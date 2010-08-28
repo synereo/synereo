@@ -111,7 +111,17 @@ with UUIDOps {
 	  }
 	}
       ).toList
-    for( place <- places )
+    
+    report( "number of places = " + places.length )
+
+    for( place <-
+	(
+	  places match {
+	    case Nil => List( path )
+	    case _ => places
+	  }
+	)
+      )
     yield {
       _labelMap.get( place ) match {
 	case None => {
@@ -128,6 +138,10 @@ with UUIDOps {
 	    report( "pivot back, rslt = " + rslt )
 	    rslt match {
 	      case Some( v ) => {
+		report( "_labelMap rows at pivot before delete : " + _labelMap.keys.toList.length )
+		report( "deleting row labeled by " + cnxnCtxtLabelToTermStr( place ) )
+		_labelMap -= place
+		report( "_labelMap rows at pivot after delete : " + _labelMap.keys.toList.length )
 		next( rslt )
 	      }
 	      case None => {
@@ -137,27 +151,54 @@ with UUIDOps {
 	  }
 	}
 	case sv @ Some( value ) => {
-	  _labelMap - place
+	  report( "_labelMap rows before delete : " + _labelMap.keys.toList.length )
+	  report( "deleting row labeled by " + cnxnCtxtLabelToTermStr( place ) )
+	  _labelMap -= place
+	  report( "_labelMap rows after delete : " + _labelMap.keys.toList.length )
 	  sv
 	}
       }
-    }
+    }    
   }
   override def put(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     resource : Resource
   ) : Unit = {
-    _waiters.get( path ) match {
-      case None => {
-	_labelMap( path ) = resource
-      }
-      case Some( waiters ) => {
-	for( k <- waiters ) {
-	  _labelCache( k ) = resource; k ( Some( resource ) )
+    val places =
+      _waiters.keys.filter( 
+	{ 
+	  ( lbl ) => {
+	    matches( path, lbl ) match {
+	      case None => false
+	      case _ => true
+	    }
+	  }
 	}
-	_waiters( path ) = Nil
+      ).toList
+    
+    for(
+      place <-
+      (
+	places match {
+	  case Nil => List( path )
+	  case _ => places
+	}
+      )
+    )
+    yield {
+      _waiters.get( place ) match {
+	case None => {
+	  _labelMap( place ) = resource
+	}
+	case Some( waiters ) => {
+	  for( k <- waiters ) {
+	    _labelCache( k ) = resource; k ( Some( resource ) )
+	  }
+	  _waiters( place ) = Nil
+	}
       }
-    }
+    };
+    ()
   }
   override def put(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
