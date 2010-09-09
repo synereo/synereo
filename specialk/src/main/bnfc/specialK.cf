@@ -1,0 +1,57 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    puny.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Mon Aug 30 10:19:43 2010 
+-- Copyright:   Not supplied 
+-- Description: 
+-- ------------------------------------------------------------------------
+
+Composition     . Agent            ::= "{" [Agent] "}"                     ;
+Superposition   . Agent            ::= "switch" "{" [GuardedAgent] "}"     ;
+Replication     . Agent            ::= "*" Variation                       ;
+Ingestion       . Agent            ::= Pattern "?" Abstraction             ;
+Excretion       . Agent            ::= Pattern "!" Concretion              ;
+
+Injection       . GuardedAgent     ::= "case" Pattern "=>" Agent           ;
+
+Applicant       . Abstraction      ::= "(" Variation ")" Agent             ;
+Applicand       . Concretion       ::= "(" Information ")" Agent           ;
+
+Element         . Pattern          ::= Symbol "(" [Pattern] ")"            ;
+Variable        . Pattern          ::= Variation                           ;
+Literal         . Pattern          ::= Value                               ;
+
+Tag             . Symbol           ::= LIdent                              ;
+
+Atomic          . Variation        ::= UIdent                              ;
+Transcription   . Variation        ::= "@" Agent                           ;
+
+Indirection     . Information      ::= Variation                           ;
+Reflection      . Information      ::= Agent                               ;
+
+BooleanLiteral  . Value            ::= Duality                             ;
+StringLiteral   . Value            ::= String                              ;
+IntegerLiteral  . Value            ::= Integer                             ;
+DoubleLiteral   . Value            ::= Double                              ;
+
+Verity          . Duality          ::= "true"                              ;
+Absurdity       . Duality          ::= "false"                             ;
+
+[]              . [Agent]          ::=                                     ;
+(: [])          . [Agent]          ::= Agent                               ;
+(:)             . [Agent]          ::= Agent ";" [Agent]                   ;
+
+[]              . [GuardedAgent]   ::=                                     ;
+(: [])          . [GuardedAgent]   ::= GuardedAgent                        ;
+(:)             . [GuardedAgent]   ::= GuardedAgent ";" [GuardedAgent]     ;
+
+[]              . [Pattern]        ::=                                     ;
+(: [])          . [Pattern]        ::= Pattern                             ;
+(:)             . [Pattern]        ::= Pattern "," [Pattern]               ;
+
+comment "//" ;
+comment "/*" "*/" ;
+
+token UIdent (upper (letter | digit | '_')*) ;
+token LIdent (lower (letter | digit | '_')*) ;
+token Wild   '_' char* ;

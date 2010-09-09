@@ -1,0 +1,19 @@
+<lift:surround with="default" at="content">
+    <h1>R-E-P-L</h1>
+    <lift:REPLForm.show>
+      <json:script/>
+      <select id="json_verb">
+	<option value="parse">Parse term</option>
+	<option value="evaluate">Evaluate term</option>
+	<option value="type">Type term</option>
+      </select>
+      <br />
+      <textarea id="expression" rows="1">{ }</textarea>>
+      <br />
+      <button json:onclick="onclick">Go</button>
+      <br />
+      <div id="result"></div>
+    </lift:REPLForm.show>
+</lift:surround>
+
+
