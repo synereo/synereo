@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<stax-web-app xmlns="http://www.stax.net/xml/webapp/1">     
-    <appid>k</appid>
-    <context-param>
-        <param-name>application.environment</param-name>
-        <param-value>prod</param-value>
-    </context-param>
-</stax-web-app>
