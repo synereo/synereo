@@ -300,122 +300,122 @@
         </configuration>
       </plugin>
 
-      <plugin>
-	<groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-antrun-plugin</artifactId>
-	<executions>
-	  <execution>
-	    <id>bnfc-generation</id>
-	    <phase>generate-sources</phase>
-	    <configuration>
-	      <tasks>
-		<property name="target.dir" value="${basedir}/target"/>
-		<property name="scala.dir" value="${basedir}/src/main/scala"/>
-		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/>
-		<property name="bnfc.package" value="${groupId}"/>
-		<property name="bnfc.artifact" value="${artifactId}"/>
-		<property name="compile_classpath"
-			  refid="maven.compile.classpath"/>
+      <!-- <plugin> -->
+<!-- 	<groupId>org.apache.maven.plugins</groupId> -->
+<!-- 	<artifactId>maven-antrun-plugin</artifactId> -->
+<!-- 	<executions> -->
+<!-- 	  <execution> -->
+<!-- 	    <id>bnfc-generation</id> -->
+<!-- 	    <phase>generate-sources</phase> -->
+<!-- 	    <configuration> -->
+<!-- 	      <tasks> -->
+<!-- 		<property name="target.dir" value="${basedir}/target"/> -->
+<!-- 		<property name="scala.dir" value="${basedir}/src/main/scala"/> -->
+<!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
+<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!-- 		<property name="compile_classpath" -->
+<!-- 			  refid="maven.compile.classpath"/> -->
 
-                <ant antfile="${basedir}/src/main/bnfc/build.xml">
-                  <target name="bnfc-generate"/>
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-	  <execution>
-	    <id>bnfc-processing</id>
-	    <phase>process-sources</phase>
-	    <configuration>
-	      <tasks>
-		<property name="target.dir" value="${basedir}/target"/>
-		<property name="scala.dir" value="${basedir}/src/main/scala"/>
-		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/>
-		<property name="bnfc.package" value="${groupId}"/>
-		<property name="bnfc.artifact" value="${artifactId}"/>
-                <ant antfile="${basedir}/src/main/bnfc/build.xml">
-                  <target name="bnfc-process"/>
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-	  <execution>
-	    <id>bnfc-doc</id>
-	    <phase>generate-resources</phase>
-	    <configuration>
-	      <tasks>
-		<property name="base.dir" value="${basedir}"/>
-		<property name="target.dir" value="${basedir}/target"/>
-		<property name="scala.dir" value="${basedir}/src/main/scala"/>
-		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/>
-		<property name="bnfc.package" value="${groupId}"/>
-		<property name="bnfc.artifact" value="${artifactId}"/>
-		<property name="compile_classpath"
-			  refid="maven.compile.classpath"/>
-                <ant antfile="${basedir}/src/main/bnfc/build.xml">
-                  <target name="bnfc-generate-doc-xhtml"/>
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-	  <execution>
-	    <id>bnfc-deploy-doc</id>
-	    <phase>process-resources</phase>
-	    <configuration>
-	      <tasks>
-		<property name="base.dir"
-			  value="${basedir}"/>
-		<property name="target.dir"
-			  value="${basedir}/target"/>
-		<property name="scala.dir"
-			  value="${basedir}/src/main/scala"/>
-		<property name="scala.dir"
-			  value="${basedir}/src/main/webapp"/>
-		<property name="bnfc.dir"
-			  value="${basedir}/src/main/bnfc"/>
-		<property name="bnfc.package"
-			  value="${groupId}"/>
-		<property name="bnfc.artifact"
-			  value="${artifactId}"/>
-		<property name="compile_classpath"
-			  refid="maven.compile.classpath"/>
-                <ant antfile="${basedir}/src/main/bnfc/build.xml">
-                  <target name="bnfc-deploy-doc-xhtml"/>
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-	  <execution>
-	    <id>bnfc-cleansing</id>
-	    <phase>clean</phase>
-	    <configuration>
-	      <tasks>
-		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/>
-		<property name="bnfc.package" value="${groupId}"/>
-		<property name="bnfc.artifact" value="${artifactId}"/>
-                <ant antfile="${basedir}/src/main/bnfc/build.xml">
-                  <target name="bnfc-clean"/>
-                </ant>
-              </tasks>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+<!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
+<!--                   <target name="bnfc-generate"/> -->
+<!--                 </ant> -->
+<!--               </tasks> -->
+<!--             </configuration> -->
+<!--             <goals> -->
+<!--               <goal>run</goal> -->
+<!--             </goals> -->
+<!--           </execution> -->
+<!-- 	  <execution> -->
+<!-- 	    <id>bnfc-processing</id> -->
+<!-- 	    <phase>process-sources</phase> -->
+<!-- 	    <configuration> -->
+<!-- 	      <tasks> -->
+<!-- 		<property name="target.dir" value="${basedir}/target"/> -->
+<!-- 		<property name="scala.dir" value="${basedir}/src/main/scala"/> -->
+<!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
+<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
+<!--                   <target name="bnfc-process"/> -->
+<!--                 </ant> -->
+<!--               </tasks> -->
+<!--             </configuration> -->
+<!--             <goals> -->
+<!--               <goal>run</goal> -->
+<!--             </goals> -->
+<!--           </execution> -->
+<!-- 	  <execution> -->
+<!-- 	    <id>bnfc-doc</id> -->
+<!-- 	    <phase>generate-resources</phase> -->
+<!-- 	    <configuration> -->
+<!-- 	      <tasks> -->
+<!-- 		<property name="base.dir" value="${basedir}"/> -->
+<!-- 		<property name="target.dir" value="${basedir}/target"/> -->
+<!-- 		<property name="scala.dir" value="${basedir}/src/main/scala"/> -->
+<!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
+<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!-- 		<property name="compile_classpath" -->
+<!-- 			  refid="maven.compile.classpath"/> -->
+<!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
+<!--                   <target name="bnfc-generate-doc-xhtml"/> -->
+<!--                 </ant> -->
+<!--               </tasks> -->
+<!--             </configuration> -->
+<!--             <goals> -->
+<!--               <goal>run</goal> -->
+<!--             </goals> -->
+<!--           </execution> -->
+<!-- 	  <execution> -->
+<!-- 	    <id>bnfc-deploy-doc</id> -->
+<!-- 	    <phase>process-resources</phase> -->
+<!-- 	    <configuration> -->
+<!-- 	      <tasks> -->
+<!-- 		<property name="base.dir" -->
+<!-- 			  value="${basedir}"/> -->
+<!-- 		<property name="target.dir" -->
+<!-- 			  value="${basedir}/target"/> -->
+<!-- 		<property name="scala.dir" -->
+<!-- 			  value="${basedir}/src/main/scala"/> -->
+<!-- 		<property name="scala.dir" -->
+<!-- 			  value="${basedir}/src/main/webapp"/> -->
+<!-- 		<property name="bnfc.dir" -->
+<!-- 			  value="${basedir}/src/main/bnfc"/> -->
+<!-- 		<property name="bnfc.package" -->
+<!-- 			  value="${groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" -->
+<!-- 			  value="${artifactId}"/> -->
+<!-- 		<property name="compile_classpath" -->
+<!-- 			  refid="maven.compile.classpath"/> -->
+<!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
+<!--                   <target name="bnfc-deploy-doc-xhtml"/> -->
+<!--                 </ant> -->
+<!--               </tasks> -->
+<!--             </configuration> -->
+<!--             <goals> -->
+<!--               <goal>run</goal> -->
+<!--             </goals> -->
+<!--           </execution> -->
+<!-- 	  <execution> -->
+<!-- 	    <id>bnfc-cleansing</id> -->
+<!-- 	    <phase>clean</phase> -->
+<!-- 	    <configuration> -->
+<!-- 	      <tasks> -->
+<!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
+<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
+<!--                   <target name="bnfc-clean"/> -->
+<!--                 </ant> -->
+<!--               </tasks> -->
+<!--             </configuration> -->
+<!--             <goals> -->
+<!--               <goal>run</goal> -->
+<!--             </goals> -->
+<!--           </execution> -->
+<!--         </executions> -->
+<!--       </plugin> -->
     </plugins>
   </build>
   <reporting>
