@@ -153,8 +153,9 @@ with UUIDOps {
     next : WhatNext
   )
   : Seq[Option[Resource]] = {        
-    for( ( place, soln ) <- places( path, Input ) )
+    for( placeNSoln <- places( path, Input ) )
     yield {
+      val ( place, soln ) = placeNSoln
       _labelMap.get( place ) match {
 	case sv @ Some( value ) => {
 	  _labelMap -= place
@@ -180,7 +181,60 @@ with UUIDOps {
 	}	
       }
     }    
-  }  
+  }
+
+  type KRsrc =
+    Option[Resource] @scala.util.continuations.cpsParam[Option[Resource],Unit]
+
+  def assayK(
+    place : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : Option[Resource] @scala.util.continuations.cpsParam[Option[Resource],Unit]
+  = {
+    val contents = _labelMap.get( place )
+    contents match {
+      case sv @ Some( value ) => {
+	shift { ( k : GetContinuation ) => { sv } }
+      }
+      case None => {
+	val rslt = 
+	  shift {
+	    ( k : GetContinuation ) => {	      
+	      _waiters( place ) =
+		_waiters.get( place ).getOrElse( Nil ) ++ List( k )
+	    }	    	      
+	  }
+	reportage( "resuming with value : " + rslt )
+	_labelMap -= place
+	rslt
+      }	
+    }
+  }
+
+  // def fetch(
+//     path : CnxnCtxtLabel[Namespace,Var,Tag]
+//   ) : Seq[Option[Resource] @cpsParam[Option[Resource],Seq[Any]] ]
+//   = {        
+//     val hotspots = places( path, Input )    
+
+//     def kLoop(
+//       placeNSolns
+//       : Seq[(CnxnCtxtLabel[Namespace,Var,Tag], Option[Solution[String]])],
+//       acc
+//       : Seq[Option[Resource] @cpsParam[Option[Resource],Unit]]
+//     ) : Seq[Option[Resource] @cpsParam[Option[Resource],Unit]] = {
+//       placeNSolns match {
+// 	case placeNSoln :: rPlaceNSolns => {
+// 	  val ( place, soln ) = placeNSoln
+// 	  val assay : Seq[Option[Resource] @cpsParam[Option[Resource],Unit]]
+// 	  = List( assayK( place ) )
+// 	  kLoop( rPlaceNSolns, acc ++ assay )
+// 	}
+// 	case Nil => acc
+//       }
+//     }
+    
+//     kLoop( hotspots )
+//   }
 
   override def put(
     path : CnxnCtxtLabel[Namespace,Var,Tag],

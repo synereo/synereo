@@ -29,6 +29,41 @@ trait TupleSpace[Place,Resource]
   //def self = theMeetingPlace
 
   val reportage = report( Luddite() ) _
+
+  def fetch( x : Place ) 
+  : Option[Resource] @scala.util.continuations.cpsParam[Option[Resource],Unit]
+  = {
+    val assay = theMeetingPlace.get( x )
+    assay match {
+      case sv @ Some( v ) => {
+	shift {
+	  ( k : RK ) => {
+	    theMeetingPlace -= x
+	    sv
+	  }
+	}
+      }
+      case None => {	
+	//reset {
+	reportage(
+	  "acquire continuation to wait for a value"
+	)
+	val cv =
+	  shift {
+	    ( k : RK ) => {	
+	      theWaiters( x ) =
+		theWaiters.get( x ).getOrElse( Nil ) ++ List( k );
+	      
+	      //k( None )
+	    }
+	  }
+	reportage( "resuming with value : " + cv )
+	theMeetingPlace -= x
+	cv
+	//}
+      }	
+    }
+  }
   
   def get( x : Place, next : CK ) : Option[Resource] = {
     val stuff = 
