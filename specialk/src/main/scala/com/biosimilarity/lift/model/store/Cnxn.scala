@@ -8,11 +8,12 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.zipper._
 import scala.collection.SeqProxy
 import java.net.URI
 
 trait CnxnLabel[Namespace,Tag]
-extends SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
+extends Tree[Tag] with SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
   def up( tOrC : Either[Tag,CnxnLabel[Namespace,Tag]] )
    : List[Tag] = {
     tOrC match {
@@ -33,7 +34,7 @@ extends SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
 }
 
 class CnxnLeaf[Namespace,Tag]( val tag : Tag )
-extends CnxnLabel[Namespace,Tag] {
+extends TreeItem[Tag]( tag ) with CnxnLabel[Namespace,Tag] {
   override def self = List( Left( tag ) )
 }
 
@@ -48,7 +49,7 @@ object CnxnLeaf {
 class CnxnBranch[Namespace,Tag](
   val nameSpace : Namespace,
   val labels : List[CnxnLabel[Namespace,Tag]]
-) extends CnxnLabel[Namespace,Tag] {
+) extends TreeSection[Tag]( labels ) with CnxnLabel[Namespace,Tag] {
   override def self = labels.map( Right( _ ) )
 }
 
