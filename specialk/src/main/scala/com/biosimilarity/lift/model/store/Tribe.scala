@@ -115,6 +115,16 @@ class Tribe[Namespace,Var,Tag,Value](
 with Warren
 with DrumTalk {
   
+  trait DMsg
+  case class DGet( path : CnxnCtxtLabel[Namespace,Var,Tag] )
+       extends DMsg
+
+  def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
+    for( jsndr <- jsonSender ) {
+      jsndr.send( DGet( path ) )
+    }
+  }
+
   override def get(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     next : WhatNext
@@ -134,8 +144,11 @@ with DrumTalk {
 	      shift {
 		( k : GetContinuation ) => {	      
 		  _waiters( place ) =
-		    _waiters.get( place ).getOrElse( Nil ) ++ List( k )
-		  
+		    _waiters.get( place )
+			    .getOrElse( Nil ) ++ List( k )
+
+		  forwardGet( path )
+
 		  k( None )
 		}	    	      
 	      }

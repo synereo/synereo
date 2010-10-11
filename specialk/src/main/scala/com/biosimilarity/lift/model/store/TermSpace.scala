@@ -53,13 +53,40 @@ extends TermTypes[Namespace,Var,Tag,Value] {
   
   def get(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
-    next : WhatNext
+    next : WhatNext,
+    peek : Boolean
   ) : Seq[Option[Resource]]
+  def get(
+    path : CnxnLabel[Namespace,Tag],
+    next : WhatNext,
+    peek : Boolean
+  ) : Seq[Option[Resource]] = {
+    get( injectLabel( path ), next, peek )
+  }
+  def get(
+    path : CnxnCtxtLabel[Namespace,Var,Tag],
+    next : WhatNext
+  ) : Seq[Option[Resource]] = {
+    get( path, next, false )
+  }
   def get(
     path : CnxnLabel[Namespace,Tag],
     next : WhatNext
   ) : Seq[Option[Resource]] = {
     get( injectLabel( path ), next )
+  }
+
+  def fetch(
+    path : CnxnCtxtLabel[Namespace,Var,Tag],
+    next : WhatNext
+  ) : Seq[Option[Resource]] = {
+    get( path, next, true )
+  }
+  def fetch(
+    path : CnxnLabel[Namespace,Tag],
+    next : WhatNext
+  ) : Seq[Option[Resource]] = {
+    fetch( injectLabel( path ), next )
   }
 
   def get(
@@ -71,6 +98,17 @@ extends TermTypes[Namespace,Var,Tag,Value] {
     path : CnxnLabel[Namespace,Tag]
   ) : Seq[Option[Resource]] = {
     get( injectLabel( path ) )
+  }
+
+  def fetch(
+    path : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : Seq[Option[Resource]] = {
+    fetch( path, ( v : Option[Resource] ) => { tap( v ); v } )
+  }
+  def fetch(
+    path : CnxnLabel[Namespace,Tag]
+  ) : Seq[Option[Resource]] = {
+    fetch( injectLabel( path ) )
   }
 
   def put(
@@ -150,7 +188,8 @@ with UUIDOps {
 
   override def get(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
-    next : WhatNext
+    next : WhatNext,
+    peek : Boolean
   )
   : Seq[Option[Resource]] = {        
     for( placeNSoln <- places( path, Input ) )
@@ -158,7 +197,9 @@ with UUIDOps {
       val ( place, soln ) = placeNSoln
       _labelMap.get( place ) match {
 	case sv @ Some( value ) => {
-	  _labelMap -= place
+	  if ( !peek ) {
+	    _labelMap -= place
+	  }
 	  sv
 	}
 	case None => {
@@ -173,6 +214,9 @@ with UUIDOps {
 		}	    	      
 	      }
 	    reportage( "resuming with value : " + rslt )
+	    if ( !peek ) {
+	      _labelMap -= place
+	    }
 	    rslt match {
 	      case Some( _ ) =>	next( rslt )
 	      case nv @ _ => nv
