@@ -99,9 +99,12 @@ trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
   
 }
 
-class AgentTwistedPair[Namespace,Var,Tag,Value]( trgt : URI ) 
-extends AgentsOverAMQP[Namespace,Var,Tag,Value]
-with AbstractJSONAMQPListener {
+class AgentTwistedPair[Namespace,Var,Tag,Value](
+  src : URI,
+  trgt : URI
+) extends AgentsOverAMQP[Namespace,Var,Tag,Value]
+with AbstractJSONAMQPListener
+with UUIDOps {
   
   type JSONListener = AMQPAgent  
 
@@ -209,9 +212,18 @@ with AbstractJSONAMQPListener {
     _jsonSender
   }
 
-  def send( contents : java.lang.Object ) : Unit = {
+  def send( contents : DMsg ) : Unit = {
+    val jr = JustifiedRequest[DMsg,DMsg](
+      getUUID(),
+      trgt,
+      src,
+      getUUID(),
+      contents,
+      None
+    )
+
     _jsonSender ! AMQPMessage(
-      new XStream( new JettisonMappedXmlDriver() ).toXML( contents )
+      new XStream( new JettisonMappedXmlDriver() ).toXML( jr )
     )
   }  
 

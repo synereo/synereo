@@ -44,7 +44,10 @@ trait Collective[Namespace,Var,Tag,Value] {
     for( acquaintance <- acquaintances )
     yield {
       (
-	new AgentTwistedPair[Namespace,Var,Tag,Value]( acquaintance )
+	new AgentTwistedPair[Namespace,Var,Tag,Value](
+	  selfIdentity,
+	  acquaintance
+	)
       )
     }
   }
