@@ -45,6 +45,11 @@ extends EndPoint[Namespace,Var,Tag,Value] {
 
   case class URIEndPointWrapper( override val location : URI )
   extends EndPoint[Namespace,Var,Tag,Value] {
+    def handleRequest( 
+      dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
+    ) : Boolean = {
+      throw new Exception( "Attempt to have a reference handle a request" )
+    }
     def handleResponse( 
       dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
     ) : Boolean = {
@@ -83,6 +88,30 @@ with Collective[Namespace,Var,Tag,Value] {
     for( jsndr <- agentTwistedPairs ) {
       jsndr.send( DGetRequest[Namespace,Var,Tag,Value]( path ) )
     }
+  }
+
+  override def handleRequest(
+    dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
+  ) : Boolean = {
+    dmsg match {
+      case JustifiedRequest(
+	msgId, mtrgt, msrc, lbl, body, _
+      ) => { 
+	// Handle a justified request with no initiating response	  
+	body match {
+	  case DGetRequest( path ) => {
+	    get( path )
+	  }
+	  case DFetchRequest( path ) => {
+	    fetch( path )
+	  }
+	  case DPutRequest( path, value ) => {	
+	    put( path, value )
+	  }
+	}
+      }
+    }    
+    true
   }
 
   override def handleResponse(

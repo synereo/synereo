@@ -122,6 +122,9 @@ trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
 
 trait EndPoint[Namespace,Var,Tag,Value] {
   def location : URI
+  def handleRequest( 
+    dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
+  ) : Boolean
   def handleResponse( 
     dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
   ) : Boolean
@@ -144,6 +147,35 @@ with UUIDOps {
 
   case object _jsonListener
   extends AMQPAgent( trgt ) {
+    override def handleWithContinuation(
+      request : JTSReq,
+      k : Status[JTSReq] => Status[JTSReq]
+    ) = {
+      //println( "handling: " + request )
+      request match {
+	case JustifiedRequest(
+	  msgId, mtrgt, msrc, lbl, body, None
+	) => { 
+	  // Handle a justified request with no initiating response	  
+	  JReqStatus(
+	    request,
+	    src.handleRequest( request ),
+	    None,
+	    Some( k )
+	  )
+	}
+	case _ => {
+	  // Handle a justified request with an initiating response
+	  JReqStatus(
+	    request,
+	    src.handleRequest( request ),
+	    None,
+	    Some( k )
+	  )
+	}
+      }      
+    }
+
     override def handleWithContinuation(
       response : JTSRsp,
       k : Status[JTSRsp] => Status[JTSRsp]
