@@ -81,7 +81,7 @@ with Collective[Namespace,Var,Tag,Value] {
 
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
     for( jsndr <- agentTwistedPairs ) {
-      jsndr.send( DFetchRequest[Namespace,Var,Tag,Value]( path ) )
+      jsndr.send( DGetRequest[Namespace,Var,Tag,Value]( path ) )
     }
   }
 
@@ -89,16 +89,16 @@ with Collective[Namespace,Var,Tag,Value] {
     dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
   ) : Boolean = {
     dmsg match {
-      case dget : DGetResponse[Namespace,Var,Tag,Value] => {
-	true
+      case DGetResponse( path, value ) => {
+	put( path, value )
       }
-      case dfetch : DFetchResponse[Namespace,Var,Tag,Value] => {
-	true
+      case DFetchResponse( path, value ) => {
+	put( path, value )
       }
-      case dput : DPutResponse[Namespace,Var,Tag,Value] => {
-	true
+      case dput : DPutResponse[Namespace,Var,Tag,Value] => {	
       }
     }
+    true
   }
 
   override def get(
