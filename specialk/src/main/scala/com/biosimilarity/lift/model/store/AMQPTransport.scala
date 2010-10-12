@@ -29,18 +29,39 @@ import java.net.URI
 import java.util.UUID
 
 trait DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+trait DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+trait DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+
 case class DGetRequest[Namespace,Var,Tag,Value](
   path : CnxnCtxtLabel[Namespace,Var,Tag]
-) extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
 case class DGetResponse[Namespace,Var,Tag,Value](
   path : CnxnCtxtLabel[Namespace,Var,Tag],
   value : Value
-) extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+case class DFetchRequest[Namespace,Var,Tag,Value](
+  path : CnxnCtxtLabel[Namespace,Var,Tag]
+) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+case class DFetchResponse[Namespace,Var,Tag,Value](
+  path : CnxnCtxtLabel[Namespace,Var,Tag],
+  value : Value
+) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+case class DPutRequest[Namespace,Var,Tag,Value](
+  path : CnxnCtxtLabel[Namespace,Var,Tag],
+  value : Value
+) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+case class DPutResponse[Namespace,Var,Tag,Value](
+  path : CnxnCtxtLabel[Namespace,Var,Tag]
+) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+
 
 trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
-  type DMsg = DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
-  type JTSReq = JustifiedRequest[DMsg,DMsg]
-  type JTSRsp = JustifiedResponse[DMsg,DMsg]
+  type DReq = DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+  type DRsp = DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  type JTSReq = JustifiedRequest[DReq,DRsp]
+  type JTSRsp = JustifiedResponse[DReq,DRsp]
 
   object IdVendor extends UUIDOps {
     def getURI() = {
@@ -48,15 +69,15 @@ trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
     }
   }
 
-  object AnAMQPTraceMonitor extends TraceMonitor[DMsg,DMsg]  
+  object AnAMQPTraceMonitor extends TraceMonitor[DReq,DRsp]  
 
   class AMQPAgent(
     alias : URI
-  ) extends ReflectiveMessenger[DMsg,DMsg](
+  ) extends ReflectiveMessenger[DReq,DRsp](
     alias,
     new ListBuffer[JTSReq](),
     new ListBuffer[JTSRsp](),
-    Some( new LinkedHashMap[URI,Socialite[DMsg,DMsg]]),
+    Some( new LinkedHashMap[URI,Socialite[DReq,DRsp]]),
     AnAMQPTraceMonitor
   )
   with UUIDOps {
@@ -99,17 +120,54 @@ trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
   
 }
 
+trait EndPoint[Namespace,Var,Tag,Value] {
+  def location : URI
+  def handleResponse( 
+    dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  ) : Boolean
+}
+
 class AgentTwistedPair[Namespace,Var,Tag,Value](
-  src : URI,
-  trgt : URI
+  src : EndPoint[Namespace,Var,Tag,Value],
+  trgt : EndPoint[Namespace,Var,Tag,Value]
 ) extends AgentsOverAMQP[Namespace,Var,Tag,Value]
 with AbstractJSONAMQPListener
 with UUIDOps {
   
+  implicit def endPointAsURI(
+    ep : EndPoint[Namespace,Var,Tag,Value]
+  ) : URI = {
+    ep.location
+  }
+
   type JSONListener = AMQPAgent  
 
   case object _jsonListener
   extends AMQPAgent( trgt ) {
+    override def handleWithContinuation(
+      response : JTSRsp,
+      k : Status[JTSRsp] => Status[JTSRsp]
+    ) = {
+      //println( "handling: " + request )
+      response match {
+	case JustifiedResponse(
+	  msgId, mtrgt, msrc, lbl, body, just
+	) => { 	  
+	  JRspStatus(
+	    response,
+	    src.handleResponse( body ),
+	    None,
+	    Some( k )
+	  )
+	}
+	case _ => {
+	  throw new Exception(
+	    "Unexpected message type : " + response.getClass
+	  )
+	}
+      }      
+    }
+
     override def act () {
       nameSpace match {
 	case None => {
@@ -126,17 +184,17 @@ with UUIDOps {
 	    }
 	    case jr@JustifiedRequest(
 	      m, p, d, t,
-	      f : DMsg,
-	      c : Option[Response[AbstractJustifiedRequest[DMsg,DMsg],DMsg]]
+	      f : DReq,
+	      c : Option[Response[AbstractJustifiedRequest[DReq,DRsp],DRsp]]
 	    ) => {	    
-	      val jrJSON : JustifiedRequest[DMsg,DMsg]
-	      = jr.asInstanceOf[JustifiedRequest[DMsg,DMsg]]
+	      val jrJSON : JustifiedRequest[DReq,DRsp]
+	      = jr.asInstanceOf[JustifiedRequest[DReq,DRsp]]
     
 	      if ( validate( jrJSON ) ) {
 		println( "calling handle on " + jr )
 		reset {
 		  shift {
-		    ( k : Status[JustifiedRequest[DMsg,DMsg]] => Status[JustifiedRequest[DMsg,DMsg]] )
+		    ( k : Status[JustifiedRequest[DReq,DRsp]] => Status[JustifiedRequest[DReq,DRsp]] )
 		  => {
 		    k( handleWithContinuation( jrJSON, k ) )
 		  }
@@ -147,16 +205,16 @@ with UUIDOps {
 	    }
 	    case jr@JustifiedResponse(
 	      m, p, d, t,
-	      f : DMsg,
-	      c : Option[Request[AbstractJustifiedResponse[DMsg,DMsg],DMsg]]
+	      f : DRsp,
+	      c : Option[Request[AbstractJustifiedResponse[DReq,DRsp],DReq]]
 	    ) =>  {
-	      val jrJSON : JustifiedResponse[DMsg,DMsg]
-	      = jr.asInstanceOf[JustifiedResponse[DMsg,DMsg]]
+	      val jrJSON : JustifiedResponse[DReq,DRsp]
+	      = jr.asInstanceOf[JustifiedResponse[DReq,DRsp]]
 	      if ( validate( jrJSON ) ) {
 		println( "calling handle on " + jr )
 		reset {
 		  shift {
-		    ( k : Status[JustifiedResponse[DMsg,DMsg]] => Status[JustifiedResponse[DMsg,DMsg]] )
+		    ( k : Status[JustifiedResponse[DReq,DRsp]] => Status[JustifiedResponse[DReq,DRsp]] )
 		  => {
 		    k( handleWithContinuation( jrJSON, k ) )
 		  }
@@ -212,8 +270,8 @@ with UUIDOps {
     _jsonSender
   }
 
-  def send( contents : DMsg ) : Unit = {
-    val jr = JustifiedRequest[DMsg,DMsg](
+  def send( contents : DReq ) : Unit = {
+    val jr = JustifiedRequest[DReq,DRsp](
       getUUID(),
       trgt,
       src,
@@ -225,21 +283,36 @@ with UUIDOps {
     _jsonSender ! AMQPMessage(
       new XStream( new JettisonMappedXmlDriver() ).toXML( jr )
     )
-  }  
+  }
+
+  def send( contents : DRsp ) : Unit = {
+    val jr = JustifiedResponse[DReq,DRsp](
+      getUUID(),
+      src,
+      trgt,
+      getUUID(),
+      contents,
+      None
+    )
+
+    _jsonSender ! AMQPMessage(
+      new XStream( new JettisonMappedXmlDriver() ).toXML( jr )
+    )
+  }
 
   def rehydrate( contents: String ) :
   Either[
-    JustifiedRequest[DMsg,DMsg],
-    JustifiedResponse[DMsg,DMsg]
+    JustifiedRequest[DReq,DRsp],
+    JustifiedResponse[DReq,DRsp]
   ] = {
     val msg =
       new XStream( new JettisonMappedXmlDriver() ).fromXML( contents )
     msg match {
-      case jreq : JustifiedRequest[DMsg,DMsg] => {
-	Left[JustifiedRequest[DMsg,DMsg],JustifiedResponse[DMsg,DMsg]]( jreq )
+      case jreq : JustifiedRequest[DReq,DRsp] => {
+	Left[JustifiedRequest[DReq,DRsp],JustifiedResponse[DReq,DRsp]]( jreq )
       }
-      case jrsp : JustifiedResponse[DMsg,DMsg] => {
-	Right[JustifiedRequest[DMsg,DMsg],JustifiedResponse[DMsg,DMsg]]( jrsp )
+      case jrsp : JustifiedResponse[DReq,DRsp] => {
+	Right[JustifiedRequest[DReq,DRsp],JustifiedResponse[DReq,DRsp]]( jrsp )
       }
       case _ => {
 	throw new Exception(

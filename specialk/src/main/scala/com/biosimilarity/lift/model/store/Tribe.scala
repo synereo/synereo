@@ -1,5 +1,5 @@
 // -*- mode: Scala;-*- 
-// Filename:    Tribe.scala 
+// Filename:    Junction.scala 
 // Authors:     lgm                                                    
 // Creation:    Fri Oct  8 17:29:51 2010 
 // Copyright:   Not supplied 
@@ -35,17 +35,35 @@ trait OZ[GetRequest,GetContinuation] {
   def hostToOutstandingReqs : Map[URI,(GetRequest,GetContinuation)]
 }
 
-trait Collective[Namespace,Var,Tag,Value] {
+trait Collective[Namespace,Var,Tag,Value]
+extends EndPoint[Namespace,Var,Tag,Value] {
   def selfIdentity : URI
   def agentTwistedPairs : Seq[AgentTwistedPair[Namespace,Var,Tag,Value]]
   def acquaintances : Seq[URI]
+
+  override def location : URI = selfIdentity
+
+  case class URIEndPointWrapper( override val location : URI )
+  extends EndPoint[Namespace,Var,Tag,Value] {
+    def handleResponse( 
+      dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+    ) : Boolean = {
+      throw new Exception( "Attempt to have a reference handle a response" )
+    }
+  }
+
+  implicit def URIasEndPoint(
+    uri : URI
+  ) : EndPoint[Namespace,Var,Tag,Value] = {
+    URIEndPointWrapper( uri )
+  }  
 
   def tunnel() : Seq[AgentTwistedPair[Namespace,Var,Tag,Value]] = {
     for( acquaintance <- acquaintances )
     yield {
       (
 	new AgentTwistedPair[Namespace,Var,Tag,Value](
-	  selfIdentity,
+	  this,
 	  acquaintance
 	)
       )
@@ -53,7 +71,7 @@ trait Collective[Namespace,Var,Tag,Value] {
   }
 }
 
-class Tribe[Namespace,Var,Tag,Value](
+class Junction[Namespace,Var,Tag,Value](
   override val selfIdentity : URI,
   override val agentTwistedPairs
   : Seq[AgentTwistedPair[Namespace,Var,Tag,Value]],
@@ -63,7 +81,23 @@ with Collective[Namespace,Var,Tag,Value] {
 
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
     for( jsndr <- agentTwistedPairs ) {
-      jsndr.send( DGetRequest( path ) )
+      jsndr.send( DFetchRequest[Namespace,Var,Tag,Value]( path ) )
+    }
+  }
+
+  override def handleResponse(
+    dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  ) : Boolean = {
+    dmsg match {
+      case dget : DGetResponse[Namespace,Var,Tag,Value] => {
+	true
+      }
+      case dfetch : DFetchResponse[Namespace,Var,Tag,Value] => {
+	true
+      }
+      case dput : DPutResponse[Namespace,Var,Tag,Value] => {
+	true
+      }
     }
   }
 
