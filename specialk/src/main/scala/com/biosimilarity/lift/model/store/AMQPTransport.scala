@@ -19,7 +19,7 @@ import scala.collection.mutable._
 import java.net.URI
 import java.util.UUID
 
-trait DrumTalk {
+trait AgentsOverAMQP {
   type JSONOverAMQP = AMQPMessage[String]
   type JTSReq = JustifiedRequest[JSONOverAMQP,JSONOverAMQP]
   type JTSRsp = JustifiedResponse[JSONOverAMQP,JSONOverAMQP]
@@ -30,28 +30,11 @@ trait DrumTalk {
     }
   }
 
-  object AnAMQPTraceMonitor extends TraceMonitor[JSONOverAMQP,JSONOverAMQP]
+  object AnAMQPTraceMonitor extends TraceMonitor[JSONOverAMQP,JSONOverAMQP]  
 
-  def source(req : JSONOverAMQP, resp : JSONOverAMQP)
-  : URI = {
-    // temporarily
-    IdVendor.getURI()
-  }
-  def target( req : JSONOverAMQP, resp : JSONOverAMQP )
-  : URI = {
-    // temporarily
-    IdVendor.getURI()
-  }
-  def label( req : JSONOverAMQP, resp : JSONOverAMQP )
-  : UUID = {
-    // temporarily
-    IdVendor.getUUID()
-  }
-
-  class TalkingDrum(
+  class AMQPAgent(
     alias : URI
-  )
-  extends ReflectiveMessenger[JSONOverAMQP,JSONOverAMQP](
+  ) extends ReflectiveMessenger[JSONOverAMQP,JSONOverAMQP](
     alias,
     new ListBuffer[JTSReq](),
     new ListBuffer[JTSRsp](),

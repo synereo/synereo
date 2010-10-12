@@ -30,7 +30,7 @@ import java.util.Properties
 import java.io.FileInputStream
 import java.io.IOException
 
-class JSONSerializedAMQPDispatcher[T](
+class JSONAMQPDispatcher[T](
   factory: ConnectionFactory,
   host: String,
   port: Int
@@ -166,7 +166,7 @@ class JSONAMQPListener( host : String ) {
   val factory = new ConnectionFactory(params)
   
   val amqp =
-    new JSONSerializedAMQPDispatcher[String](
+    new JSONAMQPDispatcher[String](
       factory,
       //"localhost",
       host,

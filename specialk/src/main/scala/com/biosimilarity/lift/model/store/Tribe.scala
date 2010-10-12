@@ -29,66 +29,12 @@ import java.net.URI
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
-trait Rabitter {
-  def configure(
-    cf : ConnectionFactory,
-    host : String,
-    port : Int
-  )(
-    channel: Channel
-  ) : Int
-
-  def rabbitFactory() : (ConnectionParameters, ConnectionFactory) = {
-    val params = new ConnectionParameters
-    // All of the params, exchanges, and queues are all just example data.
-    params.setUsername("guest")
-    params.setPassword("guest")
-    params.setVirtualHost("/")
-    params.setRequestedHeartbeat(0)
-    (params, new ConnectionFactory(params))
-  }
-
-  def rabbitTube(
-    cnxnFctry : ConnectionFactory,
-    host : String,
-    port : Int
-  ) = {
-    val conn = cnxnFctry.newConnection( host, port )
-    val channel = conn.createChannel()
-    val ticket = configure( cnxnFctry, host, port )( channel )
-
-    ( conn, channel, ticket )
-  }
-
-  def send [T] (
-    channel : Channel,
-    exchange : String,
-    routingKey : String,
-    ticket : Int
-    )(
-    msg: T
-  ) {
-      // Now write an object to a byte array and shove it across the wire.
-      val bytes = new ByteArrayOutputStream
-      val store = new ObjectOutputStream(bytes)
-      store.writeObject(msg)
-      store.close
-      channel.basicPublish(
-	ticket,
-	exchange,
-	routingKey,
-	null,
-	bytes.toByteArray
-      )
-    }  
-}
-
 trait OZ[GetRequest,GetContinuation] {
   def hostToOutstandingReqs : Map[URI,(GetRequest,GetContinuation)]
 }
 
-trait Warren {
-  def selfIdentity : UUID
+trait Collective {
+  def selfIdentity : URI
   def jsonSender : Seq[StdJSONOverAMQPSender]
   def jsonDispatcher : Seq[JSONAMQPListener]
   def acquaintances : Seq[URI]
@@ -107,21 +53,36 @@ trait Warren {
 }
 
 class Tribe[Namespace,Var,Tag,Value](
-  override val selfIdentity : UUID,
+  override val selfIdentity : URI,
   override val jsonSender : Seq[StdJSONOverAMQPSender],
   override val jsonDispatcher : Seq[JSONAMQPListener],
   override val acquaintances : Seq[URI]
 ) extends TermStore[Namespace,Var,Tag,Value]
-with Warren
-with DrumTalk {
+with Collective
+with AgentsOverAMQP
+with AbstractJSONAMQPListener {
   
+  type JSONListener = AMQPAgent  
+
+  lazy val _jsonListener = new AMQPAgent( selfIdentity )    
+
+  override def jsonListener() : JSONListener = {
+    _jsonListener
+  }  
+
+  override def host : String = { selfIdentity.getHost }
+
   trait DMsg
-  case class DGet( path : CnxnCtxtLabel[Namespace,Var,Tag] )
+  case class DGetRequest( path : CnxnCtxtLabel[Namespace,Var,Tag] )
        extends DMsg
+  case class DGetResponse(
+    path : CnxnCtxtLabel[Namespace,Var,Tag],
+    value : Value
+  ) extends DMsg
 
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
     for( jsndr <- jsonSender ) {
-      jsndr.send( DGet( path ) )
+      jsndr.send( DGetRequest( path ) )
     }
   }
 
