@@ -38,7 +38,7 @@ trait OZ[GetRequest,GetContinuation] {
 trait Collective[Namespace,Var,Tag,Value]
 extends EndPoint[Namespace,Var,Tag,Value] {
   def selfIdentity : URI
-  def agentTwistedPairs : Seq[AgentTwistedPair[Namespace,Var,Tag,Value]]
+  def agentTwistedPairs : Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]]
   def acquaintances : Seq[URI]
 
   override def location : URI = selfIdentity
@@ -61,31 +61,35 @@ extends EndPoint[Namespace,Var,Tag,Value] {
     uri : URI
   ) : EndPoint[Namespace,Var,Tag,Value] = {
     URIEndPointWrapper( uri )
-  }  
-
-  def tunnel() : Seq[AgentTwistedPair[Namespace,Var,Tag,Value]] = {
+  }    
+  
+  def meetNGreet( acquaintances : Seq[URI] )
+  : Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]] =
+  {
+    val map = new HashMap[URI,AgentTwistedPair[Namespace,Var,Tag,Value]]()
     for( acquaintance <- acquaintances )
     yield {
-      (
+      map( acquaintance ) =
 	new AgentTwistedPair[Namespace,Var,Tag,Value](
 	  this,
 	  acquaintance
 	)
-      )
     }
+    map
   }
 }
 
 class Junction[Namespace,Var,Tag,Value](
-  override val selfIdentity : URI,
-  override val agentTwistedPairs
-  : Seq[AgentTwistedPair[Namespace,Var,Tag,Value]],
+  override val selfIdentity : URI,  
   override val acquaintances : Seq[URI]
 ) extends TermStore[Namespace,Var,Tag,Value]
 with Collective[Namespace,Var,Tag,Value] {  
-
+  override lazy val agentTwistedPairs
+  : Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]] =
+    meetNGreet( acquaintances )
+  
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
-    for( jsndr <- agentTwistedPairs ) {
+    for( ( uri, jsndr ) <- agentTwistedPairs ) {
       jsndr.send( DGetRequest[Namespace,Var,Tag,Value]( path ) )
     }
   }
@@ -100,10 +104,52 @@ with Collective[Namespace,Var,Tag,Value] {
 	// Handle a justified request with no initiating response	  
 	body match {
 	  case DGetRequest( path ) => {
-	    get( path )
+	    val k =
+	      {
+		( v : Option[Resource] ) => {
+		  //tap( v )
+		  for(
+		    atp <- agentTwistedPairs.get( msrc );
+		    value <- v
+		  ) {
+		    value match {
+		      case Ground( gv ) =>
+			atp.send(
+			  DGetResponse[Namespace,Var,Tag,Value](
+			    path,
+			    gv
+			  )
+			)
+		    }
+		  }
+		  v
+		}
+	      }
+	    get( path, k )
 	  }
 	  case DFetchRequest( path ) => {
-	    fetch( path )
+	    val k =
+	      {
+		( v : Option[Resource] ) => {
+		  //tap( v )
+		  for(
+		    atp <- agentTwistedPairs.get( msrc );
+		    value <- v
+		  ) {
+		    value match {
+		      case Ground( gv ) =>
+			atp.send(
+			  DGetResponse[Namespace,Var,Tag,Value](
+			    path,
+			    gv
+			  )
+			)
+		    }
+		  }
+		  v
+		}
+	      }
+	    fetch( path, k )
 	  }
 	  case DPutRequest( path, value ) => {	
 	    put( path, value )
