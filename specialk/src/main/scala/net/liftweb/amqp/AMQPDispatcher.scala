@@ -135,7 +135,7 @@ class ExampleStringAMQPListener {
 
   val factory = new ConnectionFactory(params)
   // thor.local is a machine on your network with rabbitmq listening on port 5672
-  val amqp = new ExampleSerializedAMQPDispatcher[String](factory, "thor.local", 5672)
+  val amqp = new ExampleSerializedAMQPDispatcher[String](factory, "localhost", 5672)
   amqp.start
 
   // Example Listener that just prints the String it receives.

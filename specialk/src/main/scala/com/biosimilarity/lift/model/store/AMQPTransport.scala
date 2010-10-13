@@ -146,7 +146,7 @@ with UUIDOps {
   type JSONListener = AMQPAgent  
 
   case object _jsonListener
-  extends AMQPAgent( trgt ) {
+  extends AMQPAgent( src ) {
     override def handleWithContinuation(
       request : JTSReq,
       k : Status[JTSReq] => Status[JTSReq]
@@ -291,7 +291,7 @@ with UUIDOps {
   case object _jsonSender
   extends JSONAMQPSender(
     rabbitFactory(),
-    host,
+    trgt.getHost,
     5672,
     "mult",
     "routeroute"
