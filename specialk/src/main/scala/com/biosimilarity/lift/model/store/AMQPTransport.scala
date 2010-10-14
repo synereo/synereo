@@ -356,7 +356,7 @@ with UUIDOps {
     _jsonListener
   }  
 
-  override def host : String = { trgt.getHost }
+  override def host : String = { src.getHost }
 
   case object _jsonSender
   extends JSONAMQPSender(
