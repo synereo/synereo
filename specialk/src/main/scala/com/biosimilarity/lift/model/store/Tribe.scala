@@ -90,7 +90,13 @@ with Collective[Namespace,Var,Tag,Value] {
   
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
     for( ( uri, jsndr ) <- agentTwistedPairs ) {
-      reportage( "forwarding to " + uri )
+      reportage(
+	(
+	  this
+	  + " forwarding to "
+	  + uri
+	)
+      )
       jsndr.send( DGetRequest[Namespace,Var,Tag,Value]( path ) )
     }
   }
@@ -102,11 +108,27 @@ with Collective[Namespace,Var,Tag,Value] {
       case JustifiedRequest(
 	msgId, mtrgt, msrc, lbl, body, _
       ) => { 
-	reportage( "handling : " + dmsg )
+	reportage(
+	  (
+	    this
+	    + " handling : "
+	    + dmsg
+	    + " from "
+	    + msrc
+	    + " on behalf of "
+	    + mtrgt
+	  )
+	)
 	// Handle a justified request with no initiating response	  
 	body match {
 	  case dgreq@DGetRequest( path ) => {
-	    reportage( "handling : " + dgreq )
+	    reportage(
+	      ( 
+		this 
+		+ " handling : "
+		+ dgreq
+	      )
+	    )
 	    val k =
 	      {
 		( v : Option[Resource] ) => {
@@ -131,7 +153,13 @@ with Collective[Namespace,Var,Tag,Value] {
 	    get( path, k )
 	  }
 	  case dfreq@DFetchRequest( path ) => {
-	    reportage( "handling : " + dfreq )
+	    reportage(
+	      (
+		this 
+		+ "handling : "
+		+ dfreq
+	      )
+	    )
 	    val k =
 	      {
 		( v : Option[Resource] ) => {
@@ -156,7 +184,13 @@ with Collective[Namespace,Var,Tag,Value] {
 	    fetch( path, k )
 	  }
 	  case dpreq@DPutRequest( path, value ) => {	
-	    reportage( "handling : " + dpreq )
+	    reportage(
+	      (
+		this
+		+ " handling : "
+		+ dpreq
+	      )
+	    )
 	    put( path, value )
 	  }
 	}
@@ -178,7 +212,13 @@ with Collective[Namespace,Var,Tag,Value] {
       case dput : DPutResponse[Namespace,Var,Tag,Value] => {	
       }
       case _ => {
-	reportage( "Handling unexpected message : " + dmsg )
+	reportage(
+	  (
+	    this 
+	    + " handling unexpected message : "
+	    + dmsg
+	  )
+	)
       }
     }
     true
@@ -202,18 +242,35 @@ with Collective[Namespace,Var,Tag,Value] {
 	    val rslt : Option[Resource] = 
 	      shift {
 		( k : GetContinuation ) => {	      
-		  reportage( "storing continuation to wait for value : " + k )
+		  reportage(
+		    (
+		      this
+		      + " storing continuation to wait for value : "
+		      + k
+		    )
+		  )
 		  _waiters( place ) =
 		    _waiters.get( place )
 			    .getOrElse( Nil ) ++ List( k )
 		  
-		  reportage( "forwarding to acquaintances" )
+		  reportage(
+		    (
+		      this 
+		      + " forwarding to acquaintances "
+		    )
+		  )
 		  forwardGet( path )
 
 		  k( None )
 		}	    	      
 	      }
-	    reportage( "resuming with value : " + rslt )
+	    reportage(
+	      (
+		this
+		+ " resuming with value : "
+		+ rslt
+	      )
+	    )
 	    rslt match {
 	      case Some( _ ) =>	next( rslt )
 	      case nv @ _ => nv

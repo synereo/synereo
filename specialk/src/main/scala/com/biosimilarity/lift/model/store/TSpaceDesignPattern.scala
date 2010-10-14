@@ -46,7 +46,10 @@ trait TupleSpace[Place,Resource]
       case None => {	
 	//reset {
 	reportage(
-	  "acquire continuation to wait for a value"
+	  (
+	    this 
+	    + " acquiring continuation to wait for a value "
+	  )
 	)
 	val cv =
 	  shift {
@@ -57,7 +60,13 @@ trait TupleSpace[Place,Resource]
 	      //k( None )
 	    }
 	  }
-	reportage( "resuming with value : " + cv )
+	reportage(
+	  (
+	    this
+	    + " resuming with value : "
+	    + cv
+	  )
+	)
 	theMeetingPlace -= x
 	cv
 	//}
@@ -72,7 +81,10 @@ trait TupleSpace[Place,Resource]
 	case None => {	
 	  reset {
 	    reportage(
-	      "acquire continuation to wait for a value"
+	      (
+		this
+		+ " acquiring continuation to wait for a value "
+	      )
 	    )
 	    val cv =
 	      shift {
@@ -83,7 +95,12 @@ trait TupleSpace[Place,Resource]
 		  k( None )
 		}
 	      }
-	    reportage( "resuming with value : " + cv )
+	    reportage(
+	      (
+		this 
+		+ " resuming with value : " + cv
+	      )
+	    )
 	    cv
 	  }
 	}	

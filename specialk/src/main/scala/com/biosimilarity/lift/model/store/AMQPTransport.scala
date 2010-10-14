@@ -169,7 +169,7 @@ with UUIDOps {
       request : JTSReq,
       k : Status[JTSReq] => Status[JTSReq]
     ) = {
-      reportage( "handling: " + request )
+      reportage( this + "is handling : " + request )
       request match {
 	case JustifiedRequest(
 	  msgId, mtrgt, msrc, lbl, body, None
@@ -198,7 +198,7 @@ with UUIDOps {
       response : JTSRsp,
       k : Status[JTSRsp] => Status[JTSRsp]
     ) = {
-      reportage( "handling: " + response )
+      reportage( this + " is handling : " + response )
       response match {
 	case JustifiedResponse(
 	  msgId, mtrgt, msrc, lbl, body, just
@@ -227,7 +227,7 @@ with UUIDOps {
 	  receive {
 	    case msg@AMQPMessage( cntnt : String ) => {
 	      reportage(
-		"handling : " + msg + " with contents :" + cntnt
+		this + " is handling : " + msg + " with contents :" + cntnt
 	      )
 	      val h2o = rehydrate( cntnt ) 
 	      h2o match { 
@@ -244,7 +244,13 @@ with UUIDOps {
 	      = jr.asInstanceOf[JustifiedRequest[DReq,DRsp]]
     
 	      if ( validate( jrJSON ) ) {
-		reportage( "calling handle on " + jr )
+		reportage(
+		  (
+		    this
+		    + " is calling handleWithContinuation on "
+		    + jr
+		  )
+		)
 		reset {
 		  shift {
 		    ( k : Status[JustifiedRequest[DReq,DRsp]] => Status[JustifiedRequest[DReq,DRsp]] )
@@ -264,7 +270,13 @@ with UUIDOps {
 	      val jrJSON : JustifiedResponse[DReq,DRsp]
 	      = jr.asInstanceOf[JustifiedResponse[DReq,DRsp]]
 	      if ( validate( jrJSON ) ) {
-		reportage( "calling handle on " + jr )
+		reportage(
+		  (
+		    this
+		    + " is calling handleWithContinuation on "
+		    + jr
+		  )
+		)
 		reset {
 		  shift {
 		    ( k : Status[JustifiedResponse[DReq,DRsp]] => Status[JustifiedResponse[DReq,DRsp]] )
@@ -278,21 +290,39 @@ with UUIDOps {
 	    }
 	    case ir@InspectRequests( t, f ) => {
 	      if ( validate( ir ) ) {
-		reportage( "calling handle on " + ir )
+		reportage(
+		  (
+		    this 
+		    + "is calling handle on "
+		    + ir
+		  )
+		)
 		handle( ir )
 	      }
 	      act()
 	    }
 	    case ir@InspectResponses( t, f ) => {
 	      if ( validate( ir ) ) {
-		reportage( "calling handle on " + ir )
+		reportage(
+		  (
+		    this 
+		    + " is calling handle on "
+		    + ir
+		  )
+		)
 		handle( ir )
 	      }
 	      act()
 	    }
 	    case ir@InspectNamespace( t, f ) => {
 	      if ( validate( ir ) ) {
-		reportage( "calling handle on " + ir )
+		reportage(
+		  (
+		    this 
+		    + " is calling handle on "
+		    + ir
+		  )
+		)
 		handle( ir )
 	      }
 	      act()
@@ -323,8 +353,18 @@ with UUIDOps {
     _jsonSender
   }
 
-  def send( contents : DReq ) : Unit = {
-    reportage( "sending : " + contents )
+  def send( contents : DReq ) : Unit = {    
+    reportage(
+      (
+	this
+	+ " is sending : "
+	+ contents
+	+ " on behalf of "
+	+ src
+	+ " to "
+	+ trgt
+      )
+    )
     val jr = JustifiedRequest[DReq,DRsp](
       getUUID(),
       trgt,
@@ -340,7 +380,17 @@ with UUIDOps {
   }
 
   def send( contents : DRsp ) : Unit = {
-    reportage( "sending : " + contents )
+    reportage(
+      (
+	this
+	+ " is sending : "
+	+ contents
+	+ " on behalf of "
+	+ src
+	+ " to "
+	+ trgt
+      )
+    )
 
     val jr = JustifiedResponse[DReq,DRsp](
       getUUID(),

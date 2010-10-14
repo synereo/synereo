@@ -213,7 +213,13 @@ with UUIDOps {
 		  k( None )
 		}	    	      
 	      }
-	    reportage( "resuming with value : " + rslt )
+	    reportage(
+	      (
+		this
+		+ "resuming with value : "
+		+ rslt
+	      )
+	    )
 	    if ( !peek ) {
 	      _labelMap -= place
 	    }
@@ -247,7 +253,13 @@ with UUIDOps {
 		_waiters.get( place ).getOrElse( Nil ) ++ List( k )
 	    }	    	      
 	  }
-	reportage( "resuming with value : " + rslt )
+	reportage(
+	  ( 
+	    this
+	    + "resuming with value : "
+	    + rslt
+	  )
+	)
 	_labelMap -= place
 	rslt
       }	
