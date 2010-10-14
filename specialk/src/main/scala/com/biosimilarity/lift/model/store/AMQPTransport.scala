@@ -146,6 +146,25 @@ trait EndPoint[Namespace,Var,Tag,Value] {
   ) : Boolean
 }
 
+class EndPointLocuter[Namespace,Var,Tag,Value](
+  override val location : URI
+) extends EndPoint[Namespace,Var,Tag,Value]
+with Journalist {
+  val reportage = report( Twitterer() ) _
+  override def handleRequest( 
+    dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
+  ) : Boolean = {
+    reportage( this + "is handling : " + dmsg )
+    true
+  }
+  override def handleResponse( 
+    dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  ) : Boolean = {
+    reportage( this + "is handling : " + dmsg )
+    true
+  }
+}
+
 class AgentTwistedPair[Namespace,Var,Tag,Value](
   src : EndPoint[Namespace,Var,Tag,Value],
   trgt : EndPoint[Namespace,Var,Tag,Value]

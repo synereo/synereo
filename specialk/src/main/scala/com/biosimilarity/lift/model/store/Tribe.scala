@@ -69,11 +69,16 @@ extends EndPoint[Namespace,Var,Tag,Value] {
     val map = new HashMap[URI,AgentTwistedPair[Namespace,Var,Tag,Value]]()
     for( acquaintance <- acquaintances )
     yield {
-      map( acquaintance ) =
+      val atp =
 	new AgentTwistedPair[Namespace,Var,Tag,Value](
 	  this,
 	  acquaintance
-	)
+	)      
+
+      map( acquaintance ) = atp	
+
+      atp.startAMQPDispatcher()
+      atp.addJSONListener()
     }
     map
   }
