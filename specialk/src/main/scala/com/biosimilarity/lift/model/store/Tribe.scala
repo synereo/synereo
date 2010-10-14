@@ -90,6 +90,7 @@ with Collective[Namespace,Var,Tag,Value] {
   
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
     for( ( uri, jsndr ) <- agentTwistedPairs ) {
+      reportage( "forwarding to " + uri )
       jsndr.send( DGetRequest[Namespace,Var,Tag,Value]( path ) )
     }
   }
@@ -101,9 +102,11 @@ with Collective[Namespace,Var,Tag,Value] {
       case JustifiedRequest(
 	msgId, mtrgt, msrc, lbl, body, _
       ) => { 
+	reportage( "handling : " + dmsg )
 	// Handle a justified request with no initiating response	  
 	body match {
-	  case DGetRequest( path ) => {
+	  case dgreq@DGetRequest( path ) => {
+	    reportage( "handling : " + dgreq )
 	    val k =
 	      {
 		( v : Option[Resource] ) => {
@@ -127,7 +130,8 @@ with Collective[Namespace,Var,Tag,Value] {
 	      }
 	    get( path, k )
 	  }
-	  case DFetchRequest( path ) => {
+	  case dfreq@DFetchRequest( path ) => {
+	    reportage( "handling : " + dfreq )
 	    val k =
 	      {
 		( v : Option[Resource] ) => {
@@ -151,7 +155,8 @@ with Collective[Namespace,Var,Tag,Value] {
 	      }
 	    fetch( path, k )
 	  }
-	  case DPutRequest( path, value ) => {	
+	  case dpreq@DPutRequest( path, value ) => {	
+	    reportage( "handling : " + dpreq )
 	    put( path, value )
 	  }
 	}
@@ -171,6 +176,9 @@ with Collective[Namespace,Var,Tag,Value] {
 	put( path, value )
       }
       case dput : DPutResponse[Namespace,Var,Tag,Value] => {	
+      }
+      case _ => {
+	reportage( "Handling unexpected message : " + dmsg )
       }
     }
     true
@@ -194,10 +202,12 @@ with Collective[Namespace,Var,Tag,Value] {
 	    val rslt : Option[Resource] = 
 	      shift {
 		( k : GetContinuation ) => {	      
+		  reportage( "storing continuation to wait for value : " + k )
 		  _waiters( place ) =
 		    _waiters.get( place )
 			    .getOrElse( Nil ) ++ List( k )
-
+		  
+		  reportage( "forwarding to acquaintances" )
 		  forwardGet( path )
 
 		  k( None )
@@ -214,4 +224,25 @@ with Collective[Namespace,Var,Tag,Value] {
     }    
   }  
   
+}
+
+object PetticoatJunction {
+  val agentOneURI = new URI( "agent", "10.0.1.7", "/invitation", "" )
+  val agentTwoURI = new URI( "agent", "10.0.1.12", "/invitation", "" )
+
+  val aLabel = new CnxnLeaf[String,String]( "a" )
+  val bLabel = new CnxnLeaf[String,String]( "b" )
+
+  def junctionOne() =
+    new Junction[String,String,String,String](
+      agentOneURI, List( agentTwoURI )
+    )
+  def junctionTwo() =
+    new Junction[String,String,String,String](
+      agentTwoURI, List( agentOneURI )
+    )
+  def goGetEmTiger( jmkr : Unit => Junction[String,String,String,String] ) = {
+    val theJunction = jmkr()
+    theJunction.get( aLabel )
+  }
 }

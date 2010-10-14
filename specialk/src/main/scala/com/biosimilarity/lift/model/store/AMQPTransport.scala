@@ -34,6 +34,22 @@ extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
 trait DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
 extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
 
+// trait DistributedSelfAssemblyMsg
+// trait DistributedSelfAssemblyRequest
+// extends DistributedSelfAssemblyMsg
+// trait DistributedSelfAssemblyResponse
+// extends DistributedSelfAssemblyMsg
+
+// case class DConnect( src : URI, trgt : URI, kuid : UUID ) 
+// extends DistributedSelfAssemblyRequest
+// with DistributedTermSpaceRequest
+// case class DConnected( src : URI, trgt : URI, kuid : UUID ) 
+// extends DistributedSelfAssemblyResponse
+// with DistributedTermSpaceResponse
+// case class DConnectionRefused( src : URI, trgt : URI, kuid : UUID ) 
+// extends DistributedSelfAssemblyResponse
+// with DistributedTermSpaceResponse
+
 case class DGetRequest[Namespace,Var,Tag,Value](
   path : CnxnCtxtLabel[Namespace,Var,Tag]
 ) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
@@ -135,8 +151,10 @@ class AgentTwistedPair[Namespace,Var,Tag,Value](
   trgt : EndPoint[Namespace,Var,Tag,Value]
 ) extends AgentsOverAMQP[Namespace,Var,Tag,Value]
 with AbstractJSONAMQPListener
+with Journalist
 with UUIDOps {
-  
+  val reportage = report( Twitterer() ) _
+
   implicit def endPointAsURI(
     ep : EndPoint[Namespace,Var,Tag,Value]
   ) : URI = {
@@ -151,7 +169,7 @@ with UUIDOps {
       request : JTSReq,
       k : Status[JTSReq] => Status[JTSReq]
     ) = {
-      //println( "handling: " + request )
+      reportage( "handling: " + request )
       request match {
 	case JustifiedRequest(
 	  msgId, mtrgt, msrc, lbl, body, None
@@ -180,7 +198,7 @@ with UUIDOps {
       response : JTSRsp,
       k : Status[JTSRsp] => Status[JTSRsp]
     ) = {
-      //println( "handling: " + request )
+      reportage( "handling: " + response )
       response match {
 	case JustifiedResponse(
 	  msgId, mtrgt, msrc, lbl, body, just
@@ -208,6 +226,9 @@ with UUIDOps {
 	case Some( map ) => {
 	  receive {
 	    case msg@AMQPMessage( cntnt : String ) => {
+	      reportage(
+		"handling : " + msg + " with contents :" + cntnt
+	      )
 	      val h2o = rehydrate( cntnt ) 
 	      h2o match { 
 		case Left( jreq ) => this ! jreq 
@@ -223,7 +244,7 @@ with UUIDOps {
 	      = jr.asInstanceOf[JustifiedRequest[DReq,DRsp]]
     
 	      if ( validate( jrJSON ) ) {
-		println( "calling handle on " + jr )
+		reportage( "calling handle on " + jr )
 		reset {
 		  shift {
 		    ( k : Status[JustifiedRequest[DReq,DRsp]] => Status[JustifiedRequest[DReq,DRsp]] )
@@ -243,7 +264,7 @@ with UUIDOps {
 	      val jrJSON : JustifiedResponse[DReq,DRsp]
 	      = jr.asInstanceOf[JustifiedResponse[DReq,DRsp]]
 	      if ( validate( jrJSON ) ) {
-		println( "calling handle on " + jr )
+		reportage( "calling handle on " + jr )
 		reset {
 		  shift {
 		    ( k : Status[JustifiedResponse[DReq,DRsp]] => Status[JustifiedResponse[DReq,DRsp]] )
@@ -257,21 +278,21 @@ with UUIDOps {
 	    }
 	    case ir@InspectRequests( t, f ) => {
 	      if ( validate( ir ) ) {
-		println( "calling handle on " + ir )
+		reportage( "calling handle on " + ir )
 		handle( ir )
 	      }
 	      act()
 	    }
 	    case ir@InspectResponses( t, f ) => {
 	      if ( validate( ir ) ) {
-		println( "calling handle on " + ir )
+		reportage( "calling handle on " + ir )
 		handle( ir )
 	      }
 	      act()
 	    }
 	    case ir@InspectNamespace( t, f ) => {
 	      if ( validate( ir ) ) {
-		println( "calling handle on " + ir )
+		reportage( "calling handle on " + ir )
 		handle( ir )
 	      }
 	      act()
@@ -303,6 +324,7 @@ with UUIDOps {
   }
 
   def send( contents : DReq ) : Unit = {
+    reportage( "sending : " + contents )
     val jr = JustifiedRequest[DReq,DRsp](
       getUUID(),
       trgt,
@@ -318,6 +340,8 @@ with UUIDOps {
   }
 
   def send( contents : DRsp ) : Unit = {
+    reportage( "sending : " + contents )
+
     val jr = JustifiedResponse[DReq,DRsp](
       getUUID(),
       src,
@@ -352,7 +376,7 @@ with UUIDOps {
 	)
       }
     }
-  }
+  }  
   
 }
 

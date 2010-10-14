@@ -128,6 +128,32 @@ object CnxnCtxtBranch {
   }
 }
 
+class CnxnCtxtConjunction[Namespace,Var,Tag](
+  override val nameSpace : Namespace,
+  override val labels : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+) extends CnxnCtxtBranch[Namespace,Var,Tag]( nameSpace, labels )
+
+object CnxnCtxtConjunction {
+  def unapply[Namespace,Var,Tag](
+    cnxnCtxtConjunction : CnxnCtxtConjunction[Namespace,Var,Tag]
+  ) : Option[( Namespace, List[CnxnCtxtLabel[Namespace,Var,Tag]] )] = {
+    Some( ( cnxnCtxtConjunction.nameSpace, cnxnCtxtConjunction.labels ) )
+  }
+}
+
+class CnxnCtxtDisjunction[Namespace,Var,Tag](
+  override val nameSpace : Namespace,
+  override val labels : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+) extends CnxnCtxtBranch[Namespace,Var,Tag]( nameSpace, labels )
+
+object CnxnCtxtDisjunction {
+  def unapply[Namespace,Var,Tag](
+    cnxnCtxtDisjunction : CnxnCtxtDisjunction[Namespace,Var,Tag]
+  ) : Option[( Namespace, List[CnxnCtxtLabel[Namespace,Var,Tag]] )] = {
+    Some( ( cnxnCtxtDisjunction.nameSpace, cnxnCtxtDisjunction.labels ) )
+  }
+}
+
 trait CnxnCtxtInjector[Namespace,Var,Tag] {
   def injectLabel( cLabel : CnxnLabel[Namespace,Tag] )
   : CnxnCtxtLabel[Namespace,Var,Tag] = {

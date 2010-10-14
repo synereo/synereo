@@ -444,19 +444,65 @@ with PrologMgr {
   ) :
     Option[Solution[String]]
     = {
-    val solution =
-      unifyQuery(
-	cnxnCtxtLabelToTermStr( clabel1 ),
-	cnxnLabelToTermStr( clabel2 )
-      )
-    if ( solution.isSuccess ) {
-      // BUGBUG -- fix this
-      Some( solution )
+      def matchesOne(
+	clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
+	clabel2 : CnxnLabel[Namespace,Tag]
+      ) : Option[Solution[String]] = {
+	val solution =
+	  unifyQuery(
+	    cnxnCtxtLabelToTermStr( clabel1 ),
+	    cnxnLabelToTermStr( clabel2 )
+	  )
+	if ( solution.isSuccess ) {
+	  // BUGBUG -- fix this
+	  Some( solution )
+	}
+	else {
+	  None
+	}
+      }
+      clabel1 match {
+	case CnxnCtxtConjunction( nspace, labels ) => {
+	  def loopAnd(
+	    acc : Option[Solution[String]],
+	    lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+	  ) : Option[Solution[String]] = {
+	    lbls match {
+	      case lbl :: rlbls => {
+		// BUGBUG -- lgm -- must compose solutions...
+		matchesOne( lbl, clabel2 ) match {
+		  case optSol@Some( s ) => loopAnd( optSol, rlbls )
+		  case None => None
+		}
+	      }
+	      case Nil => acc
+	    }
+	  }
+	  loopAnd( None, labels )
+	}
+	case CnxnCtxtDisjunction( nspace, labels ) => {
+	  def loopOr(
+	    acc : Option[Solution[String]],
+	    lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+	  ) : Option[Solution[String]] = {
+	    lbls match {
+	      case lbl :: rlbls => {
+		// BUGBUG -- lgm -- must compose solutions...
+		matchesOne( lbl, clabel2 ) match {
+		  case optSol@Some( s ) => optSol
+		  case None => loopOr( None, rlbls )
+		}
+	      }
+	      case Nil => acc
+	    }
+	  }
+	  loopOr( None, labels )
+	}
+	case _ => {
+	  matchesOne( clabel1, clabel2 )
+	}
+      }      
     }
-    else {
-      None
-    }
-  }
   
   def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
@@ -477,7 +523,7 @@ with PrologMgr {
       None
     }
   }
-  
+
   def matches(
     cpath1 : CnxnVarPath[Namespace,Var,Tag], 
     cpath2 : CnxnPath[Namespace,Tag]
