@@ -438,65 +438,110 @@ with PrologMgr {
     }
   }
 
+  def doMatching(
+    clabel1 : CnxnCtxtBranch[Namespace,Var,Tag], 
+    clabel2 : CnxnLabel[Namespace,Tag]
+  ) : Option[Solution[String]] = {
+    // To do
+    None
+  }
+
+  def doMatching(
+    clabel1 : CnxnCtxtConjunction[Namespace,Var,Tag], 
+    clabel2 : CnxnLabel[Namespace,Tag]
+  ) : Option[Solution[String]] = {
+    def loopAnd(
+      acc : Option[Solution[String]],
+      lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+    ) : Option[Solution[String]] = {
+      lbls match {
+	case lbl :: rlbls => {
+	  // BUGBUG -- lgm -- must compose solutions...
+	  matchesOne( lbl, clabel2 ) match {
+	    case optSol@Some( s ) => loopAnd( optSol, rlbls )
+	    case None => None
+	  }
+	}
+	case Nil => acc
+      }
+    }    
+    loopAnd( None, clabel1.labels )
+  }
+
+  def doMatching(
+    clabel1 : CnxnCtxtDisjunction[Namespace,Var,Tag], 
+    clabel2 : CnxnLabel[Namespace,Tag]
+  ) : Option[Solution[String]] = {
+    def loopOr(
+      acc : Option[Solution[String]],
+      lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+    ) : Option[Solution[String]] = {
+      lbls match {
+	case lbl :: rlbls => {
+	  // BUGBUG -- lgm -- must compose solutions...
+	  matchesOne( lbl, clabel2 ) match {
+	    case optSol@Some( s ) => optSol
+	    case None => loopOr( None, rlbls )
+	  }
+	}
+	case Nil => acc
+      }
+    }
+    loopOr( None, clabel1.labels )
+  }
+
+  def doMatching(
+    clabel1 : CnxnCtxtRule[Namespace,Var,Tag], 
+    clabel2 : CnxnLabel[Namespace,Tag]
+  ) : Option[Solution[String]] = {
+    // To do
+    None
+  }
+
+  def doMatching(
+    clabel1 : CnxnCtxtTheory[Namespace,Var,Tag], 
+    clabel2 : CnxnLabel[Namespace,Tag]
+  ) : Option[Solution[String]] = {
+    // To do
+    None
+  }
+
+  def matchesOne(
+    clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
+    clabel2 : CnxnLabel[Namespace,Tag]
+  ) : Option[Solution[String]] = {
+    val solution =
+      unifyQuery(
+	cnxnCtxtLabelToTermStr( clabel1 ),
+	cnxnLabelToTermStr( clabel2 )
+      )
+    if ( solution.isSuccess ) {
+      // BUGBUG -- fix this
+      Some( solution )
+    }
+    else {
+      None
+    }
+  }
+
   def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) :
-    Option[Solution[String]]
+  ) : Option[Solution[String]]
     = {
-      def matchesOne(
-	clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
-	clabel2 : CnxnLabel[Namespace,Tag]
-      ) : Option[Solution[String]] = {
-	val solution =
-	  unifyQuery(
-	    cnxnCtxtLabelToTermStr( clabel1 ),
-	    cnxnLabelToTermStr( clabel2 )
-	  )
-	if ( solution.isSuccess ) {
-	  // BUGBUG -- fix this
-	  Some( solution )
-	}
-	else {
-	  None
-	}
-      }
+      
       clabel1 match {
-	case CnxnCtxtConjunction( nspace, labels ) => {
-	  def loopAnd(
-	    acc : Option[Solution[String]],
-	    lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
-	  ) : Option[Solution[String]] = {
-	    lbls match {
-	      case lbl :: rlbls => {
-		// BUGBUG -- lgm -- must compose solutions...
-		matchesOne( lbl, clabel2 ) match {
-		  case optSol@Some( s ) => loopAnd( optSol, rlbls )
-		  case None => None
-		}
-	      }
-	      case Nil => acc
-	    }
-	  }
-	  loopAnd( None, labels )
+	case ccc : CnxnCtxtConjunction[Namespace,Var,Tag] => {
+	  doMatching( ccc, clabel2 )	  
 	}
-	case CnxnCtxtDisjunction( nspace, labels ) => {
-	  def loopOr(
-	    acc : Option[Solution[String]],
-	    lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
-	  ) : Option[Solution[String]] = {
-	    lbls match {
-	      case lbl :: rlbls => {
-		// BUGBUG -- lgm -- must compose solutions...
-		matchesOne( lbl, clabel2 ) match {
-		  case optSol@Some( s ) => optSol
-		  case None => loopOr( None, rlbls )
-		}
-	      }
-	      case Nil => acc
-	    }
-	  }
-	  loopOr( None, labels )
+	case ccd : CnxnCtxtDisjunction[Namespace,Var,Tag] => {
+	  doMatching( ccd, clabel2 )
+	}
+	case ccr : CnxnCtxtRule[Namespace,Var,Tag] => {
+	  doMatching( ccr, clabel2 )
+	}
+	case cct : CnxnCtxtTheory[Namespace,Var,Tag] => {
+	  doMatching( cct, clabel2 )
 	}
 	case _ => {
 	  matchesOne( clabel1, clabel2 )
