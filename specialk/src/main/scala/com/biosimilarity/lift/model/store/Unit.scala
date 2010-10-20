@@ -13,10 +13,11 @@ import com.biosimilarity.lift.lib._
 import org.prolog4j._
 
 object Exercise
-extends CnxnUnificationQuery[String,String,String]
+extends CnxnUnificationTermQuery[String,String,String]
 with CnxnCtxtInjector[String,String,String]
-with CnxnQuery[String,String,String]
-with StructuredPrologQuery[String,String,String]
+//with CnxnQuery[String,String,String]
+with CnxnConversions[String,String,String]
+//with StructuredPrologQuery[String,String,String]
 with UUIDOps
 {
   def prover = getProver()

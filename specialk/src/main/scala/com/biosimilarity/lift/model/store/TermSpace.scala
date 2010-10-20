@@ -148,9 +148,12 @@ class TermStore[Namespace,Var,Tag,Value](
 )
 extends TermSpace[Namespace,Var,Tag,Value] 
 with CnxnCtxtInjector[Namespace,Var,Tag]
-with CnxnUnificationQuery[Namespace,Var,Tag]
-with CnxnQuery[Namespace,Var,Tag]
-with StructuredPrologQuery[Namespace,Var,Tag]
+with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
+//with CnxnUnificationQuery[Namespace,Var,Tag]
+//with CnxnQuery[Namespace,Var,Tag]
+//with StructuredPrologQuery[Namespace,Var,Tag]
+//with CnxnQuery[Namespace,Var,Tag]
+with CnxnConversions[Namespace,Var,Tag]
 with WireTap
 with Journalist
 with UUIDOps {
