@@ -309,7 +309,7 @@ extends CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
 with PrologMgr {
   self : CnxnConversions[Namespace,Var,Tag] with UUIDOps =>         
   def doMatching(
-    clabel1 : CnxnCtxtRule[Namespace,Var,Tag], 
+    clabel1 : CnxnRule[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
   ) : Option[Solution[String]] = {
     // To do
@@ -317,7 +317,7 @@ with PrologMgr {
   }
 
   def doMatching(
-    clabel1 : CnxnCtxtTheory[Namespace,Var,Tag], 
+    clabel1 : CnxnTheory[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
   ) : Option[Solution[String]] = {
     // To do
@@ -337,10 +337,10 @@ with PrologMgr {
 	case ccd : CnxnCtxtDisjunction[Namespace,Var,Tag] => {
 	  doMatching( ccd, clabel2 )
 	}
-	case ccr : CnxnCtxtRule[Namespace,Var,Tag] => {
+	case ccr : CnxnRule[Namespace,Var,Tag] => {
 	  doMatching( ccr, clabel2 )
 	}
-	case cct : CnxnCtxtTheory[Namespace,Var,Tag] => {
+	case cct : CnxnTheory[Namespace,Var,Tag] => {
 	  doMatching( cct, clabel2 )
 	}
 	case _ => {

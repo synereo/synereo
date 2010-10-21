@@ -14,44 +14,55 @@ import java.net.URI
 
 class CnxnCtxtConjunction[Namespace,Var,Tag](
   override val nameSpace : Namespace,
-  val conjuncts : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+  val conjuncts : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
 ) extends CnxnCtxtBranch[Namespace,Var,Tag]( nameSpace, conjuncts )
 
 object CnxnCtxtConjunction {
   def unapply[Namespace,Var,Tag](
     cnxnCtxtConjunction : CnxnCtxtConjunction[Namespace,Var,Tag]
-  ) : Option[( Namespace, List[CnxnCtxtLabel[Namespace,Var,Tag]] )] = {
+  ) : Option[
+        (
+	  Namespace,
+	  List[CnxnCtxtLabel[Namespace,Var,Tag]]
+	)
+      ] = {
     Some( ( cnxnCtxtConjunction.nameSpace, cnxnCtxtConjunction.conjuncts ) )
   }
 }
 
 class CnxnCtxtDisjunction[Namespace,Var,Tag](
   override val nameSpace : Namespace,
-  val disjuncts : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+  val disjuncts : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
 ) extends CnxnCtxtBranch[Namespace,Var,Tag]( nameSpace, disjuncts )
 
 object CnxnCtxtDisjunction {
   def unapply[Namespace,Var,Tag](
     cnxnCtxtDisjunction : CnxnCtxtDisjunction[Namespace,Var,Tag]
-  ) : Option[( Namespace, List[CnxnCtxtLabel[Namespace,Var,Tag]] )] = {
+  ) : Option[
+        (
+	  Namespace,
+	  List[CnxnCtxtLabel[Namespace,Var,Tag]]
+	)
+      ] = {
     Some( ( cnxnCtxtDisjunction.nameSpace, cnxnCtxtDisjunction.disjuncts ) )
   }
 }
 
-class CnxnCtxtRule[Namespace,Var,Tag](
+class CnxnRule[Namespace,Var,Tag](
   override val nameSpace : Namespace,
   val antecedents : List[CnxnCtxtLabel[Namespace,Var,Tag]],
   val consequent : CnxnCtxtLabel[Namespace,Var,Tag]
-) extends CnxnCtxtBranch[Namespace,Var,Tag](
-  nameSpace,
-  antecedents
-) {
-  override def self = ( labels ++ List( consequent ) ).map( Right( _ ) )
+) extends AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+{
+  override def self = ( labels ).map( Right( _ ) )
+  override def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]] = {
+    antecedents ++ List( consequent )
+  }
 }
 
-object CnxnCtxtRule {
+object CnxnRule {
   def unapply[Namespace,Var,Tag](
-    cnxnCtxtRule : CnxnCtxtRule[Namespace,Var,Tag]
+    cnxnCtxtRule : CnxnRule[Namespace,Var,Tag]
   ) : Option[
 	(
 	  Namespace,
@@ -69,21 +80,22 @@ object CnxnCtxtRule {
   }
 }
 
-class CnxnCtxtTheory[Namespace,Var,Tag](  
+class CnxnTheory[Namespace,Var,Tag](  
   override val nameSpace : Namespace,
   val rules : List[CnxnCtxtLabel[Namespace,Var,Tag]],
-  val facts : List[CnxnCtxtLabel[Namespace,Var,Tag]],
-  val goals : List[CnxnCtxtLabel[Namespace,Var,Tag]]
-) extends CnxnCtxtBranch[Namespace,Var,Tag](
-  nameSpace,
-  ( facts ++ rules )
-) {
-  override def self = ( labels ++ goals ).map( Right( _ ) )
+  val facts : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual],
+  val goals : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
+) extends AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+{
+  override def self = ( labels ).map( Right( _ ) )
+  override def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]] = {
+    facts ++ goals
+  }
 }
 
-object CnxnCtxtTheory {
+object CnxnTheory {
   def unapply[Namespace,Var,Tag](
-    cnxnCtxtTheory : CnxnCtxtTheory[Namespace,Var,Tag]
+    cnxnCtxtTheory : CnxnTheory[Namespace,Var,Tag]
   ) : Option[
 	(
 	  Namespace,

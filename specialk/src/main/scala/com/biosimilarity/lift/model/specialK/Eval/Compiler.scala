@@ -129,6 +129,8 @@ with UUIDOps {
   import scala.collection.JavaConversions._
 
   type Source = Elem
+  type FactualCnxnCtxtLabel =
+    CnxnCtxtLabel[String,String,String] with Factual
 
   def toScalaException(
     ind : Indirection,
@@ -341,7 +343,7 @@ with UUIDOps {
     compUnitId : UUID,
     reg : Map[Agent,UUID],
     env : Map[Variation,(Agent,Option[Source])]    
-  ) : CnxnCtxtLabel[String,String,String] = {
+  ) : FactualCnxnCtxtLabel = {
     val compUnitId = getUUID()
     pattern match {
       case elem : Element => {
@@ -361,7 +363,7 @@ with UUIDOps {
     compUnitId : UUID,
     reg : Map[Agent,UUID],
     env : Map[Variation,(Agent,Option[Source])]
-  ) : List[CnxnCtxtLabel[String,String,String]] = {
+  ) : List[FactualCnxnCtxtLabel] = {
     (for( ptrn <- lstPtrn )
     yield {
       toScalaObject( ptrn, compUnitId, reg, env )
@@ -373,7 +375,7 @@ with UUIDOps {
     compUnitId : UUID,
     reg : Map[Agent,UUID],
     env : Map[Variation,(Agent,Option[Source])]
-  ) : CnxnCtxtLabel[String,String,String] = {
+  ) : FactualCnxnCtxtLabel = {
     new CnxnCtxtBranch[String,String,String](
       symbolString( elem ),
       toScalaObj( elem.listpattern_, compUnitId, reg, env )
@@ -385,7 +387,7 @@ with UUIDOps {
     compUnitId : UUID,
     reg : Map[Agent,UUID],
     env : Map[Variation,(Agent,Option[Source])]
-  ) : CnxnCtxtLabel[String,String,String] = {
+  ) : FactualCnxnCtxtLabel = {
     new CnxnCtxtLeaf[String,String,String](
       (
 	vrbl.variation_ match {
@@ -401,7 +403,7 @@ with UUIDOps {
     compUnitId : UUID,
     reg : Map[Agent,UUID],
     env : Map[Variation,(Agent,Option[Source])]
-  ) : CnxnCtxtLabel[String,String,String] = {
+  ) : FactualCnxnCtxtLabel = {
     new CnxnCtxtLeaf[String,String,String](
       ltrl match {
 	case boollit : BooleanLiteral => {

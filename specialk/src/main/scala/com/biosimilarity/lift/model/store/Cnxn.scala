@@ -33,8 +33,12 @@ extends Tree[Tag] with SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
   def atoms : Seq[Tag] = { this flatMap( up ) }
 }
 
+trait Factual
+
 class CnxnLeaf[Namespace,Tag]( val tag : Tag )
-extends TreeItem[Tag]( tag ) with CnxnLabel[Namespace,Tag] {
+extends TreeItem[Tag]( tag )
+with CnxnLabel[Namespace,Tag]
+with Factual {
   override def self = List( Left( tag ) )
 }
 
@@ -46,11 +50,23 @@ object CnxnLeaf {
   }
 }
 
-class CnxnBranch[Namespace,Tag](
-  val nameSpace : Namespace,
-  val labels : List[CnxnLabel[Namespace,Tag]]
-) extends TreeSection[Tag]( labels ) with CnxnLabel[Namespace,Tag] {
+trait AbstractCnxnBranch[Namespace,Tag]
+extends CnxnLabel[Namespace,Tag] {
+  def nameSpace : Namespace
+  def labels : List[CnxnLabel[Namespace,Tag]]
   override def self = labels.map( Right( _ ) )
+}
+
+class CnxnBranch[Namespace,Tag](
+  override val nameSpace : Namespace,
+  val factuals : List[CnxnLabel[Namespace,Tag] with Factual]
+) extends TreeSection[Tag]( factuals )
+with AbstractCnxnBranch[Namespace,Tag]
+with CnxnLabel[Namespace,Tag]
+with Factual {
+  override def labels : List[CnxnLabel[Namespace,Tag]] = {
+    factuals
+  }
 }
 
 object CnxnBranch {
@@ -101,7 +117,9 @@ extends CnxnLabel[Either[Namespace,Var],Either[Tag,Var]] {
 }
 
 class CnxnCtxtLeaf[Namespace,Var,Tag]( val tag : Either[Tag,Var] )
-extends CnxnCtxtLabel[Namespace,Var,Tag] {
+extends TreeItem[Either[Tag,Var]]( tag )
+with CnxnCtxtLabel[Namespace,Var,Tag]
+with Factual {
   override def self = List( Left( tag ) )
 }
 
@@ -113,24 +131,41 @@ object CnxnCtxtLeaf {
   }
 }
 
-class CnxnCtxtBranch[Namespace,Var,Tag](
-  val nameSpace : Namespace,
-  val labels : List[CnxnCtxtLabel[Namespace,Var,Tag]]
-) extends CnxnCtxtLabel[Namespace,Var,Tag] {
+trait AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+extends CnxnCtxtLabel[Namespace,Var,Tag] {  
   override def self = labels.map( Right( _ ) )
+  def nameSpace : Namespace
+  def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+}
+
+class CnxnCtxtBranch[Namespace,Var,Tag](
+  override val nameSpace : Namespace,
+  val factuals : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
+) extends TreeSection[Either[Tag,Var]]( factuals )
+with AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+with Factual {
+  override def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]] = {
+    factuals
+  }
 }
 
 object CnxnCtxtBranch {
   def unapply[Namespace,Var,Tag](
     cnxnCtxtBranch : CnxnCtxtBranch[Namespace,Var,Tag]
-  ) : Option[( Namespace, List[CnxnCtxtLabel[Namespace,Var,Tag]] )] = {
-    Some( ( cnxnCtxtBranch.nameSpace, cnxnCtxtBranch.labels ) )
+  ) : Option[
+	(
+	  Namespace,
+	  List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
+	)
+      ] = {
+    Some( ( cnxnCtxtBranch.nameSpace, cnxnCtxtBranch.factuals
+ ) )
   }
 }
 
 trait CnxnCtxtInjector[Namespace,Var,Tag] {
   def injectLabel( cLabel : CnxnLabel[Namespace,Tag] )
-  : CnxnCtxtLabel[Namespace,Var,Tag] = {
+  : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
     cLabel match {
       case cLeaf : CnxnLeaf[Namespace,Tag] =>
 	inject( cLeaf )
@@ -139,14 +174,14 @@ trait CnxnCtxtInjector[Namespace,Var,Tag] {
     }
   }
   def inject( cLabel : CnxnLeaf[Namespace,Tag] )
-  : CnxnCtxtLabel[Namespace,Var,Tag] = {
+  : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
     new CnxnCtxtLeaf( Left( cLabel.tag ) )
   }
   def inject( cLabel : CnxnBranch[Namespace,Tag] )
-  : CnxnCtxtLabel[Namespace,Var,Tag] = {
+  : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
     new CnxnCtxtBranch(
       cLabel.nameSpace,
-      cLabel.labels.map( injectLabel( _ ) )
+      cLabel.factuals.map( injectLabel( _ ) )
     )
   }
 }
@@ -175,6 +210,6 @@ case class StringCnxnLeaf( override val tag : String )
 
 case class StringCnxnBranch(
   override val nameSpace : String,
-  override val labels : List[CnxnLabel[String,String]]
+  override val labels : List[CnxnLabel[String,String] with Factual]
 ) extends CnxnBranch[String,String]( nameSpace, labels )
 
