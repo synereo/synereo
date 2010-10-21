@@ -50,9 +50,11 @@ object CnxnCtxtDisjunction {
 
 class CnxnRule[Namespace,Var,Tag](
   override val nameSpace : Namespace,
-  val antecedents : List[CnxnCtxtLabel[Namespace,Var,Tag]],
-  val consequent : CnxnCtxtLabel[Namespace,Var,Tag]
-) extends AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+  val antecedents : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual],
+  val consequent : CnxnCtxtLabel[Namespace,Var,Tag] with Factual
+) extends TreeSection[Either[Tag,Var]]( antecedents ++ List( consequent ) )
+with AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+with Hypothetical
 {
   override def self = ( labels ).map( Right( _ ) )
   override def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]] = {
@@ -82,10 +84,12 @@ object CnxnRule {
 
 class CnxnTheory[Namespace,Var,Tag](  
   override val nameSpace : Namespace,
-  val rules : List[CnxnCtxtLabel[Namespace,Var,Tag]],
+  val rules : List[CnxnCtxtLabel[Namespace,Var,Tag] with Hypothetical],
   val facts : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual],
   val goals : List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
-) extends AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+) extends TreeSection[Either[Tag,Var]]( rules ++ facts ++ goals )
+with AbstractCnxnCtxtBranch[Namespace,Var,Tag]
+with Theoretical
 {
   override def self = ( labels ).map( Right( _ ) )
   override def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]] = {

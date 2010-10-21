@@ -33,7 +33,10 @@ extends Tree[Tag] with SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
   def atoms : Seq[Tag] = { this flatMap( up ) }
 }
 
-trait Factual
+trait OntologicalStatus
+trait Factual extends OntologicalStatus
+trait Hypothetical extends OntologicalStatus
+trait Theoretical extends OntologicalStatus
 
 class CnxnLeaf[Namespace,Tag]( val tag : Tag )
 extends TreeItem[Tag]( tag )
