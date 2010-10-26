@@ -121,10 +121,7 @@ object CnxnTheory {
 
 trait CnxnTheoryConversions[Namespace,Var,Tag]
 extends CnxnConversions[Namespace,Var,Tag] {
-  def cnxnLabelToRuleStr(
-    base : String,
-    connective : String
-  )(
+  def cnxnLabelRuleHdStr(
     clbl : CnxnCtxtBranch[Namespace,Var,Tag]
   ) : String = {
     val vrs = clbl.names.toSet.map(
@@ -143,31 +140,49 @@ extends CnxnConversions[Namespace,Var,Tag] {
       ).replace(
 	"(", "( "
       ).replace( ")", " )" )
-      + " :- "
-      + {
-	clbl.labels match {	  
-	  case Nil => {
-	    base + "." 
-	  }
-	  case juncts@_ => {
-	    (
-	      ( juncts.take( juncts.length - 1 ) :\ "" )(
-		{
-		  ( junct, acc ) => {
-		    (
-		      cnxnCtxtLabelToTermStr( junct )
-		      + connective
-		      + acc
-		    )
-		  }
-		}
-	      )
-	      + cnxnCtxtLabelToTermStr( juncts.last )
-	      + " . "
-	    )
-	  }
-	}	
+    )
+  }
+
+  def cnxnLabelRuleBodyStr(
+    base : String,
+    connective : String
+  )(
+    clbl : CnxnCtxtBranch[Namespace,Var,Tag]
+  ) : String = {    
+    clbl.labels match {	  
+      case Nil => {
+	base + "." 
       }
+      case juncts@_ => {
+	(
+	  ( juncts.take( juncts.length - 1 ) :\ "" )(
+	    {
+	      ( junct, acc ) => {
+		(
+		  cnxnCtxtLabelToTermStr( junct )
+		  + connective
+		  + acc
+		)
+	      }
+	    }
+	  )
+	  + cnxnCtxtLabelToTermStr( juncts.last )
+	  + " . "
+	)
+      }
+    }
+  }
+  
+  def cnxnLabelToRuleStr(
+    base : String,
+    connective : String
+  )(
+    clbl : CnxnCtxtBranch[Namespace,Var,Tag]
+  ) : String = {    
+    (
+      cnxnLabelRuleHdStr( clbl )
+      + " :- "
+      + cnxnLabelRuleBodyStr( base, connective )( clbl )
     )
   }
 
@@ -184,12 +199,33 @@ extends CnxnConversions[Namespace,Var,Tag] {
   def cnxnLabelToTermStr(
     clbl : CnxnRule[Namespace,Var,Tag]
   ) : String = {
-    ""
+    (
+      cnxnCtxtLabelToTermStr( clbl.consequent )
+      + " :- "
+      + cnxnLabelRuleBodyStr( " true ", " , " )(
+	  new CnxnCtxtConjunction[Namespace,Var,Tag](
+	    clbl.nameSpace,
+	    clbl.antecedents
+	  )
+	)
+    )
   }
   def cnxnLabelToTermStr(
     clbl : CnxnTheory[Namespace,Var,Tag]
   ) : String = {
-    ""
+    ( ( "" /: clbl.facts )(
+      {
+	( acc, c ) => {
+	  acc + "\n" + cnxnCtxtLabelToTermStr( c )
+	}
+      }
+    ) /: clbl.rules )(
+      {
+	( acc, c ) => {
+	  acc + "\n" + cnxnCtxtLabelToTermStr( c )
+	}
+      }
+    )
   }
 }
 
