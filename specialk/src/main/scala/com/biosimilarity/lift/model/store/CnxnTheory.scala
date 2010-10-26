@@ -119,3 +119,77 @@ object CnxnTheory {
   }
 }
 
+trait CnxnTheoryConversions[Namespace,Var,Tag]
+extends CnxnConversions[Namespace,Var,Tag] {
+  def cnxnLabelToRuleStr(
+    base : String,
+    connective : String
+  )(
+    clbl : CnxnCtxtBranch[Namespace,Var,Tag]
+  ) : String = {
+    val vrs = clbl.names.toSet.map(
+      ( v : Either[Tag,Var] ) => {
+	v match {
+	  case Right( x ) => "X" + x
+	  case _ => throw new Exception( "bad name" )
+	}
+      }
+    )
+
+    (
+      cnxnNamespaceTermStr( clbl.nameSpace )
+      + vrs.toString.replace(
+	"Set", ""
+      ).replace(
+	"(", "( "
+      ).replace( ")", " )" )
+      + " :- "
+      + {
+	clbl.labels match {	  
+	  case Nil => {
+	    base + "." 
+	  }
+	  case juncts@_ => {
+	    (
+	      ( juncts.take( juncts.length - 1 ) :\ "" )(
+		{
+		  ( junct, acc ) => {
+		    (
+		      cnxnCtxtLabelToTermStr( junct )
+		      + connective
+		      + acc
+		    )
+		  }
+		}
+	      )
+	      + cnxnCtxtLabelToTermStr( juncts.last )
+	      + " . "
+	    )
+	  }
+	}	
+      }
+    )
+  }
+
+  def cnxnLabelToTermStr(
+    clbl : CnxnCtxtConjunction[Namespace,Var,Tag]
+  ) : String = {
+    cnxnLabelToRuleStr( " true ", " , "  )( clbl )
+  }
+  def cnxnLabelToTermStr(
+    clbl : CnxnCtxtDisjunction[Namespace,Var,Tag]
+  ) : String = {
+    cnxnLabelToRuleStr( " false ", " ; "  )( clbl )
+  }
+  def cnxnLabelToTermStr(
+    clbl : CnxnRule[Namespace,Var,Tag]
+  ) : String = {
+    ""
+  }
+  def cnxnLabelToTermStr(
+    clbl : CnxnTheory[Namespace,Var,Tag]
+  ) : String = {
+    ""
+  }
+}
+

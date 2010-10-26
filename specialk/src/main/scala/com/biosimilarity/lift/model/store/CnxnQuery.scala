@@ -45,10 +45,6 @@ trait CnxnConversions[Namespace,Var,Tag] {
   : String = {
     "X" + variable
   }
-}
-
-trait PrologTermQuery[Namespace,Var,Tag] {
-  self : CnxnConversions[Namespace,Var,Tag] with UUIDOps with PrologMgr =>            
 
   def cnxnLabelToTermStr(
     clbl : CnxnLabel[Namespace,Tag]
@@ -143,8 +139,11 @@ trait PrologTermQuery[Namespace,Var,Tag] {
 	}
       }
     }
-  }  
+  }    
+}
 
+trait PrologTermQuery[Namespace,Var,Tag] {
+  self : CnxnConversions[Namespace,Var,Tag] with UUIDOps with PrologMgr =>
   def unifyQuery(
     qStr1 : String,
     qStr2 : String
