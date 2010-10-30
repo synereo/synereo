@@ -21,6 +21,6 @@ class JSONTwistedPair(
   srcHost : String, 
   trgtHost : String
 ) {
-  case object JSONSrc extends StdJSONOverAMQPSender( trgtHost )
-  case object JSONTgrt extends JSONAMQPListener( srcHost ) 
+  case object JSONTrgt extends StdJSONOverAMQPSender( trgtHost )
+  case object JSONSrc extends JSONAMQPListener( srcHost ) 
 }
