@@ -17,6 +17,21 @@ import _root_.java.io.ObjectOutputStream
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
+trait AMQPTwistedPair {
+  def srcHost : String
+  def trgtHost : String
+
+  def amqpSenderToSrc : StdJSONOverAMQPSender
+  def amqpReceiverFromTrgt : JSONAMQPListener
+}
+
+class JSONAMQPTP(
+  override val srcHost : String,
+  override val trgtHost : String,
+  override val amqpSenderToSrc : StdJSONOverAMQPSender,
+  override val amqpReceiverFromTrgt : JSONAMQPListener
+) extends AMQPTwistedPair 
+
 class JSONTwistedPair(
   srcHost : String, 
   trgtHost : String
