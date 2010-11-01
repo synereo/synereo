@@ -34,18 +34,49 @@ class JSONAMQPTP(
 
 class JSONAMQPTwisted(
   override val srcHost : String,
-  override val trgtHost : String
+  override val trgtHost : String  
 ) extends AMQPTwistedPair {
-  override lazy val amqpSenderToTrgt : StdJSONOverAMQPSender =
-    new StdJSONOverAMQPSender( trgtHost )
-  override lazy val amqpReceiverFromSrc : JSONAMQPListener =
-    new JSONAMQPListener( srcHost )
+  var _amqpSenderToTrgt : Option[StdJSONOverAMQPSender] = None
+  var _amqpReceiverFromSrc : Option[JSONAMQPListener] = None
+
+  override def amqpSenderToTrgt : StdJSONOverAMQPSender = {
+    _amqpSenderToTrgt match { 
+      case Some( sndr ) => sndr
+      case None => {
+	val sndr = new StdJSONOverAMQPSender( trgtHost )
+	_amqpSenderToTrgt = Some( sndr )
+	sndr 
+      }
+    }
+  }
+
+  override def amqpReceiverFromSrc : JSONAMQPListener = {
+    _amqpReceiverFromSrc match {
+      case Some( rcvr ) => rcvr 
+      case None => {
+	val rcvr = new JSONAMQPListener( srcHost )
+	_amqpReceiverFromSrc = Some( rcvr )
+	rcvr
+      }
+    }
+  }
 }
 
-class JSONTwistedPair(
-  srcHost : String, 
-  trgtHost : String
-) {
-  case object JSONTrgt extends StdJSONOverAMQPSender( trgtHost )
-  case object JSONSrc extends JSONAMQPListener( srcHost ) 
-}
+// Both of these fail!
+// class JSONAMQPTwisted(
+//   override val srcHost : String,
+//   override val trgtHost : String
+// ) extends AMQPTwistedPair {
+//   override lazy val amqpSenderToTrgt : StdJSONOverAMQPSender =
+//     new StdJSONOverAMQPSender( trgtHost )
+//   override lazy val amqpReceiverFromSrc : JSONAMQPListener =
+//     new JSONAMQPListener( srcHost )
+// }
+
+// class JSONTwistedPair(
+//   srcHost : String, 
+//   trgtHost : String
+// ) {
+//   case object JSONTrgt extends StdJSONOverAMQPSender( trgtHost )
+//   case object JSONSrc extends JSONAMQPListener( srcHost ) 
+// }
