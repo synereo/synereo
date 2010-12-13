@@ -290,7 +290,7 @@ with Collective[Namespace,Var,Tag,Value] {
 
 object PetticoatJunction {
   val agentOneURI = new URI( "agent", "10.0.1.7", "/invitation", "" )
-  val agentTwoURI = new URI( "agent", "10.0.1.12", "/invitation", "" )
+  val agentTwoURI = new URI( "agent", "10.0.1.5", "/invitation", "" )
 
   val aLabel = new CnxnLeaf[String,String]( "a" )
   val bLabel = new CnxnLeaf[String,String]( "b" )
