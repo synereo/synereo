@@ -23,9 +23,13 @@ trait AMQPTwistedPair {
 
   def amqpSenderToTrgt : StdJSONOverAMQPSender
   def amqpReceiverFromSrc : JSONAMQPListener
+
+  def wires : ( StdJSONOverAMQPSender, JSONAMQPListener ) = {
+    ( amqpSenderToTrgt, amqpReceiverFromSrc )
+  }
 }
 
-class JSONAMQPTP(
+abstract class JSONAMQPTP(
   override val srcHost : String,
   override val trgtHost : String,
   override val amqpSenderToTrgt : StdJSONOverAMQPSender,
