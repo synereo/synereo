@@ -117,15 +117,29 @@ with JSONOverAMQPListener {
     ticket
   }
 
-  lazy val _amqp : JSONAMQPDispatcher[String] =
-    new JSONAMQPDispatcher[String](
-      rabbitFactory(),
-      host,
-      5672
-    )  
+  // lazy val _amqp : JSONAMQPDispatcher[String] =
+//     new JSONAMQPDispatcher[String](
+//       rabbitFactory(),
+//       host,
+//       5672
+//     )  
+
+  var _amqp : Option[JSONAMQPDispatcher[String]] = None    
 
   override def amqp() : JSONAMQPDispatcher[String] = {
-    _amqp
+    _amqp match {
+      case Some( dispatcher ) => dispatcher
+      case None => {
+	val dispatcher =
+	  new JSONAMQPDispatcher[String](
+	    rabbitFactory(),
+	    host,
+	    5672
+	  )
+	_amqp = Some( dispatcher )
+	dispatcher
+      }
+    }
   }
 
   override def startAMQPDispatcher() : Unit = {
@@ -159,10 +173,18 @@ with AbstractJSONAMQPListener {
 
   type JSONListener = SimpleJSONListener  
 
-  lazy val _jsonListener = new SimpleJSONListener( )    
+  //lazy val _jsonListener = new SimpleJSONListener( )    
+  var _jsonListener : Option[JSONListener] = None
 
   override def jsonListener() : JSONListener = {
-    _jsonListener
+    _jsonListener match {
+      case Some( jl ) => jl
+      case None => {
+	val jl = new SimpleJSONListener( )    
+	_jsonListener = Some( jl )
+	jl
+      }
+    }
   }  
 }
 
