@@ -188,3 +188,8 @@ with AbstractJSONAMQPListener {
   }  
 }
 
+case class HostedSimpleJSONListener( override val host : String ) 
+extends SimpleJSONAMQPListener {
+  startAMQPDispatcher()
+  addJSONListener()
+}
