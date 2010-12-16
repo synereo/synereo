@@ -165,11 +165,296 @@ with Journalist {
   }
 }
 
+// class AgentTwistedPair[Namespace,Var,Tag,Value](
+//   src : EndPoint[Namespace,Var,Tag,Value],
+//   trgt : EndPoint[Namespace,Var,Tag,Value]
+// ) extends AgentsOverAMQP[Namespace,Var,Tag,Value]
+// with AbstractJSONAMQPListener
+// with Journalist
+// with UUIDOps {
+//   val reportage = report( Twitterer() ) _
+
+//   implicit def endPointAsURI(
+//     ep : EndPoint[Namespace,Var,Tag,Value]
+//   ) : URI = {
+//     ep.location
+//   }
+
+//   type JSONListener = AMQPAgent  
+
+//   case object _jsonListener
+//   extends AMQPAgent( src ) {
+//     override def handleWithContinuation(
+//       request : JTSReq,
+//       k : Status[JTSReq] => Status[JTSReq]
+//     ) = {
+//       reportage( this + "is handling : " + request )
+//       request match {
+// 	case JustifiedRequest(
+// 	  msgId, mtrgt, msrc, lbl, body, None
+// 	) => { 
+// 	  // Handle a justified request with no initiating response	  
+// 	  JReqStatus(
+// 	    request,
+// 	    src.handleRequest( request ),
+// 	    None,
+// 	    Some( k )
+// 	  )
+// 	}
+// 	case _ => {
+// 	  // Handle a justified request with an initiating response
+// 	  JReqStatus(
+// 	    request,
+// 	    src.handleRequest( request ),
+// 	    None,
+// 	    Some( k )
+// 	  )
+// 	}
+//       }      
+//     }
+
+//     override def handleWithContinuation(
+//       response : JTSRsp,
+//       k : Status[JTSRsp] => Status[JTSRsp]
+//     ) = {
+//       reportage( this + " is handling : " + response )
+//       response match {
+// 	case JustifiedResponse(
+// 	  msgId, mtrgt, msrc, lbl, body, just
+// 	) => { 	  
+// 	  JRspStatus(
+// 	    response,
+// 	    src.handleResponse( body ),
+// 	    None,
+// 	    Some( k )
+// 	  )
+// 	}
+// 	case _ => {
+// 	  throw new Exception(
+// 	    "Unexpected message type : " + response.getClass
+// 	  )
+// 	}
+//       }      
+//     }
+
+//     override def act () {
+//       nameSpace match {
+// 	case None => {
+// 	  logError( name, this, NoNamespace() )
+// 	}
+// 	case Some( map ) => {
+// 	  receive {
+// 	    case msg@AMQPMessage( cntnt : String ) => {
+// 	      reportage(
+// 		this + " is handling : " + msg + " with contents :" + cntnt
+// 	      )
+// 	      val h2o = rehydrate( cntnt ) 
+// 	      h2o match { 
+// 		case Left( jreq ) => this ! jreq 
+// 		case Right( jrsp ) => this ! jrsp
+// 	      }
+// 	    }
+// 	    case jr@JustifiedRequest(
+// 	      m, p, d, t,
+// 	      f : DReq,
+// 	      c : Option[Response[AbstractJustifiedRequest[DReq,DRsp],DRsp]]
+// 	    ) => {	    
+// 	      val jrJSON : JustifiedRequest[DReq,DRsp]
+// 	      = jr.asInstanceOf[JustifiedRequest[DReq,DRsp]]
+    
+// 	      if ( validate( jrJSON ) ) {
+// 		reportage(
+// 		  (
+// 		    this
+// 		    + " is calling handleWithContinuation on "
+// 		    + jr
+// 		  )
+// 		)
+// 		reset {
+// 		  shift {
+// 		    ( k : Status[JustifiedRequest[DReq,DRsp]] => Status[JustifiedRequest[DReq,DRsp]] )
+// 		  => {
+// 		    k( handleWithContinuation( jrJSON, k ) )
+// 		  }
+// 		  }
+// 		}
+// 	      }
+// 	      act()
+// 	    }
+// 	    case jr@JustifiedResponse(
+// 	      m, p, d, t,
+// 	      f : DRsp,
+// 	      c : Option[Request[AbstractJustifiedResponse[DReq,DRsp],DReq]]
+// 	    ) =>  {
+// 	      val jrJSON : JustifiedResponse[DReq,DRsp]
+// 	      = jr.asInstanceOf[JustifiedResponse[DReq,DRsp]]
+// 	      if ( validate( jrJSON ) ) {
+// 		reportage(
+// 		  (
+// 		    this
+// 		    + " is calling handleWithContinuation on "
+// 		    + jr
+// 		  )
+// 		)
+// 		reset {
+// 		  shift {
+// 		    ( k : Status[JustifiedResponse[DReq,DRsp]] => Status[JustifiedResponse[DReq,DRsp]] )
+// 		  => {
+// 		    k( handleWithContinuation( jrJSON, k ) )
+// 		  }
+// 		  }
+// 		}
+// 	      }
+// 	      act()
+// 	    }
+// 	    case ir@InspectRequests( t, f ) => {
+// 	      if ( validate( ir ) ) {
+// 		reportage(
+// 		  (
+// 		    this 
+// 		    + "is calling handle on "
+// 		    + ir
+// 		  )
+// 		)
+// 		handle( ir )
+// 	      }
+// 	      act()
+// 	    }
+// 	    case ir@InspectResponses( t, f ) => {
+// 	      if ( validate( ir ) ) {
+// 		reportage(
+// 		  (
+// 		    this 
+// 		    + " is calling handle on "
+// 		    + ir
+// 		  )
+// 		)
+// 		handle( ir )
+// 	      }
+// 	      act()
+// 	    }
+// 	    case ir@InspectNamespace( t, f ) => {
+// 	      if ( validate( ir ) ) {
+// 		reportage(
+// 		  (
+// 		    this 
+// 		    + " is calling handle on "
+// 		    + ir
+// 		  )
+// 		)
+// 		handle( ir )
+// 	      }
+// 	      act()
+// 	    }
+// 	  }
+// 	}
+//       }    
+//     }
+//   }
+
+//   override def jsonListener() : JSONListener = {
+//     _jsonListener
+//   }  
+
+//   override def host : String = { src.getHost }
+
+//   case object _jsonSender
+//   extends JSONAMQPSender(
+//     rabbitFactory(),
+//     trgt.getHost,
+//     5672,
+//     "mult",
+//     "routeroute"
+//   )
+//   _jsonSender.start
+  
+//   def jsonSender() : JSONAMQPSender = {
+//     _jsonSender
+//   }
+
+//   def send( contents : DReq ) : Unit = {    
+//     reportage(
+//       (
+// 	this
+// 	+ " is sending : "
+// 	+ contents
+// 	+ " on behalf of "
+// 	+ src
+// 	+ " to "
+// 	+ trgt
+//       )
+//     )
+//     val jr = JustifiedRequest[DReq,DRsp](
+//       getUUID(),
+//       trgt,
+//       src,
+//       getUUID(),
+//       contents,
+//       None
+//     )
+
+//     _jsonSender ! AMQPMessage(
+//       new XStream( new JettisonMappedXmlDriver() ).toXML( jr )
+//     )
+//   }
+
+//   def send( contents : DRsp ) : Unit = {
+//     reportage(
+//       (
+// 	this
+// 	+ " is sending : "
+// 	+ contents
+// 	+ " on behalf of "
+// 	+ src
+// 	+ " to "
+// 	+ trgt
+//       )
+//     )
+
+//     val jr = JustifiedResponse[DReq,DRsp](
+//       getUUID(),
+//       src,
+//       trgt,
+//       getUUID(),
+//       contents,
+//       None
+//     )
+
+//     _jsonSender ! AMQPMessage(
+//       new XStream( new JettisonMappedXmlDriver() ).toXML( jr )
+//     )
+//   }
+
+//   def rehydrate( contents: String ) :
+//   Either[
+//     JustifiedRequest[DReq,DRsp],
+//     JustifiedResponse[DReq,DRsp]
+//   ] = {
+//     val msg =
+//       new XStream( new JettisonMappedXmlDriver() ).fromXML( contents )
+//     msg match {
+//       case jreq : JustifiedRequest[DReq,DRsp] => {
+// 	Left[JustifiedRequest[DReq,DRsp],JustifiedResponse[DReq,DRsp]]( jreq )
+//       }
+//       case jrsp : JustifiedResponse[DReq,DRsp] => {
+// 	Right[JustifiedRequest[DReq,DRsp],JustifiedResponse[DReq,DRsp]]( jrsp )
+//       }
+//       case _ => {
+// 	throw new Exception(
+// 	  "unexpected message type : " + msg.getClass
+// 	)
+//       }
+//     }
+//   }  
+  
+// }
+
 class AgentTwistedPair[Namespace,Var,Tag,Value](
   src : EndPoint[Namespace,Var,Tag,Value],
   trgt : EndPoint[Namespace,Var,Tag,Value]
-) extends AgentsOverAMQP[Namespace,Var,Tag,Value]
-with AbstractJSONAMQPListener
+) extends JSONAMQPTwisted( src.location.getHost, trgt.location.getHost )
+with AgentsOverAMQP[Namespace,Var,Tag,Value]
+with Rabbitter
 with Journalist
 with UUIDOps {
   val reportage = report( Twitterer() ) _
@@ -180,9 +465,30 @@ with UUIDOps {
     ep.location
   }
 
+  // implicit def hostNameStringAsURI(
+//     hostNameStr : String
+//   ) : URI = {
+//     if ( hostNameStr.split( "\\." ).length > 1 ) {
+//       new URI( "agent", hostNameStr, "/", "" )
+//     }
+//     else {
+//       throw new Exception( "not a host name : " + hostNameStr )
+//     }
+//   }
+
   type JSONListener = AMQPAgent  
 
-  case object _jsonListener
+  override def configure(
+    cf : ConnectionFactory,
+    host : String,
+    port : Int
+  )(
+    channel: Channel
+  ) : Int = {
+    0
+  }
+
+  case class AgentAMQPJSONListener( src : EndPoint[Namespace,Var,Tag,Value] )
   extends AMQPAgent( src ) {
     override def handleWithContinuation(
       request : JTSReq,
@@ -352,24 +658,41 @@ with UUIDOps {
     }
   }
 
-  override def jsonListener() : JSONListener = {
-    _jsonListener
+  var _jsonListener : Option[JSONListener] = None
+
+  def jsonListener() : JSONListener = {
+    _jsonListener match {
+      case Some( jl ) => jl
+      case None => {
+	val jl = AgentAMQPJSONListener( src )
+	_jsonListener = Some( jl )
+	jl
+      }
+    }
   }  
 
-  override def host : String = { src.getHost }
+  def host : String = { src.getHost }
 
-  case object _jsonSender
-  extends JSONAMQPSender(
-    rabbitFactory(),
-    trgt.getHost,
-    5672,
-    "mult",
-    "routeroute"
-  )
-  _jsonSender.start
+  var _jsonSender : Option[JSONAMQPSender] = None 
   
   def jsonSender() : JSONAMQPSender = {
-    _jsonSender
+    _jsonSender match {
+      case Some( js ) => js
+      case None => {
+	val js = new JSONAMQPSender(
+	  rabbitFactory(),
+	  trgt.getHost,
+	  5672,
+	  "mult",
+	  "routeroute"
+	)       
+
+	_jsonSender = Some( js )
+
+	js.start
+	js
+      }
+    }
   }
 
   def send( contents : DReq ) : Unit = {    
@@ -393,7 +716,7 @@ with UUIDOps {
       None
     )
 
-    _jsonSender ! AMQPMessage(
+    jsonSender() ! AMQPMessage(
       new XStream( new JettisonMappedXmlDriver() ).toXML( jr )
     )
   }
@@ -420,7 +743,7 @@ with UUIDOps {
       None
     )
 
-    _jsonSender ! AMQPMessage(
+    jsonSender() ! AMQPMessage(
       new XStream( new JettisonMappedXmlDriver() ).toXML( jr )
     )
   }

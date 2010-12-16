@@ -77,8 +77,8 @@ extends EndPoint[Namespace,Var,Tag,Value] {
 
       map( acquaintance ) = atp	
 
-      atp.startAMQPDispatcher()
-      atp.addJSONListener()
+      //atp.startAMQPDispatcher()
+      //atp.addJSONListener()
     }
     map
   }
