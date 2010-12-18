@@ -450,8 +450,8 @@ with Journalist {
 // }
 
 class AgentTwistedPair[Namespace,Var,Tag,Value](
-  src : EndPoint[Namespace,Var,Tag,Value],
-  trgt : EndPoint[Namespace,Var,Tag,Value]
+  val src : EndPoint[Namespace,Var,Tag,Value],
+  val trgt : EndPoint[Namespace,Var,Tag,Value]
 ) extends JSONAMQPTwisted( src.location.getHost, trgt.location.getHost )
 with AgentsOverAMQP[Namespace,Var,Tag,Value]
 with Rabbitter
