@@ -772,4 +772,35 @@ with UUIDOps {
   
 }
 
+object ATPTest {
+  implicit def hostNameStringAsEndPoint(
+    hostNameStr : String
+  ) : EndPoint[String,String,String,String] = {
+    if ( hostNameStr.split( "\\." ).length > 1 ) {
+      new EndPointLocuter(
+	new URI( "agent", hostNameStr, "/", "" )
+      )
+    }
+    else {
+      throw new Exception( "not a host name : " + hostNameStr )
+    }
+  }
 
+  val aLabel =
+    new CnxnCtxtLeaf[String,String,String](
+      Left[String,String]( "a" )
+    )
+  val bLabel =
+    new CnxnCtxtLeaf[String,String,String](
+      Left[String,String]( "b" )
+    )
+  
+  def atp( src : String, trgt : String ) = {
+    new AgentTwistedPair[String,String,String,String]( src, trgt )
+  }
+
+  def doGetReq( atp : AgentTwistedPair[String,String,String,String] )
+  : Unit = {
+    atp.send( DGetRequest[String,String,String,String]( aLabel ) )
+  }
+}
