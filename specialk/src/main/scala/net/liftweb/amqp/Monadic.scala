@@ -9,7 +9,6 @@
 package net.liftweb.amqp
 
 import scala.util.continuations._
-//import scala.util.continuations.ControlContext._
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
@@ -89,7 +88,7 @@ trait MonadicAMQPDispatcher[T]
 	  
 	    for ( t <- readT( channel, ticket ) ) { k( t ) }
 
-	    println( "Disconnected: " + channel )
+	    // println( "Disconnected: " + channel )
 	    // Close bracket
 	  }
 	}
@@ -171,7 +170,7 @@ trait MonadicAMQPDispatcher[T]
 		shift { k : ( Unit => Unit ) => k() }
   	      }
   	  
-  	      println("readBytes returning")
+  	      println("readT returning")
   	      outerk()
 	    }
 	}
@@ -179,11 +178,33 @@ trait MonadicAMQPDispatcher[T]
 
 }
 
+trait AMQPUtilities {
+  def stdCnxnParams : ConnectionParameters = {
+    val params = new ConnectionParameters
+    params.setUsername( "guest" )
+    params.setPassword( "guest" )
+    params.setVirtualHost( "/" )
+    params.setRequestedHeartbeat( 0 )
+    params
+  }
+}
+
+object AMQPDefaults extends AMQPUtilities {
+  implicit val defaultConnectionFactory : ConnectionFactory =
+    new ConnectionFactory( defaultConnectionParameters )
+  implicit val defaultConnectionParameters : ConnectionParameters =
+    stdCnxnParams
+  implicit val defaultHost : String = "localhost"
+  implicit val defaultPort : Int = 5672
+}
+
 class StdMonadicAMQPDispatcher[T](
   val host : String,
   val port : Int
 ) extends MonadicAMQPDispatcher[T](
 ) {
+  import AMQPDefaults._
+
   def acceptConnections()( implicit params : ConnectionParameters )
   : Generator[Channel,Unit,Unit] =
     acceptConnections( params, host, port )
@@ -204,20 +225,5 @@ object StdMonadicAMQPDispatcher {
     smAMQPD : StdMonadicAMQPDispatcher[T]
   ) : Option[(String,Int)] = {
     Some( ( smAMQPD.host, smAMQPD.port ) )
-  }
-  def stdCnxnParams : ConnectionParameters = {
-    val params = new ConnectionParameters
-    params.setUsername( "guest" )
-    params.setPassword( "guest" )
-    params.setVirtualHost( "/" )
-    params.setRequestedHeartbeat( 0 )
-    params
-  }
-
-  implicit val defaultConnectionFactory : ConnectionFactory =
-    new ConnectionFactory( defaultConnectionParameters )
-  implicit val defaultConnectionParameters : ConnectionParameters =
-    stdCnxnParams
-  implicit val defaultHost : String = "localhost"
-  implicit val defaultPort : Int = 5672
+  }    
 }
