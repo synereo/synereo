@@ -6,7 +6,8 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package net.liftweb.amqp
+//package net.liftweb.amqp
+package com.biosimilarity.lift.lib
 
 import scala.util.continuations._
 
