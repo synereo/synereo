@@ -25,6 +25,8 @@ import _root_.java.util.TimerTask
 trait MonadicAMQPDispatcher[T]
  extends FJTaskRunners {
 
+   self : WireTap with Journalist =>
+
   type Ticket = Int
 
   trait Generable[+A,-B,+C] {
@@ -51,6 +53,8 @@ trait MonadicAMQPDispatcher[T]
     )
   }  
 
+  val reportage = report( Twitterer() ) _
+
   def acceptConnections(
     params : ConnectionParameters,
     host : String,
@@ -76,12 +80,14 @@ trait MonadicAMQPDispatcher[T]
   ) = Generator {
     k : ( T => Unit @suspendable ) =>
       //shift {	
-	println( "The rabbit is running... (with apologies to John Updike)" )
+	reportage(
+	  "The rabbit is running... (with apologies to John Updike)"
+	)
 
 	for( channel <- acceptConnections( params, host, port ) ) {
 	  spawn {
 	    // Open bracket
-	    println( "Connected: " + channel )
+	    reportage( "Connected: " + channel )
 	    val ticket = channel.accessRequest( "/data" ) 
 	    channel.exchangeDeclare( ticket, "mult", "direct" )
 	    channel.queueDeclare( ticket, "mult_queue" )
@@ -89,7 +95,7 @@ trait MonadicAMQPDispatcher[T]
 	  
 	    for ( t <- readT( channel, ticket ) ) { k( t ) }
 
-	    // println( "Disconnected: " + channel )
+	    // reportage( "Disconnected: " + channel )
 	    // Close bracket
 	  }
 	}
@@ -107,7 +113,7 @@ trait MonadicAMQPDispatcher[T]
     Generator {
       k : ( AMQPDelivery => Unit @suspendable) =>
 
-      println("level 1 callbacks")
+      reportage("level 1 callbacks")
 
       shift {
 	outerk : (Unit => Any) =>
@@ -121,18 +127,18 @@ trait MonadicAMQPDispatcher[T]
 	       body : Array[Byte]
 	     ) {
     		 spawn { 
-  		   println("before continuation in callback")
+  		   reportage("before continuation in callback")
   		
     		   k( AMQPDelivery( tag, env, props, body ) )
     		
-    		   println("after continuation in callback")
+    		   reportage("after continuation in callback")
     		   
 		   outerk()
     		 }
     	     }
 	   }
   	
-  	println("before registering callback")
+  	reportage("before registering callback")
   	
 	channel.basicConsume(
 	  ticket,
@@ -141,7 +147,7 @@ trait MonadicAMQPDispatcher[T]
 	  TheRendezvous
 	)
   	
-  	println("after registering callback")
+  	reportage("after registering callback")
   	// stop
       }
     }
@@ -171,7 +177,7 @@ trait MonadicAMQPDispatcher[T]
 		shift { k : ( Unit => Unit ) => k() }
   	      }
   	  
-  	      println("readT returning")
+  	      reportage( "readT returning" )
   	      outerk()
 	    }
 	}
@@ -203,8 +209,12 @@ class StdMonadicAMQPDispatcher[T](
   val host : String,
   val port : Int
 ) extends MonadicAMQPDispatcher[T](
-) {
+) with WireTap with Journalist {
   import AMQPDefaults._
+
+  override def tap [A] ( fact : A ) : Unit = {
+    reportage( fact )
+  }
 
   def acceptConnections()( implicit params : ConnectionParameters )
   : Generator[Channel,Unit,Unit] =
