@@ -147,13 +147,12 @@ extends TermTypes[Namespace,Var,Tag,Value] {
 class TermStore[Namespace,Var,Tag,Value](
 )
 extends TermSpace[Namespace,Var,Tag,Value] 
+with CnxnStorage[Namespace,Var,Tag]
 with CnxnCtxtInjector[Namespace,Var,Tag]
 with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
-//with CnxnUnificationQuery[Namespace,Var,Tag]
-//with CnxnQuery[Namespace,Var,Tag]
-//with StructuredPrologQuery[Namespace,Var,Tag]
-//with CnxnQuery[Namespace,Var,Tag]
 with CnxnConversions[Namespace,Var,Tag]
+with CnxnXML[Namespace,Var,Tag]
+with XMLStore
 with WireTap
 with Journalist
 with UUIDOps {
@@ -163,6 +162,15 @@ with UUIDOps {
   override def tap [A] ( fact : A ) : Unit = {
     reportage( fact )
   }
+
+  override def URI : String = ExistDefaults.URI
+  override def driver : String = ExistDefaults.driver
+  override def dbRoot : String = ExistDefaults.dbRoot
+  override def createDB : Boolean = ExistDefaults.createDB
+  override def indent : Boolean = ExistDefaults.indent
+  override def resourceType : String = ExistDefaults.resourceType  
+
+  override def tmpDirStr : String = CnxnStorageDefaults.tmpDirStr
 
   def places(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
