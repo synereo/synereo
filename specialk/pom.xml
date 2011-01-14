@@ -277,6 +277,29 @@
       <artifactId>exist</artifactId>
       <version>1.4</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.sleepycat</groupId>
+      <artifactId>db</artifactId>
+      <version>local</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jivesoft</groupId>
+      <artifactId>smack</artifactId>
+      <version>local</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jivesoft</groupId>
+      <artifactId>smackx</artifactId>
+      <version>local</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hypergraphdb</groupId>
+      <artifactId>hgdbfull</artifactId>
+      <version>local</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -299,6 +322,7 @@
 	  <scalaVersion>${scala.version}</scalaVersion>
           <charset>${project.build.sourceEncoding}</charset>
           <jvmArgs>
+	    <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
             <jvmArg>-Xmx1024m</jvmArg>
             <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
           </jvmArgs>

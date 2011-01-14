@@ -17,6 +17,7 @@ object TreeItem {
     Some( ( tree.item ) )
   }
 }
+case class CTreeItem[A]( val item : A ) extends Tree[A]
 class TreeSection[A](
   val section: List[Tree[A]]
 ) extends Tree[A]
@@ -27,3 +28,6 @@ object TreeSection {
     Some( ( tree.section ) )
   }
 }
+case class CTreeSection[A](
+  val section: List[Tree[A]]
+) extends Tree[A]
