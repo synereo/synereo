@@ -14,20 +14,23 @@ import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 
-import _root_.com.rabbitmq.client._
-import _root_.scala.actors.Actor
+import _root_.com.rabbitmq.client.{ Channel => RabbitChan,
+				   ConnectionParameters => RabbitCnxnParams, _}
+//import _root_.scala.actors.Actor
 
 import _root_.java.io.ObjectInputStream
 import _root_.java.io.ByteArrayInputStream
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
-trait MonadicAMQPDispatcher[T]
- extends FJTaskRunners {
+trait MonadicDispatcher[T] 
+extends FJTaskRunners {
+  self : WireTap with Journalist =>
 
-   self : WireTap with Journalist =>
-
-  type Ticket = Int
+  type Channel
+  type Ticket
+  type ConnectionParameters
+  type Payload
 
   trait Generable[+A,-B,+C] {
     def funK : (A => (B @suspendable)) => (C @suspendable)
@@ -41,7 +44,47 @@ trait MonadicAMQPDispatcher[T]
     override val funK : (A => (B @suspendable)) => (C @suspendable)
   ) extends Generable[A,B,C] {   
   }
+
+  val reportage = report( Twitterer() ) _
+
+  def acceptConnections(
+    params : ConnectionParameters,
+    host : String,
+    port : Int
+  ) : Generator[Channel,Unit,Unit]
+
+  def beginService(
+    params : ConnectionParameters,
+    host : String,
+    port : Int
+  ) : Generator[T,Unit,Unit]
   
+  def callbacks(
+    channel : Channel, ticket : Ticket
+  ) : Generator[Payload,Unit,Unit]
+
+  def readT(
+    channel : Channel,
+    ticket : Ticket
+  ) : Generator[T,Unit,Unit]
+}
+
+trait MonadicAMQPDispatcher[T]
+ extends MonadicDispatcher[T] {
+   self : WireTap with Journalist =>
+
+  case class AMQPDelivery(
+    tag   : String,
+    env   : Envelope,
+    props : AMQP.BasicProperties,
+    body  : Array[Byte]
+  )
+
+  type ConnectionParameters = RabbitCnxnParams
+  type Channel = RabbitChan
+  type Ticket = Int
+  type Payload = AMQPDelivery
+
   abstract class SerializedConsumer[T](
     val channel : Channel
   ) extends DefaultConsumer( channel ) {
@@ -53,9 +96,7 @@ trait MonadicAMQPDispatcher[T]
     )
   }  
 
-  val reportage = report( Twitterer() ) _
-
-  def acceptConnections(
+  override def acceptConnections(
     params : ConnectionParameters,
     host : String,
     port : Int
@@ -73,7 +114,7 @@ trait MonadicAMQPDispatcher[T]
       }
     }
 
-  def beginService(
+  override def beginService(
     params : ConnectionParameters,
     host : String,
     port : Int
@@ -102,16 +143,9 @@ trait MonadicAMQPDispatcher[T]
       //}
   }
 
-  case class AMQPDelivery(
-    tag   : String,
-    env   : Envelope,
-    props : AMQP.BasicProperties,
-    body  : Array[Byte]
-  )
-
-  def callbacks( channel : Channel, ticket : Ticket) =
+  override def callbacks( channel : Channel, ticket : Ticket) =
     Generator {
-      k : ( AMQPDelivery => Unit @suspendable) =>
+      k : ( Payload => Unit @suspendable) =>
 
       reportage("level 1 callbacks")
 
@@ -186,8 +220,8 @@ trait MonadicAMQPDispatcher[T]
 }
 
 trait AMQPUtilities {
-  def stdCnxnParams : ConnectionParameters = {
-    val params = new ConnectionParameters
+  def stdCnxnParams : RabbitCnxnParams = {
+    val params = new RabbitCnxnParams //new ConnectionParameters
     params.setUsername( "guest" )
     params.setPassword( "guest" )
     params.setVirtualHost( "/" )
@@ -199,7 +233,7 @@ trait AMQPUtilities {
 object AMQPDefaults extends AMQPUtilities {
   implicit val defaultConnectionFactory : ConnectionFactory =
     new ConnectionFactory( defaultConnectionParameters )
-  implicit val defaultConnectionParameters : ConnectionParameters =
+  implicit val defaultConnectionParameters : RabbitCnxnParams =
     stdCnxnParams
   implicit val defaultHost : String = "localhost"
   implicit val defaultPort : Int = 5672
@@ -216,10 +250,10 @@ class StdMonadicAMQPDispatcher[T](
     reportage( fact )
   }
 
-  def acceptConnections()( implicit params : ConnectionParameters )
+  def acceptConnections()( implicit params : RabbitCnxnParams )
   : Generator[Channel,Unit,Unit] =
     acceptConnections( params, host, port )
-  def beginService()( implicit params : ConnectionParameters )
+  def beginService()( implicit params : RabbitCnxnParams )
   : Generator[T,Unit,Unit] =
     beginService( params, host, port )
 }
