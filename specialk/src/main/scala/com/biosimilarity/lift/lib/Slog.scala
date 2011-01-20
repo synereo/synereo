@@ -19,6 +19,8 @@ trait Journalist {
   case class Twitterer() extends Verbosity
   case class Blogger() extends Verbosity
   case class Luddite() extends Verbosity
+
+  val reportage = report( Twitterer() ) _
   
   def report [A] ( verb : Verbosity )( fact : A ) : Unit = {
     verb match {

@@ -49,7 +49,7 @@ trait TermSpace[Namespace,Var,Tag,Value]
 extends TermTypes[Namespace,Var,Tag,Value] {
   self : CnxnCtxtInjector[Namespace,Var,Tag] with Journalist with WireTap =>
 
-  val reportage = report( Twitterer() ) _
+  // val reportage = report( Twitterer() ) _
   
   def get(
     path : CnxnCtxtLabel[Namespace,Var,Tag],

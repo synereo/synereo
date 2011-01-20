@@ -150,7 +150,7 @@ class EndPointLocuter[Namespace,Var,Tag,Value](
   override val location : URI
 ) extends EndPoint[Namespace,Var,Tag,Value]
 with Journalist {
-  val reportage = report( Twitterer() ) _
+  // val reportage = report( Twitterer() ) _
   override def handleRequest( 
     dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
   ) : Boolean = {
@@ -173,7 +173,7 @@ with AgentsOverAMQP[Namespace,Var,Tag,Value]
 with Rabbitter
 with Journalist
 with UUIDOps {
-  val reportage = report( Twitterer() ) _
+  // val reportage = report( Twitterer() ) _
 
   implicit def endPointAsURI(
     ep : EndPoint[Namespace,Var,Tag,Value]

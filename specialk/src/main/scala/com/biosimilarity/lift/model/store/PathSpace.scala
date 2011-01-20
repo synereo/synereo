@@ -28,7 +28,7 @@ trait PathSpace[Namespace,Tag,Value] {
   type GetContinuation = Option[Resource] => Option[Resource]
   type GetRequest = CnxnPath[Namespace,Tag]  
   
-  val reportage = report( Luddite() ) _
+  // val reportage = report( Luddite() ) _
     
   def get(
     path : CnxnPath[Namespace,Tag],

@@ -45,7 +45,7 @@ extends FJTaskRunners {
   ) extends Generable[A,B,C] {   
   }
 
-  val reportage = report( Twitterer() ) _
+  //val reportage = report( Twitterer() ) _
 
   def acceptConnections(
     params : ConnectionParameters,

@@ -28,7 +28,7 @@ trait TupleSpace[Place,Resource]
 
   //def self = theMeetingPlace
 
-  val reportage = report( Luddite() ) _
+  // val reportage = report( Luddite() ) _
 
   def fetch( x : Place ) 
   : Option[Resource] @scala.util.continuations.cpsParam[Option[Resource],Unit]
