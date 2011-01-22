@@ -23,14 +23,8 @@ import _root_.java.io.ByteArrayInputStream
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
-trait MonadicDispatcher[T] 
-extends FJTaskRunners {
+trait MonadicGenerators {
   self : WireTap with Journalist =>
-
-  type Channel
-  type Ticket
-  type ConnectionParameters
-  type Payload
 
   trait Generable[+A,-B,+C] {
     def funK : (A => (B @suspendable)) => (C @suspendable)
@@ -44,6 +38,69 @@ extends FJTaskRunners {
     override val funK : (A => (B @suspendable)) => (C @suspendable)
   ) extends Generable[A,B,C] {   
   }
+
+  // this is really map... fix!
+  def mapStream[A,B](
+    strmGenerator : Generator[A,Unit,Unit],
+    cnvrtr : (A => B)
+  ) =
+    Generator {
+      k : ( B => Unit @suspendable ) =>
+	shift {
+	  outerK : ( Unit => Unit ) =>
+	    reset {
+	      for( elem <- strmGenerator ) {
+		reportage( "calling conversion on elem " + elem )
+		val trgtElem = cnvrtr( elem )
+		reportage( "calling handler on converted elem " + elem )
+		k( trgtElem )
+	      }
+	      
+	      reportage( "mapStream returning" )
+  	      outerK()
+	    }
+	}
+    }
+}
+
+trait MonadicWireToTrgtConversion 
+{
+  self : MonadicGenerators with WireTap with Journalist =>
+
+  type Wire
+  type Trgt
+    
+  def wire2Trgt( wire : Wire ) : Trgt
+
+  def xformAndDispatch(
+    msgGenerator : Generator[Wire,Unit,Unit]
+  ) = 
+    Generator {
+      k : ( Trgt => Unit @suspendable ) =>
+	shift {
+	  outerK : ( Unit => Unit ) =>
+	    reset {
+	      for( msg <- mapStream[Wire,Trgt]( msgGenerator, wire2Trgt ) ) {		
+		reportage( "calling dispatch " )
+		k( msg )
+	      }
+
+	      reportage( "dispatch returning" )
+  	      outerK()
+	    }
+	}
+    }
+}
+
+trait MonadicDispatcher[T] 
+extends MonadicGenerators
+with FJTaskRunners {
+  self : WireTap with Journalist =>
+
+  type Channel
+  type Ticket
+  type ConnectionParameters
+  type Payload  
 
   //val reportage = report( Twitterer() ) _
 

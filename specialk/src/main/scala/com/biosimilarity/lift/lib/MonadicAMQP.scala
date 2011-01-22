@@ -178,6 +178,18 @@ trait MonadicAMQPDispatcher[T]
 
 }
 
+trait MonadicJSONAMQPDispatcher[T]
+extends MonadicAMQPDispatcher[T] {
+  self : MonadicWireToTrgtConversion with WireTap with Journalist =>
+  type Wire = String
+  type Trgt = T
+  
+  override def wire2Trgt( wire : Wire ) : Trgt = {
+    val xstrm = new XStream( new JettisonMappedXmlDriver )
+    xstrm.fromXML( wire ).asInstanceOf[Trgt]
+  }
+}
+
 trait AMQPUtilities {
   def stdCnxnParams : RabbitCnxnParams = {
     val params = new RabbitCnxnParams //new ConnectionParameters
@@ -199,12 +211,13 @@ object AMQPDefaults extends AMQPUtilities {
   implicit val defaultDispatching : Boolean = true
 }
 
-class StdMonadicAMQPDispatcher[T](
-  val host : String,
-  val port : Int
-) extends MonadicAMQPDispatcher[T](
-) with WireTap with Journalist {
-  import AMQPDefaults._
+trait DefaultMonadicAMQPDispatcher[T]
+extends MonadicAMQPDispatcher[T] {
+  self : WireTap with Journalist =>
+  //import AMQPDefaults._
+  
+  def host : String
+  def port : Int
 
   override def tap [A] ( fact : A ) : Unit = {
     reportage( fact )
@@ -216,6 +229,21 @@ class StdMonadicAMQPDispatcher[T](
   def beginService()( implicit params : RabbitCnxnParams )
   : Generator[T,Unit,Unit] =
     beginService( params, host, port )
+}
+
+class StdMonadicAMQPDispatcher[T](
+  override val host : String,
+  override val port : Int
+) extends DefaultMonadicAMQPDispatcher[T](
+) with WireTap with Journalist {
+}
+
+class StdMonadicJSONAMQPDispatcher[T](
+  override val host : String,
+  override val port : Int
+) extends StdMonadicAMQPDispatcher[T]( host, port )
+with MonadicJSONAMQPDispatcher[T]
+with MonadicWireToTrgtConversion {
 }
 
 object StdMonadicAMQPDispatcher {
@@ -234,29 +262,26 @@ object StdMonadicAMQPDispatcher {
 }
 
 trait SemiMonadicJSONAMQPTwistedPair[T]
-extends MonadicAMQPDispatcher[String] {
-  self : WireTap with Journalist =>
-    import AMQPDefaults._
+{  
+  import AMQPDefaults._
   
   def srcURI : URI
   def trgtURI : URI
 
-  var _jsonDispatcher : Option[StdMonadicAMQPDispatcher[String]] = None
+  var _jsonDispatcher : Option[StdMonadicJSONAMQPDispatcher[T]] = None
   def jsonDispatcher( handle : T => Unit )(
     implicit dispatchOnCreate : Boolean, port : Int
-  ) : StdMonadicAMQPDispatcher[String] = {
+  ) : StdMonadicJSONAMQPDispatcher[T] = {
     _jsonDispatcher match {
       case Some( jd ) => jd
       case None => {
 	val jd =
-	  new StdMonadicAMQPDispatcher[String]( srcURI.getHost, port )
+	  new StdMonadicJSONAMQPDispatcher[T]( srcURI.getHost, port )
 
 	if ( dispatchOnCreate ) {
-	  val xstrm = new XStream( new JettisonMappedXmlDriver )
 	  reset {
 	    for( msg <- jd.beginService() ){
-	      val msgT : T = xstrm.fromXML( msg ).asInstanceOf[T]
-	      handle( msgT )
+	      handle( msg )
 	    }
 	  }	
 	}
@@ -293,12 +318,7 @@ extends MonadicAMQPDispatcher[String] {
 class SMJATwistedPair[T](
   override val srcURI : URI,
   override val trgtURI : URI
-) extends SemiMonadicJSONAMQPTwistedPair[T]
-with WireTap
-with Journalist {
-  override def tap [A] ( fact : A ) : Unit = {
-    reportage( fact )
-  }
+) extends SemiMonadicJSONAMQPTwistedPair[T] {
 }
 
 object SMJATwistedPair {

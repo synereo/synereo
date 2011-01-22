@@ -307,7 +307,8 @@ with UUIDOps {
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     resource : Resource
   ) : Unit = {    
-    for( ( place, soln ) <- places( path, Output ) ) {
+    for( placeNSoln <- places( path, Output ) ) {
+      val ( place, soln ) = placeNSoln
       _waiters.get( place ) match {
 	case Some( k :: ks ) => {
 	  _waiters( place ) = ks
