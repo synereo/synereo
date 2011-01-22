@@ -28,51 +28,6 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 import java.net.URI
 import java.util.UUID
 
-trait DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
-trait DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
-trait DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
-extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
-
-// trait DistributedSelfAssemblyMsg
-// trait DistributedSelfAssemblyRequest
-// extends DistributedSelfAssemblyMsg
-// trait DistributedSelfAssemblyResponse
-// extends DistributedSelfAssemblyMsg
-
-// case class DConnect( src : URI, trgt : URI, kuid : UUID ) 
-// extends DistributedSelfAssemblyRequest
-// with DistributedTermSpaceRequest
-// case class DConnected( src : URI, trgt : URI, kuid : UUID ) 
-// extends DistributedSelfAssemblyResponse
-// with DistributedTermSpaceResponse
-// case class DConnectionRefused( src : URI, trgt : URI, kuid : UUID ) 
-// extends DistributedSelfAssemblyResponse
-// with DistributedTermSpaceResponse
-
-case class DGetRequest[Namespace,Var,Tag,Value](
-  path : CnxnCtxtLabel[Namespace,Var,Tag]
-) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-case class DGetResponse[Namespace,Var,Tag,Value](
-  path : CnxnCtxtLabel[Namespace,Var,Tag],
-  value : Value
-) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
-case class DFetchRequest[Namespace,Var,Tag,Value](
-  path : CnxnCtxtLabel[Namespace,Var,Tag]
-) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-case class DFetchResponse[Namespace,Var,Tag,Value](
-  path : CnxnCtxtLabel[Namespace,Var,Tag],
-  value : Value
-) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
-case class DPutRequest[Namespace,Var,Tag,Value](
-  path : CnxnCtxtLabel[Namespace,Var,Tag],
-  value : Value
-) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-case class DPutResponse[Namespace,Var,Tag,Value](
-  path : CnxnCtxtLabel[Namespace,Var,Tag]
-) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
-
-
 trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
   type DReq = DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
   type DRsp = DistributedTermSpaceResponse[Namespace,Var,Tag,Value]

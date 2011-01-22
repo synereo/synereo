@@ -179,7 +179,6 @@ trait MonadicAMQPDispatcher[T]
 }
 
 trait MonadicJSONAMQPDispatcher[T]
-//extends MonadicAMQPDispatcher[T]
 {
   self : MonadicWireToTrgtConversion with WireTap with Journalist =>
   type Wire = String
