@@ -382,6 +382,11 @@
         <configuration>
           <contextPath>/</contextPath>
           <scanIntervalSeconds>5</scanIntervalSeconds>
+	  <connectors>
+            <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
+              <port>8090</port>
+            </connector>
+          </connectors>
         </configuration>
       </plugin>
       <plugin>

@@ -382,6 +382,7 @@ with UUIDOps {
       case None => {
 	val jl = AgentAMQPJSONListener( src )
 	_jsonListener = Some( jl )
+	jl.start
 	jl
       }
     }
