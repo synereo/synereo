@@ -313,6 +313,14 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
       }
     }
   }
+
+  def send( contents : T ) : Unit = {
+    for( amqp <- _jsonSender ) {
+      amqp ! AMQPMessage(
+	new XStream( new JettisonMappedXmlDriver() ).toXML( contents )	
+      )
+    }
+  }  
 }
 
 class SMJATwistedPair[T](
