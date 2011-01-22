@@ -179,7 +179,8 @@ trait MonadicAMQPDispatcher[T]
 }
 
 trait MonadicJSONAMQPDispatcher[T]
-extends MonadicAMQPDispatcher[T] {
+//extends MonadicAMQPDispatcher[T]
+{
   self : MonadicWireToTrgtConversion with WireTap with Journalist =>
   type Wire = String
   type Trgt = T
@@ -241,7 +242,7 @@ class StdMonadicAMQPDispatcher[T](
 class StdMonadicJSONAMQPDispatcher[T](
   override val host : String,
   override val port : Int
-) extends StdMonadicAMQPDispatcher[T]( host, port )
+) extends StdMonadicAMQPDispatcher[String]( host, port )
 with MonadicJSONAMQPDispatcher[T]
 with MonadicWireToTrgtConversion {
 }
@@ -280,7 +281,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 
 	if ( dispatchOnCreate ) {
 	  reset {
-	    for( msg <- jd.beginService() ){
+	    for( msg <- jd.xformAndDispatch( jd.beginService() ) ){
 	      handle( msg )
 	    }
 	  }	
