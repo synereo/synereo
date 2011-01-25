@@ -478,3 +478,56 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
   }
 }
+
+object MonadicMsgJunction
+  extends MonadicDTSMsgScope[String,String,String,String]
+  with UUIDOps
+{
+  type MsgTypes = DTSMSH[String,String,String,String]
+  val aLabelUUID = getUUID()
+  val bLabelUUID = getUUID()
+
+  val aLabel =
+    new CnxnCtxtLeaf[String,String,String](
+      Left(
+	aLabelUUID.toString.replace( "-", "" )
+      )
+    )
+  val bLabel =
+    new CnxnCtxtLeaf[String,String,String](
+      Left(
+	bLabelUUID.toString.replace( "-", "" )
+      )
+    )
+
+  val protoDreqUUID = getUUID()
+  val protoDrspUUID = getUUID()    
+  
+  object MonadicDMsgs extends MsgTypes {
+    
+    override def protoDreq : DReq = MDGetRequest( aLabel )
+    override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
+    override def protoJtsreq : JTSReq =
+      JustifiedRequest(
+	protoDreqUUID,
+	new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	getUUID(),
+	protoDreq,
+	None
+      )
+    override def protoJtsrsp : JTSRsp = 
+      JustifiedResponse(
+	protoDreqUUID,
+	new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	getUUID(),
+	protoDrsp,
+	None
+      )
+    override def protoJtsreqorrsp : JTSReqOrRsp =
+      Left( protoJtsreq )
+  }
+  
+  override def protoMsgs : MsgTypes = MonadicDMsgs
+}
