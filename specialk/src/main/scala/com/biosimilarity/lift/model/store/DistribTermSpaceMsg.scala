@@ -64,43 +64,43 @@ case class DPutResponse[Namespace,Var,Tag,Value](
 
 
 trait DTSMSH[Namespace,Var,Tag,Value] {
-  trait DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+  trait MDistributedTermSpaceMsg[Namespace,Var,Tag,Value]
 
-  trait DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-     extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+  trait MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+     extends MDistributedTermSpaceMsg[Namespace,Var,Tag,Value]
 
-  case class DGetRequest[Namespace,Var,Tag,Value](
+  case class MDGetRequest[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]  
-  case class DFetchRequest[Namespace,Var,Tag,Value](
+  ) extends MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]  
+  case class MDFetchRequest[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-  case class DPutRequest[Namespace,Var,Tag,Value](
+  ) extends MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+  case class MDPutRequest[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     value : Value
-  ) extends DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+  ) extends MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
 
-  trait DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
-     extends DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+  trait MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+     extends MDistributedTermSpaceMsg[Namespace,Var,Tag,Value]
 
-  case class DGetResponse[Namespace,Var,Tag,Value](
+  case class MDGetResponse[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     value : Value
-  ) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
-  case class DFetchResponse[Namespace,Var,Tag,Value](
+  ) extends MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  case class MDFetchResponse[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     value : Value
-  ) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  ) extends MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
   
-  case class DPutResponse[Namespace,Var,Tag,Value](
+  case class MDPutResponse[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) extends DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  ) extends MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
 
   type DTSMsg[Namespace,Var,Tag,Value] =
-    DistributedTermSpaceMsg[Namespace,Var,Tag,Value]
+    MDistributedTermSpaceMsg[Namespace,Var,Tag,Value]
 
-  type DReq = DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-  type DRsp = DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  type DReq = MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+  type DRsp = MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
   type JTSReq = JustifiedRequest[DReq,DRsp]
   type JTSRsp = JustifiedResponse[DReq,DRsp]
   type JTSReqOrRsp = Either[JTSReq,JTSRsp]

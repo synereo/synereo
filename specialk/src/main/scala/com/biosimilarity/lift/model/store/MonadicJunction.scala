@@ -57,7 +57,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }    
   }
 
-  trait SemiMonadicAgentJSONAMQPTwistedPair[TxPort,Namespace,Var,Tag,Value]
+  trait SemiMonadicAgentJSONAMQPTwistedPair[TxPort]
   extends MonadicAgency[TxPort,Msgs.DReq,Msgs.DRsp]
   with SemiMonadicJSONAMQPTwistedPair[Msgs.JTSReqOrRsp] {
     self : MonadicWireToTrgtConversion with MonadicGenerators with WireTap with Journalist =>
@@ -93,11 +93,10 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
   }
 
-  class SMAJATwistedPair[Namespace,Var,Tag,Value](
+  class SMAJATwistedPair(
     override val srcURI : URI,
     override val trgtURI : URI
-  ) extends
-    SemiMonadicAgentJSONAMQPTwistedPair[String,Namespace,Var,Tag,Value] 
+  ) extends SemiMonadicAgentJSONAMQPTwistedPair[String] 
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion with MonadicGenerators with WireTap
   with Journalist
@@ -175,38 +174,38 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   object SMAJATwistedPair {
-    def apply[Namespace,Var,Tag,Value] (
+    def apply (
       srcIPStr : String, trgtIPStr : String
-    ) : SMAJATwistedPair[Namespace,Var,Tag,Value] = {
-      new SMAJATwistedPair[Namespace,Var,Tag,Value](
+    ) : SMAJATwistedPair = {
+      new SMAJATwistedPair(
 	new URI( "agent", srcIPStr, "/", "" ),
 	new URI( "agent", trgtIPStr, "/", "" )
       )
     }
-    def unapply[Namespace,Var,Tag,Value](
-      smajatp : SMAJATwistedPair[Namespace,Var,Tag,Value]
+    def unapply(
+      smajatp : SMAJATwistedPair
     ) : Option[(URI,URI)] = {
       Some( ( smajatp.srcURI, smajatp.trgtURI ) )
     }    
   }
 
-  trait MonadicCollective[Namespace,Var,Tag,Value] 
+  trait MonadicCollective 
   extends MonadicAgency[String,Msgs.DReq,Msgs.DRsp] {
     self : MonadicWireToTrgtConversion
 	with MonadicGenerators with WireTap with Journalist =>
     
     def agentTwistedPairs :
-    Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String,Namespace,Var,Tag,Value]]
+    Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]
     def acquaintances : Seq[URI]
     
     def meetNGreet( acquaintances : Seq[URI] )
-    : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String,Namespace,Var,Tag,Value]] =
+    : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       {
-	val map = new HashMap[URI,SemiMonadicAgentJSONAMQPTwistedPair[String,Namespace,Var,Tag,Value]]()
+	val map = new HashMap[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]()
 	for( acquaintance <- acquaintances )
 	yield {
 	  val atp =
-	    new SMAJATwistedPair[Namespace,Var,Tag,Value](
+	    new SMAJATwistedPair(
 	      name,
 	      acquaintance
 	    )      
@@ -218,7 +217,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
   }
 
-  class MonadicJunction[Namespace,Var,Tag,Value](
+  class MonadicJunction(
     override val name : URI,
     override val acquaintances : Seq[URI],
     override val requests : ListBuffer[Msgs.JTSReq],
@@ -226,8 +225,9 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     override val nameSpace :
       Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
     override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
-  ) extends TermStore[Namespace,Var,Tag,Value]
-  with MonadicCollective[Namespace,Var,Tag,Value]
+  )
+  extends TermStore[Namespace,Var,Tag,Value](
+  ) with MonadicCollective
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion
   with MonadicGenerators
@@ -237,7 +237,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     override type Trgt = Msgs.JTSReqOrRsp
 
     override lazy val agentTwistedPairs
-    : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String,Namespace,Var,Tag,Value]] =
+    : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
 
     def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
@@ -249,14 +249,232 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    + uri
 	  )
 	)
-	val smajatp : SMAJATwistedPair[Namespace,Var,Tag,Value] =
-	  jsndr.asInstanceOf[SMAJATwistedPair[Namespace,Var,Tag,Value]]
+	val smajatp : SMAJATwistedPair =
+	  jsndr.asInstanceOf[SMAJATwistedPair]
 
 	smajatp.send(
-	  Msgs.DGetRequest[Namespace,Var,Tag,Value]( path ).asInstanceOf[Msgs.DReq]
+	  Msgs.MDGetRequest[Namespace,Var,Tag,Value]( path ).asInstanceOf[Msgs.DReq]
 	)
       }
     }
   }
+
+  class InMemoryMonadicJunction(
+    override val name : URI,
+    override val acquaintances : Seq[URI]
+  ) extends MonadicJunction(
+    name,
+    acquaintances,
+    new ListBuffer[Msgs.JTSReq](),
+    new ListBuffer[Msgs.JTSRsp](),
+    Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
+    AnAMQPTraceMonitor
+  ) {
+    def handleRequest( dreq : Msgs.JTSReq ) : Unit = {
+      dreq match {
+	case JustifiedRequest( 
+	    msgId, mtrgt, msrc, lbl, body, _
+	  ) => {
+	    body match {
+	      case dgreq@Msgs.MDGetRequest( path ) => {
+		val k =
+		  {
+		    ( v : Option[Resource] ) => {
+		      //tap( v )
+		      for(
+			atp <- agentTwistedPairs.get( msrc );
+			value <- v
+		      ) {
+			val smajatp : SMAJATwistedPair =
+			  atp.asInstanceOf[SMAJATwistedPair]
+
+			value match {
+			  case Ground( gv ) =>
+			    smajatp.send(
+			      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
+				path,
+				gv
+			      )
+			    )
+			}
+		      }
+		      v
+		    }
+		  }
+	      }
+	      case dfreq@Msgs.MDFetchRequest( path ) => {
+		reportage(
+		  (
+		    this 
+		    + "handling : "
+		    + dfreq
+		  )
+		)
+		val k =
+		  {
+		    ( v : Option[Resource] ) => {
+		      //tap( v )
+		      for(
+			atp <- agentTwistedPairs.get( msrc );
+			value <- v
+		      ) {
+			val smajatp : SMAJATwistedPair =
+			  atp.asInstanceOf[SMAJATwistedPair]
+
+			value match {
+			  case Ground( gv ) =>
+			    smajatp.send(
+			      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
+				path,
+				gv
+			      )
+			    )
+			}
+		      }
+		      v
+		    }
+		  }
+		fetch( path, k )
+	      }
+	      case dpreq@Msgs.MDPutRequest( path, value ) => {	
+		reportage(
+		  (
+		    this
+		    + " handling : "
+		    + dpreq
+		  )
+		)
+		put( path, value )
+	      }
+	    }
+	  }
+      }
+    }
+
+    def handleResponse( drsp : Msgs.JTSRsp ) : Unit = {
+      drsp match {
+	case JustifiedResponse( 
+	  msgId, mtrgt, msrc, lbl, body, _
+	) => {
+	  body match {
+	    case Msgs.MDGetResponse( path, value ) => {
+	      put( path, value )
+	    }
+	    case Msgs.MDFetchResponse( path, value ) => {
+	      put( path, value )
+	    }
+	    case dput : Msgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
+	    }
+	    case _ => {
+	      reportage(
+		(
+		  this 
+		  + " handling unexpected message : "
+		  + body
+		)
+	      )
+	    }
+	  }
+	}
+      }
+    }
+
+    def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit = {
+      dmsg match {
+	case Left(
+	  dreq@JustifiedRequest( 
+	    msgId, mtrgt, msrc, lbl, body, _
+	  )
+	) => {
+	  reportage(
+	    (
+	      this
+	      + " handling : "
+	      + dmsg
+	      + " from "
+	      + msrc
+	      + " on behalf of "
+	      + mtrgt
+	    )
+	  )
+	  handleRequest( dreq )
+	}
+	case Right(
+	  drsp@JustifiedResponse( 
+	    msgId, mtrgt, msrc, lbl, body, _
+	  )
+	) => {
+	  reportage(
+	    (
+	      this
+	      + " handling : "
+	      + dmsg
+	      + " from "
+	      + msrc
+	      + " on behalf of "
+	      + mtrgt
+	    )
+	  )
+	  handleResponse( drsp )
+	}
+      }
+    }
   
+    override def get(
+      path : CnxnCtxtLabel[Namespace,Var,Tag],
+      next : WhatNext
+    )
+    : Seq[Option[Resource]] = {        
+      for( placeNSoln <- places( path, Input ) )
+      yield {
+	val ( place, soln ) = placeNSoln
+	_labelMap.get( place ) match {
+	  case sv @ Some( value ) => {
+	    _labelMap -= place
+	    sv
+	  }
+	  case None => {
+	    reset {
+	      val rslt : Option[Resource] = 
+		shift {
+		  ( k : GetContinuation ) => {	      
+		    reportage(
+		      (
+			this
+			+ " storing continuation to wait for value : "
+			+ k
+		      )
+		    )
+		    _waiters( place ) =
+		      _waiters.get( place )
+		    .getOrElse( Nil ) ++ List( k )
+		    
+		    reportage(
+		      (
+			this 
+			+ " forwarding to acquaintances "
+		      )
+		    )
+		    forwardGet( path )
+		    
+		    k( None )
+		  }	    	      
+		}
+	      reportage(
+		(
+		  this
+		  + " resuming with value : "
+		  + rslt
+		)
+	      )
+	      rslt match {
+		case Some( _ ) =>	next( rslt )
+		case nv @ _ => nv
+	      }
+	    }
+	  }	
+	}
+      }    
+    }
+  }
 }
