@@ -484,19 +484,17 @@ object MonadicMsgJunction
   with UUIDOps
 {
   type MsgTypes = DTSMSH[String,String,String,String]
-  val aLabelUUID = getUUID()
-  val bLabelUUID = getUUID()
 
   val aLabel =
     new CnxnCtxtLeaf[String,String,String](
       Left(
-	aLabelUUID.toString.replace( "-", "" )
+	"a"
       )
     )
   val bLabel =
     new CnxnCtxtLeaf[String,String,String](
       Left(
-	bLabelUUID.toString.replace( "-", "" )
+	"b"
       )
     )
 

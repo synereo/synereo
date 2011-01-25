@@ -314,6 +314,9 @@ with UUIDOps {
 	  _waiters( place ) = ks
 	  k( Some( RBound( Some( resource ), soln ) ) )
 	}
+	case Some( Nil ) => {
+	  _labelMap( place ) = resource
+	}
 	case None => {
 	  _labelMap( place ) = resource
 	}	
