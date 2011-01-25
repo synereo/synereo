@@ -210,6 +210,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	      acquaintance
 	    )      
 	  
+	  atp.jsonSender // activate jsonSender
 	  map( acquaintance ) = atp	
 
 	}
@@ -251,7 +252,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	)
 	val smajatp : SMAJATwistedPair =
 	  jsndr.asInstanceOf[SMAJATwistedPair]
-
+	
 	smajatp.send(
 	  Msgs.MDGetRequest[Namespace,Var,Tag,Value]( path ).asInstanceOf[Msgs.DReq]
 	)
