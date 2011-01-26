@@ -197,6 +197,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     def agentTwistedPairs :
     Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]
     def acquaintances : Seq[URI]
+
+    def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit
     
     def meetNGreet( acquaintances : Seq[URI] )
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
@@ -211,7 +213,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    )      
 	  
 	  atp.jsonSender // activate jsonSender
-	  atp.jsonDispatcher() // activate jsonDispatcher
+	  atp.jsonDispatcher( handleIncoming ) // activate jsonDispatcher
 	  map( acquaintance ) = atp	
 
 	}
@@ -219,7 +221,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
   }
 
-  class MonadicJunction(
+  abstract class MonadicJunction(
     override val name : URI,
     override val acquaintances : Seq[URI],
     override val requests : ListBuffer[Msgs.JTSReq],
