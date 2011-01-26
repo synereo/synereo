@@ -544,26 +544,27 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 }
 
-trait MonadicJunctionStringMessages
-extends MonadicDTSMsgScope[String,String,String,String]
+object MonadicMsgJunction
+  extends MonadicDTSMsgScope[String,String,String,String]
+  with UUIDOps
 {
-  self : UUIDOps =>
-
   type MsgTypes = DTSMSH[String,String,String,String]
 
-  def getALabel : CnxnCtxtLeaf[String,String,String] =
-    new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
-  def getAnotherLabel : CnxnCtxtLeaf[String,String,String] =
-    new CnxnCtxtLeaf[String,String,String]( Left( "b" ) )
+  val aLabel =
+    new CnxnCtxtLeaf[String,String,String](
+      Left(
+	"a"
+      )
+    )
+  val bLabel =
+    new CnxnCtxtLeaf[String,String,String](
+      Left(
+	"b"
+      )
+    )
 
-  def genProtoDreqUUID : UUID = getUUID()
-  def genProtoDrspUUID : UUID = getUUID()  
-
-  val aLabel : CnxnCtxtLeaf[String,String,String] = getALabel
-  val bLabel : CnxnCtxtLeaf[String,String,String] = getAnotherLabel
-
-  val protoDreqUUID : UUID = genProtoDreqUUID
-  val protoDrspUUID : UUID = genProtoDrspUUID
+  val protoDreqUUID = getUUID()
+  val protoDrspUUID = getUUID()    
   
   object MonadicDMsgs extends MsgTypes {
     
@@ -593,31 +594,3 @@ extends MonadicDTSMsgScope[String,String,String,String]
   
   override def protoMsgs : MsgTypes = MonadicDMsgs
 }
-
-object TheMJStrMsgs
-  extends MonadicJunctionStringMessages
-  with UUIDOps
-
-object MJUnitTest
-  extends MonadicJunctionStringMessages
-  with UUIDOps 
-{
-  val srcIPStr = "10.0.1.5"
-  val trgtIPStr = "10.0.1.9"
-
-  implicit def strToURI( ipStr : String ) : URI = {
-    new URI( "agent", ipStr, "/invitation", "" )
-  }
-
-  def junq( src : String, trgt : String ) = {
-    val junq = 
-      new InMemoryMonadicJunction(
-	src,
-	List( trgt )
-      )
-    junq.agentTwistedPairs // activate the twisted pairs
-    junq
-  }
-
-}
-
