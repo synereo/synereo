@@ -314,7 +314,10 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			)
 
 			value match {
-			  case Ground( gv ) =>
+			  case RBound(
+			    Some( Ground( gv ) ),
+			    Some( soln ) 
+			  ) => {
 			    reportage(
 			      (
 				this 
@@ -330,6 +333,17 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 				gv
 			      )
 			    )
+			  }
+			  case _ => {
+			    reportage(
+			      (
+				this 
+				+ " not sending composite value "
+				+ v
+				+ " back "
+			      )
+			    )
+			  }
 			}
 		      }
 		      v
