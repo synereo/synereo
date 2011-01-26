@@ -244,8 +244,11 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
 
-    def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
-      for( ( uri, jsndr ) <- agentTwistedPairs ) {
+    def forwardGet( hops : List[URI], path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
+      for(
+	( uri, jsndr ) <- agentTwistedPairs
+	if !hops.contains( uri )
+      ) {
 	reportage(
 	  (
 	    this
@@ -339,7 +342,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		    + path
 		  )
 		)
-		get( path, k )
+		get( List( msrc ) )( path, k )
 	      }
 	      case dfreq@Msgs.MDFetchRequest( path ) => {
 		reportage(
@@ -458,8 +461,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	}
       }
     }
-  
-    override def get(
+
+    def get( hops : List[URI] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag],
       next : WhatNext
     )
@@ -494,7 +497,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			+ " forwarding to acquaintances "
 		      )
 		    )
-		    forwardGet( path )
+
+		    forwardGet( hops, path )
 		    
 		    k( None )
 		  }	    	      
@@ -514,6 +518,14 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	  }	
 	}
       }    
+    }
+  
+    override def get(
+      path : CnxnCtxtLabel[Namespace,Var,Tag],
+      next : WhatNext
+    )
+    : Seq[Option[Resource]] = {        
+      get( Nil )( path, next )    
     }
   }
 }
