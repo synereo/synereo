@@ -334,6 +334,23 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			      )
 			    )
 			  }
+			  case Ground( gv ) => {
+			    reportage(
+			      (
+				this 
+				+ " sending value "
+				+ v
+				+ " back "
+			      )
+			    )
+
+			    smajatp.send(
+			      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
+				path,
+				gv
+			      )
+			    )
+			  }
 			  case _ => {
 			    reportage(
 			      (
