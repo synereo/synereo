@@ -551,11 +551,19 @@ extends MonadicDTSMsgScope[String,String,String,String]
 
   type MsgTypes = DTSMSH[String,String,String,String]
 
-  def aLabel : CnxnCtxtLeaf[String,String,String]
-  def bLabel : CnxnCtxtLeaf[String,String,String]
+  def getALabel : CnxnCtxtLeaf[String,String,String] =
+    new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
+  def getAnotherLabel : CnxnCtxtLeaf[String,String,String] =
+    new CnxnCtxtLeaf[String,String,String]( Left( "b" ) )
 
-  def protoDreqUUID : UUID
-  def protoDrspUUID : UUID
+  def genProtoDreqUUID : UUID = getUUID()
+  def genProtoDrspUUID : UUID = getUUID()  
+
+  val aLabel : CnxnCtxtLeaf[String,String,String] = getALabel
+  val bLabel : CnxnCtxtLeaf[String,String,String] = getAnotherLabel
+
+  val protoDreqUUID : UUID = genProtoDreqUUID
+  val protoDrspUUID : UUID = genProtoDrspUUID
   
   object MonadicDMsgs extends MsgTypes {
     
@@ -589,30 +597,19 @@ extends MonadicDTSMsgScope[String,String,String,String]
 object TheMJStrMsgs
   extends MonadicJunctionStringMessages
   with UUIDOps
-{ 
-  override val aLabel = new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
-  override val bLabel = new CnxnCtxtLeaf[String,String,String]( Left( "b" ) )
-  override val protoDreqUUID = getUUID()
-  override val protoDrspUUID = getUUID()
-}
 
 object MJUnitTest
   extends MonadicJunctionStringMessages
   with UUIDOps 
 {
-  override val aLabel = new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
-  override val bLabel = new CnxnCtxtLeaf[String,String,String]( Left( "b" ) )
-  override val protoDreqUUID = getUUID()
-  override val protoDrspUUID = getUUID()
-
-  implicit val srcIPStr = "10.0.1.5"
-  implicit val trgtIPStr = "10.0.1.9"
+  val srcIPStr = "10.0.1.5"
+  val trgtIPStr = "10.0.1.9"
 
   implicit def strToURI( ipStr : String ) : URI = {
     new URI( "agent", ipStr, "/invitation", "" )
   }
 
-  def junq( implicit src : String, trgt : String ) = {
+  def junq( src : String, trgt : String ) = {
     val junq = 
       new InMemoryMonadicJunction(
 	src,
