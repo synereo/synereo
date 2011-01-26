@@ -586,35 +586,25 @@ extends MonadicDTSMsgScope[String,String,String,String]
   override def protoMsgs : MsgTypes = MonadicDMsgs
 }
 
-class MJStrMsgs(
-  override val aLabel : CnxnCtxtLeaf[String,String,String],
-  override val bLabel : CnxnCtxtLeaf[String,String,String],
-  override val protoDreqUUID : UUID,
-  override val protoDrspUUID : UUID
-) extends MonadicJunctionStringMessages
-with UUIDOps {  
-}
-
-object IDVendor extends UUIDOps
-
 object TheMJStrMsgs
-extends MJStrMsgs(
-  new CnxnCtxtLeaf[String,String,String]( Left(	"a" ) ),
-  new CnxnCtxtLeaf[String,String,String]( Left(	"b" ) ),
-  IDVendor.getUUID(),
-  IDVendor.getUUID()
-) 
-{   
+  extends MonadicJunctionStringMessages
+  with UUIDOps
+{ 
+  override val aLabel = new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
+  override val bLabel = new CnxnCtxtLeaf[String,String,String]( Left( "b" ) )
+  override val protoDreqUUID = getUUID()
+  override val protoDrspUUID = getUUID()
 }
 
 object MJUnitTest
-extends MJStrMsgs(
-  new CnxnCtxtLeaf[String,String,String]( Left(	"a" ) ),
-  new CnxnCtxtLeaf[String,String,String]( Left(	"b" ) ),
-  IDVendor.getUUID(),
-  IDVendor.getUUID()
-) 
+  extends MonadicJunctionStringMessages
+  with UUIDOps 
 {
+  override val aLabel = new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
+  override val bLabel = new CnxnCtxtLeaf[String,String,String]( Left( "b" ) )
+  override val protoDreqUUID = getUUID()
+  override val protoDrspUUID = getUUID()
+
   implicit val srcIPStr = "10.0.1.5"
   implicit val trgtIPStr = "10.0.1.9"
 
