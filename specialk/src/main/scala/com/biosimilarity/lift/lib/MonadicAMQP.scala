@@ -263,6 +263,8 @@ object StdMonadicAMQPDispatcher {
 
 trait SemiMonadicJSONAMQPTwistedPair[T]
 {  
+  self : WireTap with Journalist =>
+
   import AMQPDefaults._
   
   def srcURI : URI
@@ -316,9 +318,23 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 
   def send( contents : T ) : Unit = {
     for( amqp <- _jsonSender ) {
-      amqp ! AMQPMessage(
-	new XStream( new JettisonMappedXmlDriver() ).toXML( contents )	
+      val body =
+	new XStream(
+	  new JettisonMappedXmlDriver()
+	).toXML( contents )	
+
+      reportage(
+	(
+	  this 
+	  + " is sending "
+	  + contents
+	  + " encoded as "
+	  + body
+	  + " along "
+	  + amqp
+	)
       )
+      amqp ! AMQPMessage( body )
     }
   }  
 }
@@ -326,7 +342,11 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 class SMJATwistedPair[T](
   override val srcURI : URI,
   override val trgtURI : URI
-) extends SemiMonadicJSONAMQPTwistedPair[T] {
+) extends SemiMonadicJSONAMQPTwistedPair[T]
+  with WireTap with Journalist {
+    override def tap [A] ( fact : A ) : Unit = {
+      reportage( fact )
+    }
 }
 
 object SMJATwistedPair {

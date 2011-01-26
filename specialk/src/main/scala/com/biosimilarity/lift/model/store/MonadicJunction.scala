@@ -211,6 +211,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    )      
 	  
 	  atp.jsonSender // activate jsonSender
+	  atp.jsonDispatcher() // activate jsonDispatcher
 	  map( acquaintance ) = atp	
 
 	}
