@@ -487,7 +487,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	_labelMap.get( place ) match {
 	  case sv @ Some( value ) => {
 	    _labelMap -= place
-	    sv
+	    next( sv )
 	  }
 	  case None => {
 	    reset {
@@ -525,7 +525,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		)
 	      )
 	      rslt match {
-		case Some( _ ) =>	next( rslt )
+		case Some( _ ) => next( rslt )
 		case nv @ _ => nv
 	      }
 	    }
