@@ -615,19 +615,22 @@ extends MJStrMsgs(
   IDVendor.getUUID()
 ) 
 {
-  val srcIPStr = "10.0.1.5"
-  val trgtIPStr = "10.0.1.9"
+  implicit val srcIPStr = "10.0.1.5"
+  implicit val trgtIPStr = "10.0.1.9"
 
   implicit def strToURI( ipStr : String ) : URI = {
     new URI( "agent", ipStr, "/invitation", "" )
   }
 
-  val junq =
-    new TheMJStrMsgs.InMemoryMonadicJunction(
-      srcIPStr,
-      List( trgtIPStr )
-    )
+  def junq( implicit src : String, trgt : String ) = {
+    val junq = 
+      new TheMJStrMsgs.InMemoryMonadicJunction(
+	src,
+	List( trgt )
+      )
+    junq.agentTwistedPairs // activate the twisted pairs
+    junq
+  }
 
-  val atps = junq.agentTwistedPairs
 }
 
