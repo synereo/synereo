@@ -281,6 +281,14 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	  ) => {
 	    body match {
 	      case dgreq@Msgs.MDGetRequest( path ) => {
+		reportage(
+		  (
+		    this 
+		    + "handling : "
+		    + dgreq
+		  )
+		)
+
 		val k =
 		  {
 		    ( v : Option[Resource] ) => {
@@ -292,8 +300,27 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			val smajatp : SMAJATwistedPair =
 			  atp.asInstanceOf[SMAJATwistedPair]
 
+			reportage(
+			  (
+			    this 
+			    + " returning from local get for location : "
+			    + path
+			    + "\nwith value : " 
+			    + v
+			  )
+			)
+
 			value match {
 			  case Ground( gv ) =>
+			    reportage(
+			      (
+				this 
+				+ " sending value "
+				+ v
+				+ " back "
+			      )
+			    )
+
 			    smajatp.send(
 			      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
 				path,
@@ -305,6 +332,14 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      v
 		    }
 		  }
+		reportage(
+		  (
+		    this 
+		    + "calling get locally for location : "
+		    + path
+		  )
+		)
+		get( path, k )
 	      }
 	      case dfreq@Msgs.MDFetchRequest( path ) => {
 		reportage(
