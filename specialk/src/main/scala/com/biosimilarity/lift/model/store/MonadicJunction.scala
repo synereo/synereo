@@ -624,7 +624,7 @@ extends MJStrMsgs(
 
   def junq( implicit src : String, trgt : String ) = {
     val junq = 
-      new TheMJStrMsgs.InMemoryMonadicJunction(
+      new InMemoryMonadicJunction(
 	src,
 	List( trgt )
       )
