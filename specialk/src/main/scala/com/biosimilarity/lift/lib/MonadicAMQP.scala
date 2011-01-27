@@ -80,14 +80,14 @@ trait MonadicAMQPDispatcher[T]
   ) = Generator {
     k : ( T => Unit @suspendable ) =>
       //shift {	
-	reportage(
+	blog(
 	  "The rabbit is running... (with apologies to John Updike)"
 	)
 
 	for( channel <- acceptConnections( params, host, port ) ) {
 	  spawn {
 	    // Open bracket
-	    reportage( "Connected: " + channel )
+	    blog( "Connected: " + channel )
 	    val ticket = channel.accessRequest( "/data" ) 
 	    channel.exchangeDeclare( ticket, "mult", "direct" )
 	    channel.queueDeclare( ticket, "mult_queue" )
@@ -95,7 +95,6 @@ trait MonadicAMQPDispatcher[T]
 	  
 	    for ( t <- readT( channel, ticket ) ) { k( t ) }
 
-	    // reportage( "Disconnected: " + channel )
 	    // Close bracket
 	  }
 	}
@@ -106,7 +105,7 @@ trait MonadicAMQPDispatcher[T]
     Generator {
       k : ( Payload => Unit @suspendable) =>
 
-      reportage("level 1 callbacks")
+      blog("level 1 callbacks")
 
       shift {
 	outerk : (Unit => Any) =>
@@ -120,18 +119,18 @@ trait MonadicAMQPDispatcher[T]
 	       body : Array[Byte]
 	     ) {
     		 spawn { 
-  		   reportage("before continuation in callback")
+  		   blog("before continuation in callback")
   		
     		   k( AMQPDelivery( tag, env, props, body ) )
     		
-    		   reportage("after continuation in callback")
+    		   blog("after continuation in callback")
     		   
 		   outerk()
     		 }
     	     }
 	   }
   	
-  	reportage("before registering callback")
+  	blog("before registering callback")
   	
 	channel.basicConsume(
 	  ticket,
@@ -140,7 +139,7 @@ trait MonadicAMQPDispatcher[T]
 	  TheRendezvous
 	)
   	
-  	reportage("after registering callback")
+  	blog("after registering callback")
   	// stop
       }
     }
@@ -170,7 +169,7 @@ trait MonadicAMQPDispatcher[T]
 		shift { k : ( Unit => Unit ) => k() }
   	      }
   	  
-  	      reportage( "readT returning" )
+  	      blog( "readT returning" )
   	      outerk()
 	    }
 	}
@@ -323,7 +322,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 	  new JettisonMappedXmlDriver()
 	).toXML( contents )	
 
-      reportage(
+      tweet(
 	(
 	  this 
 	  + " is sending "

@@ -50,13 +50,13 @@ trait MonadicGenerators {
 	  outerK : ( Unit => Unit ) =>
 	    reset {
 	      for( elem <- strmGenerator ) {
-		reportage( "calling conversion on elem " + elem )
+		tweet( "calling conversion on elem " + elem )
 		val trgtElem = cnvrtr( elem )
-		reportage( "calling handler on converted elem " + elem )
+		tweet( "calling handler on converted elem " + elem )
 		k( trgtElem )
 	      }
 	      
-	      reportage( "mapStream returning" )
+	      blog( "mapStream returning" )
   	      outerK()
 	    }
 	}
@@ -85,9 +85,9 @@ trait MonadicConcurrentGenerators {
 	      reset {
 		for( g <- gen ) {
 		  spawn {
-		    reportage( "before continuation in spawn gen" )
+		    blog( "before continuation in spawn gen" )
 		    k( g )
-		    reportage( "after continuation in spawn gen" )
+		    blog( "after continuation in spawn gen" )
 		    outerK()
 		  }
 		}
@@ -114,11 +114,11 @@ trait MonadicWireToTrgtConversion
 	  outerK : ( Unit => Unit ) =>
 	    reset {
 	      for( msg <- mapStream[Wire,Trgt]( msgGenerator, wire2Trgt ) ) {		
-		reportage( "calling dispatch " )
+		blog( "calling dispatch " )
 		k( msg )
 	      }
 
-	      reportage( "dispatch returning" )
+	      blog( "dispatch returning" )
   	      outerK()
 	    }
 	}
@@ -134,8 +134,6 @@ with FJTaskRunners {
   type Ticket
   type ConnectionParameters
   type Payload  
-
-  //val reportage = report( Twitterer() ) _
 
   def acceptConnections(
     params : ConnectionParameters,
