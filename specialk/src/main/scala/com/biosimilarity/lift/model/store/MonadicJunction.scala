@@ -18,6 +18,7 @@ import scala.collection.Map
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Stack
 import scala.actors.Actor
 import scala.actors.Actor._
 
@@ -559,6 +560,207 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       get( Nil )( path, next )    
     }
   }
+
+  class MonadicJoin[MsgT, PlaceT <: CnxnCtxtLabel[Namespace,Var,Tag]](
+    override val name : URI,
+    override val acquaintances : Seq[URI]
+  ) extends InMemoryMonadicJunction(
+    name,
+    acquaintances
+  ) {
+
+    case class Waiting(
+      path : CnxnCtxtLabel[Namespace,Var,Tag],
+      wk : GetContinuation
+    ) extends Resource
+    with Function1[Option[Resource],Option[Resource]] {
+      override def apply( or : Option[Resource] ) : Option[Resource] = {
+	wk( or )
+      }
+    }
+
+    case class Rejoin(
+      path : CnxnCtxtLabel[Namespace,Var,Tag],
+      rsrc : Option[Resource],
+      soln : Option[Solution[String]]
+    ) extends Resource
+
+    case class PartialResult(
+      fulfilled : TMap[Namespace,Var,Tag,Value],
+      outstanding : TMap[Namespace,Var,Tag,Value]
+    ) extends Resource
+
+    override def put(
+      path : CnxnCtxtLabel[Namespace,Var,Tag],
+      resource : Resource
+    ) : Unit = {    
+      for( placeNSoln <- places( path, Output ) ) {
+	val ( place, soln ) = placeNSoln
+	_waiters.get( place ) match {
+	  case Some( k :: ks ) => {
+	    _waiters( place ) = ks
+	    val ans =
+	      k match {
+		case Waiting( p, _ ) => {
+		  Rejoin( p, Some( resource ), soln )
+		}
+		case _ => {
+		  RBound( Some( resource ), soln )
+		}
+	      }
+	    k( Some( ans ) )
+	  }
+	  case Some( Nil ) => {
+	    _labelMap( place ) = resource
+	  }
+	  case None => {
+	    _labelMap( place ) = resource
+	  }	
+	}
+      }
+    }
+
+    def join( hops : List[URI] )(
+      asks : Generator[PlaceT,Unit,Unit],
+      fulfilled : TMap[Namespace,Var,Tag,Value],
+      outstanding : TMap[Namespace,Var,Tag,Value]
+    ) = 
+      Generator {
+	k : ( Option[Resource] => Unit @suspendable ) =>
+	  shift {
+	    outerK : ( Unit => Unit ) =>
+	      reset {
+		for ( ask <- asks ) {
+		  val oRsrc =
+		    reset {
+		      val rslt : Option[Resource] =
+			shift {
+			  ( wk : GetContinuation ) => {		  
+			    reportage(
+			      (
+				this
+				+ " storing continuation "
+				+ wk + " to wait for values "
+				+ asks
+			      )
+			    )
+			    
+			    val stillWaiting = Waiting( ask, wk )
+			    
+			    outstanding( ask ) = stillWaiting
+			    
+			    _waiters( ask ) =
+			      _waiters.get( ask )
+			    .getOrElse( Nil ) ++ List( stillWaiting )
+			    
+			    forwardGet( hops, ask )
+			    
+			    stillWaiting(
+			      Some(
+				PartialResult( fulfilled, outstanding )
+			      )
+			    )
+			  }		  		  
+			}
+		      
+		      reportage(
+			(
+			  this
+			  + " resuming with value : "
+			  + rslt
+			)
+		      )
+		      
+		      rslt match {
+			case Some( PartialResult( _, _ ) ) => rslt
+			case Some( Rejoin( p, rsrc, soln ) ) => {
+			  fulfilled( p ) = RBound( rsrc, soln )
+			  outstanding -= p
+			  if ( outstanding.isEmpty ) {
+			    Some( RMap( fulfilled ) )
+			  }
+			  else {		
+			    Some( PartialResult( fulfilled, outstanding ) )
+			  }
+			}		
+			case Some( _ ) => rslt
+			case _ => rslt
+		      }
+		    }
+
+		  k( oRsrc )
+		}
+
+		reportage( "join returning" )
+		outerK()
+	      }
+	  }
+      }
+
+    def serve( hops : List[URI] )(
+      placePatterns : Seq[PlaceT] // TODO replace with Generator which
+				  // implies adding flatMap to Generator
+    ) = Generator {
+      k : ( Option[Resource] => Unit @suspendable ) =>
+	reportage(
+	  "Agent is serving now... "
+	)
+      val locations =
+	placePatterns.flatMap(
+	  ( plptn ) => places( plptn, Input )
+	)
+
+      val fulfilled = new TMap[Namespace,Var,Tag,Value]()
+      val outstanding = new TMap[Namespace,Var,Tag,Value]()
+      
+      val ( asksNVals, answersNVals ) =
+	locations.partition(
+	  ( placeNVal ) => {
+	    val ( l, _ ) = placeNVal
+	    _labelMap.get( l ) match {
+	      case Some( v ) => {
+		// consume the value from the _labelMap
+		_labelMap -= l
+		// and cache it for the time when we have
+		// all the values
+		fulfilled( l ) = v
+		false
+	      }
+	      case None => {		
+		// sadly or not we cannot mark the outstanding place
+		// until we have the continuation
+		true
+	      }
+	    }
+	  }
+	)
+
+      val asks = asksNVals.unzip._1
+
+      asks match {
+	case a :: rasks => {	  	  
+	  val askItr = asks.iterator
+	  val gen =
+	    Generator {
+	      gk : ( PlaceT => Unit @suspendable ) =>
+		
+		while( askItr.hasNext ) {
+		  gk( askItr.next.asInstanceOf[PlaceT] )
+		}
+	    }
+	  for( j <- join( hops )( gen, fulfilled, outstanding ) ) {
+	    k( j )
+	  }
+	}
+	case Nil => {
+	  k( Some( RMap( fulfilled ) ) )
+	}
+      }      
+    }
+
+    
+  }
+  
 }
 
 object MonadicMsgJunction
