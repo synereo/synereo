@@ -561,7 +561,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
   }
 
-  class MonadicJoin[MsgT, PlaceT <: CnxnCtxtLabel[Namespace,Var,Tag]](
+  class MonadicJoin[PlaceT <: CnxnCtxtLabel[Namespace,Var,Tag]](
     override val name : URI,
     override val acquaintances : Seq[URI]
   ) extends InMemoryMonadicJunction(
