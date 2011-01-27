@@ -688,6 +688,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      }
 		    }
 
+		  reportage( "join resuming with result: " + oRsrc )
+
 		  k( oRsrc )
 		}
 
