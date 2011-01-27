@@ -61,6 +61,39 @@ trait MonadicGenerators {
 	    }
 	}
     }
+
+  def itergen[T]( coll : Iterable[T] ) = 
+    Generator {
+      gk : ( T => Unit @suspendable ) =>
+	val collItr = coll.iterator
+
+	while( collItr.hasNext ) {
+	  gk( collItr.next.asInstanceOf[T] )
+	}
+    }
+}
+
+trait MonadicConcurrentGenerators {
+  self : MonadicGenerators with FJTaskRunners with WireTap with Journalist =>
+    def spawnGen[T]( 
+      gen : Generator[T,Unit,Unit]
+    ) =
+      Generator {
+	k : ( T => Unit @suspendable ) =>
+	  shift {
+	    outerK : ( Unit => Unit ) =>
+	      reset {
+		for( g <- gen ) {
+		  spawn {
+		    reportage( "before continuation in spawn gen" )
+		    k( g )
+		    reportage( "after continuation in spawn gen" )
+		    outerK()
+		  }
+		}
+	      }
+	  }
+      }
 }
 
 trait MonadicWireToTrgtConversion 

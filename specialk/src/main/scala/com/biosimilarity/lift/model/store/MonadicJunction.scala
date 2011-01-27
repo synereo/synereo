@@ -14,6 +14,8 @@ import com.biosimilarity.lift.lib._
 import net.liftweb.amqp._
 
 import scala.util.continuations._ 
+import scala.concurrent.{Channel => Chan, _}
+import scala.concurrent.cpsops._
 import scala.collection.Map
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
@@ -567,7 +569,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   ) extends InMemoryMonadicJunction(
     name,
     acquaintances
-  ) {
+  ) with FJTaskRunners
+  with MonadicConcurrentGenerators {
 
     case class Waiting(
       path : CnxnCtxtLabel[Namespace,Var,Tag],
@@ -740,17 +743,12 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       val asks = asksNVals.unzip._1
 
       asks match {
-	case a :: rasks => {	  	  
-	  val askItr = asks.iterator
-	  val gen =
-	    Generator {
-	      gk : ( PlaceT => Unit @suspendable ) =>
-		
-		while( askItr.hasNext ) {
-		  gk( askItr.next.asInstanceOf[PlaceT] )
-		}
-	    }
-	  for( j <- join( hops )( gen, fulfilled, outstanding ) ) {
+	case a :: rasks => {	  	  	  	  
+	  for(
+	    j <- spawnGen[Option[Resource]](
+	      join( hops )( itergen( asks.asInstanceOf[Iterable[PlaceT]] ), fulfilled, outstanding )
+	    )
+	  ) {
 	    k( j )
 	  }
 	}
