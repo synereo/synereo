@@ -758,7 +758,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }      
     }
 
-    
   }
   
 }
