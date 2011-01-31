@@ -103,7 +103,7 @@ extends MonadicGenerators with FJTaskRunners
   }
 
   // val reportage = report( Luddite() ) _
-  def mget[K](
+  def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]]
   )( ptn : Pattern )
