@@ -26,14 +26,27 @@ extends MonadicGenerators with FJTaskRunners
 
   type RK = Option[Resource] => Unit @suspendable
   //type CK = Option[Resource] => Unit @suspendable
+  type Substitution <: Function1[Resource,Option[Resource]]
+
+  case class IdentitySubstitution( )
+       extends Function1[Resource,Option[Resource]] {
+	 override def apply( rsrc : Resource ) = Some( rsrc )
+       }
+
+  case class PlaceInstance(
+    place : Place,
+    stuff : Either[Resource,List[RK]],
+    subst : Substitution
+  )
 
   def theMeetingPlace : Map[Place,Resource]
   def theChannels : Map[Place,Resource]
   def theWaiters : Map[Place,List[RK]]
   def theSubscriptions : Map[Place,List[RK]]
 
-  def matches( ptn : Pattern, place : Place ) : Boolean
-  def representative( ptn : Pattern ) : Place
+  def fits( ptn : Pattern, place : Place ) : Boolean
+  def fitsK( ptn : Pattern, place : Place ) : Option[Substitution]
+  def representative( ptn : Pattern ) : Place  
 
   //def self = theMeetingPlace
 
@@ -47,9 +60,50 @@ extends MonadicGenerators with FJTaskRunners
 	}
     }
   
+  def locations(
+    map : Either[Map[Place,Resource],Map[Place,List[RK]]],
+    ptn : Pattern
+  ) : List[PlaceInstance] = {
+    def lox[Trgt,ITrgt](
+      m : Map[Place,Trgt],
+      inj : Trgt => ITrgt
+    ) : List[(Place,ITrgt,Substitution)]
+    = {
+      ( ( Nil : List[(Place,ITrgt,Substitution)] ) /: m )( 
+	{ 
+	  ( acc, kv ) => {
+	    val ( k, v ) = kv
+	    fitsK( ptn, k ) match {
+	      case Some( s ) => acc ++ List[(Place,ITrgt,Substitution)]( ( k, inj( v ), s ) )
+	      case None => acc
+	    }
+	  }
+	}
+      )
+    }
+    val triples =
+      map match {
+	case Left( m ) => {
+	  lox[Resource,Either[Resource,List[RK]]](
+	    m, ( r ) => Left[Resource,List[RK]]( r )
+	  )
+	}
+	case Right( m ) => {
+	  lox[List[RK],Either[Resource,List[RK]]](
+	    m, ( r ) => Right[Resource,List[RK]]( r )
+	  )
+	}
+      }
+    triples.map(
+      ( t ) => { 
+	val ( p, e, s ) = t
+	PlaceInstance( p, e, s )
+      }
+    )
+  }
 
   // val reportage = report( Luddite() ) _
-  def mget(
+  def mget[K](
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]]
   )( ptn : Pattern )
@@ -59,10 +113,8 @@ extends MonadicGenerators with FJTaskRunners
 	shift {
 	  outerk : ( Unit => Unit ) =>
 	    reset {
-	      val meets =
-		channels.filter(
-		  ( kv ) => { val ( k, _ ) = kv; matches( ptn, k ) }
-		).toList
+	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
+	      val meets = locations( map, ptn )
 
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
@@ -73,15 +125,15 @@ extends MonadicGenerators with FJTaskRunners
 	      }
 	      else {
 		for(
-		  placeNRrsc <- itergen[(Place,Resource)](
-		    channels
+		  placeNRrscNSubst <- itergen[PlaceInstance](
+		    meets
 		  )
 		) {
-		  val ( place, rsrc ) = placeNRrsc
+		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
 		  tweet( "found a resource: " + rsrc )		  
 		  channels -= place
-		  rk( Some( rsrc ) )
+		  rk( s( rsrc ) )
 		  
 		  //shift { k : ( Unit => Unit ) => k() }
 		}
@@ -103,18 +155,18 @@ extends MonadicGenerators with FJTaskRunners
     ptn : Pattern,
     rsrc : Resource
   )
-  : Generator[Place,Unit,Unit] = {    
+  : Generator[PlaceInstance,Unit,Unit] = {    
     Generator {
-      k : ( Place => Unit @suspendable ) => 
+      k : ( PlaceInstance => Unit @suspendable ) => 
 	// Are there outstanding waiters at this pattern?    
-	val waitlist =
-	  registered.keys.filter( ( k ) => matches( ptn, k ) ).toList
+	val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
+	val waitlist = locations( map, ptn )
 
 	waitlist match {
 	  // Yes!
 	  case waiter :: waiters => {
 	    tweet( "found waiters waiting for a value at " + ptn )
-	    val itr = waitlist.toList.iterator
+	    val itr = waitlist.toList.iterator	    
 	    while( itr.hasNext ) {
 	      k( itr.next )
 	    }
@@ -134,21 +186,21 @@ extends MonadicGenerators with FJTaskRunners
     registered : Map[Place,List[RK]],
     publish : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
-    for( wtr <- putPlaces( channels, registered, ptn, rsrc ) ) {
-      val Some( rks ) = registered.get( wtr )
+    for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
+      val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
       tweet( "waiters waiting for a value at " + wtr + " : " + rks )
       rks match {
 	case rk :: rrks => {	
 	  if ( publish ) {
 	    for( sk <- rks ) {
 	      spawn {
-		sk( Some( rsrc ) )
+		sk( s( rsrc ) )
 	      }
 	    }
 	  }
 	  else {
 	    registered( wtr ) = rrks
-	    rk( Some( rsrc ) )
+	    rk( s( rsrc ) )
 	  }
 	}
 	case Nil => {
@@ -173,6 +225,9 @@ object MonadicTSpace
        with WireTap
        with Journalist
 {
+
+  override type Substitution = IdentitySubstitution
+
   override val theMeetingPlace = new HashMap[String,String]()
   override val theChannels = new HashMap[String,String]()
   override val theWaiters = new HashMap[String,List[RK]]()
@@ -186,8 +241,20 @@ object MonadicTSpace
     ptn
   }
 
-  def matches( ptn : String, place : String ) : Boolean = {
+  def fits( ptn : String, place : String ) : Boolean = {
     RegexPtn.matches( ptn, place ) || RegexPtn.matches( place, ptn )
+  }
+
+  def fitsK(
+    ptn : String,
+    place : String
+  ) : Option[Substitution] = {
+    if ( fits( ptn, place ) ) {
+      Some( IdentitySubstitution() )
+    }
+    else {
+      None
+    }
   }
   
 }
