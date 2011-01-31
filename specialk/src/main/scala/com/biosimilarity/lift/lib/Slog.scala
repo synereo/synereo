@@ -52,9 +52,9 @@ trait Journalist {
   def markUp[A]( verb : Verbosity)( fact : A ) =
     TaggedFact( verb, fact )
 
-  def asTweet[A]( fact : A ) = markUp[A]( TheTwitterer ) _
-  def asBlog[A]( fact : A ) = markUp[A]( TheBlogger ) _
-  def asSilence[A]( fact : A ) = markUp[A]( TheLuddite ) _
+  def asTweet[A]( fact : A ) = markUp[A]( TheTwitterer )( fact )
+  def asBlog[A]( fact : A ) = markUp[A]( TheBlogger )( fact )
+  def asSilence[A]( fact : A ) = markUp[A]( TheLuddite )( fact )
 
   def tweet[A]( fact : A ) = report( TheTwitterer )( asTweet( fact ) )
   def blog[A]( fact : A ) = report( TheBlogger )( asTweet( fact ) )
