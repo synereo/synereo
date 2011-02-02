@@ -105,7 +105,8 @@ extends MonadicGenerators with FJTaskRunners
   // val reportage = report( Luddite() ) _
   def mget(
     channels : Map[Place,Resource],
-    registered : Map[Place,List[RK]]
+    registered : Map[Place,List[RK]],
+    consume : Boolean
   )( ptn : Pattern )
   : Generator[Option[Resource],Unit,Unit] =
     Generator {
@@ -132,7 +133,9 @@ extends MonadicGenerators with FJTaskRunners
 		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
 		  tweet( "found a resource: " + rsrc )		  
-		  channels -= place
+		  if ( consume ) {
+		    channels -= place
+		  }
 		  rk( s( rsrc ) )
 		  
 		  //shift { k : ( Unit => Unit ) => k() }
@@ -145,9 +148,11 @@ extends MonadicGenerators with FJTaskRunners
     }
 
   def get( ptn : Pattern ) =
-    mget( theMeetingPlace, theWaiters )( ptn )
+    mget( theMeetingPlace, theWaiters, true )( ptn )
+  def fetch( ptn : Pattern ) =
+    mget( theMeetingPlace, theWaiters, false )( ptn )
   def subscribe( ptn : Pattern ) =
-    mget( theChannels, theSubscriptions )( ptn )
+    mget( theChannels, theSubscriptions, true )( ptn )
 
   def putPlaces(
     channels : Map[Place,Resource],
@@ -184,14 +189,14 @@ extends MonadicGenerators with FJTaskRunners
   def mput(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
-    publish : Boolean
+    consume : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
     for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
       tweet( "waiters waiting for a value at " + wtr + " : " + rks )
       rks match {
 	case rk :: rrks => {	
-	  if ( publish ) {
+	  if ( consume ) {
 	    for( sk <- rks ) {
 	      spawn {
 		sk( s( rsrc ) )
