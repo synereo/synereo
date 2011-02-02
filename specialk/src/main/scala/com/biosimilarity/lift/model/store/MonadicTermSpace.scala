@@ -293,6 +293,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion
   with MonadicGenerators {
+    override def toString() : String = {
+      name + " -> " + acquaintances
+    }
+
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
 
@@ -300,17 +304,21 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
 
-    def forwardGet( hops : List[URI], path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
+    def forwardGet(
+      hops : List[URI],
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Unit = {
+
+      reportage(
+	( this + " in forwardGet with hops: " + hops )
+      )
+      
       for(
 	( uri, jsndr ) <- agentTwistedPairs
 	if !hops.contains( uri )
       ) {
 	reportage(
-	  (
-	    this
-	    + " forwarding to "
-	    + uri
-	  )
+	  ( this + " forwarding to " + uri )
 	)
 	val smajatp : SMAJATwistedPair =
 	  jsndr.asInstanceOf[SMAJATwistedPair]
@@ -355,7 +363,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	      )
 	    }
 	    case Msgs.MDFetchRequest( path ) => {
-	      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
+	      Msgs.MDFetchResponse[Namespace,Var,Tag,Value](
 		path,
 		gv
 	      )
