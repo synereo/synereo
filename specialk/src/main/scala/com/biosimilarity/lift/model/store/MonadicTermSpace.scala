@@ -567,7 +567,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( Nil )( theMeetingPlace, theWaiters, true )( path )    
+      mget( hops )( theMeetingPlace, theWaiters, true )( path )    
     }
 
     override def get(
@@ -581,7 +581,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( Nil )( theMeetingPlace, theWaiters, false )( path )    
+      mget( hops )( theMeetingPlace, theWaiters, false )( path )    
     }
 
     override def fetch(
