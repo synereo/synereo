@@ -66,6 +66,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 
     def db : Database
     def xmlCollStr : String
+    def queryServiceType : String = "XQueryService"
+    def queryServiceVersion : String = "1.0"
     def toFile( ptn : mTT.GetRequest ) : Option[File]
     def query( ptn : mTT.GetRequest ) : Option[String]
   }
@@ -352,7 +354,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     }
   }
 
-  class InMemoryMonadicGeneratorJunction(
+  class DistributedMonadicGeneratorJunction(
     override val name : URI,
     override val acquaintances : Seq[URI]
   ) extends MonadicGeneratorJunction(
@@ -691,6 +693,166 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       subscribe( Nil )( path )    
     }
   }
+
+  trait KVTrampoline {
+    def kvNameSpace : Namespace
+    def asValue(
+      rsrc : mTT.Resource
+    ) : CnxnCtxtLeaf[Namespace,Var,Tag]
+    def asKey(
+      key : mTT.GetRequest
+    ) : mTT.GetRequest with Factual = {
+      key match {
+	case leaf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
+	  leaf
+	case branch : CnxnCtxtBranch[Namespace,Var,Tag] =>
+	  branch
+      }
+    }
+
+    def asRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : mTT.GetRequest with Factual = {
+      new CnxnCtxtBranch[Namespace,Var,Tag](
+	kvNameSpace,
+	List( asKey( key ), asValue( value ) )
+      )
+    }
+    def persistenceDescriptor : Option[PersistenceDescriptor]
+    }
+
+  abstract class PersistedtedMonadicGeneratorJunction(
+    override val name : URI,
+    override val acquaintances : Seq[URI]
+  ) extends DistributedMonadicGeneratorJunction(
+    name,
+    acquaintances
+  ) with KVTrampoline {    
+    def mput( persist : Option[PersistenceDescriptor] )(
+      channels : Map[mTT.GetRequest,mTT.Resource],
+      registered : Map[mTT.GetRequest,List[RK]],
+      consume : Boolean
+    )( ptn : mTT.GetRequest, rsrc : mTT.Resource ) : Unit @suspendable = {    
+      for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
+	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
+	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+	rks match {
+	  case rk :: rrks => {	
+	    if ( consume ) {
+	      for( sk <- rks ) {
+		spawn {
+		  sk( s( rsrc ) )
+		}
+	      }
+	    }
+	    else {
+	      registered( wtr ) = rrks
+	      rk( s( rsrc ) )
+	    }
+	  }
+	  case Nil => {
+	    persist match {
+	      case None => {
+		channels( wtr ) = rsrc	  
+	      }
+	      case Some( pd ) => {
+		store( pd.xmlCollStr )( asRecord( ptn, rsrc ) )
+	      }
+	    }
+	  }
+	}
+      }
+      
+    }
+    def mget(
+      persist : Option[PersistenceDescriptor],
+      ask : Ask,
+      hops : List[URI]
+    )(
+      channels : Map[mTT.GetRequest,mTT.Resource],
+      registered : Map[mTT.GetRequest,List[RK]],
+      consume : Boolean
+    )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      Generator {
+	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+	  shift {
+	    outerk : ( Unit => Unit ) =>
+	      reset {
+		for(
+		  oV <- mget( channels, registered, consume )( path ) 
+		) {
+		  oV match {
+		    case None => {
+		      persist match {
+			case None => {
+			  forward( ask, hops, path )
+			  rk( oV )
+			}
+			case Some( pd ) => {
+			  for(
+			    qry <- pd.query( path );
+			    xmlColl <- getCollection( true )( pd.xmlCollStr )
+			  ) {
+			    val srvc : Service =
+			      getQueryService( xmlColl )(
+				pd.queryServiceType,
+				pd.queryServiceVersion
+			      );
+
+			    execute( xmlColl )( srvc )( qry )
+			  }
+			  rk( oV )
+			}
+		      }		      
+		    }
+		    case _ => rk( oV )
+		  }
+		}
+	      }
+	  }
+      }
+    }
+    
+    override def put( ptn : mTT.GetRequest, rsrc : mTT.Resource ) =
+      mput( persistenceDescriptor )(
+	theMeetingPlace, theWaiters, false
+      )( ptn, rsrc )
+    override def publish( ptn : mTT.GetRequest, rsrc : mTT.Resource ) =
+      mput( persistenceDescriptor )(
+	theChannels, theSubscriptions, true
+      )( ptn, rsrc )
+
+    override def get( hops : List[URI] )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      mget( persistenceDescriptor, AGet, hops )(
+	theMeetingPlace, theWaiters, true
+      )( path )    
+    }
+
+    override def fetch( hops : List[URI] )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      mget( persistenceDescriptor, AFetch, hops )(
+	theMeetingPlace, theWaiters, false
+      )( path )    
+    }
+
+    override def subscribe( hops : List[URI] )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      mget( persistenceDescriptor, ASubscribe, hops )(
+	theChannels, theSubscriptions, true
+      )( path )    
+    }
+  }
 }
 
 object MonadicTS
@@ -729,7 +891,7 @@ object MonadicTS
     
     lazy val Mona = new MonadicTermStore()
     def Imma( a : String, b : String )  =
-      new InMemoryMonadicGeneratorJunction( a, List( b ) )
+      new DistributedMonadicGeneratorJunction( a, List( b ) )
     
     type MsgTypes = DTSMSH[String,String,String,String]   
     
