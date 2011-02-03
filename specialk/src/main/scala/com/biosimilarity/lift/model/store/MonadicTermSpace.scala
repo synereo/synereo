@@ -682,15 +682,17 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 		)
 		// remove this line to force to db on get
 		channels( wtr ) = rsrc	  
-		val rcrd = asRecord( ptn, rsrc )
-		tweet(
-		  (
-		    "storing to db : " + pd.db
-		    + " pair : " + rcrd
-		    + " in coll : " + pd.xmlCollStr( cnxn )
+		spawn {
+		  val rcrd = asRecord( ptn, rsrc )
+		  tweet(
+		    (
+		      "storing to db : " + pd.db
+		      + " pair : " + rcrd
+		      + " in coll : " + pd.xmlCollStr( cnxn )
+		    )
 		  )
-		)
-		store( pd.xmlCollStr( cnxn ) )( rcrd )
+		  store( pd.xmlCollStr( cnxn ) )( rcrd )
+		}
 	      }
 	    }
 	  }
@@ -729,29 +731,46 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 			  tweet(
 			    "accessing db : " + pd.db
 			  )
-			  for(
-			    qry <- pd.query( path );
-			    xmlColl <- getCollection(
-			      true
-			    )( pd.xmlCollStr( cnxn ) )
-			  ) {
-			    val srvc : Service =
-			      getQueryService( xmlColl )(
-				pd.queryServiceType,
-				pd.queryServiceVersion
-			      );
-			    tweet(
-			      (
-				"querying db : " + pd.db
-				+ " from coll " + pd.xmlCollStr( cnxn )
-				+ " where " + qry
-			      )
-			    )
-			    execute( xmlColl )( srvc )( qry )
+			  val query = pd.query( path )
+			  query match {
+			    case None => {
+			      forward( ask, hops, path )
+			    }
+			    case Some( qry ) => {
+			      spawn {
+				for(			    
+				  xmlColl <- getCollection(
+				    true
+				  )( pd.xmlCollStr( cnxn ) )
+				) {
+				  val srvc : Service =
+				    getQueryService( xmlColl )(
+				      pd.queryServiceType,
+				      pd.queryServiceVersion
+				    );
+				  tweet(
+				    (
+				      "querying db : " + pd.db
+				      + " from coll " + pd.xmlCollStr( cnxn )
+				      + " where " + qry
+				    )
+				  )
+				  val rsrcSet =
+				    execute( xmlColl )( srvc )( qry )
+				  if ( rsrcSet.getSize == 0 ) {
+				    forward( ask, hops, path )
+				  }
+				  else {
+				    // TBD
+				    // Need to put results
+				  }
+				}
+			      }
+			    }
+			    rk( oV )
 			  }
-			  rk( oV )
-			}
-		      }		      
+			}		      
+		      }
 		    }
 		    case _ => rk( oV )
 		  }
