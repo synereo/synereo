@@ -596,69 +596,72 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 object MonadicTS
  extends MonadicTermStoreScope[String,String,String,String] 
   with UUIDOps {
-   type MTTypes = MonadicTermTypes[String,String,String,String]
-   object TheMTT extends MTTypes
-   override def protoTermTypes : MTTypes = TheMTT
-
-   val aLabel =
-     new CnxnCtxtLeaf[String,String,String](
-       Left(
-	 "a"
-       )
-     )
-   val bLabel =
-     new CnxnCtxtLeaf[String,String,String](
-       Left(
-	 "b"
-       )
-     )
-
-   val cLabel =
-    new CnxnCtxtLeaf[String,String,String](
-      Left(
-	"c"
+    import AgentURIDefaults._
+    type MTTypes = MonadicTermTypes[String,String,String,String]
+    object TheMTT extends MTTypes
+    override def protoTermTypes : MTTypes = TheMTT
+    
+    val aLabel =
+      new CnxnCtxtLeaf[String,String,String](
+	Left(
+	  "a"
+	)
       )
-    )
-  val dLabel =
-    new CnxnCtxtLeaf[String,String,String](
-      Left(
-	"d"
+    val bLabel =
+      new CnxnCtxtLeaf[String,String,String](
+	Left(
+	  "b"
+	)
       )
-    )
-
-   lazy val Mona = new MonadicTermStore()
-
-   type MsgTypes = DTSMSH[String,String,String,String]   
-
-   val protoDreqUUID = getUUID()
-   val protoDrspUUID = getUUID()    
-  
-   object MonadicDMsgs extends MsgTypes {
-     
-     override def protoDreq : DReq = MDGetRequest( aLabel )
-     override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
-     override def protoJtsreq : JTSReq =
-       JustifiedRequest(
-	 protoDreqUUID,
-	 new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-	 new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-	 getUUID(),
-	 protoDreq,
-	 None
-       )
-     override def protoJtsrsp : JTSRsp = 
-       JustifiedResponse(
-	 protoDreqUUID,
-	 new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-	 new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-	 getUUID(),
-	 protoDrsp,
-	 None
-       )
-     override def protoJtsreqorrsp : JTSReqOrRsp =
-       Left( protoJtsreq )
-   }
-   
-   override def protoMsgs : MsgTypes = MonadicDMsgs
- }
+    
+    val cLabel =
+      new CnxnCtxtLeaf[String,String,String](
+	Left(
+	  "c"
+	)
+      )
+    val dLabel =
+      new CnxnCtxtLeaf[String,String,String](
+	Left(
+	  "d"
+	)
+      )
+    
+    lazy val Mona = new MonadicTermStore()
+    def Imma( a : String, b : String )  =
+      new InMemoryMonadicGeneratorJunction( a, List( b ) )
+    
+    type MsgTypes = DTSMSH[String,String,String,String]   
+    
+    val protoDreqUUID = getUUID()
+    val protoDrspUUID = getUUID()    
+    
+    object MonadicDMsgs extends MsgTypes {
+      
+      override def protoDreq : DReq = MDGetRequest( aLabel )
+      override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
+      override def protoJtsreq : JTSReq =
+	JustifiedRequest(
+	  protoDreqUUID,
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDreq,
+	  None
+	)
+      override def protoJtsrsp : JTSRsp = 
+	JustifiedResponse(
+	  protoDreqUUID,
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDrsp,
+	  None
+	)
+      override def protoJtsreqorrsp : JTSReqOrRsp =
+	Left( protoJtsreq )
+    }
+    
+    override def protoMsgs : MsgTypes = MonadicDMsgs
+  }
 
