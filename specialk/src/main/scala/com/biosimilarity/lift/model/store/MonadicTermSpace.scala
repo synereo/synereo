@@ -304,7 +304,13 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
 
-    def forwardGet(
+    trait Ask
+    case object AGet extends Ask
+    case object AFetch extends Ask
+    case object ASubscribe extends Ask
+
+    def forward(
+      ask : Ask,
       hops : List[URI],
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
@@ -324,7 +330,23 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	  jsndr.asInstanceOf[SMAJATwistedPair]
 	
 	smajatp.send(
-	  Msgs.MDGetRequest[Namespace,Var,Tag,Value]( path ).asInstanceOf[Msgs.DReq]
+	  ask match {
+	    case AGet => {
+	      Msgs.MDGetRequest[Namespace,Var,Tag,Value](
+		path
+	      ).asInstanceOf[Msgs.DReq]
+	    }
+	    case AFetch => {
+	      Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
+		path
+	      ).asInstanceOf[Msgs.DReq]
+	    }
+	    case ASubscribe => {
+	      Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
+		path
+	      ).asInstanceOf[Msgs.DReq]
+	    }
+	  }
 	)
       }
     }
@@ -510,7 +532,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	      reportage(
 		(
 		  this 
-		  + " returning from local fetch for location : "
+		  + " returning from local subscribe for location : "
 		  + path
 		  + "\nwith value : " + v
 		)
@@ -598,9 +620,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       }
     }
 
-    def mget( hops : List[URI] )(
-      channels :
-      Map[mTT.GetRequest,mTT.Resource],
+    def mget( ask : Ask, hops : List[URI] )(
+      channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean
     )(
@@ -617,7 +638,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 		) {
 		  oV match {
 		    case None => {
-		      forwardGet( hops, path )
+		      forward( ask, hops, path )
 		      rk( oV )
 		    }
 		    case _ => rk( oV )
@@ -632,7 +653,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( hops )( theMeetingPlace, theWaiters, true )( path )    
+      mget( AGet, hops )( theMeetingPlace, theWaiters, true )( path )    
     }
 
     override def get(
@@ -646,7 +667,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( hops )( theMeetingPlace, theWaiters, false )( path )    
+      mget( AFetch, hops )( theMeetingPlace, theWaiters, false )( path )    
     }
 
     override def fetch(
@@ -660,7 +681,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( hops )( theChannels, theSubscriptions, false )( path )    
+      mget( ASubscribe, hops )( theChannels, theSubscriptions, true )( path )    
     }
 
     override def subscribe(
