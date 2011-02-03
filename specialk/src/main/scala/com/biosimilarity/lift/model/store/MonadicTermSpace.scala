@@ -677,9 +677,20 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 		channels( wtr ) = rsrc	  
 	      }
 	      case Some( pd ) => {
+		tweet(
+		  "accessing db : " + pd.db
+		)
 		// remove this line to force to db on get
 		channels( wtr ) = rsrc	  
-		store( pd.xmlCollStr( cnxn ) )( asRecord( ptn, rsrc ) )
+		val rcrd = asRecord( ptn, rsrc )
+		tweet(
+		  (
+		    "storing to db : " + pd.db
+		    + " pair : " + rcrd
+		    + " in coll : " + pd.xmlCollStr( cnxn )
+		  )
+		)
+		store( pd.xmlCollStr( cnxn ) )( rcrd )
 	      }
 	    }
 	  }
@@ -715,6 +726,9 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 			  rk( oV )
 			}
 			case Some( pd ) => {
+			  tweet(
+			    "accessing db : " + pd.db
+			  )
 			  for(
 			    qry <- pd.query( path );
 			    xmlColl <- getCollection(
@@ -726,7 +740,13 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 				pd.queryServiceType,
 				pd.queryServiceVersion
 			      );
-
+			    tweet(
+			      (
+				"querying db : " + pd.db
+				+ " from coll " + pd.xmlCollStr( cnxn )
+				+ " where " + qry
+			      )
+			    )
 			    execute( xmlColl )( srvc )( qry )
 			  }
 			  rk( oV )
