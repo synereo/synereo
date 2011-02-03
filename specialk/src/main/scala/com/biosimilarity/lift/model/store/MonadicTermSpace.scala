@@ -341,36 +341,75 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     AnAMQPTraceMonitor
   ) {
+    def sendRsp(
+      atp : SemiMonadicAgentJSONAMQPTwistedPair[String],
+      dreq : Msgs.DReq,	
+      oGv : Option[Value]
+    ) = {
+      val smajatp : SMAJATwistedPair =
+	atp.asInstanceOf[SMAJATwistedPair]
+      
+      smajatp.send(
+	dreq match {
+	  case Msgs.MDGetRequest( path ) => {
+	    oGv match {
+	      case Some( gv ) => {
+		Msgs.MDGetResponse[Namespace,Var,Tag,Value](
+		  path,
+		  gv
+		)
+	      }
+	      case None => {
+		throw new Exception( "get must take value" )
+	      }
+	    }
+	  }
+	  case Msgs.MDFetchRequest( path ) => {
+	    oGv match {
+	      case Some( gv ) => {
+		Msgs.MDFetchResponse[Namespace,Var,Tag,Value](
+		  path,
+		  gv
+		)
+	      }
+	      case None => {
+		throw new Exception( "fetch must take value" )
+	      }
+	    }
+	  }
+	  case Msgs.MDSubscribeRequest( path ) => {
+	    oGv match {
+	      case Some( gv ) => {
+		Msgs.MDSubscribeResponse[Namespace,Var,Tag,Value](
+		  path,
+		  gv
+		)
+	      }
+	      case None => {
+		throw new Exception( "subscribe must take value" )
+	      }
+	    }
+	  }
+	  case Msgs.MDPutRequest( path, _ ) => {
+	    Msgs.MDPutResponse[Namespace,Var,Tag,Value](
+	      path
+	    )
+	  }
+	  case Msgs.MDPublishRequest( path, _ ) => {
+	    Msgs.MDPublishResponse[Namespace,Var,Tag,Value](
+	      path
+	    )
+	  }
+	}
+      )
+    }
+
     def handleValue(
       dreq : Msgs.DReq,
       oV : Option[mTT.Resource],
       msrc : URI
     ) : Unit = {
-      //tap( v )
-      def sendRsp(
-	atp : SemiMonadicAgentJSONAMQPTwistedPair[String],
-	dreq : Msgs.DReq,	
-	gv : Value
-      ) = {
-	val smajatp : SMAJATwistedPair =
-	  atp.asInstanceOf[SMAJATwistedPair]
-	smajatp.send(
-	  dreq match {
-	    case Msgs.MDGetRequest( path ) => {
-	      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
-		path,
-		gv
-	      )
-	    }
-	    case Msgs.MDFetchRequest( path ) => {
-	      Msgs.MDFetchResponse[Namespace,Var,Tag,Value](
-		path,
-		gv
-	      )
-	    }
-	  }
-	)
-      }      
+      //tap( v )            
 
       for(
 	atp <- agentTwistedPairs.get( msrc );
@@ -388,7 +427,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	      )
 	    )
 	    
-	    sendRsp( atp, dreq, gv )
+	    sendRsp( atp, dreq, Some( gv ) )
 	      
 	  }
 
@@ -399,7 +438,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	      )
 	    )
 	    
-	    sendRsp( atp, dreq, gv )
+	    sendRsp( atp, dreq, Some( gv ) )
 
 	  }
 	  case _ => {
@@ -416,90 +455,116 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       oV
     }
 
-    def handleRequest( dreq : Msgs.JTSReq ) : Unit = {
-      dreq match {
-	case JustifiedRequest( 
-	    msgId, mtrgt, msrc, lbl, body, _
-	  ) => {
-	    body match {
-	      case dgreq@Msgs.MDGetRequest( path ) => {
-		reportage( this + "handling : " + dgreq	)
-		
-		reportage(
-		  ( this + "getting locally for location : " + path )
-		)
-		reset {
-		  for( v <- get( List( msrc ) )( path ) ) {
-		    reportage(
-		      (
-			this 
-			+ " returning from local get for location : "
-			+ path
-			+ "\nwith value : " + v
-		      )
-		    )
-		    handleValue( dgreq, v, msrc )
-		  }
-		}
-	      }
+    def handleRequest( dreq : Msgs.JTSReq ) : Unit = {      
+      val JustifiedRequest( 
+	msgId, mtrgt, msrc, lbl, body, _
+      ) = dreq
 
-	      case dfreq@Msgs.MDFetchRequest( path ) => {
-		reportage( this + "handling : " + dfreq	)
-		
-		reportage(
-		  ( this + "fetching locally for location : " + path )
-		)
-		reset {
-		  for( v <- fetch( List( msrc ) )( path ) ) {
-		    reportage(
-		      (
-			this 
-			+ " returning from local fetch for location : "
-			+ path
-			+ "\nwith value : " + v
-		      )
-		    )
-		    handleValue( dfreq, v, msrc )
-		  }
-		}
-	      }
+      reportage( this + "handling : " + dreq	)
 
-	      case dpreq@Msgs.MDPutRequest( path, value ) => {	
-		reportage( this + "handling : " + dpreq	)		
-		reset { put( path, mTT.Ground( value ) ) }
-	      }
-	    }
-	  }
-      }
-    }
-
-    def handleResponse( drsp : Msgs.JTSRsp ) : Unit = {
-      drsp match {
-	case JustifiedResponse( 
-	  msgId, mtrgt, msrc, lbl, body, _
-	) => {
-	  body match {
-	    case Msgs.MDGetResponse( path, value ) => {
-	      reset { put( path, mTT.Ground( value ) ) }
-	    }
-	    case Msgs.MDFetchResponse( path, value ) => {
-	      reset { put( path, mTT.Ground( value ) ) }
-	    }
-	    case dput : Msgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
-	    }
-	    case _ => {
+      body match {
+	case dgreq@Msgs.MDGetRequest( path ) => {	  
+	  reportage(
+	    ( this + "getting locally for location : " + path )
+	  )
+	  reset {
+	    for( v <- get( List( msrc ) )( path ) ) {
 	      reportage(
 		(
 		  this 
-		  + " handling unexpected message : " + body
+		  + " returning from local get for location : "
+		  + path
+		  + "\nwith value : " + v
 		)
 	      )
+	      handleValue( dgreq, v, msrc )
 	    }
+	  }
+	}
+	
+	case dfreq@Msgs.MDFetchRequest( path ) => {
+	  reportage(
+	    ( this + "fetching locally for location : " + path )
+	  )
+	  reset {
+	    for( v <- fetch( List( msrc ) )( path ) ) {
+	      reportage(
+		(
+		  this 
+		  + " returning from local fetch for location : "
+		  + path
+		  + "\nwith value : " + v
+		)
+	      )
+	      handleValue( dfreq, v, msrc )
+	    }
+	  }
+	}
+
+	case dsreq@Msgs.MDSubscribeRequest( path ) => {
+	  reportage(
+	    ( this + "fetching locally for location : " + path )
+	  )
+	  reset {
+	    for( v <- subscribe( List( msrc ) )( path ) ) {
+	      reportage(
+		(
+		  this 
+		  + " returning from local fetch for location : "
+		  + path
+		  + "\nwith value : " + v
+		)
+	      )
+	      handleValue( dsreq, v, msrc )
+	    }
+	  }
+	}
+	
+	case dpreq@Msgs.MDPutRequest( path, value ) => {	
+	  reset { put( path, mTT.Ground( value ) ) }
+	  for( atp <- agentTwistedPairs.get( msrc ) ) {
+	    sendRsp( atp, dpreq, None )
+	  }
+	}
+	case dpbreq@Msgs.MDPublishRequest( path, value ) => {	
+	  reset { publish( path, mTT.Ground( value ) ) }
+	  for( atp <- agentTwistedPairs.get( msrc ) ) {
+	    sendRsp( atp, dpbreq, None )
 	  }
 	}
       }
     }
+    
+    def handleResponse( drsp : Msgs.JTSRsp ) : Unit = {      
+      val JustifiedResponse( 
+	  msgId, mtrgt, msrc, lbl, body, _
+      ) = drsp
 
+      body match {
+	case Msgs.MDGetResponse( path, value ) => {
+	  reset { put( path, mTT.Ground( value ) ) }
+	}
+	case Msgs.MDFetchResponse( path, value ) => {
+	  reset { put( path, mTT.Ground( value ) ) }
+	}
+	case Msgs.MDSubscribeResponse( path, value ) => {
+	  reset { publish( path, mTT.Ground( value ) ) }
+	}
+	case dput : Msgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
+	}
+	case dpub : Msgs.MDPublishResponse[Namespace,Var,Tag,Value] => {	
+	}
+	case _ => {
+	  reportage(
+	    (
+	      this 
+	      + " handling unexpected message : " + body
+	    )
+	  )
+	}
+      }
+    }
+    
     def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit = {
       dmsg match {
 	case Left(
@@ -589,6 +654,20 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       fetch( Nil )( path )    
+    }
+
+    def subscribe( hops : List[URI] )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      mget( hops )( theChannels, theSubscriptions, false )( path )    
+    }
+
+    override def subscribe(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      subscribe( Nil )( path )    
     }
   }
 }

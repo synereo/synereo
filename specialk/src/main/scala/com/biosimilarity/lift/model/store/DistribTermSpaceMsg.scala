@@ -75,7 +75,14 @@ trait DTSMSH[Namespace,Var,Tag,Value] {
   case class MDFetchRequest[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag]
   ) extends MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+  case class MDSubscribeRequest[Namespace,Var,Tag,Value](
+    path : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) extends MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
   case class MDPutRequest[Namespace,Var,Tag,Value](
+    path : CnxnCtxtLabel[Namespace,Var,Tag],
+    value : Value
+  ) extends MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+  case class MDPublishRequest[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     value : Value
   ) extends MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
@@ -91,8 +98,15 @@ trait DTSMSH[Namespace,Var,Tag,Value] {
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     value : Value
   ) extends MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  case class MDSubscribeResponse[Namespace,Var,Tag,Value](
+    path : CnxnCtxtLabel[Namespace,Var,Tag],
+    value : Value
+  ) extends MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
   
   case class MDPutResponse[Namespace,Var,Tag,Value](
+    path : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) extends MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
+  case class MDPublishResponse[Namespace,Var,Tag,Value](
     path : CnxnCtxtLabel[Namespace,Var,Tag]
   ) extends MDistributedTermSpaceResponse[Namespace,Var,Tag,Value]
 
