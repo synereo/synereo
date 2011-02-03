@@ -784,6 +784,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	theMeetingPlace, theWaiters, true
       )( cnxn )( path )    
     }
+    def get(
+      cnxn : AgentCnxn
+    )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      get( Nil )( cnxn )( path )    
+    }
 
     def fetch( hops : List[URI] )(
       cnxn : AgentCnxn
@@ -795,6 +803,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	theMeetingPlace, theWaiters, false
       )( cnxn )( path )    
     }
+    def fetch(
+      cnxn : AgentCnxn
+    )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      fetch( Nil )( cnxn )( path )    
+    }
 
     def subscribe( hops : List[URI] )(
       cnxn : AgentCnxn
@@ -805,6 +821,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       mget( persistenceDescriptor, ASubscribe, hops )(
 	theChannels, theSubscriptions, true
       )( cnxn )( path )    
+    }
+    def subscribe(
+      cnxn : AgentCnxn
+    )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      subscribe( Nil )( cnxn )( path )    
     }
   }
 }
