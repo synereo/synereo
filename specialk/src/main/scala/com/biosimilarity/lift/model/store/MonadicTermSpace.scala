@@ -677,6 +677,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 		channels( wtr ) = rsrc	  
 	      }
 	      case Some( pd ) => {
+		// remove this line to force to db on get
+		channels( wtr ) = rsrc	  
 		store( pd.xmlCollStr( cnxn ) )( asRecord( ptn, rsrc ) )
 	      }
 	    }
