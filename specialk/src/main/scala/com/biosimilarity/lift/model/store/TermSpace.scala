@@ -155,6 +155,8 @@ with CnxnXML[Namespace,Var,Tag]
 with XMLStore
 with WireTap
 with Journalist
+with ConfiggyReporting
+with ConfiggyJournal
 with UUIDOps {
   lazy val _labelMap = new TMap[Namespace,Var,Tag,Value]()
   lazy val _waiters = new HashMap[GetRequest,List[GetContinuation]]()  

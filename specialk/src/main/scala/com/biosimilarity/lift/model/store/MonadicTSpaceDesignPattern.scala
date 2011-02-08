@@ -229,6 +229,8 @@ object MonadicTSpace
        extends MonadicTupleSpace[String,String,String]
        with WireTap
        with Journalist
+       with ConfiggyReporting
+       with ConfiggyJournal
 {
 
   override type Substitution = IdentitySubstitution

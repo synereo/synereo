@@ -104,7 +104,9 @@ trait EndPoint[Namespace,Var,Tag,Value] {
 class EndPointLocuter[Namespace,Var,Tag,Value](
   override val location : URI
 ) extends EndPoint[Namespace,Var,Tag,Value]
-with Journalist {
+with Journalist
+with ConfiggyReporting
+with ConfiggyJournal {
   // val reportage = report( Twitterer() ) _
   override def handleRequest( 
     dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
@@ -127,6 +129,8 @@ class AgentTwistedPair[Namespace,Var,Tag,Value](
 with AgentsOverAMQP[Namespace,Var,Tag,Value]
 with Rabbitter
 with Journalist
+with ConfiggyReporting
+with ConfiggyJournal
 with UUIDOps {
   // val reportage = report( Twitterer() ) _
 

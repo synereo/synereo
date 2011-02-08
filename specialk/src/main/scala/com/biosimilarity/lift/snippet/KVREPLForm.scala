@@ -18,7 +18,10 @@ import com.biosimilarity.lift.lib._
 import scala.xml._
 
 class KVREPLForm 
-extends WireTap with Journalist {
+extends WireTap
+with Journalist
+with ConfiggyReporting
+with ConfiggyJournal {
   override def tap [A] ( fact : A ) : Unit = {
     reportage( fact )
   }

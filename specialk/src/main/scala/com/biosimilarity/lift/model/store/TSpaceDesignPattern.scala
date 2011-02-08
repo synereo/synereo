@@ -133,6 +133,8 @@ object TSpace
        extends TupleSpace[String,String]
        with WireTap
        with Journalist
+       with ConfiggyReporting
+       with ConfiggyJournal
 {
   override val theMeetingPlace = new HashMap[String,String]()
   override val theWaiters = new HashMap[String,List[RK]]()

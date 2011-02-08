@@ -234,7 +234,10 @@ class StdMonadicAMQPDispatcher[T](
   override val host : String,
   override val port : Int
 ) extends DefaultMonadicAMQPDispatcher[T](
-) with WireTap with Journalist {
+) with WireTap
+  with Journalist
+  with ConfiggyReporting
+  with ConfiggyJournal {
 }
 
 class StdMonadicJSONAMQPDispatcher[T](
@@ -342,7 +345,10 @@ class SMJATwistedPair[T](
   override val srcURI : URI,
   override val trgtURI : URI
 ) extends SemiMonadicJSONAMQPTwistedPair[T]
-  with WireTap with Journalist {
+  with WireTap
+  with Journalist
+  with ConfiggyReporting
+  with ConfiggyJournal {
     override def tap [A] ( fact : A ) : Unit = {
       reportage( fact )
     }

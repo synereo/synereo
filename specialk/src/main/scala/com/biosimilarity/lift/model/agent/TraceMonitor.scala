@@ -30,7 +30,7 @@ trait DebuggingLevel
 case class Naked() extends DebuggingLevel
 case class FullyClothed() extends DebuggingLevel
 
-trait TraceMonitorT[Client] extends {
+trait TraceMonitorT[Client] {
   def debuggingLevel : DebuggingLevel
   def debuggingLevel( dbglvl : DebuggingLevel ) : Unit
 

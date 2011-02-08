@@ -127,6 +127,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   with XMLStore
   with WireTap
   with Journalist
+  with ConfiggyReporting
+  with ConfiggyJournal
   with UUIDOps {
     override def tap [A] ( fact : A ) : Unit = {
       reportage( fact )

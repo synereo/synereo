@@ -103,6 +103,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion with MonadicGenerators with WireTap
   with Journalist
+  with ConfiggyReporting
+  with ConfiggyJournal
   with UUIDOps {
       override type Wire = String
       override type Trgt = Msgs.JTSReqOrRsp
@@ -239,7 +241,9 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with MonadicWireToTrgtConversion
   with MonadicGenerators
   with WireTap
-  with Journalist {
+  with Journalist
+  with ConfiggyReporting
+  with ConfiggyJournal {
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
 

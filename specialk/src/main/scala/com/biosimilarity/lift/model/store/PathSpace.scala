@@ -51,7 +51,9 @@ trait PathSpace[Namespace,Tag,Value] {
 class PathStore[Namespace,Tag,Value](
 )
 extends PathSpace[Namespace,Tag,Value] 
-with Journalist {
+with Journalist
+with ConfiggyReporting
+with ConfiggyJournal {
   lazy val _pathMap = new PathMap[Namespace,Tag,Value]()
   lazy val _pathCache = new HashMap[GetContinuation,Resource]()
   lazy val _waiters = new HashMap[GetRequest,List[GetContinuation]]()  
