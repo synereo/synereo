@@ -140,8 +140,16 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     override def createDB : Boolean = ExistDefaults.createDB
     override def indent : Boolean = ExistDefaults.indent
     override def resourceType : String = ExistDefaults.resourceType  
-    
-    override def tmpDirStr : String = CnxnStorageDefaults.tmpDirStr
+
+    // BUGBUG: LGM -- refactor this!
+    override def tmpDirStr : String = {
+      val tds = config.getString( "storageDir", "tmp" )       
+      val tmpDir = new java.io.File( tds )
+      if ( ! tmpDir.exists ) {
+	tmpDir.mkdir
+      }
+      tds
+    }
 
     override val theMeetingPlace =
       new mTT.TMapR[Namespace,Var,Tag,Value]()
@@ -648,6 +656,76 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     name,
     acquaintances
   ) with KVTrampoline {    
+    def putInStore(
+      persist : Option[PersistenceDescriptor],
+      channels : Map[mTT.GetRequest,mTT.Resource],
+      ptn : mTT.GetRequest,
+      wtr : Option[mTT.GetRequest],
+      rsrc : mTT.Resource
+    )( cnxn : AgentCnxn ) : Unit = {
+      persist match {
+	case None => {
+	  channels( wtr.getOrElse( ptn ) ) = rsrc	  
+	}
+	case Some( pd ) => {
+	  tweet( "accessing db : " + pd.db )
+	  // remove this line to force to db on get
+	  channels( wtr.getOrElse( ptn ) ) = rsrc	  
+	  spawn {
+	    val rcrd = asRecord( ptn, rsrc )
+	    tweet(
+	      (
+		"storing to db : " + pd.db
+		+ " pair : " + rcrd
+		+ " in coll : " + pd.xmlCollStr( cnxn )
+	      )
+	    )
+	    store( pd.xmlCollStr( cnxn ) )( rcrd )
+	  }
+	}
+      }
+    }
+
+     def putPlaces( persist : Option[PersistenceDescriptor] )(
+      channels : Map[mTT.GetRequest,mTT.Resource],
+      registered : Map[mTT.GetRequest,List[RK]],
+      ptn : mTT.GetRequest,
+      rsrc : mTT.Resource
+    )( cnxn : AgentCnxn ) : Generator[PlaceInstance,Unit,Unit] = {    
+      Generator {
+	k : ( PlaceInstance => Unit @suspendable ) => 
+	  // Are there outstanding waiters at this pattern?    
+	  val map =
+	    Right[
+	      Map[mTT.GetRequest,mTT.Resource],
+	      Map[mTT.GetRequest,List[RK]]
+	    ]( registered )
+	  val waitlist = locations( map, ptn )
+
+	  waitlist match {
+	    // Yes!
+	    case waiter :: waiters => {
+	      tweet( "found waiters waiting for a value at " + ptn )
+	      val itr = waitlist.toList.iterator	    
+	      while( itr.hasNext ) {
+		k( itr.next )
+	      }
+	    }
+	    // No...
+	    case Nil => {
+	      // Store the rsrc at a representative of the ptn
+	      tweet( "no waiters waiting for a value at " + ptn )
+	      //channels( representative( ptn ) ) = rsrc
+	      putInStore(
+		persist, channels, ptn, None, rsrc 
+	      )(
+		cnxn
+	      )
+	    }
+	  }
+      }
+    }
+    
     def mput( persist : Option[PersistenceDescriptor] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
@@ -656,7 +734,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       ptn : mTT.GetRequest,
       rsrc : mTT.Resource
     ) : Unit @suspendable = {    
-      for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
+      for(
+	placeNRKsNSubst
+	<- putPlaces(
+	  persist
+	)( channels, registered, ptn, rsrc )( cnxn )
+      ) {
 	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
 	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
 	rks match {
@@ -674,29 +757,9 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	    }
 	  }
 	  case Nil => {
-	    persist match {
-	      case None => {
-		channels( wtr ) = rsrc	  
-	      }
-	      case Some( pd ) => {
-		tweet(
-		  "accessing db : " + pd.db
-		)
-		// remove this line to force to db on get
-		channels( wtr ) = rsrc	  
-		spawn {
-		  val rcrd = asRecord( ptn, rsrc )
-		  tweet(
-		    (
-		      "storing to db : " + pd.db
-		      + " pair : " + rcrd
-		      + " in coll : " + pd.xmlCollStr( cnxn )
-		    )
-		  )
-		  store( pd.xmlCollStr( cnxn ) )( rcrd )
-		}
-	      }
-	    }
+	    putInStore(
+	      persist, channels, ptn, Some( wtr ), rsrc 
+	    )( cnxn )
 	  }
 	}
       }
