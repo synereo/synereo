@@ -465,7 +465,8 @@ trait CnxnXQuery[Namespace,Var,Tag] {
       iterExprs
       .replaceAll( " in [^\\]]*\\]", "" )
       .replace( "for ", "" )
-      .replace( "\n" + ndentStr, "" )
+      .replaceAll( "\n", "" )
+      .replaceAll( " *", "" )
 
     println( "iter expressions : " + iterExprs )
 
@@ -501,14 +502,19 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	case "" =>
 	  subtermExprs
 	case _ =>
-	  elemVars + "\n" + subtermExprs
+	  subtermExprs match {
+	    case "" =>
+	      elemVars
+	    case _ =>
+	      elemVars + "\n" + subtermExprs + "\n"
+	  }	
       }    
 
     val ctorExpr = 
       branchExpr match {
-	case "" => placeStr
+	case "" => placeStr + "\n"
 	case _ =>
-	  xmlTrampoline( tagStr, "{" + branchExpr + "\n" + "}" ).toString
+	  xmlTrampoline( tagStr, "{" + branchExpr + "}" ).toString
       }
     
     println( "ctor expression : " + ctorExpr )
