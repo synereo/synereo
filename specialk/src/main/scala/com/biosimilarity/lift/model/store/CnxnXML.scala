@@ -429,7 +429,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     println( "constraint expressions : " + constraintExprs )
 
     println( "calculating iter expressions " )
-    val ( iterExprs, _ ) =
+    val ( iterExprsL, _ ) =
       vars match {
 	case v :: rvs => {
 	  val seedStr = 
@@ -459,6 +459,12 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	}
 
 	case Nil => ( "", sIndx )
+      }
+
+    val iterExprs = 
+      iterExprsL match {
+	case "" => ""
+	case _ => iterExprsL + " return\n"
       }
 
     val elemVars =
@@ -512,7 +518,10 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 
     val ctorExpr = 
       branchExpr match {
-	case "" => placeStr + "\n"
+	case "" =>
+	  (
+	    xqcc.xqVar + "/" + elemItrV + "\n"
+	  )
 	case _ =>
 	  xmlTrampoline( tagStr, "{" + branchExpr + "}" ).toString
       }
@@ -521,7 +530,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 
     val xQueryNode = 
       <xqueryExpr>for {elemItrV} in {placeStr}{constraintExprs} return {iterExprs}</xqueryExpr>
-    xQueryNode.text + "\n" + ctorExpr.replace( "&amp;", "&" )
+    xQueryNode.text + "\n" + ndentStr + ctorExpr.replace( "&amp;", "&" )
   }
 }
 
