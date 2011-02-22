@@ -84,7 +84,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     override val db : Database
   ) extends PersistenceDescriptor 
   with CnxnXML[Namespace,Var,Tag]
-  with CnxnCtxtInjector[Namespace,Var,Tag] {
+  with CnxnCtxtInjector[Namespace,Var,Tag]
+  with UUIDOps {
     override def xmlCollStr( cnxn : AgentCnxn ) : String = {
       // TBD
       cnxn.src.getHost + cnxn.trgt.getHost

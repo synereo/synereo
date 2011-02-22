@@ -8,7 +8,8 @@
 
 package com.biosimilarity.lift.model.store
 
-import com.biosimilarity.lift.model.store.zipper._
+import com.biosimilarity.lift.model.zipper._
+import com.biosimilarity.lift.lib._
 
 import scala.xml._
 import scala.util.parsing.combinator._
@@ -248,23 +249,23 @@ trait CnxnXQuery[Namespace,Var,Tag] {
   
   trait TermIndex
   case class DeBruijnIndex(
-    depth : int,
-    width : int
+    depth : Int,
+    width : Int
   ) extends TermIndex
 
   trait XQueryCompilerContext {
     def root : CnxnCtxtBranch[Namespace,Var,Tag]
     def xqVar : String
-    def parent : XQueryCompilerContext
-    def location : Location[Either[Tag,Var]]
+    def parent : Option[XQueryCompilerContext]
+    def location : Option[Location[Either[Tag,Var]]]
     def index : DeBruijnIndex
   }
   case class XQCC( 
-    override root : CnxnCtxtBranch[Namespace,Var,Tag],
-    override xqVar : String,
-    override parent : XQueryCompilerContext
-    override location : Location[Either[Tag,Var]]
-    override index : DeBruijnIndex
+    override val root : CnxnCtxtBranch[Namespace,Var,Tag],
+    override val xqVar : String,
+    override val parent : Option[XQueryCompilerContext],
+    override val location : Option[Location[Either[Tag,Var]]],
+    override val index : DeBruijnIndex
   ) extends XQueryCompilerContext
 
   def asXQueryString(
@@ -293,8 +294,8 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     }
   }
 
-  def createVariableName( root : String ) : String = {
-    "$" + root + "_" + getUUID 
+  def createVariableName( uniquify : Boolean )( root : String ) : String = {
+    "$" + root + (if ( uniquify ) { "_" + getUUID } else { "" })
   }
 
   def xQueryConstraint(
@@ -302,7 +303,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     xqcc : XQueryCompilerContext,
     index : DeBruijnIndex
   ) : String = {
-    val cVar = createVariableName( "" )
+    val cVar = createVariableName( false )( "xqV" )
     val lHS =
       (
 	xqcc.xqVar
@@ -315,26 +316,28 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 
   def xQueryIter(
     leafVar : Var,
-    xqcc : XQueryCompilerContext
+    xqcc : XQueryCompilerContext,
+    index : DeBruijnIndex
   ) : String = {
-    val iVar = createVariableName( leafVar + "" )
-    val lHS = "" + leafTag
-    val rHS =
+    val iVar = createVariableName( false )( leafVar + "" )
+    val lHS = iVar + "_" + index.depth + "_" + index.width
+    val rHS =    
       (
 	xqcc.xqVar
-	+ "/"
-	+ iVar + "_" + index.depth + "_" + index.width
+	+ "["
+	+ index.width 
+	+ "]"
       )    
-    lHS + "=" + rHS
+      lHS + " in " + rHS
   }
 
   def asXQueryStr(
     branch : CnxnCtxtBranch[Namespace,Var,Tag],
     xqcc : XQueryCompilerContext
   ) : String = {
-    val tagStr = branch.nameSpace
-    val elemItrV = createVariableName( tagStr )
-    val ( constraints, varsNSubterms ) =
+    val tagStr = branch.nameSpace + ""
+    val elemItrV = createVariableName( false )( tagStr )
+    val ( cclConstraints, varsNSubterms ) =
       branch.factuals.partition( 
 	{ 
 	  ( fact ) => {
@@ -345,25 +348,36 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  }		 
        }
       )
-    val ( vars, subterms ) =
+    val constraints =
+      cclConstraints.map( { case CnxnCtxtLeaf( Left( t ) ) => t } )
+    val ( cclVars, subterms ) =
       varsNSubterms.partition(
-	( fact ) => match {
+	( fact ) => {
 	  fact match {
 	    case CnxnCtxtLeaf( Right( v ) ) => true
 	    case _ => false
 	  }
 	}
       )
+    val vars = cclVars.map( { case CnxnCtxtLeaf( Right( v ) ) => v } )
 
-    val sxqcc = XQCC( branch, elemItrV, xqcc )
+    val sIndx = DeBruijnIndex( xqcc.index.depth + 1, 0 )
+    val sxqcc =
+      XQCC(
+	branch,
+	elemItrV,
+	Some( xqcc ),
+	None,
+	sIndx
+      )
 
     val constraintExprs = 
       constraints match {
 	case constraint :: rconstraints => {
-	  ( xQueryConstraint( constraint, sxqcc ) /: rconstraints )(
+	  ( xQueryConstraint( constraint, sxqcc, sIndx ) /: rconstraints )(
 	    {
 	      ( acc, cnstrnt ) => {
-		acc + " & " + xQueryConstraint( cnstrnt, sxqcc )
+		acc + " & " + xQueryConstraint( cnstrnt, sxqcc, sIndx )
 	      }
 	    }
 	  )
@@ -374,10 +388,10 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     val iterExprs =
       vars match {
 	case v :: rvs => {
-	  ( xQueryIter( v, sxqcc ) /: rvs )(
+	  ( xQueryIter( v, sxqcc, sIndx ) /: rvs )(
 	    {
 	      ( acc, v ) => {
-		acc + " & " + xQueryIter( v, sxqcc )
+		acc + " & " + xQueryIter( v, sxqcc, sIndx )
 	      }
 	    }
 	  )
@@ -385,12 +399,12 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	case Nil => ""
       }
 	
-    val branchExpr = ""
+    val branchExpr = "for " + iterExprs 
 
     val xQueryNode = 
-      <xqueryExpr>for {elemItrV} in {tagStr} where {constraintExprs} return {branchExpr}<xqueryExpr>
-    
-    xQueryNode.Text
+      <xqueryExpr>for {elemItrV} in {tagStr} where {constraintExprs} ret {branchExpr}</xqueryExpr>
+    xQueryNode.text
   }
 }
+
 

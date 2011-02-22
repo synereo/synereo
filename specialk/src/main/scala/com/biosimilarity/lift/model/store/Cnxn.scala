@@ -143,6 +143,12 @@ extends TreeItem[Either[Tag,Var]]( tag )
 with CnxnCtxtLabel[Namespace,Var,Tag]
 with Factual {
   override def self = List( Left( tag ) )
+  override def toString = {
+    tag match {
+      case Left( t ) => "<" + t + ">"
+      case Right( v ) => "'" + v
+    }
+  }
 }
 
 object CnxnCtxtLeaf {
@@ -158,6 +164,12 @@ extends CTreeItem[Either[Tag,Var]]( tag )
 with CnxnCtxtLabel[Namespace,Var,Tag]
 with Factual {
   override def self = List( Left( tag ) )
+  override def toString = {
+    tag match {
+      case Left( t ) => "<" + t + ">"
+      case Right( v ) => "'" + v
+    }
+  }
 }
 
 trait AbstractCnxnCtxtBranch[Namespace,Var,Tag]
@@ -165,6 +177,22 @@ extends CnxnCtxtLabel[Namespace,Var,Tag] {
   override def self = labels.map( Right( _ ) )
   def nameSpace : Namespace
   def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]]
+  override def toString = {
+    val lblStr =
+      labels match {
+	case albl :: rlbls => {
+	  ( albl.toString /: rlbls )( 
+	    {
+	      ( acc, lbl ) => {
+		acc + ", " + lbl
+	      }
+	    }
+	  )
+	}
+	case Nil => ""
+      }
+    nameSpace + "(" + lblStr + ")"
+  }
 }
 
 class CnxnCtxtBranch[Namespace,Var,Tag](
