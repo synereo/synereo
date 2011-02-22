@@ -335,8 +335,33 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     branch : CnxnCtxtBranch[Namespace,Var,Tag],
     xqcc : XQueryCompilerContext
   ) : String = {
+    println( "entering asXQueryStr with : " )
+    println( "branch : " + branch )
+    println( "xqcc : " + xqcc )
+
     val tagStr = branch.nameSpace + ""
-    val elemItrV = createVariableName( false )( tagStr )
+    val elemItrV = createVariableName( false )( tagStr + "_Elem" )
+    val sIndx = 
+      DeBruijnIndex( xqcc.index.depth + 1, 0 )
+    val placeStr =
+      (	
+	xqcc.xqVar + "/" + tagStr
+      )      
+
+    val sxqcc =
+      XQCC(
+	branch,
+	elemItrV,
+	Some( xqcc ),
+	None,
+	sIndx
+      )
+
+    val ndentStr =
+      ( "" /: (0 to xqcc.index.depth) )(
+	{ ( acc, s ) => acc + " " }
+      )
+
     val ( cclConstraints, varsNSubterms ) =
       branch.factuals.partition( 
 	{ 
@@ -348,8 +373,11 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  }		 
        }
       )
+    println( "cclConstraints : " + cclConstraints )
     val constraints =
       cclConstraints.map( { case CnxnCtxtLeaf( Left( t ) ) => t } )
+    println( "constraints : " + constraints )
+
     val ( cclVars, subterms ) =
       varsNSubterms.partition(
 	( fact ) => {
@@ -359,51 +387,135 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  }
 	}
       )
+    println( "cclVars : " + cclVars )
     val vars = cclVars.map( { case CnxnCtxtLeaf( Right( v ) ) => v } )
+    println( "vars : " + vars )    
 
-    val sIndx = DeBruijnIndex( xqcc.index.depth + 1, 0 )
-    val sxqcc =
-      XQCC(
-	branch,
-	elemItrV,
-	Some( xqcc ),
-	None,
-	sIndx
-      )
-
-    val constraintExprs = 
+    println( "calculating constraint expressions " )
+    val ( constraintExprs, _ ) = 
       constraints match {
 	case constraint :: rconstraints => {
-	  ( xQueryConstraint( constraint, sxqcc, sIndx ) /: rconstraints )(
+	  val seedStr = 
+	    (
+	      " " + "where" + " "
+	      + xQueryConstraint(
+		constraint,
+		sxqcc,
+		sIndx
+	      )
+	    );
+	    
+	  ( ( seedStr, sIndx ) /: rconstraints )(
 	    {
 	      ( acc, cnstrnt ) => {
-		acc + " & " + xQueryConstraint( cnstrnt, sxqcc, sIndx )
+		val ( accStr, DeBruijnIndex( d, w ) ) = acc
+		val ndbIdx = DeBruijnIndex( d, w + 1 )
+		val nSeedStr = 
+		  (
+		    accStr
+		    + " & "
+		    + xQueryConstraint(
+		      cnstrnt, sxqcc, ndbIdx
+		    )
+		  )
+		( nSeedStr, ndbIdx )
 	      }
 	    }
 	  )
 	}
-	case Nil => ""
-      }    
+	case Nil => ( "", sIndx )
+      }
 
-    val iterExprs =
+    println( "constraint expressions : " + constraintExprs )
+
+    println( "calculating iter expressions " )
+    val ( iterExprs, _ ) =
       vars match {
 	case v :: rvs => {
-	  ( xQueryIter( v, sxqcc, sIndx ) /: rvs )(
+	  val seedStr = 
+	    (
+	      "\n"
+	      + ndentStr
+	      + "for" + " "
+	      + xQueryIter( v, sxqcc, sIndx )
+	    );
+
+	  ( ( seedStr, sIndx ) /: rvs )(
 	    {
 	      ( acc, v ) => {
-		acc + " & " + xQueryIter( v, sxqcc, sIndx )
+		val ( accStr, DeBruijnIndex( d, w ) ) = acc
+		val ndbIdx = DeBruijnIndex( d, w + 1 )
+		val nSeedStr = 
+		  (
+		    accStr + ",\n"
+		    + ndentStr + "    "
+		    + xQueryIter( v, sxqcc, ndbIdx )
+		  )
+		
+		( nSeedStr, ndbIdx )
 	      }
 	    }
 	  )
 	}
-	case Nil => ""
+
+	case Nil => ( "", sIndx )
       }
+
+    val elemVars =
+      iterExprs
+      .replaceAll( " in [^\\]]*\\]", "" )
+      .replace( "for ", "" )
+      .replace( "\n" + ndentStr, "" )
+
+    println( "iter expressions : " + iterExprs )
+
+    println( "calculating subterm expressions " )
+    val ( subtermExprs, _ ) =
+      subterms match {
+	case st :: rst => {
+	  val seedStr =
+	    (
+	      "\n" + ndentStr
+	      + asXQueryString( st, sxqcc )
+	    );
+	    
+	  ( ( seedStr, sIndx ) /: rst )(
+	    {
+	      ( acc, st ) => {
+		val ( accStr, DeBruijnIndex( d, w ) ) = acc
+		val ndbIdx = DeBruijnIndex( d, w + 1 )
+		val nSeedStr = 
+		  accStr + "\n" + ndentStr + asXQueryString( st, sxqcc )
+
+		( nSeedStr, ndbIdx )
+	      }
+	    }
+	  )
+	}
+	case Nil => ( "", sIndx )
+      }
+    println( "subterm expressions : " + subtermExprs )
 	
-    val branchExpr = "for " + iterExprs 
+    val branchExpr =
+      elemVars match {
+	case "" =>
+	  subtermExprs
+	case _ =>
+	  elemVars + "\n" + subtermExprs
+      }    
+
+    val ctorExpr = 
+      branchExpr match {
+	case "" => placeStr
+	case _ =>
+	  xmlTrampoline( tagStr, "{" + branchExpr + "\n" + "}" ).toString
+      }
+    
+    println( "ctor expression : " + ctorExpr )
 
     val xQueryNode = 
-      <xqueryExpr>for {elemItrV} in {tagStr} where {constraintExprs} ret {branchExpr}</xqueryExpr>
-    xQueryNode.text
+      <xqueryExpr>for {elemItrV} in {placeStr}{constraintExprs} return {iterExprs}</xqueryExpr>
+    xQueryNode.text + "\n" + ctorExpr.replace( "&amp;", "&" )
   }
 }
 
