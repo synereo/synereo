@@ -388,6 +388,8 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  xqCnsts.map(
 	    ( p ) => {
 	      if ( p.lastIndexOf( "/" ) ==  p.length - 1 ) {
+		// BUGBUG : LGM -- need to add logic to ensure
+		  // distinct solns for each existential clause
 		(
 		  "{" + " "
 		  + "some" + " " 
