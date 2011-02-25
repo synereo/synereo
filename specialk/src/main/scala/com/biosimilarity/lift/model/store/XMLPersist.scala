@@ -177,7 +177,7 @@ trait CnxnStorage[Namespace,Var,Tag] {
       val fstream : FileWriter = new FileWriter( xmlRsrcStr )
       val out : BufferedWriter = new BufferedWriter(fstream)
       //out.write( toXML( cnxn ) ) -- Serialization-based storage
-      out.write( asXML( cnxn ).text ) // Data-binding-based storage
+      out.write( asXML( cnxn ).toString ) // Data-binding-based storage
       out.close
     
       val xrsrc = createResource( xmlColl )( xmlRsrcStr )

@@ -968,6 +968,7 @@ object MonadicTS
       ) : CnxnCtxtLeaf[String,String,String] = {
 	val blob =
 	  new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+	  //asXML( rsrc )
 	new CnxnCtxtLeaf[String,String,String](
 	  Left[String,String]( blob )
 	)
