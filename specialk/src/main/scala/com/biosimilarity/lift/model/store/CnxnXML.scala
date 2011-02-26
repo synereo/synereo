@@ -303,23 +303,27 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     def root : CnxnCtxtBranch[Namespace,Var,Tag]
     def branch : CnxnCtxtLabel[Namespace,Var,Tag]
     def xqVar : String
+    def letVar : Option[String]
     def parent : Option[XQueryCompilerContext]
     def location : Option[Location[Either[Tag,Var]]]
     def index : DeBruijnIndex
     
     def sibling(
       branch : CnxnCtxtLabel[Namespace,Var,Tag],
-      nxqv : String
-    ) : XQueryCompilerContext
-
-    def child(
-      branch : CnxnCtxtLabel[Namespace,Var,Tag],
-      nxqv : String
+      nxqv : String,
+      lxqv : Option[String]
     ) : XQueryCompilerContext
 
     def child(
       branch : CnxnCtxtLabel[Namespace,Var,Tag],
       nxqv : String,
+      lxqv : Option[String]
+    ) : XQueryCompilerContext
+
+    def child(
+      branch : CnxnCtxtLabel[Namespace,Var,Tag],
+      nxqv : String,
+      lxqv : Option[String],
       width : Int
     ) : XQueryCompilerContext
   }
@@ -328,33 +332,37 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     override val root : CnxnCtxtBranch[Namespace,Var,Tag],
     override val branch : CnxnCtxtLabel[Namespace,Var,Tag],
     override val xqVar : String,
+    override val letVar : Option[String],
     override val parent : Option[XQueryCompilerContext],
     override val location : Option[Location[Either[Tag,Var]]],
     override val index : DeBruijnIndex
   ) extends XQueryCompilerContext {
     override def sibling(
       branch : CnxnCtxtLabel[Namespace,Var,Tag],
-      nxqv : String
+      nxqv : String,
+      lxqv : Option[String]
     ) =
       XQCC(
-	root, branch, nxqv, parent, location,
+	root, branch, nxqv, lxqv, parent, location,
 	DeBruijnIndex( index.depth, index.width + 1 )
       )
     override def child(
       branch : CnxnCtxtLabel[Namespace,Var,Tag],
-      nxqv : String
+      nxqv : String,
+      lxqv : Option[String]
     ) =
       XQCC(
-	root, branch, nxqv, Some( this ), location, 
+	root, branch, nxqv, lxqv, Some( this ), location, 
 	DeBruijnIndex( index.depth + 1, 0 )
       )
     override def child(
       branch : CnxnCtxtLabel[Namespace,Var,Tag],
       nxqv : String,
+      lxqv : Option[String],
       width : Int
     ) =
       XQCC(
-	root, branch, nxqv, Some( this ), location, 
+	root, branch, nxqv, lxqv, Some( this ), location, 
 	DeBruijnIndex( index.depth + 1, width )
       )
   }
@@ -403,13 +411,13 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	val ( childConstraints, _ ) =
 	  facts match {
 	    case fact :: fs => {
-	      val fxqcc = xqcc.child( fact, nxqv, 0 )
+	      val fxqcc = xqcc.child( fact, nxqv, None, 0 )
 	      val factC = xqRecExistentialConstraints( fact, fxqcc )
 	      ( ( factC, 1 ) /: fs )( 
 		{
 		  ( acc, f ) => {
 		    val ( ccs, w ) = acc
-		    val nxqcc = xqcc.child( f, nxqv, w )
+		    val nxqcc = xqcc.child( f, nxqv, None, w )
 		    val fC = xqRecExistentialConstraints( f, nxqcc )
 		    (
 		      (fC match {
@@ -452,6 +460,23 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     }
   }
 
+  def xqLetBinding(
+    ccl : CnxnCtxtLabel[Namespace,Var,Tag],
+    xqcc : XQueryCompilerContext,
+    nxqv : String,
+    w : Int
+  ) : Option[( Option[String], String )] = {
+    ccl match {
+      case CnxnCtxtLeaf( Right( _ ) ) => None
+      case _ => {
+	val lxqv = nextXQV
+	val fLE = ( lxqv + " := " + nxqv + "/" + "*" + "[" + w + "]" )
+	
+	Some( ( Some( lxqv ), fLE ) )
+      }      
+    }    
+  }
+
   def xqRecConstraints(
     ccl : CnxnCtxtLabel[Namespace,Var,Tag],
     xqcc : XQueryCompilerContext
@@ -460,6 +485,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     val width = xqcc.index.width
     val depth = xqcc.index.depth
     val xqVar = xqcc.xqVar
+    val letVar = xqcc.letVar
 
     println( "entering xqRecConstraints with " )
     println( "xqVar : " + xqVar )
@@ -468,7 +494,8 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 
     ccl match {
       case CnxnCtxtLeaf( Left( t ) ) =>
-	( xqVar + "/" + "*" + "[" + width + "]" + " = " + t + "" )
+	//( xqVar + "/" + "*" + "[" + width + "]" + " = " + t + "" )
+	( letVar.getOrElse( nextXQV ) + " = " + t )
       case CnxnCtxtLeaf( Right( v ) ) =>
 	( "" )
       case CnxnCtxtBranch( ns, facts ) => {
@@ -478,25 +505,32 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	val ( ( childLEs, childCs ), _ ) =
 	  facts match {
 	    case fact :: fs => {
-	      val fxqcc = xqcc.child( fact, nxqv, 0 )
+	      val ( lxqv, factLE ) = 
+		xqLetBinding( fact, xqcc, nxqv, 0 )
+	        .getOrElse( ( None, "" ) )
+
+	      val fxqcc = xqcc.child( fact, nxqv, lxqv, 0 )
 	      val factC =
 		xqRecConstraints( fact, fxqcc ) match {
 		  case "" => ""
 		  case fC@_ =>
 		    "(" + " " + fC + " " + ")"
 		}	
-	      val factLE = 
-		( nextXQV + " := " + nxqv + "/" + "*" + "[" + 0 + "]" )
+
 	      ( ( ( factLE, factC ), 1 ) /: fs )( 
 		{
 		  ( acc, f ) => {
 		    val ( ( les, ccs ), w ) = acc
-		    val nxqcc = xqcc.child( f, nxqv, w )
+		    val ( nlxqv, fLE ) = 
+		      xqLetBinding( fact, xqcc, nxqv, w )
+	              .getOrElse( ( None, "" ) )
+		    val nxqcc = xqcc.child( f, nxqv, nlxqv, w )
 		    val fC = xqRecConstraints( f, nxqcc )
-		    val fLE = 
-		      ( nextXQV + " := " + nxqv + "/" + "*" + "[" + w + "]" )
-		    val accLEs =
-		      les + " , " + fLE
+		    val accLEs =		      
+		      les match {
+			case "" => fLE
+			case _ => les + " , " + fLE
+		      }
 		    val accfC =
 		      fC match {
 			case "" => ccs 
@@ -513,8 +547,8 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  }	
 
 	val arityC = (
-	  "count" + "(" + nxqv + "/" + "*" + ")" 
-	  + " = " + facts.length
+	  "(" + " " + "count" + "(" + nxqv + "/" + "*" + ")" 
+	  + " = " + facts.length + " " + ")"
 	)
 
 	val letEs =
@@ -530,12 +564,28 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  + (
 	    childCs match {
 	      case "" =>
-		arityC
+		(
+		  arityC
+		  + (
+		    ( letVar, xqcc.parent ) match {
+		      case ( Some( v ), Some( _ ) ) =>
+			" and " + "(" + " " + v + " = " + nxqv + " " + ")"
+		      case _ => ""
+		    }
+		  )
+		)
 	      case _ =>
 		(
 		  arityC + " "
 		  + " and "
 		  + childCs
+		  + (
+		    ( letVar, xqcc.parent ) match {
+		      case ( Some( v ), Some( _ ) ) =>
+			" and " + "(" + " " + v + " = " + nxqv + " " + ")"
+		      case _ => ""
+		    }
+		  )
 		)
 	    } 
 	  )
@@ -701,7 +751,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
       case CnxnCtxtLeaf( t ) => ""
       case ccb : CnxnCtxtBranch[Namespace,Var,Tag] => {
 	val xqcc =
-	  XQCC( ccb, ccb, "root", None, None, DeBruijnIndex( 0, 0 ) )
+	  XQCC( ccb, ccb, "root", Some( nextXQV ), None, None, DeBruijnIndex( 0, 0 ) )
 	xqQuery( ccl, xqcc ).getOrElse( "" )
       }
     }     
