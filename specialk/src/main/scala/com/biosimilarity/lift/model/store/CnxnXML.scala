@@ -377,7 +377,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     }
   }
 
-  def xqRecConstraints(
+  def xqRecExistentialConstraints(
     ccl : CnxnCtxtLabel[Namespace,Var,Tag],
     xqcc : XQueryCompilerContext
   ) : String = {
@@ -386,7 +386,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     val depth = xqcc.index.depth
     val xqVar = xqcc.xqVar
 
-    println( "entering xqRecConstraints with " )
+    println( "entering xqRecExistentialConstraints with " )
     println( "xqVar : " + xqVar )
     println( "width : " + width )
     println( "depth : " + depth )
@@ -404,13 +404,13 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  facts match {
 	    case fact :: fs => {
 	      val fxqcc = xqcc.child( fact, nxqv, 0 )
-	      val factC = xqRecConstraints( fact, fxqcc )
+	      val factC = xqRecExistentialConstraints( fact, fxqcc )
 	      ( ( factC, 1 ) /: fs )( 
 		{
 		  ( acc, f ) => {
 		    val ( ccs, w ) = acc
 		    val nxqcc = xqcc.child( f, nxqv, w )
-		    val fC = xqRecConstraints( f, nxqcc )
+		    val fC = xqRecExistentialConstraints( f, nxqcc )
 		    (
 		      (fC match {
 			case "" => ccs 
@@ -445,6 +445,88 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 		)
 	    } 
 	  )	  
+	)		  
+	
+        existentialC
+      }
+    }
+  }
+
+  def xqRecConstraints(
+    ccl : CnxnCtxtLabel[Namespace,Var,Tag],
+    xqcc : XQueryCompilerContext
+  ) : String = {
+
+    val width = xqcc.index.width
+    val depth = xqcc.index.depth
+    val xqVar = xqcc.xqVar
+
+    println( "entering xqRecConstraints with " )
+    println( "xqVar : " + xqVar )
+    println( "width : " + width )
+    println( "depth : " + depth )
+
+    ccl match {
+      case CnxnCtxtLeaf( Left( t ) ) =>
+	( xqVar + "/" + "*" + "[" + width + "]" + " = " + t + "" )
+      case CnxnCtxtLeaf( Right( v ) ) =>
+	( "" )
+      case CnxnCtxtBranch( ns, facts ) => {
+	val nxqv = nextXQV
+	println( "generated next var: " + nxqv )
+
+	val ( childConstraints, _ ) =
+	  facts match {
+	    case fact :: fs => {
+	      val fxqcc = xqcc.child( fact, nxqv, 0 )
+	      val factC =
+		xqRecConstraints( fact, fxqcc ) match {
+		  case "" => ""
+		  case fC@_ =>
+		    "(" + " " + fC + " " + ")"
+		}	      
+	      ( ( factC, 1 ) /: fs )( 
+		{
+		  ( acc, f ) => {
+		    val ( ccs, w ) = acc
+		    val nxqcc = xqcc.child( f, nxqv, w )
+		    val fC = xqRecConstraints( f, nxqcc )
+		    (
+		      (fC match {
+			case "" => ccs 
+			case _ =>
+			  ccs + " and " + "(" + " " + fC + " " + ")"
+		      }),
+		      w+1
+		    )
+		  }
+		}
+	      )
+	    }
+	    case Nil => ( "", 0 )
+	  }	
+
+	val arityC = (
+	  "count" + "(" + nxqv + "/" + "*" + ")" 
+	  + " = " + facts.length
+	)
+
+	val existentialC = (
+	  "for" + " " + nxqv + " in " + xqVar + "/" + ns
+	  + " where "
+	  + (
+	    childConstraints match {
+	      case "" =>
+		arityC
+	      case _ =>
+		(
+		  arityC + " "
+		  + " and "
+		  + childConstraints
+		)
+	    } 
+	  )
+	  + " return " + nxqv
 	)		  
 	
         existentialC
