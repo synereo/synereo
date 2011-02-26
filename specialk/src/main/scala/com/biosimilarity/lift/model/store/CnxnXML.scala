@@ -475,7 +475,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	val nxqv = nextXQV
 	println( "generated next var: " + nxqv )
 
-	val ( childConstraints, _ ) =
+	val ( ( childLEs, childCs ), _ ) =
 	  facts match {
 	    case fact :: fs => {
 	      val fxqcc = xqcc.child( fact, nxqv, 0 )
@@ -484,21 +484,27 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 		  case "" => ""
 		  case fC@_ =>
 		    "(" + " " + fC + " " + ")"
-		}	      
-	      ( ( factC, 1 ) /: fs )( 
+		}	
+	      val factLE = 
+		( nextXQV + " := " + nxqv + "/" + "*" + "[" + 0 + "]" )
+	      ( ( ( factLE, factC ), 1 ) /: fs )( 
 		{
 		  ( acc, f ) => {
-		    val ( ccs, w ) = acc
+		    val ( ( les, ccs ), w ) = acc
 		    val nxqcc = xqcc.child( f, nxqv, w )
 		    val fC = xqRecConstraints( f, nxqcc )
-		    (
-		      (fC match {
+		    val fLE = 
+		      ( nextXQV + " := " + nxqv + "/" + "*" + "[" + w + "]" )
+		    val accLEs =
+		      les + " , " + fLE
+		    val accfC =
+		      fC match {
 			case "" => ccs 
 			case _ =>
 			  ccs + " and " + "(" + " " + fC + " " + ")"
-		      }),
-		      w+1
-		    )
+		      }
+
+		    ( ( accLEs, accfC ), w+1 )
 		  }
 		}
 	      )
@@ -511,18 +517,25 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  + " = " + facts.length
 	)
 
+	val letEs =
+	  childLEs match {
+	    case "" => ""
+	    case _ => " let " + childLEs
+	  }
+
 	val existentialC = (
 	  "for" + " " + nxqv + " in " + xqVar + "/" + ns
+	  + letEs
 	  + " where "
 	  + (
-	    childConstraints match {
+	    childCs match {
 	      case "" =>
 		arityC
 	      case _ =>
 		(
 		  arityC + " "
 		  + " and "
-		  + childConstraints
+		  + childCs
 		)
 	    } 
 	  )
