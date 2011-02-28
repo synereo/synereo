@@ -79,10 +79,37 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     def queryServiceVersion : String = "1.0"
     def toFile( ptn : mTT.GetRequest ) : Option[File]
     def query( ptn : mTT.GetRequest ) : Option[String]
+
+    def kvNameSpace : Namespace
+    def asValue(
+      rsrc : mTT.Resource
+    ) : CnxnCtxtLeaf[Namespace,Var,Tag]
+    def asKey(
+      key : mTT.GetRequest
+    ) : mTT.GetRequest with Factual = {
+      key match {
+	case leaf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
+	  leaf
+	case branch : CnxnCtxtBranch[Namespace,Var,Tag] =>
+	  branch
+      }
+    }
+
+    def asRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : mTT.GetRequest with Factual = {
+      new CnxnCtxtBranch[Namespace,Var,Tag](
+	kvNameSpace,
+	List( asKey( key ), asValue( value ) )
+      )
+    }
   }
-  class ExistDescriptor(
+
+  abstract class ExistDescriptor(
     override val db : Database
   ) extends PersistenceDescriptor 
+    with CnxnXQuery[Namespace,Var,Tag]
   with CnxnXML[Namespace,Var,Tag]
   with CnxnCtxtInjector[Namespace,Var,Tag]
   with UUIDOps {
@@ -94,7 +121,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       ptn : mTT.GetRequest
     ) : Option[String] = {
       // TBD
-      None
+      Some( xqQuery( ptn ) )
     }
     override def toFile(
       ptn : mTT.GetRequest
@@ -104,12 +131,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     }
   }
   object ExistDescriptor {
-    def apply(
-      db : Database,
-      xmlCollStr : String
-    ) : ExistDescriptor = {
-      new ExistDescriptor( db )
-    }
+    // def apply(
+//       db : Database,
+//       xmlCollStr : String
+//     ) : ExistDescriptor = {
+//       new ExistDescriptor( db )
+//     }
     def unapply(
       ed : ExistDescriptor
     ) : Option[( Database )] = {
@@ -623,31 +650,32 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   }
 
   trait KVTrampoline {
-    def kvNameSpace : Namespace
+    def persistenceDescriptor : Option[PersistenceDescriptor]
+
+    def kvNameSpace : Option[Namespace] = {
+      for( pd <- persistenceDescriptor )
+	yield { pd.kvNameSpace }
+    }
     def asValue(
       rsrc : mTT.Resource
-    ) : CnxnCtxtLeaf[Namespace,Var,Tag]
+    ) : Option[CnxnCtxtLeaf[Namespace,Var,Tag]] = {
+      for( pd <- persistenceDescriptor ) 
+	yield { pd.asValue( rsrc ) }
+    }
     def asKey(
       key : mTT.GetRequest
-    ) : mTT.GetRequest with Factual = {
-      key match {
-	case leaf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
-	  leaf
-	case branch : CnxnCtxtBranch[Namespace,Var,Tag] =>
-	  branch
-      }
+    ) : Option[mTT.GetRequest with Factual] = {
+      for( pd <- persistenceDescriptor )
+	yield { pd.asKey( key ) }
     }
 
     def asRecord(
       key : mTT.GetRequest,
       value : mTT.Resource
-    ) : mTT.GetRequest with Factual = {
-      new CnxnCtxtBranch[Namespace,Var,Tag](
-	kvNameSpace,
-	List( asKey( key ), asValue( value ) )
-      )
-    }
-    def persistenceDescriptor : Option[PersistenceDescriptor]
+    ) : Option[mTT.GetRequest with Factual] = {
+      for( pd <- persistenceDescriptor )
+	yield { pd.asRecord( key, value ) }
+    }    
   }
 
   abstract class PersistedtedMonadicGeneratorJunction(
@@ -673,7 +701,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	  // remove this line to force to db on get
 	  channels( wtr.getOrElse( ptn ) ) = rsrc	  
 	  spawn {
-	    val rcrd = asRecord( ptn, rsrc )
+	    val rcrd = pd.asRecord( ptn, rsrc )
 	    tweet(
 	      (
 		"storing to db : " + pd.db
@@ -962,27 +990,56 @@ object MonadicTS
     ) extends PersistedtedMonadicGeneratorJunction(
       name, acquaintances
     ) {
-      def kvNameSpace : String = "KVPairs"
-      def asValue(
-	rsrc : mTT.Resource
-      ) : CnxnCtxtLeaf[String,String,String] = {
-	val blob =
-	  new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+      class StringExistDescriptor
+      extends ExistDescriptor( database ) {
+	def kvNameSpace : String = "KVPairs"
+	def asValue(
+	  rsrc : mTT.Resource
+	) : CnxnCtxtLeaf[String,String,String] = {
+	  val blob =
+	    new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
 	  //asXML( rsrc )
-	new CnxnCtxtLeaf[String,String,String](
-	  Left[String,String]( blob )
-	)
+	  new CnxnCtxtLeaf[String,String,String](
+	    Left[String,String]( blob )
+	  )
+	}
+      
       }
+
       def persistenceDescriptor : Option[PersistenceDescriptor] =
 	Some(
-	  new ExistDescriptor(
-	    database
-	  )
+	  new StringExistDescriptor
 	)
     }
     
     def Pimma( a : String, b : String )  =
       new PersistedtedStringMGJ( a, List( b ) )
+
+    import scala.collection.immutable.IndexedSeq
+
+    def testQuery( pimmgJunq : PersistedtedStringMGJ )(
+      cnxn : AgentCnxn
+    )(
+      qryStr : String
+    ) : Option[IndexedSeq[org.xmldb.api.base.Resource]] = {
+      for(
+	pd <- pimmgJunq.persistenceDescriptor;
+	xmlColl <- pimmgJunq.getCollection( true )( pd.xmlCollStr( cnxn ) )
+      )
+      yield {
+	val xqSrvc =
+	  pimmgJunq.getQueryService( xmlColl )(
+	    "XQueryService", "1.0"
+	  ).asInstanceOf[XQueryService]
+
+	val rsrcSet = xqSrvc.execute( xqSrvc.compile( qryStr ) )
+	println( "number of results = " + rsrcSet.getSize )
+	for( i <- 0 to rsrcSet.getSize.toInt - 1 )
+	yield {
+	  rsrcSet.getResource( i )
+	}
+      }
+    }
     
     type MsgTypes = DTSMSH[String,String,String,String]   
     

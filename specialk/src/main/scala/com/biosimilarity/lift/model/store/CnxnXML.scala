@@ -477,6 +477,16 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     }    
   }
 
+  def xqWrapTerm(
+    ccl : CnxnCtxtLeaf[Namespace,Var,Tag],
+    xqcc : XQueryCompilerContext
+  ) : String = {
+    ccl match {
+      case ccf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
+	asXMLData( ccf ).toString
+    }
+  }
+
   def xqRecConstraints(
     ccl : CnxnCtxtLabel[Namespace,Var,Tag],
     xqcc : XQueryCompilerContext
@@ -488,8 +498,8 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     val letVar = xqcc.letVar
 
     ccl match {
-      case CnxnCtxtLeaf( Left( t ) ) =>
-	( letVar.getOrElse( nextXQV ) + " = " + t )
+      case ccf@CnxnCtxtLeaf( Left( t ) ) =>
+	( letVar.getOrElse( nextXQV ) + " = " + xqWrapTerm( ccf, xqcc ) )
       case CnxnCtxtLeaf( Right( v ) ) =>
 	( "" )
       case CnxnCtxtBranch( ns, facts ) => {
@@ -615,5 +625,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     }         
   }
 }
+
+
 
 
