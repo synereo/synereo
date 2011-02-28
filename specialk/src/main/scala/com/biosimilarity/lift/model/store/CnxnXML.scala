@@ -58,7 +58,14 @@ trait CnxnXML[Namespace,Var,Tag] {
 	.replace( "class ", "")
 	.replace( "java.lang", "")
 	.replace( ".", "" )
-	xmlTrampoline( tagStr, t.toString )
+
+	val tStr = 
+	  t match {
+	    case s : String => s
+	    case _ => t.toString
+	  }
+
+	xmlTrampoline( tagStr, tStr )
       }
       case Right( v ) => {
 	<var>{ v.toString }</var>
@@ -217,7 +224,7 @@ trait CnxnXML[Namespace,Var,Tag] {
       applicationXform | groundXform | variableXform
     def groundXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
       (
-	stringLiteral ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x ) ) )
+	stringLiteral ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.replace( "\"", "" ) ) ) )
 	| floatingPointNumber ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.toDouble ) ) )
 	| "true" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( true ) ) )
 	| "false" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( false ) ) )
@@ -616,7 +623,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	val xqcc =
 	  XQCC(
 	    ccb, ccl,
-	    "root", Some( nextXQV ),
+	    "/", Some( nextXQV ),
 	    None, None,
 	    DeBruijnIndex( 0, 0 )
 	  )

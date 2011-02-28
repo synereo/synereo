@@ -30,12 +30,18 @@ import org.xmldb.api.base.{ Resource => XmlDbRrsc, _}
 import org.xmldb.api.modules._
 import org.xmldb.api._
 
+import org.exist.util.serializer.SAXSerializer
+import org.exist.util.serializer.SerializerPool
+
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
+import javax.xml.transform.OutputKeys
+import java.util.Properties
 import java.net.URI
 import java.io.File
 import java.io.FileInputStream
+import java.io.OutputStreamWriter
 
 trait MonadicTermTypes[Namespace,Var,Tag,Value] {
   trait Resource
@@ -1034,10 +1040,40 @@ object MonadicTS
 
 	val rsrcSet = xqSrvc.execute( xqSrvc.compile( qryStr ) )
 	println( "number of results = " + rsrcSet.getSize )
-	for( i <- 0 to rsrcSet.getSize.toInt - 1 )
-	yield {
-	  rsrcSet.getResource( i )
-	}
+
+	val outputProperties : Properties = new Properties()
+        outputProperties.setProperty(
+	  OutputKeys.INDENT, "yes"
+	)
+	
+	val serializer : SAXSerializer =	  
+	  SerializerPool.getInstance().borrowObject(
+            Class.forName( "org.exist.util.serializer.SAXSerializer" )
+	  ).asInstanceOf[SAXSerializer]	
+
+	val rslt = 
+	  for( i <- 0 to rsrcSet.getSize.toInt - 1 )
+	  yield {
+	    val rsrc = rsrcSet.getResource( i )
+	    val xmlRsrc = rsrc.asInstanceOf[XMLResource]
+
+	    val bufStrm = new java.io.ByteArrayOutputStream()
+
+	    serializer.setOutput(
+	      new OutputStreamWriter(bufStrm),
+	      outputProperties
+	    )	    
+
+	    xmlRsrc.getContentAsSAX( serializer )
+	    
+	    println( "the resource is : " + bufStrm )
+
+	    rsrc
+	  }
+
+	SerializerPool.getInstance().returnObject(serializer);
+	
+	rslt
       }
     }
     
