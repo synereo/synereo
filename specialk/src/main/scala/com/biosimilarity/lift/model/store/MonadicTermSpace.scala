@@ -67,20 +67,14 @@ trait MonadicTermTypeScope[Namespace,Var,Tag,Value] {
 
 trait MonadicTermStoreScope[Namespace,Var,Tag,Value] 
 extends MonadicTermTypeScope[Namespace,Var,Tag,Value] 
-  with MonadicDTSMsgScope[Namespace,Var,Tag,Value] {
-
-    case class AgentCnxn(
-      override val src : URI,
-      override val label : String,
-      override val trgt : URI
-    ) extends Cnxn[URI,String,URI]
+  with MonadicDTSMsgScope[Namespace,Var,Tag,Value] {    
   
   trait PersistenceDescriptor {    
     self : CnxnXML[Namespace,Var,Tag]
 	    with CnxnCtxtInjector[Namespace,Var,Tag] =>
 
     def db : Database
-    def xmlCollStr( cnxn : AgentCnxn ) : String
+    def xmlCollStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String
     def queryServiceType : String = "XQueryService"
     def queryServiceVersion : String = "1.0"
     def toFile( ptn : mTT.GetRequest ) : Option[File]
@@ -119,10 +113,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   with CnxnXML[Namespace,Var,Tag]
   with CnxnCtxtInjector[Namespace,Var,Tag]
   with UUIDOps {
-    override def xmlCollStr( cnxn : AgentCnxn ) : String = {
-      // TBD
-      cnxn.src.getHost + cnxn.trgt.getHost
-    }
+    // override def xmlCollStr[Src,Label,Trgt](
+//       cnxn : Cnxn[Src,Label,Trgt]
+//     ) : String = {
+//      
+//       cnxn.src.getHost + cnxn.trgt.getHost
+//     }
     override def query(
       ptn : mTT.GetRequest
     ) : Option[String] = {
@@ -682,274 +678,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       for( pd <- persistenceDescriptor )
 	yield { pd.asRecord( key, value ) }
     }    
-  }
-
-  abstract class PersistedtedMonadicGeneratorJunction(
-    override val name : URI,
-    override val acquaintances : Seq[URI]
-  ) extends DistributedMonadicGeneratorJunction(
-    name,
-    acquaintances
-  ) with KVTrampoline {    
-    def putInStore(
-      persist : Option[PersistenceDescriptor],
-      channels : Map[mTT.GetRequest,mTT.Resource],
-      ptn : mTT.GetRequest,
-      wtr : Option[mTT.GetRequest],
-      rsrc : mTT.Resource
-    )( cnxn : AgentCnxn ) : Unit = {
-      persist match {
-	case None => {
-	  channels( wtr.getOrElse( ptn ) ) = rsrc	  
-	}
-	case Some( pd ) => {
-	  tweet( "accessing db : " + pd.db )
-	  // remove this line to force to db on get
-	  channels( wtr.getOrElse( ptn ) ) = rsrc	  
-	  spawn {
-	    val rcrd = pd.asRecord( ptn, rsrc )
-	    tweet(
-	      (
-		"storing to db : " + pd.db
-		+ " pair : " + rcrd
-		+ " in coll : " + pd.xmlCollStr( cnxn )
-	      )
-	    )
-	    store( pd.xmlCollStr( cnxn ) )( rcrd )
-	  }
-	}
-      }
-    }
-
-     def putPlaces( persist : Option[PersistenceDescriptor] )(
-      channels : Map[mTT.GetRequest,mTT.Resource],
-      registered : Map[mTT.GetRequest,List[RK]],
-      ptn : mTT.GetRequest,
-      rsrc : mTT.Resource
-    )( cnxn : AgentCnxn ) : Generator[PlaceInstance,Unit,Unit] = {    
-      Generator {
-	k : ( PlaceInstance => Unit @suspendable ) => 
-	  // Are there outstanding waiters at this pattern?    
-	  val map =
-	    Right[
-	      Map[mTT.GetRequest,mTT.Resource],
-	      Map[mTT.GetRequest,List[RK]]
-	    ]( registered )
-	  val waitlist = locations( map, ptn )
-
-	  waitlist match {
-	    // Yes!
-	    case waiter :: waiters => {
-	      tweet( "found waiters waiting for a value at " + ptn )
-	      val itr = waitlist.toList.iterator	    
-	      while( itr.hasNext ) {
-		k( itr.next )
-	      }
-	    }
-	    // No...
-	    case Nil => {
-	      // Store the rsrc at a representative of the ptn
-	      tweet( "no waiters waiting for a value at " + ptn )
-	      //channels( representative( ptn ) ) = rsrc
-	      putInStore(
-		persist, channels, ptn, None, rsrc 
-	      )(
-		cnxn
-	      )
-	    }
-	  }
-      }
-    }
-    
-    def mput( persist : Option[PersistenceDescriptor] )(
-      channels : Map[mTT.GetRequest,mTT.Resource],
-      registered : Map[mTT.GetRequest,List[RK]],
-      consume : Boolean
-    )( cnxn : AgentCnxn )(
-      ptn : mTT.GetRequest,
-      rsrc : mTT.Resource
-    ) : Unit @suspendable = {    
-      for(
-	placeNRKsNSubst
-	<- putPlaces(
-	  persist
-	)( channels, registered, ptn, rsrc )( cnxn )
-      ) {
-	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
-	rks match {
-	  case rk :: rrks => {	
-	    if ( consume ) {
-	      for( sk <- rks ) {
-		spawn {
-		  sk( s( rsrc ) )
-		}
-	      }
-	    }
-	    else {
-	      registered( wtr ) = rrks
-	      rk( s( rsrc ) )
-	    }
-	  }
-	  case Nil => {
-	    putInStore(
-	      persist, channels, ptn, Some( wtr ), rsrc 
-	    )( cnxn )
-	  }
-	}
-      }
-      
-    }
-    def mget(
-      persist : Option[PersistenceDescriptor],
-      ask : Ask,
-      hops : List[URI]
-    )(
-      channels : Map[mTT.GetRequest,mTT.Resource],
-      registered : Map[mTT.GetRequest,List[RK]],
-      consume : Boolean
-    )( cnxn : AgentCnxn )(
-      path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      Generator {
-	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
-	  shift {
-	    outerk : ( Unit => Unit ) =>
-	      reset {
-		for(
-		  oV <- mget( channels, registered, consume )( path ) 
-		) {
-		  oV match {
-		    case None => {
-		      persist match {
-			case None => {
-			  forward( ask, hops, path )
-			  rk( oV )
-			}
-			case Some( pd ) => {
-			  tweet(
-			    "accessing db : " + pd.db
-			  )
-			  val query = pd.query( path )
-			  query match {
-			    case None => {
-			      forward( ask, hops, path )
-			    }
-			    case Some( qry ) => {
-			      spawn {
-				for(			    
-				  xmlColl <- getCollection(
-				    true
-				  )( pd.xmlCollStr( cnxn ) )
-				) {
-				  val srvc : Service =
-				    getQueryService( xmlColl )(
-				      pd.queryServiceType,
-				      pd.queryServiceVersion
-				    );
-				  tweet(
-				    (
-				      "querying db : " + pd.db
-				      + " from coll " + pd.xmlCollStr( cnxn )
-				      + " where " + qry
-				    )
-				  )
-				  val rsrcSet =
-				    execute( xmlColl )( srvc )( qry )
-				  if ( rsrcSet.getSize == 0 ) {
-				    forward( ask, hops, path )
-				  }
-				  else {
-				    // TBD
-				    // Need to put results
-				  }
-				}
-			      }
-			    }
-			    rk( oV )
-			  }
-			}		      
-		      }
-		    }
-		    case _ => rk( oV )
-		  }
-		}
-	      }
-	  }
-      }
-    }
-    
-    def put( cnxn : AgentCnxn )(
-      ptn : mTT.GetRequest, rsrc : mTT.Resource
-    ) =
-      mput( persistenceDescriptor )(
-	theMeetingPlace, theWaiters, false
-      )( cnxn )( ptn, rsrc )
-    def publish( cnxn : AgentCnxn )(
-      ptn : mTT.GetRequest, rsrc : mTT.Resource
-    ) =
-      mput( persistenceDescriptor )(
-	theChannels, theSubscriptions, true
-      )( cnxn )( ptn, rsrc )
-
-    def get( hops : List[URI] )(
-      cnxn : AgentCnxn
-    )(
-      path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, AGet, hops )(
-	theMeetingPlace, theWaiters, true
-      )( cnxn )( path )    
-    }
-    def get(
-      cnxn : AgentCnxn
-    )(
-      path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      get( Nil )( cnxn )( path )    
-    }
-
-    def fetch( hops : List[URI] )(
-      cnxn : AgentCnxn
-    )(
-      path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, AFetch, hops )(
-	theMeetingPlace, theWaiters, false
-      )( cnxn )( path )    
-    }
-    def fetch(
-      cnxn : AgentCnxn
-    )(
-      path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      fetch( Nil )( cnxn )( path )    
-    }
-
-    def subscribe( hops : List[URI] )(
-      cnxn : AgentCnxn
-    )(
-      path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, ASubscribe, hops )(
-	theChannels, theSubscriptions, true
-      )( cnxn )( path )    
-    }
-    def subscribe(
-      cnxn : AgentCnxn
-    )(
-      path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      subscribe( Nil )( cnxn )( path )    
-    }
-  }
+  }   
 }
 
 object MonadicTS
@@ -988,94 +717,7 @@ object MonadicTS
     
     lazy val Mona = new MonadicTermStore()
     def Imma( a : String, b : String )  =
-      new DistributedMonadicGeneratorJunction( a, List( b ) )
-    
-    class PersistedtedStringMGJ(
-      override val name : URI,
-      override val acquaintances : Seq[URI]
-    ) extends PersistedtedMonadicGeneratorJunction(
-      name, acquaintances
-    ) {
-      class StringExistDescriptor
-      extends ExistDescriptor( database ) {
-	def kvNameSpace : String = "KVPairs"
-	def asValue(
-	  rsrc : mTT.Resource
-	) : CnxnCtxtLeaf[String,String,String] = {
-	  val blob =
-	    new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
-	  //asXML( rsrc )
-	  new CnxnCtxtLeaf[String,String,String](
-	    Left[String,String]( blob )
-	  )
-	}
-      
-      }
-
-      def persistenceDescriptor : Option[PersistenceDescriptor] =
-	Some(
-	  new StringExistDescriptor
-	)
-    }
-    
-    def Pimma( a : String, b : String )  =
-      new PersistedtedStringMGJ( a, List( b ) )
-
-    import scala.collection.immutable.IndexedSeq
-
-    def testQuery( pimmgJunq : PersistedtedStringMGJ )(
-      cnxn : AgentCnxn
-    )(
-      qryStr : String
-    ) : Option[IndexedSeq[org.xmldb.api.base.Resource]] = {
-      for(
-	pd <- pimmgJunq.persistenceDescriptor;
-	xmlColl <- pimmgJunq.getCollection( true )( pd.xmlCollStr( cnxn ) )
-      )
-      yield {
-	val xqSrvc =
-	  pimmgJunq.getQueryService( xmlColl )(
-	    "XQueryService", "1.0"
-	  ).asInstanceOf[XQueryService]
-
-	val rsrcSet = xqSrvc.execute( xqSrvc.compile( qryStr ) )
-	println( "number of results = " + rsrcSet.getSize )
-
-	val outputProperties : Properties = new Properties()
-        outputProperties.setProperty(
-	  OutputKeys.INDENT, "yes"
-	)
-	
-	val serializer : SAXSerializer =	  
-	  SerializerPool.getInstance().borrowObject(
-            Class.forName( "org.exist.util.serializer.SAXSerializer" )
-	  ).asInstanceOf[SAXSerializer]	
-
-	val rslt = 
-	  for( i <- 0 to rsrcSet.getSize.toInt - 1 )
-	  yield {
-	    val rsrc = rsrcSet.getResource( i )
-	    val xmlRsrc = rsrc.asInstanceOf[XMLResource]
-
-	    val bufStrm = new java.io.ByteArrayOutputStream()
-
-	    serializer.setOutput(
-	      new OutputStreamWriter(bufStrm),
-	      outputProperties
-	    )	    
-
-	    xmlRsrc.getContentAsSAX( serializer )
-	    
-	    println( "the resource is : " + bufStrm )
-
-	    rsrc
-	  }
-
-	SerializerPool.getInstance().returnObject(serializer);
-	
-	rslt
-      }
-    }
+      new DistributedMonadicGeneratorJunction( a, List( b ) )    
     
     type MsgTypes = DTSMSH[String,String,String,String]   
     
