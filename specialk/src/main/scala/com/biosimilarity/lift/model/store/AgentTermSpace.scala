@@ -319,6 +319,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
   }
 }
 
+/* ------------------------------------------------------------------
+ * Mostly self-contained object to support unit testing
+ * ------------------------------------------------------------------ */ 
+
 object AgentTS
  extends AgentTermStoreScope[String,String,String,String] 
   with UUIDOps {

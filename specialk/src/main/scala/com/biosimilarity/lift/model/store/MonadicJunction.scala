@@ -766,6 +766,11 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   
 }
 
+
+/* ------------------------------------------------------------------
+ * Mostly self-contained object to support unit testing
+ * ------------------------------------------------------------------ */ 
+
 object MonadicMsgJunction
   extends MonadicDTSMsgScope[String,String,String,String]
   with UUIDOps

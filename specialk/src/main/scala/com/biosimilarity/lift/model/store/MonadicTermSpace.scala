@@ -682,39 +682,19 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   }   
 }
 
+/* ------------------------------------------------------------------
+ * Mostly self-contained object to support unit testing
+ * ------------------------------------------------------------------ */ 
+
 object MonadicTS
  extends MonadicTermStoreScope[String,String,String,String] 
   with UUIDOps {
-    import AgentURIDefaults._
+    import SpecialKURIDefaults._
+    import CnxnLeafAndBranch._
+
     type MTTypes = MonadicTermTypes[String,String,String,String]
     object TheMTT extends MTTypes
     override def protoTermTypes : MTTypes = TheMTT
-    
-    val aLabel =
-      new CnxnCtxtLeaf[String,String,String](
-	Left(
-	  "a"
-	)
-      )
-    val bLabel =
-      new CnxnCtxtLeaf[String,String,String](
-	Left(
-	  "b"
-	)
-      )
-    
-    val cLabel =
-      new CnxnCtxtLeaf[String,String,String](
-	Left(
-	  "c"
-	)
-      )
-    val dLabel =
-      new CnxnCtxtLeaf[String,String,String](
-	Left(
-	  "d"
-	)
-      )
     
     lazy val Mona = new MonadicTermStore()
     def Imma( a : String, b : String )  =
