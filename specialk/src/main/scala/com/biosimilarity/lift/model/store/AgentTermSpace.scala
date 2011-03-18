@@ -365,6 +365,9 @@ object AgentTS
     ) {
       class StringExistDescriptor
       extends ExistDescriptor( database ) {
+	override def xmlCollStr : String = {
+	  throw new Exception( "use Cnxn-based interface instead" )
+	}
 	override def xmlCollStr[Src,Label,Trgt](
 	  cnxn : Cnxn[Src,Label,Trgt]
 	) : String = {     

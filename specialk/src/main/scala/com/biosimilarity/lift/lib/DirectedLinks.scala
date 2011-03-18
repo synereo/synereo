@@ -27,6 +27,15 @@ object AgentURIDefaults {
   }  
 }
 
+object SpecialKURIDefaults {
+  def scheme : String = "specialk"
+  def path : String = "/connection"
+  def fragment : String = ""
+  implicit def stringToURI( s : String ) : URI = {
+    new URI( scheme, s, path, fragment )
+  }  
+}
+
 
 
 
