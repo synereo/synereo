@@ -307,7 +307,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     }        
 
   trait XQueryCompilerContext {
-    def root : CnxnCtxtBranch[Namespace,Var,Tag]
+    def root : Option[CnxnCtxtBranch[Namespace,Var,Tag]]
     def branch : CnxnCtxtLabel[Namespace,Var,Tag]
     def xqVar : String
     def letVar : Option[String]
@@ -336,7 +336,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
   }
 
   case class XQCC( 
-    override val root : CnxnCtxtBranch[Namespace,Var,Tag],
+    override val root : Option[CnxnCtxtBranch[Namespace,Var,Tag]],
     override val branch : CnxnCtxtLabel[Namespace,Var,Tag],
     override val xqVar : String,
     override val letVar : Option[String],
@@ -618,18 +618,35 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     ccl : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : String = {
     ccl match {
-      case CnxnCtxtLeaf( _ ) => ""
-      case ccb : CnxnCtxtBranch[Namespace,Var,Tag] => {
+      case CnxnCtxtLeaf( _ ) => {	  
+	val nxqv = nextXQV
 	val xqcc =
 	  XQCC(
-	    ccb, ccl,
+	    None,
+	    ccl,
+	    "/", Some( nxqv ),
+	    None, None,
+	    DeBruijnIndex( 0, 0 )
+	  )
+	val cond =
+	  xqRecConstraints( ccl, xqcc )
+	(
+	  "for" + " " + nxqv + " in " + "/root" + " where " + cond 
+	  + " return "  + nxqv
+	)
+      }
+      case ccb : CnxnCtxtBranch[Namespace,Var,Tag] => {			
+	val xqcc =
+	  XQCC(
+	    Some( ccb ),
+	    ccl,
 	    "/", Some( nextXQV ),
 	    None, None,
 	    DeBruijnIndex( 0, 0 )
 	  )
 	xqRecConstraints( ccl, xqcc )
       }
-    }         
+    }    
   }
 }
 
