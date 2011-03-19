@@ -10,23 +10,6 @@ package com.biosimilarity.lift.lib
 
 import java.net.URI
 
-// D_irected L_ink F_actory
-// what type constraint can we impose to insist Linker have a ctor of
-  // two arguments both of type String?
-
-object AgentURIDefaults {
-  trait Direction
-  case class A2B() extends Direction
-  case class B2A() extends Direction
-
-  def scheme : String = "agent"
-  def path : String = "/invitation"
-  def fragment : String = ""
-  implicit def stringToURI( s : String ) : URI = {
-    new URI( scheme, s, path, fragment )
-  }  
-}
-
 object SpecialKURIDefaults {
   def scheme : String = "specialk"
   def path : String = "/connection"
