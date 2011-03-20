@@ -288,6 +288,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	( this + " in forwardGet with hops: " + hops )
       )
       
+      // Dummy declarations to avoid a bug in the scala runtime
+      val das = ask
+      val dasClass = ask.getClass
+      
       for(
 	( uri, jsndr ) <- agentTwistedPairs
 	if !hops.contains( uri )
@@ -622,6 +626,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      
+      // Dummy declarations to avoid a bug in the scala runtime
+      val das = dAT.AGet
+      val dasClass = dAT.AGet.getClass
+      
       mget( dAT.AGet, hops )( theMeetingPlace, theWaiters, true )( path )    
     }
 
@@ -636,6 +645,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      
+      // Dummy declarations to avoid a bug in the scala runtime
+      val das = dAT.AFetch
+      val dasClass = dAT.AFetch.getClass
+
       mget( dAT.AFetch, hops )( theMeetingPlace, theWaiters, false )( path )    
     }
 
@@ -650,7 +664,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( dAT.ASubscribe, hops )( theChannels, theSubscriptions, true )( path )    
+
+      // Dummy declarations to avoid a bug in the scala runtime
+      val das = dAT.ASubscribe
+      val dasClass = dAT.ASubscribe.getClass
+
+      mget( dAT.ASubscribe, hops )(
+	theChannels, theSubscriptions, true
+      )( path )    
     }
 
     override def subscribe(
