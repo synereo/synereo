@@ -65,9 +65,23 @@ trait MonadicTermTypeScope[Namespace,Var,Tag,Value] {
   val mTT : MTTypes = protoTermTypes
 }
 
+trait DistributedAskTypes {
+  trait Ask
+  case object AGet extends Ask
+  case object AFetch extends Ask
+  case object ASubscribe extends Ask    
+}
+
+trait DistributedAskTypeScope {
+  type DATypes <: DistributedAskTypes
+  def protoAskTypes : DATypes
+  val dAT : DATypes = protoAskTypes
+}
+
 trait MonadicTermStoreScope[Namespace,Var,Tag,Value] 
 extends MonadicTermTypeScope[Namespace,Var,Tag,Value] 
-  with MonadicDTSMsgScope[Namespace,Var,Tag,Value] {    
+  with MonadicDTSMsgScope[Namespace,Var,Tag,Value]
+  with DistributedAskTypeScope {    
   
   trait PersistenceDescriptor {    
     self : CnxnXML[Namespace,Var,Tag]
@@ -264,13 +278,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
 
-    trait Ask
-    case object AGet extends Ask
-    case object AFetch extends Ask
-    case object ASubscribe extends Ask
-
     def forward(
-      ask : Ask,
+      ask : dAT.Ask,
       hops : List[URI],
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
@@ -291,17 +300,17 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	
 	smajatp.send(
 	  ask match {
-	    case AGet => {
+	    case dAT.AGet => {
 	      Msgs.MDGetRequest[Namespace,Var,Tag,Value](
 		path
 	      ).asInstanceOf[Msgs.DReq]
 	    }
-	    case AFetch => {
+	    case dAT.AFetch => {
 	      Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
 		path
 	      ).asInstanceOf[Msgs.DReq]
 	    }
-	    case ASubscribe => {
+	    case dAT.ASubscribe => {
 	      Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
 		path
 	      ).asInstanceOf[Msgs.DReq]
@@ -580,7 +589,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       }
     }
 
-    def mget( ask : Ask, hops : List[URI] )(
+    def mget( ask : dAT.Ask, hops : List[URI] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean
@@ -613,7 +622,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( AGet, hops )( theMeetingPlace, theWaiters, true )( path )    
+      mget( dAT.AGet, hops )( theMeetingPlace, theWaiters, true )( path )    
     }
 
     override def get(
@@ -627,7 +636,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( AFetch, hops )( theMeetingPlace, theWaiters, false )( path )    
+      mget( dAT.AFetch, hops )( theMeetingPlace, theWaiters, false )( path )    
     }
 
     override def fetch(
@@ -641,7 +650,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( ASubscribe, hops )( theChannels, theSubscriptions, true )( path )    
+      mget( dAT.ASubscribe, hops )( theChannels, theSubscriptions, true )( path )    
     }
 
     override def subscribe(
@@ -695,6 +704,10 @@ object MonadicTS
     type MTTypes = MonadicTermTypes[String,String,String,String]
     object TheMTT extends MTTypes
     override def protoTermTypes : MTTypes = TheMTT
+
+    type DATypes = DistributedAskTypes
+    object TheDAT extends DATypes
+    override def protoAskTypes : DATypes = TheDAT
     
     lazy val Mona = new MonadicTermStore()
     def Imma( a : String, b : String )  =

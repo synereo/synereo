@@ -162,7 +162,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     }
     def mget(
       persist : Option[PersistenceDescriptor],
-      ask : Ask,
+      ask : dAT.Ask,
       hops : List[URI]
     )(
       channels : Map[mTT.GetRequest,mTT.Resource],
@@ -257,7 +257,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, AGet, hops )(
+      mget( persistenceDescriptor, dAT.AGet, hops )(
 	theMeetingPlace, theWaiters, true
       )( path )    
     }
@@ -272,7 +272,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, AFetch, hops )(
+      mget( persistenceDescriptor, dAT.AFetch, hops )(
 	theMeetingPlace, theWaiters, false
       )( path )    
     }
@@ -287,7 +287,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, ASubscribe, hops )(
+      mget( persistenceDescriptor, dAT.ASubscribe, hops )(
 	theChannels, theSubscriptions, true
       )( path )    
     }
@@ -314,6 +314,10 @@ object PersistedMonadicTS
     type MTTypes = MonadicTermTypes[String,String,String,String]
     object TheMTT extends MTTypes
     override def protoTermTypes : MTTypes = TheMTT
+
+    type DATypes = DistributedAskTypes
+    object TheDAT extends DATypes
+    override def protoAskTypes : DATypes = TheDAT
     
     lazy val Mona = new MonadicTermStore()
     def Imma( a : String, b : String )  =
