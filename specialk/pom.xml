@@ -22,6 +22,16 @@
     <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
   </properties>
 
+  <distributionManagement>
+    <repository>
+      <uniqueVersion>true</uniqueVersion>
+      <id>biosimilarity</id>
+      <name>biosimrepo</name>
+      <url>file:///Users/lgm/work/src/projex/biosimilarity/biosimrepomirror</url>
+      <layout>default</layout>
+    </repository>
+  </distributionManagement>
+
   <repositories>
     <repository>
       <id>scala-tools.releases</id>

@@ -70,6 +70,12 @@ trait DistributedAskTypes {
   case object AGet extends Ask
   case object AFetch extends Ask
   case object ASubscribe extends Ask    
+  
+  // workaround due to bug in scala runtime
+  type AskNum = Int
+  val AGetNum : AskNum = 0
+  val AFetchNum : AskNum = 1
+  val ASubscribeNum : AskNum = 2
 }
 
 trait DistributedAskTypeScope {
@@ -287,7 +293,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       reportage(
 	( this + " in forwardGet with hops: " + hops )
       )
-      
+
       // Dummy declarations to avoid a bug in the scala runtime
       val das = ask
       val dasClass = ask.getClass
@@ -315,6 +321,48 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	      ).asInstanceOf[Msgs.DReq]
 	    }
 	    case dAT.ASubscribe => {
+	      Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
+		path
+	      ).asInstanceOf[Msgs.DReq]
+	    }
+	  }
+	)
+      }
+    }
+    
+    def forward(
+      ask : dAT.AskNum,
+      hops : List[URI],
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Unit = {
+
+      reportage(
+	( this + " in forwardGet with hops: " + hops )
+      )
+
+      for(
+	( uri, jsndr ) <- agentTwistedPairs
+	if !hops.contains( uri )
+      ) {
+	reportage(
+	  ( this + " forwarding to " + uri )
+	)
+	val smajatp : SMAJATwistedPair =
+	  jsndr.asInstanceOf[SMAJATwistedPair]
+	
+	smajatp.send(
+	  ask match {
+	    case dAT.AGetNum => {
+	      Msgs.MDGetRequest[Namespace,Var,Tag,Value](
+		path
+	      ).asInstanceOf[Msgs.DReq]
+	    }
+	    case dAT.AFetchNum => {
+	      Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
+		path
+	      ).asInstanceOf[Msgs.DReq]
+	    }
+	    case dAT.ASubscribeNum => {
 	      Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
 		path
 	      ).asInstanceOf[Msgs.DReq]
@@ -621,6 +669,35 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	  }
       }
     }
+
+    def mget( ask : dAT.AskNum, hops : List[URI] )(
+      channels : Map[mTT.GetRequest,mTT.Resource],
+      registered : Map[mTT.GetRequest,List[RK]],
+      consume : Boolean
+    )(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+      Generator {
+	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+	  shift {
+	    outerk : ( Unit => Unit ) =>
+	      reset {
+		for(
+		  oV <- mget( channels, registered, consume )( path ) 
+		) {
+		  oV match {
+		    case None => {
+		      forward( ask, hops, path )
+		      rk( oV )
+		    }
+		    case _ => rk( oV )
+		  }
+		}
+	      }
+	  }
+      }
+    }
   
     def get( hops : List[URI] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -628,10 +705,13 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       
       // Dummy declarations to avoid a bug in the scala runtime
-      val das = dAT.AGet
-      val dasClass = dAT.AGet.getClass
+      // val das = dAT.AGet
+//       val dasClass = dAT.AGet.getClass
       
-      mget( dAT.AGet, hops )( theMeetingPlace, theWaiters, true )( path )    
+      //mget( dAT.AGet, hops )(
+      mget( dAT.AGetNum, hops )(
+	theMeetingPlace, theWaiters, true
+      )( path )    
     }
 
     override def get(
@@ -647,10 +727,13 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       
       // Dummy declarations to avoid a bug in the scala runtime
-      val das = dAT.AFetch
-      val dasClass = dAT.AFetch.getClass
+      // val das = dAT.AFetch
+//       val dasClass = dAT.AFetch.getClass
 
-      mget( dAT.AFetch, hops )( theMeetingPlace, theWaiters, false )( path )    
+      //mget( dAT.AFetch, hops )(
+      mget( dAT.AFetchNum, hops )(
+	theMeetingPlace, theWaiters, false
+      )( path )    
     }
 
     override def fetch(
@@ -666,10 +749,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
 
       // Dummy declarations to avoid a bug in the scala runtime
-      val das = dAT.ASubscribe
-      val dasClass = dAT.ASubscribe.getClass
+      // val das = dAT.ASubscribe
+//       val dasClass = dAT.ASubscribe.getClass
 
-      mget( dAT.ASubscribe, hops )(
+      //mget( dAT.ASubscribe, hops )(
+      mget( dAT.ASubscribeNum, hops )(
 	theChannels, theSubscriptions, true
       )( path )    
     }
