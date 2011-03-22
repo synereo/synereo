@@ -4,6 +4,8 @@
 // Creation:    Thu Mar 17 14:47:04 2011 
 // Copyright:   Not supplied 
 // Description: 
+// This is a transliteration of Oleg's implementation of the monadic
+// presentation of delimited control
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.delimited
@@ -21,11 +23,16 @@ trait CC[P[M[_],_],M[_],A]{
   def unCC : M[CCV[P,M,A]]
 }
 
-trait SubCont[P[M[_],_],M[_],A,B] extends Function1[CC[P,M,A],CC[P,M,B]]
+trait SubCont[P[M[_],_],M[_],A,B]
+     extends Function1[CC[P,M,A],CC[P,M,B]]
 
-trait CCT[P[M[_],_],M[_],A,W] extends Function1[SubCont[P,M,A,W],CC[P,M,W]]
+trait CCT[P[M[_],_],M[_],A,W]
+     extends Function1[SubCont[P,M,A,W],CC[P,M,W]]
 
-trait Prompt[P[M[_],_],M[_],W] extends ( CCT[P,M,Any,W],Option[CCT[P,M,Any,W]] )
+trait Prompt[P[M[_],_],M[_],W] {
+  def _1 : CCT[P,M,Any,W] => P[M,Any]
+  def _2 : P[M,Any] => Option[CCT[P,M,Any,W]]
+}
 
 trait MonadicCCScope[P[M[_],_],M[_]] {
   type MonadM <: BMonad[M]
@@ -97,4 +104,36 @@ extends MonadicCCScope[P,M] {
       )
     }
   }
+}
+
+trait DelimitedControl[P[M[_],_],M[_],A] 
+	   extends MonadicCCScope[P,M]
+{
+  def pushPrompt [W] (
+    prompt : Prompt[P,M,W], body : CC[P,M,W]
+  ) : CC[P,M,W]
+  def takeSubCont [X,W] (
+    prompt : Prompt[P,M,W], body : CCT[P,M,X,W]
+  )
+  def pushSubCont [A,B] (
+    sk : SubCont[P,M,A,B],
+    e : CC[P,M,A]
+  ) : CC[P,M,B]
+  def runCC [A] ( ccpma : CC[P,M,A] ) : M[A]
+}
+
+trait PromptFlavors {
+  trait PS[W,M[_],X]
+  trait PSScope[W] {
+    case class PSC[M[_],X](
+      cct : CCT[PSC,M,Any,W]
+    ) extends Prompt[PSC,M,W] {
+      override def _1 = {
+	( cct : CCT[PSC,M,Any,W] ) => PSC( cct )
+      }
+      override def _2 = {
+	( p : PSC[M,Any] ) => Some( cct )
+      }
+    }
+  }    
 }
