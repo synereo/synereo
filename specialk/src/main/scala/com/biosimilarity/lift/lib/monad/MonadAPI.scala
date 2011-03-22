@@ -34,13 +34,14 @@ trait MonadPlus[M[_]] {
 }
 
 // Still more monadically good richness
-trait MonadT[T[M[_],_]] {
+trait MonadT[T[M[_],_],M[_]] {
+  //self : BMonad[M] =>
   // this is a hack
-  def lift [M[_],A] ( ma : M[A] ) : T[M,A]
+  def lift [A] ( ma : M[A] ) : T[M,A]
 }
 
-trait LogicT[T[M[_],_]] {
-  self : MonadT[T] =>
+trait LogicT[T[M[_],_],M[_]] {
+  self : MonadT[T,M] =>
     def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
   def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
   def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]

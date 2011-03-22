@@ -77,3 +77,24 @@ trait MonadicCCScope[P[M[_],_],M[_]] {
     }    
   }
 }
+
+trait MonadTransformerCCScope[P[M[_],_],M[_],A]
+extends MonadicCCScope[P,M] {
+  trait CCMT[M[_],A] extends CC[P,M,A]
+  
+  case class CCCMT[M[_],A]( 
+    override val unCC : M[CCV[P,M,A]]
+  ) extends CCMT[M,A]
+
+  abstract class MonadTransformerCC
+  extends MonadT[CCMT,M] {
+    override def lift [A] ( ma : M[A] ) : CCMT[M,A] = {
+      CCCMT(
+	monadicMWitness.bind(
+	  ma,
+	  ( a : A ) => monadicMWitness.unit( Iru( a ) )
+	)
+      )
+    }
+  }
+}
