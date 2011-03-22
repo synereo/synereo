@@ -18,6 +18,14 @@ trait Monad[M[_]] {
   }
 }
 
+// How the Haskell boyz be looking at things monadically
+trait BMonad[M[_]] extends Monad[M] {
+  override def mult [A] ( mma : M[M[A]] ) : M[A] = {
+    bind[M[A],A]( mma, ( ma ) => ma )
+  }
+  override def bind [A,B] ( ma : M[A], f : A => M[B] ) : M[B]
+}
+
 // More monadically good richness
 trait MonadPlus[M[_]] {
   self : Monad[M] =>
