@@ -123,17 +123,87 @@ trait DelimitedControl[P[M[_],_],M[_],A]
 }
 
 trait PromptFlavors {
-  trait PS[W,M[_],X]
-  trait PSScope[W] {
-    case class PSC[M[_],X](
-      cct : CCT[PSC,M,Any,W]
-    ) extends Prompt[PSC,M,W] {
+  trait SingleAnswerScope[W] {
+    case class SingleAnswerType[M[_],X](
+      cct : CCT[SingleAnswerType,M,Any,W]
+    ) extends Prompt[SingleAnswerType,M,W] {
       override def _1 = {
-	( cct : CCT[PSC,M,Any,W] ) => PSC( cct )
+	( cct : CCT[SingleAnswerType,M,Any,W] ) => SingleAnswerType( cct )
       }
       override def _2 = {
-	( p : PSC[M,Any] ) => Some( cct )
+	( p : SingleAnswerType[M,Any] ) => Some( cct )
       }
     }
-  }    
+  }
+  trait TwoAnswerScope[M[_],X,A] {
+    abstract class TwoAnswerTypes[W1[_],W2[_]](
+      val choice : Either[
+	CCT[TwoAnswerTypes,M,Any,W1[A]],
+	CCT[TwoAnswerTypes,M,Any,W2[A]]
+      ]
+    )
+    abstract class TwoAnswerTypesL[W1[_],W2[_]](
+      override val choice : Either[
+	CCT[TwoAnswerTypes,M,Any,W1[A]],
+	CCT[TwoAnswerTypes,M,Any,W2[A]]
+      ]
+    ) extends TwoAnswerTypes[W1,W2]( choice )
+	     with Prompt[TwoAnswerTypes,M,W1[A]]
+    {
+      override def _1 :
+      CCT[TwoAnswerTypes,M,Any,W1[A]] => TwoAnswerTypes[M,Any]
+      // = {
+// 	( cct : CCT[TwoAnswerTypes,M,Any,W1[A]] ) =>
+// 	  TwoAnswerTypesL[M,Any](
+// 	    Left[
+// 	      CCT[TwoAnswerTypes,M,Any,M[A]],
+// 	      CCT[TwoAnswerTypes,M,Any,Any]
+// 	    ]( cct )
+// 	  )
+//       }
+      override def _2 :
+      TwoAnswerTypes[M,Any] => Option[CCT[TwoAnswerTypes,M,Any,W1[A]]]
+      // = {
+// 	( p : TwoAnswerTypes[M,Any] ) => {
+// 	  p match {
+// 	    case TwoAnswerTypesL( Left( cct ) ) => {
+// 	      Some( p.cct )
+// 	    }
+// 	    case _ => None
+// 	  }
+// 	}
+//       }
+    }
+    abstract class TwoAnswerTypesR[W1[_],W2[_]](
+      override val choice : Either[
+	CCT[TwoAnswerTypes,M,Any,W1[A]],
+	CCT[TwoAnswerTypes,M,Any,W2[A]]
+      ]
+    ) extends TwoAnswerTypes[W1,W2]( choice )
+	     with Prompt[TwoAnswerTypes,M,W2[A]] {
+      override def _1 :
+      CCT[TwoAnswerTypes,M,Any,W2[A]] => TwoAnswerTypes[M,Any]
+      // = {
+// 	( cct : CCT[TwoAnswerTypes,M,Any,W2[A]] ) =>
+// 	  TwoAnswerTypesR[M,Any](
+// 	    Right[
+// 	      CCT[TwoAnswerTypes,M,Any,Any],
+// 	      CCT[TwoAnswerTypes,M,Any,M[A]]
+// 	    ]( cct )
+// 	  )
+//       }
+      override def _2 :
+      TwoAnswerTypes[M,Any] => Option[CCT[TwoAnswerTypes,M,Any,W2[A]]]
+      // = {
+// 	( p : TwoAnswerTypes[M,Any] ) => {
+// 	  p match {
+// 	    case TwoAnswerTypesR( Right( cct ) ) => {
+// 	      Some( p.cct )
+// 	    }
+// 	    case _ => None
+// 	  }
+// 	}
+//       }
+    }
+  }
 }
