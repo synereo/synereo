@@ -72,6 +72,12 @@
       <name>gwt-maven-rewraps</name>
       <url>http://gwt-maven-rewraps.googlecode.com/hg/</url>
     </repository>
+    
+    <repository>
+      <id>basex</id>
+      <name>BaseX Maven Repository</name>
+      <url>http://files.basex.org/maven</url>
+    </repository>
 
     <repository>
       <id>biosim</id>
@@ -295,6 +301,18 @@
     </dependency>
 
     <dependency>
+      <groupId>org.basex</groupId>
+      <artifactId>basex</artifactId>
+      <version>6.6</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.basex</groupId>
+      <artifactId>basex-api</artifactId>
+      <version>6.6</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.sleepycat</groupId>
       <artifactId>db</artifactId>
       <version>local</version>
@@ -322,6 +340,7 @@
       <artifactId>configgy</artifactId>
       <version>local</version>
     </dependency>
+    
   </dependencies>
 
   <build>
