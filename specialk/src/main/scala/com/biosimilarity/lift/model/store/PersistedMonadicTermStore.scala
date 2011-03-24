@@ -9,6 +9,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._

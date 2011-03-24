@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.lib._
 
 import scala.util.continuations._ 

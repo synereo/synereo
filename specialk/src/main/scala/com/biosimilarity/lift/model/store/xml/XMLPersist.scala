@@ -6,8 +6,29 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.model.store
+package com.biosimilarity.lift.model.store.xml
 
+import com.biosimilarity.lift.model.store.CnxnLabel
+import com.biosimilarity.lift.model.store.OntologicalStatus
+import com.biosimilarity.lift.model.store.Factual
+import com.biosimilarity.lift.model.store.Hypothetical
+import com.biosimilarity.lift.model.store.Theoretical
+import com.biosimilarity.lift.model.store.CnxnLeaf
+import com.biosimilarity.lift.model.store.CCnxnLeaf
+import com.biosimilarity.lift.model.store.AbstractCnxnBranch
+import com.biosimilarity.lift.model.store.CnxnBranch
+import com.biosimilarity.lift.model.store.CCnxnBranch
+import com.biosimilarity.lift.model.store.CnxnCtxtLabel
+import com.biosimilarity.lift.model.store.CnxnCtxtLeaf
+import com.biosimilarity.lift.model.store.CCnxnCtxtLeaf
+import com.biosimilarity.lift.model.store.AbstractCnxnCtxtBranch
+import com.biosimilarity.lift.model.store.CnxnCtxtBranch
+import com.biosimilarity.lift.model.store.CCnxnCtxtBranch
+import com.biosimilarity.lift.model.store.CnxnCtxtInjector
+import com.biosimilarity.lift.model.store.Cnxn
+import com.biosimilarity.lift.model.store.CCnxn
+import com.biosimilarity.lift.model.store.CnxnXML
+import com.biosimilarity.lift.model.store.CnxnXQuery
 import com.biosimilarity.lift.lib._
 
 import org.basex.api.xmldb.BXCollection
