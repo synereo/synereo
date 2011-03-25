@@ -164,8 +164,27 @@ trait DelimitedControl[P[M[_],_],M[_],A]
   def pushSubCont [A,B] (
     sk : SubCont[P,M,A,B],
     e : CC[P,M,A]
-  ) : CC[P,M,B]
-  def runCC [A] ( ccpma : CC[P,M,A] ) : M[A]
+  ) : CC[P,M,B] = {
+    sk( e )
+  }
+  def runCC [A] ( ccpma : CC[P,M,A] ) : M[A] = {
+    def check( ccv : CCV[P,M,A] ) : M[A] = {
+      ccv match {
+	case Iru( a ) => {
+	  monadicMWitness.unit( a )
+	}
+	case _ => {
+	  throw new Exception(
+	    "Escaping bubble: you have forgotten pushPrompt"
+	  )
+	}
+      }
+    }
+    monadicMWitness.bind(
+      ccpma.unCC,
+      check
+    )
+  }
 }
 
 trait PromptFlavors {
