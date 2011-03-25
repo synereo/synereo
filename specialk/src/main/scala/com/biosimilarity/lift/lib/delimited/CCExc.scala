@@ -109,6 +109,9 @@ extends MonadicCCScope[P,M] {
 trait DelimitedControl[P[M[_],_],M[_],A] 
 	   extends MonadicCCScope[P,M]
 {
+  type MonadCC <: MonadicCC
+  def monadicCCWitness : MonadCC
+
   def pushPrompt [W] (
     prompt : Prompt[P,M,W], body : CC[P,M,W]
   ) : CC[P,M,W] = {
@@ -150,12 +153,12 @@ trait DelimitedControl[P[M[_],_],M[_],A]
   }
   def takeSubCont [X,W] (
     prompt : Prompt[P,M,W], body : CCT[P,M,X,W]
-  ) : CC[P,M,W] = {
-    val nctx = ( x : CC[P,M,W] ) => x
-    CCC[W](
+  ) : CC[P,M,X] = {
+    val nctx = ( x : CC[P,M,X] ) => x
+    CCC[X](
       monadicMWitness.unit(      
 	Deru(
-	  nctx.asInstanceOf[SubCont[P,M,Any,W]],
+	  nctx.asInstanceOf[SubCont[P,M,Any,X]],
 	  (prompt._1)( body.asInstanceOf[CCT[P,M,Any,W]] )
 	)
       )
@@ -184,6 +187,44 @@ trait DelimitedControl[P[M[_],_],M[_],A]
       ccpma.unCC,
       check
     )
+  }
+
+  def abortP [W] (
+    prompt : Prompt[P,M,W], body : CC[P,M,W]
+  ) : CC[P,M,Any] = {
+    val cct = { ( _ : SubCont[P,M,W,Any] ) => body }
+    takeSubCont[Any,W](
+      prompt,
+      cct.asInstanceOf[CCT[P,M,Any,W]]
+    )
+  }
+
+  def shiftP [W,A] (
+    prompt : Prompt[P,M,W],
+    f : (( A => CC[P,M,W] ) => CC[P,M,W] )
+  ) : CC[P,M,A] = {
+    val cct =
+      {		  
+	( sk : SubCont[P,M,A,W] ) => {
+	  val arg = 
+	    {
+	      ( c : A ) => {
+		pushPrompt(
+		  prompt,
+		  pushSubCont(
+		    sk,
+		    monadicCCWitness.unit( c )
+		  )
+		)
+	      }
+	    }
+	  pushPrompt(
+	    prompt,
+	    f( arg )
+	  )
+	}
+      }
+    takeSubCont( prompt, cct.asInstanceOf[CCT[P,M,A,W]] )
   }
 }
 
