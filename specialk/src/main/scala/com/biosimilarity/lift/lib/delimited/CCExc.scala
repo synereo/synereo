@@ -124,8 +124,8 @@ trait DelimitedControl[P[M[_],_],M[_],A]
 
 trait PromptFlavors {
   trait SingleAnswerScope[W] {
-    case class SingleAnswerType[M[_],X](
-      cct : CCT[SingleAnswerType,M,Any,W]
+    class SingleAnswerType[M[_],X](
+      val cct : CCT[SingleAnswerType,M,Any,W]
     ) extends Prompt[SingleAnswerType,M,W] {
       override def _1 = {
 	( cct : CCT[SingleAnswerType,M,Any,W] ) => SingleAnswerType( cct )
@@ -134,7 +134,26 @@ trait PromptFlavors {
 	( p : SingleAnswerType[M,Any] ) => Some( cct )
       }
     }
+    object SingleAnswerType {
+      def apply [M[_],X] (
+	cct : CCT[SingleAnswerType,M,Any,W]
+      ) : SingleAnswerType[M,X] = {
+	new SingleAnswerType[M,X]( cct )
+      }
+      def unapply [M[_],X] (
+	sat : SingleAnswerType[M,X]
+      ) : Option[
+        (
+	  CCT[SingleAnswerType,M,Any,W] => SingleAnswerType[M,Any],
+	  SingleAnswerType[M,Any] => Option[CCT[SingleAnswerType,M,Any,W]]
+	)
+      ] =
+	{ 
+	  Some( ( sat._1, sat._2 ) )
+	}
+    }
   }
+  
   trait TwoAnswerScope[W1,W2,A] {
     abstract class TwoAnswerTypes[M[_],X](
       val choice : Either[
@@ -142,7 +161,8 @@ trait PromptFlavors {
 	CCT[TwoAnswerTypes,M,X,W2]
       ]
     )
-    case class TwoAnswerTypesL[M[_],X](
+
+    class TwoAnswerTypesL[M[_],X](
       override val choice : Either[
 	CCT[TwoAnswerTypes,M,X,W1],
 	CCT[TwoAnswerTypes,M,X,W2]
@@ -166,15 +186,41 @@ trait PromptFlavors {
       = {
 	( p : TwoAnswerTypes[M,Any] ) => {
 	  p match {
-	    case TwoAnswerTypesL( Left( cct ) ) => {
-	      Some( cct )
+	    case tatl : TwoAnswerTypesL[M,Any] => {
+	      tatl.choice match {
+		case Left( cct ) => Some( cct )
+		case _ => None
+	      }
 	    }
 	    case _ => None
 	  }
 	}
       }
     }
-    case class TwoAnswerTypesR[M[_],X](
+
+    object TwoAnswerTypesL {
+      def apply [M[_],X] (
+	cct : Either[
+	  CCT[TwoAnswerTypes,M,X,W1],
+	  CCT[TwoAnswerTypes,M,X,W2]
+	]
+      ) : TwoAnswerTypesL[M,X] = {
+	new TwoAnswerTypesL[M,X]( cct )
+      }
+      def unapply [M[_],X] (
+	sat : TwoAnswerTypesL[M,X]
+      ) : Option[
+        (
+	  CCT[TwoAnswerTypes,M,Any,W1] => TwoAnswerTypes[M,Any],
+	  TwoAnswerTypes[M,Any] => Option[CCT[TwoAnswerTypes,M,Any,W1]]
+	)
+      ] =
+	{ 
+	  Some( ( sat._1, sat._2 ) )
+	}
+    }
+
+    class TwoAnswerTypesR[M[_],X](
       override val choice : Either[
 	CCT[TwoAnswerTypes,M,X,W1],
 	CCT[TwoAnswerTypes,M,X,W2]
@@ -197,13 +243,38 @@ trait PromptFlavors {
       = {
 	( p : TwoAnswerTypes[M,Any] ) => {
 	  p match {
-	    case TwoAnswerTypesR( Right( cct ) ) => {
-	      Some( cct )
+	    case tatr : TwoAnswerTypesR[M,Any] => {
+	      tatr.choice match {
+		case Right( cct ) => Some( cct )
+		case _ => None
+	      }
 	    }
 	    case _ => None
 	  }
 	}
       }
+    }
+    
+    object TwoAnswerTypesR {
+      def apply [M[_],X] (
+	cct : Either[
+	  CCT[TwoAnswerTypes,M,X,W1],
+	  CCT[TwoAnswerTypes,M,X,W2]
+	]
+      ) : TwoAnswerTypesR[M,X] = {
+	new TwoAnswerTypesR[M,X]( cct )
+      }
+      def unapply [M[_],X] (
+	sat : TwoAnswerTypesR[M,X]
+      ) : Option[
+        (
+	  CCT[TwoAnswerTypes,M,Any,W2] => TwoAnswerTypes[M,Any],
+	  TwoAnswerTypes[M,Any] => Option[CCT[TwoAnswerTypes,M,Any,W2]]
+	)
+      ] =
+	{ 
+	  Some( ( sat._1, sat._2 ) )
+	}
     }
   }
 }
