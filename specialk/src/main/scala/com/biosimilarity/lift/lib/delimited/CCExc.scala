@@ -111,7 +111,43 @@ trait DelimitedControl[P[M[_],_],M[_],A]
 {
   def pushPrompt [W] (
     prompt : Prompt[P,M,W], body : CC[P,M,W]
-  ) : CC[P,M,W]
+  ) : CC[P,M,W] = {
+    def check( ccv : CCV[P,M,W] ) : M[CCV[P,M,W]] = {
+      ccv match {
+	case e : Iru[P,M,W] => {
+	  monadicMWitness.unit( e )
+	}
+	case Deru( ctx, nbody ) => {
+	  (prompt._2)( nbody ) match {
+	    case Some( b ) => {
+	      b( ctx ).unCC
+	    }
+	    case _ => {
+	      val nctx = {
+		( x : CC[P,M,W] ) => {
+		  pushPrompt(
+		    prompt,
+		    ctx( x.asInstanceOf[CC[P,M,Any]] ) 
+		  )
+		}
+	      }
+	      monadicMWitness.unit(
+		Deru( nctx.asInstanceOf[SubCont[P,M,Any,W]], nbody )
+	      )
+	    }
+	  }
+	}
+      }
+    }
+    
+    CCC[W](
+      monadicMWitness.bind(
+	body.unCC,
+	check
+      )
+    )
+    
+  }
   def takeSubCont [X,W] (
     prompt : Prompt[P,M,W], body : CCT[P,M,X,W]
   )
