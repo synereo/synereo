@@ -12,6 +12,7 @@ package com.biosimilarity.lift.lib.delimited
 
 import com.biosimilarity.lift.lib.monad._
 
+// Produced result: a value or a resumable exception
 trait CCV[P[M[_],A],M[_],A]
 case class Iru[P[M[_],A],M[_],A]( a : A ) extends CCV[P,M,A]
 case class Deru[P[M[_],A],M[_],A](
@@ -19,21 +20,27 @@ case class Deru[P[M[_],A],M[_],A](
   body : P[M,Any]
 ) extends CCV[P,M,A]
 
+// Delimited-continuation monad transformer
+// It is parameterized by the prompt flavor p
 trait CC[P[M[_],_],M[_],A]{
   def unCC : M[CCV[P,M,A]]
 }
 
+// The captured sub-continuation
 trait SubCont[P[M[_],_],M[_],A,B]
      extends Function1[CC[P,M,A],CC[P,M,B]]
 
+// The type of control operator's body
 trait CCT[P[M[_],_],M[_],A,W]
      extends Function1[SubCont[P,M,A,W],CC[P,M,W]]
 
+// Generalized prompts for the answer-type w: an injection-projection pair
 trait Prompt[P[M[_],_],M[_],W] {
   def _1 : CCT[P,M,Any,W] => P[M,Any]
   def _2 : P[M,Any] => Option[CCT[P,M,Any,W]]
 }
 
+// CC monad: general monadic operations
 trait MonadicCCScope[P[M[_],_],M[_]] {
   type MonadM <: BMonad[M]
   def monadicMWitness : MonadM
@@ -106,6 +113,7 @@ extends MonadicCCScope[P,M] {
   }
 }
 
+// Basic Operations of the delimited control interface
 trait DelimitedControl[P[M[_],_],M[_],A] 
 	   extends MonadicCCScope[P,M]
 {
@@ -151,6 +159,8 @@ trait DelimitedControl[P[M[_],_],M[_],A]
     )
     
   }
+
+  // Create the initial bubble
   def takeSubCont [X,W] (
     prompt : Prompt[P,M,W], body : CCT[P,M,X,W]
   ) : CC[P,M,X] = {
@@ -164,12 +174,15 @@ trait DelimitedControl[P[M[_],_],M[_],A]
       )
     )
   }
+
+  // Apply the captured continuation
   def pushSubCont [A,B] (
     sk : SubCont[P,M,A,B],
     e : CC[P,M,A]
   ) : CC[P,M,B] = {
     sk( e )
   }
+
   def runCC [A] ( ccpma : CC[P,M,A] ) : M[A] = {
     def check( ccv : CCV[P,M,A] ) : M[A] = {
       ccv match {
@@ -189,6 +202,7 @@ trait DelimitedControl[P[M[_],_],M[_],A]
     )
   }
 
+  // Useful derived operations
   def abortP [W] (
     prompt : Prompt[P,M,W], body : CC[P,M,W]
   ) : CC[P,M,Any] = {
@@ -278,8 +292,15 @@ trait DelimitedControl[P[M[_],_],M[_],A]
   }
 }
 
+// Prompt flavors
+
 trait PromptFlavors {
+  // The extreme case: prompts for the single answer-type w.
+  // The monad (CC PS) then is the monad for regular (single-prompt) 
+  // delimited continuations
   trait SingleAnswerScope[W] {
+    // There is only one generalized prompt of the flavor PS for a
+    // given answer-type w. It is defined below
     class SingleAnswerType[M[_],X](
       val cct : CCT[SingleAnswerType,M,Any,W]
     ) extends Prompt[SingleAnswerType,M,W] {
@@ -309,6 +330,12 @@ trait PromptFlavors {
 	}
     }
   }
+
+  // Prompts for the closed set of answer-types
+  // The following prompt flavor P2, for two answer-types w1 and w2,
+  // is given as an example. Typically, a programmer would define their
+  // own variant data type with variants for the answer-types that occur
+  // in their program.
   
   trait TwoAnswerScope[W1,W2,A] {
     abstract class TwoAnswerTypes[M[_],X](
@@ -318,6 +345,7 @@ trait PromptFlavors {
       ]
     )
 
+    // There are two generalized prompts of the flavor P2:
     class TwoAnswerTypesL[M[_],X](
       override val choice : Either[
 	CCT[TwoAnswerTypes,M,X,W1],
