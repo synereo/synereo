@@ -226,6 +226,56 @@ trait DelimitedControl[P[M[_],_],M[_],A]
       }
     takeSubCont( prompt, cct.asInstanceOf[CCT[P,M,A,W]] )
   }
+
+  def shift0P [W,A] (
+    prompt : Prompt[P,M,W],
+    f : (( A => CC[P,M,W] ) => CC[P,M,W] )
+  ) : CC[P,M,A] = {
+    val cct =
+      {		  
+	( sk : SubCont[P,M,A,W] ) => {
+	  val arg = 
+	    {
+	      ( c : A ) => {
+		pushPrompt(
+		  prompt,
+		  pushSubCont(
+		    sk,
+		    monadicCCWitness.unit( c )
+		  )
+		)
+	      }
+	    }
+	  f( arg )
+	}
+      }
+    takeSubCont( prompt, cct.asInstanceOf[CCT[P,M,A,W]] )
+  }
+
+  def controlP [W,A] (
+    prompt : Prompt[P,M,W],
+    f : (( A => CC[P,M,W] ) => CC[P,M,W] )
+  ) : CC[P,M,A] = {
+    val cct =
+      {		  
+	( sk : SubCont[P,M,A,W] ) => {
+	  val arg = 
+	    {
+	      ( c : A ) => {
+		pushSubCont(
+		  sk,
+		  monadicCCWitness.unit( c )
+		)
+	      }
+	    }
+	  pushPrompt(
+	    prompt,
+	    f( arg )
+	  )
+	}
+      }
+    takeSubCont( prompt, cct.asInstanceOf[CCT[P,M,A,W]] )
+  }
 }
 
 trait PromptFlavors {
