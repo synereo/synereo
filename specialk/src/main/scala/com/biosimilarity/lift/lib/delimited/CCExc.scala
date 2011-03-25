@@ -150,7 +150,17 @@ trait DelimitedControl[P[M[_],_],M[_],A]
   }
   def takeSubCont [X,W] (
     prompt : Prompt[P,M,W], body : CCT[P,M,X,W]
-  )
+  ) : CC[P,M,W] = {
+    val nctx = ( x : CC[P,M,W] ) => x
+    CCC[W](
+      monadicMWitness.unit(      
+	Deru(
+	  nctx.asInstanceOf[SubCont[P,M,Any,W]],
+	  (prompt._1)( body.asInstanceOf[CCT[P,M,Any,W]] )
+	)
+      )
+    )
+  }
   def pushSubCont [A,B] (
     sk : SubCont[P,M,A,B],
     e : CC[P,M,A]
