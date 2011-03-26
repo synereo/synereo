@@ -50,7 +50,9 @@ trait SFKTScope[M[_]] {
   ) extends SFKT[M,A]( unSFKT )
 
   abstract class MonadicSKFTC
-  extends BMonad[SFKTC] {
+  extends BMonad[SFKTC]
+	   with MonadPlus[SFKTC]
+  {
     override def unit [A] ( a : A ) : SFKTC[A] = {
       SFKTC( 
 	{
@@ -79,7 +81,33 @@ trait SFKTScope[M[_]] {
 	    }
 	  }
 	SFKTC( sfktc )
-      }    
+      }
+
+    def zero [A] : SFKTC[A] = {
+      SFKTC(
+	{
+	  ( _ : SK[M[Any],A], fk : FK[M[Any]] ) => {
+	    fk
+	  }
+	}
+      )
+    }
+    
+    def plus [A] (
+      ma1 : SFKTC[A],
+      ma2 : SFKTC[A]
+    ) : SFKTC[A] = {
+      SFKTC(
+	{
+	  ( sk : SK[M[Any],A], fk : FK[M[Any]] ) => {
+	    ma1.unSFKT(
+	      sk,
+	      ma2.unSFKT( sk, fk )
+	    )
+	  }
+	}
+      )
+    }
   }
 }
 
