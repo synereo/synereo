@@ -8,8 +8,12 @@
 
 package com.biosimilarity.lift.lib.zipper
 
-trait Tree[A]
-class TreeItem[A]( val item : A ) extends Tree[A]
+trait Tree[+A]
+
+case object TZero
+extends Tree[Nothing]
+
+class TreeItem[+A]( val item : A ) extends Tree[A]
 object TreeItem {
   def apply[A]( item : A ) = { new TreeItem( item ) }
   def unapply[A]( tree : TreeItem[A] )
@@ -17,8 +21,8 @@ object TreeItem {
     Some( ( tree.item ) )
   }
 }
-case class CTreeItem[A]( val item : A ) extends Tree[A]
-class TreeSection[A](
+case class CTreeItem[+A]( val item : A ) extends Tree[A]
+class TreeSection[+A](
   val section: List[Tree[A]]
 ) extends Tree[A]
 object TreeSection {
@@ -28,6 +32,6 @@ object TreeSection {
     Some( ( tree.section ) )
   }
 }
-case class CTreeSection[A](
+case class CTreeSection[+A](
   val section: List[Tree[A]]
 ) extends Tree[A]
