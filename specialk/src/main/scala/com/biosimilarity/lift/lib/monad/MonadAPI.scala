@@ -40,17 +40,6 @@ trait MonadT[T[M[_],_],M[_]] {
   def lift [A] ( ma : M[A] ) : T[M,A]
 }
 
-trait LogicT[T[M[_],_],M[_]] {
-  self : MonadT[T,M] =>
-    def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
-  def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
-  def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
-  def ifte [M[_],A,B] (
-    tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
-  ) : T[M,B]
-  def once [M[_],A] ( tma : T[M,A] ) : T[M,A]
-}
-
 // How the scala boyz be looking at things monadically
 // and how that relates to what the category boyz be talkin 'bout
 trait ScalaMonadAdapter[Shape[_],A] {

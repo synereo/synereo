@@ -6,7 +6,7 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.model.zipper
+package com.biosimilarity.lift.lib.zipper
 
 class Location[A](
   val tree : Tree[A],

@@ -6,7 +6,7 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.model.zipper
+package com.biosimilarity.lift.lib.zipper
 
 trait Context[A]
 case class Top[A]( ) extends Context[A]

@@ -8,7 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
-import com.biosimilarity.lift.model.zipper._
+import com.biosimilarity.lift.lib.zipper._
 import scala.collection.SeqProxy
 import java.net.URI
 

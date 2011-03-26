@@ -7,7 +7,7 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.model.agent
-import com.biosimilarity.lift.model.zipper._
+import com.biosimilarity.lift.lib.zipper._
 
 import scala.collection.SeqProxy
 
