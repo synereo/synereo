@@ -79,7 +79,9 @@ extends XMLStoreConfiguration {
 
     //override type ConfigurationDefaults = XMLStoreDefaults
 
-  override def configFileName : Option[String] = Some( "xmlStore.conf" )
+    //override def configFileName : Option[String] = Some(
+    //"xmlStore.conf" )
+    override def configFileName : Option[String] = None
 
   def driverClass : Class[_] = {
     Class.forName( driver )
