@@ -39,18 +39,47 @@ import org.xmldb.api.base._
 import org.xmldb.api.modules._
 import org.xmldb.api._
 
+import net.lag.configgy._
+
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.Map
+
 import javax.xml.transform.OutputKeys
 import java.util.UUID
 
-trait XMLStore {
+trait XMLStoreConfiguration
+extends ConfigurationTrampoline {
+  def URI                      : String =
+    configurationFromFile.get( "URI" ).getOrElse( bail() )
+  def driver                   : String =
+    configurationFromFile.get( "driver" ).getOrElse( bail() )
+  def dbRoot                   : String =
+    configurationFromFile.get( "dbRoot" ).getOrElse( bail() )
+  def createDB                 : Boolean =
+    configurationFromFile.get( "createDB" ).getOrElse( bail() ).toBoolean
+  def indent                   : Boolean =
+    configurationFromFile.get( "indent" ).getOrElse( bail() ).toBoolean
+  def resourceType             : String =
+    configurationFromFile.get( "resourceType" ).getOrElse( bail() )
+  def queryServiceType         : String =
+    configurationFromFile.get( "queryServiceType" ).getOrElse( bail() )
+  def queryServiceVersion      : String =
+    configurationFromFile.get( "queryServiceVersion" ).getOrElse( bail() )
+  def managementServiceType    : String =
+    configurationFromFile.get( "managementServiceType" ).getOrElse( bail() )
+  def managementServiceVersion : String =
+    configurationFromFile.get( "managementServiceVersion" ).getOrElse( bail() )  
+}
+
+trait XMLStoreDefaults
+
+trait XMLStore
+extends XMLStoreConfiguration {  
   self : UUIDOps =>
 
-  def URI : String
-  def driver : String
-  def dbRoot : String
-  def createDB : Boolean
-  def indent : Boolean
-  def resourceType : String
+    //override type ConfigurationDefaults = XMLStoreDefaults
+
+  override def configFileName : Option[String] = Some( "xmlStore.conf" )
 
   def driverClass : Class[_] = {
     Class.forName( driver )
@@ -73,7 +102,10 @@ trait XMLStore {
 	  if ( createIfMissing ) {
 	    val root : Collection = DatabaseManager.getCollection( URI + dbRoot )
 	    val mgtService : CollectionManagementService =
-	      root.getService("CollectionManagementService", "1.0").asInstanceOf[CollectionManagementService]
+	      root.getService(
+		managementServiceType,
+		managementServiceVersion
+	      ).asInstanceOf[CollectionManagementService]
 
 	    Some(
 	      mgtService.createCollection(
@@ -135,7 +167,7 @@ trait XMLStore {
   }
 
   def getQueryService( xmlColl : Collection )(
-    implicit qrySrvcType : String, qrySrvcVersion : String
+    qrySrvcType : String, qrySrvcVersion : String
   ) : Service = {
     val srvc = xmlColl.getService( qrySrvcType, qrySrvcVersion )
     if ( indent ) {
@@ -145,6 +177,10 @@ trait XMLStore {
       srvc.setProperty( "indent", "no" )
     }
     srvc
+  }
+
+  def getQueryServiceC( xmlColl : Collection ) : Service = {
+    getQueryService( xmlColl )( queryServiceType, queryServiceVersion )
   }
 
   def execute( xmlColl : Collection )(
@@ -165,7 +201,8 @@ trait XMLStore {
 }
 
 trait CnxnStorage[Namespace,Var,Tag] {
-  self : CnxnCtxtInjector[Namespace,Var,Tag] with CnxnXML[Namespace,Var,Tag] with XMLStore with UUIDOps =>
+  self : CnxnCtxtInjector[Namespace,Var,Tag]
+    with CnxnXML[Namespace,Var,Tag] with XMLStore with UUIDOps =>
     
     def tmpDirStr : String
   

@@ -45,24 +45,28 @@ import java.util.UUID
 
 object BaseXDefaults {
   implicit val URI : String  =
-    "http://localhost:8984/basex/jax-rx"
+    "xmldb:basex://localhost:1984/"
   implicit val driver : String =
     "org.basex.api.xmldb.BXDatabase"
   implicit val dbRoot : String = "/db"
   implicit val createDB : Boolean = false
   implicit val indent : Boolean = false
   implicit val resourceType : String = "XMLResource"
+  val queryServiceType : String = "XPathQueryService"
+  val queryServiceVersion : String = "1.0"
+  val managementServiceType : String =
+    "CollectionManagementService"
+  val managementServiceVersion : String = "1.0"  
 }
 
 class BaseXXMLStore extends XMLStore {
   self : UUIDOps =>
+  
+    //override type ConfigurationDefaults = BaseXDefaults.getClass
 
-  override def URI : String = BaseXDefaults.URI
-  override def driver : String = BaseXDefaults.driver
-  override def dbRoot : String = BaseXDefaults.dbRoot
-  override def createDB : Boolean = BaseXDefaults.createDB
-  override def indent : Boolean = BaseXDefaults.indent
-  override def resourceType : String = BaseXDefaults.resourceType  
+  override def configurationDefaults : ConfigurationDefaults = {
+    BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+  }
 }
 
 class BaseXRetrieveExample

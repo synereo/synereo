@@ -12,13 +12,44 @@ import com.biosimilarity.lift.lib.monad._
 
 trait LogicT[T[M[_],_],M[_]] {
   self : MonadT[T,M] =>
-    def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
-  def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
-  def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
-  def ifte [M[_],A,B] (
+    
+  //def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
+  def msplit [A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
+  //def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
+  def interleave [A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
+  //def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
+  def join [A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
+  // def ifte [M[_],A,B] (
+//     tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
+//   ) : T[M,B]
+  def ifte [A,B] (
     tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
   ) : T[M,B]
-  def once [M[_],A] ( tma : T[M,A] ) : T[M,A]
+  //def once [M[_],A] ( tma : T[M,A] ) : T[M,A]
+  def once [A] ( tma : T[M,A] ) : T[M,A]
+  
+}
+
+trait LogicTOps[T[M[_],_],M[_]] 
+extends LogicT[T,M]{
+  self : MonadT[T,M] =>
+    
+    type TM[A] <: T[M,A]
+
+  def monadicMWitness : BMonad[M]
+  def mplusTMWitness [A] : MonadPlus[TM] with BMonad[M]
+
+  def reflect [M[_],A] ( optATMA : Option[(A,TM[A])] ) : TM[A] = {
+    optATMA match {
+      case None => mplusTMWitness.zero
+      case Some( ( a, tma ) ) => {
+	mplusTMWitness.plus(
+	  mplusTMWitness.unit( a ).asInstanceOf[TM[A]],
+	  tma
+	)
+      }
+    }
+  }
 }
 
 trait SFKTScope[M[_]] {
@@ -108,6 +139,51 @@ trait SFKTScope[M[_]] {
 	}
       )
     }
+  }
+  
+  class MonadTransformerSFKTC
+  extends MonadicSKFTC
+  with MonadT[SFKT,M] {
+    def lift [A] ( ma : M[A] ) : SFKT[M,A] = {
+      SFKTC( 
+	{
+	  ( sk : SK[M[Any],A], fk : FK[M[Any]] ) => {
+	    monadicMWitness.bind(
+	      ma,
+	      {
+		( a : A ) => {
+		  sk( a, fk )
+		}
+	      }
+	    )
+	  }
+	}
+      )
+    }
+  }
+
+  abstract class LogicTSFKTC
+  extends MonadTransformerSFKTC
+	   with LogicTOps[SFKT,M]
+  {
+    // override def msplit [A](
+//       tma : SFKT[M,A] 
+//     ) : SFKT[M,Option[( A, SFKT[M,A] )]] = {
+//       def ssk( a : A, fk : FK[M[Any]] ) = {
+// 	unit(
+// 	  Some(
+// 	    (
+// 	      a,
+// 	      bind(
+// 		lift( fk.asInstanceOf[M[Any]] ),
+// 		reflect
+// 	      )
+// 	    )
+// 	  )
+// 	)
+//       }
+//       lift( ( tma.unSFKT )( ssk, monadicMWitness.unit( None ) ) )
+//     }
   }
 }
 

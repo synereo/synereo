@@ -40,7 +40,8 @@ import org.xmldb.api._
 import javax.xml.transform.OutputKeys
 import java.util.UUID
 
-object ExistDefaults {
+object ExistDefaults
+extends XMLStoreDefaults {
   implicit val URI : String  =
     "xmldb:exist://localhost:8080/exist/xmlrpc"
   implicit val driver : String =
@@ -49,17 +50,21 @@ object ExistDefaults {
   implicit val createDB : Boolean = false
   implicit val indent : Boolean = false
   implicit val resourceType : String = "XMLResource"
+  val queryServiceType : String = "XQueryService"
+  val queryServiceVersion : String = "1.0"
+  val managementServiceType : String =
+    "CollectionManagementService"
+  val managementServiceVersion : String = "1.0"  
 }
 
-class ExistXMLStore extends XMLStore {
+trait ExistXMLStore extends XMLStore {
   self : UUIDOps =>
 
-  override def URI : String = ExistDefaults.URI
-  override def driver : String = ExistDefaults.driver
-  override def dbRoot : String = ExistDefaults.dbRoot
-  override def createDB : Boolean = ExistDefaults.createDB
-  override def indent : Boolean = ExistDefaults.indent
-  override def resourceType : String = ExistDefaults.resourceType  
+    //override type ConfigurationDefaults = ExistDefaults.getClass
+
+  override def configurationDefaults : ConfigurationDefaults = {
+    ExistDefaults.asInstanceOf[ConfigurationDefaults]
+  }
 }
 
 class SimpleCnxnStore[Namespace,Var,Tag] 

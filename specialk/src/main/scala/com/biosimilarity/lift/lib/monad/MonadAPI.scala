@@ -20,6 +20,13 @@ trait Monad[M[_]] {
 
 // How the Haskell boyz be looking at things monadically
 trait BMonad[M[_]] extends Monad[M] {
+  override def fmap [A,B] (
+      f : A => B
+    ) : M[A] => M[B] = {
+      ( ma : M[A] ) => {
+	bind( ma, ( a : A ) => unit( f( a ) ) )
+      }
+    }
   override def mult [A] ( mma : M[M[A]] ) : M[A] = {
     bind[M[A],A]( mma, ( ma ) => ma )
   }
