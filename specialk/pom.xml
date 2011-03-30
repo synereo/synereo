@@ -259,46 +259,64 @@
       <version>3.1.2</version>
     </dependency>
 
-    <dependency>
-      <groupId>xmldb</groupId>
-      <artifactId>xmldb</artifactId>
-      <version>xmldb</version>
-    </dependency>
+    <!--     <dependency> -->
+    <!--       <groupId>xmldb</groupId> -->
+    <!--       <artifactId>xmldb</artifactId> -->
+    <!--       <version>xmldb</version> -->
+    <!--     </dependency> -->
 
     <!-- <dependency> -->
-<!--       <groupId>xmldb</groupId> -->
-<!--       <artifactId>xmldb-common</artifactId> -->
-<!--       <version>20021220</version> -->
-<!--     </dependency> -->
+    <!--       <groupId>xmldb</groupId> -->
+    <!--       <artifactId>xmldb-common</artifactId> -->
+    <!--       <version>20021220</version> -->
+    <!--     </dependency> -->
 
-<!--     <dependency> -->
-<!--       <groupId>xmldb</groupId> -->
-<!--       <artifactId>xmldb-api</artifactId> -->
-<!--       <version>20021118</version> -->
-<!--     </dependency> -->
+    <!--     <dependency> -->
+    <!--       <groupId>xmldb</groupId> -->
+    <!--       <artifactId>xmldb-api</artifactId> -->
+    <!--       <version>20021118</version> -->
+    <!--     </dependency> -->
 
-<!--     <dependency> -->
-<!--       <groupId>xmldb</groupId> -->
-<!--       <artifactId>xmldb-api-sdk</artifactId> -->
-<!--       <version>20021118</version> -->
-<!--     </dependency> -->
+    <!--     <dependency> -->
+    <!--       <groupId>xmldb</groupId> -->
+    <!--       <artifactId>xmldb-api-sdk</artifactId> -->
+    <!--       <version>20021118</version> -->
+    <!--     </dependency> -->
     
-<!--     <dependency> -->
-<!--       <groupId>xmldb</groupId> -->
-<!--       <artifactId>xmldb-xupdate</artifactId> -->
-<!--       <version>20021220</version> -->
-<!--     </dependency> -->
+    <!--     <dependency> -->
+    <!--       <groupId>xmldb</groupId> -->
+    <!--       <artifactId>xmldb-xupdate</artifactId> -->
+    <!--       <version>20021220</version> -->
+    <!--     </dependency> -->
+
+    <!-- <dependency> -->
+    <!--       <groupId>org.exist-db</groupId> -->
+    <!--       <artifactId>xmldb</artifactId> -->
+    <!--       <version>1.4</version> -->
+    <!--     </dependency> -->
+
+    <!--     <dependency> -->
+    <!--       <groupId>org.exist-db</groupId> -->
+    <!--       <artifactId>exist</artifactId> -->
+    <!--       <version>1.4</version> -->
+    <!--     </dependency> -->
 
     <dependency>
-      <groupId>org.exist-db</groupId>
-      <artifactId>xmldb</artifactId>
-      <version>1.4</version>
+      <groupId>org.xmldb</groupId>
+      <artifactId>xmldb-api</artifactId>
+      <version>1.0</version>
     </dependency>
 
     <dependency>
-      <groupId>org.exist-db</groupId>
-      <artifactId>exist</artifactId>
-      <version>1.4</version>
+      <groupId>org.jaxrx</groupId>
+      <artifactId>jax-rx</artifactId>
+      <version>1.2.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.xml.xquery</groupId>
+      <artifactId>xqj-api</artifactId>
+      <version>1.0</version>
     </dependency>
 
     <dependency>

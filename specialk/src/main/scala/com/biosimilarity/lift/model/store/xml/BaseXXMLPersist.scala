@@ -42,6 +42,7 @@ import org.xmldb.api._
 
 import javax.xml.transform.OutputKeys
 import java.util.UUID
+import java.io.File
 
 object BaseXDefaults {
   implicit val URI : String  =
@@ -59,13 +60,44 @@ object BaseXDefaults {
   val managementServiceVersion : String = "1.0"  
 }
 
-class BaseXXMLStore extends XMLStore {
+trait BaseXXMLStore extends XMLStore {
   self : UUIDOps =>
   
     //override type ConfigurationDefaults = BaseXDefaults.getClass
 
   override def configurationDefaults : ConfigurationDefaults = {
     BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+  }
+
+  override def getCollection( createIfMissing : Boolean )(
+    xmlCollStr : String
+  ) : Option[Collection] = {
+    try {
+      Some( new BXCollection( xmlCollStr, !createIfMissing ) )
+    } 
+    catch {
+      case e => None
+    }
+  }
+
+  override def createResource( xmlColl : Collection, xmlRsrcStr : String )
+  : Option[XMLResource] = {
+    val document =
+      xmlColl.createResource(
+	null, XMLResource.RESOURCE_TYPE
+      ).asInstanceOf[XMLResource]
+
+    val f : File = new File( xmlRsrcStr )
+
+    if ( f.canRead() ) {
+      document.setContent( f )
+      xmlColl.storeResource( document )
+      Some( document )
+    }
+    else {      
+      println( "cannot read file " + xmlRsrcStr )
+      None
+    }    
   }
 }
 

@@ -25,14 +25,14 @@ import scala.collection.mutable.ListBuffer
 
 import org.prolog4j._
 
-import org.exist.storage.DBBroker
+//import org.exist.storage.DBBroker
 
 import org.xmldb.api.base.{ Resource => XmlDbRrsc, _}
 import org.xmldb.api.modules._
 import org.xmldb.api._
 
-import org.exist.util.serializer.SAXSerializer
-import org.exist.util.serializer.SerializerPool
+//import org.exist.util.serializer.SAXSerializer
+//import org.exist.util.serializer.SerializerPool
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
@@ -128,19 +128,13 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     }
   }
 
-  abstract class ExistDescriptor(
+  abstract class XMLDBDescriptor(
     override val db : Database
   ) extends PersistenceDescriptor 
     with CnxnXQuery[Namespace,Var,Tag]
   with CnxnXML[Namespace,Var,Tag]
   with CnxnCtxtInjector[Namespace,Var,Tag]
   with UUIDOps {
-    // override def xmlCollStr[Src,Label,Trgt](
-//       cnxn : Cnxn[Src,Label,Trgt]
-//     ) : String = {
-//      
-//       cnxn.src.getHost + cnxn.trgt.getHost
-//     }
     override def query(
       ptn : mTT.GetRequest
     ) : Option[String] = {
@@ -154,15 +148,15 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       None
     }
   }
-  object ExistDescriptor {
+  object XMLDBDescriptor {
     // def apply(
 //       db : Database,
 //       xmlCollStr : String
-//     ) : ExistDescriptor = {
-//       new ExistDescriptor( db )
+//     ) : XMLDBDescriptor = {
+//       new XMLDBDescriptor( db )
 //     }
     def unapply(
-      ed : ExistDescriptor
+      ed : XMLDBDescriptor
     ) : Option[( Database )] = {
       Some( ( ed.db ) )
     }
@@ -176,7 +170,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
   with CnxnConversions[Namespace,Var,Tag]
   with CnxnXML[Namespace,Var,Tag]
-  with XMLStore
+  //with XMLStore
+  with BaseXXMLStore
   with WireTap
   with Journalist
   with ConfiggyReporting
@@ -186,13 +181,6 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       reportage( fact )
     }
     
-    override def URI : String = ExistDefaults.URI
-    override def driver : String = ExistDefaults.driver
-    override def dbRoot : String = ExistDefaults.dbRoot
-    override def createDB : Boolean = ExistDefaults.createDB
-    override def indent : Boolean = ExistDefaults.indent
-    override def resourceType : String = ExistDefaults.resourceType  
-
     // BUGBUG: LGM -- refactor this!
     override def tmpDirStr : String = {
       val tds = config.getString( "storageDir", "tmp" )       

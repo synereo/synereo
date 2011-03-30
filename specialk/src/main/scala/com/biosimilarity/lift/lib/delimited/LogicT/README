@@ -1,0 +1,41 @@
+The code for the paper:
+
+	Backtracking, Interleaving, and Terminating Monad Transformers 
+	(Functional Pearl)
+	ICFP 2005.
+
+
+Copyright (c) 2005, Amr Sabry, Chung-chieh Shan, Oleg Kiselyov, 
+   and Daniel P. Friedman
+
+The code has been tested with GHC 6.2.2 and 6.4, and 6.10
+
+The overview of the files
+
+Logic Monad Transformer: MonadPlusT with interleave, bindi, ifte and once
+
+MCPT.hs		-- LogicT sample code
+		   In particular: Missionaries and cannibals problem
+TicTacToe.hs    -- An extended example: Tic-Tac-Toe with minimax search
+	           and two heuristics (heavily based on the code by
+	           Andrew Bromage)
+LogicT.hs    	-- Definition, and implementation of
+		   generic operations in terms of msplit
+SFKT.hs		-- Implementation of LogicT based on the two-continuation 
+		   model of streams
+SRReifT.hs	-- Direct-style implementation of LogicT, using
+		   first-class delimited continuations
+		   Requires the CC library:
+		   http://okmij.org/ftp/continuations/CCmonad/
+
+Standalone Logic Monad: MonadPlus with interleave, bindi, ifte and once
+
+LogicM.hs	-- Definition, and implementation of
+		   generic operations in terms of msplit
+SFK1.hs		-- Implementation of LogicM based on two-continuation 
+		   model of streams
+ListLM.hs	-- Implementation of LogicM with streams modeled as
+		   (lazy) lists
+
+Last updated: September 2010.
+

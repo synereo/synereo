@@ -33,7 +33,7 @@ import com.biosimilarity.lift.lib._
 
 import org.basex.api.xmldb.BXCollection
 
-import org.exist.storage.DBBroker
+//import org.exist.storage.DBBroker
 
 import org.xmldb.api.base._
 import org.xmldb.api.modules._
@@ -43,9 +43,11 @@ import net.lag.configgy._
 
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
+import scala.xml._
 
 import javax.xml.transform.OutputKeys
 import java.util.UUID
+import java.io.File
 
 trait XMLStoreConfiguration
 extends ConfigurationTrampoline {
@@ -148,10 +150,8 @@ extends XMLStoreConfiguration {
     }
   }
 
-  def createResource( xmlColl : Collection )( xmlRsrcStr : String )
+  def createResource( xmlColl : Collection, xmlRsrcStr : String )
   : Option[XMLResource] = {
-    import java.io.File
-
     val document : XMLResource =
       xmlColl.createResource( null, resourceType ).asInstanceOf[XMLResource]
 
@@ -167,6 +167,42 @@ extends XMLStoreConfiguration {
       None
     }    
   }
+
+  def createResource( xmlColl : Collection, xmlRsrcFile : java.io.File )
+  : Option[XMLResource] = {
+
+    val document : XMLResource =
+      xmlColl.createResource( null, resourceType ).asInstanceOf[XMLResource]
+
+    if ( xmlRsrcFile.canRead() ) {
+      document.setContent( xmlRsrcFile )
+      xmlColl.storeResource( document )
+      Some( document )
+    }
+    else {      
+      println( "cannot read file " + xmlRsrcFile.getName )
+      None
+    }    
+  }
+
+  def createResourceFromContent(
+    xmlColl : Collection,
+    xmlRsrcContentStr : String
+  ) : Option[XMLResource] = {
+
+    val document : XMLResource =
+      xmlColl.createResource( null, resourceType ).asInstanceOf[XMLResource]
+
+    document.setContent( xmlRsrcContentStr )
+    xmlColl.storeResource( document )
+    Some( document )
+  }
+
+  def createResource( xmlColl : Collection, xmlRsrcContent : Elem )
+  : Option[XMLResource] = {
+
+    createResourceFromContent( xmlColl, xmlRsrcContent.toString )
+  }  
 
   def getQueryService( xmlColl : Collection )(
     qrySrvcType : String, qrySrvcVersion : String
@@ -191,8 +227,11 @@ extends XMLStoreConfiguration {
     qry : String
   ) : ResourceSet = {
     srvc match {
-      case xqSrvc : XQueryService => {
-	xqSrvc.execute( xqSrvc.compile( qry ) )
+      // case xqSrvc : XQueryService => {
+// 	xqSrvc.execute( xqSrvc.compile( qry ) )
+//       }
+      case xqSrvc : XPathQueryService => {
+	xqSrvc.query( qry )
       }
       case _ => {
 	throw new Exception( "execute not supported" )
@@ -215,13 +254,14 @@ trait CnxnStorage[Namespace,Var,Tag] {
     for( xmlColl <- getCollection( true )( xmlCollStr ) ) {
       val xmlRsrcId = getUUID()
       val xmlRsrcStr = tmpDirStr + "/" + xmlRsrcId.toString + ".xml"
-      val fstream : FileWriter = new FileWriter( xmlRsrcStr )
-      val out : BufferedWriter = new BufferedWriter(fstream)
+      val xmlRsrcFile = new File( xmlRsrcStr )
+      val fstream : FileWriter = new FileWriter( xmlRsrcFile )
+      val out : BufferedWriter = new BufferedWriter( fstream )
       //out.write( toXML( cnxn ) ) -- Serialization-based storage
       out.write( asXML( cnxn ).toString ) // Data-binding-based storage
       out.close
     
-      val xrsrc = createResource( xmlColl )( xmlRsrcStr )
+      val xrsrc = createResource( xmlColl, xmlRsrcFile )
     }
   }
 }

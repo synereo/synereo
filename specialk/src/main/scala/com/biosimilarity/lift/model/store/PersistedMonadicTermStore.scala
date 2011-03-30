@@ -26,14 +26,14 @@ import scala.collection.mutable.ListBuffer
 
 import org.prolog4j._
 
-import org.exist.storage.DBBroker
+//import org.exist.storage.DBBroker
 
 import org.xmldb.api.base.{ Resource => XmlDbRrsc, _}
 import org.xmldb.api.modules._
 import org.xmldb.api._
 
-import org.exist.util.serializer.SAXSerializer
-import org.exist.util.serializer.SerializerPool
+//import org.exist.util.serializer.SAXSerializer
+//import org.exist.util.serializer.SerializerPool
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
@@ -331,10 +331,10 @@ object PersistedMonadicTS
     ) extends PersistedMonadicGeneratorJunction(
       name, acquaintances
     ) {
-      class StringExistDescriptor(
+      class StringXMLDBDescriptor(
 	override val xmlCollStr : String
       )
-      extends ExistDescriptor( database ) {
+      extends XMLDBDescriptor( database ) {
 	override def xmlCollStr[Src,Label,Trgt](
 	  cnxn : Cnxn[Src,Label,Trgt]
 	) : String = {     
@@ -360,7 +360,7 @@ object PersistedMonadicTS
 
       def persistenceDescriptor : Option[PersistenceDescriptor] =
 	Some(
-	  new StringExistDescriptor( xmlCollStr )
+	  new StringXMLDBDescriptor( xmlCollStr )
 	)
     }
     
@@ -369,57 +369,57 @@ object PersistedMonadicTS
 
     import scala.collection.immutable.IndexedSeq
 
-    def testQuery( pimmgJunq : PersistedtedStringMGJ )(
-      qryStr : String
-    ) : Option[IndexedSeq[org.xmldb.api.base.Resource]] = {
-      for(
-	pd <- pimmgJunq.persistenceDescriptor;
-	xmlColl <- pimmgJunq.getCollection( true )( pd.xmlCollStr )
-      )
-      yield {
-	val xqSrvc =
-	  pimmgJunq.getQueryService( xmlColl )(
-	    "XQueryService", "1.0"
-	  ).asInstanceOf[XQueryService]
+    // def testQuery( pimmgJunq : PersistedtedStringMGJ )(
+//       qryStr : String
+//     ) : Option[IndexedSeq[org.xmldb.api.base.Resource]] = {
+//       for(
+// 	pd <- pimmgJunq.persistenceDescriptor;
+// 	xmlColl <- pimmgJunq.getCollection( true )( pd.xmlCollStr )
+//       )
+//       yield {
+// 	val xqSrvc =
+// 	  pimmgJunq.getQueryService( xmlColl )(
+// 	    "XQueryService", "1.0"
+// 	  ).asInstanceOf[XQueryService]
 
-	val rsrcSet = xqSrvc.execute( xqSrvc.compile( qryStr ) )
-	println( "number of results = " + rsrcSet.getSize )
+// 	val rsrcSet = xqSrvc.execute( xqSrvc.compile( qryStr ) )
+// 	println( "number of results = " + rsrcSet.getSize )
 
-	val outputProperties : Properties = new Properties()
-        outputProperties.setProperty(
-	  OutputKeys.INDENT, "yes"
-	)
+// 	val outputProperties : Properties = new Properties()
+//         outputProperties.setProperty(
+// 	  OutputKeys.INDENT, "yes"
+// 	)
 	
-	val serializer : SAXSerializer =	  
-	  SerializerPool.getInstance().borrowObject(
-            Class.forName( "org.exist.util.serializer.SAXSerializer" )
-	  ).asInstanceOf[SAXSerializer]	
+// 	val serializer : SAXSerializer =	  
+// 	  SerializerPool.getInstance().borrowObject(
+//             Class.forName( "org.exist.util.serializer.SAXSerializer" )
+// 	  ).asInstanceOf[SAXSerializer]	
 
-	val rslt = 
-	  for( i <- 0 to rsrcSet.getSize.toInt - 1 )
-	  yield {
-	    val rsrc = rsrcSet.getResource( i )
-	    val xmlRsrc = rsrc.asInstanceOf[XMLResource]
+// 	val rslt = 
+// 	  for( i <- 0 to rsrcSet.getSize.toInt - 1 )
+// 	  yield {
+// 	    val rsrc = rsrcSet.getResource( i )
+// 	    val xmlRsrc = rsrc.asInstanceOf[XMLResource]
 
-	    val bufStrm = new java.io.ByteArrayOutputStream()
+// 	    val bufStrm = new java.io.ByteArrayOutputStream()
 
-	    serializer.setOutput(
-	      new OutputStreamWriter(bufStrm),
-	      outputProperties
-	    )	    
+// 	    serializer.setOutput(
+// 	      new OutputStreamWriter(bufStrm),
+// 	      outputProperties
+// 	    )	    
 
-	    xmlRsrc.getContentAsSAX( serializer )
+// 	    xmlRsrc.getContentAsSAX( serializer )
 	    
-	    println( "the resource is : " + bufStrm )
+// 	    println( "the resource is : " + bufStrm )
 
-	    rsrc
-	  }
+// 	    rsrc
+// 	  }
 
-	SerializerPool.getInstance().returnObject(serializer);
+// 	SerializerPool.getInstance().returnObject(serializer);
 	
-	rslt
-      }
-    }
+// 	rslt
+//       }
+//     }
     
     type MsgTypes = DTSMSH[String,String,String,String]   
     
