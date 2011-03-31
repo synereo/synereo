@@ -206,8 +206,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				) {
 				  val srvc : Service =
 				    getQueryService( xmlColl )(
-				      pd.queryServiceType,
-				      pd.queryServiceVersion
+				      //pd.queryServiceType,
+				      //pd.queryServiceVersion
+				      queryServiceType,
+				      queryServiceVersion
 				    );
 				  tweet(
 				    (

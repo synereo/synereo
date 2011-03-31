@@ -97,8 +97,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     def db : Database
     def xmlCollStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String
     def xmlCollStr : String
-    def queryServiceType : String = "XQueryService"
-    def queryServiceVersion : String = "1.0"
+    //def queryServiceType : String = "XPathQueryService"
+    //def queryServiceVersion : String = "1.0"
     def toFile( ptn : mTT.GetRequest ) : Option[File]
     def query( ptn : mTT.GetRequest ) : Option[String]
 

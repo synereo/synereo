@@ -208,12 +208,12 @@ extends XMLStoreConfiguration {
     qrySrvcType : String, qrySrvcVersion : String
   ) : Service = {
     val srvc = xmlColl.getService( qrySrvcType, qrySrvcVersion )
-    if ( indent ) {
-      srvc.setProperty( "indent", "yes" )
-    }
-    else {
-      srvc.setProperty( "indent", "no" )
-    }
+    // if ( indent ) {
+//       srvc.setProperty( "indent", "yes" )
+//     }
+//     else {
+//       srvc.setProperty( "indent", "no" )
+//     }
     srvc
   }
 
