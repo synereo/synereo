@@ -106,7 +106,7 @@
                 <Connected>
                     <EdgeName>
                         <EdgeString>
-                            <String value="WholeStep"/>
+                            <String value="HalfStep"/>
                         </EdgeString>
                         
                     </EdgeName>
@@ -146,7 +146,7 @@
                         <Connected>
                             <EdgeName>
                                 <EdgeString>
-                                    <String value="HalfStep"/>
+                                    <String value="WholeStep"/>
                                 </EdgeString>
                                 
                             </EdgeName>

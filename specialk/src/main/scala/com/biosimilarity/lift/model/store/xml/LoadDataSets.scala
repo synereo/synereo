@@ -63,6 +63,14 @@ object BX extends BaseXXMLStore with UUIDOps {
   val vertexQuery2 = "//Pointed"
   val edgeQuery1 = "//Connection"
   val edgeQuery2 = "//EdgeName"
+  val vertexRoleQueryTemplate =
+    (
+      "for $lbl in //LRBoundVertex"
+      + " " 
+      + "where $lbl//VertexString/String[@value=\"%V\"]"
+      + " "
+      + "return $lbl/VertexExprLabel/VertexVariable/LIdent/@value"
+    )
 
   val outerGraphExpr =
     "Connected( EdgeString( WS ), X, Y )"
@@ -148,8 +156,22 @@ object BX extends BaseXXMLStore with UUIDOps {
 	val vertexElemStr = vrsIter.nextResource.getContent.toString
 	val vertexElem = XML.loadString( vertexElemStr )	
 	val vName = vertexElem \ "VertexString" \ "String" \ "@value"
+	val vertexRoleResourceSet =
+	  xqSrvc.query(
+	    vertexRoleQueryTemplate.replace( "%V", vName.toString )
+	  )
+	val vrrsIter = vertexRoleResourceSet.getIterator
+
 	println( "Vertex name is " + vName )
 	println( vertexElem \ "VertexString" )
+	while( vrrsIter.hasMoreResources ) {
+	  println(
+	    (
+	      "and plays in the role "
+	      +	vrrsIter.nextResource.getContent.toString
+	    )
+	  )
+	}
 	println( "" )
       }
 
