@@ -85,7 +85,7 @@ object BX extends BaseXXMLStore with UUIDOps {
   val firstVandGXQuery =
     CXQ.xqQuery( firstVandGCCL )
   val innerGraphExpr = 
-    "VertexSelection( LRB, Connected( EdgeString( WS2 ), X1, Y1 ) )"
+    "VertexSelection( LRB, Connected( EdgeName( EdgeString( WS2 ) ), X1, Y1 ) )"
   val innerGraphExprCCL =
     CXQ.fromCaseClassInstanceString( innerGraphExpr ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String]]
   val innerGraphExprXQuery =
