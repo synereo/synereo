@@ -146,8 +146,11 @@ object BX extends BaseXXMLStore with UUIDOps {
       val vrsIter = vertexResourceSet.getIterator
       while( vrsIter.hasMoreResources ) {
 	val vertexElemStr = vrsIter.nextResource.getContent.toString
-	val vertexElem = XML.loadString( vertexElemStr )
-	println( vertexElem )
+	val vertexElem = XML.loadString( vertexElemStr )	
+	val vName = vertexElem \ "VertexString" \ "String" \ "@value"
+	println( "Vertex name is " + vName )
+	println( vertexElem \ "VertexString" )
+	println( "" )
       }
 
       val edgeResourceSet = xqSrvc.query( edgeQuery2 )
@@ -160,7 +163,10 @@ object BX extends BaseXXMLStore with UUIDOps {
       while( ersIter.hasMoreResources ) {
 	val edgeElemStr = ersIter.nextResource.getContent.toString
 	val edgeElem = XML.loadString( edgeElemStr )
-	println( edgeElem )
+	val eName = edgeElem \ "EdgeString" \ "String" \ "@value"
+	println( "Edge name is " + eName )	
+	println( edgeElem \ "EdgeString" )
+	println( "" )
       }
 
       println( 
