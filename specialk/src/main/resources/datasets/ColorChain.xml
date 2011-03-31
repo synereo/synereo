@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Connected xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="file:/Users/lgm/work/src/projex/biosimilarity/graphatrope/src/main/bnfc/GraphL.xsd">
+    <EdgeName>
+        <EdgeString>
+            <String value="Bridge"/>
+        </EdgeString>
+        
+    </EdgeName>
+    <VertexSelection>
+        <Connected>
+            <EdgeName>
+                <EdgeString>
+                    <String value="TroubleWater"/>
+                </EdgeString>
+                
+            </EdgeName>
+            <VertexSelection>
+                <Isolated>
+                    <Pointed>
+                        <VertexString>
+                            <String value="Black"/>
+                        </VertexString>
+                        
+                    </Pointed>
+                    <Pointed>
+                        <VertexString>
+                            <String value="White"/>
+                        </VertexString>
+                        
+                    </Pointed>
+                </Isolated>
+            </VertexSelection>
+            <VertexSelection>
+                <Pointed>
+                    <VertexString>
+                        <String value="Red"/>
+                    </VertexString>
+                    
+                </Pointed>
+            </VertexSelection>
+        </Connected>
+    </VertexSelection>
+    <VertexSelection>
+        <Pointed>
+            <VertexString>
+                <String value="Yellow"/>
+            </VertexString>
+            
+        </Pointed>
+    </VertexSelection>
+</Connected>

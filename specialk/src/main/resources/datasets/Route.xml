@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Connected xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="file:/Users/lgm/work/src/projex/biosimilarity/graphatrope/src/main/bnfc/GraphL.xsd">
+    <EdgeName>
+        <EdgeString>
+            <String value="Route"/>
+        </EdgeString>
+        
+    </EdgeName>
+    <VertexIntensionSelection>
+        <VertexComprehensionForm>
+            <LRGenVertex>
+                <VertexExprLabel>
+                    <VertexVariable>
+                        <LIdent value="Origin"/>
+                    </VertexVariable>
+                    
+                </VertexExprLabel>
+                <VertexExtenionExpr>
+                    <VertexExtensionBuiltinExpr>
+                        <SinkSet>
+                            <Pointed>
+                                <VertexString>
+                                    <String value="Seattle"/>
+                                </VertexString>
+                                
+                            </Pointed>
+                        </SinkSet>
+                    </VertexExtensionBuiltinExpr>
+                </VertexExtenionExpr>
+            </LRGenVertex>
+        </VertexComprehensionForm>
+    </VertexIntensionSelection>
+    <VertexIntensionSelection>
+        <VertexComprehensionForm>
+            <LRGenVertex>
+                <VertexExprLabel>
+                    <VertexVariable>
+                        <LIdent value="Destination"/>
+                    </VertexVariable>
+                    
+                </VertexExprLabel>
+                <VertexExtenionExpr>
+                    <VertexExtensionBuiltinExpr>
+                        <SourceSet>
+                            <Pointed>
+                                <VertexString>
+                                    <String value="London"/>
+                                </VertexString>
+                                
+                            </Pointed>
+                        </SourceSet>
+                    </VertexExtensionBuiltinExpr>
+                </VertexExtenionExpr>
+            </LRGenVertex>
+        </VertexComprehensionForm>
+    </VertexIntensionSelection>
+    
+</Connected>

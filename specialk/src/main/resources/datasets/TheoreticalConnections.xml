@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Connected xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="file:/Users/lgm/work/src/projex/biosimilarity/graphatrope/src/main/bnfc/GraphL.xsd">
+    <EdgeName>
+        <EdgeString>
+            <String value="LINQ"/>
+        </EdgeString>
+        
+    </EdgeName>
+    <VertexIntensionSelection>
+        <VertexComprehensionForm>
+            <LRGenVertex>
+                <VertexExprLabel>
+                    <VertexVariable>
+                        <LIdent value="X"/>
+                    </VertexVariable>
+                    
+                </VertexExprLabel>
+                <VertexExtenionExpr>
+                    <VertexExtensionBuiltinExpr>
+                        <SourceSet>
+                            <Connected>
+                                <EdgeName>
+                                    <EdgeString>
+                                        <String value="Category Theory"/>
+                                    </EdgeString>
+                                    
+                                </EdgeName>
+                                <VertexSelection>
+                                    <Selected>
+                                        <Selection>
+                                            <Pointed>
+                                                <VertexString>
+                                                    <String value="Monad"/>
+                                                </VertexString>
+                                                
+                                            </Pointed>
+                                        </Selection>
+                                    </Selected>
+                                </VertexSelection>
+                                <VertexSelection>
+                                    <Pointed>
+                                        <VertexString>
+                                            <String value="Comonad"/>
+                                        </VertexString>
+                                        
+                                    </Pointed>
+                                </VertexSelection>
+                            </Connected>
+                        </SourceSet>
+                    </VertexExtensionBuiltinExpr>
+                </VertexExtenionExpr>
+            </LRGenVertex>
+        </VertexComprehensionForm>
+    </VertexIntensionSelection>
+    <VertexSelection>
+        <Pointed>
+            <VertexString>
+                <String value="Distributive Law"/>
+            </VertexString>
+            
+        </Pointed>
+    </VertexSelection>
+</Connected>
