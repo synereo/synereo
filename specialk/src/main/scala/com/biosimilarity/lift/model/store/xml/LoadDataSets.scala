@@ -73,7 +73,7 @@ object BX extends BaseXXMLStore with UUIDOps {
     )
 
   val outerGraphExpr =
-    "Connected( EdgeString( WS ), X, Y )"
+    "Connected( EdgeName( EdgeString( WS ) ), X, Y )"
   val outerGraphExprCCL =
     CXQ.fromCaseClassInstanceString( outerGraphExpr ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String]]
   val outerGraphExprXQuery =

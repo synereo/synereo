@@ -477,7 +477,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
       case CnxnCtxtLeaf( Right( _ ) ) => None
       case _ => {
 	val lxqv = nextXQV
-	val fLE = ( lxqv + " := " + nxqv + "/" + "*" + "[" + w + "]" )
+	val fLE = ( lxqv + " := " + nxqv + "/" + "*" + "[" + (w+1) + "]" )
 	
 	Some( ( Some( lxqv ), fLE ) )
       }      
