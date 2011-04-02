@@ -44,10 +44,15 @@ trait MonadPlus[M[_]] {
 trait MonadT[T[M[_],_],M[_]] {
   //self : BMonad[M] =>
   // this is a hack
+  type MonadM <: BMonad[M]
   type TM[A] <: T[M,A]
+  type MonadTM <: BMonad[TM]
 
-  //  def lift [A] ( ma : M[A] ) : TM[A]
+  def monadicMWitness : MonadM  
+  def monadicTMWitness : MonadTM  
+  
   def lift [A] ( ma : M[A] ) : T[M,A]
+  def liftC [A] ( ma : M[A] ) : TM[A]
 }
 
 // How the scala boyz be looking at things monadically

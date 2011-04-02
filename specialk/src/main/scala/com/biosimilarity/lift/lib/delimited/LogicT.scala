@@ -15,6 +15,7 @@ trait LogicT[T[M[_],_],M[_]] {
     
   //def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
   def msplit [A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
+  def msplitC [A] ( tma : TM[A] ) : TM[Option[(A,TM[A])]]
   //def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
   def interleave [A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
   //def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
@@ -34,8 +35,7 @@ trait LogicTOps[T[M[_],_],M[_]]
 extends LogicT[T,M]{
   self : MonadT[T,M] =>
     
-  def monadicMWitness : BMonad[M]
-  def mplusTMWitness [A] : MonadPlus[TM] with BMonad[M]
+  def mplusTMWitness [A] : MonadPlus[TM] with MonadM
 
   def reflect [A] ( optATMA : Option[(A,TM[A])] ) : TM[A] = {
     optATMA match {
@@ -78,7 +78,7 @@ trait SFKTScope[M[_]] {
     override val unSFKT : ( SK[M[Any],A], FK[M[Any]] ) => M[Any]
   ) extends SFKT[M,A]( unSFKT )
 
-  abstract class MonadicSKFTC
+  abstract class MonadicSFKTC
   extends BMonad[SFKTC]
 	   with MonadPlus[SFKTC]
   {
@@ -139,10 +139,13 @@ trait SFKTScope[M[_]] {
     }
   }
   
-  class MonadTransformerSFKTC
-  extends MonadicSKFTC
+  trait MonadTransformerSFKTC
+  extends MonadicSFKTC
   with MonadT[SFKT,M] {
-    override def lift [A] ( ma : M[A] ) : SFKT[M,A] = {
+    override type TM[A] = SFKTC[A]
+    override type MonadTM = MonadicSFKTC
+
+    override def liftC [A] ( ma : M[A] ) : SFKTC[A] = {
       SFKTC( 
 	{
 	  ( sk : SK[M[Any],A], fk : FK[M[Any]] ) => {
@@ -165,47 +168,45 @@ trait SFKTScope[M[_]] {
 	   with LogicTOps[SFKT,M]
   {
     override type TM[A] = SFKTC[A]
-    override def msplit [A](
-      tma : SFKT[M,A] 
-    ) : SFKT[M,Option[( A, SFKT[M,A] )]]//  = {
-//       def ssk( a : A, fk : FK[M[Any]] ) : M[Option[( A, SFKT[M,A] )]] = {
-// 	val ntma : SFKT[M,Option[( A, SFKT[M,A] )]] =
-// 	  fk match {
-// 	    case ofk : M[Option[( A, SFKT[M,A] )]] =>
-// 	      lift( ofk )
-// 	    case _ =>
-// 	      throw new Exception(
-// 		"this is what you get for using Any for universal quantification"
-// 	      )
-// 	  }
-// 	monadicMWitness.unit(
-// 	  Some(
-// 	    (
-// 	      a,
-// 	      bind[Option[( A, SFKT[M,A] )], A](
-// 		ntma.asInstanceOf[SFKTC[Option[( A, SFKT[M,A] )]]],
-// 		reflect
-// 	      )
-// 	    )
-// 	  )
-// 	)
-//       }
-      
-//       val nssk : ( A, FK[M[Any]] ) => M[Any] = {
-// 	( a : A, fk : FK[M[Any]] ) =>
-// 	  ssk( a, fk ).asInstanceOf[M[Any]]
-//       }
-	
 
-//       lift(
-// 	tma.unSFKT(
-// 	  nssk,
-// 	  monadicMWitness.unit[Option[( A, SFKT[M,A] )]](
-// 	    None
-// 	  ).asInstanceOf[M[Any]]
-// 	)
-//       ).asInstanceOf[SFKT[M, Option[( A, SFKT[M,A] )]]]
-//     }
+    def ssk [A] ( a : A, fk : FK[M[Any]] ) = {      
+      fk match {
+	case mOATMA : M[Option[(A,TM[A])]] => {
+	  // liftC( mOATMA ) : SFKTC[Option[(A,TM[A])]]
+	  // reflect : Option[(A,TM[A])] => SFKTC[A]
+	  // bind( liftC( mOATMA ), reflect ) : SFKTC[A]
+	  monadicMWitness.unit(
+	    Some(
+	      (
+		a,
+		bind[Option[(A,TM[A])],A](
+		  liftC[Option[(A,TM[A])]]( mOATMA ),
+		  reflect
+		)
+	      )
+	    )
+	  ).asInstanceOf[M[Any]]
+	}
+	case _ => {
+	  throw new Exception( "Any for universal quantification problem" )
+	}
+      }      
+    }
+
+    override def msplitC [A] (
+      tma : SFKTC[A] 
+    ) : SFKTC[Option[( A, SFKTC[A] )]] = {
+      val fk : M[Option[( A, SFKTC[A] )]] =
+	monadicMWitness.unit( None )
+      tma.unSFKT( ssk, fk.asInstanceOf[M[Any]] ) match {
+	case mOATMA : M[Option[(A, SFKTC[A])]] => {
+	  liftC( mOATMA )
+	}
+	case _ => {
+	  throw new Exception( "Any for universal quantification problem" )
+	}
+      }      
+    }
   }
 }
 
