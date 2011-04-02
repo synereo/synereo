@@ -148,16 +148,26 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       value : Elem
     ) : Option[Value] = {
       fromXML( ltns, ttv, ttt )( value ) match {
-	case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
-	  val vale : Value = asStoreValue( v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag]] )
-	  if ( kvNameSpace.equals( ns ) ) {
+	case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
+	  val vale : Value =
+	    asStoreValue(
+	      v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag]]
+	    )
+
+	  //println( "converted value = " + vale )
+	  //println( "namespace = " + ns )
+
+	  if ( kvNameSpace.equals( ns ) ) {	    
 	    Some( vale )
 	  }
-	  else {
+	  else {	    
 	    None
 	  }
 	}
-	case _ => None
+	case v@_ => {
+	  //println( "ccl = " + v )
+	  None
+	}
       }
     }
 

@@ -296,19 +296,26 @@ trait CnxnXML[Namespace,Var,Tag] {
 	)
       }
       case Text( contents ) => {
-	if ( contents.substring( 0, 1 ) == "'" ) {
-	  Some(
-	    new CnxnCtxtLeaf[Namespace,Var,Tag](
-	      Right( text2Var( contents ) )
-	    )
-	  )
+	//println( "text node with contents = " + contents )
+	if ( java.util.regex.Pattern.matches( "(\\p{Space}|\\p{Blank})*", contents ) ) {
+	  //println( "contents is whitespace " )
+	  None
 	}
 	else {
-	  Some(
-	    new CnxnCtxtLeaf[Namespace,Var,Tag](
-	      Left( text2Tag( contents ) )
+	  if ( contents.substring( 0, 1 ) == "'" ) {
+	    Some(
+	      new CnxnCtxtLeaf[Namespace,Var,Tag](
+		Right( text2Var( contents ) )
+	      )
 	    )
-	  )
+	  }
+	  else {
+	    Some(
+	      new CnxnCtxtLeaf[Namespace,Var,Tag](
+		Left( text2Tag( contents ) )
+	      )
+	    )
+	  }
 	}
       }
       case _ => {

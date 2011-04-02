@@ -253,15 +253,25 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				    while( rsrcIter.hasMoreResources ) {
 				      val xrsrc = rsrcIter.nextResource	  
 				      
+				      val xrsrcCntntStr =
+				      xrsrc.getContent.toString
+
+				      tweet( "retrieved " + xrsrcCntntStr )
+				      
 				      val ersrc : Elem =
-					XML.loadString(
-					  xrsrc.getContent.toString
-					)
+					XML.loadString( xrsrcCntntStr )									      
 				      
 				      rcrds += asResource( path, ersrc )
 				    }
 				    
-				    rk( rcrds( 0 ) )
+				    val rslt = rcrds( 0 )
+				    val cacheRcrds = rcrds.drop( 1 )
+				    for( cacheRcrd <- cacheRcrds ) {
+				      tweet( "caching " + cacheRcrd )
+				    }
+				    
+				    tweet( "returning " + rslt )
+				    rk( rslt )
 				  }
 				}
 				case _ => {
