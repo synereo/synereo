@@ -55,9 +55,9 @@ object CXQ extends CnxnXQuery[String,String,String]
 object BX extends BaseXXMLStore with UUIDOps {
   val datasetsDir = "src/main/resources/datasets/"
   val dbNames : List[String] =
-    List( "GraphOne", "GraphTwo", "GraphThree" )
+    List( "GraphOne", "GraphTwo", "GraphThree", "GraphFour" )
   val dbSets : List[String] =
-    List( "Route", "Connection", "Scale" )  
+    List( "Route", "Connection", "Scale", "GraphGraphKV" )  
 
   val vertexQuery1 = "//VertexString"
   val vertexQuery2 = "//Pointed"
@@ -131,7 +131,7 @@ object BX extends BaseXXMLStore with UUIDOps {
   lazy val dataSets = loadDataSets
 
   def reportGraphs = {
-    for( dataSet <- dataSets ) {
+    for( dataSet <- dataSets.take( 3 ) ) {
       val xqSrvc =
 	dataSet.getService(
 	  "XPathQueryService",

@@ -388,7 +388,7 @@ object PersistedMonadicTS
 	  }
 	}	
 
-	def kvNameSpace : String = "KVPairs"
+	def kvNameSpace : String = "record"
 
 	def asValue(
 	  rsrc : mTT.Resource
