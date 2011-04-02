@@ -34,12 +34,10 @@ trait LogicTOps[T[M[_],_],M[_]]
 extends LogicT[T,M]{
   self : MonadT[T,M] =>
     
-    type TM[A] <: T[M,A]
-
   def monadicMWitness : BMonad[M]
   def mplusTMWitness [A] : MonadPlus[TM] with BMonad[M]
 
-  def reflect [M[_],A] ( optATMA : Option[(A,TM[A])] ) : TM[A] = {
+  def reflect [A] ( optATMA : Option[(A,TM[A])] ) : TM[A] = {
     optATMA match {
       case None => mplusTMWitness.zero
       case Some( ( a, tma ) ) => {
@@ -144,7 +142,7 @@ trait SFKTScope[M[_]] {
   class MonadTransformerSFKTC
   extends MonadicSKFTC
   with MonadT[SFKT,M] {
-    def lift [A] ( ma : M[A] ) : SFKT[M,A] = {
+    override def lift [A] ( ma : M[A] ) : SFKT[M,A] = {
       SFKTC( 
 	{
 	  ( sk : SK[M[Any],A], fk : FK[M[Any]] ) => {
@@ -166,23 +164,47 @@ trait SFKTScope[M[_]] {
   extends MonadTransformerSFKTC
 	   with LogicTOps[SFKT,M]
   {
-    // override def msplit [A](
-//       tma : SFKT[M,A] 
-//     ) : SFKT[M,Option[( A, SFKT[M,A] )]] = {
-//       def ssk( a : A, fk : FK[M[Any]] ) = {
-// 	unit(
+    override type TM[A] = SFKTC[A]
+    override def msplit [A](
+      tma : SFKT[M,A] 
+    ) : SFKT[M,Option[( A, SFKT[M,A] )]]//  = {
+//       def ssk( a : A, fk : FK[M[Any]] ) : M[Option[( A, SFKT[M,A] )]] = {
+// 	val ntma : SFKT[M,Option[( A, SFKT[M,A] )]] =
+// 	  fk match {
+// 	    case ofk : M[Option[( A, SFKT[M,A] )]] =>
+// 	      lift( ofk )
+// 	    case _ =>
+// 	      throw new Exception(
+// 		"this is what you get for using Any for universal quantification"
+// 	      )
+// 	  }
+// 	monadicMWitness.unit(
 // 	  Some(
 // 	    (
 // 	      a,
-// 	      bind(
-// 		lift( fk.asInstanceOf[M[Any]] ),
+// 	      bind[Option[( A, SFKT[M,A] )], A](
+// 		ntma.asInstanceOf[SFKTC[Option[( A, SFKT[M,A] )]]],
 // 		reflect
 // 	      )
 // 	    )
 // 	  )
 // 	)
 //       }
-//       lift( ( tma.unSFKT )( ssk, monadicMWitness.unit( None ) ) )
+      
+//       val nssk : ( A, FK[M[Any]] ) => M[Any] = {
+// 	( a : A, fk : FK[M[Any]] ) =>
+// 	  ssk( a, fk ).asInstanceOf[M[Any]]
+//       }
+	
+
+//       lift(
+// 	tma.unSFKT(
+// 	  nssk,
+// 	  monadicMWitness.unit[Option[( A, SFKT[M,A] )]](
+// 	    None
+// 	  ).asInstanceOf[M[Any]]
+// 	)
+//       ).asInstanceOf[SFKT[M, Option[( A, SFKT[M,A] )]]]
 //     }
   }
 }

@@ -267,6 +267,55 @@ trait CnxnXML[Namespace,Var,Tag] {
       }
     }
   }
+
+  def fromXML( 
+    lbl2Namespace : String => Namespace,
+    text2Var : String => Var,
+    text2Tag : String => Tag
+  )(
+    cciElem : Node
+  ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
+    cciElem match {
+      case e : Elem => {
+	Some(
+	  new CnxnCtxtBranch[Namespace,Var,Tag](
+	    lbl2Namespace( cciElem.label ),
+	    for(
+	      child <- cciElem.child.toList;
+	      childVal <- 
+	      fromXML(
+		lbl2Namespace,
+		text2Var,
+		text2Tag
+	      )( child )
+	    ) 
+	    yield {
+	      childVal
+	    }
+	  )
+	)
+      }
+      case Text( contents ) => {
+	if ( contents.substring( 0, 1 ) == "'" ) {
+	  Some(
+	    new CnxnCtxtLeaf[Namespace,Var,Tag](
+	      Right( text2Var( contents ) )
+	    )
+	  )
+	}
+	else {
+	  Some(
+	    new CnxnCtxtLeaf[Namespace,Var,Tag](
+	      Left( text2Tag( contents ) )
+	    )
+	  )
+	}
+      }
+      case _ => {
+	None
+      }
+    }
+  }
 }
 
 trait CnxnXQuery[Namespace,Var,Tag] {

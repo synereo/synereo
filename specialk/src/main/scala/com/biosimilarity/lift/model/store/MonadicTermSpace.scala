@@ -64,6 +64,11 @@ trait MonadicTermTypeScope[Namespace,Var,Tag,Value] {
   type MTTypes <: MonadicTermTypes[Namespace,Var,Tag,Value]
   def protoTermTypes : MTTypes
   val mTT : MTTypes = protoTermTypes
+  def asCCL(
+    gReq : mTT.GetRequest
+  ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+    gReq.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
+  }
 }
 
 trait DistributedAskTypes {
@@ -89,7 +94,7 @@ trait MonadicTermStoreScope[Namespace,Var,Tag,Value]
 extends MonadicTermTypeScope[Namespace,Var,Tag,Value] 
   with MonadicDTSMsgScope[Namespace,Var,Tag,Value]
   with DistributedAskTypeScope {    
-  
+    
   trait PersistenceDescriptor {    
     self : CnxnXML[Namespace,Var,Tag]
 	    with CnxnCtxtInjector[Namespace,Var,Tag] =>
@@ -102,7 +107,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     def toFile( ptn : mTT.GetRequest ) : Option[File]
     def query( ptn : mTT.GetRequest ) : Option[String]
 
+    def labelToNS : Option[String => Namespace]
+    def textToVar : Option[String => Var]
+    def textToTag : Option[String => Tag]        
+
     def kvNameSpace : Namespace
+
     def asValue(
       rsrc : mTT.Resource
     ) : CnxnCtxtLeaf[Namespace,Var,Tag]
@@ -126,6 +136,50 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	List( asKey( key ), asValue( value ) )
       )
     }
+
+    def asStoreValue(
+      ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Value    
+
+    def asStoreValue(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      ttt : String => Tag,
+      value : Elem
+    ) : Option[Value] = {
+      fromXML( ltns, ttv, ttt )( value ) match {
+	case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+	  val vale : Value = asStoreValue( v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag]] )
+	  if ( kvNameSpace.equals( ns ) ) {
+	    Some( vale )
+	  }
+	  else {
+	    None
+	  }
+	}
+	case _ => None
+      }
+    }
+
+    def asResource(
+      key : mTT.GetRequest, // must have the pattern to determine bindings
+      value : Elem
+    ) : Option[mTT.Resource] = {
+      for(
+	ltns <- labelToNS;
+	ttv <- textToVar;
+	ttt <- textToTag;
+	vCCL <- asStoreValue( ltns, ttv, ttt, value )	
+      ) yield {
+	// BUGBUG -- LGM need to return the Solution
+	// Currently the PersistenceDescriptor has no access to the
+	// unification machinery
+	mTT.RBound( 
+	  Some( mTT.Ground( vCCL ) ),
+	  None
+	)
+      }
+    }
   }
 
   abstract class XMLDBDescriptor(
@@ -139,14 +193,31 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       ptn : mTT.GetRequest
     ) : Option[String] = {
       // TBD
-      Some( xqQuery( ptn ) )
+      for( ttv <- textToVar )
+	yield {
+	  xqQuery(
+	    new CnxnCtxtBranch[Namespace,Var,Tag](
+	      kvNameSpace,
+	      List(
+		asCCL( ptn ),
+		new CnxnCtxtLeaf[Namespace,Var,Tag](
+		  Right(
+		    ttv( "VisForValueVariableUniqueness" )
+		  )
+		)
+	      )
+	    )
+	  )
+	}
     }
+
     override def toFile(
       ptn : mTT.GetRequest
     ) : Option[File] = {
       // TBD
       None
-    }
+    }    
+
   }
   object XMLDBDescriptor {
     // def apply(
@@ -781,7 +852,15 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     ) : Option[mTT.GetRequest with Factual] = {
       for( pd <- persistenceDescriptor )
 	yield { pd.asRecord( key, value ) }
-    }    
+    }
+
+    def asResource(
+      key : mTT.GetRequest, // must have the pattern to determine bindings
+      value : Elem
+    ) : Option[mTT.Resource] = {
+      for( pd <- persistenceDescriptor; rsrc <- pd.asResource( key, value ) )
+	yield { rsrc }
+    }
   }   
 }
 

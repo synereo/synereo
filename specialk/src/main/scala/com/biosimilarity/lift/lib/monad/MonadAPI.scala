@@ -44,6 +44,9 @@ trait MonadPlus[M[_]] {
 trait MonadT[T[M[_],_],M[_]] {
   //self : BMonad[M] =>
   // this is a hack
+  type TM[A] <: T[M,A]
+
+  //  def lift [A] ( ma : M[A] ) : TM[A]
   def lift [A] ( ma : M[A] ) : T[M,A]
 }
 

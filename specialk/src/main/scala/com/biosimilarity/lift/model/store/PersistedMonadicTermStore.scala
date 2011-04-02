@@ -23,6 +23,7 @@ import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.MutableList
 
 import org.prolog4j._
 
@@ -160,7 +161,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	}
       }
       
-    }
+    }    
+    
     def mget(
       persist : Option[PersistenceDescriptor],
       ask : dAT.Ask,
@@ -173,7 +175,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      Generator {
+      Generator {	
 	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
 	  shift {
 	    outerk : ( Unit => Unit ) =>
@@ -196,21 +198,18 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			  query match {
 			    case None => {
 			      forward( ask, hops, path )
+			      rk( oV )
 			    }
-			    case Some( qry ) => {
-			      spawn {
-				for(			    
-				  xmlColl <- getCollection(
-				    true
-				  )( pd.xmlCollStr )
-				) {
-				  val srvc : Service =
+			    case Some( qry ) => {			      
+			      getCollection( true )( pd.xmlCollStr )
+			      match {
+				case Some( xmlColl ) => {
+				  val srvc =
 				    getQueryService( xmlColl )(
-				      //pd.queryServiceType,
-				      //pd.queryServiceVersion
 				      queryServiceType,
 				      queryServiceVersion
-				    );
+				    )
+				
 				  tweet(
 				    (
 				      "querying db : " + pd.db
@@ -218,19 +217,59 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				      + " where " + qry
 				    )
 				  )
+				
 				  val rsrcSet =
 				    execute( xmlColl )( srvc )( qry )
-				  if ( rsrcSet.getSize == 0 ) {
+				
+				  if ( rsrcSet.getSize == 0 ) {	
+				    tweet(
+				      (
+					"database "
+					+ xmlColl.getName
+					+ " had no matching resources."
+				      )
+				    )
 				    forward( ask, hops, path )
+				    rk( oV )
 				  }
 				  else {
-				    // TBD
-				    // Need to put results
+				    tweet(
+				      (
+					"database "
+					+ xmlColl.getName
+					+ " had "
+					+ rsrcSet.getSize
+					+ " matching resources."
+				      )
+				    )
+				    // BUGBUG -- LGM need to mput rcrds
+				    // and delete rcrd from DB
+				  
+				    val rsrcIter = rsrcSet.getIterator
+				    
+				    val rcrds =
+				      new MutableList[Option[mTT.Resource]]()
+				  
+				    while( rsrcIter.hasMoreResources ) {
+				      val xrsrc = rsrcIter.nextResource	  
+				      
+				      val ersrc : Elem =
+					XML.loadString(
+					  xrsrc.getContent.toString
+					)
+				      
+				      rcrds += asResource( path, ersrc )
+				    }
+				    
+				    rk( rcrds( 0 ) )
 				  }
 				}
+				case _ => {
+				  forward( ask, hops, path )
+				  rk( oV )
+				}
 			      }
-			    }
-			    rk( oV )
+			    }			    
 			  }
 			}		      
 		      }
@@ -334,7 +373,10 @@ object PersistedMonadicTS
       name, acquaintances
     ) {
       class StringXMLDBDescriptor(
-	override val xmlCollStr : String
+	override val xmlCollStr : String,
+	override val labelToNS : Option[String => String],
+	override val textToVar : Option[String => String],
+	override val textToTag : Option[String => String]        
       )
       extends XMLDBDescriptor( database ) {
 	override def xmlCollStr[Src,Label,Trgt](
@@ -347,6 +389,7 @@ object PersistedMonadicTS
 	}	
 
 	def kvNameSpace : String = "KVPairs"
+
 	def asValue(
 	  rsrc : mTT.Resource
 	) : CnxnCtxtLeaf[String,String,String] = {
@@ -357,17 +400,26 @@ object PersistedMonadicTS
 	    Left[String,String]( blob )
 	  )
 	}
+
+	def asStoreValue(
+	  ccl : CnxnCtxtLabel[String,String,String]
+	) : String = {
+	  asPatternString( ccl )
+	}
       
       }
 
-      def persistenceDescriptor : Option[PersistenceDescriptor] =
+      def persistenceDescriptor : Option[PersistenceDescriptor] = {
+	val sid = Some( ( s : String ) => s )
 	Some(
-	  new StringXMLDBDescriptor( xmlCollStr )
+	  new StringXMLDBDescriptor( xmlCollStr, sid, sid, sid )
 	)
+      }
     }
     
-    def Pimma( xmlcstr : String, a : String, b : String )  =
+    def Pimma( xmlcstr : String, a : String, b : String )  = {
       new PersistedtedStringMGJ( xmlcstr, a, List( b ) )
+    }
 
     import scala.collection.immutable.IndexedSeq
 
