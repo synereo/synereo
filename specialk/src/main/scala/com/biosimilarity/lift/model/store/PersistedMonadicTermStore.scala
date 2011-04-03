@@ -60,7 +60,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       channels : Map[mTT.GetRequest,mTT.Resource],
       ptn : mTT.GetRequest,
       wtr : Option[mTT.GetRequest],
-      rsrc : mTT.Resource
+      rsrc : mTT.Resource,
+      collName : Option[String]
     ) : Unit = {
       persist match {
 	case None => {
@@ -79,17 +80,22 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		+ " in coll : " + pd.xmlCollStr
 	      )
 	    )
-	    store( pd.xmlCollStr )( rcrd )
+	    store(
+	      collName.getOrElse(
+		pd.xmlCollStr
+	      )
+	    )( rcrd )
 	  }
 	}
       }
     }
 
-     def putPlaces( persist : Option[PersistenceDescriptor] )(
+    def putPlaces( persist : Option[PersistenceDescriptor] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       ptn : mTT.GetRequest,
-      rsrc : mTT.Resource
+      rsrc : mTT.Resource,
+      collName : Option[String]
     ) : Generator[PlaceInstance,Unit,Unit] = {    
       Generator {
 	k : ( PlaceInstance => Unit @suspendable ) => 
@@ -116,7 +122,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	      tweet( "no waiters waiting for a value at " + ptn )
 	      //channels( representative( ptn ) ) = rsrc
 	      putInStore(
-		persist, channels, ptn, None, rsrc 
+		persist, channels, ptn, None, rsrc, collName
 	      )
 	    }
 	  }
@@ -126,7 +132,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def mput( persist : Option[PersistenceDescriptor] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
-      consume : Boolean
+      consume : Boolean,
+      collName : Option[String]
     )(
       ptn : mTT.GetRequest,
       rsrc : mTT.Resource
@@ -135,7 +142,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	placeNRKsNSubst
 	<- putPlaces(
 	  persist
-	)( channels, registered, ptn, rsrc )
+	)( channels, registered, ptn, rsrc, collName )
       ) {
 	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
 	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
@@ -155,7 +162,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  }
 	  case Nil => {
 	    putInStore(
-	      persist, channels, ptn, Some( wtr ), rsrc 
+	      persist, channels, ptn, Some( wtr ), rsrc, collName
 	    )
 	  }
 	}
@@ -170,7 +177,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
-      consume : Boolean
+      consume : Boolean,
+      collName : Option[String]
     )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
@@ -200,8 +208,12 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			      forward( ask, hops, path )
 			      rk( oV )
 			    }
-			    case Some( qry ) => {			      
-			      getCollection( true )( pd.xmlCollStr )
+			    case Some( qry ) => {
+			      val xmlCollName =
+				collName.getOrElse( pd.xmlCollStr )
+			      getCollection( true )(
+				xmlCollName
+			      )
 			      match {
 				case Some( xmlColl ) => {
 				  val srvc =
@@ -213,7 +225,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				  tweet(
 				    (
 				      "querying db : " + pd.db
-				      + " from coll " + pd.xmlCollStr
+				      + " from coll " + xmlCollName
 				      + " where " + qry
 				    )
 				  )
@@ -294,23 +306,43 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     
     override def put(
       ptn : mTT.GetRequest, rsrc : mTT.Resource
-    ) =
-      mput( persistenceDescriptor )(
-	theMeetingPlace, theWaiters, false
+    ) = {
+      val perD = persistenceDescriptor
+      val xmlCollName = 
+	perD match {
+	  case None => None
+	  case Some( pd ) => Some( pd.xmlCollStr )
+	}
+      mput( perD )(
+	theMeetingPlace, theWaiters, false, xmlCollName
       )( ptn, rsrc )
+    }
     override def publish(
       ptn : mTT.GetRequest, rsrc : mTT.Resource
-    ) =
-      mput( persistenceDescriptor )(
-	theChannels, theSubscriptions, true
+    ) = {
+      val perD = persistenceDescriptor
+      val xmlCollName = 
+	perD match {
+	  case None => None
+	  case Some( pd ) => Some( pd.xmlCollStr )
+	}
+      mput( perD )(
+	theChannels, theSubscriptions, true, xmlCollName
       )( ptn, rsrc )
+    }
 
     override def get( hops : List[URI] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, dAT.AGet, hops )(
-	theMeetingPlace, theWaiters, true
+      val perD = persistenceDescriptor
+      val xmlCollName = 
+	perD match {
+	  case None => None
+	  case Some( pd ) => Some( pd.xmlCollStr )
+	}
+      mget( perD, dAT.AGet, hops )(
+	theMeetingPlace, theWaiters, true, xmlCollName
       )( path )    
     }
     override def get(
@@ -324,8 +356,14 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, dAT.AFetch, hops )(
-	theMeetingPlace, theWaiters, false
+      val perD = persistenceDescriptor
+      val xmlCollName = 
+	perD match {
+	  case None => None
+	  case Some( pd ) => Some( pd.xmlCollStr )
+	}
+      mget( perD, dAT.AFetch, hops )(
+	theMeetingPlace, theWaiters, false, xmlCollName
       )( path )    
     }
     override def fetch(
@@ -339,8 +377,14 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      mget( persistenceDescriptor, dAT.ASubscribe, hops )(
-	theChannels, theSubscriptions, true
+      val perD = persistenceDescriptor
+      val xmlCollName = 
+	perD match {
+	  case None => None
+	  case Some( pd ) => Some( pd.xmlCollStr )
+	}
+      mget( perD, dAT.ASubscribe, hops )(
+	theChannels, theSubscriptions, true, xmlCollName
       )( path )    
     }
     override def subscribe(
