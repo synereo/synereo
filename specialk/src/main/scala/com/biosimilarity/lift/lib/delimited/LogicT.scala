@@ -19,8 +19,9 @@ trait LogicT[T[M[_],_],M[_],A] {
   def msplitC [A] ( tma : TM[A] ) : TM[Option[(A,TM[A])]]
   //def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
   def interleave [A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
-  def interleaveC ( tma1 : TM[A], tma2 : TM[A] ) : TM[A] = {
-    tracker.wrapET( msplitC( tma1 ) ).flatMap(
+  def interleaveC [A] ( tma1 : TM[A], tma2 : TM[A] ) : TM[A] = {
+    monadicTMWitness.bind(
+      msplitC( tma1 ),
       {
 	( r : Option[(A,TM[A])] ) => {
 	  r match {
@@ -39,15 +40,64 @@ trait LogicT[T[M[_],_],M[_],A] {
 
   //def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
   def join [A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
+  def joinC [A,B] ( tma : TM[A], binding : A => TM[B] ) : TM[B] = {
+    monadicTMWitness.bind(
+      msplitC( tma ),
+      {
+	( r : Option[(A,TM[A])] ) => {
+	  r match {
+	    case None => monadicTMWitness.zero
+	    case Some( ( tma1, tma2 ) ) => {
+	      interleaveC( binding( tma1 ), joinC( tma2, binding ) )
+	    }
+	  }
+	}
+      }
+    )
+  }
   // def ifte [M[_],A,B] (
 //     tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
 //   ) : T[M,B]
   def ifte [A,B] (
     tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
   ) : T[M,B]
+  def ifteC [A,B] (
+    tma : TM[A], binding : A => TM[B], tmb : TM[B]
+  ) : TM[B] = {
+    monadicTMWitness.bind(
+      msplitC( tma ),
+      {
+	( r : Option[(A,TM[A])] ) => {
+	  r match {
+	    case None => tmb
+	    case Some( ( tma1, tma2 ) ) => {
+	      monadicTMWitness.plus(
+		binding( tma1 ),
+		monadicTMWitness.bind( tma2, binding )
+	      )
+	    }
+	  }
+	}
+      }
+    )
+  }
   //def once [M[_],A] ( tma : T[M,A] ) : T[M,A]
   def once [A] ( tma : T[M,A] ) : T[M,A]
-  
+  def onceC [A] ( tma : TM[A] ) : TM[A] = {
+    monadicTMWitness.bind(
+      msplitC( tma ),
+      {
+	( r : Option[(A,TM[A])] ) => {
+	  r match {
+	    case None => monadicTMWitness.zero
+	    case Some( ( tma1, _ ) ) => {
+	      monadicTMWitness.unit( tma1 )
+	    }
+	  }
+	}
+      }
+    )
+  }
 }
 
 trait LogicTOps[T[M[_],_],M[_],A] 
