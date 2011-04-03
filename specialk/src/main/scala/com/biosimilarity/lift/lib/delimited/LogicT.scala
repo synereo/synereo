@@ -10,14 +10,33 @@ package com.biosimilarity.lift.lib.delimited
 
 import com.biosimilarity.lift.lib.monad._
 
-trait LogicT[T[M[_],_],M[_]] {
-  self : MonadT[T,M] =>
-    
+trait LogicT[T[M[_],_],M[_],A] {
+  self : SMonadT[T,M,A] =>
+	  
+    def tracker : TMSMA[Option[(A,TM[A])]]
   //def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
   def msplit [A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
   def msplitC [A] ( tma : TM[A] ) : TM[Option[(A,TM[A])]]
   //def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
   def interleave [A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
+  def interleaveC ( tma1 : TM[A], tma2 : TM[A] ) : TM[A] = {
+    tracker.wrapET( msplitC( tma1 ) ).flatMap(
+      {
+	( r : Option[(A,TM[A])] ) => {
+	  r match {
+	    case None => tma2
+	    case Some( ( tma11, tma12 ) ) => {
+	      monadicTMWitness.plus(
+		monadicTMWitness.unit( tma11 ),
+		interleaveC( tma2, tma12 )
+	      )
+	    }
+	  }
+	}
+      }
+    )
+  }
+
   //def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
   def join [A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
   // def ifte [M[_],A,B] (
@@ -31,11 +50,12 @@ trait LogicT[T[M[_],_],M[_]] {
   
 }
 
-trait LogicTOps[T[M[_],_],M[_]] 
-extends LogicT[T,M]{
-  self : MonadT[T,M] =>
+trait LogicTOps[T[M[_],_],M[_],A] 
+extends LogicT[T,M,A]{
+  self : SMonadT[T,M,A] =>
+	//with MonadPlus[M] =>
     
-  def mplusTMWitness [A] : MonadPlus[TM] with MonadM
+  def mplusTMWitness : MonadPlus[TM] with MonadM
 
   def reflect [A] ( optATMA : Option[(A,TM[A])] ) : TM[A] = {
     optATMA match {
@@ -139,7 +159,7 @@ trait SFKTScope[M[_]] {
     }
   }
   
-  trait MonadTransformerSFKTC
+  trait MonadTransformerSFKTC[A]
   extends MonadicSFKTC
   with MonadT[SFKT,M] {
     override type TM[A] = SFKTC[A]
@@ -163,9 +183,10 @@ trait SFKTScope[M[_]] {
     }
   }
 
-  abstract class LogicTSFKTC
-  extends MonadTransformerSFKTC
-	   with LogicTOps[SFKT,M]
+  abstract class LogicTSFKTC[A]
+  extends MonadTransformerSFKTC[A]
+	   with LogicTOps[SFKT,M,A]
+	   with SMonadT[SFKT,M,A]
   {
     override type TM[A] = SFKTC[A]
 

@@ -46,7 +46,7 @@ trait MonadT[T[M[_],_],M[_]] {
   // this is a hack
   type MonadM <: BMonad[M]
   type TM[A] <: T[M,A]
-  type MonadTM <: BMonad[TM]
+  type MonadTM <: BMonad[TM] with MonadPlus[TM]
 
   def monadicMWitness : MonadM  
   def monadicTMWitness : MonadTM  
@@ -78,7 +78,7 @@ trait ScalaMonadAdapter[Shape[_],A] {
 
   // i can haz a witness?
   // These two classes show up cause all monads are effectively
-  // wrappers; the reflect some computation into a datum
+  // wrappers; they reflect some computation into a datum
   case class LazyTramp( a : A ) {
     def flatMap [B] ( f : A => Shape[B] ) : Shape[B] = 
       flatMapC( wrap( a ) )( f )
@@ -105,6 +105,12 @@ trait ScalaMonadAdapter[Shape[_],A] {
     EagerTramp( sa )
   }  
   
+}
+
+trait SMonadT[T[M[_],_],M[_],A]
+extends MonadT[T,M] {  
+  trait TMSMA[A] extends ScalaMonadAdapter[TM,A] with BMonad[TM]
+  //object tmsma extends TMSMA[A]
 }
 
 
