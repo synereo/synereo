@@ -197,7 +197,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
   with CnxnCtxtInjector[Namespace,Var,Tag]
   with XMLIfy[Namespace,Var]
   with UUIDOps {
-    def asStoreKey(
+    override def asStoreKey(
       key : mTT.GetRequest
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
       key match {
@@ -213,7 +213,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       }
     }
 
-    def asStoreRecord(
+    override def asStoreRecord(
       key : mTT.GetRequest,
       value : mTT.Resource
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
@@ -223,11 +223,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       )
     }
 
-    def asCacheValue(
+    override def asCacheValue(
       ccl : CnxnCtxtLabel[Namespace,Var,String]
     ) : Value    
 
-    def asCacheValue(
+    override def asCacheValue(
       ltns : String => Namespace,
       ttv : String => Var,
       value : Elem
@@ -252,7 +252,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       }
     }
 
-    def asResource(
+    override def asResource(
       key : mTT.GetRequest, // must have the pattern to determine bindings
       value : Elem
     ) : Option[mTT.Resource] = {
@@ -830,9 +830,9 @@ object PersistedMonadicTS
 	  None
 	}
 
-	def asStoreValue(
+	override def asStoreValue(
 	  rsrc : mTT.Resource
-	) : CnxnCtxtLeaf[String,String,String] = {
+	) : CnxnCtxtLeaf[String,String,String] with Factual = {
 	  val blob =
 	    new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
 	  //asXML( rsrc )
