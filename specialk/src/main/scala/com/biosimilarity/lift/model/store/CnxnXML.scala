@@ -323,6 +323,60 @@ trait CnxnXML[Namespace,Var,Tag] {
       }
     }
   }
+  
+  def fromXML( 
+    lbl2Namespace : String => Namespace,
+    text2Var : String => Var
+  )(
+    cciElem : Node
+  ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+    cciElem match {
+      case e : Elem => {
+	Some(
+	  new CnxnCtxtBranch[Namespace,Var,String](
+	    lbl2Namespace( cciElem.label ),
+	    for(
+	      child <- cciElem.child.toList;
+	      childVal <- 
+	      fromXML(
+		lbl2Namespace,
+		text2Var
+	      )( child )
+	    ) 
+	    yield {
+	      childVal
+	    }
+	  )
+	)
+      }
+      case Text( contents ) => {
+	//println( "text node with contents = " + contents )
+	if ( java.util.regex.Pattern.matches( "(\\p{Space}|\\p{Blank})*", contents ) ) {
+	  //println( "contents is whitespace " )
+	  None
+	}
+	else {
+	  if ( contents.substring( 0, 1 ) == "'" ) {
+	    Some(
+	      new CnxnCtxtLeaf[Namespace,Var,String](
+		Right( text2Var( contents ) )
+	      )
+	    )
+	  }
+	  else {
+	    Some(
+	      new CnxnCtxtLeaf[Namespace,Var,String](
+		Left( contents )
+	      )
+	    )
+	  }
+	}
+      }
+      case _ => {
+	None
+      }
+    }
+  }
 }
 
 trait CnxnXQuery[Namespace,Var,Tag] {

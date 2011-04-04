@@ -48,15 +48,321 @@ import java.io.OutputStreamWriter
 
 trait PersistedTermStoreScope[Namespace,Var,Tag,Value] 
 extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {  
+  trait PersistenceManifest {    
+    self : CnxnXML[Namespace,Var,Tag]
+	    with CnxnCtxtInjector[Namespace,Var,Tag] =>
+
+    def db : Database
+    def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String
+    def storeUnitStr : String
+    def toFile( ptn : mTT.GetRequest ) : Option[File]
+    def query( ptn : mTT.GetRequest ) : Option[String]
+
+    def labelToNS : Option[String => Namespace]
+    def textToVar : Option[String => Var]
+    def textToTag : Option[String => Tag]        
+
+    def kvNameSpace : Namespace
+
+    def asStoreKey(
+      key : mTT.GetRequest
+    ) : mTT.GetRequest with Factual
+
+    def asStoreValue(
+      rsrc : mTT.Resource
+    ) : CnxnCtxtLeaf[Namespace,Var,Tag]    
+    
+    def asStoreRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : mTT.GetRequest with Factual
+
+    def asCacheValue(
+      ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Value    
+
+    def asCacheValue(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      ttt : String => Tag,
+      value : Elem
+    ) : Option[Value]
+
+    def asResource(
+      key : mTT.GetRequest, // must have the pattern to determine bindings
+      value : Elem
+    ) : Option[mTT.Resource]
+  }
+
+  trait PersistenceManifestTrampoline {
+    def persistenceManifest : Option[PersistenceManifest]
+
+    def storeUnitStr[Src,Label,Trgt](
+      cnxn : Cnxn[Src,Label,Trgt]
+    ) : Option[String] = {
+      for( pd <- persistenceManifest ) 
+	yield {
+	  pd.storeUnitStr( cnxn )
+	}
+    }
+
+    def storeUnitStr : Option[String] = {
+      for( pd <- persistenceManifest ) 
+	yield {
+	  pd.storeUnitStr
+	}
+    }
+
+    def query( ptn : mTT.GetRequest ) : Option[String] = {
+      for( pd <- persistenceManifest; qry <- pd.query( ptn ) ) 
+	yield {
+	  qry
+	}
+    }
+
+    def labelToNS : Option[String => Namespace] = {
+      for( pd <- persistenceManifest; ltns <- pd.labelToNS ) 
+	yield {
+	  ltns
+	}
+    }
+    def textToVar : Option[String => Var] = {
+      for( pd <- persistenceManifest; ttv <- pd.textToVar ) 
+	yield {
+	  ttv
+	}
+    }
+    def textToTag : Option[String => Tag] = {
+      for( pd <- persistenceManifest; ttt <- pd.textToTag ) 
+	yield {
+	  ttt
+	}
+    }
+
+    def kvNameSpace : Option[Namespace] = {
+      for( pd <- persistenceManifest )
+	yield { pd.kvNameSpace }
+    }
+    def asStoreValue(
+      rsrc : mTT.Resource
+    ) : Option[CnxnCtxtLeaf[Namespace,Var,Tag]] = {
+      for( pd <- persistenceManifest ) 
+	yield { pd.asStoreValue( rsrc ) }
+    }
+    def asStoreKey(
+      key : mTT.GetRequest
+    ) : Option[mTT.GetRequest with Factual] = {
+      for( pd <- persistenceManifest )
+	yield { pd.asStoreKey( key ) }
+    }
+
+    def asStoreRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : Option[mTT.GetRequest with Factual] = {
+      for( pd <- persistenceManifest )
+	yield { pd.asStoreRecord( key, value ) }
+    }
+
+    def asResource(
+      key : mTT.GetRequest, // must have the pattern to determine bindings
+      value : Elem
+    ) : Option[mTT.Resource] = {
+      for( pd <- persistenceManifest; rsrc <- pd.asResource( key, value ) )
+	yield { rsrc }
+    }
+
+    def asCacheValue(
+      ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Option[Value] = {
+      for( pd <- persistenceManifest )
+	yield { pd.asCacheValue( ccl ) }
+    }
+
+    def asCacheValue(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      ttt : String => Tag,
+      value : Elem
+    ) : Option[Value] = {
+      for(
+	pd <- persistenceManifest;
+	rsrc <- pd.asCacheValue( ltns, ttv, ttt, value )
+      )	yield { rsrc }
+    }
+  }
+
+  abstract class XMLDBManifest(
+    override val db : Database
+  ) extends PersistenceManifest 
+    with CnxnXQuery[Namespace,Var,Tag]
+  with CnxnXML[Namespace,Var,Tag]
+  with CnxnCtxtInjector[Namespace,Var,Tag]
+  with UUIDOps {
+    def asStoreKey(
+      key : mTT.GetRequest
+    ) : mTT.GetRequest with Factual = {
+      key match {
+	case leaf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
+	  leaf
+	case branch : CnxnCtxtBranch[Namespace,Var,Tag] =>
+	  branch
+      }
+    }
+
+    def asStoreRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : mTT.GetRequest with Factual = {
+      new CnxnCtxtBranch[Namespace,Var,Tag](
+	kvNameSpace,
+	List( asStoreKey( key ), asStoreValue( value ) )
+      )
+    }
+
+    def asCacheValue(
+      ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Value    
+
+    def asCacheValue(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      ttt : String => Tag,
+      value : Elem
+    ) : Option[Value] = {
+      fromXML( ltns, ttv, ttt )( value ) match {
+	case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
+	  val vale : Value =
+	    asCacheValue(	      
+	      v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag]]
+	    )
+	  if ( kvNameSpace.equals( ns ) ) {	    
+	    Some( vale )
+	  }
+	  else {	    
+	    None
+	  }
+	}
+	case v@_ => {
+	  None
+	}
+      }
+    }
+
+    def asResource(
+      key : mTT.GetRequest, // must have the pattern to determine bindings
+      value : Elem
+    ) : Option[mTT.Resource] = {
+      for(
+	ltns <- labelToNS;
+	ttv <- textToVar;
+	ttt <- textToTag;
+	vCCL <- asCacheValue( ltns, ttv, ttt, value )	
+      ) yield {
+	// BUGBUG -- LGM need to return the Solution
+	// Currently the PersistenceManifest has no access to the
+	// unification machinery
+	mTT.RBound( 
+	  Some( mTT.Ground( vCCL ) ),
+	  None
+	)
+      }
+    }
+
+    override def query(
+      ptn : mTT.GetRequest
+    ) : Option[String] = {
+      for( ttv <- textToVar )
+	yield {
+	  xqQuery(
+	    new CnxnCtxtBranch[Namespace,Var,Tag](
+	      kvNameSpace,
+	      List(
+		asCCL( ptn ),
+		new CnxnCtxtLeaf[Namespace,Var,Tag](
+		  Right(
+		    ttv( "VisForValueVariableUniqueness" )
+		  )
+		)
+	      )
+	    )
+	  )
+	}
+    }
+
+    override def toFile(
+      ptn : mTT.GetRequest
+    ) : Option[File] = {
+      // TBD
+      None
+    }    
+
+  }
+  object XMLDBManifest {
+    def unapply(
+      ed : XMLDBManifest
+    ) : Option[( Database )] = {
+      Some( ( ed.db ) )
+    }
+  }  
+  
   abstract class PersistedMonadicGeneratorJunction(
     override val name : URI,
     override val acquaintances : Seq[URI]
   ) extends DistributedMonadicGeneratorJunction(
     name,
     acquaintances
-  ) with KVTrampoline {    
+  ) with PersistenceManifestTrampoline {    
+    override def asCacheValue(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      ttt : String => Tag,
+      value : Elem
+    ) : Option[Value] = {      
+      valueStorageType match {
+	case "CnxnCtxtLabel" => {
+	  fromXML( ltns, ttv, ttt )( value ) match {
+	    case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
+	      for(
+		vale <-
+		asCacheValue(	      
+		  v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag]]
+		);
+		if ( kvNameSpace.equals( ns ) )
+	      ) yield { vale }
+	    }
+	    case v@_ => {
+	      None
+	    }
+	  }
+	}
+	case "XStream" => {
+	  fromXML( ltns, ttv )( value ) match {
+	    case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
+	      v match {
+		case CnxnCtxtLeaf( Left( t ) ) => {
+		  Some(
+		    new XStream(
+		      new JettisonMappedXmlDriver
+		    ).fromXML( t ).asInstanceOf[Value]
+		  )
+		}
+		case _ => None
+	      }	      
+	    }
+	    case v@_ => {
+	      None
+	    }
+	  }	  
+	}
+	case _ => {
+	  throw new Exception( "unexpected value storage type" )
+	}
+      }      
+    }
+
     def putInStore(
-      persist : Option[PersistenceDescriptor],
+      persist : Option[PersistenceManifest],
       channels : Map[mTT.GetRequest,mTT.Resource],
       ptn : mTT.GetRequest,
       wtr : Option[mTT.GetRequest],
@@ -72,25 +378,29 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  // remove this line to force to db on get
 	  channels( wtr.getOrElse( ptn ) ) = rsrc	  
 	  spawn {
-	    val rcrd = pd.asRecord( ptn, rsrc )
-	    tweet(
-	      (
-		"storing to db : " + pd.db
-		+ " pair : " + rcrd
-		+ " in coll : " + pd.xmlCollStr
+	    for(
+	      rcrd <- asStoreRecord( ptn, rsrc );
+	      sus <- storeUnitStr
+	    ) {
+	      tweet(
+		(
+		  "storing to db : " + pd.db
+		  + " pair : " + rcrd
+		  + " in coll : " + sus
+		)
 	      )
-	    )
-	    store(
-	      collName.getOrElse(
-		pd.xmlCollStr
-	      )
-	    )( rcrd )
+	      store(
+		collName.getOrElse(
+		  sus
+		)
+	      )( rcrd )
+	    }
 	  }
 	}
       }
     }
 
-    def putPlaces( persist : Option[PersistenceDescriptor] )(
+    def putPlaces( persist : Option[PersistenceManifest] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       ptn : mTT.GetRequest,
@@ -129,7 +439,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       }
     }
     
-    def mput( persist : Option[PersistenceDescriptor] )(
+    def mput( persist : Option[PersistenceManifest] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean,
@@ -171,7 +481,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     }    
     
     def mget(
-      persist : Option[PersistenceDescriptor],
+      persist : Option[PersistenceManifest],
       ask : dAT.Ask,
       hops : List[URI]
     )(
@@ -202,15 +512,19 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			  tweet(
 			    "accessing db : " + pd.db
 			  )
-			  val query = pd.query( path )
-			  query match {
+			  val oQry = query( path )
+			  oQry match {
 			    case None => {
 			      forward( ask, hops, path )
 			      rk( oV )
 			    }
 			    case Some( qry ) => {
 			      val xmlCollName =
-				collName.getOrElse( pd.xmlCollStr )
+				collName.getOrElse(
+				  storeUnitStr.getOrElse(
+				    bail()
+				  )
+				)
 			      getCollection( true )(
 				xmlCollName
 			      )
@@ -307,11 +621,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     override def put(
       ptn : mTT.GetRequest, rsrc : mTT.Resource
     ) = {
-      val perD = persistenceDescriptor
+      val perD = persistenceManifest
       val xmlCollName = 
 	perD match {
 	  case None => None
-	  case Some( pd ) => Some( pd.xmlCollStr )
+	  case Some( pd ) => Some( pd.storeUnitStr )
 	}
       mput( perD )(
 	theMeetingPlace, theWaiters, false, xmlCollName
@@ -320,11 +634,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     override def publish(
       ptn : mTT.GetRequest, rsrc : mTT.Resource
     ) = {
-      val perD = persistenceDescriptor
+      val perD = persistenceManifest
       val xmlCollName = 
 	perD match {
 	  case None => None
-	  case Some( pd ) => Some( pd.xmlCollStr )
+	  case Some( pd ) => Some( pd.storeUnitStr )
 	}
       mput( perD )(
 	theChannels, theSubscriptions, true, xmlCollName
@@ -335,11 +649,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      val perD = persistenceDescriptor
+      val perD = persistenceManifest
       val xmlCollName = 
 	perD match {
 	  case None => None
-	  case Some( pd ) => Some( pd.xmlCollStr )
+	  case Some( pd ) => Some( pd.storeUnitStr )
 	}
       mget( perD, dAT.AGet, hops )(
 	theMeetingPlace, theWaiters, true, xmlCollName
@@ -356,11 +670,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      val perD = persistenceDescriptor
+      val perD = persistenceManifest
       val xmlCollName = 
 	perD match {
 	  case None => None
-	  case Some( pd ) => Some( pd.xmlCollStr )
+	  case Some( pd ) => Some( pd.storeUnitStr )
 	}
       mget( perD, dAT.AFetch, hops )(
 	theMeetingPlace, theWaiters, false, xmlCollName
@@ -377,11 +691,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      val perD = persistenceDescriptor
+      val perD = persistenceManifest
       val xmlCollName = 
 	perD match {
 	  case None => None
-	  case Some( pd ) => Some( pd.xmlCollStr )
+	  case Some( pd ) => Some( pd.storeUnitStr )
 	}
       mget( perD, dAT.ASubscribe, hops )(
 	theChannels, theSubscriptions, true, xmlCollName
@@ -420,20 +734,20 @@ object PersistedMonadicTS
       new DistributedMonadicGeneratorJunction( a, List( b ) )
     
     class PersistedtedStringMGJ(
-      val xmlCollStr : String,
+      val dfStoreUnitStr : String,
       override val name : URI,
       override val acquaintances : Seq[URI]
     ) extends PersistedMonadicGeneratorJunction(
       name, acquaintances
     ) {
-      class StringXMLDBDescriptor(
-	override val xmlCollStr : String,
+      class StringXMLDBManifest(
+	override val storeUnitStr : String,
 	override val labelToNS : Option[String => String],
 	override val textToVar : Option[String => String],
 	override val textToTag : Option[String => String]        
       )
-      extends XMLDBDescriptor( database ) {
-	override def xmlCollStr[Src,Label,Trgt](
+      extends XMLDBManifest( database ) {
+	override def storeUnitStr[Src,Label,Trgt](
 	  cnxn : Cnxn[Src,Label,Trgt]
 	) : String = {     
 	  cnxn match {
@@ -444,7 +758,7 @@ object PersistedMonadicTS
 
 	def kvNameSpace : String = "record"
 
-	def asValue(
+	def asStoreValue(
 	  rsrc : mTT.Resource
 	) : CnxnCtxtLeaf[String,String,String] = {
 	  val blob =
@@ -455,7 +769,7 @@ object PersistedMonadicTS
 	  )
 	}
 
-	def asStoreValue(
+	def asCacheValue(
 	  ccl : CnxnCtxtLabel[String,String,String]
 	) : String = {
 	  asPatternString( ccl )
@@ -463,72 +777,20 @@ object PersistedMonadicTS
       
       }
 
-      def persistenceDescriptor : Option[PersistenceDescriptor] = {
+      def persistenceManifest : Option[PersistenceManifest] = {
 	val sid = Some( ( s : String ) => s )
 	Some(
-	  new StringXMLDBDescriptor( xmlCollStr, sid, sid, sid )
+	  new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid )
 	)
       }
     }
     
-    def Pimma( xmlcstr : String, a : String, b : String )  = {
-      new PersistedtedStringMGJ( xmlcstr, a, List( b ) )
+    def Pimma( storeUnitStr : String, a : String, b : String )  = {
+      new PersistedtedStringMGJ( storeUnitStr, a, List( b ) )
     }
 
     import scala.collection.immutable.IndexedSeq
-
-    // def testQuery( pimmgJunq : PersistedtedStringMGJ )(
-//       qryStr : String
-//     ) : Option[IndexedSeq[org.xmldb.api.base.Resource]] = {
-//       for(
-// 	pd <- pimmgJunq.persistenceDescriptor;
-// 	xmlColl <- pimmgJunq.getCollection( true )( pd.xmlCollStr )
-//       )
-//       yield {
-// 	val xqSrvc =
-// 	  pimmgJunq.getQueryService( xmlColl )(
-// 	    "XQueryService", "1.0"
-// 	  ).asInstanceOf[XQueryService]
-
-// 	val rsrcSet = xqSrvc.execute( xqSrvc.compile( qryStr ) )
-// 	println( "number of results = " + rsrcSet.getSize )
-
-// 	val outputProperties : Properties = new Properties()
-//         outputProperties.setProperty(
-// 	  OutputKeys.INDENT, "yes"
-// 	)
-	
-// 	val serializer : SAXSerializer =	  
-// 	  SerializerPool.getInstance().borrowObject(
-//             Class.forName( "org.exist.util.serializer.SAXSerializer" )
-// 	  ).asInstanceOf[SAXSerializer]	
-
-// 	val rslt = 
-// 	  for( i <- 0 to rsrcSet.getSize.toInt - 1 )
-// 	  yield {
-// 	    val rsrc = rsrcSet.getResource( i )
-// 	    val xmlRsrc = rsrc.asInstanceOf[XMLResource]
-
-// 	    val bufStrm = new java.io.ByteArrayOutputStream()
-
-// 	    serializer.setOutput(
-// 	      new OutputStreamWriter(bufStrm),
-// 	      outputProperties
-// 	    )	    
-
-// 	    xmlRsrc.getContentAsSAX( serializer )
-	    
-// 	    println( "the resource is : " + bufStrm )
-
-// 	    rsrc
-// 	  }
-
-// 	SerializerPool.getInstance().returnObject(serializer);
-	
-// 	rslt
-//       }
-//     }
-    
+        
     type MsgTypes = DTSMSH[String,String,String,String]   
     
     val protoDreqUUID = getUUID()

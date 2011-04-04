@@ -71,6 +71,9 @@ extends ConfigurationTrampoline {
     configurationFromFile.get( "managementServiceType" ).getOrElse( bail() )
   def managementServiceVersion : String =
     configurationFromFile.get( "managementServiceVersion" ).getOrElse( bail() )  
+
+  def valueStorageType : String =
+    configurationFromFile.get( "valueStorageType" ).getOrElse( bail() )  
 }
 
 trait XMLStoreDefaults
@@ -243,7 +246,9 @@ extends XMLStoreConfiguration {
 
 trait CnxnStorage[Namespace,Var,Tag] {
   self : CnxnCtxtInjector[Namespace,Var,Tag]
-    with CnxnXML[Namespace,Var,Tag] with XMLStore with UUIDOps =>
+    with CnxnXML[Namespace,Var,Tag]
+    with XMLStore
+    with UUIDOps =>
     
     def tmpDirStr : String
   
