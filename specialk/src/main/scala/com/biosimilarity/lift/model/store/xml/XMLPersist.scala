@@ -245,14 +245,21 @@ extends XMLStoreConfiguration {
 }
 
 trait CnxnStorage[Namespace,Var,Tag] {
-  self : CnxnCtxtInjector[Namespace,Var,Tag]
-    with CnxnXML[Namespace,Var,Tag]
-    with XMLStore
+  self : XMLStore
     with UUIDOps =>
     
     def tmpDirStr : String
   
-  def store( xmlCollStr : String )( cnxn : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
+  object theXMLIfier
+    extends CnxnXML [Namespace,Var,String]
+    with CnxnCtxtInjector[Namespace,Var,String]
+    with UUIDOps
+
+  def xmlIfier : CnxnXML [Namespace,Var,String] = {
+    theXMLIfier
+  }
+
+  def store( xmlCollStr : String )( cnxn : CnxnCtxtLabel[Namespace,Var,String] ) : Unit = {
     import java.io.FileWriter
     import java.io.BufferedWriter
 
@@ -263,7 +270,7 @@ trait CnxnStorage[Namespace,Var,Tag] {
       val fstream : FileWriter = new FileWriter( xmlRsrcFile )
       val out : BufferedWriter = new BufferedWriter( fstream )
       //out.write( toXML( cnxn ) ) -- Serialization-based storage
-      out.write( asXML( cnxn ).toString ) // Data-binding-based storage
+      out.write( xmlIfier.asXML( cnxn ).toString ) // Data-binding-based storage
       out.close
     
       val xrsrc = createResource( xmlColl, xmlRsrcFile )

@@ -66,16 +66,16 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 
     def asStoreKey(
       key : mTT.GetRequest
-    ) : mTT.GetRequest with Factual
+    ) : CnxnCtxtLabel[Namespace,Var,String] with Factual
 
     def asStoreValue(
       rsrc : mTT.Resource
-    ) : CnxnCtxtLeaf[Namespace,Var,Tag]    
+    ) : CnxnCtxtLeaf[Namespace,Var,String] with Factual
     
     def asStoreRecord(
       key : mTT.GetRequest,
       value : mTT.Resource
-    ) : mTT.GetRequest with Factual
+    ) : CnxnCtxtLabel[Namespace,Var,String] with Factual
 
     def asCacheValue(
       ccl : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -84,7 +84,6 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def asCacheValue(
       ltns : String => Namespace,
       ttv : String => Var,
-      ttt : String => Tag,
       value : Elem
     ) : Option[Value]
 
@@ -143,23 +142,25 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       for( pd <- persistenceManifest )
 	yield { pd.kvNameSpace }
     }
-    def asStoreValue(
-      rsrc : mTT.Resource
-    ) : Option[CnxnCtxtLeaf[Namespace,Var,Tag]] = {
-      for( pd <- persistenceManifest ) 
-	yield { pd.asStoreValue( rsrc ) }
-    }
+
     def asStoreKey(
       key : mTT.GetRequest
-    ) : Option[mTT.GetRequest with Factual] = {
+    ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
       for( pd <- persistenceManifest )
 	yield { pd.asStoreKey( key ) }
     }
 
+    def asStoreValue(
+      rsrc : mTT.Resource
+    ) : Option[CnxnCtxtLeaf[Namespace,Var,String] with Factual] = {
+      for( pd <- persistenceManifest ) 
+	yield { pd.asStoreValue( rsrc ) }
+    }
+    
     def asStoreRecord(
       key : mTT.GetRequest,
       value : mTT.Resource
-    ) : Option[mTT.GetRequest with Factual] = {
+    ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
       for( pd <- persistenceManifest )
 	yield { pd.asStoreRecord( key, value ) }
     }
@@ -182,12 +183,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def asCacheValue(
       ltns : String => Namespace,
       ttv : String => Var,
-      ttt : String => Tag,
       value : Elem
     ) : Option[Value] = {
       for(
 	pd <- persistenceManifest;
-	rsrc <- pd.asCacheValue( ltns, ttv, ttt, value )
+	rsrc <- pd.asCacheValue( ltns, ttv, value )
       )	yield { rsrc }
     }
   }
@@ -201,20 +201,25 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
   with UUIDOps {
     def asStoreKey(
       key : mTT.GetRequest
-    ) : mTT.GetRequest with Factual = {
+    ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
       key match {
-	case leaf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
-	  leaf
-	case branch : CnxnCtxtBranch[Namespace,Var,Tag] =>
-	  branch
+	case CnxnCtxtLeaf( t ) =>
+	  new CnxnCtxtLeaf[Namespace,Var,String](
+	    Left( t + "" )
+	  )
+	case CnxnCtxtBranch( ns, facts ) =>
+	  new CnxnCtxtBranch[Namespace,Var,String](
+	    ns,
+	    facts.map( asStoreKey )
+	  )
       }
     }
 
     def asStoreRecord(
       key : mTT.GetRequest,
       value : mTT.Resource
-    ) : mTT.GetRequest with Factual = {
-      new CnxnCtxtBranch[Namespace,Var,Tag](
+    ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
+      new CnxnCtxtBranch[Namespace,Var,String](
 	kvNameSpace,
 	List( asStoreKey( key ), asStoreValue( value ) )
       )
@@ -312,16 +317,28 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
   ) extends DistributedMonadicGeneratorJunction(
     name,
     acquaintances
-  ) with PersistenceManifestTrampoline {    
+  ) with PersistenceManifestTrampoline
+	   with BaseXXMLStore           
+	   with CnxnStorage[Namespace,Var,Tag]           
+  {    
+    override def tmpDirStr : String = {
+      val tds = config.getString( "storageDir", "tmp" )       
+      val tmpDir = new java.io.File( tds )
+      if ( ! tmpDir.exists ) {
+	tmpDir.mkdir
+      }
+      tds
+    }
+    
     override def asCacheValue(
       ltns : String => Namespace,
       ttv : String => Var,
-      ttt : String => Tag,
       value : Elem
     ) : Option[Value] = {      
       valueStorageType match {
 	case "CnxnCtxtLabel" => {
-	  fromXML( ltns, ttv, ttt )( value ) match {
+	  val ttt = ( x : String ) => x
+	  xmlIfier.fromXML( ltns, ttv, ttt )( value ) match {
 	    case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
 	      for(
 		vale <-
@@ -337,7 +354,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  }
 	}
 	case "XStream" => {
-	  fromXML( ltns, ttv )( value ) match {
+	  xmlIfier.fromXML( ltns, ttv )( value ) match {
 	    case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
 	      v match {
 		case CnxnCtxtLeaf( Left( t ) ) => {
@@ -757,6 +774,14 @@ object PersistedMonadicTS
 	}	
 
 	def kvNameSpace : String = "record"
+
+	override def asCacheValue(
+	  ltns : String => String,
+	  ttv : String => String,
+	  value : Elem
+	) : Option[String] = {
+	  None
+	}
 
 	def asStoreValue(
 	  rsrc : mTT.Resource

@@ -98,13 +98,9 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   class MonadicTermStore(
   )
   extends MonadicTupleSpace[mTT.GetRequest,mTT.GetRequest,mTT.Resource] 
-  with CnxnStorage[Namespace,Var,Tag]
   with CnxnCtxtInjector[Namespace,Var,Tag]
   with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
   with CnxnConversions[Namespace,Var,Tag]
-  with CnxnXML[Namespace,Var,Tag]
-  //with XMLStore
-  with BaseXXMLStore
   with WireTap
   with Journalist
   with ConfiggyReporting
@@ -114,16 +110,6 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       reportage( fact )
     }
     
-    // BUGBUG: LGM -- refactor this!
-    override def tmpDirStr : String = {
-      val tds = config.getString( "storageDir", "tmp" )       
-      val tmpDir = new java.io.File( tds )
-      if ( ! tmpDir.exists ) {
-	tmpDir.mkdir
-      }
-      tds
-    }
-
     override val theMeetingPlace =
       new mTT.TMapR[Namespace,Var,Tag,Value]()
     override val theChannels =
