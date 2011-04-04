@@ -244,12 +244,7 @@ extends XMLStoreConfiguration {
 
 }
 
-trait CnxnStorage[Namespace,Var,Tag] {
-  self : XMLStore
-    with UUIDOps =>
-    
-    def tmpDirStr : String
-  
+trait XMLIfy[Namespace,Var] {
   object theXMLIfier
     extends CnxnXML [Namespace,Var,String]
     with CnxnCtxtInjector[Namespace,Var,String]
@@ -257,8 +252,16 @@ trait CnxnStorage[Namespace,Var,Tag] {
 
   def xmlIfier : CnxnXML [Namespace,Var,String] = {
     theXMLIfier
-  }
+  }  
+}
 
+trait CnxnStorage[Namespace,Var,Tag]
+extends XMLIfy[Namespace,Var] {
+  self : XMLStore
+    with UUIDOps =>
+    
+    def tmpDirStr : String
+  
   def store( xmlCollStr : String )( cnxn : CnxnCtxtLabel[Namespace,Var,String] ) : Unit = {
     import java.io.FileWriter
     import java.io.BufferedWriter

@@ -381,7 +381,7 @@ trait CnxnXML[Namespace,Var,Tag] {
 
 trait CnxnXQuery[Namespace,Var,Tag] {
   self : CnxnCtxtInjector[Namespace,Var,Tag]
-	  with UUIDOps with CnxnXML[Namespace,Var,Tag] =>
+  with UUIDOps with CnxnXML[Namespace,Var,Tag] =>
 	    // Indentation
   
   trait TermIndex

@@ -49,9 +49,6 @@ import java.io.OutputStreamWriter
 trait PersistedTermStoreScope[Namespace,Var,Tag,Value] 
 extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {  
   trait PersistenceManifest {    
-    self : CnxnXML[Namespace,Var,Tag]
-	    with CnxnCtxtInjector[Namespace,Var,Tag] =>
-
     def db : Database
     def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String
     def storeUnitStr : String
@@ -78,7 +75,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual
 
     def asCacheValue(
-      ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+      ccl : CnxnCtxtLabel[Namespace,Var,String]
     ) : Value    
 
     def asCacheValue(
@@ -174,7 +171,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     }
 
     def asCacheValue(
-      ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+      ccl : CnxnCtxtLabel[Namespace,Var,String]
     ) : Option[Value] = {
       for( pd <- persistenceManifest )
 	yield { pd.asCacheValue( ccl ) }
@@ -198,6 +195,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     with CnxnXQuery[Namespace,Var,Tag]
   with CnxnXML[Namespace,Var,Tag]
   with CnxnCtxtInjector[Namespace,Var,Tag]
+  with XMLIfy[Namespace,Var]
   with UUIDOps {
     def asStoreKey(
       key : mTT.GetRequest
@@ -226,20 +224,20 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     }
 
     def asCacheValue(
-      ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+      ccl : CnxnCtxtLabel[Namespace,Var,String]
     ) : Value    
 
     def asCacheValue(
       ltns : String => Namespace,
       ttv : String => Var,
-      ttt : String => Tag,
       value : Elem
     ) : Option[Value] = {
-      fromXML( ltns, ttv, ttt )( value ) match {
+      val ttt = ( x : String ) => x
+      xmlIfier.fromXML( ltns, ttv, ttt )( value ) match {
 	case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
 	  val vale : Value =
 	    asCacheValue(	      
-	      v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag]]
+	      v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,String]]
 	    )
 	  if ( kvNameSpace.equals( ns ) ) {	    
 	    Some( vale )
@@ -262,7 +260,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	ltns <- labelToNS;
 	ttv <- textToVar;
 	ttt <- textToTag;
-	vCCL <- asCacheValue( ltns, ttv, ttt, value )	
+	vCCL <- asCacheValue( ltns, ttv, value )	
       ) yield {
 	// BUGBUG -- LGM need to return the Solution
 	// Currently the PersistenceManifest has no access to the
@@ -330,30 +328,75 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       tds
     }
     
+    // BUGBUG -- LGM: Further evidence of problem with current factorization...
+    override def asResource(
+      key : mTT.GetRequest, // must have the pattern to determine bindings
+      value : Elem
+    ) : Option[mTT.Resource] = {
+      for(
+	ltns <- labelToNS;
+	ttv <- textToVar;
+	vCCL <- asCacheValue( ltns, ttv, value )	
+      ) yield {
+	// BUGBUG -- LGM need to return the Solution
+	// Currently the PersistenceManifest has no access to the
+	// unification machinery
+	mTT.RBound( 
+	  Some( mTT.Ground( vCCL ) ),
+	  None
+	)
+      }
+    }
+    
     override def asCacheValue(
       ltns : String => Namespace,
       ttv : String => Var,
       value : Elem
     ) : Option[Value] = {      
+      tweet(
+	"converting store value to cache value"
+      )
       valueStorageType match {
 	case "CnxnCtxtLabel" => {
+	  tweet(
+	    "using CnxnCtxtLabel method"
+	  )
 	  val ttt = ( x : String ) => x
 	  xmlIfier.fromXML( ltns, ttv, ttt )( value ) match {
 	    case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
-	      for(
-		vale <-
-		asCacheValue(	      
-		  v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag]]
-		);
-		if ( kvNameSpace.equals( ns ) )
-	      ) yield { vale }
+	      tweet(
+		"Good news! Value has the shape of a record"
+	      )
+	      if ( kvNameSpace.getOrElse( "" ).equals( ns ) ) {
+		tweet(
+		  "namespace matches : " + ns
+		)
+		for(
+		  vale <-
+		  asCacheValue(	      
+		    v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,String]]
+		  )		
+		) yield { vale }
+	      }
+	      else {
+		tweet(
+		  "namespace mismatch: " + kvNameSpace + "," + ns
+		)
+		None
+	      }
 	    }
-	    case v@_ => {
+	    case _ => {
+	      tweet(
+		"Value failed to embody the shape of a record" + value
+	      )
 	      None
 	    }
 	  }
 	}
 	case "XStream" => {
+	  tweet(
+	    "using XStream method"
+	  )
 	  xmlIfier.fromXML( ltns, ttv )( value ) match {
 	    case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
 	      v match {
@@ -775,11 +818,15 @@ object PersistedMonadicTS
 
 	def kvNameSpace : String = "record"
 
+	// BUGBUG -- LGM: Evidence of a problem with this factorization
 	override def asCacheValue(
 	  ltns : String => String,
 	  ttv : String => String,
 	  value : Elem
 	) : Option[String] = {
+	  tweet(
+	    "Shouldn't be here!"
+	  )
 	  None
 	}
 
@@ -797,6 +844,9 @@ object PersistedMonadicTS
 	def asCacheValue(
 	  ccl : CnxnCtxtLabel[String,String,String]
 	) : String = {
+	  tweet(
+	    "converting to cache value"
+	  )
 	  asPatternString( ccl )
 	}
       
