@@ -29,6 +29,7 @@ import com.biosimilarity.lift.model.store.CnxnCtxtInjector
 import com.biosimilarity.lift.model.store.Cnxn
 import com.biosimilarity.lift.model.store.CCnxn
 import com.biosimilarity.lift.model.store.CnxnXML
+import com.biosimilarity.lift.model.store.Blobify
 import com.biosimilarity.lift.model.store.CnxnXQuery
 import com.biosimilarity.lift.lib._
 
@@ -50,9 +51,10 @@ import java.io.File
 object CXQ extends CnxnXQuery[String,String,String]
  with CnxnCtxtInjector[String,String,String]
  with UUIDOps
+ with Blobify
  with CnxnXML[String,String,String]
 
-object BX extends BaseXXMLStore with UUIDOps {
+object BX extends BaseXXMLStore with Blobify with UUIDOps {
   val datasetsDir = "src/main/resources/datasets/"
   val dbNames : List[String] =
     List( "GraphOne", "GraphTwo", "GraphThree", "GraphFour" )

@@ -14,6 +14,7 @@ object CnxnLeafAndBranch
 extends CnxnXQuery[String,String,String]
  with CnxnXML[String,String,String]
  with CnxnCtxtInjector[String,String,String]
+ with Blobify
  with UUIDOps
 {
   val leavesOfConstance =

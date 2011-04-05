@@ -196,6 +196,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
   with CnxnXML[Namespace,Var,Tag]
   with CnxnCtxtInjector[Namespace,Var,Tag]
   with XMLIfy[Namespace,Var]
+  with Blobify
   with UUIDOps {
     override def asStoreKey(
       key : mTT.GetRequest

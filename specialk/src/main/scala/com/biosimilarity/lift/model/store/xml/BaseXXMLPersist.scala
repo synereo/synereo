@@ -28,6 +28,7 @@ import com.biosimilarity.lift.model.store.CnxnCtxtInjector
 import com.biosimilarity.lift.model.store.Cnxn
 import com.biosimilarity.lift.model.store.CCnxn
 import com.biosimilarity.lift.model.store.CnxnXML
+import com.biosimilarity.lift.model.store.Blobify
 import com.biosimilarity.lift.model.store.CnxnXQuery
 import com.biosimilarity.lift.lib._
 

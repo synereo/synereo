@@ -17,8 +17,18 @@ import scala.util.parsing.combinator._
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
+trait Blobify {
+  def toBlob( x : java.lang.Object ) : String = {
+    new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+  }
+  def fromBlob( blob : String ) : java.lang.Object = {
+    new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+  }      
+}
+
 trait CnxnXML[Namespace,Var,Tag] {
-  self : CnxnCtxtInjector[Namespace,Var,Tag] with UUIDOps =>
+  self : CnxnCtxtInjector[Namespace,Var,Tag]
+	 with Blobify with UUIDOps =>
 
   def toXML( cnxn : CnxnLabel[Namespace,Tag] ) : String = {
     toXML( injectLabel( cnxn ) )
@@ -280,6 +290,42 @@ trait CnxnXML[Namespace,Var,Tag] {
      || (value.isInstanceOf[String])
      // put more ground types here
    )
+  }
+
+  def blobLabel : String = "cclBlob"
+
+  def tolabeledBlob [Namespace,Var,Tag]  (
+    labelToNS : String => Namespace,
+    valToTag : String => Tag
+  )(
+    cc : Product
+  ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+    new CnxnCtxtBranch [Namespace,Var,Tag] (
+      labelToNS( blobLabel ),
+      List( 
+	new CnxnCtxtLeaf [Namespace,Var,Tag] (
+	  Left( valToTag( toBlob( cc ) ) )
+	)
+      )
+    )
+  }
+
+  def fromlabeledBlob [Namespace,Var,Tag] (
+    cclBlob : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : Option[Product] = {
+    cclBlob match {
+      case CnxnCtxtBranch( blNS, CnxnCtxtLeaf( blob ) :: Nil ) => {
+	if ( blobLabel.equals( blNS.toString ) ) {
+	  Some( fromBlob( blob + "" ).asInstanceOf[Product] )
+	}
+	else {
+	  None
+	}
+      }
+      case _ => {
+	None
+      }
+    }
   }
 
   def fromCaseClass [Namespace,Var,Tag] (

@@ -28,6 +28,7 @@ import com.biosimilarity.lift.model.store.CnxnCtxtInjector
 import com.biosimilarity.lift.model.store.Cnxn
 import com.biosimilarity.lift.model.store.CCnxn
 import com.biosimilarity.lift.model.store.CnxnXML
+import com.biosimilarity.lift.model.store.Blobify
 import com.biosimilarity.lift.model.store.CnxnXQuery
 import com.biosimilarity.lift.lib._
 
@@ -44,6 +45,9 @@ import net.lag.configgy._
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 import scala.xml._
+
+import com.thoughtworks.xstream.XStream
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
 import javax.xml.transform.OutputKeys
 import java.util.UUID
@@ -248,6 +252,7 @@ trait XMLIfy[Namespace,Var] {
   object theXMLIfier
     extends CnxnXML [Namespace,Var,String]
     with CnxnCtxtInjector[Namespace,Var,String]
+    with Blobify
     with UUIDOps
 
   def xmlIfier : CnxnXML [Namespace,Var,String] = {

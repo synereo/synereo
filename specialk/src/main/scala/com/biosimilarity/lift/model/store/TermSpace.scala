@@ -155,6 +155,7 @@ with CnxnConversions[Namespace,Var,Tag]
 with CnxnXML[Namespace,Var,Tag]
 //with XMLStore
 with BaseXXMLStore
+with Blobify
 with WireTap
 with Journalist
 with ConfiggyReporting
