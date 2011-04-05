@@ -268,6 +268,56 @@ trait CnxnXML[Namespace,Var,Tag] {
     }
   }
 
+  val javaBuiltins =
+    (new java.lang.Object()).getClass.getMethods.toList.map( _.getName )
+
+  def isGroundValueType(
+    value : {def getClass() : java.lang.Class[_]}
+  ) : Boolean = {
+    ((value.isInstanceOf[Boolean]) 
+     || (value.isInstanceOf[Int]) 
+     || (value.isInstanceOf[Float])
+     || (value.isInstanceOf[String])
+     // put more ground types here
+   )
+  }
+
+  def fromCaseClass(
+    cc : Product
+  ) : CnxnCtxtLabel[String,String,String] with Factual = {    
+    def fromCC(
+      cc : java.lang.Object
+    ) : CnxnCtxtLabel[String,String,String] with Factual = {
+      if ( isGroundValueType( cc ) ) {
+	new CnxnCtxtLeaf[String,String,String](
+	  Left( cc.toString )
+	)
+      }
+      else {
+	val facts =
+	  (for(
+	    m <- cc.getClass.getMethods;      
+	    if ((! javaBuiltins.contains( m.getName ) )
+		&& (( m.getParameterTypes.size ) == 0)
+		&& (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
+		&& (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
+	      )
+	  ) yield {
+	    new CnxnCtxtBranch[String,String,String](
+	      m.getName,
+	      List( fromCC( m.invoke( cc ) ) )
+	    )
+	  }).toList
+
+	new CnxnCtxtBranch[String,String,String] (
+	  cc.getClass.getName,
+	  facts
+	)
+      }
+    }
+    fromCC( cc )
+  }
+
   def fromXML( 
     lbl2Namespace : String => Namespace,
     text2Var : String => Var,

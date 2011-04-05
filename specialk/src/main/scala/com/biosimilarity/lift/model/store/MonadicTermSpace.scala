@@ -596,6 +596,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 		) {
 		  oV match {
 		    case None => {
+		      tweet( ">>>>> forwarding..." )
 		      forward( ask, hops, path )
 		      rk( oV )
 		    }

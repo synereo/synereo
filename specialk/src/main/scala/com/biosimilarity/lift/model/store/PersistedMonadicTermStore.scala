@@ -565,6 +565,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		    case None => {
 		      persist match {
 			case None => {
+			  tweet( ">>>>> forwarding..." )
 			  forward( ask, hops, path )
 			  rk( oV )
 			}
@@ -575,6 +576,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			  val oQry = query( path )
 			  oQry match {
 			    case None => {
+			      tweet( ">>>>> forwarding..." )
 			      forward( ask, hops, path )
 			      rk( oV )
 			    }
@@ -789,10 +791,6 @@ object PersistedMonadicTS
     object TheDAT extends DATypes
     override def protoAskTypes : DATypes = TheDAT
     
-    lazy val Mona = new MonadicTermStore()
-    def Imma( a : String, b : String )  =
-      new DistributedMonadicGeneratorJunction( a, List( b ) )
-    
     class PersistedtedStringMGJ(
       val dfStoreUnitStr : String,
       override val name : URI,
@@ -860,7 +858,7 @@ object PersistedMonadicTS
       }
     }
     
-    def Pimma( storeUnitStr : String, a : String, b : String )  = {
+    def ptToPt( storeUnitStr : String, a : String, b : String )  = {
       new PersistedtedStringMGJ( storeUnitStr, a, List( b ) )
     }
 
