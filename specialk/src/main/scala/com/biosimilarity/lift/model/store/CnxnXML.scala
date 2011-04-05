@@ -314,7 +314,7 @@ trait CnxnXML[Namespace,Var,Tag] {
     cclBlob : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : Option[Product] = {
     cclBlob match {
-      case CnxnCtxtBranch( blNS, CnxnCtxtLeaf( blob ) :: Nil ) => {
+      case CnxnCtxtBranch( blNS, CnxnCtxtLeaf( Left( blob ) ) :: Nil ) => {
 	if ( blobLabel.equals( blNS.toString ) ) {
 	  Some( fromBlob( blob + "" ).asInstanceOf[Product] )
 	}
