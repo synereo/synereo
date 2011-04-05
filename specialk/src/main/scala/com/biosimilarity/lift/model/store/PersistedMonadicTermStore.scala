@@ -441,7 +441,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  spawn {
 	    for(
 	      rcrd <- asStoreRecord( ptn, rsrc );
-	      sus <- storeUnitStr
+	      sus <- collName
 	    ) {
 	      tweet(
 		(
