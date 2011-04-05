@@ -282,40 +282,56 @@ trait CnxnXML[Namespace,Var,Tag] {
    )
   }
 
-  def fromCaseClass(
+  def fromCaseClass [Namespace,Var,Tag] (
+    labelToNS : String => Namespace,
+    valToTag : java.lang.Object => Tag
+  )(
     cc : Product
-  ) : CnxnCtxtLabel[String,String,String] with Factual = {    
+  ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {    
     def fromCC(
       cc : java.lang.Object
-    ) : CnxnCtxtLabel[String,String,String] with Factual = {
+    ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
       if ( isGroundValueType( cc ) ) {
-	new CnxnCtxtLeaf[String,String,String](
-	  Left( cc.toString )
+	new CnxnCtxtLeaf[Namespace,Var,Tag](
+	  Left( valToTag( cc ) )
 	)
       }
       else {
 	val facts =
 	  (for(
 	    m <- cc.getClass.getMethods;      
+	    // this is what you call a heuristic
+	    // and heuristic is probably better than myistic 
 	    if ((! javaBuiltins.contains( m.getName ) )
 		&& (( m.getParameterTypes.size ) == 0)
 		&& (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
 		&& (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
 	      )
 	  ) yield {
-	    new CnxnCtxtBranch[String,String,String](
-	      m.getName,
+	    new CnxnCtxtBranch[Namespace,Var,Tag](
+	      labelToNS( m.getName ),
 	      List( fromCC( m.invoke( cc ) ) )
 	    )
 	  }).toList
 
-	new CnxnCtxtBranch[String,String,String] (
-	  cc.getClass.getName,
+	new CnxnCtxtBranch[Namespace,Var,Tag] (
+	  labelToNS( cc.getClass.getName ),
 	  facts
 	)
       }
     }
     fromCC( cc )
+  }
+
+  def fromCaseClass(
+    cc : Product
+  ) : CnxnCtxtLabel[String,String,String] with Factual = {    
+    fromCaseClass [String,String,String] (
+      ( x : String ) => x,
+      ( x : java.lang.Object ) => x.toString      
+    )(
+      cc 
+    )
   }
 
   def fromXML( 
