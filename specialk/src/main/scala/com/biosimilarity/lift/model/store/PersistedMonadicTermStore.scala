@@ -318,7 +318,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     acquaintances
   ) with PersistenceManifestTrampoline
 	   with BaseXXMLStore           
-	   with CnxnStorage[Namespace,Var,Tag]           
+	   with BaseXCnxnStorage[Namespace,Var,Tag]           
   {    
     override def tmpDirStr : String = {
       val tds = config.getString( "storageDir", "tmp" )       
@@ -861,6 +861,10 @@ object PersistedMonadicTS
     
     def ptToPt( storeUnitStr : String, a : String, b : String )  = {
       new PersistedtedStringMGJ( storeUnitStr, a, List( b ) )
+    }
+
+    def loopBack( storeUnitStr : String ) = {
+      ptToPt( storeUnitStr, "localhost", "localhost" )
     }
 
     import scala.collection.immutable.IndexedSeq

@@ -102,6 +102,29 @@ trait BaseXXMLStore extends XMLStore {
       println( "cannot read file " + xmlRsrcStr )
       None
     }    
+  }  
+}
+
+trait BaseXCnxnStorage[Namespace,Var,Tag]
+extends CnxnStorage[Namespace,Var,Tag] {
+  self : BaseXXMLStore with UUIDOps =>
+    
+    override def tmpDirStr : String = {
+      throw new Exception( "don't use the filebased api" )
+    }
+  
+  override def store( xmlCollStr : String )(
+    cnxn : CnxnCtxtLabel[Namespace,Var,String]
+  ) : Unit = {   
+    for( xmlColl <- getCollection( true )( xmlCollStr ) ) {
+      val document =
+	xmlColl.createResource(
+	  null, XMLResource.RESOURCE_TYPE
+	).asInstanceOf[XMLResource]
+
+      document.setContent( xmlIfier.asXML( cnxn ).toString )
+      xmlColl.storeResource( document )
+    }
   }
 }
 
