@@ -389,32 +389,60 @@ trait CnxnXML[Namespace,Var,Tag] {
   ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
     cciElem match {
       case e : Elem => {
+	println( "elem with children = " + cciElem.child.toList )
+	val attrs =
+	  for( m <- cciElem.attributes ) 
+	    yield {
+	      new CnxnCtxtBranch[Namespace,Var,Tag](
+		lbl2Namespace( m.key + "@" ),
+		for( 
+		  attrVN <- m.value.toList;
+		  attrCCL <- 
+		  fromXML(
+		    lbl2Namespace,
+		    text2Var,
+		    text2Tag
+		  )( attrVN )
+		)
+		yield {
+		  attrCCL
+		}
+	      )
+	    }
+	val progeny =
+	  for(
+	    child <- cciElem.child.toList;
+	    childVal <- 
+	    fromXML(
+	      lbl2Namespace,
+	      text2Var,
+	      text2Tag
+	    )( child )
+	  ) 
+	  yield {
+	    childVal
+	  }
 	Some(
 	  new CnxnCtxtBranch[Namespace,Var,Tag](
 	    lbl2Namespace( cciElem.label ),
-	    for(
-	      child <- cciElem.child.toList;
-	      childVal <- 
-	      fromXML(
-		lbl2Namespace,
-		text2Var,
-		text2Tag
-	      )( child )
-	    ) 
-	    yield {
-	      childVal
-	    }
+	    attrs.toList ++ progeny.toList
 	  )
 	)
       }
       case Text( contents ) => {
-	//println( "text node with contents = " + contents )
-	if ( java.util.regex.Pattern.matches( "(\\p{Space}|\\p{Blank})*", contents ) ) {
-	  //println( "contents is whitespace " )
+	println( "text node with contents = " + contents )
+	if (
+	  java.util.regex.Pattern.matches( 
+	    "(\\p{Space}|\\p{Blank})*",
+	    contents
+	  )
+	) {
+	  println( "contents is whitespace " )
 	  None
 	}
 	else {
 	  if ( contents.substring( 0, 1 ) == "'" ) {
+	    println( "contents make a variable name " )
 	    Some(
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Right( text2Var( contents ) )
@@ -422,6 +450,7 @@ trait CnxnXML[Namespace,Var,Tag] {
 	    )
 	  }
 	  else {
+	    println( "contents comprise a string literal " )
 	    Some(
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( text2Tag( contents ) )

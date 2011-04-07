@@ -76,11 +76,15 @@ trait BaseXXMLStore extends XMLStore {
   ) : Option[Collection] = {
     try {
       // BUGBUG -- LGM the semantics of BXCollection a little
-	// different than createIfMissing
+      // different than createIfMissing; and requires catching the
+      // database not found exception
       Some( new BXCollection( xmlCollStr, true ) )
     } 
     catch {
-      case e => None
+      case e : XMLDBException => {
+	Some( new BXCollection( xmlCollStr, false ) )
+      }
+      case _ => None
     }
   }
 

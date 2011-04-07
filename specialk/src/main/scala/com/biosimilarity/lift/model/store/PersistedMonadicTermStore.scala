@@ -198,13 +198,18 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
   with XMLIfy[Namespace,Var]
   with Blobify
   with UUIDOps {
+    // BUGBUG -- LGM: Why not just the identity?
     override def asStoreKey(
       key : mTT.GetRequest
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
       key match {
-	case CnxnCtxtLeaf( t ) =>
+	case CnxnCtxtLeaf( Left( t ) ) =>
 	  new CnxnCtxtLeaf[Namespace,Var,String](
-	    Left( t + "" )
+	    Left( t + "" )	    
+	  )
+	case CnxnCtxtLeaf( Right( v ) ) =>
+	  new CnxnCtxtLeaf[Namespace,Var,String](
+	    Right( v )
 	  )
 	case CnxnCtxtBranch( ns, facts ) =>
 	  new CnxnCtxtBranch[Namespace,Var,String](
@@ -450,11 +455,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		  + " in coll : " + sus
 		)
 	      )
-	      store(
-		collName.getOrElse(
-		  sus
-		)
-	      )( rcrd )
+	      store( sus )( rcrd )
 	    }
 	  }
 	}
@@ -832,12 +833,32 @@ object PersistedMonadicTS
 	override def asStoreValue(
 	  rsrc : mTT.Resource
 	) : CnxnCtxtLeaf[String,String,String] with Factual = {
-	  val blob =
-	    new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
-	  //asXML( rsrc )
-	  new CnxnCtxtLeaf[String,String,String](
-	    Left[String,String]( blob )
-	  )
+	  valueStorageType match {
+	    case "CnxnCtxtLabel" => {
+	      tweet(
+		"warning: CnxnCtxtLabel method is using XStream"
+	      )
+	      new CnxnCtxtLeaf[String,String,String](
+		Left[String,String](
+		  new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+		)
+	      )
+	    }
+	    case "XStream" => {
+	      tweet(
+		"using XStream method"
+	      )
+	      val blob =
+		new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+	      //asXML( rsrc )
+	      new CnxnCtxtLeaf[String,String,String](
+		Left[String,String]( blob )
+	      )
+	    }
+	    case _ => {
+	      throw new Exception( "unexpected value storage type" )
+	    }
+	  }	  
 	}
 
 	def asCacheValue(
