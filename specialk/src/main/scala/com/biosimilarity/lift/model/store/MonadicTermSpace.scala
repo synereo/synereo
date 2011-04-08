@@ -140,7 +140,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       ptn : mTT.GetRequest,
       place : mTT.GetRequest
     ) : Boolean = {
-      matches( ptn, ptn ) match {
+      //println( "in fits on " + this )
+      matches( ptn, place ) match {
 	case Some( soln ) => {
 	  //PrologSubstitution( soln )
 	  true
@@ -155,7 +156,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       ptn : mTT.GetRequest,
       place : mTT.GetRequest
     ) : Option[Substitution] = {
-      matches( ptn, ptn ) match {
+      //println( "in fitsK on " + this )
+      val matchRslts = matches( ptn, place )
+      //println( "match results in fitsK on " + this + " are " + matchRslts )
+      matchRslts match {
 	case Some( soln : Solution[String] ) => {
 	  Some( PrologSubstitution( soln ) )
 	}

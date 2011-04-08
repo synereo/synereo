@@ -389,7 +389,7 @@ trait CnxnXML[Namespace,Var,Tag] {
   ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
     cciElem match {
       case e : Elem => {
-	println( "elem with children = " + cciElem.child.toList )
+	//println( "elem with children = " + cciElem.child.toList )
 	val attrs =
 	  for( m <- cciElem.attributes ) 
 	    yield {
@@ -430,19 +430,19 @@ trait CnxnXML[Namespace,Var,Tag] {
 	)
       }
       case Text( contents ) => {
-	println( "text node with contents = " + contents )
+	//println( "text node with contents = " + contents )
 	if (
 	  java.util.regex.Pattern.matches( 
 	    "(\\p{Space}|\\p{Blank})*",
 	    contents
 	  )
 	) {
-	  println( "contents is whitespace " )
+	  //println( "contents is whitespace " )
 	  None
 	}
 	else {
 	  if ( contents.substring( 0, 1 ) == "'" ) {
-	    println( "contents make a variable name " )
+	    //println( "contents make a variable name " )
 	    Some(
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Right( text2Var( contents ) )
@@ -450,7 +450,7 @@ trait CnxnXML[Namespace,Var,Tag] {
 	    )
 	  }
 	  else {
-	    println( "contents comprise a string literal " )
+	    //println( "contents comprise a string literal " )
 	    Some(
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( text2Tag( contents ) )
@@ -652,10 +652,10 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     val depth = xqcc.index.depth
     val xqVar = xqcc.xqVar
 
-    println( "entering xqRecExistentialConstraints with " )
-    println( "xqVar : " + xqVar )
-    println( "width : " + width )
-    println( "depth : " + depth )
+    //println( "entering xqRecExistentialConstraints with " )
+    //println( "xqVar : " + xqVar )
+    //println( "width : " + width )
+    //println( "depth : " + depth )
 
     ccl match {
       case CnxnCtxtLeaf( Left( t ) ) =>
@@ -664,7 +664,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	( "" )
       case CnxnCtxtBranch( ns, facts ) => {
 	val nxqv = nextXQV
-	println( "generated next var: " + nxqv )
+	//println( "generated next var: " + nxqv )
 
 	val ( childConstraints, _ ) =
 	  facts match {

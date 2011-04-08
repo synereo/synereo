@@ -256,6 +256,7 @@ object MonadicTSpace
     ptn : String,
     place : String
   ) : Option[Substitution] = {
+    //println( "in fitsK on " + this )
     if ( fits( ptn, place ) ) {
       Some( IdentitySubstitution() )
     }

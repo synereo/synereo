@@ -33,7 +33,14 @@ trait CnxnConversions[Namespace,Var,Tag] {
     (
       "tag( "
       + (trgt match {
-	  case Left( t ) => t
+	  case Left( t ) => {
+	    t match {
+	      case s : String => {
+		"\"" + s + "\""
+	      }
+	      case _ => t
+	    }
+	  }
 	  case Right( v ) => cnxnVarTermStr( v )
 	}
       )
@@ -221,16 +228,19 @@ with PrologMgr {
   ) :
     Option[Solution[String]]
     = {
+      //println( "in matches with " + clabel1 + " and " + clabel2 )
     val solution =
       unifyQuery(
 	cnxnCtxtLabelToTermStr( clabel1 ),
 	cnxnCtxtLabelToTermStr( clabel2 )
       )
     if ( solution.isSuccess ) {
+      //println( " found a solution in matches for " + clabel1 + " and " + clabel2 )
       // BUGBUG -- fix this
       Some( solution )
     }
     else {
+      //println( " no solution in matches for " + clabel1 + " and " + clabel2 )
       None
     }
   }
