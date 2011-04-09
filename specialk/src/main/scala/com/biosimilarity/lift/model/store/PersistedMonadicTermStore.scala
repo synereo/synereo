@@ -6,7 +6,6 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-
 package com.biosimilarity.lift.model.store
 
 import com.biosimilarity.lift.model.store.xml._

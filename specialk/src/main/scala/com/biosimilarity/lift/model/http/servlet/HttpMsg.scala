@@ -8,7 +8,10 @@
 
 package com.biosimilarity.lift.model.http.servlet
 
+import com.biosimilarity.lift.model.store._
+import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.msg._
+import com.biosimilarity.lift.lib._
 
 import java.net.URI
 import java.util.UUID
@@ -28,3 +31,5 @@ class JustHttpRequest(
 ) extends AbstractJustifiedRequest[HSReq,HSResp](
   msgId, to, from, flowId, body, justification
 )
+
+
