@@ -88,6 +88,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       key : mTT.GetRequest, // must have the pattern to determine bindings
       value : Elem
     ) : Option[mTT.Resource]
+    
+    def recordDeletionQueryTemplate : String = {
+      "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//record where deep-equal($rcrd/*[1], $key) return $rcrd"
+    }
   }
 
   trait PersistenceManifestTrampoline {
@@ -425,7 +429,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  throw new Exception( "unexpected value storage type" )
 	}
       }      
-    }
+    }    
 
     def putInStore(
       persist : Option[PersistenceManifest],
@@ -638,7 +642,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				    val rsrcIter = rsrcSet.getIterator
 				    
 				    val rcrds =
-				      new MutableList[Option[mTT.Resource]]()
+				      new MutableList[( Elem, Option[mTT.Resource] )]()
 				  
 				    while( rsrcIter.hasMoreResources ) {
 				      val xrsrc = rsrcIter.nextResource	  
@@ -649,17 +653,23 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				      tweet( "retrieved " + xrsrcCntntStr )
 				      
 				      val ersrc : Elem =
-					XML.loadString( xrsrcCntntStr )									      
+					XML.loadString( xrsrcCntntStr )
 				      
-				      rcrds += asResource( path, ersrc )
+				      rcrds += (( ersrc, asResource( path, ersrc ) ))
 				    }
 				    
-				    val rslt = rcrds( 0 )
+				    val ( ersrc, rslt ) = rcrds( 0 )
 				    val cacheRcrds = rcrds.drop( 1 )
-				    for( cacheRcrd <- cacheRcrds ) {
+				    for( ( elem, cacheRcrd ) <- cacheRcrds ) {
 				      tweet( "caching " + cacheRcrd )
 				    }
 				    
+				    tweet( "removing from store " + rslt )
+				    removeFromStore( 
+				      persist,
+				      ersrc,
+				      collName
+				    )
 				    tweet( "returning " + rslt )
 				    rk( rslt )
 				  }
@@ -680,6 +690,66 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	      }
 	  }
       }
+    }
+
+    def removeFromStore(
+      persist : Option[PersistenceManifest],
+      record : Elem,
+      collName : Option[String]
+    ) : Unit = {
+      for( pd <- persist; clNm <- collName )
+	{
+	  tweet( "removing from db : " + pd.db )
+	  val rcrdKey =
+	    record match {
+	      case <record>{ kv @_* }</record> => {
+		val kvs = kv.toList.filter(
+		  ( n : Node ) => {
+		    n match {
+		      case Text( contents ) => {
+			!java.util.regex.Pattern.matches( 
+			      "(\\p{Space}|\\p{Blank})*",
+			      contents
+			)
+		      }
+		      case e : Elem => {
+			true
+		      }
+		    }
+		  }
+		)
+		kvs match {
+		  case k :: v :: Nil => k.toString
+		  case _ => 
+		    throw new Exception(
+		      "Not a k-v record shape\n" + kvs
+		    )
+		}
+	      }
+	      case _ =>
+		throw new Exception(
+		  "Not a record\n" + record
+		)
+	    }
+
+	  val deletionQry =
+	    pd.recordDeletionQueryTemplate.replace(
+	      "%RecordKeyConstraints%",
+	      rcrdKey
+	    ).replace(
+	      "%COLLNAME%",
+	      clNm
+	    )
+	  tweet( "deletion query : \n" + deletionQry )
+	  val ostrm = new java.io.ByteArrayOutputStream()
+	  executeInSession( 
+	    List( deletionQry ),
+	    ostrm
+	  )
+	  tweet(
+	    "deletion results: \n" + ostrm.toString
+	  )
+	}
     }
     
     override def put(

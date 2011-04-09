@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.lib.parser
 import com.biosimilarity.lift.lib.monad._
+import com.biosimilarity.lift.lib.delimited._
 
 import scala.collection.immutable.Stream
 
@@ -92,6 +93,35 @@ trait MonadicParserWitnessScope[Result] {
       )
     }
   }
+
+  class BMonadicParserWitness[Result](
+    val cparser : MCParser[Result] 
+  ) extends BMonad[MCParser] {
+
+    // the unit of the parser monad ignores the stream of tokens and
+      // produces the boxed result
+    override def unit [A] ( a : A ) : MCParser[A] = {
+      new MCParser[A]( ( stkn ) => List( ( a, stkn ) ) )
+    }
+
+    // the bind is a more natural primitive in this case because of
+      // the sequential nature of combining parsers
+    override def bind [A,B] (
+      ma : MCParser[A], f : A => MCParser[B]
+    ) : MCParser[B] = {
+      new MCParser[B]( 
+	( stkn ) => {
+	  ma.parse( stkn ).flatMap( 
+	    {
+	      ( rnstkn ) => {
+		f( rnstkn._1 ).parse( rnstkn._2 )
+	      }
+	    }
+	  )
+	}
+      )
+    }
+  }
   
   class MonadPlusParserWitness[Result](
     override val cparser : MCParser[Result] 
@@ -115,14 +145,16 @@ trait MonadicParserWitnessScope[Result] {
   }  
 }
 
-// trait MonadicScopeComposition[
-//   Abstraction <: MonadicParserWitnessScope,
-//   Argument <: MonadicParserWitnessScope
-// ] extends MonadicParserWitnessScope[NRslt] {
-//   val abstractionScope : Abstraction
-//   val argumentScope : Argument
-//   type Token = argumentScope.Result
-// }
+trait MonadicScopeComposition[
+  Abstraction[FRslt] <: MonadicParserWitnessScope[FRslt],
+  Argument[ARslt] <: MonadicParserWitnessScope[ARslt],
+  ARslt,
+  FRslt
+] extends MonadicParserWitnessScope[FRslt] {
+  val abstractionScope : Abstraction[FRslt]
+  val argumentScope : Argument[ARslt]
+  type Token = ARslt
+}
 
 trait MonadicParsingCoreUtilities[Result]
   extends MonadicParserWitnessScope[Result] {

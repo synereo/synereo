@@ -110,6 +110,33 @@ trait Journalist {
   def record[A]( fact : A ) =
     report( Luddite( journalIDVender.getUUID ) )( asTweet( fact ) )
 
+  implicit def exceptionToTraceStr( e : Exception ) : String = {
+    val sw = new java.io.StringWriter()
+    e.printStackTrace(
+      new java.io.PrintWriter(
+	sw,
+	true
+      )
+    )
+    sw.toString
+  }
+
+  def tweetTrace( e : Exception ) = {    
+    report( Twitterer( journalIDVender.getUUID ) )(
+      asTweet( exceptionToTraceStr( e ) ) 
+    )
+  }
+  def blogTrace( e : Exception ) = {
+    report( Blogger( journalIDVender.getUUID ) )(
+      asTweet( exceptionToTraceStr( e ) )
+    )
+  }
+  def recordTrace( e : Exception ) = {
+    report( Luddite( journalIDVender.getUUID ) )(
+      asTweet( exceptionToTraceStr( e ) )
+    )
+  }
+
   def tagIt [A]( verb : Verbosity, bite : A ) : Elem = {
     verb match {
       case Twitterer( _ ) => <tweet>{bite}</tweet>

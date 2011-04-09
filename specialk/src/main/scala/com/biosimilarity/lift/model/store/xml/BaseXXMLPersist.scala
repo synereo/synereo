@@ -33,9 +33,16 @@ import com.biosimilarity.lift.model.store.CnxnXQuery
 import com.biosimilarity.lift.lib._
 
 import org.basex.api.xmldb.BXCollection
+import org.basex.BaseXClient
 import org.basex.core.BaseXException
 import org.basex.core.Context
-import org.basex.core.cmd._
+import org.basex.core.cmd.{ List => BXListx ,_ }
+import org.basex.data.Result
+import org.basex.data.XMLSerializer
+import org.basex.query.QueryException
+import org.basex.query.QueryProcessor
+import org.basex.query.item.Item
+import org.basex.query.iter.Iter
 
 import org.xmldb.api.base._
 import org.xmldb.api.modules._
@@ -48,6 +55,10 @@ import java.io.File
 object BaseXDefaults {
   implicit val URI : String  =
     "xmldb:basex://localhost:1984/"
+  val dbHost : String = "localhost"
+  val dbPort : String = "1984"
+  val dbUser : String = "admin"
+  val dbPwd  : String = "admin"
   implicit val driver : String =
     "org.basex.api.xmldb.BXDatabase"
   implicit val dbRoot : String = "/db"
@@ -63,7 +74,7 @@ object BaseXDefaults {
 }
 
 trait BaseXXMLStore extends XMLStore {
-  self : UUIDOps =>
+  self : UUIDOps with Journalist =>
   
     //override type ConfigurationDefaults = BaseXDefaults.getClass
 
@@ -106,7 +117,42 @@ trait BaseXXMLStore extends XMLStore {
       println( "cannot read file " + xmlRsrcStr )
       None
     }    
-  }  
+  }
+
+  def executeInSession(
+    qrys : List[String],
+    ostrm : java.io.OutputStream
+  ) : Unit = {
+    try {
+      val bxCtxt = new Context()
+      for( qry <- qrys ) {
+	val qproc = new QueryProcessor( qry, bxCtxt )
+	val oostrm = new java.io.ObjectOutputStream( ostrm )
+	val iter : Iter = qproc.iter()
+	var nitem = iter.next
+	while( nitem != null ) {
+	  val item = nitem.toJava
+	  if ( item.isInstanceOf[java.io.Serializable] ) {
+	    oostrm.writeObject( item )
+	  }
+	  nitem = iter.next
+	}
+	qproc.close()
+      }           
+    }
+    catch {
+      case e : Exception => {	
+	tweetTrace( e )
+      }
+    }    
+  }
+
+  def executeInSession(
+    qry : String,
+    ostrm : java.io.OutputStream
+  ) : Unit = {
+    executeInSession( List( qry ), ostrm )
+  }
 }
 
 trait BaseXCnxnStorage[Namespace,Var,Tag]

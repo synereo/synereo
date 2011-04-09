@@ -54,7 +54,8 @@ object CXQ extends CnxnXQuery[String,String,String]
  with Blobify
  with CnxnXML[String,String,String]
 
-object BX extends BaseXXMLStore with Blobify with UUIDOps {
+object BX extends BaseXXMLStore
+ with Blobify with UUIDOps with Journalist {
   val datasetsDir = "src/main/resources/datasets/"
   val dbNames : List[String] =
     List( "GraphOne", "GraphTwo", "GraphThree", "GraphFour" )

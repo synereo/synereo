@@ -57,6 +57,14 @@ trait XMLStoreConfiguration
 extends ConfigurationTrampoline {
   def URI                      : String =
     configurationFromFile.get( "URI" ).getOrElse( bail() )
+  def dbHost                   : String =
+    configurationFromFile.get( "dbHost" ).getOrElse( bail() )
+  def dbPort                   : String =
+    configurationFromFile.get( "dbPort" ).getOrElse( bail() )
+  def dbUser                   : String =
+    configurationFromFile.get( "dbHost" ).getOrElse( bail() )
+  def dbPwd                    : String =
+    configurationFromFile.get( "dbPort" ).getOrElse( bail() )
   def driver                   : String =
     configurationFromFile.get( "driver" ).getOrElse( bail() )
   def dbRoot                   : String =
