@@ -992,3 +992,152 @@ object PersistedMonadicTS
     
     override def protoMsgs : MsgTypes = MonadicDMsgs
   }
+
+object StdPersistedMonadicTS
+ extends PersistedTermStoreScope[Symbol,Symbol,Any,Any] 
+  with UUIDOps {
+    import SpecialKURIDefaults._
+    import CnxnLeafAndBranch._
+    import CCLDSL._
+
+    type MTTypes = MonadicTermTypes[Symbol,Symbol,Any,Any]
+    object TheMTT extends MTTypes
+    override def protoTermTypes : MTTypes = TheMTT
+
+    type DATypes = DistributedAskTypes
+    object TheDAT extends DATypes
+    override def protoAskTypes : DATypes = TheDAT
+    
+    class PersistedtedStdMGJ(
+      val dfStoreUnitStr : String,
+      override val name : URI,
+      override val acquaintances : Seq[URI]
+    ) extends PersistedMonadicGeneratorJunction(
+      name, acquaintances
+    ) {
+      class StringXMLDBManifest(
+	override val storeUnitStr : String,
+	override val labelToNS : Option[String => Symbol],
+	override val textToVar : Option[String => Symbol],
+	override val textToTag : Option[String => Any]        
+      )
+      extends XMLDBManifest( database ) {
+	override def storeUnitStr[Src,Label,Trgt](
+	  cnxn : Cnxn[Src,Label,Trgt]
+	) : String = {     
+	  cnxn match {
+	    case CCnxn( s, l, t ) =>
+	      s.toString + l.toString + t.toString
+	  }
+	}	
+
+	def kvNameSpace : Symbol = 'record
+
+	// BUGBUG -- LGM: Evidence of a problem with this factorization
+	override def asCacheValue(
+	  ltns : String => Symbol,
+	  ttv : String => Symbol,
+	  value : Elem
+	) : Option[String] = {
+	  tweet(
+	    "Shouldn't be here!"
+	  )
+	  None
+	}
+
+	override def asStoreValue(
+	  rsrc : mTT.Resource
+	) : CnxnCtxtLeaf[Symbol,Symbol,String] with Factual = {
+	  valueStorageType match {
+	    case "CnxnCtxtLabel" => {
+	      tweet(
+		"warning: CnxnCtxtLabel method is using XStream"
+	      )
+	      new CnxnCtxtLeaf[Symbol,Symbol,String](
+		Left[String,Symbol](
+		  new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+		)
+	      )
+	    }
+	    case "XStream" => {
+	      tweet(
+		"using XStream method"
+	      )
+	      val blob =
+		new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+	      //asXML( rsrc )
+	      new CnxnCtxtLeaf[Symbol,Symbol,String](
+		Left[String,Symbol]( blob )
+	      )
+	    }
+	    case _ => {
+	      throw new Exception( "unexpected value storage type" )
+	    }
+	  }	  
+	}
+
+	def asCacheValue(
+	  ccl : CnxnCtxtLabel[Symbol,Symbol,String]
+	) : Any = {
+	  tweet(
+	    "converting to cache value"
+	  )
+	  asPatternString( ccl.asInstanceOf[CnxnCtxtLabel[Symbol,Symbol,Any]] )
+	}
+      
+      }
+
+      def persistenceManifest : Option[PersistenceManifest] = {
+	val sid = Some( ( s : String ) => s )
+	val sym = Some( ( s : String ) => Symbol( s ) )
+	Some(
+	  new StringXMLDBManifest( dfStoreUnitStr, sym, sym, sid )
+	)
+      }
+    }
+    
+    def ptToPt( storeUnitStr : String, a : String, b : String )  = {
+      new PersistedtedStdMGJ( storeUnitStr, a, List( b ) )
+    }
+
+    def loopBack( storeUnitStr : String ) = {
+      ptToPt( storeUnitStr, "localhost", "localhost" )
+    }
+
+    import scala.collection.immutable.IndexedSeq
+        
+    type MsgTypes = DTSMSH[Symbol,Symbol,Any,Any]   
+    
+    val protoDreqUUID = getUUID()
+    val protoDrspUUID = getUUID()    
+    
+    object MonadicDMsgs extends MsgTypes {
+      
+      override def protoDreq : DReq = 
+	MDGetRequest( $('protoDReq)( "yo!" ) )
+      override def protoDrsp : DRsp =
+	MDGetResponse( $('protoDRsp)( "oy!" ), Symbol( aLabel.toString ) )
+      override def protoJtsreq : JTSReq =
+	JustifiedRequest(
+	  protoDreqUUID,
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDreq,
+	  None
+	)
+      override def protoJtsrsp : JTSRsp = 
+	JustifiedResponse(
+	  protoDreqUUID,
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDrsp,
+	  None
+	)
+      override def protoJtsreqorrsp : JTSReqOrRsp =
+	Left( protoJtsreq )
+    }
+    
+    override def protoMsgs : MsgTypes = MonadicDMsgs
+  }
