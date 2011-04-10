@@ -644,6 +644,28 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       get( Nil )( path )    
     }
 
+    def getValue(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Generator[Value,Unit,Unit] = 
+      Generator {
+	k : ( Value => Unit @suspendable ) =>
+	  for(
+	    orsrc <- get( path )
+	    //rsrc <- orsrc
+	    //gv <- getGV( rsrc )
+	  ) {
+	    orsrc match {
+	      case Some( rsrc ) => {
+		getGV( rsrc ) match {
+		  case Some( gv ) => k( gv )
+		  case None =>
+		}
+	      }
+	      case None => 
+	    };
+	  }
+      }
+
     def fetch( hops : List[URI] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
