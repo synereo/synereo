@@ -1101,11 +1101,44 @@ object StdPersistedMonadicTS
 
 	def asCacheValue(
 	  ccl : CnxnCtxtLabel[Symbol,Symbol,String]
-	) : Any = {
+	) : String = {
 	  tweet(
 	    "converting to cache value"
 	  )
-	  asPatternString( ccl.asInstanceOf[CnxnCtxtLabel[Symbol,Symbol,Any]] )
+	  //asPatternString( ccl )
+	  ccl match {
+	    case CnxnCtxtBranch(
+	      storeType,
+	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
+	    ) => {
+	      def extractValue( rv : String ) : String = {
+		fromBlob(
+		  rv.replace(
+		    "&quot;",
+		    "\""
+		  )
+		) match {
+		  case rsrc : mTT.Resource => {
+		    (getGV( rsrc ).getOrElse( "" ) + "")
+		  }
+		}
+	      }
+
+	      (storeType + "") match {
+		case "String" => {
+		  extractValue( rv )
+		}
+		case "'String" => {
+		  extractValue( rv )
+		}
+	      }	      
+	    }
+	    case _ => {
+	      asPatternString(
+		ccl.asInstanceOf[CnxnCtxtLabel[Symbol,Symbol,Any]]
+	      )
+	    }
+	  }
 	}
       
       }
