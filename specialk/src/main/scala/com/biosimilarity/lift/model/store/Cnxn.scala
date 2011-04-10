@@ -145,7 +145,8 @@ with Factual {
   override def self = List( Left( tag ) )
   override def toString = {
     tag match {
-      case Left( t ) => "<" + t + ">"
+      //case Left( t ) => "<" + t + ">"
+      case Left( t ) => "" + t + ""
       case Right( v ) => "'" + v
     }
   }

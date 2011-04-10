@@ -58,6 +58,7 @@ trait MonadicTermTypes[Namespace,Var,Tag,Value] {
 
   class TMapR[Namespace,Var,Tag,Value]
   extends HashMap[GetRequest,Resource]  
+  
 }
 
 trait MonadicTermTypeScope[Namespace,Var,Tag,Value] {
@@ -166,6 +167,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	case None => {
 	  None
 	}
+      }
+    }
+
+    def getGV( rsrc : mTT.Resource ) : Option[Value] = {
+      rsrc match {
+	case mTT.Ground( v ) => Some( v )
+	case mTT.RBound( Some( nrsrc ), _ ) => getGV( nrsrc )
+	case _ => None
       }
     }
  

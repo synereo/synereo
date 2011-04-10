@@ -70,3 +70,4 @@ trait HTTPTrampolineScope[Namespace,Var,Tag] {
   lazy val httpTramp : HTTPTrampolineTypes =
     protoHttpTramp
 }
+

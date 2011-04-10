@@ -30,14 +30,32 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 object MonadicHttpTS
- extends MonadicTermStoreScope[String,String,String,HTTPRequestCtxt]
-  with HTTPTrampolineScope[String,String,String]
+ extends MonadicTermStoreScope[Symbol,Symbol,Any,HTTPRequestCtxt]
+  with HTTPTrampolineScope[Symbol,Symbol,Any]
   with UUIDOps
 {
   import SpecialKURIDefaults._
   import CnxnLeafAndBranch._
+  import CCLDSL._
 
-  type MTTypes = MonadicTermTypes[String,String,String,HTTPRequestCtxt]
+  val HTTPReqCCL =
+    $('request)(
+      // taken from SWI Prolog http interface
+      $('host)('Host),
+      $('input)('IStrm),
+      $('method)('Method),
+      $('path)('Path),
+      $('peer)('Peer),
+      $('port)('Port),
+      $('requestURI)('ReqURI),
+      $('query)('Query),
+      $('httpVersion)('HttpVersion),
+      $('cookie)('Cookie),
+      // added from Java HttpServletRequest spec
+      $('parts)('Parts)
+    )
+
+  type MTTypes = MonadicTermTypes[Symbol,Symbol,Any,HTTPRequestCtxt]
   object TheMTT extends MTTypes
   override def protoTermTypes : MTTypes = TheMTT
 
@@ -46,20 +64,22 @@ object MonadicHttpTS
   override def protoAskTypes : DATypes = TheDAT        
   
   override type HTTPTrampolineTypes = 
-    HTTPTrampoline[String,String,String]
-    with DTSMsgScope[String,String,String,HTTPRequestCtxt]
+    HTTPTrampoline[Symbol,Symbol,Any]
+    with DTSMsgScope[Symbol,Symbol,Any,HTTPRequestCtxt]
 
   object HTTPHobo
-    extends HTTPTrampoline[String,String,String]
-    with DTSMsgScope[String,String,String,HTTPRequestCtxt]
+    extends HTTPTrampoline[Symbol,Symbol,Any]
+    with DTSMsgScope[Symbol,Symbol,Any,HTTPRequestCtxt]
   {
-    override type MsgTypes = DTSMSH[String,String,String,HTTPRequestCtxt]       
+    override type MsgTypes = DTSMSH[Symbol,Symbol,Any,HTTPRequestCtxt]       
     object MonadicDMsgs extends MsgTypes {   
       val protoDreqUUID = getUUID()
       val protoDrspUUID = getUUID()    
         
-      override def protoDreq : DReq = MDGetRequest( aLabel )
-      override def protoDrsp : DRsp = MDGetResponse( aLabel, null )
+      override def protoDreq : DReq =
+	MDGetRequest( $('protoDReq)( "yo!" ) )
+      override def protoDrsp : DRsp =
+	MDGetResponse( $('protoDRsp)( "oy!" ), null )
       override def protoJtsreq : JTSReq =
 	JustifiedRequest(
 	  protoDreqUUID,
@@ -83,31 +103,53 @@ object MonadicHttpTS
     }
     override def protoMsgs : MsgTypes = MonadicDMsgs
     
-    override type HTTPConverter = HTTPToCnxnCtxtLabel[String,String,String]
+    override type HTTPConverter = HTTPToCnxnCtxtLabel[Symbol,Symbol,Any]
     
     object HTTPNonCoverter extends HTTPConverter {
       def asCall(
 	hctxt : HTTPRequestCtxt
       ) :
-      Option[Msgs.MDistributedTermSpaceRequest[String,String,String,HTTPRequestCtxt]]
-      = None
+      Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,HTTPRequestCtxt]]
+      = { 
+	val req = hctxt.req
+	Some(
+	  Msgs.MDPutRequest(
+	    $('request)(
+	      // taken from SWI Prolog http interface
+	      $('host)( req.getServerName ),
+	      $('input)( req.getReader ),
+	      $('method)( req.getMethod ),
+	      $('path)( req.getPathTranslated ),
+	      $('peer)('Peer),
+	      $('port)( req.getServerPort.toString ),
+	      $('requestURI)( req.getRequestURI ),
+	      $('query)( req.getQueryString ),
+	      $('httpVersion)('HttpVersion),
+	      $('cookie)( req.getCookies ),
+	      // added from Java HttpServletRequest spec
+	      $('parts)('Parts)
+	    ),
+	    hctxt
+	  )
+	)
+      }
       def rspPickupLoc(
 	hctxt : HTTPRequestCtxt
       ) :
-      Option[Msgs.MDistributedTermSpaceRequest[String,String,String,HTTPRequestCtxt]]
+      Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,HTTPRequestCtxt]]
       =
 	None
       def asCCL(
 	hctxt : HTTPRequestCtxt
-      ) : Option[CnxnCtxtLabel[String,String,String] with Factual] =
+      ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] =
 	None
       def asCCL(
 	hsrq : HttpServletRequest
-      ) : Option[CnxnCtxtLabel[String,String,String] with Factual] =
+      ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] =
 	None
       def asCCL(
 	hsrq : HttpServletResponse
-      ) : Option[CnxnCtxtLabel[String,String,String] with Factual] =
+      ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] =
 	None
     }
     

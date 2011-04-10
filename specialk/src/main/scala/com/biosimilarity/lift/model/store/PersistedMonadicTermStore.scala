@@ -380,6 +380,9 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		tweet(
 		  "namespace matches : " + ns
 		)
+		tweet(
+		  "value before conversion is \n" + v
+		)
 		for(
 		  vale <-
 		  asCacheValue(	      
@@ -936,7 +939,27 @@ object PersistedMonadicTS
 	  tweet(
 	    "converting to cache value"
 	  )
-	  asPatternString( ccl )
+	  //asPatternString( ccl )
+	  ccl match {
+	    case CnxnCtxtBranch(
+	      "String",
+	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
+	    ) => {
+	      fromBlob(
+		rv.replace(
+		  "&quot;",
+		  "\""
+		)
+	      ) match {
+		case rsrc : mTT.Resource => {
+		  getGV( rsrc ).getOrElse( "" )
+		}
+	      }
+	    }
+	    case _ => {
+	      asPatternString( ccl )
+	    }
+	  }
 	}
       
       }
