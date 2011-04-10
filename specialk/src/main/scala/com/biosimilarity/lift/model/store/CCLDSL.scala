@@ -8,11 +8,12 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.lib._
 import com.biosimilarity.lift.lib.zipper._
 import scala.collection.SeqProxy
 import java.net.URI
 
-object CCLDSL {
+object CCLDSL {    
   trait StdCnxnCtxtLabel {
     self : CnxnCtxtLabel[Symbol,Symbol,Any] =>
   }
@@ -54,3 +55,10 @@ object CCLDSL {
   def $( s : Symbol ) : StdCnxnCtxtBranch =
     new StdCnxnCtxtBranch( s, Nil )
 }
+
+object CCLDSLCXQ extends CnxnXQuery[Symbol,Symbol,Any]
+ with CnxnCtxtInjector[Symbol,Symbol,Any]
+ with UUIDOps
+ with Blobify
+ with CnxnXML[Symbol,Symbol,Any] {
+ }

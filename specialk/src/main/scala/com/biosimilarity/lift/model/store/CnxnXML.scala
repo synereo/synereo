@@ -86,7 +86,9 @@ trait CnxnXML[Namespace,Var,Tag] {
   def asXMLData(
     branch : CnxnCtxtBranch[Namespace,Var,Tag]
   ) : Node = {
-    val tagStr = branch.nameSpace
+    val tagStr = branch.nameSpace + ""
+    val ctagStr = tagStr.replace( "'", "" )    
+    
     val fx = 
       branch.factuals match {
 	case fact :: rfacts => {
@@ -103,7 +105,7 @@ trait CnxnXML[Namespace,Var,Tag] {
 	}
       }
 
-    xmlTrampoline( tagStr + "", fx )    
+    xmlTrampoline( ctagStr, fx )    
   }
 
   def asCCIString [A,B,C]( ccl : CnxnCtxtLabel[A,B,C] ) : String = {
@@ -819,7 +821,8 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  }
 
 	val existentialC = (
-	  "for" + " " + nxqv + " in " + xqVar + "/" + ns
+	  "for" + " " + nxqv + " in " + xqVar + "/"
+	  + ns.toString.replace( "'", "" )
 	  + letEs
 	  + " where "
 	  + (

@@ -52,7 +52,12 @@ object CXQ extends CnxnXQuery[String,String,String]
  with CnxnCtxtInjector[String,String,String]
  with UUIDOps
  with Blobify
- with CnxnXML[String,String,String]
+ with CnxnXML[String,String,String] {
+   implicit def toPattern( s : String ) =
+     fromCaseClassInstanceString( s )
+   .getOrElse( null )
+   .asInstanceOf[CnxnCtxtLabel[String,String,String]]
+ }
 
 object BX extends BaseXXMLStore
  with Blobify with UUIDOps with Journalist {

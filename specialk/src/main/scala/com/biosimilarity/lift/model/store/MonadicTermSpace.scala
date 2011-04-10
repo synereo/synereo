@@ -70,6 +70,7 @@ trait MonadicTermTypeScope[Namespace,Var,Tag,Value] {
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
     gReq.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
   }
+  implicit def toValue( v : Value ) = mTT.Ground( v )
 }
 
 trait DistributedAskTypes {

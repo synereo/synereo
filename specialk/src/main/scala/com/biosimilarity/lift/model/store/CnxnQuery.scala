@@ -20,7 +20,7 @@ extends Exception( msg )
 trait CnxnConversions[Namespace,Var,Tag] {
   def cnxnNamespaceTermStr( nspace : Namespace )
   : String = {
-    nspace + ""
+    (nspace + "").replace( "'", "" )
   }
 
   def cnxnTrgtTermStr( trgt : Tag )
@@ -50,7 +50,7 @@ trait CnxnConversions[Namespace,Var,Tag] {
   
   def cnxnVarTermStr( variable : Var )
   : String = {
-    "X" + variable
+    ("X" + variable).replace( "'", "" )
   }
 
   def cnxnLabelToTermStr(
