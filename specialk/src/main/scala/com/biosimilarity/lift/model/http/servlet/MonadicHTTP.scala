@@ -105,55 +105,89 @@ object MonadicHttpTS
     
     override type HTTPConverter = HTTPToCnxnCtxtLabel[Symbol,Symbol,Any]
     
-    object HTTPNonCoverter extends HTTPConverter {
+    object HTTPBasicConverter extends HTTPConverter {
       def asCall(
 	hctxt : HTTPRequestCtxt
       ) :
       Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,HTTPRequestCtxt]]
-      = { 
-	val req = hctxt.req
-	Some(
-	  Msgs.MDPutRequest(
-	    $('request)(
-	      // taken from SWI Prolog http interface
-	      $('host)( req.getServerName ),
-	      $('input)( req.getReader ),
-	      $('method)( req.getMethod ),
-	      $('path)( req.getPathTranslated ),
-	      $('peer)('Peer),
-	      $('port)( req.getServerPort.toString ),
-	      $('requestURI)( req.getRequestURI ),
-	      $('query)( req.getQueryString ),
-	      $('httpVersion)('HttpVersion),
-	      $('cookie)( req.getCookies ),
-	      // added from Java HttpServletRequest spec
-	      $('parts)('Parts)
-	    ),
-	    hctxt
-	  )
-	)
+      = { 	
+	for( ccl <- asCCL( hctxt ) ) 
+	  yield {
+	    Msgs.MDPutRequest(
+	      ccl,
+	      hctxt
+	    )
+	  }
       }
       def rspPickupLoc(
 	hctxt : HTTPRequestCtxt
       ) :
       Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,HTTPRequestCtxt]]
-      =
-	None
+      = {
+	for( cnvId <- hctxt.conversationId )
+	  yield {
+	    Msgs.MDPutRequest(
+	      ?('response)(
+		// taken from SWI Prolog http interface
+		?('host)( 'Host ),
+		?('input)( 'IStream ),
+		?('method)( 'Method ),
+		?('path)( 'Path ),
+		?('peer)('Peer),
+		?('port)( 'Port ),
+		?('hsrquestURI)('RequestURI ),
+		?('query)( 'Query ),
+		?('httpVersion)('HttpVersion),
+		?('cookie)( 'Cookie ),
+		// added from Java HttpServletRequest spec
+		?('parts)('Parts),
+		// unique to this implementation
+		?('conversationId)( cnvId )
+	      ),
+	      hctxt
+	    )
+	  }
+      }
       def asCCL(
 	hctxt : HTTPRequestCtxt
-      ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] =
-	None
+      ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] = {
+	for(
+	  cnvId <- hctxt.conversationId;
+	  ccl <- asCCL( hctxt.req, cnvId )
+	) yield { ccl }
+      }
       def asCCL(
-	hsrq : HttpServletRequest
-      ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] =
-	None
+	hsrq : HttpServletRequest,
+	cnvId : UUID
+      ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] = {
+	Some(
+	  ?('request)(
+	      // taken from SWI Prolog http interface
+	    ?('host)( hsrq.getServerName ),
+	    ?('input)( hsrq.getReader ),
+	    ?('method)( hsrq.getMethod ),
+	    ?('path)( hsrq.getPathTranslated ),
+	    ?('peer)('Peer),
+	    ?('port)( hsrq.getServerPort.toString ),
+	    ?('hsrquestURI)( hsrq.getRequestURI ),
+	    ?('query)( hsrq.getQueryString ),
+	    ?('httpVersion)('HttpVersion),
+	    ?('cookie)( hsrq.getCookies ),
+	    // added from Java HttpServletRequest spec
+	    ?('parts)('Parts),
+	    // unique to this implementation
+	    ?('conversationId)( cnvId )
+	  )
+	)
+      }
       def asCCL(
-	hsrq : HttpServletResponse
+	hsrq : HttpServletResponse,
+	cnvId : UUID
       ) : Option[CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] =
 	None
     }
     
-    override def protoHTTPConverter = HTTPNonCoverter
+    override def protoHTTPConverter = HTTPBasicConverter
   }
 
   override def protoHttpTramp = HTTPHobo

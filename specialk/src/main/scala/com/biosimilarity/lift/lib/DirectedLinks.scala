@@ -16,7 +16,10 @@ object SpecialKURIDefaults {
   def fragment : String = ""
   implicit def stringToURI( s : String ) : URI = {
     new URI( scheme, s, path, fragment )
-  }  
+  }
+  implicit def symbolToURI( s : Symbol ) : URI = {
+    new URI( scheme, s.toString.replace( "'", "" ), path, fragment )
+  }
 }
 
 

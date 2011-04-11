@@ -32,7 +32,8 @@ import javax.servlet.http.HttpServletResponse
 case class HTTPRequestCtxt(
   req : HttpServletRequest,
   resp : HttpServletResponse,
-  chain : FilterChain
+  chain : FilterChain,
+  conversationId : Option[UUID]
 )
 
 trait HTTPTrampoline[Namespace,Var,Tag] {
@@ -48,10 +49,12 @@ trait HTTPTrampoline[Namespace,Var,Tag] {
       hctxt : HTTPRequestCtxt
     ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
     def asCCL(
-      hsrq : HttpServletRequest
+      hsrq : HttpServletRequest,
+      cnvId : UUID
     ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
     def asCCL(
-      hsrq : HttpServletResponse
+      hsrq : HttpServletResponse,
+      cnvId : UUID
     ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
   }  
 

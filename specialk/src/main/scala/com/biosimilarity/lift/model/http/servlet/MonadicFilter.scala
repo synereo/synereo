@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class MonadicFilter
-extends Filter with Journalist {
+extends Filter with Journalist with UUIDOps {
   import MonadicHttpTS._
   import mTT._
   override def init( fltrCfg : FilterConfig ) = {
@@ -42,14 +42,16 @@ extends Filter with Journalist {
   ) = {
     ( req, rsp ) match {
       case ( hsrq : HttpServletRequest, hsrp : HttpServletResponse ) => {
-	val hctxt = HTTPRequestCtxt( hsrq, hsrp, chain )
+	val hctxt = HTTPRequestCtxt( hsrq, hsrp, chain, Some( getUUID ) )
 	for( call <- httpTramp.httpConverter.asCall( hctxt ) ) {
 	  call match {	    
 	    // Calculating a ptn at this point affords redirect semantics
 	    case httpTramp.Msgs.MDPutRequest( ptn, v ) => {
 	      reset {	    
 		Mona.put( ptn, Ground( v ) )
-		for( rsrc <- httpTramp.httpConverter.rspPickupLoc( hctxt ) ) {
+		for(
+		  rsrc <- httpTramp.httpConverter.rspPickupLoc( hctxt )
+		) {
 		  tweet( "should serve up: " + rsrc )
 		}
 	      }
