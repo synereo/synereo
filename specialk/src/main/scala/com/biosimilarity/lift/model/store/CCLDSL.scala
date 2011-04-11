@@ -54,6 +54,10 @@ object CCLDSL {
 
   def $( s : Symbol ) : StdCnxnCtxtBranch =
     new StdCnxnCtxtBranch( s, Nil )
+  def ?( s : Symbol ) : StdCnxnCtxtBranch =
+    new StdCnxnCtxtBranch( s, Nil )
+  def ?( s : String ) : StdCnxnCtxtBranch =
+    new StdCnxnCtxtBranch( Symbol( s ), Nil )
 }
 
 object CCLDSLCXQ extends CnxnXQuery[Symbol,Symbol,Any]

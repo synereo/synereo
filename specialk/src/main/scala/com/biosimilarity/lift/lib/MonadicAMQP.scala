@@ -325,17 +325,17 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 	  new JettisonMappedXmlDriver()
 	).toXML( contents )	
 
-      tweet(
-	(
-	  this 
-	  + " is sending "
-	  + contents
-	  + " encoded as "
-	  + body
-	  + " along "
-	  + amqp
-	)
-      )
+      // tweet(
+// 	(
+// 	  this 
+// 	  + " is sending "
+// 	  + contents
+// 	  + " encoded as "
+// 	  + body
+// 	  + " along "
+// 	  + amqp
+// 	)
+//       )
       amqp ! AMQPMessage( body )
     }
   }  

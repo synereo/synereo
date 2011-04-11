@@ -372,17 +372,17 @@ with UUIDOps {
   }
 
   def send( contents : DReq ) : Unit = {    
-    reportage(
-      (
-	this
-	+ " is sending : "
-	+ contents
-	+ " on behalf of "
-	+ src
-	+ " to "
-	+ trgt
-      )
-    )
+    // reportage(
+//       (
+// 	this
+// 	+ " is sending : "
+// 	+ contents
+// 	+ " on behalf of "
+// 	+ src
+// 	+ " to "
+// 	+ trgt
+//       )
+//     )
     val jr = JustifiedRequest[DReq,DRsp](
       getUUID(),
       trgt,
@@ -398,17 +398,17 @@ with UUIDOps {
   }
 
   def send( contents : DRsp ) : Unit = {
-    reportage(
-      (
-	this
-	+ " is sending : "
-	+ contents
-	+ " on behalf of "
-	+ src
-	+ " to "
-	+ trgt
-      )
-    )
+    // reportage(
+//       (
+// 	this
+// 	+ " is sending : "
+// 	+ contents
+// 	+ " on behalf of "
+// 	+ src
+// 	+ " to "
+// 	+ trgt
+//       )
+//     )
 
     val jr = JustifiedResponse[DReq,DRsp](
       getUUID(),

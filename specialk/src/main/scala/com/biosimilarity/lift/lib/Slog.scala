@@ -251,6 +251,79 @@ trait ConfiggyJournal {
   }
 }
 
+object ConfiguredJournalDefaults {
+  val loggingLevel = "Tweet"
+}
+
+trait ConfiguredJournal {
+  self : Journalist
+       with ConfiggyReporting
+	with ConfigurationTrampoline =>    
+
+  override lazy val config = Configgy.config
+
+  override lazy val logger = Logger.get  
+
+  override def configurationDefaults : ConfigurationDefaults = {
+    ConfiguredJournalDefaults.asInstanceOf[ConfigurationDefaults]
+  }
+
+  def loggingLevel        : String =
+    configurationFromFile.get( "loggingLevel" ).getOrElse( bail() )
+
+  var _loggingLevel : Option[Verbosity] = None
+  def setLoggingLevel( verb : Verbosity ) : Unit = {
+    _loggingLevel = Some( verb )
+  }
+  def getLoggingLevel : Verbosity = {
+    _loggingLevel match {
+      case Some( verb ) => verb
+      case None => {
+	loggingLevel match {
+	  case "Tweet" => {
+	    val ll = Twitterer( journalIDVender.getUUID )
+	    _loggingLevel = Some( ll )
+	    ll
+	  }
+	  case "Blog" => {
+	    val ll = Blogger( journalIDVender.getUUID )
+	    _loggingLevel = Some( ll )
+	    ll
+	  }
+	  case "Record" => {
+	    val ll = Luddite( journalIDVender.getUUID )
+	    _loggingLevel = Some( ll )
+	    ll
+	  }
+	}
+      }
+    }
+  }
+
+  override def tweet[A]( fact : A ) =
+    report( getLoggingLevel )( asTweet( fact ) )
+  override def blog[A]( fact : A ) =
+    report( getLoggingLevel )( asTweet( fact ) )
+  override def record[A]( fact : A ) =
+    report( getLoggingLevel )( asTweet( fact ) )
+
+  override def storeFn[A] : ( Verbosity, A ) => Unit = {
+    ( v : Verbosity, a : A ) => {
+      v match {
+	case Twitterer( _ ) => {
+	  logger.ifInfo( tagIt( v, a ).toString ) 
+	}
+	case Blogger( _ ) => {
+	  logger.ifTrace( tagIt( v, a ).toString ) 
+	}
+	case Luddite( _ ) => {
+	  logger.ifDebug( tagIt( v, a ).toString ) 
+	}
+      }
+    }
+  }
+}
+
 abstract class Reporter( override val notebook : StringBuffer )
 	 extends Journalist
 

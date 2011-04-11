@@ -71,6 +71,7 @@ object BaseXDefaults {
     "CollectionManagementService"
   val managementServiceVersion : String = "1.0"  
   val valueStorageType : String = "CnxnCtxtLabel"
+  val loggingLevel : String = "Tweet"
 }
 
 trait BaseXXMLStore extends XMLStore {

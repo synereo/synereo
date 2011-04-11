@@ -130,17 +130,17 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
 
     def send( dreq : Msgs.DReq ) : Unit = {
-      reportage(
-	(
-	  this
-	  + " is sending : "
-	  + dreq
-	  + " on behalf of "
-	  + srcURI
-	  + " to "
-	  + trgtURI
-	)
-      )
+      // reportage(
+// 	(
+// 	  this
+// 	  + " is sending : "
+// 	  + dreq
+// 	  + " on behalf of "
+// 	  + srcURI
+// 	  + " to "
+// 	  + trgtURI
+// 	)
+//       )
       val jr = JustifiedRequest[Msgs.DReq,Msgs.DRsp](
 	getUUID(),
 	trgtURI,
@@ -154,17 +154,17 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
 
     def send( drsp : Msgs.DRsp ) : Unit = {
-      reportage(
-	(
-	  this
-	  + " is sending : "
-	  + drsp
-	  + " on behalf of "
-	  + srcURI
-	  + " to "
-	  + trgtURI
-	)
-      )
+      // reportage(
+// 	(
+// 	  this
+// 	  + " is sending : "
+// 	  + drsp
+// 	  + " on behalf of "
+// 	  + srcURI
+// 	  + " to "
+// 	  + trgtURI
+// 	)
+//       )
       val jr = JustifiedResponse[Msgs.DReq,Msgs.DRsp](
 	getUUID(),
 	trgtURI,
@@ -256,13 +256,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	( uri, jsndr ) <- agentTwistedPairs
 	if !hops.contains( uri )
       ) {
-	reportage(
-	  (
-	    this
-	    + " forwarding to "
-	    + uri
-	  )
-	)
+	// reportage(
+// 	  (
+// 	    this
+// 	    + " forwarding to "
+// 	    + uri
+// 	  )
+// 	)
 	val smajatp : SMAJATwistedPair =
 	  jsndr.asInstanceOf[SMAJATwistedPair]
 	
@@ -291,13 +291,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	  ) => {
 	    body match {
 	      case dgreq@Msgs.MDGetRequest( path ) => {
-		reportage(
-		  (
-		    this 
-		    + "handling : "
-		    + dgreq
-		  )
-		)
+		// reportage(
+// 		  (
+// 		    this 
+// 		    + "handling : "
+// 		    + dgreq
+// 		  )
+// 		)
 
 		val k =
 		  {
@@ -310,29 +310,29 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			val smajatp : SMAJATwistedPair =
 			  atp.asInstanceOf[SMAJATwistedPair]
 
-			reportage(
-			  (
-			    this 
-			    + " returning from local get for location : "
-			    + path
-			    + "\nwith value : " 
-			    + v
-			  )
-			)
+			// reportage(
+// 			  (
+// 			    this 
+// 			    + " returning from local get for location : "
+// 			    + path
+// 			    + "\nwith value : " 
+// 			    + v
+// 			  )
+// 			)
 
 			value match {
 			  case RBound(
 			    Some( Ground( gv ) ),
 			    Some( soln ) 
 			  ) => {
-			    reportage(
-			      (
-				this 
-				+ " sending value "
-				+ v
-				+ " back "
-			      )
-			    )
+			    // reportage(
+// 			      (
+// 				this 
+// 				+ " sending value "
+// 				+ v
+// 				+ " back "
+// 			      )
+// 			    )
 
 			    smajatp.send(
 			      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
@@ -342,14 +342,14 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			    )
 			  }
 			  case Ground( gv ) => {
-			    reportage(
-			      (
-				this 
-				+ " sending value "
-				+ v
-				+ " back "
-			      )
-			    )
+			    // reportage(
+// 			      (
+// 				this 
+// 				+ " sending value "
+// 				+ v
+// 				+ " back "
+// 			      )
+// 			    )
 
 			    smajatp.send(
 			      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
@@ -359,37 +359,37 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			    )
 			  }
 			  case _ => {
-			    reportage(
-			      (
-				this 
-				+ " not sending composite value "
-				+ v
-				+ " back "
-			      )
-			    )
+			    // reportage(
+// 			      (
+// 				this 
+// 				+ " not sending composite value "
+// 				+ v
+// 				+ " back "
+// 			      )
+// 			    )
 			  }
 			}
 		      }
 		      v
 		    }
 		  }
-		reportage(
-		  (
-		    this 
-		    + "calling get locally for location : "
-		    + path
-		  )
-		)
+		// reportage(
+// 		  (
+// 		    this 
+// 		    + "calling get locally for location : "
+// 		    + path
+// 		  )
+// 		)
 		get( List( msrc ) )( path, k )
 	      }
 	      case dfreq@Msgs.MDFetchRequest( path ) => {
-		reportage(
-		  (
-		    this 
-		    + "handling : "
-		    + dfreq
-		  )
-		)
+		// reportage(
+// 		  (
+// 		    this 
+// 		    + "handling : "
+// 		    + dfreq
+// 		  )
+// 		)
 		val k =
 		  {
 		    ( v : Option[Resource] ) => {
@@ -417,13 +417,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		fetch( path, k )
 	      }
 	      case dpreq@Msgs.MDPutRequest( path, value ) => {	
-		reportage(
-		  (
-		    this
-		    + " handling : "
-		    + dpreq
-		  )
-		)
+		// reportage(
+// 		  (
+// 		    this
+// 		    + " handling : "
+// 		    + dpreq
+// 		  )
+// 		)
 		put( path, value )
 	      }
 	    }
@@ -446,13 +446,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    case dput : Msgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
 	    }
 	    case _ => {
-	      reportage(
-		(
-		  this 
-		  + " handling unexpected message : "
-		  + body
-		)
-	      )
+	      // reportage(
+// 		(
+// 		  this 
+// 		  + " handling unexpected message : "
+// 		  + body
+// 		)
+// 	      )
 	    }
 	  }
 	}
@@ -466,17 +466,17 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    msgId, mtrgt, msrc, lbl, body, _
 	  )
 	) => {
-	  reportage(
-	    (
-	      this
-	      + " handling : "
-	      + dmsg
-	      + " from "
-	      + msrc
-	      + " on behalf of "
-	      + mtrgt
-	    )
-	  )
+	  // reportage(
+// 	    (
+// 	      this
+// 	      + " handling : "
+// 	      + dmsg
+// 	      + " from "
+// 	      + msrc
+// 	      + " on behalf of "
+// 	      + mtrgt
+// 	    )
+// 	  )
 	  handleRequest( dreq )
 	}
 	case Right(
@@ -484,17 +484,17 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    msgId, mtrgt, msrc, lbl, body, _
 	  )
 	) => {
-	  reportage(
-	    (
-	      this
-	      + " handling : "
-	      + dmsg
-	      + " from "
-	      + msrc
-	      + " on behalf of "
-	      + mtrgt
-	    )
-	  )
+	  // reportage(
+// 	    (
+// 	      this
+// 	      + " handling : "
+// 	      + dmsg
+// 	      + " from "
+// 	      + msrc
+// 	      + " on behalf of "
+// 	      + mtrgt
+// 	    )
+// 	  )
 	  handleResponse( drsp )
 	}
       }
@@ -518,36 +518,36 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	      val rslt : Option[Resource] = 
 		shift {
 		  ( k : GetContinuation ) => {	      
-		    reportage(
-		      (
-			this
-			+ " storing continuation to wait for value : "
-			+ k
-		      )
-		    )
+		    // reportage(
+// 		      (
+// 			this
+// 			+ " storing continuation to wait for value : "
+// 			+ k
+// 		      )
+// 		    )
 		    _waiters( place ) =
 		      _waiters.get( place )
 		    .getOrElse( Nil ) ++ List( k )
 		    
-		    reportage(
-		      (
-			this 
-			+ " forwarding to acquaintances "
-		      )
-		    )
+		    // reportage(
+// 		      (
+// 			this 
+// 			+ " forwarding to acquaintances "
+// 		      )
+// 		    )
 
 		    forwardGet( hops, path )
 		    
 		    k( None )
 		  }	    	      
 		}
-	      reportage(
-		(
-		  this
-		  + " resuming with value : "
-		  + rslt
-		)
-	      )
+	      // reportage(
+// 		(
+// 		  this
+// 		  + " resuming with value : "
+// 		  + rslt
+// 		)
+// 	      )
 	      rslt match {
 		case Some( _ ) => next( rslt )
 		case nv @ _ => nv
@@ -643,14 +643,14 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      val rslt : Option[Resource] =
 			shift {
 			  ( wk : GetContinuation ) => {		  
-			    reportage(
-			      (
-				this
-				+ " storing continuation "
-				+ wk + " to wait for values "
-				+ asks
-			      )
-			    )
+			    // reportage(
+// 			      (
+// 				this
+// 				+ " storing continuation "
+// 				+ wk + " to wait for values "
+// 				+ asks
+// 			      )
+// 			    )
 			    
 			    val stillWaiting = Waiting( ask, wk )
 			    
@@ -670,13 +670,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			  }		  		  
 			}
 		      
-		      reportage(
-			(
-			  this
-			  + " resuming with value : "
-			  + rslt
-			)
-		      )
+		      // reportage(
+// 			(
+// 			  this
+// 			  + " resuming with value : "
+// 			  + rslt
+// 			)
+// 		      )
 		      
 		      rslt match {
 			case Some( PartialResult( _, _ ) ) => rslt
@@ -695,12 +695,12 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      }
 		    }
 
-		  reportage( "join resuming with result: " + oRsrc )
+		  // reportage( "join resuming with result: " + oRsrc )
 
 		  k( oRsrc )
 		}
 
-		reportage( "join returning" )
+		// reportage( "join returning" )
 		outerK()
 	      }
 	  }
@@ -711,9 +711,9 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 				  // implies adding flatMap to Generator
     ) = Generator {
       k : ( Option[Resource] => Unit @suspendable ) =>
-	reportage(
-	  "Agent is serving now... "
-	)
+	// reportage(
+// 	  "Agent is serving now... "
+// 	)
       val locations =
 	placePatterns.flatMap(
 	  ( plptn ) => places( plptn, Input )

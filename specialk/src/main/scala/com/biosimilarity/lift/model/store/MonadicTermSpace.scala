@@ -106,7 +106,9 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   with WireTap
   with Journalist
   with ConfiggyReporting
-  with ConfiggyJournal
+  //with ConfiggyJournal
+  with ConfiguredJournal
+  with ConfigurationTrampoline
   with UUIDOps {
     override def tap [A] ( fact : A ) : Unit = {
       reportage( fact )
@@ -178,6 +180,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	case _ => None
       }
     }
+
+    override def configFileName : Option[String] = None
+    override def configurationDefaults : ConfigurationDefaults = {
+      ConfiguredJournalDefaults.asInstanceOf[ConfigurationDefaults]
+    }
  
   }
 
@@ -212,7 +219,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
 
-      reportage(
+      tweet(
 	( this + " in forwardGet with hops: " + hops )
       )
 
@@ -224,7 +231,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	( uri, jsndr ) <- agentTwistedPairs
 	if !hops.contains( uri )
       ) {
-	reportage(
+	tweet(
 	  ( this + " forwarding to " + uri )
 	)
 	val smajatp : SMAJATwistedPair =
@@ -258,7 +265,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
 
-      reportage(
+      tweet(
 	( this + " in forwardGet with hops: " + hops )
       )
 
@@ -266,7 +273,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	( uri, jsndr ) <- agentTwistedPairs
 	if !hops.contains( uri )
       ) {
-	reportage(
+	tweet(
 	  ( this + " forwarding to " + uri )
 	)
 	val smajatp : SMAJATwistedPair =
@@ -386,7 +393,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	    Some( mTT.Ground( gv ) ),
 	    Some( soln ) 
 	  ) => {
-	    reportage(
+	    tweet(
 	      (
 		this + " sending value " + oV + " back "
 	      )
@@ -397,7 +404,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	  }
 
 	  case mTT.Ground( gv ) => {
-	    reportage(
+	    tweet(
 	      (
 		this + " sending value " + oV + " back "
 	      )
@@ -407,7 +414,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 
 	  }
 	  case _ => {
-	    reportage(
+	    tweet(
 	      (
 		this 
 		+ " not sending composite value " + oV
@@ -425,16 +432,16 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	msgId, mtrgt, msrc, lbl, body, _
       ) = dreq
 
-      reportage( this + "handling : " + dreq	)
+      tweet( this + "handling : " + dreq	)
 
       body match {
 	case dgreq@Msgs.MDGetRequest( path ) => {	  
-	  reportage(
+	  tweet(
 	    ( this + "getting locally for location : " + path )
 	  )
 	  reset {
 	    for( v <- get( List( msrc ) )( path ) ) {
-	      reportage(
+	      tweet(
 		(
 		  this 
 		  + " returning from local get for location : "
@@ -448,12 +455,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	}
 	
 	case dfreq@Msgs.MDFetchRequest( path ) => {
-	  reportage(
+	  tweet(
 	    ( this + "fetching locally for location : " + path )
 	  )
 	  reset {
 	    for( v <- fetch( List( msrc ) )( path ) ) {
-	      reportage(
+	      tweet(
 		(
 		  this 
 		  + " returning from local fetch for location : "
@@ -467,12 +474,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	}
 
 	case dsreq@Msgs.MDSubscribeRequest( path ) => {
-	  reportage(
+	  tweet(
 	    ( this + "fetching locally for location : " + path )
 	  )
 	  reset {
 	    for( v <- subscribe( List( msrc ) )( path ) ) {
-	      reportage(
+	      tweet(
 		(
 		  this 
 		  + " returning from local subscribe for location : "
@@ -520,7 +527,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	case dpub : Msgs.MDPublishResponse[Namespace,Var,Tag,Value] => {	
 	}
 	case _ => {
-	  reportage(
+	  tweet(
 	    (
 	      this 
 	      + " handling unexpected message : " + body
@@ -537,7 +544,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	    msgId, mtrgt, msrc, lbl, body, _
 	  )
 	) => {
-	  reportage(
+	  tweet(
 	    (
 	      this + " handling : " + dmsg
 	      + " from " + msrc
@@ -551,7 +558,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	    msgId, mtrgt, msrc, lbl, body, _
 	  )
 	) => {
-	  reportage(
+	  tweet(
 	    (
 	      this + " handling : " + dmsg
 	      + " from " + msrc
@@ -688,6 +695,28 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       fetch( Nil )( path )    
     }
 
+    def fetchValue(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Generator[Value,Unit,Unit] = 
+      Generator {
+	k : ( Value => Unit @suspendable ) =>
+	  for(
+	    orsrc <- fetch( path )
+	    //rsrc <- orsrc
+	    //gv <- getGV( rsrc )
+	  ) {
+	    orsrc match {
+	      case Some( rsrc ) => {
+		getGV( rsrc ) match {
+		  case Some( gv ) => k( gv )
+		  case None =>
+		}
+	      }
+	      case None => 
+	    };
+	  }
+      }
+
     def subscribe( hops : List[URI] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
@@ -709,6 +738,28 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       subscribe( Nil )( path )    
     }
+    
+    def subscribeValue(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Generator[Value,Unit,Unit] = 
+      Generator {
+	k : ( Value => Unit @suspendable ) =>
+	  for(
+	    orsrc <- subscribe( path )
+	    //rsrc <- orsrc
+	    //gv <- getGV( rsrc )
+	  ) {
+	    orsrc match {
+	      case Some( rsrc ) => {
+		getGV( rsrc ) match {
+		  case Some( gv ) => k( gv )
+		  case None =>
+		}
+	      }
+	      case None => 
+	    };
+	  }
+      }
   }
    
 }

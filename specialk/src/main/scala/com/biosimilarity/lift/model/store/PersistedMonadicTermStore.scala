@@ -336,6 +336,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       }
       tds
     }
+
+    override def configurationDefaults : ConfigurationDefaults = {
+      BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+    } 
     
     // BUGBUG -- LGM: Further evidence of problem with current factorization...
     override def asResource(
