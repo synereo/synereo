@@ -321,9 +321,31 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			)
 
 			value match {
+			  // BUGBUG -- LGM : will eventually do
+			  // something different in this case
 			  case RBound(
 			    Some( Ground( gv ) ),
 			    Some( soln ) 
+			  ) => {
+			    tweet(
+			      (
+				this 
+				+ " sending value "
+				+ v
+				+ " back "
+			      )
+			    )
+
+			    smajatp.send(
+			      Msgs.MDGetResponse[Namespace,Var,Tag,Value](
+				path,
+				gv
+			      )
+			    )
+			  }
+			  case RBound(
+			    Some( Ground( gv ) ),
+			    None 
 			  ) => {
 			    tweet(
 			      (

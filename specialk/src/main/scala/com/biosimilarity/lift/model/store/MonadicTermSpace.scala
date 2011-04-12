@@ -403,6 +403,20 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	      
 	  }
 
+	  case mTT.RBound(
+	    Some( mTT.Ground( gv ) ),
+	    None 
+	  ) => {
+	    tweet(
+	      (
+		this + " sending value " + oV + " back "
+	      )
+	    )
+	    
+	    sendRsp( atp, dreq, Some( gv ) )
+	      
+	  }
+
 	  case mTT.Ground( gv ) => {
 	    tweet(
 	      (
