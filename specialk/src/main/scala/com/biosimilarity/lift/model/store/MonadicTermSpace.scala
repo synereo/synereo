@@ -783,8 +783,11 @@ object MonadicTS
     override def protoAskTypes : DATypes = TheDAT
     
     lazy val Mona = new MonadicTermStore()
-    def Imma( a : String, b : String )  =
+    def ptToPt( a : String, b : String )  =
       new DistributedMonadicGeneratorJunction( a, List( b ) )    
+    def loopBack() = {
+      ptToPt( "localhost", "localhost" )
+    }
     
     type MsgTypes = DTSMSH[String,String,String,String]   
     

@@ -20,9 +20,13 @@ import scala.collection.mutable.HashMap
 
 trait MonadicTupleSpace[Place,Pattern,Resource]
 //       extends MapLike[Place,Resource, This]
-extends MonadicGenerators with FJTaskRunners
+extends MonadicGenerators
+with FJTaskRunners
 {
-  self : WireTap with Journalist =>
+  self : WireTap
+      with Journalist
+      with ConfiggyReporting 
+      with ConfigurationTrampoline =>
 
   type RK = Option[Resource] => Unit @suspendable
   //type CK = Option[Resource] => Unit @suspendable
@@ -230,7 +234,9 @@ object MonadicTSpace
        with WireTap
        with Journalist
        with ConfiggyReporting
-       with ConfiggyJournal
+       //with ConfiggyJournal
+       with ConfiguredJournal
+       with ConfigurationTrampoline
 {
 
   override type Substitution = IdentitySubstitution
@@ -242,6 +248,11 @@ object MonadicTSpace
 
   override def tap [A] ( fact : A ) : Unit = {
     reportage( fact )
+  }
+
+  override def configFileName : Option[String] = None
+  override def configurationDefaults : ConfigurationDefaults = {
+    ConfiguredJournalDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
   def representative( ptn : String ) : String = {

@@ -37,25 +37,57 @@ extends Filter with Journalist with UUIDOps {
     // TBD
   }  
   
+  lazy val mySpace = loopBack()
+
   override def doFilter(
     req : HSReq, rsp : HSRsp, chain : FilterChain
   ) = {
     ( req, rsp ) match {
       case ( hsrq : HttpServletRequest, hsrp : HttpServletResponse ) => {
+	// tweet( " we are here! " )
+// 	hsrp.setContentType("text/html")
+// 	val pw : java.io.PrintWriter = hsrp.getWriter()
+// 	pw.println("<html>")
+// 	pw.println("<head><title>Hello World</title></title>")
+// 	pw.println("<body>")
+// 	pw.println("<h1>Hello World</h1>")
+// 	pw.println("</body></html>")
+
 	val hctxt = HTTPRequestCtxt( hsrq, hsrp, chain, Some( getUUID ) )
 	for( call <- httpTramp.httpConverter.asCall( hctxt ) ) {
 	  call match {	    
-	    // Calculating a ptn at this point affords redirect semantics
+	    //Calculating a ptn at this point affords redirect semantics
 	    case httpTramp.Msgs.MDPutRequest( ptn, v ) => {
 	      reset {	    
-		Mona.put( ptn, Ground( v ) )
-		for(
-		  rsrc <- httpTramp.httpConverter.rspPickupLoc( hctxt )
-		) {
-		  tweet( "should serve up: " + rsrc )
+		mySpace.put( ptn, Ground( v ) )
+		httpTramp.httpConverter.rspPickupLoc( hctxt ) match {
+		  case Some( replyLocWrapper ) => {
+		    replyLocWrapper match {
+		      case httpTramp.Msgs.MDPutRequest(
+			rplyLoc, nhctxt
+		      ) => {
+			for( rsrc <- mySpace.getValue( rplyLoc ) ) {
+			  tweet( "should serve up: " + rsrc )
+			  val response = rsrc.resp		    
+			  response.setContentType("text/html")
+			  val pw : java.io.PrintWriter = response.getWriter()
+			  pw.println("<html>")
+			  pw.println("<head><title>Hello World</title></title>")
+			  pw.println("<body>")
+			  pw.println("<h1>Hello World</h1>")
+			  pw.println("</body></html>")
+			}
+		      }
+		    }
+		  }
+		  case None => {
+		    tweet(
+		      "What to do if there is no reply location?"
+		    );
+		  }
 		}
 	      }
-	      chain.doFilter( req, rsp )
+	      //chain.doFilter( req, rsp )
 	    }
 	    case _ => {
 	      tweet(

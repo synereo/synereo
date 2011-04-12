@@ -142,7 +142,7 @@ object MonadicHttpTS
 		// added from Java HttpServletRequest spec
 		?('parts)('Parts),
 		// unique to this implementation
-		?('conversationId)( cnvId )
+		?('conversationId)( cnvId.toString )
 	      ),
 	      hctxt
 	    )
@@ -164,19 +164,19 @@ object MonadicHttpTS
 	  ?('request)(
 	      // taken from SWI Prolog http interface
 	    ?('host)( hsrq.getServerName ),
-	    ?('input)( hsrq.getReader ),
+	    ?('input)( hsrq.getReader.toString ),
 	    ?('method)( hsrq.getMethod ),
 	    ?('path)( hsrq.getPathTranslated ),
 	    ?('peer)('Peer),
 	    ?('port)( hsrq.getServerPort.toString ),
-	    ?('hsrquestURI)( hsrq.getRequestURI ),
+	    ?('hsrquestURI)( hsrq.getRequestURI.toString ),
 	    ?('query)( hsrq.getQueryString ),
 	    ?('httpVersion)('HttpVersion),
-	    ?('cookie)( hsrq.getCookies ),
+	    ?('cookie)( hsrq.getCookies.toString ),
 	    // added from Java HttpServletRequest spec
 	    ?('parts)('Parts),
 	    // unique to this implementation
-	    ?('conversationId)( cnvId )
+	    ?('conversationId)( cnvId.toString )
 	  )
 	)
       }
@@ -196,6 +196,11 @@ object MonadicHttpTS
   override def protoMsgs = httpTramp.protoMsgs  
   
   lazy val Mona = new MonadicTermStore()
+  def ptToPt( a : String, b : String )  =
+      new DistributedMonadicGeneratorJunction( a, List( b ) )    
+    def loopBack() = {
+      ptToPt( "localhost", "localhost" )
+    }
 }
 
 
