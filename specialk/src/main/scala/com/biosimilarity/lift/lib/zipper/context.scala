@@ -8,9 +8,9 @@
 
 package com.biosimilarity.lift.lib.zipper
 
-trait Context[A]
-case class Top[A]( ) extends Context[A]
-class TreeContext[A](
+trait Context[+A]
+case class Top[+A]( ) extends Context[A]
+class TreeContext[+A](
   val left : List[Tree[A]],
   val ctxt : Context[A],
   val right : List[Tree[A]]

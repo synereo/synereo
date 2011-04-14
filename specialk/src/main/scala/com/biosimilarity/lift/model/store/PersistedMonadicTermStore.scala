@@ -670,12 +670,15 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				      tweet( "caching " + cacheRcrd )
 				    }
 				    
-				    tweet( "removing from store " + rslt )
-				    removeFromStore( 
-				      persist,
-				      ersrc,
-				      collName
-				    )
+				    if ( consume ) {
+				      tweet( "removing from store " + rslt )
+				      removeFromStore( 
+					persist,
+					ersrc,
+					collName
+				      )
+				    }
+
 				    tweet( "returning " + rslt )
 				    rk( rslt )
 				  }

@@ -6,10 +6,12 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.lib.zipper
+package com.biosimilarity.lift.lib.navigation
 
-trait ZipperNavigation[A] {
-  def left( location : Location[A] ) : Location[A] = {
+import com.biosimilarity.lift.lib.zipper._
+
+trait ZipperNavigation[+A] {
+  def left [A1 >: A] ( location : Location[A1] ) : Location[A1] = {
     location match {
       case Location( _, Top( ) ) => {
         throw new Exception( "left of top" )
@@ -22,7 +24,7 @@ trait ZipperNavigation[A] {
       }
     }
   }
-  def right( location : Location[A] ) : Location[A] = {
+  def right [A1 >: A] ( location : Location[A1] ) : Location[A1] = {
     location match {
       case Location( _, Top( ) ) => {
         throw new Exception( "right of top" )
@@ -35,7 +37,7 @@ trait ZipperNavigation[A] {
       }
     }
   }
-  def up( location : Location[A] ) : Location[A] = {
+  def up [A1 >: A]( location : Location[A1] ) : Location[A1] = {
     location match {
       case Location( _, Top( ) ) => {
         throw new Exception( "up of top" )
@@ -46,7 +48,7 @@ trait ZipperNavigation[A] {
       }
     }
   }
-  def down( location : Location[A] ) : Location[A] = {
+  def down [A1 >: A]( location : Location[A1] ) : Location[A1] = {
     location match {
       case Location( TreeItem( _ ), _ ) => {
         throw new Exception( "down of item" )
@@ -60,3 +62,5 @@ trait ZipperNavigation[A] {
     }
   }
 }
+
+

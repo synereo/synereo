@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 object MonadicHttpTS
- extends MonadicTermStoreScope[Symbol,Symbol,Any,HTTPRequestCtxt]
+ extends MonadicTermStoreScope[Symbol,Symbol,Any,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]
   with HTTPTrampolineScope[Symbol,Symbol,Any]
   with UUIDOps
 {
@@ -55,7 +55,8 @@ object MonadicHttpTS
       $('parts)('Parts)
     )
 
-  type MTTypes = MonadicTermTypes[Symbol,Symbol,Any,HTTPRequestCtxt]
+  type MTTypes =
+    MonadicTermTypes[Symbol,Symbol,Any,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]
   object TheMTT extends MTTypes
   override def protoTermTypes : MTTypes = TheMTT
 
@@ -65,13 +66,14 @@ object MonadicHttpTS
   
   override type HTTPTrampolineTypes = 
     HTTPTrampoline[Symbol,Symbol,Any]
-    with DTSMsgScope[Symbol,Symbol,Any,HTTPRequestCtxt]
+    with DTSMsgScope[Symbol,Symbol,Any,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]
 
   object HTTPHobo
     extends HTTPTrampoline[Symbol,Symbol,Any]
-    with DTSMsgScope[Symbol,Symbol,Any,HTTPRequestCtxt]
+    with DTSMsgScope[Symbol,Symbol,Any,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]
   {
-    override type MsgTypes = DTSMSH[Symbol,Symbol,Any,HTTPRequestCtxt]       
+    override type MsgTypes =
+      DTSMSH[Symbol,Symbol,Any,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]       
     object MonadicDMsgs extends MsgTypes {   
       val protoDreqUUID = getUUID()
       val protoDrspUUID = getUUID()    
@@ -109,24 +111,21 @@ object MonadicHttpTS
       def asCall(
 	hctxt : HTTPRequestCtxt
       ) :
-      Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,HTTPRequestCtxt]]
+      Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]]
       = { 	
 	for( ccl <- asCCL( hctxt ) ) 
 	  yield {
-	    Msgs.MDPutRequest(
-	      ccl,
-	      hctxt
-	    )
+	    Msgs.MDPutRequest( ccl, ccl )
 	  }
       }
       def rspPickupLoc(
 	hctxt : HTTPRequestCtxt
       ) :
-      Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,HTTPRequestCtxt]]
+      Option[Msgs.MDistributedTermSpaceRequest[Symbol,Symbol,Any,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]]
       = {
 	for( cnvId <- hctxt.conversationId )
 	  yield {
-	    Msgs.MDPutRequest(
+	    val rspCCL = 
 	      ?('response)(
 		// taken from SWI Prolog http interface
 		?('host)( 'Host ),
@@ -143,9 +142,8 @@ object MonadicHttpTS
 		?('parts)('Parts),
 		// unique to this implementation
 		?('conversationId)( cnvId.toString )
-	      ),
-	      hctxt
-	    )
+	      )
+	    Msgs.MDPutRequest( rspCCL, rspCCL )
 	  }
       }
       def asCCL(

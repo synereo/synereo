@@ -13,6 +13,10 @@ import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.zipper._
+import com.biosimilarity.lift.lib.navigation.{
+  Left => ZL, Right => ZR, Up => ZU, Down => ZD, _
+}
 
 import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
@@ -30,9 +34,19 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class MonadicFilter
-extends Filter with Journalist with UUIDOps {
+extends Filter
+with Journalist
+with UUIDOps
+with FJTaskRunners
+{
   import MonadicHttpTS._
   import mTT._
+  import CCLDSL._
+  import NavDSL._
+
+//   lazy val conversations =
+//     new HashMap[UUID,HTTPRequestCtxt]()
+
   override def init( fltrCfg : FilterConfig ) = {
     // TBD
   }  
@@ -53,13 +67,44 @@ extends Filter with Journalist with UUIDOps {
 // 	pw.println("<h1>Hello World</h1>")
 // 	pw.println("</body></html>")
 
-	val hctxt = HTTPRequestCtxt( hsrq, hsrp, chain, Some( getUUID ) )
+	val cnvId = getUUID
+	val hctxt = HTTPRequestCtxt( hsrq, hsrp, chain, Some( cnvId ) )
+	//conversations( cnvId ) = hctxt
+
 	for( call <- httpTramp.httpConverter.asCall( hctxt ) ) {
 	  call match {	    
 	    //Calculating a ptn at this point affords redirect semantics
 	    case httpTramp.Msgs.MDPutRequest( ptn, v ) => {
 	      reset {	    
 		mySpace.put( ptn, Ground( v ) )
+		spawn {
+		  val rspCCL = 
+		    ?('response)(
+		      // taken from SWI Prolog http interface
+		      ?('host)( 'Host ),
+		      ?('input)( 'IStream ),
+		      ?('method)( 'Method ),
+		      ?('path)( 'Path ),
+		      ?('peer)('Peer),
+		      ?('port)( 'Port ),
+		      ?('hsrquestURI)('RequestURI ),
+		      ?('query)( 'Query ),
+		      ?('httpVersion)('HttpVersion),
+		      ?('cookie)( 'Cookie ),
+		      // added from Java HttpServletRequest spec
+		      ?('parts)('Parts),
+		      // unique to this implementation
+		      ?('conversationId)( cnvId.toString )
+		    )
+		  mySpace.put(
+		    rspCCL,
+		    ?('pageData)(
+		      ?('title)( "Hello Kitty!" ),
+		      ?('body)( "Hello Kitty!" )
+		    )
+		  )
+		}
+		//spawn {
 		httpTramp.httpConverter.rspPickupLoc( hctxt ) match {
 		  case Some( replyLocWrapper ) => {
 		    replyLocWrapper match {
@@ -68,13 +113,18 @@ extends Filter with Journalist with UUIDOps {
 		      ) => {
 			for( rsrc <- mySpace.getValue( rplyLoc ) ) {
 			  tweet( "should serve up: " + rsrc )
-			  val response = rsrc.resp		    
+			  val response = hctxt.resp		    
 			  response.setContentType("text/html")
-			  val pw : java.io.PrintWriter = response.getWriter()
+			  val pw : java.io.PrintWriter =
+			    response.getWriter()
+			  val title = (/( rsrc ) / ZD / ZD).toString
+			  val body = (/( rsrc ) / ZD / ZR / ZD).toString
 			  pw.println("<html>")
-			  pw.println("<head><title>Hello World</title></title>")
+			  pw.println(
+			    "<head><title>" + title + "</title></title>"
+			  )
 			  pw.println("<body>")
-			  pw.println("<h1>Hello World</h1>")
+			  pw.println("<h1>" + body + "</h1>")
 			  pw.println("</body></html>")
 			}
 		      }
@@ -86,6 +136,7 @@ extends Filter with Journalist with UUIDOps {
 		    );
 		  }
 		}
+		//}		
 	      }
 	      //chain.doFilter( req, rsp )
 	    }

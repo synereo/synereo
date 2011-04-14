@@ -37,14 +37,14 @@ case class HTTPRequestCtxt(
 )
 
 trait HTTPTrampoline[Namespace,Var,Tag] {
-  self : DTSMsgScope[Namespace,Var,Tag,HTTPRequestCtxt] => 
+  self : DTSMsgScope[Namespace,Var,Tag,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual] => 
   trait HTTPToCnxnCtxtLabel[Namespace,Var,Tag] {  
     def asCall(
       hctxt : HTTPRequestCtxt
-    ) : Option[Msgs.MDistributedTermSpaceRequest[Namespace,Var,Tag,HTTPRequestCtxt]]
+    ) : Option[Msgs.MDistributedTermSpaceRequest[Namespace,Var,Tag,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]]
     def rspPickupLoc(
       hctxt : HTTPRequestCtxt
-    ) : Option[Msgs.MDistributedTermSpaceRequest[Namespace,Var,Tag,HTTPRequestCtxt]]
+    ) : Option[Msgs.MDistributedTermSpaceRequest[Namespace,Var,Tag,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]]
     def asCCL(
       hctxt : HTTPRequestCtxt
     ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
@@ -67,7 +67,7 @@ trait HTTPTrampoline[Namespace,Var,Tag] {
 trait HTTPTrampolineScope[Namespace,Var,Tag] {
   type HTTPTrampolineTypes <:
   HTTPTrampoline[Namespace,Var,Tag]
-     with DTSMsgScope[Namespace,Var,Tag,HTTPRequestCtxt]
+     with DTSMsgScope[Namespace,Var,Tag,CnxnCtxtLabel[Symbol,Symbol,Any] with Factual]
 
   def protoHttpTramp : HTTPTrampolineTypes
   lazy val httpTramp : HTTPTrampolineTypes =

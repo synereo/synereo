@@ -7,6 +7,7 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.zipper
+import com.biosimilarity.lift.lib.navigation.ZipperNavigation
 
 object Exercise extends ZipperNavigation[String]
 with ZipperMutation[String]{

@@ -8,7 +8,7 @@
 
 package com.biosimilarity.lift.lib.zipper
 
-class Location[A](
+class Location[+A](
   val tree : Tree[A],
   val ctxt : Context[A]
 )
