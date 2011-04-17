@@ -229,7 +229,7 @@ with FJTaskRunners
 
 import java.util.regex.{Pattern => RegexPtn, Matcher => RegexMatcher}
 
-object MonadicTSpace
+object MonadicRegexTSpace
        extends MonadicTupleSpace[String,String,String]
        with WireTap
        with Journalist
@@ -277,3 +277,5 @@ object MonadicTSpace
   }
   
 }
+
+

@@ -65,8 +65,20 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with SemiMonadicJSONAMQPTwistedPair[Msgs.JTSReqOrRsp] {
     self : MonadicWireToTrgtConversion with MonadicGenerators with WireTap with Journalist =>
       
-    override type Trgt = Msgs.JTSReqOrRsp
-    override def jsonDispatcher( handle : Msgs.JTSReqOrRsp => Unit )(
+    override type Trgt = Msgs.JTSReqOrRsp    
+
+    override def jsonDispatcher(
+      handle : Msgs.JTSReqOrRsp => Unit
+    )(
+      implicit dispatchOnCreate : Boolean, port : Int
+    ) : StdMonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
+      jsonDispatcher( "mult", handle )( dispatchOnCreate, port )
+    }
+
+    override def jsonDispatcher(
+      exQNameRoot : String,
+      handle : Msgs.JTSReqOrRsp => Unit
+    )(
       implicit dispatchOnCreate : Boolean, port : Int
     ) : StdMonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
       _jsonDispatcher match {
@@ -83,7 +95,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	  
 	  if ( dispatchOnCreate ) {
 	    reset {
-	      for( msg <- jd.xformAndDispatch( jd.beginService() ) ){
+	      for(
+		msg <- jd.xformAndDispatch(
+		  jd.beginService(
+		    exQNameRoot
+		  )
+		)
+	      ) {
 		handle( msg )
 	      }
 	    }	
@@ -111,21 +129,34 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       override def tap [A] ( fact : A ) : Unit = {
 	reportage( fact )
       }
-      def jsonDispatcher() : StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
-	jsonDispatcher( ( x ) => {} ).asInstanceOf[StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp]]
-      }
-      override def name : URI = srcURI
-      override def requests : ListBuffer[Msgs.JTSReq] = {
-	jsonDispatcher().requests
-      }
-      override def responses : ListBuffer[Msgs.JTSRsp] = {
-	jsonDispatcher( ).responses
-      }
-      override def nameSpace : Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
-	jsonDispatcher( ).nameSpace
+    def jsonDispatcher() : StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
+      jsonDispatcher(
+	"mult",
+	( x ) => {}
+      ).asInstanceOf[StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp]]
     }
-      override def traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp] =
-    {
+
+    def jsonDispatcher(
+      exQNameRoot : String
+    ) : StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
+      jsonDispatcher(
+	exQNameRoot,
+	( x ) => {}
+      ).asInstanceOf[StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp]]
+    }
+
+    override def name : URI = srcURI
+    override def requests : ListBuffer[Msgs.JTSReq] = {
+      jsonDispatcher().requests
+    }
+    override def responses : ListBuffer[Msgs.JTSRsp] = {
+      jsonDispatcher( ).responses
+    }
+    override def nameSpace :
+    Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
+      jsonDispatcher( ).nameSpace
+    }
+    override def traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp] = {
       jsonDispatcher( ).traceMonitor
     }
 
@@ -204,6 +235,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     def acquaintances : Seq[URI]
 
     def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit
+
+    def acqQName( acqURI : URI ) : String
     
     def meetNGreet( acquaintances : Seq[URI] )
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
@@ -216,14 +249,39 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	      name,
 	      acquaintance
 	    )      
+
+	  val acqQN = acqQName( acquaintance )
 	  
-	  atp.jsonSender // activate jsonSender
-	  atp.jsonDispatcher( handleIncoming ) // activate jsonDispatcher
+	  atp.jsonSender( acqQN ) // activate jsonSender
+	  atp.jsonDispatcher(
+	    acqQN,
+	    handleIncoming
+	  ) // activate jsonDispatcher
 	  map( acquaintance ) = atp	
 
 	}
 	map
       }
+  }
+
+  trait QueueNameVender {
+    self : UUIDOps =>
+    lazy val acqQNames = new LinkedHashMap[URI,UUID]( )
+
+    def acqQNameUnique( acqURI : URI ) : String = {
+      acqQNames.get( acqURI ) match {
+	case Some( uuid ) => uuid.toString
+	case None => {
+	  val uuid = getUUID()
+	  acqQNames( acqURI ) = uuid
+	  uuid.toString
+	}
+      }
+    }
+    
+    def acqQName( acqURI : URI ) : String = {
+      acqURI.getPath.split( "/" ).last
+    }
   }
 
   abstract class MonadicJunction(
@@ -240,6 +298,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion
   with MonadicGenerators
+  with QueueNameVender
   with WireTap
   with Journalist
   with ConfiggyReporting
@@ -249,7 +308,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 
     override lazy val agentTwistedPairs
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
-      meetNGreet( acquaintances )
+      meetNGreet( acquaintances )    
 
     def forwardGet( hops : List[URI], path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
       for(

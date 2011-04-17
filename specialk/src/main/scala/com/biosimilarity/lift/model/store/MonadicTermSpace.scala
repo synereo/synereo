@@ -312,7 +312,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     new ListBuffer[Msgs.JTSRsp](),
     Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     AnAMQPTraceMonitor
-  ) {
+  ) with QueueNameVender {
     def sendRsp(
       atp : SemiMonadicAgentJSONAMQPTwistedPair[String],
       dreq : Msgs.DReq,	

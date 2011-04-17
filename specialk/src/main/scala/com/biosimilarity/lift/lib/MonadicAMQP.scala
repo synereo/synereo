@@ -71,12 +71,21 @@ trait MonadicAMQPDispatcher[T]
 	  //}
 	//}      
       }
-    }
+    }   
 
   override def beginService(
     params : ConnectionParameters,
     host : String,
     port : Int
+  ) = {
+    beginService( params, host, port, "mult" )
+  }
+
+   def beginService(
+    params : ConnectionParameters,
+    host : String,
+    port : Int,
+    exQNameRoot : String
   ) = Generator {
     k : ( T => Unit @suspendable ) =>
       //shift {	
@@ -84,16 +93,17 @@ trait MonadicAMQPDispatcher[T]
 	  "The rabbit is running... (with apologies to John Updike)"
 	)
 
-	for( channel <- acceptConnections( params, host, port ) ) {
+	for( channel <- acceptConnections( params, host, port )	) {
 	  spawn {
 	    // Open bracket
 	    blog( "Connected: " + channel )
 	    val ticket = channel.accessRequest( "/data" ) 
-	    channel.exchangeDeclare( ticket, "mult", "direct" )
-	    channel.queueDeclare( ticket, "mult_queue" )
-	    channel.queueBind( ticket, "mult_queue", "mult", "routeroute" )
+	    val qname = (exQNameRoot + "_queue")
+	    channel.exchangeDeclare( ticket, exQNameRoot, "direct" )
+	    channel.queueDeclare( ticket, qname )
+	    channel.queueBind( ticket, qname, exQNameRoot, "routeroute" )
 	  
-	    for ( t <- readT( channel, ticket ) ) { k( t ) }
+	    for ( t <- readT( channel, ticket, exQNameRoot ) ) { k( t ) }
 
 	    // Close bracket
 	  }
@@ -101,7 +111,13 @@ trait MonadicAMQPDispatcher[T]
       //}
   }
 
-  override def callbacks( channel : Channel, ticket : Ticket) =
+  override def callbacks( channel : Channel, ticket : Ticket) = {
+    callbacks( channel, ticket, "mult" )
+  }
+
+  def callbacks(
+    channel : Channel, ticket : Ticket, exQNameRoot : String
+  ) =
     Generator {
       k : ( Payload => Unit @suspendable) =>
 
@@ -134,7 +150,7 @@ trait MonadicAMQPDispatcher[T]
   	
 	channel.basicConsume(
 	  ticket,
-	  "mult_queue",
+	  exQNameRoot + "_queue",
 	  false,
 	  TheRendezvous
 	)
@@ -144,7 +160,11 @@ trait MonadicAMQPDispatcher[T]
       }
     }
 
-  def readT( channel : Channel, ticket : Ticket ) =
+  def readT( channel : Channel, ticket : Ticket ) = {
+    readT( channel, ticket, "mult" )
+  }
+
+   def readT( channel : Channel, ticket : Ticket, exQNameRoot : String ) =
     Generator {
       k: ( T => Unit @suspendable) =>
 	shift {
@@ -152,7 +172,7 @@ trait MonadicAMQPDispatcher[T]
 	    reset {
 	      
   	      for (
-		amqpD <- callbacks( channel, ticket )
+		amqpD <- callbacks( channel, ticket, exQNameRoot )
 	      )	{
   		val routingKey = amqpD.env.getRoutingKey
 		val contentType = amqpD.props.contentType
@@ -228,6 +248,9 @@ extends MonadicAMQPDispatcher[T] {
   def beginService()( implicit params : RabbitCnxnParams )
   : Generator[T,Unit,Unit] =
     beginService( params, host, port )
+  def beginService( exQNameStr : String )( implicit params : RabbitCnxnParams )
+  : Generator[T,Unit,Unit] =
+    beginService( params, host, port, exQNameStr )
 }
 
 class StdMonadicAMQPDispatcher[T](
@@ -276,6 +299,12 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
   def jsonDispatcher( handle : T => Unit )(
     implicit dispatchOnCreate : Boolean, port : Int
   ) : StdMonadicJSONAMQPDispatcher[T] = {
+    jsonDispatcher( "mult", handle )
+  }
+
+  def jsonDispatcher( exQNameStr : String, handle : T => Unit )(
+    implicit dispatchOnCreate : Boolean, port : Int
+  ) : StdMonadicJSONAMQPDispatcher[T] = {
     _jsonDispatcher match {
       case Some( jd ) => jd
       case None => {
@@ -284,7 +313,11 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 
 	if ( dispatchOnCreate ) {
 	  reset {
-	    for( msg <- jd.xformAndDispatch( jd.beginService() ) ){
+	    for(
+	      msg <- jd.xformAndDispatch(
+		jd.beginService( exQNameStr )
+	      )
+	    ) {
 	      handle( msg )
 	    }
 	  }	
@@ -299,6 +332,10 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
   var _jsonSender : Option[JSONAMQPSender] = None 
   
   def jsonSender()( implicit params : RabbitCnxnParams, port : Int ) : JSONAMQPSender = {
+    jsonSender( "mult" )( params, port )
+  }
+
+  def jsonSender( exchNameStr : String )( implicit params : RabbitCnxnParams, port : Int ) : JSONAMQPSender = {
     _jsonSender match {
       case Some( js ) => js
       case None => {
@@ -306,7 +343,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 	  new ConnectionFactory( params ),
 	  trgtURI.getHost,
 	  port,
-	  "mult",
+	  exchNameStr,
 	  "routeroute"
 	)       
 
