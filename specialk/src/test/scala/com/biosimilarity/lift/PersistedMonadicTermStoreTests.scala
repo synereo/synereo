@@ -57,8 +57,37 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
       val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
       val atps = pimgJunq.agentTwistedPairs
       val oge = BX.outerGraphExprCCL
-      reset { for( e <- pimgJunq.get( oge ) ) { println( "received: " + e ) } }
-      assert( true )
+
+      var eVal = ""
+
+      reset {
+	for( e <- pimgJunq.get( oge ) )
+	  {
+	    println( "received: " + e )
+	    e match {
+	      case Some(
+		mTT.RBound(
+		  Some( mTT.Ground( graphSpec ) ),
+		  None
+		)
+	      ) => {
+		eVal = e.toString
+	      }
+	      case _ => {
+		throw new Exception(
+		  "received unexpect value from	test " + e
+		)
+	      }
+	    }
+	  }
+      }
+
+      while ( eVal == "" ) {
+	Thread.sleep( 100 )
+      }
+
+      eVal.length must be >= 0
+      eVal.indexOf("Connected") must be >= 0
     }
   }
 }
