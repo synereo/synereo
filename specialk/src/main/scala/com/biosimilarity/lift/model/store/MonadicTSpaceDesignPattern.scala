@@ -88,6 +88,13 @@ extends FJTaskRunners
     )
   }
 
+  // rename to mget and the function below to mgetCorrect to generate
+  // runtime error with a call like
+  // reset {
+  //   for( e <- MonadicRegexTSpace.get( "a.*" ) ) {
+  //    println( "received: " + e )
+  //   } 
+  // }
   def mgetError(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
@@ -135,7 +142,13 @@ extends FJTaskRunners
 	}
     }
 
-  // val reportage = report( Luddite() ) _
+  // rename to mgetCorrect and the function above to mget to generate
+  // runtime error with a call like
+  // reset {
+  //   for( e <- MonadicRegexTSpace.get( "a.*" ) ) {
+  //    println( "received: " + e )
+  //   } 
+  // }
   def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
