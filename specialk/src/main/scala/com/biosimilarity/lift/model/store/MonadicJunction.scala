@@ -63,7 +63,10 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   trait SemiMonadicAgentJSONAMQPTwistedPair[TxPort]
   extends MonadicAgency[TxPort,Msgs.DReq,Msgs.DRsp]
   with SemiMonadicJSONAMQPTwistedPair[Msgs.JTSReqOrRsp] {
-    self : MonadicWireToTrgtConversion with MonadicGenerators with WireTap with Journalist =>
+    self : MonadicWireToTrgtConversion
+      with MonadicGenerators
+      with WireTap
+      with Journalist =>
       
     override type Trgt = Msgs.JTSReqOrRsp    
 

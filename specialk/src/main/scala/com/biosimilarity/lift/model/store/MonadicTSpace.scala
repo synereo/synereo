@@ -6,7 +6,9 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.model.store.design
+package com.biosimilarity.lift.model.store
+
+import com.biosimilarity.lift.lib._
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
@@ -16,10 +18,16 @@ import scala.collection.MapProxy
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 
-trait MonadicTupleSpaceDP[Place,Pattern,Resource]
+trait MonadicTupleSpace[Place,Pattern,Resource]
 //       extends MapLike[Place,Resource, This]
-extends FJTaskRunners
+extends MonadicGenerators
+with FJTaskRunners
 {
+  self : WireTap
+      with Journalist
+      with ConfiggyReporting 
+      with ConfigurationTrampoline =>
+
   type RK = Option[Resource] => Unit @suspendable
   //type CK = Option[Resource] => Unit @suspendable
   type Substitution <: Function1[Resource,Option[Resource]]
@@ -44,7 +52,17 @@ extends FJTaskRunners
   def fitsK( ptn : Pattern, place : Place ) : Option[Substitution]
   def representative( ptn : Pattern ) : Place  
 
-  //def self = theMeetingPlace  
+  //def self = theMeetingPlace
+
+  override def itergen[T]( coll : Iterable[T] ) = 
+    Generator {
+      gk : ( T => Unit @suspendable ) =>
+	val collItr = coll.iterator
+
+	while( collItr.hasNext ) {
+	  gk( collItr.next )
+	}
+    }
   
   def locations(
     map : Either[Map[Place,Resource],Map[Place,List[RK]]],
@@ -88,54 +106,6 @@ extends FJTaskRunners
     )
   }
 
-  def mgetError(
-    channels : Map[Place,Resource],
-    registered : Map[Place,List[RK]],
-    consume : Boolean
-  )( ptn : Pattern )
-  : Generator[Option[Resource],Unit,Unit] =
-    Generator {
-      rk : ( Option[Resource] => Unit @suspendable ) =>
-	shift {
-	  outerk : ( Unit => Unit ) =>
-	    reset {
-	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
-	      val meets = locations( map, ptn )
-
-	      if ( meets.isEmpty )  {
-		val place = representative( ptn )
-		println( "did not find a resource, storing a continuation: " + rk )
-		registered( place ) =
-		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
-		//rk( None )
-		println( "get suspending" )
-		//outerk()
-	      }
-	      else {
-		for(
-		  placeNRrscNSubst <- itergen[PlaceInstance](
-		    meets
-		  )
-		) {
-		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
-		  
-		  println( "found a resource: " + rsrc )		  
-		  if ( consume ) {
-		    channels -= place
-		  }
-		  rk( s( rsrc ) )
-		  println( "get returning" )
-		  outerk()
-		  //shift { k : ( Unit => Unit ) => k() }
-		}
-	      }
-	      //println( "get returning" )
-	      //outerk()
-	    }
-	}
-    }
-
-  // val reportage = report( Luddite() ) _
   def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
@@ -152,7 +122,55 @@ extends FJTaskRunners
 
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
-		println( "did not find a resource, storing a continuation: " + rk )
+		tweet( "did not find a resource, storing a continuation: " + rk )
+		registered( place ) =
+		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		//rk( None )
+		tweet( "get suspending" )
+		//outerk()
+	      }
+	      else {
+		for(
+		  placeNRrscNSubst <- itergen[PlaceInstance](
+		    meets
+		  )
+		) {
+		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+		  
+		  tweet( "found a resource: " + rsrc )		  
+		  if ( consume ) {
+		    channels -= place
+		  }
+		  rk( s( rsrc ) )
+		  tweet( "get returning" )
+		  outerk()
+		  //shift { k : ( Unit => Unit ) => k() }
+		}
+	      }
+	      //tweet( "get returning" )
+	      //outerk()
+	    }
+	}
+    }
+
+  // val reportage = report( Luddite() ) _
+  def mgetO(
+    channels : Map[Place,Resource],
+    registered : Map[Place,List[RK]],
+    consume : Boolean
+  )( ptn : Pattern )
+  : Generator[Option[Resource],Unit,Unit] =
+    Generator {
+      rk : ( Option[Resource] => Unit @suspendable ) =>
+	shift {
+	  outerk : ( Unit => Unit ) =>
+	    reset {
+	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
+	      val meets = locations( map, ptn )
+
+	      if ( meets.isEmpty )  {
+		val place = representative( ptn )
+		tweet( "did not find a resource, storing a continuation: " + rk )
 		registered( place ) =
 		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
 		rk( None )
@@ -165,7 +183,7 @@ extends FJTaskRunners
 		) {
 		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
-		  println( "found a resource: " + rsrc )		  
+		  tweet( "found a resource: " + rsrc )		  
 		  if ( consume ) {
 		    channels -= place
 		  }
@@ -174,7 +192,7 @@ extends FJTaskRunners
 		  //shift { k : ( Unit => Unit ) => k() }
 		}
 	      }
-	      println( "get returning" )
+	      tweet( "get returning" )
 	      outerk()
 	    }
 	}
@@ -203,7 +221,7 @@ extends FJTaskRunners
 	waitlist match {
 	  // Yes!
 	  case waiter :: waiters => {
-	    println( "found waiters waiting for a value at " + ptn )
+	    tweet( "found waiters waiting for a value at " + ptn )
 	    val itr = waitlist.toList.iterator	    
 	    while( itr.hasNext ) {
 	      k( itr.next )
@@ -212,7 +230,7 @@ extends FJTaskRunners
 	  // No...
 	  case Nil => {
 	    // Store the rsrc at a representative of the ptn
-	    println( "no waiters waiting for a value at " + ptn )
+	    tweet( "no waiters waiting for a value at " + ptn )
 	    channels( representative( ptn ) ) = rsrc
 	  }
 	}
@@ -226,7 +244,7 @@ extends FJTaskRunners
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
     for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-      println( "waiters waiting for a value at " + wtr + " : " + rks )
+      tweet( "waiters waiting for a value at " + wtr + " : " + rks )
       rks match {
 	case rk :: rrks => {	
 	  if ( consume ) {
@@ -253,59 +271,19 @@ extends FJTaskRunners
     mput( theMeetingPlace, theWaiters, false )( ptn, rsrc )
   def publish( ptn : Pattern, rsrc : Resource ) =
     mput( theChannels, theSubscriptions, true )( ptn, rsrc )
- 
-  trait Generable[+A,-B,+C] {
-    def funK : (A => (B @suspendable)) => (C @suspendable)
-    
-    def foreach( f : (A => B @suspendable) ) : C @suspendable = {
-      funK( f )
-    }
-  }
-
-  case class Generator[+A,-B,+C](
-    override val funK : (A => (B @suspendable)) => (C @suspendable)
-  ) extends Generable[A,B,C] {   
-  }
-
-  // this is really map... fix!
-  def mapStream[A,B](
-    strmGenerator : Generator[A,Unit,Unit],
-    cnvrtr : (A => B)
-  ) =
-    Generator {
-      k : ( B => Unit @suspendable ) =>
-	shift {
-	  outerK : ( Unit => Unit ) =>
-	    reset {
-	      for( elem <- strmGenerator ) {
-		//tweet( "calling conversion on elem " + elem )
-		val trgtElem = cnvrtr( elem )
-		//tweet( "calling handler on converted elem " + elem )
-		k( trgtElem )
-	      }
-	      
-	      println( "mapStream returning" )
-  	      outerK()
-	    }
-	}
-    }
-
-  def itergen[T]( coll : Iterable[T] ) = 
-    Generator {
-      gk : ( T => Unit @suspendable ) =>
-	val collItr = coll.iterator
-
-	while( collItr.hasNext ) {
-	  gk( collItr.next.asInstanceOf[T] )
-	}
-    }
- 
+  
 }
 
 import java.util.regex.{Pattern => RegexPtn, Matcher => RegexMatcher}
 
 object MonadicRegexTSpace
-       extends MonadicTupleSpaceDP[String,String,String]
+       extends MonadicTupleSpace[String,String,String]
+       with WireTap
+       with Journalist
+       with ConfiggyReporting
+       //with ConfiggyJournal
+       with ConfiguredJournal
+       with ConfigurationTrampoline
 {
 
   override type Substitution = IdentitySubstitution
@@ -314,6 +292,15 @@ object MonadicRegexTSpace
   override val theChannels = new HashMap[String,String]()
   override val theWaiters = new HashMap[String,List[RK]]()
   override val theSubscriptions = new HashMap[String,List[RK]]()
+
+  override def tap [A] ( fact : A ) : Unit = {
+    reportage( fact )
+  }
+
+  override def configFileName : Option[String] = None
+  override def configurationDefaults : ConfigurationDefaults = {
+    ConfiguredJournalDefaults.asInstanceOf[ConfigurationDefaults]
+  }
 
   def representative( ptn : String ) : String = {
     ptn
