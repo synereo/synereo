@@ -95,7 +95,7 @@ extends FJTaskRunners
   //    println( "received: " + e )
   //   } 
   // }
-  def mgetError(
+  def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
     consume : Boolean
@@ -103,9 +103,9 @@ extends FJTaskRunners
   : Generator[Option[Resource],Unit,Unit] =
     Generator {
       rk : ( Option[Resource] => Unit @suspendable ) =>
-	shift {
+	shift[Unit,Unit,Unit] {
 	  outerk : ( Unit => Unit ) =>
-	    reset {
+	    reset[Unit,Unit] {
 	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
 	      val meets = locations( map, ptn )
 
@@ -149,7 +149,7 @@ extends FJTaskRunners
   //    println( "received: " + e )
   //   } 
   // }
-  def mget(
+  def mgetCorrect(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
     consume : Boolean

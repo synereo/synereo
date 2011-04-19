@@ -400,6 +400,7 @@
 	  <args>
 	    <arg>-deprecation</arg>
 	    <arg>-unchecked</arg>
+	    <!-- <arg>-Xprint:selectivecps</arg> -->
 	    <arg>-P:continuations:enable</arg>
           </args>
 	  <compilerPlugins>

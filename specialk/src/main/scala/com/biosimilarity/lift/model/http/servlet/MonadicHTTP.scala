@@ -170,7 +170,7 @@ object MonadicHttpTS
 	    ?('hsrquestURI)( hsrq.getRequestURI.toString ),
 	    ?('query)( hsrq.getQueryString ),
 	    ?('httpVersion)('HttpVersion),
-	    ?('cookie)( hsrq.getCookies.toString ),
+	    ?('cookie)( (hsrq.getCookies + "") ),
 	    // added from Java HttpServletRequest spec
 	    ?('parts)('Parts),
 	    // unique to this implementation

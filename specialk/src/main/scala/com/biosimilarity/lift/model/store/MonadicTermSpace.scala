@@ -665,9 +665,42 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       get( Nil )( path )    
     }
 
+    def getValueWithSuspension(
+      path : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Generator[Value,Unit,Unit] = {
+      var suspension : Option[Unit => Unit] = None
+      def suspend : Unit @suspendable = {
+	shift {
+	  ( k : Unit => Unit ) => {
+	    suspension = Some( k )
+	  }
+	}
+      }
+      Generator {
+	k : ( Value => Unit @suspendable ) =>
+	  for(
+	    orsrc <- get( path )
+	    //rsrc <- orsrc
+	    //gv <- getGV( rsrc )
+	  ) {
+	    orsrc match {
+	      case Some( rsrc ) => {
+		getGV( rsrc ) match {
+		  case Some( gv ) => k( gv )
+		  case None =>
+		}
+	      }
+	      case None => {
+		suspend;
+	      }
+	    };
+	  }
+      }
+    }
+
     def getValue(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
-    ) : Generator[Value,Unit,Unit] = 
+    ) : Generator[Value,Unit,Unit] =
       Generator {
 	k : ( Value => Unit @suspendable ) =>
 	  for(
