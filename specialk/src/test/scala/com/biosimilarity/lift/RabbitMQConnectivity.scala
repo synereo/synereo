@@ -54,15 +54,25 @@ object RabbitMQConnectivityTestSpecs extends Specification {
   import MonadicAMQPUnitTest._
   "basic send / receive using monadic dispatching" should {
     "send and receive values over rabbitmq queue" in {
+      var msgCount = 0
       val sma1 = SMJATwistedPair[Msg]( "localhost", "localhost" )
       sma1.jsonSender( "myFavoriteQueue" )
       sma1.jsonDispatcher(
 	"myFavoriteQueue",
-	( x ) => { println( "received : " + x ) }
+	( x ) => {
+	  println( "received : " + x )
+	  msgCount += 1
+	}
       )
       val msgs = msgStrm.take( 100 )
 
       for( i <- 0 to 9 ) { sma1.send( msgs( i ) ) }
+      
+      while ( msgCount < 10 ) {
+	Thread.sleep( 100 )
+      }
+      
+      msgCount must be >= 10
     }
   }
 }
