@@ -106,7 +106,7 @@ with FJTaskRunners
     )
   }  
 
-  def mget(
+  def mgetWithSuspension(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
     consume : Boolean
@@ -153,49 +153,49 @@ with FJTaskRunners
 	}
     }
 
-  // def mget(
-//     channels : Map[Place,Resource],
-//     registered : Map[Place,List[RK]],
-//     consume : Boolean
-//   )( ptn : Pattern )
-//   : Generator[Option[Resource],Unit,Unit] =
-//     Generator {
-//       rk : ( Option[Resource] => Unit @suspendable ) =>
-// 	shift {
-// 	  outerk : ( Unit => Unit ) =>
-// 	    reset {
-// 	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
-// 	      val meets = locations( map, ptn )
+  def mget(
+    channels : Map[Place,Resource],
+    registered : Map[Place,List[RK]],
+    consume : Boolean
+  )( ptn : Pattern )
+  : Generator[Option[Resource],Unit,Unit] =
+    Generator {
+      rk : ( Option[Resource] => Unit @suspendable ) =>
+	shift {
+	  outerk : ( Unit => Unit ) =>
+	    reset {
+	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
+	      val meets = locations( map, ptn )
 
-// 	      if ( meets.isEmpty )  {
-// 		val place = representative( ptn )
-// 		tweet( "did not find a resource, storing a continuation: " + rk )
-// 		registered( place ) =
-// 		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
-// 		rk( None )
-// 	      }
-// 	      else {
-// 		for(
-// 		  placeNRrscNSubst <- itergen[PlaceInstance](
-// 		    meets
-// 		  )
-// 		) {
-// 		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+	      if ( meets.isEmpty )  {
+		val place = representative( ptn )
+		tweet( "did not find a resource, storing a continuation: " + rk )
+		registered( place ) =
+		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		rk( None )
+	      }
+	      else {
+		for(
+		  placeNRrscNSubst <- itergen[PlaceInstance](
+		    meets
+		  )
+		) {
+		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
-// 		  tweet( "found a resource: " + rsrc )		  
-// 		  if ( consume ) {
-// 		    channels -= place
-// 		  }
-// 		  rk( s( rsrc ) )
+		  tweet( "found a resource: " + rsrc )		  
+		  if ( consume ) {
+		    channels -= place
+		  }
+		  rk( s( rsrc ) )
 		  
-// 		  //shift { k : ( Unit => Unit ) => k() }
-// 		}
-// 	      }
-// 	      tweet( "get returning" )
-// 	      outerk()
-// 	    }
-// 	}
-//     }
+		  //shift { k : ( Unit => Unit ) => k() }
+ 		}
+ 	      }
+ 	      tweet( "get returning" )
+ 	      outerk()
+ 	    }
+ 	}
+     }
 
   def get( ptn : Pattern ) =
     mget( theMeetingPlace, theWaiters, true )( ptn )
