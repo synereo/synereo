@@ -19,10 +19,52 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
 trait Blobify {
   def toBlob( x : java.lang.Object ) : String = {
-    new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+    toJSONBlob( x )
   }
   def fromBlob( blob : String ) : java.lang.Object = {
+    fromJSONBlob( blob )
+  }      
+  def toJSONBlob( x : java.lang.Object ) : String = {
+    new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+  }
+  def fromJSONBlob( blob : String ) : java.lang.Object = {
     new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+  }      
+  def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+    val jsonBlob =
+      new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+    jsonBlob.replace(
+      "{",
+      "{{"
+    ).replace(
+      "}",
+      "}}"
+    )
+  }
+  def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+    val jsonBlob =
+      (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
+	blob.replace(
+	  "{{",
+	  "{"
+	).replace(
+	  "}}",
+	  "}"
+	)
+      }
+      else {
+	blob
+      }).replace(
+      "&quot;",
+      "\""
+    )
+    new XStream( new JettisonMappedXmlDriver() ).fromXML( jsonBlob )
+  }      
+  def toXMLBlob( x : java.lang.Object ) : String = {
+    new XStream( ).toXML( x )
+  }
+  def fromXMLBlob( blob : String ) : java.lang.Object = {
+    new XStream( ).fromXML( blob )
   }      
 }
 

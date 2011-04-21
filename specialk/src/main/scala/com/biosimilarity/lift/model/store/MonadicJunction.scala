@@ -302,10 +302,12 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with MonadicWireToTrgtConversion
   with MonadicGenerators
   with QueueNameVender
-  with WireTap
-  with Journalist
-  with ConfiggyReporting
-  with ConfiggyJournal {
+  //with WireTap
+  //with Journalist
+  //with ConfiggyReporting
+  //with ConfiguredJournal
+  //with ConfigurationTrampoline
+  {
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
 

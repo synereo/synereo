@@ -75,7 +75,11 @@ object BaseXDefaults {
 }
 
 trait BaseXXMLStore extends XMLStore {
-  self : UUIDOps with Journalist =>
+  self : Journalist
+	 with ConfiggyReporting
+	 with ConfiguredJournal
+         with ConfigurationTrampoline
+	 with UUIDOps =>
   
     //override type ConfigurationDefaults = BaseXDefaults.getClass
 
@@ -121,44 +125,53 @@ trait BaseXXMLStore extends XMLStore {
   }
 
   def executeInSession(
+    xmlCollStr : String,
     qrys : List[String],
     ostrm : java.io.OutputStream
   ) : Unit = {
-    try {
-      val bxCtxt = new Context()
+    val dbCtxt = new Context()
+    try {      
+      new Open( xmlCollStr ).execute( dbCtxt )
+
       for( qry <- qrys ) {
-	val qproc = new QueryProcessor( qry, bxCtxt )
-	val oostrm = new java.io.ObjectOutputStream( ostrm )
-	val iter : Iter = qproc.iter()
-	var nitem = iter.next
-	while( nitem != null ) {
-	  val item = nitem.toJava
-	  if ( item.isInstanceOf[java.io.Serializable] ) {
-	    oostrm.writeObject( item )
-	  }
-	  nitem = iter.next
-	}
-	qproc.close()
+	val xqry = new XQuery( qry )
+	xqry.execute( dbCtxt, ostrm )
       }           
     }
     catch {
+      case e : BaseXException => {
+	new CreateDB( xmlCollStr ).execute( dbCtxt )
+	for( qry <- qrys ) {
+	  val xqry = new XQuery( qry )
+	  xqry.execute( dbCtxt, ostrm )
+	}
+      }
       case e : Exception => {	
 	tweetTrace( e )
       }
-    }    
+    }
+    finally {
+      dbCtxt.close()
+    }
   }
 
   def executeInSession(
+    xmlCollStr : String,
     qry : String,
     ostrm : java.io.OutputStream
   ) : Unit = {
-    executeInSession( List( qry ), ostrm )
+    executeInSession( xmlCollStr, List( qry ), ostrm )
   }
 }
 
 trait BaseXCnxnStorage[Namespace,Var,Tag]
 extends CnxnStorage[Namespace,Var,Tag] {
-  self : BaseXXMLStore with UUIDOps =>
+  self : BaseXXMLStore
+        with Journalist
+	with ConfiggyReporting
+	with ConfiguredJournal
+        with ConfigurationTrampoline
+	with UUIDOps =>
     
     override def tmpDirStr : String = {
       throw new Exception( "don't use the filebased api" )
@@ -167,14 +180,80 @@ extends CnxnStorage[Namespace,Var,Tag] {
   override def store( xmlCollStr : String )(
     cnxn : CnxnCtxtLabel[Namespace,Var,String]
   ) : Unit = {   
-    for( xmlColl <- getCollection( true )( xmlCollStr ) ) {
-      val document =
-	xmlColl.createResource(
-	  null, XMLResource.RESOURCE_TYPE
-	).asInstanceOf[XMLResource]
+    val dbCtxt = new Context()
+    try {
+      tweet( 
+	"attempting to open collection: " + xmlCollStr
+      )
+      new Open( xmlCollStr ).execute( dbCtxt )
+      
+      tweet( 
+	"collection " + xmlCollStr + " opened"
+      )
 
-      document.setContent( xmlIfier.asXML( cnxn ).toString )
-      xmlColl.storeResource( document )
+      val insertTemplate =
+	(
+	  "insert node %NODE% into "
+	  + "for $db in collection('%COLLNAME%')/records return $db"
+	);
+
+      val nodeStr = 
+	xmlIfier.asXML( cnxn ).toString
+
+      tweet( 
+	"attempting to insert record into database doc in " + xmlCollStr
+      )
+
+      println( "record : \n" + nodeStr )
+      
+      val insertQry = 
+	insertTemplate.replace(
+	  "%NODE%",
+	  nodeStr
+	).replace(
+	  "%COLLNAME%",
+	  xmlCollStr
+	)
+
+      println( "insertion query : \n" + insertQry )
+      
+      try {	
+	new XQuery(
+	  insertQry
+	).execute( dbCtxt )
+      }
+      catch {
+	case e : BaseXException => {
+	  tweet( 
+	    "insertion query failed " + insertQry
+	  )
+	  tweetTrace( e )
+	}
+      }
+    }
+    catch {
+      case e : BaseXException => {
+	tweet( 
+	  "failed to open " + xmlCollStr
+	)
+	tweet( 
+	  "attempting to create " + xmlCollStr
+	)
+	new CreateDB( xmlCollStr ).execute( dbCtxt )
+	val recordElem = xmlIfier.asXML( cnxn )
+	val recordsElem =
+	  <records>{recordElem}</records>
+	tweet( 
+	  "adding database doc to " + xmlCollStr
+	)
+	new Add(
+	  recordsElem.toString,
+	  "database"
+	).execute( dbCtxt )          
+      }      
+    }    
+    finally {
+      dbCtxt.close()
     }
   }
 }

@@ -60,7 +60,17 @@ object CXQ extends CnxnXQuery[String,String,String]
  }
 
 object BX extends BaseXXMLStore
- with Blobify with UUIDOps with Journalist {
+ with Blobify
+ with Journalist
+ with ConfiggyReporting
+ with ConfiguredJournal
+ with ConfigurationTrampoline
+ with UUIDOps
+{
+   override def configurationDefaults : ConfigurationDefaults = {
+     BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+   }
+
   val datasetsDir = "src/main/resources/datasets/"
   val dbNames : List[String] =
     List( "GraphOne", "GraphTwo", "GraphThree", "GraphFour" )

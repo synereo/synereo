@@ -752,6 +752,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  tweet( "deletion query : \n" + deletionQry )
 	  val ostrm = new java.io.ByteArrayOutputStream()
 	  executeInSession( 
+	    clNm,
 	    List( deletionQry ),
 	    ostrm
 	  )
@@ -917,9 +918,12 @@ object PersistedMonadicTS
 	      tweet(
 		"warning: CnxnCtxtLabel method is using XStream"
 	      )
+
+	      val blob = toXQSafeJSONBlob( rsrc )
+
 	      new CnxnCtxtLeaf[String,String,String](
 		Left[String,String](
-		  new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+		  blob
 		)
 	      )
 	    }
@@ -927,8 +931,9 @@ object PersistedMonadicTS
 	      tweet(
 		"using XStream method"
 	      )
-	      val blob =
-		new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+
+	      val blob = toXQSafeJSONBlob( rsrc )
+
 	      //asXML( rsrc )
 	      new CnxnCtxtLeaf[String,String,String](
 		Left[String,String]( blob )
@@ -952,12 +957,10 @@ object PersistedMonadicTS
 	      "String",
 	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
 	    ) => {
-	      fromBlob(
-		rv.replace(
-		  "&quot;",
-		  "\""
-		)
-	      ) match {
+	      val unBlob =
+		fromXQSafeJSONBlob( rv )
+
+	      unBlob match {
 		case rsrc : mTT.Resource => {
 		  getGV( rsrc ).getOrElse( "" )
 		}
@@ -1083,9 +1086,12 @@ object StdPersistedMonadicTS
 	      tweet(
 		"warning: CnxnCtxtLabel method is using XStream"
 	      )
+
+	      val blob = toXQSafeJSONBlob( rsrc )
+
 	      new CnxnCtxtLeaf[Symbol,Symbol,String](
 		Left[String,Symbol](
-		  new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+		  blob
 		)
 	      )
 	    }
@@ -1093,8 +1099,7 @@ object StdPersistedMonadicTS
 	      tweet(
 		"using XStream method"
 	      )
-	      val blob =
-		new XStream( new JettisonMappedXmlDriver ).toXML( rsrc )
+	      val blob = toXQSafeJSONBlob( rsrc )
 	      //asXML( rsrc )
 	      new CnxnCtxtLeaf[Symbol,Symbol,String](
 		Left[String,Symbol]( blob )
@@ -1119,12 +1124,10 @@ object StdPersistedMonadicTS
 	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
 	    ) => {
 	      def extractValue( rv : String ) : String = {
-		fromBlob(
-		  rv.replace(
-		    "&quot;",
-		    "\""
-		  )
-		) match {
+		val unBlob =
+		  fromXQSafeJSONBlob( rv )
+
+		unBlob match {
 		  case rsrc : mTT.Resource => {
 		    (getGV( rsrc ).getOrElse( "" ) + "")
 		  }

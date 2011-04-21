@@ -159,13 +159,19 @@ with Blobify
 with WireTap
 with Journalist
 with ConfiggyReporting
-with ConfiggyJournal
+//with ConfiggyJournal
+with ConfiguredJournal
+with ConfigurationTrampoline
 with UUIDOps {
   lazy val _labelMap = new TMap[Namespace,Var,Tag,Value]()
   lazy val _waiters = new HashMap[GetRequest,List[GetContinuation]]()  
 
   override def tap [A] ( fact : A ) : Unit = {
     reportage( fact )
+  }
+
+  override def configurationDefaults : ConfigurationDefaults = {
+    BaseXDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
   override def tmpDirStr : String = CnxnStorageDefaults.tmpDirStr
