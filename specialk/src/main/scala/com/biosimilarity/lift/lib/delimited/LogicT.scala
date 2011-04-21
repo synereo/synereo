@@ -10,15 +10,39 @@ package com.biosimilarity.lift.lib.delimited
 
 import com.biosimilarity.lift.lib.monad._
 
+/* ------------------------------------------------------------------------
+ *
+ * The LogicT monad transformer provides an interface for handling
+ * backtracking in any monad, M. It does so with a sensitivity to the
+ * possibility of divergence of computations. Thus, it provides a fair
+ * disjunction (interleaving) and conjunction (join).
+ *
+ * The interface is factored through one function, msplit. Thus, an
+ * implementation is only required to provide the implementation of
+ * that function.
+ *
+ * Practically, this differs from the paper by Kiselyov, Shan and
+ * Friedman due to the differences between Haskell and Scala's version
+ * of higher-kinded types. We have documented the differences in two
+ * ways: 1) by adding comments regarding alternative signatures of the
+ * functions making up the interface that would be more closely
+ * aligned with a transliteration from the Haskell presentation; 2) by
+ * marking the provided functions with a C for the type-level Currying
+ * needed to make the Scala compiler happy.
+ * 
+ * ------------------------------------------------------------------------ */
 trait LogicT[T[M[_],_],M[_],A] {
   self : SMonadT[T,M,A] =>
 	  
     def tracker : TMSMA[Option[(A,TM[A])]]
-  //def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
-  def msplit [A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
+
+  // def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
+  // def msplit [A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
+
   def msplitC [A] ( tma : TM[A] ) : TM[Option[(A,TM[A])]]
-  //def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
-  def interleave [A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
+
+  // def interleave [M[_],A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
+  // def interleave [A] ( tma1 : T[M,A], tma2 : T[M,A] ) : T[M,A]
   def interleaveC [A] ( tma1 : TM[A], tma2 : TM[A] ) : TM[A] = {
     monadicTMWitness.bind(
       msplitC( tma1 ),
@@ -38,8 +62,8 @@ trait LogicT[T[M[_],_],M[_],A] {
     )
   }
 
-  //def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
-  def join [A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
+  // def join [M[_],A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
+  // def join [A,B] ( tma : T[M,A], binding : A => T[M,B] ) : T[M,B]
   def joinC [A,B] ( tma : TM[A], binding : A => TM[B] ) : TM[B] = {
     monadicTMWitness.bind(
       msplitC( tma ),
@@ -55,12 +79,13 @@ trait LogicT[T[M[_],_],M[_],A] {
       }
     )
   }
+
   // def ifte [M[_],A,B] (
-//     tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
-//   ) : T[M,B]
-  def ifte [A,B] (
-    tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
-  ) : T[M,B]
+  //   tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
+  // ) : T[M,B]
+  // def ifte [A,B] (
+  //  tma : T[M,A], binding : A => T[M,B], tmb : T[M,B]
+  // ) : T[M,B]
   def ifteC [A,B] (
     tma : TM[A], binding : A => TM[B], tmb : TM[B]
   ) : TM[B] = {
@@ -98,6 +123,57 @@ trait LogicT[T[M[_],_],M[_],A] {
       }
     )
   }
+}
+
+trait LogicTRunner[T[M[_],_],M[_],A] {
+  self : SMonadT[T,M,A] with LogicT[T,M,A] =>
+    
+  def observeC( tma : TM[A] ) : M[A]
+  def bagOfNC( oN : Option[Int], tma : TM[A] ) : TM[List[A]] = {
+    def bagOfNCP(
+      oATMA : Option[(A,TM[A])]
+    ) : TM[List[A]] = {
+      oATMA match {
+	case None => {
+	  monadicTMWitness.unit( List() )
+	}
+	case Some( ( a, tmap ) ) => {
+	  monadicTMWitness.bind(
+	    bagOfNC(
+	      for( n <- oN ) yield { n - 1 },
+	      tmap
+	    ),
+	    ( lA : List[A] ) => {
+	      monadicTMWitness.unit(
+		List( a ) ++ lA
+	      )
+	    }
+	  )
+	}
+      }
+    }
+    oN match {
+      case Some( n ) => {
+	if ( n <= 0 ) {
+	  monadicTMWitness.unit( List() )
+	}
+	else {
+	  monadicTMWitness.bind(
+	    msplitC( tma ),
+	    bagOfNCP
+	  )
+	}
+      }
+      case None => {
+	monadicTMWitness.bind(
+	    msplitC( tma ),
+	    bagOfNCP
+	  )
+      }
+    }
+  }
+
+  def runL [L[_]] ( oN : Option[Int], lA : L[A] ) : List[A]
 }
 
 trait LogicTOps[T[M[_],_],M[_],A] 
@@ -235,8 +311,9 @@ trait SFKTScope[M[_]] {
 
   abstract class LogicTSFKTC[A]
   extends MonadTransformerSFKTC[A]
-	   with LogicTOps[SFKT,M,A]
-	   with SMonadT[SFKT,M,A]
+	  with LogicTRunner[SFKT,M,A]
+	  with LogicTOps[SFKT,M,A]
+	  with SMonadT[SFKT,M,A]
   {
     override type TM[A] = SFKTC[A]
 
@@ -277,6 +354,17 @@ trait SFKTScope[M[_]] {
 	  throw new Exception( "Any for universal quantification problem" )
 	}
       }      
+    }
+
+    override def observeC( tma : SFKTC[A] ) : M[A] = {
+      lazy val fA : FK[M[Any]] =
+	throw new Exception( "no answer" )
+      tma.unSFKT(
+	( a : A, fk : FK[M[Any]] ) => {
+	  monadicMWitness.unit( a )
+	},
+	fA
+      ).asInstanceOf[M[A]]
     }
   }
 }
