@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store.xml
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.CnxnLabel
 import com.biosimilarity.lift.model.store.OntologicalStatus
 import com.biosimilarity.lift.model.store.Factual
@@ -86,6 +87,8 @@ extends ConfigurationTrampoline {
 
   def valueStorageType : String =
     configurationFromFile.get( "valueStorageType" ).getOrElse( bail() )  
+  def tmpDirStr : String =
+    configurationFromFile.get( "tmpDirStr" ).getOrElse( bail() )
 }
 
 trait XMLStoreDefaults

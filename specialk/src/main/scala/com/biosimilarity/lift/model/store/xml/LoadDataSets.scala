@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store.xml.datasets
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.store.CnxnLabel
 import com.biosimilarity.lift.model.store.OntologicalStatus
@@ -68,7 +69,7 @@ object BX extends BaseXXMLStore
  with UUIDOps
 {
    override def configurationDefaults : ConfigurationDefaults = {
-     BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
    }
 
   val datasetsDir = "src/main/resources/datasets/"

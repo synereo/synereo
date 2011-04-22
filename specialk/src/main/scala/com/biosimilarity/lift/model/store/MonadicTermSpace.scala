@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
@@ -183,7 +184,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 
     override def configFileName : Option[String] = None
     override def configurationDefaults : ConfigurationDefaults = {
-      ConfiguredJournalDefaults.asInstanceOf[ConfigurationDefaults]
+      ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
     }
  
   }

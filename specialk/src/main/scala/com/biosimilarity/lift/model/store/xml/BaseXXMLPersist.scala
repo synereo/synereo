@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store.xml
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.CnxnLabel
 import com.biosimilarity.lift.model.store.OntologicalStatus
 import com.biosimilarity.lift.model.store.Factual
@@ -34,6 +35,7 @@ import com.biosimilarity.lift.lib._
 
 import org.basex.api.xmldb.BXCollection
 import org.basex.BaseXClient
+import org.basex.server.ClientSession
 import org.basex.core.BaseXException
 import org.basex.core.Context
 import org.basex.core.cmd.{ List => BXListx ,_ }
@@ -52,28 +54,6 @@ import javax.xml.transform.OutputKeys
 import java.util.UUID
 import java.io.File
 
-object BaseXDefaults {
-  implicit val URI : String  =
-    "xmldb:basex://localhost:1984/"
-  val dbHost : String = "localhost"
-  val dbPort : String = "1984"
-  val dbUser : String = "admin"
-  val dbPwd  : String = "admin"
-  implicit val driver : String =
-    "org.basex.api.xmldb.BXDatabase"
-  implicit val dbRoot : String = "/db"
-  implicit val createDB : Boolean = false
-  implicit val indent : Boolean = false
-  implicit val resourceType : String = "XMLResource"
-  val queryServiceType : String = "XPathQueryService"
-  val queryServiceVersion : String = "1.0"
-  val managementServiceType : String =
-    "CollectionManagementService"
-  val managementServiceVersion : String = "1.0"  
-  val valueStorageType : String = "CnxnCtxtLabel"
-  val loggingLevel : String = "Tweet"
-}
-
 trait BaseXXMLStore extends XMLStore {
   self : Journalist
 	 with ConfiggyReporting
@@ -81,10 +61,26 @@ trait BaseXXMLStore extends XMLStore {
          with ConfigurationTrampoline
 	 with UUIDOps =>
   
-    //override type ConfigurationDefaults = BaseXDefaults.getClass
+  var _clientSession : Option[ClientSession] = None
+  def clientSession : ClientSession = {
+    _clientSession match {
+      case Some( cs ) => cs
+      case None => {
+	val cs =
+	  new ClientSession(
+	    dbHost,
+	    dbPort.toInt,
+	    dbUser,
+	    dbPwd
+	  )
+	_clientSession = Some( cs )
+	cs
+      }
+    }
+  }
 
   override def configurationDefaults : ConfigurationDefaults = {
-    BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
   override def getCollection( createIfMissing : Boolean )(
@@ -124,7 +120,7 @@ trait BaseXXMLStore extends XMLStore {
     }    
   }
 
-  def executeInSession(
+  def executeInContext(
     xmlCollStr : String,
     qrys : List[String],
     ostrm : java.io.OutputStream
@@ -152,6 +148,24 @@ trait BaseXXMLStore extends XMLStore {
     }
     finally {
       dbCtxt.close()
+    }
+  }
+
+  def executeInContext(
+    xmlCollStr : String,
+    qry : String,
+    ostrm : java.io.OutputStream
+  ) : Unit = {
+    executeInContext( xmlCollStr, List( qry ), ostrm )
+  }
+
+  def executeInSession(
+    xmlCollStr : String,
+    qrys : List[String],
+    ostrm : java.io.OutputStream
+  ) : Unit = {
+    for( qry <- qrys ) {
+      clientSession.execute( "XQUERY " + qry )
     }
   }
 

@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
@@ -338,7 +339,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     }
 
     override def configurationDefaults : ConfigurationDefaults = {
-      BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+      ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
     } 
     
     // BUGBUG -- LGM: Further evidence of problem with current factorization...

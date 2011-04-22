@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.lib._
 
 import scala.concurrent.{Channel => Chan, _}
@@ -298,7 +299,7 @@ object MonadicRegexTSpace
 
   override def configFileName : Option[String] = None
   override def configurationDefaults : ConfigurationDefaults = {
-    ConfiguredJournalDefaults.asInstanceOf[ConfigurationDefaults]
+    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
   def representative( ptn : String ) : String = {

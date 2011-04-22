@@ -27,7 +27,7 @@ case class RegularInjection[Name, NSeq <: NmSeq[Name]](
 		    +
 		    (
 		      if ( e ) {
-			Math.pow( 2, pos ).asInstanceOf[Int]
+			scala.math.pow( 2, pos ).toInt
 		      }
 			else { 0 }
 		    )

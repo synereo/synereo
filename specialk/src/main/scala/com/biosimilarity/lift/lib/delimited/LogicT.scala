@@ -106,8 +106,9 @@ trait LogicT[T[M[_],_],M[_],A] {
       }
     )
   }
+
   //def once [M[_],A] ( tma : T[M,A] ) : T[M,A]
-  def once [A] ( tma : T[M,A] ) : T[M,A]
+  //def once [A] ( tma : T[M,A] ) : T[M,A]
   def onceC [A] ( tma : TM[A] ) : TM[A] = {
     monadicTMWitness.bind(
       msplitC( tma ),

@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
@@ -66,7 +67,11 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     self : MonadicWireToTrgtConversion
       with MonadicGenerators
       with WireTap
-      with Journalist =>
+      with Journalist
+      with ConfiggyReporting
+  //with ConfiggyJournal
+      with ConfiguredJournal
+      with ConfigurationTrampoline =>
       
     override type Trgt = Msgs.JTSReqOrRsp    
 
@@ -125,13 +130,21 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with MonadicWireToTrgtConversion with MonadicGenerators with WireTap
   with Journalist
   with ConfiggyReporting
-  with ConfiggyJournal
+  //with ConfiggyJournal
+  with ConfiguredJournal
+  with ConfigurationTrampoline
   with UUIDOps {
       override type Wire = String
       override type Trgt = Msgs.JTSReqOrRsp
       override def tap [A] ( fact : A ) : Unit = {
 	reportage( fact )
       }
+
+    override def configFileName : Option[String] = None
+    override def configurationDefaults : ConfigurationDefaults = {
+      ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
+    }
+
     def jsonDispatcher() : StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
       jsonDispatcher(
 	"mult",
@@ -231,7 +244,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   trait MonadicCollective 
   extends MonadicAgency[String,Msgs.DReq,Msgs.DRsp] {
     self : MonadicWireToTrgtConversion
-	with MonadicGenerators with WireTap with Journalist =>
+	with MonadicGenerators
+	with WireTap
+	with Journalist
+	with ConfiggyReporting
+  //with ConfiggyJournal
+	with ConfiguredJournal
+	with ConfigurationTrampoline =>
     
     def agentTwistedPairs :
     Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]
@@ -240,6 +259,17 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit
 
     def acqQName( acqURI : URI ) : String
+
+    override def setLoggingLevel( verb : Verbosity ) : Unit = {
+      _loggingLevel = Some( verb )
+      for( ( uri, acquaintance ) <- agentTwistedPairs ) {
+	acquaintance match {
+	  case sma : SMAJATwistedPair => {
+	    sma.setLoggingLevel( verb )
+	  }
+	}
+      }
+    }
     
     def meetNGreet( acquaintances : Seq[URI] )
     : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =

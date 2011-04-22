@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.lib._
 
 object CnxnLeafAndBranch

@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.lib._
 
@@ -171,10 +172,10 @@ with UUIDOps {
   }
 
   override def configurationDefaults : ConfigurationDefaults = {
-    BaseXDefaults.asInstanceOf[ConfigurationDefaults]
+    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
-  override def tmpDirStr : String = CnxnStorageDefaults.tmpDirStr
+  //override def tmpDirStr : String = CnxnStorageDefaults.tmpDirStr
 
   def places(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
