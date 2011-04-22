@@ -63,9 +63,9 @@ extends ConfigurationTrampoline {
   def dbPort                   : String =
     configurationFromFile.get( "dbPort" ).getOrElse( bail() )
   def dbUser                   : String =
-    configurationFromFile.get( "dbHost" ).getOrElse( bail() )
+    configurationFromFile.get( "dbUser" ).getOrElse( bail() )
   def dbPwd                    : String =
-    configurationFromFile.get( "dbPort" ).getOrElse( bail() )
+    configurationFromFile.get( "dbPwd" ).getOrElse( bail() )
   def driver                   : String =
     configurationFromFile.get( "driver" ).getOrElse( bail() )
   def dbRoot                   : String =

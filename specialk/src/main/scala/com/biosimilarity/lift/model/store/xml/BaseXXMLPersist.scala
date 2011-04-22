@@ -165,7 +165,8 @@ trait BaseXXMLStore extends XMLStore {
     ostrm : java.io.OutputStream
   ) : Unit = {
     for( qry <- qrys ) {
-      clientSession.execute( "XQUERY " + qry )
+      clientSession.setOutputStream( ostrm )
+      clientSession.execute( new XQuery( qry ) )
     }
   }
 
@@ -194,12 +195,14 @@ extends CnxnStorage[Namespace,Var,Tag] {
   override def store( xmlCollStr : String )(
     cnxn : CnxnCtxtLabel[Namespace,Var,String]
   ) : Unit = {   
-    val dbCtxt = new Context()
+    //val dbCtxt = new Context()
+    val srvrRspStrm = new java.io.ByteArrayOutputStream()
     try {
       tweet( 
 	"attempting to open collection: " + xmlCollStr
       )
-      new Open( xmlCollStr ).execute( dbCtxt )
+      clientSession.setOutputStream( srvrRspStrm )
+      clientSession.execute( new Open( xmlCollStr ) )
       
       tweet( 
 	"collection " + xmlCollStr + " opened"
@@ -232,9 +235,7 @@ extends CnxnStorage[Namespace,Var,Tag] {
       println( "insertion query : \n" + insertQry )
       
       try {	
-	new XQuery(
-	  insertQry
-	).execute( dbCtxt )
+	clientSession.execute( new XQuery( insertQry ) )
       }
       catch {
 	case e : BaseXException => {
@@ -253,21 +254,23 @@ extends CnxnStorage[Namespace,Var,Tag] {
 	tweet( 
 	  "attempting to create " + xmlCollStr
 	)
-	new CreateDB( xmlCollStr ).execute( dbCtxt )
+	clientSession.execute( new CreateDB( xmlCollStr ) )
 	val recordElem = xmlIfier.asXML( cnxn )
 	val recordsElem =
 	  <records>{recordElem}</records>
 	tweet( 
 	  "adding database doc to " + xmlCollStr
 	)
-	new Add(
-	  recordsElem.toString,
-	  "database"
-	).execute( dbCtxt )          
+	clientSession.execute(
+	  new Add(
+	    recordsElem.toString,
+	    "database"
+	  )
+	)          
       }      
     }    
     finally {
-      dbCtxt.close()
+      srvrRspStrm.close()
     }
   }
 }
