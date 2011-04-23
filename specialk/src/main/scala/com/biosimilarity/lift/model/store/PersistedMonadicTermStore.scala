@@ -600,93 +600,77 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				    bail()
 				  )
 				)
-			      getCollection( true )(
-				xmlCollName
+
+			      val ostrm =
+				new java.io.ByteArrayOutputStream()
+			      
+			      executeInSession( 
+				xmlCollName,
+				qry,
+				ostrm
 			      )
-			      match {
-				case Some( xmlColl ) => {
-				  val srvc =
-				    getQueryService( xmlColl )(
-				      queryServiceType,
-				      queryServiceVersion
-				    )
-				
+
+			      val rsrcStr = ostrm.toString( "UTF-8" )
+
+			      rsrcStr match {
+				case "" => {	
 				  tweet(
 				    (
-				      "querying db : " + pd.db
-				      + " from coll " + xmlCollName
-				      + " where " + qry
+				      "database "
+				      + xmlCollName
+				      + " had no matching resources."
 				    )
 				  )
-				
-				  val rsrcSet =
-				    execute( xmlColl )( srvc )( qry )
-				
-				  if ( rsrcSet.getSize == 0 ) {	
-				    tweet(
+				  forward( ask, hops, path )
+				  rk( oV )
+				}
+				case _ => {
+				  val rsltsElem =
+				    XML.loadString(
 				      (
-					"database "
-					+ xmlColl.getName
-					+ " had no matching resources."
+					"<results>"
+					+ ostrm.toString( "UTF-8" )
+					+ "</results>"
 				      )
 				    )
-				    forward( ask, hops, path )
-				    rk( oV )
-				  }
-				  else {
-				    tweet(
-				      (
-					"database "
-					+ xmlColl.getName
-					+ " had "
-					+ rsrcSet.getSize
-					+ " matching resources."
-				      )
+				  val rslts =
+				    rsltsElem.child.toList.filter(
+				      ( x : Node ) => x.isInstanceOf[Elem]
+				    ).asInstanceOf[List[Elem]]
+				  
+				  tweet(
+				    (
+				      "database "
+				      + xmlCollName
+				      + " had "
+				      + rslts.length
+				      + " matching resources."
 				    )
-				    // BUGBUG -- LGM need to mput rcrds
-				    // and delete rcrd from DB
+				  )  				  				  
 				  
-				    val rsrcIter = rsrcSet.getIterator
-				    
-				    val rcrds =
-				      new MutableList[( Elem, Option[mTT.Resource] )]()
-				  
-				    while( rsrcIter.hasMoreResources ) {
-				      val xrsrc = rsrcIter.nextResource	  
-				      
-				      val xrsrcCntntStr =
-				      xrsrc.getContent.toString
+				  for( rslt <- itergen[Elem]( rslts ) ) {
+				    tweet( "retrieved " + rslt.toString )
+				    val ersrc = asResource( path, rslt )
 
-				      tweet( "retrieved " + xrsrcCntntStr )
-				      
-				      val ersrc : Elem =
-					XML.loadString( xrsrcCntntStr )
-				      
-				      rcrds += (( ersrc, asResource( path, ersrc ) ))
-				    }
-				    
-				    val ( ersrc, rslt ) = rcrds( 0 )
-				    val cacheRcrds = rcrds.drop( 1 )
-				    for( ( elem, cacheRcrd ) <- cacheRcrds ) {
-				      tweet( "caching " + cacheRcrd )
-				    }
-				    
 				    if ( consume ) {
 				      tweet( "removing from store " + rslt )
 				      removeFromStore( 
 					persist,
-					ersrc,
+					rslt,
 					collName
 				      )
 				    }
-
-				    tweet( "returning " + rslt )
-				    rk( rslt )
+				  
+				    // BUGBUG -- LGM : This is a
+				    // window of possible
+				    // failure; if we crash here,
+				    // then the result is out of
+				    // the store, but we haven't
+				    // completed processing. This is
+				    // where we need Tx.
+				    tweet( "returning " + ersrc )
+				    rk( ersrc )
 				  }
-				}
-				case _ => {
-				  forward( ask, hops, path )
-				  rk( oV )
 				}
 			      }
 			    }			    

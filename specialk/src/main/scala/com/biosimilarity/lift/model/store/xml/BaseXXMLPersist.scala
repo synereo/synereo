@@ -115,7 +115,7 @@ trait BaseXXMLStore extends XMLStore {
       Some( document )
     }
     else {      
-      println( "cannot read file " + xmlRsrcStr )
+      //println( "cannot read file " + xmlRsrcStr )
       None
     }    
   }
@@ -221,7 +221,7 @@ extends CnxnStorage[Namespace,Var,Tag] {
 	"attempting to insert record into database doc in " + xmlCollStr
       )
 
-      println( "record : \n" + nodeStr )
+      //println( "record : \n" + nodeStr )
       
       val insertQry = 
 	insertTemplate.replace(
@@ -232,7 +232,7 @@ extends CnxnStorage[Namespace,Var,Tag] {
 	  xmlCollStr
 	)
 
-      println( "insertion query : \n" + insertQry )
+      //println( "insertion query : \n" + insertQry )
       
       try {	
 	clientSession.execute( new XQuery( insertQry ) )
