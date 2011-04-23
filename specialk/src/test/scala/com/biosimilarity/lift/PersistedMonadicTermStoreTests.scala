@@ -53,7 +53,7 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
   import PersistedMonadicTS._
   "basic get" should {
     "Retrieve values from the GraphFour DB" in {
-      BX.reportGraphs
+      BX.reportGraphsClientSession
       val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
       val atps = pimgJunq.agentTwistedPairs
       val oge = BX.outerGraphExprCCL

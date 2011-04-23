@@ -50,6 +50,8 @@ import org.xmldb.api.base._
 import org.xmldb.api.modules._
 import org.xmldb.api._
 
+import scala.xml._
+
 import javax.xml.transform.OutputKeys
 import java.util.UUID
 import java.io.File
@@ -157,6 +159,38 @@ trait BaseXXMLStore extends XMLStore {
     ostrm : java.io.OutputStream
   ) : Unit = {
     executeInContext( xmlCollStr, List( qry ), ostrm )
+  }
+
+  def executeInSession(
+    qry : String
+  ) : List[Elem] = {
+    val srvrRspStrm = new java.io.ByteArrayOutputStream()
+    clientSession.setOutputStream( srvrRspStrm )
+    clientSession.execute( new XQuery( qry ) )
+    val rsltsStr = srvrRspStrm.toString( "UTF-8" )
+    srvrRspStrm.close
+    rsltsStr match {
+      case "" => {
+	Nil
+      }
+      case _ => {
+	XML.loadString(
+	  (
+	    "<results>"
+	    + rsltsStr
+	    + "</results>"
+	  )
+	).child.toList.filter(
+	  ( x : Node ) => x.isInstanceOf[Elem]
+	).asInstanceOf[List[Elem]]
+      }
+    }    
+  }
+
+  def executeInSession(
+    qrys : List[String]
+  ) : List[Elem] = {
+    qrys.flatMap( executeInSession )
   }
 
   def executeInSession(

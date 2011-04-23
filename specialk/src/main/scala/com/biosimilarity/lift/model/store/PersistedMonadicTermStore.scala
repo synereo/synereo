@@ -54,6 +54,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def storeUnitStr : String
     def toFile( ptn : mTT.GetRequest ) : Option[File]
     def query( ptn : mTT.GetRequest ) : Option[String]
+    def query( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String]
 
     def labelToNS : Option[String => Namespace]
     def textToVar : Option[String => Var]
@@ -115,6 +116,13 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 
     def query( ptn : mTT.GetRequest ) : Option[String] = {
       for( pd <- persistenceManifest; qry <- pd.query( ptn ) ) 
+	yield {
+	  qry
+	}
+    }
+
+    def query( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String] = {
+      for( pd <- persistenceManifest; qry <- pd.query( xmlCollStr, ptn ) ) 
 	yield {
 	  qry
 	}
@@ -298,6 +306,41 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		  )
 		)
 	      )
+	    )
+	  )
+	}
+    }
+
+    override def query(
+      xmlCollStr : String,
+      ptn : mTT.GetRequest
+    ) : Option[String] = {
+      for( ttv <- textToVar )
+	yield {
+	  val ccb =
+	    new CnxnCtxtBranch[Namespace,Var,Tag](
+	      kvNameSpace,
+	      List(
+		asCCL( ptn ),
+		new CnxnCtxtLeaf[Namespace,Var,Tag](
+		  Right(
+		    ttv( "VisForValueVariableUniqueness" )
+		  )
+		)
+	      )
+	    )
+	  xqQuery(
+	    ccb,
+	    XQCC(
+	      Some( ccb ),
+	      ccb,
+	      "collection( '%COLLNAME%' )/".replace(
+		"%COLLNAME%",
+		xmlCollStr
+	      ),
+	      Some( nextXQV ),
+	      None, None,
+	      DeBruijnIndex( 0, 0 )
 	    )
 	  )
 	}
@@ -586,34 +629,34 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			  tweet(
 			    "accessing db : " + pd.db
 			  )
-			  val oQry = query( path )
+
+			  val xmlCollName =
+			    collName.getOrElse(
+			      storeUnitStr.getOrElse(
+				bail()
+			      )
+			    )
+
+			  val oQry = query( xmlCollName, path )
+			  
 			  oQry match {
 			    case None => {
 			      tweet( ">>>>> forwarding..." )
 			      forward( ask, hops, path )
 			      rk( oV )
 			    }
-			    case Some( qry ) => {
-			      val xmlCollName =
-				collName.getOrElse(
-				  storeUnitStr.getOrElse(
-				    bail()
-				  )
+			    case Some( qry ) => {			      
+
+			      tweet(
+				(
+				  "retrieval query : \n" + qry
 				)
-
-			      val ostrm =
-				new java.io.ByteArrayOutputStream()
-			      
-			      executeInSession( 
-				xmlCollName,
-				qry,
-				ostrm
 			      )
+			      
+			      val rslts = executeInSession( qry )
 
-			      val rsrcStr = ostrm.toString( "UTF-8" )
-
-			      rsrcStr match {
-				case "" => {	
+			      rslts match {
+				case Nil => {	
 				  tweet(
 				    (
 				      "database "
@@ -624,20 +667,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				  forward( ask, hops, path )
 				  rk( oV )
 				}
-				case _ => {
-				  val rsltsElem =
-				    XML.loadString(
-				      (
-					"<results>"
-					+ ostrm.toString( "UTF-8" )
-					+ "</results>"
-				      )
-				    )
-				  val rslts =
-				    rsltsElem.child.toList.filter(
-				      ( x : Node ) => x.isInstanceOf[Elem]
-				    ).asInstanceOf[List[Elem]]
-				  
+				case _ => { 			  
 				  tweet(
 				    (
 				      "database "

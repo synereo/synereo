@@ -35,6 +35,7 @@ import com.biosimilarity.lift.model.store.CnxnXQuery
 import com.biosimilarity.lift.lib._
 
 import org.basex.api.xmldb.BXCollection
+import org.basex.server.ClientSession
 import org.basex.core.BaseXException
 import org.basex.core.Context
 import org.basex.core.cmd.{ List => BXList, _ }
@@ -67,7 +68,7 @@ object BX extends BaseXXMLStore
  with ConfiguredJournal
  with ConfigurationTrampoline
  with UUIDOps
-{
+{  
    override def configurationDefaults : ConfigurationDefaults = {
      ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
    }
@@ -87,6 +88,14 @@ object BX extends BaseXXMLStore
       "for $lbl in //LRBoundVertex"
       + " " 
       + "where $lbl//VertexString/String[@value=\"%V\"]"
+      + " "
+      + "return $lbl/VertexExprLabel/VertexVariable/LIdent/@value"
+    );
+  val vertexRoleQueryClientSessionTemplate =
+    (
+      "for $lbl in collection( '%COLLNAME%' )//LRBoundVertex"
+      + " " 
+      + "where $lbl//VertexString/String[@value=\"%V%\"]"
       + " "
       + "return $lbl/VertexExprLabel/VertexVariable/LIdent/@value"
     )
@@ -139,7 +148,7 @@ object BX extends BaseXXMLStore
 
     // open the database for operations
     new BXCollection( dbNameStr, true )
-  }
+  }  
 
   def loadDataSets = {
     dbNames.zip( dbSets ).map(
@@ -148,7 +157,7 @@ object BX extends BaseXXMLStore
   }
 
   lazy val dataSets = loadDataSets
-
+  
   def reportGraphs = {
     for( dataSet <- dataSets.take( 3 ) ) {
       val xqSrvc =
@@ -213,6 +222,129 @@ object BX extends BaseXXMLStore
       println( 
 	"// *************************************************************\n\n"
       )
+    }
+  }
+
+  def populateDBClientSession(
+    dbNameStr : String,      // name of the database
+    contentFileStr : String  // root of the file name of the data
+  ) = {    
+    val srvrRspStrm = new java.io.ByteArrayOutputStream()
+    // new database
+    try {
+      clientSession.setOutputStream( srvrRspStrm )
+      // leftover from a test run
+      clientSession.execute( new Open( dbNameStr ) )
+      // so... get rid of it
+      clientSession.execute( new DropDB( dbNameStr ) )
+    }
+    catch {
+      case e : BaseXException => {
+	// fresh green field
+	clientSession.execute( new CreateDB( dbNameStr ) )
+	// add the content
+	clientSession.execute(
+	  new Add(
+	    contentFileStr,
+	    dbNameStr
+	  )
+	)
+      }
+    }
+  }
+
+  def loadDataSetsClientSession = {
+    dbNames.zip( dbSets ).map(
+      { ( dbNData ) => populateDBClientSession( dbNData._1, dbNData._2 ) }
+    )
+  }    
+
+  def reportGraphsClientSession = {
+    try {
+      for( dbName <- dbNames.take( 3 ) ) {      
+	val vertices =
+	  executeInSession(
+	    (
+	      "for $p in collection( '%COLLNAME%' )".replace(
+		"%COLLNAME%",
+		dbName
+	      )
+	      + vertexQuery2
+	      + " return $p"
+	    )
+	  )
+
+	println( 
+	  "// *************************************************************"
+	)
+	println( 
+	  "// Report for database: " + dbName 
+	)      
+	println( 
+	  "// *************************************************************"
+	)   
+	
+	println(
+	  "Number of vertices in this graph is " + vertices.length + "\n"
+	)
+	
+	for( vertexElem <- vertices ) {
+	  val vName = vertexElem \ "VertexString" \ "String" \ "@value"
+	  val vRoleQry =
+	    vertexRoleQueryClientSessionTemplate.replace(
+	      "%V%",
+	      vName.toString
+	    ).replace(
+	      "%COLLNAME%",
+	      dbName
+	    )
+	  
+	  val vRoles = executeInSession( vRoleQry )
+	    
+	  for( vRole <- vRoles ) {
+	    println(
+	      (
+		"and plays in the role "
+		+	vRole.toString
+	      )
+	    )
+	  }
+	  
+	  println( "" )
+	}           
+
+	val edges = 
+	  executeInSession(
+	    (
+	      "for $p in collection( '%COLLNAME%' )".replace(
+		"%COLLNAME%",
+		dbName
+	      )
+	      + edgeQuery2
+	      + " return $p"
+	    )
+	  )
+
+	println(
+	  "\n\nNumber of edges in this graph is " + edges.length + "\n"
+	)
+	
+	for( edgeElem <- edges ) {
+	  val eName = edgeElem \ "EdgeString" \ "String" \ "@value"
+	  println( "Edge name is " + eName )	
+	  println( edgeElem \ "EdgeString" )
+	  println( "" )
+	}      
+	
+	println( 
+	  "// *************************************************************\n\n"
+	)
+      }
+    }
+    catch {
+      case e : BaseXException => {
+	tweetTrace( e )
+      }
     }
   }
 }
