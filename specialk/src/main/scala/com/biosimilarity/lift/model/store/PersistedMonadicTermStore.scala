@@ -637,73 +637,81 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			      )
 			    )
 
-			  val oQry = query( xmlCollName, path )
+			  // Defensively check that db is actually available
 			  
-			  oQry match {
-			    case None => {
-			      tweet( ">>>>> forwarding..." )
-			      forward( ask, hops, path )
-			      rk( oV )
-			    }
-			    case Some( qry ) => {			      
-
-			      tweet(
-				(
-				  "retrieval query : \n" + qry
-				)
-			      )
-			      
-			      val rslts = executeInSession( qry )
-
-			      rslts match {
-				case Nil => {	
-				  tweet(
-				    (
-				      "database "
-				      + xmlCollName
-				      + " had no matching resources."
-				    )
-				  )
+			  checkIfDBExists( xmlCollName, true ) match {
+			    case true => {
+			      val oQry = query( xmlCollName, path )
+			  
+			      oQry match {
+				case None => {
+				  tweet( ">>>>> forwarding..." )
 				  forward( ask, hops, path )
 				  rk( oV )
 				}
-				case _ => { 			  
+				case Some( qry ) => {	
 				  tweet(
 				    (
-				      "database "
-				      + xmlCollName
-				      + " had "
-				      + rslts.length
-				      + " matching resources."
+				      "retrieval query : \n" + qry
 				    )
-				  )  				  				  
-				  
-				  for( rslt <- itergen[Elem]( rslts ) ) {
-				    tweet( "retrieved " + rslt.toString )
-				    val ersrc = asResource( path, rslt )
-
-				    if ( consume ) {
-				      tweet( "removing from store " + rslt )
-				      removeFromStore( 
-					persist,
-					rslt,
-					collName
+				  )
+				
+				  val rslts = executeInSession( qry )
+				
+				  rslts match {
+				    case Nil => {	
+				      tweet(
+					(
+					  "database "
+					  + xmlCollName
+					  + " had no matching resources."
+					)
 				      )
+				      forward( ask, hops, path )
+				      rk( oV )
 				    }
+				    case _ => { 			  
+				      tweet(
+					(
+					  "database "
+					  + xmlCollName
+					  + " had "
+					  + rslts.length
+					  + " matching resources."
+					)
+				      )		  				  
 				  
-				    // BUGBUG -- LGM : This is a
-				    // window of possible
-				    // failure; if we crash here,
-				    // then the result is out of
-				    // the store, but we haven't
-				    // completed processing. This is
-				    // where we need Tx.
-				    tweet( "returning " + ersrc )
-				    rk( ersrc )
+				      for( rslt <- itergen[Elem]( rslts ) ) {
+					tweet( "retrieved " + rslt.toString )
+					val ersrc = asResource( path, rslt )
+					
+					if ( consume ) {
+					  tweet( "removing from store " + rslt )
+					  removeFromStore( 
+					    persist,
+					    rslt,
+					    collName
+					  )
+					}
+					
+					// BUGBUG -- LGM : This is a
+					// window of possible
+					// failure; if we crash here,
+					// then the result is out of
+					// the store, but we haven't
+					// completed processing. This is
+					// where we need Tx.
+					tweet( "returning " + ersrc )
+					rk( ersrc )
+				      }
+				    }
 				  }
-				}
-			      }
-			    }			    
+				}			    
+			      }			      
+			    }
+			    case false => {
+			      rk( oV )
+			    }
 			  }
 			}		      
 		      }

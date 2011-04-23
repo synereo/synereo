@@ -225,6 +225,27 @@ extends CnxnStorage[Namespace,Var,Tag] {
     override def tmpDirStr : String = {
       throw new Exception( "don't use the filebased api" )
     }
+
+  def checkIfDBExists(
+    xmlCollStr : String,
+    leaveOpen : Boolean
+  ) : Boolean = {
+    try {
+      val srvrRspStrm =
+	new java.io.ByteArrayOutputStream()
+      clientSession.setOutputStream( srvrRspStrm )
+      clientSession.execute( new Open( xmlCollStr ) )
+      if ( ! leaveOpen ) {
+	clientSession.execute( new Close() )
+      }
+      true
+    }
+    catch {
+      case e : BaseXException => {
+	false
+      }
+    }
+  }
   
   override def store( xmlCollStr : String )(
     cnxn : CnxnCtxtLabel[Namespace,Var,String]
