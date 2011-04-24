@@ -34,7 +34,7 @@ import com.biosimilarity.lift.lib.monad._
 trait LogicT[T[M[_],_],M[_],A] {
   self : SMonadT[T,M,A] =>
 	  
-    def tracker : TMSMA[Option[(A,TM[A])]]
+    //def tracker : TMSMA[Option[(A,TM[A])]]
 
   // def msplit [M[_],A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
   // def msplit [A] ( tma : T[M,A] ) : T[M,Option[(A,T[M,A])]]
