@@ -129,7 +129,7 @@ trait LogicT[T[M[_],_],M[_],A] {
 trait LogicTRunner[T[M[_],_],M[_],A] {
   self : SMonadT[T,M,A] with LogicT[T,M,A] =>
     
-  def observeC( tma : TM[A] ) : M[A]
+    
   def bagOfNC( oN : Option[Int], tma : TM[A] ) : TM[List[A]] = {
     def bagOfNCP(
       oATMA : Option[(A,TM[A])]
@@ -172,9 +172,7 @@ trait LogicTRunner[T[M[_],_],M[_],A] {
 	  )
       }
     }
-  }
-
-  def runL [L[_]] ( oN : Option[Int], lA : L[A] ) : List[A]
+  }  
 }
 
 trait LogicTOps[T[M[_],_],M[_],A] 
@@ -182,14 +180,14 @@ extends LogicT[T,M,A]{
   self : SMonadT[T,M,A] =>
 	//with MonadPlus[M] =>
     
-  def mplusTMWitness : MonadPlus[TM] with MonadM
+  //def mplusTMWitness : MonadPlus[TM] with MonadM
 
   def reflect [A] ( optATMA : Option[(A,TM[A])] ) : TM[A] = {
     optATMA match {
-      case None => mplusTMWitness.zero
+      case None => monadicTMWitness.zero
       case Some( ( a, tma ) ) => {
-	mplusTMWitness.plus(
-	  mplusTMWitness.unit( a ).asInstanceOf[TM[A]],
+	monadicTMWitness.plus(
+	  monadicTMWitness.unit( a ).asInstanceOf[TM[A]],
 	  tma
 	)
       }
@@ -225,7 +223,7 @@ trait SFKTScope[M[_]] {
     override val unSFKT : ( SK[M[Any],A], FK[M[Any]] ) => M[Any]
   ) extends SFKT[M,A]( unSFKT )
 
-  abstract class MonadicSFKTC
+  trait MonadicSFKTC
   extends BMonad[SFKTC]
 	   with MonadPlus[SFKTC]
   {
@@ -355,18 +353,74 @@ trait SFKTScope[M[_]] {
 	  throw new Exception( "Any for universal quantification problem" )
 	}
       }      
-    }
+    }    
+    
+    //def runL [L[_]] ( oN : Option[Int], lA : L[A] ) : List[A]
+    // def runM ( oN : Option[Int], tma : SFKTC[A] ) : M[List[A]] = {
+//       ( oN, tma ) match {
+// 	case ( None, SFKTC( unSFKT ) ) => {
+// 	  val sk = 
+// 	    {
+// 	      ( a : A, fk : FK[M[Any]] ) => {
+// 		monadicMWitness.bind(
+// 		  fk,
+// 		  ( x : List[A] ) => {
+// 		    monadicMWitness.unit(
+// 		      List( a ) ++ x
+// 		    )
+// 		  }
+// 		)
+// 	      }
+// 	    }
+// 	  unSFKT( sk, ( monadicMWitness.unit( Nil ) ) )
+// 	}
+// 	case ( Some( n ), SFKTC( unSFKT ) ) => {
+// 	  if ( n <= 0 ) {
+// 	    monadicMWitness.unit( Nil )
+// 	  }
+// 	  else {
+// 	    def runMP( oAM : Option[( A, M[A] )] ) : M[List[A]] = {
+// 	      oAM match {
+// 		case None => {
+// 		  monadicMWitness.unit( Nil )
+// 		}
+// 		case Some( ( a, tmap ) ) => {
+// 		  monadicMWitness.bind(
+// 		    runM( Some( n - 1 ), tmap ),
+// 		    ( x : List[A] ) => {
+// 		      monadicMWitness.unit(
+// 			List( a ) ++ x
+// 		      )
+// 		    }
+// 		  )
+// 		}
+// 	      }
+// 	    }
+// 	  }
+// 	}
+// 	case ( Some( 1 ), SFKTC( unSFKT ) ) => {
+// 	  unSFKT(
+// 	    {
+// 	      ( a : A, fk : FK[M[Any]] ) => {
+// 		monadicMWitness.unit( List( a ) )
+// 	      }
+// 	    },
+// 	    monadicMWitness.unit( Nil )
+// 	  )
+// 	}
+//       }
+//     }
 
-    override def observeC( tma : SFKTC[A] ) : M[A] = {
-      lazy val fA : FK[M[Any]] =
-	throw new Exception( "no answer" )
-      tma.unSFKT(
-	( a : A, fk : FK[M[Any]] ) => {
-	  monadicMWitness.unit( a )
-	},
-	fA
-      ).asInstanceOf[M[A]]
-    }
+//     def observeC( tma : SFKTC[A] ) : M[A] = {
+//       lazy val fA : FK[M[Any]] =
+// 	throw new Exception( "no answer" )
+//       tma.unSFKT(
+// 	( a : A, fk : FK[M[Any]] ) => {
+// 	  monadicMWitness.unit( a )
+// 	},
+// 	fA
+//       ).asInstanceOf[M[A]]
+//     }
   }
 }
 

@@ -54,7 +54,9 @@ trait MonadT[T[M[_],_],M[_]] {
   def monadicMWitness : MonadM  
   def monadicTMWitness : MonadTM  
   
-  def lift [A] ( ma : M[A] ) : T[M,A]
+  def lift [A] ( ma : M[A] ) : T[M,A] = {
+    liftC[A]( ma )
+  }
   def liftC [A] ( ma : M[A] ) : TM[A]
 }
 
@@ -140,7 +142,11 @@ trait ScalaMonadAdapter[Shape[_],A] {
 
 trait SMonadT[T[M[_],_],M[_],A]
 extends MonadT[T,M] {  
-  trait TMSMA[A] extends ScalaMonadAdapter[TM,A] with BMonad[TM]
+  trait TMSMA[A]
+       extends ScalaMonadAdapter[TM,A]
+       with BMonad[TM]
+       with MonadPlus[TM]
+
   def tmsma : TMSMA[A]
 }
 

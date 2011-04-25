@@ -13,7 +13,7 @@ import com.biosimilarity.lift.lib.monad._
 import scala.collection.immutable.Map
 import scala.collection.immutable.HashMap
 
-class TicTacToe( n : Int, m : Int ) {
+abstract class TicTacToe[M1[_]]( n : Int, m : Int ) extends SFKTScope[M1] {
   trait Mark
   case object X extends Mark
   case object O extends Mark
@@ -205,7 +205,7 @@ class TicTacToe( n : Int, m : Int ) {
        extends LogicT[T,M,Outcome]
   with LogicTRunner[T,M,Outcome]
   with SMonadT[T,M,Outcome] {
-    override type TM[A] = T[M,A]
+    //override type TM[A] = T[M,A]
     def p : Mark
     def proc( g : Game ) : TM[Outcome]        
   }
@@ -253,11 +253,11 @@ class TicTacToe( n : Int, m : Int ) {
   // This really illustrates the difference between Scala and pure
   // functional languages. In Haskell, for example, this is a
   // function. In Scala there is no place for a named function to
-  // reside but on a class and/or object. All of the typing
-  // obligations need to be discharged in the context of the class.
-  abstract class AI[T[M[_],_],M[_]]( val p : Mark )
-  extends PlayerProc[T,M] {    
+  // reside but on a trait, class or object. All of the typing
+  // obligations need to be discharged in the context of such.
+  trait AI[T[M[_],_],M[_],RTM[A] <: T[M,A]] extends PlayerProc[T,M] {    
     // Utilities
+    override type TM[A] = RTM[A]
     def choose [A] ( la : List[A] ) : TM[A] = {
       monadicTMWitness.msum(
 	la.map(
@@ -291,7 +291,7 @@ class TicTacToe( n : Int, m : Int ) {
       }
     }
 
-    def opponent [T[M[_],_],M[_]] ( p : Mark ) : AI[T,M]
+    def opponent ( p : Mark ) : AI[T,M,RTM]
 
     override def proc( g : Game ) : TM[Outcome] = {
       g match {
@@ -311,7 +311,7 @@ class TicTacToe( n : Int, m : Int ) {
 		val gp = takeMove( p, m, g )
 
 		val oc =
-		  opponent[T,M](
+		  opponent/*[T,M,RTM]*/(
 		    otherPlayer( p )
 		  ).proc( gp )
 
@@ -335,7 +335,35 @@ class TicTacToe( n : Int, m : Int ) {
 	}
       }
     }    
-  }  
+  }
+
+  abstract class SFKTAI
+  extends LogicTSFKTC[Outcome]
+  with AI[SFKT,M1,SFKTC] {    
+  }
+
+  // The class below represents the most specific abstract interface
+  // to the Min-Max AI algorithm for playing TicTacToe over an
+  // arbitrary monad, M. It is as far as we can go until we know
+  // more about M. More specifically,
+  abstract class RSFKTAI( override val p : Mark )
+  extends SFKTAI {
+    // this method can't be defined because RSFKTAI is abstract
+    // and RSFKTAI is abstract because...
+    override def opponent( op : Mark ) : AI[SFKT,M1,SFKTC] /*= {
+      new RSFKTAI( op )
+    }*/
+
+    object aTMSMA
+      extends TMSMA[Outcome] 
+      with MonadicSFKTC
+
+    override def tmsma = aTMSMA
+    override def monadicTMWitness = tmsma
+
+    // ...this can't be defined until we know more about M.
+    override def monadicMWitness : MonadM  
+  }
 }
 
 
