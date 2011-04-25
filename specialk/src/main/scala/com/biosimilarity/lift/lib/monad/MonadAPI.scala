@@ -43,6 +43,11 @@ trait MonadPlus[M[_]] {
   }
 }
 
+trait MonadFilter[M[_]] {
+  self : Monad[M] =>
+    def mfilter [A] ( ma : M[A], pred : A => Boolean ) : M[A]
+}
+
 // Still more monadically good richness
 trait MonadT[T[M[_],_],M[_]] {
   //self : BMonad[M] =>
@@ -149,5 +154,6 @@ extends MonadT[T,M] {
 
   def tmsma : TMSMA[A]
 }
+
 
 

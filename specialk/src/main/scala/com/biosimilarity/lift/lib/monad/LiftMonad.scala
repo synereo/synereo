@@ -35,5 +35,30 @@ with Monad[Lift] {
   }
 }
 
+class LiftM[A]( )
+extends ForNotationAdapter[Lift,A] 
+with BMonad[Lift]
+with MonadFilter[Lift] {  
+  override def unit [S] ( s : S ) : Lift[S] = 
+    Lifted[S]( s )
+  override def bind [S,T] ( ls : Lift[S], f : S => Lift[T] ) : Lift[T]
+  = {
+    ls match {
+      case Bottom => Bottom
+      case Lifted( s ) => f( s )
+    }
+  }
+  def mfilter [S] ( ls : Lift[S], pred : S => Boolean ) : Lift[S] = {
+    ls match {
+      case Bottom => Bottom
+      case Lifted( s ) =>
+	pred( s ) match {
+	  case true => Lifted( s )
+	  case false => Bottom
+	}
+    }
+  }
+}
+
 
 
