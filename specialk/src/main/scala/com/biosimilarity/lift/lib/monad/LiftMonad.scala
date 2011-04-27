@@ -13,28 +13,6 @@ trait Lift[+A]
 case object Bottom extends Lift[Nothing]
 case class Lifted[+A]( a : A ) extends Lift[A]
 
-
-// An interpretation of this structure as a monad
-class LiftMonad[A]( )
-extends ScalaMonadAdapter[Lift,A] 
-with Monad[Lift] {  
-  override def fmap [S,T]( f : S => T ) : Lift[S] => Lift[T] = {
-    ( la : Lift[S] ) => {
-      la match {
-	case Lifted( s ) => Lifted( f( s ) )
-	case _ => Bottom
-      }
-    }
-  }
-  override def unit [S] ( s : S ) : Lift[S] = Lifted[S]( s )
-  override def mult [S] ( lls : Lift[Lift[S]] ) : Lift[S] = {
-    lls match {
-      case Lifted( Lifted( s ) ) => Lifted( s )
-      case _ => Bottom
-    }
-  }
-}
-
 class LiftM[A]( )
 extends ForNotationAdapter[Lift,A] 
 with BMonad[Lift]
@@ -56,6 +34,75 @@ with MonadFilter[Lift] {
 	  case true => Lifted( s )
 	  case false => Bottom
 	}
+    }
+  }
+}
+
+case class StateLift[+A](
+  sfn : Int => ( Int, Option[A] )
+) extends Lift[A]
+
+class LiftLM[A]( )
+extends ForNotationAdapter[Lift,A] 
+with BMonad[Lift]
+with MonadFilter[Lift] {  
+  override def unit [S] ( s : S ) : Lift[S] = 
+    StateLift[S]( ( n : Int ) => ( n, Some( s ) ) )
+  override def bind [S,T] ( ls : Lift[S], f : S => Lift[T] ) : Lift[T]
+  = {
+    ls match {
+      case Bottom => Bottom
+      case Lifted( a ) => f( a )
+      case StateLift( sfn ) => {
+	StateLift(
+	  ( n ) => {
+	    sfn( n ) match {
+	      case ( np, Some( s ) ) => {
+		f( s ) match {
+		  case Bottom => {
+		    ( np, None )
+		  }
+		  case Lifted( a ) => {
+		    ( np, Some( a ) )
+		  }
+		  case StateLift( tfn ) => {
+		    tfn( np )
+		  }
+		}
+	      }
+	      case ( np, None ) => ( np, None )
+	    }
+	  }
+	)
+      }
+    }
+  }
+  def mfilter [S] ( ls : Lift[S], pred : S => Boolean ) : Lift[S] = {
+    ls match {
+      case Bottom => Bottom
+      case Lifted( s ) =>
+	pred( s ) match {
+	  case true => Lifted( s )
+	  case false => Bottom
+	}
+      case StateLift( sfn ) => {
+	StateLift(
+	  ( n : Int ) => {
+	    val ( np, os ) = sfn( n )
+	    os match {
+	      case Some( s ) => {
+		pred( s ) match {
+		  case true => ( np, Some( s ) );
+		  case false => ( np, None )
+		}
+	      }
+	      case None => {
+		( np, None )
+	      }
+	    }
+	  }
+	)
+      }
     }
   }
 }
