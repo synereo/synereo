@@ -58,19 +58,8 @@ with FJTaskRunners
   ) = {
     ( req, rsp ) match {
       case ( hsrq : HttpServletRequest, hsrp : HttpServletResponse ) => {
-	// tweet( " we are here! " )
-// 	hsrp.setContentType("text/html")
-// 	val pw : java.io.PrintWriter = hsrp.getWriter()
-// 	pw.println("<html>")
-// 	pw.println("<head><title>Hello World</title></title>")
-// 	pw.println("<body>")
-// 	pw.println("<h1>Hello World</h1>")
-// 	pw.println("</body></html>")
-
 	val cnvId = getUUID
-	val hctxt = HTTPRequestCtxt( hsrq, hsrp, chain, Some( cnvId ) )
-	//conversations( cnvId ) = hctxt
-
+	val hctxt = HTTPRequestCtxt( hsrq, hsrp, chain, Some( cnvId ) )	
 	for( call <- httpTramp.httpConverter.asCall( hctxt ) ) {
 	  call match {	    
 	    //Calculating a ptn at this point affords redirect semantics
@@ -104,39 +93,54 @@ with FJTaskRunners
 		    )
 		  )
 		}
-		//spawn {
-		httpTramp.httpConverter.rspPickupLoc( hctxt ) match {
-		  case Some( replyLocWrapper ) => {
-		    replyLocWrapper match {
-		      case httpTramp.Msgs.MDPutRequest(
-			rplyLoc, nhctxt
-		      ) => {
-			for( rsrc <- mySpace.getValue( rplyLoc ) ) {
-			  tweet( "should serve up: " + rsrc )
-			  val response = hctxt.resp		    
-			  response.setContentType("text/html")
-			  val pw : java.io.PrintWriter =
-			    response.getWriter()
-			  val title = (/( rsrc ) / ZD / ZD).toString
-			  val body = (/( rsrc ) / ZD / ZR / ZD).toString
-			  pw.println("<html>")
-			  pw.println(
-			    "<head><title>" + title + "</title></title>"
-			  )
-			  pw.println("<body>")
-			  pw.println("<h1>" + body + "</h1>")
-			  pw.println("</body></html>")
+		spawn {
+		  httpTramp.httpConverter.rspPickupLoc( hctxt ) match {
+		    case Some( replyLocWrapper ) => {
+		      replyLocWrapper match {
+			case httpTramp.Msgs.MDPutRequest(
+			  rplyLoc, nhctxt
+			) => {
+			  for( rsrc <- mySpace.getValue( rplyLoc ) ) {
+			    tweet( "should serve up: " + rsrc )
+			    val response = hctxt.resp		    
+			    response.setContentType("text/html")
+
+			    val pw : java.io.PrintWriter =
+			      response.getWriter()
+
+			    val title =
+			      (/( rsrc ) / ZD / ZD).tree.toString
+			    val body =
+			      (/( rsrc ) / ZD / ZR / ZD).tree.toString
+
+			    tweet( "title : " + title )
+			    tweet( "body : " + body )
+
+			    pw.println("<html>")
+			    pw.println(
+			      "<head><title>" + title + "</title></title>"
+			    )
+			    pw.println("<body>")
+			    pw.println("<h1>" + body + "</h1>")
+ 			    pw.println("</body></html>")
+			    
+			    synchronized {
+			      this.notifyAll
+			    }
+			  }
 			}
 		      }
 		    }
-		  }
-		  case None => {
-		    tweet(
-		      "What to do if there is no reply location?"
-		    );
+		    case None => {
+		      tweet(
+			"What to do if there is no reply location?"
+		      );
+		    }
 		  }
 		}
-		//}		
+		synchronized {
+		  this.wait
+		}
 	      }
 	      //chain.doFilter( req, rsp )
 	    }
