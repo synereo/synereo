@@ -204,7 +204,9 @@ abstract class TicTacToe[M1[_]]( n : Int, m : Int ) extends SFKTScope[M1] {
   trait PlayerProc[T[M[_],_],M[_]]
        extends LogicT[T,M,Outcome]
   with LogicTRunner[T,M,Outcome]
-  with SMonadT[T,M,Outcome] {
+  //with SMonadT[T,M,Outcome]
+  with FNMonadT[T,M,Outcome]
+  {
     //override type TM[A] = T[M,A]
     def p : Mark
     def proc( g : Game ) : TM[Outcome]        
@@ -235,17 +237,18 @@ abstract class TicTacToe[M1[_]]( n : Int, m : Int ) extends SFKTScope[M1] {
 	)
       }
       case _ => {	
-	for(
-	  iga <- playerProc.tmsma.wrapET(
-	    playerProc.onceC( playerProc.proc( g ) )
-	  )
-	)
-	  yield {
-            val Outcome( _, ga ) = iga
+	// val playerProcTMSMA = playerProc.tmsma
+// 	import playerProcTMSMA._
+// 	for(
+// 	  iga <- playerProc.onceC( playerProc.proc( g ) )	  
+// 	)
+// 	  yield {            
+	    val iga = playerProc.onceC( playerProc.proc( g ) )	  
+	    val Outcome( _, ga ) = iga
 	    val gp = ga.asInstanceOf[Game]
 	    println( showBoard( gp.board ) )
 	    game( otherPlayer, player, gp )
-	  }
+	  //}
       }
     }
   }
@@ -304,6 +307,8 @@ abstract class TicTacToe[M1[_]]( n : Int, m : Int ) extends SFKTScope[M1] {
 	    Outcome( estimateState( p, g ), g )
 	  )
 	case _ => {
+	  val thisTMSMA = tmsma
+	  import thisTMSMA._
 	  val tma : TM[Outcome] =	    
 	    monadicTMWitness.bind(
 	      choose( g.moves ),
@@ -328,7 +333,11 @@ abstract class TicTacToe[M1[_]]( n : Int, m : Int ) extends SFKTScope[M1] {
 
 	  val options : TM[List[Outcome]] =
 	    bagOfNC( Some( 5 ), tma )
-	  for( wbs <- tmsma.toETramp( options ) )
+	  for(
+	    //wbs <- tmsma.toETramp( options )
+	    //wbs <- tmsma.toMembrane( options )
+	    wbs <- options
+	  )
 	  yield {
 	    maxByFstProj[Int,Game,Outcome]( wbs.drop( 1 ), wbs( 0 ) )	    
 	  }

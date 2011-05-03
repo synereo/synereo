@@ -44,9 +44,6 @@ with FJTaskRunners
   import CCLDSL._
   import NavDSL._
 
-//   lazy val conversations =
-//     new HashMap[UUID,HTTPRequestCtxt]()
-
   override def init( fltrCfg : FilterConfig ) = {
     // TBD
   }  
@@ -65,10 +62,21 @@ with FJTaskRunners
 	    //Calculating a ptn at this point affords redirect semantics
 	    case httpTramp.Msgs.MDPutRequest( ptn, v ) => {
 	      reset {	    
+		
+		// This represents putting the request into the
+		// TupleSpace; and, as such, is the client side
+
 		mySpace.put( ptn, Ground( v ) )
+
+		// As a whole this responds to the request by putting
+		// some HTML into the TupleSpace at the agreed up
+		// response location; and, as such, is the server side
 		spawn {
-		  val rspCCL = 
-		    ?('response)(
+
+		  // This calculates where to put the response and is
+		  // counterpart to rspPickupLoc
+		   val rspCCL = 
+		      ?('response)(
 		      // taken from SWI Prolog http interface
 		      ?('host)( 'Host ),
 		      ?('input)( 'IStream ),
@@ -85,6 +93,8 @@ with FJTaskRunners
 		      // unique to this implementation
 		      ?('conversationId)( cnvId.toString )
 		    )
+		  
+		  // This puts the page data at the location
 		  mySpace.put(
 		    rspCCL,
 		    ?('pageData)(
@@ -93,6 +103,12 @@ with FJTaskRunners
 		    )
 		  )
 		}
+
+		// This thread is the interlocuter between client and
+		// server. It waits for whatever the server serves up
+		// in response to the client and places it into the
+		// response output stream associated with the
+		// HttpServletResponse.
 		spawn {
 		  httpTramp.httpConverter.rspPickupLoc( hctxt ) match {
 		    case Some( replyLocWrapper ) => {
@@ -100,6 +116,7 @@ with FJTaskRunners
 			case httpTramp.Msgs.MDPutRequest(
 			  rplyLoc, nhctxt
 			) => {
+			  // this waits for the response
 			  for( rsrc <- mySpace.getValue( rplyLoc ) ) {
 			    tweet( "should serve up: " + rsrc )
 			    val response = hctxt.resp		    
@@ -124,6 +141,7 @@ with FJTaskRunners
 			    pw.println("<h1>" + body + "</h1>")
  			    pw.println("</body></html>")
 			    
+			    // We alert the filter that it can now proceed...
 			    synchronized {
 			      this.notifyAll
 			    }
@@ -138,6 +156,9 @@ with FJTaskRunners
 		    }
 		  }
 		}
+
+		// We cannot return from doFilter until we know that
+		// we have processed the response
 		synchronized {
 		  this.wait
 		}

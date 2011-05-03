@@ -30,7 +30,32 @@ with FJTaskRunners
       with ConfigurationTrampoline =>
 
   type RK = Option[Resource] => Unit @suspendable
-  //type CK = Option[Resource] => Unit @suspendable
+  
+  class BlockableContinuation(
+    val rk : RK
+  ) extends Function1[Option[Resource],Unit @suspendable] {
+    override def apply(
+      orsrc : Option[Resource]
+    ) : Unit @suspendable = {
+      rk( orsrc )
+    }
+    def unapply(
+      bc : BlockableContinuation
+    ) : Option[(RK)] = {
+      Some( ( bc.rk ) )
+    }
+    def blockForValue() = {
+      synchronized {
+	wait()
+      }
+    }
+    def unblockOnValue() = {
+      synchronized {
+	notifyAll()
+      }
+    }
+  }
+
   type Substitution <: Function1[Resource,Option[Resource]]
 
   case class IdentitySubstitution( )
@@ -124,10 +149,15 @@ with FJTaskRunners
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
 		println( "did not find a resource, storing a continuation: " + rk )
+		val bk = new BlockableContinuation( rk )
 		registered( place ) =
-		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		  (
+		    registered.get( place ).getOrElse( Nil )
+		    ++ List( bk )
+		  )
 		//rk( None )
 		println( "get suspending" )
+		bk.blockForValue()
 		//outerk()
 	      }
 	      else {
@@ -203,7 +233,51 @@ with FJTaskRunners
   def fetch( ptn : Pattern ) =
     mget( theMeetingPlace, theWaiters, false )( ptn )
   def subscribe( ptn : Pattern ) =
-    mget( theChannels, theSubscriptions, true )( ptn )
+    mget( theChannels, theSubscriptions, true )( ptn )  
+
+  def mputWithSuspension(
+    channels : Map[Place,Resource],
+    registered : Map[Place,List[RK]],
+    consume : Boolean
+  )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
+    for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
+      val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
+      tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+      rks match {
+	case rk :: rrks => {	
+	  if ( consume ) {
+	    for( sk <- rks ) {
+	      sk match {
+		case bk : BlockableContinuation => {
+		  bk.unblockOnValue()
+		}
+		case _ => {
+		}
+	      }
+	      spawn {
+		sk( s( rsrc ) )
+	      }
+	    }
+	  }
+	  else {
+	    registered( wtr ) = rrks
+	    rk match {
+		case bk : BlockableContinuation => {
+		  bk.unblockOnValue()
+		}
+		case _ => {
+		}
+	      }
+	    rk( s( rsrc ) )
+	  }
+	}
+	case Nil => {
+	  channels( wtr ) = rsrc	  
+	}
+      }
+    }
+        
+  }
 
   def putPlaces(
     channels : Map[Place,Resource],

@@ -32,7 +32,8 @@ import com.biosimilarity.lift.lib.monad._
  * 
  * ------------------------------------------------------------------------ */
 trait LogicT[T[M[_],_],M[_],A] {
-  self : SMonadT[T,M,A] =>
+  //self : SMonadT[T,M,A] =>
+  self : FNMonadT[T,M,A] =>
 	  
     //def tracker : TMSMA[Option[(A,TM[A])]]
 
@@ -127,8 +128,8 @@ trait LogicT[T[M[_],_],M[_],A] {
 }
 
 trait LogicTRunner[T[M[_],_],M[_],A] {
-  self : SMonadT[T,M,A] with LogicT[T,M,A] =>
-    
+  //self : SMonadT[T,M,A] with LogicT[T,M,A] =>
+  self : FNMonadT[T,M,A] with LogicT[T,M,A] =>   
     
   def bagOfNC( oN : Option[Int], tma : TM[A] ) : TM[List[A]] = {
     def bagOfNCP(
@@ -177,8 +178,9 @@ trait LogicTRunner[T[M[_],_],M[_],A] {
 
 trait LogicTOps[T[M[_],_],M[_],A] 
 extends LogicT[T,M,A]{
-  self : SMonadT[T,M,A] =>
+  //self : SMonadT[T,M,A] =>
 	//with MonadPlus[M] =>
+  self : FNMonadT[T,M,A] =>
     
   //def mplusTMWitness : MonadPlus[TM] with MonadM
 
@@ -225,7 +227,8 @@ trait SFKTScope[M[_]] {
 
   trait MonadicSFKTC
   extends BMonad[SFKTC]
-	   with MonadPlus[SFKTC]
+       with MonadPlus[SFKTC]
+       with MonadFilter[SFKTC]
   {
     override def unit [A] ( a : A ) : SFKTC[A] = {
       SFKTC( 
@@ -282,6 +285,30 @@ trait SFKTScope[M[_]] {
 	}
       )
     }
+
+    override def mfilter [A] (
+      ma : SFKTC[A],
+      pred : A => Boolean
+    ) : SFKTC[A] = {
+      SFKTC[A](
+	{
+	  ( sk : SK[M[Any],A], fk : FK[M[Any]] ) => {
+	    val nsk = 
+	      {
+		( a : A, nfk : FK[M[Any]] ) => {
+		  if ( pred( a ) ) {
+		    ma.unSFKT( sk, nfk )
+		  }
+		  else {
+		    fk
+		  }
+		}
+	      }	      
+	    ma.unSFKT( nsk, fk )
+	  }
+	}
+      )
+    }
   }
   
   trait MonadTransformerSFKTC[A]
@@ -312,7 +339,8 @@ trait SFKTScope[M[_]] {
   extends MonadTransformerSFKTC[A]
 	  with LogicTRunner[SFKT,M,A]
 	  with LogicTOps[SFKT,M,A]
-	  with SMonadT[SFKT,M,A]
+	  //with SMonadT[SFKT,M,A]
+          with FNMonadT[SFKT,M,A]
   {
     override type TM[A] = SFKTC[A]
 

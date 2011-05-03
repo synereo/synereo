@@ -59,7 +59,13 @@ trait MonadicTermTypes[Namespace,Var,Tag,Value] {
 
   class TMapR[Namespace,Var,Tag,Value]
   extends HashMap[GetRequest,Resource]  
-  
+
+  trait Color
+  case object Clear extends Color
+  case object Opaque extends Color
+
+  class RMapC[Namespace,Var,Tag,Value]
+  extends HashMap[Resource,Color]  
 }
 
 trait MonadicTermTypeScope[Namespace,Var,Tag,Value] {

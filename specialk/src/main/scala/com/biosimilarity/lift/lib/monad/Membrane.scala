@@ -131,3 +131,13 @@ trait ForNotationAdapter[Shape[_],A] {
   }
 }
 
+trait FNMonadT[T[M[_],_],M[_],A]
+extends MonadT[T,M] {  
+  trait TMSMA[A]
+       extends ForNotationAdapter[TM,A]
+       with BMonad[TM]
+       with MonadFilter[TM]
+       with MonadPlus[TM]
+
+  def tmsma : TMSMA[A]
+}
