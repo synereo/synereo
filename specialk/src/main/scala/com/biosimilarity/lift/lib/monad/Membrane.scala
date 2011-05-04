@@ -25,6 +25,9 @@ trait ForNotationAdapter[Shape[_],A] {
   trait Filter[+A] {
     self : Membrane[A] =>
       def withFilter( pred : A => Boolean ) : Membrane[A] with Filter[A]
+    def filter( pred : A => Boolean ) : Membrane[A] with Filter[A] = {
+      withFilter( pred )
+    }
   }
 
   case object Open extends Membrane[Nothing] with Filter[Nothing] {
@@ -119,7 +122,7 @@ trait ForNotationAdapter[Shape[_],A] {
 
   // Next, we provide some useful implicits:
   // One to enclose Shape's in Membrane's ...
-  implicit def toMembrane [A] ( s : Shape[A] ) : Membrane[A] =
+  implicit def toMembrane [A] ( s : Shape[A] ) : Membrane[A] with Filter[A] =
     SCell[A]( s )
 
   // ... and one to open the enclosure
