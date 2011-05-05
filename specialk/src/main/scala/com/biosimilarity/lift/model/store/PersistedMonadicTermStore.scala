@@ -710,6 +710,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			      }			      
 			    }
 			    case false => {
+			      tweet( ">>>>> forwarding..." )
+			      forward( ask, hops, path )
 			      rk( oV )
 			    }
 			  }
