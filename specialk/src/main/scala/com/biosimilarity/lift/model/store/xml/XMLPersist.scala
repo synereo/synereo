@@ -295,6 +295,11 @@ extends XMLIfy[Namespace,Var] {
       val xrsrc = createResource( xmlColl, xmlRsrcFile )
     }
   }
+  def update( xmlCollStr : String )(
+    cnxn : CnxnCtxtLabel[Namespace,Var,String]
+  ) : Unit = {
+    store( xmlCollStr )( cnxn )
+  }
 }
 
 object CnxnStorageDefaults {

@@ -328,6 +328,121 @@ extends CnxnStorage[Namespace,Var,Tag] {
       srvrRspStrm.close()
     }
   }
+
+  def keyValue(
+    cnxn : CnxnCtxtLabel[Namespace,Var,String]
+  ) : ( Node, Node ) = {
+    val cxml = xmlIfier.asXML( cnxn )
+    cxml.child.toList match {
+      case k :: v :: Nil => {
+	( k, v )
+      }
+      case _ => {
+	throw new Exception( "malformed record: " + cxml )
+      }
+    }
+  }
+
+  override def update( xmlCollStr : String )(
+    cnxn : CnxnCtxtLabel[Namespace,Var,String]
+  ) : Unit = {   
+    //val dbCtxt = new Context()
+    val srvrRspStrm = new java.io.ByteArrayOutputStream()
+    try {
+      tweet( 
+	"attempting to open collection: " + xmlCollStr
+      )
+      clientSession.setOutputStream( srvrRspStrm )
+      clientSession.execute( new Open( xmlCollStr ) )
+      
+      tweet( 
+	"collection " + xmlCollStr + " opened"
+      )
+
+      val replaceTemplate =
+	(
+	  "let $rcrds := "
+	  + "("
+	  + "for $rcrd in "
+	  + "collection('%COLLNAME%')/database/records/record "
+	  + "where $rcrd/*[1] = %KEY% "
+	  + "return $rcrd"
+	  + ")"
+	  + "if ( count( $rcrds ) > 0 ) "
+	  + "then "
+	  + "return replace value of node $rcrds[1]/*[2]"
+	  + "with %VALUE% "
+	  + "else insert node %NODE% into "
+	  + "collection('%COLLNAME%')/database/records "
+	);
+
+      val nodeStr = 
+	xmlIfier.asXML( cnxn ).toString
+
+      val ( k, v ) = keyValue( cnxn )
+
+      tweet( 
+	"attempting to update record in database doc in " + xmlCollStr
+      )
+
+      //println( "record : \n" + nodeStr )
+      
+      val replaceQry = 
+	replaceTemplate.replace(
+	  "%KEY%",
+	  k.toString
+	).replace(
+	  "%VALUE%",
+	  v.toString
+	).replace(
+	  "%NODE%",
+	  nodeStr
+	).replace(
+	  "%COLLNAME%",
+	  xmlCollStr
+	)
+
+      //println( "insertion query : \n" + insertQry )
+      
+      try {	
+	clientSession.execute( new XQuery( replaceQry ) )
+      }
+      catch {
+	case e : BaseXException => {
+	  tweet( 
+	    "insertion query failed " + replaceQry
+	  )
+	  tweetTrace( e )
+	}
+      }
+    }
+    catch {
+      case e : BaseXException => {
+	tweet( 
+	  "failed to open " + xmlCollStr
+	)
+	tweet( 
+	  "attempting to create " + xmlCollStr
+	)
+	clientSession.execute( new CreateDB( xmlCollStr ) )
+	val recordElem = xmlIfier.asXML( cnxn )
+	val recordsElem =
+	  <records>{recordElem}</records>
+	tweet( 
+	  "adding database doc to " + xmlCollStr
+	)
+	clientSession.execute(
+	  new Add(
+	    recordsElem.toString,
+	    "database"
+	  )
+	)          
+      }      
+    }    
+    finally {
+      srvrRspStrm.close()
+    }
+  }
 }
 
 class BaseXRetrieveExample
