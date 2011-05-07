@@ -13,7 +13,10 @@ import com.biosimilarity.lift.lib.monad._
 import scala.collection.immutable.Map
 import scala.collection.immutable.HashMap
 
-abstract class TicTacToe[M1[_]]( n : Int, m : Int ) extends SFKTScope[M1] {
+abstract class TicTacToe[M1[_]](
+  val n : Int,
+  val m : Int
+) extends SFKTScope[M1] {
   trait Mark
   case object X extends Mark
   case object O extends Mark
@@ -372,6 +375,15 @@ abstract class TicTacToe[M1[_]]( n : Int, m : Int ) extends SFKTScope[M1] {
 
     // ...this can't be defined until we know more about M.
     override def monadicMWitness : MonadM  
+  }
+}
+
+class TicTacToeL( override val n : Int, override val m : Int )
+	 extends TicTacToe[List]( n, m )
+{
+  override type MonadM = ListM[Outcome]
+  override def monadicMWitness : MonadM = {
+    new ListM[Outcome]()
   }
 }
 
