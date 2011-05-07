@@ -385,6 +385,25 @@ class TicTacToeL( override val n : Int, override val m : Int )
   override def monadicMWitness : MonadM = {
     new ListM[Outcome]()
   }
+
+  class RSFKTAI( override val p : Mark )
+  extends SFKTAI {
+    override type MonadM = ListM[Outcome]
+    override def opponent( op : Mark ) : AI[SFKT,List,SFKTC] = {
+      new RSFKTAI( op )
+    }
+
+    object aTMSMA
+      extends TMSMA[Outcome] 
+      with MonadicSFKTC
+
+    override def tmsma = aTMSMA
+    override def monadicTMWitness = tmsma
+
+    override def monadicMWitness : MonadM = {
+      new ListM[Outcome]()
+    }
+  }
 }
 
 
