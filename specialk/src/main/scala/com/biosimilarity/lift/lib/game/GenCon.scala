@@ -351,27 +351,53 @@ trait GenConPreM[A] {
     pred : S => Boolean
   ) : GeneralizedConwayGame[S] = {
     GenConGame(
-      ls.left.filter(
-	( gl ) => {
-	  gl match {
-	    case Left( s ) => pred( s )
-	    case Right( h ) => {
-	      gcgMfilter( h, pred ) match {
-		case EmptyGenConGame => false
-		case _ => true
+      ( ( Nil : List[Either[S,GeneralizedConwayGame[S]]] ) /: ls.left )( 
+	{
+	  (
+	    acc : List[Either[S,GeneralizedConwayGame[S]]],
+	    e : Either[S,GeneralizedConwayGame[S]]
+	  ) => {
+	    e match {
+	      case Right( g ) => {
+		val fg : GeneralizedConwayGame[S] = 
+		  gcgMfilter[S]( g, pred )
+		val rg : Either[S,GeneralizedConwayGame[S]] =
+		  Right[S,GeneralizedConwayGame[S]]( fg )
+		acc ++ List( rg )
+	      }
+	      case Left( s ) => {
+		if ( pred( s ) ) {
+		  acc ++ List( Left( s ) )
+		}
+		else {
+		  acc
+		}
 	      }
 	    }
 	  }
 	}
       ),
-      ls.right.filter(
-	( gl ) => {
-	  gl match {
-	    case Left( s ) => pred( s )
-	    case Right( h ) => {
-	      gcgMfilter( h, pred ) match {
-		case EmptyGenConGame => false
-		case _ => true
+      ( ( Nil : List[Either[S,GeneralizedConwayGame[S]]] ) /: ls.right )( 
+	{
+	  (
+	    acc : List[Either[S,GeneralizedConwayGame[S]]],
+	    e : Either[S,GeneralizedConwayGame[S]]
+	  ) => {
+	    e match {
+	      case Right( g ) => {
+		val fg : GeneralizedConwayGame[S] = 
+		  gcgMfilter[S]( g, pred )
+		val rg : Either[S,GeneralizedConwayGame[S]] =
+		  Right[S,GeneralizedConwayGame[S]]( fg )
+		acc ++ List( rg )
+	      }
+	      case Left( s ) => {
+		if ( pred( s ) ) {
+		  acc ++ List( Left( s ) )
+		}
+		else {
+		  acc
+		}
 	      }
 	    }
 	  }
