@@ -13,9 +13,9 @@ import com.biosimilarity.lift.lib.zipper._
 import scala.collection.SeqProxy
 import java.net.URI
 
-trait CnxnLabel[Namespace,Tag]
+trait CnxnLabel[Namespace, /*+*/Tag]
 extends Tree[Tag] with SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
-  def up( tOrC : Either[Tag,CnxnLabel[Namespace,Tag]] )
+  def up /* [Tag1 >: Tag] */ ( tOrC : Either[Tag,CnxnLabel[Namespace,Tag]] )
    : List[Tag] = {
     tOrC match {
       case Left( t ) => List( t )
@@ -23,7 +23,7 @@ extends Tree[Tag] with SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
 	( List[Tag]() /: lbls.flatMap( _.self ) )(
 	  {
 	    ( acc, e ) => {
-	      acc ++ up( e )
+	      acc ++ up/*[Tag1]*/( e )
 	    }
 	  }
 	)
@@ -100,24 +100,24 @@ with Factual {
   }
 }
 
-trait CnxnCtxtLabel[Namespace,Var,Tag]
+trait CnxnCtxtLabel[Namespace,Var,/*+*/Tag]
 extends CnxnLabel[Either[Namespace,Var],Either[Tag,Var]] {
-  type U =
+  type U/*[Tag1]*/ =
     Either[
       Either[Tag,Var],
       CnxnLabel[Either[Namespace,Var],Either[Tag,Var]]
     ]
-  override def up( tOrC : U )
+  override def up /*[Tag1 >: Tag]*/ ( tOrC : U/*[Tag1]*/ )
    : List[Either[Tag,Var]] = {
     tOrC match {
       case Left( t ) => List( t )
       case Right( CnxnCtxtLeaf( tOrV ) ) => List( tOrV )
       case Right( CnxnCtxtBranch( ns, lbls ) ) => {
-	val selves : List[U] = lbls.flatMap( _.self )
+	val selves : List[U/*[Tag1]*/] = lbls.flatMap( _.self )
 	( List[Either[Tag,Var]]() /: selves )(
 	  {
 	    ( acc, e ) => {
-	      acc ++ up( e )
+	      acc ++ up/*[Tag1]*/( e )
 	    }
 	  }
 	)
