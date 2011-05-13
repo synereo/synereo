@@ -49,6 +49,8 @@ trait GenConRenderer[+A] {
   def openBrace : String = "{"
   def closeBrace : String = "}"
 
+  def componentBound : Int = 10
+
   override def toString : String = {
     def compStr( comp : List[Either[A,GeneralizedConwayGame[A]]] ) = {
       comp match {

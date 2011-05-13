@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.lib.game
 
+// Generators
 trait GenConOps[+A] {
   def add [A1 >: A] (
     g1 : GeneralizedConwayGame[A1],
@@ -31,6 +32,22 @@ trait LazyGenConOps[V,+A] {
   ) : GeneralizedConwayGame[A]
 }
 */
+
+// Relations
+trait GenConRelations[+A] {
+  def `=G=` [A1 >: A] ( 
+    g1 : GeneralizedConwayGame[A1],
+    g2 : GeneralizedConwayGame[A1]
+  ) : Boolean
+  def `|G>` [A1 >: A] ( 
+    g1 : GeneralizedConwayGame[A1],
+    g2 : GeneralizedConwayGame[A1]
+  ) : Boolean
+  def `||` [A1 >: A] ( 
+    g1 : GeneralizedConwayGame[A1],
+    g2 : GeneralizedConwayGame[A1]
+  ) : Boolean
+}
 
 class GenConCalculator[+A] extends GenConOps[A] {
   override def add [A1 >: A] (
