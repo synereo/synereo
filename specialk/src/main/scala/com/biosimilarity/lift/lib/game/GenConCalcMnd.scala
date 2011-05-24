@@ -10,7 +10,7 @@ package com.biosimilarity.lift.lib.game.mnd
 import com.biosimilarity.lift.lib.monad._
 
 trait MonadicConwayCalculatorScope[
-  MPlus[M[_]] <: BMonad[M] with MonadPlus[M] with StrongMonad[M],M[+A]
+  MPlus[M[_]] <: BMonad[M] with MonadPlus[M],M[+A]
 ] extends MonadicConwayGameScope[MPlus,M] {
   // Generators
   import Games._
@@ -220,22 +220,20 @@ trait MonadicConwayCalculatorScope[
 	)
       }                
 
-      val g12L =
+      GenConGame(
 	witness.plus(
 	  for( g1C <- g1.left; g2C <- g2.left )
 	  yield { mComp( ( g1C, g2C ) ) },
 	  for( g1C <- g1.right; g2C <- g2.right )
 	  yield { mComp( ( g1C, g2C ) ) }
-	)
-      val g12R =
+	),
 	witness.plus(
 	  for( g1C <- g1.left; g2C <- g2.right )
 	  yield { mComp( ( g1C, g2C ) ) },
 	  for( g1C <- g1.right; g2C <- g2.left )
 	  yield { mComp( ( g1C, g2C ) ) }
 	)
-      
-      GenConGame( g12L,	g12R )
+      )
     }
   }
 }
