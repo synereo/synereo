@@ -43,6 +43,11 @@ trait MonadPlus[M[_]] {
   }
 }
 
+trait StrongMonad[M[_]] {
+  self : Monad[M] =>
+    def strength [P[_,_],A,B] ( pAMB : P[A,M[B]] ) : M[P[A,B]]
+}
+
 trait MonadFilter[M[_]] {
   self : Monad[M] =>
     def mfilter [A] ( ma : M[A], pred : A => Boolean ) : M[A]

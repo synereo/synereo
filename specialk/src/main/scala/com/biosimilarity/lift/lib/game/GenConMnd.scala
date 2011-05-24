@@ -41,7 +41,7 @@ package com.biosimilarity.lift.lib.game.mnd
 import com.biosimilarity.lift.lib.monad._
 
 trait MonadicScope[MPlus[M[_]] <: BMonad[M] with MonadPlus[M],M[+A]] {
-  def witness : MPlus[M]
+  def witness [A] : MPlus[M] with ForNotationAdapter[M,A]
 
   trait GeneralizedConwayGame[+A] {
     def left : M[Either[A,GeneralizedConwayGame[A]]]
@@ -156,4 +156,12 @@ trait MonadicScope[MPlus[M[_]] <: BMonad[M] with MonadPlus[M],M[+A]] {
     }
   }
   
+}
+
+trait MonadicConwayGameScope[
+  MPlus[M[_]] <: BMonad[M] with MonadPlus[M],M[+A]
+] {
+  type MCGScope <: MonadicScope[MPlus,M]
+  def protoGames : MCGScope
+  val Games : MCGScope = protoGames
 }
