@@ -203,19 +203,16 @@ trait MonadicConwayCalculatorScope[
       }
       
       def mComp(
-	gtpl : (
-	  Either[A1,GeneralizedConwayGame[A1]],
-	  Either[A1,GeneralizedConwayGame[A1]]
-	)
+	g1C : Either[A1,GeneralizedConwayGame[A1]],
+	g2C : Either[A1,GeneralizedConwayGame[A1]]
       ) = {
-	val ( g1L, g2L ) = gtpl
 	Right(
 	  add(
 	    add(
-	      timesLeft( g1L, g2 ),
-	      timesRight( g1, g2L )
+	      timesLeft( g1C, g2 ),
+	      timesRight( g1, g2C )
 	    ),
-	    minus( timesMiddle( g1L, g2L ) )
+	    minus( timesMiddle( g1C, g2C ) )
 	  )
 	)
       }                
@@ -223,15 +220,15 @@ trait MonadicConwayCalculatorScope[
       GenConGame(
 	witness.plus(
 	  for( g1C <- g1.left; g2C <- g2.left )
-	  yield { mComp( ( g1C, g2C ) ) },
+	  yield { mComp( g1C, g2C ) },
 	  for( g1C <- g1.right; g2C <- g2.right )
-	  yield { mComp( ( g1C, g2C ) ) }
+	  yield { mComp( g1C, g2C ) }
 	),
 	witness.plus(
 	  for( g1C <- g1.left; g2C <- g2.right )
-	  yield { mComp( ( g1C, g2C ) ) },
+	  yield { mComp( g1C, g2C ) },
 	  for( g1C <- g1.right; g2C <- g2.left )
-	  yield { mComp( ( g1C, g2C ) ) }
+	  yield { mComp( g1C, g2C ) }
 	)
       )
     }
