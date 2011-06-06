@@ -240,18 +240,24 @@ abstract class TicTacToe[M1[_]](
 	)
       }
       case _ => {	
-	// val playerProcTMSMA = playerProc.tmsma
-// 	import playerProcTMSMA._
-// 	for(
-// 	  iga <- playerProc.onceC( playerProc.proc( g ) )	  
-// 	)
-// 	  yield {            
-	    val iga = playerProc.onceC( playerProc.proc( g ) )	  
-	    val Outcome( _, ga ) = iga
-	    val gp = ga.asInstanceOf[Game]
-	    println( showBoard( gp.board ) )
-	    game( otherPlayer, player, gp )
-	  //}
+	val playerProcTMSMA = playerProc.tmsma
+ 	import playerProcTMSMA._
+	val iga = playerProc.onceC( playerProc.proc( g ) )	  	
+	playerProcTMSMA.bind(
+	  iga, 
+	  {
+	    ( oc : Outcome ) => {
+	      val Outcome( _, ga ) = oc
+	      println( showBoard( ga.board ) )
+	      // BUGBUG -- lgm: This is safe, but ugly!!!
+	      game(
+		otherPlayer,
+		player,
+		ga
+	      ).asInstanceOf[playerProc.TM[Unit]]
+	    }
+	  }
+	)	
       }
     }
   }
