@@ -206,6 +206,23 @@ with Factual {
   override def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]] = {
     factuals
   }
+  override def equals( o : Any ) : Boolean = {
+    o match {
+      case that : CnxnCtxtBranch[Namespace,Var,Tag] => {
+	(
+	  nameSpace.equals( that.nameSpace )
+	  && factuals.equals( that.factuals ) 
+	)
+      }
+      case _ => false
+    }
+  }
+  override def hashCode( ) : Int = {
+    (
+      ( 37 * nameSpace.hashCode )
+      + ( 37 * factuals.hashCode )
+    )
+  }
 }
 
 case class CCnxnCtxtBranch[Namespace,Var,Tag](
