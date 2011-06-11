@@ -382,6 +382,35 @@ trait SFKTScope[M[_]] {
 	}
       }      
     }    
+
+    def observe [A] (
+      tma : SFKTC[A]
+    ) : M[A] = {
+      val fk : Any = 
+	() => (throw new Exception( "no answer" ));
+      
+      val ans : M[Any] =	  
+	tma.unSFKT(
+	  {
+	    ( a, fk ) =>{
+	      monadicMWitness.unit( a )
+	    }
+	  },
+	  monadicMWitness.unit( fk )
+	) 
+      
+      monadicMWitness.bind(
+	ans,
+	{
+	  ( any : Any ) => {
+	    any match {
+	      case a : A => monadicMWitness.unit( a )
+	      case _ => throw new Exception( "no answer" ) 
+	    }
+	  }
+	}
+      )
+    }
     
     //def runL [L[_]] ( oN : Option[Int], lA : L[A] ) : List[A]
     // def runM ( oN : Option[Int], tma : SFKTC[A] ) : M[List[A]] = {
