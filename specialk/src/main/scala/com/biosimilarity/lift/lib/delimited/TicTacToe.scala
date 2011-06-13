@@ -21,7 +21,6 @@ abstract class TicTacToe[M1[_]](
   case object X extends Mark
   case object O extends Mark
 
-
   trait Projections[A,B] {
     def _1 : A
     def _2 : B
@@ -164,14 +163,15 @@ abstract class TicTacToe[M1[_]](
   def showBoard(
     board : Board
   ) : String = {
-    def showRow( i : Int ) : Unit = {
+    //println( "showing board: " + board )
+    def showRow( i : Int ) : String = {
       ( "" /: (0 to n - 1) )(
 	{
 	  ( acc, idx ) => {
 	    acc + (board.get( BoardLocation( i, idx ) ) match {
 	      case Some( X ) => "X"
 	      case Some( O ) => "O"
-	      case _ => " ."
+	      case _ => "."
 	    })
 	  }
 	}
@@ -180,7 +180,7 @@ abstract class TicTacToe[M1[_]](
     ( "" /: (0 to n - 1) )(
       {
 	( acc, idx ) => {
-	  acc + showRow( idx )
+	  acc + "\n" + showRow( idx )
 	}
       }
     )
