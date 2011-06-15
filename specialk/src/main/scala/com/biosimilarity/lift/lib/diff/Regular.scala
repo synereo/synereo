@@ -59,7 +59,7 @@ case class RegularRestriction[Name, NSeq <: NmSeq[Name]](
 ) extends RegularType[Name, NSeq] {
   def support : NSeq = {
     val eSupp = e.support
-    eSupp.findIndexOf( v.equals( _ ) ) match {
+    eSupp.indexWhere( v.equals( _ ) ) match {
       case (-1) => {
 	eSupp
       }
