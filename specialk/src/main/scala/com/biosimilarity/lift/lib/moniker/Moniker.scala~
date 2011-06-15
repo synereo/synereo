@@ -1,9 +1,0 @@
-// -*- mode: Scala;-*- 
-// Filename:    Moniker.scala 
-// Authors:     lgm                                                    
-// Creation:    Wed Jun 15 05:32:56 2011 
-// Copyright:   Not supplied 
-// Description: 
-// ------------------------------------------------------------------------
-
-package com.biosimilarity.lift.lib.moniker
