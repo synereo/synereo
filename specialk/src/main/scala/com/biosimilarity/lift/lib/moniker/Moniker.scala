@@ -96,3 +96,27 @@ class URM(
 }
 
 
+object identityConversions {
+  implicit def toMoniker( url : URL ) : Moniker = {
+    new MURL( url )
+  }
+  implicit def toMoniker( uri : URI ) : Moniker = {
+    new MURI( uri )
+  }
+  implicit def toMoniker( s : String ) : Moniker = {
+    new URI( s )
+  }  
+  implicit def toURI( mnkr : Moniker ) : URI = {
+    mnkr match {
+      case muri : MURI => muri.uri
+      case murn : MURN => murn.uri
+      case _ => throw new Exception( "conversion not defined" )
+    }
+  }
+  implicit def toURL( mnkr : Moniker ) : URL = {
+    mnkr match {
+      case murl : MURL => murl.url
+      case _ => throw new Exception( "conversion not defined" )
+    }
+  }
+}
