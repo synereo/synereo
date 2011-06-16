@@ -14,8 +14,10 @@ import scala.concurrent.cpsops._
 import scala.util.continuations._ 
 
 // We assume enough structure that when we introduce types we can
-// build a monoidal category TupleSpaces. More specifically,
-// TupleSpaces are morphisms.
+// build a monoidal category of TupleSpaces. More specifically,
+// TupleSpaces are morphisms. We make these operations partial and
+// introduce the types that say when they are defined in the classes
+// below.
 trait MTSGenerators[MTS[L,P,R],Place,Pattern,Resource] {
   type CMTS <: MTS[Place,Pattern,Resource]
 
@@ -73,12 +75,6 @@ trait MonadicTSTyping[MTS[L,P,R],Place,Pattern,Resource,PtnType] {
   self : PatternTyping[Place,Pattern,PtnType] =>
 
   // A scope says whether a client uses the I or the O patterns.
-  type ScopeLambda[
-    MTSP[L,P,R] <: MTS[L,P,R],
-    MTSPattern,
-    U
-  ] <: MTS[MTSP[Place,Pattern,Resource],MTSPattern,U]
-
   type Scope[
     MTSP,
     MTSPattern,
@@ -89,11 +85,6 @@ trait MonadicTSTyping[MTS[L,P,R],Place,Pattern,Resource,PtnType] {
   // operations structure above. One of the elements that needs to be
   // fleshed out in this situation is the relationshipe between scope
   // nesting and name structure
-  type ScopeCompositorsLambda[
-    MTSP[L,P,R] <: MTS[L,P,R],
-    MTSPattern,
-    U
-  ] <: MTSGenerators[Scope,MTSP[Place,Pattern,Resource],MTSPattern,U]
   type ScopeCompositors[
     MTSP,
     MTSPattern,
@@ -127,10 +118,12 @@ trait MonadicTSTyping[MTS[L,P,R],Place,Pattern,Resource,PtnType] {
     def space : MTS[L,P,R]
     def `type` : TSType
     
-    def get [MTSPattern,U] (
-      ptn : Pattern, scope : Scope[MTS[L,P,R],MTSPattern,U]
-    ) : Option[Resource] //= {
-      // scope.get( space ) match {
+    // These all follow the same pattern -- so, there is a higher-order
+    // abstraction that can be pulled out. More importantly, these
+    // checks need to be done at compile time (via a compiler
+    // plugin?), not at runtime...
+//   = {
+//    scope.get( space ) match {
 // 	case Some( _ ) => {
 // 	  in( ptn, `type`.inScopeConsumer ) match {
 // 	    case true => space.get( ptn )
@@ -146,8 +139,10 @@ trait MonadicTSTyping[MTS[L,P,R],Place,Pattern,Resource,PtnType] {
 //       }
 //    }
 
-    // These follow the same pattern -- so, there is a higher-order
-    // abstraction that can be pulled out.
+    def get [MTSPattern,U] (
+      ptn : Pattern, scope : Scope[MTS[L,P,R],MTSPattern,U]
+    ) : Option[Resource] 
+
     def fetch [MTSPattern,U] (
       ptn : Pattern, scope : Scope[MTS[L,P,R],MTSPattern,U]
     ) : Option[Resource]
@@ -155,10 +150,13 @@ trait MonadicTSTyping[MTS[L,P,R],Place,Pattern,Resource,PtnType] {
       ptn : Pattern, scope : Scope[MTS[L,P,R],MTSPattern,U]
     ) : Option[Resource]
 
-    def put [MTSPattern,U] (
-      ptn : Pattern, rsrc : Resource, scope : Scope[MTS[L,P,R],MTSPattern,U]
-    ) : Unit  //= {
-      // scope.get( space ) match {
+    // These all follow the same pattern -- so, there is a higher-order
+    // abstraction that can be pulled out. More importantly, these
+    // checks need to be done at compile time (via a compiler
+    // plugin?), not at runtime...
+
+//   = {
+//    scope.get( space ) match {
 // 	case Some( _ ) => {
 // 	  in( ptn, `type`.inScopeProducer ) match {
 // 	    case true => space.put( ptn, rsrc )
@@ -173,9 +171,10 @@ trait MonadicTSTyping[MTS[L,P,R],Place,Pattern,Resource,PtnType] {
 // 	}
 //       }
 //    }
+    def put [MTSPattern,U] (
+      ptn : Pattern, rsrc : Resource, scope : Scope[MTS[L,P,R],MTSPattern,U]
+    ) : Unit  
 
-    // These follow the same pattern -- so, there is a higher-order
-    // abstraction that can be pulled out.
     def publish [MTSPattern,U] (
       ptn : Pattern, rsrc : Resource, scope : Scope[MTS[L,P,R],MTSPattern,U]
     ) : Unit
