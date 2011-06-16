@@ -12,6 +12,7 @@ import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 import net.liftweb.amqp._
 
 import scala.util.continuations._ 
@@ -41,6 +42,7 @@ trait MonadicDTSMsgScope[Namespace,Var,Tag,Value]
 extends DTSMsgScope[Namespace,Var,Tag,Value]
 {
   import AMQPDefaults._
+  import identityConversions._
 
   object AnAMQPTraceMonitor extends TraceMonitor[Msgs.DReq,Msgs.DRsp]  
 
@@ -49,14 +51,16 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     override val requests : ListBuffer[Msgs.JTSReq],
     override val responses : ListBuffer[Msgs.JTSRsp],
     override val nameSpace :
-    Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
     override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
   ) extends StdMonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp](
     host, port
   ) with MonadicAgency[String,Msgs.DReq,Msgs.DRsp] {  
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
-    override def name : URI = {
+    //override def name : URI = {
+    override def name : Moniker = {
       new URI( "agent", host, "/", "" )
     }    
   }
@@ -97,7 +101,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	      srcURI.getHost, port,
 	      new ListBuffer[Msgs.JTSReq](),
 	      new ListBuffer[Msgs.JTSRsp](),
-	      Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
+	      //Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
+	      Some( new LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
 	      AnAMQPTraceMonitor
 	    )
 	  
@@ -123,8 +128,10 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   class SMAJATwistedPair(
-    override val srcURI : URI,
-    override val trgtURI : URI
+    //override val srcURI : URI,
+    override val srcURI : Moniker,
+    //override val trgtURI : URI
+    override val trgtURI : Moniker
   ) extends SemiMonadicAgentJSONAMQPTwistedPair[String] 
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion with MonadicGenerators with WireTap
@@ -161,7 +168,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       ).asInstanceOf[StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp]]
     }
 
-    override def name : URI = srcURI
+    //override def name : URI = srcURI
+    override def name : Moniker = srcURI
     override def requests : ListBuffer[Msgs.JTSReq] = {
       jsonDispatcher().requests
     }
@@ -169,7 +177,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       jsonDispatcher( ).responses
     }
     override def nameSpace :
-    Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
+    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
+    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
       jsonDispatcher( ).nameSpace
     }
     override def traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp] = {
@@ -236,7 +245,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
     def unapply(
       smajatp : SMAJATwistedPair
-    ) : Option[(URI,URI)] = {
+    ) : //Option[(URI,URI)] = {
+    Option[(Moniker,Moniker)] = {
       Some( ( smajatp.srcURI, smajatp.trgtURI ) )
     }    
   }
@@ -253,12 +263,15 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	with ConfigurationTrampoline =>
     
     def agentTwistedPairs :
-    Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]
-    def acquaintances : Seq[URI]
+    //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]
+    Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]]
+    //def acquaintances : Seq[URI]
+    def acquaintances : Seq[Moniker]
 
     def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit
 
-    def acqQName( acqURI : URI ) : String
+    //def acqQName( acqURI : URI ) : String
+    def acqQName( acqURI : Moniker ) : String
 
     override def setLoggingLevel( verb : Verbosity ) : Unit = {
       _loggingLevel = Some( verb )
@@ -271,10 +284,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
     }
     
-    def meetNGreet( acquaintances : Seq[URI] )
-    : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    //def meetNGreet( acquaintances : Seq[URI] )
+    def meetNGreet( acquaintances : Seq[Moniker] )
+    : //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       {
-	val map = new HashMap[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]()
+	//val map = new HashMap[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]()
+	val map = new HashMap[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]]()
 	for( acquaintance <- acquaintances )
 	yield {
 	  val atp =
@@ -299,9 +315,11 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 
   trait QueueNameVender {
     self : UUIDOps =>
-    lazy val acqQNames = new LinkedHashMap[URI,UUID]( )
-
-    def acqQNameUnique( acqURI : URI ) : String = {
+    //lazy val acqQNames = new LinkedHashMap[URI,UUID]( )
+      lazy val acqQNames = new LinkedHashMap[Moniker,UUID]( )
+      
+    //def acqQNameUnique( acqURI : URI ) : String = {
+    def acqQNameUnique( acqURI : Moniker ) : String = {
       acqQNames.get( acqURI ) match {
 	case Some( uuid ) => uuid.toString
 	case None => {
@@ -312,18 +330,22 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
     }
     
-    def acqQName( acqURI : URI ) : String = {
+    //def acqQName( acqURI : URI ) : String = {
+    def acqQName( acqURI : Moniker ) : String = {
       acqURI.getPath.split( "/" ).last
     }
   }
 
   abstract class MonadicJunction(
-    override val name : URI,
-    override val acquaintances : Seq[URI],
+    //override val name : URI,
+    override val name : Moniker,
+    //override val acquaintances : Seq[URI],
+    override val acquaintances : Seq[Moniker],
     override val requests : ListBuffer[Msgs.JTSReq],
     override val responses : ListBuffer[Msgs.JTSRsp],
     override val nameSpace :
-      Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
     override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
   )
   extends TermStore[Namespace,Var,Tag,Value](
@@ -342,10 +364,11 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     override type Trgt = Msgs.JTSReqOrRsp
 
     override lazy val agentTwistedPairs
-    : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    : //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )    
 
-    def forwardGet( hops : List[URI], path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
+    def forwardGet( hops : List[Moniker], path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
       for(
 	( uri, jsndr ) <- agentTwistedPairs
 	if !hops.contains( uri )
@@ -368,14 +391,17 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   class InMemoryMonadicJunction(
-    override val name : URI,
-    override val acquaintances : Seq[URI]
+    //override val name : URI,
+    override val name : Moniker,
+    //override val acquaintances : Seq[URI]
+    override val acquaintances : Seq[Moniker]
   ) extends MonadicJunction(
     name,
     acquaintances,
     new ListBuffer[Msgs.JTSReq](),
     new ListBuffer[Msgs.JTSRsp](),
-    Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
+    //Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
+    Some( new LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     AnAMQPTraceMonitor
   ) {
     def handleRequest( dreq : Msgs.JTSReq ) : Unit = {
@@ -616,7 +642,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
     }
 
-    def get( hops : List[URI] )(
+    //def get( hops : List[URI] )(
+    def get( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag],
       next : WhatNext
     )
@@ -684,8 +711,10 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   class MonadicJoin[PlaceT <: CnxnCtxtLabel[Namespace,Var,Tag]](
-    override val name : URI,
-    override val acquaintances : Seq[URI]
+    //override val name : URI,
+    override val name : Moniker,
+    //override val acquaintances : Seq[URI]
+    override val acquaintances : Seq[Moniker]
   ) extends InMemoryMonadicJunction(
     name,
     acquaintances
@@ -743,7 +772,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
     }
 
-    def join( hops : List[URI] )(
+    //def join( hops : List[URI] )(
+    def join( hops : List[Moniker] )(
       asks : Generator[PlaceT,Unit,Unit],
       fulfilled : TMap[Namespace,Var,Tag,Value],
       outstanding : TMap[Namespace,Var,Tag,Value]
@@ -822,7 +852,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	  }
       }
 
-    def serve( hops : List[URI] )(
+    //def serve( hops : List[URI] )(
+    def serve( hops : List[Moniker] )(
       placePatterns : Seq[PlaceT] // TODO replace with Generator which
 				  // implies adding flatMap to Generator
     ) = Generator {
@@ -891,6 +922,8 @@ object MonadicMsgJunction
   extends MonadicDTSMsgScope[String,String,String,String]
   with UUIDOps
 {
+  import identityConversions._
+
   type MsgTypes = DTSMSH[String,String,String,String]
 
   val aLabel =

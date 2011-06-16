@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.agent
 
+import com.biosimilarity.lift.lib.moniker._
 import com.biosimilarity.lift.model.msg._
 
 import java.net.URI
@@ -20,10 +21,12 @@ import scala.actors._
 import Actor._
 
 trait Socialite[ReqBody,RspBody] {  
-  def name : URI
+  //def name : URI
+  def name : Moniker
   def requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]]
   def responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]]
-  def nameSpace : Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]]
+  //def nameSpace : Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]]
+  def nameSpace : Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]]
 
   def traceMonitor : TraceMonitor[ReqBody,RspBody]
 
@@ -64,10 +67,12 @@ trait Socialite[ReqBody,RspBody] {
   }
   def isJustified( response : InspectionRequest ) : Boolean = true
 
-  def validateTarget( msg : {def to : URI} ) : Boolean = {
+  //def validateTarget( msg : {def to : URI} ) : Boolean = {
+  def validateTarget( msg : {def to : Moniker} ) : Boolean = {
     msg.to == name
   }
-  def validateAcquaintance( msg : {def from : URI} ) : Boolean = {
+  //def validateAcquaintance( msg : {def from : URI} ) : Boolean = {
+  def validateAcquaintance( msg : {def from : Moniker} ) : Boolean = {  
     nameSpace match {
       case None => false
       case Some( map ) => {
@@ -195,9 +200,11 @@ trait Socialite[ReqBody,RspBody] {
     true
   }
 
-  def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean
+  //def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean
+  def likes( dsg : Moniker, acq : Socialite[ReqBody,RspBody] ) : Boolean
 
-  def introduce( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean = {
+  //def introduce( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean = {
+  def introduce( dsg : Moniker, acq : Socialite[ReqBody,RspBody] ) : Boolean = {
     if ( likes( dsg, acq ) ) {
       nameSpace match {
 	case None => {
@@ -388,7 +395,8 @@ trait Socialite[ReqBody,RspBody] {
   }
 
   def logError(
-    dsg : URI,
+    //dsg : URI,
+    dsg : Moniker,
     agent : Socialite[ReqBody,RspBody],
     error : NoNamespace
   ) : Boolean = {
@@ -530,11 +538,15 @@ trait Socialite[ReqBody,RspBody] {
 
 class SocialiteExtractor[ReqBody,RspBody] {
   def unapply( socialite : Socialite[ReqBody,RspBody] )
-  : (URI,
-     ListBuffer[JustifiedRequest[ReqBody,RspBody]],
-     ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-     Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
-     TraceMonitor[ReqBody,RspBody])
+  : ( 
+    //URI,
+    Moniker,
+    ListBuffer[JustifiedRequest[ReqBody,RspBody]],
+    ListBuffer[JustifiedResponse[ReqBody,RspBody]],
+    //Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
+    Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]],
+    TraceMonitor[ReqBody,RspBody]
+  )
   = {
     (
       socialite.name,
@@ -1054,14 +1066,17 @@ class SocialiteExtractor[ReqBody,RspBody] {
 // }
 
 class Messenger[ReqBody,RspBody](
-  override val name : URI,
+  //override val name : URI,
+  override val name : Moniker,
   override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
   override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-  override val nameSpace : Option[LinkedHashMap[URI, Socialite[ReqBody,RspBody]]],
+  //override val nameSpace : Option[LinkedHashMap[URI, Socialite[ReqBody,RspBody]]],
+  override val nameSpace : Option[LinkedHashMap[Moniker, Socialite[ReqBody,RspBody]]],
   override val traceMonitor : TraceMonitor[ReqBody,RspBody]
 ) extends Actor with Socialite[ReqBody,RspBody] {
   override def useBraceNotation : Boolean = false
-  def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean = true
+  //def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean = true
+  def likes( dsg : Moniker, acq : Socialite[ReqBody,RspBody] ) : Boolean = true
   def act () {
     nameSpace match {
       case None => {

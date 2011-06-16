@@ -11,6 +11,7 @@ package com.biosimilarity.lift.model.store
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import net.liftweb.amqp._
 
@@ -28,6 +29,8 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 import java.net.URI
 import java.util.UUID
 
+import identityConversions._
+
 trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
   type DReq = DistributedTermSpaceRequest[Namespace,Var,Tag,Value]
   type DRsp = DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
@@ -43,21 +46,25 @@ trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
   object AnAMQPTraceMonitor extends TraceMonitor[DReq,DRsp]  
 
   class AMQPAgent(
-    alias : URI
+    //alias : URI
+    alias : Moniker
   ) extends ReflectiveMessenger[DReq,DRsp](
     alias,
     new ListBuffer[JTSReq](),
     new ListBuffer[JTSRsp](),
-    Some( new LinkedHashMap[URI,Socialite[DReq,DRsp]]),
+    //Some( new LinkedHashMap[URI,Socialite[DReq,DRsp]]),
+    Some( new LinkedHashMap[Moniker,Socialite[DReq,DRsp]]),
     AnAMQPTraceMonitor
   )
   with UUIDOps {
-    override def validateTarget( msg : {def to : URI} ) : Boolean = {
+    //override def validateTarget( msg : {def to : URI} ) : Boolean = {
+    override def validateTarget( msg : {def to : Moniker} ) : Boolean = {
       // Put URI filtering behavior here
       true
     }
     
-    override def validateAcquaintance( msg : {def from : URI} ) : Boolean = {
+    //override def validateAcquaintance( msg : {def from : URI} ) : Boolean = {
+    override def validateAcquaintance( msg : {def from : Moniker} ) : Boolean = {
       // Put Requestor filtering behavior here
       nameSpace match {
 	case None => false
@@ -92,7 +99,8 @@ trait AgentsOverAMQP[Namespace,Var,Tag,Value] {
 }
 
 trait EndPoint[Namespace,Var,Tag,Value] {
-  def location : URI
+  //def location : URI
+  def location : Moniker
   def handleRequest( 
     dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
   ) : Boolean
@@ -102,7 +110,8 @@ trait EndPoint[Namespace,Var,Tag,Value] {
 }
 
 class EndPointLocuter[Namespace,Var,Tag,Value](
-  override val location : URI
+  //override val location : URI
+  override val location : Moniker
 ) extends EndPoint[Namespace,Var,Tag,Value]
 with Journalist
 with ConfiggyReporting
@@ -138,6 +147,11 @@ with UUIDOps {
     ep : EndPoint[Namespace,Var,Tag,Value]
   ) : URI = {
     ep.location
+  }
+  implicit def endPointAsMoniker(
+    ep : EndPoint[Namespace,Var,Tag,Value]
+  ) : Moniker = {
+    MURI( ep.location )
   }
 
   // implicit def hostNameStringAsURI(
@@ -347,7 +361,7 @@ with UUIDOps {
     }
   }  
 
-  def host : String = { src.getHost }
+  def host : String = { src.location.getHost }
 
   var _jsonSender : Option[JSONAMQPSender] = None 
   
@@ -357,7 +371,7 @@ with UUIDOps {
       case None => {
 	val js = new JSONAMQPSender(
 	  rabbitFactory(),
-	  trgt.getHost,
+	  trgt.location.getHost,
 	  5672,
 	  "mult",
 	  "routeroute"

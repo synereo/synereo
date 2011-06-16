@@ -10,6 +10,7 @@ package com.biosimilarity.lift.model.store
 
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.lift.lib.zipper._
+import com.biosimilarity.lift.lib.moniker._
 import scala.collection.SeqProxy
 import java.net.URI
 

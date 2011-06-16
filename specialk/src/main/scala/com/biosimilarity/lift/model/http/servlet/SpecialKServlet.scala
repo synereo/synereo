@@ -11,6 +11,7 @@ package com.biosimilarity.lift.model.http.servlet
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import scala.util.continuations._
 
@@ -34,6 +35,7 @@ import javax.servlet.http.{HttpServlet
 class SpecialKServlet
 extends HttpServlet
 with MsgShortHand {
+  import identityConversions._
   lazy val _msngrMoniker = IdVendor.getURI()
   case object TheSpecialK extends SpecialKMessenger( _msngrMoniker )
 

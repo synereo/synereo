@@ -12,6 +12,7 @@ import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import scala.collection.mutable._
 import scala.util.continuations._ 
@@ -142,6 +143,8 @@ object MonadicStringDMsgs
        extends DTSMSH[String,String,String,String]
        with UUIDOps
 {
+  import identityConversions._
+
   val aLabelUUID = getUUID()
   val bLabelUUID = getUUID()
 

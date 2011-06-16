@@ -9,6 +9,7 @@
 package com.biosimilarity.lift.model.agent
 
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 import com.biosimilarity.lift.model.msg._
 
 import scala.util.continuations._ 
@@ -29,7 +30,8 @@ trait MonadicAgency[TxPort,ReqBody,RspBody]
     Either[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]]  
     
     override def useBraceNotation : Boolean = false
-  def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] )
+  //def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] )
+  def likes( dsg : Moniker, acq : Socialite[ReqBody,RspBody] )
   : Boolean = true
        
   override def handleRequestPayload ( payload : ReqBody )

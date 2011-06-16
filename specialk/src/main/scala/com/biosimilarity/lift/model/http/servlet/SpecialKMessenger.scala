@@ -11,6 +11,7 @@ package com.biosimilarity.lift.model.http.servlet
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import scala.collection.mutable._
 
@@ -26,6 +27,7 @@ import javax.servlet.http.{HttpServlet
 			 }
 
 trait MsgShortHand {
+  import identityConversions._
   type HttpPair = ( HSReq, HSResp )
   type JHttpReq = JustifiedRequest[HttpPair,HSResp]
   type JHttpRsp = JustifiedResponse[HttpPair,HSResp]
@@ -39,12 +41,14 @@ trait MsgShortHand {
   object AnHTTPTraceMonitor extends TraceMonitor[HttpPair,HSResp]
 
   def source(req : HSReq, resp : HSResp)
-  : URI = {
+  : //URI = {
+  Moniker = {
     // temporarily
     IdVendor.getURI()
   }
   def target(req : HSReq, resp : HSResp)
-  : URI = {
+  : //URI = {
+  Moniker = {
     // temporarily
     req match {
       case hsReq : HttpSReq => {
@@ -74,22 +78,26 @@ trait MsgShortHand {
   }
 
   class SpecialKMessenger(
-    alias : URI
+    //alias : URI
+    alias : Moniker
   )
   extends ReflectiveMessenger[HttpPair,HSResp](
     alias,
     new ListBuffer[JHttpReq](),
     new ListBuffer[JHttpRsp](),
-    Some( new LinkedHashMap[URI,Socialite[HttpPair,HSResp]]),
+    //Some( new LinkedHashMap[URI,Socialite[HttpPair,HSResp]]),
+    Some( new LinkedHashMap[Moniker,Socialite[HttpPair,HSResp]]),
     AnHTTPTraceMonitor
   )
   with UUIDOps {
-    override def validateTarget( msg : {def to : URI} ) : Boolean = {
+    //override def validateTarget( msg : {def to : URI} ) : Boolean = {
+    override def validateTarget( msg : {def to : Moniker} ) : Boolean = {
       // Put URI filtering behavior here
       true
     }
     
-    override def validateAcquaintance( msg : {def from : URI} ) : Boolean = {
+    //override def validateAcquaintance( msg : {def from : URI} ) : Boolean = {
+    override def validateAcquaintance( msg : {def from : Moniker} ) : Boolean = {
       // Put Requestor filtering behavior here
       nameSpace match {
 	case None => false

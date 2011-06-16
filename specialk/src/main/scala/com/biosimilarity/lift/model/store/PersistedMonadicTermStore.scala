@@ -13,6 +13,7 @@ import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
@@ -363,8 +364,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
   }  
   
   abstract class PersistedMonadicGeneratorJunction(
-    override val name : URI,
-    override val acquaintances : Seq[URI]
+    //override val name : URI,
+    override val name : Moniker,
+    //override val acquaintances : Seq[URI]
+    override val acquaintances : Seq[Moniker]
   ) extends DistributedMonadicGeneratorJunction(
     name,
     acquaintances
@@ -599,7 +602,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def mget(
       persist : Option[PersistenceManifest],
       ask : dAT.Ask,
-      hops : List[URI]
+      //hops : List[URI]
+      hops : List[Moniker]
     )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
@@ -814,7 +818,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       )( ptn, rsrc )
     }
 
-    override def get( hops : List[URI] )(
+    //override def get( hops : List[URI] )(
+    override def get( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
@@ -835,7 +840,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       get( Nil )( path )    
     }
 
-    override def fetch( hops : List[URI] )(
+    //override def fetch( hops : List[URI] )(
+    override def fetch( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
@@ -856,7 +862,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       fetch( Nil )( path )    
     }
 
-    override def subscribe( hops : List[URI] )(
+    //override def subscribe( hops : List[URI] )(
+    override def subscribe( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
@@ -889,6 +896,7 @@ object PersistedMonadicTS
   with UUIDOps {
     import SpecialKURIDefaults._
     import CnxnLeafAndBranch._
+    import identityConversions._
 
     type MTTypes = MonadicTermTypes[String,String,String,String]
     object TheMTT extends MTTypes
@@ -900,8 +908,10 @@ object PersistedMonadicTS
     
     class PersistedtedStringMGJ(
       val dfStoreUnitStr : String,
-      override val name : URI,
-      override val acquaintances : Seq[URI]
+      //override val name : URI,
+      override val name : Moniker,
+      //override val acquaintances : Seq[URI]
+      override val acquaintances : Seq[Moniker]
     ) extends PersistedMonadicGeneratorJunction(
       name, acquaintances
     ) {
@@ -1057,6 +1067,7 @@ object StdPersistedMonadicTS
     import SpecialKURIDefaults._
     import CnxnLeafAndBranch._
     import CCLDSL._
+    import identityConversions._
 
     type MTTypes = MonadicTermTypes[Symbol,Symbol,Any,Any]
     object TheMTT extends MTTypes
@@ -1068,8 +1079,10 @@ object StdPersistedMonadicTS
     
     class PersistedtedStdMGJ(
       val dfStoreUnitStr : String,
-      override val name : URI,
-      override val acquaintances : Seq[URI]
+      //override val name : URI,
+      override val name : Moniker,
+      //override val acquaintances : Seq[URI]
+      override val acquaintances : Seq[Moniker]
     ) extends PersistedMonadicGeneratorJunction(
       name, acquaintances
     ) {

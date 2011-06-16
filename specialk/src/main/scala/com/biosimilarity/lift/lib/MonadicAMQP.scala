@@ -8,6 +8,8 @@
 
 package com.biosimilarity.lift.lib
 
+import com.biosimilarity.lift.lib.moniker._
+
 import net.liftweb.amqp._
 
 import scala.util.continuations._
@@ -292,8 +294,10 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 
   import AMQPDefaults._
   
-  def srcURI : URI
-  def trgtURI : URI
+  //def srcURI : URI
+  def srcURI : Moniker
+  //def trgtURI : URI
+  def trgtURI : Moniker
 
   var _jsonDispatcher : Option[StdMonadicJSONAMQPDispatcher[T]] = None
   def jsonDispatcher( handle : T => Unit )(
@@ -379,8 +383,10 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 }
 
 class SMJATwistedPair[T](
-  override val srcURI : URI,
-  override val trgtURI : URI
+  //override val srcURI : URI,
+  override val srcURI : Moniker,
+  //override val trgtURI : URI
+  override val trgtURI : Moniker
 ) extends SemiMonadicJSONAMQPTwistedPair[T]
   with WireTap
   with Journalist
@@ -396,13 +402,16 @@ object SMJATwistedPair {
     srcIPStr : String, trgtIPStr : String
   ) : SMJATwistedPair[T] = {
     new SMJATwistedPair[T](
-      new URI( "agent", srcIPStr, "/invitation", "" ),
-      new URI( "agent", trgtIPStr, "/invitation", "" )
+      //new URI( "agent", srcIPStr, "/invitation", "" ),
+      MURI( new URI( "agent", srcIPStr, "/invitation", "" ) ),
+      //new URI( "agent", trgtIPStr, "/invitation", "" )
+      MURI( new URI( "agent", trgtIPStr, "/invitation", "" ) )
     )
   }
   def unapply[T](
     smjatp : SMJATwistedPair[T]
-  ) : Option[(URI,URI)] = {
+  ) : //Option[(URI,URI)] = {
+  Option[(Moniker,Moniker)] = {
     Some( ( smjatp.srcURI, smjatp.trgtURI ) )
   }    
 }

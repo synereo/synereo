@@ -13,6 +13,7 @@ import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
@@ -196,12 +197,15 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   }
 
   abstract class MonadicGeneratorJunction(
-    override val name : URI,
-    override val acquaintances : Seq[URI],
+    //override val name : URI,
+    override val name : Moniker,
+    //override val acquaintances : Seq[URI],
+    override val acquaintances : Seq[Moniker],
     override val requests : ListBuffer[Msgs.JTSReq],
     override val responses : ListBuffer[Msgs.JTSRsp],
     override val nameSpace :
-    Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
     override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
   )
   extends MonadicTermStore(
@@ -217,12 +221,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     override type Trgt = Msgs.JTSReqOrRsp
 
     override lazy val agentTwistedPairs
-    : Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    : //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
 
     def forward(
       ask : dAT.Ask,
-      hops : List[URI],
+      //hops : List[URI],
+      hops : List[Moniker],
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
 
@@ -268,7 +274,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     
     def forward(
       ask : dAT.AskNum,
-      hops : List[URI],
+      //hops : List[URI],
+      hops : List[Moniker],
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
 
@@ -310,14 +317,17 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   }
 
   class DistributedMonadicGeneratorJunction(
-    override val name : URI,
-    override val acquaintances : Seq[URI]
+    //override val name : URI,
+    override val name : Moniker,
+    //override val acquaintances : Seq[URI]
+    override val acquaintances : Seq[Moniker]
   ) extends MonadicGeneratorJunction(
     name,
     acquaintances,
     new ListBuffer[Msgs.JTSReq](),
     new ListBuffer[Msgs.JTSRsp](),
-    Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
+    //Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
+    Some( new LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     AnAMQPTraceMonitor
   ) with QueueNameVender {
     def sendRsp(
@@ -386,7 +396,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     def handleValue(
       dreq : Msgs.DReq,
       oV : Option[mTT.Resource],
-      msrc : URI
+      //msrc : URI
+      msrc : Moniker
     ) : Unit = {
       //tap( v )            
 
@@ -591,7 +602,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       }
     }
 
-    def mget( ask : dAT.Ask, hops : List[URI] )(
+    //def mget( ask : dAT.Ask, hops : List[URI] )(
+    def mget( ask : dAT.Ask, hops : List[Moniker] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean
@@ -620,7 +632,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       }
     }
 
-    def mget( ask : dAT.AskNum, hops : List[URI] )(
+    //def mget( ask : dAT.AskNum, hops : List[URI] )(
+    def mget( ask : dAT.AskNum, hops : List[Moniker] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean
@@ -650,7 +663,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       }
     }
   
-    def get( hops : List[URI] )(
+    //def get( hops : List[URI] )(
+    def get( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
@@ -727,7 +741,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	  }
       }
 
-    def fetch( hops : List[URI] )(
+    //def fetch( hops : List[URI] )(
+    def fetch( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
@@ -771,7 +786,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	  }
       }
 
-    def subscribe( hops : List[URI] )(
+    //def subscribe( hops : List[URI] )(
+    def subscribe( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
@@ -827,6 +843,7 @@ object MonadicTS
   with UUIDOps {
     import SpecialKURIDefaults._
     import CnxnLeafAndBranch._
+    import identityConversions._
 
     type MTTypes = MonadicTermTypes[String,String,String,String]
     object TheMTT extends MTTypes

@@ -12,6 +12,7 @@ import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import java.net.URI
 import java.util.UUID
@@ -23,8 +24,10 @@ import javax.servlet.http.{HttpServlet,
 
 class JustHttpRequest(
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : HSReq,
   override val justification : Option[Response[AbstractJustifiedRequest[HSReq,HSResp],HSResp]]

@@ -9,14 +9,17 @@
 package com.biosimilarity.lift.model.msg
 
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import java.net.URI
 import java.util.UUID
 
 trait Header {
   def msgId         : UUID
-  def to            : URI
-  def from          : URI
+  //def to            : URI
+  def to            : Moniker
+  //def from          : URI
+  def from          : Moniker
   def flowId        : UUID
 }
 
@@ -27,8 +30,10 @@ trait Message[Justfication,BodyType] {
 
 abstract class Request[Response,BodyType](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : BodyType,
   override val justification : Option[Response]  
@@ -36,8 +41,10 @@ abstract class Request[Response,BodyType](
 
 class AbstractJustifiedRequest[ReqBody,RspBody](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : ReqBody,
   override val justification : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
@@ -48,8 +55,10 @@ class AbstractJustifiedRequest[ReqBody,RspBody](
 object AbstractJustifiedRequest {
   def apply[ReqBody,RspBody](
     msgId         : UUID,
-    to            : URI,
-    from          : URI,
+    //to            : URI,
+    to            : Moniker,
+    //from          : URI,
+    from          : Moniker,
     flowId        : UUID,
     body          : ReqBody,
     justification : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
@@ -60,7 +69,8 @@ object AbstractJustifiedRequest {
     )
   }  
   def unapply[ReqBody,RspBody]( ajr : AbstractJustifiedRequest[ReqBody,RspBody] )
-  : Option[(UUID,URI,URI,UUID,ReqBody,Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]])]
+  : //Option[(UUID,URI,URI,UUID,ReqBody,Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]])]
+  Option[(UUID,Moniker,Moniker,UUID,ReqBody,Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]])]
   = {
     Some(( ajr.msgId, ajr.to, ajr.from, ajr.flowId, ajr.body, ajr.justification ))
   }    
@@ -68,8 +78,10 @@ object AbstractJustifiedRequest {
 
 case class JustifiedRequest[ReqBody,RspBody](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : ReqBody,
   override val justification : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
@@ -79,8 +91,10 @@ case class JustifiedRequest[ReqBody,RspBody](
 
 case class URIJustifiedRequest[ReqBody](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : ReqBody,
   override val justification : Option[Response[AbstractJustifiedRequest[ReqBody,URI],URI]]
@@ -90,8 +104,10 @@ case class URIJustifiedRequest[ReqBody](
 
 abstract class Response[Request,BodyType](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : BodyType,
   override val justification : Option[Request]
@@ -99,8 +115,10 @@ abstract class Response[Request,BodyType](
 
 class AbstractJustifiedResponse[ReqBody,RspBody](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : RspBody,
   override val justification : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
@@ -111,8 +129,10 @@ class AbstractJustifiedResponse[ReqBody,RspBody](
 object AbstractJustifiedResponse {
   def apply[ReqBody,RspBody](
     msgId         : UUID,
-    to            : URI,
-    from          : URI,
+    //to            : URI,
+    to            : Moniker,
+    //from          : URI,
+    from          : Moniker,
     flowId        : UUID,
     body          : RspBody,
     justification : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
@@ -122,7 +142,8 @@ object AbstractJustifiedResponse {
     )
   }
   def unapply[ReqBody,RspBody]( ajr : AbstractJustifiedResponse[ReqBody,RspBody] )
-  : Option[(UUID,URI,URI,UUID,RspBody,Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]])]
+  : //Option[(UUID,URI,URI,UUID,RspBody,Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]])]
+  Option[(UUID,Moniker,Moniker,UUID,RspBody,Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]])]
   = {
       Some( ( ajr.msgId, ajr.to, ajr.from, ajr.flowId, ajr.body, ajr.justification ) )
   }  
@@ -130,8 +151,10 @@ object AbstractJustifiedResponse {
 
 case class JustifiedResponse[ReqBody,RspBody](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : RspBody,
   override val justification : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
@@ -141,8 +164,10 @@ case class JustifiedResponse[ReqBody,RspBody](
 
 case class URIJustifiedResponse[RspBody](
   override val msgId  : UUID,
-  override val to     : URI,
-  override val from   : URI,
+  //override val to     : URI,
+  override val to     : Moniker,
+  //override val from   : URI,
+  override val from   : Moniker,
   override val flowId : UUID,
   override val body   : RspBody,
   override val justification : Option[Request[AbstractJustifiedResponse[URI,RspBody],URI]]
@@ -159,21 +184,24 @@ trait InspectionRequest
   val flowId : UUID = getUUID()
 }
 
-case class InspectRequests( to : URI, from : URI )
+//case class InspectRequests( to : URI, from : URI )
+case class InspectRequests( to : Moniker, from : Moniker )
      extends InspectionRequest {
        override def msgId = getUUID()
        override def body = {}
        override def justification = None       
      }
 
-case class InspectResponses( to : URI, from : URI )
+//case class InspectResponses( to : URI, from : URI )
+case class InspectResponses( to : Moniker, from : Moniker )
      extends InspectionRequest {
        override def msgId = getUUID()
        override def body = {}
        override def justification = None
      }
 
-case class InspectNamespace( to : URI, from : URI )
+//case class InspectNamespace( to : URI, from : URI )
+case class InspectNamespace( to : Moniker, from : Moniker )
      extends InspectionRequest {
        override def msgId = getUUID()
        override def body = {}

@@ -10,10 +10,38 @@ package com.biosimilarity.lift.lib.moniker
 import java.net.URI
 import java.net.URL
 
-trait Moniker
-case class MURI( uri : URI ) extends Moniker
-case class MURN( uri : URI ) extends Moniker
-case class MURL( url : URL ) extends Moniker
+trait Moniker {
+  def getScheme : String
+  def getHost : String
+  def getPort : Int
+  def getPath : String
+  def getQuery : String
+  def getFragment : String
+}
+case class MURI( uri : URI ) extends Moniker {
+  override def getScheme : String = uri.getScheme
+  override def getHost : String = uri.getHost
+  override def getPort : Int = uri.getPort
+  override def getPath : String = uri.getPath
+  override def getQuery : String = uri.getQuery
+  override def getFragment : String = uri.getFragment
+}
+case class MURN( uri : URI ) extends Moniker {
+  override def getScheme : String = uri.getScheme
+  override def getHost : String = uri.getHost
+  override def getPort : Int = uri.getPort
+  override def getPath : String = uri.getPath
+  override def getQuery : String = uri.getQuery
+  override def getFragment : String = uri.getFragment
+}
+case class MURL( url : URL ) extends Moniker {
+  override def getScheme : String = url.getProtocol
+  override def getHost : String = url.getHost
+  override def getPort : Int = url.getPort
+  override def getPath : String = url.getPath
+  override def getQuery : String = url.getQuery
+  override def getFragment : String = ""
+}
 
 class URM(
   val scheme : String,
@@ -93,6 +121,12 @@ class URM(
       + ( 37 * fragment.hashCode )
     )
   }
+  override def getScheme : String = uri.getScheme
+  override def getHost : String = uri.getHost
+  override def getPort : Int = uri.getPort
+  override def getPath : String = uri.getPath
+  override def getQuery : String = uri.getQuery
+  override def getFragment : String = uri.getFragment
 }
 
 

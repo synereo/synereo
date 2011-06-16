@@ -11,6 +11,7 @@ package com.biosimilarity.lift.model.store
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 import net.liftweb.amqp._
 
 import scala.util.continuations._ 
@@ -32,18 +33,24 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
 trait OZ[GetRequest,GetContinuation] {
-  def hostToOutstandingReqs : Map[URI,(GetRequest,GetContinuation)]
+  //def hostToOutstandingReqs : Map[URI,(GetRequest,GetContinuation)]
+  def hostToOutstandingReqs : Map[Moniker,(GetRequest,GetContinuation)]
 }
 
 trait Collective[Namespace,Var,Tag,Value]
 extends EndPoint[Namespace,Var,Tag,Value] {
-  def selfIdentity : URI
-  def agentTwistedPairs : Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]]
-  def acquaintances : Seq[URI]
+  //def selfIdentity : URI
+  def selfIdentity : Moniker
+  //def agentTwistedPairs : Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]]
+  def agentTwistedPairs : Map[Moniker,AgentTwistedPair[Namespace,Var,Tag,Value]]
+  //def acquaintances : Seq[URI]
+  def acquaintances : Seq[Moniker]
 
-  override def location : URI = selfIdentity
+  //override def location : URI = selfIdentity
+  override def location : Moniker = selfIdentity
 
-  case class URIEndPointWrapper( override val location : URI )
+  //case class URIEndPointWrapper( override val location : URI )
+  case class URIEndPointWrapper( override val location : Moniker )
   extends EndPoint[Namespace,Var,Tag,Value] {
     def handleRequest( 
       dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
@@ -58,15 +65,20 @@ extends EndPoint[Namespace,Var,Tag,Value] {
   }
 
   implicit def URIasEndPoint(
-    uri : URI
+    //uri : URI
+    uri : Moniker
   ) : EndPoint[Namespace,Var,Tag,Value] = {
     URIEndPointWrapper( uri )
   }    
   
-  def meetNGreet( acquaintances : Seq[URI] )
-  : Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]] =
+  //def meetNGreet( acquaintances : Seq[URI] )
+  def meetNGreet( acquaintances : Seq[Moniker] )
+  : //Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]] =
+  Map[Moniker,AgentTwistedPair[Namespace,Var,Tag,Value]] =
   {
-    val map = new HashMap[URI,AgentTwistedPair[Namespace,Var,Tag,Value]]()
+    //val map = new
+    //HashMap[URI,AgentTwistedPair[Namespace,Var,Tag,Value]]()
+    val map = new HashMap[Moniker,AgentTwistedPair[Namespace,Var,Tag,Value]]()
     for( acquaintance <- acquaintances )
     yield {
       val atp =
@@ -85,12 +97,15 @@ extends EndPoint[Namespace,Var,Tag,Value] {
 }
 
 class Junction[Namespace,Var,Tag,Value](
-  override val selfIdentity : URI,  
-  override val acquaintances : Seq[URI]
+  //override val selfIdentity : URI,  
+  override val selfIdentity : Moniker,  
+  //override val acquaintances : Seq[URI]
+  override val acquaintances : Seq[Moniker]
 ) extends TermStore[Namespace,Var,Tag,Value]
 with Collective[Namespace,Var,Tag,Value] {  
   override lazy val agentTwistedPairs
-  : Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]] =
+  : //Map[URI,AgentTwistedPair[Namespace,Var,Tag,Value]] =
+  Map[Moniker,AgentTwistedPair[Namespace,Var,Tag,Value]] =
     meetNGreet( acquaintances )
   
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
@@ -289,6 +304,7 @@ with Collective[Namespace,Var,Tag,Value] {
 }
 
 object PetticoatJunction {
+  import identityConversions._
   val agentOneURI = new URI( "agent", "10.0.1.7", "/invitation", "" )
   val agentTwoURI = new URI( "agent", "10.0.1.5", "/invitation", "" )
 

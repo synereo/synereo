@@ -11,6 +11,7 @@ package com.biosimilarity.lift.model.http.servlet
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import scala.collection.mutable._
 
@@ -25,6 +26,7 @@ import javax.servlet.http.{HttpServlet}
 class SpecialKFilter
 extends Filter
 with MsgShortHand {
+  import identityConversions._
   lazy val _msngrMoniker = IdVendor.getURI()
   case object TheSpecialK extends SpecialKMessenger( _msngrMoniker )
 

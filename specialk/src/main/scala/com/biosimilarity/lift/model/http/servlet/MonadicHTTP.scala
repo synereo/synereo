@@ -13,6 +13,7 @@ import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
 
 import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
@@ -37,6 +38,7 @@ object MonadicHttpTS
   import SpecialKURIDefaults._
   import CnxnLeafAndBranch._
   import CCLDSL._
+  import identityConversions._
 
   val HTTPReqCCL =
     $('request)(

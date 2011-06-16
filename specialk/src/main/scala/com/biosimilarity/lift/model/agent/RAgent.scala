@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model.agent
 
+import com.biosimilarity.lift.lib.moniker._
 import com.biosimilarity.lift.model.msg._
 
 import java.net.URI
@@ -78,17 +79,20 @@ trait Focus[ReqBody,RspBody] {
 // Mercury -- down to the shiny bits
 
 class ReflectiveMessenger[ReqBody,RspBody](
-  override val name : URI,
+  //override val name : URI,
+  override val name : Moniker,
   override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
   override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-  override val nameSpace : Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
+  //override val nameSpace : Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
+  override val nameSpace : Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]],
   override val traceMonitor : TraceMonitor[ReqBody,RspBody]
 ) extends Actor
      with Socialite[ReqBody,RspBody]
      with Awareness[ReqBody,RspBody]
      with Focus[ReqBody,RspBody] {
   override def useBraceNotation : Boolean = false
-  def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] )
+  //def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] )
+  def likes( dsg : Moniker, acq : Socialite[ReqBody,RspBody] )
   : Boolean = true
        
   override def handleRequestPayload ( payload : ReqBody ) : Boolean = false
@@ -185,10 +189,12 @@ class ReflectiveMessenger[ReqBody,RspBody](
 object ReflectiveMessengerExtractor {
   def unapply[ReqBody,RspBody]( rmsngr : ReflectiveMessenger[ReqBody,RspBody] )
   : (
-      URI,
+      //URI,
+      Moniker,
       ListBuffer[JustifiedRequest[ReqBody,RspBody]],
       ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-      Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
+      //Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
+      Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]],
       TraceMonitor[ReqBody,RspBody]
     ) = {
       (
@@ -202,13 +208,15 @@ object ReflectiveMessengerExtractor {
 }
 
 class SociallyAwareMessenger[ReqBody,RspBody](
-  handle : URI,
+  //handle : URI,
+  handle : Moniker,
   monitor : TraceMonitor[ReqBody,RspBody]
 ) extends ReflectiveMessenger[ReqBody,RspBody](
   handle,
   new ListBuffer[JustifiedRequest[ReqBody,RspBody]](),
   new ListBuffer[JustifiedResponse[ReqBody,RspBody]](),
-  Some( new LinkedHashMap[URI,Socialite[ReqBody,RspBody]]() ),
+  //Some( new LinkedHashMap[URI,Socialite[ReqBody,RspBody]]() ),
+  Some( new LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]() ),
   monitor
   ){    
 }
@@ -216,10 +224,12 @@ class SociallyAwareMessenger[ReqBody,RspBody](
 // Messenger class that handles messaging with continuations
 
 class RMessenger[ReqBody,RspBody](
-  name : URI,
+  //name : URI,
+  name : Moniker,
   requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
   responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-  nameSpace : Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
+  //nameSpace : Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]],
+  nameSpace : Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]],
   traceMonitor : TraceMonitor[ReqBody,RspBody]
 ) extends ReflectiveMessenger[ReqBody,RspBody](
   name, requests, responses, nameSpace, traceMonitor
