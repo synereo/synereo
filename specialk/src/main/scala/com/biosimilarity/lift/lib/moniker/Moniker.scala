@@ -131,6 +131,10 @@ class URM(
 
 
 object identityConversions {
+  def defaultScheme : String = "specialk"
+  def defaultPath : String = "/connection"
+  def defaultFragment : String = ""
+
   implicit def toMoniker( url : URL ) : Moniker = {
     new MURL( url )
   }
@@ -138,8 +142,16 @@ object identityConversions {
     new MURI( uri )
   }
   implicit def toMoniker( s : String ) : Moniker = {
-    new URI( s )
+    new URI( defaultScheme, s, defaultPath, defaultFragment )
   }  
+  implicit def toMoniker( s : Symbol ) : URI = {
+    new URI(
+      defaultScheme,
+      s.toString.replace( "'", "" ),
+      defaultPath,
+      defaultFragment
+    )
+  }
   implicit def toURI( mnkr : Moniker ) : URI = {
     mnkr match {
       case muri : MURI => muri.uri
