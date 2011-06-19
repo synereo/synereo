@@ -370,6 +370,50 @@ abstract class TicTacToe[M1[_]](
 	}	
       )	
     }
+    def minmax(
+      dlim : Int,
+      blim : Int,
+      ppSelf : ( Int => Int => AI[T,M,RTM] ),
+      p : Mark,
+      g : Game
+    ) : TM[Outcome] = {
+      val tma : TM[Outcome] =	    
+	monadicTMWitness.bind(
+	  choose( g.moves ),
+	  ( m : Loc ) => {
+	    val gp = takeMove( p, m, g )
+	    if ( dlim <= 0 ) {
+	      monadicTMWitness.unit(
+		Outcome( estimateState( p, gp ), gp )
+	      )
+	    }
+	    else {
+	      val oc =
+		ppSelf( (dlim - 1) )( blim ).opponent(
+		  otherPlayer( p )
+		).proc( gp )
+	    
+	      monadicTMWitness.bind(
+		oc,
+		( oc : Outcome ) => {
+		  monadicTMWitness.unit(
+		    Outcome( -( oc.w ), gp )
+		  )
+		}
+	      )
+	    }	    
+	  }
+	)
+
+      monadicTMWitness.bind(
+	bagOfNC( Some( blim ), tma ),
+	( wbs : List[Outcome] ) => {
+	  monadicTMWitness.unit(
+	    maxByFstProj[Int,Game,Outcome]( wbs.drop( 1 ), wbs( 0 ) )
+	  )
+	}
+      )
+    }
   }
 
   abstract class SFKTAI
