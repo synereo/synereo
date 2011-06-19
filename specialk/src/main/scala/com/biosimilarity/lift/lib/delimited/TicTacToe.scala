@@ -355,6 +355,23 @@ abstract class TicTacToe[M1[_]](
     }    
   }
 
+  trait BetterAI[T[M[_],_],M[_],RTM[A] <: T[M,A]] extends AI[T,M,RTM]
+  {
+    def firstMoveWins( p : Mark, g : Game ) : TM[Option[( Loc, Outcome )]] = {
+      monadicTMWitness.bind(
+	choose( g.moves ),
+	( m : Loc ) => {
+	  val gp = takeMove( p, m, g )	  
+	  monadicTMWitness.unit(
+	    for( ( _, pp ) <- gp.winner; if ( pp == p ) ) yield {
+	      ( m, Outcome(scoreWin,gp) )
+	    }
+	  )
+	}	
+      )	
+    }
+  }
+
   abstract class SFKTAI
   extends LogicTSFKTC[Outcome]
   with AI[SFKT,M1,SFKTC] {    
