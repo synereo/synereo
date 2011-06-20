@@ -357,6 +357,16 @@ abstract class TicTacToe[M1[_]](
 
   trait BetterAI[T[M[_],_],M[_],RTM[A] <: T[M,A]] extends AI[T,M,RTM]
   {
+    case class MoveNOutcome( m : Loc, oc : Outcome )
+    extends Projections[Loc,Outcome] {
+      override def _1 : Loc = m
+      override def _2 : Outcome = oc
+    }
+
+    def aiLim( dlim : Int )( blim : Int ) : AI[T,M,RTM]
+    def dlim : Int
+    def blim : Int
+
     def firstMoveWins( p : Mark, g : Game ) : TM[Option[( Loc, Outcome )]] = {
       monadicTMWitness.bind(
 	choose( g.moves ),
@@ -376,7 +386,7 @@ abstract class TicTacToe[M1[_]](
       ppSelf : ( Int => Int => AI[T,M,RTM] ),
       p : Mark,
       g : Game
-    ) : TM[Outcome] = {
+    ) : TM[Outcome] = {      	  
       val tma : TM[Outcome] =	    
 	monadicTMWitness.bind(
 	  choose( g.moves ),
@@ -413,6 +423,60 @@ abstract class TicTacToe[M1[_]](
 	  )
 	}
       )
+    }
+
+    override def proc( g : Game ) : TM[Outcome] = {
+      g match {
+	case Game( Some( _ ), _, _ ) =>
+	  monadicTMWitness.unit(
+	    Outcome( estimateState( p, g ), g )
+	  )
+	case Game( _, Nil, _ ) =>
+	  monadicTMWitness.unit(
+	    Outcome( estimateState( p, g ), g )
+	  )
+	case _ => {	  	  
+	  ifteC(
+	    onceC( firstMoveWins( p, g ) ),
+	    ( mX : Option[( Loc, Outcome )] ) => {
+	      mX match {
+		case Some( mO ) => {
+		  monadicTMWitness.unit( mO._2 )
+		}
+		case _ =>
+		  throw new Exception( "why are we here?" )
+	      }
+	    },
+	    ifteC(
+	      onceC( firstMoveWins( otherPlayer( p ), g ) ),
+	      ( mX : Option[( Loc, Outcome )] ) => {
+		mX match {
+		  case Some( mO ) => {
+		    val gp = takeMove( p, mO._1, g )
+		
+		    val oc =
+		      aiLim( (dlim - 1) )( blim ).opponent(
+			otherPlayer( p )
+		      ).proc( gp )
+		    
+		    monadicTMWitness.bind(
+		      oc,
+		      ( oc : Outcome ) => {
+			monadicTMWitness.unit(
+			  Outcome( -( oc.w ), gp )
+			)
+		      }
+		    )
+		  }
+		  case _ =>
+		    throw new Exception( "why are we here?" )
+		}				
+	      },
+	      minmax( dlim, blim, aiLim, p, g )
+	    )
+	  )	    	  
+	}
+      }
     }
   }
 
