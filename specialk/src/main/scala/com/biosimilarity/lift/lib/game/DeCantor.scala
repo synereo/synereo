@@ -20,18 +20,15 @@ extends IterableProxy[A] {
   // mutable maps are invariant in the target type.
   def mapf [B] ( f : (A) => B ) : DeCantor[B] = {
     var rslt : HashMap[Int,B] = new HashMap[Int,B]()
-    for( a <- contents.values.iterator ) {
-      val b = f( a )
-      val hb = b.hashCode( )
-      rslt = rslt + ( ( hb, b ) )
+    for( a <- self; b = f( a ) ) {
+      rslt = rslt + ( ( b.hashCode, b ) )
     }
     new DeCantor( rslt )
   }
   def zip [B] (that: GenIterable[B]): DeCantor[(A, B)] = {
     var rslt : HashMap[Int,( A, B )] = new HashMap[Int,( A, B )]()
-    for( ab <- self.zip( that ).iterator ) {
-      val hab = ab.hashCode()
-      rslt = rslt + ( ( hab, ab ) )
+    for( ab <- self.zip( that ) ) {
+      rslt = rslt + ( ( ab.hashCode, ab ) )
     }
     new DeCantor( rslt )
   }
@@ -39,8 +36,7 @@ extends IterableProxy[A] {
     var rslt : HashMap[Int,B] = contents
     that.foreach(
       ( t : B ) => {
-	val ht = t.hashCode
-	rslt = rslt + ( ( ht, t ) )	
+	rslt = rslt + ( ( t.hashCode, t ) )	
       }
     )
     new DeCantor[B]( rslt )
