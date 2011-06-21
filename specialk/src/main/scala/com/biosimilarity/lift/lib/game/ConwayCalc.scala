@@ -26,21 +26,35 @@ trait ConwayOps {
 
 // Relations
 trait ConwayRelations {
+  // identity
+  def `===` ( 
+    g1 : ConwayGame,
+    g2 : ConwayGame
+  ) : Boolean = {
+    ( ( g1.left.equals( g2.left ) ) && ( g1.right.equals( g2.right ) ) )
+  }
+  // equality
   def `=G=` ( 
     g1 : ConwayGame,
     g2 : ConwayGame
-  ) : Boolean
-  def `|G>` ( 
+  ) : Boolean = {
+    ( `G>=`( g1, g2 ) && `G>=`( g2, g1 ) )
+  }
+  // order
+  def `G>=` ( 
     g1 : ConwayGame,
     g2 : ConwayGame
-  ) : Boolean
-  def `||` ( 
-    g1 : ConwayGame,
-    g2 : ConwayGame
-  ) : Boolean
+  ) : Boolean = {
+    (
+      g2.left.forall( ( g2L : ConwayGame ) => ! `G>=`( g2L, g1 ) )
+      && g1.right.forall( ( g1R : ConwayGame ) =>  ! `G>=`( g2, g1R ) )
+    )
+  }
 }
 
-class ConwayCalculator extends ConwayOps {
+class ConwayCalculator
+extends ConwayOps
+with ConwayRelations {
   override def add (
     g1 : ConwayGame,
     g2 : ConwayGame
