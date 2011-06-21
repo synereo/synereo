@@ -14,6 +14,23 @@ import scala.collection.immutable.HashMap
 class DeCantor[+A]( val contents : HashMap[Int,A] )
 extends IterableProxy[A] {
   override def self : Iterable[A] = contents.values  
+  def mapf [B] ( f : (A) => B ) : DeCantor[B] = {
+    var rslt : HashMap[Int,B] = new HashMap[Int,B]()
+    for( a <- contents.values.iterator ) {
+      val b = f( a )
+      val hb = b.hashCode( )
+      rslt = rslt + ( ( hb, b ) )
+    }
+    new DeCantor( rslt )
+  }
+  def zip [B] (that: GenIterable[B]): DeCantor[(A, B)] = {
+    var rslt : HashMap[Int,( A, B )] = new HashMap[Int,( A, B )]()
+    for( ab <- self.zip( that ).iterator ) {
+      val hab = ab.hashCode()
+      rslt = rslt + ( ( hab, ab ) )
+    }
+    new DeCantor( rslt )
+  }
   def ++ [B >: A] (that: GenTraversableOnce[B]): DeCantor[B] = {
     var rslt : HashMap[Int,B] = contents
     that.foreach(
