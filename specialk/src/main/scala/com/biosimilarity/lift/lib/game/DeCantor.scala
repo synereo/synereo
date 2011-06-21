@@ -14,6 +14,10 @@ import scala.collection.immutable.HashMap
 class DeCantor[+A]( val contents : HashMap[Int,A] )
 extends IterableProxy[A] {
   override def self : Iterable[A] = contents.values  
+  // BUGBUG -- lgm: i'm not sure why zip and ++ are dispatched to
+  // correctly but map isn't. So, i've renamed it to mapf.
+  // BUGBUG -- lgm: this pattern is terribly inefficient, but the
+  // mutable maps are invariant in the target type.
   def mapf [B] ( f : (A) => B ) : DeCantor[B] = {
     var rslt : HashMap[Int,B] = new HashMap[Int,B]()
     for( a <- contents.values.iterator ) {
