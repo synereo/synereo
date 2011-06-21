@@ -45,6 +45,17 @@ extends IterableProxy[A] {
     )
     new DeCantor[B]( rslt )
   }
+  override def equals( o : Any ) : Boolean = {
+    o match {
+      case that : DeCantor[A] => {
+	contents.equals( that.contents )
+      }
+      case _ => false
+    }
+  }
+  override def hashCode( ) : Int = {
+    ( 37 * contents.hashCode )
+  }
 }
 
 object DeCantor {
