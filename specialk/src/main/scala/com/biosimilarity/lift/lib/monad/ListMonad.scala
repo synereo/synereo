@@ -11,6 +11,7 @@ package com.biosimilarity.lift.lib.monad
 class ListM[A]( )
 extends ForNotationAdapter[List,A] 
 with BMonad[List]
+with MonadPlus[List]
 with MonadFilter[List] {
   override def unit [S] ( s : S ) : List[S] = 
     List[S]( s )
@@ -25,6 +26,15 @@ with MonadFilter[List] {
 	}
       }
     )
+  }
+  override def zero [A] : List[A] = {
+    List[A]( )
+  }
+  override def plus [A] (
+    ma1 : List[A],
+    ma2 : List[A]
+  ) : List[A] = {
+    ma1 ++ ma2
   }
   override def mfilter [S] (
     ls : List[S],

@@ -9,11 +9,11 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.game.conway
-import com.biosimilarity.lift.lib.collection._
+import com.biosimilarity.lift.lib.collection.{ DeCantor => Set, _ }
 
 trait ConwayGame {
-  def left : DeCantor[ConwayGame]
-  def right : DeCantor[ConwayGame]  
+  def left : Set[ConwayGame]
+  def right : Set[ConwayGame]  
 }
 
 trait ConwayRenderer {
@@ -53,15 +53,15 @@ case object EmptyGame
 extends ConwayGame
 with ConwayRenderer
 {
-  override def left : DeCantor[ConwayGame] =
-    DeCantor.empty[ConwayGame]
-  override def right : DeCantor[ConwayGame] = 
-    DeCantor.empty[ConwayGame]
+  override def left : Set[ConwayGame] =
+    Set.empty[ConwayGame]
+  override def right : Set[ConwayGame] = 
+    Set.empty[ConwayGame]
 }
 
 case class Game(
-  left : DeCantor[ConwayGame],
-  right : DeCantor[ConwayGame]
+  left : Set[ConwayGame],
+  right : Set[ConwayGame]
 ) extends ConwayGame 
      with ConwayRenderer
 

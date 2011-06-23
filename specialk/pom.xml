@@ -148,6 +148,11 @@
     <!-- <version>1.3</version> -->
     <version>1.6.1.RC1</version>
   </dependency>
+  <dependency>
+    <groupId>org.scala-tools.sxr</groupId>
+    <artifactId>sxr_2.9.0</artifactId>
+    <version>0.2.7</version>
+  </dependency>
     <dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty</artifactId>
@@ -418,6 +423,8 @@
 	    <arg>-deprecation</arg>
 	    <arg>-unchecked</arg>
 	    <!-- <arg>-Xprint:selectivecps</arg> -->
+	    <arg>-Xplugin:/Users/lgm/.m2/repository/org/scala-tools/sxr/sxr_2.9.0/0.2.7/sxr_2.9.0-0.2.7.jar</arg>
+	    <arg>-P:sxr:base-directory:${basedir}/src</arg>
 	    <arg>-P:continuations:enable</arg>
           </args>
 	  <compilerPlugins>
@@ -425,6 +432,11 @@
       	      <groupId>org.scala-lang.plugins</groupId>
       	      <artifactId>continuations</artifactId>
       	      <version>${scala.version}</version>
+      	    </compilerPlugin>
+	    <compilerPlugin>	      
+      	      <groupId>org.scala-tools.sxr</groupId>
+      	      <artifactId>sxr_2.9.0</artifactId>
+      	      <version>0.2.7</version>
       	    </compilerPlugin>
       	  </compilerPlugins>
         </configuration>

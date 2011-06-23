@@ -7,7 +7,7 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.game.conway
-import com.biosimilarity.lift.lib.collection._
+import com.biosimilarity.lift.lib.collection.{ DeCantor => Set, _ }
 
 // Generators
 trait ConwayOps {
@@ -30,31 +30,23 @@ trait ConwayRelations {
   def `===` ( 
     g1 : ConwayGame,
     g2 : ConwayGame
-  ) : Boolean = {
-    ( ( g1.left.equals( g2.left ) ) && ( g1.right.equals( g2.right ) ) )
-  }
+  ) : Boolean
   // equality
   def `=G=` ( 
     g1 : ConwayGame,
     g2 : ConwayGame
-  ) : Boolean = {
-    ( `G>=`( g1, g2 ) && `G>=`( g2, g1 ) )
-  }
+  ) : Boolean
   // order
   def `G>=` ( 
     g1 : ConwayGame,
     g2 : ConwayGame
-  ) : Boolean = {
-    (
-      g2.left.forall( ( g2L : ConwayGame ) => ! `G>=`( g2L, g1 ) )
-      && g1.right.forall( ( g1R : ConwayGame ) =>  ! `G>=`( g2, g1R ) )
-    )
-  }
+  ) : Boolean
 }
 
 class ConwayCalculator
 extends ConwayOps
-with ConwayRelations {
+with ConwayRelations {  
+  // generators
   override def add (
     g1 : ConwayGame,
     g2 : ConwayGame
@@ -115,6 +107,32 @@ with ConwayRelations {
 	g1.left.zip( g2.right ).mapf( mComp )
 	++ g1.right.zip( g2.left ).mapf( mComp )
       )
+    )
+  }
+
+  // relations
+  // identity
+  override def `===` ( 
+    g1 : ConwayGame,
+    g2 : ConwayGame
+  ) : Boolean = {
+    ( ( g1.left.equals( g2.left ) ) && ( g1.right.equals( g2.right ) ) )
+  }
+  // equality
+  override def `=G=` ( 
+    g1 : ConwayGame,
+    g2 : ConwayGame
+  ) : Boolean = {
+    ( `G>=`( g1, g2 ) && `G>=`( g2, g1 ) )
+  }
+  // order
+  override def `G>=` ( 
+    g1 : ConwayGame,
+    g2 : ConwayGame
+  ) : Boolean = {
+    (
+      g2.left.forall( ( g2L : ConwayGame ) => ! `G>=`( g2L, g1 ) )
+      && g1.right.forall( ( g1R : ConwayGame ) =>  ! `G>=`( g2, g1R ) )
     )
   }
 }

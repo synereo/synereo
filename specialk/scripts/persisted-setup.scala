@@ -27,8 +27,8 @@ implicit def toPattern(
 
 implicit def toValue( s : String ) : mTT.Resource = mTT.Ground( s )
 
-//val pimgJunq = ptToPt( "K", "10.0.1.5", "10.0.1.9" )
-val pimgJunq = ptToPt( "Yellow", "localhost", "localhost" )
+val pimgJunq = ptToPt( "K", "10.0.1.5", "10.0.1.9" )
+//val pimgJunq = ptToPt( "Yellow", "localhost", "localhost" )
 val atps = pimgJunq.agentTwistedPairs
 
 val lbl1 = "contentChannel(\"email\")"
