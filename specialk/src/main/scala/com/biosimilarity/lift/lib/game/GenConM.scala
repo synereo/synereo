@@ -7,7 +7,7 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.game
-
+import com.biosimilarity.lift.lib.collection.{ DeCantor => Set, _ }
 import com.biosimilarity.lift.lib.monad._
 
 trait GenConPreM[A] {
@@ -16,7 +16,7 @@ trait GenConPreM[A] {
     f : S => GeneralizedConwayGame[T]
   ) : GeneralizedConwayGame[T] = {
     GenConGame(
-      ( ( Nil : List[Either[T,GeneralizedConwayGame[T]]] ) /: ls.left )( 
+      ( ( Set.empty[Either[T,GeneralizedConwayGame[T]]] : Set[Either[T,GeneralizedConwayGame[T]]] ) /: ls.left )( 
 	{
 	  ( acc, e ) => {
 	    acc ++ List(
@@ -30,7 +30,7 @@ trait GenConPreM[A] {
 	  }
 	}
       ),
-      ( ( Nil : List[Either[T,GeneralizedConwayGame[T]]] ) /: ls.right )( 
+      ( ( Set.empty[Either[T,GeneralizedConwayGame[T]]] : Set[Either[T,GeneralizedConwayGame[T]]] ) /: ls.right )( 
 	{
 	  ( acc, e ) => {
 	    acc ++ List(
@@ -51,10 +51,10 @@ trait GenConPreM[A] {
     pred : S => Boolean
   ) : GeneralizedConwayGame[S] = {
     GenConGame(
-      ( ( Nil : List[Either[S,GeneralizedConwayGame[S]]] ) /: ls.left )( 
+      ( ( Set.empty[Either[S,GeneralizedConwayGame[S]]] : Set[Either[S,GeneralizedConwayGame[S]]] ) /: ls.left )( 
 	{
 	  (
-	    acc : List[Either[S,GeneralizedConwayGame[S]]],
+	    acc : Set[Either[S,GeneralizedConwayGame[S]]],
 	    e : Either[S,GeneralizedConwayGame[S]]
 	  ) => {
 	    e match {
@@ -77,10 +77,10 @@ trait GenConPreM[A] {
 	  }
 	}
       ),
-      ( ( Nil : List[Either[S,GeneralizedConwayGame[S]]] ) /: ls.right )( 
+      ( ( Set.empty[Either[S,GeneralizedConwayGame[S]]] : Set[Either[S,GeneralizedConwayGame[S]]] ) /: ls.right )( 
 	{
 	  (
-	    acc : List[Either[S,GeneralizedConwayGame[S]]],
+	    acc : Set[Either[S,GeneralizedConwayGame[S]]],
 	    e : Either[S,GeneralizedConwayGame[S]]
 	  ) => {
 	    e match {
@@ -113,7 +113,7 @@ with BMonad[GeneralizedConwayGame]
 with MonadFilter[GeneralizedConwayGame]
 with GenConPreM[A] {
   override def unit [S] ( s : S ) : GeneralizedConwayGame[S] = 
-    GenConGame[S]( List( Left[S,GeneralizedConwayGame[S]]( s ) ), Nil )
+    GenConGame[S]( Set( Left[S,GeneralizedConwayGame[S]]( s ) ), Set.empty )
   override def bind [S,T] (
     ls : GeneralizedConwayGame[S],
     f : S => GeneralizedConwayGame[T]
@@ -134,7 +134,7 @@ with BMonad[GeneralizedConwayGame]
 with MonadFilter[GeneralizedConwayGame]
 with GenConPreM[A] {
   override def unit [S] ( s : S ) : GeneralizedConwayGame[S] = 
-    GenConGame[S]( Nil, List( Left[S,GeneralizedConwayGame[S]]( s ) ) )
+    GenConGame[S]( Set.empty[Either[S,GeneralizedConwayGame[S]]], Set[Either[S,GeneralizedConwayGame[S]]]( Left[S,GeneralizedConwayGame[S]]( s ) ) )
   override def bind [S,T] (
     ls : GeneralizedConwayGame[S],
     f : S => GeneralizedConwayGame[T]

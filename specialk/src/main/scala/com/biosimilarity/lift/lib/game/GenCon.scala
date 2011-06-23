@@ -37,10 +37,11 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.game
+import com.biosimilarity.lift.lib.collection.{ DeCantor => Set, _ }
 
 trait GeneralizedConwayGame[+A] {
-  def left : List[Either[A,GeneralizedConwayGame[A]]]
-  def right : List[Either[A,GeneralizedConwayGame[A]]]  
+  def left : Set[Either[A,GeneralizedConwayGame[A]]]
+  def right : Set[Either[A,GeneralizedConwayGame[A]]]  
 }
 
 trait GenConRenderer[+A] {
@@ -81,9 +82,9 @@ trait GenConRenderer[+A] {
 
     (
       openBrace
-      + compStr( left )
+      + compStr( left.self.toList )
       + "|"
-      + compStr( right )
+      + compStr( right.self.toList )
       + closeBrace
     )
   }
@@ -93,13 +94,15 @@ case object EmptyGenConGame
 extends GeneralizedConwayGame[Nothing]
 with GenConRenderer[Nothing]
 {
-  override def left : List[Either[Nothing,GeneralizedConwayGame[Nothing]]] = Nil
-  override def right : List[Either[Nothing,GeneralizedConwayGame[Nothing]]] = Nil
+  override def left : Set[Either[Nothing,GeneralizedConwayGame[Nothing]]] = 
+    Set.empty[Either[Nothing,GeneralizedConwayGame[Nothing]]]
+  override def right : Set[Either[Nothing,GeneralizedConwayGame[Nothing]]] = 
+    Set.empty[Either[Nothing,GeneralizedConwayGame[Nothing]]]
 }
 
 case class GenConGame[+A](
-  left : List[Either[A,GeneralizedConwayGame[A]]],
-  right : List[Either[A,GeneralizedConwayGame[A]]]
+  left : Set[Either[A,GeneralizedConwayGame[A]]],
+  right : Set[Either[A,GeneralizedConwayGame[A]]]
 ) extends GeneralizedConwayGame[A] 
      with GenConRenderer[A]
 
@@ -111,11 +114,11 @@ extends GeneralizedConwayGame[A]
    with GCGFormalNegation[A]
    with GenConRenderer[A]
 {
-  def left : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Left( a ) )
+  def left : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Left( a ) )
   }
-  def right : List[Either[A,GeneralizedConwayGame[A]]] = {
-    Nil
+  def right : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set.empty[Either[A,GeneralizedConwayGame[A]]]
   }  
   override def openBrace : String = "{-|"
   override def closeBrace : String = "|-}"
@@ -133,11 +136,11 @@ case class GCGSumLeft[+A](
      with GCGFormalSum[A]
      with GenConRenderer[A]
 {
-  def left : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Left( a ) )
+  def left : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Left( a ) )
   }
-  def right : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Right( g ) )
+  def right : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Right( g ) )
   }  
   override def openBrace : String = "{<|"
   override def closeBrace : String = "|<}"
@@ -149,11 +152,11 @@ case class GCGSumRight[+A](
      with GCGFormalSum[A]
      with GenConRenderer[A]
 {
-  def left : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Right( g ) )
+  def left : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Right( g ) )
   }
-  def right : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Left( a ) )
+  def right : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Left( a ) )
   }
   override def openBrace : String = "{>|"
   override def closeBrace : String = "|>}"
@@ -171,11 +174,11 @@ case class GCGScalarMultipleLeft[+A](
      with GCGScalarMultiple[A]
      with GenConRenderer[A]
 {
-  def left : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Left( a ) )
+  def left : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Left( a ) )
   }
-  def right : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Right( g ) )
+  def right : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Right( g ) )
   }
   override def openBrace : String = "{*<|"
   override def closeBrace : String = "|*<}"
@@ -188,11 +191,11 @@ case class GCGScalarMultipleRight[+A](
      with GCGScalarMultiple[A]
      with GenConRenderer[A]
 {
-  def left : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Right( g ) )
+  def left : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Right( g ) )
   }
-  def right : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Left( a ) )
+  def right : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Left( a ) )
   }
   override def openBrace : String = "{*>|"
   override def closeBrace : String = "|*>}"
@@ -205,11 +208,11 @@ case class GCGScalarMultipleMiddle[+A](
      with GCGScalarMultiple[A]
      with GenConRenderer[A]
 {
-  def left : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Left( leftA ) )
+  def left : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Left( leftA ) )
   }
-  def right : List[Either[A,GeneralizedConwayGame[A]]] = {
-    List( Left( rightA ) )
+  def right : Set[Either[A,GeneralizedConwayGame[A]]] = {
+    Set( Left( rightA ) )
   }
   override def openBrace : String = "{*|"
   override def closeBrace : String = "|*}"

@@ -7,6 +7,7 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.game
+import com.biosimilarity.lift.lib.collection.{ DeCantor => Set, _ }
 
 // Generators
 trait GenConOps[+A] {
@@ -62,7 +63,7 @@ class GenConCalculator[+A] extends GenConOps[A] {
 	  case _ => {
 	    GenConGame(
 	      (
-		g1.left.map(
+		g1.left.mapf(
 		  ( g1L ) => {
 		    Right( 
 		      g1L match {
@@ -75,7 +76,7 @@ class GenConCalculator[+A] extends GenConOps[A] {
 		  }
 		)
 		++
-		g2.left.map(
+		g2.left.mapf(
 		  ( g2L ) => {
 		    Right(
 		      g2L match {
@@ -89,7 +90,7 @@ class GenConCalculator[+A] extends GenConOps[A] {
 		)
 	      ),
 	      (
-		g1.right.map(
+		g1.right.mapf(
 		  ( g1R ) => {
 		    Right(
 		      g1R match {
@@ -102,7 +103,7 @@ class GenConCalculator[+A] extends GenConOps[A] {
 		  }
 		)
 		++
-		g2.right.map(
+		g2.right.mapf(
 		  ( g2R ) => {
 		    Right(
 		      g2R match {
@@ -133,7 +134,7 @@ class GenConCalculator[+A] extends GenConOps[A] {
       )
     }
 
-    GenConGame( g.right.map( negate ), g.left.map( negate ) )
+    GenConGame( g.right.mapf( negate ), g.left.mapf( negate ) )
   }
   override def multiply [A1 >: A] (
     g1 : GeneralizedConwayGame[A1],
@@ -204,8 +205,8 @@ class GenConCalculator[+A] extends GenConOps[A] {
     }    
    
     GenConGame(
-      g1.left.zip( g2.left ).map( mComp ) ++ g1.right.zip( g2.right ).map( mComp ),
-      g1.left.zip( g2.right ).map( mComp ) ++ g1.right.zip( g2.left ).map( mComp )
+      g1.left.zip( g2.left ).mapf( mComp ) ++ g1.right.zip( g2.right ).mapf( mComp ),
+      g1.left.zip( g2.right ).mapf( mComp ) ++ g1.right.zip( g2.left ).mapf( mComp )
     )
   }
 }

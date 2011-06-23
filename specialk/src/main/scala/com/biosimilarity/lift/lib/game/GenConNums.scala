@@ -7,6 +7,7 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.lib.game
+import com.biosimilarity.lift.lib.collection.{ DeCantor => Set, _ }
 
 case object TheNaturalsViaConway {
   lazy val theCalculator : GenConCalculator[String] =
@@ -14,8 +15,8 @@ case object TheNaturalsViaConway {
 
   lazy val theOne : GeneralizedConwayGame[String] = 
     new GenConGame(
-      List( Right( EmptyGenConGame ) ),
-      Nil
+      Set( Right( EmptyGenConGame ) ),
+      Set.empty
     )
 
   lazy val theNumbers : Stream[GeneralizedConwayGame[String]] =    
