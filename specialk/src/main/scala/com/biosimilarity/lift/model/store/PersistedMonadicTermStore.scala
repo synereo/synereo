@@ -887,6 +887,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 }
 
 
+package usage {
 /* ------------------------------------------------------------------
  * Mostly self-contained object to support unit testing
  * ------------------------------------------------------------------ */ 
@@ -1245,3 +1246,5 @@ object StdPersistedMonadicTS
     
     override def protoMsgs : MsgTypes = MonadicDMsgs
   }
+
+}

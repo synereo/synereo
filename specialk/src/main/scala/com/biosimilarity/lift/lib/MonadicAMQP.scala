@@ -416,6 +416,11 @@ object SMJATwistedPair {
   }    
 }
 
+package usage {
+/* ------------------------------------------------------------------
+ * Mostly self-contained object to support unit testing
+ * ------------------------------------------------------------------ */ 
+
 object MonadicAMQPUnitTest {
   import AMQPDefaults._
   case class Msg(
@@ -466,4 +471,6 @@ object MonadicAMQPUnitTest {
 //     }
     _smjatp
   }
+}
+
 }

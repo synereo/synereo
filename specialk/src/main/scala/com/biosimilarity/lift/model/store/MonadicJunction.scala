@@ -914,6 +914,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 }
 
 
+package usage {
 /* ------------------------------------------------------------------
  * Mostly self-contained object to support unit testing
  * ------------------------------------------------------------------ */ 
@@ -969,4 +970,6 @@ object MonadicMsgJunction
   }
   
   override def protoMsgs : MsgTypes = MonadicDMsgs
+}
+
 }

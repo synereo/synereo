@@ -7,6 +7,7 @@
 // ------------------------------------------------------------------------
 
 import com.biosimilarity.lift.model.store._
+import com.biosimilarity.lift.model.store.usage._
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.store.xml.datasets._
 import com.biosimilarity.lift.lib._
@@ -16,6 +17,7 @@ import java.util.UUID
 import CCLDSL._
 import PersistedMonadicTS._
 import com.biosimilarity.lift.lib.SpecialKURIDefaults._
+
 implicit def toPattern(
   s : String
 ) : CnxnCtxtLabel[String,String,String] with Factual =

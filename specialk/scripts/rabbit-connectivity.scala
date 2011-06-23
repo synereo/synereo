@@ -7,7 +7,9 @@
 // ------------------------------------------------------------------------
 
 import com.biosimilarity.lift.model.store._
+import com.biosimilarity.lift.model.store.usage._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.usage._
 import scala.util.continuations._ 
 
 object RabbitMQConnectivityTest {

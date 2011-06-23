@@ -348,6 +348,11 @@ with FJTaskRunners
   
 }
 
+package usage {
+/* ------------------------------------------------------------------
+ * Mostly self-contained object to support unit testing
+ * ------------------------------------------------------------------ */ 
+
 import java.util.regex.{Pattern => RegexPtn, Matcher => RegexMatcher}
 
 object MonadicRegexTSpace
@@ -400,3 +405,4 @@ object MonadicRegexTSpace
 }
 
 
+}
