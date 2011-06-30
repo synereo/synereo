@@ -50,16 +50,62 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStreamWriter
 
-trait CnxnBasedLoggingScope[M[_],Namespace,Var,Tag,Value]
-extends HistoricalContextScope[M,CnxnCtxtLabel[Namespace,Var,Tag]]
+object Severity extends Enumeration()
+{
+  type Severity = Value
+  val Fatal, Error, Warning, Info, Debug, Trace = Value
+}
+
+trait SeverityOps {
+  def SeverityFromOption( level : Option[ String ] ) : Severity.Value =
+  {
+    level match {
+      case Some( x ) => {
+        SeverityFromString( x )
+      }
+      case None => {
+        Severity.Debug
+      }
+    }
+  }
+
+  def SeverityFromString( level : String ) : Severity.Value =
+  {
+    level.toLowerCase() match {
+      case "fatal" => {
+        Severity.Fatal
+      }
+      case "error" => {
+        Severity.Error
+      }
+      case "warning" => {
+        Severity.Warning
+      }
+      case "info" => {
+        Severity.Info
+      }
+      case "debug" => {
+        Severity.Debug
+      }
+      case "trace" => {
+        Severity.Trace
+      }
+      case _ => {
+        Severity.Debug
+      }
+    }
+  }
+}
+
+trait CnxnBasedLoggingScope[MW[_],M[_],Namespace,Var,Tag,Value]
+//extends HistoricalContextScope[M,CnxnCtxtLabel[Namespace,Var,Tag]]
+extends HistoricalContextScope[M,java.io.Serializable]
 with PersistedTermStoreScope[Namespace,Var,Tag,Value]
-with UUIDOps {
+with UUIDOps 
+with SeverityOps {
   import SpecialKURIDefaults._
   import CnxnLeafAndBranch._
-  import identityConversions._
-  
-  trait CnxnWriter[A] extends WriterM[A] {    
-  }
+  import identityConversions._    
 
   object MonitorScope
     extends PersistedTermStoreScope[String,String,String,String] {
@@ -225,4 +271,60 @@ with UUIDOps {
       
       override def protoMsgs : MsgTypes = MonadicDMsgs
     }
+
+  trait CnxnWriter[A] extends WriterM[A] {    
+    abstract class AbstractWrapper[A](
+      override val value : A,
+      override val record : M[java.io.Serializable]
+    ) extends MHCtxt[A]
+    
+    implicit def toMHCtxt[A](
+      tpl : ( A, M[java.io.Serializable] )
+    ) : MHCtxt[A]
+    implicit def fromMHCtxt[A](
+      mhctxt : MHCtxt[A]
+    ) : ( A, M[java.io.Serializable] )
+
+    def tweet( fact : java.io.Serializable ) : M[Unit]
+    def blog( fact : java.io.Serializable ) : M[Unit]
+    def report( fact : java.io.Serializable ) : M[Unit]    
+    def record( fact : java.io.Serializable ) : M[Unit]
+    def log( fact : java.io.Serializable ) : M[Unit]
+
+    def tweetValue[A]( a : A ) : AbstractWrapper[A]
+    def blogValue[A]( a : A ) : AbstractWrapper[A]
+    def reportValue[A]( a : A ) : AbstractWrapper[A]
+    def recordValue[A]( a : A ) : AbstractWrapper[A]
+    def logValue[A]( a : A ) : AbstractWrapper[A]
+
+    def tweet(
+      fact : java.io.Serializable,
+      severity : Severity.Value
+    ) : M[Unit]
+    def blog(
+      fact : java.io.Serializable,
+      severity : Severity.Value
+    ) : M[Unit]
+    def report(
+      fact : java.io.Serializable,
+      severity : Severity.Value
+    ) : M[Unit]    
+    def record(
+      fact : java.io.Serializable,
+      severity : Severity.Value
+    ) : M[Unit]    
+    def log(
+      fact : java.io.Serializable,
+      severity : Severity.Value
+    ) : M[Unit]        
+
+    def tweetValue[A]( a : A, severity : Severity.Value ) : AbstractWrapper[A]
+    def blogValue[A]( a : A, severity : Severity.Value ) : AbstractWrapper[A]
+    def reportValue[A]( a : A, severity : Severity.Value ) : AbstractWrapper[A]
+    def recordValue[A]( a : A, severity : Severity.Value ) : AbstractWrapper[A]
+    def logValue[A]( a : A, severity : Severity.Value ) : AbstractWrapper[A]
+  }
+
+  def beginLogging[A]( a : A ) : CnxnWriter[A]
+  def endLogging[A]( cnxnWrtr : CnxnWriter[A] ) : Unit
 }
