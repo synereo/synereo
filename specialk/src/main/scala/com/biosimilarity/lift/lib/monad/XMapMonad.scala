@@ -9,13 +9,15 @@
 package com.biosimilarity.lift.lib.monad
 
 import com.biosimilarity.lift.lib.collection.XMap
+import com.biosimilarity.lift.lib.collection.RXMap
 
+import scala.collection.SeqProxy
 import scala.collection.immutable.HashMap
 
 trait XMapMScope[A] {
   case class XMapC[B](
-    override val self : HashMap[A,B]
-  ) extends XMap[A,B]( self )
+    override val seq : HashMap[A,B]
+  ) extends XMap[A,B]( seq )  
 
   class XMapM[B](
     val unitKey : A
@@ -71,4 +73,43 @@ trait XMapMScope[A] {
       )
     }
   }
+}
+
+trait XMapCMScope[B] {
+  case class RXMapC[A](
+    override val seq : HashMap[A,Either[B,RXMap[A,B]]]
+  ) extends RXMap[A,B]( seq )
+
+  case class RXASeq[A]( override val self : List[A] )
+  extends SeqProxy[A]
+
+  // class RXMapCM[A]( )
+//   extends BComonad[RXMapC] {
+//     override def counit [S] ( tS : RXMapC[S] ) : S = 
+//       tS.attribute
+//     override def cobind [S,T] (
+//       ctxt : RXMapC[S] => T, 
+//       tS : RXMapC[S] 
+//     ) : RXMapC[T] = {
+//       val t : T = ctxt( tS )
+//       tS match {
+// 	case tI@RXMapItem( _, attrItem ) => {
+// 	  new RXMapItem( 
+// 	    t,
+// 	    attrItem
+// 	  )
+// 	}
+// 	case tI@RXMapSection( _, attrSection ) => {
+// 	  new RXMapSection( 
+// 	    t,
+// 	    attrSection.map(
+// 	      ( atree : RXMapC[S] ) => {
+// 		cobind( ctxt, atree )
+// 	      }
+// 	    )
+// 	  )
+// 	}
+//       }
+//     }
+//   }
 }

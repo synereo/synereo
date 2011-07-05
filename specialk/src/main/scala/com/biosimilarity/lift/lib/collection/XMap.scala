@@ -20,4 +20,13 @@ class XMap[A, +B](
     new XMap[A,B]( new HashMap[A,B]( ) )
 }
 
+class RXMap[A, +B](
+  override val seq : HashMap[A,Either[B,RXMap[A,B]]]
+) extends Map[A,Either[B,RXMap[A,B]]]
+  with MapProxyLike[A,Either[B,RXMap[A,B]],Map[A,Either[B,RXMap[A,B]]]] {
+  override def self = seq
+  override def empty =
+    new RXMap[A,B]( new HashMap[A,Either[B,RXMap[A,B]]]( ) )
+}
+
 

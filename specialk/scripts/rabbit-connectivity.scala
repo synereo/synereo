@@ -12,27 +12,51 @@ import com.biosimilarity.lift.lib._
 import com.biosimilarity.lift.lib.usage._
 import scala.util.continuations._ 
 
-object RabbitMQConnectivityTest {
+object RabbitMQConnectivityTest extends UUIDOps {
   import AMQPDefaults._
   import MonadicAMQPUnitTest._
-  def checkConnectivity( a : String, b : String ) = {
-    var msgCount = 0
+  import scala.collection.mutable.HashMap
+  def setupConnectionApparatus(
+    queueName : String,
+    a : String,
+    b : String,
+    msgCount : Int,
+    msgCx : HashMap[String,List[Msg]]
+  ) = {
     val sma1 = SMJATwistedPair[Msg]( a, b )
-    sma1.jsonSender( "myFavoriteQueue" )
-    sma1.jsonDispatcher(
-      "myFavoriteQueue",
-      ( x ) => {
-	println( "received : " + x )
-	msgCount += 1
-      }
+    (
+      sma1,
+      sma1.jsonSender( queueName ),
+      sma1.jsonDispatcher(
+	queueName,
+	( x ) => {
+	  println( "received : " + x )
+	  val msgs = msgCx.getOrElse( queueName, Nil )
+	  msgCx += ( ( queueName, msgs ++ List( x ) ) )
+	}
+      ),
+      msgStrm.take( msgCount )
     )
+  }
 
-    val msgs = msgStrm.take( 100 )
+  def checkConnectivity( a : String, b : String ) = {
+    val queueId = getUUID()
+    val queueName = "amqp_" + queueId
+    val msgCx = new HashMap[String,List[Msg]]()
+    def msgCount = {
+      msgCx.getOrElse( queueName, Nil ).size
+    }
+    val ( sma1, jsdnr, jsdsp, msgs ) =
+      setupConnectionApparatus(
+	queueName,
+	a, b, 100,
+	msgCx
+      )
     
     for( i <- 0 to 9 ) { sma1.send( msgs( i ) ) }
       
-    while ( msgCount < 10 ) {
-      Thread.sleep( 100 )
-    }
+    while ( msgCount < 10 ) { Thread.sleep( 100 ) }
+
+    ( queueName, msgCx )
   }      
 }
