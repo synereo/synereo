@@ -16,6 +16,9 @@ object RabbitMQConnectivityTest extends UUIDOps {
   import AMQPDefaults._
   import MonadicAMQPUnitTest._
   import scala.collection.mutable.HashMap
+  def freshQueueName() : String = {
+    "amqp_" + getUUID
+  }
   def setupConnectionApparatus(
     queueName : String,
     a : String,
@@ -40,8 +43,7 @@ object RabbitMQConnectivityTest extends UUIDOps {
   }
 
   def checkConnectivity( a : String, b : String ) = {
-    val queueId = getUUID()
-    val queueName = "amqp_" + queueId
+    val queueName = freshQueueName
     val msgCx = new HashMap[String,List[Msg]]()
     def msgCount = {
       msgCx.getOrElse( queueName, Nil ).size
