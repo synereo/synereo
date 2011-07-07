@@ -13,13 +13,13 @@ import _root_.java.io.ObjectOutputStream
  * @author Steve Jenson (stevej@pobox.com)
  */
 abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends Actor {
-  val conn = cf.newConnection(host, port)
+  val conn = cf.newConnection( Array { new Address(host, port) } )
   val channel = conn.createChannel()
-  val ticket = configure(channel)
+
   /**
    * Override this to use your own AMQP queue/exchange with the given channel.
-   */
-  def configure(channel: Channel): Int
+  */
+  def configure(channel: Channel)
 
   def send(msg: T) {
     // Now write an object to a byte array and shove it across the wire.
@@ -27,7 +27,7 @@ abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exc
     val store = new ObjectOutputStream(bytes)
     store.writeObject(msg)
     store.close
-    channel.basicPublish(ticket, exchange, routingKey, null, bytes.toByteArray)
+    channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
   }
 
   def act = loop
@@ -52,10 +52,9 @@ abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exc
  */
 class StringAMQPSender(cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends AMQPSender[String](cf, host, port, exchange, routingKey) {
   override def configure(channel: Channel) = {
-    val conn = cf.newConnection(host, port)
+    //BUGBUG: JSK - is this internal code needed anymore now that ticket is obsolete
+    val conn = cf.newConnection( Array { new Address(host, port) } )
     val channel = conn.createChannel()
-    val ticket = channel.accessRequest("/data")
-    ticket
   }
 }
 
@@ -63,13 +62,12 @@ class StringAMQPSender(cf: ConnectionFactory, host: String, port: Int, exchange:
  * An Example of how to use the Example subclass of AMQPSender[T]. Still following?
  */
 class ExampleStringAMQPSender {
-  val params = new ConnectionParameters
   // All of the params, exchanges, and queues are all just example data.
-  params.setUsername("guest")
-  params.setPassword("guest")
-  params.setVirtualHost("/")
-  params.setRequestedHeartbeat(0)
-  val factory = new ConnectionFactory(params)
+  val factory = new ConnectionFactory()
+  factory.setUsername("guest")
+  factory.setPassword("guest")
+  factory.setVirtualHost("/")
+  factory.setRequestedHeartbeat(0)
 
   val amqp = new StringAMQPSender(factory, "localhost", 5672, "mult", "routeroute")
   amqp.start
@@ -83,26 +81,24 @@ class ExampleStringAMQPSender {
  */
 object ExampleDirectAMQPSender {
   def send[T](msg: T) {
-    val params = new ConnectionParameters
     // All of the params, exchanges, and queues are all just example data.
-    params.setUsername("guest")
-    params.setPassword("guest")
-    params.setVirtualHost("/")
-    params.setRequestedHeartbeat(0)
-    send(msg, params, "localhost", 5672)
+    val factory = new ConnectionFactory()
+    factory.setUsername("guest")
+    factory.setPassword("guest")
+    factory.setVirtualHost("/")
+    factory.setRequestedHeartbeat(0)
+    send(msg, factory, "localhost", 5672)
   }
 
-  def send[T](msg: T, params: ConnectionParameters, host: String, port: Int) {
-    val factory = new ConnectionFactory(params)
-    val conn = factory.newConnection(host, port)
+  def send[T](msg: T, factory: ConnectionFactory, host: String, port: Int) {
+    val conn = factory.newConnection( Array { new Address(host, port) } )
     val channel = conn.createChannel()
-    val ticket = channel.accessRequest("/data")
     // Now write an object to a byte array and shove it across the wire.
     val bytes = new ByteArrayOutputStream
     val store = new ObjectOutputStream(bytes)
     store.writeObject(msg)
     store.close
-    channel.basicPublish(ticket, "mult", "routeroute", null, bytes.toByteArray)
+    channel.basicPublish("mult", "routeroute", null, bytes.toByteArray)
   }
 }
 

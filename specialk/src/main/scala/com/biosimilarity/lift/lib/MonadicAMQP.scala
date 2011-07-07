@@ -17,8 +17,7 @@ import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 
-import _root_.com.rabbitmq.client.{ Channel => RabbitChan,
-				   ConnectionParameters => RabbitCnxnParams, _}
+import _root_.com.rabbitmq.client.{ Channel => RabbitChan, _}
 import _root_.scala.actors.Actor
 
 import com.thoughtworks.xstream.XStream
@@ -41,9 +40,9 @@ trait MonadicAMQPDispatcher[T]
     body  : Array[Byte]
   )
 
-  type ConnectionParameters = RabbitCnxnParams
+//  type ConnectionParameters = RabbitCnxnParams
   type Channel = RabbitChan
-  type Ticket = Int
+//  type Ticket = Int
   type Payload = AMQPDelivery
 
   abstract class SerializedConsumer[T](
@@ -58,7 +57,7 @@ trait MonadicAMQPDispatcher[T]
   }  
 
   override def acceptConnections(
-    params : ConnectionParameters,
+    factory : ConnectionFactory,
     host : String,
     port : Int
   ) =
@@ -66,8 +65,7 @@ trait MonadicAMQPDispatcher[T]
       k : ( Channel => Unit @suspendable ) => {
 	//shift {
 	  //innerk : (Unit => Unit @suspendable) => {
-	    val factory = new ConnectionFactory( params )
-	    val connection = factory.newConnection( host, port )
+	    val connection = factory.newConnection( Array { new Address(host, port) } )
 	    val channel = connection.createChannel()
 	    k( channel );
 	  //}
@@ -76,49 +74,49 @@ trait MonadicAMQPDispatcher[T]
     }   
 
   override def beginService(
-    params : ConnectionParameters,
+    factory : ConnectionFactory,
     host : String,
     port : Int
   ) = {
-    beginService( params, host, port, "mult" )
+    beginService( factory, host, port, "mult" )
   }
 
    def beginService(
-    params : ConnectionParameters,
+    factory : ConnectionFactory,
     host : String,
     port : Int,
     exQNameRoot : String
   ) = Generator {
     k : ( T => Unit @suspendable ) =>
-      //shift {	
+      //shift {
 	blog(
 	  "The rabbit is running... (with apologies to John Updike)"
 	)
 
-	for( channel <- acceptConnections( params, host, port )	) {
+	for( channel <- acceptConnections( factory, host, port )	) {
 	  spawn {
 	    // Open bracket
 	    blog( "Connected: " + channel )
-	    val ticket = channel.accessRequest( "/data" ) 
-	    val qname = (exQNameRoot + "_queue")
-	    channel.exchangeDeclare( ticket, exQNameRoot, "direct" )
-	    channel.queueDeclare( ticket, qname )
-	    channel.queueBind( ticket, qname, exQNameRoot, "routeroute" )
-	  
-	    for ( t <- readT( channel, ticket, exQNameRoot ) ) { k( t ) }
+            val qname = (exQNameRoot + "_queue")
+            channel.exchangeDeclare( exQNameRoot, "direct" )
+            //queueDeclare(java.lang.String queue, boolean durable, boolean exclusive, boolean autoDelete, java.util.Map<java.lang.String,java.lang.Object> arguments)
+            channel.queueDeclare(qname, true, false, false, null);
+            channel.queueBind( qname, exQNameRoot, "routeroute" )
 
-	    // Close bracket
+            for ( t <- readT( channel, exQNameRoot ) ) { k( t ) }
+
+            // Close bracket
 	  }
 	}
       //}
   }
 
-  override def callbacks( channel : Channel, ticket : Ticket) = {
-    callbacks( channel, ticket, "mult" )
+  override def callbacks( channel : Channel) = {
+    callbacks( channel, "mult" )
   }
 
   def callbacks(
-    channel : Channel, ticket : Ticket, exQNameRoot : String
+    channel : Channel, exQNameRoot : String
   ) =
     Generator {
       k : ( Payload => Unit @suspendable) =>
@@ -151,7 +149,7 @@ trait MonadicAMQPDispatcher[T]
   	blog("before registering callback")
   	
 	channel.basicConsume(
-	  ticket,
+//	  ticket,
 	  exQNameRoot + "_queue",
 	  false,
 	  TheRendezvous
@@ -162,11 +160,11 @@ trait MonadicAMQPDispatcher[T]
       }
     }
 
-  def readT( channel : Channel, ticket : Ticket ) = {
-    readT( channel, ticket, "mult" )
+  def readT( channel : Channel ) = {
+    readT( channel, "mult" )
   }
 
-   def readT( channel : Channel, ticket : Ticket, exQNameRoot : String ) =
+   def readT( channel : Channel, exQNameRoot : String ) =
     Generator {
       k: ( T => Unit @suspendable) =>
 	shift {
@@ -174,10 +172,10 @@ trait MonadicAMQPDispatcher[T]
 	    reset {
 	      
   	      for (
-		amqpD <- callbacks( channel, ticket, exQNameRoot )
+		amqpD <- callbacks( channel, exQNameRoot )
 	      )	{
   		val routingKey = amqpD.env.getRoutingKey
-		val contentType = amqpD.props.contentType
+		val contentType = amqpD.props.getContentType
 		val deliveryTag = amqpD.env.getDeliveryTag
 		val in =
 		  new ObjectInputStream(
@@ -212,21 +210,28 @@ trait MonadicJSONAMQPDispatcher[T]
 }
 
 trait AMQPUtilities {
-  def stdCnxnParams : RabbitCnxnParams = {
-    val params = new RabbitCnxnParams //new ConnectionParameters
-    params.setUsername( "guest" )
-    params.setPassword( "guest" )
-    params.setVirtualHost( "/" )
-    params.setRequestedHeartbeat( 0 )
-    params
-  }
+//  def stdCnxnParams : RabbitCnxnParams = {
+//    val params = new RabbitCnxnParams //new ConnectionParameters
+//    params.setUsername( "guest" )
+//    params.setPassword( "guest" )
+//    params.setVirtualHost( "/" )
+//    params.setRequestedHeartbeat( 0 )
+//    params
+//  }
 }
 
 object AMQPDefaults extends AMQPUtilities {
-  implicit val defaultConnectionFactory : ConnectionFactory =
-    new ConnectionFactory( defaultConnectionParameters )
-  implicit val defaultConnectionParameters : RabbitCnxnParams =
-    stdCnxnParams
+  def getDefaultConnectionFactory(): ConnectionFactory =
+  {
+    val factory = new ConnectionFactory(  )
+    factory.setUsername("guest")
+    factory.setPassword("guest")
+    factory.setVirtualHost("/")
+    factory.setRequestedHeartbeat(0)
+    factory
+  }
+
+  implicit val defaultConnectionFactory : ConnectionFactory = getDefaultConnectionFactory()
   implicit val defaultHost : String = "localhost"
   implicit val defaultPort : Int = 5672
   implicit val defaultDispatching : Boolean = true
@@ -244,15 +249,15 @@ extends MonadicAMQPDispatcher[T] {
     reportage( fact )
   }
 
-  def acceptConnections()( implicit params : RabbitCnxnParams )
+  def acceptConnections()( implicit connectionFactory : ConnectionFactory )
   : Generator[Channel,Unit,Unit] =
-    acceptConnections( params, host, port )
-  def beginService()( implicit params : RabbitCnxnParams )
+    acceptConnections( connectionFactory, host, port )
+  def beginService()( implicit connectionFactory : ConnectionFactory )
   : Generator[T,Unit,Unit] =
-    beginService( params, host, port )
-  def beginService( exQNameStr : String )( implicit params : RabbitCnxnParams )
+    beginService( connectionFactory, host, port )
+  def beginService( exQNameStr : String )( implicit connectionFactory : ConnectionFactory )
   : Generator[T,Unit,Unit] =
-    beginService( params, host, port, exQNameStr )
+    beginService( connectionFactory, host, port, exQNameStr )
 }
 
 class StdMonadicAMQPDispatcher[T](
@@ -335,16 +340,16 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 
   var _jsonSender : Option[JSONAMQPSender] = None 
   
-  def jsonSender()( implicit params : RabbitCnxnParams, port : Int ) : JSONAMQPSender = {
-    jsonSender( "mult" )( params, port )
+  def jsonSender()( implicit connectionFactory : ConnectionFactory, defaultPort : Int ) : JSONAMQPSender = {
+    jsonSender( "mult" )( connectionFactory, defaultPort )
   }
 
-  def jsonSender( exchNameStr : String )( implicit params : RabbitCnxnParams, port : Int ) : JSONAMQPSender = {
+  def jsonSender( exchNameStr : String )( implicit connectionFactory : ConnectionFactory, port : Int ) : JSONAMQPSender = {
     _jsonSender match {
       case Some( js ) => js
       case None => {
 	val js = new JSONAMQPSender(
-	  new ConnectionFactory( params ),
+	  connectionFactory,
 	  trgtURI.getHost,
 	  port,
 	  exchNameStr,

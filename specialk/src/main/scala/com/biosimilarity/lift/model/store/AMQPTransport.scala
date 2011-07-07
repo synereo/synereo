@@ -173,8 +173,7 @@ with UUIDOps {
     port : Int
   )(
     channel: Channel
-  ) : Int = {
-    0
+  ) = {
   }
 
   case class AgentAMQPJSONListener( src : EndPoint[Namespace,Var,Tag,Value] )

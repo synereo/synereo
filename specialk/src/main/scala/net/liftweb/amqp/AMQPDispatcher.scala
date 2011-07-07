@@ -44,7 +44,7 @@ abstract class AMQPDispatcher[T](cf: ConnectionFactory, host: String, port: Int)
   var (conn, channel) = connect()
 
   private def connect(): (Connection, Channel) = {
-    conn = cf.newConnection(host, port)
+    conn = cf.newConnection( Array { new Address(host, port) } )
     channel = conn.createChannel()
     configure(channel)
     (conn, channel)
@@ -93,7 +93,7 @@ abstract class AMQPDispatcher[T](cf: ConnectionFactory, host: String, port: Int)
 class SerializedConsumer[T](channel: Channel, a: Actor) extends DefaultConsumer(channel) {
   override def handleDelivery(tag: String, env: Envelope, props: AMQP.BasicProperties, body: Array[Byte]) {
     val routingKey = env.getRoutingKey
-    val contentType = props.contentType
+    val contentType = props.getContentType
     val deliveryTag = env.getDeliveryTag
     val in = new ObjectInputStream(new ByteArrayInputStream(body))
     val t = in.readObject.asInstanceOf[T];
@@ -111,14 +111,12 @@ class SerializedConsumer[T](channel: Channel, a: Actor) extends DefaultConsumer(
 class ExampleSerializedAMQPDispatcher[T](factory: ConnectionFactory, host: String, port: Int)
     extends AMQPDispatcher[T](factory, host, port) {
   override def configure(channel: Channel) {
-    // Get the ticket.
-    val ticket = channel.accessRequest("/data")
     // Set up the exchange and queue
-    channel.exchangeDeclare(ticket, "mult", "direct")
-    channel.queueDeclare(ticket, "mult_queue")
-    channel.queueBind(ticket, "mult_queue", "mult", "routeroute")
+    channel.exchangeDeclare("mult", "direct")
+    channel.queueDeclare("mult_queue", true, false, false, null);
+    channel.queueBind("mult_queue", "mult", "routeroute")
     // Use the short version of the basicConsume method for convenience.
-    channel.basicConsume(ticket, "mult_queue", false, new SerializedConsumer(channel, this))
+    channel.basicConsume("mult_queue", false, new SerializedConsumer(channel, this))
   }
 }
 
@@ -127,13 +125,12 @@ class ExampleSerializedAMQPDispatcher[T](factory: ConnectionFactory, host: Strin
  * ExampleSerializedAMQPDispatcher.
  */
 class ExampleStringAMQPListener {
-  val params = new ConnectionParameters
-  params.setUsername("guest")
-  params.setPassword("guest")
-  params.setVirtualHost("/")
-  params.setRequestedHeartbeat(0)
+  val factory = new ConnectionFactory()
+  factory.setUsername("guest")
+  factory.setPassword("guest")
+  factory.setVirtualHost("/")
+  factory.setRequestedHeartbeat(0)
 
-  val factory = new ConnectionFactory(params)
   // thor.local is a machine on your network with rabbitmq listening on port 5672
   val amqp = new ExampleSerializedAMQPDispatcher[String](factory, "localhost", 5672)
   amqp.start
