@@ -18,6 +18,7 @@ import com.biosimilarity.lift.model.store.xml.datasets._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.usage._
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._

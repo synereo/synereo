@@ -15,6 +15,7 @@ import org.specs.runner.ConsoleRunner
 import org.junit._
 
 import com.biosimilarity.lift.model.store._
+import com.biosimilarity.lift.model.store.usage._
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.store.xml.datasets._
 import com.biosimilarity.lift.model.agent._
