@@ -8,7 +8,6 @@
 
 package net.liftweb.amqp
 
-import _root_.scala.actors.Actor
 import _root_.scala.actors.Actor._
 import _root_.com.rabbitmq.client._
 import _root_.java.io.ByteArrayOutputStream
@@ -25,21 +24,19 @@ class JSONAMQPSender(
   routingKey: String
 ) extends AMQPSender[String](cf, host, port, exchange, routingKey) {
   override def configure(channel: Channel) = {
-    val conn = cf.newConnection(host, port)
+    //BUGBUG: JSK - is this internal code needed anymore now that ticket is obsolete
+    val conn = cf.newConnection( Array { new Address(host, port) } )
     val channel = conn.createChannel()
-    val ticket = channel.accessRequest("/data")
-    ticket
   }
 }
 
 class BasicJSONAMQPSender {
-  val params = new ConnectionParameters
   // All of the params, exchanges, and queues are all just example data.
-  params.setUsername("guest")
-  params.setPassword("guest")
-  params.setVirtualHost("/")
-  params.setRequestedHeartbeat(0)
-  val factory = new ConnectionFactory(params)
+  val factory = new ConnectionFactory()
+  factory.setUsername("guest")
+  factory.setPassword("guest")
+  factory.setVirtualHost("/")
+  factory.setRequestedHeartbeat(0)
 
   val amqp =
     new JSONAMQPSender(
@@ -61,13 +58,12 @@ class BasicJSONAMQPSender {
 }
 
 trait JSONAMQPForwarder {
-  val params = new ConnectionParameters
   // All of the params, exchanges, and queues are all just example data.
-  params.setUsername("guest")
-  params.setPassword("guest")
-  params.setVirtualHost("/")
-  params.setRequestedHeartbeat(0)
-  val factory = new ConnectionFactory(params)
+  val factory = new ConnectionFactory()
+  factory.setUsername("guest")
+  factory.setPassword("guest")
+  factory.setVirtualHost("/")
+  factory.setRequestedHeartbeat(0)
 
   var _amqpSender : Option[JSONAMQPSender] = None
 

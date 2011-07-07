@@ -37,32 +37,27 @@ trait Rabbitter {
     port : Int
   )(
     channel: Channel
-  ) : Int
+  )
 
-  def rabbitParams() : ConnectionParameters = {
-    val params = new ConnectionParameters
-    // All of the params, exchanges, and queues are all just example data.
-    params.setUsername("guest")
-    params.setPassword("guest")
-    params.setVirtualHost("/")
-    params.setRequestedHeartbeat(0)
-    params
-  }
-
-  def rabbitFactory() : ConnectionFactory = {    
-    new ConnectionFactory(rabbitParams())
+  def rabbitFactory() : ConnectionFactory = {
+    val factory = new ConnectionFactory()
+    factory.setUsername("guest")
+    factory.setPassword("guest")
+    factory.setVirtualHost("/")
+    factory.setRequestedHeartbeat(0)
+    factory
   }
 
   def rabbitTube(
-    cnxnFctry : ConnectionFactory,
+    factory : ConnectionFactory,
     host : String,
     port : Int
   ) = {
-    val conn = cnxnFctry.newConnection( host, port )
-    val channel = conn.createChannel()
-    val ticket = configure( cnxnFctry, host, port )( channel )
+    val connection = factory.newConnection( Array { new Address(host, port) } )
+    val channel = connection.createChannel()
+//    configure( factory, host, port )( channel )
 
-    ( conn, channel, ticket )
+    ( connection, channel )
   }    
 }
 
@@ -72,8 +67,7 @@ trait RabbitWriter {
   def send [T] (
     channel : Channel,
     exchange : String,
-    routingKey : String,
-    ticket : Int
+    routingKey : String
     )(
     msg: T
   ) {
@@ -83,7 +77,7 @@ trait RabbitWriter {
       store.writeObject(msg)
       store.close
       channel.basicPublish(
-	ticket,
+//	ticket,
 	exchange,
 	routingKey,
 	null,
@@ -110,11 +104,10 @@ with JSONOverAMQPListener {
     port : Int
   )(
     channel: Channel
-  ) : Int = {
-    val conn = cf.newConnection(host, port)
+  ) : Unit = {
+    //BUGBUG: JSK - is this internal code needed anymore now that ticket is obsolete
+    val conn = cf.newConnection( Array { new Address(host, port) } )
     val channel = conn.createChannel()
-    val ticket = channel.accessRequest("/data")
-    ticket
   }
 
   // lazy val _amqp : JSONAMQPDispatcher[String] =

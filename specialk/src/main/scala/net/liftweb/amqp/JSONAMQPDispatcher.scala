@@ -36,14 +36,12 @@ class JSONAMQPDispatcher[T](
   port: Int
 ) extends AMQPDispatcher[T](factory, host, port) {  
   override def configure(channel: Channel) {
-    // Get the ticket.
-    val ticket = channel.accessRequest("/data")
     // Set up the exchange and queue
-    channel.exchangeDeclare(ticket, "mult", "direct")
-    channel.queueDeclare(ticket, "mult_queue")
-    channel.queueBind(ticket, "mult_queue", "mult", "routeroute")
+    channel.exchangeDeclare("mult", "direct")
+    channel.queueDeclare("mult_queue", true, false, false, null);
+    channel.queueBind("mult_queue", "mult", "routeroute")
     // Use the short version of the basicConsume method for convenience.
-    channel.basicConsume(ticket, "mult_queue", false, new SerializedConsumer(channel, this))
+    channel.basicConsume("mult_queue", false, new SerializedConsumer(channel, this))
   }  
 }
 
@@ -157,14 +155,12 @@ class JSONAMQPListener( host : String ) {
   val LOG_PROPERTIES_FILE : String =
     "src/main/resources/Log4J.properties";  
 
-  val params = new ConnectionParameters
-  params.setUsername("guest")
-  params.setPassword("guest")
-  params.setVirtualHost("/")
-  params.setRequestedHeartbeat(0)
+  val factory = new ConnectionFactory()
+  factory.setUsername("guest")
+  factory.setPassword("guest")
+  factory.setVirtualHost("/")
+  factory.setRequestedHeartbeat(0)
 
-  val factory = new ConnectionFactory(params)
-  
   val amqp =
     new JSONAMQPDispatcher[String](
       factory,

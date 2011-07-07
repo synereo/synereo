@@ -14,8 +14,7 @@ import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 
-import _root_.com.rabbitmq.client.{ Channel => RabbitChan,
-				   ConnectionParameters => RabbitCnxnParams, _}
+import _root_.com.rabbitmq.client.{ Channel => RabbitChan,  _}
 //import _root_.scala.actors.Actor
 
 import _root_.java.io.ObjectInputStream
@@ -131,30 +130,29 @@ with FJTaskRunners {
   self : WireTap with Journalist =>
 
   type Channel
-  type Ticket
-  type ConnectionParameters
+//  type ConnectionParameters
   type Payload  
 
   def acceptConnections(
-    params : ConnectionParameters,
+    factory : ConnectionFactory,
     host : String,
     port : Int
   ) : Generator[Channel,Unit,Unit]
 
   def beginService(
-    params : ConnectionParameters,
+    factory : ConnectionFactory,
     host : String,
     port : Int
   ) : Generator[T,Unit,Unit]
-  
+
   def callbacks(
-    channel : Channel, ticket : Ticket
+    channel : Channel
   ) : Generator[Payload,Unit,Unit]
 
   def readT(
-    channel : Channel,
-    ticket : Ticket
+    channel : Channel
   ) : Generator[T,Unit,Unit]
+
 }
 
 
