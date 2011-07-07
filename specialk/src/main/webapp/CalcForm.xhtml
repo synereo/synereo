@@ -1,45 +1,44 @@
 <lift:surround with="default" at="content">
-    <h1>KV R-E-P-L</h1>
-    <lift:KVREPLForm.show>
+    <h1>Conway Calculator</h1>
+    <lift:CalcForm.show>
       <json:script/>
-      <FORM NAME="Calc">
-      <TABLE BORDER=4>
-      <TR>
-      <TD>
-	<INPUT TYPE="text"   NAME="Input" Size="16">
-	<br>
-      </TD>
-      </TR>
-      <TR>
-	<TD>
-	  <INPUT TYPE="button" NAME="one"   VALUE="  1  " OnClick="Calc.Input.value += '1'">
-	  <INPUT TYPE="button" NAME="two"   VALUE="  2  " OnCLick="Calc.Input.value += '2'">
-	  <INPUT TYPE="button" NAME="three" VALUE="  3  " OnClick="Calc.Input.value += '3'">
-	  <INPUT TYPE="button" NAME="plus"  VALUE="  +  " OnClick="Calc.Input.value += ' + '">
-	  <br>
-	  <INPUT TYPE="button" NAME="four"  VALUE="  4  " OnClick="Calc.Input.value += '4'">
-	  <INPUT TYPE="button" NAME="five"  VALUE="  5  " OnCLick="Calc.Input.value += '5'">
-	  <INPUT TYPE="button" NAME="six"   VALUE="  6  " OnClick="Calc.Input.value += '6'">
-	  <INPUT TYPE="button" NAME="minus" VALUE="  -  " OnClick="Calc.Input.value += ' - '">
-	  <br>
-	  <INPUT TYPE="button" NAME="seven" VALUE="  7  " OnClick="Calc.Input.value += '7'">
-	  <INPUT TYPE="button" NAME="eight" VALUE="  8  " OnCLick="Calc.Input.value += '8'">
-	  <INPUT TYPE="button" NAME="nine"  VALUE="  9  " OnClick="Calc.Input.value += '9'">
-	  <INPUT TYPE="button" NAME="times" VALUE="  x  " OnClick="Calc.Input.value += ' * '">
-	  <br>
-	  <INPUT TYPE="button" NAME="clear" VALUE="  c  " OnClick="Calc.Input.value = ''">
-	  <INPUT TYPE="button" NAME="zero"  VALUE="  0  " OnClick="Calc.Input.value += '0'">
-	  <INPUT TYPE="button" NAME="DoIt"  VALUE="  =  " OnClick="Calc.Input.value = eval(Calc.Input.value)">
-	  <INPUT TYPE="button" NAME="div"   VALUE="  /  " OnClick="Calc.Input.value += ' / '">
-	  <br>
-	</TD>
-      </TR>
-      </TABLE>
-      </FORM>
-      
-      <p align="center"><font face="arial" size="-2">This free script provided by</font><br>
-	<font face="arial, helvetica" size="-2"><a href="http://javascriptkit.com">JavaScript Kit</a></font></p>
-    </lift:KVREPLForm.show>
+      <select id="json_verb">
+	<option value="parse">Parse term</option>
+	<option value="evaluate">Evaluate term</option>
+	<option value="type">Type term</option>
+      </select>
+      <br />
+      <table>
+	<tr>
+	  <td>
+	    Arabic numerals: <input type="text" name="arabic-calc-value" /><br />
+	    Conway numerals: <input type="text" name="conway-calc-value" /><br />
+	  </td>
+	</tr>
+	<tr>
+	  <td>
+	    <input type="button" name="one"   value="  1  " onclick="Calc.Input.calc-value += '1'"/>
+	    <input type="button" name="two"   value="  2  " onclick="Calc.Input.calc-value += '2'"/>
+	    <input type="button" name="three" value="  3  " onclick="Calc.Input.calc-value += '3'"/>
+	    <br/>
+	    <input type="button" name="four"  value="  4  " onclick="Calc.Input.calc-value += '4'"/>
+	    <input type="button" name="five"  value="  5  " onclick="Calc.Input.calc-value += '5'"/>
+	    <input type="button" name="six"   value="  6  " onclick="Calc.Input.calc-value += '6'"/>
+	    <input type="button" name="minus" value="  -  " onclick="Calc.Input.calc-value += ' - '"/>
+	    <br/>
+	    <input type="button" name="seven" value="  7  " onclick="Calc.Input.calc-value += '7'"/>
+	    <input type="button" name="eight" value="  8  " onclick="Calc.Input.calc-value += '8'"/>
+	    <input type="button" name="nine"  value="  9  " onclick="Calc.Input.calc-value += '9'"/>
+	    <input type="button" name="times" value="  x  " onclick="Calc.Input.calc-value += ' * '"/>
+	    <br/>
+	    <input type="button" name="clear" value="  c  " onclick="Calc.Input.calc-value = ''"/>
+	    <input type="button" name="zero"  value="  0  " onclick="Calc.Input.calc-value += '0'"/>
+	    <input type="button" name="DoIt"  value="  =  " onclick="Calc.Input.calc-value = eval(Calc.Input.calc-value)"/>
+	    <input type="button" name="div"   value="  /  " onclick="Calc.Input.calc-value += ' / '"/>
+	    <br/>
+	  </td>
+	</tr>
+      </table>
+      <div id="result"></div>
+    </lift:CalcForm.show>
 </lift:surround>
-
-
