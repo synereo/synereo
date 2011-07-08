@@ -36,7 +36,7 @@ class ConwayCalcREPL {
     override val self : List[Either[String,SList]]
   ) extends SeqProxy[Either[String,SList]]
 
-  def parse( register : String ) : SList = {
+  def parseWithPartial( register : String ) : ( String, SList ) = {
     def loop(
       acc : ( String, SList ),
       sl : List[String]
@@ -137,8 +137,11 @@ class ConwayCalcREPL {
 	}
       }
     }
-    val ( t, s ) =
-      loop( ( "", SList( Nil ) ), registers.getOrElse( register, Nil ) );
+    loop( ( "", SList( Nil ) ), registers.getOrElse( register, Nil ) )
+  }
+
+  def parse( register : String ) : SList = {
+    val ( t, s ) = parseWithPartial( register );
     s
   }
 
@@ -189,6 +192,75 @@ class ConwayCalcREPL {
       case SList( Left( "c" ) :: Right( nsl ) :: Nil ) => {
 	registers += ( ( register, Nil ) )
 	( 0, EmptyGame )
+      }
+    }
+  }
+
+  def isArithmeticOp( op : String ) : Boolean = {
+    op match {
+      case "+" => {
+	true
+      }
+      case "-" => {
+	true
+      }
+      case "x" => {
+	true
+      }
+      case "/" => {
+	true
+      }
+      case _ => false
+    }
+  }
+
+  def evalPartial(
+    register : String,
+    tempStore : String,
+    op : String
+  ) : ( Double, ConwayGame ) = {
+    if ( isArithmeticOp( op ) ) {
+      println( op + " " + "is an arithmetic operation" )
+      registers.getOrElse( tempStore, Nil ) match {
+	case Nil => {
+	  ( 0, EmptyGame )
+	}
+	case n :: Nil => {
+	  val nd = n.toInt
+	  ( nd, acalc.toConwayGame( nd ) )
+	}
+      }
+    }
+    else { 
+      registers.getOrElse( register, Nil ) match {
+	case Nil => {
+	  ( 0, EmptyGame )
+	}
+	case l => {
+	  l.reverse.takeWhile(
+	    ( s : String ) => {
+	      s match {
+		case "+" => false
+		case "-" => false
+		case "x" => false
+		case "/" => false
+		case "c" => false
+		case "=" => false
+		case _ => true
+	      }
+	    }
+	  ) match {
+	    case Nil => {
+	      ( 0, EmptyGame )
+	    }
+	    case partial => {
+	      val n = ( "" /: partial.reverse )( _ + _ )
+	      registers += ( ( tempStore, List( n ) ) )
+	      val nd = n.toInt
+	      ( nd, acalc.toConwayGame( nd ) )
+	    }
+	  }	
+	}
       }
     }
   }

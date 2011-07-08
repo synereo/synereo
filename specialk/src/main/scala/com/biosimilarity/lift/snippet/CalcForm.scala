@@ -27,6 +27,7 @@ with ConfiggyJournal {
   }
 
   val theRegister = "register"
+  val theTempStore = "tempStore"
   val theREPL = new ConwayCalcREPL()
   var theTerm : String = "{ | }"
   var theClientRequestStr : String = evalStr()
@@ -54,8 +55,14 @@ with ConfiggyJournal {
 		  val ( an, cgn ) = theREPL.eval( theRegister );		
 		  "Conway game numerals: " + cgn + "\n" + "arabic numerals: " + an
 		}
+		case "c" => {
+		  val ( an, cgn ) = theREPL.eval( theRegister );		
+		  "Conway game numerals: " + cgn + "\n" + "arabic numerals: " + an
+		}
 		case _ => {
-		  "..."
+		  val ( an, cgn ) =
+		    theREPL.evalPartial( theRegister, theTempStore, theGoods );
+		  "Conway game numerals: " + cgn + "\n" + "arabic numerals: " + an
 		}
 	      }
 	    )
