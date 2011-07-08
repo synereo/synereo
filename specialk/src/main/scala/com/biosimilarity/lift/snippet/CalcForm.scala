@@ -12,7 +12,7 @@ import js.{JE, JsCmd, JsCmds}
 import JsCmds._
 import JE._
 
-import com.biosimilarity.lift.model.REPL
+import com.biosimilarity.lift.model.ConwayCalcREPL
 import com.biosimilarity.lift.lib._
 
 import scala.xml._
@@ -26,7 +26,8 @@ with ConfiggyJournal {
     reportage( fact )
   }
 
-  val theREPL = new REPL()
+  val theRegister = "register"
+  val theREPL = new ConwayCalcREPL()
   var theTerm : String = "{ | }"
   var theClientRequestStr : String = evalStr()
 
@@ -41,15 +42,28 @@ with ConfiggyJournal {
 	jsonCmd match {
 	  case JsonCmd( "parse", _, paramStr : String, _ ) => {
 	    Text(
-	      ("parse " + theREPL.showClientRequestParseTree(paramStr).toString) )
+	      ( "parsed: " + theREPL.parse( theRegister ) )
+	    )
 	  }
 	  case JsonCmd( "evaluate", _, paramStr :  String, _ ) => {
+	    val theGoods = paramStr.replace( " ", "" )
+	    theREPL.addToRegister( theRegister, theGoods )
 	    Text(
-	      ("evaluate " + paramStr) )
+	      theGoods match {
+		case "=" => {
+		  val ( an, cgn ) = theREPL.eval( theRegister );		
+		  "Conway game numerals: " + cgn + "\n" + "arabic numerals: " + an
+		}
+		case _ => {
+		  "..."
+		}
+	      }
+	    )
 	  }
 	  case JsonCmd( "type", _, paramStr :  String, _ ) => {
 	    Text(
-	      ("type " + "TBD") )
+	      ("type " + "TBD")
+	    )
 	  }
 	}
       )

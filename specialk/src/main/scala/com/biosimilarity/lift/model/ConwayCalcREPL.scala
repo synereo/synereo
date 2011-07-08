@@ -25,18 +25,18 @@ import java.util.UUID
 import java.io.StringReader
 
 class ConwayCalcREPL {
-  val expr =
+  val registers =
     new scala.collection.mutable.HashMap[String,List[String]]()
 
-  def addToExpr( exprKey : String, fragment : String ) = {
-    expr += ( ( exprKey, expr.getOrElse( exprKey, Nil ) ++ List( fragment ) ) )
+  def addToRegister( register : String, fragment : String ) = {
+    registers += ( ( register, registers.getOrElse( register, Nil ) ++ List( fragment ) ) )
   }
 
   case class SList(
     override val self : List[Either[String,SList]]
   ) extends SeqProxy[Either[String,SList]]
 
-  def parse( exprKey : String ) : SList = {
+  def parse( register : String ) : SList = {
     def loop(
       acc : ( String, SList ),
       sl : List[String]
@@ -124,20 +124,31 @@ class ConwayCalcREPL {
 	      }
 	    }
 	    case "c" => {
-	      loop( ( "", SList( Nil ) ), slp )
+	      loop( ( c, l ), slp ) match {
+		case ( "", nl ) => {
+		  ( "", SList( List( Left( "c" ), Right( nl ) ) ) )
+		}
+		case ( cp, lp ) => {
+		  ( "", SList( List( Left( "c" ), Left( cp ), Right( lp ) ) ) )
+		}
+	      }	      
 	    }
 	  }
 	}
       }
     }
     val ( t, s ) =
-      loop( ( "", SList( Nil ) ), expr.getOrElse( exprKey, Nil ) );
+      loop( ( "", SList( Nil ) ), registers.getOrElse( register, Nil ) );
     s
   }
 
   object acalc extends ConwayCalculator
 
-  def eval( sl : SList ) : ( Double, ConwayGame ) = {
+  def eval( register : String ) : ( Double, ConwayGame ) = {
+    eval( register, parse( register ) )
+  }
+
+  def eval( register : String, sl : SList ) : ( Double, ConwayGame ) = {
     sl match {
       case SList( Nil ) => { ( 0, EmptyGame ) }
       case SList( Left( n ) :: Nil ) => {
@@ -147,13 +158,13 @@ class ConwayCalcREPL {
       case SList( Left( "+" ) :: Left( n ) :: Right( nsl ) :: Nil ) => {
 	val nd = n.toInt
 	val nc = acalc.toConwayGame( nd )
-	val ( rd, rc ) = eval( nsl )
+	val ( rd, rc ) = eval( register, nsl )
 	( nd + rd, acalc.add( nc, rc ) )
       }
       case SList( Left( "-" ) :: Left( n ) :: Right( nsl ) :: Nil ) => {
 	val nd = n.toInt
 	val nc = acalc.toConwayGame( nd )
-	val ( rd, rc ) = eval( nsl )
+	val ( rd, rc ) = eval( register, nsl )
 	( nd - rd, acalc.add( nc, acalc.minus( rc ) ) )
       }
       case SList( Left( "-" ) :: Left( n ) :: Nil ) => {
@@ -164,7 +175,7 @@ class ConwayCalcREPL {
       case SList( Left( "x" ) :: Left( n ) :: Right( nsl ) :: Nil ) => {
 	val nd = n.toInt
 	val nc = acalc.toConwayGame( nd )
-	val ( rd, rc ) = eval( nsl )
+	val ( rd, rc ) = eval( register, nsl )
 	( nd * rd, acalc.multiply( nc, rc ) )
       }
       case SList( Left( "/" ) :: Left( n ) :: Right( nsl ) :: Nil ) => {
@@ -174,6 +185,10 @@ class ConwayCalcREPL {
 	val nd = n.toInt
 	val nc = acalc.toConwayGame( nd )
 	( nd, nc )
+      }
+      case SList( Left( "c" ) :: Right( nsl ) :: Nil ) => {
+	registers += ( ( register, Nil ) )
+	( 0, EmptyGame )
       }
     }
   }
