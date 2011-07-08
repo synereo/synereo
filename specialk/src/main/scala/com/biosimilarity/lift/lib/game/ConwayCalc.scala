@@ -24,6 +24,65 @@ trait ConwayOps {
   ) : ConwayGame  
 }
 
+trait ConwayConversions {
+  implicit def toArabicNumeralDouble(
+    g : ConwayGame
+  ) : Double = {
+    if ( g.left.isEmpty ) {
+      if ( g.right.isEmpty ) {
+	0
+      }
+      else {
+	- ( ( g.right.map( toArabicNumeralDouble ).min ) + 1 )
+      }
+    } 
+    else {
+      if ( g.right.isEmpty ) {
+	( 1 + ( g.left.map( toArabicNumeralDouble ).max ) )
+      }
+      else {
+	val l =
+	  g.left.map( toArabicNumeralDouble ).max
+	val r =
+	  g.right.map( toArabicNumeralDouble ).min
+	val d = l - r
+	l + ( d / 2 )
+      }
+    }
+  }
+
+  implicit def toConwayGame(
+    i : Int 
+  ) : ConwayGame = {
+    def loop( i : Int, acc : ConwayGame ) : ConwayGame = {
+      if ( i == 0 ) {
+	acc
+      }
+      else {
+	if ( i > 0 ) {
+	  loop(
+	    i - 1,
+	    Game(
+	      Set.empty[ConwayGame] ++ List( acc ),
+	      Set.empty[ConwayGame]
+	    )
+	  )
+	}
+	else {
+	  loop(
+	    i + 1,
+	    Game(
+	      Set.empty[ConwayGame],
+	      Set.empty[ConwayGame] ++ List( acc )
+	    )
+	  )
+	}
+      }
+    }
+    loop( i, EmptyGame )
+  }
+}
+
 // Relations
 trait ConwayRelations {
   // identity
@@ -45,7 +104,8 @@ trait ConwayRelations {
 
 class ConwayCalculator
 extends ConwayOps
-with ConwayRelations {  
+with ConwayRelations
+with ConwayConversions {  
   // generators
   override def add (
     g1 : ConwayGame,

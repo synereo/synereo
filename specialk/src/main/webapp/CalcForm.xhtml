@@ -3,42 +3,47 @@
     <lift:CalcForm.show>
       <json:script/>
       <select id="json_verb">
-	<option value="parse">Parse term</option>
 	<option value="evaluate">Evaluate term</option>
+	<option value="parse">Parse term</option>	
 	<option value="type">Type term</option>
       </select>
       <br />
       <table>
 	<tr>
 	  <td>
-	    Arabic numerals: <input type="text" name="arabic-calc-value" /><br />
-	    Conway numerals: <input type="text" name="conway-calc-value" /><br />
+	    <div id="result">	    
+	      Conway numerals: <br />
+	      Arabic numerals: <br />
+	    </div>      
 	  </td>
 	</tr>
 	<tr>
 	  <td>
-	    <input type="button" name="one"   value="  1  " onclick="Calc.Input.calc-value += '1'"/>
-	    <input type="button" name="two"   value="  2  " onclick="Calc.Input.calc-value += '2'"/>
-	    <input type="button" name="three" value="  3  " onclick="Calc.Input.calc-value += '3'"/>
+	    <input type="button" name="one" id="oneBtn"   value="  1  " json:onclick1="onclick"/>
+	    <input type="button" name="two" id="twoBtn"   value="  2  " json:onclick2="onclick"/>
+	    <input type="button" name="three" id="threeBtn" value="  3  " json:onclick3="onclick"/>
+	    <input type="button" name="plus" id="plusBtn" value="  +  " json:onclickPlus="onclick"/>
 	    <br/>
-	    <input type="button" name="four"  value="  4  " onclick="Calc.Input.calc-value += '4'"/>
-	    <input type="button" name="five"  value="  5  " onclick="Calc.Input.calc-value += '5'"/>
-	    <input type="button" name="six"   value="  6  " onclick="Calc.Input.calc-value += '6'"/>
-	    <input type="button" name="minus" value="  -  " onclick="Calc.Input.calc-value += ' - '"/>
+	    <input type="button" name="four" id="fourBtn"  value="  4  " json:onclick4="onclick"/>
+	    <input type="button" name="five" id="fiveBtn"  value="  5  " json:onclick5="onclick"/>
+	    <input type="button" name="six" id="sixBtn"   value="  6  " json:onclick6="onclick"/>
+	    <input type="button" name="minus" id="minusBtn" value="  -  " json:onclickMinus="onclick"/>
 	    <br/>
-	    <input type="button" name="seven" value="  7  " onclick="Calc.Input.calc-value += '7'"/>
-	    <input type="button" name="eight" value="  8  " onclick="Calc.Input.calc-value += '8'"/>
-	    <input type="button" name="nine"  value="  9  " onclick="Calc.Input.calc-value += '9'"/>
-	    <input type="button" name="times" value="  x  " onclick="Calc.Input.calc-value += ' * '"/>
+	    <input type="button" name="seven" id="sevenBtn" value="  7  " json:onclick7="onclick"/>
+	    <input type="button" name="eight" id="eightBtn" value="  8  " json:onclick8="onclick"/>
+	    <input type="button" name="nine" id="nineBtn"  value="  9  " json:onclick9="onclick"/>
+	    <input type="button" name="times" id="timesBtn" value="  x  " json:onclickTimes="onclick"/>
 	    <br/>
-	    <input type="button" name="clear" value="  c  " onclick="Calc.Input.calc-value = ''"/>
-	    <input type="button" name="zero"  value="  0  " onclick="Calc.Input.calc-value += '0'"/>
-	    <input type="button" name="DoIt"  value="  =  " onclick="Calc.Input.calc-value = eval(Calc.Input.calc-value)"/>
-	    <input type="button" name="div"   value="  /  " onclick="Calc.Input.calc-value += ' / '"/>
+	    <input type="button" name="clear" id="clearBtn" value="  c  " json:onclickClear="onclick"/>
+	    <input type="button" name="zero" id="zeroBtn"  value="  0  " json:onclick0="onclick"/>
+	    <input type="button" name="DoIt" id="DoItBtn"  value="  =  " json:onclickEval="onclick"/>
+	    <input type="button" name="div" id="divBtn"   value="  /  " json:onclickDiv="onclick"/>
 	    <br/>
 	  </td>
 	</tr>
-      </table>
-      <div id="result"></div>
+      </table>      
+      <br />
+      <br />
+      <div id="bottom"></div>
     </lift:CalcForm.show>
 </lift:surround>

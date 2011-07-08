@@ -27,7 +27,7 @@ with ConfiggyJournal {
   }
 
   val theREPL = new REPL()
-  var theTerm : String = "{ }"
+  var theTerm : String = "{ | }"
   var theClientRequestStr : String = evalStr()
 
   def evalStr() = theTerm
@@ -35,6 +35,7 @@ with ConfiggyJournal {
 
   object json extends JsonHandler {          
     def apply( jsonCmd : Any ) : JsCmd = {
+      reportage( "in apply on JsonHandler object" )
       SetHtml(
 	"result",
 	jsonCmd match {
@@ -44,7 +45,7 @@ with ConfiggyJournal {
 	  }
 	  case JsonCmd( "evaluate", _, paramStr :  String, _ ) => {
 	    Text(
-	      ("evaluate " + "TBD") )
+	      ("evaluate " + paramStr) )
 	  }
 	  case JsonCmd( "type", _, paramStr :  String, _ ) => {
 	    Text(
@@ -87,11 +88,161 @@ with ConfiggyJournal {
       "json", xhtml,
       "script" -> Script( json.jsCmd ),
       AttrBindParam(
-	"onclick",
+	"onclick1",
 	Text(
 	  json.call(
 	    ElemById( "json_verb" )~>Value,
-	    (ElemById( "expression" )~>Value)
+	    (ElemById( "oneBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick2",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "twoBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick3",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "threeBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclickPlus",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "plusBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick4",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "fourBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick5",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "fiveBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick6",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "sixBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclickMinus",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "minusBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick7",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "sevenBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick8",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "eightBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick9",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "nineBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclickTimes",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "timesBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclickClear",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "clearBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclick0",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "zeroBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclickEval",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "DoItBtn" )~>Value)
+	  ).toJsCmd
+	),
+	"onclick"
+	),
+      AttrBindParam(
+	"onclickDiv",
+	Text(
+	  json.call(
+	    ElemById( "json_verb" )~>Value,
+	    (ElemById( "divBtn" )~>Value)
 	  ).toJsCmd
 	),
 	"onclick"

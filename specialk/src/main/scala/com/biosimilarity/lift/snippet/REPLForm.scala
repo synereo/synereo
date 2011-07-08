@@ -26,6 +26,7 @@ class REPLForm {
 
   object json extends JsonHandler {          
     def apply( jsonCmd : Any ) : JsCmd = {
+      println( "in apply on JsonHandler object" )
       SetHtml(
 	"result",
 	jsonCmd match {
@@ -35,7 +36,7 @@ class REPLForm {
 	  }
 	  case JsonCmd( "evaluate", _, paramStr :  String, _ ) => {
 	    Text(
-	      ("evaluate " + "TBD") )
+	      ("evaluate " + paramStr) )
 	  }
 	  case JsonCmd( "type", _, paramStr :  String, _ ) => {
 	    Text(
