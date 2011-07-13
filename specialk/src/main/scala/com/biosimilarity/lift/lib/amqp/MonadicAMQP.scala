@@ -65,8 +65,10 @@ trait MonadicAMQPDispatcher[T]
       k : ( Channel => Unit @suspendable ) => {
 	//shift {
 	  //innerk : (Unit => Unit @suspendable) => {
-	    val connection = factory.newConnection( Array { new Address(host, port) } )
-	    val channel = connection.createChannel()
+	    val connection =
+	      factory.newConnection( Array { new Address(host, port) } )
+	    val channel =
+	      connection.createChannel()
 	    k( channel );
 	  //}
 	//}      
@@ -86,6 +88,13 @@ trait MonadicAMQPDispatcher[T]
     host : String,
     port : Int,
     exQNameRoot : String
+  ) = serve [T] ( factory, host, port, exQNameRoot )
+
+   def serve [T] (
+    factory : ConnectionFactory,
+    host : String,
+    port : Int,
+    exQNameRoot : String
   ) = Generator {
     k : ( T => Unit @suspendable ) =>
       //shift {
@@ -93,17 +102,16 @@ trait MonadicAMQPDispatcher[T]
 	  "The rabbit is running... (with apologies to John Updike)"
 	)
 
-	for( channel <- acceptConnections( factory, host, port )	) {
+	for( channel <- acceptConnections( factory, host, port ) ) {
 	  spawn {
 	    // Open bracket
 	    blog( "Connected: " + channel )
             val qname = (exQNameRoot + "_queue")
             channel.exchangeDeclare( exQNameRoot, "direct" )
-            //queueDeclare(java.lang.String queue, boolean durable, boolean exclusive, boolean autoDelete, java.util.Map<java.lang.String,java.lang.Object> arguments)
             channel.queueDeclare(qname, true, false, false, null);
             channel.queueBind( qname, exQNameRoot, "routeroute" )
 
-            for ( t <- readT( channel, exQNameRoot ) ) { k( t ) }
+            for ( t <- read [T] ( channel, exQNameRoot ) ) { k( t ) }
 
             // Close bracket
 	  }
@@ -160,42 +168,45 @@ trait MonadicAMQPDispatcher[T]
       }
     }
 
-  def readT( channel : Channel ) = {
-    readT( channel, "mult" )
-  }
+   def readT( channel : Channel ) = {
+     readT( channel, "mult" )
+   }   
 
    def readT( channel : Channel, exQNameRoot : String ) =
-    Generator {
-      k: ( T => Unit @suspendable) =>
-	shift {
-	  outerk: (Unit => Unit) =>
-	    reset {
+     read [T] ( channel, exQNameRoot )
+
+   def read [T] ( channel : Channel, exQNameRoot : String ) =
+     Generator {
+       k: ( T => Unit @suspendable) =>
+	 shift {
+	   outerk: (Unit => Unit) =>
+	     reset {
 	      
-  	      for (
-		amqpD <- callbacks( channel, exQNameRoot )
-	      )	{
-  		val routingKey = amqpD.env.getRoutingKey
-		val contentType = amqpD.props.getContentType
-		val deliveryTag = amqpD.env.getDeliveryTag
-		val in =
-		  new ObjectInputStream(
-		    new ByteArrayInputStream( amqpD.body )
-		  )
-		val t = in.readObject.asInstanceOf[T];
-		k( t )
-		channel.basicAck(deliveryTag, false);
-
-		// Is this necessary?
-		shift { k : ( Unit => Unit ) => k() }
-  	      }
-  	  
-  	      blog( "readT returning" )
-  	      outerk()
-	    }
-	}
-    }
-
-}
+  	       for (
+		 amqpD <- callbacks( channel, exQNameRoot )
+	       )	{
+  		 val routingKey = amqpD.env.getRoutingKey
+		 val contentType = amqpD.props.getContentType
+		 val deliveryTag = amqpD.env.getDeliveryTag
+		 val in =
+		   new ObjectInputStream(
+		     new ByteArrayInputStream( amqpD.body )
+		   )
+		 val t = in.readObject.asInstanceOf[T];
+		 k( t )
+		 channel.basicAck(deliveryTag, false);
+		 
+		 // Is this necessary?
+		 shift { k : ( Unit => Unit ) => k() }
+  	       }
+  	       
+  	       blog( "readT returning" )
+  	       outerk()
+	     }
+	 }
+     }
+   
+ }
 
 trait MonadicJSONAMQPDispatcher[T]
 {
@@ -211,7 +222,7 @@ trait MonadicJSONAMQPDispatcher[T]
 
 trait AMQPUtilities {
 //  def stdCnxnParams : RabbitCnxnParams = {
-//    val params = new RabbitCnxnParams //new ConnectionParameters
+//    val params = new RabbitCnxnParams /* new ConnectionParameters */
 //    params.setUsername( "guest" )
 //    params.setPassword( "guest" )
 //    params.setVirtualHost( "/" )

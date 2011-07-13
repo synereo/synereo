@@ -145,6 +145,13 @@ with FJTaskRunners {
     port : Int
   ) : Generator[T,Unit,Unit]
 
+  def serve [T] (
+    factory : ConnectionFactory,
+    host : String,
+    port : Int,
+    exchange : String
+  ) : Generator[T,Unit,Unit]
+
   def callbacks(
     channel : Channel
   ) : Generator[Payload,Unit,Unit]
@@ -153,6 +160,17 @@ with FJTaskRunners {
     channel : Channel
   ) : Generator[T,Unit,Unit]
 
+  def read [T] (
+    channel : Channel,
+    exchange : String
+  ) : Generator[T,Unit,Unit]
+
 }
 
+
+trait MonadicDispatcherScope[T] {
+  type MDS[A] <: MonadicDispatcher[A]
+  val theMDS = protoMDS[T]
+  def protoMDS[A] : MDS[A]
+}
 
