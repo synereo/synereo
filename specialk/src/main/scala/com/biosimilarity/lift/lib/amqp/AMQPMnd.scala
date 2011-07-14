@@ -32,10 +32,10 @@ import _root_.java.io.ByteArrayOutputStream
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
-case class AMQPScope[T](
-  factory : ConnectionFactory,
-  host : String,
-  port : Int
+class AMQPScope[T](
+  val factory : ConnectionFactory,
+  val host : String,
+  val port : Int
 ) extends MonadicDispatcherScope[T] {
   self =>
   override type MDS[A] = AMQPQueueM[A]
@@ -56,6 +56,21 @@ case class AMQPScope[T](
   with BMonad[AMQPQueue]
   with MonadPlus[AMQPQueue]
   with MonadFilter[AMQPQueue] {
+    case class QCell[A](
+      queue : AMQPQueue[A]
+    ) extends SCell( queue ) {
+      override def foreach ( f : A => Unit ) : Unit = {
+	reset { for( msg <- queue.dispatcher ) { f( msg ) } } ;
+	()
+      }
+    }
+
+    override implicit def toMembrane [A] (
+      s : AMQPQueue[A]
+    ) : Membrane[A] with Filter[A] = {
+      QCell[A]( s )
+    }
+
     def sender [A] ( 
       exchange : String,
       routingKey : String
@@ -111,13 +126,17 @@ case class AMQPScope[T](
     ) : AMQPQueue[T] = {
       val acc = zero[T]
       spawn {
-	for( s <- amqpS.dispatcher ) {
-	  val amqpT = f( s )
-	  spawn {
-	    for( t <- amqpT.dispatcher ) {
-	      for( e <- acc.sender ) { t }
-	    }
-	  }		
+	reset {
+	  for( s <- amqpS.dispatcher ) {
+	    val amqpT = f( s )
+	    spawn {
+	      reset {
+		for( t <- amqpT.dispatcher ) {
+		  for( e <- acc.sender ) { t }
+		}
+	      }
+	    }		
+	  }
 	}
       }
       acc
@@ -136,13 +155,17 @@ case class AMQPScope[T](
     ) : AMQPQueue[A] = {
       val amqpA12 = zero[A]
       spawn {
-	for( a1 <- amqpA1.dispatcher ) {
-	  for( e <- amqpA12.sender ) { a1 }
+	reset {
+	  for( a1 <- amqpA1.dispatcher ) {
+	    for( e <- amqpA12.sender ) { a1 }
+	  }
 	}
       }
       spawn {
-	for( a2 <- amqpA2.dispatcher ) {
-	  for( e <- amqpA12.sender ) { a2 }
+	reset {
+	  for( a2 <- amqpA2.dispatcher ) {
+	    for( e <- amqpA12.sender ) { a2 }
+	  }
 	}
       }
       amqpA12
@@ -153,13 +176,58 @@ case class AMQPScope[T](
     ) : AMQPQueue[S] = {
       val rslt = zero[S]
       spawn {
-	for( s <- amqpS.dispatcher ) {
-	  if ( pred( s ) ) {
-	    for( e <- rslt.sender ) { s }
+	reset {
+	  for( s <- amqpS.dispatcher ) {
+	    if ( pred( s ) ) {
+	      for( e <- rslt.sender ) { s }
+	    }
 	  }
 	}
       }
       rslt
     }
   }
+
+  override def equals( o : Any ) : Boolean = {
+    o match {
+      case that : AMQPScope[T] => {
+	(
+	  factory.equals( that.factory )
+	  && host.equals( that.host )
+	  && port.equals( that.port )
+	)
+      }
+      case _ => false
+    }
+  }
+  override def hashCode( ) : Int = {
+    (
+      ( 37 * factory.hashCode )
+      + ( 37 * host.hashCode )
+      + ( 37 * port.hashCode )
+    )
+  }
+}
+
+object AMQPScope {
+  def apply [T] (
+    factory : ConnectionFactory,
+    host : String,
+    port : Int
+  ) : AMQPScope[T] = {
+    new AMQPScope( factory, host, port )
+  }
+  def unapply [T] (
+    amqpScope : AMQPScope[T]
+  ) : Option[( ConnectionFactory, String, Int )] = {
+    Some( ( amqpScope.factory, amqpScope.host, amqpScope.port ) )
+  }
+}
+
+case class StdAMQPScope[T]( 
+) extends AMQPScope[T](
+  AMQPDefaults.defaultConnectionFactory,
+  AMQPDefaults.defaultHost,
+  AMQPDefaults.defaultPort
+){
 }
