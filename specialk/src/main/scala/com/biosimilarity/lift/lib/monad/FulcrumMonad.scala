@@ -95,10 +95,57 @@ extends FulcrumScope[M] {
   }  
 }
 
-object FulcrumListM extends FulcrumMonadScope[List] {
-  def emptyM [X] : List[X] = Nil
-}
+package usage {
+  object FulcrumListM extends FulcrumMonadScope[List] {
+    def emptyM [X] : List[X] = Nil
+  }
 
-object FulcrumStreamM extends FulcrumMonadScope[Stream] {
-  def emptyM [X] : Stream[X] = (List[X]( )).toStream
+  object FulcrumStreamM extends FulcrumMonadScope[Stream] {
+    def emptyM [X] : Stream[X] = (List[X]( )).toStream
+  } 
+
+  object UnitTest {
+    import FulcrumStreamM._
+    import cantiLeverage._
+
+    val fm1 = new FulcrumM[Int]()
+    
+    import fm1._
+
+    val ufcZero : UniformFulcrumC[Int] =
+      UniformFulcrumC[Int]( 0, List[UniformFulcrumC[Int]]( ).toStream, 0 )
+
+    val ufcOne : UniformFulcrumC[Int] =
+      UniformFulcrumC[Int](
+	1,
+	List[UniformFulcrumC[Int]]( ufcZero ).toStream,
+	1
+      )
+
+    lazy val ufcInfOne : UniformFulcrumC[Int] = {
+      def loop(
+	s : Stream[UniformFulcrumC[Int]]
+      ) : Stream[UniformFulcrumC[Int]] = {
+	if ( s.isEmpty ) {
+	  s
+	}
+	else {
+	  s.map(
+	    {
+	      ( f ) => {
+		UniformFulcrumC(
+		  f._1 + 1, 
+		  loop( f._2 ),
+		  f._3 + 1
+		)
+	      }
+	    }
+	  )
+	}
+      }
+      UniformFulcrumC[Int](
+	0, List( ufcOne ).toStream.append( loop( ufcInfOne._2 ) ), 0
+      )
+    }
+  }
 }
