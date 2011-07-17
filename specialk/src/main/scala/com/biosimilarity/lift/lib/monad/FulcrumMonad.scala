@@ -113,32 +113,19 @@ package usage {
     
     import fm1._
 
-    val ufcZero : UniformFulcrumC[Int] =
-      UniformFulcrumC[Int]( 0, List[UniformFulcrumC[Int]]( ).toStream, 0 )
-
-    val ufcOne : UniformFulcrumC[Int] =
-      UniformFulcrumC[Int](
-	1,
-	List[UniformFulcrumC[Int]]( ufcZero ).toStream,
-	1
-      )
-
-    lazy val ufcInfOne : UniformFulcrumC[Int] = {
-      def loop(
-	ufc : UniformFulcrumC[Int]
-      ) : UniformFulcrumC[Int] = {
-	lazy val ns =
-	  if ( ufc._2.isEmpty ) {
-	    ufc._2
+    lazy val ufcInfOne : Stream[UniformFulcrumC[Int]] = {
+      List[UniformFulcrumC[Int]](
+	UniformFulcrumC[Int]( 0, List[UniformFulcrumC[Int]]( ).toStream, 0 )
+      ).toStream append ufcInfOne.map(
+	{
+	  ( f ) => {
+	    UniformFulcrumC[Int](
+	      f._1 + 1,
+	      List[UniformFulcrumC[Int]]( f ).toStream,
+	      f._3 + 1
+	    )
 	  }
-	  else { ufc._2.map( loop ) }
-
-	UniformFulcrumC[Int]( ufc._1 + 1, ns, ufc._3 + 1 )
-      }
-      UniformFulcrumC[Int](
-	0,
-	List( ufcOne ).toStream.append( ufcInfOne._2.map( loop ) ),
-	0
+	}
       )
     }
   }
