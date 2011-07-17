@@ -12,56 +12,74 @@ import com.biosimilarity.lift.lib.comonad._
 import com.biosimilarity.lift.lib.collection.Fulcrum
 import com.biosimilarity.lift.lib.collection.FulcrumAlt2
 
-class FulcrumM[A]( )
-extends ForNotationAdapter[Fulcrum,A] 
-with BMonad[Fulcrum]
-with MonadFilter[Fulcrum] {
-  override def unit [S] ( s : S ) : Fulcrum[S] = 
-    Fulcrum[S]( s, Nil, s )
-  override def bind [S,T] (
-    fs : Fulcrum[S],
-    f : S => Fulcrum[T]
-  ) : Fulcrum[T] = {
-    fs match {
-      case Fulcrum( s1, lf, s2 ) => {
-	val Fulcrum( fs1t1, fs1lf, fs1t2 ) = f( s1 )
-	val Fulcrum( fs2t1, fs2lf, fs2t2 ) = f( s2 )
-	Fulcrum( fs1t1, ( fs1lf ++ lf ++ fs2lf ), fs2t2	)
+trait FulcrumMonadScope[M[X] <: Iterable[X]] {
+  def emptyM [X] : M[X]
+  case class FulcrumC[A](
+    override val _1 : A,
+    override val _2 : M[Fulcrum[M,_]],
+    override val _3 : A
+  ) extends Fulcrum[M,A]( _1, _2, _3 )
+  class FulcrumM[A]( )
+  extends ForNotationAdapter[FulcrumC,A] 
+  with BMonad[FulcrumC]
+  with MonadFilter[FulcrumC] {
+    override def unit [S] ( s : S ) : FulcrumC[S] = {
+      FulcrumC[S]( s, emptyM[Fulcrum[M,_]], s )
+    }
+    override def bind [S,T] (
+      fs : FulcrumC[S],
+      f : S => FulcrumC[T]
+    ) : FulcrumC[T] = {
+      fs match {
+	case FulcrumC( s1, lf, s2 ) => {
+	  val FulcrumC( fs1t1, fs1lf, fs1t2 ) = f( s1 )
+	  val FulcrumC( fs2t1, fs2lf, fs2t2 ) = f( s2 )
+	  val nlf = ( fs1lf ++ lf ++ fs2lf ).asInstanceOf[M[Fulcrum[M,_]]]
+	  FulcrumC( fs1t1, nlf, fs2t2 )
+	}
+      }
+    }
+    
+    override def mfilter [S] (
+      flcrm : FulcrumC[S],
+      pred : S => Boolean
+    ) : FulcrumC[S] = {
+      flcrm match {      
+	case FulcrumC( s1, lf, s2 ) => { 
+	  if ( pred( s1 ) && pred( s2 ) ) {
+	    FulcrumC( s1, lf, s2 )
+	  }
+	  else {
+	    throw new Exception( "Maybe add option to S type in Fulcrim defn?" )
+	  }
+	}
       }
     }
   }
 
-  override def mfilter [S] (
-    flcrm : Fulcrum[S],
-    pred : S => Boolean
-  ) : Fulcrum[S] = {
-    flcrm match {      
-      case Fulcrum( s1, lf, s2 ) => { 
-	if ( pred( s1 ) && pred( s2 ) ) {
-	  Fulcrum( s1, lf, s2 )
-	}
-	else {
-	  throw new Exception( "Maybe add option to S type in Fulcrim defn?" )
+  class FulcrumCM[A]( )
+  extends BComonad[FulcrumC] {
+    override def counit [S] ( flcrm : FulcrumC[S] ) : S = {
+      flcrm._3
+    }
+    override def cobind [S,T] (
+      ctxt : FulcrumC[S] => T, 
+      flcrm : FulcrumC[S] 
+    ) : FulcrumC[T] = {
+      val t : T = ctxt( flcrm )
+      flcrm match {
+	case FulcrumC( s1, lf, s2 ) => {	
+	  FulcrumC( t, lf, t )
 	}
       }
     }
   }
 }
 
-class FulcrumCM[A]( )
-extends BComonad[Fulcrum] {
-  override def counit [S] ( flcrm : Fulcrum[S] ) : S = {
-    flcrm._3
-  }
-  override def cobind [S,T] (
-    ctxt : Fulcrum[S] => T, 
-    flcrm : Fulcrum[S] 
-  ) : Fulcrum[T] = {
-    val t : T = ctxt( flcrm )
-    flcrm match {
-      case Fulcrum( s1, lf, s2 ) => {	
-	Fulcrum( t, lf, t )
-      }
-    }
-  }
+object FulcrumListM extends FulcrumMonadScope[List] {
+  def emptyM [X] : List[X] = Nil
+}
+
+object FulcrumStreamM extends FulcrumMonadScope[Stream] {
+  def emptyM [X] : Stream[X] = (List[X]( )).toStream
 }

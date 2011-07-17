@@ -8,34 +8,56 @@
 
 package com.biosimilarity.lift.lib.collection
 
-class Fulcrum[A](
+class Fulcrum[M[X] <: Iterable[X],A](
   override val _1 : A,
-  override val _2 : List[Fulcrum[_]],
+  override val _2 : M[Fulcrum[M,_]],
   override val _3 : A
-) extends ( A, List[Fulcrum[_]], A )( _1, _2, _3 )
+) extends ( A, M[Fulcrum[M,_]], A )( _1, _2, _3 )
 
 object Fulcrum {
-  def apply [A] (
+  def apply [M[X] <: Iterable[X],A] (
     left : A,
-    middle : List[Fulcrum[_]],
+    middle : M[Fulcrum[M,_]],
     right : A
-  ) : Fulcrum[A] = {
-    new Fulcrum[A]( left, middle, right )
+  ) : Fulcrum[M,A] = {
+    new Fulcrum[M,A]( left, middle, right )
   }
-  def unapply [A] (
-    flcrm : Fulcrum[A]
-  ) : Option[ ( A, List[Fulcrum[_]], A ) ] = {
+  def unapply [M[X] <: Iterable[X],A] (
+    flcrm : Fulcrum[M,A]
+  ) : Option[ ( A, M[Fulcrum[M,_]], A ) ] = {
     Some( ( flcrm._1, flcrm._2, flcrm._3 ) )
   }
 }
 
-case class FulcrumAlt2[A,B] (
-  choice : Either[( A, List[FulcrumAlt2[B,A]], A ),
-		  ( B, List[FulcrumAlt2[A,B]], B )]
+class UniformFulcrum[M[X] <: Iterable[X],A](
+  override val _1 : A,
+  override val _2 : M[UniformFulcrum[M,A]],
+  override val _3 : A
+) extends ( A, M[UniformFulcrum[M,A]], A )( _1, _2, _3 )
+
+object UniformFulcrum {
+  def apply [M[X] <: Iterable[X],A] (
+    left : A,
+    middle : M[UniformFulcrum[M,A]],
+    right : A
+  ) : UniformFulcrum[M,A] = {
+    new UniformFulcrum[M,A]( left, middle, right )
+  }
+  def unapply [M[X] <: Iterable[X],A] (
+    flcrm : UniformFulcrum[M,A]
+  ) : Option[ ( A, M[UniformFulcrum[M,A]], A ) ] = {
+    Some( ( flcrm._1, flcrm._2, flcrm._3 ) )
+  }
+}
+
+case class FulcrumAlt2[M[X] <: Iterable[X],A,B] (
+  choice : Either[( A, M[FulcrumAlt2[M,B,A]], A ),
+		  ( B, M[FulcrumAlt2[M,A,B]], B )]
 )
 
-case class FulcrumAlt3[A,B,C] (
-  choice : Either[( A, List[Either[FulcrumAlt3[B,C,A],FulcrumAlt3[C,B,A]]], A ),
-		  Either[( B, List[Either[FulcrumAlt3[A,C,B],FulcrumAlt3[C,A,B]]], B ),
-			 ( C, List[Either[FulcrumAlt3[B,A,C],FulcrumAlt3[A,B,C]]], B )]]
+case class FulcrumAlt3[M[X] <: Iterable[X],A,B,C] (
+  choice : Either[( A, M[Either[FulcrumAlt3[M,B,C,A],FulcrumAlt3[M,C,B,A]]], A ),
+		  Either[( B, M[Either[FulcrumAlt3[M,A,C,B],FulcrumAlt3[M,C,A,B]]], B ),
+			 ( C, M[Either[FulcrumAlt3[M,B,A,C],FulcrumAlt3[M,A,B,C]]], B )]]
 ) 
+
