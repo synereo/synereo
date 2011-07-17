@@ -9,22 +9,41 @@
 package com.biosimilarity.lift.lib.monad
 
 import com.biosimilarity.lift.lib.comonad._
-import com.biosimilarity.lift.lib.collection.Fulcrum
-import com.biosimilarity.lift.lib.collection.FulcrumAlt2
+import com.biosimilarity.lift.lib.collection.Fulcrums
+import com.biosimilarity.lift.lib.collection.FulcrumScope
 
-trait FulcrumMonadScope[M[X] <: Iterable[X]] {
-  def emptyM [X] : M[X]
-  case class FulcrumC[A](
-    override val _1 : A,
-    override val _2 : M[Fulcrum[M,_]],
-    override val _3 : A
-  ) extends Fulcrum[M,A]( _1, _2, _3 )
+trait FulcrumMonadScope[M[X] <: Iterable[X]]
+extends FulcrumScope[M] {    
+  object cantiLeverage extends Fulcrums[M] {
+    override type F[A] = FulcrumC[A]
+    override type UF[A] = UniformFulcrumC[A]
+
+    case class FulcrumC[A](
+      override val _1 : A,
+      override val _2 : M[F[_]],
+      override val _3 : A
+    ) extends Fulcrum[M,A]( _1, _2, _3 )
+
+    case class UniformFulcrumC[A](
+      override val _1 : A,
+      override val _2 : M[UF[A]],
+      override val _3 : A
+    ) extends UniformFulcrum[M,A]( _1, _2, _3 )
+ 
+  }
+  override type Fulcrumology = Fulcrums[M]
+  override def protoFulcrumology = cantiLeverage  
+
+  import cantiLeverage._
+
+  def emptyM [X] : M[X]  
+
   class FulcrumM[A]( )
   extends ForNotationAdapter[FulcrumC,A] 
   with BMonad[FulcrumC]
   with MonadFilter[FulcrumC] {
     override def unit [S] ( s : S ) : FulcrumC[S] = {
-      FulcrumC[S]( s, emptyM[Fulcrum[M,_]], s )
+      FulcrumC[S]( s, emptyM[F[_]], s )
     }
     override def bind [S,T] (
       fs : FulcrumC[S],
@@ -34,7 +53,7 @@ trait FulcrumMonadScope[M[X] <: Iterable[X]] {
 	case FulcrumC( s1, lf, s2 ) => {
 	  val FulcrumC( fs1t1, fs1lf, fs1t2 ) = f( s1 )
 	  val FulcrumC( fs2t1, fs2lf, fs2t2 ) = f( s2 )
-	  val nlf = ( fs1lf ++ lf ++ fs2lf ).asInstanceOf[M[Fulcrum[M,_]]]
+	  val nlf = ( fs1lf ++ lf ++ fs2lf ).asInstanceOf[M[F[_]]]
 	  FulcrumC( fs1t1, nlf, fs2t2 )
 	}
       }
@@ -73,7 +92,7 @@ trait FulcrumMonadScope[M[X] <: Iterable[X]] {
 	}
       }
     }
-  }
+  }  
 }
 
 object FulcrumListM extends FulcrumMonadScope[List] {
