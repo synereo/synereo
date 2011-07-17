@@ -31,6 +31,7 @@ extends FulcrumScope[M] {
     ) extends UniformFulcrum[M,A]( _1, _2, _3 )
  
   }
+
   override type Fulcrumology = Fulcrums[M]
   override def protoFulcrumology = cantiLeverage  
 
@@ -124,27 +125,20 @@ package usage {
 
     lazy val ufcInfOne : UniformFulcrumC[Int] = {
       def loop(
-	s : Stream[UniformFulcrumC[Int]]
-      ) : Stream[UniformFulcrumC[Int]] = {
-	if ( s.isEmpty ) {
-	  s
-	}
-	else {
-	  s.map(
-	    {
-	      ( f ) => {
-		UniformFulcrumC(
-		  f._1 + 1, 
-		  loop( f._2 ),
-		  f._3 + 1
-		)
-	      }
-	    }
-	  )
-	}
+	ufc : UniformFulcrumC[Int]
+      ) : UniformFulcrumC[Int] = {
+	lazy val ns =
+	  if ( ufc._2.isEmpty ) {
+	    ufc._2
+	  }
+	  else { ufc._2.map( loop ) }
+
+	UniformFulcrumC[Int]( ufc._1 + 1, ns, ufc._3 + 1 )
       }
       UniformFulcrumC[Int](
-	0, List( ufcOne ).toStream.append( loop( ufcInfOne._2 ) ), 0
+	0,
+	List( ufcOne ).toStream.append( ufcInfOne._2.map( loop ) ),
+	0
       )
     }
   }
