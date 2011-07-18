@@ -224,6 +224,15 @@ object AMQPScope {
   }
 }
 
+case class AMQPHostScope[T]( 
+  override val host : String
+) extends AMQPScope[T](
+  AMQPDefaults.defaultConnectionFactory,
+  host,
+  AMQPDefaults.defaultPort
+){
+}
+
 case class StdAMQPScope[T]( 
 ) extends AMQPScope[T](
   AMQPDefaults.defaultConnectionFactory,
