@@ -46,7 +46,11 @@ class AMQPScope[T](
     routingKey : String,
     dispatcher : theMDS.Generator[A,Unit,Unit],
     sender : theMDS.Generator[Unit,A,Unit]
-  ) 
+  ) {
+    def !( msg : A ) : Unit = {
+      reset { for( _ <- sender ) { msg } }
+    }
+  }
 
   class AMQPQueueM[A](
     exchange : String,
@@ -112,7 +116,11 @@ class AMQPScope[T](
 	}
       }
     }
-    
+
+    def apply [S] ( queue : AMQPQueue[S] ) : QCell[S] = {
+      QCell[S]( queue )
+    }
+
     override def unit [S] ( s : S ) : AMQPQueue[S] = {
       val rslt = zero[S]
       spawn {
@@ -186,6 +194,20 @@ class AMQPScope[T](
       }
       rslt
     }
+  }  
+
+  def apply [A] (
+    m : AMQPQueueM[A],
+    queue : AMQPQueue[A]
+  ) : theMDS.Generator[A,Unit,Unit] = {
+    theMDS.Generator {
+      k : ( A => Unit @suspendable ) => {	
+	for( msg <- queue.dispatcher ) {
+	  import m._
+	  k( msg )
+	}
+      }
+    }
   }
 
   override def equals( o : Any ) : Boolean = {
@@ -206,7 +228,7 @@ class AMQPScope[T](
       + ( 37 * host.hashCode )
       + ( 37 * port.hashCode )
     )
-  }
+  }  
 }
 
 object AMQPScope {
