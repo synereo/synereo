@@ -56,10 +56,12 @@ class AMQPScope[T](
     exchange : String,
     routingKey : String
   ) extends StdMonadicAMQPDispatcher[A]( host, port )
-  with ForNotationAdapter[AMQPQueue,A] 
+  with ForNotationShiv[AMQPQueue,A] 
+  with ForNotationApplyShiv[AMQPQueue,A]
   with BMonad[AMQPQueue]
   with MonadPlus[AMQPQueue]
   with MonadFilter[AMQPQueue] {
+    override type ForNotationTrampoline[A] = QCell[A]
     case class QCell[A](
       queue : AMQPQueue[A]
     ) extends SCell( queue ) {
@@ -67,13 +69,7 @@ class AMQPScope[T](
 	reset { for( msg <- queue.dispatcher ) { f( msg ) } } ;
 	()
       }
-    }
-
-    override implicit def toMembrane [A] (
-      s : AMQPQueue[A]
-    ) : Membrane[A] with Filter[A] = {
-      QCell[A]( s )
-    }
+    }    
 
     def sender [A] ( 
       exchange : String,
@@ -117,7 +113,9 @@ class AMQPScope[T](
       }
     }
 
-    def apply [S] ( queue : AMQPQueue[S] ) : QCell[S] = {
+    override def apply [S] (
+      queue : AMQPQueue[S]
+    ) : ForNotationTrampoline[S] = {
       QCell[S]( queue )
     }
 
