@@ -433,33 +433,16 @@ object SMJATwistedPair {
 }
 
 package usage {
+  import com.biosimilarity.lift.lib.amqp.utilities._
 /* ------------------------------------------------------------------
  * Mostly self-contained object to support unit testing
  * ------------------------------------------------------------------ */ 
 
-object MonadicAMQPUnitTest {
-  import AMQPDefaults._
-  case class Msg(
-    s : String, i : Int, b : Boolean, r : Option[Msg]
-  )
+object MonadicAMQPUnitTest
+extends AMQPTestUtility[String] {
+  import AMQPDefaults._  
   
-  lazy val msgStrm : Stream[Msg] =
-    List( Msg( ("msg" + 0), 0, true, None ) ).toStream append (
-      msgStrm.map(
-	{
-	  ( msg ) => {
-	    msg match {
-	      case Msg( s, i, b, r ) => {
-		val j = i + 1
-		Msg(
-		  ("msg" + j) , j, ((j % 2) == 0), Some( msg )
-		)
-	      }
-	    }
-	  }
-	}
-      )
-    )
+  override def msgStreamPayload( idx : Int ) : String = { "Msg" + idx }  
 
   val srcIPStr = "10.0.1.5"
   val trgtIPStr = "10.0.1.9"
@@ -480,7 +463,7 @@ object MonadicAMQPUnitTest {
     _smjatp.jsonDispatcher(
       ( msg ) => { println( "received : " + msg ) }
     )
-    val msgs = msgStrm.take( 100 ).toList
+    val msgs = msgStream.take( 100 ).toList
     _smjatp.jsonSender
     // for( i <- 1 to 100 ) {
 //       _smjatp.send( msgs( i - 1 ) )

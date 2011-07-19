@@ -32,12 +32,12 @@ import _root_.java.io.ByteArrayOutputStream
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
-class AMQPScope[T](
-  val factory : ConnectionFactory,
-  val host : String,
-  val port : Int
-) extends MonadicDispatcherScope[T] {
-  self =>
+trait AMQPBrokerScope[T] {
+  self : MonadicDispatcherScope[T] =>
+    def factory : ConnectionFactory
+  def host : String
+  def port : Int
+
   override type MDS[A] = AMQPQueueM[A]
   override def protoMDS[A] = new AMQPQueueM[A]( "", "" )
 
@@ -207,27 +207,36 @@ class AMQPScope[T](
       }
     }
   }
-
-  override def equals( o : Any ) : Boolean = {
-    o match {
-      case that : AMQPScope[T] => {
-	(
-	  factory.equals( that.factory )
-	  && host.equals( that.host )
-	  && port.equals( that.port )
-	)
-      }
-      case _ => false
-    }
-  }
-  override def hashCode( ) : Int = {
-    (
-      ( 37 * factory.hashCode )
-      + ( 37 * host.hashCode )
-      + ( 37 * port.hashCode )
-    )
-  }  
 }
+
+class AMQPScope[T](
+  override val factory : ConnectionFactory,
+  override val host : String,
+  override val port : Int
+) extends MonadicDispatcherScope[T]
+  with AMQPBrokerScope[T] {
+  self =>
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : AMQPScope[T] => {
+	  (
+	    factory.equals( that.factory )
+	    && host.equals( that.host )
+	    && port.equals( that.port )
+	  )
+	}
+	case _ => false
+      }
+    }
+    
+    override def hashCode( ) : Int = {
+      (
+	( 37 * factory.hashCode )
+	+ ( 37 * host.hashCode )
+	+ ( 37 * port.hashCode )
+      )
+    }  
+  }
 
 object AMQPScope {
   def apply [T] (
@@ -259,4 +268,73 @@ case class StdAMQPScope[T](
   AMQPDefaults.defaultHost,
   AMQPDefaults.defaultPort
 ){
+}
+
+package usage {
+  import scala.collection.mutable.HashMap
+  import java.util.UUID  
+
+  object AMQPSample extends UUIDOps {
+    val defaultSrcHost = "10.0.1.5"
+    val defaultTrgtHost = "10.0.1.9"
+
+    val defaultQueueUUID = getUUID
+    
+    val srcSeed = scala.math.round( scala.math.random * 100 ).toInt
+    val trgtSeed = scala.math.round( scala.math.random * 100 ).toInt
+        
+    def setupAndRunTest(
+      srcHost : String,
+      trgtHost : String,
+      queueUUID : UUID,
+      msgCount : Int
+    ) = {
+      val srcScope = new AMQPHostScope[Int]( srcHost )
+      val trgtScope = new AMQPHostScope[Int]( trgtHost )
+      
+      val srcQM =
+	new srcScope.AMQPQueueM[Int](
+	  queueUUID.toString,
+	  "routeroute"
+	)
+      val trgtQM =
+	new trgtScope.AMQPQueueM[Int](
+	  queueUUID.toString,
+	  "routeroute"
+	)
+
+      val srcQ = srcQM.unit[Int]( srcSeed )
+      val trgtQ = trgtQM.unit[Int]( trgtSeed )
+
+      val msgMap = new HashMap[Int,Int]()
+
+      def loop( count : Int ) : Unit = {
+	count match {
+	  case 0 => {
+	    for( ( order, msg ) <- msgMap ) {
+	      val prefix = "received " + msg + " "
+	      val suffix = 
+		order match {
+		  case 1 => 1 + "st" + " "
+		  case 2 => 2 + "nd" + " "
+		  case 3 => 3 + "rd" + " "
+		  case _ => order + "th" + " "
+		}
+	      println( prefix + suffix + "msg" )
+	    }
+	  }
+	  case i => {
+	    for( msg <- trgtQM( trgtQ ) ) {
+	      msgMap += ( ( i, msg ) )
+	      srcQ ! i
+	      loop( i - 1 )
+	    }
+	  }
+	}
+      }
+      
+      loop( msgCount )
+    }
+    
+  }
 }
