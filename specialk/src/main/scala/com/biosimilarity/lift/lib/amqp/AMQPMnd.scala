@@ -333,9 +333,15 @@ package usage {
 
 		if ( mms == count - 1 ) {
 		  if ( !parity ) {
+		    println(
+		      "Ha! We have the last word with msg " + mms
+		    )
 		    srcQ ! mms
 		  }
-		  for( ( order, msg ) <- msgMap ) {
+		  println( "All " + count + " messages sent and received." )
+		  println( "Conversation summary: " )
+		  for( order <- 1 to count ) {
+		    val msg = msgMap( order )
 		    val prefix = "received " + msg + " "
 		    val suffix = 
 		      order match {
@@ -346,6 +352,7 @@ package usage {
 		      }
 		    println( prefix + suffix + "msg" )
 		  }
+		  println( "Test successful." )
 		}
 		else {
 		  if ( mms < count ) {
