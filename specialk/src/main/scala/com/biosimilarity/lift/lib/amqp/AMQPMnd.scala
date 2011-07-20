@@ -380,4 +380,68 @@ package usage {
     }
     
   }
+
+/*
+Welcome to Scala version 2.9.0.1 (Java HotSpot(TM) 64-Bit Server VM, Java 1.6.0_26).
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib._
+
+scala> import com.biosimilarity.lift.lib.usage._
+import com.biosimilarity.lift.lib.usage._
+import com.biosimilarity.lift.lib.usage._
+
+scala> import scala.util.continuations._
+import scala.util.continuations._
+import scala.util.continuations._
+
+scala> import AMQPSample._
+import AMQPSample._
+import AMQPSample._
+
+scala> setupAndRunTest( true, defaultSrcHost, defaultTrgtHost, "queueRS", 10 )
+setupAndRunTest( true, defaultSrcHost, defaultTrgtHost, "queueRS", 10 )
+sending initial msg 47 on queue queueRS
+entering msg loop with count : 10
+Waiting for a message on queue : queueRS
+
+scala> received msg number 0 with contents 0 on queueRS
+replying with msg 0
+received msg number 1 with contents 1 on queueRS
+replying with msg 1
+received msg number 2 with contents 2 on queueRS
+replying with msg 2
+received msg number 3 with contents 3 on queueRS
+replying with msg 3
+received msg number 4 with contents 4 on queueRS
+replying with msg 4
+received msg number 5 with contents 5 on queueRS
+replying with msg 5
+received msg number 6 with contents 6 on queueRS
+replying with msg 6
+received msg number 7 with contents 7 on queueRS
+replying with msg 7
+received msg number 8 with contents 8 on queueRS
+replying with msg 8
+received msg number 9 with contents 9 on queueRS
+All 10 messages sent and received.
+Conversation summary: 
+received 0 1st msg
+received 1 2nd msg
+received 2 3rd msg
+received 3 4th msg
+received 4 5th msg
+received 5 6th msg
+received 6 7th msg
+received 7 8th msg
+received 8 9th msg
+received 9 10th msg
+Test successful.
+:q
+:q
+*/
 }
+
