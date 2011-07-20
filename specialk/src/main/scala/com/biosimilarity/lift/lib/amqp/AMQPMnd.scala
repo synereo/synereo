@@ -35,11 +35,12 @@ import _root_.java.util.TimerTask
 trait AMQPBrokerScope[T] {
   self : MonadicDispatcherScope[T] =>
     def factory : ConnectionFactory
-  def host : String
-  def port : Int
 
   override type MDS[A] = AMQPQueueM[A]
-  override def protoMDS[A] = new AMQPQueueM[A]( "", "" )
+  override def protoMDS[A] =
+    new AMQPQueueM[A](
+      "", -1, "", ""
+    )
 
   case class AMQPQueue[A](    
     exchange : String,
@@ -53,8 +54,10 @@ trait AMQPBrokerScope[T] {
   }
 
   class AMQPQueueM[A](
-    exchange : String,
-    routingKey : String
+    override val host : String,
+    override val port : Int,
+    val exchange : String,
+    val routingKey : String
   ) extends StdMonadicAMQPDispatcher[A]( host, port )
   with ForNotationShiv[AMQPQueue,A] 
   with ForNotationApplyShiv[AMQPQueue,A]
@@ -192,7 +195,76 @@ trait AMQPBrokerScope[T] {
       }
       rslt
     }
-  }  
+
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : AMQPQueueM[A] => {
+	  (
+	    host.equals( that.host )
+	    && port.equals( that.port )
+	    && exchange.equals( that.exchange )
+	    && routingKey.equals( that.routingKey )
+	  )
+	}
+	case _ => false
+      }
+    }
+    
+    override def hashCode( ) : Int = {
+      (
+	( 37 * host.hashCode )
+	+ ( 37 * port.hashCode )
+	+ ( 37 * exchange.hashCode )
+	+ ( 37 * routingKey.hashCode )
+      )
+    }
+  }
+
+  object AMQPQueueM {
+    def apply [A] (
+      host : String,
+      port : Int,
+      exchange : String,
+      routingKey : String
+    ) : AMQPQueueM[A] = {
+      new AMQPQueueM[A] ( host, port, exchange, routingKey )
+    }
+    def unapply [A] (
+      amqpQM : AMQPQueueM[A]
+    ) : Option[( String, Int, String, String )] = {
+      Some(
+	( amqpQM.host, amqpQM.port, amqpQM.exchange, amqpQM.routingKey )
+      )
+    }
+  }
+
+  case class AMQPQueueHostExchangeM[A] (
+    override val host : String,
+    override val exchange : String
+  ) extends AMQPQueueM[A](
+    host,
+    AMQPDefaults.defaultPort,
+    exchange,
+    "routeroute"
+  )
+
+  case class AMQPQueueHostURIM[A] (
+    uri : URI
+  ) extends AMQPQueueM[A](
+    uri.getHost,
+    uri.getPort,
+    uri.getPath.split( "/" )( 1 ),
+    uri.getPath.split( "/" )( 0 )
+  )
+
+  case class AMQPQueueHostMonikerM[A] (
+    moniker : Moniker
+  ) extends AMQPQueueM[A](
+    moniker.getHost,
+    moniker.getPort,
+    moniker.getPath.split( "/" )( 1 ),
+    moniker.getPath.split( "/" )( 0 )
+  )
 
   def apply [A] (
     m : AMQPQueueM[A],
@@ -209,66 +281,40 @@ trait AMQPBrokerScope[T] {
   }
 }
 
-class AMQPScope[T](
-  override val factory : ConnectionFactory,
-  override val host : String,
-  override val port : Int
-) extends MonadicDispatcherScope[T]
-  with AMQPBrokerScope[T] {
-  self =>
-    override def equals( o : Any ) : Boolean = {
-      o match {
-	case that : AMQPScope[T] => {
-	  (
-	    factory.equals( that.factory )
-	    && host.equals( that.host )
-	    && port.equals( that.port )
-	  )
-	}
-	case _ => false
+class AMQPScope [T] (
+  override val factory : ConnectionFactory
+) extends AMQPBrokerScope[T]
+with MonadicDispatcherScope[T] {
+  override def equals( o : Any ) : Boolean = {
+    o match {
+      case that : AMQPScope[T] => {
+	factory.equals( that.factory )
       }
+      case _ => false
     }
-    
-    override def hashCode( ) : Int = {
-      (
-	( 37 * factory.hashCode )
-	+ ( 37 * host.hashCode )
-	+ ( 37 * port.hashCode )
-      )
-    }  
   }
+  override def hashCode( ) : Int = {
+    37 * factory.hashCode
+  }
+}
 
 object AMQPScope {
   def apply [T] (
-    factory : ConnectionFactory,
-    host : String,
-    port : Int
+    factory : ConnectionFactory
   ) : AMQPScope[T] = {
-    new AMQPScope( factory, host, port )
+    new AMQPScope[T] ( factory )
   }
   def unapply [T] (
     amqpScope : AMQPScope[T]
-  ) : Option[( ConnectionFactory, String, Int )] = {
-    Some( ( amqpScope.factory, amqpScope.host, amqpScope.port ) )
+  ) : Option[( ConnectionFactory )] = {
+    Some( ( amqpScope.factory ) )
   }
 }
 
-case class AMQPHostScope[T]( 
-  override val host : String
-) extends AMQPScope[T](
-  AMQPDefaults.defaultConnectionFactory,
-  host,
-  AMQPDefaults.defaultPort
-){
-}
-
-case class StdAMQPScope[T]( 
-) extends AMQPScope[T](
-  AMQPDefaults.defaultConnectionFactory,
-  AMQPDefaults.defaultHost,
-  AMQPDefaults.defaultPort
-){
-}
+case class AMQPStdScope[T] (  
+) extends AMQPScope[T] (
+  AMQPDefaults.defaultConnectionFactory
+) 
 
 package usage {
   import scala.collection.mutable.HashMap
@@ -290,13 +336,13 @@ package usage {
       queueStr : String,
       msgCount : Int
     ) = {
-      val srcScope = new AMQPHostScope[Int]( srcHost )
-      val trgtScope = new AMQPHostScope[Int]( trgtHost )
+      val srcScope = new AMQPStdScope[Int]()
+      val trgtScope = new AMQPStdScope[Int]()
       
       val srcQM =
-	new srcScope.AMQPQueueM[Int]( queueStr, "routeroute" )
+	new srcScope.AMQPQueueHostExchangeM[Int]( srcHost, queueStr )
       val trgtQM =
-	new trgtScope.AMQPQueueM[Int]( queueStr, "routeroute" )
+	new trgtScope.AMQPQueueHostExchangeM[Int]( trgtHost, queueStr )
 
       val srcQ = srcQM.zero[Int]
       val trgtQ = trgtQM.zero[Int]
