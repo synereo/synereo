@@ -297,8 +297,8 @@ package usage {
       val trgtQM =
 	new trgtScope.AMQPQueueM[Int]( queueStr, "routeroute" )
 
-      val srcQ = srcQM.unit[Int]( srcSeed )
-      val trgtQ = trgtQM.unit[Int]( trgtSeed )
+      val srcQ = srcQM.zero[Int]
+      val trgtQ = trgtQM.zero[Int]
 
       val msgMap = new HashMap[Int,Int]()
 
