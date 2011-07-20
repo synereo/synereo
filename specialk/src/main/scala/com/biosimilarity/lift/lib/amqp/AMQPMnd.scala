@@ -284,6 +284,7 @@ package usage {
     val trgtSeed = scala.math.round( scala.math.random * 100 ).toInt
         
     def setupAndRunTest(
+      parity : Boolean,
       srcHost : String,
       trgtHost : String,
       queueStr : String,
@@ -358,6 +359,7 @@ package usage {
 	}
       }
       
+      if ( parity ) { srcQ ! srcSeed }
       loop( msgCount )
     }
     
