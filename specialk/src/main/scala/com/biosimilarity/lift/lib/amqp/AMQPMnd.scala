@@ -306,17 +306,7 @@ package usage {
 	println( "entering msg loop with count : " + count )
 	count match {
 	  case 0 => {
-	    for( ( order, msg ) <- msgMap ) {
-	      val prefix = "received " + msg + " "
-	      val suffix = 
-		order match {
-		  case 1 => 1 + "st" + " "
-		  case 2 => 2 + "nd" + " "
-		  case 3 => 3 + "rd" + " "
-		  case _ => order + "th" + " "
-		}
-	      println( prefix + suffix + "msg" )
-	    }
+	    println( "Nothing to do." )
 	  }
 	  case i => {
 	    if ( i < 0 ) {
@@ -329,10 +319,39 @@ package usage {
 		"Waiting for a message on queue : " + queueStr
 	      )
 	      for( msg <- trgtQM( trgtQ ) ) {
-		println( "received: " + msg + " on " + queueStr )
-		msgMap += ( ( i, msg ) )
-		srcQ ! i
-		loop( i - 1 )
+		val mms = msgMap.size
+		println(
+		  (
+		    "received msg number " + mms
+		    + " with contents " + msg
+		    + " on " + queueStr 
+		  )
+		)
+
+		msgMap += ( ( (mms + 1), msg ) )
+
+		if ( mms == count - 1 ) {
+		  for( ( order, msg ) <- msgMap ) {
+		    val prefix = "received " + msg + " "
+		    val suffix = 
+		      order match {
+			case 1 => 1 + "st" + " "
+			case 2 => 2 + "nd" + " "
+			case 3 => 3 + "rd" + " "
+			case _ => order + "th" + " "
+		      }
+		    println( prefix + suffix + "msg" )
+		  }
+		}
+		else {
+		  if ( mms < count ) {
+		    println( "replying with msg " + mms )
+		    srcQ ! mms
+		  }
+		  else {
+		    println( "received unexpected msg: " + msg )
+		  }
+		}
 	      }
 	    }
 	  }
