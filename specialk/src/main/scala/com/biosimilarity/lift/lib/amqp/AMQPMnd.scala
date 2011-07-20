@@ -332,6 +332,9 @@ package usage {
 		msgMap += ( ( (mms + 1), msg ) )
 
 		if ( mms == count - 1 ) {
+		  if ( !parity ) {
+		    srcQ ! mms
+		  }
 		  for( ( order, msg ) <- msgMap ) {
 		    val prefix = "received " + msg + " "
 		    val suffix = 
@@ -359,7 +362,13 @@ package usage {
 	}
       }
       
-      if ( parity ) { srcQ ! srcSeed }
+      if ( parity ) {
+	println(
+	  "sending initial msg " + srcSeed + " on queue " + queueStr
+	)
+	srcQ ! srcSeed
+      }
+
       loop( msgCount )
     }
     
