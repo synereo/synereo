@@ -286,22 +286,16 @@ package usage {
     def setupAndRunTest(
       srcHost : String,
       trgtHost : String,
-      queueUUID : UUID,
+      queueStr : String,
       msgCount : Int
     ) = {
       val srcScope = new AMQPHostScope[Int]( srcHost )
       val trgtScope = new AMQPHostScope[Int]( trgtHost )
       
       val srcQM =
-	new srcScope.AMQPQueueM[Int](
-	  queueUUID.toString,
-	  "routeroute"
-	)
+	new srcScope.AMQPQueueM[Int]( queueStr, "routeroute" )
       val trgtQM =
-	new trgtScope.AMQPQueueM[Int](
-	  queueUUID.toString,
-	  "routeroute"
-	)
+	new trgtScope.AMQPQueueM[Int]( queueStr, "routeroute" )
 
       val srcQ = srcQM.unit[Int]( srcSeed )
       val trgtQ = trgtQM.unit[Int]( trgtSeed )
@@ -309,6 +303,7 @@ package usage {
       val msgMap = new HashMap[Int,Int]()
 
       def loop( count : Int ) : Unit = {
+	println( "entering msg loop with count : " + count )
 	count match {
 	  case 0 => {
 	    for( ( order, msg ) <- msgMap ) {
@@ -324,10 +319,21 @@ package usage {
 	    }
 	  }
 	  case i => {
-	    for( msg <- trgtQM( trgtQ ) ) {
-	      msgMap += ( ( i, msg ) )
-	      srcQ ! i
-	      loop( i - 1 )
+	    if ( i < 0 ) {
+	      throw new Exception(
+		"Tsk, tsk, play fair, now... please keep msg counts positive!"
+	      )
+	    }
+	    else {
+	      println(
+		"Waiting for a message on queue : " + queueStr
+	      )
+	      for( msg <- trgtQM( trgtQ ) ) {
+		println( "received: " + msg + " on " + queueStr )
+		msgMap += ( ( i, msg ) )
+		srcQ ! i
+		loop( i - 1 )
+	      }
 	    }
 	  }
 	}
