@@ -75,26 +75,26 @@ trait AMQPTwistedPairScope[T] {
       exchange : String,
       routingKey : String
     ) : theMDS.Generator[Unit, A, Unit] = {
+      val conn = factory.newConnection( Array { new Address(host, port) } )
+      val channel = conn.createChannel()
+      val qname = ( exchange + "_queue" )
+	channel.exchangeDeclare( exchange, "direct" )
+      channel.queueDeclare( qname, true, false, false, null );
+      channel.queueBind( qname, exchange, routingKey )	  
+	
       theMDS.Generator {
-	k : ( Unit => A @suspendable ) => {
-	  for( channel <- senderChannel( host, port, exchange, routingKey ) ) {
-	    spawn {
-	      val qname = ( exchange + "_queue" )
-		channel.exchangeDeclare( exchange, "direct" )
-	      channel.queueDeclare( qname, true, false, false, null );
-	      channel.queueBind( qname, exchange, routingKey )
-	      
-	      val bytes = new ByteArrayOutputStream
-	      val store = new ObjectOutputStream(bytes)
-	      store.writeObject( k() )
-	      store.close
-	      channel.basicPublish(
-		exchange,
-		routingKey,
-		null,
-		bytes.toByteArray
-	      )	    
-	    }
+	k : ( Unit => A @suspendable ) => {	  	      
+	  spawn {
+	    val bytes = new ByteArrayOutputStream
+	    val store = new ObjectOutputStream(bytes)
+	    store.writeObject( k() )
+	    store.close
+	    channel.basicPublish(
+	      exchange,
+	      routingKey,
+	      null,
+	      bytes.toByteArray
+	    )	    
 	  }
 	}
       }

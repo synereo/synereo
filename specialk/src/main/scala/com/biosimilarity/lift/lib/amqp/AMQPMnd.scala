@@ -75,6 +75,8 @@ trait AMQPBrokerScope[T] {
     }    
 
     def sender [A] ( 
+      host : String,
+      port : Int,
       exchange : String,
       routingKey : String
     ) : theMDS.Generator[Unit, A, Unit] = {      
@@ -155,7 +157,7 @@ trait AMQPBrokerScope[T] {
 	exchange,
 	routingKey,
 	theMDS.serve[A]( factory, host, port, exchange ),
-	sender( exchange, routingKey )
+	sender( host, port, exchange, routingKey )
       )
     }
     override def plus [A] (
