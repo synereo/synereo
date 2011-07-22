@@ -77,27 +77,27 @@ trait AMQPBrokerScope[T] {
     def sender [A] ( 
       exchange : String,
       routingKey : String
-    ) : theMDS.Generator[Unit, A, Unit] = {
+    ) : theMDS.Generator[Unit, A, Unit] = {      
+      val conn = factory.newConnection( Array { new Address(host, port) } )
+      val channel = conn.createChannel()
+      val qname = ( exchange + "_queue" )
+	channel.exchangeDeclare( exchange, "direct" )
+      channel.queueDeclare( qname, true, false, false, null );
+      channel.queueBind( qname, exchange, routingKey )
+	  
       theMDS.Generator {
 	k : ( Unit => A @suspendable ) => {
-	  for( channel <- senderChannel( exchange, routingKey ) ) {
-	    spawn {
-	      val qname = ( exchange + "_queue" )
-		channel.exchangeDeclare( exchange, "direct" )
-	      channel.queueDeclare( qname, true, false, false, null );
-	      channel.queueBind( qname, exchange, routingKey )
-	      
-	      val bytes = new ByteArrayOutputStream
-	      val store = new ObjectOutputStream(bytes)
-	      store.writeObject( k() )
-	      store.close
-	      channel.basicPublish(
-		exchange,
-		routingKey,
-		null,
-		bytes.toByteArray
-	      )	    
-	    }
+	  spawn {
+	    val bytes = new ByteArrayOutputStream
+	    val store = new ObjectOutputStream(bytes)
+	    store.writeObject( k() )
+	    store.close
+	    channel.basicPublish(
+	      exchange,
+	      routingKey,
+	      null,
+	      bytes.toByteArray
+	    )	    
 	  }
 	}
       }
