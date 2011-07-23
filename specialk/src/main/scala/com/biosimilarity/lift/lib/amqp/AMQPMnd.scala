@@ -42,38 +42,8 @@ trait AMQPBrokerScope[T] {
       "", -1, "", ""
     )
 
-  case class AMQPQueue[A](    
-    exchange : String,
-    routingKey : String,
-    dispatcher : theMDS.Generator[A,Unit,Unit],
-    sender : theMDS.Generator[Unit,A,Unit]
-  ) {
-    def !( msg : A ) : Unit = {
-      reset { for( _ <- sender ) { msg } }
-    }
-  }
-
-  class AMQPQueueM[A](
-    override val host : String,
-    override val port : Int,
-    val exchange : String,
-    val routingKey : String
-  ) extends StdMonadicAMQPDispatcher[A]( host, port )
-  with ForNotationShiv[AMQPQueue,A] 
-  with ForNotationApplyShiv[AMQPQueue,A]
-  with BMonad[AMQPQueue]
-  with MonadPlus[AMQPQueue]
-  with MonadFilter[AMQPQueue] {
-    override type ForNotationTrampoline[A] = QCell[A]
-    case class QCell[A](
-      queue : AMQPQueue[A]
-    ) extends SCell( queue ) {
-      override def foreach ( f : A => Unit ) : Unit = {
-	reset { for( msg <- queue.dispatcher ) { f( msg ) } } ;
-	()
-      }
-    }    
-
+  trait SenderFactory[A] {
+    self : StdMonadicAMQPDispatcher[A] =>
     def sender [A] ( 
       host : String,
       port : Int,
@@ -117,6 +87,40 @@ trait AMQPBrokerScope[T] {
 	}
       }
     }
+  }
+
+  case class AMQPQueue[A](    
+    exchange : String,
+    routingKey : String,
+    dispatcher : theMDS.Generator[A,Unit,Unit],
+    sender : theMDS.Generator[Unit,A,Unit]
+  ) {
+    def !( msg : A ) : Unit = {
+      reset { for( _ <- sender ) { msg } }
+    }
+  }
+
+  class AMQPQueueM[A](
+    override val host : String,
+    override val port : Int,
+    val exchange : String,
+    val routingKey : String
+  ) extends StdMonadicAMQPDispatcher[A]( host, port )
+  with SenderFactory[A]
+  with ForNotationShiv[AMQPQueue,A] 
+  with ForNotationApplyShiv[AMQPQueue,A]
+  with BMonad[AMQPQueue]
+  with MonadPlus[AMQPQueue]
+  with MonadFilter[AMQPQueue] {
+    override type ForNotationTrampoline[A] = QCell[A]
+    case class QCell[A](
+      queue : AMQPQueue[A]
+    ) extends SCell( queue ) {
+      override def foreach ( f : A => Unit ) : Unit = {
+	reset { for( msg <- queue.dispatcher ) { f( msg ) } } ;
+	()
+      }
+    }        
 
     override def apply [S] (
       queue : AMQPQueue[S]

@@ -32,8 +32,10 @@ import _root_.java.io.ByteArrayOutputStream
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
-trait AMQPTwistedPairScope[T] {
-  self : AMQPBrokerScope[T] with MonadicDispatcherScope[T] =>
+trait AMQPTwistedPairScope[T] 
+extends AMQPBrokerScope[T]
+with MonadicDispatcherScope[T] {
+  //self : AMQPBrokerScope[T] with MonadicDispatcherScope[T] =>
 
     def src : URI
   def trgt : URI
@@ -54,6 +56,7 @@ trait AMQPTwistedPairScope[T] {
     val exchange : String,
     val routingKey : String
   ) extends StdMonadicAMQPDispatcher[A]( host, port )
+  with SenderFactory[A]
   with ForNotationShiv[TwistedQueuePair,A] 
   with ForNotationApplyShiv[TwistedQueuePair,A]
   with BMonad[TwistedQueuePair]
@@ -66,52 +69,6 @@ trait AMQPTwistedPairScope[T] {
       override def foreach ( f : A => Unit ) : Unit = {
 	reset { for( msg <- pair.srcQ.dispatcher ) { f( msg ) } } ;
 	()
-      }
-    }    
-
-    def sender [A] ( 
-      host : String,
-      port : Int,
-      exchange : String,
-      routingKey : String
-    ) : theMDS.Generator[Unit, A, Unit] = {
-      val conn = factory.newConnection( Array { new Address(host, port) } )
-      val channel = conn.createChannel()
-      val qname = ( exchange + "_queue" )
-	channel.exchangeDeclare( exchange, "direct" )
-      channel.queueDeclare( qname, true, false, false, null );
-      channel.queueBind( qname, exchange, routingKey )	  
-	
-      theMDS.Generator {
-	k : ( Unit => A @suspendable ) => {	  	      
-	  spawn {
-	    val bytes = new ByteArrayOutputStream
-	    val store = new ObjectOutputStream(bytes)
-	    store.writeObject( k() )
-	    store.close
-	    channel.basicPublish(
-	      exchange,
-	      routingKey,
-	      null,
-	      bytes.toByteArray
-	    )	    
-	  }
-	}
-      }
-    }
-    
-    def senderChannel [A] ( 
-      host : String,
-      port : Int,
-      exchange : String,
-      routingKey : String
-    ) : theMDS.Generator[Channel, Unit, Unit] = {
-      theMDS.Generator {
-	k : ( Channel => Unit @suspendable ) => {
-	  val conn = factory.newConnection( Array { new Address(host, port) } )
-	  val channel = conn.createChannel()
-	  k( channel )
-	}
       }
     }
 
