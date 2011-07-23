@@ -33,9 +33,8 @@ import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
 trait AMQPTwistedPairScope[T] 
-extends AMQPBrokerScope[T]
-with MonadicDispatcherScope[T] {
-  //self : AMQPBrokerScope[T] with MonadicDispatcherScope[T] =>
+{
+  self : AMQPBrokerScope[T] with MonadicDispatcherScope[T] =>
 
     def src : URI
   def trgt : URI
@@ -184,3 +183,53 @@ with MonadicDispatcherScope[T] {
     }
   }
 }
+
+class AMQPStdTwistedPairScope[T](
+  override val factory : ConnectionFactory,
+  override val src : URI,
+  override val trgt : URI
+) extends AMQPTwistedPairScope[T]
+with AMQPBrokerScope[T]
+with MonadicDispatcherScope[T] {
+  override def equals( o : Any ) : Boolean = {
+    o match {
+      case that : AMQPStdTwistedPairScope[T] => {
+	(
+	  factory.equals( that.factory )
+	  && src.equals( that.src )
+	  && trgt.equals( that.trgt )
+	)
+      }
+      case _ => false
+    }
+  }
+  override def hashCode( ) : Int = {
+    (
+      ( 37 * factory.hashCode() )
+      + ( 37 * src.hashCode() )
+      + ( 37 * trgt.hashCode() )
+    )
+  }
+}
+
+object AMQPStdTwistedPairScope {
+  def apply [T] (
+    factory : ConnectionFactory,
+    src : URI,
+    trgt : URI
+  ) : AMQPStdTwistedPairScope[T] = {
+    new AMQPStdTwistedPairScope[T]( factory, src, trgt )
+  }
+  def unapply [T] (
+    amqpStdTPS : AMQPStdTwistedPairScope[T]
+  ) : Option[( ConnectionFactory, URI, URI )] = {
+    Some( ( amqpStdTPS.factory, amqpStdTPS.src, amqpStdTPS.trgt ) )
+  }
+}
+
+case class AMQPStdTPS[T](
+  override val src : URI,
+  override val trgt : URI
+) extends AMQPStdTwistedPairScope[T](
+  AMQPDefaults.defaultConnectionFactory, src, trgt
+)
