@@ -31,11 +31,53 @@ trait MonadicGenerators {
     def foreach( f : (A => B @suspendable) ) : C @suspendable = {
       funK( f )
     }
+    def map [Aprime] ( g : A => Aprime ) : Generable[Aprime,B,C]
+    def filter( pred : A => Boolean ) : Generable[A,B,C]
   }
 
   case class Generator[+A,-B,+C](
     override val funK : (A => (B @suspendable)) => (C @suspendable)
   ) extends Generable[A,B,C] {   
+    override def map [Aprime] (
+      g : A => Aprime
+    ) : Generable[Aprime,B,C] = {
+      Generator {
+	k : ( Aprime => B @suspendable ) =>
+	  shift {
+	    outerK : ( C => Unit ) =>
+	      reset {
+		for( elem <- this ) {
+		  val trgtElem = g( elem )
+		  k( trgtElem )
+		}		
+  		outerK( funK( ( a : A ) => k( g( a ) ) ) )
+	      }	    
+	  }
+      }
+    }
+    override def filter(
+      pred : A => Boolean
+    ) : Generable[A,B,C] = {
+      Generator {
+	k : ( A => B @suspendable ) =>
+	  shift {
+	    outerK : ( C => Unit ) =>
+	      reset {
+		for( elem <- this ) {
+		  val b : B @suspendable = 
+		    if ( pred( elem ) ) {
+		      k( elem )
+		    }
+		    else { 
+		      null.asInstanceOf[B]
+		    }
+		  b
+		}		
+  		outerK( funK( k ) )
+	      }
+	  }
+      }
+    }
   }
 
   // this is really map... fix!
