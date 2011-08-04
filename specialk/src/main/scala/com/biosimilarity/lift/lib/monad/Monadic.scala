@@ -32,51 +32,63 @@ trait MonadicGenerators {
       funK( f )
     }
     def map [Aprime] ( g : A => Aprime ) : Generable[Aprime,B,C]
-    def filter( pred : A => Boolean ) : Generable[A,B,C]
+    def mapSrc [Aprime] ( g : A => Aprime ) : Generable[Aprime,B,C]
+    def mapTrgt [Bprime] ( g : Bprime => B ) : Generable[A,Bprime,C]
+  
+    def flatMap [Aprime >: A, Bprime <: B, Cprime >: C] (
+      g : Aprime => Generable[Aprime,Bprime,Cprime]
+    ) : Generable[Aprime,Bprime,Cprime]
+
+    def filter( pred : A => Boolean ) : Generable[Option[A],B,C]    
   }
 
   case class Generator[+A,-B,+C](
     override val funK : (A => (B @suspendable)) => (C @suspendable)
-  ) extends Generable[A,B,C] {   
+  ) extends Generable[A,B,C] {               
     override def map [Aprime] (
+      g : A => Aprime
+    ) : Generable[Aprime,B,C] = mapSrc[Aprime]( g )
+    override def mapSrc [Aprime] (
       g : A => Aprime
     ) : Generable[Aprime,B,C] = {
       Generator {
 	k : ( Aprime => B @suspendable ) =>
-	  shift {
-	    outerK : ( C => Unit ) =>
-	      reset {
-		for( elem <- this ) {
-		  val trgtElem = g( elem )
-		  k( trgtElem )
-		}		
-  		outerK( funK( ( a : A ) => k( g( a ) ) ) )
-	      }	    
-	  }
+	  funK( ( a : A ) => k( g( a ) ) )
       }
     }
+    override def mapTrgt [Bprime] (
+      g : Bprime => B
+    ) : Generable[A,Bprime,C] = {
+      Generator {
+	k : ( A => Bprime @suspendable ) =>
+	  funK( ( a : A ) => g( k( a ) ) )
+      }
+    }
+
+    override def flatMap [Aprime >: A, Bprime <: B, Cprime >: C] (
+      g : Aprime => Generable[Aprime,Bprime,Cprime]
+    ) : Generable[Aprime,Bprime,Cprime] = {
+      Generator {
+	k : ( Aprime => Bprime @suspendable ) => {
+	  // this is a hack!
+	  // we really need to calculate a coend to eliminate the
+	  // dependency on A
+	  var rA : Option[Aprime] = None 
+	  funK( ( a : A ) => { rA = Some( a ); k( a ) } )
+	  rA match {
+	    case Some( a ) => g( a ).funK( k )
+	    case _ => throw new Exception( "Should never get here!" )
+	  }
+	}
+      }
+    }
+
     override def filter(
       pred : A => Boolean
-    ) : Generable[A,B,C] = {
-      Generator {
-	k : ( A => B @suspendable ) =>
-	  shift {
-	    outerK : ( C => Unit ) =>
-	      reset {
-		for( elem <- this ) {
-		  val b : B @suspendable = 
-		    if ( pred( elem ) ) {
-		      k( elem )
-		    }
-		    else { 
-		      null.asInstanceOf[B]
-		    }
-		  b
-		}		
-  		outerK( funK( k ) )
-	      }
-	  }
-      }
+    ) : Generable[Option[A],B,C] = {
+      mapSrc[Option[A]](
+	( a : A ) => { if ( pred( a ) ) { Some( a ) } else { None } }
+      )
     }
   }
 
