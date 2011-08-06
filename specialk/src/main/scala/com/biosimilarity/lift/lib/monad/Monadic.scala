@@ -39,7 +39,38 @@ trait MonadicGenerators {
       g : Aprime => Generable[Aprime,Bprime,Cprime]
     ) : Generable[Aprime,Bprime,Cprime]
 
-    def filter( pred : A => Boolean ) : Generable[Option[A],B,C]    
+    def filter( pred : A => Boolean ) : Generable[Option[A],B,C] 
+
+    def map [Aprime] ( f : ( Aprime => B @suspendable ) )(
+      g : A => Aprime
+    ) : (C @suspendable) = {
+      map( g ).funK( f )
+    }
+    def mapSrc [Aprime] ( f : ( Aprime => B @suspendable ) )(
+      g : A => Aprime
+    ) : (C @suspendable) = {
+      mapSrc( g ).funK( f )
+    }
+    def mapTrgt [Bprime] ( f : ( A => Bprime @suspendable ) )(
+      g : Bprime => B
+    ) : (C @suspendable) = {
+      mapTrgt( g ).funK( f )
+    }
+  
+    def flatMap [Aprime >: A, Bprime <: B, Cprime >: C] (
+      f : ( Aprime => Bprime @suspendable )
+    )(
+      g : Aprime => Generable[Aprime,Bprime,Cprime]
+    ) : (Cprime @suspendable) = {
+      flatMap( g ).funK( f )
+    }
+    
+    def filter ( f : ( Option[A] => B @suspendable ) )(
+      pred : A => Boolean
+    ) : (C @suspendable) = {
+      filter( pred ).funK( f )
+    }
+    
   }
 
   case class Generator[+A,-B,+C](
