@@ -47,14 +47,18 @@ trait AMQPTwistedPairScope[T]
   case class TwistedQueuePair[T](
     srcQ : AMQPQueue[T],
     trgtQ : AMQPQueue[T]
-  )
+  ) {
+    def !( msg : T ) : Unit = { trgtQ ! msg }
+  }
   
   class TwistedQueuePairM[A](
-    override val host : String,
-    override val port : Int,
     val exchange : String,
     val routingKey : String
-  ) extends StdMonadicAMQPDispatcher[A]( host, port )
+  ) extends MonadicJSONAMQPDispatcher[A]
+  with WireTap
+  with Journalist
+  with MonadicDispatcher[A]
+  with MonadicWireToTrgtConversion
   with SenderFactory[A]
   with ForNotationShiv[TwistedQueuePair,A] 
   with ForNotationApplyShiv[TwistedQueuePair,A]
@@ -163,9 +167,7 @@ trait AMQPTwistedPairScope[T]
       o match {
 	case that : TwistedQueuePairM[A] => {
 	  (
-	    host.equals( that.host )
-	    && port.equals( that.port )
-	    && exchange.equals( that.exchange )
+	    exchange.equals( that.exchange )
 	    && routingKey.equals( that.routingKey )
 	  )
 	}
@@ -174,10 +176,8 @@ trait AMQPTwistedPairScope[T]
     }
     
     override def hashCode( ) : Int = {
-      (
-	( 37 * host.hashCode )
-	+ ( 37 * port.hashCode )
-	+ ( 37 * exchange.hashCode )
+      (	
+	( 37 * exchange.hashCode )
 	+ ( 37 * routingKey.hashCode )
       )
     }
@@ -233,3 +233,110 @@ case class AMQPStdTPS[T](
 ) extends AMQPStdTwistedPairScope[T](
   AMQPDefaults.defaultConnectionFactory, src, trgt
 )
+
+package usage {
+  import scala.collection.mutable.HashMap
+  import java.util.UUID  
+
+  object AMQPTPSample extends UUIDOps {
+    val defaultSrcHost = "10.0.1.5"
+    val defaultTrgtHost = "10.0.1.9"
+
+    val defaultQueueUUID = getUUID
+    
+    val srcSeed = scala.math.round( scala.math.random * 100 ).toInt
+    val trgtSeed = scala.math.round( scala.math.random * 100 ).toInt
+        
+    def setupAndRunTest(
+      parity : Boolean,
+      srcHost : URI,
+      trgtHost : URI,
+      queueStr : String,
+      msgCount : Int
+    ) = {
+      val scope = new AMQPStdTPS[Int]( srcHost, trgtHost )
+      val qpM =	new scope.TwistedQueuePairM[Int]( queueStr, "routeroute" )
+
+      val qtp = qpM.zero[Int]
+
+      val msgMap = new HashMap[Int,Int]()
+
+      def loop( count : Int ) : Unit = {
+	println( "entering msg loop with count : " + count )
+	count match {
+	  case 0 => {
+	    println( "Nothing to do." )
+	  }
+	  case i => {
+	    if ( i < 0 ) {
+	      throw new Exception(
+		"Tsk, tsk, play fair, now... please keep msg counts positive!"
+	      )
+	    }
+	    else {
+	      println(
+		"Waiting for a message on queue : " + queueStr
+	      )
+	      for( msg <- qpM( qtp ) ) {
+		val mms = msgMap.size
+		println(
+		  (
+		    "received msg number " + mms
+		    + " with contents " + msg
+		    + " on " + queueStr 
+		  )
+		)
+
+		msgMap += ( ( (mms + 1), msg ) )
+
+		if ( mms == count - 1 ) {
+		  if ( !parity ) {
+		    println(
+		      "Ha! We have the last word with msg " + mms
+		    )
+		    qtp ! mms
+		  }
+		  println( "All " + count + " messages sent and received." )
+		  println( "Conversation summary: " )
+		  for( order <- 1 to count ) {
+		    val msg = msgMap( order )
+		    val prefix = "received " + msg + " "
+		    val suffix = 
+		      order match {
+			case 1 => 1 + "st" + " "
+			case 2 => 2 + "nd" + " "
+			case 3 => 3 + "rd" + " "
+			case _ => order + "th" + " "
+		      }
+		    println( prefix + suffix + "msg" )
+		  }
+		  println( "Test successful." )
+		}
+		else {
+		  if ( mms < count ) {
+		    println( "replying with msg " + mms )
+		    qtp ! mms
+		  }
+		  else {
+		    println( "received unexpected msg: " + msg )
+		  }
+		}
+	      }
+	    }
+	  }
+	}
+      }
+      
+      if ( parity ) {
+	println(
+	  "sending initial msg " + srcSeed + " on queue " + queueStr
+	)
+	qtp ! srcSeed
+      }
+
+      loop( msgCount )
+    }
+    
+  }
+
+}

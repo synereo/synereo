@@ -43,7 +43,9 @@ trait AMQPBrokerScope[T] {
     )
 
   trait SenderFactory[A] {
-    self : StdMonadicAMQPDispatcher[A] =>
+    //self : StdMonadicAMQPDispatcher[A] =>
+    self : MonadicDispatcher[A] =>
+      type Channel = RabbitChan
     def sender [A] ( 
       host : String,
       port : Int,
@@ -76,6 +78,8 @@ trait AMQPBrokerScope[T] {
     }
     
     def senderChannel [A] ( 
+      host : String,
+      port : Int,      
       exchange : String,
       routingKey : String
     ) : theMDS.Generator[Channel, Unit, Unit] = {
