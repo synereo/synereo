@@ -45,7 +45,7 @@ trait AMQPBrokerScope[T] {
   trait SenderFactory[A] {
     //self : StdMonadicAMQPDispatcher[A] =>
     self : MonadicDispatcher[A] =>
-      type Channel = RabbitChan
+      override type Channel = RabbitChan
     def sender [A] ( 
       host : String,
       port : Int,

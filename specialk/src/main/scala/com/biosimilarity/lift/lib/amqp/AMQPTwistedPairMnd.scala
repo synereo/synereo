@@ -57,14 +57,14 @@ trait AMQPTwistedPairScope[T]
   ) extends MonadicJSONAMQPDispatcher[A]
   with WireTap
   with Journalist
-  with MonadicDispatcher[A]
+  with MonadicAMQPDispatcher[A]
   with MonadicWireToTrgtConversion
   with SenderFactory[A]
   with ForNotationShiv[TwistedQueuePair,A] 
   with ForNotationApplyShiv[TwistedQueuePair,A]
   with BMonad[TwistedQueuePair]
   with MonadPlus[TwistedQueuePair]
-  with MonadFilter[TwistedQueuePair] {
+  with MonadFilter[TwistedQueuePair] {    
     override type ForNotationTrampoline[A] = TwistedPairCell[A]
     case class TwistedPairCell[A](
       pair : TwistedQueuePair[A]
@@ -79,6 +79,10 @@ trait AMQPTwistedPairScope[T]
       pair : TwistedQueuePair[S]
     ) : ForNotationTrampoline[S] = {
       TwistedPairCell[S]( pair )
+    }
+
+    override def tap [A] ( fact : A ) : Unit = {
+      reportage( fact )
     }
 
     override def unit [S] ( s : S ) : TwistedQueuePair[S] = {
