@@ -188,6 +188,7 @@ trait MonadicWireToTrgtConversion
   type Trgt
     
   def wire2Trgt( wire : Wire ) : Trgt
+  def trgt2Wire( trgt : Trgt ) : Wire
 
   def xformAndDispatch(
     msgGenerator : Generator[Wire,Unit,Unit]

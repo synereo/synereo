@@ -218,6 +218,10 @@ trait MonadicJSONAMQPDispatcher[T]
     val xstrm = new XStream( new JettisonMappedXmlDriver )
     xstrm.fromXML( wire ).asInstanceOf[Trgt]
   }
+  override def trgt2Wire( trgt : Trgt ) : Wire = {
+    val xstrm = new XStream( new JettisonMappedXmlDriver )
+    xstrm.toXML( trgt ).asInstanceOf[Wire]
+  }
 }
 
 trait AMQPUtilities {
