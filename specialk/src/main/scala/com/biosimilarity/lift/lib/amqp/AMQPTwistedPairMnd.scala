@@ -59,7 +59,7 @@ trait AMQPTwistedPairScope[T]
   with Journalist
   with MonadicAMQPDispatcher[A]
   with MonadicWireToTrgtConversion
-  with SenderFactory[A]
+  //with SenderFactory[A]
   with ForNotationShiv[TwistedQueuePair,A] 
   with ForNotationApplyShiv[TwistedQueuePair,A]
   with BMonad[TwistedQueuePair]
@@ -119,13 +119,13 @@ trait AMQPTwistedPairScope[T]
 	  exchange,
 	  routingKey,
 	  theMDS.serve[theMDS.Wire]( factory, srcHost, srcPort, exchange ),
-	  sender[theMDS.Wire]( srcHost, srcPort, exchange, routingKey )
+	  theMDS.sender[theMDS.Wire]( srcHost, srcPort, exchange, routingKey )
 	),
 	AMQPQueue[A](
 	  exchange,
 	  routingKey,
 	  theMDS.serve[theMDS.Wire]( factory, trgtHost, trgtPort, exchange ),
-	  sender[theMDS.Wire]( trgtHost, trgtPort, exchange, routingKey )
+	  theMDS.sender[theMDS.Wire]( trgtHost, trgtPort, exchange, routingKey )
 	)
       )
     }

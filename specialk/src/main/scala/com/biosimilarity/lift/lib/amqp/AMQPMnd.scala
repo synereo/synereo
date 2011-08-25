@@ -34,24 +34,25 @@ import _root_.java.util.TimerTask
 
 trait AMQPBrokerScope[T] {
   self : MonadicDispatcherScope[T] =>
-    def factory : ConnectionFactory
+    def factory : ConnectionFactory  
 
-  override type MDS[A] = AMQPQueueM[A]
-  override def protoMDS[A] =
-    new AMQPQueueM[A](
-      "", -1, "", ""
-    )
+  class StdMonadicAMQPSndrRcvr[A](
+    override val host : String,
+    override val port : Int
+  ) extends StdMonadicAMQPDispatcher[A]( host, port ) 
+  with WireToTrgtConversion {
+    override type Trgt = A
+    override type Wire = Trgt
 
-  trait SenderFactory[A] {
-    //self : StdMonadicAMQPDispatcher[A] =>
-    self : MonadicDispatcher[A] =>
-      override type Channel = RabbitChan
+    override def wire2Trgt( wire : Wire ) : Trgt = { wire }
+    override def trgt2Wire( trgt : Trgt ) : Wire = { trgt }
+
     def sender [A] ( 
       host : String,
       port : Int,
       exchange : String,
       routingKey : String
-    ) : theMDS.Generator[Unit, A, Unit] = {      
+    ) : Generator[Unit, A, Unit] = {      
       val conn = factory.newConnection( Array { new Address(host, port) } )
       val channel = conn.createChannel()
       val qname = ( exchange + "_queue" )
@@ -59,7 +60,7 @@ trait AMQPBrokerScope[T] {
       channel.queueDeclare( qname, true, false, false, null );
       channel.queueBind( qname, exchange, routingKey )
 	  
-      theMDS.Generator {
+      Generator {
 	k : ( Unit => A @suspendable ) => {
 	  spawn {
 	    val bytes = new ByteArrayOutputStream
@@ -82,8 +83,8 @@ trait AMQPBrokerScope[T] {
       port : Int,      
       exchange : String,
       routingKey : String
-    ) : theMDS.Generator[Channel, Unit, Unit] = {
-      theMDS.Generator {
+    ) : Generator[Channel, Unit, Unit] = {
+      Generator {
 	k : ( Channel => Unit @suspendable ) => {
 	  val conn = factory.newConnection( Array { new Address(host, port) } )
 	  val channel = conn.createChannel()
@@ -92,6 +93,10 @@ trait AMQPBrokerScope[T] {
       }
     }
   }
+
+  override type MDS[A] = StdMonadicAMQPSndrRcvr[A]
+  override def protoMDS[A] =
+    new StdMonadicAMQPSndrRcvr[A]( "", -1 )
 
   trait AMQPQueueXForm[W,T] extends WireToTrgtConversion {
     override type Trgt = T
@@ -185,15 +190,8 @@ trait AMQPBrokerScope[T] {
     }
   }
 
-  /*
-  type QTS[A] <: AMQPQueue[A]
-  val theQTS = protoQTS[T]
-  def protoQTS[A] : QTS[A]
-  */
-
   trait AMQPQueueMQT[A,QT[Msg] <: AMQPQueue[Msg]]
-  extends SenderFactory[A]
-  with MonadicDispatcher[A]
+  extends FJTaskRunners
   with WireToTrgtConversion
   with WireTap
   with Journalist
@@ -297,18 +295,21 @@ trait AMQPBrokerScope[T] {
     override val port : Int,
     override val exchange : String,
     override val routingKey : String
-  ) extends StdMonadicAMQPDispatcher[A]( host, port )
-  with AMQPQueueMQT[A,AMQPQueue] {            
+  ) //extends StdMonadicAMQPDispatcher[A]( host, port )
+  extends AMQPQueueMQT[A,AMQPQueue] {            
     override type Wire = A
     override def wire2Trgt( wire : Wire ) : Trgt = { wire }
     override def trgt2Wire( trgt : Trgt ) : Wire = { trgt }
+    override def tap [A] ( fact : A ) : Unit = {
+      reportage( fact )
+    }
 
     override def zero [A] : AMQPQueue[A] = {
       AMQPQueue[A](
 	exchange,
 	routingKey,
 	theMDS.serve[theMDS.Wire]( factory, host, port, exchange ),
-	sender[theMDS.Wire]( host, port, exchange, routingKey )
+	theMDS.sender[theMDS.Wire]( host, port, exchange, routingKey )
       )
     }    
     override def equals( o : Any ) : Boolean = {
@@ -426,72 +427,32 @@ object AMQPScope {
   }
 }
 
-// trait JSONOverAMQPBrokerScope[T] 
-// extends AMQPBrokerScope[T] with MonadicDispatcherScope[T] {
-//   self =>
-//   class JSONOverAMQPQueue[A](    
-//     override val exchange : String,
-//     override val routingKey : String,
-//     override val dispatcher : theMDS.Generator[String,Unit,Unit],
-//     override val sender : theMDS.Generator[Unit,String,Unit]
-//   ) extends self.AMQPQueue[A](
-//     exchange, routingKey, dispatcher, sender
-//   ) {
-//     override def !( msg : A ) : Unit = {
-//       val msgBody =
-// 	new XStream(
-// 	  new JettisonMappedXmlDriver()
-// 	).toXML( msg )	
-//       reset { for( _ <- sender ) { msgBody } }
-//     }
-//   }
-// 
-
-//   class JSONOverAMQPQueueM[A](
-//     override val host : String,
-//     override val port : Int,
-//     override val exchange : String,
-//     override val routingKey : String
-//   ) extends AMQPQueueMQT[A,self.JSONOverAMQPQueue]
-//   with MonadicAMQPDispatcher[A]
-//   with MonadicJSONAMQPDispatcher[A] 
-//   with MonadicWireToTrgtConversion
-//   with WireTap
-//   with Journalist {
-//     innerSelf =>
-//     override type Channel = RabbitChan
-//     override type ForNotationTrampoline[A] = JSONQCell[A]
-//     class JSONQCell[A](
-//       queue : JSONOverAMQPQueue[A]
-//     ) extends innerSelf.QCell( queue ) {
-//       override def foreach ( f : A => Unit ) : Unit = {
-// 	reset {
-// 	  for( msg <- queue.dispatcher ) {
-// 	    val msgBody : A =
-// 	      new XStream(
-// 		new JettisonMappedXmlDriver()
-// 	      ).fromXML( msg ).asInstanceOf[A]
-// 	    f( msgBody )
-// 	  }
-// 	} ;
-// 	()
-//       }
-//     }
-
-//     override def zero [A] : JSONOverAMQPQueue[A] = {
-//       new JSONOverAMQPQueue[A](
-// 	exchange,
-// 	routingKey,
-// 	theMDS.serve[String]( factory, host, port, exchange ),
-// 	sender( host, port, exchange, routingKey )
-//       )
-//     }
-
-//     override def tap [A] ( fact : A ) : Unit = {
-//       reportage( fact )
-//     }
-//   }
-// }
+trait JSONOverAMQPBrokerScope[T] 
+extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {
+  class JSONOverAMQPQueueM[A](
+    override val host : String,
+    override val port : Int,
+    override val exchange : String,
+    override val routingKey : String
+  ) extends AMQPQueueMQT[A,AMQPQueue]
+  with JSONWireToTrgtConversion
+  with WireTap
+  with Journalist {
+    override type Trgt = A
+    override type Wire = String
+    override def tap [A] ( fact : A ) : Unit = {
+      reportage( fact )
+    }
+    override def zero [A] : AMQPQueue[A] = {
+      AMQPQueue[A](
+	exchange,
+	routingKey,
+	theMDS.serve[theMDS.Wire]( factory, host, port, exchange ),
+	theMDS.sender[theMDS.Wire]( host, port, exchange, routingKey )
+      )
+    }    
+  }
+}
 
 case class AMQPStdScope[T] (  
 ) extends AMQPScope[T] (
