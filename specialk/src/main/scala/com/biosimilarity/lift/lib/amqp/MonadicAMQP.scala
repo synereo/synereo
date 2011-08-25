@@ -208,12 +208,10 @@ trait MonadicAMQPDispatcher[T]
    
  }
 
-trait MonadicJSONAMQPDispatcher[T]
-{
-  self : MonadicWireToTrgtConversion with WireTap with Journalist =>
-  type Wire = String
-  type Trgt = T
-  
+trait JSONWireToTrgtConversion
+extends WireToTrgtConversion {
+  override type Wire = String
+
   override def wire2Trgt( wire : Wire ) : Trgt = {
     val xstrm = new XStream( new JettisonMappedXmlDriver )
     xstrm.fromXML( wire ).asInstanceOf[Trgt]
@@ -222,6 +220,13 @@ trait MonadicJSONAMQPDispatcher[T]
     val xstrm = new XStream( new JettisonMappedXmlDriver )
     xstrm.toXML( trgt ).asInstanceOf[Wire]
   }
+}
+
+trait MonadicJSONAMQPDispatcher[T]
+extends JSONWireToTrgtConversion
+{
+  self : MonadicWireToTrgtConversion with WireTap with Journalist =>
+    type Trgt = T   
 }
 
 trait AMQPUtilities {

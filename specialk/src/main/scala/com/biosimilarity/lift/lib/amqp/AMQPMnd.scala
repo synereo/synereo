@@ -93,14 +93,72 @@ trait AMQPBrokerScope[T] {
     }
   }
 
-  class AMQPQueue[A](    
-    val exchange : String,
-    val routingKey : String,
-    val dispatcher : theMDS.Generator[A,Unit,Unit],
-    val sender : theMDS.Generator[Unit,A,Unit]
-  ) {
-    def !( msg : A ) : Unit = {
+  trait AMQPQueueXForm[W,T] extends WireToTrgtConversion {
+    override type Trgt = T
+    override type Wire = W
+
+    var _dispatcher : Option[theMDS.Generator[Trgt,Unit,Unit]] = None
+    var _sender : Option[theMDS.Generator[Unit,Trgt,Unit]] = None
+
+    def exchange : String
+    def routingKey : String
+    def dispatcherW : theMDS.Generator[Wire,Unit,Unit]
+    def senderW : theMDS.Generator[Unit,Wire,Unit]
+
+    def dispatcher : theMDS.Generator[Trgt,Unit,Unit] = {
+      _dispatcher match {
+	case Some( d ) => d
+	case _ => {
+	  // BUGBUG -- lgm : the coercion is relatively safe -- we
+	  // know that Generator is the only concrete instance of
+	  // Generable in play in this codebase at this time
+	  val d =
+	    dispatcherW.mapSrc(
+	      wire2Trgt( _ )
+	    ).asInstanceOf[theMDS.Generator[Trgt,Unit,Unit]]
+	  _dispatcher = Some( d )
+	  d
+	}
+      }
+    }
+    
+    def sender : theMDS.Generator[Unit,Trgt,Unit] = {
+      _sender match {
+	case Some( s ) => s
+	case _ => {
+	  // BUGBUG -- lgm : the coercion is relatively safe -- we
+	  // know that Generator is the only concrete instance of
+	  // Generable in play in this codebase at this time
+	  val s =
+	    senderW.mapTrgt(
+	      trgt2Wire( _ )
+	    ).asInstanceOf[theMDS.Generator[Unit,Trgt,Unit]]
+	  _sender = Some( s )
+	  s
+	}
+      }
+    }
+
+    def !( msg : T ) : Unit = {
       reset { for( _ <- sender ) { msg } }
+    }
+  }
+
+  class AMQPQueue[A]( 
+    override val exchange : String,
+    override val routingKey : String,
+    override val dispatcherW : theMDS.Generator[theMDS.Wire,Unit,Unit],
+    override val senderW : theMDS.Generator[Unit,theMDS.Wire,Unit]
+  ) extends AMQPQueueXForm[theMDS.Wire,A] {
+    override def wire2Trgt( wire : Wire ) : Trgt = {
+      // BUGBUG -- lgm : the type members don't allow us to declare
+      // that theMDS.Trgt type == this.Trgt type
+      theMDS.wire2Trgt( wire ).asInstanceOf[Trgt]
+    }
+    override def trgt2Wire( trgt : Trgt ) : Wire = {
+      // BUGBUG -- lgm : the type members don't allow us to declare
+      // that theMDS.Trgt type == this.Trgt type
+      theMDS.trgt2Wire( trgt.asInstanceOf[theMDS.Trgt] )
     }
   }
 
@@ -108,10 +166,10 @@ trait AMQPBrokerScope[T] {
     def apply [A] (
       exchange : String,
       routingKey : String,
-      dispatcher : theMDS.Generator[A,Unit,Unit],
-      sender : theMDS.Generator[Unit,A,Unit]
+      dispatcherW : theMDS.Generator[theMDS.Wire,Unit,Unit],
+      senderW : theMDS.Generator[Unit,theMDS.Wire,Unit]
     ) : AMQPQueue[A] = {
-      new AMQPQueue( exchange, routingKey, dispatcher, sender )
+      new AMQPQueue( exchange, routingKey, dispatcherW, senderW )
     }
     def unapply [A] (
       amqpQ : AMQPQueue[A]
@@ -136,8 +194,7 @@ trait AMQPBrokerScope[T] {
   trait AMQPQueueMQT[A,QT[Msg] <: AMQPQueue[Msg]]
   extends SenderFactory[A]
   with MonadicDispatcher[A]
-  with MonadicJSONAMQPDispatcher[A] 
-  with MonadicWireToTrgtConversion
+  with WireToTrgtConversion
   with WireTap
   with Journalist
   with ForNotationShiv[QT,A] 
@@ -145,6 +202,8 @@ trait AMQPBrokerScope[T] {
   with BMonad[QT]
   with MonadPlus[QT]
   with MonadFilter[QT] {
+    override type Trgt = A
+
     def host : String
     def port : Int
     def exchange : String
@@ -240,12 +299,16 @@ trait AMQPBrokerScope[T] {
     override val routingKey : String
   ) extends StdMonadicAMQPDispatcher[A]( host, port )
   with AMQPQueueMQT[A,AMQPQueue] {            
+    override type Wire = A
+    override def wire2Trgt( wire : Wire ) : Trgt = { wire }
+    override def trgt2Wire( trgt : Trgt ) : Wire = { trgt }
+
     override def zero [A] : AMQPQueue[A] = {
       AMQPQueue[A](
 	exchange,
 	routingKey,
-	theMDS.serve[A]( factory, host, port, exchange ),
-	sender( host, port, exchange, routingKey )
+	theMDS.serve[theMDS.Wire]( factory, host, port, exchange ),
+	sender[theMDS.Wire]( host, port, exchange, routingKey )
       )
     }    
     override def equals( o : Any ) : Boolean = {

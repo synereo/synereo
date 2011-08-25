@@ -180,15 +180,18 @@ trait MonadicConcurrentGenerators {
       }
 }
 
-trait MonadicWireToTrgtConversion 
-{
-  self : MonadicGenerators with WireTap with Journalist =>
-
+trait WireToTrgtConversion {
   type Wire
   type Trgt
     
   def wire2Trgt( wire : Wire ) : Trgt
-  def trgt2Wire( trgt : Trgt ) : Wire
+  def trgt2Wire( trgt : Trgt ) : Wire  
+}
+
+trait MonadicWireToTrgtConversion 
+{
+  self : MonadicGenerators
+       with WireToTrgtConversion with WireTap with Journalist =>
 
   def xformAndDispatch(
     msgGenerator : Generator[Wire,Unit,Unit]
