@@ -118,14 +118,14 @@ trait AMQPTwistedPairScope[T]
 	AMQPQueue[A](
 	  exchange,
 	  routingKey,
-	  theMDS.serve[theMDS.Wire]( factory, srcHost, srcPort, exchange ),
-	  theMDS.sender[theMDS.Wire]( srcHost, srcPort, exchange, routingKey )
+	  theMDS.serve[A]( factory, srcHost, srcPort, exchange ),
+	  theMDS.sender[A]( srcHost, srcPort, exchange, routingKey )
 	),
 	AMQPQueue[A](
 	  exchange,
 	  routingKey,
-	  theMDS.serve[theMDS.Wire]( factory, trgtHost, trgtPort, exchange ),
-	  theMDS.sender[theMDS.Wire]( trgtHost, trgtPort, exchange, routingKey )
+	  theMDS.serve[A]( factory, trgtHost, trgtPort, exchange ),
+	  theMDS.sender[A]( trgtHost, trgtPort, exchange, routingKey )
 	)
       )
     }
