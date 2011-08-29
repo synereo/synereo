@@ -188,6 +188,169 @@ trait AMQPTwistedPairScope[T]
   }
 }
 
+trait JSONOverAMQPTwistedScope[T] 
+extends JSONOverAMQPBrokerScope[T] with AMQPTwistedPairScope[T]
+{
+  case class JSONTwistedQueuePair[T](
+    srcQ : JSONOverAMQPQueue[T],
+    trgtQ : JSONOverAMQPQueue[T]
+  ) extends AMQPQueueXForm[String,T]
+  with JSONWireToTrgtConversion {
+    //def !( msg : T ) : Unit = { trgtQ ! msg }
+    override def exchange : String = {
+      if ( srcQ.exchange == trgtQ.exchange ) {
+	srcQ.exchange
+      }
+      else {
+	throw new Exception( "src & trgt Q's exchange not equal" )
+      }
+    }
+    override def routingKey : String = {
+      if ( srcQ.routingKey == trgtQ.routingKey ) {
+	srcQ.routingKey
+      }
+      else {
+	throw new Exception( "src & trgt Q's routingKey not equal" )
+      }
+    }
+    override def dispatcherW : theMDS.Generator[String,Unit,Unit] = {
+      srcQ.dispatcherW
+    }
+    override def senderW : theMDS.Generator[Unit,Wire,Unit] = {
+      trgtQ.senderW
+    }
+  }  
+
+  class JSONTwistedQueuePairM[A](
+    val exchange : String,
+    val routingKey : String
+  ) /* extends AMQPQueueMQT[A,JSONTwistedQueuePair] */
+  extends FJTaskRunners
+  with ForNotationShiv[JSONTwistedQueuePair,A] 
+  with ForNotationApplyShiv[JSONTwistedQueuePair,A]
+  with BMonad[JSONTwistedQueuePair]
+  with MonadPlus[JSONTwistedQueuePair]
+  with MonadFilter[JSONTwistedQueuePair]
+ {
+    override type ForNotationTrampoline[A] = JSONTwistedPairCell[A]
+    case class JSONTwistedPairCell[A](
+      pair : JSONTwistedQueuePair[A]
+    ) extends SCell( pair ) {
+      override def foreach ( f : A => Unit ) : Unit = {
+	reset { for( msg <- pair.srcQ.dispatcher ) { f( msg ) } } ;
+	()
+      }
+    }
+
+    override def apply [S] (
+      pair : JSONTwistedQueuePair[S]
+    ) : ForNotationTrampoline[S] = {
+      JSONTwistedPairCell[S]( pair )
+    }
+
+    override def unit [S] ( s : S ) : JSONTwistedQueuePair[S] = {
+      val rslt = zero[S]
+      spawn {
+	reset { for( e <- rslt.trgtQ.sender ) { s } }
+      }
+      rslt
+    }
+    override def bind [S,T] (
+      pairS : JSONTwistedQueuePair[S],
+      f : S => JSONTwistedQueuePair[T]
+    ) : JSONTwistedQueuePair[T] = {
+      val acc = zero[T]
+      spawn {
+	reset {
+	  for( s <- pairS.srcQ.dispatcher ) {
+	    val pairT = f( s )
+	    spawn {
+	      reset {
+		for( t <- pairT.srcQ.dispatcher ) {
+		  for( e <- acc.trgtQ.sender ) { t }
+		}
+	      }
+	    }		
+	  }
+	}
+      }
+      acc
+    }
+    override def zero [A] : JSONTwistedQueuePair[A] = {
+      JSONTwistedQueuePair[A](
+	new JSONOverAMQPQueue[A](
+	  exchange,
+	  routingKey,
+	  theMDS.serve[String]( factory, srcHost, srcPort, exchange ),
+	  theMDS.sender[String]( srcHost, srcPort, exchange, routingKey )
+	),
+	new JSONOverAMQPQueue[A](
+	  exchange,
+	  routingKey,
+	  theMDS.serve[String]( factory, trgtHost, trgtPort, exchange ),
+	  theMDS.sender[String]( trgtHost, trgtPort, exchange, routingKey )
+	)
+      )
+    }
+    override def plus [A] (
+      pairA1 : JSONTwistedQueuePair[A],
+      pairA2 : JSONTwistedQueuePair[A]
+    ) : JSONTwistedQueuePair[A] = {
+      val pairA12 = zero[A]
+      spawn {
+	reset {
+	  for( a1 <- pairA1.srcQ.dispatcher ) {
+	    for( e <- pairA12.trgtQ.sender ) { a1 }
+	  }
+	}
+      }
+      spawn {
+	reset {
+	  for( a2 <- pairA2.srcQ.dispatcher ) {
+	    for( e <- pairA12.trgtQ.sender ) { a2 }
+	  }
+	}
+      }
+      pairA12
+    }
+    override def mfilter [S] (
+      pairS : JSONTwistedQueuePair[S],
+      pred : S => Boolean
+    ) : JSONTwistedQueuePair[S] = {
+      val rslt = zero[S]
+      spawn {
+	reset {
+	  for( s <- pairS.srcQ.dispatcher ) {
+	    if ( pred( s ) ) {
+	      for( e <- rslt.trgtQ.sender ) { s }
+	    }
+	  }
+	}
+      }
+      rslt
+    }
+
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : JSONTwistedQueuePairM[A] => {
+	  (
+	    exchange.equals( that.exchange )
+	    && routingKey.equals( that.routingKey )
+	  )
+	}
+	case _ => false
+      }
+    }
+    
+    override def hashCode( ) : Int = {
+      (	
+	( 37 * exchange.hashCode )
+	+ ( 37 * routingKey.hashCode )
+      )
+    }
+  }
+}
+
 class AMQPStdTwistedPairScope[T](
   override val factory : ConnectionFactory,
   override val src : URI,

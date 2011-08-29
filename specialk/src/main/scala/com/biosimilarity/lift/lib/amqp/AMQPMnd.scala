@@ -183,8 +183,6 @@ trait AMQPBrokerScope[T] {
   with MonadPlus[QT]
   with MonadFilter[QT] {
 
-    def host : String
-    def port : Int
     def exchange : String
     def routingKey : String
 
@@ -272,8 +270,8 @@ trait AMQPBrokerScope[T] {
   }
 
   class AMQPQueueM[A](
-    override val host : String,
-    override val port : Int,
+    val host : String,
+    val port : Int,
     override val exchange : String,
     override val routingKey : String
   ) extends AMQPQueueMQT[A,AMQPQueue] {            
@@ -412,8 +410,8 @@ extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {
   }
 
   class JSONOverAMQPQueueM[A](
-    override val host : String,
-    override val port : Int,
+    val host : String,
+    val port : Int,
     override val exchange : String,
     override val routingKey : String
   ) extends AMQPQueueMQT[A,JSONOverAMQPQueue] {
