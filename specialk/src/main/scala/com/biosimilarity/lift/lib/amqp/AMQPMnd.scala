@@ -91,19 +91,76 @@ trait AMQPBrokerScope[T] {
   override def protoMDS[A] =
     new StdMonadicAMQPSndrRcvr[A]( "", -1 )
 
-  trait AMQPQueueXForm[W,T] extends WireToTrgtConversion {
+  trait AMQPAbstractQueue[T] {
+    def exchange : String
+    def routingKey : String
+    
+    def dispatcher : theMDS.Generator[T,Unit,Unit]
+    def sender : theMDS.Generator[Unit,T,Unit]
+
+    def !( msg : T ) : Unit = {
+      reset { for( _ <- sender ) { msg } }
+    }
+
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : AMQPAbstractQueue[T] => {
+	  (
+	    exchange.equals( that.exchange )
+	    && routingKey.equals( that.routingKey )
+	    && dispatcher.equals( that.dispatcher )
+	    && sender.equals( that.sender )
+	  )
+	}
+	case _ => false
+      }
+    }
+    
+    override def hashCode( ) : Int = {
+      (	
+	( 37 * exchange.hashCode )
+	+ ( 37 * routingKey.hashCode )
+	+ ( 37 * dispatcher.hashCode )
+	+ ( 37 * sender.hashCode )
+      )
+    }
+  }
+
+  trait AMQPQueueFunctor[W,T,AQT[T] <: AMQPAbstractQueue[T]] {
+    def makeQueue [S] (
+      exchange : String,
+      routingKey : String,
+      dispatcher : theMDS.Generator[S,Unit,Unit],
+      sender : theMDS.Generator[Unit,S,Unit]
+    ) : AQT[S]
+
+    def map[W,T]( aQueue : AQT[T], w2T : W => T, t2W : T => W ) : AQT[W] = {
+      val aDspr =
+	aQueue.dispatcher.mapSrc[W](
+	  t2W
+	).asInstanceOf[theMDS.Generator[W,Unit,Unit]]
+      val aSndr =
+	aQueue.sender.mapTrgt[W](
+	  w2T
+	).asInstanceOf[theMDS.Generator[Unit,W,Unit]]
+
+      makeQueue[W]( aQueue.exchange, aQueue.routingKey,	aDspr, aSndr )
+    }
+  }
+
+  trait AMQPQueueXForm[W,T]
+  extends AMQPAbstractQueue[T]
+  with WireToTrgtConversion {
     override type Trgt = T
     override type Wire = W
 
     var _dispatcher : Option[theMDS.Generator[Trgt,Unit,Unit]] = None
     var _sender : Option[theMDS.Generator[Unit,Trgt,Unit]] = None
 
-    def exchange : String
-    def routingKey : String
     def dispatcherW : theMDS.Generator[Wire,Unit,Unit]
     def senderW : theMDS.Generator[Unit,Wire,Unit]
 
-    def dispatcher : theMDS.Generator[Trgt,Unit,Unit] = {
+    override def dispatcher : theMDS.Generator[Trgt,Unit,Unit] = {
       _dispatcher match {
 	case Some( d ) => d
 	case _ => {
@@ -120,7 +177,7 @@ trait AMQPBrokerScope[T] {
       }
     }
     
-    def sender : theMDS.Generator[Unit,Trgt,Unit] = {
+    override def sender : theMDS.Generator[Unit,Trgt,Unit] = {
       _sender match {
 	case Some( s ) => s
 	case _ => {
@@ -135,31 +192,24 @@ trait AMQPBrokerScope[T] {
 	  s
 	}
       }
-    }
-
-    def !( msg : T ) : Unit = {
-      reset { for( _ <- sender ) { msg } }
-    }
+    }    
   }
 
   class AMQPQueue[A]( 
     override val exchange : String,
     override val routingKey : String,
-    override val dispatcherW : theMDS.Generator[A,Unit,Unit],
-    override val senderW : theMDS.Generator[Unit,A,Unit]
-  ) extends AMQPQueueXForm[A,A] {
-    override def wire2Trgt( wire : Wire ) : Trgt = { wire }
-    override def trgt2Wire( trgt : Trgt ) : Wire = { trgt }
-  }
+    override val dispatcher : theMDS.Generator[A,Unit,Unit],
+    override val sender : theMDS.Generator[Unit,A,Unit]
+  ) extends AMQPAbstractQueue[A]
 
   object AMQPQueue {
     def apply [A] (
       exchange : String,
       routingKey : String,
-      dispatcherW : theMDS.Generator[A,Unit,Unit],
-      senderW : theMDS.Generator[Unit,A,Unit]
+      dispatcher : theMDS.Generator[A,Unit,Unit],
+      sender : theMDS.Generator[Unit,A,Unit]
     ) : AMQPQueue[A] = {
-      new AMQPQueue( exchange, routingKey, dispatcherW, senderW )
+      new AMQPQueue( exchange, routingKey, dispatcher, sender )
     }
     def unapply [A] (
       amqpQ : AMQPQueue[A]
@@ -175,32 +225,14 @@ trait AMQPBrokerScope[T] {
     }
   }
 
-  trait AMQPQueueMQT[A,QT[Msg] <: AMQPQueueXForm[_,Msg]]
+  trait AMQPQueuePreShivMQT[A, QT[Msg] <: AMQPAbstractQueue[Msg]]
   extends FJTaskRunners
-  with ForNotationShiv[QT,A] 
-  with ForNotationApplyShiv[QT,A]
   with BMonad[QT]
   with MonadPlus[QT]
   with MonadFilter[QT] {
 
     def exchange : String
-    def routingKey : String
-
-    override type ForNotationTrampoline[A] = QCell[A]
-    class QCell[A](
-      queue : QT[A]
-    ) extends SCell( queue ) {
-      override def foreach ( f : A => Unit ) : Unit = {
-	reset { for( msg <- queue.dispatcher ) { f( msg ) } } ;
-	()
-      }
-    }
-
-    override def apply [S] (
-      queue : QT[S]
-    ) : ForNotationTrampoline[S] = {
-      new QCell[S]( queue )
-    }
+    def routingKey : String        
 
     override def unit [S] ( s : S ) : QT[S] = {
       val rslt = zero[S]
@@ -266,6 +298,50 @@ trait AMQPBrokerScope[T] {
 	}
       }
       rslt
+    }    
+
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : AMQPQueuePreShivMQT[A,QT] => {
+	  (
+	    exchange.equals( that.exchange )
+	    && routingKey.equals( that.routingKey )
+	  )
+	}
+	case _ => false
+      }
+    }
+    
+    override def hashCode( ) : Int = {
+      (	
+	( 37 * exchange.hashCode )
+	+ ( 37 * routingKey.hashCode )
+      )
+    }
+  }
+
+  trait AMQPQueueMQT[A,QT[Msg] <: AMQPAbstractQueue[Msg]]
+  extends AMQPQueuePreShivMQT[A,QT]
+  with ForNotationShiv[QT,A] 
+  with ForNotationApplyShiv[QT,A] {
+
+    def exchange : String
+    def routingKey : String
+
+    override type ForNotationTrampoline[A] = QCell[A]
+    class QCell[A](
+      queue : QT[A]
+    ) extends SCell( queue ) {
+      override def foreach ( f : A => Unit ) : Unit = {
+	reset { for( msg <- queue.dispatcher ) { f( msg ) } } ;
+	()
+      }
+    }
+
+    override def apply [S] (
+      queue : QT[S]
+    ) : ForNotationTrampoline[S] = {
+      new QCell[S]( queue )
     }    
   }
 
@@ -399,28 +475,43 @@ object AMQPScope {
 }
 
 trait JSONOverAMQPBrokerScope[T] 
-extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {
-  class JSONOverAMQPQueue[A]( 
-    override val exchange : String,
-    override val routingKey : String,
-    override val dispatcherW : theMDS.Generator[String,Unit,Unit],
-    override val senderW : theMDS.Generator[Unit,String,Unit]
-  ) extends AMQPQueueXForm[String,A] 
-  with JSONWireToTrgtConversion {
-  }
-
+extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {  
   class JSONOverAMQPQueueM[A](
     val host : String,
     val port : Int,
     override val exchange : String,
     override val routingKey : String
-  ) extends AMQPQueueMQT[A,JSONOverAMQPQueue] {
-    override def zero [A] : JSONOverAMQPQueue[A] = {
-      new JSONOverAMQPQueue[A](
+  ) extends AMQPQueueMQT[A,AMQPQueue]
+  with JSONWireToTrgtConversion 
+  with AMQPQueueFunctor[String,A,AMQPQueue] {
+    override type Trgt = A
+    override type Wire = String
+    override def makeQueue [S] (
+      exchange : String,
+      routingKey : String,
+      dispatcher : theMDS.Generator[S,Unit,Unit],
+      sender : theMDS.Generator[Unit,S,Unit]
+    ) : AMQPQueue[S] = {
+      AMQPQueue[S](
 	exchange,
 	routingKey,
-	theMDS.serve[String]( factory, host, port, exchange ),
-	theMDS.sender[String]( host, port, exchange, routingKey )
+	theMDS.serve[S]( factory, host, port, exchange ),
+	theMDS.sender[S]( host, port, exchange, routingKey )
+      )
+    }
+    def emptyQueue [A] : AMQPQueue[String] = {
+      map[String,A](
+	zero[A],
+	( s : String ) => { wire2Trgt( s ).asInstanceOf[A] },
+	( a : A ) => { trgt2Wire( a.asInstanceOf[Trgt] ) }
+      )
+    }
+    override def zero [A] : AMQPQueue[A] = {
+      makeQueue[A](
+	exchange,
+	routingKey,
+	theMDS.serve[A]( factory, host, port, exchange ),
+	theMDS.sender[A]( host, port, exchange, routingKey )
       )
     }    
   }
