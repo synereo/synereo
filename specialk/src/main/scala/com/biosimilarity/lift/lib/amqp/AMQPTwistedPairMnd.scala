@@ -8,6 +8,8 @@
 
 package com.biosimilarity.lift.lib
 
+import com.biosimilarity.lift.model.msg._
+
 import com.biosimilarity.lift.lib.moniker._
 import com.biosimilarity.lift.lib.monad._
 
@@ -77,6 +79,56 @@ trait AMQPTwistedPairScope[T]
     override val srcQ : AMQPQueue[T],
     override val trgtQ : AMQPQueue[T]
   ) extends AbstractTwistedQueuePair[T]
+
+  class AMQPTwistedPairXForm[W,T](
+    override val w2T : W => T,
+    override val t2W : T => W,
+    val tQP : TwistedQueuePair[W]
+  ) extends AMQPQueueXForm[W,T] {
+    override def exchange : String = { tQP.exchange }
+    override def routingKey : String = { tQP.routingKey }
+    override def dispatcherW : theMDS.Generator[W,Unit,Unit] = {
+      tQP.dispatcher
+    }
+    override def senderW : theMDS.Generator[Unit,W,Unit] = {
+      tQP.sender
+    }
+
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : AMQPTwistedPairXForm[W,T] => {
+	  (
+	    w2T.equals( that.w2T )
+	    && t2W.equals( that.t2W )
+	    && tQP.equals( that.tQP )
+	  )
+	}
+	case _ => false
+      }
+    }
+    override def hashCode( ) : Int = {
+      (	
+	( 37 * w2T.hashCode )
+	+ ( 37 * t2W.hashCode )
+	+ ( 37 * tQP.hashCode )
+      )
+    }
+  }  
+  
+  object AMQPTwistedPairXForm {
+    def apply [W,T] (
+      w2T : W => T, t2W : T => W, tQP : TwistedQueuePair[W]
+    ) : AMQPTwistedPairXForm[W,T] = {
+      new AMQPTwistedPairXForm[W,T]( w2T, t2W, tQP )
+    }
+    def unapply [W,T] (
+      amqpTPXfm : AMQPTwistedPairXForm[W,T]
+    ) : Option[( W => T, T => W, TwistedQueuePair[W] )] = {
+      Some(
+	( amqpTPXfm.w2T, amqpTPXfm.t2W, amqpTPXfm.tQP )
+      )
+    }
+  }
   
   class TwistedQueuePairM[A](
     val exchange : String,
@@ -105,20 +157,11 @@ trait JSONOverAMQPTwistedPairScope[T]
 {
   self : JSONOverAMQPBrokerScope[T] with AMQPTwistedPairScope[T] =>     
 
-  case class AMQPTwistedPairJSONXForm[T](
-    override val w2T : String => T,
-    override val t2W : T => String,
-    val tQP : TwistedQueuePair[String]
-  ) extends AMQPQueueXForm[String,T] {
-    override def exchange : String = { tQP.exchange }
-    override def routingKey : String = { tQP.routingKey }
-    override def dispatcherW : theMDS.Generator[String,Unit,Unit] = {
-      tQP.dispatcher
-    }
-    override def senderW : theMDS.Generator[Unit,String,Unit] = {
-      tQP.sender
-    }
-  }
+    case class AMQPTwistedPairJSONXForm[A](
+      override val w2T : String => A,
+      override val t2W : A => String,
+      override val tQP : TwistedQueuePair[String]
+    ) extends AMQPTwistedPairXForm[String,A]( w2T, t2W, tQP )
 
   class JSONOverAMQPTwistedPairXFormM[A](
     override val exchange : String,
@@ -256,6 +299,84 @@ case class StdJSONOverAMQPTPS[T](
 ) extends StdJSONOverAMQPTwistedPairScope[T](
   AMQPDefaults.defaultConnectionFactory, src, trgt
 )
+
+trait JustificationOverAMQPTwistedPairScope[Req,Rsp] 
+{
+  self : AMQPTwistedPairScope[Either[Req,Rsp]] with AMQPBrokerScope[Either[Req,Rsp]] with MonadicDispatcherScope[Either[Req,Rsp]] =>     
+
+  case class AMQPTwistedPairJustificationXForm[T](
+    override val w2T : Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]] => T,
+    override val t2W : T => Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]],
+    override val tQP : TwistedQueuePair[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]]
+  ) extends
+    AMQPTwistedPairXForm[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]],T]( w2T, t2W, tQP )
+
+  class JustificationOverAMQPTwistedPairXFormM[A](
+    override val exchange : String,
+    override val routingKey : String
+  ) extends AMQPQueueMQT[A,AMQPTwistedPairJustificationXForm] with UUIDOps {
+    override def zero [A] : AMQPTwistedPairJustificationXForm[A] = {
+      val a2S : A => Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]] = 
+	( a : A ) => {
+	  a match {
+	    case Left( req : Req ) => {
+	      Left[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]](
+		JustifiedRequest[Req,Rsp](
+		  getUUID(),
+		  MURI( trgt ),
+		  MURI( src ),
+		  getUUID(),
+		  req,
+		  None
+		)
+	      )
+	    }
+	    case Right( rsp : Rsp ) => {
+	      Right[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]](
+		JustifiedResponse[Req,Rsp](
+		  getUUID(),
+		  MURI( trgt ),
+		  MURI( src ),
+		  getUUID(),
+		  rsp,
+		  None
+		)
+	      )
+	    }
+	  }
+	}
+      val s2A : Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]] => A = 
+	( s : Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]] ) => {
+	  s match {
+	    case Left( JustifiedRequest( _, _, _, _, req : Req, _ ) ) => {
+	      Left[Req,Rsp]( req ).asInstanceOf[A]
+	    }
+	    case Right( JustifiedResponse( _, _, _, _, rsp : Rsp, _ ) ) => {
+	      Right[Req,Rsp]( rsp ).asInstanceOf[A]
+	    }
+	  }
+	}
+      AMQPTwistedPairJustificationXForm[A](
+	s2A,
+	a2S,
+	TwistedQueuePair[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]](
+	  AMQPQueue[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]](
+	    exchange,
+	    routingKey,
+	    theMDS.serve[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]]( factory, srcHost, srcPort, exchange ),
+	    theMDS.sender[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]]( srcHost, srcPort, exchange, routingKey )
+	  ),
+	  AMQPQueue[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]](
+	    exchange,
+	    routingKey,
+	    theMDS.serve[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]]( factory, trgtHost, trgtPort, exchange ),
+	    theMDS.sender[Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]]]( trgtHost, trgtPort, exchange, routingKey )
+	  )
+	)
+      )
+    }    
+  }
+}
 
 package usage {
   import scala.collection.mutable.HashMap
