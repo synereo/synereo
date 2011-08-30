@@ -275,17 +275,29 @@ package usage {
       srcHost : URI,
       trgtHost : URI,
       queueStr : String,
-      /* useJSON : Boolean, */
+      useJSON : Boolean,
       msgCount : Int
-    ) = {
+    ) = {      
       val scope :
 	    AMQPTwistedPairScope[Int]
 	     with AMQPBrokerScope[Int]
 	     with MonadicDispatcherScope[Int] =
-	       AMQPStdTPS[Int]( srcHost, trgtHost )   
+	       if ( useJSON ) {
+		 StdJSONOverAMQPTPS[Int]( srcHost, trgtHost )
+	       }
+	       else {
+		 AMQPStdTPS[Int]( srcHost, trgtHost )   
+	       }
 
       val qpM : scope.AMQPQueueMQT[Int,scope.AMQPAbstractQueue] =
-	(new scope.TwistedQueuePairM[Int]( queueStr, "routeroute" )).asInstanceOf[scope.AMQPQueueMQT[Int,scope.AMQPAbstractQueue]]
+	(if ( useJSON ) {
+	  val s : StdJSONOverAMQPTPS[Int] =
+	    scope.asInstanceOf[StdJSONOverAMQPTPS[Int]]
+	  new s.JSONOverAMQPTwistedPairXFormM[Int]( queueStr, "routeroute" )
+	}
+	 else {
+	  new scope.TwistedQueuePairM[Int]( queueStr, "routeroute" ) 
+	 }).asInstanceOf[scope.AMQPQueueMQT[Int,scope.AMQPAbstractQueue]]
       val qtp : scope.AMQPAbstractQueue[Int] = qpM.zero[Int]
 
       val msgMap = new HashMap[Int,Int]()
