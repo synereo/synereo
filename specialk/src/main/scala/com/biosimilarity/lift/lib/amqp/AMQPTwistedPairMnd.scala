@@ -104,54 +104,57 @@ trait AMQPTwistedPairScope[T]
 trait JSONOverAMQPTwistedPairScope[T] 
 {
   self : JSONOverAMQPBrokerScope[T] with AMQPTwistedPairScope[T] =>     
-  class JSONTwistedQueuePairM[A](
-    val exchange : String,
-    val routingKey : String
-  ) extends AMQPQueueMQT[A,TwistedQueuePair]
-  with JSONWireToTrgtConversion 
-  with AMQPQueueFunctor[String,A,TwistedQueuePair]
- {      
-   override type Trgt = A
-   override type Wire = String
-   override def makeQueue [S] (
-     exchange : String,
-     routingKey : String,
-     dispatcher : theMDS.Generator[S,Unit,Unit],
-     sender : theMDS.Generator[Unit,S,Unit]
-   ) : TwistedQueuePair[S] = {
-     TwistedQueuePair[S](
-       new AMQPQueue[S](
-	 exchange,
-	 routingKey,
-	 dispatcher,
-	 theMDS.sender[S]( srcHost, srcPort, exchange, routingKey )
-       ),
-       new AMQPQueue[S](
-	 exchange,
-	 routingKey,
-	 theMDS.serve[S]( factory, trgtHost, trgtPort, exchange ),
-	 sender
-       )
-     )
-   }
 
-   def emptyQueue [A] : TwistedQueuePair[String] = {
-     map[String,A](
-       zero[A],
-       ( s : String ) => { wire2Trgt( s ).asInstanceOf[A] },
-       ( a : A ) => { trgt2Wire( a.asInstanceOf[Trgt] ) }
-     )
-   }
-    
-   override def zero [A] : TwistedQueuePair[A] = {
-     makeQueue[A](
-       exchange,
-       routingKey,
-       theMDS.serve[A]( factory, srcHost, srcPort, exchange ),
-       theMDS.sender[A]( trgtHost, trgtPort, exchange, routingKey )
-     )
-   }         
- }
+  case class AMQPTwistedPairJSONXForm[T](
+    override val w2T : String => T,
+    override val t2W : T => String,
+    val tQP : TwistedQueuePair[String]
+  ) extends AMQPQueueXForm[String,T] {
+    override def exchange : String = { tQP.exchange }
+    override def routingKey : String = { tQP.routingKey }
+    override def dispatcherW : theMDS.Generator[String,Unit,Unit] = {
+      tQP.dispatcher
+    }
+    override def senderW : theMDS.Generator[Unit,String,Unit] = {
+      tQP.sender
+    }
+  }
+
+  class JSONOverAMQPTwistedPairXFormM[A](
+    override val exchange : String,
+    override val routingKey : String
+  ) extends AMQPQueueMQT[A,AMQPTwistedPairJSONXForm] {
+    override def zero [A] : AMQPTwistedPairJSONXForm[A] = {
+      val a2S : A => String = 
+	( a : A ) => {
+	  new XStream( new JettisonMappedXmlDriver ).toXML( a )
+	}
+      val s2A : String => A = 
+	( s : String ) => {
+	  new XStream(
+	    new JettisonMappedXmlDriver
+	  ).fromXML( s ).asInstanceOf[A]
+	}
+      AMQPTwistedPairJSONXForm[A](
+	s2A,
+	a2S,
+	TwistedQueuePair[String](
+	  AMQPQueue[String](
+	    exchange,
+	    routingKey,
+	    theMDS.serve[String]( factory, srcHost, srcPort, exchange ),
+	    theMDS.sender[String]( srcHost, srcPort, exchange, routingKey )
+	  ),
+	  AMQPQueue[String](
+	    exchange,
+	    routingKey,
+	    theMDS.serve[String]( factory, trgtHost, trgtPort, exchange ),
+	    theMDS.sender[String]( trgtHost, trgtPort, exchange, routingKey )
+	  )
+	)
+      )
+    }    
+  }
 }
 
 class AMQPStdTwistedPairScope[T](
@@ -272,14 +275,18 @@ package usage {
       srcHost : URI,
       trgtHost : URI,
       queueStr : String,
-      useJSON : Boolean,
+      /* useJSON : Boolean, */
       msgCount : Int
     ) = {
-      val scope = new AMQPStdTPS[Int]( srcHost, trgtHost )
+      val scope :
+	    AMQPTwistedPairScope[Int]
+	     with AMQPBrokerScope[Int]
+	     with MonadicDispatcherScope[Int] =
+	       AMQPStdTPS[Int]( srcHost, trgtHost )   
 
-      val qpM =	new scope.TwistedQueuePairM[Int]( queueStr, "routeroute" )
-
-      val qtp = qpM.zero[Int]
+      val qpM : scope.AMQPQueueMQT[Int,scope.AMQPAbstractQueue] =
+	(new scope.TwistedQueuePairM[Int]( queueStr, "routeroute" )).asInstanceOf[scope.AMQPQueueMQT[Int,scope.AMQPAbstractQueue]]
+      val qtp : scope.AMQPAbstractQueue[Int] = qpM.zero[Int]
 
       val msgMap = new HashMap[Int,Int]()
 
@@ -357,8 +364,8 @@ package usage {
       }
 
       loop( msgCount )
-    }
+    }        
     
   }
-
 }
+  
