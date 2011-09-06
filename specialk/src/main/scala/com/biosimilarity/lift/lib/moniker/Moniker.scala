@@ -12,6 +12,8 @@ import java.net.URL
 
 trait Moniker {
   def getScheme : String
+  def getUserInfo : String
+  def getAuthority : String
   def getHost : String
   def getPort : Int
   def getPath : String
@@ -20,6 +22,8 @@ trait Moniker {
 }
 case class MURI( uri : URI ) extends Moniker {
   override def getScheme : String = uri.getScheme
+  override def getUserInfo : String = uri.getUserInfo
+  override def getAuthority : String = uri.getAuthority
   override def getHost : String = uri.getHost
   override def getPort : Int = uri.getPort
   override def getPath : String = uri.getPath
@@ -28,6 +32,8 @@ case class MURI( uri : URI ) extends Moniker {
 }
 case class MURN( uri : URI ) extends Moniker {
   override def getScheme : String = uri.getScheme
+  override def getUserInfo : String = uri.getUserInfo
+  override def getAuthority : String = uri.getAuthority
   override def getHost : String = uri.getHost
   override def getPort : Int = uri.getPort
   override def getPath : String = uri.getPath
@@ -36,6 +42,8 @@ case class MURN( uri : URI ) extends Moniker {
 }
 case class MURL( url : URL ) extends Moniker {
   override def getScheme : String = url.getProtocol
+  override def getUserInfo : String = url.getUserInfo
+  override def getAuthority : String = url.getAuthority
   override def getHost : String = url.getHost
   override def getPort : Int = url.getPort
   override def getPath : String = url.getPath
@@ -53,6 +61,8 @@ class URM(
   val query : Option[String],
   val fragment : Option[String]
 ) extends Moniker {
+  def this(scheme: String, host: String, path: String, fragment: Option[String]) = this (scheme, None, None, host, None, path, None, fragment)
+
   lazy val uri =
     {
       val qry = query.getOrElse( "" )
@@ -122,6 +132,8 @@ class URM(
     )
   }
   override def getScheme : String = uri.getScheme
+  override def getUserInfo : String = uri.getUserInfo
+  override def getAuthority : String = uri.getAuthority
   override def getHost : String = uri.getHost
   override def getPort : Int = uri.getPort
   override def getPath : String = uri.getPath
@@ -156,6 +168,7 @@ object identityConversions {
     mnkr match {
       case muri : MURI => muri.uri
       case murn : MURN => murn.uri
+      case urm : URM => urm.uri
       case _ => throw new Exception( "conversion not defined" )
     }
   }
