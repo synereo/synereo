@@ -231,6 +231,7 @@ object BX extends BaseXXMLStore
   ) = {    
     val srvrRspStrm = new java.io.ByteArrayOutputStream()
     // new database
+    val clientSession = clientSessionFromConfig
     try {
       clientSession.setOutputStream( srvrRspStrm )
       // leftover from a test run
@@ -263,7 +264,7 @@ object BX extends BaseXXMLStore
     try {
       for( dbName <- dbNames.take( 3 ) ) {      
 	val vertices =
-	  executeInSession(
+	  executeWithResults(
 	    (
 	      "for $p in collection( '%COLLNAME%' )".replace(
 		"%COLLNAME%",
@@ -299,7 +300,7 @@ object BX extends BaseXXMLStore
 	      dbName
 	    )
 	  
-	  val vRoles = executeInSession( vRoleQry )
+	  val vRoles = executeWithResults( vRoleQry )
 	    
 	  for( vRole <- vRoles ) {
 	    println(
@@ -314,7 +315,7 @@ object BX extends BaseXXMLStore
 	}           
 
 	val edges = 
-	  executeInSession(
+	  executeWithResults(
 	    (
 	      "for $p in collection( '%COLLNAME%' )".replace(
 		"%COLLNAME%",

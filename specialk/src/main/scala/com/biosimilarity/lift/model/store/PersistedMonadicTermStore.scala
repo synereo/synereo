@@ -678,7 +678,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				    )
 				  )
 				
-				  val rslts = executeInSession( qry )
+				  val rslts = executeWithResults( qry )
 				
 				  rslts match {
 				    case Nil => {	
@@ -835,11 +835,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	    )
 	  tweet( "deletion query : \n" + deletionQry )
 	  val ostrm = new java.io.ByteArrayOutputStream()
-	  executeInSession( 
-	    clNm,
-	    List( deletionQry ),
-	    ostrm
-	  )
+	  execute( List( deletionQry ) )
 	  tweet(
 	    "deletion results: \n" + ostrm.toString
 	  )
