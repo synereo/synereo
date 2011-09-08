@@ -27,6 +27,13 @@ abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exc
     val store = new ObjectOutputStream(bytes)
     store.writeObject(msg)
     store.close
+
+    val qname = (exchange + "_queue")
+    channel.exchangeDeclare( exchange, "direct" )
+    //queueDeclare(java.lang.String queue, boolean durable, boolean exclusive, boolean autoDelete, java.util.Map<java.lang.String,java.lang.Object> arguments)
+    channel.queueDeclare(qname, true, false, false, null);
+    channel.queueBind( qname, exchange, routingKey )
+
     channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
   }
 
