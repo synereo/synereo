@@ -248,8 +248,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       srcIPStr : String, trgtIPStr : String
     ) : SMAJATwistedPair = {
       new SMAJATwistedPair(
-	new URI( "agent", srcIPStr, "/", "" ),
-	new URI( "agent", trgtIPStr, "/", "" )
+	new URM( "agent", srcIPStr, "/", None ),
+	new URM( "agent", trgtIPStr, "/", None )
       )
     }
     def unapply(
