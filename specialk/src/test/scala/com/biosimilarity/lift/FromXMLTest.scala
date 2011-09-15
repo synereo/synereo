@@ -58,10 +58,11 @@ object FromXMLTestSpecs extends Specification {
   import PersistedMonadicTS._
   "Pattern as query" should {
     "Retrieve 3 values from the GraphFour DB" in {
-      BX.reportGraphs
+      BX.loadDataSetsClientSession
+      // BX.reportGraphsClientSession
       val ptn1 = "record(" + BX.outerGraphExpr + "," + "V" + ")"
-      val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
-      val atps = pimgJunq.agentTwistedPairs
+//       val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+//       val atps = pimgJunq.agentTwistedPairs
       val ccl1 =
 	CXQ.fromCaseClassInstanceString(
 	  ptn1
@@ -69,24 +70,7 @@ object FromXMLTestSpecs extends Specification {
 	  null
 	).asInstanceOf[CnxnCtxtLabel[String,String,String]]
       val qry1 = CXQ.xqQuery( ccl1 )
-      val bx1 = new BXCollection( "GraphFour", true )
-      val xqSrvc =
-	bx1.getService(
-	  "XPathQueryService", "1.0"
-	).asInstanceOf[XPathQueryService]
-      val rs2 = xqSrvc.query( qry1 )
-      val rsSz = rs2.getSize
-      val rs2Iter = rs2.getIterator
-      val rsrc1 = rs2Iter.nextResource
-      val rsrc1Str = rsrc1.getContent.toString
-      val elem1 = XML.loadString( rsrc1Str )
-      val ccl2 =
-	CXQ.fromXML(
-	  ( x : String ) => x,
-	  ( x : String ) => x,
-	  ( x : String ) => x
-	)( elem1 ).getOrElse( null )
-      println( ccl2.toString )
+
       //assertEquals( 3, rsSz )
     }
   }

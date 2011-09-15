@@ -3,7 +3,7 @@ import _root_.org.mortbay.jetty.Server
 import _root_.org.mortbay.jetty.webapp.WebAppContext
 import org.mortbay.jetty.nio._
 
-object RunWebApp extends Application {
+object RunWebApp extends App {
   val server = new Server
   val scc = new SelectChannelConnector
   scc.setPort(8080)

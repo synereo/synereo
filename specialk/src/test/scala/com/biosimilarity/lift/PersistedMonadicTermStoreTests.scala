@@ -53,10 +53,11 @@ extends ConsoleRunner(PersistedMonadicTermStoreTestSpecs)
 object PersistedMonadicTermStoreTestSpecs extends Specification {
   import PersistedMonadicTS._
   "basic get" should {
-     BX.reportGraphsClientSession
-     val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
-     val atps = pimgJunq.agentTwistedPairs
-     val oge = BX.outerGraphExprCCL
+    BX.loadDataSetsClientSession
+    BX.reportGraphsClientSession
+    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val atps = pimgJunq.agentTwistedPairs
+    val oge = BX.outerGraphExprCCL
 
     var eVal = ""
     var sleepCount = 0

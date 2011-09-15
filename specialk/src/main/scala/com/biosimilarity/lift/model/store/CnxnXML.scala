@@ -912,38 +912,75 @@ trait CnxnXQuery[Namespace,Var,Tag] {
   }
   
   def xqQuery(
-    ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+    ccl : CnxnCtxtLabel[Namespace,Var,Tag],
+    collName : String
   ) : String = {
     ccl match {
       case CnxnCtxtLeaf( _ ) => {	  
+	val rootStr =
+	  collName match {
+	    case "/" => {
+	      "root"
+	    }
+	    case _ => {
+	      "collection( '%COLLNAME%' )/".replace(
+		"%COLLNAME%",
+		collName
+	      )
+	    }
+	  }    
+    
 	val nxqv = nextXQV
 	val xqcc =
 	  XQCC(
 	    None,
 	    ccl,
-	    "/", Some( nxqv ),
+	    "/",
+	    Some( nxqv ),
 	    None, None,
 	    DeBruijnIndex( 0, 0 )
 	  )
 	val cond =
 	  xqRecConstraints( ccl, xqcc )
 	(
-	  "for" + " " + nxqv + " in " + "/root" + " where " + cond 
+	  "for" + " " + nxqv
+	  + " in "
+	  + rootStr
+	  + " where " + cond 
 	  + " return "  + nxqv
 	)
       }
-      case ccb : CnxnCtxtBranch[Namespace,Var,Tag] => {			
+      case ccb : CnxnCtxtBranch[Namespace,Var,Tag] => {
+	val ccRootStr =
+	  collName match {
+	    case "/" => collName
+	      case _ => {
+		"collection( '%COLLNAME%' )/".replace(
+		  "%COLLNAME%",
+		  collName
+		)
+	      }
+	  }
+	
 	val xqcc =
 	  XQCC(
 	    Some( ccb ),
 	    ccl,
-	    "/", Some( nextXQV ),
+	    ccRootStr,
+	    Some( nextXQV ),
 	    None, None,
 	    DeBruijnIndex( 0, 0 )
 	  )
 	xqRecConstraints( ccl, xqcc )
       }
     }    
+  }
+
+
+  def xqQuery(
+    ccl : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : String = {
+    xqQuery( ccl, "/" )
   }
 }
 

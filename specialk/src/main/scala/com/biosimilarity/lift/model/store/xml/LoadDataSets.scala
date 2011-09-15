@@ -61,7 +61,7 @@ object CXQ extends CnxnXQuery[String,String,String]
    .asInstanceOf[CnxnCtxtLabel[String,String,String]]
  }
 
-object BXUtilities {
+trait BXGraphQueryResources {
   val datasetsDir = "src/main/resources/datasets/"
   val dbNames : List[String] =
     List( "GraphOne", "GraphTwo", "GraphThree", "GraphFour" )
@@ -94,16 +94,20 @@ object BXUtilities {
   val firstVandG =
     "VertexSelection( LRBoundVertex( VELabel, V ), G )"
   val innerGraphExpr = 
-    "VertexSelection( LRB, Connected( EdgeName( EdgeString( WS2 ) ), X1, Y1 ) )"}
+    "VertexSelection( LRB, Connected( EdgeName( EdgeString( WS2 ) ), X1, Y1 ) )"
+}
 
-trait BaseXXMLUtilities extends BaseXXMLStore
+object BXUtilities extends BXGraphQueryResources
+
+trait BaseXXMLUtilities
+extends BaseXXMLStore
+with BXGraphQueryResources
  with Blobify
  with Journalist
  with ConfiggyReporting
  with ConfiguredJournal
  with ConfigurationTrampoline
  with UUIDOps {
-   import BXUtilities._
    val outerGraphExprCCL =
     CXQ.fromCaseClassInstanceString( outerGraphExpr ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String]]
   val outerGraphExprXQuery =
@@ -120,8 +124,6 @@ trait BaseXXMLUtilities extends BaseXXMLStore
 
 object BXToBeDeprecated extends BaseXXMLUtilities
 { 
-  import BXUtilities._
-
   override def configurationDefaults : ConfigurationDefaults = {
     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }  
@@ -234,9 +236,7 @@ object BXToBeDeprecated extends BaseXXMLUtilities
 }
 
 object BX extends BaseXXMLUtilities
-{ 
-  import BXUtilities._
-
+{  
   override def configurationDefaults : ConfigurationDefaults = {
     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
@@ -254,18 +254,42 @@ object BX extends BaseXXMLUtilities
       clientSession.execute( new Open( dbNameStr ) )
       // so... get rid of it
       clientSession.execute( new DropDB( dbNameStr ) )
-    }
-    catch {
-      case e : BaseXException => {
+
+      val f1 =
+	new java.io.File( datasetsDir + contentFileStr + ".xml" )
+      if ( f1.exists ) {
 	// fresh green field
 	clientSession.execute( new CreateDB( dbNameStr ) )
 	// add the content
 	clientSession.execute(
 	  new Add(
-	    contentFileStr,
-	    dbNameStr
+	    f1.getCanonicalPath,
+	    dbNameStr	      
 	  )
 	)
+      }
+      else {
+	throw new Exception( "test data file not found" )
+      }
+    }
+    catch {
+      case e : BaseXException => {
+	val f1 =
+	  new java.io.File( datasetsDir + contentFileStr + ".xml" )
+	if ( f1.exists ) {
+	  // fresh green field
+	  clientSession.execute( new CreateDB( dbNameStr ) )
+	  // add the content
+	  clientSession.execute(
+	    new Add(
+	      f1.getCanonicalPath,
+	      dbNameStr	      
+	    )
+	  )
+	}
+	else {
+	  throw new Exception( "test data file not found" )
+	}
       }
     }
   }
