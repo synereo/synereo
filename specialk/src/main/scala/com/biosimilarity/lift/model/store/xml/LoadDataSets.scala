@@ -292,6 +292,9 @@ object BX extends BaseXXMLUtilities
 	}
       }
     }
+    finally {
+      clientSession.execute( new Close() )
+    }
   }
 
   def loadDataSetsClientSession = {
