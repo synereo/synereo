@@ -24,6 +24,7 @@ import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
 import org.apache.http.HttpResponse
+import org.apache.http.HttpEntity
 import org.apache.http.impl.nio.client.DefaultHttpAsyncClient
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.nio.conn.ClientConnectionManager
@@ -104,7 +105,7 @@ trait MonadicHTTPDispatcher[T]
     k : ( T => Unit @suspendable ) =>
       //shift {
 	blog(
-	  "The rabbit is running... (with apologies to John Updike)"
+	  "The client is running... (don't let him get away!)"
 	)
 
 	for( cnr <- acceptConnections( factory, request ) ) {
@@ -161,6 +162,39 @@ trait MonadicHTTPDispatcher[T]
       }
     }   
 
+    def dispatchContent [T] ( response : HttpResponse ) : T = {
+      def entityContentString( entity : HttpEntity ) : String = {
+	// BUGBUG -- lgm : should get the charset from the response	
+	org.apache.commons.io.IOUtils.toString(
+	  entity.getContent,
+	  "UTF-8"
+	)
+      }
+      val httpEntity = response.getEntity
+      httpEntity.getContentType.getValue match {
+	case "application/json" => {	  	  
+	  val rslt =
+	    new XStream(
+	      new JettisonMappedXmlDriver()
+	    ).fromXML( entityContentString( httpEntity ) )
+	  rslt.asInstanceOf[T]
+	}
+	case "text/xml" => {
+	  val rslt =
+	    new XStream( ).fromXML( entityContentString( httpEntity ) )
+	  rslt.asInstanceOf[T]
+	}
+	case "text/plain" => {
+	  entityContentString( httpEntity ).asInstanceOf[T]
+	}
+	case ct@_ => {
+	  throw new Exception( "content type (" + ct + ") not supported" )
+	}
+      }		 
+      //val in = new ObjectInputStream( httpEntity.getContent )
+      //val t = in.readObject.asInstanceOf[T];		 
+    }
+
    def read [T] ( httpClient : HttpAsyncClient, channel : Channel ) =
      Generator {
        k: ( T => Unit @suspendable) =>
@@ -171,11 +205,7 @@ trait MonadicHTTPDispatcher[T]
   	       for (
 		 response <- callbacks( httpClient, channel )
 	       ) {
-		 val httpEntity = response.getEntity
-		 
-		 val in = new ObjectInputStream( httpEntity.getContent )
-		 val t = in.readObject.asInstanceOf[T];
-		 k( t )
+		 k( dispatchContent[T]( response ) )
 		 // Is this necessary?
 		 shift { k : ( Unit => Unit ) => k() }
   	       }
