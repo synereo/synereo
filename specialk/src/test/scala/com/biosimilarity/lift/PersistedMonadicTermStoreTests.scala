@@ -53,8 +53,8 @@ extends ConsoleRunner(PersistedMonadicTermStoreTestSpecs)
 object PersistedMonadicTermStoreTestSpecs extends Specification {
   import PersistedMonadicTS._
   "basic get" should {
-    BX.loadDataSetsClientSession
-    //BX.reportGraphsClientSession
+    BX.loadDataSetsClientSession( BX.getUUID.toString )
+//    BX.reportGraphsClientSession
     val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
     val atps = pimgJunq.agentTwistedPairs
     val oge = BX.outerGraphExprCCL
@@ -93,6 +93,18 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
       eVal.length must be >= 0
       eVal.indexOf("Connected") must be >= 0
     }
+    
+  }
+
+  "basic cursor get" should {
+    BX.loadDataSetsClientSession( BX.getUUID.toString )
+//    BX.reportGraphsClientSession
+    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val atps = pimgJunq.agentTwistedPairs
+    val oge = BX.outerGraphExprCCL
+
+    var eVal = ""
+    var sleepCount = 0    
 
     "Fetch values from the GraphFour DB by Cursor" in {
       reset {
@@ -109,8 +121,8 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
 		for ( v <- graphSpec)
                 {
                   eVal = eVal + v.toString
-                  //eVal = "good"
-                }
+                  eVal = "good"
+               }
                 println( "parsed cursor: " + eVal )
 	      }
 	      case _ => {
@@ -130,6 +142,17 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
       eVal.length must be >= 0
       eVal.indexOf("Connected") must be >= 0
     }
+  }
+
+  "basic cursor get" should {
+    BX.loadDataSetsClientSession( BX.getUUID.toString )
+//    BX.reportGraphsClientSession
+    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val atps = pimgJunq.agentTwistedPairs
+    val oge = BX.outerGraphExprCCL
+
+    var eVal = ""
+    var sleepCount = 0    
 
     "Get values from the GraphFour DB by Cursor" in {
       reset {
@@ -146,7 +169,7 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
 		for ( v <- graphSpec)
                 {
                   eVal = eVal + v.toString
-                  //eVal = "good"
+                  eVal = "good"
                 }
                 println( "parsed cursor: " + eVal )
 	      }

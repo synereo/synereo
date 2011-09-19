@@ -301,7 +301,13 @@ object BX extends BaseXXMLUtilities
     dbNames.zip( dbSets ).map(
       { ( dbNData ) => populateDBClientSession( dbNData._1, dbNData._2 ) }
     )
-  }    
+  }
+
+  def loadDataSetsClientSession( tag : String ) = {
+    dbNames.zip( dbSets ).map(
+      { ( dbNData ) => populateDBClientSession( dbNData._1 + tag, dbNData._2 ) }
+    )
+  }
 
   def reportGraphsClientSession = {
     try {
