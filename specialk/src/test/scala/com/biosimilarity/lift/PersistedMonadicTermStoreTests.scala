@@ -52,17 +52,33 @@ extends ConsoleRunner(PersistedMonadicTermStoreTestSpecs)
 
 object PersistedMonadicTermStoreTestSpecs extends Specification {
   import PersistedMonadicTS._
-  "basic get" should {
-    BX.loadDataSetsClientSession( BX.getUUID.toString )
+
+  val dbSuffixes =
+    List( "BasicFetch", "BasicCursorFetch", "BasicCursorGet" );
+
+  def dbSuffix( i : Int ) = dbSuffixes( i - 1 )
+  def dbFullName( i : Int ) = "GraphFour" + dbSuffix( i )
+
+  val oge = BX.outerGraphExprCCL
+      
+  "basic fetch" should {
+    BX.loadDataSetsClientSession( dbSuffix( 1 ) )
 //    BX.reportGraphsClientSession
-    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
-    val atps = pimgJunq.agentTwistedPairs
-    val oge = BX.outerGraphExprCCL
+    val pimgJunq = ptToPt( dbFullName( 1 ), "localhost", "localhost" )
+    val atps = pimgJunq.agentTwistedPairs	    
 
     var eVal = ""
     var sleepCount = 0
 
     "Fetch values from the GraphFour DB" in {
+      println( "*****************************************" )
+      println( "loading datasets for " + dbFullName( 1 ) )
+      println( "*****************************************" )
+
+      println( "*****************************************" )
+      println( "query " + oge )
+      println( "*****************************************" )
+    
       reset {
 	for( e <- pimgJunq.fetch( oge ) )
 	  {
@@ -97,16 +113,23 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
   }
 
   "basic cursor get" should {
-    BX.loadDataSetsClientSession( BX.getUUID.toString )
+    BX.loadDataSetsClientSession( dbSuffix( 2 ) )
 //    BX.reportGraphsClientSession
-    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val pimgJunq = ptToPt( dbFullName( 2 ), "localhost", "localhost" )
     val atps = pimgJunq.agentTwistedPairs
-    val oge = BX.outerGraphExprCCL
 
     var eVal = ""
     var sleepCount = 0    
 
     "Fetch values from the GraphFour DB by Cursor" in {
+      println( "*****************************************" )
+      println( "loading datasets for " + dbFullName( 2 ) )
+      println( "*****************************************" )
+      
+      println( "*****************************************" )
+      println( "query " + oge )
+      println( "*****************************************" )
+    
       reset {
 	for( e <- pimgJunq.fetch( true )( oge ) )
 	  {
@@ -121,7 +144,7 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
 		for ( v <- graphSpec)
                 {
                   eVal = eVal + v.toString
-                  eVal = "good"
+//                  eVal = "good"
                }
                 println( "parsed cursor: " + eVal )
 	      }
@@ -145,16 +168,23 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
   }
 
   "basic cursor get" should {
-    BX.loadDataSetsClientSession( BX.getUUID.toString )
+    BX.loadDataSetsClientSession( dbSuffix( 3 ) )
 //    BX.reportGraphsClientSession
-    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val pimgJunq = ptToPt( dbFullName( 3 ), "localhost", "localhost" )
     val atps = pimgJunq.agentTwistedPairs
-    val oge = BX.outerGraphExprCCL
 
     var eVal = ""
     var sleepCount = 0    
 
     "Get values from the GraphFour DB by Cursor" in {
+      println( "*****************************************" )
+      println( "loading datasets for " + dbFullName( 3 ) )
+      println( "*****************************************" )
+
+      println( "*****************************************" )
+      println( "query " + oge )
+      println( "*****************************************" )
+    
       reset {
 	for( e <- pimgJunq.get( true )( oge ) )
 	  {
@@ -169,7 +199,7 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
 		for ( v <- graphSpec)
                 {
                   eVal = eVal + v.toString
-                  eVal = "good"
+//                  eVal = "good"
                 }
                 println( "parsed cursor: " + eVal )
 	      }
