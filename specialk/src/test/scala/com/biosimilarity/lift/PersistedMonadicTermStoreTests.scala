@@ -9,7 +9,7 @@
 package com.biosimilarity.lift.test.store
 
 import org.specs._
-import org.specs.runner.JUnit3
+import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 
 import com.biosimilarity.lift.model.store._
@@ -44,7 +44,7 @@ import java.util.UUID
 
 
 class PersistedMonadicTermStoreTest
-extends JUnit3(PersistedMonadicTermStoreTestSpecs)
+extends JUnit4(PersistedMonadicTermStoreTestSpecs)
 
 object PersistedMonadicTermStoreTestSpecsRunner
 extends ConsoleRunner(PersistedMonadicTermStoreTestSpecs)
@@ -54,7 +54,7 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
   import PersistedMonadicTS._
   "basic get" should {
     BX.loadDataSetsClientSession
-    BX.reportGraphsClientSession
+    //BX.reportGraphsClientSession
     val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
     val atps = pimgJunq.agentTwistedPairs
     val oge = BX.outerGraphExprCCL
