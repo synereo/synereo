@@ -61,18 +61,7 @@ object CXQ extends CnxnXQuery[String,String,String]
    .asInstanceOf[CnxnCtxtLabel[String,String,String]]
  }
 
-object BX extends BaseXXMLStore
- with Blobify
- with Journalist
- with ConfiggyReporting
- with ConfiguredJournal
- with ConfigurationTrampoline
- with UUIDOps
-{  
-   override def configurationDefaults : ConfigurationDefaults = {
-     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
-   }
-
+trait BXGraphQueryResources {
   val datasetsDir = "src/main/resources/datasets/"
   val dbNames : List[String] =
     List( "GraphOne", "GraphTwo", "GraphThree", "GraphFour" )
@@ -102,22 +91,42 @@ object BX extends BaseXXMLStore
 
   val outerGraphExpr =
     "Connected( EdgeName( EdgeString( WS ) ), X, Y )"
-  val outerGraphExprCCL =
+  val firstVandG =
+    "VertexSelection( LRBoundVertex( VELabel, V ), G )"
+  val innerGraphExpr = 
+    "VertexSelection( LRB, Connected( EdgeName( EdgeString( WS2 ) ), X1, Y1 ) )"
+}
+
+object BXUtilities extends BXGraphQueryResources
+
+trait BaseXXMLUtilities
+extends BaseXXMLStore
+with BXGraphQueryResources
+ with Blobify
+ with Journalist
+ with ConfiggyReporting
+ with ConfiguredJournal
+ with ConfigurationTrampoline
+ with UUIDOps {
+   val outerGraphExprCCL =
     CXQ.fromCaseClassInstanceString( outerGraphExpr ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String]]
   val outerGraphExprXQuery =
     CXQ.xqQuery( outerGraphExprCCL )
-  val firstVandG =
-    "VertexSelection( LRBoundVertex( VELabel, V ), G )"
   val firstVandGCCL =
     CXQ.fromCaseClassInstanceString( firstVandG ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String]]
   val firstVandGXQuery =
     CXQ.xqQuery( firstVandGCCL )
-  val innerGraphExpr = 
-    "VertexSelection( LRB, Connected( EdgeName( EdgeString( WS2 ) ), X1, Y1 ) )"
   val innerGraphExprCCL =
     CXQ.fromCaseClassInstanceString( innerGraphExpr ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String]]
   val innerGraphExprXQuery =
     CXQ.xqQuery( innerGraphExprCCL )
+ }
+
+object BXToBeDeprecated extends BaseXXMLUtilities
+{ 
+  override def configurationDefaults : ConfigurationDefaults = {
+    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
+  }  
     
   def populateDB(
     dbNameStr : String,      // name of the database
@@ -223,6 +232,13 @@ object BX extends BaseXXMLStore
 	"// *************************************************************\n\n"
       )
     }
+  }  
+}
+
+object BX extends BaseXXMLUtilities
+{  
+  override def configurationDefaults : ConfigurationDefaults = {
+    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
   def populateDBClientSession(
@@ -231,25 +247,53 @@ object BX extends BaseXXMLStore
   ) = {    
     val srvrRspStrm = new java.io.ByteArrayOutputStream()
     // new database
+    val clientSession = clientSessionFromConfig
     try {
       clientSession.setOutputStream( srvrRspStrm )
       // leftover from a test run
       clientSession.execute( new Open( dbNameStr ) )
       // so... get rid of it
       clientSession.execute( new DropDB( dbNameStr ) )
-    }
-    catch {
-      case e : BaseXException => {
+
+      val f1 =
+	new java.io.File( datasetsDir + contentFileStr + ".xml" )
+      if ( f1.exists ) {
 	// fresh green field
 	clientSession.execute( new CreateDB( dbNameStr ) )
 	// add the content
 	clientSession.execute(
 	  new Add(
-	    contentFileStr,
-	    dbNameStr
+	    f1.getCanonicalPath,
+	    dbNameStr	      
 	  )
 	)
       }
+      else {
+	throw new Exception( "test data file not found" )
+      }
+    }
+    catch {
+      case e : BaseXException => {
+	val f1 =
+	  new java.io.File( datasetsDir + contentFileStr + ".xml" )
+	if ( f1.exists ) {
+	  // fresh green field
+	  clientSession.execute( new CreateDB( dbNameStr ) )
+	  // add the content
+	  clientSession.execute(
+	    new Add(
+	      f1.getCanonicalPath,
+	      dbNameStr	      
+	    )
+	  )
+	}
+	else {
+	  throw new Exception( "test data file not found" )
+	}
+      }
+    }
+    finally {
+      clientSession.execute( new Close() )
     }
   }
 
@@ -257,13 +301,19 @@ object BX extends BaseXXMLStore
     dbNames.zip( dbSets ).map(
       { ( dbNData ) => populateDBClientSession( dbNData._1, dbNData._2 ) }
     )
-  }    
+  }
+
+  def loadDataSetsClientSession( tag : String ) = {
+    dbNames.zip( dbSets ).map(
+      { ( dbNData ) => populateDBClientSession( dbNData._1 + tag, dbNData._2 ) }
+    )
+  }
 
   def reportGraphsClientSession = {
     try {
       for( dbName <- dbNames.take( 3 ) ) {      
 	val vertices =
-	  executeInSession(
+	  executeWithResults(
 	    (
 	      "for $p in collection( '%COLLNAME%' )".replace(
 		"%COLLNAME%",
@@ -299,7 +349,7 @@ object BX extends BaseXXMLStore
 	      dbName
 	    )
 	  
-	  val vRoles = executeInSession( vRoleQry )
+	  val vRoles = executeWithResults( vRoleQry )
 	    
 	  for( vRole <- vRoles ) {
 	    println(
@@ -314,7 +364,7 @@ object BX extends BaseXXMLStore
 	}           
 
 	val edges = 
-	  executeInSession(
+	  executeWithResults(
 	    (
 	      "for $p in collection( '%COLLNAME%' )".replace(
 		"%COLLNAME%",

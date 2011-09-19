@@ -135,7 +135,8 @@ with FJTaskRunners
   def mgetWithSuspension(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
-    consume : Boolean
+    consume : Boolean,
+    cursor : Boolean
   )( ptn : Pattern )
   : Generator[Option[Resource],Unit,Unit] =
     Generator {

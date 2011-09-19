@@ -23,7 +23,7 @@ import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
 trait MonadicGenerators {
-  self : WireTap with Journalist =>
+  //self : WireTap with Journalist =>
 
   trait Generable[+A,-B,+C] {
     def funK : (A => (B @suspendable)) => (C @suspendable)
@@ -140,7 +140,7 @@ trait MonadicGenerators {
 		k( trgtElem )
 	      }
 	      
-	      blog( "mapStream returning" )
+	      //blog( "mapStream returning" )
   	      outerK()
 	    }
 	}

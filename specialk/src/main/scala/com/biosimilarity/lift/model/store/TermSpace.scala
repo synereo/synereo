@@ -149,7 +149,8 @@ extends TermTypes[Namespace,Var,Tag,Value] {
 class TermStore[Namespace,Var,Tag,Value](
 )
 extends TermSpace[Namespace,Var,Tag,Value] 
-with CnxnStorage[Namespace,Var,Tag]
+with BaseXCnxnStorage[Namespace,Var,Tag]
+//with CnxnStorage[Namespace,Var,Tag]
 with CnxnCtxtInjector[Namespace,Var,Tag]
 with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
 with CnxnConversions[Namespace,Var,Tag]

@@ -73,7 +73,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       with WireTap
       with Journalist
       with ConfiggyReporting
-  //with ConfiggyJournal
+      //with ConfiggyJournal
       with ConfiguredJournal
       with ConfigurationTrampoline =>
       
@@ -82,23 +82,24 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     override def jsonDispatcher(
       handle : Msgs.JTSReqOrRsp => Unit
     )(
-      implicit dispatchOnCreate : Boolean, port : Int
+      implicit dispatchOnCreate : Boolean, defaultPort : Int
     ) : StdMonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
-      jsonDispatcher( "mult", handle )( dispatchOnCreate, port )
+      jsonDispatcher( "mult", handle )( dispatchOnCreate, defaultPort )
     }
 
     override def jsonDispatcher(
       exQNameRoot : String,
       handle : Msgs.JTSReqOrRsp => Unit
     )(
-      implicit dispatchOnCreate : Boolean, port : Int
+      implicit dispatchOnCreate : Boolean, defaultPort : Int
     ) : StdMonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp] = {
       _jsonDispatcher match {
 	case Some( jd ) => jd
 	case None => {
 	  val jd =
 	    new StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp](
-	      srcURI.getHost, port,
+	      srcURI.getHost,
+	      getPort(srcURI.getPort, defaultPort),
 	      new ListBuffer[Msgs.JTSReq](),
 	      new ListBuffer[Msgs.JTSRsp](),
 	      //Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
@@ -236,11 +237,19 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 
   object SMAJATwistedPair {
     def apply (
+      srcURI : Moniker, trgtURI : Moniker
+    ) : SMAJATwistedPair = {
+      new SMAJATwistedPair(
+	srcURI,
+	trgtURI
+      )
+    }
+    def apply (
       srcIPStr : String, trgtIPStr : String
     ) : SMAJATwistedPair = {
       new SMAJATwistedPair(
-	new URI( "agent", srcIPStr, "/", "" ),
-	new URI( "agent", trgtIPStr, "/", "" )
+	new URM( "agent", srcIPStr, "/", None ),
+	new URM( "agent", trgtIPStr, "/", None )
       )
     }
     def unapply(

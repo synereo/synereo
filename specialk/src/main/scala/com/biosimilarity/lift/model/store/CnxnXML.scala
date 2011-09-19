@@ -945,6 +945,48 @@ trait CnxnXQuery[Namespace,Var,Tag] {
       }
     }    
   }
+
+  def xqQuery(
+    ccl : CnxnCtxtLabel[Namespace,Var,Tag],
+    xmlCollStr : String
+  ) : String = {
+    val ccRootStr =
+      "collection( '%COLLNAME%' )/".replace(
+	"%COLLNAME%",
+	xmlCollStr
+      )
+
+    ccl match {
+      case CnxnCtxtLeaf( _ ) => {	  
+	val nxqv = nextXQV
+	val xqcc =
+	  XQCC(
+	    None,
+	    ccl,
+	    "/", Some( nxqv ),
+	    None, None,
+	    DeBruijnIndex( 0, 0 )
+	  )
+	val cond =
+	  xqRecConstraints( ccl, xqcc )
+	(
+	  "for" + " " + nxqv + " in " + ccRootStr + " where " + cond 
+	  + " return "  + nxqv
+	)
+      }
+      case ccb : CnxnCtxtBranch[Namespace,Var,Tag] => {			
+	val xqcc =
+	  XQCC(
+	    Some( ccb ),
+	    ccl,
+	    ccRootStr, Some( nextXQV ),
+	    None, None,
+	    DeBruijnIndex( 0, 0 )
+	  )
+	xqRecConstraints( ccl, xqcc )
+      }
+    }    
+  }
 }
 
 

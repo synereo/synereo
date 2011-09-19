@@ -9,7 +9,7 @@
 package com.biosimilarity.lift.test.store
 
 import org.specs._
-import org.specs.runner.JUnit3
+import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 
 import com.biosimilarity.lift.model.store._
@@ -44,7 +44,7 @@ import java.util.UUID
 
 
 class PersistedMonadicTermStoreTest
-extends JUnit3(PersistedMonadicTermStoreTestSpecs)
+extends JUnit4(PersistedMonadicTermStoreTestSpecs)
 
 object PersistedMonadicTermStoreTestSpecsRunner
 extends ConsoleRunner(PersistedMonadicTermStoreTestSpecs)
@@ -53,16 +53,18 @@ extends ConsoleRunner(PersistedMonadicTermStoreTestSpecs)
 object PersistedMonadicTermStoreTestSpecs extends Specification {
   import PersistedMonadicTS._
   "basic get" should {
-    "Retrieve values from the GraphFour DB" in {
-      BX.reportGraphsClientSession
-      val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
-      val atps = pimgJunq.agentTwistedPairs
-      val oge = BX.outerGraphExprCCL
+    BX.loadDataSetsClientSession( BX.getUUID.toString )
+//    BX.reportGraphsClientSession
+    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val atps = pimgJunq.agentTwistedPairs
+    val oge = BX.outerGraphExprCCL
 
-      var eVal = ""
+    var eVal = ""
+    var sleepCount = 0
 
+    "Fetch values from the GraphFour DB" in {
       reset {
-	for( e <- pimgJunq.get( oge ) )
+	for( e <- pimgJunq.fetch( oge ) )
 	  {
 	    println( "received: " + e )
 	    e match {
@@ -83,7 +85,105 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
 	  }
       }
 
-      while ( eVal == "" ) {
+      while ( eVal == "" && sleepCount < 25) {
+        sleepCount += 1
+	Thread.sleep( 100 )
+      }
+
+      eVal.length must be >= 0
+      eVal.indexOf("Connected") must be >= 0
+    }
+    
+  }
+
+  "basic cursor get" should {
+    BX.loadDataSetsClientSession( BX.getUUID.toString )
+//    BX.reportGraphsClientSession
+    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val atps = pimgJunq.agentTwistedPairs
+    val oge = BX.outerGraphExprCCL
+
+    var eVal = ""
+    var sleepCount = 0    
+
+    "Fetch values from the GraphFour DB by Cursor" in {
+      reset {
+	for( e <- pimgJunq.fetch( true )( oge ) )
+	  {
+	    println( "received: " + e )
+	    e match {
+	      case Some(
+		mTT.RBound(
+		  Some( mTT.Cursor( graphSpec ) ),
+		  None
+		)
+	      ) => {
+		for ( v <- graphSpec)
+                {
+                  eVal = eVal + v.toString
+                  eVal = "good"
+               }
+                println( "parsed cursor: " + eVal )
+	      }
+	      case _ => {
+		throw new Exception(
+		  "received unexpected value from test " + e
+		)
+	      }
+	    }
+	  }
+      }
+
+      while ( eVal == ""  && sleepCount < 25) {
+        sleepCount += 1
+	Thread.sleep( 100 )
+      }
+
+      eVal.length must be >= 0
+      eVal.indexOf("Connected") must be >= 0
+    }
+  }
+
+  "basic cursor get" should {
+    BX.loadDataSetsClientSession( BX.getUUID.toString )
+//    BX.reportGraphsClientSession
+    val pimgJunq = ptToPt( "GraphFour", "localhost", "localhost" )
+    val atps = pimgJunq.agentTwistedPairs
+    val oge = BX.outerGraphExprCCL
+
+    var eVal = ""
+    var sleepCount = 0    
+
+    "Get values from the GraphFour DB by Cursor" in {
+      reset {
+	for( e <- pimgJunq.get( true )( oge ) )
+	  {
+	    println( "received: " + e )
+	    e match {
+	      case Some(
+		mTT.RBound(
+		  Some( mTT.Cursor( graphSpec ) ),
+		  None
+		)
+	      ) => {
+		for ( v <- graphSpec)
+                {
+                  eVal = eVal + v.toString
+                  eVal = "good"
+                }
+                println( "parsed cursor: " + eVal )
+	      }
+	      case _ => {
+		throw new Exception(
+		  "received unexpected value from test " + e
+		)
+	      }
+	    }
+	  }
+      }
+
+      while ( eVal == ""  && sleepCount < 25) {
+        sleepCount += 1
 	Thread.sleep( 100 )
       }
 
