@@ -70,3 +70,40 @@ trait MonadT[T[M[_],_],M[_]] {
   def liftC [A] ( ma : M[A] ) : TM[A]
 }
 
+// From Atkey's paper
+// Convenience conversions
+trait ParametricMonad[M[_,_,_],S,T,U] {
+  def inhabitant : M[S,U,T]
+  def >>= [S1,V] (
+    f : S => M[S1,V,U]
+  )( implicit witness : PMonad[M] ) : M[S1,V,T] = {
+    witness.bind[S,S1,T,U,V]( inhabitant, f )
+  }
+}
+
+object ParametricMonad {
+  implicit def paraMnd [M[_,_,_],A,B,C] (
+    mabc : M[A,C,B]
+  ) : ParametricMonad[M,A,B,C] =
+    new ParametricMonad[M,A,B,C] {
+      override val inhabitant : M[A,C,B] = mabc
+    }
+}
+
+trait PMonad[M[_,_,_]] {
+  def fmap [S1,S2,T,U] ( f : S1 => S2 ) : M[S1,T,U] => M[S2,T,U]
+  def unit [S,T] ( s : S ) : M[S,T,T]
+  def mult [S,T,U,V] ( mms : M[M[S,V,U],U,T] ) : M[S,V,T]
+  def bind [S1,S2,T,U,V] (
+    ms : M[S1,U,T],
+    f : S1 => M[S2,V,U]
+  ) : M[S2,V,T] = {
+    mult( fmap( f )( ms ) )
+  }
+  def strength [S1,S2,T,U] ( s : S1, ms : M[S2,T,U] ) : M[( S1, S2 ),T,U]
+}
+
+
+
+
+
