@@ -80,4 +80,30 @@ trait ParametricMonadScope[B,C] {
       )
     }
   }
+  
+  class DelimitedContinuation( )
+  extends ContinuationM( ) {
+    def reset [A,B,C] (
+      c : Continuation[A,A,B]
+    ) : Continuation[B,C,C] = {
+      Continuation[B,C,C](
+	( b2c2c : ( B => C ) ) => {
+	  b2c2c( c.map( ( a : A ) => a ) )
+	}
+      )
+    }
+    def shift [A,B,C,D,E] (
+      a2cbcc2cdde : ( A => Continuation[B,C,C] ) => Continuation[D,D,E]
+    ) : Continuation[A,B,E] = {
+      Continuation[A,B,E](
+	( a2b : A => B ) => {
+	  a2cbcc2cdde(
+	    ( a : A ) => {
+	      unit[B,C]( a2b( a ) )
+	    }
+	  ).map( ( d : D ) => d )
+	}
+      )
+    }
+  }
 }
