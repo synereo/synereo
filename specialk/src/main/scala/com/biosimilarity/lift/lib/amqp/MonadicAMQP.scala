@@ -345,7 +345,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
       case Some( jd ) => jd
       case None => {
 	val jd =
-	  new StdMonadicJSONAMQPDispatcher[T]( srcURI.getHost, port )
+	  new StdMonadicJSONAMQPDispatcher[T]( srcURI.getHost, getPort(srcURI.getPort, port) )
 
 	if ( dispatchOnCreate ) {
 	  reset {
@@ -378,7 +378,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 	val js = new JSONAMQPSender(
 	  connectionFactory,
 	  trgtURI.getHost,
-	  port,
+	  getPort(trgtURI.getPort, port),
 	  exchNameStr,
 	  "routeroute"
 	)       
