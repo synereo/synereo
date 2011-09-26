@@ -9,12 +9,16 @@
 package com.biosimilarity.lift.lib.monad
 
 class Continuation[A,B,C]( val k : ( A => B ) => C ) {
-  def map( f : A => B ) : C = k( f )
+  def apply( f : A => B ) : C = k( f )
+  def map( f : A => B ) : C = this( f )
   def foreach( f : A => B ) : C = map( f )
   override def equals( o : Any ) : Boolean = {
     o match {
       case that : Continuation[A,B,C] => {
 	k.equals( that.k )
+      }
+      case _ => {
+	false
       }
     }
   }
@@ -106,3 +110,46 @@ extends ContinuationM( ) {
   }
 }
 
+package usage {
+  object TryDelC {
+    val dc1 = new DelimitedContinuation()
+    def plus31 = {
+      dc1.reset[Int,Int,Int](
+	dc1.fmap( ( x : Int ) => { 3 + x } )(
+	  dc1.shift[Int,Int,Int,Int,Int](
+	    ( c : Int => Continuation[Int,Int,Int] ) => {
+	      Continuation[Int,Int,Int](
+		( k : Int => Int ) => {
+		  c( 0 ).map(
+		    ( a : Int ) => {
+		      c( 1 ).map( 
+			( b : Int ) => {
+			  k( a + b )
+			}
+		      )
+		    }
+		  )
+		}
+	      )
+	    }
+	  )	  
+	)
+      )
+    }
+    def plus32 = {
+      dc1.reset[Int,Int,Int](
+	dc1.fmap( ( x : Int ) => x )(
+	  dc1.shift[Int,Int,Int,Int,Int](
+	    ( c : Int => Continuation[Int,Int,Int] ) => {
+	      Continuation[Int,Int,Int](
+		( k : Int => Int ) => {
+		  c( 0 ).map( k ) + c( 1 ).map( k )
+		}
+	      )
+	    }
+	  )
+	)
+      )
+    }
+  }
+}
