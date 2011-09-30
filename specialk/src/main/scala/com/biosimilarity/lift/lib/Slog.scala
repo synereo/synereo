@@ -14,6 +14,16 @@ import net.lag.logging._
 import scala.xml._
 import java.util.UUID
 
+import net.lag.configgy._
+
+import org.apache.log4j.{PropertyConfigurator, Level, Logger}
+
+object Severity extends Enumeration()
+{
+  type Severity = Value
+  val Fatal, Error, Warning, Info, Debug, Trace = Value
+}
+
 trait WireTap {
   def tap [A] ( fact : A ) : Unit
 }
@@ -77,44 +87,104 @@ trait Journalist {
 
   object journalIDVender extends UUIDOps
 
-  lazy val _notebook = new StringBuffer
-  def notebook : StringBuffer = _notebook
-  
-  def displayFn[A] : ( Verbosity, A ) => Unit = {
-    ( v : Verbosity, a : A ) => println( a )
-  }
-
-  def rememberFn[A] : ( Verbosity, A ) => Unit = {
-    ( v : Verbosity, x : A ) => {
-      notebook.append( x )
+  def SeverityFromOption(level: Option[ String ]): Severity.Value =
+  {
+    level match {
+      case Some(x) => {
+        SeverityFromString(x)
+      }
+      case None => {
+        Severity.Trace
+      }
     }
   }
 
-  def storeFn[A] : ( Verbosity, A ) => Unit = {
-    ( v : Verbosity, x : A ) => {
-      //throw new Exception( "log store not defined" )
+  def SeverityFromString(level: String): Severity.Value =
+  {
+    level.toLowerCase() match {
+      case "fatal" => {
+        Severity.Fatal
+      }
+      case "error" => {
+        Severity.Error
+      }
+      case "warning" => {
+        Severity.Warning
+      }
+      case "info" => {
+        Severity.Info
+      }
+      case "debug" => {
+        Severity.Debug
+      }
+      case "trace" => {
+        Severity.Trace
+      }
+      case _ => {
+        Severity.Trace
+      }
     }
   }
 
-  val reportage = report( TheTwitterer ) _
+  def prettyPrint(value: String): String =
+  {
+    value.replace("{", "")
+      .replace("}", "")
+      .replace("&amp;", "")
+      .replace("vamp;", "")
+      .replace("amp;", "")
+      .replace("&quot;", "")
+      .replace("vquot;", "")
+      .replace("quot;", "")
+      .replace("_-", "")
+      .replace(":", "")
+      .replace("@class", "")
+      .replace("com.biosimilarity.lift.model.store.", "")
+      .replace("com.protegra.agentservices.store.", "")
+      .replace("MonadicTermTypes", "")
+      .replace("AgentTS$TheMTT$", "")
+      .replace("Groundvstring,$", "")
+      .replace("Groundstring,$", "")
+      .replace(",outer", "")
+      .replace("&lt;", "<")
+      .replace("&gt;", ">")
+      .toString
+  }
 
-  case class TaggedFact[A]( verb : Verbosity, fact : A )
+  Configgy.configure("log.conf")
+  PropertyConfigurator.configure("log.properties")
 
-  def markUp[A]( verb : Verbosity)( fact : A ) =
-    TaggedFact( verb, fact )
+  lazy val config = Configgy.config
+  var tweetLevel = SeverityFromOption(config.getString("tweetLevel"))
+  var blogLevel = SeverityFromOption(config.getString("blogLevel"))
 
-  def asTweet[A]( fact : A ) = markUp[A]( TheTwitterer )( fact )
-  def asBlog[A]( fact : A ) = markUp[A]( TheBlogger )( fact )
-  def asRecord[A]( fact : A ) = markUp[A]( TheLuddite )( fact )
+  lazy val logger = Logger.getLogger(this.getClass.getName)
 
-  def tweet[A]( fact : A ) =
-    report( Twitterer( journalIDVender.getUUID ) )( asTweet( fact ) )
-  def blog[A]( fact : A ) =
-    report( Blogger( journalIDVender.getUUID ) )( asTweet( fact ) )
-  def record[A]( fact : A ) =
-    report( Luddite( journalIDVender.getUUID ) )( asTweet( fact ) )
+  def header(level: Severity.Value): String =
+  {
+    "=" + level.toString.toUpperCase + " REPORT==== Thread " + Thread.currentThread.getName + " ==="
+  }
 
-  implicit def exceptionToTraceStr( e : Exception ) : String = {
+  def wrap[ A ](fact: A): String =
+  {
+    //keep it readable on println but still send it all to the log
+    val value = prettyPrint(fact.toString)
+    val max = if ( value.length < 512 ) value.length else 512
+    value.substring(0, max)
+  }
+
+  def enabled(reportLevel: Severity.Value, configLevel: Severity.Value): Boolean =
+  {
+    //use id to compare ints in order of declaration
+    reportLevel.id <= configLevel.id
+  }
+
+  var _loggingLevel : Option[Verbosity] = None
+    def setLoggingLevel( verb : Verbosity ) : Unit = {
+      _loggingLevel = Some( verb )
+    }
+
+  def exceptionToTraceStr( e : Exception ) : String = {
     val sw = new java.io.StringWriter()
     e.printStackTrace(
       new java.io.PrintWriter(
@@ -125,138 +195,110 @@ trait Journalist {
     sw.toString
   }
 
-  def tweetTrace( e : Exception ) = {    
-    report( Twitterer( journalIDVender.getUUID ) )(
-      asTweet( exceptionToTraceStr( e ) ) 
-    )
+  def tweetTrace( e : Exception ) = {
+    reportage(exceptionToTraceStr( e ) )
   }
-  def blogTrace( e : Exception ) = {
-    report( Blogger( journalIDVender.getUUID ) )(
-      asTweet( exceptionToTraceStr( e ) )
-    )
-  }
-  def recordTrace( e : Exception ) = {
-    report( Luddite( journalIDVender.getUUID ) )(
-      asTweet( exceptionToTraceStr( e ) )
-    )
+  def reportage[ A ](fact: A): Unit =
+  {
+    tweet(fact, Severity.Trace)
   }
 
-  def tagIt [A]( verb : Verbosity, bite : A ) : Elem = {
-    verb match {
-      case Twitterer( _ ) => <tweet>{bite}</tweet>
-      case Blogger( _ ) => <blog>{bite}</blog>
-      case Luddite( _ ) => <record>{bite}</record>
+  def reportage[ A ](fact: A, level: Severity.Value) =
+  {
+    tweet(fact, level)
+  }
+
+  def tweet[ A ](fact: A): Unit =
+  {
+    tweet(fact, Severity.Trace)
+  }
+
+  def tweet[ A ](fact: A, level: Severity.Value) =
+  {
+    display(fact, level)
+    blog(fact, level)
+  }
+
+  def display[ A ](fact: A): Unit =
+  {
+    display(fact, Severity.Trace)
+  }
+
+  def display[ A ](fact: A, level: Severity.Value) =
+  {
+    if ( enabled(level, tweetLevel) ) {trace(fact, level)}
+  }
+
+  private def trace[ A ](fact: A, level: Severity.Value) =
+  {
+    //todo: worth adding severity to output <report> tag?
+    level match {
+      case _ => {
+        println(header(level) + "\n" + wrap(fact).toString() + "\n")
+      }
     }
   }
 
-  def report [A] ( verb : Verbosity )( fact : A ) : Unit = {
-    fact match {
-      case TaggedFact( vrb, bite ) => {
-	val rpt = tagIt( vrb, bite )
-	if ( verb.getClass.isInstance( vrb ) ) {
-	  verb match {
-	    case Twitterer( _ ) => {	      
-	      displayFn( vrb, rpt )
-	      rememberFn( vrb, rpt )
-	      storeFn( vrb, rpt )
-	    }
-	    case Blogger( _ ) => {
-	      rememberFn( vrb, rpt )
-	      storeFn( vrb, rpt )
-	    }
-	    case Luddite( _ ) => {
-	      storeFn( vrb, rpt )
-	    }
-	  }
-	}
+  def blog[ A ](fact: A): Unit =
+  {
+    blog(fact, Severity.Debug)
+  }
+
+  def blog[ A ](fact: A, level: Severity.Value) =
+  {
+    if ( enabled(level, blogLevel) ) {log(fact, level)}
+  }
+
+  private def log[ A ](fact: A, level: Severity.Value) =
+  {
+    level match {
+      case Severity.Fatal => {
+        logger.log(Level.FATAL, fact toString)
+      }
+      case Severity.Error => {
+        logger.log(Level.ERROR, fact toString)
+      }
+      case Severity.Warning => {
+        logger.log(Level.WARN, fact toString)
+      }
+      case Severity.Info => {
+        logger.log(Level.INFO, fact toString)
+      }
+      case Severity.Debug => {
+        logger.log(Level.DEBUG, fact toString)
+      }
+      case Severity.Trace => {
+        logger.log(Level.TRACE, fact toString)
       }
       case _ => {
-	val rpt = tagIt( verb, fact )
-	verb match {
-	  case Twitterer( _ ) => {	    
-	    displayFn( verb, rpt )
-	    rememberFn( verb, rpt )
-	    storeFn( verb, rpt )
-	  }
-	  case Blogger( _ ) => {
-	    rememberFn( verb, rpt )
-	    storeFn( verb, rpt )
-	  }
-	  case Luddite( _ ) => {
-	    storeFn( verb, rpt )
-	  }
-	}
+        logger.log(Level.TRACE, fact toString)
       }
-    }    
+    }
   }
+
+  //  implicit def exceptionToTraceStr( e : Exception ) : String = {
+  //    val sw = new java.io.StringWriter()
+  //    e.printStackTrace(
+  //      new java.io.PrintWriter(
+  //	sw,
+  //	true
+  //      )
+  //    )
+  //    sw.toString
+  //  }
+
 }
 
 trait ConfiggyReporting {
   self : Journalist =>
   
-  def config : Config
-  def logger : Logger
-
-  def wrap [A] ( fact : A ) : Elem = {
-     <report>{fact}</report>
-  }
-
-  def logFatal [A] ( fact : A ) : Unit = {
-    logger.ifFatal(wrap(fact) toString)
-  }
-
-  def logCritical [A] ( fact : A ) : Unit = {
-    logger.ifCritical(wrap(fact) toString)
-  }
-
-  def logError [A] ( fact : A ) : Unit = {
-    logger.ifError(wrap(fact) toString)
-  }
-  
-  def logWarning [A] ( fact : A ) : Unit = {
-    logger.ifWarning(wrap(fact) toString) 
-  }
-  
-  def logInfo [A] ( fact : A ) : Unit = {
-    logger.ifInfo(wrap(fact) toString) 
-  }
-  
-  def logDebug [A] ( fact : A ) : Unit = {
-    logger.ifDebug(wrap(fact) toString) 
-  }
-
-  def logTrace [A] ( fact : A ) : Unit = {
-    logger.ifTrace(wrap(fact) toString)
-  }
 }
 
 trait ConfiggyJournal {
   self : Journalist with ConfiggyReporting =>
-    Configgy.configure("log.conf")
-
-  override lazy val config = Configgy.config
-
-  override lazy val logger = Logger.get  
-
-  override def storeFn[A] : ( Verbosity, A ) => Unit = {
-    ( v : Verbosity, a : A ) => {
-      v match {
-	case Twitterer( _ ) => {
-	  logger.ifInfo( tagIt( v, a ).toString ) 
-	}
-	case Blogger( _ ) => {
-	  logger.ifTrace( tagIt( v, a ).toString ) 
-	}
-	case Luddite( _ ) => {
-	  logger.ifDebug( tagIt( v, a ).toString ) 
-	}
-      }
-    }
-  }
 }
 
 object ConfiguredJournalDefaults {
-  val loggingLevel = "Tweet"
 }
 
 trait ConfiguredJournal {
@@ -264,71 +306,9 @@ trait ConfiguredJournal {
        with ConfiggyReporting
 	with ConfigurationTrampoline =>    
 
-  override lazy val config = Configgy.config
-
-  override lazy val logger = Logger.get  
-
-  override def configurationDefaults : ConfigurationDefaults = {
-    ConfiguredJournalDefaults.asInstanceOf[ConfigurationDefaults]
-  }
-
-  def loggingLevel        : String =
-    configurationFromFile.get( "loggingLevel" ).getOrElse( bail() )
-
-  var _loggingLevel : Option[Verbosity] = None
-  def setLoggingLevel( verb : Verbosity ) : Unit = {
-    _loggingLevel = Some( verb )
-  }
-  def getLoggingLevel : Verbosity = {
-    _loggingLevel match {
-      case Some( verb ) => verb
-      case None => {
-	loggingLevel match {
-	  case "Tweet" => {
-	    val ll = Twitterer( journalIDVender.getUUID )
-	    _loggingLevel = Some( ll )
-	    ll
-	  }
-	  case "Blog" => {
-	    val ll = Blogger( journalIDVender.getUUID )
-	    _loggingLevel = Some( ll )
-	    ll
-	  }
-	  case "Record" => {
-	    val ll = Luddite( journalIDVender.getUUID )
-	    _loggingLevel = Some( ll )
-	    ll
-	  }
-	}
-      }
-    }
-  }
-
-  override def tweet[A]( fact : A ) =
-    report( getLoggingLevel )( asTweet( fact ) )
-  override def blog[A]( fact : A ) =
-    report( getLoggingLevel )( asTweet( fact ) )
-  override def record[A]( fact : A ) =
-    report( getLoggingLevel )( asTweet( fact ) )
-
-  override def storeFn[A] : ( Verbosity, A ) => Unit = {
-    ( v : Verbosity, a : A ) => {
-      v match {
-	case Twitterer( _ ) => {
-	  logger.ifInfo( tagIt( v, a ).toString ) 
-	}
-	case Blogger( _ ) => {
-	  logger.ifTrace( tagIt( v, a ).toString ) 
-	}
-	case Luddite( _ ) => {
-	  logger.ifDebug( tagIt( v, a ).toString ) 
-	}
-      }
-    }
-  }
 }
 
-abstract class Reporter( override val notebook : StringBuffer )
+abstract class Reporter( val notebook : StringBuffer )
 	 extends Journalist
 
 class ConfiggyReporter(
