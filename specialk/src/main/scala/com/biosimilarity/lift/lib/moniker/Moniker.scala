@@ -117,6 +117,7 @@ class URM(
 	    && host.equals( that.host )
 	    && significantBit( path ).equals( significantBit( that.path ) )
 	    && fragment.equals( that.fragment )
+	    && port.equals( that.port )
 	  )
 	}
 	case _ => false
@@ -129,6 +130,7 @@ class URM(
       + ( 37 * host.hashCode )
       + ( 37 * significantBit( path ).hashCode )
       + ( 37 * fragment.hashCode )
+      + ( 37 * port.hashCode )
     )
   }
   override def getScheme : String = uri.getScheme
