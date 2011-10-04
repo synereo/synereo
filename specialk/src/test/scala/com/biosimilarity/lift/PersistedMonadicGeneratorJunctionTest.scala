@@ -26,10 +26,10 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
 
   val TIMEOUT_EVENTUALLY = new Duration(1500)
 
-  val RABBIT_PORT_WRITER = 4444
-  val RABBIT_PORT_READER = 5672
-  val RABBIT_PORT_READER2 = 5555
-  val RABBIT_PORT_UNRELATED = 6666
+  val RABBIT_PORT_WRITER = 5672
+  val RABBIT_PORT_READER = 6000
+  val RABBIT_PORT_READER2 = 6001
+  val RABBIT_PORT_UNRELATED = 4000
 
   "PersistedMonadicGeneratorJunction" should {
     var found = false;
@@ -42,12 +42,11 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
     val unrelated_location = "localhost".toURM.withPort(RABBIT_PORT_UNRELATED)
 
     "retrieve between two queues" in {
-//      RetrieveBetweenTwoQueues() //success
-//      RetrieveBetweenTwoQueuesUnrelatedQueueNoAcquaintances() //success
-//      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintances() //success
-      RetrieveBetweenTwoQueuesWithMultipleAcquaintances() //fail
-//      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintancesNoGet() //fail
-//      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintancesNoTwistedPair() //success
+      RetrieveBetweenTwoQueues() //success
+      RetrieveBetweenTwoQueuesUnrelatedQueueNoAcquaintances() //success
+      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintances() //success
+      RetrieveBetweenTwoQueuesWithMultipleAcquaintances() //success
+      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintancesNoGet() //success
     }
 
     def RetrieveBetweenTwoQueues() =
@@ -66,7 +65,7 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
       val writer_privateQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, writer_location, Seq[ URM ](reader_location))
       writer_privateQ.agentTwistedPairs
 
-      val reader_msgQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader_location, Seq[ URM ]())
+      val reader_msgQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader2_location, Seq[ URM ]())
       reader_msgQ.agentTwistedPairs
       val reader_privateQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader_location, Seq[ URM ](writer_location))
       reader_privateQ.agentTwistedPairs
@@ -113,34 +112,15 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
       getPut(reader_privateQ, writer_privateQ)
     }
 
-
     def RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintancesNoGet() =
     {
       val writer_privateQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, writer_location, Seq[ URM ](reader_location))
       writer_privateQ.agentTwistedPairs
 
-      val reader_msgQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader_location, Seq[ URM ](unrelated_location))
+      val reader_msgQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader2_location, Seq[ URM ](unrelated_location))
       reader_msgQ.agentTwistedPairs
       val reader_privateQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader_location, Seq[ URM ](writer_location))
       reader_privateQ.agentTwistedPairs
-
-      getPut(reader_privateQ, writer_privateQ)
-    }
-
-    def RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintancesNoTwistedPair() =
-    {
-      val writer_privateQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, writer_location, Seq[ URM ](reader_location))
-      writer_privateQ.agentTwistedPairs
-
-      val reader_msgQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader_location, Seq[ URM ](unrelated_location))
-      //      reader_msgQ.agentTwistedPairs
-      val reader_privateQ: PersistedtedStringMGJ = new PersistedtedStringMGJ(dbWriterReader, reader_location, Seq[ URM ](writer_location))
-      reader_privateQ.agentTwistedPairs
-
-      val keyPublic = "channelPublic(_)"
-      reset {
-        for ( e <- reader_msgQ.get(keyPublic.toLabel) ) {}
-      }
 
       getPut(reader_privateQ, writer_privateQ)
     }
