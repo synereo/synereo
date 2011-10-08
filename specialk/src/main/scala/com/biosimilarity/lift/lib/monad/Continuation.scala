@@ -8,7 +8,7 @@
 
 package com.biosimilarity.lift.lib.monad
 
-class Continuation[A,B,C]( val k : ( A => B ) => C ) {
+class Continuation[+A,-B,+C]( val k : ( A => B ) => C ) {
   def apply( f : A => B ) : C = k( f )
   def map( f : A => B ) : C = this( f )
   def foreach( f : A => B ) : C = map( f )
@@ -39,8 +39,10 @@ object Continuation {
   }
 }  
 
-class ContinuationM( )
-extends PMonad[Continuation] {
+class ContinuationM[X,Y,Z]( )
+extends PMonad[Continuation]
+with ForNotationPShiv[Continuation,X,Y,Z] 
+with ForNotationApplyPShiv[Continuation,X,Y,Z] {
   override def fmap [S1,S2,T,U] (
     f : S1 => S2
   ) : Continuation[S1,T,U] => Continuation[S2,T,U] = {
@@ -84,8 +86,8 @@ extends PMonad[Continuation] {
   }
 }
 
-class DelimitedContinuation( )
-extends ContinuationM( ) {
+class DelimitedContinuation[X,Y,Z]( )
+extends ContinuationM[X,Y,Z]( ) {
   def reset [A,B,C] (
     c : Continuation[A,A,B]
   ) : Continuation[B,C,C] = {
@@ -112,7 +114,7 @@ extends ContinuationM( ) {
 
 package usage {
   object TryDelC {
-    val dc1 = new DelimitedContinuation()
+    val dc1 = new DelimitedContinuation[Int,Int,Int]()
     def plus31 = {
       dc1.reset[Int,Int,Int](
 	dc1.fmap( ( x : Int ) => { 3 + x } )(

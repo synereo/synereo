@@ -8,7 +8,7 @@
 
 package com.biosimilarity.lift.lib.monad
 
-trait ForNotationPShiv[Shape[_,_,_],A,B,C] {
+trait ForNotationPShiv[Shape[+_,_,_],A,B,C] {
   self : PMonad[Shape] =>
     type ForNotationPTrampoline[A] <: PMembrane[A,B,C]
     // One approach to trampolining to Scala's for-notation is
@@ -17,6 +17,7 @@ trait ForNotationPShiv[Shape[_,_,_],A,B,C] {
     // for-notation. Then we provide the monadic layer in terms of
     // this.
     trait PMembrane[+A,U,T] {
+      def inhabitant : Either[A,Shape[A,U,T]]
       def flatMap [B,V] (
 	f : A => PMembrane[B,V,U]
       )(
@@ -43,6 +44,8 @@ trait ForNotationPShiv[Shape[_,_,_],A,B,C] {
 //   }
 
   case class PCell[+A,U,T]( a : A ) extends PMembrane[A,U,T] {
+    override def inhabitant : Either[A,Shape[A,U,T]] =
+      Left[A,Shape[A,U,T]]( a )
     override def flatMap [B,V] (
       f : A => PMembrane[B,V,U]
     )(
@@ -60,6 +63,8 @@ trait ForNotationPShiv[Shape[_,_,_],A,B,C] {
 
   case class SPCell[A,U,T]( val sa : Shape[A,U,T] ) extends PMembrane[A,U,T]
   {
+    override def inhabitant : Either[A,Shape[A,U,T]] =
+      Right[A,Shape[A,U,T]]( sa )
     override def flatMap [B,V] (
       f : A => PMembrane[B,V,U]
     )(
@@ -93,18 +98,16 @@ trait ForNotationPShiv[Shape[_,_,_],A,B,C] {
     ) : PMembrane[B,U,T] = {      
       SPCell[B,U,T]( fmap[A,B,U,T]( f )( sa ) )
     }
-
-    override def equals( o : Any ) : Boolean = {
-      o match {
-	case that : SPCell[A,U,T] => {
-	  sa.equals( that.sa )
-	}
-	case _ => false
-      }
-    }
-    override def hashCode( ) : Int = {
-      37 * sa.hashCode
-    }
   } 
   
+}
+
+trait ForNotationApplyPShiv[Shape[+_,_,_],A,B,C] {
+  self : ForNotationPShiv[Shape,A,B,C] =>
+    //override type ForNotationPTrampoline[A] = PMembrane[A,B,C]
+    def apply [A,B,C] (
+      sa : Shape[A,B,C]
+    ) : PMembrane[A,B,C] = {
+      SPCell[A,B,C]( sa )
+  }
 }

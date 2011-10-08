@@ -222,8 +222,46 @@ package usage {
 /* ------------------------------------------------------------------
  * Mostly self-contained object to support unit testing
  * ------------------------------------------------------------------ */ 
+  import org.apache.http.impl.conn.tsccm._
+  import org.apache.http.impl.nio.reactor._
+  import org.apache.http.impl.nio.client.DefaultHttpAsyncClient
+  import org.apache.http.impl.nio.conn.PoolingClientConnectionManager
 
-  object MonadicHTTPUnitTest {
-  }
+  object MndHTTPStringDispatcher
+	     extends MonadicHTTPDispatcher[String]
+	     with WireTap
+	     with Journalist
+	     with ConfiggyReporting
+	     with ConfiggyJournal {
+	       lazy val dcior1 =
+		 new DefaultConnectingIOReactor()
+	       lazy val pccm =
+		 new PoolingClientConnectionManager( dcior1 )
+	       override def dispatchContent [T] (
+		 response : HttpResponse
+	       ) : T = {
+		 org.apache.commons.io.IOUtils.toString(
+		   response.getEntity.getContent,
+		   "UTF-8"
+		 ).asInstanceOf[T]
+	       }
+
+	       def getURL( urlStr : String ) = {
+		 reset {
+		   for(
+		     rsp <- MndHTTPStringDispatcher.beginService(
+		       pccm,
+		       urlStr
+		     )
+		   ) {
+		     println( "received: " + rsp )
+		   }
+		 }
+	       }
+
+	       override def tap [A]( fact : A ) : Unit = {
+		 blog( fact )
+	       }	       
+	     }
 
 }
