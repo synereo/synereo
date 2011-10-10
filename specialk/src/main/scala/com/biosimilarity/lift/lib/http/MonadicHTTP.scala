@@ -225,8 +225,118 @@ package usage {
   import org.apache.http.impl.conn.tsccm._
   import org.apache.http.impl.nio.reactor._
   import org.apache.http.impl.nio.client.DefaultHttpAsyncClient
-  import org.apache.http.impl.nio.conn.PoolingClientConnectionManager
+  import org.apache.http.impl.nio.conn.PoolingClientConnectionManager  
 
+  trait EtherpadLiteAPIData {
+    val stdCaseClassMethods =
+    List[String]( 
+      "equals",
+      "toString",
+      "hashCode",
+      "copy",
+      "productPrefix",
+      "productArity",
+      "productElement",
+      "productIterator",
+      "productElements",
+      "canEqual",
+      "copy$default$1",
+      "wait",
+      "wait",
+      "wait",
+      "getClass",
+      "notify",
+      "notifyAll"
+      )
+
+    val baseURL = "http://beta.etherpad.org/api"
+    val apiVersion = "1"
+    val apiKey = "EtherpadFTW"
+
+    trait EtherpadAPIMsg
+
+    def toEtherpadVerb( msg : EtherpadAPIMsg ) : String = {
+      val msgClassName = msg.getClass.getName
+      val msgName =
+	msgClassName.substring( 
+	  msgClassName.indexOf( "$" ) + 1,
+	  msgClassName.length 
+	)
+      
+      msgName.take( 1 ).toLowerCase + msgName.drop( 1 )
+    }
+    def toEtherpadArgs( msg : EtherpadAPIMsg ) : String = {
+      def getArg( msg : EtherpadAPIMsg, mthd : String ) : String = {
+	val meth = msg.getClass.getMethod( mthd )
+	meth.invoke( msg ).toString
+      }
+
+      ( "" /: msg.getClass.getMethods )(
+	( acc, m ) => {
+	  val methName = m.getName
+	  if (
+	    stdCaseClassMethods.contains( methName )
+	    || methName.contains( "$$$outer" )
+	  ) {
+	    acc
+	  }
+	  else {
+	    acc + "&" + methName + "=" + getArg( msg, methName )
+	  }
+	}
+      )
+    }
+    def toEtherpadRequest( msg : EtherpadAPIMsg ) : String = {
+      (
+	baseURL
+	+ "/" + apiVersion
+	+ "/" + toEtherpadVerb( msg )
+	+ "?" + "apikey" + "=" + apiKey
+	+ toEtherpadArgs( msg )
+      )
+    }
+
+    case class CreateGroupIfNotExistsFor( groupMapper : String )
+	 extends EtherpadAPIMsg
+
+    case class CreateGroup( )
+	 extends EtherpadAPIMsg
+    case class DeleteGroup( groupID : String )
+	 extends EtherpadAPIMsg
+    case class ListPads( groupID : String )
+	 extends EtherpadAPIMsg
+    case class CreateGroupPad(
+      groupID : String,
+      padName: String,
+      text : String
+    ) extends EtherpadAPIMsg
+    case class CreateAuthor( name : String ) extends EtherpadAPIMsg
+    case class CreateAuthorIfNotExistsFor(
+      authorMapper : String,
+      name : String
+    ) extends EtherpadAPIMsg
+    case class CreateSession(
+      groupID : String, authorID : String , validUntil : String
+    ) extends EtherpadAPIMsg
+    case class DeleteSession( sessionID : String ) extends EtherpadAPIMsg
+    case class GetSessionInfo( sessionID : String ) extends EtherpadAPIMsg
+    case class ListSessionsOfGroup( groupID : String ) extends EtherpadAPIMsg
+    case class ListSessionsOfAuthor( authorID : String ) extends EtherpadAPIMsg
+    case class GetText( padID : String ) extends EtherpadAPIMsg
+    case class SetText( padID : String, text : String ) extends EtherpadAPIMsg
+    case class CreatePad( padID : String, text : String ) extends EtherpadAPIMsg
+    case class GetRevisionsCount( padID : String ) extends EtherpadAPIMsg
+    case class GeletePad( padID : String ) extends EtherpadAPIMsg
+    case class GetReadOnlyID( padID : String ) extends EtherpadAPIMsg
+    case class SetPublicStatus( padID : String, publicStatus : String )
+	 extends EtherpadAPIMsg
+    case class GetPublicStatus( padID : String ) extends EtherpadAPIMsg
+    case class SetPassword( padID : String, password : String )
+	 extends EtherpadAPIMsg
+    case class IsPasswordProtected( padID : String ) extends EtherpadAPIMsg
+    
+  }  
+  
   object MndHTTPStringDispatcher
 	     extends MonadicHTTPDispatcher[String]
 	     with WireTap
@@ -244,6 +354,11 @@ package usage {
 		   response.getEntity.getContent,
 		   "UTF-8"
 		 ).asInstanceOf[T]
+	       }	       
+
+	       def handle( jsonStr : String ) = {
+		 println( "received: " + jsonStr )
+		 // ToDo
 	       }
 
 	       def getURL( urlStr : String ) = {
@@ -254,7 +369,26 @@ package usage {
 		       urlStr
 		     )
 		   ) {
-		     println( "received: " + rsp )
+		     handle( "received: " + rsp )
+		   }
+		 }
+	       }
+
+	       object EtherpadLiteAPI 
+	       extends EtherpadLiteAPIData {
+		 def apply(
+		   handler : String => Unit,
+		   req : EtherpadAPIMsg
+		 ) : Unit = {
+		   reset {
+		     for(
+		       rsp <- MndHTTPStringDispatcher.beginService(
+			 pccm,
+			 toEtherpadRequest( req )
+		       )
+		     ) {
+		       handler( rsp )
+		     }
 		   }
 		 }
 	       }
