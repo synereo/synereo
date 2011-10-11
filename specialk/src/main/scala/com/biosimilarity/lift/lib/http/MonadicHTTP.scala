@@ -227,6 +227,24 @@ package usage {
   import org.apache.http.impl.nio.client.DefaultHttpAsyncClient
   import org.apache.http.impl.nio.conn.PoolingClientConnectionManager  
 
+  import com.biosimilarity.magritte.json._
+  import com.biosimilarity.magritte.json.Absyn._
+  import java.io.StringReader
+
+  trait Argonaut {
+    def lexer (str : String) = new Yylex(new StringReader(str))
+    def parser (str : String) = new parser(lexer(str))
+    def parseJSONStr( str : String ) =
+      {
+	try {
+	  Some((parser(str)).pJSONObject())
+	}
+	catch {
+	  case _ => None
+	}
+      }
+  }
+  
   trait EtherpadLiteAPIData {
     val stdCaseClassMethods =
     List[String]( 
@@ -277,6 +295,7 @@ package usage {
 	  if (
 	    stdCaseClassMethods.contains( methName )
 	    || methName.contains( "$$$outer" )
+	    || methName.contains( "copy$default" )
 	  ) {
 	    acc
 	  }
@@ -354,28 +373,11 @@ package usage {
 		   response.getEntity.getContent,
 		   "UTF-8"
 		 ).asInstanceOf[T]
-	       }	       
-
-	       def handle( jsonStr : String ) = {
-		 println( "received: " + jsonStr )
-		 // ToDo
-	       }
-
-	       def getURL( urlStr : String ) = {
-		 reset {
-		   for(
-		     rsp <- MndHTTPStringDispatcher.beginService(
-		       pccm,
-		       urlStr
-		     )
-		   ) {
-		     handle( "received: " + rsp )
-		   }
-		 }
 	       }
 
 	       object EtherpadLiteAPI 
-	       extends EtherpadLiteAPIData {
+	       extends EtherpadLiteAPIData
+	       with Argonaut {
 		 def apply(
 		   handler : String => Unit,
 		   req : EtherpadAPIMsg
