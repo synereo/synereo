@@ -54,31 +54,14 @@ class RLLREPL {
     com.biosimilarity.seleKt.model.ill.vm.illvm.PrettyPrinter.show( v )
   }
 
-  object RLLEvaluationServiceProxy extends CnxnXQuery[String,String,String]
-    with CnxnCtxtInjector[String,String,String]
-    with UUIDOps
-    with Blobify
-    with CnxnXML[String,String,String] {
-      import com.biosimilarity.lift.model.store.usage._
-      import PersistedMonadicTS._
-      import scala.util.continuations._ 
-
-      implicit def toPattern( s : String ) =
-	fromCaseClassInstanceString( s )
-	.getOrElse( null )
-	.asInstanceOf[CnxnCtxtLabel[String,String,String]]
-
-      val clientId = getUUID
-      val remoteService =
-	ptToPt( "SDEC", "localhost", "localhost" )
-      val sessionRequestStr =
-	"sessionRequest( )"
-      val sessionResponseStr =
-	"sessionResponse( " + clientId.toString + " )"      
+  object RLLEvaluationServiceProxy extends RLLEvaluationProtocol {
+    import com.biosimilarity.lift.model.store.usage._
+    import PersistedMonadicTS._
+    import scala.util.continuations._ 
 
     def evalRemoteVM( str : String, k : Option[mTT.Resource] => Unit ) = {
       reset {
-	remoteService.put( sessionRequestStr, clientId.toString )
+	remoteService.put( sessionRequestStr, endPointId.toString )
       }
       reset {
 	for( sessId <- remoteService.get( sessionResponseStr ) ) {
@@ -106,7 +89,7 @@ class RLLREPL {
 
     def evalRemoteX( str : String, k : Option[mTT.Resource] => Unit ) = {
       reset {
-	remoteService.put( sessionRequestStr, clientId.toString )
+	remoteService.put( sessionRequestStr, endPointId.toString )
       }
       reset {
 	for( sessId <- remoteService.get( sessionResponseStr ) ) {

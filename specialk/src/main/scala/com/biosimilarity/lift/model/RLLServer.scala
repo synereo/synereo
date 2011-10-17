@@ -22,9 +22,5 @@ import java.net.URI
 import java.util.UUID
 import java.io.StringReader
 
-object RLLEvaluationService {
-  import com.biosimilarity.lift.model.store.usage._
-  import PersistedMonadicTS._
-  
-  val repl1 = new RLLREPL()
+object RLLEvaluationService extends RLLEvaluationProtocol {
 }
