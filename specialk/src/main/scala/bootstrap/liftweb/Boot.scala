@@ -43,6 +43,7 @@ class Boot {
       Menu(Loc("CalcForm.1", List( "CalcForm" ), "Conway Calculator", If(User.loggedIn_? _, "x"))) ::
       Menu(Loc("AgentREPLForm.1", List( "AgentREPLForm" ), "Agent-R-E-P-L", If(User.loggedIn_? _, "x"))) ::
       Menu(Loc("KVREPLForm.1", List( "KVREPLForm" ), "KV-R-E-P-L", If(User.loggedIn_? _, "x"))) ::
+      Menu(Loc("RLLREPLForm.1", List( "RLLREPLForm" ), "Linear Lambda R-E-P-L", If(User.loggedIn_? _, "x"))) ::
       Menu(Loc("GrammarSpec.1", List( "GrammarSpec" ), "Grammar", If(User.loggedIn_? _, "x"))) ::
       Menu(Loc("file_upload", List( "file_upload" ), "File Upload", If(User.loggedIn_? _, "x") )) ::
       // Menu entries for the User management stuff

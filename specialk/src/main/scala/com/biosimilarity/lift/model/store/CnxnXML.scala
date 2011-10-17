@@ -268,7 +268,9 @@ trait CnxnXML[Namespace,Var,Tag] {
 
   class TermParser extends JavaTokenParsers {
     def term : Parser[Any] =
-      application | ground | variable
+      application | list | ground | variable
+    def list : Parser[Any] =
+      "["~repsep( term, "," )~"]"
     def ground : Parser[Any] =
       stringLiteral | floatingPointNumber | "true" | "false"
     def variable : Parser[Any] = ident
@@ -276,7 +278,16 @@ trait CnxnXML[Namespace,Var,Tag] {
       ident~"("~repsep( term, "," )~")"
 
     def termXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      applicationXform | groundXform | variableXform
+      applicationXform | listXform | groundXform | variableXform
+    def listXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] = 
+      "["~repsep( termXform, "," )~"]" ^^ {
+	case "["~terms~"]" => {
+	  new CnxnCtxtBranch[String,String,Any](
+	    "list",
+	    terms
+	  )
+	}
+      }
     def groundXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
       (
 	stringLiteral ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.replace( "\"", "" ) ) ) )

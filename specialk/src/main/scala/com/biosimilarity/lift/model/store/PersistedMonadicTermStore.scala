@@ -986,7 +986,7 @@ object PersistedMonadicTS
       override val acquaintances : Seq[Moniker]
     ) extends PersistedMonadicGeneratorJunction(
       name, acquaintances
-    ) {
+    ) {      
       class StringXMLDBManifest(
 	override val storeUnitStr : String,
 	override val labelToNS : Option[String => String],
@@ -1085,6 +1085,23 @@ object PersistedMonadicTS
 	val sid = Some( ( s : String ) => s )
 	Some(
 	  new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid )
+	)
+      }
+
+      override def cnxnTrgtTermStr( trgt : Either[String,String] )
+      : String = {
+	(
+	  trgt match {
+	    case Left( t ) => {
+	      t match {
+		case s : String => {
+		  "\"" + s + "\""
+		}
+		case _ => t
+	      }
+	    }
+	    case Right( v ) => cnxnVarTermStr( v )
+	  }
 	)
       }
     }
