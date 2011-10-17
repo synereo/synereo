@@ -37,10 +37,8 @@ trait RLLEvaluationProtocol extends CnxnXQuery[String,String,String]
      .asInstanceOf[CnxnCtxtLabel[String,String,String]]
 
    val endPointId = getUUID
-   val remoteService =
-     ptToPt( "SDEC", "localhost", "localhost" )
-   val sessionRequestStr =
-     "sessionRequest( )"
+   val exchange = ptToPt( "SDEC", "localhost", "localhost" )
+   val sessionRequestStr = "sessionRequest( )"
    val sessionResponseStr =
      "sessionResponse( " + endPointId.toString + " )"      
    

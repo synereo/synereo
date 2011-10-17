@@ -52,70 +52,7 @@ class RLLREPL {
     val ( v, _ ) =
       TraceTransitions.reduce( tmstate, VMReadBack )
     com.biosimilarity.seleKt.model.ill.vm.illvm.PrettyPrinter.show( v )
-  }
-
-  object RLLEvaluationServiceProxy extends RLLEvaluationProtocol {
-    import com.biosimilarity.lift.model.store.usage._
-    import PersistedMonadicTS._
-    import scala.util.continuations._ 
-
-    def evalRemoteVM( str : String, k : Option[mTT.Resource] => Unit ) = {
-      reset {
-	remoteService.put( sessionRequestStr, endPointId.toString )
-      }
-      reset {
-	for( sessId <- remoteService.get( sessionResponseStr ) ) {
-	  val evaluationRequestStr = 
-	    (
-	      "vmEvaluationRequest( "
-	      + "sessionId( " + sessId + " )"
-	      + " )"
-	    );
-	  val evaluationResponseStr = 
-	    (
-	      "vmEevaluationResponse( "
-	      + "sessionId( " + sessId + " )"
-	      + " )"
-	    );
-
-	  remoteService.put( evaluationRequestStr, str )
-
-	  for( rslt <- remoteService.get( evaluationResponseStr ) ) {
-	    k( rslt )
-	  }
-	}
-      }
-    }
-
-    def evalRemoteX( str : String, k : Option[mTT.Resource] => Unit ) = {
-      reset {
-	remoteService.put( sessionRequestStr, endPointId.toString )
-      }
-      reset {
-	for( sessId <- remoteService.get( sessionResponseStr ) ) {
-	  val evaluationRequestStr = 
-	    (
-	      "experimentalEvaluationRequest( "
-	      + "sessionId( " + sessId + " )"
-	      + " )"
-	    );
-	  val evaluationResponseStr = 
-	    (
-	      "experimentalEevaluationResponse( "
-	      + "sessionId( " + sessId + " )"
-	      + " )"
-	    );
-
-	  remoteService.put( evaluationRequestStr, str )
-
-	  for( rslt <- remoteService.get( evaluationResponseStr ) ) {
-	    k( rslt )
-	  }
-	}
-      }
-      
-    }
-  }
+  }  
 
   // printing
   def showClientRequestParseTree (str : String) =
@@ -173,6 +110,8 @@ class RLLREPL {
     }
   }
 }
+
+
 
 /*
 Welcome to Scala version 2.9.0.1 (Java HotSpot(TM) 64-Bit Server VM, Java 1.6.0_26).
