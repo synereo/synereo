@@ -1088,6 +1088,7 @@ object PersistedMonadicTS
 	)
       }
 
+      /*
       override def cnxnTrgtTermStr( trgt : Either[String,String] )
       : String = {
 	(
@@ -1104,6 +1105,7 @@ object PersistedMonadicTS
 	  }
 	)
       }
+      */
     }
     
     def ptToPt( storeUnitStr : String, a : String, b : String )  = {

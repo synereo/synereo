@@ -72,6 +72,7 @@ trait CnxnConversions[Namespace,Var,Tag] {
 	cnxnLabelTermStr( cLeaf )
       case cBranch : CnxnCtxtBranch[Namespace,Var,Tag] =>
 	cnxnLabelTermStr( cBranch )
+      case _ => "\"\""
     }
   }
 
@@ -229,7 +230,7 @@ with PrologMgr {
   ) :
     Option[Solution[String]]
     = {
-      //println( "in matches with " + clabel1 + " and " + clabel2 )
+	println( "in matches with " + clabel1 + " and " + clabel2 )
     val solution =
       unifyQuery(
 	cnxnCtxtLabelToTermStr( clabel1 ),

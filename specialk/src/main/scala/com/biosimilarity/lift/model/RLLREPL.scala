@@ -40,7 +40,7 @@ class RLLREPL {
   }
   
   // evaluation  
-  def eval( str : String ) = {    
+  def eval( str : String ) : String = {    
     val ( code, ctxt ) = compile( str )
     val tmstate = 
       TMState(
