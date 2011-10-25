@@ -1,5 +1,5 @@
-package com.biosimilarity.magritte.json;
-import com.biosimilarity.magritte.json.Absyn.*;
+package com.biosimilarity.lift.lib.json;
+import com.biosimilarity.lift.lib.json.Absyn.*;
 /*** BNFC-Generated Visitor Design Pattern Skeleton. ***/
 /* This implements the common visitor design pattern.
    Tests show it to be slightly less efficient than the
@@ -11,7 +11,7 @@ public class VisitSkel
 {
   public class JSONObjectVisitor<R,A> implements JSONObject.Visitor<R,A>
   {
-    public R visit(com.biosimilarity.magritte.json.Absyn.JObject p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JObject p, A arg)
     {
       /* Code For JObject Goes Here */
 
@@ -24,7 +24,7 @@ public class VisitSkel
   }
   public class JSONPairVisitor<R,A> implements JSONPair.Visitor<R,A>
   {
-    public R visit(com.biosimilarity.magritte.json.Absyn.JPair p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JPair p, A arg)
     {
       /* Code For JPair Goes Here */
 
@@ -37,7 +37,7 @@ public class VisitSkel
   }
   public class JSONArrayVisitor<R,A> implements JSONArray.Visitor<R,A>
   {
-    public R visit(com.biosimilarity.magritte.json.Absyn.JArray p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JArray p, A arg)
     {
       /* Code For JArray Goes Here */
 
@@ -50,7 +50,7 @@ public class VisitSkel
   }
   public class JSONValueVisitor<R,A> implements JSONValue.Visitor<R,A>
   {
-    public R visit(com.biosimilarity.magritte.json.Absyn.JStr p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JStr p, A arg)
     {
       /* Code For JStr Goes Here */
 
@@ -58,15 +58,15 @@ public class VisitSkel
 
       return null;
     }
-    public R visit(com.biosimilarity.magritte.json.Absyn.JNum p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JNum p, A arg)
     {
       /* Code For JNum Goes Here */
 
-      //p.double_;
+      p.jsonnum_.accept(new JSONNumVisitor<R,A>(), arg);
 
       return null;
     }
-    public R visit(com.biosimilarity.magritte.json.Absyn.JObj p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JObj p, A arg)
     {
       /* Code For JObj Goes Here */
 
@@ -74,7 +74,7 @@ public class VisitSkel
 
       return null;
     }
-    public R visit(com.biosimilarity.magritte.json.Absyn.JArr p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JArr p, A arg)
     {
       /* Code For JArr Goes Here */
 
@@ -82,24 +82,48 @@ public class VisitSkel
 
       return null;
     }
-    public R visit(com.biosimilarity.magritte.json.Absyn.JTru p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JTru p, A arg)
     {
       /* Code For JTru Goes Here */
 
 
       return null;
     }
-    public R visit(com.biosimilarity.magritte.json.Absyn.JFal p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JFal p, A arg)
     {
       /* Code For JFal Goes Here */
 
 
       return null;
     }
-    public R visit(com.biosimilarity.magritte.json.Absyn.JNul p, A arg)
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JNul p, A arg)
     {
       /* Code For JNul Goes Here */
 
+
+      return null;
+    }
+
+  }
+  public class JSONNumVisitor<R,A> implements JSONNum.Visitor<R,A>
+  {
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JDbl p, A arg)
+    {
+      /* Code For JDbl Goes Here */
+
+      //p.double_;
+
+      return null;
+    }
+
+  }
+  public class JSONIntVisitor<R,A> implements JSONInt.Visitor<R,A>
+  {
+    public R visit(com.biosimilarity.lift.lib.json.Absyn.JInt p, A arg)
+    {
+      /* Code For JInt Goes Here */
+
+      //p.integer_;
 
       return null;
     }

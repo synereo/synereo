@@ -227,8 +227,8 @@ package usage {
   import org.apache.http.impl.nio.client.DefaultHttpAsyncClient
   import org.apache.http.impl.nio.conn.PoolingClientConnectionManager  
 
-  import com.biosimilarity.magritte.json._
-  import com.biosimilarity.magritte.json.Absyn._
+  import com.biosimilarity.lift.lib.json._
+  import com.biosimilarity.lift.lib.json.Absyn._
   import java.io.StringReader
 
   trait Argonaut {

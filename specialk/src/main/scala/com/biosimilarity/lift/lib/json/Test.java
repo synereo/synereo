@@ -1,7 +1,7 @@
-package com.biosimilarity.magritte.json;
+package com.biosimilarity.lift.lib.json;
 import java_cup.runtime.*;
-import com.biosimilarity.magritte.json.*;
-import com.biosimilarity.magritte.json.Absyn.*;
+import com.biosimilarity.lift.lib.json.*;
+import com.biosimilarity.lift.lib.json.Absyn.*;
 import java.io.*;
 
 public class Test
@@ -23,10 +23,10 @@ public class Test
     p = new parser(l);
     /* The default parser is the first-defined entry point. */
     /* You may want to change this. Other options are: */
-    /* pJSONPair, pJSONArray, pJSONValue, pListJSONPair, pListJSONValue */
+    /* pJSONPair, pJSONArray, pJSONValue, pJSONNum, pJSONInt, pListJSONPair, pListJSONValue */
     try
     {
-      com.biosimilarity.magritte.json.Absyn.JSONObject parse_tree = p.pJSONObject();
+      com.biosimilarity.lift.lib.json.Absyn.JSONObject parse_tree = p.pJSONObject();
       System.out.println();
       System.out.println("Parse Succesful!");
       System.out.println();

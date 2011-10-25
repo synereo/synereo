@@ -1,5 +1,5 @@
-package com.biosimilarity.magritte.json;
-import com.biosimilarity.magritte.json.Absyn.*;
+package com.biosimilarity.lift.lib.json;
+import com.biosimilarity.lift.lib.json.Absyn.*;
 
 public class PrettyPrinter
 {
@@ -60,7 +60,7 @@ public class PrettyPrinter
 
 
   //  print and show methods are defined for each category.
-  public static String print(com.biosimilarity.magritte.json.Absyn.JSONObject foo)
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.JSONObject foo)
   {
     pp(foo, 0);
     trim();
@@ -68,14 +68,14 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String show(com.biosimilarity.magritte.json.Absyn.JSONObject foo)
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.JSONObject foo)
   {
     sh(foo);
     String temp = buf_.toString();
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String print(com.biosimilarity.magritte.json.Absyn.JSONPair foo)
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.JSONPair foo)
   {
     pp(foo, 0);
     trim();
@@ -83,14 +83,14 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String show(com.biosimilarity.magritte.json.Absyn.JSONPair foo)
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.JSONPair foo)
   {
     sh(foo);
     String temp = buf_.toString();
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String print(com.biosimilarity.magritte.json.Absyn.JSONArray foo)
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.JSONArray foo)
   {
     pp(foo, 0);
     trim();
@@ -98,14 +98,14 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String show(com.biosimilarity.magritte.json.Absyn.JSONArray foo)
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.JSONArray foo)
   {
     sh(foo);
     String temp = buf_.toString();
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String print(com.biosimilarity.magritte.json.Absyn.JSONValue foo)
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.JSONValue foo)
   {
     pp(foo, 0);
     trim();
@@ -113,14 +113,14 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String show(com.biosimilarity.magritte.json.Absyn.JSONValue foo)
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.JSONValue foo)
   {
     sh(foo);
     String temp = buf_.toString();
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String print(com.biosimilarity.magritte.json.Absyn.ListJSONPair foo)
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.JSONNum foo)
   {
     pp(foo, 0);
     trim();
@@ -128,14 +128,14 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String show(com.biosimilarity.magritte.json.Absyn.ListJSONPair foo)
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.JSONNum foo)
   {
     sh(foo);
     String temp = buf_.toString();
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String print(com.biosimilarity.magritte.json.Absyn.ListJSONValue foo)
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.JSONInt foo)
   {
     pp(foo, 0);
     trim();
@@ -143,7 +143,37 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
-  public static String show(com.biosimilarity.magritte.json.Absyn.ListJSONValue foo)
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.JSONInt foo)
+  {
+    sh(foo);
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.ListJSONPair foo)
+  {
+    pp(foo, 0);
+    trim();
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.ListJSONPair foo)
+  {
+    sh(foo);
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String print(com.biosimilarity.lift.lib.json.Absyn.ListJSONValue foo)
+  {
+    pp(foo, 0);
+    trim();
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String show(com.biosimilarity.lift.lib.json.Absyn.ListJSONValue foo)
   {
     sh(foo);
     String temp = buf_.toString();
@@ -152,11 +182,11 @@ public class PrettyPrinter
   }
   /***   You shouldn't need to change anything beyond this point.   ***/
 
-  private static void pp(com.biosimilarity.magritte.json.Absyn.JSONObject foo, int _i_)
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.JSONObject foo, int _i_)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JObject)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JObject)
     {
-       com.biosimilarity.magritte.json.Absyn.JObject _jobject = (com.biosimilarity.magritte.json.Absyn.JObject) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JObject _jobject = (com.biosimilarity.lift.lib.json.Absyn.JObject) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("{");
        pp(_jobject.listjsonpair_, 0);
@@ -165,11 +195,11 @@ public class PrettyPrinter
     }
   }
 
-  private static void pp(com.biosimilarity.magritte.json.Absyn.JSONPair foo, int _i_)
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.JSONPair foo, int _i_)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JPair)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JPair)
     {
-       com.biosimilarity.magritte.json.Absyn.JPair _jpair = (com.biosimilarity.magritte.json.Absyn.JPair) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JPair _jpair = (com.biosimilarity.lift.lib.json.Absyn.JPair) foo;
        if (_i_ > 0) render(_L_PAREN);
        printQuoted(_jpair.string_);
        render(":");
@@ -178,11 +208,11 @@ public class PrettyPrinter
     }
   }
 
-  private static void pp(com.biosimilarity.magritte.json.Absyn.JSONArray foo, int _i_)
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.JSONArray foo, int _i_)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JArray)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JArray)
     {
-       com.biosimilarity.magritte.json.Absyn.JArray _jarray = (com.biosimilarity.magritte.json.Absyn.JArray) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JArray _jarray = (com.biosimilarity.lift.lib.json.Absyn.JArray) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("[");
        pp(_jarray.listjsonvalue_, 0);
@@ -191,60 +221,82 @@ public class PrettyPrinter
     }
   }
 
-  private static void pp(com.biosimilarity.magritte.json.Absyn.JSONValue foo, int _i_)
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.JSONValue foo, int _i_)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JStr)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JStr)
     {
-       com.biosimilarity.magritte.json.Absyn.JStr _jstr = (com.biosimilarity.magritte.json.Absyn.JStr) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JStr _jstr = (com.biosimilarity.lift.lib.json.Absyn.JStr) foo;
        if (_i_ > 0) render(_L_PAREN);
        printQuoted(_jstr.string_);
        if (_i_ > 0) render(_R_PAREN);
     }
-    else     if (foo instanceof com.biosimilarity.magritte.json.Absyn.JNum)
+    else     if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JNum)
     {
-       com.biosimilarity.magritte.json.Absyn.JNum _jnum = (com.biosimilarity.magritte.json.Absyn.JNum) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JNum _jnum = (com.biosimilarity.lift.lib.json.Absyn.JNum) foo;
        if (_i_ > 0) render(_L_PAREN);
-       pp(_jnum.double_, 0);
+       pp(_jnum.jsonnum_, 0);
        if (_i_ > 0) render(_R_PAREN);
     }
-    else     if (foo instanceof com.biosimilarity.magritte.json.Absyn.JObj)
+    else     if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JObj)
     {
-       com.biosimilarity.magritte.json.Absyn.JObj _jobj = (com.biosimilarity.magritte.json.Absyn.JObj) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JObj _jobj = (com.biosimilarity.lift.lib.json.Absyn.JObj) foo;
        if (_i_ > 0) render(_L_PAREN);
        pp(_jobj.jsonobject_, 0);
        if (_i_ > 0) render(_R_PAREN);
     }
-    else     if (foo instanceof com.biosimilarity.magritte.json.Absyn.JArr)
+    else     if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JArr)
     {
-       com.biosimilarity.magritte.json.Absyn.JArr _jarr = (com.biosimilarity.magritte.json.Absyn.JArr) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JArr _jarr = (com.biosimilarity.lift.lib.json.Absyn.JArr) foo;
        if (_i_ > 0) render(_L_PAREN);
        pp(_jarr.jsonarray_, 0);
        if (_i_ > 0) render(_R_PAREN);
     }
-    else     if (foo instanceof com.biosimilarity.magritte.json.Absyn.JTru)
+    else     if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JTru)
     {
-       com.biosimilarity.magritte.json.Absyn.JTru _jtru = (com.biosimilarity.magritte.json.Absyn.JTru) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JTru _jtru = (com.biosimilarity.lift.lib.json.Absyn.JTru) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("true");
        if (_i_ > 0) render(_R_PAREN);
     }
-    else     if (foo instanceof com.biosimilarity.magritte.json.Absyn.JFal)
+    else     if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JFal)
     {
-       com.biosimilarity.magritte.json.Absyn.JFal _jfal = (com.biosimilarity.magritte.json.Absyn.JFal) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JFal _jfal = (com.biosimilarity.lift.lib.json.Absyn.JFal) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("false");
        if (_i_ > 0) render(_R_PAREN);
     }
-    else     if (foo instanceof com.biosimilarity.magritte.json.Absyn.JNul)
+    else     if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JNul)
     {
-       com.biosimilarity.magritte.json.Absyn.JNul _jnul = (com.biosimilarity.magritte.json.Absyn.JNul) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JNul _jnul = (com.biosimilarity.lift.lib.json.Absyn.JNul) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("null");
        if (_i_ > 0) render(_R_PAREN);
     }
   }
 
-  private static void pp(com.biosimilarity.magritte.json.Absyn.ListJSONPair foo, int _i_)
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.JSONNum foo, int _i_)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JDbl)
+    {
+       com.biosimilarity.lift.lib.json.Absyn.JDbl _jdbl = (com.biosimilarity.lift.lib.json.Absyn.JDbl) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_jdbl.double_, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+  }
+
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.JSONInt foo, int _i_)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JInt)
+    {
+       com.biosimilarity.lift.lib.json.Absyn.JInt _jint = (com.biosimilarity.lift.lib.json.Absyn.JInt) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_jint.integer_, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+  }
+
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.ListJSONPair foo, int _i_)
   {
      for (java.util.Iterator<JSONPair> it = foo.iterator(); it.hasNext();)
      {
@@ -257,7 +309,7 @@ public class PrettyPrinter
      }
   }
 
-  private static void pp(com.biosimilarity.magritte.json.Absyn.ListJSONValue foo, int _i_)
+  private static void pp(com.biosimilarity.lift.lib.json.Absyn.ListJSONValue foo, int _i_)
   {
      for (java.util.Iterator<JSONValue> it = foo.iterator(); it.hasNext();)
      {
@@ -271,11 +323,11 @@ public class PrettyPrinter
   }
 
 
-  private static void sh(com.biosimilarity.magritte.json.Absyn.JSONObject foo)
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.JSONObject foo)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JObject)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JObject)
     {
-       com.biosimilarity.magritte.json.Absyn.JObject _jobject = (com.biosimilarity.magritte.json.Absyn.JObject) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JObject _jobject = (com.biosimilarity.lift.lib.json.Absyn.JObject) foo;
        render("(");
        render("JObject");
        render("[");
@@ -285,11 +337,11 @@ public class PrettyPrinter
     }
   }
 
-  private static void sh(com.biosimilarity.magritte.json.Absyn.JSONPair foo)
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.JSONPair foo)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JPair)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JPair)
     {
-       com.biosimilarity.magritte.json.Absyn.JPair _jpair = (com.biosimilarity.magritte.json.Absyn.JPair) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JPair _jpair = (com.biosimilarity.lift.lib.json.Absyn.JPair) foo;
        render("(");
        render("JPair");
        sh(_jpair.string_);
@@ -298,11 +350,11 @@ public class PrettyPrinter
     }
   }
 
-  private static void sh(com.biosimilarity.magritte.json.Absyn.JSONArray foo)
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.JSONArray foo)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JArray)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JArray)
     {
-       com.biosimilarity.magritte.json.Absyn.JArray _jarray = (com.biosimilarity.magritte.json.Absyn.JArray) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JArray _jarray = (com.biosimilarity.lift.lib.json.Absyn.JArray) foo;
        render("(");
        render("JArray");
        render("[");
@@ -312,58 +364,82 @@ public class PrettyPrinter
     }
   }
 
-  private static void sh(com.biosimilarity.magritte.json.Absyn.JSONValue foo)
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.JSONValue foo)
   {
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JStr)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JStr)
     {
-       com.biosimilarity.magritte.json.Absyn.JStr _jstr = (com.biosimilarity.magritte.json.Absyn.JStr) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JStr _jstr = (com.biosimilarity.lift.lib.json.Absyn.JStr) foo;
        render("(");
        render("JStr");
        sh(_jstr.string_);
        render(")");
     }
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JNum)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JNum)
     {
-       com.biosimilarity.magritte.json.Absyn.JNum _jnum = (com.biosimilarity.magritte.json.Absyn.JNum) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JNum _jnum = (com.biosimilarity.lift.lib.json.Absyn.JNum) foo;
        render("(");
        render("JNum");
-       sh(_jnum.double_);
+       sh(_jnum.jsonnum_);
        render(")");
     }
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JObj)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JObj)
     {
-       com.biosimilarity.magritte.json.Absyn.JObj _jobj = (com.biosimilarity.magritte.json.Absyn.JObj) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JObj _jobj = (com.biosimilarity.lift.lib.json.Absyn.JObj) foo;
        render("(");
        render("JObj");
        sh(_jobj.jsonobject_);
        render(")");
     }
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JArr)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JArr)
     {
-       com.biosimilarity.magritte.json.Absyn.JArr _jarr = (com.biosimilarity.magritte.json.Absyn.JArr) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JArr _jarr = (com.biosimilarity.lift.lib.json.Absyn.JArr) foo;
        render("(");
        render("JArr");
        sh(_jarr.jsonarray_);
        render(")");
     }
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JTru)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JTru)
     {
-       com.biosimilarity.magritte.json.Absyn.JTru _jtru = (com.biosimilarity.magritte.json.Absyn.JTru) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JTru _jtru = (com.biosimilarity.lift.lib.json.Absyn.JTru) foo;
        render("JTru");
     }
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JFal)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JFal)
     {
-       com.biosimilarity.magritte.json.Absyn.JFal _jfal = (com.biosimilarity.magritte.json.Absyn.JFal) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JFal _jfal = (com.biosimilarity.lift.lib.json.Absyn.JFal) foo;
        render("JFal");
     }
-    if (foo instanceof com.biosimilarity.magritte.json.Absyn.JNul)
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JNul)
     {
-       com.biosimilarity.magritte.json.Absyn.JNul _jnul = (com.biosimilarity.magritte.json.Absyn.JNul) foo;
+       com.biosimilarity.lift.lib.json.Absyn.JNul _jnul = (com.biosimilarity.lift.lib.json.Absyn.JNul) foo;
        render("JNul");
     }
   }
 
-  private static void sh(com.biosimilarity.magritte.json.Absyn.ListJSONPair foo)
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.JSONNum foo)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JDbl)
+    {
+       com.biosimilarity.lift.lib.json.Absyn.JDbl _jdbl = (com.biosimilarity.lift.lib.json.Absyn.JDbl) foo;
+       render("(");
+       render("JDbl");
+       sh(_jdbl.double_);
+       render(")");
+    }
+  }
+
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.JSONInt foo)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.json.Absyn.JInt)
+    {
+       com.biosimilarity.lift.lib.json.Absyn.JInt _jint = (com.biosimilarity.lift.lib.json.Absyn.JInt) foo;
+       render("(");
+       render("JInt");
+       sh(_jint.integer_);
+       render(")");
+    }
+  }
+
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.ListJSONPair foo)
   {
      for (java.util.Iterator<JSONPair> it = foo.iterator(); it.hasNext();)
      {
@@ -373,7 +449,7 @@ public class PrettyPrinter
      }
   }
 
-  private static void sh(com.biosimilarity.magritte.json.Absyn.ListJSONValue foo)
+  private static void sh(com.biosimilarity.lift.lib.json.Absyn.ListJSONValue foo)
   {
      for (java.util.Iterator<JSONValue> it = foo.iterator(); it.hasNext();)
      {

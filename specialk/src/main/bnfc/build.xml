@@ -8,6 +8,10 @@
 <!--     </classpath> -->
 <!--   </taskdef> -->
 
+<!-- taskdef resource="net/sf/antcontrib/antlib.xml"> 
+  <classpath path="/opt/local/share/java/apache-ant/lib/ant-contrib-1.0b3.jar"/> 
+</taskdef --> 
+
   <!-- ****************** Properties ********************* -->
   <property name="bnfc.dir" value="${basedir}"/>
   <property name="scala.dir" value="${bnfc.dir}/../scala"/>
@@ -134,6 +138,54 @@
       <arg value="${bnfc.artifact}.cf" />
     </exec>
   </target>
+  <target name="generate-java-from-cfs">
+    <ac:for param="cf-file" xmlns:ac="antlib:net.sf.antcontrib.logic">
+      <ac:path>
+	<ac:fileset dir="${bnfc.dir}/" includes="*.cf"/>
+      </ac:path>
+      <sequential>
+	<basename property="filenamens" file="@{cf-file}" suffix=".cf"/>
+	<property name="cf.build.dir" value="${bnfc.dir}/${filenamens}-build"/>
+	<echo>Generating java for BNFC file @{cf-file}</echo>
+	<mkdir dir="${cf.build.dir}"/>
+	<copy file="@{cf-file}"
+	      todir="${cf.build.dir}"/>
+	<exec executable="BNFC"
+	      failonerror="true"
+	      logerror="true"
+	      dir="${cf.build.dir}">
+	  <arg value="-m" />
+	  <arg value="-java1.5"/>
+	  <arg value="-p" />
+	  <arg value="${bnfc.package}.model" />
+	  <arg value="@{cf-file}" />
+	</exec>
+	<echo message="classpath according to maven: ${compile_classpath}"/>
+	<property name="javac.flags" value="JAVAC_FLAGS=-sourcepath . -cp ${compile_classpath}"/>
+	<property name="java.flags" value="JAVA_FLAGS=-cp ${compile_classpath}"/>
+	<echo>javac.flags: JAVAC_FLAGS=-sourcepath . -cp ${compile_classpath} </echo>
+	<echo>java.flags: JAVA_FLAGS=-cp ${compile_classpath}</echo>
+	<exec executable="make"
+	      failonerror="true"
+	      logerror="true"
+	      dir="${cf.build.dir}">
+	  <arg value="${java.flags}" />
+	  <arg value="${javac.flags}" />	  
+	  <arg value="all" />
+	</exec>
+	<exec executable="make"
+	      failonerror="true"
+	      logerror="true"
+	      dir="${cf.build.dir}">
+	  <arg value="clean" />
+	</exec>
+	<!-- mkdir dir="${target.dir}/generated-sources/${bnfc.stem.dir}/model/${bnfc.artifact}"/>
+	<copy todir="${target.dir}/generated-sources/${bnfc.stem.dir}/model/${bnfc.artifact}">
+	  <fileset dir="${bnfc.dir}/${bnfc.stem.dir}/model/${bnfc.artifact}" />
+	</copy -->
+      </sequential>
+    </ac:for>
+  </target>
   <!-- <target name="bnfc-generate-xsd"> -->
 <!--     <mkdir -->
 <!-- 	dir="${target.dir}/generated-schema/${bnfc.stem.dir}/model/${bnfc.artifact}"/> -->
@@ -206,6 +258,18 @@
   </target>  
   <target name="bnfc-all"
 	  depends="java-parser,bnfc-generate-doc-xhtml">
+  </target>
+  <target name="show-cfs">
+    <ac:for param="cf-file" xmlns:ac="antlib:net.sf.antcontrib">
+      <ac:path>
+	<ac:fileset dir="${bnfc.dir}/" includes="*.cf"/>
+      </ac:path>
+      <sequential>
+	<basename property="filenamens" file="@{cf-file}" suffix=".cf"/>
+	<echo>BNFC file @{cf-file}</echo>	
+	<echo>BNFC file basename ${filenamens}</echo>	
+      </sequential>
+    </ac:for>
   </target>
   <target name="bnfc-generate"
 	  depends="check-generated-sources"
