@@ -10,6 +10,7 @@ package com.biosimilarity.lift.model
 
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.parsing.prolog.term._
 import com.biosimilarity.seleKt.model.ill.lang.illtl._
 import com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn._
 import com.biosimilarity.seleKt.model.ill.compiler._
@@ -22,7 +23,7 @@ import java.net.URI
 import java.util.UUID
 import java.io.StringReader
 
-class RLLREPL {
+class RLLREPL extends PrologTermParsing {
   import SyntaxConversion._
   // parsing
   def lexer (str : String) = new Yylex( new StringReader( str ) )
@@ -56,59 +57,7 @@ class RLLREPL {
 
   // printing
   def showClientRequestParseTree (str : String) =
-    PrettyPrinter.show(clientRequestParseTree(str))    
-
-  // Concrete syntax to abstract syntax xform
-  class CTermParser extends JavaTokenParsers {
-    def term : Parser[Any] =
-      application | list | atom | ground | variable
-    def list : Parser[Any] =
-      "["~repsep( term, "," )~"]"
-    def atom : Parser[Any] = "'"~ident
-    def ground : Parser[Any] =
-      stringLiteral | floatingPointNumber | "true" | "false"
-    def variable : Parser[Any] = ident
-    def application : Parser[Any] =
-      "("~ident~rep( term )~")"
-    
-    def termXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      applicationXform | listXform | atomXform | groundXform | variableXform
-    def listXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] = 
-      "["~repsep( termXform, "," )~"]" ^^ {
-	case "["~terms~"]" => {
-	  new CnxnCtxtBranch[String,String,Any]( "list", terms )
-	}
-      }
-    def atomXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] = 
-      "'"~ident ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.toString.replace( "~", "" ) ) ) )
-    def groundXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      (
-	stringLiteral ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.replace( "\"", "" ) ) ) )
-	| floatingPointNumber ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.toDouble ) ) )
-	| "true" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( true ) ) )
-	| "false" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( false ) ) )
-      )
-      def variableXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-	ident ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Right( x.toString ) ) )
-    def applicationXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      "("~ident~rep( termXform )~")" ^^ {
-	case "("~ident~terms~")" => new CnxnCtxtBranch[String,String,Any]( ident, terms )
-      }
-  }
-
-  def xformSyntax( xpr : String ) :
-  Option[CnxnCtxtLabel[String,String,Any]] = {
-    val readBack = new CTermParser
-    val ptree =
-      readBack.parseAll(
-	readBack.termXform,
-	new java.io.StringReader( xpr )
-      )
-    ptree match {
-      case readBack.Success( r, _ ) => Some( r )
-      case _ => None
-    }
-  }
+    PrettyPrinter.show(clientRequestParseTree(str))      
 }
 
 
