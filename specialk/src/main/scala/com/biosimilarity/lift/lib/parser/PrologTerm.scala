@@ -89,3 +89,85 @@ trait PrologTermParsing {
     }
   }
 }
+
+trait CaseClassConversion {
+  val stdCaseClassMethods =
+    List[String]( 
+      "equals",
+      "toString",
+      "hashCode",
+      "copy",
+      "productPrefix",
+      "productArity",
+      "productElement",
+      "productIterator",
+      "productElements",
+      "canEqual",
+      "copy$default$1",
+      "wait",
+      "wait",
+      "wait",
+      "getClass",
+      "notify",
+      "notifyAll"
+      )
+
+  def isCaseClass( candidate : Any ) = false
+  def isCaseClass( candidate : ScalaObject with Product with Serializable ) = true
+
+  def toTermSymbol( msg : ScalaObject with Product with Serializable ) : String = {
+    val msgClassName = msg.getClass.getName
+    val msgName =
+      msgClassName.substring( 
+	msgClassName.indexOf( "$" ) + 1,
+	msgClassName.length 
+      )
+    
+    msgName.take( 1 ).toLowerCase + msgName.drop( 1 )
+  }
+  
+  def toTermActuals( msg : ScalaObject with Product with Serializable ) : String = {
+    def getArg( msg : ScalaObject with Product with Serializable, mthd : String ) : String = {
+      val meth = msg.getClass.getMethod( mthd )
+      val mbr = meth.invoke( msg )
+      if ( isCaseClass( mbr ) ) {
+	toTerm( mbr.asInstanceOf[ScalaObject with Product with Serializable] )
+      }
+      else {
+	mbr.toString
+      }
+    }
+
+    val methods = msg.getClass.getMethods.toList
+
+    methods match {
+      case mthd :: mthds => {
+	( getArg( msg, mthd.getName ) /: mthds )(
+	  ( acc, m ) => {
+	    val methName = m.getName
+	    if (
+	      stdCaseClassMethods.contains( methName )
+	      || methName.contains( "$$$outer" )
+	      || methName.contains( "copy$default" )
+	    ) {
+	      acc
+	    }
+	    else {
+	      acc + "," + getArg( msg, methName )
+	    }
+	  }
+	)
+      }
+      case Nil => " "
+    }    
+  }
+
+  def toTerm( msg : ScalaObject with Product with Serializable ) : String = {
+    (
+      toTermSymbol( msg )
+      + "("
+      + toTermActuals( msg )
+      + ")"
+    )
+  }
+}

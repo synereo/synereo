@@ -97,7 +97,13 @@ with PrologTermParsing {
     srcHost : String, trgtHost : String,
     srcQStr : String, trgtQStr : String
   ) = {
-    val srcScope = new AMQPStdScope[String]()
+    val srcScope = new AMQPStdScope[String]() {
+      override def properties : Option[AMQP.BasicProperties] = {    
+	val amqpBPBuilder = new AMQP.BasicProperties.Builder
+	amqpBPBuilder.contentType( "application/json" )
+	Some( amqpBPBuilder.build )
+      }
+    }
     val srcQM =
       new srcScope.AMQPQueueHostExchangeM[String]( srcHost, srcQStr )
     val srcQ = srcQM.zero[String]

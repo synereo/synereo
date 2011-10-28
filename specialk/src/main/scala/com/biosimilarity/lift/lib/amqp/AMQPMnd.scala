@@ -35,6 +35,22 @@ import _root_.java.util.TimerTask
 trait AMQPBrokerScope[T] {
   self : MonadicDispatcherScope[T] =>
     def factory : ConnectionFactory  
+  
+  /* java.lang.String contentType */
+  /* java.lang.String contentEncoding */
+  /* java.util.Map<java.lang.String,java.lang.Object> headers */
+  /* java.lang.Integer deliveryMode */
+  /* java.lang.Integer priority */
+  /* java.lang.String correlationId */
+  /* java.lang.String replyTo */
+  /* java.lang.String expiration */
+  /* java.lang.String messageId */
+  /* java.util.Date timestamp */
+  /* java.lang.String type */
+  /* java.lang.String userId */
+  /* java.lang.String appId */
+  /* java.lang.String clusterId */
+  def properties : Option[AMQP.BasicProperties] = None
 
   class StdMonadicAMQPSndrRcvr[A](
     override val host : String,
@@ -63,7 +79,7 @@ trait AMQPBrokerScope[T] {
 	    channel.basicPublish(
 	      exchange,
 	      routingKey,
-	      null,
+	      properties.getOrElse( null ),
 	      bytes.toByteArray
 	    )	    
 	  }
