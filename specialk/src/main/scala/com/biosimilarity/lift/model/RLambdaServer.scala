@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.model
 
+import com.biosimilarity.lift.lib._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.seleKt.model.ill.lang.illtl._
 import com.biosimilarity.seleKt.model.ill.lang.illtl.Absyn._
@@ -30,58 +31,124 @@ import java.io.StringReader
 
 class RLambdaEvaluationService(
   override val exchange : PersistedtedStringMGJ
-) extends RLLEvalProtocol( exchange ) {  
-  val sessionMap = new HashMap[String,String]( )
-
-  def sessionMsg( sessId : String, msgType : String ) : String = {
-    (
-      msgType + "( "
-      //+ "sessionId( "
-      + "\"" + sessId + "\""
-      //+ " )"
-      + " )"
-    )
+) extends RLLEvalProtocol( exchange )
+with DEvalMsgScope
+with CnxnXML[String,String,String]
+with CnxnCtxtInjector[String,String,String]
+with Blobify
+with UUIDOps {  
+  type EvalMsgTypes = DEvalMessages
+  
+  object theDEvalMsgs extends DEvalMessages {
+      val sessionID = getUUID
+      val flowID = getUUID
+      val expr = "lambda x.x"
+    def protoSessionRequest =
+      new sessionRequest( sessionID.toString )
+    def protoSessionResponse =
+      new sessionResponse( sessionID.toString )
+    def protoEvaluationRequest = 
+      new evalExprRequest(
+	sessionID.toString,
+	flowID.toString,
+	expr
+      )
+    def protoEvaluationResponse =
+      new evalExprResponse(
+	sessionID.toString,
+	flowID.toString,
+	expr
+      )       
   }
 
-  def inSession(
+  def protoEvalMsgs = theDEvalMsgs  
+
+  object protocolConversions {
+    implicit def caseClassAsPattern(
+      cc : ScalaObject with Product with Serializable
+    ) : CnxnCtxtLabel[String,String,String] with Factual = {
+      val l2ns : String => String = 
+	( s : String ) => {
+	  s.substring( 0, 1 ).toLowerCase + s.substring( 1, s.length )
+	}
+      val v2t : java.lang.Object => String = 
+	( o : java.lang.Object ) => {
+	  if ( o.isInstanceOf[String] )
+	    { "\"" + o + "\"" }
+	  else { o + "" }
+	}
+      fromCaseClass( l2ns, v2t )( cc )
+    }
+  }
+
+  case class EvalSessionRsrc(
     endPtId : String,
-    reqType : String,
-    rspType : String,
+    flowVar : String,
+    exprVar : String
+  )
+  
+  val sessionMap = new HashMap[String,String]( )
+  val protocolSessionMap = new HashMap[String,EvalSessionRsrc]( )
+
+  // Using the protocol methods
+  def makeVariable( root : String ) : String = {
+    ( root + getUUID ).replace( "-", "" )
+  }
+  def inSessionProtocol(
+    endPtId : String,
     evaluation : String => String
   ) = {
-    val sessionResponseStr =
-      "sessionResponse( " + "\"" + endPtId + "\"" + " )"      
-    val sessId = getUUID
-    sessionMap += ( ( sessId.toString, endPtId ) )
-    exchange.put( sessionResponseStr, sessId.toString )
-    
-    val ( evaluationRequestStr, evaluationResponseStr ) = 
-      (
-	sessionMsg( sessId.toString, reqType ),
-	sessionMsg( sessId.toString, rspType )
-      );
+    import protocolConversions._
 
+    val sessId = getUUID    
+    val flowIdVar = makeVariable( "flow" )
+    val exprVar = makeVariable( "expr" )
+
+    val evalSessionRsrc =
+      EvalSessionRsrc( endPtId, flowIdVar, exprVar )
+
+    protocolSessionMap += ( ( sessId.toString, evalSessionRsrc ) )
+    exchange.put( caseClassAsPattern( theDEvalMsgs.sessionResponse( endPtId ) ), sessId.toString )    
+
+    val evalExprReq =
+      theDEvalMsgs.evalExprRequest( sessId.toString, flowIdVar, exprVar )
+    
     println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
     println( "waiting to serve evaluation request: " )
     println( "client id: " + endPtId )
     println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 
     reset {
-      for( exprRsrc <- exchange.get( evaluationRequestStr ) ) {
-	exprRsrc match {
+      for( evalExprReqK <- exchange.get( caseClassAsPattern( evalExprReq ) ) ) {
+	evalExprReqK match {
 	  case Some( mTT.Ground( expr ) ) => {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
-	    println( "received evaluation request from: " + endPtId )
+	    println( "received malformed evaluation request from: " + endPtId )
 	    println( "expr: " + expr )
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
-	    exchange.put( evaluationResponseStr, evaluation( expr ) )
+	    throw new Exception( "evaluation request with no binding" )
 	  }
-	  case Some( mTT.RBound( Some( mTT.Ground( expr ) ), _ ) ) => {
+	  case Some( mTT.RBound( Some( mTT.Ground( expr ) ), None ) ) => {
+	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
+	    println( "received malformed evaluation request from: " + endPtId )
+	    println( "expr: " + expr )
+	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
+	    throw new Exception( "evaluation request with no binding" )
+	  }
+	  case Some( mTT.RBound( Some( mTT.Ground( expr ) ), Some( soln ) ) ) => {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    println( "received evaluation request from: " + endPtId )
 	    println( "expr: " + expr )
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
-	    exchange.put( evaluationResponseStr, evaluation( expr ) )
+	    
+	    val evalExprRsp =
+	      theDEvalMsgs.evalExprResponse(
+		sessId.toString,
+		soln.get( flowIdVar ),
+		expr
+	      )
+
+	    exchange.put( caseClassAsPattern( evalExprRsp ), evaluation( soln.get( exprVar ) ) )
 	  }
 	  case _ => {
 	    println( "waiting for evaluation request..." )
@@ -91,31 +158,37 @@ class RLambdaEvaluationService(
     }
   }
 
-  def evalInSession( endPtId : String ) = {
+  def evalInSessionProtocol( endPtId : String ) = {
     println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
     println( "received session request from: " + endPtId )
     println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
-    inSession(
+    inSessionProtocol(
       endPtId,
-      "evaluationRequest",
-      "evaluationResponse",
       ( expr : String ) => { new RLambdaREPL( ).eval( expr ) }
     )
   }
 
-  def serve = {
+  def serveProtocol = {
+    import protocolConversions._
+
     println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
     println( "waiting to serve session request: " + endPointId.toString )
     println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
     
     reset {
-      for( endPtRsrc <- exchange.get( sessionRequestStr ) ) {
+      for(
+	endPtRsrc <- exchange.get(
+	  caseClassAsPattern(
+	    theDEvalMsgs.sessionRequest( makeVariable( "session" ) )
+	  )
+	)
+      ) {
 	endPtRsrc match {
 	  case Some( mTT.Ground( endPtId ) ) => {
-	    evalInSession( endPtId )
+	    evalInSessionProtocol( endPtId )
 	  }
 	  case Some( mTT.RBound( Some( mTT.Ground( endPtId ) ), _ ) ) => {
-	    evalInSession( endPtId )	    
+	    evalInSessionProtocol( endPtId )
 	  }
 	  case _ => {
 	    println( "waiting for session request ..." )
@@ -123,7 +196,7 @@ class RLambdaEvaluationService(
 	}	
       }
     }    
-  }  
+  }
 }
 
 class RLambdaApplicationEvaluationService(
@@ -135,7 +208,7 @@ class RLambdaApplicationEvaluationService(
   def appEvalReqStr : String = {
     throw new Exception( "tbd" )
   }
-  override def serve = {
+  override def serveProtocol = {
     reset {
       for( appEvalRsrc <- exchange.get( appEvalReqStr ) ) {
 	appEvalRsrc match {
@@ -163,7 +236,7 @@ class RLambdaAbstractionEvaluationService(
   def absEvalReqStr : String = {
     throw new Exception( "tbd" )
   }  
-  override def serve = {
+  override def serveProtocol = {
     reset {
       for( absEvalRsrc <- exchange.get( absEvalReqStr ) ) {
 	absEvalRsrc match {
@@ -191,7 +264,7 @@ class RLambdaMentionEvaluationService(
   def mntnEvalReqStr : String = {
     throw new Exception( "tbd" )
   }  
-  override def serve = {
+  override def serveProtocol = {
     reset {
       for( mntnEvalRsrc <- exchange.get( mntnEvalReqStr ) ) {
 	mntnEvalRsrc match {

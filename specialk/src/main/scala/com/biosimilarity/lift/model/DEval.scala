@@ -15,15 +15,16 @@ import java.net.URI
 import java.util.UUID
 
 trait DEvalMessages {
+  trait evaluationProtocolMsg
   trait request
   trait response
-  trait sessionSetup
+  trait sessionSetup extends evaluationProtocolMsg
   case class sessionRequest( id : String )
        extends sessionSetup with request
   case class sessionResponse( id : String )
        extends sessionSetup with response
   
-  trait evaluation
+  trait evaluation extends evaluationProtocolMsg
   case class evalExprRequest(
     sessId : String,
     flowId : String, // useful to make this hash of expr
@@ -41,11 +42,11 @@ trait DEvalMessages {
   def protoSessionResponse : sessionResponse
   lazy val theProtoSessionResponse : sessionResponse =
     protoSessionResponse
-  def protoEvaluationRequest : sessionRequest
-  lazy val theProtoEvaluationRequest : sessionRequest =
+  def protoEvaluationRequest : evalExprRequest
+  lazy val theProtoEvaluationRequest : evalExprRequest =
     protoEvaluationRequest
-  def protoEvaluationResponse : sessionResponse
-  lazy val theProtoEvaluationResponse : sessionResponse =
+  def protoEvaluationResponse : evalExprResponse
+  lazy val theProtoEvaluationResponse : evalExprResponse =
     protoEvaluationResponse
 }
 
