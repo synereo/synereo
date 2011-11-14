@@ -683,10 +683,81 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  persist
 	)( channels, registered, ptn, rsrc, collName )
       ) {
+	def updateKStore( callK : Boolean ) : Option[List[Option[mTT.Resource] => Unit @suspendable]] = {
+	  val xmlCollName =
+	    collName.getOrElse(
+	      storeUnitStr.getOrElse(
+		bail()
+	      )
+	    )
+
+	  checkIfDBExists( xmlCollName, true ) match {
+	    case true => {
+	      val oKQry = kquery( xmlCollName, ptn )
+	      oKQry match {
+		case None => {
+		  throw new Exception(
+		    "failed to compile a continuation query" 
+		  )				  
+		}
+		case Some( kqry ) => {
+		  val krslts = executeWithResults( kqry )
+		  krslts match {
+		    case Nil => {
+		      // Nothing to do
+		      None
+		    }
+		    case _ => {
+		      //for( krslt <- itergen[Elem]( krslts ) ) {
+		      Some(
+			for( krslt <- krslts ) yield {
+			  tweet( "retrieved " + krslt.toString )
+			  val ekrsrc = asResource( ptn, krslt )
+			  
+			  if ( consume ) {
+			    tweet( "removing from store " + krslt )
+			    removeFromStore( 
+			      persist,
+			      krslt,
+			      collName
+			    )
+			  }
+			  
+			  ekrsrc match {
+			    case Some( mTT.Continuation( k :: ks ) ) => {
+			      putKInStore(
+				persist,
+				ptn,
+				mTT.Continuation( ks ),
+				collName
+			      )
+			      k
+			    }
+			    case _ => {
+			      throw new Exception(
+				"Non-continuation resource stored in kRecord" + ekrsrc
+			      )
+			    }
+			  }
+			}
+		      )
+		    }
+		  }
+		}
+	      }
+	    }
+	    case false => {
+	      tweet( "warning: failed to find a database!" )			  
+	      None
+	    }
+	  }
+	}
+
 	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
 	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
 	rks match {
-	  case rk :: rrks => {	
+	  case rk :: rrks => {		    
+	    val ks = updateKStore( false )
 	    if ( consume ) {
 	      for( sk <- rks ) {
 		spawn {
@@ -700,9 +771,21 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	    }
 	  }
 	  case Nil => {
-	    putInStore(
-	      persist, channels, ptn, Some( wtr ), rsrc, collName
-	    )
+	    val ks = updateKStore( false )
+	    ks match {
+	      case Some( kks ) => {
+		for( sk <- kks ) {
+		  spawn {
+		    sk( s( rsrc ) )
+		  }
+		}
+	      }
+	      case None => {
+		putInStore(
+		  persist, channels, ptn, Some( wtr ), rsrc, collName
+		)
+	      }
+	    }	    
 	  }
 	}
       }
@@ -794,11 +877,12 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 					  )				  
 					}
 					case Some( kqry ) => {
+					  val krslts = executeWithResults( qry )
+
 					  // This is the easy case!
 					  // There are no locations
 					  // matching the pattern with
-					  // stored continuations	  
-					  val krslts = executeWithResults( qry )
+					  // stored continuations	  					  
 					  krslts match {
 					    case Nil => {
 					      putKInStore(
