@@ -571,6 +571,40 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       }
     }
 
+    // BUGBUG -- lgm : how can we refactor out commonality between
+    // this and the method, putInStore, above
+    def putKInStore(
+      persist : Option[PersistenceManifest],
+      ptn : mTT.GetRequest,
+      rsrc : mTT.Resource,
+      collName : Option[String]
+    ) : Unit = {
+      persist match {
+	case None => {
+	  // Nothing to do
+	  tweet( "warning : no store in which to put continuation " + rsrc )
+	}
+	case Some( pd ) => {
+	  tweet( "accessing db : " + pd.db )
+	  spawn {
+	    for(
+	      rcrd <- asStoreKRecord( ptn, rsrc );
+	      sus <- collName
+	    ) {
+	      tweet(
+		(
+		  "storing to db : " + pd.db
+		  + " pair : " + rcrd
+		  + " in coll : " + sus
+		)
+	      )
+	      store( sus )( rcrd )
+	    }
+	  }
+	}
+      }
+    }
+
     def putPlaces( persist : Option[PersistenceManifest] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
@@ -727,6 +761,12 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				      // Need to store the
 				      // continuation on the tail of
 				      // the continuation entry
+				      putKInStore(
+					persist,
+					path,
+					mTT.Continuation( rk ),
+					collName
+				      )
 				      
 				      // Then forward the request
 				      forward( ask, hops, path )

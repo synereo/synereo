@@ -63,6 +63,10 @@ extends MonadicGenerators {
   class TMapR[Namespace,Var,Tag,Value]
   extends HashMap[GetRequest,Resource]  
 
+  case class Continuation(
+    k : Option[Resource] => Unit @suspendable
+  ) extends Resource
+
   trait Color
   case object Clear extends Color
   case object Opaque extends Color
