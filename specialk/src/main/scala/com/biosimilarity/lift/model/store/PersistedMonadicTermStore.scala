@@ -56,6 +56,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def toFile( ptn : mTT.GetRequest ) : Option[File]
     def query( ptn : mTT.GetRequest ) : Option[String]
     def query( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String]
+    def kquery( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String]
 
     def labelToNS : Option[String => Namespace]
     def textToVar : Option[String => Var]
@@ -130,6 +131,13 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 
     def query( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String] = {
       for( pd <- persistenceManifest; qry <- pd.query( xmlCollStr, ptn ) ) 
+	yield {
+	  qry
+	}
+    }
+
+    def kquery( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String] = {
+      for( pd <- persistenceManifest; qry <- pd.kquery( xmlCollStr, ptn ) ) 
 	yield {
 	  qry
 	}
@@ -347,15 +355,17 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	}
     }
 
-    override def query(
+    def queryRsrc(
       xmlCollStr : String,
       ptn : mTT.GetRequest
-    ) : Option[String] = {
+    )(
+      nameSpace : Namespace
+    ): Option[String] = {
       for( ttv <- textToVar )
 	yield {
 	  val ccb =
 	    new CnxnCtxtBranch[Namespace,Var,Tag](
-	      kvNameSpace,
+	      nameSpace,
 	      List(
 		asCCL( ptn ),
 		new CnxnCtxtLeaf[Namespace,Var,Tag](
@@ -380,6 +390,20 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	    )
 	  )
 	}
+    }
+
+    override def query(
+      xmlCollStr : String,
+      ptn : mTT.GetRequest
+    ) : Option[String] = {
+      queryRsrc( xmlCollStr, ptn )( kvNameSpace )
+    }
+
+    override def kquery(
+      xmlCollStr : String,
+      ptn : mTT.GetRequest
+    ) : Option[String] = {
+      queryRsrc( xmlCollStr, ptn )( kvKNameSpace )
     }
 
     override def toFile(
@@ -758,15 +782,71 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 					  + " had no matching resources."
 					)
 				      )
+
 				      // Need to store the
 				      // continuation on the tail of
 				      // the continuation entry
-				      putKInStore(
-					persist,
-					path,
-					mTT.Continuation( rk ),
-					collName
-				      )
+				      val oKQry = kquery( xmlCollName, path )
+				      oKQry match {
+					case None => {
+					  throw new Exception(
+					    "failed to compile a continuation query" 
+					  )				  
+					}
+					case Some( kqry ) => {
+					  // This is the easy case!
+					  // There are no locations
+					  // matching the pattern with
+					  // stored continuations	  
+					  val krslts = executeWithResults( qry )
+					  krslts match {
+					    case Nil => {
+					      putKInStore(
+						persist,
+						path,
+						mTT.Continuation( List( rk ) ),
+						collName
+					      )
+					    }
+					    case _ => {
+					      // A more subtle
+					      // case. Do we store
+					      // the continutation on
+					      // each match?
+					      // Answer: Yes!
+					      for( krslt <- itergen[Elem]( krslts ) ) {
+						tweet( "retrieved " + krslt.toString )
+						val ekrsrc = asResource( path, krslt )
+					  
+						if ( consume ) {
+						  tweet( "removing from store " + krslt )
+						  removeFromStore( 
+						    persist,
+						    krslt,
+						    collName
+						  )
+						}
+						
+						ekrsrc match {
+						  case Some( mTT.Continuation( ks ) ) => {
+						    putKInStore(
+						      persist,
+						      path,
+						      mTT.Continuation( ks ++ List( rk ) ),
+						      collName
+						    )
+						  }
+						  case _ => {
+						    throw new Exception(
+						      "Non-continuation resource stored in kRecord" + ekrsrc
+						    )
+						  }
+						}
+					      }
+					    }
+					  }				  
+					}
+				      }	
 				      
 				      // Then forward the request
 				      forward( ask, hops, path )
@@ -818,7 +898,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
                                         rk( rsrcCursor )
                                       }
                                       else
-                                      {
+					{
 					for( rslt <- itergen[Elem]( rslts ) ) {
 					  tweet( "retrieved " + rslt.toString )
 					  val ersrc = asResource( path, rslt )

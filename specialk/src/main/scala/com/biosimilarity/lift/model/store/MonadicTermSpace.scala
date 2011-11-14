@@ -64,7 +64,7 @@ extends MonadicGenerators {
   extends HashMap[GetRequest,Resource]  
 
   case class Continuation(
-    k : Option[Resource] => Unit @suspendable
+    ks : List[Option[Resource] => Unit @suspendable]
   ) extends Resource
 
   trait Color
