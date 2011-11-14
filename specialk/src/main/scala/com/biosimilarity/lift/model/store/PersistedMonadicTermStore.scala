@@ -712,25 +712,25 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		      Some(
 			for( krslt <- krslts ) yield {
 			  tweet( "retrieved " + krslt.toString )
-			  val ekrsrc = asResource( ptn, krslt )
-			  
-			  if ( consume ) {
-			    tweet( "removing from store " + krslt )
-			    removeFromStore( 
-			      persist,
-			      krslt,
-			      collName
-			    )
-			  }
+			  val ekrsrc = asResource( ptn, krslt )			 			  
 			  
 			  ekrsrc match {
 			    case Some( mTT.Continuation( k :: ks ) ) => {
-			      putKInStore(
-				persist,
-				ptn,
-				mTT.Continuation( ks ),
-				collName
-			      )
+			      if ( consume ) {
+				tweet( "removing from store " + krslt )
+				removeFromStore( 
+				  persist,
+				  krslt,
+				  collName
+				)
+				tweet( "updating store " )
+				putKInStore(
+				  persist,
+				  ptn,
+				  mTT.Continuation( ks ),
+				  collName
+				)
+			      }
 			      k
 			    }
 			    case _ => {
