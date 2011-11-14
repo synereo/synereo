@@ -62,6 +62,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def textToTag : Option[String => Tag]        
 
     def kvNameSpace : Namespace
+    def kvKNameSpace : Namespace
 
     def asStoreKey(
       key : mTT.GetRequest
@@ -72,6 +73,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     ) : CnxnCtxtLeaf[Namespace,Var,String] with Factual
     
     def asStoreRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : CnxnCtxtLabel[Namespace,Var,String] with Factual
+
+    def asStoreKRecord(
       key : mTT.GetRequest,
       value : mTT.Resource
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual
@@ -153,6 +159,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	yield { pd.kvNameSpace }
     }
 
+    def kvKNameSpace : Option[Namespace] = {
+      for( pd <- persistenceManifest )
+	yield { pd.kvKNameSpace }
+    }
+
     def asStoreKey(
       key : mTT.GetRequest
     ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
@@ -173,6 +184,14 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
       for( pd <- persistenceManifest )
 	yield { pd.asStoreRecord( key, value ) }
+    }
+
+    def asStoreKRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+      for( pd <- persistenceManifest )
+	yield { pd.asStoreKRecord( key, value ) }
     }
 
     def asResource(
@@ -232,14 +251,30 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       }
     }
 
+    def asStoreEntry(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    )(
+      nameSpace : Namespace
+    ): CnxnCtxtLabel[Namespace,Var,String] with Factual = {
+      new CnxnCtxtBranch[Namespace,Var,String](
+	nameSpace,
+	List( asStoreKey( key ), asStoreValue( value ) )
+      )
+    }
+
     override def asStoreRecord(
       key : mTT.GetRequest,
       value : mTT.Resource
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
-      new CnxnCtxtBranch[Namespace,Var,String](
-	kvNameSpace,
-	List( asStoreKey( key ), asStoreValue( value ) )
-      )
+      asStoreEntry( key, value )( kvNameSpace )
+    }
+
+    override def asStoreKRecord(
+      key : mTT.GetRequest,
+      value : mTT.Resource
+    ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
+      asStoreEntry( key, value )( kvKNameSpace )
     }
 
     override def asCacheValue(
@@ -689,6 +724,11 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 					  + " had no matching resources."
 					)
 				      )
+				      // Need to store the
+				      // continuation on the tail of
+				      // the continuation entry
+				      
+				      // Then forward the request
 				      forward( ask, hops, path )
 				      rk( oV )
 				    }
@@ -1004,6 +1044,7 @@ object PersistedMonadicTS
 	}	
 
 	def kvNameSpace : String = "record"
+	def kvKNameSpace : String = "kRecord"
 
 	// BUGBUG -- LGM: Evidence of a problem with this factorization
 	override def asCacheValue(
@@ -1194,6 +1235,7 @@ object StdPersistedMonadicTS
 	}	
 
 	def kvNameSpace : Symbol = 'record
+	def kvKNameSpace : Symbol = 'kRecord
 
 	// BUGBUG -- LGM: Evidence of a problem with this factorization
 	override def asCacheValue(

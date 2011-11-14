@@ -91,6 +91,7 @@ class SimpleStoreScope[A]( )
 	  }	
 	  
 	  def kvNameSpace : String = "record"
+	  def kvKNameSpace : String = "kRecord"
 	  
 	  // BUGBUG -- LGM: Evidence of a problem with this factorization
 	  override def asCacheValue(

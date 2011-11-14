@@ -259,7 +259,7 @@ with FJTaskRunners {
 
 trait MonadicDispatcherScope[T] {
   type MDS[A] <: MonadicDispatcher[A]
-  val theMDS = protoMDS[T]
+  val theMDS : MDS[T] = protoMDS[T]
   def protoMDS[A] : MDS[A]
 }
 

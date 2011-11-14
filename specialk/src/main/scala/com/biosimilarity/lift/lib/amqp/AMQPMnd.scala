@@ -29,13 +29,14 @@ import _root_.java.io.ObjectInputStream
 import _root_.java.io.ObjectOutputStream
 import _root_.java.io.ByteArrayInputStream
 import _root_.java.io.ByteArrayOutputStream
+import _root_.java.io.PrintWriter
+import _root_.java.io.StringWriter
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
 trait AMQPBrokerScope[T] {
   self : MonadicDispatcherScope[T] =>
     def factory : ConnectionFactory  
-  
   /* java.lang.String contentType */
   /* java.lang.String contentEncoding */
   /* java.util.Map<java.lang.String,java.lang.Object> headers */
@@ -101,7 +102,7 @@ trait AMQPBrokerScope[T] {
 	}
       }
     }
-  }
+  }  
 
   override type MDS[A] = StdMonadicAMQPSndrRcvr[A]
   override def protoMDS[A] =
@@ -487,6 +488,130 @@ object AMQPScope {
   ) : Option[( ConnectionFactory )] = {
     Some( ( amqpScope.factory ) )
   }
+}
+
+class AMQPNodeJSScope (
+  override val factory : ConnectionFactory
+) extends AMQPScope[String]( factory ) {
+  override val theMDS : MDS[String] = protoMDSNode
+  val theNodeMDS : StdMonadicAMQPNodeJSSndrRcvr = protoNode
+  def protoMDSNode : MDS[String] = protoNode
+  def protoNode : StdMonadicAMQPNodeJSSndrRcvr =
+    new StdMonadicAMQPNodeJSSndrRcvr( "", -1 )
+  
+  class StdMonadicAMQPNodeJSSndrRcvr(
+    override val host : String,
+    override val port : Int
+  ) extends StdMonadicAMQPSndrRcvr[String]( host, port ) {
+    def readJSON ( channel : Channel, exQNameRoot : String ) =
+      Generator {
+	k: ( String => Unit @suspendable) =>
+	  shift {
+	    outerk: (Unit => Unit) =>
+	      reset {
+		
+  		for (
+		  amqpD <- callbacks( channel, exQNameRoot )
+		)	{
+  		  val routingKey = amqpD.env.getRoutingKey
+		  val contentType = amqpD.props.getContentType
+		  val deliveryTag = amqpD.env.getDeliveryTag
+
+		  k( new String( amqpD.body ) )
+		  channel.basicAck(deliveryTag, false);
+		  
+		  // Is this necessary?
+		  shift { k : ( Unit => Unit ) => k() }
+  		}
+  		
+  		blog( "readT returning" )
+  		outerk()
+	      }
+	  }
+      }
+
+    def serveJSON (
+      factory : ConnectionFactory,
+      host : String,
+      port : Int,
+      exQNameRoot : String
+    ) = Generator {
+      k : ( String => Unit @suspendable ) =>
+	//shift {
+	blog(
+	  "The rabbit is running... (with apologies to John Updike)"
+	)
+
+	for( channel <- acceptConnections( factory, host, port ) ) {
+	  spawn {
+	    // Open bracket
+	    blog( "Connected: " + channel )
+            val qname = (exQNameRoot + "_queue")
+            channel.exchangeDeclare( exQNameRoot, "direct" )
+            channel.queueDeclare(qname, true, false, false, null);
+            channel.queueBind( qname, exQNameRoot, "routeroute" )
+
+            for ( t <- readJSON ( channel, exQNameRoot ) ) { k( t ) }
+
+            // Close bracket
+	  }
+	}
+      //}
+    }
+
+    def senderJSON ( 
+      host : String,
+      port : Int,
+      exchange : String,
+      routingKey : String
+    ) : Generator[Unit, String, Unit] = {      
+      val conn = factory.newConnection( Array { new Address(host, port) } )
+      val channel = conn.createChannel()
+      val qname = ( exchange + "_queue" )
+	channel.exchangeDeclare( exchange, "direct" )
+      channel.queueDeclare( qname, true, false, false, null );
+      channel.queueBind( qname, exchange, routingKey )
+	  
+      Generator {
+	k : ( Unit => String @suspendable ) => {
+	  spawn {	   
+	    channel.basicPublish(
+	      exchange,
+	      routingKey,
+	      properties.getOrElse( null ),
+	      k( ).getBytes
+	    )	    
+	  }
+	}
+      }
+    }
+  }
+
+  class AMQPNodeJSQueueM(
+    override val host : String,
+    override val port : Int,
+    override val exchange : String,
+    override val routingKey : String
+  ) extends AMQPQueueM[String]( host, port, exchange, routingKey ) {            
+    def zeroJSON : AMQPQueue[String] = {
+      AMQPQueue[String](
+	exchange,
+	routingKey,
+	theNodeMDS.serveJSON(
+	  factory,
+	  host,
+	  port,
+	  exchange
+	).asInstanceOf[AMQPNodeJSScope.this.theMDS.Generator[String,Unit,Unit]],
+	theNodeMDS.senderJSON(
+	  host,
+	  port,
+	  exchange,
+	  routingKey
+	).asInstanceOf[AMQPNodeJSScope.this.theMDS.Generator[Unit,String,Unit]]
+      )
+    }
+  }  
 }
 
 trait JSONOverAMQPBrokerScope[T] 
