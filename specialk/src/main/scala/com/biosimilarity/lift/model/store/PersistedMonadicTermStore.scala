@@ -683,7 +683,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  persist
 	)( channels, registered, ptn, rsrc, collName )
       ) {
-	def updateKStore( callK : Boolean ) : Option[List[Option[mTT.Resource] => Unit @suspendable]] = {
+	def updateKStore( ) : Option[List[Option[mTT.Resource] => Unit @suspendable]] = {
 	  val xmlCollName =
 	    collName.getOrElse(
 	      storeUnitStr.getOrElse(
@@ -755,9 +755,9 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 
 	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
 	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
-	rks match {
-	  case rk :: rrks => {		    
-	    val ks = updateKStore( false )
+	val ks = updateKStore( )
+	ks match {
+	  case Some( kk :: kks ) => {
 	    if ( consume ) {
 	      for( sk <- rks ) {
 		spawn {
@@ -766,26 +766,14 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	      }
 	    }
 	    else {
-	      registered( wtr ) = rrks
-	      rk( s( rsrc ) )
+	      registered( wtr ) = kks
+	      kk( s( rsrc ) )
 	    }
 	  }
-	  case Nil => {
-	    val ks = updateKStore( false )
-	    ks match {
-	      case Some( kks ) => {
-		for( sk <- kks ) {
-		  spawn {
-		    sk( s( rsrc ) )
-		  }
-		}
-	      }
-	      case None => {
-		putInStore(
-		  persist, channels, ptn, Some( wtr ), rsrc, collName
-		)
-	      }
-	    }	    
+	  case _ => {
+	    putInStore(
+	      persist, channels, ptn, Some( wtr ), rsrc, collName
+	    )
 	  }
 	}
       }
@@ -900,19 +888,16 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 					      // Answer: Yes!
 					      for( krslt <- itergen[Elem]( krslts ) ) {
 						tweet( "retrieved " + krslt.toString )
-						val ekrsrc = asResource( path, krslt )
-					  
-						if ( consume ) {
-						  tweet( "removing from store " + krslt )
-						  removeFromStore( 
-						    persist,
-						    krslt,
-						    collName
-						  )
-						}
+						val ekrsrc = asResource( path, krslt )			 						
 						
 						ekrsrc match {
 						  case Some( mTT.Continuation( ks ) ) => {
+						    tweet( "removing from store " + krslt )
+						    removeFromStore( 
+						      persist,
+						      krslt,
+						      collName
+						    )
 						    putKInStore(
 						      persist,
 						      path,
