@@ -11,6 +11,7 @@ package com.biosimilarity.lift.lib.node
 import com.biosimilarity.lift.lib.monad._
 import com.biosimilarity.lift.lib.moniker._
 
+import com.biosimilarity.lift.lib.AMQPDefaults
 import com.biosimilarity.lift.lib.AMQPTwistedPairScope
 import com.biosimilarity.lift.lib.JSONOverAMQPTwistedPairScope
 import com.biosimilarity.lift.lib.AMQPStdTwistedPairScope
@@ -21,6 +22,7 @@ import com.biosimilarity.lift.lib.AMQPBrokerScope
 import com.biosimilarity.lift.lib.AMQPScope
 import com.biosimilarity.lift.lib.JSONOverAMQPBrokerScope
 import com.biosimilarity.lift.lib.AMQPStdScope
+import com.biosimilarity.lift.lib.AMQPNodeJSScope
 import com.biosimilarity.lift.lib.MonadicAMQPDispatcher
 import com.biosimilarity.lift.lib.JSONWireToTrgtConversion
 
@@ -112,6 +114,40 @@ with PrologTermParsing {
     val trgtQM =
       new trgtScope.AMQPQueueHostExchangeM[String]( trgtHost, trgtQStr )
     val trgtQ = trgtQM.zero[String]
+    
+    spawn {
+      for( msg <- srcQM( srcQ ) ) {
+	println(
+	  (
+	    "received msg " + msg
+	    + " on " + srcQStr 
+	  )
+	)      
+      }
+    }
+
+    trgtQ ! "{application:{operation:{abstraction:{formal:\"u\",body:{mention:\"u\"}}},actual:{abstraction:{formal:\"u\",body:{mention: \"u\"}}}}}"
+  }
+
+  def exchangeNode(
+    srcHost : String, trgtHost : String,
+    srcQStr : String, trgtQStr : String
+  ) = {
+    val srcScope = new AMQPNodeJSScope( AMQPDefaults.defaultConnectionFactory ) {
+      override def properties : Option[AMQP.BasicProperties] = {    
+	val amqpBPBuilder = new AMQP.BasicProperties.Builder
+	amqpBPBuilder.contentType( "application/json" )
+	Some( amqpBPBuilder.build )
+      }
+    }
+    val srcQM =
+      new srcScope.AMQPNodeJSQueueM( srcHost, srcQStr )
+    val srcQ = srcQM.zeroJSON
+
+    val trgtScope = new AMQPNodeJSScope( AMQPDefaults.defaultConnectionFactory )
+    val trgtQM =
+      new trgtScope.AMQPNodeJSQueueM( trgtHost, trgtQStr )
+    val trgtQ = trgtQM.zeroJSON
     
     spawn {
       for( msg <- srcQM( srcQ ) ) {

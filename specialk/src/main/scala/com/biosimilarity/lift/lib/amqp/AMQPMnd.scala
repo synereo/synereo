@@ -589,25 +589,23 @@ class AMQPNodeJSScope (
 
   class AMQPNodeJSQueueM(
     override val host : String,
-    override val port : Int,
-    override val exchange : String,
-    override val routingKey : String
-  ) extends AMQPQueueM[String]( host, port, exchange, routingKey ) {            
+    override val exchange : String
+  ) extends AMQPQueueHostExchangeM[String]( host, exchange ) {            
     def zeroJSON : AMQPQueue[String] = {
       AMQPQueue[String](
 	exchange,
-	routingKey,
+	"routeroute",
 	theNodeMDS.serveJSON(
 	  factory,
 	  host,
-	  port,
+	  AMQPDefaults.defaultPort,
 	  exchange
 	).asInstanceOf[AMQPNodeJSScope.this.theMDS.Generator[String,Unit,Unit]],
 	theNodeMDS.senderJSON(
 	  host,
-	  port,
+	  AMQPDefaults.defaultPort,
 	  exchange,
-	  routingKey
+	  "routeroute"
 	).asInstanceOf[AMQPNodeJSScope.this.theMDS.Generator[Unit,String,Unit]]
       )
     }
