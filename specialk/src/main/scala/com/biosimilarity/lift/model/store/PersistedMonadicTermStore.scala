@@ -691,7 +691,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	      )
 	    )
 
-	  checkIfDBExists( xmlCollName, true ) match {
+	  checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
 	    case true => {
 	      val oKQry = kquery( xmlCollName, ptn )
 	      oKQry match {
@@ -807,11 +807,13 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		    case None => {
 		      persist match {
 			case None => {
+			  tweet( ">>>>> no persistence manifest..." )
 			  tweet( ">>>>> forwarding..." )
 			  forward( ask, hops, path )
 			  rk( oV )
 			}
 			case Some( pd ) => {
+			  tweet( ">>>>> found a persistence manifest..." )
 			  tweet(
 			    "accessing db : " + pd.db
 			  )
@@ -825,17 +827,19 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 
 			  // Defensively check that db is actually available
 			  
-			  checkIfDBExists( xmlCollName, true ) match {
+			  checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
 			    case true => {
 			      val oQry = query( xmlCollName, path )
 			  
 			      oQry match {
 				case None => {
+				  tweet( ">>>>> unable to compile query for path " + path )
 				  tweet( ">>>>> forwarding..." )
 				  forward( ask, hops, path )
 				  rk( oV )
 				}
 				case Some( qry ) => {	
+				  tweet( ">>>>> compiled query for path " + path )
 				  tweet(
 				    (
 				      "retrieval query : \n" + qry

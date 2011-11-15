@@ -54,6 +54,38 @@ with Schema
     }
   }
 
+  def checkIfDBExistsAndCreateIfNot(collectionName: String, leaveOpen: Boolean): Boolean =
+  {
+    val clientSession = clientSessionFromConfig
+
+    try {      
+      clientSession.execute(new Open(collectionName))
+      if (!leaveOpen) {
+        clientSession.execute(new Close())
+      }
+      true
+    }
+    catch {
+      case e: BaseXException => {
+        val records = toRecords( "" )
+        clientSession.execute(new Add(records, "database"))
+	if (!leaveOpen) {
+          clientSession.execute(new Close())
+	}
+	true
+      }
+      case _ => {
+	clientSession.execute(new Close())
+	false
+      }
+    }
+    /*
+    finally {
+      clientSession.execute(new Close())
+    }
+    */
+  }
+
   def open(collectionName: String): ClientSession =
   {
     open(collectionName, 50, 100)
