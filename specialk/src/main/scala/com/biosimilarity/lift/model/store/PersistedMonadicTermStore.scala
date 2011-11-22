@@ -1455,16 +1455,29 @@ object PersistedMonadicTS
 	      fromXQSafeJSONBlob( rv )
 	    
 	    unBlob match {
-	      case k@mTT.Continuation( ks ) => {
-		Some( k )
+	      case k : mTT.Resource => {
+		Some( k.asInstanceOf[mTT.Continuation] )
 	      }
 	      case _ => {
-		throw new Exception( "ill-formatted continuation stack" + rv )
+		throw new Exception(
+		  (
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    + "ill-formatted continuation stack blob : " + rv
+		    + "\n" 
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    + "\n"
+		    + "unBlob : " + unBlob
+		    + "\n"
+		    + "unBlob type : " + unBlob
+		    + "\n"
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  )
+		)
 	      }
 	    }
 	  }
 	  case _ => {
-	    throw new Exception( "ill-formatted continuation stack" + ccl )
+	    throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
 	  }
 	}
       }
