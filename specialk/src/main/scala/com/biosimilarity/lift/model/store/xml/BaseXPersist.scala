@@ -139,22 +139,23 @@ with Schema
     }
   }
 
-  def insertUpdate(collectionName: String, key: String, value: String)
-  : Unit =
+  def insertUpdate( recordType : String )(
+    collectionName : String, key : String, value : String
+  ) : Unit =
   {
     //race condition on the exists. wrap this in a transaction
 
     //there may be a more efficient way to achieve this in a single query but the fact that XQUF doesnt return results
     //and that we need special root node insert handling on very first insert made this cleaner
-    if (exists(collectionName, key)) {
-      update(collectionName, key, value)
+    if ( exists( recordType )( collectionName, key ) ) {
+      update( recordType )( collectionName, key, value )
     }
     else {
-      insert(collectionName, key, value)
+      insert( recordType )( collectionName, key, value )
     }
   }
 
-  def insert(collectionName: String, key: String, value: String) =
+  def insert( recordType : String )( collectionName : String, key : String, value : String ) =
   {
     val clientSession = open(collectionName)
     val insertTemplate =
@@ -167,7 +168,7 @@ with Schema
     //      "attempting to insert record into database doc in " + collectionName
     //    )
 
-    val record = toRecord(key, value)
+    val record = toRecord( recordType )( key, value )
     //println( "record : \n" + record )
 
     val insertQry =
@@ -205,23 +206,26 @@ with Schema
     }
   }
 
-  def update(collectionName: String, key: String, value: String) =
+  def replaceTemplate( recordType : String ) : String = {
+    (
+      "let $root := collection('%COLLNAME%')/records "
+      + "let $key := %KEY% "
+      + "for $rcrd in $root/%RECORDTYPE% "
+      + "let $rcrdkey := $rcrd/*[1] "
+      + "where deep-equal($rcrdkey, $key) "
+      + "return if (exists($rcrd)) "
+      + "then replace value of node $rcrd/*[2] "
+      //+ "return replace value of node $rcrds[1]/*[2] "
+      + "with %VALUE% "
+      + "else ()"
+    ).replace( "%RECORDTYPE%", recordType )
+  }
+
+  def update( recordType : String )(collectionName: String, key: String, value: String) =
   {
     val clientSession = open(collectionName)
 
-    val replaceTemplate =
-      (
-        "let $root := collection('%COLLNAME%')/records "
-          + "let $key := %KEY% "
-          + "for $rcrd in $root/record "
-          + "let $rcrdkey := $rcrd/*[1] "
-          + "where deep-equal($rcrdkey, $key) "
-          + "return if (exists($rcrd)) "
-          + "then replace value of node $rcrd/*[2] "
-          //+ "return replace value of node $rcrds[1]/*[2] "
-          + "with %VALUE% "
-          + "else ()"
-        );
+    val replTemplate : String = replaceTemplate( recordType );
     //    report(
     //      "attempting to update record in database doc in " + collectionName
     //    )
@@ -229,7 +233,7 @@ with Schema
     //println( "record : \n" + nodeStr )
 
     val replaceQry =
-      replaceTemplate.replace(
+      replTemplate.replace(
         "%KEY%",
         key
       ).replace(
@@ -245,22 +249,25 @@ with Schema
     execute(replaceQry)
   }
 
+  def existsTemplate( recordType : String ) : String = {
+    (
+      "let $root := collection('%COLLNAME%')/records "
+      + "let $key := %KEY% "
+      + "for $rcrd in $root/%RECORDTYPE% "
+      + "let $rcrdkey := $rcrd/*[1] "
+      + "where deep-equal($rcrdkey, $key) "
+      + "return (exists($rcrd)) "
+    ).replace( "%RECORDTYPE%", recordType )
+  }
+
   //exist by id (one attr among many) will likely not work with deep-equal
-  def exists(collectionName: String, key: String): Boolean =
+  def exists( recordType : String )(collectionName: String, key: String): Boolean =
   {
     val clientSession = clientSessionFromConfig
-    val existsTemplate =
-      (
-        "let $root := collection('%COLLNAME%')/records "
-          + "let $key := %KEY% "
-          + "for $rcrd in $root/record "
-          + "let $rcrdkey := $rcrd/*[1] "
-          + "where deep-equal($rcrdkey, $key) "
-          + "return (exists($rcrd)) "
-        );
+    val eTemplate : String = existsTemplate( recordType );
 
     val existsQry =
-      existsTemplate.replace(
+      eTemplate.replace(
         "%KEY%",
         key
       ).replace(
@@ -283,18 +290,23 @@ with Schema
     }
   }
 
-  def delete(collectionName: String, key: String) : Unit =
-  {
-    val recordDeletionQueryTemplate = (
+  def recordDeletionQueryTemplate( recordType : String ) : String = {
+    (
       "delete node "
-        + "let $key := %RecordKeyConstraints% "
-        + "for $rcrd in collection( '%COLLNAME%' )/records/record "
-        + "where deep-equal($rcrd/*[1], $key) "
-        + "return $rcrd"
-      )
+      + "let $key := %RecordKeyConstraints% "
+      + "for $rcrd in collection( '%COLLNAME%' )/records/%RECORDTYPE% "
+      + "where deep-equal($rcrd/*[1], $key) "
+      + "return $rcrd"
+    ).replace( "%RECORDTYPE%", recordType )
+  }
+
+  def delete( recordType : String )(collectionName: String, key: String) : Unit =
+  {
+    val rcrdDelQryTemplate : String = 
+      recordDeletionQueryTemplate( recordType )
 
     val deletionQry =
-      recordDeletionQueryTemplate.replace(
+      rcrdDelQryTemplate.replace(
         "%RecordKeyConstraints%",
         key
       ).replace(

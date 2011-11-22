@@ -92,6 +92,10 @@ class SimpleStoreScope[A]( )
 	  
 	  def kvNameSpace : String = "record"
 	  def kvKNameSpace : String = "kRecord"
+
+	  def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+	    ns1.equals( ns2 )
+	  }
 	  
 	  // BUGBUG -- LGM: Evidence of a problem with this factorization
 	  override def asCacheValue(

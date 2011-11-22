@@ -65,6 +65,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     def kvNameSpace : Namespace
     def kvKNameSpace : Namespace
 
+    def compareNameSpace( ns1 : Namespace, ns2 : Namespace ) : Boolean
+
     def asStoreKey(
       key : mTT.GetRequest
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual
@@ -92,6 +94,20 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       ttv : String => Var,
       value : Elem
     ) : Option[Value]
+
+    def asCacheK(
+      ccl : CnxnCtxtLabel[Namespace,Var,String]
+    ) : mTT.Continuation = {
+      throw new Exception( "shouldn't be calling this version of asCacheK" )
+    }
+
+    def asCacheK(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      value : Elem
+    ) : Option[mTT.Continuation] = {
+      throw new Exception( "shouldn't be calling this version of asCacheK" )
+    }
 
     def asResource(
       key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -172,6 +188,13 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	yield { pd.kvKNameSpace }
     }
 
+    def compareNameSpace( ns1 : Namespace, ns2 : Namespace ) : Boolean = {
+      persistenceManifest match {
+	case Some( pd ) => pd.compareNameSpace( ns1, ns2 )
+	case _ => false
+      }
+    }
+
     def asStoreKey(
       key : mTT.GetRequest
     ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
@@ -225,6 +248,24 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       for(
 	pd <- persistenceManifest;
 	rsrc <- pd.asCacheValue( ltns, ttv, value )
+      )	yield { rsrc }
+    }
+
+    def asCacheK(
+      ccl : CnxnCtxtLabel[Namespace,Var,String]
+    ) : Option[mTT.Continuation] = {
+      for( pd <- persistenceManifest )
+	yield { pd.asCacheK( ccl ) }
+    }
+
+    def asCacheK(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      value : Elem
+    ) : Option[mTT.Continuation] = {
+      for(
+	pd <- persistenceManifest;
+	rsrc <- pd.asCacheK( ltns, ttv, value )
       )	yield { rsrc }
     }
   }
@@ -282,6 +323,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       key : mTT.GetRequest,
       value : mTT.Resource
     ) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
+      println( "in asStoreKRecord with kvKNameSpace = " + kvKNameSpace )
       asStoreEntry( key, value )( kvKNameSpace )
     }
 
@@ -314,23 +356,54 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       }
     }
 
+    override def asCacheK(
+      ccl : CnxnCtxtLabel[Namespace,Var,String]
+    ) : mTT.Continuation = {
+      throw new Exception( "shouldn't be calling this version of asCacheK" )
+    }
+    
+    override def asCacheK(
+      ltns : String => Namespace,
+      ttv : String => Var,
+      value : Elem
+    ) : Option[mTT.Continuation] = {
+      throw new Exception( "shouldn't be calling this version of asCacheK" )
+    }
+
     override def asResource(
       key : mTT.GetRequest, // must have the pattern to determine bindings
       value : Elem
     ) : Option[mTT.Resource] = {
+      val ttt = ( x : String ) => x
       for(
 	ltns <- labelToNS;
-	ttv <- textToVar;
-	ttt <- textToTag;
-	vCCL <- asCacheValue( ltns, ttv, value )	
+	ttv <- textToVar
       ) yield {
-	// BUGBUG -- LGM need to return the Solution
-	// Currently the PersistenceManifest has no access to the
-	// unification machinery
-	mTT.RBound( 
-	  Some( mTT.Ground( vCCL ) ),
-	  None
-	)
+	xmlIfier.fromXML( ltns, ttv, ttt )( value ) match {
+	  case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
+	    if ( compareNameSpace( ns, kvNameSpace ) ) {	    
+	      // BUGBUG -- LGM need to return the Solution
+	      // Currently the PersistenceManifest has no access to the
+	      // unification machinery	      
+	      mTT.RBound( 
+		for ( vCCL <- asCacheValue( ltns, ttv, value ) ) 
+		yield { mTT.Ground( vCCL ) },
+		None
+	      )
+	    }
+	    else {
+	      if ( compareNameSpace( ns, kvKNameSpace ) ) {
+		asCacheK( v )
+	      }
+	      else {
+		throw new Exception( "unexpected namespace : (" + ns + ")" )
+	      }
+	    }
+	  }
+	  case _ => {
+	    throw new Exception( "unexpected record format : " + value )
+	  }
+	}      
       }
     }
 
@@ -452,19 +525,43 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
       key : mTT.GetRequest, // must have the pattern to determine bindings
       value : Elem
     ) : Option[mTT.Resource] = {
-      for(
-	ltns <- labelToNS;
-	ttv <- textToVar;
-	vCCL <- asCacheValue( ltns, ttv, value )	
-      ) yield {
-	// BUGBUG -- LGM need to return the Solution
-	// Currently the PersistenceManifest has no access to the
-	// unification machinery
-	mTT.RBound( 
-	  Some( mTT.Ground( vCCL ) ),
-	  None
-	)
-      }
+      val ttt = ( x : String ) => x
+      val oRsrc : Option[Option[mTT.Resource]] =
+	for(
+	  ltns <- labelToNS;
+	  ttv <- textToVar;
+	  kvns <- kvNameSpace;
+	  kvkns <- kvKNameSpace;
+	  ccl <- xmlIfier.fromXML( ltns, ttv, ttt )( value )
+	) yield {
+	  ccl match {
+	    case CnxnCtxtBranch( ns, k :: v :: Nil ) => {	    
+	      if ( compareNameSpace( ns, kvns ) ) {	    
+		// BUGBUG -- LGM need to return the Solution
+		// Currently the PersistenceManifest has no access to the
+		// unification machinery	      
+		for ( vCCL <- asCacheValue( ltns, ttv, value ) ) 
+		yield {
+		  mTT.RBound( Some( mTT.Ground( vCCL ) ), None )
+		}
+	      }
+	      else {
+		if ( compareNameSpace( ns, kvkns ) ) {
+		  asCacheK( v )
+		}
+		else {
+		  throw new Exception( "unexpected namespace : (" + ns + ")" )
+		}
+	      }
+	    }
+	    case _ => {
+	      throw new Exception( "unexpected record format : " + value )
+	    }
+	  }      
+	}
+
+      // BUGBUG -- lgm : this is a job for flatMap
+      oRsrc.getOrElse( None )
     }
 
     def asCursor(
@@ -518,10 +615,30 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		) yield { vale }
 	      }
 	      else {
-		tweet(
-		  "namespace mismatch: " + kvNameSpace + "," + ns
-		)
-		None
+		if ( kvKNameSpace.getOrElse( "" ).equals( ns ) ) {
+		  tweet(
+		    "namespace matches : " + ns
+		  )
+		  tweet(
+		    "value before conversion is \n" + v
+		  )
+		  for(
+		    vale <-
+		    asCacheValue(	      
+		      v.asInstanceOf[CnxnCtxtLabel[Namespace,Var,String]]
+		    )		
+		  ) yield { vale }
+		} else {
+		  tweet(
+		    (
+		      "namespace mismatch: "
+		      + "kvNameSpace : " + kvNameSpace
+		      + "kvKNameSpace : " + kvKNameSpace
+		      + "," + ns
+		    )
+		  )
+		  None
+		}
 	      }
 	    }
 	    case _ => {
@@ -609,7 +726,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  tweet( "warning : no store in which to put continuation " + rsrc )
 	}
 	case Some( pd ) => {
-	  tweet( "accessing db : " + pd.db )
+	  tweet( "putKInStore accessing db : " + pd.db )
 	  spawn {
 	    for(
 	      rcrd <- asStoreKRecord( ptn, rsrc );
@@ -676,109 +793,112 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
     )(
       ptn : mTT.GetRequest,
       rsrc : mTT.Resource
-    ) : Unit @suspendable = {    
-      for(
-	placeNRKsNSubst
-	<- putPlaces(
-	  persist
-	)( channels, registered, ptn, rsrc, collName )
-      ) {
-	def updateKStore( ) : Option[List[Option[mTT.Resource] => Unit @suspendable]] = {
-	  val xmlCollName =
-	    collName.getOrElse(
-	      storeUnitStr.getOrElse(
-		bail()
-	      )
+    ) : Unit @suspendable = {                
+      def updateKStore( ) : Option[List[Option[mTT.Resource] => Unit @suspendable]] = {
+	tweet( "in updateKStore " )
+	val xmlCollName =
+	  collName.getOrElse(
+	    storeUnitStr.getOrElse(
+	      bail()
 	    )
+	  )
 
-	  checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
-	    case true => {
-	      val oKQry = kquery( xmlCollName, ptn )
-	      oKQry match {
-		case None => {
-		  throw new Exception(
-		    "failed to compile a continuation query" 
-		  )				  
-		}
-		case Some( kqry ) => {
-		  val krslts = executeWithResults( kqry )
-		  krslts match {
-		    case Nil => {
-		      // Nothing to do
-		      None
-		    }
-		    case _ => {
-		      //for( krslt <- itergen[Elem]( krslts ) ) {
-		      Some(
-			for( krslt <- krslts ) yield {
-			  tweet( "retrieved " + krslt.toString )
-			  val ekrsrc = asResource( ptn, krslt )			 			  
-			  
-			  ekrsrc match {
-			    case Some( mTT.Continuation( k :: ks ) ) => {
-			      if ( consume ) {
-				tweet( "removing from store " + krslt )
-				removeFromStore( 
-				  persist,
-				  krslt,
-				  collName
-				)
-				tweet( "updating store " )
-				putKInStore(
-				  persist,
-				  ptn,
-				  mTT.Continuation( ks ),
-				  collName
-				)
-			      }
-			      k
-			    }
-			    case _ => {
-			      throw new Exception(
-				"Non-continuation resource stored in kRecord" + ekrsrc
+	checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
+	  case true => {
+	    tweet( "database " + xmlCollName + " found" )
+	    val oKQry = kquery( xmlCollName, ptn )
+	    oKQry match {
+	      case None => {
+		throw new Exception(
+		  "failed to compile a continuation query" 
+		)				  
+	      }
+	      case Some( kqry ) => {
+		tweet( "kqry : " + kqry )
+		val krslts = executeWithResults( kqry )
+		krslts match {
+		  case Nil => {
+		    // Nothing to do
+		    tweet( " no continuations in store " )
+		    None
+		  }
+		  case _ => {
+		    Some(
+		      for( krslt <- krslts ) yield {
+			tweet( "retrieved " + krslt.toString )
+			val ekrsrc = asResource( ptn, krslt )			 			  
+			
+			ekrsrc match {
+			  case Some( mTT.Continuation( k :: ks ) ) => {
+			    if ( consume ) {
+			      tweet( "removing from store " + krslt )
+			      removeFromStore( 
+				persist,
+				krslt,
+				collName
+			      )
+			      tweet( "updating store " )
+			      putKInStore(
+				persist,
+				ptn,
+				mTT.Continuation( ks ),
+				collName
 			      )
 			    }
+			    k
+			  }
+			  case _ => {
+			    throw new Exception(
+			      "Non-continuation resource stored in kRecord" + ekrsrc
+			    )
 			  }
 			}
-		      )
-		    }
+		      }
+		    )
 		  }
 		}
 	      }
 	    }
-	    case false => {
-	      tweet( "warning: failed to find a database!" )			  
-	      None
-	    }
 	  }
-	}
-
-	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
-	val ks = updateKStore( )
-	ks match {
-	  case Some( kk :: kks ) => {
-	    if ( consume ) {
-	      for( sk <- rks ) {
-		spawn {
-		  sk( s( rsrc ) )
-		}
-	      }
-	    }
-	    else {
-	      registered( wtr ) = kks
-	      kk( s( rsrc ) )
-	    }
-	  }
-	  case _ => {
-	    putInStore(
-	      persist, channels, ptn, Some( wtr ), rsrc, collName
-	    )
+	  case false => {
+	    tweet( "warning: failed to find a database!" )			  
+	    None
 	  }
 	}
       }
       
-    }    
+    for(
+      placeNRKsNSubst
+      <- putPlaces(
+	persist
+      )( channels, registered, ptn, rsrc, collName )
+    ) {	      
+      val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
+      tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+      val ks = updateKStore( )
+      //val ks : Option[List[Option[mTT.Resource] => Unit @suspendable]] = None
+      ks match {
+	case Some( kk :: kks ) => {
+	  if ( consume ) {
+	    for( sk <- rks ) {
+	      spawn {
+		sk( s( rsrc ) )
+	      }
+	    }
+	  }
+	  else {
+	    registered( wtr ) = kks
+	    kk( s( rsrc ) )
+	  }
+	}
+	case _ => {
+	  putInStore(
+	    persist, channels, ptn, Some( wtr ), rsrc, collName
+	  )
+	}
+      }            
+    }
+  }
     
     def mget(
       persist : Option[PersistenceManifest],
@@ -1239,6 +1359,10 @@ object PersistedMonadicTS
 	def kvNameSpace : String = "record"
 	def kvKNameSpace : String = "kRecord"
 
+	def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+	  ns1.equals( ns2 )
+	}
+
 	// BUGBUG -- LGM: Evidence of a problem with this factorization
 	override def asCacheValue(
 	  ltns : String => String,
@@ -1315,6 +1439,44 @@ object PersistedMonadicTS
       
       }
 
+      override def asCacheK(
+	ccl : CnxnCtxtLabel[String,String,String]
+      ) : Option[mTT.Continuation] = {
+	tweet(
+	  "converting to cache continuation stack" + ccl
+	)
+	//asPatternString( ccl )	
+	ccl match {
+	  case CnxnCtxtBranch(
+	    "String",
+	    CnxnCtxtLeaf( Left( rv ) ) :: Nil
+	  ) => {
+	    val unBlob =
+	      fromXQSafeJSONBlob( rv )
+	    
+	    unBlob match {
+	      case k@mTT.Continuation( ks ) => {
+		Some( k )
+	      }
+	      case _ => {
+		throw new Exception( "ill-formatted continuation stack" + rv )
+	      }
+	    }
+	  }
+	  case _ => {
+	    throw new Exception( "ill-formatted continuation stack" + ccl )
+	  }
+	}
+      }
+
+      override def asCacheK(
+	ltns : String => String,
+	ttv : String => String,
+	value : Elem
+      ) : Option[mTT.Continuation] = {
+	throw new Exception( "shouldn't be calling this version of asCacheK" )
+      }	
+
       def persistenceManifest : Option[PersistenceManifest] = {
 	val sid = Some( ( s : String ) => s )
 	Some(
@@ -1342,6 +1504,10 @@ object PersistedMonadicTS
       */
     }
     
+    def singleton( storeUnitStr : String, a : String )  = {
+      new PersistedtedStringMGJ( storeUnitStr, a, List( ) )
+    }
+
     def ptToPt( storeUnitStr : String, a : String, b : String )  = {
       new PersistedtedStringMGJ( storeUnitStr, a, List( b ) )
     }
@@ -1429,6 +1595,10 @@ object StdPersistedMonadicTS
 
 	def kvNameSpace : Symbol = 'record
 	def kvKNameSpace : Symbol = 'kRecord
+
+	def compareNameSpace( ns1 : Symbol, ns2 : Symbol ) : Boolean = {
+	  ns1.equals( ns2 )
+	}
 
 	// BUGBUG -- LGM: Evidence of a problem with this factorization
 	override def asCacheValue(

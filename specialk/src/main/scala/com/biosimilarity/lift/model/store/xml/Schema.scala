@@ -5,9 +5,11 @@ package com.biosimilarity.lift.model.store.xml
 
 trait Schema
 {
-  def toRecord(key: String, value: String) =
+  def toRecord( recordType : String )( key : String, value : String ) =
   {
-    "<record>" + key + value + "</record>"
+    ( "<%RECORDTYPE%>" + key + value + "</%RECORDTYPE%>" ).replace(
+      "%RECORDTYPE%", recordType
+    )
   }
 
   def toRecords(record: String) =

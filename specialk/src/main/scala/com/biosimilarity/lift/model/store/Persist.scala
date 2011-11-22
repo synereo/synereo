@@ -13,9 +13,9 @@ trait Persist[OpenReturn]
 
   def drop(collectionName: String) : Unit
 
-  def insertUpdate(collectionName: String, key: String, value: String) : Unit
+  def insertUpdate( recordType : String )(collectionName: String, key: String, value: String) : Unit
 
-  def delete(collectionName: String, key: String) : Unit
+  def delete( recordType : String )(collectionName: String, key: String) : Unit
 
   def execute(query: String): Unit
 

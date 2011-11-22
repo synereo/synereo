@@ -91,21 +91,21 @@ trait BaseXCnxnStorage[Namespace,Var,Tag]
       throw new Exception( "don't use the filebased api" )
     }      
   
-  def store(xmlCollStr: String)(
+  def store( xmlCollStr : String )(
     cnxn: CnxnCtxtLabel[Namespace, Var, String]
     ): Unit =
   {
-    val (k, v) = keyValue(cnxn)
-    insertUpdate(xmlCollStr, k.toString, v.toString)
+    val ( rcrdT, k, v ) = keyValue( cnxn )
+    insertUpdate( rcrdT )( xmlCollStr, k.toString, v.toString )
   }  
 
   def keyValue(
     cnxn : CnxnCtxtLabel[Namespace,Var,String]
-  ) : ( Node, Node ) = {
+  ) : ( String, Node, Node ) = {
     val cxml = xmlIfier.asXML( cnxn )
     cxml.child.toList match {
       case k :: v :: Nil => {
-	( k, v )
+	( cxml.label, k, v )
       }
       case _ => {
 	throw new Exception( "malformed record: " + cxml )
@@ -113,11 +113,12 @@ trait BaseXCnxnStorage[Namespace,Var,Tag]
     }
   }
 
- def delete(xmlCollStr: String, path: CnxnCtxtLabel[Namespace, Var, String]
-    ): Unit =
+ def delete(
+   xmlCollStr : String, path : CnxnCtxtLabel[Namespace, Var, String]
+ ): Unit =
   {
-    val key = xmlIfier.asXML(path)
-    delete(xmlCollStr, key.toString)
+    val key = xmlIfier.asXML( path )
+    delete( key.label )( xmlCollStr, key.toString )
   }
 }
 
