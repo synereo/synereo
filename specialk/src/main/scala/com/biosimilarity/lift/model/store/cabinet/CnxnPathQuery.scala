@@ -83,10 +83,6 @@ trait CnxnPathQuery[Namespace,Var,Tag] {
   ) : Option[(Option[CnxnPath[Namespace,Tag]],Option[Binding[Namespace,Var,Tag]])]
 }
 
-trait PrologMgr {
-  def getProver() = { ProverFactory.getProver() }
-}
-
 trait PrologPathQuery[Namespace,Var,Tag] {
   self : CnxnConversions[Namespace,Var,Tag]
          with CnxnPathQuery[Namespace,Var,Tag]
@@ -262,15 +258,7 @@ extends PrologPathQuery[Namespace,Var,Tag]
 with PrologMgr {
   self : CnxnConversions[Namespace,Var,Tag]
          with CnxnPathQuery[Namespace,Var,Tag]
-         with UUIDOps => 
-  def unifyQuery(
-    qStr1 : String,
-    qStr2 : String
-  ) : Solution[String] = {
-    val prover = getProver()
-    val queryStr = qStr1 + " = " + qStr2 + "."
-    prover.solve( queryStr )
-  }
+         with UUIDOps =>   
   override def matches(
     cpath1 : CnxnPath[Namespace,Tag], 
     cpath2 : CnxnPath[Namespace,Tag]

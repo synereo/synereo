@@ -17,6 +17,7 @@ import SyntaxConversion._
 
 import com.biosimilarity.lift.model.store.usage._
 import PersistedMonadicTS._
+import Being._
 
 import scala.collection.mutable.HashMap
 import scala.util.parsing.combinator._
@@ -27,7 +28,7 @@ import java.util.UUID
 import java.io.StringReader
 
 class RLLEvaluationService(
-  override val exchange : PersistedtedStringMGJ
+  override val exchange : PersistedStringMGJ
 ) extends RLLEvalProtocol( exchange ) {  
   val sessionMap = new HashMap[String,String]( )
 

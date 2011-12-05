@@ -18,6 +18,7 @@ import SyntaxConversion._
 
 import com.biosimilarity.lift.model.store.usage._
 import PersistedMonadicTS._
+import Being._
 
 import scala.collection.mutable.HashMap
 import scala.util.parsing.combinator._
@@ -30,7 +31,7 @@ import java.util.UUID
 import java.io.StringReader
 
 class RLambdaEvaluationService(
-  override val exchange : PersistedtedStringMGJ
+  override val exchange : PersistedStringMGJ
 ) extends RLLEvalProtocol( exchange )
 with DEvalMsgScope
 with CnxnXML[String,String,String]
@@ -200,7 +201,7 @@ with UUIDOps {
 }
 
 class RLambdaApplicationEvaluationService(
-  override val exchange : PersistedtedStringMGJ
+  override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
   def evalInSession( appEvalReq : String, subst : Solution[String] ) = {
     throw new Exception( "tbd" )
@@ -228,7 +229,7 @@ class RLambdaApplicationEvaluationService(
 }
 
 class RLambdaAbstractionEvaluationService(
-  override val exchange : PersistedtedStringMGJ
+  override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
   def evalInSession( absEvalReq : String, subst : Solution[String] ) = {
     throw new Exception( "tbd" )
@@ -256,7 +257,7 @@ class RLambdaAbstractionEvaluationService(
 }
 
 class RLambdaMentionEvaluationService(
-  override val exchange : PersistedtedStringMGJ
+  override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
   def evalInSession( mntnEvalReq : String, subst : Solution[String] ) = {
     throw new Exception( "tbd" )

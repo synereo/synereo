@@ -151,8 +151,8 @@ trait CnxnConversions[Namespace,Var,Tag] {
   }    
 }
 
-trait PrologTermQuery[Namespace,Var,Tag] {
-  self : CnxnConversions[Namespace,Var,Tag] with UUIDOps with PrologMgr =>
+trait PrologMgr {
+  def getProver() = { ProverFactory.getProver() }
   def unifyQuery(
     qStr1 : String,
     qStr2 : String
@@ -161,7 +161,10 @@ trait PrologTermQuery[Namespace,Var,Tag] {
     val queryStr = qStr1 + " = " + qStr2 + "."
     prover.solve( queryStr )
   }
+}
 
+trait PrologTermQuery[Namespace,Var,Tag] {
+  self : CnxnConversions[Namespace,Var,Tag] with UUIDOps with PrologMgr =>  
   def matches(
     clabel1 : CnxnLabel[Namespace,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]

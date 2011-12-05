@@ -64,130 +64,160 @@ class SimpleStoreScope[A]( )
       type DATypes = DistributedAskTypes
       object TheDAT extends DATypes
       override def protoAskTypes : DATypes = TheDAT
-      
-      class PersistedtedStringMGJ(
-	val dfStoreUnitStr : String,
-	//override val name : URI,
-	override val name : Moniker,
-	//override val acquaintances : Seq[URI]
-	override val acquaintances : Seq[Moniker]
-      ) extends PersistedMonadicGeneratorJunction(
-	name, acquaintances
-      ) {
-	class StringXMLDBManifest(
-	  override val storeUnitStr : String,
-	  override val labelToNS : Option[String => String],
-	  override val textToVar : Option[String => String],
-	  override val textToTag : Option[String => String]        
-	)
-	extends XMLDBManifest( database ) {
-	  override def storeUnitStr[Src,Label,Trgt](
-	    cnxn : Cnxn[Src,Label,Trgt]
-	  ) : String = {     
-	    cnxn match {
-	      case CCnxn( s, l, t ) =>
-		s.toString + l.toString + t.toString
-	    }
-	  }	
-	  
-	  def kvNameSpace : String = "record"
-	  def kvKNameSpace : String = "kRecord"
 
-	  def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
-	    ns1.equals( ns2 )
-	  }
-	  
-	  // BUGBUG -- LGM: Evidence of a problem with this factorization
-	  override def asCacheValue(
-	    ltns : String => String,
-	    ttv : String => String,
-	    value : Elem
-	  ) : Option[A] = {
-	    tweet(
-	      "Shouldn't be here!"
-	    )
-	    None
-	  }
-	  
-	  override def asStoreValue(
-	    rsrc : mTT.Resource
-	  ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-	    valueStorageType match {
-	      case "CnxnCtxtLabel" => {
-		tweet(
-		  "warning: CnxnCtxtLabel method is using XStream"
-		)
-		
-		val blob = toXQSafeJSONBlob( rsrc )
-		
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String](
-		    blob
+      object Being extends PersistenceScope {
+
+	override type EMTypes =
+	  ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+
+      object theEMTypes
+      extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+	{
+	case class PrologSubstitution( soln : Solution[String] )
+	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
+	     override def apply( rsrc : mTT.Resource ) = {
+	       Some( mTT.RBound( Some( rsrc ), Some( soln ) ) )
+	     }
+	   }
+	override type Substitution = PrologSubstitution
+      }      
+
+      override def protoEMTypes : EMTypes =
+	theEMTypes
+      
+	class PersistedStringMGJ(
+	  val dfStoreUnitStr : String,
+	  //override val name : URI,
+	  override val name : Moniker,
+	  //override val acquaintances : Seq[URI]
+	  override val acquaintances : Seq[Moniker]
+	) extends PersistedMonadicGeneratorJunction(
+	  name, acquaintances
+	) {
+	  class StringXMLDBManifest(
+	    override val storeUnitStr : String,
+	    override val labelToNS : Option[String => String],
+	    override val textToVar : Option[String => String],
+	    override val textToTag : Option[String => String]        
+	  )
+	  extends XMLDBManifest( database ) {
+	    override def asResource(
+	      key : mTT.GetRequest, // must have the pattern to determine bindings
+	      value : Elem
+	    ) : emT.PlaceInstance = {
+	      throw new Exception( "not yet implemented" )
+	    }
+	    override def storeUnitStr[Src,Label,Trgt](
+	      cnxn : Cnxn[Src,Label,Trgt]
+	    ) : String = {     
+	      cnxn match {
+		case CCnxn( s, l, t ) =>
+		  s.toString + l.toString + t.toString
+	      }
+	    }	
+	    
+	    def kvNameSpace : String = "record"
+	    def kvKNameSpace : String = "kRecord"
+	    
+	    def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+	      ns1.equals( ns2 )
+	    }
+	    
+	    // BUGBUG -- LGM: Evidence of a problem with this factorization
+	    override def asCacheValue(
+	      ltns : String => String,
+	      ttv : String => String,
+	      value : Elem
+	    ) : Option[A] = {
+	      tweet(
+		"Shouldn't be here!"
+	      )
+	      None
+	    }
+	    
+	    override def asStoreValue(
+	      rsrc : mTT.Resource
+	    ) : CnxnCtxtLeaf[String,String,String] with Factual = {
+	      valueStorageType match {
+		case "CnxnCtxtLabel" => {
+		  tweet(
+		    "warning: CnxnCtxtLabel method is using XStream"
 		  )
-		)
-	      }
-	      case "XStream" => {
-		tweet(
-		  "using XStream method"
-		)
-		
-		val blob = toXQSafeJSONBlob( rsrc )
-		
-		//asXML( rsrc )
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String]( blob )
-		)
-	      }
-	      case _ => {
-		throw new Exception( "unexpected value storage type" )
-	      }
-	    }	  
-	  }
-	  
-	  def asCacheValue(
-	    ccl : CnxnCtxtLabel[String,String,String]
-	  ) : A = {
-	    tweet(
-	      "converting to cache value"
-	    )
-	    //asPatternString( ccl )
-	    ccl match {
-	      case CnxnCtxtBranch(
-		"String",
-		CnxnCtxtLeaf( Left( rv ) ) :: Nil
-	      ) => {
-		val unBlob =
-		  fromXQSafeJSONBlob( rv ).asInstanceOf[A]
-		
-		unBlob match {
-		  case rsrc : mTT.Resource => {
-		    getGV( rsrc ) match {
-		      case Some( cv ) => cv
-		      case _ => 
-			throw new Exception( "Missing resource conversion" )
+		  
+		  val blob = toXQSafeJSONBlob( rsrc )
+		  
+		  new CnxnCtxtLeaf[String,String,String](
+		    Left[String,String](
+		      blob
+		    )
+		  )
+		}
+		case "XStream" => {
+		  tweet(
+		    "using XStream method"
+		  )
+		  
+		  val blob = toXQSafeJSONBlob( rsrc )
+		  
+		  //asXML( rsrc )
+		  new CnxnCtxtLeaf[String,String,String](
+		    Left[String,String]( blob )
+		  )
+		}
+		case _ => {
+		  throw new Exception( "unexpected value storage type" )
+		}
+	      }	  
+	    }
+	    
+	    def asCacheValue(
+	      ccl : CnxnCtxtLabel[String,String,String]
+	    ) : A = {
+	      tweet(
+		"converting to cache value"
+	      )
+	      //asPatternString( ccl )
+	      ccl match {
+		case CnxnCtxtBranch(
+		  "String",
+		  CnxnCtxtLeaf( Left( rv ) ) :: Nil
+		) => {
+		  val unBlob =
+		    fromXQSafeJSONBlob( rv ).asInstanceOf[A]
+		  
+		  unBlob match {
+		    case rsrc : mTT.Resource => {
+		      getGV( rsrc ) match {
+			case Some( cv ) => cv
+			case _ => 
+			  throw new Exception( "Missing resource conversion" )
+		      }
 		    }
 		  }
 		}
-	      }
-	      case _ => {
-		//asPatternString( ccl )
-		throw new Exception( "Missing conversion" )
+		case _ => {
+		  //asPatternString( ccl )
+		  throw new Exception( "Missing conversion" )
+		}
 	      }
 	    }
+	    
 	  }
 	  
+	  def persistenceManifest : Option[PersistenceManifest] = {
+	    val sid = Some( ( s : String ) => s )
+	    Some(
+	      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid )
+	    )
+	  }
 	}
 	
-	def persistenceManifest : Option[PersistenceManifest] = {
-	  val sid = Some( ( s : String ) => s )
-	  Some(
-	    new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid )
-	  )
-	}
       }
+
+      import Being._
       
       def ptToPt( storeUnitStr : String, a : String, b : String )  = {
-	new PersistedtedStringMGJ( storeUnitStr, a, List( b ) )
+	new PersistedStringMGJ( storeUnitStr, a, List( b ) )
       }
       
       def loopBack( storeUnitStr : String ) = {

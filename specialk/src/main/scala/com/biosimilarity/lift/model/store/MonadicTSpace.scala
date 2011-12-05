@@ -19,16 +19,7 @@ import scala.collection.MapProxy
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 
-trait MonadicTupleSpace[Place,Pattern,Resource]
-//       extends MapLike[Place,Resource, This]
-extends MonadicGenerators
-with FJTaskRunners
-{
-  self : WireTap
-      with Journalist
-      with ConfiggyReporting 
-      with ConfigurationTrampoline =>
-
+trait ExcludedMiddleTypes[Place,Pattern,Resource] {
   type RK = Option[Resource] => Unit @suspendable
   
   class BlockableContinuation(
@@ -68,6 +59,24 @@ with FJTaskRunners
     stuff : Either[Resource,List[RK]],
     subst : Substitution
   )
+}
+
+trait ExcludedMiddleScope[Place,Pattern,Resource] {
+  type EMTypes <: ExcludedMiddleTypes[Place,Pattern,Resource]
+  def protoEMTypes : EMTypes
+  val emT : EMTypes = protoEMTypes
+}
+
+trait MonadicTupleSpace[Place,Pattern,Resource]
+//       extends MapLike[Place,Resource, This]
+extends MonadicGenerators
+with FJTaskRunners
+with ExcludedMiddleTypes[Place,Pattern,Resource]
+{
+  self : WireTap
+      with Journalist
+      with ConfiggyReporting 
+      with ConfigurationTrampoline =>
 
   def theMeetingPlace : Map[Place,Resource]
   def theChannels : Map[Place,Resource]

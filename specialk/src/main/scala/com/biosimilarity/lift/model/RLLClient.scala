@@ -17,6 +17,7 @@ import com.biosimilarity.seleKt.model.ill.vm.illvm.executive._
 
 import com.biosimilarity.lift.model.store.usage._
 import PersistedMonadicTS._
+import Being._
 
 import scala.collection.immutable.HashMap
 import scala.util.parsing.combinator._
@@ -27,7 +28,7 @@ import java.util.UUID
 import java.io.StringReader
 
 class RLLEvaluationServiceProxy(
-  override val exchange : PersistedtedStringMGJ
+  override val exchange : PersistedStringMGJ
 ) extends RLLEvalProtocol( exchange ) {
   def evalExchange(
     str : String,

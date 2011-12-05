@@ -24,6 +24,7 @@ import java.io.StringReader
 
 import com.biosimilarity.lift.model.store.usage._
 import PersistedMonadicTS._
+import Being._
 import scala.util.continuations._    
 
 trait RLLEvaluationProtocol extends CnxnXQuery[String,String,String]
@@ -45,12 +46,12 @@ trait RLLEvaluationProtocol extends CnxnXQuery[String,String,String]
  }
 
 class RLLEvalProtocol(
-  override val exchange : PersistedtedStringMGJ
+  override val exchange : PersistedStringMGJ
 ) extends RLLEvaluationProtocol
 
 object RLLEvalProtocol {
-  def apply( exchange : PersistedtedStringMGJ ) : RLLEvalProtocol =
+  def apply( exchange : PersistedStringMGJ ) : RLLEvalProtocol =
     new RLLEvalProtocol( exchange )
-  def unapply( rllEvP : RLLEvalProtocol ) : Option[(PersistedtedStringMGJ)] = 
+  def unapply( rllEvP : RLLEvalProtocol ) : Option[(PersistedStringMGJ)] = 
     Some( (rllEvP.exchange) )
 }
