@@ -447,9 +447,8 @@ trait CnxnXML[Namespace,Var,Tag] {
 	      )
 	    }
 	    case None => {
-	      new CnxnCtxtBranch[Namespace,Var,Tag](
-		labelToNS( "none" ),
-		List( )
+	      new CnxnCtxtLeaf[Namespace,Var,Tag](
+		Left( valToTag( "none" ) )
 	      )
 	    }
 	  }	  
