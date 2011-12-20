@@ -284,6 +284,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	       with Blobify
 	       with UUIDOps
       {
+	import CnxnConversionStringScope._
 	// BUGBUG -- LGM: Why not just the identity?
 	override def asStoreKey(
 	  key : mTT.GetRequest
@@ -366,7 +367,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	) : mTT.Continuation = {
 	  ccl match {
 	    case CnxnCtxtBranch(
-	      "String",
+	      "string",
 	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
 	    ) => {
 	      val unBlob =
@@ -1436,7 +1437,7 @@ object PersistedMonadicTS
 	    val ptn = asPatternString( key )
 	    println( "ptn : " + ptn )		
 	    
-	    val oRsrc : Option[(CnxnCtxtLabel[String,String,String],Option[Either[mTT.Resource,mTT.Resource]])] =
+	    val oRsrc : Option[emT.PlaceInstance] =
 	      for(
 		ltns <- labelToNS;
 		ttv <- textToVar;
@@ -1445,8 +1446,7 @@ object PersistedMonadicTS
 	      ) yield {
 		ccl match {
 		  case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
-		    ( 
-		      k,
+		    val oGvOrK = 
 		      (if ( compareNameSpace( ns, kvNameSpace ) ) {	    
 			// BUGBUG -- LGM need to return the Solution
 			// Currently the PersistenceManifest has no access to the
@@ -1464,7 +1464,39 @@ object PersistedMonadicTS
 			 else {
 			   throw new Exception( "unexpected namespace : (" + ns + ")" )
 			 }
-		       })
+		       });
+
+		    val cclKey =
+		      xmlIfier.fromXML( ltns, ttv, ttt )(
+			xmlIfier.asXML( key )
+		      ) match {
+			case Some( cclX ) => cclX
+			case _ => throw new Exception( "xml roundtrip failed " + key )
+		      }
+
+		    val soln = 
+		      unifyQuery(
+			asPatternString(
+			  cclKey
+			),
+			asPatternString( k )
+		      )
+		    emT.PlaceInstance(
+		      k,
+		      oGvOrK match {
+			case Some( Left( gv ) ) => {
+			  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( gv )
+			}
+			case Some( Right( mTT.Continuation( ks ) ) ) => {
+			  Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( ks )
+			}
+			case _ => {
+			  throw new Exception( "excluded middle contract broken: " + oGvOrK )
+			}
+		      },
+		      // BUGBUG -- lgm : why can't the compiler determine
+		      // that this cast is not necessary?
+		      theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
 		    )
 		  }
 		  case _ => {
@@ -1476,29 +1508,8 @@ object PersistedMonadicTS
 	    // BUGBUG -- lgm : this is a job for flatMap
 	    //oRsrc.getOrElse( None )
 	    oRsrc match {
-	      case Some( ( k, oGvOrK ) ) => {
-		val soln = 
-		  unifyQuery(
-		    cnxnCtxtLabelToTermStr( key ),
-		    cnxnCtxtLabelToTermStr( k )
-		  )
-		emT.PlaceInstance(
-		  k,
-		  oGvOrK match {
-		    case Some( Left( gv ) ) => {
-		      Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( gv )
-		    }
-		    case Some( Right( mTT.Continuation( ks ) ) ) => {
-		      Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( ks )
-		    }
-		    case _ => {
-		      throw new Exception( "excluded middle contract broken: " + oGvOrK )
-		    }
-		  },
-		  // BUGBUG -- lgm : why can't the compiler determine
-		  // that this cast is not necessary?
-		  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-		)
+	      case Some( pI ) => {
+		pI
 	      }
 	      case _ => {
 		throw new Exception( "violated excluded middle : " + oRsrc )

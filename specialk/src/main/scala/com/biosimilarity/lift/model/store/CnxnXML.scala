@@ -112,13 +112,19 @@ trait CnxnXML[Namespace,Var,Tag] {
 	.replace( "java.lang", "")
 	.replace( ".", "" )
 
+	val lcTagStr =
+	  (
+	    tagStr.substring( 0, 1 ).toLowerCase
+	    + tagStr.substring( 1, tagStr.length )
+	  )
+
 	val tStr = 
 	  t match {
 	    case s : String => s
 	    case _ => t.toString
 	  }
 
-	xmlTrampoline( tagStr, tStr )
+	xmlTrampoline( lcTagStr, tStr )
       }
       case Right( v ) => {
 	<var>{ v.toString }</var>
@@ -349,7 +355,7 @@ trait CnxnXML[Namespace,Var,Tag] {
      || (value.isInstanceOf[Int]) 
      || (value.isInstanceOf[Float])
      || (value.isInstanceOf[String])
-     || (value.isInstanceOf[Option[_]])
+     //|| (value.isInstanceOf[Option[_]])
      // put more ground types here
    )
   }
@@ -421,28 +427,57 @@ trait CnxnXML[Namespace,Var,Tag] {
 	)
       }
       else {
-	val facts =
-	  (for(
-	    m <- cc.getClass.getMethods;      
-	    // this is what you call a heuristic
-	    // and heuristic is probably better than myistic 
-	    if ((! javaBuiltins.contains( m.getName ) )
-		&& (( m.getParameterTypes.size ) == 0)
-		&& (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
-		&& (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
-		&& ( filter( m ) )
+	if ( cc.isInstanceOf[Option[_]] ) {
+	  cc match {
+	    case Some(
+	      thing : ScalaObject with Product with Serializable
+	    ) => {
+	      new CnxnCtxtBranch[Namespace,Var,Tag](
+		labelToNS( "some" ),
+		List(
+		  fromCaseClass( filter )( labelToNS, valToTag )( thing )
+		)
 	      )
-	  ) yield {
-	    new CnxnCtxtBranch[Namespace,Var,Tag](
-	      labelToNS( m.getName ),
-	      List( fromCC( m.invoke( cc ) ) )
-	    )
-	  }).toList
-
-	new CnxnCtxtBranch[Namespace,Var,Tag] (
-	  labelToNS( cc.getClass.getName ),
-	  facts
-	)
+	    }
+	    case Some(
+	      thingElse : AnyRef
+	    ) => {
+	      new CnxnCtxtLeaf[Namespace,Var,Tag](
+		Left( valToTag( thingElse ) )
+	      )
+	    }
+	    case None => {
+	      new CnxnCtxtBranch[Namespace,Var,Tag](
+		labelToNS( "none" ),
+		List( )
+	      )
+	    }
+	  }	  
+	}
+	else {
+	  val facts =
+	    (for(
+	      m <- cc.getClass.getMethods;      
+	      // this is what you call a heuristic
+	      // and heuristic is probably better than myistic 
+	      if ((! javaBuiltins.contains( m.getName ) )
+		  && (( m.getParameterTypes.size ) == 0)
+		  && (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
+		  && (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
+		  && ( filter( m ) )
+		)
+	    ) yield {
+	      new CnxnCtxtBranch[Namespace,Var,Tag](
+		labelToNS( m.getName ),
+		List( fromCC( m.invoke( cc ) ) )
+	      )
+	    }).toList
+	  
+	  new CnxnCtxtBranch[Namespace,Var,Tag] (
+	    labelToNS( cc.getClass.getName ),
+	    facts
+	  )
+	}
       }
     }
     fromCC( cc )
@@ -643,32 +678,8 @@ object CnxnConversionStringScope
   def v2t( obj: java.lang.Object ) : String = {
     obj match {
       case s : String => {
-	//"\"" + s + "\""
 	s
-      }
-      case opt : Option[_] => {
-	opt match {
-	  case Some( x : ScalaObject with Product with Serializable ) => {
-	    (
-	      "some"
-	      + "( "
-	      + cnxnConversions.fromCaseClass( l2ns, v2t )( x )
-	      + " )"
-	    )
-	  }
-	  case Some( o ) => {
-	    (
-	      "some"
-	      + "( "
-	      + v2t( o + "" )
-	      + " )"
-	    )
-	  }
-	  case None => {
-	    "none( )"
-	  }
-	}
-      }
+      }      
       case _ => obj + ""
     }
   }
