@@ -708,7 +708,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  ptn : mTT.GetRequest,
 	  consume : Boolean,
 	  collName : Option[String]
-	) : Option[List[Option[mTT.Resource] => Unit @suspendable]] = {
+	) : Option[List[emT.PlaceInstance]] = {
 	  tweet( "in updateKStore " )
 	  val xmlCollName =
 	    collName.getOrElse(
@@ -741,8 +741,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			for( krslt <- krslts ) yield {
 			  tweet( "retrieved " + krslt.toString )
 			  val ekrsrc = pm.asResource( ptn, krslt )
+			  tweet( "krslt as resource " + ekrsrc )
 			  ekrsrc.stuff match {
 			    case Right( k :: ks ) => {
+			      tweet( "have a list of continuations " )
 			      if ( consume ) {
 				// BUGBUG -- lgm : write XQuery to update node
 				tweet( "removing from store " + krslt )
@@ -759,7 +761,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 				  collName
 				)
 			      }
-			      k
+			      ekrsrc
 			    }
 			    case _ => {
 			      throw new Exception(
@@ -786,6 +788,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	  registered : Map[mTT.GetRequest,List[RK]],
 	  ptn : mTT.GetRequest,
 	  rsrc : mTT.Resource,
+	  consume : Boolean,
 	  collName : Option[String]
 	) : Generator[emT.PlaceInstance,Unit,Unit] = {    
 	  Generator {
@@ -813,9 +816,33 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 		// Store the rsrc at a representative of the ptn
 		tweet( "no waiters waiting for a value at " + ptn )
 		//channels( representative( ptn ) ) = rsrc
-		putInStore(
-		  persist, channels, ptn, None, rsrc, collName
-		)
+		updateKStore( persist )(
+		  ptn, consume, collName
+		) match {
+		  case Some( pIs ) => {
+		    for ( pI <- pIs ) {
+		      pI.stuff match {
+			case Right( k :: ks ) => {
+			  for( sk <- ( k :: ks ) ) {
+			    spawn {
+			      sk( pI.subst( rsrc ) )
+			    }
+			  }
+			}
+			case Right( Nil ) => {
+			  putInStore(
+			    persist, channels, ptn, None, rsrc, collName
+			  )
+			}
+		      }
+		    }
+		  }
+		  case None => {
+		    putInStore(
+		      persist, channels, ptn, None, rsrc, collName
+		    )
+		  }
+		}		
 	      }
 	    }
 	  }
@@ -834,29 +861,35 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	    placeNRKsNSubst
 	    <- putPlaces(
 	      persist
-	    )( channels, registered, ptn, rsrc, collName )
+	    )( channels, registered, ptn, rsrc, consume, collName )
 	  ) {	      
 	    val emT.PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
 	    tweet( "waiters waiting for a value at " + wtr + " : " + rks )
-	    val ks = updateKStore( persist )( ptn, consume, collName )
 	    //val ks : Option[List[Option[mTT.Resource] => Unit @suspendable]] = None
-	    ks match {
-	      case Some( kk :: kks ) => {
-		if ( consume ) {
-		  for( sk <- rks ) {
-		    spawn {
-		      sk( s( rsrc ) )
+	    updateKStore( persist )(
+	      ptn, consume, collName
+	    ) match {
+	      case Some( pIs ) => {
+		for ( pI <- pIs ) {
+		  pI.stuff match {
+		    case Right( k :: ks ) => {		      
+		      for( sk <- ( k :: ks ) ) {			
+			spawn {
+			  sk( pI.subst( rsrc ) )
+			}
+		      }
+		    }
+		    case Right( Nil ) => {
+		      putInStore(
+			persist, channels, ptn, None, rsrc, collName
+		      )
 		    }
 		  }
 		}
-		else {
-		  registered( wtr ) = kks
-		  kk( s( rsrc ) )
-		}
 	      }
-	      case _ => {
+	      case None => {
 		putInStore(
-		  persist, channels, ptn, Some( wtr ), rsrc, collName
+		  persist, channels, ptn, None, rsrc, collName
 		)
 	      }
 	    }            
@@ -1146,6 +1179,30 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 			)
 		    }
 		  }
+		  case <kRecord>{ kv @_* }</kRecord> => {
+		    val kvs = kv.toList.filter(
+		      ( n : Node ) => {
+			n match {
+			  case Text( contents ) => {
+			    !java.util.regex.Pattern.matches( 
+			      "(\\p{Space}|\\p{Blank})*",
+			      contents
+			    )
+			  }
+			  case e : Elem => {
+			    true
+			  }
+			}
+		      }
+		    )
+		    kvs match {
+		      case k :: v :: Nil => k.toString
+		      case _ => 
+			throw new Exception(
+			  "Not a k-v record shape\n" + kvs
+			)
+		    }
+		  }
 		  case _ =>
 		    throw new Exception(
 		      "Not a record\n" + record
@@ -1179,7 +1236,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mput( perD )(
-	    theMeetingPlace, theWaiters, false, xmlCollName
+	    theMeetingPlace, theWaiters, true, xmlCollName
 	  )( ptn, rsrc )
 	}
 	override def publish(
