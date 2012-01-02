@@ -29,6 +29,7 @@ object ApplicationDefaults {
   val managementServiceVersion : String = "1.0"  
   // Storage conversion mechanism
   val valueStorageType : String = "CnxnCtxtLabel"
+  val continuationStorageType : String = "Base64"
   // Logging
   val loggingLevel : String = "Tweet"
   // File system configuration

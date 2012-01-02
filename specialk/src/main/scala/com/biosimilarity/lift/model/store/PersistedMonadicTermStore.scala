@@ -40,12 +40,18 @@ import org.xmldb.api._
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
+import biz.source_code.base64Coder.Base64Coder
+
 import javax.xml.transform.OutputKeys
 import java.util.Properties
 import java.net.URI
 import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStreamWriter
+import java.io.ObjectInputStream
+import java.io.ByteArrayInputStream
+import java.io.ObjectOutputStream
+import java.io.ByteArrayOutputStream
 
 trait PersistedTermStoreScope[Namespace,Var,Tag,Value] 
 extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {  
@@ -59,6 +65,9 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	def query( ptn : mTT.GetRequest ) : Option[String]
 	def query( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String]
 	def kquery( xmlCollStr : String, ptn : mTT.GetRequest ) : Option[String]
+	
+	def valueStorageType : String
+	def continuationStorageType : String
 	
 	def labelToNS : Option[String => Namespace]
 	def textToVar : Option[String => Var]
@@ -371,7 +380,25 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
 	    ) => {
 	      val unBlob =
-		fromXQSafeJSONBlob( rv )
+		valueStorageType match {
+		  case "CnxnCtxtLabel" => {
+		    // tweet(
+// 		      "warning: CnxnCtxtLabel method is using XStream"
+// 		    )
+		    fromXQSafeJSONBlob( rv )
+		  }
+		  case "XStream" => {
+		    fromXQSafeJSONBlob( rv )
+		  }
+		  case "Base64" => {
+		    val data : Array[Byte] = Base64Coder.decode( rv )
+		    val ois : ObjectInputStream =
+		      new ObjectInputStream( new ByteArrayInputStream(  data ) )
+		    val o : java.lang.Object = ois.readObject();
+		    ois.close()
+		    o
+		  }
+		}	      
 	      
 	      unBlob match {
 		case k : mTT.Resource => {
@@ -1395,6 +1422,13 @@ object PersistedMonadicTS
 	  override val textToTag : Option[String => String]        
 	)
 	extends XMLDBManifest( database ) {
+	  override def valueStorageType : String = {
+	    throw new Exception( "valueStorageType not overriden in instantiation" )
+	  }
+	  override def continuationStorageType : String = {
+	    throw new Exception( "continuationStorageType not overriden in instantiation" )
+	  }
+
 	  override def storeUnitStr[Src,Label,Trgt](
 	    cnxn : Cnxn[Src,Label,Trgt]
 	  ) : String = {     
@@ -1426,36 +1460,35 @@ object PersistedMonadicTS
 	  override def asStoreValue(
 	    rsrc : mTT.Resource
 	  ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-	    valueStorageType match {
-	      case "CnxnCtxtLabel" => {
-		tweet(
-		  "warning: CnxnCtxtLabel method is using XStream"
-		)
-		
-		val blob = toXQSafeJSONBlob( rsrc )
-		
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String](
-		    blob
+	    val blob =
+	      valueStorageType match {
+		case "Base64" => {
+		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
+		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
+		  oos.writeObject( rsrc )
+		  oos.close()
+		  new String( Base64Coder.encode( baos.toByteArray() ) )
+		}
+		case "CnxnCtxtLabel" => {
+		  tweet(
+		    "warning: CnxnCtxtLabel method is using XStream"
 		  )
-		)
-	      }
-	      case "XStream" => {
-		tweet(
-		  "using XStream method"
-		)
-		
-		val blob = toXQSafeJSONBlob( rsrc )
-		
-		//asXML( rsrc )
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String]( blob )
-		)
-	      }
-	      case _ => {
-		throw new Exception( "unexpected value storage type" )
-	      }
-	    }	  
+		  toXQSafeJSONBlob( rsrc )		  		  
+		}
+		case "XStream" => {
+		  tweet(
+		    "using XStream method"
+		  )
+		  
+		  toXQSafeJSONBlob( rsrc )
+		}
+		case _ => {
+		  throw new Exception( "unexpected value storage type" )
+		}
+	    }
+	    new CnxnCtxtLeaf[String,String,String](
+	      Left[String,String]( blob )
+	    )
 	  }
 	  
 	  def asCacheValue(
@@ -1629,8 +1662,16 @@ object PersistedMonadicTS
 	
 	def persistenceManifest : Option[PersistenceManifest] = {
 	  val sid = Some( ( s : String ) => s )
+	  val kvdb = this;
 	  Some(
-	    new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid )
+	    new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+	      override def valueStorageType : String = {
+		kvdb.valueStorageType
+	      }
+	      override def continuationStorageType : String = {
+		kvdb.valueStorageType
+	      }
+	    }
 	  )
 	}
 	
@@ -1758,6 +1799,12 @@ object StdPersistedMonadicTS
 	  override val textToTag : Option[String => Any]        
 	)
 	extends XMLDBManifest( database ) {
+	  override def valueStorageType : String = {
+	    throw new Exception( "valueStorageType not overriden in instantiation" )
+	  }
+	  override def continuationStorageType : String = {
+	    throw new Exception( "continuationStorageType not overriden in instantiation" )
+	  }
 	  override def storeUnitStr[Src,Label,Trgt](
 	    cnxn : Cnxn[Src,Label,Trgt]
 	  ) : String = {     
@@ -1789,34 +1836,37 @@ object StdPersistedMonadicTS
 	  override def asStoreValue(
 	    rsrc : mTT.Resource
 	  ) : CnxnCtxtLeaf[Symbol,Symbol,String] with Factual = {
-	    valueStorageType match {
-	      case "CnxnCtxtLabel" => {
-		tweet(
-		  "warning: CnxnCtxtLabel method is using XStream"
-		)
-		
-		val blob = toXQSafeJSONBlob( rsrc )
-		
-		new CnxnCtxtLeaf[Symbol,Symbol,String](
-		  Left[String,Symbol](
-		    blob
+	    val blob = 
+	      valueStorageType match {
+		case "Base64" => {
+		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
+		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
+		  oos.writeObject( rsrc )
+		  oos.close()
+		  new String( Base64Coder.encode( baos.toByteArray() ) )
+		}
+		case "CnxnCtxtLabel" => {
+		  tweet(
+		    "warning: CnxnCtxtLabel method is using XStream"
 		  )
-		)
-	      }
-	      case "XStream" => {
-		tweet(
-		  "using XStream method"
-		)
-		val blob = toXQSafeJSONBlob( rsrc )
-		//asXML( rsrc )
-		new CnxnCtxtLeaf[Symbol,Symbol,String](
-		  Left[String,Symbol]( blob )
-		)
-	      }
-	      case _ => {
-		throw new Exception( "unexpected value storage type" )
-	      }
-	    }	  
+		
+		  toXQSafeJSONBlob( rsrc )		  
+		}
+		case "XStream" => {
+		  tweet(
+		    "using XStream method"
+		  )
+		  toXQSafeJSONBlob( rsrc )
+		}
+		case _ => {
+		  throw new Exception( "unexpected value storage type" )
+		}
+	      }	 
+	    new CnxnCtxtLeaf[Symbol,Symbol,String](
+	      Left[String,Symbol](
+		blob
+	      )
+	    )
 	  }
 	  
 	  def asCacheValue(
@@ -1871,8 +1921,16 @@ object StdPersistedMonadicTS
 	def persistenceManifest : Option[PersistenceManifest] = {
 	  val sid = Some( ( s : String ) => s )
 	  val sym = Some( ( s : String ) => Symbol( s ) )
+	  val kvdb = this;
 	  Some(
-	    new StringXMLDBManifest( dfStoreUnitStr, sym, sym, sid )
+	    new StringXMLDBManifest( dfStoreUnitStr, sym, sym, sid ) {
+	      override def valueStorageType : String = {
+		kvdb.valueStorageType
+	      }
+	      override def continuationStorageType : String = {
+		kvdb.valueStorageType
+	      }
+	    }
 	  )
 	}
       }

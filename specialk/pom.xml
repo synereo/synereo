@@ -96,6 +96,11 @@
 
   <dependencies>
     <dependency>
+	<groupId>biz.source_code</groupId>
+	<artifactId>base64coder</artifactId>
+	<version>2010-09-21</version>
+    </dependency>            
+    <dependency>
       <groupId>org.coconut.forkjoin</groupId>
       <artifactId>jsr166y</artifactId>
       <version>070108</version>

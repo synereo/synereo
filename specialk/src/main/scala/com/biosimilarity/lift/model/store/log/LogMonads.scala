@@ -101,6 +101,13 @@ class SimpleStoreScope[A]( )
 	    override val textToTag : Option[String => String]        
 	  )
 	  extends XMLDBManifest( database ) {
+	    override def valueStorageType : String = {
+	      throw new Exception( "valueStorageType not overriden in instantiation" )
+	    }
+	    override def continuationStorageType : String = {
+	      throw new Exception( "continuationStorageType not overriden in instantiation" )
+	    }
+
 	    override def asResource(
 	      key : mTT.GetRequest, // must have the pattern to determine bindings
 	      value : Elem
@@ -206,8 +213,16 @@ class SimpleStoreScope[A]( )
 	  
 	  def persistenceManifest : Option[PersistenceManifest] = {
 	    val sid = Some( ( s : String ) => s )
+	    val kvdb = this;
 	    Some(
-	      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid )
+	      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+		override def valueStorageType : String = {
+		  kvdb.valueStorageType
+		}
+		override def continuationStorageType : String = {
+		  kvdb.valueStorageType
+		}
+	      }
 	    )
 	  }
 	}

@@ -87,6 +87,8 @@ extends ConfigurationTrampoline {
 
   def valueStorageType : String =
     configurationFromFile.get( "valueStorageType" ).getOrElse( bail() )  
+  def continuationStorageType : String =
+    configurationFromFile.get( "continuationStorageType" ).getOrElse( bail() )  
   def tmpDirStr : String =
     configurationFromFile.get( "tmpDirStr" ).getOrElse( bail() )
 }
