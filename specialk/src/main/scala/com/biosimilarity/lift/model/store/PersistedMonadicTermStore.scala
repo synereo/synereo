@@ -380,7 +380,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
 	    ) => {
 	      val unBlob =
-		valueStorageType match {
+		continuationStorageType match {
 		  case "CnxnCtxtLabel" => {
 		    // tweet(
 // 		      "warning: CnxnCtxtLabel method is using XStream"
@@ -536,6 +536,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	       with BaseXXMLStore           
 	       with BaseXCnxnStorage[Namespace,Var,Tag]           
       {    	
+	//override def continuationStorageType : String = "Base64"
 	override def tmpDirStr : String = {
 	  val tds = config.getString( "storageDir", "tmp" )       
 	  val tmpDir = new java.io.File( tds )
@@ -1372,15 +1373,19 @@ package usage {
  * Mostly self-contained object to support unit testing
  * ------------------------------------------------------------------ */ 
 
-object PersistedMonadicTS
- extends PersistedTermStoreScope[String,String,String,String] 
-  with UUIDOps {
+  case class CC1( b : Boolean, i : Int, s : String, r : Option[CC1] )
+  case class CC2( b : Boolean, i : Int, s : String )
+
+  object PersistedMonadicTS
+       extends PersistedTermStoreScope[String,String,String,String] 
+       with UUIDOps
+  {
     import SpecialKURIDefaults._
     import CnxnLeafAndBranch._
     import identityConversions._
 
     type MTTypes = MonadicTermTypes[String,String,String,String]
-    object TheMTT extends MTTypes
+    object TheMTT extends MTTypes with Serializable
     override def protoTermTypes : MTTypes = TheMTT
 
     type DATypes = DistributedAskTypes
@@ -1460,12 +1465,35 @@ object PersistedMonadicTS
 	  override def asStoreValue(
 	    rsrc : mTT.Resource
 	  ) : CnxnCtxtLeaf[String,String,String] with Factual = {
+	    tweet(
+	      "In asStoreValue on " + this + " for resource: " + rsrc
+	    )
+	    val storageDispatch = 
+	      rsrc match {
+		case k : mTT.Continuation => {
+		  tweet(
+		    "Resource " + rsrc + " is a continuation"
+		  )
+		  continuationStorageType
+		}
+		case _ => {
+		  tweet(
+		    "Resource " + rsrc + " is a value"
+		  )
+		  valueStorageType
+		}
+	      };
+
+	    tweet(
+	      "storageDispatch: " + storageDispatch
+	    )
+
 	    val blob =
-	      valueStorageType match {
+	      storageDispatch match {
 		case "Base64" => {
 		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
 		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
-		  oos.writeObject( rsrc )
+		  oos.writeObject( rsrc.asInstanceOf[Serializable] )
 		  oos.close()
 		  new String( Base64Coder.encode( baos.toByteArray() ) )
 		}
@@ -1500,7 +1528,7 @@ object PersistedMonadicTS
 	    //asPatternString( ccl )
 	    ccl match {
 	      case CnxnCtxtBranch(
-		"String",
+		"string",
 		CnxnCtxtLeaf( Left( rv ) ) :: Nil
 	      ) => {
 		val unBlob =
@@ -1618,11 +1646,29 @@ object PersistedMonadicTS
 	  //asPatternString( ccl )	
 	  ccl match {
 	    case CnxnCtxtBranch(
-	      "String",
+	      "string",
 	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
 	    ) => {
 	      val unBlob =
-		fromXQSafeJSONBlob( rv )
+		continuationStorageType match {
+		  case "CnxnCtxtLabel" => {
+		    // tweet(
+// 		      "warning: CnxnCtxtLabel method is using XStream"
+// 		    )
+		    fromXQSafeJSONBlob( rv )
+		  }
+		  case "XStream" => {
+		    fromXQSafeJSONBlob( rv )
+		  }
+		  case "Base64" => {
+		    val data : Array[Byte] = Base64Coder.decode( rv )
+		    val ois : ObjectInputStream =
+		      new ObjectInputStream( new ByteArrayInputStream(  data ) )
+		    val o : java.lang.Object = ois.readObject();
+		    ois.close()
+		    o
+		  }
+		}
 	      
 	      unBlob match {
 		case k : mTT.Resource => {
@@ -1669,7 +1715,7 @@ object PersistedMonadicTS
 		kvdb.valueStorageType
 	      }
 	      override def continuationStorageType : String = {
-		kvdb.valueStorageType
+		kvdb.continuationStorageType
 	      }
 	    }
 	  )
@@ -1746,6 +1792,33 @@ object PersistedMonadicTS
     }
     
     override def protoMsgs : MsgTypes = MonadicDMsgs
+
+    object Acceptance {
+      import CnxnConversionStringScope._
+
+      lazy val kvdb1 = singleton( "Acceptance", "localhost" )
+      lazy val cc11 = CC1( true, 0, "Fire", None )
+      lazy val cc21 = CC2( true, 0, "Ice" )
+      lazy val xelem1 = <CC1><b>true</b><i>0</i><s>"Fire"</s><r>None</r></CC1>
+      
+      lazy val kmap = new HashMap[String,Option[mTT.Resource]]()
+
+      lazy val v =
+	reset {
+	  for( e <- kvdb1.get( cc11 ) )	{
+	    println( "received: " + e );
+	    kmap += ( ( "Fire", e ) );
+	    ()
+	  }
+	}
+      
+      lazy val s = {
+	val cclStr = toValue( "Steam" )
+	reset { kvdb1.put( cc11, cclStr ) };
+	cclStr
+      }
+    }
+
   }
 
 object StdPersistedMonadicTS
@@ -1757,7 +1830,7 @@ object StdPersistedMonadicTS
     import identityConversions._
 
     type MTTypes = MonadicTermTypes[Symbol,Symbol,Any,Any]
-    object TheMTT extends MTTypes
+    object TheMTT extends MTTypes with Serializable
     override def protoTermTypes : MTTypes = TheMTT
 
     type DATypes = DistributedAskTypes
@@ -1836,12 +1909,26 @@ object StdPersistedMonadicTS
 	  override def asStoreValue(
 	    rsrc : mTT.Resource
 	  ) : CnxnCtxtLeaf[Symbol,Symbol,String] with Factual = {
+	    tweet(
+	      "In asStoreValue on " + this + " for resource: " + rsrc
+	    )
+
+	    val storageDispatch = 
+	      rsrc match {
+		case k : mTT.Continuation => continuationStorageType
+		case _ => valueStorageType
+	      };
+
+	    tweet(
+	      "storageDispatch: " + storageDispatch
+	    )
+
 	    val blob = 
-	      valueStorageType match {
+	      storageDispatch match {
 		case "Base64" => {
 		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
 		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
-		  oos.writeObject( rsrc )
+		  oos.writeObject( rsrc.asInstanceOf[Serializable] )
 		  oos.close()
 		  new String( Base64Coder.encode( baos.toByteArray() ) )
 		}
@@ -1893,10 +1980,10 @@ object StdPersistedMonadicTS
 		}
 		
 		(storeType + "") match {
-		  case "String" => {
+		  case "string" => {
 		    extractValue( rv )
 		  }
-		  case "'String" => {
+		  case "'string" => {
 		    extractValue( rv )
 		  }
 		}	      
@@ -1928,7 +2015,7 @@ object StdPersistedMonadicTS
 		kvdb.valueStorageType
 	      }
 	      override def continuationStorageType : String = {
-		kvdb.valueStorageType
+		kvdb.continuationStorageType
 	      }
 	    }
 	  )

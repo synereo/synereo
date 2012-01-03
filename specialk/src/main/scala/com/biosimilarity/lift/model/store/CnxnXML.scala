@@ -397,17 +397,48 @@ trait CnxnXML[Namespace,Var,Tag] {
   }
 
   def caseClassAccessors( 
-    cc : ScalaObject with Product with Serializable
+    //cc : ScalaObject with Product with Serializable
+    cc : java.lang.Object
   ) : Array[java.lang.reflect.Method] = {
+    // this is what you call a heuristic
+    // and heuristic is probably better than myistic 	      
     cc.getClass.getMethods.filter(
       ( m : java.lang.reflect.Method ) => {
 	((! javaBuiltins.contains( m.getName ) )
 	 && (( m.getParameterTypes.size ) == 0)
 	 && (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
 	 && (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
+	 && (! java.lang.reflect.Modifier.isStatic( m.getModifiers() ) )
        )
       }
     )
+  }
+
+  def caseClassNameSpace(
+    //cc : ScalaObject with Product with Serializable
+    cc : java.lang.Object
+  ) : String = {
+    val initialName = cc.getClass.getName
+    val nameComponents = initialName.split( "\\." ).toList
+    if ( nameComponents.length > 1 ) {
+      val iC =
+	nameComponents.take( 1 )( 0 )
+      val initialCompStr =
+	iC.substring( 0, 1 ).toLowerCase + iC.substring( 1, iC.length )
+
+      ( initialCompStr /: nameComponents.drop( 1 ) )(
+	{
+	  ( acc, e ) => {
+	    val compStr =
+	      e.substring( 0, 1 ).toUpperCase + e.substring( 1, e.length ) 
+	    acc + compStr
+	  }
+	}
+      )
+    }
+    else {
+      initialName
+    }
   }
 
   def fromCaseClass [Namespace,Var,Tag] (
@@ -455,25 +486,17 @@ trait CnxnXML[Namespace,Var,Tag] {
 	}
 	else {
 	  val facts =
-	    (for(
-	      m <- cc.getClass.getMethods;      
-	      // this is what you call a heuristic
-	      // and heuristic is probably better than myistic 
-	      if ((! javaBuiltins.contains( m.getName ) )
-		  && (( m.getParameterTypes.size ) == 0)
-		  && (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
-		  && (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
-		  && ( filter( m ) )
+	    (
+	      for( m <- caseClassAccessors( cc ) ) yield {
+		new CnxnCtxtBranch[Namespace,Var,Tag](
+		  labelToNS( m.getName ),
+		  List( fromCC( m.invoke( cc ) ) )
 		)
-	    ) yield {
-	      new CnxnCtxtBranch[Namespace,Var,Tag](
-		labelToNS( m.getName ),
-		List( fromCC( m.invoke( cc ) ) )
-	      )
-	    }).toList
+	      }
+	    ).toList
 	  
 	  new CnxnCtxtBranch[Namespace,Var,Tag] (
-	    labelToNS( cc.getClass.getName ),
+	    labelToNS( caseClassNameSpace( cc ) ),
 	    facts
 	  )
 	}

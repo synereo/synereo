@@ -58,7 +58,7 @@ class SimpleStoreScope[A]( )
       import identityConversions._    
 
       type MTTypes = MonadicTermTypes[String,String,String,A]
-      object TheMTT extends MTTypes
+      object TheMTT extends MTTypes with Serializable
       override def protoTermTypes : MTTypes = TheMTT
       
       type DATypes = DistributedAskTypes

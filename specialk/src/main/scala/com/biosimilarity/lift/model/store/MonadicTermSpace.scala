@@ -48,7 +48,7 @@ import java.io.OutputStreamWriter
 
 trait MonadicTermTypes[Namespace,Var,Tag,Value] 
 extends MonadicGenerators {
-  trait Resource
+  trait Resource extends Serializable
   case class Ground( v : Value ) extends Resource
   case class Cursor( v : Generator[Resource,Unit,Unit] ) extends Resource
   case class RMap(
