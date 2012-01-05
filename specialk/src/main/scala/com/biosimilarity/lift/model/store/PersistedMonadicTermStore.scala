@@ -1855,8 +1855,15 @@ package usage {
       lazy val kmap = new HashMap[String,Option[mTT.Resource]]()
 
       var _count = 0
-      def count = {
+      def count = _count
+
+      def openParen : Int = {
 	_count += 1
+	_count
+      }
+
+      def closeParen : Int = {
+	_count -= 1
 	_count
       }
 
@@ -1875,6 +1882,7 @@ package usage {
 
       def doGet( nUUID : String ) : Unit = {	
 	reset {
+	  openParen
 	  for( e <- kvdb1.get( CC1( true, count, nUUID, None ) ) ) {
 	    println( "received: " + e );
 	    kmap += ( ( nUUID, e ) );
@@ -1888,6 +1896,7 @@ package usage {
       def doPut( nUUID : String ) : mTT.Resource = {
 	val cclStr = toValue( getUUID + "" )
 	reset { kvdb1.put( CC1( true, count, nUUID, None ), cclStr ) };
+	closeParen
 	cclStr
       }
 
