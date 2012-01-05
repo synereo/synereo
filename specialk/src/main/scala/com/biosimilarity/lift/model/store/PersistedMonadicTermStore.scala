@@ -1411,7 +1411,7 @@ package usage {
       override def protoEMTypes : EMTypes =
 	theEMTypes
 
-      class PersistedStringMGJ(
+      case class PersistedStringMGJ(
 	val dfStoreUnitStr : String,
 	//override val name : URI,
 	override val name : Moniker,
@@ -1765,7 +1765,7 @@ package usage {
     val protoDreqUUID = getUUID()
     val protoDrspUUID = getUUID()    
     
-    object MonadicDMsgs extends MsgTypes {
+    object MonadicDMsgs extends MsgTypes with Serializable {
       
       override def protoDreq : DReq = MDGetRequest( aLabel )
       override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
@@ -1793,30 +1793,105 @@ package usage {
     
     override def protoMsgs : MsgTypes = MonadicDMsgs
 
-    object Acceptance {
+    object Acceptance extends UUIDOps {
       import CnxnConversionStringScope._
 
-      lazy val kvdb1 = singleton( "Acceptance", "localhost" )
+      lazy val _kvdb1Map : HashMap[String,PersistedStringMGJ] = 
+	new HashMap[String,PersistedStringMGJ]()
+
+      def kvdb1 : PersistedStringMGJ = kvdb1( true )( false )
+
+      def kvdb1( useExisting : Boolean )( lb : Boolean ) : PersistedStringMGJ = {
+	_kvdb1Map.get( "Acceptance" ) match {
+	  case Some( psMGJ ) => {
+	    if ( useExisting ) {
+	      psMGJ
+	    }
+	    else {
+	      if ( lb ) {
+		psMGJ.acquaintances.length match {
+		  case 0 => {
+		    val dbN = "Acceptance" + _kvdb1Map.keys.size
+		    val npsMGJ = loopBack( dbN )
+		    _kvdb1Map += ( ( dbN, psMGJ ) )
+		    _kvdb1Map += ( ( "Acceptance", npsMGJ ) )
+		    npsMGJ
+		  }
+		  case _ => psMGJ
+		}
+	      }
+	      else {
+		psMGJ.acquaintances.length match {
+		  case 0 => psMGJ
+		  case _ => {
+		    val dbN = "Acceptance" + _kvdb1Map.keys.size
+		    val npsMGJ = singleton( dbN, "localhost" )
+		    _kvdb1Map += ( ( dbN, psMGJ ) )
+		    _kvdb1Map += ( ( "Acceptance", npsMGJ ) )
+		    npsMGJ
+		  }
+		}
+	      }
+	    }
+	  }
+	  case None => {
+	    val npsMGJ = 
+	      if ( lb ) {
+		loopBack( "Acceptance" )
+	      }
+	      else {
+		singleton( "Acceptance", "localhost" )
+	      }
+	    _kvdb1Map += ( ( "Acceptance", npsMGJ ) )
+	    npsMGJ
+	  }
+	}	
+      }
+
       lazy val cc11 = CC1( true, 0, "Fire", None )
       lazy val cc21 = CC2( true, 0, "Ice" )
       lazy val xelem1 = <CC1><b>true</b><i>0</i><s>"Fire"</s><r>None</r></CC1>
       
       lazy val kmap = new HashMap[String,Option[mTT.Resource]]()
 
-      lazy val v =
+      var _count = 0
+      def count = {
+	_count += 1
+	_count
+      }
+
+      var _uuidStack : List[String] = Nil
+      def nextUUID : String = {
+	val nUUID = getUUID + ""
+	_uuidStack = nUUID :: _uuidStack
+	nUUID
+      }
+      def currUUID : String = {
+	_uuidStack match {
+	  case nUUID :: rUUIDs => nUUID
+	  case _ => nextUUID
+	}
+      }
+
+      def doGet( nUUID : String ) : Unit = {	
 	reset {
-	  for( e <- kvdb1.get( cc11 ) )	{
+	  for( e <- kvdb1.get( CC1( true, count, nUUID, None ) ) ) {
 	    println( "received: " + e );
-	    kmap += ( ( "Fire", e ) );
+	    kmap += ( ( nUUID, e ) );
 	    ()
 	  }
 	}
+      }
+
+      def doGet : Unit = { doGet( nextUUID ) }
       
-      lazy val s = {
-	val cclStr = toValue( "Steam" )
-	reset { kvdb1.put( cc11, cclStr ) };
+      def doPut( nUUID : String ) : mTT.Resource = {
+	val cclStr = toValue( getUUID + "" )
+	reset { kvdb1.put( CC1( true, count, nUUID, None ), cclStr ) };
 	cclStr
       }
+
+      def doPut : mTT.Resource = { doPut( currUUID ) }
     }
 
   }
@@ -1856,7 +1931,7 @@ object StdPersistedMonadicTS
       override def protoEMTypes : EMTypes =
 	theEMTypes
     
-      class PersistedStdMGJ(
+      case class PersistedStdMGJ(
 	val dfStoreUnitStr : String,
 	//override val name : URI,
 	override val name : Moniker,
@@ -2041,7 +2116,7 @@ object StdPersistedMonadicTS
     val protoDreqUUID = getUUID()
     val protoDrspUUID = getUUID()    
     
-    object MonadicDMsgs extends MsgTypes {
+    object MonadicDMsgs extends MsgTypes with Serializable {
       
       override def protoDreq : DReq = 
 	MDGetRequest( $('protoDReq)( "yo!" ) )

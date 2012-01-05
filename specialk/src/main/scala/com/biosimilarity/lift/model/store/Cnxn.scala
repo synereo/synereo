@@ -14,7 +14,8 @@ import scala.collection.SeqProxy
 import java.net.URI
 
 trait CnxnLabel[Namespace, /*+*/Tag]
-extends Tree[Tag] with SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]] {
+extends Tree[Tag] with SeqProxy[Either[Tag,CnxnLabel[Namespace,Tag]]]
+  with Serializable {
   def up /* [Tag1 >: Tag] */ ( tOrC : Either[Tag,CnxnLabel[Namespace,Tag]] )
    : List[Tag] = {
     tOrC match {
