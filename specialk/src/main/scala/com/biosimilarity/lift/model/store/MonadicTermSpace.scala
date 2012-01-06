@@ -203,7 +203,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
  
   }
 
-  abstract class MonadicGeneratorJunction(
+  /* abstract */ class MonadicGeneratorJunction(
     //override val name : URI,
     override val name : Moniker,
     //override val acquaintances : Seq[URI],
@@ -220,6 +220,24 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion
   with MonadicGenerators {
+    def this() = {
+      this(
+	MURI( new URI( "agent", "localhost", "/connect", "" ) ),
+	Nil,
+	new ListBuffer[Msgs.JTSReq](),
+	new ListBuffer[Msgs.JTSRsp](),
+	None,
+	null
+      )
+    }
+
+    override def acqQName( acqURI : Moniker ) : String = {
+      acqURI.getPath.split( "/" ).last
+    }    
+    override def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit = {
+      throw new Exception( "handleIncoming not implemented" )
+    }
+
     override def toString() : String = {
       name + " -> " + acquaintances
     }
@@ -337,6 +355,15 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     Some( new LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     AnAMQPTraceMonitor
   ) with QueueNameVender {
+    def this() = {
+      this(
+	MURI( new URI( "agent", "localhost", "/connect", "" ) ),
+	Nil
+      )
+    }
+    override def acqQName( acqURI : Moniker ) : String = {
+      acqURI.getPath.split( "/" ).last
+    }
     def sendRsp(
       atp : SemiMonadicAgentJSONAMQPTwistedPair[String],
       dreq : Msgs.DReq,	
@@ -576,7 +603,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       }
     }
     
-    def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit = {
+    override def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit = {
       dmsg match {
 	case Left(
 	  dreq@JustifiedRequest( 

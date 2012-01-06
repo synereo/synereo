@@ -267,6 +267,7 @@ trait XMLIfy[Namespace,Var] {
     with CnxnCtxtInjector[Namespace,Var,String]
     with Blobify
     with UUIDOps
+    with Serializable
 
   def xmlIfier : CnxnXML [Namespace,Var,String] = {
     theXMLIfier

@@ -211,7 +211,7 @@ class SimpleStoreScope[A]( )
 	    
 	  }
 	  
-	  def persistenceManifest : Option[PersistenceManifest] = {
+	  override def persistenceManifest : Option[PersistenceManifest] = {
 	    val sid = Some( ( s : String ) => s )
 	    val kvdb = this;
 	    Some(

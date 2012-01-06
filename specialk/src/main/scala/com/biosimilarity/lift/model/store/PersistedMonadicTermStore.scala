@@ -54,9 +54,10 @@ import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 
 trait PersistedTermStoreScope[Namespace,Var,Tag,Value] 
-extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {  
+extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {  
   trait PersistenceScope
-    extends ExcludedMiddleScope[mTT.GetRequest,mTT.GetRequest,mTT.Resource] {
+    extends ExcludedMiddleScope[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+    with Serializable {
       trait PersistenceManifest {    
 	def db : Database
 	def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String
@@ -130,8 +131,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	}
       }
       
-      trait PersistenceManifestTrampoline {
-	def persistenceManifest : Option[PersistenceManifest]
+      trait PersistenceManifestTrampoline extends Serializable {
+	def persistenceManifest : Option[PersistenceManifest] = None
 	
 	def storeUnitStr[Src,Label,Trgt](
 	  cnxn : Cnxn[Src,Label,Trgt]
@@ -524,7 +525,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	}
       }  
   
-      abstract class PersistedMonadicGeneratorJunction(
+      /* abstract */ case class PersistedMonadicGeneratorJunction(
 	//override val name : URI,
 	override val name : Moniker,
 	//override val acquaintances : Seq[URI]
@@ -534,8 +535,12 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] {
 	acquaintances
       ) with PersistenceManifestTrampoline
 	       with BaseXXMLStore           
-	       with BaseXCnxnStorage[Namespace,Var,Tag]           
-      {    	
+	       with BaseXCnxnStorage[Namespace,Var,Tag]
+			  with java.io.Serializable
+      {    
+	def this() = {
+	  this( MURI( new URI( "agent", "localhost", "/connect", "") ), Nil )
+	}
 	//override def continuationStorageType : String = "Base64"
 	override def tmpDirStr : String = {
 	  val tds = config.getString( "storageDir", "tmp" )       
@@ -1379,6 +1384,7 @@ package usage {
   object PersistedMonadicTS
        extends PersistedTermStoreScope[String,String,String,String] 
        with UUIDOps
+       with Serializable
   {
     import SpecialKURIDefaults._
     import CnxnLeafAndBranch._
@@ -1392,12 +1398,12 @@ package usage {
     object TheDAT extends DATypes
     override def protoAskTypes : DATypes = TheDAT
 
-    object Being extends PersistenceScope {      
+    object Being extends PersistenceScope with Serializable {      
       
       override type EMTypes = ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
 
-      object theEMTypes
-	       extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+      object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+       with Serializable
       {
 	case class PrologSubstitution( soln : Solution[String] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
@@ -1411,7 +1417,7 @@ package usage {
       override def protoEMTypes : EMTypes =
 	theEMTypes
 
-      case class PersistedStringMGJ(
+      class PersistedStringMGJ(
 	val dfStoreUnitStr : String,
 	//override val name : URI,
 	override val name : Moniker,
@@ -1420,6 +1426,14 @@ package usage {
       ) extends PersistedMonadicGeneratorJunction(
 	name, acquaintances
       ) {      
+	def this() = {
+	  this(
+	    "",
+	    MURI( new URI( "agent", "localhost", "/connect", "" ) ),
+	    Nil
+	  )
+	}
+
 	class StringXMLDBManifest(
 	  override val storeUnitStr : String,
 	  override val labelToNS : Option[String => String],
@@ -1706,7 +1720,7 @@ package usage {
 	  throw new Exception( "shouldn't be calling this version of asCacheK" )
 	}	
 	
-	def persistenceManifest : Option[PersistenceManifest] = {
+	override def persistenceManifest : Option[PersistenceManifest] = {
 	  val sid = Some( ( s : String ) => s )
 	  val kvdb = this;
 	  Some(
@@ -1854,18 +1868,22 @@ package usage {
       
       lazy val kmap = new HashMap[String,Option[mTT.Resource]]()
 
-      var _count = 0
-      def count = _count
+      var _openParenCount = 0
+      def openParenCount = _openParenCount
+      var _closeParenCount = 0
+      def closeParenCount = _closeParenCount
 
       def openParen : Int = {
-	_count += 1
-	_count
+	_openParenCount += 1
+	_openParenCount
       }
 
       def closeParen : Int = {
-	_count -= 1
-	_count
+	_closeParenCount += 1
+	_closeParenCount
       }
+
+      def count = openParenCount - closeParenCount
 
       var _uuidStack : List[String] = Nil
       def nextUUID : String = {
@@ -1921,12 +1939,12 @@ object StdPersistedMonadicTS
     object TheDAT extends DATypes
     override def protoAskTypes : DATypes = TheDAT
 
-    object Being extends PersistenceScope {
+    object Being extends PersistenceScope with Serializable {
 
       override type EMTypes = ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
 
-      object theEMTypes
-	       extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+      object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+	with Serializable
       {
 	case class PrologSubstitution( soln : Solution[String] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
@@ -1949,6 +1967,13 @@ object StdPersistedMonadicTS
       ) extends PersistedMonadicGeneratorJunction(
 	name, acquaintances
       ) {
+	def this() = {
+	  this(
+	    "",
+	    MURI( new URI( "agent", "localhost", "/connect", "" ) ),
+	    Nil
+	  )
+	}
 	class StringXMLDBManifest(
 	  override val storeUnitStr : String,
 	  override val labelToNS : Option[String => Symbol],
@@ -2089,7 +2114,7 @@ object StdPersistedMonadicTS
  
 	}
 	
-	def persistenceManifest : Option[PersistenceManifest] = {
+	override def persistenceManifest : Option[PersistenceManifest] = {
 	  val sid = Some( ( s : String ) => s )
 	  val sym = Some( ( s : String ) => Symbol( s ) )
 	  val kvdb = this;
