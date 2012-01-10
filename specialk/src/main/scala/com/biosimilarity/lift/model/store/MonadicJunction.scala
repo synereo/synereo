@@ -42,7 +42,9 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   import AMQPDefaults._
   import identityConversions._
 
-  @transient object AnAMQPTraceMonitor extends TraceMonitor[Msgs.DReq,Msgs.DRsp]  
+  //@transient object AnAMQPTraceMonitor extends TraceMonitor[Msgs.DReq,Msgs.DRsp]  
+
+  @transient lazy val AnAMQPTraceMonitor = new TraceMonitor[Msgs.DReq,Msgs.DRsp]()
 
   class StdMonadicAgentJSONAMQPDispatcher[TxPort](
     host : String, port : Int,
@@ -55,7 +57,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   ) with MonadicAgency[String,Msgs.DReq,Msgs.DRsp] {  
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
-    //override def name : URI = {
     override def name : Moniker = {
       new URI( "agent", host, "/", "" )
     }    

@@ -10,7 +10,7 @@ package com.biosimilarity.lift.lib.moniker
 import java.net.URI
 import java.net.URL
 
-trait Moniker {
+trait Moniker extends Serializable {
   def getScheme : String
   def getUserInfo : String
   def getAuthority : String

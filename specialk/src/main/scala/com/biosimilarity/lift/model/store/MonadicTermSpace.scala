@@ -879,11 +879,11 @@ object MonadicTS
     import identityConversions._
 
     type MTTypes = MonadicTermTypes[String,String,String,String]
-    object TheMTT extends MTTypes
+    object TheMTT extends MTTypes with Serializable
     override def protoTermTypes : MTTypes = TheMTT
 
     type DATypes = DistributedAskTypes
-    object TheDAT extends DATypes
+    object TheDAT extends DATypes with Serializable
     override def protoAskTypes : DATypes = TheDAT
     
     lazy val Mona = new MonadicTermStore()
@@ -898,7 +898,7 @@ object MonadicTS
     val protoDreqUUID = getUUID()
     val protoDrspUUID = getUUID()    
     
-    object MonadicDMsgs extends MsgTypes {
+    object MonadicDMsgs extends MsgTypes with Serializable {
       
       override def protoDreq : DReq = MDGetRequest( aLabel )
       override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )

@@ -1384,7 +1384,7 @@ package usage {
     override def protoTermTypes : MTTypes = TheMTT
 
     type DATypes = DistributedAskTypes
-    object TheDAT extends DATypes
+    object TheDAT extends DATypes with Serializable
     override def protoAskTypes : DATypes = TheDAT
 
     object Being extends PersistenceScope with Serializable {      
@@ -1940,7 +1940,7 @@ object StdPersistedMonadicTS
     override def protoTermTypes : MTTypes = TheMTT
 
     type DATypes = DistributedAskTypes
-    object TheDAT extends DATypes
+    object TheDAT extends DATypes with Serializable
     override def protoAskTypes : DATypes = TheDAT
 
     object Being extends PersistenceScope with Serializable {
