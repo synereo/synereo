@@ -6,7 +6,9 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.model.store
+package com.biosimilarity.lift.model.store.deprecated
+
+import com.biosimilarity.lift.model.store._
 
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
@@ -17,9 +19,6 @@ import net.liftweb.amqp._
 
 import scala.collection.mutable._
 import scala.util.continuations._ 
-
-import scala.actors.Actor
-import scala.actors.Actor._
 
 import com.rabbitmq.client._
 

@@ -21,11 +21,9 @@ import scala.actors._
 import Actor._
 
 trait Socialite[ReqBody,RspBody] {  
-  //def name : URI
   def name : Moniker
   def requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]]
   def responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]]
-  //def nameSpace : Option[LinkedHashMap[URI,Socialite[ReqBody,RspBody]]]
   def nameSpace : Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]]
 
   def traceMonitor : TraceMonitor[ReqBody,RspBody]
@@ -67,11 +65,10 @@ trait Socialite[ReqBody,RspBody] {
   }
   def isJustified( response : InspectionRequest ) : Boolean = true
 
-  //def validateTarget( msg : {def to : URI} ) : Boolean = {
   def validateTarget( msg : {def to : Moniker} ) : Boolean = {
     msg.to == name
   }
-  //def validateAcquaintance( msg : {def from : URI} ) : Boolean = {
+
   def validateAcquaintance( msg : {def from : Moniker} ) : Boolean = {  
     nameSpace match {
       case None => false
@@ -200,10 +197,8 @@ trait Socialite[ReqBody,RspBody] {
     true
   }
 
-  //def likes( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean
   def likes( dsg : Moniker, acq : Socialite[ReqBody,RspBody] ) : Boolean
 
-  //def introduce( dsg : URI, acq : Socialite[ReqBody,RspBody] ) : Boolean = {
   def introduce( dsg : Moniker, acq : Socialite[ReqBody,RspBody] ) : Boolean = {
     if ( likes( dsg, acq ) ) {
       nameSpace match {
@@ -539,7 +534,6 @@ trait Socialite[ReqBody,RspBody] {
 class SocialiteExtractor[ReqBody,RspBody] {
   def unapply( socialite : Socialite[ReqBody,RspBody] )
   : ( 
-    //URI,
     Moniker,
     ListBuffer[JustifiedRequest[ReqBody,RspBody]],
     ListBuffer[JustifiedResponse[ReqBody,RspBody]],
@@ -1065,6 +1059,7 @@ class SocialiteExtractor[ReqBody,RspBody] {
 //   }
 // }
 
+@transient
 class Messenger[ReqBody,RspBody](
   //override val name : URI,
   override val name : Moniker,

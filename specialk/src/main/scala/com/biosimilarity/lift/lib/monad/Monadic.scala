@@ -15,7 +15,6 @@ import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 
 import _root_.com.rabbitmq.client.{ Channel => RabbitChan,  _}
-//import _root_.scala.actors.Actor
 
 import _root_.java.io.ObjectInputStream
 import _root_.java.io.ByteArrayInputStream

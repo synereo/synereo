@@ -154,11 +154,11 @@ trait Journalist {
   Configgy.configure("log.conf")
   PropertyConfigurator.configure("log.properties")
 
-  lazy val config = Configgy.config
+  @transient lazy val config = Configgy.config
   var tweetLevel = SeverityFromOption(config.getString("tweetLevel"))
   var blogLevel = SeverityFromOption(config.getString("blogLevel"))
 
-  lazy val logger = Logger.getLogger(this.getClass.getName)
+  @transient lazy val logger = Logger.getLogger(this.getClass.getName)
 
   def header(level: Severity.Value): String =
   {

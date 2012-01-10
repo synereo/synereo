@@ -16,6 +16,7 @@ import _root_.java.io.ObjectOutputStream
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
+@transient
 class JSONAMQPSender(
   cf: ConnectionFactory,
   host: String,

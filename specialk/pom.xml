@@ -453,9 +453,13 @@
 	  <scalaVersion>${scala.version}</scalaVersion>
           <charset>${project.build.sourceEncoding}</charset>
 	  <displayCmd>true</displayCmd>
-          <jvmArgs>
+          <jvmArgs>	    
+	    <jvmArg>-Xdebug</jvmArg>
+	    <jvmArg>-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005</jvmArg>
+	    <!-- jvmArg>-Xnoagent</jvmArg -->
+	    <!-- jvmArg>-Djava.compiler=NONE</jvmArg -->
+	    <jvmArg>-Xmx1024m</jvmArg>
 	    <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
-            <jvmArg>-Xmx1024m</jvmArg>
             <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
           </jvmArgs>
 	  <args>	    

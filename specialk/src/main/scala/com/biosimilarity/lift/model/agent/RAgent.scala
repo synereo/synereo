@@ -78,6 +78,7 @@ trait Focus[ReqBody,RspBody] {
 
 // Mercury -- down to the shiny bits
 
+@transient
 class ReflectiveMessenger[ReqBody,RspBody](
   //override val name : URI,
   override val name : Moniker,

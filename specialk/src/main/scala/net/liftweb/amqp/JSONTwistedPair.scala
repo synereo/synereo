@@ -32,16 +32,16 @@ trait AMQPTwistedPair {
 abstract class JSONAMQPTP(
   override val srcHost : String,
   override val trgtHost : String,
-  override val amqpSenderToTrgt : StdJSONOverAMQPSender,
-  override val amqpReceiverFromSrc : JSONAMQPListener
+  @transient override val amqpSenderToTrgt : StdJSONOverAMQPSender,
+  @transient override val amqpReceiverFromSrc : JSONAMQPListener
 ) extends AMQPTwistedPair 
 
 class JSONAMQPTwisted(
   override val srcHost : String,
   override val trgtHost : String  
 ) extends AMQPTwistedPair {
-  var _amqpSenderToTrgt : Option[StdJSONOverAMQPSender] = None
-  var _amqpReceiverFromSrc : Option[JSONAMQPListener] = None
+  @transient var _amqpSenderToTrgt : Option[StdJSONOverAMQPSender] = None
+  @transient var _amqpReceiverFromSrc : Option[JSONAMQPListener] = None
 
   override def amqpSenderToTrgt : StdJSONOverAMQPSender = {
     _amqpSenderToTrgt match { 

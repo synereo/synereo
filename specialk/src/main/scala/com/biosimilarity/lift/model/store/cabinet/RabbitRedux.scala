@@ -6,7 +6,7 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.model.store
+package com.biosimilarity.lift.model.store.deprecated
 
 import com.biosimilarity.lift.lib._
 

@@ -28,14 +28,9 @@ import scala.collection.mutable.MutableList
 
 import org.prolog4j._
 
-//import org.exist.storage.DBBroker
-
 import org.xmldb.api.base.{ Resource => XmlDbRrsc, _}
 import org.xmldb.api.modules._
 import org.xmldb.api._
-
-//import org.exist.util.serializer.SAXSerializer
-//import org.exist.util.serializer.SerializerPool
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
@@ -124,7 +119,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
 	  value : Elem
-	) : emT.PlaceInstance //Option[mTT.Resource]
+	) : emT.PlaceInstance 
 	
 	def recordDeletionQueryTemplate : String = {
 	  "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//record where deep-equal($rcrd/*[1], $key) return $rcrd"
@@ -240,7 +235,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
 	  value : Elem
-	) : Option[emT.PlaceInstance] /* Option[mTT.Resource] */ = {
+	) : Option[emT.PlaceInstance] = {
 	  for( pd <- persistenceManifest )
 	  yield { pd.asResource( key, value ) }
 	}
@@ -525,10 +520,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	}
       }  
   
-      /* abstract */ case class PersistedMonadicGeneratorJunction(
-	//override val name : URI,
+      abstract /* case */ class PersistedMonadicGeneratorJunction(
 	override val name : Moniker,
-	//override val acquaintances : Seq[URI]
 	override val acquaintances : Seq[Moniker]
       ) extends DistributedMonadicGeneratorJunction(
 	name,
@@ -536,12 +529,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
       ) with PersistenceManifestTrampoline
 	       with BaseXXMLStore           
 	       with BaseXCnxnStorage[Namespace,Var,Tag]
-			  with java.io.Serializable
       {    
 	def this() = {
 	  this( MURI( new URI( "agent", "localhost", "/connect", "") ), Nil )
 	}
-	//override def continuationStorageType : String = "Base64"
 	override def tmpDirStr : String = {
 	  val tds = config.getString( "storageDir", "tmp" )       
 	  val tmpDir = new java.io.File( tds )
@@ -898,7 +889,6 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	  ) {	      
 	    val emT.PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
 	    tweet( "waiters waiting for a value at " + wtr + " : " + rks )
-	    //val ks : Option[List[Option[mTT.Resource] => Unit @suspendable]] = None
 	    updateKStore( persist )(
 	      ptn, consume, collName
 	    ) match {
@@ -932,7 +922,6 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	def mget(
 	  persist : Option[PersistenceManifest],
 	  ask : dAT.Ask,
-	  //hops : List[URI]
 	  hops : List[Moniker]
 	)(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
@@ -1107,7 +1096,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 						// the store, but we haven't
 						// completed processing. This is
 						// where we need Tx.
-						//val ersrc : Option[mTT.Resource] = asResource( path, rslt )
+
 						val ersrc : emT.PlaceInstance = pd.asResource( path, rslt )
 						ersrc.stuff match {
 						  case Left( r ) => rsrcRslts = r :: rsrcRslts
@@ -1419,9 +1408,7 @@ package usage {
 
       class PersistedStringMGJ(
 	val dfStoreUnitStr : String,
-	//override val name : URI,
 	override val name : Moniker,
-	//override val acquaintances : Seq[URI]
 	override val acquaintances : Seq[Moniker]
       ) extends PersistedMonadicGeneratorJunction(
 	name, acquaintances
@@ -1539,7 +1526,6 @@ package usage {
 	    tweet(
 	      "converting to cache value"
 	    )
-	    //asPatternString( ccl )
 	    ccl match {
 	      case CnxnCtxtBranch(
 		"string",
@@ -1563,7 +1549,7 @@ package usage {
 	  override def asResource(
 	    key : mTT.GetRequest, // must have the pattern to determine bindings
 	    value : Elem
-	  ) : emT.PlaceInstance /* Option[mTT.Resource] */ = {
+	  ) : emT.PlaceInstance = {
 	    val ttt = ( x : String ) => x
 	    
 	    val ptn = asPatternString( key )
@@ -1573,7 +1559,6 @@ package usage {
 	      for(
 		ltns <- labelToNS;
 		ttv <- textToVar;
-		//ttt <- textToTag;
 		ccl <- xmlIfier.fromXML( ltns, ttv, ttt )( value )
 	      ) yield {
 		ccl match {
@@ -1638,7 +1623,6 @@ package usage {
 	      }
 	    
 	    // BUGBUG -- lgm : this is a job for flatMap
-	    //oRsrc.getOrElse( None )
 	    oRsrc match {
 	      case Some( pI ) => {
 		pI
@@ -1657,7 +1641,6 @@ package usage {
 	  tweet(
 	    "converting to cache continuation stack" + ccl
 	  )
-	  //asPatternString( ccl )	
 	  ccl match {
 	    case CnxnCtxtBranch(
 	      "string",
@@ -1918,7 +1901,28 @@ package usage {
 	cclStr
       }
 
-      def doPut : mTT.Resource = { doPut( currUUID ) }
+      def doPut : mTT.Resource = { doPut( currUUID ) }      
+    }
+    
+    def main(args: Array[String]): Unit = {
+      import tools.jline.console.ConsoleReader
+      import Acceptance._
+      val cr = new ConsoleReader()
+      println( "create kvdb? " )
+      val lck = cr.readLine( "> " )
+      if ( lck.contains( "y" ) ) {
+	kvdb1( false )( true )
+	println( "doGet? " )
+	val ldg = cr.readLine( "> " )
+	if ( ldg.contains( "y" ) ) {
+	  doGet
+	  println( "doPut? " )
+	  val ldp = cr.readLine( "> " )
+	  if ( ldp.contains( "y" ) ) {
+	    doPut
+	  }
+	}
+      }
     }
 
   }
@@ -1960,9 +1964,7 @@ object StdPersistedMonadicTS
     
       case class PersistedStdMGJ(
 	val dfStoreUnitStr : String,
-	//override val name : URI,
 	override val name : Moniker,
-	//override val acquaintances : Seq[URI]
 	override val acquaintances : Seq[Moniker]
       ) extends PersistedMonadicGeneratorJunction(
 	name, acquaintances
@@ -2071,7 +2073,6 @@ object StdPersistedMonadicTS
 	    tweet(
 	      "converting to cache value"
 	    )
-	    //asPatternString( ccl )
 	    ccl match {
 	      case CnxnCtxtBranch(
 		storeType,
@@ -2108,7 +2109,7 @@ object StdPersistedMonadicTS
 	  override def asResource(
 	    key : mTT.GetRequest, // must have the pattern to determine bindings
 	    value : Elem
-	  ) : emT.PlaceInstance /* Option[mTT.Resource] */ = {
+	  ) : emT.PlaceInstance = {
 	    throw new Exception( "not yet implemented" )
 	  }
  

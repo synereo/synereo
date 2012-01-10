@@ -25,6 +25,7 @@ case class TraceSocialXmlEvent[ReqBody,RspBody]( agent : Socialite[ReqBody,RspBo
      }
 case class ShowLog[ReqBody,RspBody]() extends LogAction[Socialite[ReqBody,RspBody]]
 
+@transient
 class TraceMonitor[ReqBody,RspBody]
 extends Actor
 with TraceMonitorT[Socialite[ReqBody,RspBody]] {

@@ -18,7 +18,6 @@ import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 
 import _root_.com.rabbitmq.client.{ Channel => RabbitChan, _}
-import _root_.scala.actors.Actor
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
@@ -40,9 +39,7 @@ trait MonadicAMQPDispatcher[T]
     body  : Array[Byte]
   )
 
-//  type ConnectionParameters = RabbitCnxnParams
   type Channel = RabbitChan
-//  type Ticket = Int
   type Payload = AMQPDelivery
 
   abstract class SerializedConsumer[T](
@@ -319,9 +316,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 
   import AMQPDefaults._
   
-  //def srcURI : URI
   def srcURI : Moniker
-  //def trgtURI : URI
   def trgtURI : Moniker
 
   def getPort(uriPort: Int, defaultPort: Int): Int = {
@@ -331,7 +326,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
     }
   }
 
-  var _jsonDispatcher : Option[StdMonadicJSONAMQPDispatcher[T]] = None
+  @transient var _jsonDispatcher : Option[StdMonadicJSONAMQPDispatcher[T]] = None
   def jsonDispatcher( handle : T => Unit )(
     implicit dispatchOnCreate : Boolean, port : Int
   ) : StdMonadicJSONAMQPDispatcher[T] = {
@@ -365,7 +360,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
     }
   }
 
-  var _jsonSender : Option[JSONAMQPSender] = None 
+  @transient var _jsonSender : Option[JSONAMQPSender] = None 
   
   def jsonSender()( implicit connectionFactory : ConnectionFactory, defaultPort : Int ) : JSONAMQPSender = {
     jsonSender( "mult" )( connectionFactory, defaultPort )
@@ -415,9 +410,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 }
 
 class SMJATwistedPair[T](
-  //override val srcURI : URI,
   override val srcURI : Moniker,
-  //override val trgtURI : URI
   override val trgtURI : Moniker
 ) extends SemiMonadicJSONAMQPTwistedPair[T]
   with WireTap
@@ -443,16 +436,13 @@ object SMJATwistedPair {
     srcIPStr : String, trgtIPStr : String
   ) : SMJATwistedPair[T] = {
     new SMJATwistedPair[T](
-      //new URI( "agent", srcIPStr, "/invitation", "" ),
       MURI( new URI( "agent", srcIPStr, "/invitation", "" ) ),
-      //new URI( "agent", trgtIPStr, "/invitation", "" )
       MURI( new URI( "agent", trgtIPStr, "/invitation", "" ) )
     )
   }
   def unapply[T](
     smjatp : SMJATwistedPair[T]
-  ) : //Option[(URI,URI)] = {
-  Option[(Moniker,Moniker)] = {
+  ) : Option[(Moniker,Moniker)] = {
     Some( ( smjatp.srcURI, smjatp.trgtURI ) )
   }    
 }

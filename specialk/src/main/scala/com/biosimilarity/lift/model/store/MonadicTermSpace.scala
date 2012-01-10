@@ -123,7 +123,9 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   //with ConfiggyJournal
   with ConfiguredJournal
   with ConfigurationTrampoline
-  with UUIDOps {
+  with UUIDOps
+  with Serializable
+    {
     override def tap [A] ( fact : A ) : Unit = {
       reportage( fact )
     }
@@ -204,16 +206,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   }
 
   /* abstract */ class MonadicGeneratorJunction(
-    //override val name : URI,
     override val name : Moniker,
-    //override val acquaintances : Seq[URI],
     override val acquaintances : Seq[Moniker],
     override val requests : ListBuffer[Msgs.JTSReq],
     override val responses : ListBuffer[Msgs.JTSRsp],
-    override val nameSpace :
-    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
-    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
-    override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
+    override val nameSpace : Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    @transient override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
   )
   extends MonadicTermStore(
   ) with MonadicCollective
@@ -342,16 +340,13 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
   }
 
   class DistributedMonadicGeneratorJunction(
-    //override val name : URI,
     override val name : Moniker,
-    //override val acquaintances : Seq[URI]
     override val acquaintances : Seq[Moniker]
   ) extends MonadicGeneratorJunction(
     name,
     acquaintances,
     new ListBuffer[Msgs.JTSReq](),
     new ListBuffer[Msgs.JTSRsp](),
-    //Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     Some( new LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     AnAMQPTraceMonitor
   ) with QueueNameVender {
@@ -705,13 +700,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      
-      // Dummy declarations to avoid a bug in the scala runtime
-      // val das = dAT.AGet
-//       val dasClass = dAT.AGet.getClass
-      
-      //mget( dAT.AGet, hops )(
+    : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AGetNum, hops )(
 	theMeetingPlace, theWaiters, true, cursor
       )( path )    
@@ -725,22 +714,6 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Generator[Option[mTT.Resource],Unit,Unit] = {
       get( Nil )( cursor )( path )
     }    
-
-    //def get( hops : List[URI] )(
-    // def get( hops : List[Moniker] )(
-//       path : CnxnCtxtLabel[Namespace,Var,Tag]
-//     )
-//     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      
-      // Dummy declarations to avoid a bug in the scala runtime
-      // val das = dAT.AGet
-//       val dasClass = dAT.AGet.getClass
-      
-      //mget( dAT.AGet, hops )(
-//       mget( dAT.AGetNum, hops )(
-// 	theMeetingPlace, theWaiters, true, false
-//       )( path )    
-//     }
 
     override def get(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -810,13 +783,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      
-      // Dummy declarations to avoid a bug in the scala runtime
-      // val das = dAT.AFetch
-//       val dasClass = dAT.AFetch.getClass
-
-      //mget( dAT.AFetch, hops )(
+    : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AFetchNum, hops )(
 	theMeetingPlace, theWaiters, false, cursor
       )( path )    
@@ -830,22 +797,6 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     : Generator[Option[mTT.Resource],Unit,Unit] = {
       get( Nil )( cursor )( path )
     }
-
-    //def fetch( hops : List[URI] )(
-//     def fetch( hops : List[Moniker] )(
-//       path : CnxnCtxtLabel[Namespace,Var,Tag]
-//     )
-//     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-      
-      // Dummy declarations to avoid a bug in the scala runtime
-      // val das = dAT.AFetch
-//       val dasClass = dAT.AFetch.getClass
-
-      //mget( dAT.AFetch, hops )(
-//       mget( dAT.AFetchNum, hops )(
-// 	theMeetingPlace, theWaiters, false, false
-//       )( path )    
-//     }
 
     override def fetch(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -861,8 +812,6 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	k : ( Value => Unit @suspendable ) =>
 	  for(
 	    orsrc <- fetch( path )
-	    //rsrc <- orsrc
-	    //gv <- getGV( rsrc )
 	  ) {
 	    orsrc match {
 	      case Some( rsrc ) => {
@@ -876,17 +825,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	  }
       }
 
-    //def subscribe( hops : List[URI] )(
     def subscribe( hops : List[Moniker] )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
-
-      // Dummy declarations to avoid a bug in the scala runtime
-      // val das = dAT.ASubscribe
-//       val dasClass = dAT.ASubscribe.getClass
-
-      //mget( dAT.ASubscribe, hops )(
       mget( dAT.ASubscribeNum, hops )(
 	theChannels, theSubscriptions, true, false
       )( path )    

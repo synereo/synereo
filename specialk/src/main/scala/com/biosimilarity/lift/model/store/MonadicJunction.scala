@@ -23,8 +23,6 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Stack
-import scala.actors.Actor
-import scala.actors.Actor._
 
 import com.rabbitmq.client._
 
@@ -44,16 +42,14 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   import AMQPDefaults._
   import identityConversions._
 
-  object AnAMQPTraceMonitor extends TraceMonitor[Msgs.DReq,Msgs.DRsp]  
+  @transient object AnAMQPTraceMonitor extends TraceMonitor[Msgs.DReq,Msgs.DRsp]  
 
   class StdMonadicAgentJSONAMQPDispatcher[TxPort](
     host : String, port : Int,
     override val requests : ListBuffer[Msgs.JTSReq],
     override val responses : ListBuffer[Msgs.JTSRsp],
-    override val nameSpace :
-    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
-    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
-    override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
+    override val nameSpace : Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    @transient override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
   ) extends StdMonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp](
     host, port
   ) with MonadicAgency[String,Msgs.DReq,Msgs.DRsp] {  
@@ -73,7 +69,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       with WireTap
       with Journalist
       with ConfiggyReporting
-      //with ConfiggyJournal
       with ConfiguredJournal
       with ConfigurationTrampoline =>
       
@@ -102,7 +97,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	      getPort(srcURI.getPort, defaultPort),
 	      new ListBuffer[Msgs.JTSReq](),
 	      new ListBuffer[Msgs.JTSRsp](),
-	      //Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
 	      Some( new LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
 	      AnAMQPTraceMonitor
 	    )
@@ -129,16 +123,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   class SMAJATwistedPair(
-    //override val srcURI : URI,
     override val srcURI : Moniker,
-    //override val trgtURI : URI
     override val trgtURI : Moniker
   ) extends SemiMonadicAgentJSONAMQPTwistedPair[String] 
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion with MonadicGenerators with WireTap
   with Journalist
   with ConfiggyReporting
-  //with ConfiggyJournal
   with ConfiguredJournal
   with ConfigurationTrampoline
   with UUIDOps {
@@ -169,7 +160,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       ).asInstanceOf[StdMonadicAgentJSONAMQPDispatcher[Msgs.JTSReqOrRsp]]
     }
 
-    //override def name : URI = srcURI
     override def name : Moniker = srcURI
     override def requests : ListBuffer[Msgs.JTSReq] = {
       jsonDispatcher().requests
@@ -177,9 +167,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     override def responses : ListBuffer[Msgs.JTSRsp] = {
       jsonDispatcher( ).responses
     }
-    override def nameSpace :
-    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
-    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
+    override def nameSpace : Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]] = {
       jsonDispatcher( ).nameSpace
     }
     override def traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp] = {
@@ -293,12 +281,9 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
     }
     
-    //def meetNGreet( acquaintances : Seq[URI] )
     def meetNGreet( acquaintances : Seq[Moniker] )
-    : //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
-    Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    : Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       {
-	//val map = new HashMap[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]]()
 	val map = new HashMap[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]]()
 	for( acquaintance <- acquaintances )
 	yield {
@@ -324,10 +309,8 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 
   trait QueueNameVender {
     self : UUIDOps =>
-    //lazy val acqQNames = new LinkedHashMap[URI,UUID]( )
       lazy val acqQNames = new LinkedHashMap[Moniker,UUID]( )
       
-    //def acqQNameUnique( acqURI : URI ) : String = {
     def acqQNameUnique( acqURI : Moniker ) : String = {
       acqQNames.get( acqURI ) match {
 	case Some( uuid ) => uuid.toString
@@ -346,16 +329,12 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   abstract class MonadicJunction(
-    //override val name : URI,
     override val name : Moniker,
-    //override val acquaintances : Seq[URI],
     override val acquaintances : Seq[Moniker],
     override val requests : ListBuffer[Msgs.JTSReq],
     override val responses : ListBuffer[Msgs.JTSRsp],
-    override val nameSpace :
-    //Option[LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]],
-    Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
-    override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
+    override val nameSpace : Option[LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]],
+    @transient override val traceMonitor : TraceMonitor[Msgs.DReq,Msgs.DRsp]
   )
   extends TermStore[Namespace,Var,Tag,Value](
   ) with MonadicCollective
@@ -363,18 +342,12 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with MonadicWireToTrgtConversion
   with MonadicGenerators
   with QueueNameVender
-  //with WireTap
-  //with Journalist
-  //with ConfiggyReporting
-  //with ConfiguredJournal
-  //with ConfigurationTrampoline
   {
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
 
     override lazy val agentTwistedPairs
-    : //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
-    Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    : Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )    
 
     def forwardGet( hops : List[Moniker], path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
@@ -400,16 +373,13 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   class InMemoryMonadicJunction(
-    //override val name : URI,
     override val name : Moniker,
-    //override val acquaintances : Seq[URI]
     override val acquaintances : Seq[Moniker]
   ) extends MonadicJunction(
     name,
     acquaintances,
     new ListBuffer[Msgs.JTSReq](),
     new ListBuffer[Msgs.JTSRsp](),
-    //Some( new LinkedHashMap[URI,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     Some( new LinkedHashMap[Moniker,Socialite[Msgs.DReq,Msgs.DRsp]]() ),
     AnAMQPTraceMonitor
   ) {
@@ -720,9 +690,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   }
 
   class MonadicJoin[PlaceT <: CnxnCtxtLabel[Namespace,Var,Tag]](
-    //override val name : URI,
     override val name : Moniker,
-    //override val acquaintances : Seq[URI]
     override val acquaintances : Seq[Moniker]
   ) extends InMemoryMonadicJunction(
     name,
