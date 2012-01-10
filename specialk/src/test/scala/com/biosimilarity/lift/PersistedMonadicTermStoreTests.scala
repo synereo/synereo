@@ -111,114 +111,114 @@ object PersistedMonadicTermStoreTestSpecs extends Specification {
     }
     
   }
-
-  "basic cursor get" should {
-    BX.loadDataSetsClientSession( dbSuffix( 2 ) )
-//    BX.reportGraphsClientSession
-    val pimgJunq = ptToPt( dbFullName( 2 ), "localhost", "localhost" )
-    val atps = pimgJunq.agentTwistedPairs
-
-    var eVal = ""
-    var sleepCount = 0    
-
-    "Fetch values from the GraphFour DB by Cursor" in {
-      println( "*****************************************" )
-      println( "loading datasets for " + dbFullName( 2 ) )
-      println( "*****************************************" )
-      
-      println( "*****************************************" )
-      println( "query " + oge )
-      println( "*****************************************" )
-    
-      reset {
-	for( e <- pimgJunq.fetch( true )( oge ) )
-	  {
-	    println( "received: " + e )
-	    e match {
-	      case Some(
-		mTT.RBound(
-		  Some( mTT.Cursor( graphSpec ) ),
-		  None
-		)
-	      ) => {
-		for ( v <- graphSpec)
-                {
-                  eVal = eVal + v.toString
-//                  eVal = "good"
-               }
-                println( "parsed cursor: " + eVal )
-	      }
-	      case _ => {
-		throw new Exception(
-		  "received unexpected value from test " + e
-		)
-	      }
-	    }
-	  }
-      }
-
-      while ( eVal == ""  && sleepCount < 25) {
-        sleepCount += 1
-	Thread.sleep( 100 )
-      }
-
-      eVal.length must be >= 0
-      eVal.indexOf("Connected") must be >= 0
-    }
-  }
-
-  "basic cursor get" should {
-    BX.loadDataSetsClientSession( dbSuffix( 3 ) )
-//    BX.reportGraphsClientSession
-    val pimgJunq = ptToPt( dbFullName( 3 ), "localhost", "localhost" )
-    val atps = pimgJunq.agentTwistedPairs
-
-    var eVal = ""
-    var sleepCount = 0    
-
-    "Get values from the GraphFour DB by Cursor" in {
-      println( "*****************************************" )
-      println( "loading datasets for " + dbFullName( 3 ) )
-      println( "*****************************************" )
-
-      println( "*****************************************" )
-      println( "query " + oge )
-      println( "*****************************************" )
-    
-      reset {
-	for( e <- pimgJunq.get( true )( oge ) )
-	  {
-	    println( "received: " + e )
-	    e match {
-	      case Some(
-		mTT.RBound(
-		  Some( mTT.Cursor( graphSpec ) ),
-		  None
-		)
-	      ) => {
-		for ( v <- graphSpec)
-                {
-                  eVal = eVal + v.toString
-//                  eVal = "good"
-                }
-                println( "parsed cursor: " + eVal )
-	      }
-	      case _ => {
-		throw new Exception(
-		  "received unexpected value from test " + e
-		)
-	      }
-	    }
-	  }
-      }
-
-      while ( eVal == ""  && sleepCount < 25) {
-        sleepCount += 1
-	Thread.sleep( 100 )
-      }
-
-      eVal.length must be >= 0
-      eVal.indexOf("Connected") must be >= 0
-    }
-  }
+//
+//  "basic cursor get" should {
+//    BX.loadDataSetsClientSession( dbSuffix( 2 ) )
+////    BX.reportGraphsClientSession
+//    val pimgJunq = ptToPt( dbFullName( 2 ), "localhost", "localhost" )
+//    val atps = pimgJunq.agentTwistedPairs
+//
+//    var eVal = ""
+//    var sleepCount = 0
+//
+//    "Fetch values from the GraphFour DB by Cursor" in {
+//      println( "*****************************************" )
+//      println( "loading datasets for " + dbFullName( 2 ) )
+//      println( "*****************************************" )
+//
+//      println( "*****************************************" )
+//      println( "query " + oge )
+//      println( "*****************************************" )
+//
+//      reset {
+//	for( e <- pimgJunq.fetch( true )( oge ) )
+//	  {
+//	    println( "received: " + e )
+//	    e match {
+//	      case Some(
+//		mTT.RBound(
+//		  Some( mTT.Cursor( graphSpec ) ),
+//		  None
+//		)
+//	      ) => {
+//		for ( v <- graphSpec)
+//                {
+//                  eVal = eVal + v.toString
+////                  eVal = "good"
+//               }
+//                println( "parsed cursor: " + eVal )
+//	      }
+//	      case _ => {
+//		throw new Exception(
+//		  "received unexpected value from test " + e
+//		)
+//	      }
+//	    }
+//	  }
+//      }
+//
+//      while ( eVal == ""  && sleepCount < 25) {
+//        sleepCount += 1
+//	Thread.sleep( 100 )
+//      }
+//
+//      eVal.length must be >= 0
+//      eVal.indexOf("Connected") must be >= 0
+//    }
+//  }
+//
+//  "basic cursor get" should {
+//    BX.loadDataSetsClientSession( dbSuffix( 3 ) )
+////    BX.reportGraphsClientSession
+//    val pimgJunq = ptToPt( dbFullName( 3 ), "localhost", "localhost" )
+//    val atps = pimgJunq.agentTwistedPairs
+//
+//    var eVal = ""
+//    var sleepCount = 0
+//
+//    "Get values from the GraphFour DB by Cursor" in {
+//      println( "*****************************************" )
+//      println( "loading datasets for " + dbFullName( 3 ) )
+//      println( "*****************************************" )
+//
+//      println( "*****************************************" )
+//      println( "query " + oge )
+//      println( "*****************************************" )
+//
+//      reset {
+//	for( e <- pimgJunq.get( true )( oge ) )
+//	  {
+//	    println( "received: " + e )
+//	    e match {
+//	      case Some(
+//		mTT.RBound(
+//		  Some( mTT.Cursor( graphSpec ) ),
+//		  None
+//		)
+//	      ) => {
+//		for ( v <- graphSpec)
+//                {
+//                  eVal = eVal + v.toString
+////                  eVal = "good"
+//                }
+//                println( "parsed cursor: " + eVal )
+//	      }
+//	      case _ => {
+//		throw new Exception(
+//		  "received unexpected value from test " + e
+//		)
+//	      }
+//	    }
+//	  }
+//      }
+//
+//      while ( eVal == ""  && sleepCount < 25) {
+//        sleepCount += 1
+//	Thread.sleep( 100 )
+//      }
+//
+//      eVal.length must be >= 0
+//      eVal.indexOf("Connected") must be >= 0
+//    }
+//  }
 }

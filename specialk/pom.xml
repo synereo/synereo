@@ -454,8 +454,6 @@
           <charset>${project.build.sourceEncoding}</charset>
 	  <displayCmd>true</displayCmd>
           <jvmArgs>	    
-	    <jvmArg>-Xdebug</jvmArg>
-	    <jvmArg>-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005</jvmArg>
 	    <!-- jvmArg>-Xnoagent</jvmArg -->
 	    <!-- jvmArg>-Djava.compiler=NONE</jvmArg -->
 	    <jvmArg>-Xmx1024m</jvmArg>
