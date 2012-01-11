@@ -53,7 +53,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
   trait PersistenceScope
     extends ExcludedMiddleScope[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
     with Serializable {
-      trait PersistenceManifest {    
+      trait PersistenceManifest extends Serializable {
 	def db : Database
 	def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String
 	def storeUnitStr : String
@@ -278,7 +278,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
       }      
 
       abstract class XMLDBManifest(
-	override val db : Database
+	@transient override val db : Database
       ) extends PersistenceManifest 
 	       with PrologMgr
 	       with CnxnConversions[Namespace,Var,Tag]
@@ -1422,10 +1422,10 @@ package usage {
 	}
 
 	class StringXMLDBManifest(
-	  override val storeUnitStr : String,
-	  override val labelToNS : Option[String => String],
-	  override val textToVar : Option[String => String],
-	  override val textToTag : Option[String => String]        
+          override val storeUnitStr : String,
+          @transient override val labelToNS : Option[String => String],
+          @transient override val textToVar : Option[String => String],
+          @transient override val textToTag : Option[String => String]
 	)
 	extends XMLDBManifest( database ) {
 	  override def valueStorageType : String = {
@@ -1492,10 +1492,13 @@ package usage {
 	    val blob =
 	      storageDispatch match {
 		case "Base64" => {
+                  println("start base64")
+
 		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
 		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
 		  oos.writeObject( rsrc.asInstanceOf[Serializable] )
 		  oos.close()
+                  println("end base64")
 		  new String( Base64Coder.encode( baos.toByteArray() ) )
 		}
 		case "CnxnCtxtLabel" => {
@@ -1705,7 +1708,7 @@ package usage {
 	
 	override def persistenceManifest : Option[PersistenceManifest] = {
 	  val sid = Some( ( s : String ) => s )
-	  val kvdb = this;
+          val kvdb = this;
 	  Some(
 	    new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
 	      override def valueStorageType : String = {

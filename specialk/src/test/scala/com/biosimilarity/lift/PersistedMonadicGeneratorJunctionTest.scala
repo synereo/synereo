@@ -47,9 +47,9 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
 
     "retrieve between two queues" in {
       //      acceptTest()
-      SerializeJunction()
+//      SerializeJunction()
       SerializeGetJunction()
-      SerializeKVDB()
+//      SerializeKVDB()
       //      SerializeAcceptance()
       //      RetrieveBetweenOneQueuePutGet() //success
       //      RetrieveBetweenOneQueueGetPut() //success
