@@ -19,6 +19,7 @@ import scala.concurrent.ops._
 import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 import Acceptance._
+import com.biosimilarity.lift.model.store.CnxnCtxtBranch
 
 class PersistedMonadicGeneratorJunctionTest
   extends JUnit4(PersistedMonadicGeneratorJunctionTestSpecs)
@@ -46,15 +47,16 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
     val unrelated_location = "localhost".toURM.withPort(RABBIT_PORT_UNRELATED)
 
     "retrieve between two queues" in {
+//      LabelTest()
       //      acceptTest()
 //      SerializeJunction()
-      SerializeGetJunction()
+//      SerializeGetJunction()
 //      SerializeKVDB()
       //      SerializeAcceptance()
       //      RetrieveBetweenOneQueuePutGet() //success
-      //      RetrieveBetweenOneQueueGetPut() //success
+//            RetrieveBetweenOneQueueGetPut() //success
       //      RetrieveBetweenTwoQueuesPutGet() //success
-      //      RetrieveBetweenTwoQueuesGetPut() //success
+            RetrieveBetweenTwoQueuesGetPut() //success
       //      RetrieveBetweenTwoQueuesUnrelatedQueueNoAcquaintances() //success
       //      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintances() //success
       //      RetrieveBetweenTwoQueuesWithMultipleAcquaintances() //success
@@ -65,6 +67,15 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
 //    {
 //      com.biosimilarity.lift.model.store.usage.PersistedMonadicTS.main()
 //    }
+
+    def LabelTest() =
+    {
+      val lbl = new CnxnCtxtBranch[ String, String, Any ]("list", Nil)
+      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
+      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
+      oos.writeObject(lbl)
+    }
+
 
     def SerializeJunction() =
     {

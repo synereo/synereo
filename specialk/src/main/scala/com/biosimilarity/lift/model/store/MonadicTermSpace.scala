@@ -243,7 +243,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
 
-    override lazy val agentTwistedPairs
+    @transient override lazy val agentTwistedPairs
     : //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
     Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
