@@ -144,6 +144,7 @@ class CnxnCtxtLeaf[Namespace,Var,Tag]( val tag : Either[Tag,Var] )
 extends TreeItem[Either[Tag,Var]]( tag )
 with CnxnCtxtLabel[Namespace,Var,Tag]
 with Factual {
+  def this() = { this( null.asInstanceOf[Either[Tag,Var]] ) }
   override def self = List( Left( tag ) )
   override def toString = {
     tag match {
@@ -204,6 +205,7 @@ class CnxnCtxtBranch[Namespace,Var,Tag](
 ) extends TreeSection[Either[Tag,Var]]( factuals )
 with AbstractCnxnCtxtBranch[Namespace,Var,Tag]
 with Factual {
+  def this() = { this( null.asInstanceOf[Namespace], Nil ) }
   override def labels : List[CnxnCtxtLabel[Namespace,Var,Tag]] = {
     factuals
   }

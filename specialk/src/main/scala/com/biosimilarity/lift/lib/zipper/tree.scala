@@ -8,7 +8,7 @@
 
 package com.biosimilarity.lift.lib.zipper
 
-trait Tree[+A]
+trait Tree[+A] extends Serializable
 
 case object TZero
 extends Tree[Nothing]
