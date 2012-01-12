@@ -787,6 +787,10 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 			      }
 			      ekrsrc
 			    }
+			    case Right( Nil ) => {
+			      tweet( " have empty list of continuations; no continuations in store " )
+			      ekrsrc
+			    }
 			    case _ => {
 			      throw new Exception(
 				"Non-continuation resource stored in kRecord" + ekrsrc
