@@ -1,0 +1,153 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    amqpJSONAPI.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Tue Jan 17 21:06:06 2012 
+-- Copyright:   Not supplied 
+-- Description: 
+-- ------------------------------------------------------------------------
+
+-- Framed Messages
+
+KVDBJustReq     . Message       ::= "{" "\"" "to" "\"" ":" URI "," "\"" "from" "\"" ":" URI "," "\"" "msgId" "\"" ":" UUID "," "\"" "flowId" "\"" ":" UUID "," "\"" "body" "\"" ":" KVDBRequest "," "\"" "justification" "\"" ":" ReqJust "}" ;
+KVDBJustRsp     . Message       ::= "{" "\"" "to" "\"" ":" URI "," "\"" "from" "\"" ":" URI "," "\"" "msgId" "\"" ":" UUID "," "\"" "flowId" "\"" ":" UUID "," "\"" "body" "\"" ":" KVDBResponse "," "\"" "justification" "\"" ":" RspJust "}" ;
+
+-- Requests
+
+KVDBAskReq      . KVDBRequest   ::= "{" "\"" AskReq "\"" ":" AskReqPacket "}"           ;
+KVDBAnsrReq     . KVDBRequest   ::= "{" "\"" AnsrReq "\"" ":" AnsrReqPacket "}"         ;
+
+-- Responses
+
+KVDBAskRsp      . KVDBResponse  ::= "{" "\"" AskRsp "\"" ":" AskRspPacket "}"           ;
+KVDBAnsrRsp     . KVDBResponse  ::= "{" "\"" AnsrRsp "\"" ":" AnsrRspPacket "}"         ;
+
+-- Payload
+
+KVDBAskReqData  . AskReqPacket  ::= "{" "\"" "pattern" "\"" ":" Pattern "}"             ;
+KVDBAskRspData  . AskRspPacket  ::= "{" "\"" "pattern" "\"" ":" Pattern "," "\"" "value" "\"" ":" Blob "," "\"substitution" "\"" ":" Substitution "}" ;
+KVDBAnsrReqData . AnsrReqPacket ::= "{" "\"" "pattern" "\"" ":" Pattern "," "\"" "value" "\"" ":" Blob  "}" ;
+KVDBAnsrRspData . AnsrRspPacket ::= "{" "\"" "acknowledgment" "\"" ":" Status  "}" ;
+
+-- Justifications
+
+KVDBReqJustNone . ReqJust       ::= "None"                                              ;
+KVDBReqJustSome . ReqJust       ::= "{" "\"" "response" "\"" ":" UUID "}"               ;
+KVDBRspJustNone . RspJust       ::= "None"                                              ;
+KVDBRspJustSome . RspJust       ::= "{" "\"" "request" "\"" ":" UUID "}"                ;
+
+-- Message type
+
+KVDBGetReq      . AskReq        ::= "getRequest"                                        ;
+KVDBFetchReq    . AskReq        ::= "fetchRequest"                                      ;
+KVDBSubscribeReq . AskReq       ::= "subscribeRequest"                                  ;
+
+KVDBPutReq      . AnsrReq       ::= "putRequest"                                        ;
+KVDBStoreReq    . AnsrReq       ::= "storeRequest"                                      ;
+KVDBPublishReq  . AnsrReq       ::= "publishRequest"                                    ;
+
+KVDBGetRsp      . AskRsp        ::= "getResponse"                                       ;
+KVDBFetchRsp    . AskRsp        ::= "fetchResponse"                                     ;
+KVDBSubscribeRsp . AskRsp       ::= "subscribeResponse"                                 ;
+
+KVDBPutRsp      . AnsrRsp       ::= "putResponse"                                       ;
+KVDBStoreRsp    . AnsrRsp       ::= "storeResponse"                                     ;
+KVDBPublishRsp  . AnsrRsp       ::= "publishResponse"                                   ;
+
+KVDBStatusOk    . Status        ::= "ok"                                                ;
+KVDBStatusNotOk . Status        ::= "notok"                                             ;
+KVDBStatusCode  . Status        ::= Integer                                             ;
+KVDBStatusStr   . Status        ::= String                                              ;
+
+-- Patterns
+
+QPointed        . Pattern       ::= QryTerm                                             ;
+
+-- Values
+
+QBlob           . Blob          ::= String                                              ;
+
+-- Substitutions
+
+KVDBSubst       . Substitution  ::= "{" [SubstPair] "}"                                 ;
+KVDBSubstPair   . SubstPair     ::= "\"" "$" UIdent "\"" ":" QryTerm                    ;
+
+-- ********************************************************************************* --
+--                        Simple Query Syntax
+-- ********************************************************************************* --
+
+QTerm           . QryTerm       ::= "{" String ":" [QryPair] "}"                        ;
+
+QPosTerm        . QryPair       ::= "\'" Integer "\'" ":" QryTerm                       ;
+QPosArray       . QryPair       ::= "\'" Integer "\'" ":" "[" [QryValue] "]"            ;
+QPosVar         . QryPair       ::= "\'" Integer "\'" ":" "$" UIdent                    ;
+QPosStr         . QryPair       ::= "\'" Integer "\'" ":" String                        ;
+QPosBool        . QryPair       ::= "\'" Integer "\'" ":" QryBool                       ;
+QPosInt         . QryPair       ::= "\'" Integer "\'" ":" Integer                       ;
+QPosDbl         . QryPair       ::= "\'" Integer "\'" ":" Double                        ;
+
+QCompound       . QryValue      ::= QryTerm                                             ;
+QAtomic         . QryValue      ::= QryGrndLit                                          ;
+QColl           . QryValue      ::= QryArray                                            ;
+
+QArray          . QryArray      ::= [QryValue]                                          ;
+                   
+QStr            . QryGrndLit    ::= String                                              ;
+QNum            . QryGrndLit    ::= QryNum                                              ;
+QBool           . QryGrndLit    ::= QryBool                                             ;
+QNul            . QryGrndLit    ::= "null"                                              ;
+
+QTru            . QryBool       ::= "true"                                              ;
+QFal            . QryBool       ::= "false"                                             ;
+
+QInt            . QryNum        ::= Integer                                             ;
+QDbl            . QryNum        ::= Double                                              ;
+
+-- ********************************************************************************* --
+--                        Simple URI Syntax
+-- ********************************************************************************* --
+
+BasicURI         . URI               ::= URIScheme ":" URIPath                        ;
+LocatedtedPath   . URIPath           ::= "/" URILocation URIRelativePath              ;
+--RelativePath     . URIPath           ::= "/" URIRelativePath                          ;
+
+URINetLocation   . URILocation       ::= URIRoot URIRsrcLocation                      ;
+URIRsrcPortLoc   . URIRsrcLocation   ::= NetLocation ":" Port                         ;
+URIRsrcLoc       . URIRsrcLocation   ::= NetLocation                                  ;
+
+SlashPath        . URIRelativePath   ::= URIRoot [URIPathElement]                     ;
+
+URIOrigin        . URIRoot           ::= "/"                                          ;
+DNSAddr          . NetLocation       ::= [DNSElement]                                 ;
+AtomScheme       . URIScheme         ::= Ident                                        ;
+AtomPathElement  . URIPathElement    ::= Ident                                        ;
+AtomDNSElement   . DNSElement        ::= Ident                                        ;
+AtomPort         . Port              ::= Integer                                      ;
+
+
+-- Sequences
+
+[]               . [QryPair]         ::=                                              ;
+(: [])           . [QryPair]         ::= QryPair                                      ;
+(:)              . [QryPair]         ::= QryPair "," [QryPair]                        ;
+
+[]               . [QryValue]        ::=                                              ;
+(: [])           . [QryValue]        ::= QryValue                                     ;
+(:)              . [QryValue]        ::= QryValue "," [QryValue]                      ;
+
+[]               . [SubstPair]       ::=                                              ;
+(: [])           . [SubstPair]       ::= SubstPair                                    ;
+(:)              . [SubstPair]       ::= SubstPair "," [SubstPair]                    ;
+
+[]               . [URIPathElement]  ::=                                              ;
+(: [])           . [URIPathElement]  ::= URIPathElement                               ;
+(:)              . [URIPathElement]  ::= URIPathElement "/" [URIPathElement]          ;
+
+[]               . [DNSElement]      ::=                                              ;
+(: [])           . [DNSElement]      ::= DNSElement                                   ;
+(:)              . [DNSElement]      ::= DNSElement "." [DNSElement]                  ;
+
+token UIdent (upper (letter | digit | '_')*) ;
+token LIdent (lower (letter | digit | '_')*) ;
+token Wild   '_' char* ;
+
+token UUID ( (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) );
