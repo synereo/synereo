@@ -257,9 +257,9 @@
     <dependency>
       <groupId>org.scalaquery</groupId>
       <!-- <artifactId>scalaquery_2.8.1</artifactId> -->
-      <artifactId>scalaquery_2.9.0</artifactId>
+      <artifactId>scalaquery_2.9.0-1</artifactId>
       <!-- <version>0.9.1</version> -->
-      <version>0.9.4</version>
+      <version>0.9.5</version>
     </dependency>
 
     <dependency>
@@ -429,7 +429,12 @@
         <version>1.2.16</version>
       </dependency>
 
-    
+      <dependency>
+	<groupId>postgresql</groupId>
+	<artifactId>postgresql</artifactId>
+	<version>9.1-901.jdbc4</version>
+      </dependency>
+            
   </dependencies>
 
   <build>
