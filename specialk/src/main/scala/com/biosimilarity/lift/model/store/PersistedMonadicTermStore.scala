@@ -1899,7 +1899,8 @@ package usage {
 	}
       }
 
-      def doGet : Unit = { doGet( nextUUID ) }
+      //def doGet : Unit = { doGet( nextUUID ) }
+      def doGet : Unit = { doGet( currUUID ) }
       
       def doPut( nUUID : String ) : mTT.Resource = {
 	val cclStr = toValue( getUUID + "" )

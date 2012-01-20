@@ -30,10 +30,12 @@ object REPLUseCase extends REPL[Yylex,parser,Message] with UUIDOps {
   //lazy val from = new URI( "agent", "localhost", "/connect", "" )
   lazy val from = "agent://localhost/connect"
   lazy val nfrom = "null"
-  lazy val msgId = "AAAAAA-BBBBBB-CCCCCC-DDDDDD-EEEEEE-FFFFFF"
+  //lazy val msgId = "AAAAAA-BBBBBB-CCCCCC-DDDDDD-EEEEEE-FFFFFF"
+  lazy val msgId : String = getUUID + ""
   //lazy val msgId = "thisShouldBeAUUID"
   lazy val nmsgId = "null"
-  lazy val flowId = "FFFFFF-EEEEEE-DDDDDD-CCCCCC-BBBBBB-AAAAAA"
+  //lazy val flowId = "FFFFFF-EEEEEE-DDDDDD-CCCCCC-BBBBBB-AAAAAA"
+  lazy val flowId : String = getUUID + ""
   //lazy val flowId = "thisShouldAlsoBeAUUID"
   lazy val nflowId = "null"
   val msgBody = 
