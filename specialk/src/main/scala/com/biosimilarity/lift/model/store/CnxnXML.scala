@@ -967,8 +967,23 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     val letVar = xqcc.letVar
 
     ccl match {
-      case ccf@CnxnCtxtLeaf( Left( t ) ) =>
-	( letVar.getOrElse( nextXQV ) + " = " + xqWrapTerm( ccf, xqcc ) )
+      case ccf@CnxnCtxtLeaf( Left( t ) ) => {
+	val lVT = letVar.getOrElse( nextXQV )
+	(
+	  "( "
+	  + "( "
+	  + ( lVT + " = " + xqWrapTerm( ccf, xqcc ) )
+	  + " )"
+	  + " or "
+	  + "( "
+	  + "fn:string( "
+	  + "fn:node-name( " + lVT + " )"
+	  + " )"
+	  + " = " + "\"var\""
+	  + " )"
+	  + " )"
+	)
+      }
       case CnxnCtxtLeaf( Right( v ) ) =>
 	( "" )
       case CnxnCtxtBranch( ns, facts ) => {
