@@ -1,0 +1,202 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    amqpJSONAPI.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Tue Jan 17 21:06:06 2012 
+-- Copyright:   Not supplied 
+-- Description: 
+-- ------------------------------------------------------------------------
+
+-- Framed Messages
+
+-- Note bene: i left framed messages intentionally order-insensitive
+-- as a reminder of the complexity of "schematic" JSON parsing. With
+-- the order-insensitive kv-pairs the combinatorics of validating a
+-- JSON object are prohibitively complex.
+
+-- To overcome this complexity one has to sequentialize the
+-- structure. JSON offers *two* strategies for sequential structure:
+-- nesting objects and arrays. In this specification we have used
+-- arrays to reduce the complexity.
+
+-- With this solution we have the following advantages
+
+-- 1) This is legal JSON, and as such is parsable by any OTS JSON parser
+
+-- 2) It is *also* a legal context-free grammar with an evident
+-- expression in LBNF (labeled version of EBNF). This means that we have
+
+--    a) an implementation-independent specification of the API
+
+--    b) said specification can be fed into OTS tools, such as BNFC,
+--    to generate a parser that validates the specific structure (and
+--    not just that it is JSON)
+
+KVDBJustReqHB   . Message       ::= "{" LblReqHeader "," LblReqBody "}"                 ;
+KVDBJustReqBH   . Message       ::= "{" LblReqBody "," LblReqHeader "}"                 ;
+KVDBJustRspHB   . Message       ::= "{" LblRspHeader "," LblRspBody "}"                 ;
+KVDBJustRspBH   . Message       ::= "{" LblRspBody "," LblRspHeader "}"                 ;
+
+KVDBLblReqHdr   . LblReqHeader  ::= "\"headers\"" ":" ReqHeader                         ;
+KVDBLblRspHdr   . LblRspHeader  ::= "\"headers\"" ":" RspHeader                         ;
+
+KVDBLblReqBody  . LblReqBody    ::= "\"body\"" ":" KVDBRequest                          ;
+KVDBLblRspBody  . LblRspBody    ::= "\"body\"" ":" KVDBResponse                         ;
+
+-- Headers
+--                                      to     from    msgId    flowId  justification
+KVDBReqHdr      . ReqHeader     ::= "[" URI "," URI "," UUID "," UUID "," ReqJust "]"   ;
+-- for testing purposes
+KVDBReqNoHdr    . ReqHeader     ::= "[" "{" "\"testReqEmptyHdrs\"" ":" "null" "}" "]"       ;
+--KVDBReqURIHdr   . ReqHeader     ::= "[" "{" "\"testReqURIHdr\"" ":" URI "}" "]"             ;
+--KVDBReqUUIDHdr  . ReqHeader     ::= "[" "{" "\"testReqUUIDHdr\"" ":" UUID "}" "]"           ;
+
+--                                      to     from    msgId    flowId  justification
+KVDBRspHdr      . RspHeader     ::= "[" URI "," URI "," UUID "," UUID "," RspJust "]"   ;
+-- for testing purposes
+KVDBRspNoHdr    . RspHeader     ::= "[" "{" "\"testRspEmptyHdrs\"" ":" "null" "}" "]"       ;
+--KVDBRspURIHdr   . RspHeader     ::= "[" "{" "\"testRspURIHdr\"" ":" URI "}" "]"             ;
+--KVDBRspUUIDHdr  . RspHeader     ::= "[" "{" "\"testRspUUIDHdr\"" ":" UUID "}" "]"           ;
+
+-- Requests
+
+KVDBAskReq      . KVDBRequest   ::= "{" AskReq ":" AskReqPacket "}"                     ;
+KVDBTellReq     . KVDBRequest   ::= "{" TellReq ":" TellReqPacket "}"                   ;
+-- for testing purposes
+KVDBNoReq       . KVDBRequest   ::= "[" "{" "\"testReqEmptyBody\"" ":" "null" "}" "]"       ;
+
+-- Responses
+
+KVDBAskRsp      . KVDBResponse  ::= "{" AskRsp ":" AskRspPacket "}"                     ;
+KVDBTellRsp     . KVDBResponse  ::= "{" TellRsp ":" TellRspPacket "}"                   ;
+-- for testing purposes
+KVDBNoRsp       . KVDBResponse  ::= "[" "{" "\"testRspEmptyBody\"" ":" "null" "}" "]"       ;
+
+-- Payload
+
+KVDBAskReqData  . AskReqPacket  ::= "{" "\"ask\"" ":" Pattern "}"                       ;
+KVDBAskRspData  . AskRspPacket  ::= "{" "\"answer\"" ":" "[" Pattern "," Substitution "," Blob "]" "}" ;
+KVDBTellReqData . TellReqPacket ::= "{" "\"tell\"" ":" "[" Pattern "," Blob "]" "}"     ;
+KVDBTellRspData . TellRspPacket ::= "{" "\"acknowledge\"" ":" Status  "}"               ;
+
+-- Justifications
+
+KVDBReqJustNone . ReqJust       ::= "{" "\"response\"" ":" "null" "}"                   ;
+KVDBReqJustSome . ReqJust       ::= "{" "\"response\"" ":" "[" UUID "]" "}"             ;
+KVDBRspJustNone . RspJust       ::= "{" "\"request\"" ":" "null" "}"                    ;
+KVDBRspJustSome . RspJust       ::= "{" "\"request\"" ":" "[" UUID "]" "}"              ;
+
+-- Message type
+
+KVDBGetReq      . AskReq        ::= "\"getRequest\""                                    ;
+KVDBFetchReq    . AskReq        ::= "\"fetchRequest\""                                  ;
+KVDBSubscribeReq . AskReq       ::= "\"subscribeRequest\""                              ;
+
+KVDBPutReq      . TellReq       ::= "\"putRequest\""                                    ;
+KVDBStoreReq    . TellReq       ::= "\"storeRequest\""                                  ;
+KVDBPublishReq  . TellReq       ::= "\"publishRequest\""                                ;
+
+KVDBGetRsp      . AskRsp        ::= "\"getResponse\""                                   ;
+KVDBFetchRsp    . AskRsp        ::= "\"fetchResponse\""                                 ;
+KVDBSubscribeRsp . AskRsp       ::= "\"subscribeResponse\""                             ;
+
+KVDBPutRsp      . TellRsp       ::= "\"putResponse\""                                   ;
+KVDBStoreRsp    . TellRsp       ::= "\"storeResponse\""                                 ;
+KVDBPublishRsp  . TellRsp       ::= "\"publishResponse\""                               ;
+
+KVDBStatusOk    . Status        ::= "\"ok\""                                            ;
+KVDBStatusNotOk . Status        ::= "\"notok\""                                         ;
+KVDBStatusCode  . Status        ::= Integer                                             ;
+KVDBStatusStr   . Status        ::= String                                              ;
+
+-- Patterns
+
+QPointed        . Pattern       ::= QryTerm                                             ;
+
+-- Values
+
+QBlob           . Blob          ::= String                                              ;
+
+-- Substitutions
+
+KVDBSubst       . Substitution  ::= "{" [SubstPair] "}"                                 ;
+KVDBSubstPair   . SubstPair     ::= VarUIdent ":" QryTerm                    ;
+
+-- ********************************************************************************* --
+--                        Simple Query Syntax
+-- ********************************************************************************* --
+
+QTerm           . QryTerm       ::= "{" String ":" QryArray "}"                         ;
+
+QVar            . QryElem       ::= VarUIdent                                           ;
+QVal            . QryElem       ::= QryValue                                            ;
+
+QAtomic         . QryValue      ::= QryGrndLit                                          ;
+QColl           . QryValue      ::= QryArray                                            ;
+QComp           . QryValue      ::= QryTerm                                             ;
+
+QArray          . QryArray      ::= "[" [QryElem] "]"                                   ;
+                   
+QStr            . QryGrndLit    ::= String                                              ;
+QNum            . QryGrndLit    ::= QryNum                                              ;
+QBool           . QryGrndLit    ::= QryBool                                             ;
+QNul            . QryGrndLit    ::= "null"                                              ;
+
+QTru            . QryBool       ::= "true"                                              ;
+QFal            . QryBool       ::= "false"                                             ;
+
+QInt            . QryNum        ::= Integer                                             ;
+QDbl            . QryNum        ::= Double                                              ;
+
+-- ********************************************************************************* --
+--                        Simple URI Syntax
+-- ********************************************************************************* --
+
+BasicURI         . URI               ::= URIScheme ":" URIPath                        ;
+NullURI          . URI               ::= "null"                                       ;
+LocatedtedPath   . URIPath           ::= "/" URILocation URIRelativePath              ;
+--RelativePath     . URIPath           ::= "/" URIRelativePath                          ;
+
+URINetLocation   . URILocation       ::= URIRoot URIRsrcLocation                      ;
+URIRsrcPortLoc   . URIRsrcLocation   ::= NetLocation ":" Port                         ;
+URIRsrcLoc       . URIRsrcLocation   ::= NetLocation                                  ;
+
+SlashPath        . URIRelativePath   ::= URIRoot [URIPathElement]                     ;
+
+URIOrigin        . URIRoot           ::= "/"                                          ;
+DNSAddr          . NetLocation       ::= [DNSElement]                                 ;
+AtomScheme       . URIScheme         ::= LIdent                                       ;
+AtomPathElement  . URIPathElement    ::= LIdent                                       ;
+AtomDNSElement   . DNSElement        ::= LIdent                                       ;
+AtomPort         . Port              ::= Integer                                      ;
+
+-- UUID
+
+KVDBLUUID        . UUID              ::= LIdent                                       ;
+--KVDBUUUID        . UUID              ::= UIdent                                       ;
+KVDBPrimUUID     . UUID              ::= PrimUUID                                     ;
+KVDBNullUUID     . UUID              ::= "null"                                       ;
+
+-- Sequences
+
+[]               . [QryElem]         ::=                                              ;
+(: [])           . [QryElem]         ::= QryElem                                      ;
+(:)              . [QryElem]         ::= QryElem "," [QryElem]                        ;
+
+[]               . [SubstPair]       ::=                                              ;
+(: [])           . [SubstPair]       ::= SubstPair                                    ;
+(:)              . [SubstPair]       ::= SubstPair "," [SubstPair]                    ;
+
+[]               . [URIPathElement]  ::=                                              ;
+(: [])           . [URIPathElement]  ::= URIPathElement                               ;
+(:)              . [URIPathElement]  ::= URIPathElement "/" [URIPathElement]          ;
+
+[]               . [DNSElement]      ::=                                              ;
+(: [])           . [DNSElement]      ::= DNSElement                                   ;
+(:)              . [DNSElement]      ::= DNSElement "." [DNSElement]                  ;
+
+token VarUIdent ('"' '$' upper (letter | digit | '_')* '"') ;
+token UIdent (upper (letter | digit | '_')*) ;
+token LIdent (lower (letter | digit | '_')*) ;
+token Wild   '_' char* ;
+
+token PrimUUID ( (('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) '-' (('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')('A' | 'B' | 'C' | 'D' | 'E' | 'F' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9')) );
