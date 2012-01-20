@@ -6,8 +6,8 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-import com.biosimilarity.lift.lib.amqpJSONAPI2._
-import com.biosimilarity.lift.lib.amqpJSONAPI2.Absyn._
+import com.biosimilarity.lift.lib.kvdbJSON._
+import com.biosimilarity.lift.lib.kvdbJSON.Absyn._
 
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
@@ -30,11 +30,11 @@ object REPLUseCase extends REPL[Yylex,parser,Message] with UUIDOps {
   //lazy val from = new URI( "agent", "localhost", "/connect", "" )
   lazy val from = "agent://localhost/connect"
   lazy val nfrom = "null"
-  //lazy val msgId = "AAAAAA-BBBBBB-CCCCCC-DDDDDD-EEEEEE-FFFFFF"
-  lazy val msgId = "thisShouldBeAUUID"
+  lazy val msgId = "AAAAAA-BBBBBB-CCCCCC-DDDDDD-EEEEEE-FFFFFF"
+  //lazy val msgId = "thisShouldBeAUUID"
   lazy val nmsgId = "null"
-  //lazy val flowId = "FFFFFF-EEEEEE-DDDDDD-CCCCCC-BBBBBB-AAAAAA"
-  lazy val flowId = "thisShouldAlsoBeAUUID"
+  lazy val flowId = "FFFFFF-EEEEEE-DDDDDD-CCCCCC-BBBBBB-AAAAAA"
+  //lazy val flowId = "thisShouldAlsoBeAUUID"
   lazy val nflowId = "null"
   val msgBody = 
     (
