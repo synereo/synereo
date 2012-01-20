@@ -36,61 +36,75 @@ KVDBJustReqBH   . Message       ::= "{" LblReqBody "," LblReqHeader "}"         
 KVDBJustRspHB   . Message       ::= "{" LblRspHeader "," LblRspBody "}"                 ;
 KVDBJustRspBH   . Message       ::= "{" LblRspBody "," LblRspHeader "}"                 ;
 
-KVDBLblReqHdr   . LblReqHeader  ::= "\"" "headers" "\"" ":" ReqHeader                   ;
-KVDBLblRsqHdr   . LblRspHeader  ::= "\"" "headers" "\"" ":" RspHeader                   ;
+KVDBLblReqHdr   . LblReqHeader  ::= "\"headers\"" ":" ReqHeader                         ;
+KVDBLblRspHdr   . LblRspHeader  ::= "\"headers\"" ":" RspHeader                         ;
 
-KVDBLblReqBody  . LblReqBody    ::= "\"" "body" "\"" ":" KVDBRequest                    ;
-KVDBLblRspBody  . LblRspBody    ::= "\"" "body" "\"" ":" KVDBResponse                   ;
+KVDBLblReqBody  . LblReqBody    ::= "\"body\"" ":" KVDBRequest                          ;
+KVDBLblRspBody  . LblRspBody    ::= "\"body\"" ":" KVDBResponse                         ;
 
 -- Headers
 --                                      to     from    msgId    flowId  justification
 KVDBReqHdr      . ReqHeader     ::= "[" URI "," URI "," UUID "," UUID "," ReqJust "]"   ;
+-- for testing purposes
+KVDBReqNoHdr    . ReqHeader     ::= "[" "{" "\"testReqEmptyHdrs\"" ":" "null" "}" "]"       ;
+KVDBReqURIHdr   . ReqHeader     ::= "[" "{" "\"testReqURIHdr\"" ":" URI "}" "]"             ;
+KVDBReqUUIDHdr  . ReqHeader     ::= "[" "{" "\"testReqUUIDHdr\"" ":" UUID "}" "]"           ;
+
+--                                      to     from    msgId    flowId  justification
 KVDBRspHdr      . RspHeader     ::= "[" URI "," URI "," UUID "," UUID "," RspJust "]"   ;
+-- for testing purposes
+KVDBRspNoHdr    . RspHeader     ::= "[" "{" "\"testRspEmptyHdrs\"" ":" "null" "}" "]"       ;
+KVDBRspURIHdr   . RspHeader     ::= "[" "{" "\"testRspURIHdr\"" ":" URI "}" "]"             ;
+KVDBRspUUIDHdr  . RspHeader     ::= "[" "{" "\"testRspUUIDHdr\"" ":" UUID "}" "]"           ;
 
 -- Requests
 
-KVDBAskReq      . KVDBRequest   ::= "{" "\"" AskReq "\"" ":" AskReqPacket "}"           ;
-KVDBTellReq     . KVDBRequest   ::= "{" "\"" TellReq "\"" ":" TellReqPacket "}"         ;
+KVDBAskReq      . KVDBRequest   ::= "{" AskReq ":" AskReqPacket "}"                     ;
+KVDBTellReq     . KVDBRequest   ::= "{" TellReq ":" TellReqPacket "}"                   ;
+-- for testing purposes
+KVDBNoReq       . KVDBRequest   ::= "[" "{" "\"testReqEmptyBody\"" ":" "null" "}" "]"       ;
 
 -- Responses
 
-KVDBAskRsp      . KVDBResponse  ::= "{" "\"" AskRsp "\"" ":" AskRspPacket "}"           ;
-KVDBTellRsp     . KVDBResponse  ::= "{" "\"" TellRsp "\"" ":" TellRspPacket "}"         ;
+KVDBAskRsp      . KVDBResponse  ::= "{" AskRsp ":" AskRspPacket "}"                     ;
+KVDBTellRsp     . KVDBResponse  ::= "{" TellRsp ":" TellRspPacket "}"                   ;
+-- for testing purposes
+KVDBNoRsp       . KVDBResponse  ::= "[" "{" "\"testRspEmptyBody\"" ":" "null" "}" "]"       ;
 
 -- Payload
 
-KVDBAskReqData  . AskReqPacket  ::= "{" "\"" "ask" "\"" ":" Pattern "}"             ;
-KVDBAskRspData  . AskRspPacket  ::= "{" "\"" "answer" "\"" ":" "[" Pattern "," Substitution "," Blob "]" "}" ;
-KVDBTellReqData . TellReqPacket ::= "{" "\"" "tell" "\"" ":" "[" Pattern "," Blob "]" "}" ;
-KVDBTellRspData . TellRspPacket ::= "{" "\"" "acknowledge" "\"" ":" Status  "}" ;
+KVDBAskReqData  . AskReqPacket  ::= "{" "\"ask\"" ":" Pattern "}"                       ;
+KVDBAskRspData  . AskRspPacket  ::= "{" "\"answer\"" ":" "[" Pattern "," Substitution "," Blob "]" "}" ;
+KVDBTellReqData . TellReqPacket ::= "{" "\"tell\"" ":" "[" Pattern "," Blob "]" "}"     ;
+KVDBTellRspData . TellRspPacket ::= "{" "\"acknowledge\"" ":" Status  "}"               ;
 
 -- Justifications
 
-KVDBReqJustNone . ReqJust       ::= "None"                                              ;
-KVDBReqJustSome . ReqJust       ::= "{" "\"" "response" "\"" ":" UUID "}"               ;
-KVDBRspJustNone . RspJust       ::= "None"                                              ;
-KVDBRspJustSome . RspJust       ::= "{" "\"" "request" "\"" ":" UUID "}"                ;
+KVDBReqJustNone . ReqJust       ::= "{" "\"response\"" ":" "null" "}"                   ;
+KVDBReqJustSome . ReqJust       ::= "{" "\"response\"" ":" "[" UUID "]" "}"             ;
+KVDBRspJustNone . RspJust       ::= "{" "\"request\"" ":" "null" "}"                    ;
+KVDBRspJustSome . RspJust       ::= "{" "\"request\"" ":" "[" UUID "]" "}"              ;
 
 -- Message type
 
-KVDBGetReq      . AskReq        ::= "getRequest"                                        ;
-KVDBFetchReq    . AskReq        ::= "fetchRequest"                                      ;
-KVDBSubscribeReq . AskReq       ::= "subscribeRequest"                                  ;
+KVDBGetReq      . AskReq        ::= "\"getRequest\""                                    ;
+KVDBFetchReq    . AskReq        ::= "\"fetchRequest\""                                  ;
+KVDBSubscribeReq . AskReq       ::= "\"subscribeRequest\""                              ;
 
-KVDBPutReq      . TellReq       ::= "putRequest"                                        ;
-KVDBStoreReq    . TellReq       ::= "storeRequest"                                      ;
-KVDBPublishReq  . TellReq       ::= "publishRequest"                                    ;
+KVDBPutReq      . TellReq       ::= "\"putRequest\""                                    ;
+KVDBStoreReq    . TellReq       ::= "\"storeRequest\""                                  ;
+KVDBPublishReq  . TellReq       ::= "\"publishRequest\""                                ;
 
-KVDBGetRsp      . AskRsp        ::= "getResponse"                                       ;
-KVDBFetchRsp    . AskRsp        ::= "fetchResponse"                                     ;
-KVDBSubscribeRsp . AskRsp       ::= "subscribeResponse"                                 ;
+KVDBGetRsp      . AskRsp        ::= "\"getResponse\""                                   ;
+KVDBFetchRsp    . AskRsp        ::= "\"fetchResponse\""                                 ;
+KVDBSubscribeRsp . AskRsp       ::= "\"subscribeResponse\""                             ;
 
-KVDBPutRsp      . TellRsp       ::= "putResponse"                                       ;
-KVDBStoreRsp    . TellRsp       ::= "storeResponse"                                     ;
-KVDBPublishRsp  . TellRsp       ::= "publishResponse"                                   ;
+KVDBPutRsp      . TellRsp       ::= "\"putResponse\""                                   ;
+KVDBStoreRsp    . TellRsp       ::= "\"storeResponse\""                                 ;
+KVDBPublishRsp  . TellRsp       ::= "\"publishResponse\""                               ;
 
-KVDBStatusOk    . Status        ::= "ok"                                                ;
-KVDBStatusNotOk . Status        ::= "notok"                                             ;
+KVDBStatusOk    . Status        ::= "\"ok\""                                            ;
+KVDBStatusNotOk . Status        ::= "\"notok\""                                         ;
 KVDBStatusCode  . Status        ::= Integer                                             ;
 KVDBStatusStr   . Status        ::= String                                              ;
 
@@ -105,22 +119,22 @@ QBlob           . Blob          ::= String                                      
 -- Substitutions
 
 KVDBSubst       . Substitution  ::= "{" [SubstPair] "}"                                 ;
-KVDBSubstPair   . SubstPair     ::= "\"" "$" UIdent "\"" ":" QryTerm                    ;
+KVDBSubstPair   . SubstPair     ::= VarUIdent ":" QryTerm                    ;
 
 -- ********************************************************************************* --
 --                        Simple Query Syntax
 -- ********************************************************************************* --
 
-QTerm           . QryTerm       ::= "{" String ":" [QryElem] "}"                        ;
+QTerm           . QryTerm       ::= "{" String ":" QryArray "}"                         ;
 
-QVar            . QryElem       ::= "\"" "$" UIdent "\""                                ;
+QVar            . QryElem       ::= VarUIdent                                           ;
 QVal            . QryElem       ::= QryValue                                            ;
 
 QAtomic         . QryValue      ::= QryGrndLit                                          ;
 QColl           . QryValue      ::= QryArray                                            ;
 QComp           . QryValue      ::= QryTerm                                             ;
 
-QArray          . QryArray      ::= "[" [QryValue] "]"                                  ;
+QArray          . QryArray      ::= "[" [QryElem] "]"                                   ;
                    
 QStr            . QryGrndLit    ::= String                                              ;
 QNum            . QryGrndLit    ::= QryNum                                              ;
@@ -138,6 +152,7 @@ QDbl            . QryNum        ::= Double                                      
 -- ********************************************************************************* --
 
 BasicURI         . URI               ::= URIScheme ":" URIPath                        ;
+NullURI          . URI               ::= "null"                                       ;
 LocatedtedPath   . URIPath           ::= "/" URILocation URIRelativePath              ;
 --RelativePath     . URIPath           ::= "/" URIRelativePath                          ;
 
@@ -149,21 +164,22 @@ SlashPath        . URIRelativePath   ::= URIRoot [URIPathElement]               
 
 URIOrigin        . URIRoot           ::= "/"                                          ;
 DNSAddr          . NetLocation       ::= [DNSElement]                                 ;
-AtomScheme       . URIScheme         ::= Ident                                        ;
-AtomPathElement  . URIPathElement    ::= Ident                                        ;
-AtomDNSElement   . DNSElement        ::= Ident                                        ;
+AtomScheme       . URIScheme         ::= LIdent                                       ;
+AtomPathElement  . URIPathElement    ::= LIdent                                       ;
+AtomDNSElement   . DNSElement        ::= LIdent                                       ;
 AtomPort         . Port              ::= Integer                                      ;
 
+-- UUID
+
+KVDBLUUID        . UUID              ::= LIdent                                       ;
+KVDBUUUID        . UUID              ::= UIdent                                       ;
+KVDBNullUUID     . UUID              ::= "null"                                       ;
 
 -- Sequences
 
 []               . [QryElem]         ::=                                              ;
 (: [])           . [QryElem]         ::= QryElem                                      ;
 (:)              . [QryElem]         ::= QryElem "," [QryElem]                        ;
-
-[]               . [QryValue]        ::=                                              ;
-(: [])           . [QryValue]        ::= QryValue                                     ;
-(:)              . [QryValue]        ::= QryValue "," [QryValue]                      ;
 
 []               . [SubstPair]       ::=                                              ;
 (: [])           . [SubstPair]       ::= SubstPair                                    ;
@@ -177,8 +193,9 @@ AtomPort         . Port              ::= Integer                                
 (: [])           . [DNSElement]      ::= DNSElement                                   ;
 (:)              . [DNSElement]      ::= DNSElement "." [DNSElement]                  ;
 
+token VarUIdent ('"' '$' upper (letter | digit | '_')* '"') ;
 token UIdent (upper (letter | digit | '_')*) ;
 token LIdent (lower (letter | digit | '_')*) ;
 token Wild   '_' char* ;
 
-token UUID ( (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) );
+--token UUID ( (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) '-' (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) (["ABCDEF0123456789"]) );

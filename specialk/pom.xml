@@ -579,7 +579,7 @@
         </configuration>
       </plugin>
 
-      <!-- <plugin> -->
+<!--       <plugin> -->
 <!-- 	<groupId>org.apache.maven.plugins</groupId> -->
 <!-- 	<artifactId>maven-antrun-plugin</artifactId> -->
 <!-- 	<executions> -->
@@ -591,8 +591,8 @@
 <!-- 		<property name="target.dir" value="${basedir}/target"/> -->
 <!-- 		<property name="scala.dir" value="${basedir}/src/main/scala"/> -->
 <!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
-<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
-<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!-- 		<property name="bnfc.package" value="${project.groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${project.artifactId}"/> -->
 <!-- 		<property name="compile_classpath" -->
 <!-- 			  refid="maven.compile.classpath"/> -->
 
@@ -613,8 +613,8 @@
 <!-- 		<property name="target.dir" value="${basedir}/target"/> -->
 <!-- 		<property name="scala.dir" value="${basedir}/src/main/scala"/> -->
 <!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
-<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
-<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!-- 		<property name="bnfc.package" value="${project.groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${project.artifactId}"/> -->
 <!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
 <!--                   <target name="bnfc-process"/> -->
 <!--                 </ant> -->
@@ -633,8 +633,8 @@
 <!-- 		<property name="target.dir" value="${basedir}/target"/> -->
 <!-- 		<property name="scala.dir" value="${basedir}/src/main/scala"/> -->
 <!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
-<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
-<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!-- 		<property name="bnfc.package" value="${project.groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${project.artifactId}"/> -->
 <!-- 		<property name="compile_classpath" -->
 <!-- 			  refid="maven.compile.classpath"/> -->
 <!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
@@ -662,9 +662,9 @@
 <!-- 		<property name="bnfc.dir" -->
 <!-- 			  value="${basedir}/src/main/bnfc"/> -->
 <!-- 		<property name="bnfc.package" -->
-<!-- 			  value="${groupId}"/> -->
+<!-- 			  value="${project.groupId}"/> -->
 <!-- 		<property name="bnfc.artifact" -->
-<!-- 			  value="${artifactId}"/> -->
+<!-- 			  value="${project.artifactId}"/> -->
 <!-- 		<property name="compile_classpath" -->
 <!-- 			  refid="maven.compile.classpath"/> -->
 <!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
@@ -682,8 +682,8 @@
 <!-- 	    <configuration> -->
 <!-- 	      <tasks> -->
 <!-- 		<property name="bnfc.dir" value="${basedir}/src/main/bnfc"/> -->
-<!-- 		<property name="bnfc.package" value="${groupId}"/> -->
-<!-- 		<property name="bnfc.artifact" value="${artifactId}"/> -->
+<!-- 		<property name="bnfc.package" value="${project.groupId}"/> -->
+<!-- 		<property name="bnfc.artifact" value="${project.artifactId}"/> -->
 <!--                 <ant antfile="${basedir}/src/main/bnfc/build.xml"> -->
 <!--                   <target name="bnfc-clean"/> -->
 <!--                 </ant> -->
