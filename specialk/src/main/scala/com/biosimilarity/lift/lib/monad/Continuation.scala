@@ -187,69 +187,104 @@ package usage {
     }
 
     // This simulates a callback mechanism on events in the event stream
-    def registerCB [Src,Trgt] ( srcSource : Stream[Either[Src,Boolean]] )( cb : Src => Trgt ) : Unit = {
+    def registerCB [Src,Trgt] (
+      srcSource : Stream[Either[Src,Boolean]]
+    )(
+      pwrtr : java.io.PrintWriter
+    )( cb : Src => Trgt ) : Unit = {
       var srcSrc = srcSource
       def loop() : Unit = {
-	val t = new java.lang.Thread() {
+	(new java.lang.Thread() {
 	  override def run() : Unit = {
 	    srcSrc.head match {
 	      case Left( src ) => {
-		println( "invoking callback : " + cb + " on " + src )
-		println( "with result : " + cb( src ) )
+		//println( "invoking callback : " + cb + " on " + src )
+		//println( "with result : " + cb( src ) )
+		pwrtr.print( "<event>" + cb( src ) + "</event>" )
 		srcSrc = srcSrc.drop( 1 )
-		println( "getting next event" )
+		//println( "getting next event" )
 		loop()
 	      }
 	      case Right( true ) => {
 		srcSrc = srcSrc.drop( 1 )
-		println( "getting next event" )
+		//println( "getting next event" )
+		pwrtr.print( "<tick/>" )
 		loop()
 	      }
 	      case _ => {
-		println( "halting" )
+		//println( "halting" )
+		pwrtr.print( "</time>" )
 	      }
 	    }
 	  }	  
-	}
-	t.run()
+	}).run()
       }
+      pwrtr.print( "<time>" )
       loop()
     }
-    def registerCB [Src,Trgt]( srcGen : () => Src )( cb : Src => Trgt ) : Unit = {
-      registerCB[Src,Trgt]( randomStream[Src]( srcGen ) )( cb )
+    def registerCB [Src,Trgt](
+      srcGen : () => Src
+    )(
+      pwrtr : java.io.PrintWriter
+    )( cb : Src => Trgt ) : Unit = {      
+      (new java.lang.Thread() {
+	override def run() : Unit = {
+	  registerCB[Src,Trgt](
+	    randomStream[Src]( srcGen )
+	  )( pwrtr )( cb )
+	}
+      }).run()
     }
 
-    def delimitedCallBacks( cb : Int => Int ) : Continuation[Unit,Unit,Unit] = {
+    def delimitedCallBacks( pwrtr : java.io.PrintWriter )( cb : Int => Int ) : Continuation[Unit,Unit,Unit] = {
       val rstrm = randomStream[Int]( () => { ( scala.math.random * 1000 ).toInt } )
       val dc1 = new DelimitedContinuation[Int,Unit,Unit]()
       dc1.reset[Int,Unit,Unit](
-	dc1.fmap( ( x : Int ) => { println( "adding 3 to " + x + " yields " + 3 + x ); 3 + x } )(
+	dc1.fmap(
+	  ( x : Int ) => {
+	    val xp3 = x + 3
+	    pwrtr.print( "<xform>3 + " + x + " = " + xp3 + "</xform>" )
+	    xp3
+	  }
+	)(
 	  dc1.shift[Int,Int,Unit,Unit,Unit](
 	    ( c : Int => Continuation[Int,Unit,Unit] ) => {
 	      Continuation[Unit,Unit,Unit](
 		( k : Unit => Unit ) => {
 		  val kcb : Int => Unit = {		    
 		    ( i : Int ) => {
-		      val t = new java.lang.Thread() {
+		      (new java.lang.Thread() {
 			override def run() : Unit = {
-			  println( "before user-supplied callback" )
-			  cb( i )
-			  println( "after user-supplied callback" )
+			  pwrtr.print( "<cbScope>" )
+			  c( i ).map(
+			    ( j : Int ) => {
+			      pwrtr.print(
+				"<cbResults>" + cb( j ) + "</cbResults>"
+			      )
+			    } 
+			  )
+			  pwrtr.print( "</cbScope>" )
 			  k()
 			}
-		      }
-		      t.run()
+		      }).run()
 		    }
 		  }
-		  println( "before registering callback" )
-		  registerCB[Int,Unit]( rstrm )( kcb )
-		  println( "after registering callback" )
+		  pwrtr.print( "<registerCB>" )
+		  registerCB[Int,Unit]( rstrm )( pwrtr )( kcb )
+		  pwrtr.print( "</registerCB>" )
 		}
 	      )
 	    }
 	  )	  
 	)
       )
+    }
+
+    def delimitedCallBacks( cb : Int => Int ) : scala.xml.Elem = {
+      val sw = new java.io.StringWriter()
+      val pw = new java.io.PrintWriter( sw )    
+      delimitedCallBacks( pw )( cb )( Unit => { println( "done" ) } )
+      scala.xml.XML.loadString( sw.toString )
     }
   }
 }
