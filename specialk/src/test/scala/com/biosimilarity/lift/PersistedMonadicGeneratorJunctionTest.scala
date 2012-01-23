@@ -20,6 +20,7 @@ import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 import Acceptance._
 import com.biosimilarity.lift.model.store.CnxnCtxtBranch
+import identityConversions._
 
 class PersistedMonadicGeneratorJunctionTest
   extends JUnit4(PersistedMonadicGeneratorJunctionTestSpecs)
@@ -53,10 +54,10 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
 //      SerializeGetJunction()
 //      SerializeKVDB()
       //      SerializeAcceptance()
-      //      RetrieveBetweenOneQueuePutGet() //success
+//            RetrieveBetweenOneQueuePutGet() //success
 //            RetrieveBetweenOneQueueGetPut() //success
-      //      RetrieveBetweenTwoQueuesPutGet() //success
-            RetrieveBetweenTwoQueuesGetPut() //success
+            RetrieveBetweenTwoQueuesPutGet() //success
+//            RetrieveBetweenTwoQueuesGetPut() //success
       //      RetrieveBetweenTwoQueuesUnrelatedQueueNoAcquaintances() //success
       //      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintances() //success
       //      RetrieveBetweenTwoQueuesWithMultipleAcquaintances() //success
@@ -143,21 +144,16 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
       oos.writeObject(Acceptance)
     }
 
-
-
-
     def RetrieveBetweenOneQueuePutGet() =
     {
       val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, List())
-      writer_privateQ.agentTwistedPairs
 
       putGet(writer_privateQ, writer_privateQ)
     }
 
     def RetrieveBetweenOneQueueGetPut() =
     {
-      val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, List())
-      writer_privateQ.agentTwistedPairs
+      val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location.toString, List())
 
       getPut(writer_privateQ, writer_privateQ)
     }
@@ -165,10 +161,8 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
     def RetrieveBetweenTwoQueuesPutGet() =
     {
       val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, Seq[ URM ](reader_location))
-      writer_privateQ.agentTwistedPairs
 
       val reader_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, reader_location, Seq[ URM ](writer_location))
-      reader_privateQ.agentTwistedPairs
 
       putGet(reader_privateQ, writer_privateQ)
     }
@@ -176,10 +170,8 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
     def RetrieveBetweenTwoQueuesGetPut() =
     {
       val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, Seq[ URM ](reader_location))
-      writer_privateQ.agentTwistedPairs
 
       val reader_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, reader_location, Seq[ URM ](writer_location))
-      reader_privateQ.agentTwistedPairs
 
       getPut(reader_privateQ, writer_privateQ)
     }
@@ -251,42 +243,62 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
 
     def getPut(reader: PersistedStringMGJ, writer: PersistedStringMGJ) =
     {
-      val keyPrivate = "channelPrivate(_)"
+      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
+      val keyPrivate = keyMsg
+//      val keyPrivate = "channelPrivate(_)"
       reset {
         for ( e <- reader.get(keyPrivate.toLabel) ) {
+          println("in GET !!!!!!!!!!!!!!")
           //removing e!= None causes it to work
           if ( e != None ) {
+            println("in found")
+            println(e.toString)
             found = true;
+            println("found " + found)
           }
           else {
+            println("in not found ")
+            println(e.toString)
             println("listen received - none")
+            println("found " + found)
           }
         }
       }
 
-      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
+//      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
       val value = "test"
       reset {writer.put(keyMsg.toLabel, mTT.Ground(value))}
 
+      println("finding")
       found must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     def putGet(reader: PersistedStringMGJ, writer: PersistedStringMGJ) =
     {
-      val keyPrivate = "channelPrivate(_)"
-
       val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
+      val keyPrivate = keyMsg
+//
+//      val keyPrivate = "channelPrivate(_)"
+//
+//      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
       val value = "test"
       reset {writer.put(keyMsg.toLabel, mTT.Ground(value))}
 
+      Thread.sleep(4000)
       reset {
         for ( e <- reader.get(keyPrivate.toLabel) ) {
           //removing e!= None causes it to work
           if ( e != None ) {
+            println("in found")
+            println(e.toString)
             found = true;
+            println("found " + found)
           }
           else {
+            println("in not found ")
+            println(e.toString)
             println("listen received - none")
+            println("found " + found)
           }
         }
       }
