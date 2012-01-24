@@ -198,21 +198,16 @@ package usage {
 	  override def run() : Unit = {
 	    srcSrc.head match {
 	      case Left( src ) => {
-		//println( "invoking callback : " + cb + " on " + src )
-		//println( "with result : " + cb( src ) )
 		pwrtr.print( "<event>" + cb( src ) + "</event>" )
 		srcSrc = srcSrc.drop( 1 )
-		//println( "getting next event" )
 		loop()
 	      }
 	      case Right( true ) => {
 		srcSrc = srcSrc.drop( 1 )
-		//println( "getting next event" )
 		pwrtr.print( "<tick/>" )
 		loop()
 	      }
 	      case _ => {
-		//println( "halting" )
 		pwrtr.print( "</time>" )
 	      }
 	    }

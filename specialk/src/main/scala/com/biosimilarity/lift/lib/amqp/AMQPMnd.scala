@@ -611,6 +611,19 @@ class AMQPNodeJSScope (
   }  
 }
 
+object AMQPNodeJSScope {
+  def apply (
+    factory : ConnectionFactory
+  ) : AMQPNodeJSScope = {
+    new AMQPNodeJSScope ( factory )
+  }
+  def unapply (
+    amqpScope : AMQPNodeJSScope
+  ) : Option[( ConnectionFactory )] = {
+    Some( ( amqpScope.factory ) )
+  }
+}
+
 trait JSONOverAMQPBrokerScope[T] 
 extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {  
   case class AMQPQueueJSONXForm[T](
@@ -651,8 +664,48 @@ extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {
   }  
 }
 
+class JSONOverAMQPScope [T] (
+  override val factory : ConnectionFactory
+) extends AMQPBrokerScope[T]
+with MonadicDispatcherScope[T] {
+  override def equals( o : Any ) : Boolean = {
+    o match {
+      case that : JSONOverAMQPScope[T] => {
+	factory.equals( that.factory )
+      }
+      case _ => false
+    }
+  }
+  override def hashCode( ) : Int = {
+    37 * factory.hashCode
+  }
+}
+
+object JSONOverAMQPScope {
+  def apply [T] (
+    factory : ConnectionFactory
+  ) : JSONOverAMQPScope[T] = {
+    new JSONOverAMQPScope[T] ( factory )
+  }
+  def unapply [T] (
+    amqpScope : JSONOverAMQPScope[T]
+  ) : Option[( ConnectionFactory )] = {
+    Some( ( amqpScope.factory ) )
+  }
+}
+
 case class AMQPStdScope[T] (  
 ) extends AMQPScope[T] (
+  AMQPDefaults.defaultConnectionFactory
+) 
+
+case class AMQPNodeJSStdScope (  
+) extends AMQPNodeJSScope (
+  AMQPDefaults.defaultConnectionFactory
+) 
+
+case class JSONOverAMQPStdScope[T] (  
+) extends JSONOverAMQPScope[T] (
   AMQPDefaults.defaultConnectionFactory
 ) 
 
