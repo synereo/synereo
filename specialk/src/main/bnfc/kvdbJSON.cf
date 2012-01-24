@@ -119,7 +119,7 @@ QBlob           . Blob          ::= String                                      
 -- Substitutions
 
 KVDBSubst       . Substitution  ::= "{" [SubstPair] "}"                                 ;
-KVDBSubstPair   . SubstPair     ::= VarUIdent ":" QryTerm                    ;
+KVDBSubstPair   . SubstPair     ::= VarUIdent ":" QryTerm                               ;
 
 -- ********************************************************************************* --
 --                        Simple Query Syntax

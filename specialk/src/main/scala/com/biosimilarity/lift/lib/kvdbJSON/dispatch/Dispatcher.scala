@@ -17,7 +17,7 @@ import scala.collection.mutable.HashMap
 import java.net.URI
 import java.io.StringReader
 
-trait KVDBJSONAPIDispatcherT {
+trait KVDBJSONAPIDispatcherT extends Serializable {
   import scala.collection.JavaConversions._
 
   // comms
@@ -228,11 +228,126 @@ trait KVDBJSONAPIDispatcherT {
     getRequest( jrbh.lblreqbody_ )
   }
 
-  def jsonToTerm( json : Pattern ) : CnxnCtxtLabel[String,String,String] = {
-    throw new Exception( "TODO : implement jsonToTerm on " + this )
+  def jsonToTerm( qryElem : QryGrndLit ) : CnxnCtxtLabel[String,String,String] with Factual = {
+    qryElem match {
+      case qstr : QStr => {
+	new CnxnCtxtLeaf[String,String,String](
+	  Left[String,String]( qstr.string_ )
+	)
+      }
+      case qnum : QNum => {
+	new CnxnCtxtLeaf[String,String,String](
+	  Left[String,String] (
+	    qnum match {
+	      case qint : QInt => {
+		qint.integer_ + ""
+	      }
+	      case qdbl : QDbl => {
+		qdbl.double_ + ""
+	      }
+	      case _ => {
+		throw new Exception( "ill-formed message: bad num " + qnum )
+	      }
+	    }
+	  )
+	)
+      }
+      case qbool : QBool => {
+	new CnxnCtxtLeaf[String,String,String](
+	  Left[String,String](
+	    qbool match {
+	      case qtru : QTru => "true"
+	      case qfal : QFal => "false"
+	      case _ => {
+		throw new Exception( "ill-formed message: bad boolean " + qbool )
+	      }
+	    }
+	  )
+	)
+      }
+      case qnul : QNul => {
+	new CnxnCtxtLeaf[String,String,String](
+	  Left[String,String]( "null" )
+	)
+      }
+    }
   }
 
-  def asPattern( kvdbAskReq : KVDBAskReq ) : CnxnCtxtLabel[String,String,String] = {
+  def jsonToTerm( qryElem : QryElem ) : CnxnCtxtLabel[String,String,String] with Factual = {
+    qryElem match {
+      case qvar : QVar => {
+	new CnxnCtxtLeaf[String,String,String](
+	  Right[String,String]( qvar.varuident_ )
+	)
+      }
+      case qval : QVal => {
+	qval.qryvalue_ match {
+	  case qatm : QAtomic => {
+	    jsonToTerm( qatm.qrygrndlit_ )
+	  }
+	  case qcoll : QColl => {
+	    new CnxnCtxtBranch[String,String,String](
+	      "qCollection", jsonToTerm( qcoll.qryarray_ )
+	    )
+	  }
+	  case qcomp : QComp => {
+	    jsonToTerm( qcomp.qryterm_ )
+	  }
+	}
+      }
+      case _ => {
+	throw new Exception( "ill-formatted qryElem " + qryElem )
+      }
+    }
+  }
+
+  def jsonToTerm(
+    qryArray : QryArray
+  ) : List[CnxnCtxtLabel[String,String,String] with Factual] = {
+    qryArray match {
+      case qarray : QArray => {
+	qarray.listqryelem_.toList.map( jsonToTerm )
+      }
+      case _ => {
+	throw new Exception( "ill-formatted term array " + qryArray )
+      }
+    }
+  }
+
+  def jsonToTerm( qtrm : QryTerm ) : CnxnCtxtLabel[String,String,String] with Factual = {
+    qtrm match {
+      case qt : QTerm => {
+	new CnxnCtxtBranch[String,String,String](
+	  qt.string_,
+	  jsonToTerm( qt.qryarray_ )
+	)
+      }
+      case _ => {
+	throw new Exception( "ill-formatted term " + qtrm )
+      }
+    }
+    
+  }
+
+  def jsonToTerm( json : Pattern ) : CnxnCtxtLabel[String,String,String] with Factual = {
+    json match {
+      case qp : QPointed => {
+	qp.qryterm_ match {
+	  case qtrm : QTerm => {
+	    jsonToTerm( qtrm )
+	  }
+	  case _ => {
+	    throw new Exception( "ill-formatted pattern term " + json )
+	  }
+	}
+      }
+      case _ => {
+	throw new Exception( "ill-formatted pattern " + json )
+      }
+    }
+  }
+
+  def asPattern( kvdbAskReq : KVDBAskReq ) : CnxnCtxtLabel[String,String,String] with Factual = {
     kvdbAskReq.askreqpacket_ match {
       case askReqData : KVDBAskReqData => {
 	jsonToTerm( askReqData.pattern_ )
@@ -243,7 +358,7 @@ trait KVDBJSONAPIDispatcherT {
     }
   }
 
-  def asPattern( kvdbTellReq : KVDBTellReq ) : CnxnCtxtLabel[String,String,String] = {
+  def asPattern( kvdbTellReq : KVDBTellReq ) : CnxnCtxtLabel[String,String,String] with Factual = {
     kvdbTellReq.tellreqpacket_ match {
       case tellReqData : KVDBTellReqData => {
 	jsonToTerm( tellReqData.pattern_ )
@@ -349,7 +464,21 @@ trait KVDBJSONAPIDispatcherT {
   def serveAPI : Unit = serveAPI( srcHost, srcExchange )
 }
 
-case class KVDBJSONAPIDispatcher(
+class KVDBJSONAPIDispatcher(
   override val srcHost : String,
   override val srcExchange : String
 ) extends KVDBJSONAPIDispatcherT
+
+object KVDBJSONAPIDispatcher {
+  def apply(
+    srcHost : String,
+    srcExchange : String
+  ) : KVDBJSONAPIDispatcher = {
+    new KVDBJSONAPIDispatcher( srcHost, srcExchange )
+  }
+  def unapply(
+    kvdbDispatcher : KVDBJSONAPIDispatcher
+  ) : Option[( String, String )] = {
+    Some( ( kvdbDispatcher.srcHost, kvdbDispatcher.srcExchange ) )
+  }
+}
