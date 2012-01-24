@@ -393,9 +393,20 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
   }
 
   def asReplyTrgt(
-    reqHdr : ReqHeader
-  ) : ( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] ) = {
-    throw new Exception( "TODO : implement asReplyTrgt on " + this )
+    reqHdr : KVDBReqHdr
+  ) : Option[( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )] = {
+    for( trgt <- asURI( reqHdr.uri_2 ); rplyTrgt <- replyNamespace.get( trgt ) ) yield {
+      rplyTrgt match {
+	case Left( ( replyHost, replyExchange ) ) => {
+	  val replyM = replyQM( replyHost, replyExchange )
+	  val replyQ = replyM.zeroJSON
+	  ( replyM, replyQ )
+	}
+	case Right( ( replyM, replyQ ) ) => {
+	  ( replyM, replyQ )
+	}
+      }
+    }
   }
 
   def dispatch(
@@ -403,22 +414,30 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
     reqHdr : ReqHeader,
     req : KVDBRequest
   ) : Unit = {
-    val ( m, q ) = asReplyTrgt( reqHdr )
-    req match {
-      case askReq : KVDBAskReq => {
-	reset {
-	  for( rslt <- kvdb.get( asPattern( askReq ) ) ) {
-	    q ! asResponse( rslt )
+    reqHdr match {
+      case kvdbReqHdr : KVDBReqHdr => {
+	for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
+	  req match {
+	    case askReq : KVDBAskReq => {
+	      reset {
+		for( rslt <- kvdb.get( asPattern( askReq ) ) ) {
+		  q ! asResponse( rslt )
+		}
+	      }
+	    }
+	    case tellReq : KVDBTellReq => {
+	      reset {
+		kvdb.put( asPattern( tellReq ), asValue( tellReq ) )
+		q ! craftResponse( tellReq )
+	      }
+	    }
 	  }
 	}
       }
-      case tellReq : KVDBTellReq => {
-	reset {
-	  kvdb.put( asPattern( tellReq ), asValue( tellReq ) )
-	  q ! craftResponse( tellReq )
-	}
+      case _ => {
+	throw new Exception( "ill-formed kvdbJSON message: bad header " + reqHdr )
       }
-    }
+    }    
   }
 
   def dispatch( msg : Message ) : Unit = {
@@ -450,6 +469,8 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
     }
   }
 
+  // BUGBUG : lgm -- is it really necessary to create a new parser to
+  // parse each message?
   def parse( msg : String ) : Message =
     (new parser( new Yylex( new StringReader( msg ) ) )).pMessage()
 
@@ -461,6 +482,7 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
       dispatch( parse( msg ) )
     }
   }
+
   def serveAPI : Unit = serveAPI( srcHost, srcExchange )
 }
 
