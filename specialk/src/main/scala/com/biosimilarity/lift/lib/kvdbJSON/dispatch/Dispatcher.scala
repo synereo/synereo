@@ -35,20 +35,35 @@ trait KVDBJSONAPIDispatcherT {
     srcQM( srcHost, srcExchange ).zeroJSON
   def srcQ : stblSrcScope.AMQPQueue[String] = stblSrcQM.zeroJSON
 
+  def replyScope : AMQPNodeJSStdScope =
+    new AMQPNodeJSStdScope()
+  lazy val stblReplyScope : AMQPNodeJSStdScope = replyScope
+  def replyQM( replyHost : String, replyExchange : String ) : stblReplyScope.AMQPNodeJSQueueM =
+    new stblReplyScope.AMQPNodeJSQueueM( replyHost, replyExchange )
+  def replyQ( replyHost : String, replyExchange : String ) : stblReplyScope.AMQPQueue[String] = 
+    replyQM( replyHost, replyExchange ).zeroJSON
+
   // namespace
   def kvdbScope : PersistedTermStoreScope[String,String,String,String] = {
-    throw new Exception( "TODO : implement kvdbScope on KVDBJSONAPIDispatcherT" )
+    throw new Exception( "TODO : implement kvdbScope on " + this )
   }
   lazy val stblKVDBScope : PersistedTermStoreScope[String,String,String,String] =
     kvdbScope
   def kvdbPersistenceScope : stblKVDBScope.PersistenceScope = {
-    throw new Exception( "TODO : implement kvdbPersistenceScope on KVDBJSONAPIDispatcherT" )
+    throw new Exception( "TODO : implement kvdbPersistenceScope on " + this )
   }
   lazy val stblKVDBPersistenceScope : stblKVDBScope.PersistenceScope =
     kvdbPersistenceScope
   def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
   = {
-    throw new Exception( "TODO : implement namespace on KVDBJSONAPIDispatcherT" )
+    throw new Exception( "TODO : implement namespace on " + this )
+  }
+
+  type ReplyTrgt =
+    Either[( String, String ),( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]
+
+  def replyNamespace : HashMap[URI,ReplyTrgt] = {
+    throw new Exception( "TODO : implement namespace on " + this )
   }
 
   // service
@@ -213,19 +228,91 @@ trait KVDBJSONAPIDispatcherT {
     getRequest( jrbh.lblreqbody_ )
   }
 
+  def jsonToTerm( json : Pattern ) : CnxnCtxtLabel[String,String,String] = {
+    throw new Exception( "TODO : implement jsonToTerm on " + this )
+  }
+
+  def asPattern( kvdbAskReq : KVDBAskReq ) : CnxnCtxtLabel[String,String,String] = {
+    kvdbAskReq.askreqpacket_ match {
+      case askReqData : KVDBAskReqData => {
+	jsonToTerm( askReqData.pattern_ )
+      }
+      case _ => {
+	throw new Exception( "ill-formed kvdbJSON message: bad ask request data " + kvdbAskReq )
+      }
+    }
+  }
+
+  def asPattern( kvdbTellReq : KVDBTellReq ) : CnxnCtxtLabel[String,String,String] = {
+    kvdbTellReq.tellreqpacket_ match {
+      case tellReqData : KVDBTellReqData => {
+	jsonToTerm( tellReqData.pattern_ )
+      }
+      case _ => {
+	throw new Exception( "ill-formed kvdbJSON message: bad ask request data " + kvdbTellReq )
+      }
+    }
+  }
+
+  def asValue( kvdbTellReq : KVDBTellReq ) : stblKVDBScope.mTT.Resource = {
+    kvdbTellReq.tellreqpacket_ match {
+      case tellReqData : KVDBTellReqData => {
+	tellReqData.blob_ match {
+	  case qblob : QBlob => {
+	    stblKVDBScope.mTT.Ground( qblob.string_ )
+	  }
+	}
+      }
+      case _ => {
+	throw new Exception( "ill-formed kvdbJSON message: bad ask request data " + kvdbTellReq )
+      }
+    }
+  }
+
+  def asResponse( oRsrc : Option[stblKVDBScope.mTT.Resource] ) : String = {
+    throw new Exception( "TODO : implement asResponse on " + this )
+  }
+
+  def craftResponse( kvdbTellReq : KVDBTellReq ) : String = {
+    throw new Exception( "TODO : implement craftResponse on " + this )
+  }
+
+  def asReplyTrgt(
+    reqHdr : ReqHeader
+  ) : ( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] ) = {
+    throw new Exception( "TODO : implement asReplyTrgt on " + this )
+  }
+
   def dispatch(
     kvdb : stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction,
+    reqHdr : ReqHeader,
     req : KVDBRequest
   ) : Unit = {
-    throw new Exception( "TODO : implement dispatch on KVDBJSONAPIDispatcherT" )
+    val ( m, q ) = asReplyTrgt( reqHdr )
+    req match {
+      case askReq : KVDBAskReq => {
+	reset {
+	  for( rslt <- kvdb.get( asPattern( askReq ) ) ) {
+	    q ! asResponse( rslt )
+	  }
+	}
+      }
+      case tellReq : KVDBTellReq => {
+	reset {
+	  kvdb.put( asPattern( tellReq ), asValue( tellReq ) )
+	  q ! craftResponse( tellReq )
+	}
+      }
+    }
   }
+
   def dispatch( msg : Message ) : Unit = {
     msg match {
       case jreqHB : KVDBJustReqHB => {
 	jreqHB.lblreqheader_ match {
 	  case reqHdr : KVDBReqHdr => {
 	    for( trgt <- asURI( reqHdr.uri_1 ); kvdb <- namespace.get( trgt ) ) {
-	      dispatch( kvdb, getRequest( jreqHB ) )
+	      dispatch( kvdb, reqHdr, getRequest( jreqHB ) )
 	    }
 	  }
 	  case _ => {
@@ -237,7 +324,7 @@ trait KVDBJSONAPIDispatcherT {
 	jreqBH.lblreqheader_ match {
 	  case reqHdr : KVDBReqHdr => {
 	    for( trgt <- asURI( reqHdr.uri_1 ); kvdb <- namespace.get( trgt ) ) {	      
-	      dispatch( kvdb, getRequest( jreqBH ) )
+	      dispatch( kvdb, reqHdr, getRequest( jreqBH ) )
 	    }
 	  }
 	  case _ => {
@@ -247,6 +334,7 @@ trait KVDBJSONAPIDispatcherT {
       }
     }
   }
+
   def parse( msg : String ) : Message =
     (new parser( new Yylex( new StringReader( msg ) ) )).pMessage()
 
