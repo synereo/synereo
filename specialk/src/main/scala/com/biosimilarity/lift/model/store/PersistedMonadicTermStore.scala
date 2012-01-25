@@ -1505,13 +1505,10 @@ package usage {
 	    val blob =
 	      storageDispatch match {
 		case "Base64" => {
-                  println("start base64")
-
 		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
 		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
 		  oos.writeObject( rsrc.asInstanceOf[Serializable] )
 		  oos.close()
-                  println("end base64")
 		  new String( Base64Coder.encode( baos.toByteArray() ) )
 		}
 		case "CnxnCtxtLabel" => {

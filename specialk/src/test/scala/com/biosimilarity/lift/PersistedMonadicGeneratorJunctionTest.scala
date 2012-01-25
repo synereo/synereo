@@ -37,111 +37,25 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
   val RABBIT_PORT_READER2 = 6001
   val RABBIT_PORT_UNRELATED = 4000
 
+  val writer_location = "localhost".toURM.withPort(RABBIT_PORT_WRITER)
+  val reader_location = "localhost".toURM.withPort(RABBIT_PORT_READER)
+  val reader2_location = "localhost".toURM.withPort(RABBIT_PORT_READER2)
+  val unrelated_location = "localhost".toURM.withPort(RABBIT_PORT_UNRELATED)
+
   "PersistedMonadicGeneratorJunction" should {
     var found = false;
 
     val dbWriterReader = "KVDB-WriterReader" + UUID.randomUUID().toString
 
-    val writer_location = "localhost".toURM.withPort(RABBIT_PORT_WRITER)
-    val reader_location = "localhost".toURM.withPort(RABBIT_PORT_READER)
-    val reader2_location = "localhost".toURM.withPort(RABBIT_PORT_READER2)
-    val unrelated_location = "localhost".toURM.withPort(RABBIT_PORT_UNRELATED)
-
     "retrieve between two queues" in {
-//      LabelTest()
-      //      acceptTest()
-//      SerializeJunction()
-//      SerializeGetJunction()
-//      SerializeKVDB()
-      //      SerializeAcceptance()
-//            RetrieveBetweenOneQueuePutGet() //success
-            RetrieveBetweenOneQueueGetPut() //success
-//            RetrieveBetweenTwoQueuesPutGet() //success
-//            RetrieveBetweenTwoQueuesGetPut() //success
-      //      RetrieveBetweenTwoQueuesUnrelatedQueueNoAcquaintances() //success
-      //      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintances() //success
-      //      RetrieveBetweenTwoQueuesWithMultipleAcquaintances() //success
-      //      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintancesNoGet() //success
-    }
-
-//    def acceptTest() =
-//    {
-//      com.biosimilarity.lift.model.store.usage.PersistedMonadicTS.main()
-//    }
-
-    def LabelTest() =
-    {
-      val lbl = new CnxnCtxtBranch[ String, String, Any ]("list", Nil)
-      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
-      oos.writeObject(lbl)
-    }
-
-
-    def SerializeJunction() =
-    {
-      val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, List())
-      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
-      oos.writeObject(writer_privateQ)
-    }
-
-    def SerializeGetJunction() =
-    {
-      val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, List())
-
-      val keyPrivate = "channelPrivate(_)"
-      println("get")
-      reset {
-        for ( e <- writer_privateQ.get(keyPrivate.toLabel) ) {
-          //removing e!= None causes it to work
-          if ( e != None ) {
-            found = true;
-          }
-          else {
-            println("listen received - none")
-          }
-        }
-      }
-
-      //sleep for clean output
-      Thread.sleep(3000)
-
-      println("baos setup")
-      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
-
-      println("persistenceManifest")
-      oos.writeObject(writer_privateQ.persistenceManifest)
-      Thread.sleep(3000)
-
-      println("acquaintances")
-      oos.writeObject(writer_privateQ.acquaintances)
-      Thread.sleep(3000)
-
-      println("theWaiters")
-      oos.writeObject(writer_privateQ.theWaiters)
-      Thread.sleep(3000)
-
-//      oos.writeObject(writer_privateQ)
-//      Thread.sleep(3000)
-
-    }
-
-    def SerializeKVDB() =
-    {
-      val kvdb = kvdb1(false)(true)
-      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
-      oos.writeObject(kvdb)
-    }
-
-    def SerializeAcceptance() =
-    {
-      val kvdb = kvdb1(false)(true)
-      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
-      oos.writeObject(Acceptance)
+      RetrieveBetweenOneQueuePutGet() //success
+//      RetrieveBetweenOneQueueGetPut() //success but fails with race condition
+      RetrieveBetweenTwoQueuesPutGet() //success
+//      RetrieveBetweenTwoQueuesGetPut() //success but fails with race condition
+      RetrieveBetweenTwoQueuesUnrelatedQueueNoAcquaintances() //success
+      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintances() //success
+      RetrieveBetweenTwoQueuesWithMultipleAcquaintances() //success
+      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintancesNoGet() //success
     }
 
     def RetrieveBetweenOneQueuePutGet() =
@@ -246,39 +160,30 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
       val keyPrivate = "channelPrivate(_)"
       reset {
         for ( e <- reader.get(keyPrivate.toLabel) ) {
-          println("in GET !!!!!!!!!!!!!!")
           //removing e!= None causes it to work
           if ( e != None ) {
-            println("in found")
             println(e.toString)
             found = true;
-            println("found " + found)
           }
           else {
-            println("in not found ")
             println(e.toString)
             println("listen received - none")
-            println("found " + found)
           }
         }
       }
 
       val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
       val value = "test"
-      reset {writer.put(keyMsg.toLabel, mTT.Ground(value))}
       Thread.sleep(4000)
-      println("finding")
+      reset {writer.put(keyMsg.toLabel, mTT.Ground(value))}
       found must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     def putGet(reader: PersistedStringMGJ, writer: PersistedStringMGJ) =
     {
+      val keyPrivate = "channelPrivate(_)"
+
       val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
-      val keyPrivate = keyMsg
-//
-//      val keyPrivate = "channelPrivate(_)"
-//
-//      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
       val value = "test"
       reset {writer.put(keyMsg.toLabel, mTT.Ground(value))}
 
@@ -287,16 +192,12 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
         for ( e <- reader.get(keyPrivate.toLabel) ) {
           //removing e!= None causes it to work
           if ( e != None ) {
-            println("in found")
             println(e.toString)
             found = true;
-            println("found " + found)
           }
           else {
-            println("in not found ")
             println(e.toString)
             println("listen received - none")
-            println("found " + found)
           }
         }
       }
@@ -305,5 +206,67 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
     }
   }
 
+  "Serialize" should {
+    val dbWriterReader = "KVDB-WriterReader" + UUID.randomUUID().toString
+
+    "label" in {
+      val lbl = new CnxnCtxtBranch[ String, String, Any ]("list", Nil)
+      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
+      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
+      oos.writeObject(lbl)
+    }
+
+    "junction" in {
+      val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, List())
+      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
+      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
+      oos.writeObject(writer_privateQ)
+    }
+
+    "get junction" in {
+      val writer_privateQ: PersistedStringMGJ = new PersistedStringMGJ(dbWriterReader, writer_location, List())
+
+      val keyPrivate = "channelPrivate(_)"
+      println("get")
+      reset {
+        for ( e <- writer_privateQ.get(keyPrivate.toLabel) ) {
+          //removing e!= None causes it to work
+          if ( e != None ) {
+            println("listen received - " + e.toString)
+          }
+          else {
+            println("listen received - none")
+          }
+        }
+      }
+
+      //sleep for clean output
+      Thread.sleep(3000)
+
+      println("baos setup")
+      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
+      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
+
+      println("persistenceManifest")
+      oos.writeObject(writer_privateQ.persistenceManifest)
+      Thread.sleep(3000)
+
+      println("acquaintances")
+      oos.writeObject(writer_privateQ.acquaintances)
+      Thread.sleep(3000)
+
+      println("theWaiters")
+      oos.writeObject(writer_privateQ.theWaiters)
+      Thread.sleep(3000)
+    }
+
+    "kvdb" in {
+      val kvdb = kvdb1(false)(true)
+      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
+      val oos: ObjectOutputStream = new ObjectOutputStream(baos)
+      oos.writeObject(kvdb)
+    }
+
+  }
 
 }
