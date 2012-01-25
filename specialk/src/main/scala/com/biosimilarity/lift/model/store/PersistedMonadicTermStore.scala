@@ -1456,16 +1456,25 @@ package usage {
 	  }
 	  
 	  // BUGBUG -- LGM: Evidence of a problem with this factorization
-	  override def asCacheValue(
-	    ltns : String => String,
-	    ttv : String => String,
-	    value : Elem
-	  ) : Option[String] = {
-	    tweet(
-	      "Shouldn't be here!"
-	    )
-	    None
-	  }
+	  // override def asCacheValue(
+// 	    ltns : String => String,
+// 	    ttv : String => String,
+// 	    value : Elem
+// 	  ) : Option[String] = {
+// 	    tweet(
+// 	      "Shouldn't be in this implementation of asCacheValue on " + this
+// 	    )
+// 	    try {
+// 	      throw new Exception( "asCacheValue method miss" )
+// 	    }
+// 	    catch {
+// 	      case e : Exception => {
+// 		e.printStackTrace
+// 		throw e
+// 	      }
+// 	    }
+// 	    None
+// 	  }
 	  
 	  override def asStoreValue(
 	    rsrc : mTT.Resource
@@ -2020,7 +2029,7 @@ object StdPersistedMonadicTS
 	    value : Elem
 	  ) : Option[String] = {
 	    tweet(
-	      "Shouldn't be here!"
+	      "Shouldn't be in this implementation of asCacheValue on " + this
 	    )
 	    None
 	  }

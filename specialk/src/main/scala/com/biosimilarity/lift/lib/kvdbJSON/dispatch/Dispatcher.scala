@@ -44,27 +44,21 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
     replyQM( replyHost, replyExchange ).zeroJSON
 
   // namespace
-  def kvdbScope : PersistedTermStoreScope[String,String,String,String] = {
-    throw new Exception( "TODO : implement kvdbScope on " + this )
-  }
+  def kvdbScope : PersistedTermStoreScope[String,String,String,String]
   lazy val stblKVDBScope : PersistedTermStoreScope[String,String,String,String] =
     kvdbScope
-  def kvdbPersistenceScope : stblKVDBScope.PersistenceScope = {
-    throw new Exception( "TODO : implement kvdbPersistenceScope on " + this )
-  }
+  def kvdbPersistenceScope : stblKVDBScope.PersistenceScope
   lazy val stblKVDBPersistenceScope : stblKVDBScope.PersistenceScope =
     kvdbPersistenceScope
+
+  // this controls what URI's will be dispatched to KVDB's
   def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
-  = {
-    throw new Exception( "TODO : implement namespace on " + this )
-  }
 
   type ReplyTrgt =
     Either[( String, String ),( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]
 
-  def replyNamespace : HashMap[URI,ReplyTrgt] = {
-    throw new Exception( "TODO : implement namespace on " + this )
-  }
+  // this controls what URI's will be dispatched to with results
+  def replyNamespace : HashMap[URI,ReplyTrgt]
 
   // service
   implicit def asString( kvdbURINetLoc : NetLocation ) : String = {
@@ -489,7 +483,24 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
 class KVDBJSONAPIDispatcher(
   override val srcHost : String,
   override val srcExchange : String
-) extends KVDBJSONAPIDispatcherT
+) extends KVDBJSONAPIDispatcherT {
+  override def kvdbScope : PersistedTermStoreScope[String,String,String,String] = {
+    throw new Exception( "TODO : implement kvdbScope on " + this )
+  }
+  override def kvdbPersistenceScope : stblKVDBScope.PersistenceScope = {
+    throw new Exception( "TODO : implement kvdbPersistenceScope on " + this )
+  }
+  // this controls what URI's will be dispatched to KVDB's
+  override def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
+  = {
+    throw new Exception( "TODO : implement namespace on " + this )
+  }
+
+  // this controls what URI's will be dispatched to with results to db requests
+  override def replyNamespace : HashMap[URI,ReplyTrgt] = {
+    throw new Exception( "TODO : implement namespace on " + this )
+  }
+}
 
 object KVDBJSONAPIDispatcher {
   def apply(
