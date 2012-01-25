@@ -55,8 +55,8 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
 //      SerializeKVDB()
       //      SerializeAcceptance()
 //            RetrieveBetweenOneQueuePutGet() //success
-//            RetrieveBetweenOneQueueGetPut() //success
-            RetrieveBetweenTwoQueuesPutGet() //success
+            RetrieveBetweenOneQueueGetPut() //success
+//            RetrieveBetweenTwoQueuesPutGet() //success
 //            RetrieveBetweenTwoQueuesGetPut() //success
       //      RetrieveBetweenTwoQueuesUnrelatedQueueNoAcquaintances() //success
       //      RetrieveBetweenTwoQueuesUnrelatedQueueWithAcquaintances() //success
@@ -243,9 +243,7 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
 
     def getPut(reader: PersistedStringMGJ, writer: PersistedStringMGJ) =
     {
-      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
-      val keyPrivate = keyMsg
-//      val keyPrivate = "channelPrivate(_)"
+      val keyPrivate = "channelPrivate(_)"
       reset {
         for ( e <- reader.get(keyPrivate.toLabel) ) {
           println("in GET !!!!!!!!!!!!!!")
@@ -265,10 +263,10 @@ object PersistedMonadicGeneratorJunctionTestSpecs extends Specification
         }
       }
 
-//      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
+      val keyMsg = "channelPrivate(\"" + UUID.randomUUID() + "\")"
       val value = "test"
       reset {writer.put(keyMsg.toLabel, mTT.Ground(value))}
-
+      Thread.sleep(4000)
       println("finding")
       found must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
