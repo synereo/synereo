@@ -226,6 +226,7 @@ trait CnxnXML[Namespace,Var,Tag] {
   ) : Elem = {
     <pattern>{asPatternString( cnxn )}</pattern>
   }
+
   def asPatternString(
     cnxn : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : String = {
@@ -236,6 +237,7 @@ trait CnxnXML[Namespace,Var,Tag] {
 	asPatternStr( branch )
     }
   }
+
   def asPatternStr(
     leaf : CnxnCtxtLeaf[Namespace,Var,Tag]
   ) : String = {
@@ -275,6 +277,58 @@ trait CnxnXML[Namespace,Var,Tag] {
       }
 
     tagStr + "(" + fx + ")"
+  }  
+
+  def toJSON(
+    cnxn : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : String = {
+    cnxn match {
+      case leaf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
+	toJSONStr( leaf )
+      case branch : CnxnCtxtBranch[Namespace,Var,Tag] =>
+	"{ " + toJSONStr( branch ) + " }"
+    }
+  }
+
+  def toJSONStr(
+    leaf : CnxnCtxtLeaf[Namespace,Var,Tag]
+  ) : String = {
+    leaf.tag match {
+      case Left( t ) => {
+	t match {
+	  case s : String => {
+	    "\"" + s + "\""
+	  }
+	  case _ => t.toString
+	}	
+      }
+      case Right( v ) => {
+	v.toString
+      }
+    }
+  }
+
+  def toJSONStr(
+    branch : CnxnCtxtBranch[Namespace,Var,Tag]
+  ) : String = {
+    val tagStr = branch.nameSpace
+    val fx = 
+      branch.factuals match {
+	case fact :: rfacts => {
+	  ( toJSON( fact ) /: rfacts )(
+	    {
+	      ( acc, f ) => {
+		acc + "," + toJSON( f )
+	      }
+	    }
+	  )
+	}
+	case Nil => {
+	  ""
+	}
+      }
+
+    tagStr + " : " + "[ " + fx + " ]"
   }  
 
   class TermParser extends JavaTokenParsers {

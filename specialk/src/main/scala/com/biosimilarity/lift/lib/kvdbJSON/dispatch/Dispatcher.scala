@@ -8,16 +8,24 @@
 
 package com.biosimilarity.lift.lib.kvdbJSON
 
-import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{ URI => kvdbURI, _ }
+import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{ URI => kvdbURI, UUID => kvdbUUID, _ }
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import scala.util.continuations._
 import scala.collection.mutable.HashMap
 
+import org.prolog4j._
+
 import java.net.URI
 import java.io.StringReader
 
-trait KVDBJSONAPIDispatcherT extends Serializable {
+trait KVDBJSONAPIDispatcherT
+extends Serializable
+with CnxnXQuery[String,String,String]
+with CnxnXML[String,String,String]
+with CnxnCtxtInjector[String,String,String]
+with Blobify
+with UUIDOps {
   import scala.collection.JavaConversions._
 
   // comms
@@ -165,6 +173,14 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
       }
     }
   }
+
+  implicit def asOptString( uuid : kvdbUUID ) : Option[String] = {
+    uuid match {
+      case primUUID : KVDBPrimUUID => Some( primUUID.primuuid_ )
+      case nullUUID : KVDBNullUUID => None
+    }
+  }
+
   implicit def asURI( kvdbURI : kvdbURI ) : Option[URI] = {
     kvdbURI match {
       case bURI : BasicURI => {
@@ -378,12 +394,168 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
     }
   }
 
-  def asResponse( oRsrc : Option[stblKVDBScope.mTT.Resource] ) : String = {
-    throw new Exception( "TODO : implement asResponse on " + this )
+  def patternVars(
+    pattern : CnxnCtxtLabel[String,String,String]
+  ) : List[String] = {
+    ( ( Nil : List[String] ) /: pattern.atoms )(
+      ( acc : List[String], atom : Either[String,String] ) => {
+	atom match {
+	  case Right( v ) => acc ++ List( v )
+	  case _ => acc
+	}
+      }
+    )
   }
 
-  def craftResponse( kvdbTellReq : KVDBTellReq ) : String = {
-    throw new Exception( "TODO : implement craftResponse on " + this )
+  def substAsJSON(
+    pattern : CnxnCtxtLabel[String,String,String],
+    rsrc : stblKVDBScope.mTT.Ground
+  ) : Option[String] = {
+    None
+  }
+
+  def substAsJSONPairs(
+    ptrnVars : List[String],
+    rsrc : stblKVDBScope.mTT.RBound
+  ) : Option[String] = {
+    def resolve( subst : Solution[String], pVar : String ) : String = {
+      subst.on( pVar )
+      subst.get( )
+    }
+
+    def asJSONPairs(
+      subst : Solution[String],
+      ptrnVars : List[String]
+    ) : String = {
+      ptrnVars match {
+	case pVar :: pVars => {
+	  ( ( pVar + " : " + resolve( subst, pVar ) ) /: pVars )(
+	    ( acc, e ) => {
+	      acc + " , " + e + " : " + resolve( subst, e )
+	    }
+	  )
+	}
+	case _ => {
+	  ""
+	}
+      }
+    }
+
+    rsrc match {
+      case stblKVDBScope.mTT.RBound( Some( rsrc ), Some( subst ) ) => {
+	rsrc match {
+	  case bndRsrc : stblKVDBScope.mTT.RBound => {
+	    Some(
+	      (
+		asJSONPairs( subst, ptrnVars )
+		+ " , "
+		+ substAsJSONPairs( ptrnVars, bndRsrc ).getOrElse( "" )
+	      )
+	    )
+	  }
+	}
+      }
+      case stblKVDBScope.mTT.RBound( None, Some( subst ) ) => {
+	Some( asJSONPairs( subst, ptrnVars ) )
+      }
+      case stblKVDBScope.mTT.RBound( _, None ) => {
+	None
+      }
+    }
+  }
+
+  def getGrndVal( 
+    rsrc : stblKVDBScope.mTT.Resource
+  ) : Option[String] = {
+    rsrc match {
+      case stblKVDBScope.mTT.Ground( v ) => Some( v + "" )
+      case stblKVDBScope.mTT.RBound( oRsrc, _ ) => {
+	for( bndRsrc <- oRsrc; gv <- getGrndVal( bndRsrc ) ) yield {
+	  gv
+	}
+      }
+      case _ => {
+	throw new Exception( "unhandled resource case while getting value: " + rsrc )
+      }
+    }
+  }
+
+  def asResponse(
+    reqHdr : KVDBReqHdr,
+    pattern : CnxnCtxtLabel[String,String,String],
+    oRsrc : Option[stblKVDBScope.mTT.Resource]
+  ) : String = {
+    val rspMsgId = getUUID
+    val headers =
+      for(
+	reqMsgId <- asOptString( reqHdr.uuid_1 ); 
+	reqFlowId <- asOptString( reqHdr.uuid_2 );
+	reqSrcURI <- asURI( reqHdr.uri_1 );
+	reqTrgtURI <- asURI( reqHdr.uri_2 )
+      ) yield {
+	(
+	  "[ "
+	  + reqSrcURI + ","
+	  + reqTrgtURI + ","
+	  + rspMsgId + ","
+	  + reqFlowId + ","
+	  + reqMsgId
+	  + " ]"
+	)
+      }
+
+    val body =
+      for( rsrc <- oRsrc ) yield {
+	val reqPtrn = toJSON( pattern )	
+	val ( rspVal, rspSubst ) =
+	  rsrc match {
+	    case stblKVDBScope.mTT.Ground( v ) => {
+	      ( v + "", "null" )
+	    }
+	    case bndRsrc : stblKVDBScope.mTT.RBound => {
+	      (
+		getGrndVal( rsrc ), 
+		substAsJSONPairs( patternVars( pattern), bndRsrc ) match {
+		  case Some( jps ) => {
+		    "{ " + jps + " }"
+		  }
+		  case _ => "null" 
+		}
+	      )
+	    }
+	    case _ => {
+	      throw new Exception( "unhandled resource case: " + rsrc )
+	    }
+	  }
+
+	( "{ "
+	 + "\"answer\"" + ":"
+	 + "[ "
+	 + reqPtrn + ","
+	 + rspSubst + ","
+	 + rspVal
+	 + " ]"
+	 + " }"      
+       )
+      }
+
+    (
+      "{ "
+      + "\"headers\"" + ":"
+      + headers.getOrElse( "null" )
+      + "\"body\"" + ":"
+      + body.getOrElse( "null" )
+      + " }"
+    )
+  }
+
+  def craftResponse( reqHdr : ReqHeader, kvdbTellReq : KVDBTellReq ) : String = {
+    (
+      "{ " 
+      + "\"acknowledge\"" + " : "
+      + "\"ok\""
+      + " }"
+    )
   }
 
   def asReplyTrgt(
@@ -413,16 +585,17 @@ trait KVDBJSONAPIDispatcherT extends Serializable {
 	for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
 	  req match {
 	    case askReq : KVDBAskReq => {
+	      val pattern = asPattern( askReq )
 	      reset {
-		for( rslt <- kvdb.get( asPattern( askReq ) ) ) {
-		  q ! asResponse( rslt )
+		for( rslt <- kvdb.get( pattern ) ) {
+		  q ! asResponse( kvdbReqHdr, pattern, rslt )
 		}
 	      }
 	    }
 	    case tellReq : KVDBTellReq => {
 	      reset {
 		kvdb.put( asPattern( tellReq ), asValue( tellReq ) )
-		q ! craftResponse( tellReq )
+		q ! craftResponse( reqHdr, tellReq )
 	      }
 	    }
 	  }
