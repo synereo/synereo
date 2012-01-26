@@ -606,11 +606,14 @@ with UUIDOps {
        )
       }
 
+    tweet( "response body: " + body )
+
     (
       "{ "
-      + "\"headers\"" + ":"
-      + headers.getOrElse( "null" )
-      + "\"body\"" + ":"
+      + "\"headers\"" + " : "
+      + headers.getOrElse( "null" ).replace( "#", "" )
+      + ", "
+      + "\"body\"" + " : "
       + body.getOrElse( "null" )
       + " }"
     )
