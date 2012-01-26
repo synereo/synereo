@@ -510,6 +510,9 @@ with UUIDOps {
 	      )
 	    )
 	  }
+	  case grndRsrc : stblKVDBScope.mTT.Ground => {
+	    Some( asJSONPairs( subst, ptrnVars ) )
+	  }
 	}
       }
       case stblKVDBScope.mTT.RBound( None, Some( subst ) ) => {
@@ -517,6 +520,9 @@ with UUIDOps {
       }
       case stblKVDBScope.mTT.RBound( _, None ) => {
 	None
+      }
+      case _ => {
+	throw new Exception( "unhandled resource case while getting substitution: " + rsrc )
       }
     }
   }
@@ -563,15 +569,19 @@ with UUIDOps {
 
     val body =
       for( rsrc <- oRsrc ) yield {
+	tweet( "retrieved rsrc: " + rsrc )
 	val reqPtrn = toJSON( pattern )	
+	tweet( "for pattern: " + reqPtrn )
 	val ( rspVal, rspSubst ) =
 	  rsrc match {
 	    case stblKVDBScope.mTT.Ground( v ) => {
+	      tweet( "retrieved ground value: " + v )
 	      ( v + "", "null" )
 	    }
 	    case bndRsrc : stblKVDBScope.mTT.RBound => {
+	      tweet( "retrieved bound resource: " + bndRsrc )
 	      (
-		getGrndVal( rsrc ), 
+		getGrndVal( bndRsrc ), 
 		substAsJSONPairs( patternVars( pattern), bndRsrc ) match {
 		  case Some( jps ) => {
 		    "{ " + jps + " }"
@@ -640,28 +650,34 @@ with UUIDOps {
     tweet( "dispatching " + req + " to + " + kvdb )
     reqHdr match {
       case kvdbReqHdr : KVDBReqHdr => {
-	for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
-	  req match {
-	    case askReq : KVDBAskReq => {	      
-	      val pattern = asPattern( askReq )
-	      tweet( "we have an ask request " + pattern + " from " + kvdb )
-	      reset {
-		for( rslt <- kvdb.get( pattern ) ) {
-		  q ! asResponse( kvdbReqHdr, pattern, rslt )
-		}
-	      }
-	    }
-	    case tellReq : KVDBTellReq => {
-	      val pattern = asPattern( tellReq )
-	      val value = asValue( tellReq )
-	      tweet( "we have a tell request to put " + value + " at " + pattern + " in " + kvdb )
-	      reset {
-		kvdb.put( pattern, value )
-		q ! craftResponse( reqHdr, tellReq )
+	req match {
+	  case askReq : KVDBAskReq => {	      
+	    val pattern = asPattern( askReq )
+	    tweet( "we have an ask request " + pattern + " from " + kvdb )
+	    reset {
+	      for( rslt <- kvdb.get( pattern ) ) {
+		val rsp = asResponse( kvdbReqHdr, pattern, rslt )
+		tweet( "response: " + rsp )
+		for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
+		  tweet( "replyTrgt: " + ( m, q ) )	  
+		  q ! rsp
+		}		
 	      }
 	    }
 	  }
-	}
+	  case tellReq : KVDBTellReq => {
+	    val pattern = asPattern( tellReq )
+	    val value = asValue( tellReq )
+	    tweet( "we have a tell request to put " + value + " at " + pattern + " in " + kvdb )
+	    reset {
+	      kvdb.put( pattern, value )
+	      for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
+		tweet( "replyTrgt: " + ( m, q ) )	  
+		q ! craftResponse( reqHdr, tellReq )
+	      }	      
+	    }
+	  }
+	}	
       }
       case _ => {
 	throw new Exception( "ill-formed kvdbJSON message: bad header " + reqHdr )

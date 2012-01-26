@@ -127,12 +127,35 @@ object Probe extends UUIDOps {
     )
   }
 
-  def !() : Unit = {
+  def !( host : String, exchange : String ) : Unit = {
     val srcScope : AMQPNodeJSScope = new AMQPNodeJSStdScope()
-    val srcQM = new srcScope.AMQPNodeJSQueueM( "localhost", "kvdb" )
+    val srcQM = new srcScope.AMQPNodeJSQueueM( host, exchange )
     val srcQ = srcQM.zeroJSON
     
-    srcQ ! getMsgHdrsBody
-    //srcQ ! putMsgHdrsBody
+    srcQ ! putMsgHdrsBody
   }
+
+  def !() : Unit = this ! ( "localhost", "kvdb" )
+
+  def ?( host : String, exchange : String ) : Unit = {
+    val srcScope : AMQPNodeJSScope = new AMQPNodeJSStdScope()
+    val srcQM = new srcScope.AMQPNodeJSQueueM( host, exchange )
+    val srcQ = srcQM.zeroJSON
+    
+    srcQ ! getMsgHdrsBody    
+  }
+  
+  def ?() : Unit = this ? ( "localhost", "kvdb" )
+
+  def showReplies( host : String, exchange : String ) : Unit = {
+    val srcScope : AMQPNodeJSScope = new AMQPNodeJSStdScope()
+    val srcQM = new srcScope.AMQPNodeJSQueueM( host, exchange )
+    val srcQ = srcQM.zeroJSON
+
+    for( rply <- srcQM( srcQ ) ) {
+      println( "received: " + rply )
+    }
+  }
+
+  def showReplies() : Unit = showReplies( "localhost", "kvdbReply" )
 }
