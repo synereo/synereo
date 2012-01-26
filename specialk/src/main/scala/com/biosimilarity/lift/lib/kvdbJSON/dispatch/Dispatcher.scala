@@ -205,14 +205,47 @@ with UUIDOps {
 	      case netLoc : URINetLocation => {
 		val ( host : String, port : Option[Int] ) =
 		  asHostPortTuple( netLoc.urirsrclocation_ )
-		val path = lpath.urirelativepath_ 
+		val rpath = lpath.urirelativepath_ 
+		val path = 
+		  rpath match {
+		    case spath : SlashPath => {
+		      spath.listuripathelement_.toList match {
+			case pElem :: pElems => {
+			  var f = 
+			    pElem match {
+			      case atmPE : AtomPathElement => atmPE.lident_
+			      case _ => {
+				throw new Exception( "bad URI format: unexpected path element" )
+			      }
+			    }
+
+			  ( f /: pElems )(
+			    ( acc, e ) => {
+			      val c : String = 
+				e match {
+				  case atmPE : AtomPathElement => atmPE.lident_
+				  case _ => {
+				    throw new Exception( "bad URI format: unexpected path element" )
+				  }
+				}
+			      acc + "/" + c
+			    }
+			  )
+			}
+			case _ => ""
+		      }
+		    }
+		  }
 		val lhost = port match {
 		  case Some( p ) => 
-		    host + p
+		    host + ":" + p
 		  case None => 
 		    host
 		}
-		Some( new URI( scheme, lhost, path, "" ) )
+
+		println( "scheme: " + scheme + " host: " + host + " path: " + path )
+
+		Some( new URI( scheme, lhost, "/" + path, "" ) )
 	      }
 	      case _ => {
 		throw new Exception( "ill-formed kvdbJSON message: bad URI host in header" + kvdbURI )
@@ -619,19 +652,31 @@ with UUIDOps {
 	throw new Exception( "ill-formed kvdbJSON message: bad header " + reqHdr )
       }
     }    
-  }
+  }  
 
   def dispatch( msg : kvdbMessage ) : Unit = {
     msg match {
       case jreqHB : KVDBJustReqHB => {
 	jreqHB.lblreqheader_ match {
-	  case reqHdr : KVDBReqHdr => {
-	    for( trgt <- asURI( reqHdr.uri_1 ); kvdb <- namespace.get( trgt ) ) {
-	      dispatch( kvdb, reqHdr, getRequest( jreqHB ) )
-	    }
+	  case lblReqHdr : KVDBLblReqHdr => {
+	    lblReqHdr.reqheader_ match {
+	      case reqHdr : KVDBReqHdr => {
+		for( trgt <- asURI( reqHdr.uri_1 ); kvdb <- namespace.get( trgt ) ) {
+		  dispatch( kvdb, reqHdr, getRequest( jreqHB ) )
+		}
+	      }
+	    }	    
 	  }
-	  case _ => {
-	    throw new Exception( "ill-formed kvdbJSON message: bad header" + msg )
+
+	  // BUGBUG : lgm -- this is a work around due to ambiguity
+	  // arising from non-ordering of elements in a JSON object
+	  case rspHdr : KVDBLblRspHdr => {
+	    throw new Exception( "ambiguity: bad header " + rspHdr )
+	  }
+	  case hdr@_ => {
+	    throw new Exception(
+	      "ill-formed kvdbJSON message: bad header " + msg + "\nheader: " + hdr
+	    )
 	  }
 	}
       }
