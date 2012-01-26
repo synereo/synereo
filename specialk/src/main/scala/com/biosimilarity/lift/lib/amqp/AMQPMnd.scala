@@ -33,7 +33,7 @@ import _root_.java.io.StringWriter
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
-trait AMQPBrokerScope[T] {
+trait AMQPBrokerScope[T] extends Serializable {
   self : MonadicDispatcherScope[T] =>
     def factory : ConnectionFactory  
   /* java.lang.String contentType */
@@ -55,7 +55,8 @@ trait AMQPBrokerScope[T] {
   class StdMonadicAMQPSndrRcvr[A](
     override val host : String,
     override val port : Int
-  ) extends StdMonadicAMQPDispatcher[A]( host, port ) {
+  ) extends StdMonadicAMQPDispatcher[A]( host, port )
+  with Serializable {
     def sender [A] ( 
       host : String,
       port : Int,
@@ -107,7 +108,7 @@ trait AMQPBrokerScope[T] {
   override def protoMDS[A] =
     new StdMonadicAMQPSndrRcvr[A]( "", -1 )
 
-  trait AMQPAbstractQueue[T] {
+  trait AMQPAbstractQueue[T] extends Serializable {
     def exchange : String
     def routingKey : String
     
@@ -142,7 +143,7 @@ trait AMQPBrokerScope[T] {
     }
   }
 
-  trait AMQPQueueFunctor[W,T,AQT[T] <: AMQPAbstractQueue[T]] {
+  trait AMQPQueueFunctor[W,T,AQT[T] <: AMQPAbstractQueue[T]] extends Serializable {
     def makeQueue [S] (
       exchange : String,
       routingKey : String,
@@ -169,8 +170,8 @@ trait AMQPBrokerScope[T] {
     def w2T : W => T
     def t2W : T => W
 
-    var _dispatcher : Option[theMDS.Generator[T,Unit,Unit]] = None
-    var _sender : Option[theMDS.Generator[Unit,T,Unit]] = None
+    @transient var _dispatcher : Option[theMDS.Generator[T,Unit,Unit]] = None
+    @transient var _sender : Option[theMDS.Generator[Unit,T,Unit]] = None
 
     def dispatcherW : theMDS.Generator[W,Unit,Unit]
     def senderW : theMDS.Generator[Unit,W,Unit]
@@ -213,8 +214,8 @@ trait AMQPBrokerScope[T] {
   class AMQPQueue[A]( 
     override val exchange : String,
     override val routingKey : String,
-    override val dispatcher : theMDS.Generator[A,Unit,Unit],
-    override val sender : theMDS.Generator[Unit,A,Unit]
+    @transient override val dispatcher : theMDS.Generator[A,Unit,Unit],
+    @transient override val sender : theMDS.Generator[Unit,A,Unit]
   ) extends AMQPAbstractQueue[A]
 
   object AMQPQueue {
@@ -244,7 +245,8 @@ trait AMQPBrokerScope[T] {
   extends FJTaskRunners
   with BMonad[QT]
   with MonadPlus[QT]
-  with MonadFilter[QT] {
+  with MonadFilter[QT] 
+  with Serializable {
 
     def exchange : String
     def routingKey : String        
@@ -460,7 +462,7 @@ trait AMQPBrokerScope[T] {
 }
 
 class AMQPScope [T] (
-  override val factory : ConnectionFactory
+  @transient override val factory : ConnectionFactory
 ) extends AMQPBrokerScope[T]
 with MonadicDispatcherScope[T] {
   override def equals( o : Any ) : Boolean = {
@@ -490,10 +492,10 @@ object AMQPScope {
 }
 
 class AMQPNodeJSScope (
-  override val factory : ConnectionFactory
+  @transient override val factory : ConnectionFactory
 ) extends AMQPScope[String]( factory ) {
-  override val theMDS : MDS[String] = protoMDSNode
-  val theNodeMDS : StdMonadicAMQPNodeJSSndrRcvr = protoNode
+  @transient override val theMDS : MDS[String] = protoMDSNode
+  @transient val theNodeMDS : StdMonadicAMQPNodeJSSndrRcvr = protoNode
   def protoMDSNode : MDS[String] = protoNode
   def protoNode : StdMonadicAMQPNodeJSSndrRcvr =
     new StdMonadicAMQPNodeJSSndrRcvr( "", -1 )
@@ -631,8 +633,8 @@ extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {
     override val routingKey : String,    
     override val w2T : String => T,
     override val t2W : T => String,
-    override val dispatcherW : theMDS.Generator[String,Unit,Unit],
-    override val senderW : theMDS.Generator[Unit,String,Unit]
+    @transient override val dispatcherW : theMDS.Generator[String,Unit,Unit],
+    @transient override val senderW : theMDS.Generator[Unit,String,Unit]
   ) extends AMQPQueueXForm[String,T]
 
   class JSONOverAMQPQueueXFormM[A](
@@ -665,7 +667,7 @@ extends MonadicDispatcherScope[T] with AMQPBrokerScope[T] {
 }
 
 class JSONOverAMQPScope [T] (
-  override val factory : ConnectionFactory
+  @transient override val factory : ConnectionFactory
 ) extends AMQPBrokerScope[T]
 with MonadicDispatcherScope[T] {
   override def equals( o : Any ) : Boolean = {

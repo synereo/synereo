@@ -11,6 +11,8 @@ package com.biosimilarity.lift.lib.kvdbJSON
 import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{
   URI => kvdbURI, UUID => kvdbUUID, Message => kvdbMessage, _
 }
+
+import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store._
 //import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
@@ -39,8 +41,18 @@ with CnxnXQuery[String,String,String]
 with CnxnXML[String,String,String]
 with CnxnCtxtInjector[String,String,String]
 with Blobify
+with Journalist
+with ConfiggyReporting
+with ConfiguredJournal
+with ConfigurationTrampoline
 with UUIDOps {
   import scala.collection.JavaConversions._
+  
+  // Configuration
+  override def configFileName : Option[String] = None
+  override def configurationDefaults : ConfigurationDefaults = {
+    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
+  }
 
   // comms
   def srcHost : String
@@ -242,8 +254,6 @@ with UUIDOps {
 		  case None => 
 		    host
 		}
-
-		println( "scheme: " + scheme + " host: " + host + " path: " + path )
 
 		Some( new URI( scheme, lhost, "/" + path, "" ) )
 	      }
@@ -627,12 +637,14 @@ with UUIDOps {
     reqHdr : ReqHeader,
     req : KVDBRequest
   ) : Unit = {
+    tweet( "dispatching " + req + " to + " + kvdb )
     reqHdr match {
       case kvdbReqHdr : KVDBReqHdr => {
 	for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
 	  req match {
-	    case askReq : KVDBAskReq => {
+	    case askReq : KVDBAskReq => {	      
 	      val pattern = asPattern( askReq )
+	      tweet( "we have an ask request " + pattern + " from " + kvdb )
 	      reset {
 		for( rslt <- kvdb.get( pattern ) ) {
 		  q ! asResponse( kvdbReqHdr, pattern, rslt )
@@ -640,8 +652,11 @@ with UUIDOps {
 	      }
 	    }
 	    case tellReq : KVDBTellReq => {
+	      val pattern = asPattern( tellReq )
+	      val value = asValue( tellReq )
+	      tweet( "we have a tell request to put " + value + " at " + pattern + " in " + kvdb )
 	      reset {
-		kvdb.put( asPattern( tellReq ), asValue( tellReq ) )
+		kvdb.put( pattern, value )
 		q ! craftResponse( reqHdr, tellReq )
 	      }
 	    }
@@ -655,13 +670,24 @@ with UUIDOps {
   }  
 
   def dispatch( msg : kvdbMessage ) : Unit = {
+    tweet( "dispatching " + msg )
     msg match {
       case jreqHB : KVDBJustReqHB => {
+	tweet( msg + " is a KVDBJustReqHB " )
 	jreqHB.lblreqheader_ match {
 	  case lblReqHdr : KVDBLblReqHdr => {
+	    tweet( msg + " has a KVDBLblReqHdr " + lblReqHdr )
 	    lblReqHdr.reqheader_ match {
 	      case reqHdr : KVDBReqHdr => {
+		tweet( msg + " has a reqHdr " + reqHdr )		
+		for( trTrgt <- asURI( reqHdr.uri_1 ) ) {
+		  tweet( msg + "'s trgt URI is " + trTrgt )
+		  for( kvdb <- namespace.get( trTrgt ) ) {
+		    tweet( msg + "'s trgt kvdb is " + kvdb )
+		  }
+		}
 		for( trgt <- asURI( reqHdr.uri_1 ); kvdb <- namespace.get( trgt ) ) {
+		  tweet( "dispatching to trgt " + trgt + " corresponding to " + kvdb )
 		  dispatch( kvdb, reqHdr, getRequest( jreqHB ) )
 		}
 	      }
@@ -681,11 +707,27 @@ with UUIDOps {
 	}
       }
       case jreqBH : KVDBJustReqBH => {
+	tweet( msg + " is a KVDBJustReqBH " )
 	jreqBH.lblreqheader_ match {
-	  case reqHdr : KVDBReqHdr => {
-	    for( trgt <- asURI( reqHdr.uri_1 ); kvdb <- namespace.get( trgt ) ) {	      
-	      dispatch( kvdb, reqHdr, getRequest( jreqBH ) )
-	    }
+	  case lblReqHdr : KVDBLblReqHdr => {
+	    tweet( msg + " has a KVDBLblReqHdr " + lblReqHdr )
+	    lblReqHdr.reqheader_ match {
+	      case reqHdr : KVDBReqHdr => {
+		tweet( msg + " has a reqHdr " + reqHdr )	  
+		for( trTrgt <- asURI( reqHdr.uri_1 ) ) {
+		  tweet( msg + "'s trgt URI is " + trTrgt )
+		  for( kvdb <- namespace.get( trTrgt ) ) {
+		    tweet( msg + "'s trgt kvdb is " + kvdb )
+		  }
+		}
+		
+		
+		for( trgt <- asURI( reqHdr.uri_1 ); kvdb <- namespace.get( trgt ) ) {	      
+		  tweet( "dispatching to trgt " + trgt + " corresponding to " + kvdb )
+		  dispatch( kvdb, reqHdr, getRequest( jreqBH ) )
+		}
+	      }
+	    }	    
 	  }
 	  case _ => {
 	    throw new Exception( "ill-formed kvdbJSON message: bad header" + msg )
@@ -701,10 +743,12 @@ with UUIDOps {
     (new parser( new Yylex( new StringReader( msg ) ) )).pMessage()
 
   def serveAPI( srcHost : String, srcExchange : String ) : Unit = {
+    tweet( "serving api on " + srcHost + " from amqp exchange " + srcExchange )
     val apiSrcQM = srcQM( srcHost, srcExchange )
     val apiSrcQ = srcQ( srcHost, srcExchange )  
     
     for( msg <- apiSrcQM( apiSrcQ ) ) {
+      tweet( "received: " + msg )
       dispatch( parse( msg ) )
     }
   }
@@ -725,30 +769,46 @@ class KVDBJSONAPIDispatcher(
   // this controls what URI's will be dispatched to KVDB's
   override def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
   = {
-    new HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]()
+    stblNamespace match {
+      case Some( ns ) => ns
+      case _ => {
+	val ns = new HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]()
+	stblNamespace = Some( ns )
+	ns
+      }
+    }
   }
-  @transient lazy val stblNamespace = namespace
+  @transient var stblNamespace : Option[HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]] = None
 
   // this controls what URI's will be dispatched to with results to db requests
   override def replyNamespace : HashMap[URI,ReplyTrgt] = {
-    new HashMap[URI,ReplyTrgt]()
+    stblReplyNamespace match {
+      case Some( rns ) => rns
+      case _ => {
+	val rns = new HashMap[URI,ReplyTrgt]()
+	stblReplyNamespace = Some( rns )
+	rns
+      }
+    }
+    
   }
-  @transient lazy val stblReplyNamespace = replyNamespace
+  @transient var stblReplyNamespace : Option[HashMap[URI,ReplyTrgt]] = None
 
   def addSingletonKVDB( uri : URI, db : String, host : String ) : Unit = {
     // This cast makes me sad...
     val kvdb = PTSS.singleton( db, host ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
-    stblNamespace += ( ( uri, kvdb ) )
+    namespace += ( ( uri, kvdb ) )
   }
 
   def addSingletonKVDB( uri : URI ) : Unit = {
     val host = uri.getHost
     val path = uri.getPath
-    val db = path.split( "/" )( 0 )
+    val db = path.split( "/" )( 1 )
+    tweet( "adding a kvdb@" + host + " to " + uri + " storing in " + db + "." )
     // This cast makes me sad...
     val kvdb = PTSS.singleton( db, host ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
-    stblNamespace += ( ( uri, kvdb ) )
+    namespace += ( ( uri, kvdb ) )
   }
   
   def addPtToPtKVDB(
@@ -759,18 +819,18 @@ class KVDBJSONAPIDispatcher(
     // This cast makes me sad...
     val kvdb = PTSS.ptToPt( db, srcHost, trgtHost ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
-    stblNamespace += ( ( srcURI, kvdb ) )
-    stblNamespace += ( ( trgtURI, kvdb ) )
+    namespace += ( ( srcURI, kvdb ) )
+    namespace += ( ( trgtURI, kvdb ) )
   }
 
   def addPtToPtKVDB( srcURI : URI, trgtURI : URI ) : Unit = {
     val srcHost = srcURI.getHost
     val srcPath = srcURI.getPath
-    val srcDB = srcPath.split( "//" )( 0 )
+    val srcDB = srcPath.split( "/" )( 1 )
 
     val trgtHost = trgtURI.getHost
     val trgtPath = trgtURI.getPath
-    val trgtDB = trgtPath.split( "//" )( 0 )
+    val trgtDB = trgtPath.split( "/" )( 1 )
 
     val db = 
       if ( srcDB.equals( trgtDB ) ) {
@@ -784,12 +844,12 @@ class KVDBJSONAPIDispatcher(
     // This cast makes me sad...
     val kvdb = PTSS.ptToPt( db, srcHost, trgtHost ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
-    stblNamespace += ( ( srcURI, kvdb ) )
-    stblNamespace += ( ( trgtURI, kvdb ) )
+    namespace += ( ( srcURI, kvdb ) )
+    namespace += ( ( trgtURI, kvdb ) )
   }
 
   def addReplyQueue( uri : URI, host : String, exchange : String ) : Unit = {
-    stblReplyNamespace +=
+    replyNamespace +=
     ( ( uri, Left[( String, String ),( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]( host, exchange ) ) )
   }
 

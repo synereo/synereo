@@ -24,14 +24,16 @@ object Dispatcher {
   lazy val srcURI = 
     new URI( "agent", "localhost", "/kvdbDispatchStore2", "" )  
 
-  def setup() : Unit = {
+  def setup() : KVDBJSONAPIDispatcher = {
     // Configure it to serve requests with a "to" header of agent://localhost/kvdbDispatchStore1
     // and a "from" header of agent://localhost/kvdbDispatchStore2
     // and deposit replies to the kvdbSrcQueue in the kvdbExchange
   
     dsp.addSingletonKVDB( trgtURI )
-    dsp.addReplyQueue( srcURI, "kvdbSrcQueue", "kvdbExchange" )
+    dsp.addReplyQueue( srcURI, "localhost", "kvdbReply" )
     dsp.serveAPI
+    
+    dsp
   }
 }
 

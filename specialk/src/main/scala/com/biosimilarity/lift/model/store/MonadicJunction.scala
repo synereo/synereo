@@ -134,11 +134,11 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   with ConfiguredJournal
   with ConfigurationTrampoline
   with UUIDOps {
-      override type Wire = String
-      override type Trgt = Msgs.JTSReqOrRsp
-      override def tap [A] ( fact : A ) : Unit = {
-	reportage( fact )
-      }
+    override type Wire = String
+    override type Trgt = Msgs.JTSReqOrRsp
+    override def tap [A] ( fact : A ) : Unit = {
+      reportage( fact )
+    }
 
     override def configFileName : Option[String] = None
     override def configurationDefaults : ConfigurationDefaults = {
