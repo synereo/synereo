@@ -46,14 +46,14 @@ KVDBLblRspBody  . LblRspBody    ::= "\"body\"" ":" KVDBResponse                 
 --                                      to     from    msgId    flowId  justification
 KVDBReqHdr      . ReqHeader     ::= "[" URI "," URI "," UUID "," UUID "," ReqJust "]"   ;
 -- for testing purposes
-KVDBReqNoHdr    . ReqHeader     ::= "[" "{" "\"testReqEmptyHdrs\"" ":" "null" "}" "]"       ;
+KVDBReqNoHdr    . ReqHeader     ::= "[" "{" "\"testReqEmptyHdrs\"" ":" "null" "}" "]"   ;
 --KVDBReqURIHdr   . ReqHeader     ::= "[" "{" "\"testReqURIHdr\"" ":" URI "}" "]"             ;
 --KVDBReqUUIDHdr  . ReqHeader     ::= "[" "{" "\"testReqUUIDHdr\"" ":" UUID "}" "]"           ;
 
 --                                      to     from    msgId    flowId  justification
 KVDBRspHdr      . RspHeader     ::= "[" URI "," URI "," UUID "," UUID "," RspJust "]"   ;
 -- for testing purposes
-KVDBRspNoHdr    . RspHeader     ::= "[" "{" "\"testRspEmptyHdrs\"" ":" "null" "}" "]"       ;
+KVDBRspNoHdr    . RspHeader     ::= "[" "{" "\"testRspEmptyHdrs\"" ":" "null" "}" "]"   ;
 --KVDBRspURIHdr   . RspHeader     ::= "[" "{" "\"testRspURIHdr\"" ":" URI "}" "]"             ;
 --KVDBRspUUIDHdr  . RspHeader     ::= "[" "{" "\"testRspUUIDHdr\"" ":" UUID "}" "]"           ;
 
@@ -62,14 +62,14 @@ KVDBRspNoHdr    . RspHeader     ::= "[" "{" "\"testRspEmptyHdrs\"" ":" "null" "}
 KVDBAskReq      . KVDBRequest   ::= "{" AskReq ":" AskReqPacket "}"                     ;
 KVDBTellReq     . KVDBRequest   ::= "{" TellReq ":" TellReqPacket "}"                   ;
 -- for testing purposes
-KVDBNoReq       . KVDBRequest   ::= "[" "{" "\"testReqEmptyBody\"" ":" "null" "}" "]"       ;
+KVDBNoReq       . KVDBRequest   ::= "[" "{" "\"testReqEmptyBody\"" ":" "null" "}" "]"   ;
 
 -- Responses
 
 KVDBAskRsp      . KVDBResponse  ::= "{" AskRsp ":" AskRspPacket "}"                     ;
 KVDBTellRsp     . KVDBResponse  ::= "{" TellRsp ":" TellRspPacket "}"                   ;
 -- for testing purposes
-KVDBNoRsp       . KVDBResponse  ::= "[" "{" "\"testRspEmptyBody\"" ":" "null" "}" "]"       ;
+KVDBNoRsp       . KVDBResponse  ::= "[" "{" "\"testRspEmptyBody\"" ":" "null" "}" "]"   ;
 
 -- Payload
 

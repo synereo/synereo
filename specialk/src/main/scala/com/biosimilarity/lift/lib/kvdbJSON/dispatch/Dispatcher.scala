@@ -8,16 +8,30 @@
 
 package com.biosimilarity.lift.lib.kvdbJSON
 
-import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{ URI => kvdbURI, UUID => kvdbUUID, _ }
+import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{
+  URI => kvdbURI, UUID => kvdbUUID, Message => kvdbMessage, _
+}
 import com.biosimilarity.lift.model.store._
+//import com.biosimilarity.lift.model.agent._
+import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.moniker._
+
 import scala.util.continuations._
 import scala.collection.mutable.HashMap
+import scala.xml._
 
 import org.prolog4j._
+import biz.source_code.base64Coder.Base64Coder
 
 import java.net.URI
 import java.io.StringReader
+import java.io.FileInputStream
+import java.io.OutputStreamWriter
+import java.io.ObjectInputStream
+import java.io.ByteArrayInputStream
+import java.io.ObjectOutputStream
+import java.io.ByteArrayOutputStream
 
 trait KVDBJSONAPIDispatcherT
 extends Serializable
@@ -607,7 +621,7 @@ with UUIDOps {
     }    
   }
 
-  def dispatch( msg : Message ) : Unit = {
+  def dispatch( msg : kvdbMessage ) : Unit = {
     msg match {
       case jreqHB : KVDBJustReqHB => {
 	jreqHB.lblreqheader_ match {
@@ -638,7 +652,7 @@ with UUIDOps {
 
   // BUGBUG : lgm -- is it really necessary to create a new parser to
   // parse each message?
-  def parse( msg : String ) : Message =
+  def parse( msg : String ) : kvdbMessage =
     (new parser( new Yylex( new StringReader( msg ) ) )).pMessage()
 
   def serveAPI( srcHost : String, srcExchange : String ) : Unit = {
@@ -657,21 +671,475 @@ class KVDBJSONAPIDispatcher(
   override val srcHost : String,
   override val srcExchange : String
 ) extends KVDBJSONAPIDispatcherT {
-  override def kvdbScope : PersistedTermStoreScope[String,String,String,String] = {
-    throw new Exception( "TODO : implement kvdbScope on " + this )
-  }
+  override def kvdbScope : PersistedTermStoreScope[String,String,String,String] = PTSS
   override def kvdbPersistenceScope : stblKVDBScope.PersistenceScope = {
-    throw new Exception( "TODO : implement kvdbPersistenceScope on " + this )
+    // This cast makes me sad...
+    PTSS.Being.asInstanceOf[stblKVDBScope.PersistenceScope]
   }
+
   // this controls what URI's will be dispatched to KVDB's
   override def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
   = {
-    throw new Exception( "TODO : implement namespace on " + this )
+    new HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]()
   }
+  @transient lazy val stblNamespace = namespace
 
   // this controls what URI's will be dispatched to with results to db requests
   override def replyNamespace : HashMap[URI,ReplyTrgt] = {
-    throw new Exception( "TODO : implement namespace on " + this )
+    new HashMap[URI,ReplyTrgt]()
+  }
+  @transient lazy val stblReplyNamespace = replyNamespace
+
+  def addSingletonKVDB( uri : URI, db : String, host : String ) : Unit = {
+    val kvdb = PTSS.singleton( db, host ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
+    stblNamespace += ( ( uri, kvdb ) )
+  }
+
+  def addSingletonKVDB( uri : URI ) : Unit = {
+    val host = uri.getHost
+    val path = uri.getPath
+    val db = path.split( "/" )( 0 )
+    val kvdb = PTSS.singleton( db, host ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
+
+    stblNamespace += ( ( uri, kvdb ) )
+  }
+  
+  def addPtToPtKVDB(
+    srcURI : URI, srcHost : String,
+    trgtURI : URI, trgtHost : String,
+    db : String
+  ) : Unit = {
+    val kvdb = PTSS.ptToPt( db, srcHost, trgtHost ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
+
+    stblNamespace += ( ( srcURI, kvdb ) )
+    stblNamespace += ( ( trgtURI, kvdb ) )
+  }
+
+  def addPtToPtKVDB( srcURI : URI, trgtURI : URI ) : Unit = {
+    val srcHost = srcURI.getHost
+    val srcPath = srcURI.getPath
+    val srcDB = srcPath.split( "//" )( 0 )
+
+    val trgtHost = trgtURI.getHost
+    val trgtPath = trgtURI.getPath
+    val trgtDB = trgtPath.split( "//" )( 0 )
+
+    val db = 
+      if ( srcDB.equals( trgtDB ) ) {
+	srcDB
+      }
+      else {
+	// BUGBUG : lgm -- issue warning to log!
+	srcDB
+      }
+
+    val kvdb = PTSS.ptToPt( db, srcHost, trgtHost ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
+
+    stblNamespace += ( ( srcURI, kvdb ) )
+    stblNamespace += ( ( trgtURI, kvdb ) )
+  }
+
+  def addReplyQueue( uri : URI, host : String, exchange : String ) : Unit = {
+    stblReplyNamespace +=
+    ( ( uri, Left[( String, String ),( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]( host, exchange ) ) )
+  }
+
+  object PTSS
+       extends PersistedTermStoreScope[String,String,String,String] 
+       with UUIDOps
+       with Serializable
+  {
+    import SpecialKURIDefaults._
+    import identityConversions._
+
+    type MTTypes = MonadicTermTypes[String,String,String,String]
+    object TheMTT extends MTTypes with Serializable
+    override def protoTermTypes : MTTypes = TheMTT
+
+    type DATypes = DistributedAskTypes
+    object TheDAT extends DATypes with Serializable
+    override def protoAskTypes : DATypes = TheDAT
+
+    object Being extends PersistenceScope with Serializable {      
+      
+      override type EMTypes = ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+
+      object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+       with Serializable
+      {
+	case class PrologSubstitution( soln : Solution[String] )
+	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
+	     override def apply( rsrc : mTT.Resource ) = {
+	       Some( mTT.RBound( Some( rsrc ), Some( soln ) ) )
+	     }
+	   }
+	override type Substitution = PrologSubstitution
+      }      
+
+      override def protoEMTypes : EMTypes =
+	theEMTypes
+
+      class PersistedStringMGJ(
+	val dfStoreUnitStr : String,
+	override val name : Moniker,
+	override val acquaintances : Seq[Moniker]
+      ) extends PersistedMonadicGeneratorJunction(
+	name, acquaintances
+      ) {      
+	def this() = {
+	  this(
+	    "",
+	    MURI( new URI( "agent", "localhost", "/connect", "" ) ),
+	    Nil
+	  )
+	}
+
+	class StringXMLDBManifest(
+          override val storeUnitStr : String,
+          @transient override val labelToNS : Option[String => String],
+          @transient override val textToVar : Option[String => String],
+          @transient override val textToTag : Option[String => String]
+	)
+	extends XMLDBManifest( database ) {
+	  override def valueStorageType : String = {
+	    throw new Exception( "valueStorageType not overriden in instantiation" )
+	  }
+	  override def continuationStorageType : String = {
+	    throw new Exception( "continuationStorageType not overriden in instantiation" )
+	  }
+
+	  override def storeUnitStr[Src,Label,Trgt](
+	    cnxn : Cnxn[Src,Label,Trgt]
+	  ) : String = {     
+	    cnxn match {
+	      case CCnxn( s, l, t ) =>
+		s.toString + l.toString + t.toString
+	    }	    
+	  }	
+	  
+	  def kvNameSpace : String = "record"
+	  def kvKNameSpace : String = "kRecord"
+	  
+	  def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+	    ns1.equals( ns2 )
+	  }
+	  
+	  override def asStoreValue(
+	    rsrc : mTT.Resource
+	  ) : CnxnCtxtLeaf[String,String,String] with Factual = {
+	    tweet(
+	      "In asStoreValue on " + this + " for resource: " + rsrc
+	    )
+	    val storageDispatch = 
+	      rsrc match {
+		case k : mTT.Continuation => {
+		  tweet(
+		    "Resource " + rsrc + " is a continuation"
+		  )
+		  continuationStorageType
+		}
+		case _ => {
+		  tweet(
+		    "Resource " + rsrc + " is a value"
+		  )
+		  valueStorageType
+		}
+	      };
+
+	    tweet(
+	      "storageDispatch: " + storageDispatch
+	    )
+
+	    val blob =
+	      storageDispatch match {
+		case "Base64" => {
+                  println("start base64")
+
+		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
+		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
+		  oos.writeObject( rsrc.asInstanceOf[Serializable] )
+		  oos.close()
+                  println("end base64")
+		  new String( Base64Coder.encode( baos.toByteArray() ) )
+		}
+		case "CnxnCtxtLabel" => {
+		  tweet(
+		    "warning: CnxnCtxtLabel method is using XStream"
+		  )
+		  toXQSafeJSONBlob( rsrc )		  		  
+		}
+		case "XStream" => {
+		  tweet(
+		    "using XStream method"
+		  )
+		  
+		  toXQSafeJSONBlob( rsrc )
+		}
+		case _ => {
+		  throw new Exception( "unexpected value storage type" )
+		}
+	    }
+	    new CnxnCtxtLeaf[String,String,String](
+	      Left[String,String]( blob )
+	    )
+	  }
+	  
+	  def asCacheValue(
+	    ccl : CnxnCtxtLabel[String,String,String]
+	  ) : String = {
+	    tweet(
+	      "converting to cache value"
+	    )
+	    ccl match {
+	      case CnxnCtxtBranch(
+		"string",
+		CnxnCtxtLeaf( Left( rv ) ) :: Nil
+	      ) => {
+		val unBlob =
+		  fromXQSafeJSONBlob( rv )
+		
+		unBlob match {
+		  case rsrc : mTT.Resource => {
+		    getGV( rsrc ).getOrElse( "" )
+		  }
+		}
+	      }
+	      case _ => {
+		asPatternString( ccl )
+	      }
+	    }
+	  }
+	 
+	  override def asResource(
+	    key : mTT.GetRequest, // must have the pattern to determine bindings
+	    value : Elem
+	  ) : emT.PlaceInstance = {
+	    val ttt = ( x : String ) => x
+	    
+	    val ptn = asPatternString( key )
+	    println( "ptn : " + ptn )		
+	    
+	    val oRsrc : Option[emT.PlaceInstance] =
+	      for(
+		ltns <- labelToNS;
+		ttv <- textToVar;
+		ccl <- xmlIfier.fromXML( ltns, ttv, ttt )( value )
+	      ) yield {
+		ccl match {
+		  case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+		    val oGvOrK = 
+		      (if ( compareNameSpace( ns, kvNameSpace ) ) {	    
+			// BUGBUG -- LGM need to return the Solution
+			// Currently the PersistenceManifest has no access to the
+			// unification machinery	      
+			
+			for ( vCCL <- asCacheValue( ltns, ttv, value ) ) 
+			yield {				    
+			  Left[mTT.Resource,mTT.Resource]( mTT.Ground( vCCL ) )
+			}
+		      }
+		       else {
+			 if ( compareNameSpace( ns, kvKNameSpace ) ) {
+			   Some( Right[mTT.Resource,mTT.Resource]( asCacheK( v ) ) )
+			 }
+			 else {
+			   throw new Exception( "unexpected namespace : (" + ns + ")" )
+			 }
+		       });
+
+		    val cclKey =
+		      xmlIfier.fromXML( ltns, ttv, ttt )(
+			xmlIfier.asXML( key )
+		      ) match {
+			case Some( cclX ) => cclX
+			case _ => throw new Exception( "xml roundtrip failed " + key )
+		      }
+
+		    val soln = 
+		      unifyQuery(
+			asPatternString(
+			  cclKey
+			),
+			asPatternString( k )
+		      )
+		    emT.PlaceInstance(
+		      k,
+		      oGvOrK match {
+			case Some( Left( gv ) ) => {
+			  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( gv )
+			}
+			case Some( Right( mTT.Continuation( ks ) ) ) => {
+			  Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( ks )
+			}
+			case _ => {
+			  throw new Exception( "excluded middle contract broken: " + oGvOrK )
+			}
+		      },
+		      // BUGBUG -- lgm : why can't the compiler determine
+		      // that this cast is not necessary?
+		      theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+		    )
+		  }
+		  case _ => {
+		    throw new Exception( "unexpected record format : " + value )
+		  }
+		}      
+	      }
+	    
+	    // BUGBUG -- lgm : this is a job for flatMap
+	    oRsrc match {
+	      case Some( pI ) => {
+		pI
+	      }
+	      case _ => {
+		throw new Exception( "violated excluded middle : " + oRsrc )
+	      }
+	    }
+	  }
+ 
+	}
+	
+	override def asCacheK(
+	  ccl : CnxnCtxtLabel[String,String,String]
+	) : Option[mTT.Continuation] = {
+	  tweet(
+	    "converting to cache continuation stack" + ccl
+	  )
+	  ccl match {
+	    case CnxnCtxtBranch(
+	      "string",
+	      CnxnCtxtLeaf( Left( rv ) ) :: Nil
+	    ) => {
+	      val unBlob =
+		continuationStorageType match {
+		  case "CnxnCtxtLabel" => {
+		    // tweet(
+// 		      "warning: CnxnCtxtLabel method is using XStream"
+// 		    )
+		    fromXQSafeJSONBlob( rv )
+		  }
+		  case "XStream" => {
+		    fromXQSafeJSONBlob( rv )
+		  }
+		  case "Base64" => {
+		    val data : Array[Byte] = Base64Coder.decode( rv )
+		    val ois : ObjectInputStream =
+		      new ObjectInputStream( new ByteArrayInputStream(  data ) )
+		    val o : java.lang.Object = ois.readObject();
+		    ois.close()
+		    o
+		  }
+		}
+	      
+	      unBlob match {
+		case k : mTT.Resource => {
+		  Some( k.asInstanceOf[mTT.Continuation] )
+		}
+		case _ => {
+		  throw new Exception(
+		    (
+		      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		      + "ill-formatted continuation stack blob : " + rv
+		      + "\n" 
+		      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		      + "\n"
+		      + "unBlob : " + unBlob
+		      + "\n"
+		      + "unBlob type : " + unBlob
+		      + "\n"
+		      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    )
+		  )
+		}
+	      }
+	    }
+	    case _ => {
+	      throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
+	    }
+	  }
+	}
+	
+	override def asCacheK(
+	  ltns : String => String,
+	  ttv : String => String,
+	  value : Elem
+	) : Option[mTT.Continuation] = {
+	  throw new Exception( "shouldn't be calling this version of asCacheK" )
+	}	
+	
+	override def persistenceManifest : Option[PersistenceManifest] = {
+	  val sid = Some( ( s : String ) => s )
+          val kvdb = this;
+	  Some(
+	    new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+	      override def valueStorageType : String = {
+		kvdb.valueStorageType
+	      }
+	      override def continuationStorageType : String = {
+		kvdb.continuationStorageType
+	      }
+	    }
+	  )
+	}
+	
+      }
+      
+    }
+    
+    import Being._
+
+    def singleton( storeUnitStr : String, a : String )  = {
+      new PersistedStringMGJ( storeUnitStr, a, List( ) )
+    }
+
+    def ptToPt( storeUnitStr : String, a : String, b : String )  = {
+      new PersistedStringMGJ( storeUnitStr, a, List( b ) )
+    }
+
+    def loopBack( storeUnitStr : String ) = {
+      ptToPt( storeUnitStr, "localhost", "localhost" )
+    }
+
+    import scala.collection.immutable.IndexedSeq
+        
+    type MsgTypes = DTSMSH[String,String,String,String]   
+    
+    val protoDreqUUID = getUUID()
+    val protoDrspUUID = getUUID()    
+    
+    object MonadicDMsgs extends MsgTypes with Serializable {
+      val aLabel =
+	new CnxnCtxtLeaf[String,String,String](
+	  Left(
+	    "a"
+	  )
+	)
+      override def protoDreq : DReq = MDGetRequest( aLabel )
+      override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
+      override def protoJtsreq : JTSReq =
+	JustifiedRequest(
+	  protoDreqUUID,
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDreq,
+	  None
+	)
+      override def protoJtsrsp : JTSRsp = 
+	JustifiedResponse(
+	  protoDreqUUID,
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDrsp,
+	  None
+	)
+      override def protoJtsreqorrsp : JTSReqOrRsp =
+	Left( protoJtsreq )
+    }
+    
+    override def protoMsgs : MsgTypes = MonadicDMsgs            
+
   }
 }
 
