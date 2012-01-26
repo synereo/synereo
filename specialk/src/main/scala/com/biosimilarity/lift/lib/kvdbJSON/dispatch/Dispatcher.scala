@@ -691,6 +691,7 @@ class KVDBJSONAPIDispatcher(
   @transient lazy val stblReplyNamespace = replyNamespace
 
   def addSingletonKVDB( uri : URI, db : String, host : String ) : Unit = {
+    // This cast makes me sad...
     val kvdb = PTSS.singleton( db, host ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
     stblNamespace += ( ( uri, kvdb ) )
   }
@@ -699,6 +700,7 @@ class KVDBJSONAPIDispatcher(
     val host = uri.getHost
     val path = uri.getPath
     val db = path.split( "/" )( 0 )
+    // This cast makes me sad...
     val kvdb = PTSS.singleton( db, host ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
     stblNamespace += ( ( uri, kvdb ) )
@@ -709,6 +711,7 @@ class KVDBJSONAPIDispatcher(
     trgtURI : URI, trgtHost : String,
     db : String
   ) : Unit = {
+    // This cast makes me sad...
     val kvdb = PTSS.ptToPt( db, srcHost, trgtHost ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
     stblNamespace += ( ( srcURI, kvdb ) )
@@ -733,6 +736,7 @@ class KVDBJSONAPIDispatcher(
 	srcDB
       }
 
+    // This cast makes me sad...
     val kvdb = PTSS.ptToPt( db, srcHost, trgtHost ).asInstanceOf[stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
     stblNamespace += ( ( srcURI, kvdb ) )
