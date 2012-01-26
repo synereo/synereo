@@ -862,14 +862,19 @@ class KVDBJSONAPIDispatcher(
     import identityConversions._
 
     type MTTypes = MonadicTermTypes[String,String,String,String]
-    object TheMTT extends MTTypes with Serializable
+    //object TheMTT extends MTTypes with Serializable
+    @transient lazy val TheMTT : MTTypes with Serializable =
+      new MTTypes with Serializable { }
     override def protoTermTypes : MTTypes = TheMTT
 
     type DATypes = DistributedAskTypes
-    object TheDAT extends DATypes with Serializable
+    //object TheDAT extends DATypes with Serializable
+    @transient lazy val TheDAT : DATypes with Serializable =
+      new DATypes with Serializable
     override def protoAskTypes : DATypes = TheDAT
 
-    object Being extends PersistenceScope with Serializable {      
+    //object Being extends PersistenceScope with Serializable {      
+    trait BeingScope extends PersistenceScope with Serializable {      
       
       override type EMTypes = ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
 
@@ -1194,15 +1199,20 @@ class KVDBJSONAPIDispatcher(
       }
       
     }
+
+    @transient lazy val Being : BeingScope =
+      new BeingScope { }
     
-    import Being._
+    //import Being._
 
     def singleton( storeUnitStr : String, a : String )  = {
-      new PersistedStringMGJ( storeUnitStr, a, List( ) )
+      //new PersistedStringMGJ( storeUnitStr, a, List( ) )
+      new Being.PersistedStringMGJ( storeUnitStr, a, List( ) )
     }
 
     def ptToPt( storeUnitStr : String, a : String, b : String )  = {
-      new PersistedStringMGJ( storeUnitStr, a, List( b ) )
+      //new PersistedStringMGJ( storeUnitStr, a, List( b ) )
+      new Being.PersistedStringMGJ( storeUnitStr, a, List( b ) )
     }
 
     def loopBack( storeUnitStr : String ) = {

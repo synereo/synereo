@@ -29,7 +29,7 @@ import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
 trait MonadicAMQPDispatcher[T]
- extends MonadicDispatcher[T] {
+ extends MonadicDispatcher[T] with Serializable {
    self : WireTap with Journalist =>
 
   case class AMQPDelivery(

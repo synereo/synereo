@@ -41,7 +41,7 @@ object Probe extends UUIDOps {
   lazy val from = "agent://localhost/kvdbDispatchStore2"
   lazy val msgId : String = getUUID + ""
   lazy val flowId : String = getUUID + ""
-  val msgBody = 
+  val getMsgBody = 
     (
       "{ "
       + "\"getRequest\" : "
@@ -68,6 +68,39 @@ object Probe extends UUIDOps {
       + " }"
       + " }"
     );
+
+  val putMsgBody = 
+    (
+      "{ "
+      + "\"putRequest\" : "
+      + "{ "
+      +    "\"tell\" : "
+      +       "[ "
+      +        "{ " 
+      +           "\"node\" : "
+      +              "[" 
+      +                "{ "
+      +                   "\"machine\" : "
+      +                      "["
+      +                        "\"sl390\""
+      +                      "]"
+      +                " }, "
+      +                "{ "
+      +                   "\"os\" : " 
+      +                      "["
+      +                        "\"Ubuntu\","
+      +                        "\"11.04\""
+      +                      "]"
+      +                " }"
+      +              " ]"
+      +        " }"
+      +           ", "
+      +        "\"running\""
+      +       " ]"
+      + " }"
+      + " }"
+    );
+
   lazy val justification = 
     "{ " + "\"response\"" + " : " + "null" + " }"
   lazy val allHdrs = 
@@ -77,8 +110,10 @@ object Probe extends UUIDOps {
       + justification
       + "]"
     );
-  lazy val msgHdrsBody = 
-    makeMsg( allHdrs, msgBody );
+  lazy val getMsgHdrsBody = 
+    makeMsg( allHdrs, getMsgBody );
+  lazy val putMsgHdrsBody = 
+    makeMsg( allHdrs, putMsgBody );
 
   def makeMsg( hdrs : String, body : String ) : String = {
     (
@@ -97,6 +132,7 @@ object Probe extends UUIDOps {
     val srcQM = new srcScope.AMQPNodeJSQueueM( "localhost", "kvdb" )
     val srcQ = srcQM.zeroJSON
     
-    srcQ ! msgHdrsBody
+    srcQ ! getMsgHdrsBody
+    //srcQ ! putMsgHdrsBody
   }
 }
