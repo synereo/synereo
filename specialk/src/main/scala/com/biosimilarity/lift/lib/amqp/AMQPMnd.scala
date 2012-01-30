@@ -77,6 +77,7 @@ trait AMQPBrokerScope[T] extends Serializable {
 	    val store = new ObjectOutputStream(bytes)
 	    store.writeObject( k() )
 	    store.close
+	    println( "calling basicPublish on " + channel )
 	    channel.basicPublish(
 	      exchange,
 	      routingKey,
@@ -116,7 +117,13 @@ trait AMQPBrokerScope[T] extends Serializable {
     def sender : theMDS.Generator[Unit,T,Unit]
 
     def !( msg : T ) : Unit = {
+      println( "sending message : " + msg )
       reset { for( _ <- sender ) { msg } }
+    }
+
+    def !!( msg : T ) : Unit @suspendable = {
+      println( "sending message : " + msg )
+      for( _ <- sender ) { msg }
     }
 
     override def equals( o : Any ) : Boolean = {
@@ -500,6 +507,10 @@ class AMQPNodeJSScope (
   def protoNode : StdMonadicAMQPNodeJSSndrRcvr =
     new StdMonadicAMQPNodeJSSndrRcvr( "", -1 )
   
+
+  @transient override lazy val properties : Option[AMQP.BasicProperties] = 
+    Some( new AMQP.BasicProperties.Builder().contentType( "application/json" ).build() )
+
   class StdMonadicAMQPNodeJSSndrRcvr(
     override val host : String,
     override val port : Int

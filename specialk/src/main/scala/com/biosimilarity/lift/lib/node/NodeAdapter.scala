@@ -134,9 +134,9 @@ with PrologTermParsing {
     srcQStr : String, trgtQStr : String
   ) = {
     val srcScope = new AMQPNodeJSScope( AMQPDefaults.defaultConnectionFactory ) {
-      override def properties : Option[AMQP.BasicProperties] = {    
+      @transient override lazy val properties : Option[AMQP.BasicProperties] = {    
 	val amqpBPBuilder = new AMQP.BasicProperties.Builder
-	amqpBPBuilder.contentType( "application/json" )
+	amqpBPBuilder.contentType( "text/plain" )
 	Some( amqpBPBuilder.build )
       }
     }

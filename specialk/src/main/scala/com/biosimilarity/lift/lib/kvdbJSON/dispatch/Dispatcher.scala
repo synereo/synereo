@@ -89,10 +89,11 @@ with UUIDOps {
   def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
   type ReplyTrgt =
-    Either[( String, String ),( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]
+    Either[( String, String ),( String, String )]
 
   // this controls what URI's will be dispatched to with results
   def replyNamespace : HashMap[URI,ReplyTrgt]
+  def replyNamespaceCache : HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]
 
   // service
   implicit def asString( kvdbURINetLoc : NetLocation ) : String = {
@@ -631,15 +632,34 @@ with UUIDOps {
   def asReplyTrgt(
     reqHdr : KVDBReqHdr
   ) : Option[( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )] = {
+    def cacheMnQ(
+      trgt : URI, replyHost : String, replyExchange : String
+    ) : ( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] ) = {
+      tweet( "make reply target queue " + replyExchange + "_queue" + "@" + replyHost )
+      val replyM = replyQM( replyHost, replyExchange )
+      val replyQ = replyM.zeroJSON
+      replyNamespaceCache +=
+      ( ( trgt, ( replyM, replyQ ) ) )
+      replyNamespace +=
+      ( ( trgt, Right[(String,String),(String,String)]( replyHost, replyExchange ) ) )
+      ( replyM, replyQ )
+    }
     for( trgt <- asURI( reqHdr.uri_2 ); rplyTrgt <- replyNamespace.get( trgt ) ) yield {
       rplyTrgt match {
 	case Left( ( replyHost, replyExchange ) ) => {
-	  val replyM = replyQM( replyHost, replyExchange )
-	  val replyQ = replyM.zeroJSON
-	  ( replyM, replyQ )
+	  cacheMnQ( trgt, replyHost, replyExchange )
 	}
-	case Right( ( replyM, replyQ ) ) => {
-	  ( replyM, replyQ )
+	case Right( ( replyHost, replyExchange ) ) => {
+	  replyNamespaceCache.get( trgt ) match {
+	    case Some( ( replyM, replyQ ) ) => {
+	      tweet( "reusing reply target queue " + replyQ )
+	      ( replyM, replyQ )
+	    }
+	    case _ => {
+	      tweet( "reconstituting cache from storage " )
+	      cacheMnQ( trgt, replyHost, replyExchange )
+	    }
+	  }
 	}
       }
     }
@@ -663,6 +683,7 @@ with UUIDOps {
 		tweet( "response: " + rsp )
 		for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
 		  tweet( "replyTrgt: " + ( m, q ) )	  
+		  tweet( "sending " + rsp + " to " + q )
 		  q ! rsp
 		}		
 	      }
@@ -811,7 +832,20 @@ class KVDBJSONAPIDispatcher(
     }
     
   }
-  @transient var stblReplyNamespace : Option[HashMap[URI,ReplyTrgt]] = None
+  var stblReplyNamespace : Option[HashMap[URI,ReplyTrgt]] = None
+
+  override def replyNamespaceCache : HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )] = {
+    stblReplyNamespaceCache match {
+      case Some( rnsc ) => rnsc
+      case _ => {
+	val rnsc = new HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]()
+	stblReplyNamespaceCache = Some( rnsc )
+	rnsc
+      }
+    }
+    
+  }
+  @transient var stblReplyNamespaceCache : Option[HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]] = None
 
   def addSingletonKVDB( uri : URI, db : String, host : String ) : Unit = {
     // This cast makes me sad...
@@ -869,7 +903,7 @@ class KVDBJSONAPIDispatcher(
 
   def addReplyQueue( uri : URI, host : String, exchange : String ) : Unit = {
     replyNamespace +=
-    ( ( uri, Left[( String, String ),( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]( host, exchange ) ) )
+    ( ( uri, Left[( String, String ),( String, String )]( host, exchange ) ) )
   }
 
   object PTSS
@@ -986,13 +1020,10 @@ class KVDBJSONAPIDispatcher(
 	    val blob =
 	      storageDispatch match {
 		case "Base64" => {
-                  println("start base64")
-
 		  val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
 		  val oos : ObjectOutputStream = new ObjectOutputStream( baos )
 		  oos.writeObject( rsrc.asInstanceOf[Serializable] )
 		  oos.close()
-                  println("end base64")
 		  new String( Base64Coder.encode( baos.toByteArray() ) )
 		}
 		case "CnxnCtxtLabel" => {
@@ -1050,8 +1081,7 @@ class KVDBJSONAPIDispatcher(
 	    val ttt = ( x : String ) => x
 	    
 	    val ptn = asPatternString( key )
-	    println( "ptn : " + ptn )		
-	    
+
 	    val oRsrc : Option[emT.PlaceInstance] =
 	      for(
 		ltns <- labelToNS;
