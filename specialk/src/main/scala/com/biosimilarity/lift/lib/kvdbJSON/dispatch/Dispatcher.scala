@@ -59,19 +59,19 @@ with UUIDOps {
   def srcExchange : String
   def srcScope : AMQPNodeJSStdScope =
     new AMQPNodeJSStdScope()
-  lazy val stblSrcScope : AMQPNodeJSStdScope = srcScope
+  @transient lazy val stblSrcScope : AMQPNodeJSStdScope = srcScope
   def srcQM( srcHost : String, srcExchange : String ) : stblSrcScope.AMQPNodeJSQueueM =
     new stblSrcScope.AMQPNodeJSQueueM( srcHost, srcExchange )
   def srcQM : stblSrcScope.AMQPNodeJSQueueM =
     srcQM( srcHost, srcExchange )
-  lazy val stblSrcQM : stblSrcScope.AMQPNodeJSQueueM = srcQM
+  @transient lazy val stblSrcQM : stblSrcScope.AMQPNodeJSQueueM = srcQM
   def srcQ( srcHost : String, srcExchange : String ) : stblSrcScope.AMQPQueue[String] = 
     srcQM( srcHost, srcExchange ).zeroJSON
   def srcQ : stblSrcScope.AMQPQueue[String] = stblSrcQM.zeroJSON
 
   def replyScope : AMQPNodeJSStdScope =
     new AMQPNodeJSStdScope()
-  lazy val stblReplyScope : AMQPNodeJSStdScope = replyScope
+  @transient lazy val stblReplyScope : AMQPNodeJSStdScope = replyScope
   def replyQM( replyHost : String, replyExchange : String ) : stblReplyScope.AMQPNodeJSQueueM =
     new stblReplyScope.AMQPNodeJSQueueM( replyHost, replyExchange )
   def replyQ( replyHost : String, replyExchange : String ) : stblReplyScope.AMQPQueue[String] = 
@@ -584,6 +584,9 @@ with UUIDOps {
 	      (
 		getGrndVal( bndRsrc ), 
 		substAsJSONPairs( patternVars( pattern), bndRsrc ) match {
+		  case Some( "" ) => {
+		    "null"
+		  }
 		  case Some( jps ) => {
 		    "{ " + jps + " }"
 		  }
@@ -597,11 +600,18 @@ with UUIDOps {
 	  }
 
 	( "{ "
-	 + "\"answer\"" + ":"
+	 + "\"answer\"" + " : "
 	 + "[ "
 	 + reqPtrn + ","
 	 + rspSubst + ","
-	 + rspVal
+	 + (
+	   rspVal match {
+	     case Some( rval ) => {
+	       "\"" + rval + "\""
+	     }
+	     case _ => "null"
+	   }
+	 )
 	 + " ]"
 	 + " }"      
        )
