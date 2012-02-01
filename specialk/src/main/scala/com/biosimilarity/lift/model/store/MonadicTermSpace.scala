@@ -177,7 +177,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       place : mTT.GetRequest
     ) : Option[Substitution] = {
       //println( "in fitsK on " + this )
-      println( "in fitsK with ptn = " + ptn + "\n place = " + place )
+      //println( "in fitsK with ptn = " + ptn + "\n place = " + place )
       val matchRslts = matches( ptn, place )
       //println( "match results in fitsK on " + this + " are " + matchRslts )
       matchRslts match {

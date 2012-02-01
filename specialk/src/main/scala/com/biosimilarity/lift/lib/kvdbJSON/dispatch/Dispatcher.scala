@@ -602,8 +602,8 @@ with UUIDOps {
 	( "{ "
 	 + "\"answer\"" + " : "
 	 + "[ "
-	 + reqPtrn + ","
-	 + rspSubst + ","
+	 + reqPtrn + ", "
+	 + rspSubst + ", "
 	 + (
 	   rspVal match {
 	     case Some( rval ) => {
@@ -914,7 +914,7 @@ class KVDBJSONAPIDispatcher(
   def addReplyQueue( uri : URI, host : String, exchange : String ) : Unit = {
     replyNamespace +=
     ( ( uri, Left[( String, String ),( String, String )]( host, exchange ) ) )
-  }
+  }    
 
   object PTSS
        extends PersistedTermStoreScope[String,String,String,String] 
@@ -1334,3 +1334,5 @@ object KVDBJSONAPIDispatcher {
     Some( ( kvdbDispatcher.srcHost, kvdbDispatcher.srcExchange ) )
   }
 }
+
+

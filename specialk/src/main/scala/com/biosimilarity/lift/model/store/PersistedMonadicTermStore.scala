@@ -1907,6 +1907,19 @@ package usage {
 
       //def doGet : Unit = { doGet( nextUUID ) }
       def doGet : Unit = { doGet( currUUID ) }
+
+      def doSubscribe( nUUID : String ) : Unit = {	
+	reset {
+	  openParen
+	  for( e <- kvdb1.get( CC1( true, count, nUUID, None ) ) ) {
+	    println( "received: " + e );
+	    kmap += ( ( nUUID, e ) );
+	    ()
+	  }
+	}
+      }
+
+      def doSubscribe : Unit = { doSubscribe( currUUID ) }
       
       def doPut( nUUID : String ) : mTT.Resource = {
 	val cclStr = toValue( getUUID + "" )
@@ -1916,6 +1929,15 @@ package usage {
       }
 
       def doPut : mTT.Resource = { doPut( currUUID ) }      
+
+      def doPublish( nUUID : String ) : mTT.Resource = {
+	val cclStr = toValue( getUUID + "" )
+	reset { kvdb1.publish( CC1( true, count, nUUID, None ), cclStr ) };
+	closeParen
+	cclStr
+      }
+
+      def doPublish : mTT.Resource = { doPublish( currUUID ) }      
     }
     
     def main(args: Array[String]): Unit = {
