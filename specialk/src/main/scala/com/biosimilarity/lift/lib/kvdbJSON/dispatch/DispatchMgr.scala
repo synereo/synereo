@@ -238,3 +238,54 @@ with ConfigurationTrampoline {
     }
   }
 }
+
+package usage {
+  trait StandardDispatchController {
+    def dispatcher : KVDBJSONAPIDispatcher
+    def trgtURI : URI
+    def srcURI : URI
+    def replyURI : URI
+    def setup(
+      dispatcher : KVDBJSONAPIDispatcher,
+      trgtURI : URI,
+      srcURI : URI,
+      replyURI : URI
+    ) : KVDBJSONAPIDispatcher
+    def setup() : KVDBJSONAPIDispatcher = 
+      setup( dispatcher, trgtURI, srcURI, replyURI )
+  }
+
+  case class StdDispatchController(
+    override val dispatcher : KVDBJSONAPIDispatcher,
+    override val trgtURI : URI,
+    override val srcURI : URI,
+    override val replyURI : URI
+  ) extends StandardDispatchController {
+    def setup(
+      dispatcher : KVDBJSONAPIDispatcher,
+      trgtURI : URI,
+      srcURI : URI,
+      replyURI : URI
+    ) : KVDBJSONAPIDispatcher = {
+      // Configure dispatcher to serve requests with a "to" header of trgtURI
+      // and a "from" header of srcURI
+      // and deposit replies according to the following scheme
+      // if replyURI = scheme://host/root
+      // replyQueue = root_queue, replyExchange = root_exchange
+      
+      dispatcher.addSingletonKVDB( trgtURI )
+      dispatcher.addReplyQueue( srcURI, replyURI.getHost, replyURI.getPath.split( "/" )( 1 ) )
+      dispatcher.serveAPI
+      
+      dispatcher
+    }
+  }
+
+  object Dispatcher extends StdDispatchController(
+    new KVDBJSONAPIDispatcher( "localhost", "kvdb" ),
+    new URI( "agent", "localhost", "/kvdbDispatchStore1", "" ),
+    new URI( "agent", "localhost", "/kvdbDispatchStore2", "" ),
+    new URI( "agent", "localhost", "/kvdbReply", "" )
+  ) {    
+  }
+}
