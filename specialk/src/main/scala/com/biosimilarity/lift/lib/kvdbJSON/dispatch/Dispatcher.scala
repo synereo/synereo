@@ -88,12 +88,26 @@ with UUIDOps {
   // this controls what URI's will be dispatched to KVDB's
   def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
 
-  type ReplyTrgt =
-    Either[( String, String ),( String, String )]
+  type ReplyTrgt = Either[URI,URI]
+  trait ReplyCacheTrgt
+  case class AMQPTrgt(
+    monad : stblReplyScope.AMQPNodeJSQueueM,
+    queue : stblReplyScope.AMQPQueue[String]
+  ) extends ReplyCacheTrgt
+  case class JVMWriter(
+    writer : java.io.Writer
+  ) extends ReplyCacheTrgt
 
   // this controls what URI's will be dispatched to with results
+  // Note bene: the URI format is expected to tell us what kind of
+  // reply cache target is to be used:
+  //
+  // amqp://host/trgtLocation
+  // writer://fullyQualifiedWriterClass
+  //
+
   def replyNamespace : HashMap[URI,ReplyTrgt]
-  def replyNamespaceCache : HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]
+  def replyNamespaceCache : HashMap[URI,ReplyCacheTrgt]
 
   // service
   implicit def asString( kvdbURINetLoc : NetLocation ) : String = {
@@ -641,33 +655,61 @@ with UUIDOps {
 
   def asReplyTrgt(
     reqHdr : KVDBReqHdr
-  ) : Option[( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )] = {
+  ) : Option[ReplyCacheTrgt] = {
     def cacheMnQ(
-      trgt : URI, replyHost : String, replyExchange : String
-    ) : ( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] ) = {
-      tweet( "make reply target queue " + replyExchange + "_queue" + "@" + replyHost )
-      val replyM = replyQM( replyHost, replyExchange )
-      val replyQ = replyM.zeroJSON
-      replyNamespaceCache +=
-      ( ( trgt, ( replyM, replyQ ) ) )
-      replyNamespace +=
-      ( ( trgt, Right[(String,String),(String,String)]( replyHost, replyExchange ) ) )
-      ( replyM, replyQ )
+      trgt : URI, reply : URI
+    ) : ReplyCacheTrgt = {  
+      val replyTrgt : ReplyCacheTrgt = 
+	reply.getScheme match {
+	  case "amqp" => {
+	    tweet( "using amqp reply target scheme " )
+	    val ( replyHost, replyExchange ) =
+	      ( reply.getHost, reply.getPath.split( "/" )( 1 ) );
+	      
+	    tweet( "make reply target queue " + replyExchange + "_queue" + "@" + replyHost )
+	    val replyM = replyQM( replyHost, replyExchange )
+	    val replyQ = replyM.zeroJSON
+	    
+	    AMQPTrgt( replyM, replyQ )
+	    
+	  }
+
+	  // BUGBUG : lgm -- BTW, this is a major security hole!!!
+	  // Actually, by moving the scheme to the reply URI, it's
+	  // slightly less of a security hole...
+	  case "writer" => {
+	    tweet( "using writer reply target scheme" )
+	    tweet( "loading writer class: " + trgt.getHost )
+	    val cls =
+	      Thread.currentThread.getContextClassLoader.loadClass( trgt.getHost )
+	    
+	    tweet( "creating and initializing writer instance" )
+	    val writer : java.io.Writer =
+	      cls.getConstructor().newInstance( trgt.getPath.split( "/" ) ).asInstanceOf[java.io.Writer]
+
+	    JVMWriter( writer )
+	  }
+	}      
+
+      replyNamespaceCache += ( ( trgt, replyTrgt ) )
+      replyNamespace += ( ( trgt, Right[URI,URI]( reply ) ) )
+      
+      replyTrgt
+      
     }
+
     for( trgt <- asURI( reqHdr.uri_2 ); rplyTrgt <- replyNamespace.get( trgt ) ) yield {
       rplyTrgt match {
-	case Left( ( replyHost, replyExchange ) ) => {
-	  cacheMnQ( trgt, replyHost, replyExchange )
-	}
-	case Right( ( replyHost, replyExchange ) ) => {
+	case Left( reply ) => {	cacheMnQ( trgt, reply )	}
+	case Right( reply ) => {
 	  replyNamespaceCache.get( trgt ) match {
-	    case Some( ( replyM, replyQ ) ) => {
-	      tweet( "reusing reply target queue " + replyQ )
-	      ( replyM, replyQ )
+	    case Some( replyTrgt ) => {
+	      tweet( "reusing reply target " + replyTrgt )
+	      replyTrgt
 	    }
 	    case _ => {
 	      tweet( "reconstituting cache from storage " )
-	      cacheMnQ( trgt, replyHost, replyExchange )
+	      cacheMnQ( trgt, reply )
 	    }
 	  }
 	}
@@ -691,10 +733,17 @@ with UUIDOps {
 	      for( rslt <- kvdb.get( pattern ) ) {
 		val rsp = asResponse( kvdbReqHdr, pattern, rslt )
 		tweet( "response: " + rsp )
-		for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
-		  tweet( "replyTrgt: " + ( m, q ) )	  
-		  tweet( "sending " + rsp + " to " + q )
-		  q ! rsp
+		for( replyTrgt <- asReplyTrgt( kvdbReqHdr ) ) {
+		  tweet( "replyTrgt: " + replyTrgt )	  
+		  replyTrgt match {
+		    case AMQPTrgt( m, q ) => {
+		      tweet( "sending " + rsp + " to " + q )
+		      q ! rsp
+		    }
+		    case JVMWriter( writer ) => {
+		      writer.write( rsp )
+		    }
+		  }		  		  
 		}		
 	      }
 	    }
@@ -705,9 +754,18 @@ with UUIDOps {
 	    tweet( "we have a tell request to put " + value + " at " + pattern + " in " + kvdb )
 	    reset {
 	      kvdb.put( pattern, value )
-	      for( ( m, q ) <- asReplyTrgt( kvdbReqHdr ) ) {
-		tweet( "replyTrgt: " + ( m, q ) )	  
-		q ! craftResponse( reqHdr, tellReq )
+	      for( replyTrgt <- asReplyTrgt( kvdbReqHdr ) ) {
+		val rsp = craftResponse( reqHdr, tellReq )
+		tweet( "replyTrgt: " + replyTrgt )	  
+		replyTrgt match {
+		  case AMQPTrgt( m, q ) => {
+		    tweet( "sending " + rsp + " to " + q )
+		    q ! rsp
+		  }
+		  case JVMWriter( writer ) => {
+		    writer.write( rsp )
+		  }
+		}
 	      }	      
 	    }
 	  }
@@ -804,6 +862,14 @@ with UUIDOps {
   }
 
   def serveAPI : Unit = serveAPI( srcHost, srcExchange )
+
+  def serveAPI( stream : java.io.InputStream ) : Unit = {
+    val bSrc = scala.io.Source.createBufferedSource( stream )
+    for( jsonLine <- bSrc.getLines ) {
+      tweet( "received: " + jsonLine )
+      dispatch( parse( jsonLine ) )
+    }
+  }
 }
 
 class KVDBJSONAPIDispatcher(
@@ -844,18 +910,18 @@ class KVDBJSONAPIDispatcher(
   }
   var stblReplyNamespace : Option[HashMap[URI,ReplyTrgt]] = None
 
-  override def replyNamespaceCache : HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )] = {
+  override def replyNamespaceCache : HashMap[URI,ReplyCacheTrgt] = {
     stblReplyNamespaceCache match {
       case Some( rnsc ) => rnsc
       case _ => {
-	val rnsc = new HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]()
+	val rnsc = new HashMap[URI,ReplyCacheTrgt]()
 	stblReplyNamespaceCache = Some( rnsc )
 	rnsc
       }
     }
     
   }
-  @transient var stblReplyNamespaceCache : Option[HashMap[URI,( stblReplyScope.AMQPNodeJSQueueM, stblReplyScope.AMQPQueue[String] )]] = None
+  @transient var stblReplyNamespaceCache : Option[HashMap[URI,ReplyCacheTrgt]] = None
 
   def addSingletonKVDB( uri : URI, db : String, host : String ) : Unit = {
     // This cast makes me sad...
@@ -912,8 +978,14 @@ class KVDBJSONAPIDispatcher(
   }
 
   def addReplyQueue( uri : URI, host : String, exchange : String ) : Unit = {
+    val replyURI = new URI( "amqp", host, "/" + exchange, "" )
     replyNamespace +=
-    ( ( uri, Left[( String, String ),( String, String )]( host, exchange ) ) )
+    ( ( uri, Left[URI,URI]( replyURI ) ) )
+  }    
+
+  def addReplyURI( uri : URI, replyURI : URI ) : Unit = {
+    replyNamespace +=
+    ( ( uri, Left[URI,URI]( replyURI ) ) )
   }    
 
   object PTSS
