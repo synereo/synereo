@@ -15,7 +15,8 @@ import java.util.UUID
 
 object Dispatcher {
   // Make a dispatcher
-  lazy val dsp = new KVDBJSONAPIDispatcher( "localhost", "kvdb" )
+  lazy val dsp =
+    new KVDBJSONAPIDispatcher( new URI( "amqp", "localhost", "/kvdb", "" ) )
 
   lazy val trgtURI = 
     new URI( "agent", "localhost", "/kvdbDispatchStore1", "" )

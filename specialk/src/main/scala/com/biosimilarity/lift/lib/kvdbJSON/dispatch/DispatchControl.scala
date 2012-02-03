@@ -78,7 +78,7 @@ case class StdDispatchController(
 
 package usage {  
   object Dispatcher extends StdDispatchController(
-    new KVDBJSONAPIDispatcher( "localhost", "kvdb" ),
+    new KVDBJSONAPIDispatcher( new URI( "amqp", "localhost", "/kvdb", "" ) ),
     new URI( "agent", "localhost", "/kvdbDispatchStore1", "" ),
     new URI( "agent", "localhost", "/kvdbDispatchStore2", "" ),
     new URI( "amqp", "localhost", "/kvdbReply", "" )

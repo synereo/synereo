@@ -56,8 +56,13 @@ with UUIDOps {
   }
 
   // comms
-  def srcHost : String
-  def srcExchange : String
+  def srcURI : URI 
+  def srcHost( srcURI : URI ) : String = srcURI.getHost
+  def srcHost : String = srcHost( srcURI )
+  def srcExchange( srcURI : URI ) : String =
+    srcURI.getPath.split( "/" )( 1 )
+  def srcExchange : String = srcExchange( srcURI )
+
   def srcScope : AMQPNodeJSStdScope =
     new AMQPNodeJSStdScope()
   @transient lazy val stblSrcScope : AMQPNodeJSStdScope = srcScope
@@ -512,11 +517,30 @@ with UUIDOps {
       dispatch( parse( jsonLine ) )
     }
   }
+
+  def serveAPI( uri : URI ) : Unit = {
+    uri.getScheme match {
+      case "amqp" => {
+	serveAPI( srcHost( uri ), srcExchange( uri ) )
+      }
+      case "stream" => {
+	tweet( "using stream src scheme" )
+	tweet( "loading stream class: " + uri.getHost )
+	val cls =
+	  Thread.currentThread.getContextClassLoader.loadClass( uri.getHost )
+	
+	tweet( "creating and initializing stream instance" )
+	val stream : java.io.InputStream =
+	  cls.newInstance( ).asInstanceOf[java.io.InputStream]
+	
+	serveAPI( stream )
+      }      
+    }
+  }
 }
 
 class KVDBJSONAPIDispatcher(
-  override val srcHost : String,
-  override val srcExchange : String
+  override val srcURI : URI
 ) extends KVDBJSONAPIDispatcherT {
   override def kvdbScope : PersistedTermStoreScope[String,String,String,String] = PTSS
   override def kvdbPersistenceScope : stblKVDBScope.PersistenceScope = {
@@ -1037,15 +1061,14 @@ class KVDBJSONAPIDispatcher(
 
 object KVDBJSONAPIDispatcher {
   def apply(
-    srcHost : String,
-    srcExchange : String
+    srcURI : URI
   ) : KVDBJSONAPIDispatcher = {
-    new KVDBJSONAPIDispatcher( srcHost, srcExchange )
+    new KVDBJSONAPIDispatcher( srcURI )
   }
   def unapply(
     kvdbDispatcher : KVDBJSONAPIDispatcher
-  ) : Option[( String, String )] = {
-    Some( ( kvdbDispatcher.srcHost, kvdbDispatcher.srcExchange ) )
+  ) : Option[( URI )] = {
+    Some( ( kvdbDispatcher.srcURI ) )
   }
 }
 
