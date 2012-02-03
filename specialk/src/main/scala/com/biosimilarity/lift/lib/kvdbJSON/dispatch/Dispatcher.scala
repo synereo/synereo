@@ -506,9 +506,7 @@ with UUIDOps {
       tweet( "received: " + msg )
       dispatch( parse( msg ) )
     }
-  }
-
-  def serveAPI : Unit = serveAPI( srcHost, srcExchange )
+  }  
 
   def serveAPI( stream : java.io.InputStream ) : Unit = {
     val bSrc = scala.io.Source.createBufferedSource( stream )
@@ -537,6 +535,8 @@ with UUIDOps {
       }      
     }
   }
+
+  def serveAPI : Unit = serveAPI( srcURI )
 }
 
 class KVDBJSONAPIDispatcher(
