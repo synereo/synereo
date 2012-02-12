@@ -158,11 +158,45 @@
       <artifactId>sxr_2.9.0</artifactId>
       <version>0.2.7</version>
     </dependency>
-    <dependency>
+    <!-- dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty</artifactId>
       <version>[6.1.6,7.0)</version>
       <scope>test</scope>
+    </dependency -->
+    <dependency>
+      <groupId>org.mortbay.jetty</groupId>
+      <artifactId>jetty</artifactId>
+      <version>[6.1.6,8.0.4)</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-http</artifactId>
+      <version>8.0.4.v20111024</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlets</artifactId>
+      <version>8.0.4.v20111024</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <!-- version>8.0.4.v20111024</version -->
+      <version>8.0.1.v20110908</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-webapp</artifactId>
+      <version>8.0.4.v20111024</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-websocket</artifactId>
+      <!-- version>8.0.4.v20111024</version -->
+      <version>8.0.1.v20110908</version>
     </dependency>
     <!-- for LiftConsole -->
     <dependency>
@@ -523,7 +557,7 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
+      <!-- plugin>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>maven-jetty-plugin</artifactId>
         <version>6.1.24</version>
@@ -532,6 +566,22 @@
           <scanIntervalSeconds>5</scanIntervalSeconds>
 	  <connectors>
             <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
+              <port>8090</port>
+            </connector>
+          </connectors>
+        </configuration>
+      </plugin -->
+      <plugin>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <!-- version>8.0.4.v20111024</version -->
+	<version>8.0.1.v20110908</version>
+        <configuration>
+          <contextPath>/</contextPath>
+          <scanIntervalSeconds>5</scanIntervalSeconds>
+	  <connectors>
+            <!-- connector implementation="org.eclipse.jetty.nio.SelectChannelConnector" -->
+	    <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
               <port>8090</port>
             </connector>
           </connectors>

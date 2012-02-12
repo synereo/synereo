@@ -12,6 +12,8 @@ import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{
   URI => kvdbURI, UUID => kvdbUUID, Message => kvdbMessage, _
 }
 
+import com.biosimilarity.lift.lib.websocket._
+
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store._
 //import com.biosimilarity.lift.model.agent._
@@ -25,6 +27,8 @@ import scala.xml._
 
 import org.prolog4j._
 import biz.source_code.base64Coder.Base64Coder
+
+import org.eclipse.jetty.websocket.WebSocket
 
 import java.net.URI
 import java.io.StringReader
@@ -54,6 +58,9 @@ with UUIDOps {
   override def configurationDefaults : ConfigurationDefaults = {
     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
+
+  // Websocket support
+  def wsMgr : WSMgr
 
   // comms
   def srcURI : URI 
@@ -102,6 +109,10 @@ with UUIDOps {
   ) extends ReplyCacheTrgt
   case class JVMWriter(
     writer : java.io.Writer
+  ) extends ReplyCacheTrgt
+  case class WebSocketTrgt(
+    socket : WebSocket,
+    connection : WebSocket.Connection
   ) extends ReplyCacheTrgt
 
   // this controls what URI's will be dispatched to with results
@@ -325,6 +336,20 @@ with UUIDOps {
 	    AMQPTrgt( replyM, replyQ )
 	    
 	  }
+	  
+	  case "websocket" => {
+	    wsMgr.socketURIMap.get( reply ) match {
+	      case Some( sockCnxnPair ) => {
+		WebSocketTrgt(
+		  sockCnxnPair.socket,
+		  sockCnxnPair.connection
+		)
+	      }
+	      case _ => {
+		throw new Exception( "missing websocket for : " + reply )
+	      }
+	    }
+	  }
 
 	  // BUGBUG : lgm -- BTW, this is a major security hole!!!
 	  // Actually, by moving the scheme to the reply URI, it's
@@ -392,9 +417,12 @@ with UUIDOps {
 		      tweet( "sending " + rsp + " to " + q )
 		      q ! rsp
 		    }
+		    case WebSocketTrgt( socket, connection ) => {
+		      connection.sendMessage( rsp )
+		    }
 		    case JVMWriter( writer ) => {
 		      writer.write( rsp )
-		    }
+		    }		    
 		  }		  		  
 		}		
 	      }
@@ -413,6 +441,9 @@ with UUIDOps {
 		  case AMQPTrgt( m, q ) => {
 		    tweet( "sending " + rsp + " to " + q )
 		    q ! rsp
+		  }
+		  case WebSocketTrgt( socket, connection ) => {
+		    connection.sendMessage( rsp )
 		  }
 		  case JVMWriter( writer ) => {
 		    writer.write( rsp )
@@ -516,10 +547,22 @@ with UUIDOps {
     }
   }
 
+  def serveAPI( seq : Seq[String] ) : Unit = {
+    for( jsonReq <- seq ) {
+      tweet( "received: " + jsonReq )
+      dispatch( parse( jsonReq ) )
+    }
+  }
+
   def serveAPI( uri : URI ) : Unit = {
     uri.getScheme match {
       case "amqp" => {
 	serveAPI( srcHost( uri ), srcExchange( uri ) )
+      }
+      case "websocket" => {
+	for( sockCnxnPair <- wsMgr.socketURIMap.get( uri ) ) {
+	  serveAPI( sockCnxnPair.socket )
+	}
       }
       case "stream" => {
 	tweet( "using stream src scheme" )
@@ -542,6 +585,7 @@ with UUIDOps {
 class KVDBJSONAPIDispatcher(
   override val srcURI : URI
 ) extends KVDBJSONAPIDispatcherT {
+  override def wsMgr : WSMgr = theWSMgr
   override def kvdbScope : PersistedTermStoreScope[String,String,String,String] = PTSS
   override def kvdbPersistenceScope : stblKVDBScope.PersistenceScope = {
     // This cast makes me sad...
