@@ -226,34 +226,6 @@ extends JSONWireToTrgtConversion
     type Trgt = T   
 }
 
-trait AMQPUtilities {
-//  def stdCnxnParams : RabbitCnxnParams = {
-//    val params = new RabbitCnxnParams /* new ConnectionParameters */
-//    params.setUsername( "guest" )
-//    params.setPassword( "guest" )
-//    params.setVirtualHost( "/" )
-//    params.setRequestedHeartbeat( 0 )
-//    params
-//  }
-}
-
-object AMQPDefaults extends AMQPUtilities {
-  def getDefaultConnectionFactory(): ConnectionFactory =
-  {
-    val factory = new ConnectionFactory(  )
-    factory.setUsername("guest")
-    factory.setPassword("guest")
-    factory.setVirtualHost("/")
-    factory.setRequestedHeartbeat(0)
-    factory
-  }
-
-  implicit val defaultConnectionFactory : ConnectionFactory = getDefaultConnectionFactory()
-  implicit val defaultHost : String = "localhost"
-  implicit val defaultPort : Int = 5672
-  implicit val defaultDispatching : Boolean = true
-}
-
 trait DefaultMonadicAMQPDispatcher[T]
 extends MonadicAMQPDispatcher[T] {
   self : WireTap with Journalist =>

@@ -17,21 +17,22 @@ import scala.util.continuations._
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
+import scala.collection.mutable.HashMap
 
-import _root_.com.rabbitmq.client.{ Channel => RabbitChan, _}
+import com.rabbitmq.client.{ Channel => RabbitChan, _}
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
 import java.net.URI
-import _root_.java.io.ObjectInputStream
-import _root_.java.io.ObjectOutputStream
-import _root_.java.io.ByteArrayInputStream
-import _root_.java.io.ByteArrayOutputStream
-import _root_.java.io.PrintWriter
-import _root_.java.io.StringWriter
-import _root_.java.util.Timer
-import _root_.java.util.TimerTask
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.util.Timer
+import java.util.TimerTask
 
 trait AMQPBrokerScope[T] extends Serializable {
   self : MonadicDispatcherScope[T] =>
@@ -439,18 +440,66 @@ trait AMQPBrokerScope[T] extends Serializable {
     uri : URI
   ) extends AMQPQueueM[A](
     uri.getHost,
-    uri.getPort,
-    uri.getPath.split( "/" )( 1 ),
-    uri.getPath.split( "/" )( 0 )
+    {
+      uri.getPort match {
+	case -1 => AMQPDefaults.defaultPort
+	case port => port
+      }
+    },
+    {
+      val spath = uri.getPath.split( "/" )
+      spath.length match {
+      case 1 => AMQPDefaults.defaultExchange
+      case 0 => AMQPDefaults.defaultExchange
+      case _ => spath( 1 )
+      }
+    },
+    {
+      val qmap = new HashMap[String,String]( )
+      uri.getQuery.split( "," ).map(
+	( x ) => {
+	  val kv = x.split( "=" )
+	  qmap += ( ( kv( 0 ), kv( 1 ) ) )
+	}
+      )
+      qmap.get( "routingKey" ) match {
+	case Some( rk ) => rk
+	case _ => AMQPDefaults.defaultRoutingKey
+      }
+    }
   )
 
   case class AMQPQueueHostMonikerM[A] (
     moniker : Moniker
   ) extends AMQPQueueM[A](
     moniker.getHost,
-    moniker.getPort,
-    moniker.getPath.split( "/" )( 1 ),
-    moniker.getPath.split( "/" )( 0 )
+    {
+      moniker.getPort match {
+	case -1 => AMQPDefaults.defaultPort
+	case port => port
+      }
+    },
+    {
+      val spath = moniker.getPath.split( "/" )
+      spath.length match {
+      case 1 => AMQPDefaults.defaultExchange
+      case 0 => AMQPDefaults.defaultExchange
+      case _ => spath( 1 )
+      }
+    },
+    {
+      val qmap = new HashMap[String,String]( )
+      moniker.getQuery.split( "," ).map(
+	( x ) => {
+	  val kv = x.split( "=" )
+	  qmap += ( ( kv( 0 ), kv( 1 ) ) )
+	}
+      )
+      qmap.get( "routingKey" ) match {
+	case Some( rk ) => rk
+	case _ => AMQPDefaults.defaultRoutingKey
+      }
+    }
   )
 
   def apply [A] (
