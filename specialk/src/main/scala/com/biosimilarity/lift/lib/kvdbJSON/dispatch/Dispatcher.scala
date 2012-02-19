@@ -21,6 +21,8 @@ import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.lift.lib.moniker._
 
+import com.biosimilarity.lift.lib.websocket.LockFreeMap
+
 import scala.util.continuations._
 import scala.collection.mutable.HashMap
 import scala.xml._
@@ -59,9 +61,6 @@ with UUIDOps {
     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
-  // Websocket support
-  def wsMgr : WSMgr
-
   // comms
   def srcURI : URI 
   def srcHost( srcURI : URI ) : String = srcURI.getHost
@@ -90,6 +89,8 @@ with UUIDOps {
   def replyQ( replyHost : String, replyExchange : String ) : stblReplyScope.AMQPQueue[String] = 
     replyQM( replyHost, replyExchange ).zeroJSON
 
+  def socketURIMap: LockFreeMap[URI,SocketConnectionPair]
+  
   // namespace
   def kvdbScope : PersistedTermStoreScope[String,String,String,String]
   lazy val stblKVDBScope : PersistedTermStoreScope[String,String,String,String] =
@@ -111,8 +112,7 @@ with UUIDOps {
     writer : java.io.Writer
   ) extends ReplyCacheTrgt
   case class WebSocketTrgt(
-    socket : WebSocket,
-    connection : WebSocket.Connection
+    wsConnection : WebSocket.Connection
   ) extends ReplyCacheTrgt
 
   // this controls what URI's will be dispatched to with results
@@ -338,11 +338,10 @@ with UUIDOps {
 	  }
 	  
 	  case "websocket" => {
-	    wsMgr.socketURIMap.get( reply ) match {
-	      case Some( sockCnxnPair ) => {
+	    socketURIMap.get( reply ) match {
+	      case Some( SocketConnectionPair(_,wsConnection) ) => {
 		WebSocketTrgt(
-		  sockCnxnPair.socket,
-		  sockCnxnPair.connection
+		  wsConnection
 		)
 	      }
 	      case _ => {
@@ -417,8 +416,8 @@ with UUIDOps {
 		      tweet( "sending " + rsp + " to " + q )
 		      q ! rsp
 		    }
-		    case WebSocketTrgt( socket, connection ) => {
-		      connection.sendMessage( rsp )
+		    case WebSocketTrgt( wsConnection ) => {
+		      wsConnection.sendMessage( rsp )
 		    }
 		    case JVMWriter( writer ) => {
 		      writer.write( rsp )
@@ -442,8 +441,8 @@ with UUIDOps {
 		    tweet( "sending " + rsp + " to " + q )
 		    q ! rsp
 		  }
-		  case WebSocketTrgt( socket, connection ) => {
-		    connection.sendMessage( rsp )
+		  case WebSocketTrgt( wsConnection ) => {
+		    wsConnection.sendMessage( rsp )
 		  }
 		  case JVMWriter( writer ) => {
 		    writer.write( rsp )
@@ -560,8 +559,8 @@ with UUIDOps {
 	serveAPI( srcHost( uri ), srcExchange( uri ) )
       }
       case "websocket" => {
-	for( sockCnxnPair <- wsMgr.socketURIMap.get( uri ) ) {
-	  serveAPI( sockCnxnPair.socket )
+	for( SocketConnectionPair(queue,_) <- socketURIMap.get( uri ) ) {
+	  serveAPI( queue )
 	}
       }
       case "stream" => {
@@ -585,12 +584,13 @@ with UUIDOps {
 class KVDBJSONAPIDispatcher(
   override val srcURI : URI
 ) extends KVDBJSONAPIDispatcherT {
-  override def wsMgr : WSMgr = theWSMgr
   override def kvdbScope : PersistedTermStoreScope[String,String,String,String] = PTSS
   override def kvdbPersistenceScope : stblKVDBScope.PersistenceScope = {
     // This cast makes me sad...
     PTSS.Being.asInstanceOf[stblKVDBScope.PersistenceScope]
   }
+  
+  val socketURIMap = LockFreeMap[URI,SocketConnectionPair]()
 
   // this controls what URI's will be dispatched to KVDB's
   override def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]

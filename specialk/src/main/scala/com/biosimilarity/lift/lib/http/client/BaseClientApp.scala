@@ -11,7 +11,8 @@ import org.eclipse.jetty.websocket.WebSocketClientFactory;
 
 trait BaseClientApp extends App {
 
-  val url = new URI("ws://127.0.0.1:8090/querysocket")
+//  lazy val url = new URI("ws://127.0.0.1:8090/querysocket")
+  lazy val url = new URI("ws://127.0.0.1:8090/websocket")
 
   lazy val client = {
     val factory = new WebSocketClientFactory()
@@ -29,9 +30,9 @@ trait BaseClientApp extends App {
     }).get(5, TimeUnit.SECONDS)
   }  
   
-  val messagesReceivedCounter = new AtomicInteger
+  lazy val messagesReceivedCounter = new AtomicInteger
 
-  val waiter = new Object
+  lazy val waiter = new Object
   def wait(seconds: Int) = waiter.synchronized(waiter.wait(seconds*1000))
 
   def sendGet(key: String) = send("get", key)
@@ -54,8 +55,10 @@ trait BaseClientApp extends App {
    .replace(":key:", key)
    .replace(":value:", value)
     println("--sending message: " + msg);
-    connection sendMessage msg
+    rawSend(msg)
   }
+  
+  def rawSend(msg: String) =  connection sendMessage msg
   
   def run
   

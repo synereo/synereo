@@ -48,93 +48,52 @@ import _root_.java.io.ObjectInputStream
 import _root_.java.io.ByteArrayInputStream
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
+import java.net.URI
+import com.biosimilarity.lift.lib.kvdbJSON.KVDBJSONAPIDispatcher
 
 case class SocketConnectionPair( 
-  socket : WebSocket with Seq[String],
-  connection : WebSocket.Connection
+  requestQueue : Seq[String],  // this is the queue that the dispatcher listens for incoming messages on
+  responseConnection : WebSocket.Connection   // this is the websocket that the dispatcher will send outgoing messages with
 )
 
-case class WSMgr( 
-  socketURIMap : HashMap[URI,SocketConnectionPair],
-  socketMap : HashMap[WebSocket,URI],
-  host : String
-) extends MapProxy[WebSocket,URI]
-with UUIDOps {
-  override def self = socketMap
-  implicit def asURI( ws : WebSocket ) : URI = {
-    new URI( "websocket", host, "/" + getUUID, "" )
-  }
-}
-
-case object theWSMgr extends WSMgr(
-  new HashMap[URI,SocketConnectionPair]( ),
-  new HashMap[WebSocket,URI]( ),
-  "localhost"
-)
 
 case class QueuingWebSocket( 
-  wsMgr : WSMgr,
-  queue : Queue[String]
+  dispatcher: KVDBJSONAPIDispatcher
+  , uri: URI
 ) extends WebSocket 
      with WebSocket.OnTextMessage
-     with SeqProxy[String]
 {
-  override def self = queue
+  
+  val queue = Queue[String]()
 
   override def onOpen(
-    connection: WebSocket.Connection
+    wsConnection: WebSocket.Connection
   ) : Unit = {
-    // BUGBUG -- lgm : is this thread safe?
-    println( "in onOpen with " + connection )
-    val uri = wsMgr.asURI( this )
-    wsMgr += ( ( this, uri ) )
-    wsMgr.socketURIMap += ( ( uri, SocketConnectionPair( this, connection ) ) )
+    println( "in onOpen with " + wsConnection )
+    dispatcher.socketURIMap += ( uri -> SocketConnectionPair(queue,wsConnection) )
   }
   
   override def onClose(
     closeCode: Int,
     message: String
   ) : Unit = {
-    // BUGBUG -- lgm : is this thread safe?
     println( "in onClose with " + closeCode + " and " + message )
-    for( uri <- wsMgr.get( this ) ) {
-      wsMgr.socketURIMap -= uri
-    }
-    wsMgr -= this
+    dispatcher.socketURIMap -= uri
   }
   
   override def onMessage(
     message: String
   ) : Unit = {
-    // BUGBUG -- lgm : is this thread safe?
-    println( "in onMessage with " + message )
+    // is this thread safe?
     queue += message
+    // GLENandGREG need to send the message throught the dispatcher here.  The following code is AMQP'ish not websocket'ish
+    // but we need something like this except it does the 
+/*
+    val srcScope : AMQPNodeJSScope = new AMQPNodeJSStdScope()
+    val srcQM = new srcScope.AMQPNodeJSQueueM( host, exchange )
+    val srcQ = srcQM.zeroJSON    
+    srcQ ! putMsgHdrsBody
+*/
   }    
 }
-
-
-package usage {
-/* ------------------------------------------------------------------
- * Mostly self-contained object to support unit testing
- * ------------------------------------------------------------------ */ 
-
-  import com.biosimilarity.lift.model.store._
-  import com.biosimilarity.lift.model.agent._
-  import com.biosimilarity.lift.model.msg._
-
-  import com.biosimilarity.lift.lib.UUIDOps
-  import com.biosimilarity.lift.lib.moniker._
-
-  import scala.xml._
-  import scala.collection.MapProxy
-  import scala.collection.mutable.Map
-  import scala.collection.mutable.HashMap
-  import scala.collection.mutable.LinkedHashMap
-  import scala.collection.mutable.ListBuffer
-  import scala.collection.mutable.MutableList
-
-  import java.io.StringReader
-
-}
-
 
