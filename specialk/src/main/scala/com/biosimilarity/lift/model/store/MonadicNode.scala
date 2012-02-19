@@ -71,6 +71,9 @@ class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   def srcHost( src : Moniker ) : String = src.getHost
   def srcHost : String = srcHost( name )
 
+  def srcPort( src : Moniker ) : Int = src.getPort
+  def srcPort : Int = srcPort( name )
+
   def srcExchange( src : Moniker ) : String =
     src.getPath.split( "/" )( 1 )
   def srcExchange : String = srcExchange( name )
@@ -78,14 +81,60 @@ class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   def srcScope : AMQPScope[TxPort] = new AMQPStdScope[TxPort]()
   @transient lazy val stblSrcScope : AMQPScope[TxPort] = srcScope
 
-  def srcQM( srcHost : String, srcExchange : String ) : stblSrcScope.AMQPQueueHostExchangeM[TxPort] =
+  def srcQM( srcHost : String, srcExchange : String ) : stblSrcScope.AMQPQueueM[TxPort] =
     new stblSrcScope.AMQPQueueHostExchangeM( srcHost, srcExchange )
-  def srcQM : stblSrcScope.AMQPQueueHostExchangeM[TxPort] = srcQM( srcHost, srcExchange )
-  @transient lazy val stblSrcQM : stblSrcScope.AMQPQueueHostExchangeM[TxPort] = srcQM
+  def srcQM( srcMoniker : Moniker ) : stblSrcScope.AMQPQueueM[TxPort] =
+    new stblSrcScope.AMQPQueueHostMonikerM( srcMoniker )
+  def srcQM : stblSrcScope.AMQPQueueM[TxPort] = srcQM( name )
+  @transient lazy val stblSrcQM : stblSrcScope.AMQPQueueM[TxPort] = srcQM
 
   def srcQ( srcHost : String, srcExchange : String ) : stblSrcScope.AMQPQueue[String] = 
     srcQM( srcHost, srcExchange ).zero
   def srcQ : stblSrcScope.AMQPQueue[String] = stblSrcQM.zero
+
+  def dispatch(
+    msgGenerator : Generator[TxPort,Unit,Unit]
+  ) = 
+    Generator {
+      k : ( Trgt => Unit @suspendable ) =>
+	shift {
+	  outerK : ( Unit => Unit ) =>
+	    reset {
+	      for( msg <- xformAndDispatch( msgGenerator ) ) {
+		msg match {
+		  case l@Left(
+		    jreq@JustifiedRequest(
+		      m, p, d, t,
+		      f : ReqBody,
+		      c : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
+		    )
+		  ) => {
+		    if ( validate( jreq ) ) {
+		      reportage( "calling handler on " + jreq )
+		      k( l )
+		    }
+		  }
+		  case r@Right(
+		    jrsp@JustifiedResponse(
+		      m, p, d, t,
+		      f : RspBody,
+		      c : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
+		    )
+		  ) => {
+		    if ( validate( jrsp ) ) {
+		      reportage( "calling handler on " + jrsp )
+		      k( r )
+		    }
+		  }
+		}
+
+	      }
+
+	      reportage( "dispatch returning" )
+  	      outerK()
+	    }
+	}
+    }
 }
 
 

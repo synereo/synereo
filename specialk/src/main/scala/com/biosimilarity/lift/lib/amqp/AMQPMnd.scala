@@ -440,8 +440,23 @@ trait AMQPBrokerScope[T] extends Serializable {
   ) extends AMQPQueueM[A](
     uri.getHost,
     uri.getPort,
-    uri.getPath.split( "/" )( 1 ),
-    uri.getPath.split( "/" )( 0 )
+    {
+      val spath = uri.getPath.split( "/" )
+      spath.length match {
+      case 1 => "mult"
+      case 0 => "mult"
+      case _ => spath( 1 )
+      }
+    },
+    {
+      val spath = uri.getPath.split( "/" )
+      spath.length match {
+      case 2 => "routeroute"
+      case 1 => "routeroute"
+      case 0 => "routeroute"
+      case _ => spath( 2 )
+      }
+    }
   )
 
   case class AMQPQueueHostMonikerM[A] (
@@ -449,8 +464,23 @@ trait AMQPBrokerScope[T] extends Serializable {
   ) extends AMQPQueueM[A](
     moniker.getHost,
     moniker.getPort,
-    moniker.getPath.split( "/" )( 1 ),
-    moniker.getPath.split( "/" )( 0 )
+    {
+      val spath = moniker.getPath.split( "/" )
+      spath.length match {
+      case 1 => "mult"
+      case 0 => "mult"
+      case _ => spath( 1 )
+      }
+    },
+    {
+      val spath = moniker.getPath.split( "/" )
+      spath.length match {
+      case 2 => "routeroute"
+      case 1 => "routeroute"
+      case 0 => "routeroute"
+      case _ => spath( 2 )
+      }
+    }
   )
 
   def apply [A] (
