@@ -71,6 +71,7 @@ case class QueuingWebSocket(
   ) : Unit = {
     println( "in onOpen with " + wsConnection )
     dispatcher.socketURIMap += ( uri -> SocketConnectionPair(queue,wsConnection) )
+    dispatcher.serveAPI(uri)
   }
   
   override def onClose(
@@ -85,6 +86,7 @@ case class QueuingWebSocket(
     message: String
   ) : Unit = {
     // is this thread safe?
+    println("adding message to queue " + queue.size + "  " + message)
     queue += message
     // GLENandGREG need to send the message throught the dispatcher here.  The following code is AMQP'ish not websocket'ish
     // but we need something like this except it does the 
