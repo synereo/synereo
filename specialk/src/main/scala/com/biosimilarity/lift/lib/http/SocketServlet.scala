@@ -66,9 +66,13 @@ class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
   ) : WebSocket = {
     val uri = new URI(request.getParameter("uri"))
     println("socket received " + request)
-    QueuingWebSocket( 
-      dispatcher
-      , uri
+    QueuingWebSocket(
+      new Queue[String](),
+      ( scp : SocketConnectionPair ) => {
+	dispatcher.socketURIMap += ( uri -> scp )
+	dispatcher.serveAPI(uri)
+      },
+      () => { dispatcher.socketURIMap -= uri }
     )
   }  
 }

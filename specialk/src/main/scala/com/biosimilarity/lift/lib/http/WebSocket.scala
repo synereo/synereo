@@ -51,27 +51,30 @@ import _root_.java.util.TimerTask
 import java.net.URI
 import com.biosimilarity.lift.lib.kvdbJSON.KVDBJSONAPIDispatcher
 
-case class SocketConnectionPair( 
-  requestQueue : Seq[String],  // this is the queue that the dispatcher listens for incoming messages on
-  responseConnection : WebSocket.Connection   // this is the websocket that the dispatcher will send outgoing messages with
-)
+trait SocketConnectionPair {
+  def webSocket : WebSocket with Seq[String]
+  def responseConnection : WebSocket.Connection
+}
 
+case class SCP(
+  webSocket : WebSocket with Seq[String]
+  , responseConnection : WebSocket.Connection
+) extends SocketConnectionPair
 
 case class QueuingWebSocket( 
-  dispatcher: KVDBJSONAPIDispatcher
-  , uri: URI
+  requestQueue : Queue[String]
+  , openCB : SocketConnectionPair => Unit
+  , closeCB : () => Unit
 ) extends WebSocket 
      with WebSocket.OnTextMessage
-{
-  
-  val queue = Queue[String]()
-
+     with SeqProxy[String]
+{ 
+  override def self = requestQueue
   override def onOpen(
     wsConnection: WebSocket.Connection
   ) : Unit = {
     println( "in onOpen with " + wsConnection )
-    dispatcher.socketURIMap += ( uri -> SocketConnectionPair(queue,wsConnection) )
-    dispatcher.serveAPI(uri)
+    openCB( SCP( this, wsConnection ) )    
   }
   
   override def onClose(
@@ -79,23 +82,15 @@ case class QueuingWebSocket(
     message: String
   ) : Unit = {
     println( "in onClose with " + closeCode + " and " + message )
-    dispatcher.socketURIMap -= uri
+    closeCB()
   }
   
   override def onMessage(
     message: String
   ) : Unit = {
     // is this thread safe?
-    println("adding message to queue " + queue.size + "  " + message)
-    queue += message
-    // GLENandGREG need to send the message throught the dispatcher here.  The following code is AMQP'ish not websocket'ish
-    // but we need something like this except it does the 
-/*
-    val srcScope : AMQPNodeJSScope = new AMQPNodeJSStdScope()
-    val srcQM = new srcScope.AMQPNodeJSQueueM( host, exchange )
-    val srcQ = srcQM.zeroJSON    
-    srcQ ! putMsgHdrsBody
-*/
+    println("adding message to queue (of size " + requestQueue.size + ")  " + message)
+    requestQueue += message
   }    
 }
 

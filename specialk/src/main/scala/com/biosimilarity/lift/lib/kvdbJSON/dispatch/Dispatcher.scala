@@ -339,10 +339,8 @@ with UUIDOps {
 	  
 	  case "websocket" => {
 	    socketURIMap.get( reply ) match {
-	      case Some( SocketConnectionPair(_,wsConnection) ) => {
-		WebSocketTrgt(
-		  wsConnection
-		)
+	      case Some( SCP( _, wsConnection ) ) => {
+		WebSocketTrgt( wsConnection )
 	      }
 	      case _ => {
 		throw new Exception( "missing websocket for : " + reply )
@@ -559,7 +557,7 @@ with UUIDOps {
 	serveAPI( srcHost( uri ), srcExchange( uri ) )
       }
       case "websocket" => {
-	for( SocketConnectionPair(queue,_) <- socketURIMap.get( uri ) ) {
+	for( SCP(queue,_) <- socketURIMap.get( uri ) ) {
 	  serveAPI( queue )
 	}
       }
