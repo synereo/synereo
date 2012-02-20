@@ -23,6 +23,9 @@ import com.biosimilarity.lift.lib.moniker._
 
 import com.biosimilarity.lift.lib.websocket.LockFreeMap
 
+import scala.concurrent.{Channel => Chan, _}
+import scala.concurrent.cpsops._
+
 import scala.util.continuations._
 import scala.collection.mutable.HashMap
 import scala.xml._
@@ -52,6 +55,7 @@ with Journalist
 with ConfiggyReporting
 with ConfiguredJournal
 with ConfigurationTrampoline
+with FJTaskRunners
 with UUIDOps {
   import scala.collection.JavaConversions._
   
@@ -576,7 +580,7 @@ with UUIDOps {
     }
   }
 
-  def serveAPI : Unit = serveAPI( srcURI )
+  def serveAPI : Unit = spawn { serveAPI( srcURI ) }
 }
 
 class KVDBJSONAPIDispatcher(
