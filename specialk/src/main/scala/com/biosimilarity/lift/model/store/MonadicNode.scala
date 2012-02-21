@@ -121,13 +121,13 @@ abstract class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
 
   override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
   
-  def srcHost( src : Moniker ) : String = src.getHost
-  def srcHost : String = srcHost( name )
+  def mnkrHost( src : Moniker ) : String = src.getHost
+  def srcHost : String = mnkrHost( name )
 
-  def srcPort( src : Moniker ) : Int = src.getPort
-  def srcPort : Int = srcPort( name )
+  def mnkrPort( src : Moniker ) : Int = src.getPort
+  def srcPort : Int = mnkrPort( name )
 
-  def srcExchange( src : Moniker ) : String = {
+  def mnkrExchange( src : Moniker ) : String = {
     val spath = src.getPath.split( "/" )
     spath.length match {
       case 0 => AMQPDefaults.defaultExchange
@@ -135,22 +135,22 @@ abstract class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
       case 2 => spath( 1 )
     }
   }
-  def srcExchange : String = srcExchange( name )  
+  def srcExchange : String = mnkrExchange( name )  
 
-  def srcRoutingKey( src : Moniker ) : String = {
+  def mnkrRoutingKey( src : Moniker ) : String = {
     val rkA = src.getQuery.split( "," ).filter( ( p : String ) => p.contains( "routingKey" ) )
     rkA.length match {
       case 0 => AMQPDefaults.defaultRoutingKey
       case _ => rkA( 0 ).split( "=" )( 1 )
     }
   }
-  def srcRoutingKey : String = srcRoutingKey( name )
+  def srcRoutingKey : String = mnkrRoutingKey( name )
 
   def srcScope : AMQPTxPortTrgtScope = new AMQPTxPortTrgtScope()
 
   @transient lazy val stblSrcScope : AMQPTxPortTrgtScope = srcScope
 
-  def srcQM(
+  def mkQM(
     srcHost : String,
     srcPort : Int,
     srcExchange : String,
@@ -160,27 +160,30 @@ abstract class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
       srcHost, srcPort, srcExchange, srcRoutingKey
     )
   }
-  def srcQM(
+  def mnkrQM(
     srcMoniker : Moniker
   ) : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = {
-    new stblSrcScope.TxPortOverAMQPQueueXFormM(
-      srcHost( srcMoniker ),
-      srcPort( srcMoniker ),
-      srcExchange( srcMoniker ),
-      srcRoutingKey( srcMoniker )
+    mkQM(
+      mnkrHost( srcMoniker ),
+      mnkrPort( srcMoniker ),
+      mnkrExchange( srcMoniker ),
+      mnkrRoutingKey( srcMoniker )
     )
   }
   
-  implicit def srcQM : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = srcQM( name )
+  implicit def srcQM : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = mnkrQM( name )
   @transient lazy val stblSrcQM : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = srcQM
 
-  def srcQ(
+  def mkQ(
     srcHost : String,
     srcPort : Int,
     srcExchange : String,
     srcRoutingKey : String
   ) : stblSrcScope.AMQPQueueTxPort2TrgtXForm[Trgt] = {
-    srcQM( srcHost, srcPort, srcExchange, srcRoutingKey ).zeroTrgt
+    mkQM( srcHost, srcPort, srcExchange, srcRoutingKey ).zeroTrgt
+  }
+  def mnkrQ( mnkr : Moniker ) : stblSrcScope.AMQPQueueTxPort2TrgtXForm[Trgt] = {
+    mnkrQM( mnkr ).zeroTrgt
   }
   implicit def srcQ : stblSrcScope.AMQPQueueTxPort2TrgtXForm[Trgt] = stblSrcQM.zeroTrgt
 
