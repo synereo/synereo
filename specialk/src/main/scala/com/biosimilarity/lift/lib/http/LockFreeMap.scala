@@ -1,18 +1,18 @@
-package com.biosimilarity.lift.lib.websocket
+package com.biosimilarity.lift.lib.http
 
 import scala.collection.immutable.{Map => ImmutableMap}
 import scala.collection.mutable.{Map => MutableMap, MapLike}
 import scala.collection.generic.{CanBuildFrom, MutableMapFactory}
-import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
+import java.util.concurrent.atomic.AtomicReference
 
 
 /**
  * a lock free map that looks like a mutable map to the outside world and internally
- * delegates to a immutable map.  Any mutations create a new immutable map and then use
- * atomic get and set to mutate the delegate map.  If the get and set fails it will
+ * delegates to an immutable map.  Any mutations create a new immutable map and then use
+ * atomic get and set (aka CAS) to mutate the delegate map.  If the atomic get and set fails it will
  * redo the creation of the ew immutable map and try again, etc, etc.  
  *
- * Very high for scenarios with large number of reads compared to writes/mutations.
+ * Performance profile is excellent for scenarios with large number of reads compared to writes/mutations.
  *
  */
 class LockFreeMap[A,B] extends MutableMap[A,B] 

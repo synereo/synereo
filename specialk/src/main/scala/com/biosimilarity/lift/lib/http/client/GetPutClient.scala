@@ -1,11 +1,11 @@
-package com.biosimilarity.lift.lib.websocket.client
+package com.biosimilarity.lift.lib.http.client
 
 
 object GetPutClient extends BaseClientApp {
 
   val getMessage = """
 { "headers" : [
-    websocket://blah/blah
+    :clientUri:
     , agent://localhost/kvdbDispatchStore2
     , f5e9e43b-c590-4285-a66c-96faef286aa3
     , e64c44b5-dfff-4a0e-8e39-49458fd99683
@@ -23,7 +23,7 @@ object GetPutClient extends BaseClientApp {
 
   val putMessage = """
 { "headers" : [
-    agent://localhost/kvdbDispatchStore1
+    :clientUri:
     , agent://localhost/kvdbDispatchStore2
     , f5e9e43b-c590-4285-a66c-96faef286aa3
     , e64c44b5-dfff-4a0e-8e39-49458fd99683
@@ -37,10 +37,12 @@ object GetPutClient extends BaseClientApp {
 }
 """  
 
+  def sendit(msg: String) = rawSend(msg.replace(":clientUri:",clientUri))
+
   def run = {
     (1 to 5) foreach { i =>
-      rawSend(getMessage)
-      rawSend(putMessage)
+      sendit(getMessage)
+      sendit(putMessage)
     }
     // sendPut ("helloWorld", "The Hello World Value")
     // sendGet("helloWorld")

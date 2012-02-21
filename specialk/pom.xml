@@ -120,12 +120,6 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.5</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.7</version>
@@ -163,13 +157,56 @@
       <artifactId>jetty</artifactId>
       <version>[6.1.6,7.0)</version>
       <scope>test</scope>
-    </dependency -->
+    </dependency 
     <dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty</artifactId>
       <version>[6.1.6,8.0.4)</version>
       <scope>test</scope>
     </dependency>
+    -->
+  	<dependency>
+  	  <groupId>org.eclipse.jetty</groupId>
+  	  <artifactId>jetty-server</artifactId>
+  	  <version>8.0.4.v20111024</version>
+  	  <exclusions>
+  			<exclusion>
+  				<groupId>org.mortbay.jetty</groupId>
+  				<artifactId>servlet-api</artifactId>
+  			</exclusion>
+      </exclusions>
+  	</dependency>
+  	<dependency>
+    		<groupId>org.slf4j</groupId>
+    		<artifactId>slf4j-log4j12</artifactId>
+    		<version>1.6.1</version>
+		<scope>compile</scope>
+  	</dependency>
+    <dependency>
+    	<groupId>org.eclipse.jetty.orbit</groupId>
+    	<artifactId>com.sun.el</artifactId>
+    	<version>2.2.0.v201108011116</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.eclipse.jetty.orbit</groupId>
+    	<artifactId>javax.el</artifactId>
+    	<version>2.2.0.v201108011116</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.eclipse.jetty.orbit</groupId>
+    	<artifactId>org.apache.jasper.glassfish</artifactId>
+    	<version>2.2.2.v201112011158</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.eclipse.jetty.orbit</groupId>
+    	<artifactId>javax.servlet.jsp</artifactId>
+    	<version>2.2.0.v201112011158</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.eclipse.jetty.orbit</groupId>
+    	<artifactId>org.apache.taglibs.standard.glassfish</artifactId>
+    	<version>1.2.0.v201112081803</version>
+    </dependency>  	
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-http</artifactId>
@@ -179,13 +216,6 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlets</artifactId>
       <version>8.0.4.v20111024</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <!-- version>8.0.4.v20111024</version -->
-      <version>8.0.1.v20110908</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>

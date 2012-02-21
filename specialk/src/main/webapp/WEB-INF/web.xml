@@ -5,33 +5,10 @@ PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
 "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
-  <filter>
-    <filter-name>MonadicFilter</filter-name>
-    <display-name>Monadic Filter</display-name>
-    <description>The Filter that intercepts SpecialK calls</description>
-    <filter-class>com.biosimilarity.lift.model.http.servlet.MonadicFilter</filter-class>
-  </filter>
-
-  <filter>
-    <filter-name>LiftFilter</filter-name>
-    <display-name>Lift Filter</display-name>
-    <description>The Filter that intercepts lift calls</description>
-    <filter-class>net.liftweb.http.LiftFilter</filter-class>
-  </filter>
-  	
-  <filter-mapping>
-    <filter-name>MonadicFilter</filter-name>
-    <url-pattern>/Monadic</url-pattern>
-  </filter-mapping>
-  <filter-mapping>
-    <filter-name>LiftFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>  
-
-
+  
   <servlet>
     <servlet-name>websocket</servlet-name>
-    <servlet-class>com.biosimilarity.lift.lib.websocket.SocketServlet</servlet-class>
+    <servlet-class>com.biosimilarity.lift.lib.http.SocketServlet</servlet-class>
   </servlet>
 
   <servlet-mapping>

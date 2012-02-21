@@ -2,7 +2,7 @@ package com.biosimilarity.lift {
 package lib {
 
 import net.liftweb._
-import http._
+import net.liftweb.http._
 import util._
 import common._
 import _root_.java.util.Date
