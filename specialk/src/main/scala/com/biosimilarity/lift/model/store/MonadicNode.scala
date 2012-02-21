@@ -36,7 +36,7 @@ import java.net.URI
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
-class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
+abstract class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   override val name : Moniker,
   override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
   override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
@@ -45,14 +45,73 @@ class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
 ) extends Socialite[ReqBody,RspBody]
   with Awareness[ReqBody,RspBody]
   with Focus[ReqBody,RspBody] 
-  with MonadicWireToTrgtConversion
   with MonadicGenerators
-  with WireToTrgtConversion
+  with MonadicConcurrentGenerators
+  with FJTaskRunners
   with WireTap 
   with Journalist
 {  
-  override type Wire = TxPort
-  override type Trgt = Either[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]]
+  type Trgt = Either[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]]
+  def txPort2Trgt [A <: Trgt] ( txPortMsg : TxPort ) : A
+  def trgt2TxPort [A >: Trgt] ( txPortMsg : A ) : TxPort
+
+  case class AMQPTxPortTrgtScope(
+  ) extends AMQPScope[TxPort](
+    AMQPDefaults.defaultConnectionFactory
+  ) {
+    case class AMQPQueueTxPort2TrgtXForm[T](
+      override val exchange : String,
+      override val routingKey : String,    
+      override val w2T : TxPort => T,
+      override val t2W : T => TxPort,
+      @transient override val dispatcherW : theMDS.Generator[TxPort,Unit,Unit],
+      @transient override val senderW : theMDS.Generator[Unit,TxPort,Unit]
+    ) extends AMQPQueueXForm[TxPort,T]
+    
+    class TxPortOverAMQPQueueXFormM[A <: Trgt](
+      val host : String,
+      val port : Int,
+      override val exchange : String,
+      override val routingKey : String
+    ) extends AMQPQueueMQT[A,AMQPQueueTxPort2TrgtXForm] {
+      override def zero [B] : AMQPQueueTxPort2TrgtXForm[B] = {
+	AMQPQueueTxPort2TrgtXForm[B](
+	  exchange,
+	  routingKey,	  
+	  ( txPortMsg : TxPort ) => {
+	    txPort2Trgt[Trgt]( txPortMsg ) match {
+	      case b : B => b
+	      case _ => {
+		throw new Exception( "trgt is not a B" )
+	      }
+	    }
+	  },
+	  ( b : B ) => {
+	    b match {
+	      case trgt : Trgt => {
+		trgt2TxPort[Trgt]( b.asInstanceOf[Trgt] )
+	      }
+	      case _ => {
+		throw new Exception( "Not a trgt: " + b )
+	      }
+	    }
+	  },
+	  theMDS.serve[TxPort]( factory, host, port, exchange ),
+	  theMDS.sender[TxPort]( host, port, exchange, routingKey )
+	)
+      }
+      def zeroTrgt [B >: Trgt] : AMQPQueueTxPort2TrgtXForm[B] = {
+	AMQPQueueTxPort2TrgtXForm[B](
+	  exchange,
+	  routingKey,	  
+	  txPort2Trgt[A],
+	  trgt2TxPort[B],
+	  theMDS.serve[TxPort]( factory, host, port, exchange ),
+	  theMDS.sender[TxPort]( host, port, exchange, routingKey )
+	)
+      }    
+    }
+  }
 
   override def useBraceNotation : Boolean = false  
   def likes( dsg : Moniker, acq : Socialite[ReqBody,RspBody] ) : Boolean = true
@@ -61,12 +120,6 @@ class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   override def handleResponsePayload ( payload : RspBody ) : Boolean = false  
 
   override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
-  override def wire2Trgt( wire : Wire ) : Trgt = {
-    throw new Exception( "wire2Trgt left unimplemented" )
-  }
-  override def trgt2Wire( trgt : Trgt ) : Wire = { 
-    throw new Exception( "trgt2Wire left unimplemented" )
-  }
   
   def srcHost( src : Moniker ) : String = src.getHost
   def srcHost : String = srcHost( name )
@@ -74,67 +127,93 @@ class MonadicFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   def srcPort( src : Moniker ) : Int = src.getPort
   def srcPort : Int = srcPort( name )
 
-  def srcExchange( src : Moniker ) : String =
-    src.getPath.split( "/" )( 1 )
-  def srcExchange : String = srcExchange( name )
-
-  def srcScope : AMQPScope[TxPort] = new AMQPStdScope[TxPort]()
-  @transient lazy val stblSrcScope : AMQPScope[TxPort] = srcScope
-
-  def srcQM( srcHost : String, srcExchange : String ) : stblSrcScope.AMQPQueueM[TxPort] =
-    new stblSrcScope.AMQPQueueHostExchangeM( srcHost, srcExchange )
-  def srcQM( srcMoniker : Moniker ) : stblSrcScope.AMQPQueueM[TxPort] =
-    new stblSrcScope.AMQPQueueHostMonikerM( srcMoniker )
-  def srcQM : stblSrcScope.AMQPQueueM[TxPort] = srcQM( name )
-  @transient lazy val stblSrcQM : stblSrcScope.AMQPQueueM[TxPort] = srcQM
-
-  def srcQ( srcHost : String, srcExchange : String ) : stblSrcScope.AMQPQueue[String] = 
-    srcQM( srcHost, srcExchange ).zero
-  def srcQ : stblSrcScope.AMQPQueue[String] = stblSrcQM.zero
-
-  def dispatch(
-    msgGenerator : Generator[TxPort,Unit,Unit]
-  ) = 
-    Generator {
-      k : ( Trgt => Unit @suspendable ) =>
-	shift {
-	  outerK : ( Unit => Unit ) =>
-	    reset {
-	      for( msg <- xformAndDispatch( msgGenerator ) ) {
-		msg match {
-		  case l@Left(
-		    jreq@JustifiedRequest(
-		      m, p, d, t,
-		      f : ReqBody,
-		      c : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
-		    )
-		  ) => {
-		    if ( validate( jreq ) ) {
-		      reportage( "calling handler on " + jreq )
-		      k( l )
-		    }
-		  }
-		  case r@Right(
-		    jrsp@JustifiedResponse(
-		      m, p, d, t,
-		      f : RspBody,
-		      c : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
-		    )
-		  ) => {
-		    if ( validate( jrsp ) ) {
-		      reportage( "calling handler on " + jrsp )
-		      k( r )
-		    }
-		  }
-		}
-
-	      }
-
-	      reportage( "dispatch returning" )
-  	      outerK()
-	    }
-	}
+  def srcExchange( src : Moniker ) : String = {
+    val spath = src.getPath.split( "/" )
+    spath.length match {
+      case 0 => AMQPDefaults.defaultExchange
+      case 1 => AMQPDefaults.defaultExchange
+      case 2 => spath( 1 )
     }
+  }
+  def srcExchange : String = srcExchange( name )  
+
+  def srcRoutingKey( src : Moniker ) : String = {
+    val rkA = src.getQuery.split( "," ).filter( ( p : String ) => p.contains( "routingKey" ) )
+    rkA.length match {
+      case 0 => AMQPDefaults.defaultRoutingKey
+      case _ => rkA( 0 ).split( "=" )( 1 )
+    }
+  }
+  def srcRoutingKey : String = srcRoutingKey( name )
+
+  def srcScope : AMQPTxPortTrgtScope = new AMQPTxPortTrgtScope()
+
+  @transient lazy val stblSrcScope : AMQPTxPortTrgtScope = srcScope
+
+  def srcQM(
+    srcHost : String,
+    srcPort : Int,
+    srcExchange : String,
+    srcRoutingKey : String
+  ) : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = {
+    new stblSrcScope.TxPortOverAMQPQueueXFormM(
+      srcHost, srcPort, srcExchange, srcRoutingKey
+    )
+  }
+  def srcQM(
+    srcMoniker : Moniker
+  ) : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = {
+    new stblSrcScope.TxPortOverAMQPQueueXFormM(
+      srcHost( srcMoniker ),
+      srcPort( srcMoniker ),
+      srcExchange( srcMoniker ),
+      srcRoutingKey( srcMoniker )
+    )
+  }
+  
+  implicit def srcQM : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = srcQM( name )
+  @transient lazy val stblSrcQM : stblSrcScope.TxPortOverAMQPQueueXFormM[Trgt] = srcQM
+
+  def srcQ(
+    srcHost : String,
+    srcPort : Int,
+    srcExchange : String,
+    srcRoutingKey : String
+  ) : stblSrcScope.AMQPQueueTxPort2TrgtXForm[Trgt] = {
+    srcQM( srcHost, srcPort, srcExchange, srcRoutingKey ).zeroTrgt
+  }
+  implicit def srcQ : stblSrcScope.AMQPQueueTxPort2TrgtXForm[Trgt] = stblSrcQM.zeroTrgt
+
+  // def dispatch(
+//     implicit
+//     queueMnd : stblSrcScope.AMQPQueueM[String],
+//     queue : stblSrcScope.AMQPQueue[String] )(
+//   ) : Generator[Trgt,Unit,Unit] = {
+//     Generator {
+//       k : ( Trgt => Unit @suspendable ) =>
+// 	shift {
+// 	  outerK : ( Unit => Unit ) =>
+// 	    reset {
+// 	      for( msg <- queueMnd( queue ) ) {
+// 		msg match {
+// 		  case l@Left( jreq : JustifiedRequest ) => {
+// 		    if ( validate( jreq ) ) {
+// 		      reportage( "calling handler on " + jreq )
+// 		      k( l )
+// 		    }
+// 		  }
+// 		  case r@Right( jrsp : JustifiedResponse ) => {
+// 		    if ( validate( jrsp ) ) {
+// 		      reportage( "calling handler on " + jrsp )
+// 		      k( r )
+// 		    }
+// 		  }
+// 		}
+// 	      }
+// 	    }
+// 	}
+//     }
+      
 }
 
 

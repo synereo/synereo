@@ -562,6 +562,7 @@ with UUIDOps {
       }
       case "websocket" => {
 	for( SCP(queue,_) <- socketURIMap.get( uri ) ) {
+	  tweet( "found a queue " + queue )
 	  serveAPI( queue )
 	}
       }
