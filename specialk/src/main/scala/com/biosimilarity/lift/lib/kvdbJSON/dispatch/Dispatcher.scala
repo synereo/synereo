@@ -595,7 +595,7 @@ class KVDBJSONAPIDispatcher(
     PTSS.Being.asInstanceOf[stblKVDBScope.PersistenceScope]
   }
   
-  val socketURIMap = LockFreeMap[URI,SocketConnectionPair]()
+  @transient val socketURIMap = LockFreeMap[URI,SocketConnectionPair]()
 
   // this controls what URI's will be dispatched to KVDB's
   override def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]
