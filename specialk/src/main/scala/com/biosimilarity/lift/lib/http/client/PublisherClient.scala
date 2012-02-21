@@ -1,4 +1,4 @@
-package com.biosimilarity.lift.lib.websocket.client
+package com.biosimilarity.lift.lib.http.client
 
 object PublisherClient extends BaseClientApp {
     

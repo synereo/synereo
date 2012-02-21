@@ -6,22 +6,13 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.lift.lib.websocket
-
-import scala.collection.mutable.Queue
+package com.biosimilarity.lift.lib.http
 
 import javax.servlet.http.HttpServletRequest
-
-import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.websocket.WebSocketServlet
-import org.eclipse.jetty.websocket.WebSocket
 import java.net.URI
 import com.biosimilarity.lift.lib.kvdbJSON.KVDBJSONAPIDispatcher
+import org.eclipse.jetty.websocket.WebSocket
 
 /**
 
@@ -30,10 +21,17 @@ I (aka Glen) am not clear if more framing is needed.  I.e. I think we send the f
 client.  We "could" have the framing at the socket level and send it once as well then all messages get 
 that from URI, etc, etc...  Anyways this is enough text to trigger my memory for discussion
 
-GLENandGREG when should serveAPI be called?  Per web socket connection?  That is my best educated 2 cent guess ;-)
-
 */
 object SocketServlet {
+
+  val requestQueue = new RequestQueue {
+    val delegate = new java.util.concurrent.LinkedBlockingQueue[String]()
+    def hasNext = true
+    def next = delegate.take // this is a blocking call
+    def put(msg: String) = delegate.put(msg)    
+    override def size = delegate.size  // important otherwise a call to size blocks because it iterates
+  }
+
   lazy val dispatcher = {
     val dsp =
       new KVDBJSONAPIDispatcher( new URI( "amqp", "localhost", "/kvdb", "" ) )
@@ -41,15 +39,22 @@ object SocketServlet {
     val trgtURI = 
       new URI( "agent", "localhost", "/kvdbDispatchStore1", "" )
 
-    val srcURI = 
-      new URI( "agent", "localhost", "/kvdbDispatchStore2", "" )  
+    // val srcURI = 
+    //   new URI( "agent", "localhost", "/kvdbDispatchStore2", "" )  
       
-    // Configure it to serve requests with a "to" header of agent://localhost/kvdbDispatchStore1
-    // and a "from" header of agent://localhost/kvdbDispatchStore2
-    // and deposit replies to the kvdbReplyQueue in the kvdbReplyExchange  
     dsp.addSingletonKVDB( trgtURI )
-    // dsp.addReplyQueue( srcURI, "localhost", "kvdbReply" )
-    dsp.serveAPI
+    
+    // # of dispatcher worker threads we want    
+    val workerCount = 1
+    
+    (1 to workerCount) foreach { i =>
+      new Thread {
+        setName("socketServletRequestQueue-" + i)
+        override def run = {
+          dsp.serveAPI(requestQueue)
+        }
+      }.start
+    }
     
     dsp
   }
@@ -58,7 +63,7 @@ object SocketServlet {
 
 class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
   
-  import SocketServlet.dispatcher
+  import SocketServlet._
    
   def doWebSocketConnect(
     request : HttpServletRequest,
@@ -67,10 +72,9 @@ class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
     val uri = new URI(request.getParameter("uri"))
     println("socket received " + request)
     QueuingWebSocket(
-      new Queue[String](),
+      requestQueue,
       ( scp : SocketConnectionPair ) => {
 	dispatcher.socketURIMap += ( uri -> scp )
-	dispatcher.serveAPI(uri)
       },
       () => { dispatcher.socketURIMap -= uri }
     )

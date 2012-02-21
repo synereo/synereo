@@ -46,3 +46,4 @@ build.log
 build.log
 
 *.log
+lift_proto.db.h2.db

@@ -1,4 +1,4 @@
-package com.biosimilarity.lift.lib.websocket.client
+package com.biosimilarity.lift.lib.http.client
 
 
 import java.net.URI
@@ -11,8 +11,14 @@ import org.eclipse.jetty.websocket.WebSocketClientFactory;
 
 trait BaseClientApp extends App {
 
-//  lazy val url = new URI("ws://127.0.0.1:8090/querysocket")
-  lazy val url = new URI("ws://127.0.0.1:8090/websocket")
+//  lazy val socketServerUrl = new URI("ws://127.0.0.1:8090/websocket")
+  lazy val clientUri = "websocket://blah/blah/" + UUID.randomUUID.toString
+
+  lazy val socketServerUrl = {
+    val uri = new URI("ws://127.0.0.1:8080/websocket?uri=" + clientUri)
+    println("server url is " + uri)
+    uri
+  }
 
   lazy val client = {
     val factory = new WebSocketClientFactory()
@@ -23,7 +29,7 @@ trait BaseClientApp extends App {
     client
   }
   lazy val connection = {
-    client.open(url, new WebSocket.OnTextMessage {
+    client.open(socketServerUrl, new WebSocket.OnTextMessage {
          def onOpen(conn: WebSocket.Connection) = println("-- open")
          def onClose(closeCode: Int, msg: String) = println("-- close " + closeCode + " -- " + msg)
          def onMessage(msg: String) = println("-- received message: " + msg)
@@ -54,6 +60,7 @@ trait BaseClientApp extends App {
    .replace(":verb:", verb)
    .replace(":key:", key)
    .replace(":value:", value)
+   .replace(":clientUri:",clientUri)
     println("--sending message: " + msg);
     rawSend(msg)
   }

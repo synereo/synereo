@@ -12,7 +12,7 @@ import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{
   URI => kvdbURI, UUID => kvdbUUID, Message => kvdbMessage, _
 }
 
-import com.biosimilarity.lift.lib.websocket._
+import com.biosimilarity.lift.lib.http._
 
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store._
@@ -21,7 +21,7 @@ import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.lift.lib.moniker._
 
-import com.biosimilarity.lift.lib.websocket.LockFreeMap
+import com.biosimilarity.lift.lib.http.LockFreeMap
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
@@ -55,7 +55,6 @@ with Journalist
 with ConfiggyReporting
 with ConfiguredJournal
 with ConfigurationTrampoline
-with FJTaskRunners
 with UUIDOps {
   import scala.collection.JavaConversions._
   
@@ -343,8 +342,8 @@ with UUIDOps {
 	  
 	  case "websocket" => {
 	    socketURIMap.get( reply ) match {
-	      case Some( SCP( _, wsConnection ) ) => {
-		WebSocketTrgt( wsConnection )
+	      case Some( scp ) => {
+		WebSocketTrgt( scp.responseConnection )
 	      }
 	      case _ => {
 		throw new Exception( "missing websocket for : " + reply )
@@ -548,21 +547,25 @@ with UUIDOps {
     }
   }
 
-  def serveAPI( seq : Seq[String] ) : Unit = {
-    for( jsonReq <- seq ) {
+  def serveAPI( queue : Iterator[String] ) : Unit = {
+    println("entered serveAPI")
+    for( jsonReq <- queue ) {
+      println("received")
       tweet( "received: " + jsonReq )
       dispatch( parse( jsonReq ) )
     }
   }
 
   def serveAPI( uri : URI ) : Unit = {
+    println("serveAPI " + uri)
     uri.getScheme match {
       case "amqp" => {
 	serveAPI( srcHost( uri ), srcExchange( uri ) )
       }
       case "websocket" => {
-	for( SCP(queue,_) <- socketURIMap.get( uri ) ) {
-	  serveAPI( queue )
+        println("serveAPI websocket")
+	for( scp <- socketURIMap.get( uri ) ) {
+	  serveAPI( scp.requestQueue )
 	}
       }
       case "stream" => {
@@ -580,7 +583,7 @@ with UUIDOps {
     }
   }
 
-  def serveAPI : Unit = spawn { serveAPI( srcURI ) }
+  def serveAPI : Unit = serveAPI( srcURI ) 
 }
 
 class KVDBJSONAPIDispatcher(
