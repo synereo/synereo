@@ -92,7 +92,7 @@ with UUIDOps {
   def replyQ( replyHost : String, replyExchange : String ) : stblReplyScope.AMQPQueue[String] = 
     replyQM( replyHost, replyExchange ).zeroJSON
 
-  def socketURIMap: LockFreeMap[URI,SocketConnectionPair]
+  def socketURIMap : LockFreeMap[URI,SocketConnectionPair]
   
   // namespace
   def kvdbScope : PersistedTermStoreScope[String,String,String,String]
@@ -341,6 +341,7 @@ with UUIDOps {
 	  }
 	  
 	  case "websocket" => {
+	    tweet( "using websocket reply target scheme " )
 	    socketURIMap.get( reply ) match {
 	      case Some( scp ) => {
 		WebSocketTrgt( scp.responseConnection )
@@ -375,7 +376,15 @@ with UUIDOps {
       
     }
 
+    // val trgtURI = asURI( reqHdr.uri_2 )
+//     tweet( "calculating reply target from " + reqHdr.uri_2 )
+//     tweet( "uri is " + trgtURI )
+//     tweet( "uri is " + replyNamespace.get( trgtURI.getOrElse( null ) ) )
+//     for( ( turi, rtrgt ) <- replyNamespace ) { tweet( turi + " , " + rtrgt ) }
+
     for( trgt <- asURI( reqHdr.uri_2 ); rplyTrgt <- replyNamespace.get( trgt ) ) yield {
+      // tweet( "trgt URI :" + trgt )
+//       tweet( "reply trgt :" + rplyTrgt )
       rplyTrgt match {
 	case Left( reply ) => {	cacheMnQ( trgt, reply )	}
 	case Right( reply ) => {
@@ -594,8 +603,18 @@ class KVDBJSONAPIDispatcher(
     // This cast makes me sad...
     PTSS.Being.asInstanceOf[stblKVDBScope.PersistenceScope]
   }
-  
-  @transient val socketURIMap = LockFreeMap[URI,SocketConnectionPair]()
+    
+  override def socketURIMap : LockFreeMap[URI,SocketConnectionPair] = {
+    stblSocketURIMap match {
+      case Some( sum ) => sum
+      case _ => {
+	val sum = new LockFreeMap[URI,SocketConnectionPair]()
+	stblSocketURIMap = Some( sum )
+	sum
+      }
+    }
+  }
+  @transient var stblSocketURIMap : Option[LockFreeMap[URI,SocketConnectionPair]] = None
 
   // this controls what URI's will be dispatched to KVDB's
   override def namespace : HashMap[URI,stblKVDBPersistenceScope.PersistedMonadicGeneratorJunction]

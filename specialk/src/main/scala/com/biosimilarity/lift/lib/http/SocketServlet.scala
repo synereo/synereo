@@ -37,7 +37,7 @@ object SocketServlet {
       new KVDBJSONAPIDispatcher( new URI( "amqp", "localhost", "/kvdb", "" ) )
 
     val trgtURI = 
-      new URI( "agent", "localhost", "/kvdbDispatchStore1", "" )
+      new URI( "agent", "localhost", "/kvdbDispatchStore1", null )
 
     // val srcURI = 
     //   new URI( "agent", "localhost", "/kvdbDispatchStore2", "" )  
@@ -75,6 +75,7 @@ class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
       requestQueue,
       ( scp : SocketConnectionPair ) => {
 	dispatcher.socketURIMap += ( uri -> scp )
+	dispatcher.addReplyURI( uri, uri )
       },
       () => { dispatcher.socketURIMap -= uri }
     )
