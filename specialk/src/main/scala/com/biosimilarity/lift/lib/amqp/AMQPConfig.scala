@@ -40,3 +40,43 @@ object AMQPDefaults extends AMQPUtilities {
   implicit val defaultURI : URI = 
     new URI( "amqp", null, "localhost", 5672, "/mult", "routingKey=routeroute", null )
 }
+
+trait AMQPMonikerOps {
+  def mnkrHost( src : Moniker ) : String = src.getHost
+  def mnkrPort( src : Moniker ) : Int = src.getPort
+  def mnkrExchange( src : Moniker ) : String = {
+    val spath = src.getPath.split( "/" )
+    spath.length match {
+      case 0 => AMQPDefaults.defaultExchange
+      case 1 => AMQPDefaults.defaultExchange
+      case 2 => spath( 1 )
+    }
+  }
+  def mnkrRoutingKey( src : Moniker ) : String = {
+    val rkA = src.getQuery.split( "," ).filter( ( p : String ) => p.contains( "routingKey" ) )
+    rkA.length match {
+      case 0 => AMQPDefaults.defaultRoutingKey
+      case _ => rkA( 0 ).split( "=" )( 1 )
+    }
+  }  
+}
+
+trait AMQPURIOps {
+  def uriHost( src : URI ) : String = src.getHost
+  def uriPort( src : URI ) : Int = src.getPort
+  def uriExchange( src : URI ) : String = {
+    val spath = src.getPath.split( "/" )
+    spath.length match {
+      case 0 => AMQPDefaults.defaultExchange
+      case 1 => AMQPDefaults.defaultExchange
+      case 2 => spath( 1 )
+    }
+  }
+  def uriRoutingKey( src : URI ) : String = {
+    val rkA = src.getQuery.split( "," ).filter( ( p : String ) => p.contains( "routingKey" ) )
+    rkA.length match {
+      case 0 => AMQPDefaults.defaultRoutingKey
+      case _ => rkA( 0 ).split( "=" )( 1 )
+    }
+  }  
+}
