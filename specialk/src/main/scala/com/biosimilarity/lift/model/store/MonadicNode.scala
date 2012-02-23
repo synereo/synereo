@@ -38,7 +38,7 @@ import java.io.ObjectOutputStream
 
 abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <: MonadicTxPortFramedMsgDispatcher[_,_,_,SZ]](
   override val individuality : Individual[ReqBody,RspBody,SZ],
-  @transient override val acquaintances : List[Moniker]
+  override val acquaintances : List[Moniker]
 ) extends RemoteSociety[ReqBody,RspBody,SZ](
   individuality, acquaintances
 ) with MonadicGenerators
@@ -227,7 +227,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
 
 class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
   override val individuality : Individual[ReqBody,RspBody,MonadicJSONFramedMsgDispatcher],
-  @transient override val acquaintances : List[Moniker]
+  override val acquaintances : List[Moniker]
 ) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,MonadicJSONFramedMsgDispatcher](
   individuality, acquaintances
 ) {
@@ -262,5 +262,45 @@ object MonadicJSONFramedMsgDispatcher {
 	dispatcher.acquaintances
       )
     )
+  }
+}
+
+package usage {
+  import com.biosimilarity.lift.lib.amqp.utilities._
+  object MsgStreamFactory extends AMQPTestUtility[String] {
+    override def msgStreamPayload( idx : Int ) : String = { "Msg" + idx }  
+  }
+  object FramedMsgDispatcherUseCase {
+    trait UseCaseProtocol
+    trait UseCaseRequest extends UseCaseProtocol
+    trait UseCaseResponse extends UseCaseProtocol
+    case class UseCaseRequestOne(
+      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
+    ) extends MsgStreamFactory.Message with UseCaseRequest 
+    case class UseCaseResponseOne(
+      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
+    ) extends MsgStreamFactory.Message with UseCaseResponse
+    case class FramedUseCaseProtocolDispatcher(
+      here : URI, there : URI
+    ) extends MonadicJSONFramedMsgDispatcher[UseCaseRequest,UseCaseResponse](
+      Individual(
+	MURI( here ),
+	new ListBuffer[JustifiedRequest[UseCaseRequest,UseCaseResponse]](),
+	new ListBuffer[JustifiedResponse[UseCaseRequest,UseCaseResponse]]()
+      ),
+      List[Moniker]( MURI( here ) )
+    )
+    def setup(
+      localHost : String, localPort : Int,
+      remoteHost : String, remotePort : Int
+    ) : FramedUseCaseProtocolDispatcher = {
+      FramedUseCaseProtocolDispatcher(
+	new URI( "agent", null, localHost, localPort, "/useCaseProtocol", null, null ),
+	new URI( "agent", null, remoteHost, remotePort, "/useCaseProtocol", null, null )
+      )
+    }
+    def run( implicit numMsgs : Int ) : Unit = {
+      val msgs = MsgStreamFactory.msgStream.take( 100 ).toList
+    }
   }
 }
