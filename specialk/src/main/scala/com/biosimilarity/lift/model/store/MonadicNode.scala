@@ -40,7 +40,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   override val name : Moniker,
   override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
   override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-  @transient override val nameSpace : Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]],
+  @transient val nameMap : Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody]]],
   @transient override val traceMonitor : TraceMonitor[ReqBody,RspBody]
 ) extends Socialite[ReqBody,RspBody]
   with Awareness[ReqBody,RspBody]
@@ -53,6 +53,8 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   with Journalist
 {  
   import identityConversions._
+  override def nameSpace : Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]] =
+    nameMap.asInstanceOf[Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]]]
 
   type FramedMsg = Either[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]]
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : TxPort ) : A
@@ -235,4 +237,51 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   }       
 }
 
+class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
+  override val name : Moniker,
+  override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
+  override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
+  @transient override val nameMap : Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody]]],
+  @transient override val traceMonitor : TraceMonitor[ReqBody,RspBody]
+) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody](
+  name, requests, responses, nameMap, traceMonitor
+) {
+  import identityConversions._
+  
+  def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
+    val xstrm = new XStream( new JettisonMappedXmlDriver )
+    xstrm.fromXML( txPortMsg ).asInstanceOf[A]
+  }
+  def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
+    val xstrm = new XStream( new JettisonMappedXmlDriver )
+    xstrm.toXML( txPortMsg )
+  }
+}
 
+object MonadicJSONFramedMsgDispatcher {
+  def apply [ReqBody,RspBody] (
+    name : Moniker,
+    requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
+    responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
+    nameMap : Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody]]],
+    traceMonitor : TraceMonitor[ReqBody,RspBody]
+  ) : MonadicJSONFramedMsgDispatcher[ReqBody,RspBody] = {
+    new MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
+      name, requests, responses, nameMap, traceMonitor
+    )
+  }
+  def unapply [ReqBody,RspBody] (
+    dispatcher : MonadicJSONFramedMsgDispatcher[ReqBody,RspBody]
+  ) : Option[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]],Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody]]],TraceMonitor[ReqBody,RspBody])]
+  = {
+    Some(
+      (
+	dispatcher.name,
+	dispatcher.requests,
+	dispatcher.responses,
+	dispatcher.nameMap,
+	dispatcher.traceMonitor
+      )
+    )
+  }
+}

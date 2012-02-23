@@ -9,6 +9,7 @@
 package com.biosimilarity.lift.model.agent
 
 import com.biosimilarity.lift.lib.moniker._
+import com.biosimilarity.lift.lib.zipper._
 import com.biosimilarity.lift.model.msg._
 
 import java.net.URI
