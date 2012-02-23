@@ -78,7 +78,7 @@ object Individual {
 
 class Society[ReqBody,RspBody,SZ[_,_] <: Society[_,_,SZ]](
   val individuality : Individual[ReqBody,RspBody,SZ],
-  val nameSpace : MHashMap[Moniker,SZ[ReqBody,RspBody]]
+  val nameSpace : Map[Moniker,SZ[ReqBody,RspBody]]
 ) extends TreeSection[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]])](
   nameSpace.values.toList.map(
     ( sz ) => sz.asInstanceOf[Tree[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]])]]
@@ -116,7 +116,7 @@ class Society[ReqBody,RspBody,SZ[_,_] <: Society[_,_,SZ]](
 object Society {
   def apply [ReqBody,RspBody,SZ[_,_] <: Society[_,_,SZ]] (
     individuality : Individual[ReqBody,RspBody,SZ],
-    nameSpace : MHashMap[Moniker,SZ[ReqBody,RspBody]]
+    nameSpace : Map[Moniker,SZ[ReqBody,RspBody]]
   ) : Society[ReqBody,RspBody,SZ] = {
     new Society[ReqBody,RspBody,SZ]( individuality, nameSpace )
   }

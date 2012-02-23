@@ -36,16 +36,12 @@ import java.net.URI
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
-abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
-  override val name : Moniker,
-  override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
-  override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-  @transient val nameMap : Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody]]],
-  @transient override val traceMonitor : TraceMonitor[ReqBody,RspBody]
-) extends Socialite[ReqBody,RspBody]
-  with Awareness[ReqBody,RspBody]
-  with Focus[ReqBody,RspBody] 
-  with MonadicGenerators
+abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <: MonadicTxPortFramedMsgDispatcher[_,_,_,SZ]](
+  override val individuality : Individual[ReqBody,RspBody,SZ],
+  @transient override val acquaintances : List[Moniker]
+) extends RemoteSociety[ReqBody,RspBody,SZ](
+  individuality, acquaintances
+) with MonadicGenerators
   with MonadicConcurrentGenerators
   with AMQPMonikerOps
   with FJTaskRunners
@@ -53,8 +49,6 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
   with Journalist
 {  
   import identityConversions._
-  override def nameSpace : Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]] =
-    nameMap.asInstanceOf[Option[LinkedHashMap[Moniker,Socialite[ReqBody,RspBody]]]]
 
   type FramedMsg = Either[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]]
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : TxPort ) : A
@@ -187,13 +181,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
       }
     }
   }
-
-  override def useBraceNotation : Boolean = false  
-  def likes( dsg : Moniker, acq : Socialite[ReqBody,RspBody] ) : Boolean = true
-       
-  override def handleRequestPayload ( payload : ReqBody ) : Boolean = false
-  override def handleResponsePayload ( payload : RspBody ) : Boolean = false  
-
+  
   override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
     
   def srcHost : String = mnkrHost( name )  
@@ -210,14 +198,14 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
     sMap
   }  
 
-  @transient lazy val stblScopeMap : Option[HashMap[Moniker,AMQPTxPortFramedMsgScope]] = 
-    for( ns <- nameSpace ) yield { scopeMap( ns.keys ) }
+  @transient lazy val stblScopeMap : HashMap[Moniker,AMQPTxPortFramedMsgScope] = 
+    scopeMap( acquaintances )
   
   def mnkrTPM(
     srcMoniker : Moniker,
     trgtMoniker : Moniker
   ) : Option[AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedQueuePairM[FramedMsg]] = {
-    for( ssMap <- stblScopeMap; scope <- ssMap.get( trgtMoniker ) ) yield {
+    for( scope <- stblScopeMap.get( trgtMoniker ) ) yield {
       new scope.TxPortOverAMQPTwistedQueuePairM( srcMoniker, trgtMoniker )
     }
   }
@@ -229,22 +217,19 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody](
     for( trgt <- trgts; tpm <- mnkrTPM( name, trgt ) ) { tpmMap += ( trgt -> tpm ) }
     tpmMap
   }
-  @transient lazy val stblTPMMap : Option[HashMap[Moniker,AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedQueuePairM[FramedMsg]]] = 
-    for( ns <- nameSpace ) yield { tpmMap( ns.keys ) }
+  @transient lazy val stblTPMMap : HashMap[Moniker,AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedQueuePairM[FramedMsg]] = 
+    tpmMap( acquaintances )
     
   def mnkrQ( mnkr : Moniker ) : Option[AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedPairXForm[FramedMsg]] = {
-    for( stpmMap <- stblTPMMap; tpm <- stpmMap.get( mnkr ) ) yield { tpm.zero }
+    for( tpm <- stblTPMMap.get( mnkr ) ) yield { tpm.zero }
   }       
 }
 
 class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
-  override val name : Moniker,
-  override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
-  override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-  @transient override val nameMap : Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody]]],
-  @transient override val traceMonitor : TraceMonitor[ReqBody,RspBody]
-) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody](
-  name, requests, responses, nameMap, traceMonitor
+  override val individuality : Individual[ReqBody,RspBody,MonadicJSONFramedMsgDispatcher],
+  @transient override val acquaintances : List[Moniker]
+) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,MonadicJSONFramedMsgDispatcher](
+  individuality, acquaintances
 ) {
   import identityConversions._
   
@@ -260,27 +245,21 @@ class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
 
 object MonadicJSONFramedMsgDispatcher {
   def apply [ReqBody,RspBody] (
-    name : Moniker,
-    requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
-    responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]],
-    nameMap : Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody]]],
-    traceMonitor : TraceMonitor[ReqBody,RspBody]
+    individuality : Individual[ReqBody,RspBody,MonadicJSONFramedMsgDispatcher],
+    acquaintances : List[Moniker]
   ) : MonadicJSONFramedMsgDispatcher[ReqBody,RspBody] = {
     new MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
-      name, requests, responses, nameMap, traceMonitor
+      individuality, acquaintances
     )
   }
   def unapply [ReqBody,RspBody] (
     dispatcher : MonadicJSONFramedMsgDispatcher[ReqBody,RspBody]
-  ) : Option[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]],Option[LinkedHashMap[Moniker,MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody]]],TraceMonitor[ReqBody,RspBody])]
+  ) : Option[(Individual[ReqBody,RspBody,MonadicJSONFramedMsgDispatcher],List[Moniker])]
   = {
     Some(
       (
-	dispatcher.name,
-	dispatcher.requests,
-	dispatcher.responses,
-	dispatcher.nameMap,
-	dispatcher.traceMonitor
+	dispatcher.individuality,
+	dispatcher.acquaintances
       )
     )
   }
