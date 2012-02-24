@@ -204,7 +204,7 @@ trait KVDBJSONAPIProtocolFormatT {
 		    host
 		}
 
-		Some( new URI( scheme, lhost, "/" + path, "" ) )
+		Some( new URI( scheme, lhost, "/" + path, null ) )
 	      }
 	      case _ => {
 		throw new Exception( "ill-formed kvdbJSON message: bad URI host in header" + kvdbURI )

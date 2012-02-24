@@ -9,37 +9,55 @@
 package com.biosimilarity.lift.lib.amqp.utilities
 
 trait AMQPTestUtility[A] {
-  case class Msg( a : A, i : Int, b : Boolean, r : Option[Msg] )
+  trait Message {
+    def a : A
+    def i : Int
+    def b : Boolean
+    def r : Option[Message]
+  }
+
+  case class Msg(
+    a : A, i : Int, b : Boolean, r : Option[Message]
+  ) extends Message
 
   def msgStreamPayload( idx : Int ) : A
   
-  var _msgStrm : Option[Stream[Msg]] = None
+  var _msgStrm : Option[Stream[Message]] = None
 
-  def msgStream : Stream[Msg] = {
+  def msgStream [M <: Message](
+    mkMsg : (Boolean,Int,A,Option[Message]) => M
+  ) : Stream[M] = {
+    lazy val msgStrm : Stream[M] =
+      List( mkMsg( true, 0, msgStreamPayload( 0 ), None ) ).toStream append (
+	msgStrm.map(
+	  {
+	    ( msg ) => {
+	      val j = msg.i + 1
+	      mkMsg(
+		((j % 2) == 0),
+		j,
+		msgStreamPayload( j ),
+		Some( msg )
+	      )
+	    }
+	  }
+	)
+      )
+    _msgStrm = Some( msgStrm )
+    msgStrm    
+  }
+
+  def msgStream : Stream[Message] = {    
     _msgStrm match {
       case Some( msgStrm ) => {
 	msgStrm
       }
       case None => {
-	lazy val msgStrm : Stream[Msg] =
-	  List( Msg( msgStreamPayload( 0 ), 0, true, None ) ).toStream append (
-	    msgStrm.map(
-	      {
-		( msg ) => {
-		  msg match {
-		    case Msg( a, i, b, r ) => {
-		      val j = i + 1
-		      Msg(
-			msgStreamPayload( j ) , j, ((j % 2) == 0), Some( msg )
-		      )
-		    }
-		  }
-		}
-	      }
-	    )
-	  )
-	_msgStrm = Some( msgStrm )
-	msgStrm
+	msgStream(
+	  ( b : Boolean, i : Int, a : A, r : Option[Message] ) => {
+	    Msg( a, i, b, r )
+	  }
+	)
       }
     }    
   }

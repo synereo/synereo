@@ -8,6 +8,8 @@
 
 package com.biosimilarity.lift.lib.http
 
+import com.biosimilarity.lift.lib._
+
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse;
 import java.net.URI
@@ -37,7 +39,7 @@ object SocketServlet {
       new KVDBJSONAPIDispatcher( new URI( "amqp", "localhost", "/kvdb", "" ) )
 
     val trgtURI = 
-      new URI( "agent", "localhost", "/kvdbDispatchStore1", "" )
+      new URI( "agent", "localhost", "/kvdbDispatchStore1", null )
 
     // val srcURI = 
     //   new URI( "agent", "localhost", "/kvdbDispatchStore2", "" )  
@@ -64,7 +66,25 @@ object SocketServlet {
 class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
   
   import SocketServlet._
-   
+  def dispatchReplies(
+    replyHost : String,
+    replyExchange : String,
+    scp : SocketConnectionPair
+  ) : Unit = {
+    new Thread {
+      override def run() : Unit = {
+	val srcScope : AMQPNodeJSScope = new AMQPNodeJSStdScope()
+	val srcQM = new srcScope.AMQPNodeJSQueueM( replyHost, replyExchange )
+	val srcQ = srcQM.zeroJSON
+    
+	for( rply <- srcQM( srcQ ) ) {
+	  println( "received: " + rply )
+	  scp.responseConnection.sendMessage( rply )
+	}
+      }
+    }.start    
+  }
+
   def doWebSocketConnect(
     request : HttpServletRequest,
     protocol : String
@@ -75,6 +95,13 @@ class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
       requestQueue,
       ( scp : SocketConnectionPair ) => {
 	dispatcher.socketURIMap += ( uri -> scp )
+	//dispatcher.addReplyURI( uri, uri )
+	val spath = uri.getPath.split( "/" )
+	val replyHost = uri.getHost
+	val replyExchange = spath( 1 )
+
+	dispatcher.addReplyQueue( uri, replyHost, replyExchange )
+	dispatchReplies( replyHost, replyExchange, scp )	
       },
       () => { dispatcher.socketURIMap -= uri }
     )
