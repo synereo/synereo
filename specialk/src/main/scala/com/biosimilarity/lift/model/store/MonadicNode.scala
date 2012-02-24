@@ -296,6 +296,39 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
   }
   @transient lazy val stblQMap : HashMap[Moniker,AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedPairXForm[FramedMsg]] = 
     qMap( acquaintances )
+
+  def !( request : ReqBody ) : Unit = {
+    for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
+      q ! frameRequest( trgt )( request )
+    }
+  }
+
+  def !!( response : RspBody ) : Unit = {
+    for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
+      q ! frameResponse( trgt )( response )
+    }
+  }
+
+  def ?() = {
+    Generator {
+      k : ( Either[ReqBody,RspBody] => Unit @suspendable ) => {
+	val acqItr = acquaintances.iterator
+	while( acqItr.hasNext ) {
+	  val trgt = acqItr.next.asInstanceOf[Moniker]
+	  val ( q, tpm, scope ) =
+	    ( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
+	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
+	    tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
+	  val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
+	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
+	  
+	  for( msg <- tpmp( qp ) ) {
+	    reset{ k( body( msg ) ) }
+	  }
+	}
+      }
+    }
+  }
 }
 
 class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
@@ -362,40 +395,7 @@ package usage {
 	new ListBuffer[JustifiedResponse[UseCaseRequest,UseCaseResponse]]()
       ),
       List[Moniker]( MURI( here ) )
-    ) {
-      def !( request : UseCaseRequest ) : Unit = {
-	for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
-	  q ! frameRequest( trgt )( request )
-	}
-      }
-      def !( response : UseCaseResponse ) : Unit = {
-	for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
-	  q ! frameResponse( trgt )( response )
-	}
-      }
-      def ?() = {
-	Generator {
-	  k : ( UseCaseProtocol => Unit @suspendable ) => {
-	    val acqItr = acquaintances.iterator
-	    while( acqItr.hasNext ) {
-	      val trgt = acqItr.next.asInstanceOf[Moniker]
-	      val ( q, tpm, scope ) =
-		( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
-	      val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
-		tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
-	      val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
-		q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
-	      
-	      for( msg <- tpmp( qp ) ) {
-		body( msg ) match {
-		    case Left( req ) => reset{ k( req ) }
-		    case Right( rsp ) => reset{ k( rsp ) }
-		  }
-	      }
-	    }
-	  }
-	}
-      }
+    ) {      
     }
     def setup(
       localHost : String, localPort : Int,
@@ -421,16 +421,12 @@ package usage {
 
       msgMap += ( 0 -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( 0 ) ) )
       dispatcher ! reqs( 0 )      
+
       reset {
 	for( msg <- dispatcher ?() ) {
 	  println( "received:" + msg )
 	  msg match {
-	    case req : UseCaseRequestOne => {
-	      throw new Exception( "protocol violated" )
-	    }
-	    case rsp@UseCaseResponseOne(
-	      b, j, a, r
-	    ) => {
+	    case Right( rsp@UseCaseResponseOne( b, j, a, r ) ) => {
 	      msgMap.get( j ) match {
 		case Some( Left( req ) ) => {
 		  msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
@@ -447,10 +443,14 @@ package usage {
 		}
 	      }
 	    }
+	    case _ => {
+	      throw new Exception( "protocol violated" )
+	    }	    
 	  }
 	}
       }      
     }
+
     def runServer( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {                  
       // map-reduce version of protocol checking
       val msgMap =
@@ -460,16 +460,14 @@ package usage {
 	for( msg <- dispatcher ?() ) {
 	  println( "received:" + msg )
 	  msg match {
-	    case req@UseCaseRequestOne(
-	      b, j, a, r
-	    ) => {
+	    case Left( req@UseCaseRequestOne( b, j, a, r ) ) => {
 	      if ( j < numMsgs ) {
 		msgMap.get( j ) match {
 		  case None => {
 		    val rsp = UseCaseResponseOne( b, j, a, Some( req ) )
 		    msgMap +=
 		    ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( req, rsp ) )	
-		    dispatcher ! rsp
+		    dispatcher !! rsp
 		  }
 		  case _ => {
 		    throw new Exception( "protocol violated" )
