@@ -550,9 +550,16 @@ with UUIDOps {
   def serveAPI( queue : Iterator[String] ) : Unit = {
     println("entered serveAPI")
     for( jsonReq <- queue ) {
-      println("received")
-      tweet( "received: " + jsonReq )
-      dispatch( parse( jsonReq ) )
+      try {
+        println("received")
+        tweet( "received: " + jsonReq )
+      	dispatch( parse( jsonReq ) )
+		  } catch {
+			  case e => {
+			    println("failed processing\n" + jsonReq)
+          e.printStackTrace
+			  }
+		  }
     }
   }
 

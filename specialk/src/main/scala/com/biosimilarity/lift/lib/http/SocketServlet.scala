@@ -69,7 +69,7 @@ class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
     request : HttpServletRequest,
     protocol : String
   ) : WebSocket = {
-    val uri = new URI(request.getParameter("uri"))
+    val uri = new URI("websocket://" + request.getPathInfo)
     println("socket received " + request)
     QueuingWebSocket(
       requestQueue,
