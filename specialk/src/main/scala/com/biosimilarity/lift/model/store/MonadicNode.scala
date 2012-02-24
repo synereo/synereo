@@ -414,7 +414,7 @@ package usage {
 	}
       ).take( numMsgs ).toList      
       
-      // map-reduce version of protocol checking
+      // map-reduce-style protocol checking
 
       val msgMap =
 	new HashMap[Int,Either[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]]()
@@ -428,6 +428,7 @@ package usage {
 	  msg match {
 	    case Right( rsp@UseCaseResponseOne( b, j, a, r ) ) => {
 	      msgMap.get( j ) match {
+		// Open with left brace ...
 		case Some( Left( req ) ) => {
 		  msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
 		  if ( j < numMsgs ) {
@@ -452,7 +453,7 @@ package usage {
     }
 
     def runServer( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {                  
-      // map-reduce version of protocol checking
+      // map-reduce-style protocol checking
       val msgMap =
 	new HashMap[Int,Either[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]]()
 
@@ -460,6 +461,7 @@ package usage {
 	for( msg <- dispatcher ?() ) {
 	  println( "received:" + msg )
 	  msg match {
+	    // Close with right brace ...
 	    case Left( req@UseCaseRequestOne( b, j, a, r ) ) => {
 	      if ( j < numMsgs ) {
 		msgMap.get( j ) match {
