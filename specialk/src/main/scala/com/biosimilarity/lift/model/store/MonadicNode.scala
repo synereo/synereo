@@ -344,15 +344,15 @@ package usage {
     override def msgStreamPayload( idx : Int ) : String = { "Msg" + idx }  
   }
   object FramedMsgDispatcherUseCase {
-    trait UseCaseProtocol
+    trait UseCaseProtocol extends MsgStreamFactory.Message
     trait UseCaseRequest extends UseCaseProtocol
     trait UseCaseResponse extends UseCaseProtocol
     case class UseCaseRequestOne(
       b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
-    ) extends MsgStreamFactory.Message with UseCaseRequest 
+    ) extends UseCaseRequest 
     case class UseCaseResponseOne(
       b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
-    ) extends MsgStreamFactory.Message with UseCaseResponse
+    ) extends UseCaseResponse
     case class FramedUseCaseProtocolDispatcher(
       here : URI, there : URI
     ) extends MonadicJSONFramedMsgDispatcher[UseCaseRequest,UseCaseResponse](
@@ -368,20 +368,27 @@ package usage {
 	  q ! frameRequest( trgt )( request )
 	}
       }
-      def ?( k : UseCaseProtocol => Unit ) : Unit = {
-	for ( trgt <- acquaintances; q <- stblQMap.get( trgt ); tpm <- stblTPMMap.get( trgt ); scope <- stblScopeMap.get( trgt ) ) {
-	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] = tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
-	  val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
-	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
-	  val qcell = tpmp( qp )
-	  qcell.foreach(
-	    ( msg ) => {
-	      body( msg ) match {
-		case Left( req ) => k( req )
-		case Right( rsp ) => k( rsp )
+      def ?() = {
+	Generator {
+	  k : ( UseCaseProtocol => Unit @suspendable ) => {
+	    val acqItr = acquaintances.iterator
+	    while( acqItr.hasNext ) {
+	      val trgt = acqItr.next.asInstanceOf[Moniker]
+	      val ( q, tpm, scope ) =
+		( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
+	      val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
+		tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
+	      val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
+		q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
+	      
+	      for( msg <- tpmp( qp ) ) {
+		body( msg ) match {
+		    case Left( req ) => reset{ k( req ) }
+		    case Right( rsp ) => reset{ k( rsp ) }
+		  }
 	      }
 	    }
-	  )	    	  
+	  }
 	}
       }
     }
@@ -396,11 +403,19 @@ package usage {
     }
     implicit val numberOfMsgs : Int = 100
     def run( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {
-      val msgs = MsgStreamFactory.msgStream(
+      val reqs = MsgStreamFactory.msgStream[UseCaseRequest](
 	( b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message] ) => {
 	  UseCaseRequestOne( b, i, a, r )
 	}
       ).take( numMsgs ).toList
+      for( i <- 0 to ( numMsgs - 1 ) ) {
+	dispatcher ! reqs( 1 )
+      }
+      reset {
+	for( msg <- dispatcher ?() ) {
+	  println( "received:" + msg )
+	}
+      }
     }
   }
 }
