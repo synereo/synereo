@@ -45,6 +45,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
   with MonadicConcurrentGenerators
   with AMQPMonikerOps
   with FJTaskRunners
+  with UUIDOps
   with WireTap 
   with Journalist
 {  
@@ -53,6 +54,48 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
   type FramedMsg = Either[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]]
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : TxPort ) : A
   def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : TxPort
+  implicit def requestJustification : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]] = 
+    None
+  implicit def responseJustification : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]] = 
+    None
+  def frameRequest( trgt : Moniker )( req : ReqBody )(
+    implicit just : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
+  ) : FramedMsg = {
+    Left[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]](
+      new JustifiedRequest[ReqBody,RspBody](
+	getUUID(),
+	toURI( trgt ),
+	toURI( name ),
+	getUUID(),
+	req,
+	just
+      )
+    )
+  }
+  def frameResponse( trgt : Moniker )( rsp : RspBody )(
+    implicit just : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
+  ) : FramedMsg = {
+    Right[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]](
+      new JustifiedResponse[ReqBody,RspBody](
+	getUUID(),
+	toURI( trgt ),
+	toURI( name ),
+	getUUID(),
+	rsp,
+	just
+      )
+    )
+  }
+  def body( fmsg : FramedMsg ) : Either[ReqBody,RspBody] = {
+    fmsg match {
+      case Left( jr : JustifiedRequest[ReqBody,RspBody] ) => {
+	Left[ReqBody,RspBody]( jr.body)
+      }
+      case Right( jr : JustifiedResponse[ReqBody,RspBody] ) => {
+	Right[ReqBody,RspBody]( jr.body )
+      }
+    }
+  }
 
   case class AMQPTxPortFramedMsgScope(
     srcMnkr : Moniker,
@@ -69,7 +112,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
       override val t2W : T => TxPort,
       @transient override val dispatcherW : theMDS.Generator[TxPort,Unit,Unit],
       @transient override val senderW : theMDS.Generator[Unit,TxPort,Unit]
-    ) extends AMQPQueueXForm[TxPort,T]
+    ) extends AMQPQueueXForm[TxPort,T] 
     
     class TxPortOverAMQPQueueXFormM[A <: FramedMsg](
       val host : String,
@@ -101,7 +144,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
 	  },
 	  theMDS.serve[TxPort]( factory, host, port, exchange ),
 	  theMDS.sender[TxPort]( host, port, exchange, routingKey )
-	)
+	) 
       }
       def zeroFramedMsg [B >: FramedMsg] : AMQPQueueTxPort2FramedMsgXForm[B] = {
 	AMQPQueueTxPort2FramedMsgXForm[B](
@@ -206,7 +249,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
     trgtMoniker : Moniker
   ) : Option[AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedQueuePairM[FramedMsg]] = {
     for( scope <- stblScopeMap.get( trgtMoniker ) ) yield {
-      new scope.TxPortOverAMQPTwistedQueuePairM( srcMoniker, trgtMoniker )
+      new scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]( srcMoniker, trgtMoniker )
     }
   }
   
@@ -221,8 +264,38 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
     tpmMap( acquaintances )
     
   def mnkrQ( mnkr : Moniker ) : Option[AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedPairXForm[FramedMsg]] = {
-    for( tpm <- stblTPMMap.get( mnkr ) ) yield { tpm.zero }
+    for( tpm <- stblTPMMap.get( mnkr ) ) yield { tpm.zero[FramedMsg] }
   }       
+  def qMap( trgts : Iterable[Moniker] ) : HashMap[Moniker,AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedPairXForm[FramedMsg]] = {
+    val queueMap = new HashMap[Moniker,AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedPairXForm[FramedMsg]]()
+    for( trgt <- trgts ) {
+      val tpm =
+	stblTPMMap.get( trgt ) match {
+	  case Some( tpm ) => tpm
+	  case _ => {
+	    mkTPM( trgt ) match {
+	      case Some( tpm ) => {
+		stblTPMMap += ( trgt -> tpm )
+		tpm
+	      }
+	      case _ => {
+		val sScope = srcScope( name, trgt )
+		stblScopeMap += ( trgt -> sScope )
+		val tpm : AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
+		  new sScope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]( name, trgt )
+		stblTPMMap += ( trgt -> tpm )
+		tpm
+	      }
+	    }
+	  }
+	}
+
+      queueMap += ( trgt -> tpm.zero[FramedMsg] )
+    }
+    queueMap
+  }
+  @transient lazy val stblQMap : HashMap[Moniker,AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedPairXForm[FramedMsg]] = 
+    qMap( acquaintances )
 }
 
 class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
@@ -289,7 +362,29 @@ package usage {
 	new ListBuffer[JustifiedResponse[UseCaseRequest,UseCaseResponse]]()
       ),
       List[Moniker]( MURI( here ) )
-    )
+    ) {
+      def !( request : UseCaseRequest ) : Unit = {
+	for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
+	  q ! frameRequest( trgt )( request )
+	}
+      }
+      def ?( k : UseCaseProtocol => Unit ) : Unit = {
+	for ( trgt <- acquaintances; q <- stblQMap.get( trgt ); tpm <- stblTPMMap.get( trgt ); scope <- stblScopeMap.get( trgt ) ) {
+	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] = tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
+	  val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
+	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
+	  val qcell = tpmp( qp )
+	  qcell.foreach(
+	    ( msg ) => {
+	      body( msg ) match {
+		case Left( req ) => k( req )
+		case Right( rsp ) => k( rsp )
+	      }
+	    }
+	  )	    	  
+	}
+      }
+    }
     def setup(
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
@@ -299,8 +394,13 @@ package usage {
 	new URI( "agent", null, remoteHost, remotePort, "/useCaseProtocol", null, null )
       )
     }
-    def run( implicit numMsgs : Int ) : Unit = {
-      val msgs = MsgStreamFactory.msgStream.take( 100 ).toList
+    implicit val numberOfMsgs : Int = 100
+    def run( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {
+      val msgs = MsgStreamFactory.msgStream(
+	( b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message] ) => {
+	  UseCaseRequestOne( b, i, a, r )
+	}
+      ).take( numMsgs ).toList
     }
   }
 }
