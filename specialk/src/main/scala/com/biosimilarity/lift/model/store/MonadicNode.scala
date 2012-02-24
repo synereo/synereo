@@ -368,6 +368,11 @@ package usage {
 	  q ! frameRequest( trgt )( request )
 	}
       }
+      def !( response : UseCaseResponse ) : Unit = {
+	for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
+	  q ! frameResponse( trgt )( response )
+	}
+      }
       def ?() = {
 	Generator {
 	  k : ( UseCaseProtocol => Unit @suspendable ) => {
@@ -402,20 +407,86 @@ package usage {
       )
     }
     implicit val numberOfMsgs : Int = 100
-    def run( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {
+    def runClient( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {
       val reqs = MsgStreamFactory.msgStream[UseCaseRequest](
 	( b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message] ) => {
 	  UseCaseRequestOne( b, i, a, r )
 	}
-      ).take( numMsgs ).toList
-      for( i <- 0 to ( numMsgs - 1 ) ) {
-	dispatcher ! reqs( 1 )
-      }
+      ).take( numMsgs ).toList      
+      
+      // map-reduce version of protocol checking
+
+      val msgMap =
+	new HashMap[Int,Either[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]]()
+
+      msgMap += ( 0 -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( 0 ) ) )
+      dispatcher ! reqs( 0 )      
       reset {
 	for( msg <- dispatcher ?() ) {
 	  println( "received:" + msg )
+	  msg match {
+	    case req : UseCaseRequestOne => {
+	      throw new Exception( "protocol violated" )
+	    }
+	    case rsp@UseCaseResponseOne(
+	      b, j, a, r
+	    ) => {
+	      msgMap.get( j ) match {
+		case Some( Left( req ) ) => {
+		  msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
+		  if ( j < numMsgs ) {
+		    msgMap += ( 0 -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( j + 1 ) ) )
+		    dispatcher ! reqs( j + 1 ) 
+		  }
+		  else {
+		    println( "Client side of test complete." )
+		  }
+		}
+		case _ => {
+		  throw new Exception( "protocol violated" )
+		}
+	      }
+	    }
+	  }
+	}
+      }      
+    }
+    def runServer( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {                  
+      // map-reduce version of protocol checking
+      val msgMap =
+	new HashMap[Int,Either[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]]()
+
+      reset {
+	for( msg <- dispatcher ?() ) {
+	  println( "received:" + msg )
+	  msg match {
+	    case req@UseCaseRequestOne(
+	      b, j, a, r
+	    ) => {
+	      if ( j < numMsgs ) {
+		msgMap.get( j ) match {
+		  case None => {
+		    val rsp = UseCaseResponseOne( b, j, a, Some( req ) )
+		    msgMap +=
+		    ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( req, rsp ) )	
+		    dispatcher ! rsp
+		  }
+		  case _ => {
+		    throw new Exception( "protocol violated" )
+		  }
+		}		
+	      }
+	      else {
+		println( "Server side of test complete." )
+	      }	      
+	    }
+	    case _ => {
+	      throw new Exception( "protocol violated" )
+	    }
+	  }
 	}
       }
+      
     }
   }
 }
