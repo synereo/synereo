@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- WholeStep( 
+       let Do = C in <C>, 
+       let Re = D in WholeStep( 
+                       let Re = D in <D>
+                       let Mi = E in HalfStep(
+                                      let Mi = E in <E>,
+                                      let Fa = F in WholeStep(
+                                                      let Fa = F in <F>,
+                                                      let Sol = G in WholeStep(
+                                                                       let Sol = G in <G>,
+                                                                       let La = A in WholeStep(
+                                                                                       let La = A in <A>,
+                                                                                       let Ti = B in HalfStep(
+                                                                                                      let Ti = B in <B>,
+                                                                                                      let Do2 = C2 in <C2>
+                                                                                                     )
+                                                                                     )
+                                                                     )
+                                                     )
+                                     )
+                     )
+      )
+-->
+<Connected xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="file:/Users/lgm/work/src/projex/biosimilarity/graphatrope/src/main/bnfc/GraphL.xsd">
+    <EdgeName>
+        <EdgeString>
+            <String value="WholeStep"/>
+        </EdgeString>
+        
+    </EdgeName>
+    <VertexSelection>
+        <LRBoundVertex>            
+            <VertexExprLabel>
+                <VertexVariable>
+                    <LIdent value="Do"/>
+                </VertexVariable>
+                
+            </VertexExprLabel>
+            <VertexString>
+                <String value="C"/>
+            </VertexString>
+            
+        </LRBoundVertex>
+        <Pointed>
+            <VertexString>
+                <String value="C"/>
+            </VertexString>
+            
+        </Pointed>
+    </VertexSelection>
+    <VertexSelection>
+        <LRBoundVertex>
+            <VertexExprLabel>
+                <VertexVariable>
+                    <LIdent value="Re"/>
+                </VertexVariable>
+                
+            </VertexExprLabel>
+            <VertexString>
+                <String value="D"/>
+            </VertexString>
+            
+        </LRBoundVertex>
+        <Connected>
+            <EdgeName>
+                <EdgeString>
+                    <String value="WholeStep"/>
+                </EdgeString>
+                
+            </EdgeName>
+            <VertexSelection>
+                <LRBoundVertex>
+                    <VertexExprLabel>
+                        <VertexVariable>
+                            <LIdent value="Re"/>
+                        </VertexVariable>
+                        
+                    </VertexExprLabel>
+                    <VertexString>
+                        <String value="D"/>
+                    </VertexString>
+                    
+                </LRBoundVertex>
+                <Pointed>
+                    <VertexString>
+                        <String value="D"/>
+                    </VertexString>
+                    
+                </Pointed>
+            </VertexSelection>
+            <VertexSelection>
+                <LRBoundVertex>
+                    <VertexExprLabel>
+                        <VertexVariable>
+                            <LIdent value="Mi"/>
+                        </VertexVariable>
+                        
+                    </VertexExprLabel>
+                    <VertexString>
+                        <String value="E"/>
+                    </VertexString>
+                    
+                </LRBoundVertex>
+                <Connected>
+                    <EdgeName>
+                        <EdgeString>
+                            <String value="HalfStep"/>
+                        </EdgeString>
+                        
+                    </EdgeName>
+                    <VertexSelection>
+                        <LRBoundVertex>
+                            <VertexExprLabel>
+                                <VertexVariable>
+                                    <LIdent value="Mi"/>
+                                </VertexVariable>
+                                
+                            </VertexExprLabel>
+                            <VertexString>
+                                <String value="E"/>
+                            </VertexString>
+                            
+                        </LRBoundVertex>
+                        <Pointed>
+                            <VertexString>
+                                <String value="E"/>
+                            </VertexString>
+                            
+                        </Pointed>
+                    </VertexSelection>
+                    <VertexSelection>
+                        <LRBoundVertex>
+                            <VertexExprLabel>
+                                <VertexVariable>
+                                    <LIdent value="Fa"/>
+                                </VertexVariable>
+                                
+                            </VertexExprLabel>
+                            <VertexString>
+                                <String value="F"/>
+                            </VertexString>
+                            
+                        </LRBoundVertex>
+                        <Connected>
+                            <EdgeName>
+                                <EdgeString>
+                                    <String value="WholeStep"/>
+                                </EdgeString>
+                                
+                            </EdgeName>
+                            <VertexSelection>
+                                <LRBoundVertex>
+                                    <VertexExprLabel>
+                                        <VertexVariable>
+                                            <LIdent value="Fa"/>
+                                        </VertexVariable>
+                                        
+                                    </VertexExprLabel>
+                                    <VertexString>
+                                        <String value="F"/>
+                                    </VertexString>
+                                    
+                                </LRBoundVertex>
+                                <Pointed>
+                                    <VertexString>
+                                        <String value="F"/>
+                                    </VertexString>
+                                    
+                                </Pointed>
+                            </VertexSelection>
+                            <VertexSelection>
+                                <LRBoundVertex>
+                                    <VertexExprLabel>
+                                        <VertexVariable>
+                                            <LIdent value="Sol"/>
+                                        </VertexVariable>
+                                        
+                                    </VertexExprLabel>
+                                    <VertexString>
+                                        <String value="G"/>
+                                    </VertexString>
+                                    
+                                </LRBoundVertex>
+                                <Connected>
+                                    <EdgeName>
+                                        <EdgeString>
+                                            <String value="WholeStep"/>
+                                        </EdgeString>
+                                        
+                                    </EdgeName>
+                                    <VertexSelection>
+                                        <LRBoundVertex>
+                                            <VertexExprLabel>
+                                                <VertexVariable>
+                                                    <LIdent value="Sol"/>
+                                                </VertexVariable>
+                                                
+                                            </VertexExprLabel>
+                                            <VertexString>
+                                                <String value="G"/>
+                                            </VertexString>
+                                            
+                                        </LRBoundVertex>
+                                        <Pointed>
+                                            <VertexString>
+                                                <String value="G"/>
+                                            </VertexString>
+                                            
+                                        </Pointed>
+                                    </VertexSelection>
+                                    <VertexSelection>
+                                        <LRBoundVertex>
+                                            <VertexExprLabel>
+                                                <VertexVariable>
+                                                    <LIdent value="La"/>
+                                                </VertexVariable>
+                                                
+                                            </VertexExprLabel>
+                                            <VertexString>
+                                                <String value="A"/>
+                                            </VertexString>
+                                            
+                                        </LRBoundVertex>
+                                        <Connected>
+                                            <EdgeName>
+                                                <EdgeString>
+                                                    <String value="WholeStep"/>
+                                                </EdgeString>
+                                                
+                                            </EdgeName>
+                                            <VertexSelection>
+                                                <LRBoundVertex>
+                                                    <VertexExprLabel>
+                                                        <VertexVariable>
+                                                            <LIdent value="La"/>
+                                                        </VertexVariable>
+                                                        
+                                                    </VertexExprLabel>
+                                                    <VertexString>
+                                                        <String value="A"/>
+                                                    </VertexString>
+                                                    
+                                                </LRBoundVertex>
+                                                <Pointed>
+                                                    <VertexString>
+                                                        <String value="A"/>
+                                                    </VertexString>
+                                                    
+                                                </Pointed>
+                                            </VertexSelection>
+                                            <VertexSelection>
+                                                <LRBoundVertex>
+                                                    <VertexExprLabel>
+                                                        <VertexVariable>
+                                                            <LIdent value="Ti"/>
+                                                        </VertexVariable>
+                                                        
+                                                    </VertexExprLabel>
+                                                    <VertexString>
+                                                        <String value="B"/>
+                                                    </VertexString>
+                                                    
+                                                </LRBoundVertex>
+                                                <Connected>
+                                                    <EdgeName>
+                                                        <EdgeString>
+                                                            <String value="HalfStep"/>
+                                                        </EdgeString>
+                                                        
+                                                    </EdgeName>
+                                                    <VertexSelection>
+                                                        <LRBoundVertex>
+                                                            <VertexExprLabel>
+                                                                <VertexVariable>
+                                                                    <LIdent value="Ti"/>
+                                                                </VertexVariable>
+                                                                
+                                                            </VertexExprLabel>
+                                                            <VertexString>
+                                                                <String value="B"/>
+                                                            </VertexString>
+                                                            
+                                                        </LRBoundVertex>
+                                                        <Pointed>
+                                                            <VertexString>
+                                                                <String value="B"/>
+                                                            </VertexString>
+                                                            
+                                                        </Pointed>
+                                                    </VertexSelection>
+                                                    <VertexSelection>
+                                                        <LRBoundVertex>
+                                                            <VertexExprLabel>
+                                                                <VertexVariable>
+                                                                    <LIdent value="Do2"/>
+                                                                </VertexVariable>
+                                                                
+                                                            </VertexExprLabel>
+                                                            <VertexString>
+                                                                <String value="C2"/>
+                                                            </VertexString>
+                                                            
+                                                        </LRBoundVertex>
+                                                        <Pointed>
+                                                            <VertexString>
+                                                                <String value="C2"/>
+                                                            </VertexString>
+                                                            
+                                                        </Pointed>
+                                                    </VertexSelection>
+                                                </Connected>
+                                            </VertexSelection>
+                                        </Connected>
+                                    </VertexSelection>
+                                </Connected>
+                            </VertexSelection>
+                        </Connected>
+                    </VertexSelection>
+                </Connected>
+            </VertexSelection>
+        </Connected>
+    </VertexSelection>
+</Connected>
