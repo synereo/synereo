@@ -427,11 +427,11 @@ package usage {
 	  println( "received:" + msg )
 	  msg match {
 	    case Right( rsp@UseCaseResponseOne( b, j, a, r ) ) => {
-	      msgMap.get( j ) match {
-		// Open with left brace ...
+	      msgMap.get( j ) match {		
 		case Some( Left( req ) ) => {
 		  msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
 		  if ( j < numMsgs ) {
+		    // Open with left brace ...
 		    msgMap += ( 0 -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( j + 1 ) ) )
 		    dispatcher ! reqs( j + 1 ) 
 		  }
