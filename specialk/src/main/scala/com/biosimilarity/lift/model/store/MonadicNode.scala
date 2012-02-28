@@ -396,16 +396,47 @@ package usage {
       ),
       List[Moniker]( MURI( there ) )
     ) {      
+      override def toString() : String = {
+	"FramedUseCaseProtocolDispatcher" + "[" + here + " -> " + there + "]"
+      }
     }
+    implicit val retTwist : Boolean = false
     def setup(
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
-    ) : FramedUseCaseProtocolDispatcher = {
-      FramedUseCaseProtocolDispatcher(
-	new URI( "agent", null, localHost, localPort, "/useCaseProtocol", null, null ),
-	new URI( "agent", null, remoteHost, remotePort, "/useCaseProtocol", null, null )
-      )
+    )( implicit returnTwist : Boolean ) : Either[FramedUseCaseProtocolDispatcher,(FramedUseCaseProtocolDispatcher,FramedUseCaseProtocolDispatcher)] = {
+      val ( localExchange, remoteExchange ) = 
+	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
+	  ( "/useCaseProtocolLocal", "/useCaseProtocolRemote" )	  
+	}
+	else {
+	  ( "/useCaseProtocol", "/useCaseProtocol" )	  
+	}
+
+      if ( returnTwist ) {
+	Right[FramedUseCaseProtocolDispatcher,(FramedUseCaseProtocolDispatcher,FramedUseCaseProtocolDispatcher)](
+	  (
+	    FramedUseCaseProtocolDispatcher(
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	    ),
+	    FramedUseCaseProtocolDispatcher(	      
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null )
+	    )
+	  )
+	)
+      }
+      else {
+	Left[FramedUseCaseProtocolDispatcher,(FramedUseCaseProtocolDispatcher,FramedUseCaseProtocolDispatcher)](
+	  FramedUseCaseProtocolDispatcher(
+	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	  )
+	)
+      }
     }
+
     implicit val numberOfMsgs : Int = 100
     def runClient( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {
       val reqs = MsgStreamFactory.msgStream[UseCaseRequest](
@@ -422,34 +453,39 @@ package usage {
       msgMap += ( 0 -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( 0 ) ) )
       dispatcher ! reqs( 0 )      
 
-      reset {
-	for( msg <- dispatcher ?() ) {
-	  println( "received:" + msg )
-	  msg match {
-	    case Right( rsp@UseCaseResponseOne( b, j, a, r ) ) => {
-	      msgMap.get( j ) match {		
-		case Some( Left( req ) ) => {
-		  msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
-		  if ( j < numMsgs ) {
-		    // Open with left brace ...
-		    msgMap += ( 0 -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( j + 1 ) ) )
-		    dispatcher ! reqs( j + 1 ) 
-		  }
-		  else {
-		    println( "Client side of test complete." )
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    for( msg <- dispatcher ?() ) {
+	      println( dispatcher + " received: " + msg )
+	      msg match {
+		case Right( rsp@UseCaseResponseOne( b, j, a, r ) ) => {
+		  println( dispatcher + " handling response for the " + j + "th " + "request" )
+		  msgMap.get( j ) match {		
+		    case Some( Left( req ) ) => {
+		      msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
+		      if ( j < ( numMsgs - 1 ) ) {
+			// Open with left brace ...
+			msgMap += ( ( j + 1 ) -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( j + 1 ) ) )
+			dispatcher ! reqs( j + 1 ) 
+		      }
+		      else {
+			println( "Client side of test complete." )
+		      }
+		    }
+		    case unExpected@_ => {
+		      throw new Exception( "Protocol violated. Received: " + unExpected )
+		    }
 		  }
 		}
-		case _ => {
-		  throw new Exception( "protocol violated" )
-		}
+		case unExpected@_ => {
+		  throw new Exception( "Protocol violated. Received: " + unExpected )
+		}	    
 	      }
 	    }
-	    case _ => {
-	      throw new Exception( "protocol violated" )
-	    }	    
 	  }
 	}
-      }      
+      }.start
     }
 
     def runServer( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {                  
@@ -457,35 +493,43 @@ package usage {
       val msgMap =
 	new HashMap[Int,Either[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]]()
 
-      reset {
-	for( msg <- dispatcher ?() ) {
-	  println( "received:" + msg )
-	  msg match {
-	    // Close with right brace ...
-	    case Left( req@UseCaseRequestOne( b, j, a, r ) ) => {
-	      if ( j < numMsgs ) {
-		msgMap.get( j ) match {
-		  case None => {
-		    val rsp = UseCaseResponseOne( b, j, a, Some( req ) )
-		    msgMap +=
-		    ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( req, rsp ) )	
-		    dispatcher !! rsp
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    for( msg <- dispatcher ?() ) {
+	      println( dispatcher + " received: " + msg )
+	      msg match {
+		// Close with right brace ...
+		case Left( req@UseCaseRequestOne( b, j, a, r ) ) => {
+		  println( dispatcher + " handling the " + j + "th " + "request" )
+		  if ( j < numMsgs ) {
+		    msgMap.get( j ) match {
+		      case None => {
+			val rsp = UseCaseResponseOne( b, j, a, Some( req ) )
+			msgMap +=
+			( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( req, rsp ) )	
+			dispatcher !! rsp
+			if ( msgMap.size == numMsgs ) {
+			  println( "Server side of test complete." )
+			}
+		      }
+		      case unExpected@_ => {
+			throw new Exception( "Protocol violated. Received: " + unExpected )
+		      }
+		    }		
 		  }
-		  case _ => {
-		    throw new Exception( "protocol violated" )
-		  }
-		}		
+		  else {
+		    println( "Server side of test complete." )
+		  }	      
+		}
+		case unExpected@_ => {
+		  throw new Exception( "Protocol violated. Received: " + unExpected )
+		}
 	      }
-	      else {
-		println( "Server side of test complete." )
-	      }	      
-	    }
-	    case _ => {
-	      throw new Exception( "protocol violated" )
 	    }
 	  }
 	}
-      }
+      }.start
       
     }
   }
