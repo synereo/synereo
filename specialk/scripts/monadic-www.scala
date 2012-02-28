@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse
 
 object WWW extends MonadicEmbeddedJetty[String] with WireTap with Journalist {
   override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
+
   def fillInResponse( request : HttpServletRequest, response : HttpServletResponse ) : Unit = {
     response.setContentType( "text/html" )
     response.setStatus( HttpServletResponse.SC_OK )
@@ -24,12 +25,13 @@ object WWW extends MonadicEmbeddedJetty[String] with WireTap with Journalist {
         "<HEAD><TITLE>Hello WWW</TITLE></HEAD>\n" +
         "<BODY>\n" +
         "<H1>Hello WWW</H1>\n" +
+	"session = " + request.getSession( true ).getId() +
         "</BODY></HTML>"
       )
-    )
+    )    
     response.getWriter().flush()
-    response.getWriter().println( "session = " + request.getSession( true ).getId() )	
   }
+
   def run() : Unit = {
     reset {
       for( reqRsp <- beginService( 8090, "/" ) ) {

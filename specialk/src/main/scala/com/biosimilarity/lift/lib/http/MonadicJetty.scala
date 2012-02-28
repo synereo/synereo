@@ -128,14 +128,22 @@ trait MonadicEmbeddedJetty[T]
 		   override def httpServletReq = req
 		   override def httpServletRsp = rsp
 		 }
+	       tweet( 
+		 (
+		   "in doGet with" +
+		   "\nrequest = " + req +
+		   "\nresponse = " + rsp +
+		   "\ncrp = " + crp
+		 )     
+	       )
     	       
 	       spawn { 
-  		 tweet("before continuation in callback")		 
+  		 tweet( "before continuation in callback" )
   		
     		 k( crp )
 		 crp.release
     		
-    		 tweet("after continuation in callback")
+    		 tweet( "after continuation in callback" )
     		   
 		 outerk()
     	       }
@@ -144,11 +152,11 @@ trait MonadicEmbeddedJetty[T]
     	     }	     
 	   }
   	
-  	tweet("before registering callback")
+  	tweet( "before registering callback" )
   	
 	ctxt.addServlet( new ServletHolder( TheRendezvous ), "/*" )
   	
-  	tweet("after registering callback")
+  	tweet( "after registering callback" )
   	// stop
       }
     }       
