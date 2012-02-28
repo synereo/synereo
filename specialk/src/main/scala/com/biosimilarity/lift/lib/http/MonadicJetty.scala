@@ -44,8 +44,8 @@ trait MonadicEmbeddedJetty[T]
     trait ClientRequestPair[T] {
       def httpServletReq : HttpServletRequest
       def httpServletRsp : HttpServletResponse
-      def stall : Unit = synchronized { this.wait }
-      def unstall : Unit = synchronized { this.notifyAll }
+      def hold : Unit = synchronized { this.wait }
+      def release : Unit = synchronized { this.notifyAll }
     }
 
     trait ServerContextPair[T] {
@@ -133,13 +133,14 @@ trait MonadicEmbeddedJetty[T]
   		 tweet("before continuation in callback")		 
   		
     		 k( crp )
+		 crp.release
     		
     		 tweet("after continuation in callback")
     		   
 		 outerk()
     	       }
 
-	       crp.stall
+	       crp.hold
     	     }	     
 	   }
   	

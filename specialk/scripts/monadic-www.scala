@@ -35,9 +35,7 @@ object WWW extends MonadicEmbeddedJetty[String] with WireTap with Journalist {
 	  )
 	)
 	response.getWriter().flush()
-
-	reqRsp.unstall
-        //response.getWriter().println("session = " + request.getSession( true ).getId() )
+	response.getWriter().println("session = " + request.getSession( true ).getId() )	
       }
     }
   }
