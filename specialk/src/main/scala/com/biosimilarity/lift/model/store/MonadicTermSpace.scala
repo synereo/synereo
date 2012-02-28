@@ -46,47 +46,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStreamWriter
 
-trait MonadicTermTypes[Namespace,Var,Tag,Value] 
-extends MonadicGenerators {
-  trait Resource extends Serializable
-  case class Ground( v : Value ) extends Resource
-  case class Cursor( v : Generator[Resource,Unit,Unit] ) extends Resource
-  case class RMap(
-    m : TMapR[Namespace,Var,Tag,Value]
-  ) extends Resource
-  case class RBound(
-    rsrc : Option[Resource], soln : Option[Solution[String]]
-  ) extends Resource
-
-  type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  
-
-  class TMapR[Namespace,Var,Tag,Value]
-  extends HashMap[GetRequest,Resource]  
-
-  case class Continuation(
-    ks : List[Option[Resource] => Unit @suspendable]
-  ) extends Resource
-
-  trait Color
-  case object Clear extends Color
-  case object Opaque extends Color
-
-  class RMapC[Namespace,Var,Tag,Value]
-  extends HashMap[Resource,Color]  
-}
-
-trait MonadicTermTypeScope[Namespace,Var,Tag,Value] {
-  type MTTypes <: MonadicTermTypes[Namespace,Var,Tag,Value]
-  def protoTermTypes : MTTypes
-  val mTT : MTTypes = protoTermTypes
-  def asCCL(
-    gReq : mTT.GetRequest
-  ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-    gReq.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
-  }
-  implicit def toValue( v : Value ) = mTT.Ground( v )
-}
-
 trait DistributedAskTypes {
   trait Ask
   case object AGet extends Ask
@@ -106,37 +65,36 @@ trait DistributedAskTypeScope {
   val dAT : DATypes = protoAskTypes
 }
 
-trait MonadicTermStoreScope[Namespace,Var,Tag,Value] 
+trait MonadicSoloTermStoreScope[Namespace,Var,Tag,Value] 
 extends MonadicTermTypeScope[Namespace,Var,Tag,Value] 
   with MonadicDTSMsgScope[Namespace,Var,Tag,Value]
-  with DistributedAskTypeScope {          
+  with DistributedAskTypeScope
+{          
 
-  class MonadicTermStore(
-  )
-  extends MonadicTupleSpace[mTT.GetRequest,mTT.GetRequest,mTT.Resource] 
-  with CnxnCtxtInjector[Namespace,Var,Tag]
-  with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
-  with CnxnConversions[Namespace,Var,Tag]
-  with WireTap
-  with Journalist
-  with ConfiggyReporting
-  //with ConfiggyJournal
-  with ConfiguredJournal
-  with ConfigurationTrampoline
-  with UUIDOps
-  with Serializable
-    {
+  trait MonadicTermStoreT
+   extends MonadicTupleSpace[mTT.GetRequest,mTT.GetRequest,mTT.Resource] 
+    with CnxnCtxtInjector[Namespace,Var,Tag]
+    with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
+    with CnxnConversions[Namespace,Var,Tag]
+    with WireTap
+    with Journalist
+    with ConfiggyReporting
+    with ConfiguredJournal
+    with ConfigurationTrampoline
+    with UUIDOps
+    with Serializable
+  {
     override def tap [A] ( fact : A ) : Unit = {
       reportage( fact )
     }
     
-    override val theMeetingPlace =
+    override lazy val theMeetingPlace =
       new mTT.TMapR[Namespace,Var,Tag,Value]()
-    override val theChannels =
+    override lazy val theChannels =
       new mTT.TMapR[Namespace,Var,Tag,Value]()
-    override val theWaiters =
+    override lazy val theWaiters =
       new TMapK[Namespace,Var,Tag,Value]()
-    override val theSubscriptions =
+    override lazy val theSubscriptions =
       new TMapK[Namespace,Var,Tag,Value]()
 
     class TMapK[Namespace,Var,Tag,Value]
@@ -197,13 +155,21 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	case _ => None
       }
     }
+    
+  }
 
+  class MonadicTermStore(
+  ) extends MonadicTermStoreT {    
     override def configFileName : Option[String] = None
     override def configurationDefaults : ConfigurationDefaults = {
       ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
-    }
- 
+    } 
   }
+
+}
+
+trait MonadicTermStoreScope[Namespace,Var,Tag,Value] 
+extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 
   /* abstract */ class MonadicGeneratorJunction(
     override val name : Moniker,

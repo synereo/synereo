@@ -329,6 +329,27 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
       }
     }
   }
+
+  def ??() = {
+    Generator {
+      k : ( FramedMsg => Unit @suspendable ) => {
+	val acqItr = acquaintances.iterator
+	while( acqItr.hasNext ) {
+	  val trgt = acqItr.next.asInstanceOf[Moniker]
+	  val ( q, tpm, scope ) =
+	    ( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
+	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
+	    tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
+	  val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
+	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
+	  
+	  for( msg <- tpmp( qp ) ) {
+	    reset{ k( msg ) }
+	  }
+	}
+      }
+    }
+  }
 }
 
 class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
