@@ -139,43 +139,45 @@ trait DTSMsgScope[Namespace,Var,Tag,Value] {
   val Msgs : MsgTypes = protoMsgs
 }
 
-object MonadicStringDMsgs
+package usage { 
+  object MonadicStringDMsgs
        extends DTSMSH[String,String,String,String]
        with UUIDOps
-{
-  import identityConversions._
-
-  val aLabelUUID = getUUID()
-  val bLabelUUID = getUUID()
-
-  val aLabel =
-    new CnxnCtxtLeaf[String,String,String]( Left( aLabelUUID.toString ) )
-  val bLabel =
-    new CnxnCtxtLeaf[String,String,String]( Left( bLabelUUID.toString ) )
-
-  val protoDreqUUID = getUUID()
-  val protoDrspUUID = getUUID()    
+  {
+    import identityConversions._
     
-  override def protoDreq : DReq = MDGetRequest( aLabel )
-  override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
-  override def protoJtsreq : JTSReq =
-    JustifiedRequest(
-      protoDreqUUID,
-      new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-      new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-      getUUID(),
-      protoDreq,
-      None
-    )
-  override def protoJtsrsp : JTSRsp = 
-    JustifiedResponse(
-      protoDreqUUID,
-      new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-      new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-      getUUID(),
-      protoDrsp,
-      None
-    )
-  override def protoJtsreqorrsp : JTSReqOrRsp =
-    Left( protoJtsreq )
+    val aLabelUUID = getUUID()
+    val bLabelUUID = getUUID()
+    
+    val aLabel =
+      new CnxnCtxtLeaf[String,String,String]( Left( aLabelUUID.toString ) )
+    val bLabel =
+      new CnxnCtxtLeaf[String,String,String]( Left( bLabelUUID.toString ) )
+    
+    val protoDreqUUID = getUUID()
+    val protoDrspUUID = getUUID()    
+    
+    override def protoDreq : DReq = MDGetRequest( aLabel )
+    override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
+    override def protoJtsreq : JTSReq =
+      JustifiedRequest(
+	protoDreqUUID,
+	new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	getUUID(),
+	protoDreq,
+	None
+      )
+    override def protoJtsrsp : JTSRsp = 
+      JustifiedResponse(
+	protoDreqUUID,
+	new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	getUUID(),
+	protoDrsp,
+	None
+      )
+    override def protoJtsreqorrsp : JTSReqOrRsp =
+      Left( protoJtsreq )
+  }
 }

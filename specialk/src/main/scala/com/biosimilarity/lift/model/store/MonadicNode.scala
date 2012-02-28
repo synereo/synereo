@@ -296,6 +296,60 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
   }
   @transient lazy val stblQMap : HashMap[Moniker,AMQPTxPortFramedMsgScope#TxPortOverAMQPTwistedPairXForm[FramedMsg]] = 
     qMap( acquaintances )
+
+  def !( request : ReqBody ) : Unit = {
+    for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
+      q ! frameRequest( trgt )( request )
+    }
+  }
+
+  def !!( response : RspBody ) : Unit = {
+    for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
+      q ! frameResponse( trgt )( response )
+    }
+  }
+
+  def ?() = {
+    Generator {
+      k : ( Either[ReqBody,RspBody] => Unit @suspendable ) => {
+	val acqItr = acquaintances.iterator
+	while( acqItr.hasNext ) {
+	  val trgt = acqItr.next.asInstanceOf[Moniker]
+	  val ( q, tpm, scope ) =
+	    ( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
+	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
+	    tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
+	  val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
+	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
+	  
+	  for( msg <- tpmp( qp ) ) {
+	    reset{ k( body( msg ) ) }
+	  }
+	}
+      }
+    }
+  }
+
+  def ??() = {
+    Generator {
+      k : ( FramedMsg => Unit @suspendable ) => {
+	val acqItr = acquaintances.iterator
+	while( acqItr.hasNext ) {
+	  val trgt = acqItr.next.asInstanceOf[Moniker]
+	  val ( q, tpm, scope ) =
+	    ( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
+	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
+	    tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
+	  val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
+	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
+	  
+	  for( msg <- tpmp( qp ) ) {
+	    reset{ k( msg ) }
+	  }
+	}
+      }
+    }
+  }
 }
 
 class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
@@ -361,61 +415,143 @@ package usage {
 	new ListBuffer[JustifiedRequest[UseCaseRequest,UseCaseResponse]](),
 	new ListBuffer[JustifiedResponse[UseCaseRequest,UseCaseResponse]]()
       ),
-      List[Moniker]( MURI( here ) )
-    ) {
-      def !( request : UseCaseRequest ) : Unit = {
-	for ( trgt <- acquaintances; q <- stblQMap.get( trgt ) ) {
-	  q ! frameRequest( trgt )( request )
-	}
-      }
-      def ?() = {
-	Generator {
-	  k : ( UseCaseProtocol => Unit @suspendable ) => {
-	    val acqItr = acquaintances.iterator
-	    while( acqItr.hasNext ) {
-	      val trgt = acqItr.next.asInstanceOf[Moniker]
-	      val ( q, tpm, scope ) =
-		( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
-	      val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
-		tpm.asInstanceOf[scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg]]
-	      val qp : scope.TxPortOverAMQPTwistedPairXForm[FramedMsg] =
-		q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
-	      
-	      for( msg <- tpmp( qp ) ) {
-		body( msg ) match {
-		    case Left( req ) => reset{ k( req ) }
-		    case Right( rsp ) => reset{ k( rsp ) }
-		  }
-	      }
-	    }
-	  }
-	}
+      List[Moniker]( MURI( there ) )
+    ) {      
+      override def toString() : String = {
+	"FramedUseCaseProtocolDispatcher" + "[" + here + " -> " + there + "]"
       }
     }
+    implicit val retTwist : Boolean = false
     def setup(
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
-    ) : FramedUseCaseProtocolDispatcher = {
-      FramedUseCaseProtocolDispatcher(
-	new URI( "agent", null, localHost, localPort, "/useCaseProtocol", null, null ),
-	new URI( "agent", null, remoteHost, remotePort, "/useCaseProtocol", null, null )
-      )
+    )( implicit returnTwist : Boolean ) : Either[FramedUseCaseProtocolDispatcher,(FramedUseCaseProtocolDispatcher,FramedUseCaseProtocolDispatcher)] = {
+      val ( localExchange, remoteExchange ) = 
+	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
+	  ( "/useCaseProtocolLocal", "/useCaseProtocolRemote" )	  
+	}
+	else {
+	  ( "/useCaseProtocol", "/useCaseProtocol" )	  
+	}
+
+      if ( returnTwist ) {
+	Right[FramedUseCaseProtocolDispatcher,(FramedUseCaseProtocolDispatcher,FramedUseCaseProtocolDispatcher)](
+	  (
+	    FramedUseCaseProtocolDispatcher(
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	    ),
+	    FramedUseCaseProtocolDispatcher(	      
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null )
+	    )
+	  )
+	)
+      }
+      else {
+	Left[FramedUseCaseProtocolDispatcher,(FramedUseCaseProtocolDispatcher,FramedUseCaseProtocolDispatcher)](
+	  FramedUseCaseProtocolDispatcher(
+	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	  )
+	)
+      }
     }
+
     implicit val numberOfMsgs : Int = 100
-    def run( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {
+    def runClient( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {
       val reqs = MsgStreamFactory.msgStream[UseCaseRequest](
 	( b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message] ) => {
 	  UseCaseRequestOne( b, i, a, r )
 	}
-      ).take( numMsgs ).toList
-      for( i <- 0 to ( numMsgs - 1 ) ) {
-	dispatcher ! reqs( 1 )
-      }
-      reset {
-	for( msg <- dispatcher ?() ) {
-	  println( "received:" + msg )
+      ).take( numMsgs ).toList      
+      
+      // map-reduce-style protocol checking
+
+      val msgMap =
+	new HashMap[Int,Either[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]]()
+
+      msgMap += ( 0 -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( 0 ) ) )
+      dispatcher ! reqs( 0 )      
+
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    for( msg <- dispatcher ?() ) {
+	      println( dispatcher + " received: " + msg )
+	      msg match {
+		case Right( rsp@UseCaseResponseOne( b, j, a, r ) ) => {
+		  println( dispatcher + " handling response for the " + j + "th " + "request" )
+		  msgMap.get( j ) match {		
+		    case Some( Left( req ) ) => {
+		      msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
+		      if ( j < ( numMsgs - 1 ) ) {
+			// Open with left brace ...
+			msgMap += ( ( j + 1 ) -> Left[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( reqs( j + 1 ) ) )
+			dispatcher ! reqs( j + 1 ) 
+		      }
+		      else {
+			println( "Client side of test complete." )
+		      }
+		    }
+		    case unExpected@_ => {
+		      throw new Exception( "Protocol violated. Received: " + unExpected )
+		    }
+		  }
+		}
+		case unExpected@_ => {
+		  throw new Exception( "Protocol violated. Received: " + unExpected )
+		}	    
+	      }
+	    }
+	  }
 	}
-      }
+      }.start
+    }
+
+    def runServer( dispatcher : FramedUseCaseProtocolDispatcher )( implicit numMsgs : Int ) : Unit = {                  
+      // map-reduce-style protocol checking
+      val msgMap =
+	new HashMap[Int,Either[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]]()
+
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    for( msg <- dispatcher ?() ) {
+	      println( dispatcher + " received: " + msg )
+	      msg match {
+		// Close with right brace ...
+		case Left( req@UseCaseRequestOne( b, j, a, r ) ) => {
+		  println( dispatcher + " handling the " + j + "th " + "request" )
+		  if ( j < numMsgs ) {
+		    msgMap.get( j ) match {
+		      case None => {
+			val rsp = UseCaseResponseOne( b, j, a, Some( req ) )
+			msgMap +=
+			( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( req, rsp ) )	
+			dispatcher !! rsp
+			if ( msgMap.size == numMsgs ) {
+			  println( "Server side of test complete." )
+			}
+		      }
+		      case unExpected@_ => {
+			throw new Exception( "Protocol violated. Received: " + unExpected )
+		      }
+		    }		
+		  }
+		  else {
+		    println( "Server side of test complete." )
+		  }	      
+		}
+		case unExpected@_ => {
+		  throw new Exception( "Protocol violated. Received: " + unExpected )
+		}
+	      }
+	    }
+	  }
+	}
+      }.start
+      
     }
   }
 }

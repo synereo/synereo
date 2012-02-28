@@ -53,11 +53,16 @@ trait AMQPMonikerOps {
     }
   }
   def mnkrRoutingKey( src : Moniker ) : String = {
-    val rkA = src.getQuery.split( "," ).filter( ( p : String ) => p.contains( "routingKey" ) )
-    rkA.length match {
-      case 0 => AMQPDefaults.defaultRoutingKey
-      case _ => rkA( 0 ).split( "=" )( 1 )
-    }
+    src.getQuery match {
+      case null => AMQPDefaults.defaultRoutingKey
+      case qs => {
+	val rkA = qs.split( "," ).filter( ( p : String ) => p.contains( "routingKey" ) )
+	rkA.length match {
+	  case 0 => AMQPDefaults.defaultRoutingKey
+	  case _ => rkA( 0 ).split( "=" )( 1 )
+	}
+      }
+    }    
   }  
 }
 
