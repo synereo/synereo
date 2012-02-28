@@ -13,29 +13,32 @@ import javax.servlet.http.HttpServletResponse
 
 object WWW extends MonadicEmbeddedJetty[String] with WireTap with Journalist {
   override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
+  def fillInResponse( request : HttpServletRequest, response : HttpServletResponse ) : Unit = {
+    response.setContentType( "text/html" )
+    response.setStatus( HttpServletResponse.SC_OK )
+    response.getWriter().println(
+      (
+	"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 " +
+        "Transitional//EN\">\n" +
+        "<HTML>\n" +
+        "<HEAD><TITLE>Hello WWW</TITLE></HEAD>\n" +
+        "<BODY>\n" +
+        "<H1>Hello WWW</H1>\n" +
+        "</BODY></HTML>"
+      )
+    )
+    response.getWriter().flush()
+    response.getWriter().println( "session = " + request.getSession( true ).getId() )	
+  }
   def run() : Unit = {
-    reset{
-      for( reqRsp <- WWW.beginService( 8090, "/" ) ) {
+    reset {
+      for( reqRsp <- beginService( 8090, "/" ) ) {
 	val request = reqRsp.httpServletReq
 	val response = reqRsp.httpServletRsp
 
 	println( "serving request: " + request )
 
-	response.setContentType( "text/html" )
-        response.setStatus( HttpServletResponse.SC_OK )
-        response.getWriter().println(
-	  (
-	    "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 " +
-            "Transitional//EN\">\n" +
-            "<HTML>\n" +
-            "<HEAD><TITLE>Hello WWW</TITLE></HEAD>\n" +
-            "<BODY>\n" +
-            "<H1>Hello WWW</H1>\n" +
-            "</BODY></HTML>"
-	  )
-	)
-	response.getWriter().flush()
-	response.getWriter().println("session = " + request.getSession( true ).getId() )	
+	fillInResponse( request, response )
       }
     }
   }
