@@ -30,6 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.session.HashSessionManager;
+import org.eclipse.jetty.server.session.SessionHandler;
 
 trait MonadicEmbeddedJetty[T]
  extends MonadicGenerators
@@ -42,11 +44,13 @@ trait MonadicEmbeddedJetty[T]
     trait ClientRequestPair[T] {
       def httpServletReq : HttpServletRequest
       def httpServletRsp : HttpServletResponse
+      def stall : Unit = synchronized { this.wait }
+      def unstall : Unit = synchronized { this.notifyAll }
     }
 
     trait ServerContextPair[T] {
       def server : Server
-      def context : ServletContextHandler
+      def context : ServletContextHandler            
     }
 
     case class CnR[T](
@@ -63,12 +67,17 @@ trait MonadicEmbeddedJetty[T]
 	val server = new Server( port )
 	val context = 
 	  new ServletContextHandler( ServletContextHandler.SESSIONS )
+	val sm = new HashSessionManager()
+	val sh = new SessionHandler( sm )
+
 	context.setContextPath( path )
-	server.setHandler(context)
+	server.setHandler( context )	
+	context.setSessionHandler( sh )
 
 	server.start()
+	spawn{ server.join() }
 
-	k( CnR[T]( server, context ) );
+	k( CnR[T]( server, context ) )
       }
     }   
 
@@ -114,20 +123,23 @@ trait MonadicEmbeddedJetty[T]
 	       req : HttpServletRequest,
 	       rsp : HttpServletResponse
 	     ) : Unit = {
-    	       spawn { 
-  		 tweet("before continuation in callback")
+	       val crp = 
+		 new ClientRequestPair[T] {
+		   override def httpServletReq = req
+		   override def httpServletRsp = rsp
+		 }
+    	       
+	       spawn { 
+  		 tweet("before continuation in callback")		 
   		
-    		 k(
-		   new ClientRequestPair[T] {
-		     override def httpServletReq = req
-		     override def httpServletRsp = rsp
-		   }
-		 )
+    		 k( crp )
     		
     		 tweet("after continuation in callback")
     		   
 		 outerk()
     	       }
+
+	       crp.stall
     	     }	     
 	   }
   	
@@ -151,6 +163,7 @@ trait MonadicEmbeddedJetty[T]
 		 reqRspPair <- callbacks( server, context )
 	       ) {
 		 k( reqRspPair )
+		 
 		 // Is this necessary?
 		 shift { k : ( Unit => Unit ) => k() }
   	       }
