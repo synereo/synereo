@@ -308,30 +308,21 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
       }      
     }
 
-    def get( hops : List[Moniker] )(
-      cursor : Boolean
-    )(
+    def get( hops : List[Moniker] )( cursor : Boolean )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {              
-      mget( dAT.AGetNum, hops )(
-	theMeetingPlace, theWaiters, true, cursor
-      )( path )    
+    ) : Generator[Option[mTT.Resource],Unit,Unit] = {              
+      mget( dAT.AGetNum, hops )( theMeetingPlace, theWaiters, true, cursor )( path )    
     }
     
-    def get(
-      cursor : Boolean
-    )(
+    def get( cursor : Boolean )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {
+    ): Generator[Option[mTT.Resource],Unit,Unit] = {
       get( Nil )( cursor )( path )
     }    
     
     override def get(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
-    )
-    : Generator[Option[mTT.Resource],Unit,Unit] = {        
+    ) : Generator[Option[mTT.Resource],Unit,Unit] = {        
       get( Nil )( false )( path )    
     }
     
@@ -382,5 +373,39 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     override def configurationDefaults : ConfigurationDefaults = {
       ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
     } 
+  }
+
+  object KVDBNodeFactory extends AMQPURIOps with FJTaskRunners {
+    def ptToPt( here : URI, there : URI ) : MonadicKVDBNode = {
+      val node = MonadicKVDBNode( MonadicKVDB( MURI( here ) ), List( MURI( there ) ) )
+      spawn { node.dispatchDMsgs() }
+      node
+    }
+    def loopBack( here : URI ) : MonadicKVDBNode = {
+      val exchange = uriExchange( here )
+      val hereNow =
+	new URI(
+	  here.getScheme,
+	  here.getUserInfo,
+	  here.getHost,
+	  here.getPort,
+	  "/" + exchange + "Local",
+	  here.getQuery,
+	  here.getFragment
+	)
+      val thereNow =
+	new URI(
+	  here.getScheme,
+	  here.getUserInfo,
+	  here.getHost,
+	  here.getPort,
+	  "/" + exchange + "Remote",
+	  here.getQuery,
+	  here.getFragment
+	)
+      val node = MonadicKVDBNode( MonadicKVDB( MURI( hereNow ) ), List( MURI( thereNow ) ) )
+      spawn { node.dispatchDMsgs() }
+      node
+    }
   }
 }
