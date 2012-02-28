@@ -60,18 +60,15 @@ trait MonadicEmbeddedJetty[T]
     ) =
     Generator {
       k : ( CnR[T] => Unit @suspendable ) => {
-	//shift {
-	  //innerk : (Unit => Unit @suspendable) => {	
-
 	val server = new Server( port )
 	val context = 
 	  new ServletContextHandler( ServletContextHandler.SESSIONS )
+	context.setContextPath( path )
+	server.setHandler(context)
 
 	server.start()
 
 	k( CnR[T]( server, context ) );
-	  //}
-	//}      
       }
     }   
 
@@ -87,29 +84,24 @@ trait MonadicEmbeddedJetty[T]
      path : String
    ) = Generator {
      k : ( Payload => Unit @suspendable ) =>
-       //shift {
-       blog(
+       tweet(
 	 "The client is running... (don't let him get away!)"
        )
 
      for( cnr <- acceptConnections( port, path ) ) {
        spawn {
-	 // Open bracket
-	 blog( "Connected: " + cnr.server )
+	 tweet( "Connected: " + cnr.server )
 	 
          for ( t <- read [T] ( cnr.server, cnr.context ) ) { k( t ) }
-	 
-         // Close bracket
        }
      }
-     //}
    }
 
   def callbacks( srvr : Server, ctxt : ServletContextHandler ) =
     Generator {
       k : ( Payload => Unit @suspendable) =>
 
-      blog("level 1 callbacks")
+      tweet("level 1 callbacks")
 
       shift {
   	outerk : (Unit => Any) =>
@@ -123,7 +115,7 @@ trait MonadicEmbeddedJetty[T]
 	       rsp : HttpServletResponse
 	     ) : Unit = {
     	       spawn { 
-  		 blog("before continuation in callback")
+  		 tweet("before continuation in callback")
   		
     		 k(
 		   new ClientRequestPair[T] {
@@ -132,18 +124,18 @@ trait MonadicEmbeddedJetty[T]
 		   }
 		 )
     		
-    		 blog("after continuation in callback")
+    		 tweet("after continuation in callback")
     		   
 		 outerk()
     	       }
     	     }	     
 	   }
   	
-  	blog("before registering callback")
+  	tweet("before registering callback")
   	
 	ctxt.addServlet( new ServletHolder( TheRendezvous ), "/*" )
   	
-  	blog("after registering callback")
+  	tweet("after registering callback")
   	// stop
       }
     }       
@@ -163,7 +155,7 @@ trait MonadicEmbeddedJetty[T]
 		 shift { k : ( Unit => Unit ) => k() }
   	       }
   	       
-  	       blog( "readT returning" )
+  	       tweet( "readT returning" )
   	       outerk()
 	     }
 	 }
