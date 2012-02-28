@@ -409,3 +409,58 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     }
   }
 }
+
+package usage {
+  object MonadicKVDBNet
+       extends MonadicKVDBNodeScope[String,String,String,String]
+       with UUIDOps
+  {
+    import SpecialKURIDefaults._
+    import identityConversions._
+
+    type MTTypes = MonadicTermTypes[String,String,String,String]
+    object TheMTT extends MTTypes with Serializable
+    override def protoTermTypes : MTTypes = TheMTT
+
+    type DATypes = DistributedAskTypes
+    object TheDAT extends DATypes with Serializable
+    override def protoAskTypes : DATypes = TheDAT
+    
+    override type MsgTypes = DTSMSHRsrc   
+    override type RsrcMsgTypes = DTSMSHRsrc   
+
+    val protoDreqUUID = getUUID()
+    val protoDrspUUID = getUUID()    
+    
+    lazy val aLabel = new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
+
+    object MonadicDRsrcMsgs extends RsrcMsgTypes with Serializable {
+      
+      override def protoDreq : DReq = MDGetRequest( aLabel )
+      override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
+      override def protoJtsreq : JTSReq =
+	JustifiedRequest(
+	  protoDreqUUID,
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDreq,
+	  None
+	)
+      override def protoJtsrsp : JTSRsp = 
+	JustifiedResponse(
+	  protoDreqUUID,
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+	  getUUID(),
+	  protoDrsp,
+	  None
+	)
+      override def protoJtsreqorrsp : JTSReqOrRsp =
+	Left( protoJtsreq )
+    }
+    
+    override def protoMsgs : MsgTypes = MonadicDRsrcMsgs
+    override def protoRsrcMsgs : RsrcMsgTypes = MonadicDRsrcMsgs
+  }
+}
