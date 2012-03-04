@@ -13,6 +13,7 @@ import com.biosimilarity.lift.lib.kvdbJSON.Absyn.{
 }
 
 import com.biosimilarity.lift.lib.http._
+import com.biosimilarity.lift.lib.http.HttpPimping
 
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store._
@@ -556,17 +557,26 @@ with UUIDOps {
     }
   }
 
-  def serveAPI( queue : Iterator[String] ) : Unit = {
+  def serveAPI( queue : Iterator[(URI, String)] ) : Unit = {
     println("entered serveAPI")
-    for( jsonReq <- queue ) {
+    for( req <- queue ) {
       try {
         println("received")
-        tweet( "received: " + jsonReq )
-      	dispatch( parse( jsonReq ) )
+        tweet( "received: " + req._2 )
+      	dispatch( parse( req._2 ) )
 		  } catch {
 			  case e => {
-			    println("failed processing\n" + jsonReq)
-          e.printStackTrace
+          socketURIMap.get(req._1).map { scp =>
+            import HttpPimping._
+            // send a parsing failed to the client 
+            scp.responseConnection.sendMessage(
+              """{ "error" : "parsing failed", "msg" : ":escapedJson:", "stackTrace" : ":stackTrace:" }""" 
+                .replaceVars(Map(
+                  "escapedJson" -> req._2.toEscapedJson,
+                  ":stackTrace:" -> e.toStackTrace.toEscapedJson
+                ))
+            )
+          }
 			  }
 		  }
     }
