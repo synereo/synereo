@@ -412,13 +412,13 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 
 package usage {
   object MonadicKVDBNet
-       extends MonadicKVDBNodeScope[String,String,String,String]
+       extends MonadicKVDBNodeScope[String,String,String,Double]
        with UUIDOps
   {
     import SpecialKURIDefaults._
     import identityConversions._
 
-    type MTTypes = MonadicTermTypes[String,String,String,String]
+    type MTTypes = MonadicTermTypes[String,String,String,Double]
     object TheMTT extends MTTypes with Serializable
     override def protoTermTypes : MTTypes = TheMTT
 
@@ -437,7 +437,7 @@ package usage {
     object MonadicDRsrcMsgs extends RsrcMsgTypes with Serializable {
       
       override def protoDreq : DReq = MDGetRequest( aLabel )
-      override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
+      override def protoDrsp : DRsp = MDGetResponse( aLabel, 0.0 )
       override def protoJtsreq : JTSReq =
 	JustifiedRequest(
 	  protoDreqUUID,
@@ -462,5 +462,66 @@ package usage {
     
     override def protoMsgs : MsgTypes = MonadicDRsrcMsgs
     override def protoRsrcMsgs : RsrcMsgTypes = MonadicDRsrcMsgs
+  }
+
+  object MolecularUseCase {
+    import MonadicKVDBNet._
+    import KVDBNodeFactory._
+
+    trait Kinase extends MsgStreamFactory.Message
+    case class RAF(
+      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
+    ) extends Kinase
+    case class RAS(
+      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
+    ) extends Kinase
+    case class MEK1(
+      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
+    ) extends Kinase
+    case class MEK2(
+      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
+    ) extends Kinase
+    case class MAPK(
+      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
+    ) extends Kinase
+
+    implicit val retTwist : Boolean = false
+    def setup(
+      localHost : String, localPort : Int,
+      remoteHost : String, remotePort : Int
+    )(
+      implicit returnTwist : Boolean
+    ) : Either[MonadicKVDBNode,(MonadicKVDBNode,MonadicKVDBNode)] = {
+      val ( localExchange, remoteExchange ) = 
+	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
+	  ( "/molecularUseCaseProtocolLocal", "/molecularUseCaseProtocolRemote" )	  
+	}
+	else {
+	  ( "/molecularUseCaseProtocol", "/molecularUseCaseProtocol" )	  
+	}
+
+      if ( returnTwist ) {
+	Right[MonadicKVDBNode,(MonadicKVDBNode,MonadicKVDBNode)](
+	  (
+	    ptToPt(
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	    ),
+	    ptToPt(	      
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null )
+	    )
+	  )
+	)
+      }
+      else {
+	Left[MonadicKVDBNode,(MonadicKVDBNode,MonadicKVDBNode)](
+	  ptToPt(
+	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	  )
+	)
+      }
+    }
   }
 }

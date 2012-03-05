@@ -511,17 +511,22 @@
       <version>local</version>
     </dependency>
 
-      <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>1.2.16</version>
-      </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.16</version>
+    </dependency>
 
-      <dependency>
-	<groupId>postgresql</groupId>
-	<artifactId>postgresql</artifactId>
-	<version>9.1-901.jdbc4</version>
-      </dependency>
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>9.1-901.jdbc4</version>
+    </dependency>     
+    <dependency>
+      <groupId>org.ow2.sirocco.vmm</groupId>
+      <artifactId>sirocco-vmm-agent-monitoring-driver-collectd</artifactId>
+      <version>0.7.1</version>
+    </dependency>
             
   </dependencies>
 

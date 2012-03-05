@@ -29,7 +29,6 @@ object WWW extends MonadicEmbeddedJetty[String] with WireTap with Journalist {
         "</BODY></HTML>"
       )
     )    
-    response.getWriter().flush()
   }
 
   def run() : Unit = {
