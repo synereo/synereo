@@ -27,10 +27,10 @@ that from URI, etc, etc...  Anyways this is enough text to trigger my memory for
 object SocketServlet {
 
   val requestQueue = new RequestQueue {
-    val delegate = new java.util.concurrent.LinkedBlockingQueue[String]()
+    val delegate = new java.util.concurrent.LinkedBlockingQueue[(URI,String)]()
     def hasNext = true
     def next = delegate.take // this is a blocking call
-    def put(msg: String) = delegate.put(msg)    
+    def put(msg: (URI,String)) = delegate.put(msg)    
     override def size = delegate.size  // important otherwise a call to size blocks because it iterates
   }
 
@@ -89,10 +89,11 @@ class SocketServlet extends org.eclipse.jetty.websocket.WebSocketServlet {
     request : HttpServletRequest,
     protocol : String
   ) : WebSocket = {
-    val uri = new URI(request.getParameter("uri"))
+    val uri = new URI("websocket://" + request.getPathInfo)
     println("socket received " + request)
     QueuingWebSocket(
       requestQueue,
+      uri,
       ( scp : SocketConnectionPair ) => {
 	dispatcher.socketURIMap += ( uri -> scp )
 	//dispatcher.addReplyURI( uri, uri )
