@@ -474,25 +474,27 @@ trait CnxnXML[Namespace,Var,Tag] {
   ) : String = {
     val initialName = cc.getClass.getName
     val nameComponents = initialName.split( "\\." ).toList
-    if ( nameComponents.length > 1 ) {
-      val iC =
-	nameComponents.take( 1 )( 0 )
-      val initialCompStr =
-	iC.substring( 0, 1 ).toLowerCase + iC.substring( 1, iC.length )
-
-      ( initialCompStr /: nameComponents.drop( 1 ) )(
-	{
-	  ( acc, e ) => {
-	    val compStr =
-	      e.substring( 0, 1 ).toUpperCase + e.substring( 1, e.length ) 
-	    acc + compStr
+    val ccns =
+      if ( nameComponents.length > 1 ) {
+	val iC =
+	  nameComponents.take( 1 )( 0 )
+	val initialCompStr =
+	  iC.substring( 0, 1 ).toLowerCase + iC.substring( 1, iC.length )
+	
+	( initialCompStr /: nameComponents.drop( 1 ) )(
+	  {
+	    ( acc, e ) => {
+	      val compStr =
+		e.substring( 0, 1 ).toUpperCase + e.substring( 1, e.length ) 
+	      acc + compStr
+	    }
 	  }
-	}
-      )
-    }
-    else {
-      initialName
-    }
+	)
+      }
+      else {
+	initialName
+      }
+    ccns.replace( "$", "_" )
   }
 
   def fromCaseClass [Namespace,Var,Tag] (

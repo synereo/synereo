@@ -532,9 +532,9 @@ package usage {
       case class MAPK(
 	b : Boolean, i : Int, a : String
       ) extends Kinase    
-
-      val RASProto : RAS = RAS( true, 0, "Phosphorylated" )
+      
       val RAFProto : RAF = RAF( true, 0, "Phosphorylated" )
+      val RASProto : RAS = RAS( true, 0, "Phosphorylated" )
       val MEK1Proto : MEK1 = MEK1( true, 0, "Phosphorylated" )
       val MEK2Proto : MEK2 = MEK2( true, 0, "Phosphorylated" )      
       val MAPKProto : MAPK = MAPK( true, 0, "Phosphorylated" )
@@ -546,11 +546,16 @@ package usage {
 	    new CnxnCtxtLeaf[String,String,String](
 	      Right[String,String]( "B" )
 	    ),
-	    new CnxnCtxtLeaf[String,String,String](
-	      Right[String,String]( "I" )
+	    new CnxnCtxtBranch[String,String,String](
+	      "a",
+	      List(
+		new CnxnCtxtLeaf[String,String,String](
+		  Left[String,String]( "Phosphorylated" )
+		)
+	      )
 	    ),
 	    new CnxnCtxtLeaf[String,String,String](
-	      Left[String,String]( "Phosphorylated" )
+	      Right[String,String]( "I" )
 	    )
 	  )
 	)

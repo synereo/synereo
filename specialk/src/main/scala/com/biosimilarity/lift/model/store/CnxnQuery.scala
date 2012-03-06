@@ -21,7 +21,7 @@ extends Exception( msg )
 trait CnxnConversions[Namespace,Var,Tag] {
   def cnxnNamespaceTermStr( nspace : Namespace )
   : String = {
-    (nspace + "").replace( "'", "" )
+    (nspace + "").replace( "'", "" ).replace( "$", "_" )
   }
 
   def cnxnTrgtTermStr( trgt : Tag )
@@ -29,25 +29,38 @@ trait CnxnConversions[Namespace,Var,Tag] {
     "tag( " + trgt + " )"
   }
 
-  def cnxnTrgtTermStr( trgt : Either[Tag,Var] )
+  def cnxnTrgtTermStr( useTag : Boolean )( trgt : Either[Tag,Var] )
   : String = {
-    (
-      "tag( "
-      + (trgt match {
-	  case Left( t ) => {
-	    t match {
-	      case s : String => {
-		"\"" + s + "\""
-	      }
-	      case _ => t
+    val tagStr =
+      (trgt match {
+	case Left( t ) => {
+	  t match {
+	    case s : String => {
+	      "\"" + s + "\""
 	    }
+	    case _ => t + ""
 	  }
-	  case Right( v ) => cnxnVarTermStr( v )
 	}
-      )
-      + " )"
-    )
-  }  
+	case Right( v ) => cnxnVarTermStr( v )
+      }
+     )
+    useTag match {
+      case true => {
+	(
+	  "tag( "
+	  + tagStr
+	  + " )"
+	)
+      }
+      case _ => {
+	tagStr
+      }
+    }    
+  }
+
+  def cnxnTrgtTermStr( trgt : Either[Tag,Var] ) : String = {
+    cnxnTrgtTermStr( false )( trgt )
+  }
   
   def cnxnVarTermStr( variable : Var )
   : String = {
@@ -230,10 +243,9 @@ with PrologMgr {
   override def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) :
-    Option[Solution[String]]
-    = {
-	println( "in matches with " + clabel1 + " and " + clabel2 )
+  ) : Option[Solution[String]]
+  = {
+    println( "in matches with " + clabel1 + " and " + clabel2 )
     val solution =
       unifyQuery(
 	cnxnCtxtLabelToTermStr( clabel1 ),
