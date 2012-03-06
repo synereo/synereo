@@ -162,6 +162,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
       override val tQP : TwistedQueuePair[TxPort]
     ) extends AMQPTwistedPairXForm[TxPort,FMsg](
       ( txPortMsg : TxPort ) => {
+	tweet( "calling txPort2FramedMsg" )
 	txPort2FramedMsg[FramedMsg]( txPortMsg ) match {
 	  case fmsg : FMsg => fmsg
 	  case _ => {
@@ -170,6 +171,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
 	}
       },
       ( fmsg : FMsg ) => {
+	tweet( "calling framedMsg2TxPort" )
 	fmsg match {
 	  case trgt : FramedMsg => {
 	    framedMsg2TxPort[FramedMsg]( fmsg.asInstanceOf[FramedMsg] )
