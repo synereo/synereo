@@ -171,7 +171,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 
       body match {
 	case dgreq@Msgs.MDGetRequest( path ) => {	  
-	  tweet( ( this + "getting locally for location : " + path ) )
+	  tweet( ( this + " getting locally for location : " + path ) )
 	  reset {
 	    for( v <- get( List( msrc ) )( false )( path ) ) {
 	      tweet(
@@ -239,7 +239,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     def dispatchDMsgs()  : Unit = {
       reset {
 	for( dreq <- ??() ) {
-	  tweet( this + "handling : " + dreq )	
+	  tweet( this + " handling : " + dreq )	
 	  dispatchDMsg( dreq )
 	}
       }
@@ -541,7 +541,7 @@ package usage {
 
       def mkMolPtn( molType : String ) : CnxnCtxtLabel[String,String,String] = {
 	new CnxnCtxtBranch[String,String,String](
-	  "molType",
+	  "comBiosimilarityLiftModelStoreUsageMolecularUseCase_KinaseSpecifications_" + molType,
 	  List( 
 	    new CnxnCtxtLeaf[String,String,String](
 	      Right[String,String]( "B" )
@@ -658,7 +658,10 @@ package usage {
 		      }
 		    }
 		  }
-		}		
+		}
+		case None => {
+		  println( "Waiting is, Water Brother." )
+		}
 		case unExpected@_ => {
 		  throw new Exception( "Protocol violated. Received: " + unExpected )
 		}	    
@@ -730,6 +733,9 @@ package usage {
 		    }
 		  }
 		}		
+		case None => {
+		  println( "Waiting is, Water Brother." )
+		}
 		case unExpected@_ => {
 		  throw new Exception( "Protocol violated. Received: " + unExpected )
 		}	    

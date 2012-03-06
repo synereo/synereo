@@ -24,14 +24,16 @@ object CookSoup {
     runClient( client )
     runServer( server )
   }
-  def playClient( serverIP : String ) : Unit = {
-    val Right( ( client, server ) ) =
-      setup( localIP, 5672, serverIP, 5672 )( true )
+  def playClient( serverIP : String ) = {
+    val Left( client ) =
+      setup( localIP, 5672, serverIP, 5672 )( false )
     runClient( client )
+    client
   }
-  def playServer( clientIP : String ) : Unit = {
-    val Right( ( client, server ) ) =
-      setup( clientIP, 5672, localIP, 5672 )( true )
+  def playServer( clientIP : String ) = {
+    val Left( server ) =
+      setup( localIP, 5672, clientIP, 5672 )( false )
     runServer( server )
+    server
   }
 }
