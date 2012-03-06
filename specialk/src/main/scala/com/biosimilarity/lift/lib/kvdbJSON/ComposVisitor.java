@@ -481,6 +481,12 @@ public class ComposVisitor<A> implements
     }
 
 /* URI */
+    public URI visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI p, A arg)
+    {
+      String primuri_ = p.primuri_;
+
+      return new com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI(primuri_);
+    }
     public URI visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI p, A arg)
     {
       URIScheme urischeme_ = p.urischeme_.accept(this, arg);
@@ -501,6 +507,12 @@ public class ComposVisitor<A> implements
       URIRelativePath urirelativepath_ = p.urirelativepath_.accept(this, arg);
 
       return new com.biosimilarity.lift.lib.kvdbJSON.Absyn.LocatedtedPath(urilocation_, urirelativepath_);
+    }
+    public URIPath visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath p, A arg)
+    {
+      URIRelativePath urirelativepath_ = p.urirelativepath_.accept(this, arg);
+
+      return new com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath(urirelativepath_);
     }
 
 /* URILocation */

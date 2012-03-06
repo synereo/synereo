@@ -371,6 +371,10 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
     }
 
 /* URI */
+    public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI p, A arg) {
+      R r = leaf(arg);
+      return r;
+    }
     public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI p, A arg) {
       R r = leaf(arg);
       r = combine(p.urischeme_.accept(this, arg), r, arg);
@@ -386,6 +390,11 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
     public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.LocatedtedPath p, A arg) {
       R r = leaf(arg);
       r = combine(p.urilocation_.accept(this, arg), r, arg);
+      r = combine(p.urirelativepath_.accept(this, arg), r, arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath p, A arg) {
+      R r = leaf(arg);
       r = combine(p.urirelativepath_.accept(this, arg), r, arg);
       return r;
     }

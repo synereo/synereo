@@ -623,6 +623,14 @@ public class VisitSkel
   }
   public class URIVisitor<R,A> implements URI.Visitor<R,A>
   {
+    public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI p, A arg)
+    {
+      /* Code For TokenURI Goes Here */
+
+      //p.primuri_;
+
+      return null;
+    }
     public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI p, A arg)
     {
       /* Code For BasicURI Goes Here */
@@ -648,6 +656,14 @@ public class VisitSkel
       /* Code For LocatedtedPath Goes Here */
 
       p.urilocation_.accept(new URILocationVisitor<R,A>(), arg);
+      p.urirelativepath_.accept(new URIRelativePathVisitor<R,A>(), arg);
+
+      return null;
+    }
+    public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath p, A arg)
+    {
+      /* Code For RelativePath Goes Here */
+
       p.urirelativepath_.accept(new URIRelativePathVisitor<R,A>(), arg);
 
       return null;

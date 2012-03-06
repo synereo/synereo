@@ -4,6 +4,7 @@ public abstract class URIPath implements java.io.Serializable {
   public abstract <R,A> R accept(URIPath.Visitor<R,A> v, A arg);
   public interface Visitor <R,A> {
     public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.LocatedtedPath p, A arg);
+    public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath p, A arg);
 
   }
 

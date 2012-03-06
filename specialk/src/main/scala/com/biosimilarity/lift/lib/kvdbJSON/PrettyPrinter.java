@@ -874,13 +874,21 @@ public class PrettyPrinter
        com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqHdr _kvdbreqhdr = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqHdr) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("[");
+       render("'");
        pp(_kvdbreqhdr.uri_1, 0);
+       render("'");
        render(",");
+       render("'");
        pp(_kvdbreqhdr.uri_2, 0);
+       render("'");
        render(",");
+       render("'");
        pp(_kvdbreqhdr.uuid_1, 0);
+       render("'");
        render(",");
+       render("'");
        pp(_kvdbreqhdr.uuid_2, 0);
+       render("'");
        render(",");
        pp(_kvdbreqhdr.reqjust_, 0);
        render("]");
@@ -908,13 +916,21 @@ public class PrettyPrinter
        com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspHdr _kvdbrsphdr = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspHdr) foo;
        if (_i_ > 0) render(_L_PAREN);
        render("[");
+       render("'");
        pp(_kvdbrsphdr.uri_1, 0);
+       render("'");
        render(",");
+       render("'");
        pp(_kvdbrsphdr.uri_2, 0);
+       render("'");
        render(",");
+       render("'");
        pp(_kvdbrsphdr.uuid_1, 0);
+       render("'");
        render(",");
+       render("'");
        pp(_kvdbrsphdr.uuid_2, 0);
+       render("'");
        render(",");
        pp(_kvdbrsphdr.rspjust_, 0);
        render("]");
@@ -1460,7 +1476,14 @@ public class PrettyPrinter
 
   private static void pp(com.biosimilarity.lift.lib.kvdbJSON.Absyn.URI foo, int _i_)
   {
-    if (foo instanceof com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI)
+    if (foo instanceof com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI)
+    {
+       com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI _tokenuri = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_tokenuri.primuri_, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI)
     {
        com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI _basicuri = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI) foo;
        if (_i_ > 0) render(_L_PAREN);
@@ -1487,6 +1510,14 @@ public class PrettyPrinter
        render("/");
        pp(_locatedtedpath.urilocation_, 0);
        pp(_locatedtedpath.urirelativepath_, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath)
+    {
+       com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath _relativepath = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       render("/");
+       pp(_relativepath.urirelativepath_, 0);
        if (_i_ > 0) render(_R_PAREN);
     }
   }
@@ -2249,6 +2280,14 @@ public class PrettyPrinter
 
   private static void sh(com.biosimilarity.lift.lib.kvdbJSON.Absyn.URI foo)
   {
+    if (foo instanceof com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI)
+    {
+       com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI _tokenuri = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI) foo;
+       render("(");
+       render("TokenURI");
+       sh(_tokenuri.primuri_);
+       render(")");
+    }
     if (foo instanceof com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI)
     {
        com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI _basicuri = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI) foo;
@@ -2274,6 +2313,14 @@ public class PrettyPrinter
        render("LocatedtedPath");
        sh(_locatedtedpath.urilocation_);
        sh(_locatedtedpath.urirelativepath_);
+       render(")");
+    }
+    if (foo instanceof com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath)
+    {
+       com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath _relativepath = (com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath) foo;
+       render("(");
+       render("RelativePath");
+       sh(_relativepath.urirelativepath_);
        render(")");
     }
   }

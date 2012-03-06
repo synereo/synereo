@@ -77,36 +77,37 @@ terminal _SYMB_3;    //   "headers"
 terminal _SYMB_4;    //   :
 terminal _SYMB_5;    //   "body"
 terminal _SYMB_6;    //   [
-terminal _SYMB_7;    //   ]
-terminal _SYMB_8;    //   "testReqEmptyHdrs"
-terminal _SYMB_9;    //   "testRspEmptyHdrs"
-terminal _SYMB_10;    //   "testReqEmptyBody"
-terminal _SYMB_11;    //   "testRspEmptyBody"
-terminal _SYMB_12;    //   "ask"
-terminal _SYMB_13;    //   "answer"
-terminal _SYMB_14;    //   "tell"
-terminal _SYMB_15;    //   "acknowledge"
-terminal _SYMB_16;    //   "response"
-terminal _SYMB_17;    //   "request"
-terminal _SYMB_18;    //   "getRequest"
-terminal _SYMB_19;    //   "fetchRequest"
-terminal _SYMB_20;    //   "subscribeRequest"
-terminal _SYMB_21;    //   "putRequest"
-terminal _SYMB_22;    //   "storeRequest"
-terminal _SYMB_23;    //   "publishRequest"
-terminal _SYMB_24;    //   "getResponse"
-terminal _SYMB_25;    //   "fetchResponse"
-terminal _SYMB_26;    //   "subscribeResponse"
-terminal _SYMB_27;    //   "putResponse"
-terminal _SYMB_28;    //   "storeResponse"
-terminal _SYMB_29;    //   "publishResponse"
-terminal _SYMB_30;    //   "ok"
-terminal _SYMB_31;    //   "notok"
-terminal _SYMB_32;    //   /
-terminal _SYMB_33;    //   .
-terminal _SYMB_34;    //   false
-terminal _SYMB_35;    //   null
-terminal _SYMB_36;    //   true
+terminal _SYMB_7;    //   '
+terminal _SYMB_8;    //   ]
+terminal _SYMB_9;    //   "testReqEmptyHdrs"
+terminal _SYMB_10;    //   "testRspEmptyHdrs"
+terminal _SYMB_11;    //   "testReqEmptyBody"
+terminal _SYMB_12;    //   "testRspEmptyBody"
+terminal _SYMB_13;    //   "ask"
+terminal _SYMB_14;    //   "answer"
+terminal _SYMB_15;    //   "tell"
+terminal _SYMB_16;    //   "acknowledge"
+terminal _SYMB_17;    //   "response"
+terminal _SYMB_18;    //   "request"
+terminal _SYMB_19;    //   "getRequest"
+terminal _SYMB_20;    //   "fetchRequest"
+terminal _SYMB_21;    //   "subscribeRequest"
+terminal _SYMB_22;    //   "putRequest"
+terminal _SYMB_23;    //   "storeRequest"
+terminal _SYMB_24;    //   "publishRequest"
+terminal _SYMB_25;    //   "getResponse"
+terminal _SYMB_26;    //   "fetchResponse"
+terminal _SYMB_27;    //   "subscribeResponse"
+terminal _SYMB_28;    //   "putResponse"
+terminal _SYMB_29;    //   "storeResponse"
+terminal _SYMB_30;    //   "publishResponse"
+terminal _SYMB_31;    //   "ok"
+terminal _SYMB_32;    //   "notok"
+terminal _SYMB_33;    //   /
+terminal _SYMB_34;    //   .
+terminal _SYMB_35;    //   false
+terminal _SYMB_36;    //   null
+terminal _SYMB_37;    //   true
 
 terminal String _STRING_;
 
@@ -118,6 +119,7 @@ terminal String VarUIdent;
 terminal String UIdent;
 terminal String LIdent;
 terminal String Wild;
+terminal String PrimURI;
 terminal String PrimUUID;
 
 
@@ -137,52 +139,52 @@ LblReqBody ::= _SYMB_5 _SYMB_4 KVDBRequest:p_3  {: RESULT = new com.biosimilarit
 ;
 LblRspBody ::= _SYMB_5 _SYMB_4 KVDBResponse:p_3  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBLblRspBody(p_3); :} 
 ;
-ReqHeader ::= _SYMB_6 URI:p_2 _SYMB_1 URI:p_4 _SYMB_1 UUID:p_6 _SYMB_1 UUID:p_8 _SYMB_1 ReqJust:p_10 _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqHdr(p_2,p_4,p_6,p_8,p_10); :} 
-  | _SYMB_6 _SYMB_0 _SYMB_8 _SYMB_4 _SYMB_35 _SYMB_2 _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqNoHdr(); :}
+ReqHeader ::= _SYMB_6 _SYMB_7 URI:p_3 _SYMB_7 _SYMB_1 _SYMB_7 URI:p_7 _SYMB_7 _SYMB_1 _SYMB_7 UUID:p_11 _SYMB_7 _SYMB_1 _SYMB_7 UUID:p_15 _SYMB_7 _SYMB_1 ReqJust:p_18 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqHdr(p_3,p_7,p_11,p_15,p_18); :} 
+  | _SYMB_6 _SYMB_0 _SYMB_9 _SYMB_4 _SYMB_36 _SYMB_2 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqNoHdr(); :}
 ;
-RspHeader ::= _SYMB_6 URI:p_2 _SYMB_1 URI:p_4 _SYMB_1 UUID:p_6 _SYMB_1 UUID:p_8 _SYMB_1 RspJust:p_10 _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspHdr(p_2,p_4,p_6,p_8,p_10); :} 
-  | _SYMB_6 _SYMB_0 _SYMB_9 _SYMB_4 _SYMB_35 _SYMB_2 _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspNoHdr(); :}
+RspHeader ::= _SYMB_6 _SYMB_7 URI:p_3 _SYMB_7 _SYMB_1 _SYMB_7 URI:p_7 _SYMB_7 _SYMB_1 _SYMB_7 UUID:p_11 _SYMB_7 _SYMB_1 _SYMB_7 UUID:p_15 _SYMB_7 _SYMB_1 RspJust:p_18 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspHdr(p_3,p_7,p_11,p_15,p_18); :} 
+  | _SYMB_6 _SYMB_0 _SYMB_10 _SYMB_4 _SYMB_36 _SYMB_2 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspNoHdr(); :}
 ;
 KVDBRequest ::= _SYMB_0 AskReq:p_2 _SYMB_4 AskReqPacket:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBAskReq(p_2,p_4); :} 
   | _SYMB_0 TellReq:p_2 _SYMB_4 TellReqPacket:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBTellReq(p_2,p_4); :}
-  | _SYMB_6 _SYMB_0 _SYMB_10 _SYMB_4 _SYMB_35 _SYMB_2 _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBNoReq(); :}
+  | _SYMB_6 _SYMB_0 _SYMB_11 _SYMB_4 _SYMB_36 _SYMB_2 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBNoReq(); :}
 ;
 KVDBResponse ::= _SYMB_0 AskRsp:p_2 _SYMB_4 AskRspPacket:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBAskRsp(p_2,p_4); :} 
   | _SYMB_0 TellRsp:p_2 _SYMB_4 TellRspPacket:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBTellRsp(p_2,p_4); :}
-  | _SYMB_6 _SYMB_0 _SYMB_11 _SYMB_4 _SYMB_35 _SYMB_2 _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBNoRsp(); :}
+  | _SYMB_6 _SYMB_0 _SYMB_12 _SYMB_4 _SYMB_36 _SYMB_2 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBNoRsp(); :}
 ;
-AskReqPacket ::= _SYMB_0 _SYMB_12 _SYMB_4 Pattern:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBAskReqData(p_4); :} 
+AskReqPacket ::= _SYMB_0 _SYMB_13 _SYMB_4 Pattern:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBAskReqData(p_4); :} 
 ;
-AskRspPacket ::= _SYMB_0 _SYMB_13 _SYMB_4 _SYMB_6 Pattern:p_5 _SYMB_1 Substitution:p_7 _SYMB_1 Blob:p_9 _SYMB_7 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBAskRspData(p_5,p_7,p_9); :} 
+AskRspPacket ::= _SYMB_0 _SYMB_14 _SYMB_4 _SYMB_6 Pattern:p_5 _SYMB_1 Substitution:p_7 _SYMB_1 Blob:p_9 _SYMB_8 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBAskRspData(p_5,p_7,p_9); :} 
 ;
-TellReqPacket ::= _SYMB_0 _SYMB_14 _SYMB_4 _SYMB_6 Pattern:p_5 _SYMB_1 Blob:p_7 _SYMB_7 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBTellReqData(p_5,p_7); :} 
+TellReqPacket ::= _SYMB_0 _SYMB_15 _SYMB_4 _SYMB_6 Pattern:p_5 _SYMB_1 Blob:p_7 _SYMB_8 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBTellReqData(p_5,p_7); :} 
 ;
-TellRspPacket ::= _SYMB_0 _SYMB_15 _SYMB_4 Status:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBTellRspData(p_4); :} 
+TellRspPacket ::= _SYMB_0 _SYMB_16 _SYMB_4 Status:p_4 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBTellRspData(p_4); :} 
 ;
-ReqJust ::= _SYMB_0 _SYMB_16 _SYMB_4 _SYMB_35 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqJustNone(); :} 
-  | _SYMB_0 _SYMB_16 _SYMB_4 _SYMB_6 UUID:p_5 _SYMB_7 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqJustSome(p_5); :}
+ReqJust ::= _SYMB_0 _SYMB_17 _SYMB_4 _SYMB_36 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqJustNone(); :} 
+  | _SYMB_0 _SYMB_17 _SYMB_4 _SYMB_6 UUID:p_5 _SYMB_8 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBReqJustSome(p_5); :}
 ;
-RspJust ::= _SYMB_0 _SYMB_17 _SYMB_4 _SYMB_35 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspJustNone(); :} 
-  | _SYMB_0 _SYMB_17 _SYMB_4 _SYMB_6 UUID:p_5 _SYMB_7 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspJustSome(p_5); :}
+RspJust ::= _SYMB_0 _SYMB_18 _SYMB_4 _SYMB_36 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspJustNone(); :} 
+  | _SYMB_0 _SYMB_18 _SYMB_4 _SYMB_6 UUID:p_5 _SYMB_8 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBRspJustSome(p_5); :}
 ;
-AskReq ::= _SYMB_18  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBGetReq(); :} 
-  | _SYMB_19  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBFetchReq(); :}
-  | _SYMB_20  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBSubscribeReq(); :}
+AskReq ::= _SYMB_19  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBGetReq(); :} 
+  | _SYMB_20  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBFetchReq(); :}
+  | _SYMB_21  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBSubscribeReq(); :}
 ;
-TellReq ::= _SYMB_21  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPutReq(); :} 
-  | _SYMB_22  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStoreReq(); :}
-  | _SYMB_23  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPublishReq(); :}
+TellReq ::= _SYMB_22  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPutReq(); :} 
+  | _SYMB_23  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStoreReq(); :}
+  | _SYMB_24  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPublishReq(); :}
 ;
-AskRsp ::= _SYMB_24  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBGetRsp(); :} 
-  | _SYMB_25  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBFetchRsp(); :}
-  | _SYMB_26  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBSubscribeRsp(); :}
+AskRsp ::= _SYMB_25  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBGetRsp(); :} 
+  | _SYMB_26  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBFetchRsp(); :}
+  | _SYMB_27  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBSubscribeRsp(); :}
 ;
-TellRsp ::= _SYMB_27  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPutRsp(); :} 
-  | _SYMB_28  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStoreRsp(); :}
-  | _SYMB_29  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPublishRsp(); :}
+TellRsp ::= _SYMB_28  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPutRsp(); :} 
+  | _SYMB_29  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStoreRsp(); :}
+  | _SYMB_30  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPublishRsp(); :}
 ;
-Status ::= _SYMB_30  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStatusOk(); :} 
-  | _SYMB_31  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStatusNotOk(); :}
+Status ::= _SYMB_31  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStatusOk(); :} 
+  | _SYMB_32  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStatusNotOk(); :}
   | _INTEGER_:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStatusCode(p_1); :}
   | _STRING_:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBStatusStr(p_1); :}
 ;
@@ -203,23 +205,25 @@ QryValue ::= QryGrndLit:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON
   | QryArray:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QColl(p_1); :}
   | QryTerm:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QComp(p_1); :}
 ;
-QryArray ::= _SYMB_6 ListQryElem:p_2 _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QArray(p_2); :} 
+QryArray ::= _SYMB_6 ListQryElem:p_2 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QArray(p_2); :} 
 ;
 QryGrndLit ::= _STRING_:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QStr(p_1); :} 
   | QryNum:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QNum(p_1); :}
   | QryBool:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QBool(p_1); :}
-  | _SYMB_35  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QNul(); :}
+  | _SYMB_36  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QNul(); :}
 ;
-QryBool ::= _SYMB_36  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QTru(); :} 
-  | _SYMB_34  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QFal(); :}
+QryBool ::= _SYMB_37  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QTru(); :} 
+  | _SYMB_35  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QFal(); :}
 ;
 QryNum ::= _INTEGER_:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QInt(p_1); :} 
   | _DOUBLE_:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.QDbl(p_1); :}
 ;
-URI ::= URIScheme:p_1 _SYMB_4 URIPath:p_3  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI(p_1,p_3); :} 
-  | _SYMB_35  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.NullURI(); :}
+URI ::= PrimURI:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI(p_1); :} 
+  | URIScheme:p_1 _SYMB_4 URIPath:p_3  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI(p_1,p_3); :}
+  | _SYMB_36  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.NullURI(); :}
 ;
-URIPath ::= _SYMB_32 URILocation:p_2 URIRelativePath:p_3  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.LocatedtedPath(p_2,p_3); :} 
+URIPath ::= _SYMB_33 URILocation:p_2 URIRelativePath:p_3  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.LocatedtedPath(p_2,p_3); :} 
+  | _SYMB_33 URIRelativePath:p_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath(p_2); :}
 ;
 URILocation ::= URIRoot:p_1 URIRsrcLocation:p_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.URINetLocation(p_1,p_2); :} 
 ;
@@ -228,7 +232,7 @@ URIRsrcLocation ::= NetLocation:p_1 _SYMB_4 Port:p_3  {: RESULT = new com.biosim
 ;
 URIRelativePath ::= URIRoot:p_1 ListURIPathElement:p_2  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.SlashPath(p_1,p_2); :} 
 ;
-URIRoot ::= _SYMB_32  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.URIOrigin(); :} 
+URIRoot ::= _SYMB_33  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.URIOrigin(); :} 
 ;
 NetLocation ::= ListDNSElement:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.DNSAddr(p_1); :} 
 ;
@@ -242,7 +246,7 @@ Port ::= _INTEGER_:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absy
 ;
 UUID ::= LIdent:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBLUUID(p_1); :} 
   | PrimUUID:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBPrimUUID(p_1); :}
-  | _SYMB_35  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBNullUUID(); :}
+  | _SYMB_36  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.KVDBNullUUID(); :}
 ;
 ListQryElem ::=  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.ListQryElem(); :} 
   | QryElem:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.ListQryElem(); RESULT.addLast(p_1); :}
@@ -254,10 +258,10 @@ ListSubstPair ::=  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.kvdbJ
 ;
 ListURIPathElement ::=  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.ListURIPathElement(); :} 
   | URIPathElement:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.ListURIPathElement(); RESULT.addLast(p_1); :}
-  | URIPathElement:p_1 _SYMB_32 ListURIPathElement:p_3  {: RESULT = p_3; p_3.addFirst(p_1); :}
+  | URIPathElement:p_1 _SYMB_33 ListURIPathElement:p_3  {: RESULT = p_3; p_3.addFirst(p_1); :}
 ;
 ListDNSElement ::=  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.ListDNSElement(); :} 
   | DNSElement:p_1  {: RESULT = new com.biosimilarity.lift.lib.kvdbJSON.Absyn.ListDNSElement(); RESULT.addLast(p_1); :}
-  | DNSElement:p_1 _SYMB_33 ListDNSElement:p_3  {: RESULT = p_3; p_3.addFirst(p_1); :}
+  | DNSElement:p_1 _SYMB_34 ListDNSElement:p_3  {: RESULT = p_3; p_3.addFirst(p_1); :}
 ;
 

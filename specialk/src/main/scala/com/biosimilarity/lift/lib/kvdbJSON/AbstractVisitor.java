@@ -188,6 +188,7 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
 /* URI */
+    public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.TokenURI p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.BasicURI p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.NullURI p, A arg) { return visitDefault(p, arg); }
     public R visitDefault(com.biosimilarity.lift.lib.kvdbJSON.Absyn.URI p, A arg) {
@@ -195,6 +196,7 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
     }
 /* URIPath */
     public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.LocatedtedPath p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.lift.lib.kvdbJSON.Absyn.RelativePath p, A arg) { return visitDefault(p, arg); }
     public R visitDefault(com.biosimilarity.lift.lib.kvdbJSON.Absyn.URIPath p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
