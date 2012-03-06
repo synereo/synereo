@@ -253,8 +253,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 
       tweet( ( this + " in forwardGet with hops: " + hops ) )
 
-      for( trgt <- acquaintances; q <- stblQMap.get( trgt ) if !hops.contains( trgt ) ) {
-	tweet( ( this + " forwarding to " + trgt ) )
+      for( trgt <- acquaintances; q <- stblQMap.get( trgt ) if !hops.contains( trgt ) ) {	
 	val request : KVDBNodeRequest = 
 	  ask match {
 	    case dAT.AGetNum => {
@@ -274,7 +273,9 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    }
 	  }
 
-	q ! frameRequest( trgt )( request )
+	val framedReq = frameRequest( trgt )( request )
+	tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
+	q ! framedReq
       }
     }
 
