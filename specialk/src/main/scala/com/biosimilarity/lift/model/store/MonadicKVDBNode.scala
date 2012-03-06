@@ -19,6 +19,7 @@ import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 import scala.collection.mutable.Map
+import scala.collection.mutable.MapProxy
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.ListBuffer
@@ -463,27 +464,10 @@ package usage {
     override def protoMsgs : MsgTypes = MonadicDRsrcMsgs
     override def protoRsrcMsgs : RsrcMsgTypes = MonadicDRsrcMsgs
   }
-
+  
   object MolecularUseCase {
     import MonadicKVDBNet._
     import KVDBNodeFactory._
-
-    trait Kinase extends MsgStreamFactory.Message
-    case class RAF(
-      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
-    ) extends Kinase
-    case class RAS(
-      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
-    ) extends Kinase
-    case class MEK1(
-      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
-    ) extends Kinase
-    case class MEK2(
-      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
-    ) extends Kinase
-    case class MAPK(
-      b : Boolean, i : Int, a : String, r : Option[MsgStreamFactory.Message]
-    ) extends Kinase
 
     implicit val retTwist : Boolean = false
     def setup(
@@ -523,5 +507,238 @@ package usage {
 	)
       }
     }
+
+    object KinaseSpecifications {
+      import scala.math._
+      def raf2RAS : Double = random * 100
+      def ras2MEK1 : Double = random * 100
+      def mek12MEK2 : Double = random * 100
+      def mek22MAPK : Double = random * 100
+      def mapk2Protein : Double = random * 100
+
+      trait Kinase
+      case class RAF(
+	b : Boolean, i : Int, a : String
+      ) extends Kinase
+      case class RAS(
+	b : Boolean, i : Int, a : String
+      ) extends Kinase
+      case class MEK1(
+	b : Boolean, i : Int, a : String
+      ) extends Kinase
+      case class MEK2(
+	b : Boolean, i : Int, a : String
+      ) extends Kinase
+      case class MAPK(
+	b : Boolean, i : Int, a : String
+      ) extends Kinase    
+
+      val RASProto : RAS = RAS( true, 0, "Phosphorylated" )
+      val RAFProto : RAF = RAF( true, 0, "Phosphorylated" )
+      val MEK1Proto : MEK1 = MEK1( true, 0, "Phosphorylated" )
+      val MEK2Proto : MEK2 = MEK2( true, 0, "Phosphorylated" )      
+      val MAPKProto : MAPK = MAPK( true, 0, "Phosphorylated" )
+
+      def mkMolPtn( molType : String ) : CnxnCtxtLabel[String,String,String] = {
+	new CnxnCtxtBranch[String,String,String](
+	  "molType",
+	  List( 
+	    new CnxnCtxtLeaf[String,String,String](
+	      Right[String,String]( "B" )
+	    ),
+	    new CnxnCtxtLeaf[String,String,String](
+	      Right[String,String]( "I" )
+	    ),
+	    new CnxnCtxtLeaf[String,String,String](
+	      Left[String,String]( "Phosphorylated" )
+	    )
+	  )
+	)
+      }
+
+      val RASPtn : CnxnCtxtLabel[String,String,String] =
+	mkMolPtn( "RAS" )
+
+      val RAFPtn : CnxnCtxtLabel[String,String,String] =
+	mkMolPtn( "RAF" )
+      
+      val MEK1Ptn : CnxnCtxtLabel[String,String,String] =
+	mkMolPtn( "MEK1" )
+
+      val MEK2Ptn : CnxnCtxtLabel[String,String,String] =
+	mkMolPtn( "MEK2" )
+            
+      val MAPKPtn : CnxnCtxtLabel[String,String,String] =
+	mkMolPtn( "MAPK" )
+    }
+
+    import KinaseSpecifications._
+
+    trait CellularEnvironment {
+      def kinaseMap : HashMap[Kinase,Double] 
+      def amt [K <: Kinase] ( proto : K ) : Double = {
+	kinaseMap.get( proto ).getOrElse( 0 )
+      }      
+    }
+    
+    case class Cytoplasm( kinaseMap : HashMap[Kinase,Double] )
+	 extends CellularEnvironment with MapProxy[Kinase,Double] {
+	   override def self = kinaseMap
+	 }
+
+    implicit lazy val cellCytoplasm : Cytoplasm = Cytoplasm( new HashMap[Kinase,Double]() )    
+
+    def supplyKinase(
+      kvdbNode : MonadicKVDBNode,
+      cellCytoplasm : Cytoplasm,
+      kinase : Kinase with ScalaObject with Product with Serializable,
+      trigger : Double
+    ) : Unit = {
+      import scala.math._
+      import CnxnConversionStringScope._
+      import cnxnConversions._
+      new Thread {
+	override def run() : Unit = {
+	  def loop( kinase : Kinase with ScalaObject with Product with Serializable, amt : Double ) : Unit = {
+	    val kamt = cellCytoplasm.amt( kinase )
+	    if ( kamt < amt ) {
+	      val inc = random * 25
+	      cellCytoplasm += ( kinase -> ( kamt + inc ) )
+	      reset { kvdbNode.put( asCnxnCtxtLabel( kinase ), inc ) }
+	      loop( kinase, amt )
+	    }
+	  }
+
+	  loop( kinase, trigger )
+
+	}
+      }.start
+    }
+
+    def runClient( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
+      import scala.math._
+      import KinaseSpecifications._
+      // map-reduce-style protocol       
+
+      supplyKinase( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
+
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    for( rasRsrc <- kvdbNode.get( RASPtn ) ) {
+	      println( kvdbNode + " received: " + rasRsrc )
+	      rasRsrc match {
+		case Some( mTT.RBound( Some( mTT.Ground( inc ) ), soln ) ) => {
+		  println( kvdbNode + " received an increment, " + inc + ", of RAS" )
+		  val currAmt : Double = cellCytoplasm.amt( RASProto )
+		  cellCytoplasm += ( ( RASProto, ( inc + currAmt ) ) )
+		  for( amt <- cellCytoplasm.get( RASProto ) ) {
+		    if ( amt > ras2MEK1 ) {
+		      supplyKinase( kvdbNode, cellCytoplasm, MEK1Proto, mek12MEK2 )
+		      reset {
+			for( mek2Rsrc <- kvdbNode.get( MEK2Ptn ) ) {
+			  println( kvdbNode + " received: " + mek2Rsrc )
+			  mek2Rsrc match {
+			    case Some( mTT.RBound( Some( mTT.Ground( inc ) ), soln ) ) => {
+			      println( kvdbNode + " received an increment, " + inc + ", of MEK2" )
+			      val currAmt : Double = cellCytoplasm.amt( MEK2Proto )
+			      cellCytoplasm += ( ( MEK2Proto, ( currAmt + inc ) ) )
+			      for( amt <- cellCytoplasm.get( MEK2Proto ) ) {
+				if ( amt > mek22MAPK ) {
+				  supplyKinase( kvdbNode, cellCytoplasm, MAPKProto, mapk2Protein )
+				  println( "MAPK produced." )
+				}
+			      }
+			    }
+			    case unExpected@_ => {
+			      throw new Exception( "Protocol violated. Received: " + unExpected )
+			    }
+			  }
+			}
+		      }
+		    }
+		  }
+		}		
+		case unExpected@_ => {
+		  throw new Exception( "Protocol violated. Received: " + unExpected )
+		}	    
+	      }
+	    }
+	  }
+	}
+      }.start
+    }
+
+    def runServer( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
+      import scala.math._
+      import KinaseSpecifications._
+      // map-reduce-style protocol checking                        
+
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    for( rafRsrc <- kvdbNode.get( RAFPtn ) ) {
+	      println( kvdbNode + " received: " + rafRsrc )
+	      rafRsrc match {
+		case Some( mTT.RBound( Some( mTT.Ground( inc ) ), soln ) ) => {
+		  println( kvdbNode + " received an increment, " + inc + ", of RAF" )
+		  val currAmt : Double = cellCytoplasm.amt( RAFProto )
+		  cellCytoplasm += ( ( RAFProto, ( currAmt + inc ) ) )
+		  for( amt <- cellCytoplasm.get( RAFProto ) ) {
+		    if ( amt > raf2RAS ) {
+		      supplyKinase( kvdbNode, cellCytoplasm, RASProto, ras2MEK1 )
+		      reset {
+			for( mek1Rsrc <- kvdbNode.get( MEK1Ptn ) ) {
+			  println( kvdbNode + " received: " + mek1Rsrc )
+			  mek1Rsrc match {
+			    case Some( mTT.RBound( Some( mTT.Ground( inc ) ), soln ) ) => {
+			      println( kvdbNode + " received an increment, " + inc + ", of MEK1" )
+			      val currAmt : Double = cellCytoplasm.amt( MEK1Proto )
+			      cellCytoplasm += ( ( MEK1Proto, ( currAmt + inc ) ) )
+			      for( amt <- cellCytoplasm.get( MEK1Proto ) ) {
+				if ( amt > mek12MEK2 ) {
+				  supplyKinase( kvdbNode, cellCytoplasm, MEK2Proto, mek22MAPK )
+				  reset {
+				    for( mapkRsrc <- kvdbNode.get( MAPKPtn ) ) {
+				      println( kvdbNode + " received: " + mapkRsrc )
+				      mapkRsrc match {
+					case Some( mTT.RBound( Some( mTT.Ground( inc ) ), soln ) ) => {
+					  println( kvdbNode + " received an increment, " + inc + ", of MAPK" )
+					  val currAmt : Double = cellCytoplasm.amt( MAPKProto )
+					  cellCytoplasm += ( ( MAPKProto, ( currAmt + inc ) ) )
+					  for( amt <- cellCytoplasm.get( MAPKProto ) ) {
+					    if ( amt > mapk2Protein ) {
+					      println( "Protein produced." )
+					    }
+					  }
+					}
+					case unExpected@_ => {
+					  throw new Exception( "Protocol violated. Received: " + unExpected )
+					}
+				      }
+				    }
+				  }
+				}
+			      }
+			    }
+			    case unExpected@_ => {
+			      throw new Exception( "Protocol violated. Received: " + unExpected )
+			    }
+			  }
+			}
+		      }
+		    }
+		  }
+		}		
+		case unExpected@_ => {
+		  throw new Exception( "Protocol violated. Received: " + unExpected )
+		}	    
+	      }
+	    }
+	  }
+	}
+      }.start
+    }
+    
   }
 }
