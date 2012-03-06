@@ -94,15 +94,17 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     import identityConversions._
   
     override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
+      tweet( "unwrapping transport message : " + txPortMsg )
       val xstrm = new XStream( new JettisonMappedXmlDriver )
       val fmsg = xstrm.fromXML( txPortMsg ).asInstanceOf[A]
-      tweet( "fmsg : " + fmsg )
+      tweet( "resulting framed message : " + fmsg )
       fmsg 
     }
     override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
+      tweet( "wrapping framed message : " + txPortMsg )
       val xstrm = new XStream( new JettisonMappedXmlDriver )
       val xmsg = xstrm.toXML( txPortMsg )
-      tweet( "txPortMsg : " + xmsg )
+      tweet( "resulting transport message : " + xmsg )
       xmsg
     }
   }
@@ -523,19 +525,19 @@ package usage {
 
       trait Kinase
       case class RAF(
-	b : Boolean, i : Int, a : String
+	b : Boolean, i : Int, state : String
       ) extends Kinase
       case class RAS(
-	b : Boolean, i : Int, a : String
+	b : Boolean, i : Int, state : String
       ) extends Kinase
       case class MEK1(
-	b : Boolean, i : Int, a : String
+	b : Boolean, i : Int, state : String
       ) extends Kinase
       case class MEK2(
-	b : Boolean, i : Int, a : String
+	b : Boolean, i : Int, state : String
       ) extends Kinase
       case class MAPK(
-	b : Boolean, i : Int, a : String
+	b : Boolean, i : Int, state : String
       ) extends Kinase    
       
       val RAFProto : RAF = RAF( true, 0, "Phosphorylated" )
@@ -551,16 +553,16 @@ package usage {
 	    new CnxnCtxtLeaf[String,String,String](
 	      Right[String,String]( "B" )
 	    ),
+	    new CnxnCtxtLeaf[String,String,String](
+	      Right[String,String]( "I" )
+	    ),
 	    new CnxnCtxtBranch[String,String,String](
-	      "a",
+	      "state",
 	      List(
 		new CnxnCtxtLeaf[String,String,String](
 		  Left[String,String]( "Phosphorylated" )
 		)
 	      )
-	    ),
-	    new CnxnCtxtLeaf[String,String,String](
-	      Right[String,String]( "I" )
 	    )
 	  )
 	)
