@@ -523,7 +523,11 @@ package usage {
       def mek22MAPK : Double = random * 100
       def mapk2Protein : Double = random * 100
 
-      trait Kinase
+      trait Kinase {
+	def b : Boolean
+	def i : Int
+	def state : String
+      }
       case class RAF(
 	b : Boolean, i : Int, state : String
       ) extends Kinase
@@ -561,6 +565,40 @@ package usage {
 	      List(
 		new CnxnCtxtLeaf[String,String,String](
 		  Left[String,String]( "Phosphorylated" )
+		)
+	      )
+	    )
+	  )
+	)
+      }
+
+      def mkMolQry( kinase : Kinase ) : CnxnCtxtLabel[String,String,String] = {
+	val molType =
+	  kinase.getClass.getName.split( "\\." ).toList.last.split( "\\$" ).toList.last
+	new CnxnCtxtBranch[String,String,String](
+	  "comBiosimilarityLiftModelStoreUsageMolecularUseCase_KinaseSpecifications_" + molType,
+	  List( 
+	    new CnxnCtxtBranch[String,String,String](
+	      "b",
+	      List(
+		new CnxnCtxtLeaf[String,String,String](
+		  Left[String,String]( kinase.b + "" )
+		)
+	      )
+	    ),
+	    new CnxnCtxtBranch[String,String,String](
+	      "i",
+	      List(
+		new CnxnCtxtLeaf[String,String,String](
+		  Left[String,String]( kinase.i + "" )
+		)
+	      )
+	    ),
+	    new CnxnCtxtBranch[String,String,String](
+	      "state",
+	      List(
+		new CnxnCtxtLeaf[String,String,String](
+		  Left[String,String]( kinase.state )
 		)
 	      )
 	    )
@@ -616,7 +654,7 @@ package usage {
 	    if ( kamt < amt ) {
 	      val inc = random * 25
 	      cellCytoplasm += ( kinase -> ( kamt + inc ) )
-	      reset { kvdbNode.put( asCnxnCtxtLabel( kinase ), inc ) }
+	      reset { kvdbNode.put( mkMolQry( kinase ), inc ) }
 	      loop( kinase, amt )
 	    }
 	  }
