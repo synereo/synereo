@@ -95,11 +95,15 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   
     override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
       val xstrm = new XStream( new JettisonMappedXmlDriver )
-      xstrm.fromXML( txPortMsg ).asInstanceOf[A]
+      val fmsg = xstrm.fromXML( txPortMsg ).asInstanceOf[A]
+      tweet( "fmsg : " + fmsg )
+      fmsg 
     }
     override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
       val xstrm = new XStream( new JettisonMappedXmlDriver )
-      xstrm.toXML( txPortMsg )
+      val xmsg = xstrm.toXML( txPortMsg )
+      tweet( "txPortMsg : " + xmsg )
+      xmsg
     }
   }
 
