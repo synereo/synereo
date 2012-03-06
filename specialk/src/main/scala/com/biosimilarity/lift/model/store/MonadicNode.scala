@@ -361,12 +361,18 @@ class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
   import identityConversions._
   
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
+    tweet( "message before xform : " + txPortMsg )
     val xstrm = new XStream( new JettisonMappedXmlDriver )
-    xstrm.fromXML( txPortMsg ).asInstanceOf[A]
+    val msgA = xstrm.fromXML( txPortMsg ).asInstanceOf[A]
+    tweet( "message after xform : " + msgA )
+    msgA
   }
   def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
+    tweet( "message before xform : " + txPortMsg )
     val xstrm = new XStream( new JettisonMappedXmlDriver )
-    xstrm.toXML( txPortMsg )
+    val msgStr = xstrm.toXML( txPortMsg )
+    tweet( "message after xform : " + msgStr )
+    msgStr
   }
 }
 
