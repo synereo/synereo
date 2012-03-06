@@ -93,11 +93,11 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   ) with MonadicTermStoreT {
     import identityConversions._
   
-    def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
+    override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
       val xstrm = new XStream( new JettisonMappedXmlDriver )
       xstrm.fromXML( txPortMsg ).asInstanceOf[A]
     }
-    def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
+    override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
       val xstrm = new XStream( new JettisonMappedXmlDriver )
       xstrm.toXML( txPortMsg )
     }

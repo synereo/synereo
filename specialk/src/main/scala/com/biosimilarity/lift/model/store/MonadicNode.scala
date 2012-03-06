@@ -164,7 +164,10 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
       ( txPortMsg : TxPort ) => {
 	tweet( "calling txPort2FramedMsg" )
 	txPort2FramedMsg[FramedMsg]( txPortMsg ) match {
-	  case fmsg : FMsg => fmsg
+	  case fmsg : FMsg => {
+	    tweet( "fmsg : " + fmsg )
+	    fmsg
+	  }
 	  case _ => {
 	    throw new Exception( "trgt is not an FMsg" )
 	  }
@@ -174,7 +177,9 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
 	tweet( "calling framedMsg2TxPort" )
 	fmsg match {
 	  case trgt : FramedMsg => {
-	    framedMsg2TxPort[FramedMsg]( fmsg.asInstanceOf[FramedMsg] )
+	    val txPortMsg = framedMsg2TxPort[FramedMsg]( fmsg.asInstanceOf[FramedMsg] )
+	    tweet( "txPortMsg : " + txPortMsg )
+	    txPortMsg
 	  }
 	  case _ => {
 	    throw new Exception( "Not a trgt: " + fmsg )
