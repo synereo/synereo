@@ -11,6 +11,8 @@ package com.biosimilarity.lift.model.store
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.lib._
 
+import scala.collection.mutable.HashMap
+
 import org.prolog4j._
 
 import java.net.URI
@@ -240,6 +242,52 @@ with PrologMgr {
       matchesOne( clabel1, clabel2 )      
     }
   
+  def patternVars(
+    pattern : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : List[Var] = {
+    ( ( Nil : List[Var] ) /: pattern.atoms )(
+      ( acc : List[Var], atom : Either[Tag,Var] ) => {
+	atom match {
+	  case Right( v ) => acc ++ List( v )
+	  case _ => acc
+	}
+      }
+    )
+  }
+
+  def matchMap(
+    clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
+    clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : Option[HashMap[Var,Tag]] = {
+    println( "in matches with " + clabel1 + " and " + clabel2 )
+    val solution : Solution[Tag] =
+      getProver().solve(
+	( cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "." )
+      )
+
+    if ( solution.isSuccess ) {
+      //println( " found a solution in matches for " + clabel1 + " and " + clabel2 )
+      // BUGBUG -- fix this
+
+      val clbl1Vars = patternVars( clabel1 ).toSet
+      val clbl2Vars = patternVars( clabel2 ).toSet
+      val varSet = clbl1Vars ++ clbl2Vars
+      
+      val hmSoln = new HashMap[Var,Tag]()
+    
+      for( v <- varSet ) {
+	solution.on( v + "" )
+	hmSoln += ( v -> solution.get )
+      }
+      
+      Some( hmSoln )
+    }
+    else {
+      //println( " no solution in matches for " + clabel1 + " and " + clabel2 )
+      None
+    }
+  }
+
   override def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -251,9 +299,11 @@ with PrologMgr {
 	cnxnCtxtLabelToTermStr( clabel1 ),
 	cnxnCtxtLabelToTermStr( clabel2 )
       )
+
     if ( solution.isSuccess ) {
       //println( " found a solution in matches for " + clabel1 + " and " + clabel2 )
-      // BUGBUG -- fix this
+      // BUGBUG -- fix this      
+      
       Some( solution )
     }
     else {
