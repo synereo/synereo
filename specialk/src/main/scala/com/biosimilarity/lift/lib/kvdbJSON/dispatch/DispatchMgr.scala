@@ -163,7 +163,7 @@ with ConfigurationTrampoline {
       reset {
 	for( msg <- kvdbMgr.get( requestPattern() ) ) {
 	  msg match {
-	    case Some( kvdbDispatcher.stblKVDBScope.mTT.RBound( v, Some( subst ) ) ) => {	      
+	    case Some( kvdbDispatcher.stblKVDBScope.mTT.RBoundP4JSoln( v, Some( subst ) ) ) => {	      
 	       for( mgtReq <- parseRequest( subst ) ) {
 		 mgtReq match {
 		   case AddSingletonKVDB( uri, db, host ) => {

@@ -181,7 +181,7 @@ with UUIDOps {
     }
 
     rsrc match {
-      case stblKVDBScope.mTT.RBound( Some( rsrc ), Some( subst ) ) => {
+      case stblKVDBScope.mTT.RBoundP4JSoln( Some( rsrc ), Some( subst ) ) => {
 	rsrc match {
 	  case bndRsrc : stblKVDBScope.mTT.RBound => {
 	    Some(
@@ -197,10 +197,10 @@ with UUIDOps {
 	  }
 	}
       }
-      case stblKVDBScope.mTT.RBound( None, Some( subst ) ) => {
+      case stblKVDBScope.mTT.RBoundP4JSoln( None, Some( subst ) ) => {
 	Some( asJSONPairs( subst, ptrnVars ) )
       }
-      case stblKVDBScope.mTT.RBound( _, None ) => {
+      case stblKVDBScope.mTT.RBoundP4JSoln( _, None ) => {
 	None
       }
       case _ => {
@@ -214,7 +214,7 @@ with UUIDOps {
   ) : Option[String] = {
     rsrc match {
       case stblKVDBScope.mTT.Ground( v ) => Some( v + "" )
-      case stblKVDBScope.mTT.RBound( oRsrc, _ ) => {
+      case stblKVDBScope.mTT.RBoundP4JSoln( oRsrc, _ ) => {
 	for( bndRsrc <- oRsrc; gv <- getGrndVal( bndRsrc ) ) yield {
 	  gv
 	}
@@ -770,7 +770,7 @@ class KVDBJSONAPIDispatcher(
 	case class PrologSubstitution( soln : Solution[String] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
-	       Some( mTT.RBound( Some( rsrc ), Some( soln ) ) )
+	       Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )
 	     }
 	   }
 	override type Substitution = PrologSubstitution

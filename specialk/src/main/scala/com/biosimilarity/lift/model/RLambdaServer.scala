@@ -129,14 +129,14 @@ with UUIDOps {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    throw new Exception( "evaluation request with no binding" )
 	  }
-	  case Some( mTT.RBound( Some( mTT.Ground( expr ) ), None ) ) => {
+	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( expr ) ), None ) ) => {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    println( "received malformed evaluation request from: " + endPtId )
 	    println( "expr: " + expr )
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    throw new Exception( "evaluation request with no binding" )
 	  }
-	  case Some( mTT.RBound( Some( mTT.Ground( expr ) ), Some( soln ) ) ) => {
+	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( expr ) ), Some( soln ) ) ) => {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    println( "received evaluation request from: " + endPtId )
 	    println( "expr: " + expr )
@@ -188,7 +188,7 @@ with UUIDOps {
 	  case Some( mTT.Ground( endPtId ) ) => {
 	    evalInSessionProtocol( endPtId )
 	  }
-	  case Some( mTT.RBound( Some( mTT.Ground( endPtId ) ), _ ) ) => {
+	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( endPtId ) ), _ ) ) => {
 	    evalInSessionProtocol( endPtId )
 	  }
 	  case _ => {
@@ -216,7 +216,7 @@ class RLambdaApplicationEvaluationService(
 	  case Some( mTT.Ground( appEvalReq ) ) => {
 	    throw new Exception( "invalid appEvalReq format : " + appEvalReq )
 	  }
-	  case Some( mTT.RBound( Some( mTT.Ground( appEvalReq ) ), Some( subst ) ) ) => {
+	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( appEvalReq ) ), Some( subst ) ) ) => {
 	    evalInSession( appEvalReq, subst )	    
 	  }
 	  case _ => {
@@ -244,7 +244,7 @@ class RLambdaAbstractionEvaluationService(
 	  case Some( mTT.Ground( absEvalReq ) ) => {
 	    throw new Exception( "invalid absEvalReq format : " + absEvalReq )
 	  }
-	  case Some( mTT.RBound( Some( mTT.Ground( absEvalReq ) ), Some( subst ) ) ) => {
+	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( absEvalReq ) ), Some( subst ) ) ) => {
 	    evalInSession( absEvalReq, subst )	    
 	  }
 	  case _ => {
@@ -272,7 +272,7 @@ class RLambdaMentionEvaluationService(
 	  case Some( mTT.Ground( mntnEvalReq ) ) => {
 	    throw new Exception( "invalid mntnEvalReq format : " + mntnEvalReq )
 	  }
-	  case Some( mTT.RBound( Some( mTT.Ground( mntnEvalReq ) ), Some( subst ) ) ) => {
+	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( mntnEvalReq ) ), Some( subst ) ) ) => {
 	    evalInSession( mntnEvalReq, subst )	    
 	  }
 	  case _ => {

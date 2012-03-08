@@ -259,16 +259,12 @@ with PrologMgr {
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : Option[HashMap[Var,Tag]] = {
-    println( "in matches with " + clabel1 + " and " + clabel2 )
     val solution : Solution[Tag] =
       getProver().solve(
 	( cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "." )
       )
 
     if ( solution.isSuccess ) {
-      //println( " found a solution in matches for " + clabel1 + " and " + clabel2 )
-      // BUGBUG -- fix this
-
       val clbl1Vars = patternVars( clabel1 ).toSet
       val clbl2Vars = patternVars( clabel2 ).toSet
       val varSet = clbl1Vars ++ clbl2Vars
@@ -283,7 +279,6 @@ with PrologMgr {
       Some( hmSoln )
     }
     else {
-      //println( " no solution in matches for " + clabel1 + " and " + clabel2 )
       None
     }
   }

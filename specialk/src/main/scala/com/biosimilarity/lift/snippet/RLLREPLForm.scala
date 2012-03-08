@@ -71,7 +71,7 @@ class RLLREPLForm {
 		    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 		    rslt = Some( nf )
 		  }
-		  case Some( mTT.RBound( Some( mTT.Ground( nf ) ), _ ) ) => {
+		  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( nf ) ), _ ) ) => {
 		    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 		    println( "rslt: " + nf )
 		    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )

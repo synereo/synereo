@@ -103,7 +103,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     case class PrologSubstitution( soln : Solution[String] )
 	 extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	   override def apply( rsrc : mTT.Resource ) = {
-	     Some( mTT.RBound( Some( rsrc ), Some( soln ) ) )
+	     Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )
 	   }
 	 }
 
@@ -119,7 +119,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       place : mTT.GetRequest
     ) : Boolean = {
       //println( "in fits on " + this )
-      matches( ptn, place ) match {
+      //matches( ptn, place ) match {
+      matchMap( ptn, place ) match {
 	case Some( soln ) => {
 	  //PrologSubstitution( soln )
 	  true
@@ -151,7 +152,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     def getGV( rsrc : mTT.Resource ) : Option[Value] = {
       rsrc match {
 	case mTT.Ground( v ) => Some( v )
-	case mTT.RBound( Some( nrsrc ), _ ) => getGV( nrsrc )
+	case mTT.RBoundP4JSoln( Some( nrsrc ), _ ) => getGV( nrsrc )
 	case _ => None
       }
     }
@@ -402,7 +403,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       ) {	
 
 	value match {
-	  case mTT.RBound(
+	  case mTT.RBoundP4JSoln(
 	    Some( mTT.Ground( gv ) ),
 	    Some( soln ) 
 	  ) => {
@@ -416,7 +417,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	      
 	  }
 
-	  case mTT.RBound(
+	  case mTT.RBoundP4JSoln(
 	    Some( mTT.Ground( gv ) ),
 	    None 
 	  ) => {

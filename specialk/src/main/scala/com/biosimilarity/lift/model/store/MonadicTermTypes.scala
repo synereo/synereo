@@ -49,14 +49,43 @@ import java.io.OutputStreamWriter
 trait MonadicTermTypes[Namespace,Var,Tag,Value] 
 extends MonadicGenerators {
   trait Resource extends Serializable
+  trait RBound extends Resource {
+    def rsrc : Option[Resource]
+    def soln : Option[Solution[String]]
+    def sbst : Option[HashMap[Var,Tag]]
+  } 
+  object RBound {
+    def apply(
+      rsrc : Option[Resource], soln : Option[Solution[String]]
+    ) : RBound = {
+      RBoundP4JSoln( rsrc, soln )
+    }
+    def unapply(
+      rsrc : RBoundP4JSoln
+    ) : Option[( Option[Resource], Option[Solution[String]] )] = {
+      Some( ( rsrc.rsrc, rsrc.soln ) )
+    }
+    def unapply(
+      rsrc : RBoundHM
+    ) : Option[( Option[Resource], Option[HashMap[Var,Tag]] )] = {
+      Some( ( rsrc.rsrc, rsrc.sbst ) )
+    }
+  }
   case class Ground( v : Value ) extends Resource
   case class Cursor( v : Generator[Resource,Unit,Unit] ) extends Resource
   case class RMap(
     m : TMapR[Namespace,Var,Tag,Value]
   ) extends Resource
-  case class RBound(
+  case class RBoundP4JSoln(
     rsrc : Option[Resource], soln : Option[Solution[String]]
-  ) extends Resource
+  ) extends RBound {
+    override def sbst : Option[HashMap[Var,Tag]] = None
+  }
+  case class RBoundHM(
+    rsrc : Option[Resource], sbst : Option[HashMap[Var,Tag]]
+  ) extends RBound {
+    override def soln : Option[Solution[String]] = None
+  }
 
   type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  
 

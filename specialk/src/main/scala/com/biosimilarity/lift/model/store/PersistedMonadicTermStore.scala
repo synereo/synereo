@@ -556,7 +556,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	  // Currently the PersistenceManifest has no access to the
 	  // unification machinery
 	  Some (
-            mTT.RBound(
+            mTT.RBoundP4JSoln(
 	      Some( mTT.Cursor( ig ) ),
 	      None
   	    )
@@ -1401,7 +1401,7 @@ package usage {
 	case class PrologSubstitution( soln : Solution[String] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
-	       Some( mTT.RBound( Some( rsrc ), Some( soln ) ) )
+	       Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )
 	     }
 	   }
 	override type Substitution = PrologSubstitution
@@ -1989,7 +1989,7 @@ object StdPersistedMonadicTS
 	case class PrologSubstitution( soln : Solution[String] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
-	       Some( mTT.RBound( Some( rsrc ), Some( soln ) ) )
+	       Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )
 	     }
 	   }
 	override type Substitution = PrologSubstitution
