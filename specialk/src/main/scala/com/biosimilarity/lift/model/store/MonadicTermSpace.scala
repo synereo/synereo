@@ -100,10 +100,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     class TMapK[Namespace,Var,Tag,Value]
     extends HashMap[mTT.GetRequest,List[RK]]
 
-    case class PrologSubstitution( soln : Solution[String] )
+    case class PrologSubstitution( soln : HashMap[Var,Tag] )
 	 extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	   override def apply( rsrc : mTT.Resource ) = {
-	     Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )
+	     Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
 	   }
 	 }
 
@@ -137,10 +137,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     ) : Option[Substitution] = {
       //println( "in fitsK on " + this )
       //println( "in fitsK with ptn = " + ptn + "\n place = " + place )
-      val matchRslts = matches( ptn, place )
+      val matchRslts = matchMap( ptn, place )
       //println( "match results in fitsK on " + this + " are " + matchRslts )
       matchRslts match {
-	case Some( soln : Solution[String] ) => {
+	case Some( soln : HashMap[Var,Tag] ) => {
 	  Some( PrologSubstitution( soln ) )
 	}
 	case None => {
@@ -152,7 +152,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     def getGV( rsrc : mTT.Resource ) : Option[Value] = {
       rsrc match {
 	case mTT.Ground( v ) => Some( v )
-	case mTT.RBoundP4JSoln( Some( nrsrc ), _ ) => getGV( nrsrc )
+	case mTT.RBoundHM( Some( nrsrc ), _ ) => getGV( nrsrc )
 	case _ => None
       }
     }
@@ -403,7 +403,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       ) {	
 
 	value match {
-	  case mTT.RBoundP4JSoln(
+	  case mTT.RBoundHM(
 	    Some( mTT.Ground( gv ) ),
 	    Some( soln ) 
 	  ) => {
@@ -417,7 +417,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	      
 	  }
 
-	  case mTT.RBoundP4JSoln(
+	  case mTT.RBoundHM(
 	    Some( mTT.Ground( gv ) ),
 	    None 
 	  ) => {

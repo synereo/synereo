@@ -556,7 +556,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	  // Currently the PersistenceManifest has no access to the
 	  // unification machinery
 	  Some (
-            mTT.RBoundP4JSoln(
+            mTT.RBoundHM(
 	      Some( mTT.Cursor( ig ) ),
 	      None
   	    )
@@ -1398,10 +1398,10 @@ package usage {
       object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
        with Serializable
       {
-	case class PrologSubstitution( soln : Solution[String] )
+	case class PrologSubstitution( soln : HashMap[String,String] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
-	       Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )
+	       Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
 	     }
 	   }
 	override type Substitution = PrologSubstitution
@@ -1604,13 +1604,8 @@ package usage {
 			case _ => throw new Exception( "xml roundtrip failed " + key )
 		      }
 
-		    val soln = 
-		      unifyQuery(
-			asPatternString(
-			  cclKey
-			),
-			asPatternString( k )
-		      )
+		    val Some( soln ) = matchMap( cclKey, k )
+
 		    emT.PlaceInstance(
 		      k,
 		      oGvOrK match {
@@ -1986,10 +1981,10 @@ object StdPersistedMonadicTS
       object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
 	with Serializable
       {
-	case class PrologSubstitution( soln : Solution[String] )
+	case class PrologSubstitution( soln : HashMap[Symbol,Any] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
-	       Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )
+	       Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
 	     }
 	   }
 	override type Substitution = PrologSubstitution

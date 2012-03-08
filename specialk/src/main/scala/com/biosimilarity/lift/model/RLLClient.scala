@@ -94,7 +94,7 @@ class RLLEvaluationServiceProxy(
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    evalExchange( str, sessId, k )
 	  }
-	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( sessId ) ), _ ) ) => {
+	  case Some( mTT.RBoundHM( Some( mTT.Ground( sessId ) ), _ ) ) => {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    println( "engaging evaluation exchange: " )
 	    println( "client: " + endPointId.toString )

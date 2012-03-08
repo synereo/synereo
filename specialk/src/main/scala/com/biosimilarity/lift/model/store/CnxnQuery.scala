@@ -175,7 +175,7 @@ trait PrologMgr {
     val prover = getProver()
     val queryStr = qStr1 + " = " + qStr2 + "."
     prover.solve( queryStr )
-  }
+  }  
 }
 
 trait PrologTermQuery[Namespace,Var,Tag] {
@@ -253,15 +253,16 @@ with PrologMgr {
 	}
       }
     )
-  }
+  }  
 
   def matchMap(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : Option[HashMap[Var,Tag]] = {
+        
     val solution : Solution[Tag] =
       getProver().solve(
-	( cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "." )
+	cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "."
       )
 
     if ( solution.isSuccess ) {

@@ -73,7 +73,7 @@ class RLLEvaluationService(
 	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	  exchange.put( evaluationResponseStr, evaluation( expr ) )
 	}
-	case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( expr ) ), _ ) ) => {
+	case Some( mTT.RBoundHM( Some( mTT.Ground( expr ) ), _ ) ) => {
 	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	  println( "received evaluation request from: " + endPtId )
 	  println( "expr: " + expr )
@@ -105,7 +105,7 @@ class RLLEvaluationService(
 	      ( expr : String ) => { new RLLREPL( ).eval( expr ) }
 	    )
 	  }
-	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( endPtId ) ), _ ) ) => {
+	  case Some( mTT.RBoundHM( Some( mTT.Ground( endPtId ) ), _ ) ) => {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    println( "received session request from: " + endPtId )
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
@@ -136,7 +136,7 @@ class RLLEvaluationService(
 	      ( expr : String ) => { new RLLREPL( ).eval( expr ) }
 	    )
 	  }
-	  case Some( mTT.RBoundP4JSoln( Some( mTT.Ground( endPtId ) ), _ ) ) => {
+	  case Some( mTT.RBoundHM( Some( mTT.Ground( endPtId ) ), _ ) ) => {
 	    inSession(
 	      endPtId,
 	      "vmEvaluationRequest",
