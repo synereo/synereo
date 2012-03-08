@@ -1,0 +1,66 @@
+-- -*- mode: Haskell;-*- 
+-- Filename:    rlambda.cf 
+-- Authors:     lgm                                                    
+-- Creation:    Fri May  1 13:17:06 2009 
+-- Copyright:   Not supplied 
+-- Description: 
+-- ------------------------------------------------------------------------
+
+-- Programs are merely syntactic sugar over the core lambda calculus :
+-- Sequencing of expressions can be interpreted
+-- desugar( e1; es ) = val v1 = e1 ; desugar( es )
+Progression     . Program       ::= Expression ";" Program                  ;
+Completion      . Program       ::=                                         ;
+
+-- Binding of variables to values can be interpreted
+-- desugar( val v = e1 ; e ) = ( ( v ) => e )( e1 )
+Binding         . Program       ::= "val" VariableExpr "=" Expression ";" Program ;
+
+-- Core lambda calculus in scala-style syntax
+Application     . Expression    ::= Expression "(" [Expression] ")"         ;
+Abstraction     . Expression    ::= "(" [VariableExpr] ")" "=>" "{" Program "}" ;
+Mention         . Expression    ::= VariableExpr                            ;
+
+-- Endowing the computational model with values 
+-- (other than lambda expressions)
+Value           . Expression    ::= ValueExpr                               ;
+
+-- Programs are Expressions
+Embedding       . Expression    ::= "{" Program "}"                         ;
+
+-- Traditionally, some form of identifier is assumed
+Atom            . VariableExpr  ::= Ident                                   ;
+-- But, this is not necessary if we use expression syntax, itself 
+-- to form identifiers
+Transcription   . VariableExpr  ::= "@" "<" Expression ">"                  ;
+
+-- Basic list syntax
+Listed          . ValueExpr     ::= "[" [Expression] "]"                    ;
+
+-- Ground value are restricted to Numeric types, Booleans, and Strings
+Quantity        . ValueExpr     ::= Numeric                                 ;
+Quality         . ValueExpr     ::= Bool                                    ;
+Utterance       . ValueExpr     ::= String                                  ;
+
+-- Numeric types are limited to just Doubles and Integers
+Measure         . Numeric       ::= Double                                  ;
+Count           . Numeric       ::= Integer                                 ;
+
+Verity          . Bool          ::= "true"                                  ;
+Absurdity       . Bool          ::= "false"                                 ;
+
+-- Syntactic repetition constructs
+[]              . [VariableExpr] ::=                                        ;
+(: [])          . [VariableExpr] ::= VariableExpr                           ;
+(:)             . [VariableExpr] ::= VariableExpr "," [VariableExpr]        ;
+
+[]              . [Expression]   ::=                                        ;
+(: [])          . [Expression]   ::= Expression                             ;
+(:)             . [Expression]   ::= Expression "," [Expression]            ;
+
+[]              . [Expression1]  ::=                                        ;
+(: [])          . [Expression1]  ::= Expression                             ;
+(:)             . [Expression1]  ::= Expression ";" [Expression1]           ;
+
+comment "//" ;
+comment "/*" "*/" ;
