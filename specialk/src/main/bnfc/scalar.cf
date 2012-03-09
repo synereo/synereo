@@ -21,9 +21,9 @@ Application     . Expression    ::= Expression "(" [Expression] ")"         ;
 Abstraction     . Expression    ::= "(" [VariableExpr] ")" "=>" "{" Program "}" ;
 Mention         . Expression    ::= VariableExpr                            ;
 
--- Endowing the computational model with values 
--- (other than lambda expressions)
-Value           . Expression    ::= ValueExpr                               ;
+-- Endowing the core computational model with values 
+-- (other than lambda expressions) and arithmetic over them
+Calculation     . Expression    ::= ArithemeticExpr                         ;
 
 -- Programs are Expressions
 Embedding       . Expression    ::= "{" Program "}"                         ;
@@ -37,17 +37,29 @@ Transcription   . VariableExpr  ::= "@" "<" Expression ">"                  ;
 -- Basic list syntax
 Listed          . ValueExpr     ::= "[" [Expression] "]"                    ;
 
+-- Basic arithmetic syntax
+Summation       . ArithemeticExpr ::= ArithmeticExpr "+" ArithmeticExpr1    ;
+Multiplication  . ArithmeticExpr1 ::= ArithmeticExpr1 "*" ArithmeticExpr2   ;
+Negation        . ArithmeticExpr2 ::= "-" ArithmeticExpr3                   ;
+Reduction       . ArithmeticExpr3 ::= "(" Expression "(" [Expression] ")" ")" ;
+Variation       . ArithmeticExpr3 ::= VariableExpr                          ;
+Value           . ArithmeticExpr3 ::= ValueExpr                             ;
+
+_               . ArithmeticExpr  ::= ArithmeticExpr1                       ;
+_               . ArithmeticExpr1 ::= ArithmeticExpr2                       ;
+_               . ArithmeticExpr2 ::= ArithmeticExpr3                       ;
+
 -- Ground value are restricted to Numeric types, Booleans, and Strings
 Quantity        . ValueExpr     ::= Numeric                                 ;
-Quality         . ValueExpr     ::= Bool                                    ;
+Quality         . ValueExpr     ::= Logical                                 ;
 Utterance       . ValueExpr     ::= String                                  ;
 
 -- Numeric types are limited to just Doubles and Integers
 Measure         . Numeric       ::= Double                                  ;
 Count           . Numeric       ::= Integer                                 ;
 
-Verity          . Bool          ::= "true"                                  ;
-Absurdity       . Bool          ::= "false"                                 ;
+Verity          . Logical        ::= "true"                                  ;
+Absurdity       . Logical        ::= "false"                                 ;
 
 -- Syntactic repetition constructs
 []              . [VariableExpr] ::=                                        ;

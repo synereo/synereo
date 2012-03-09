@@ -36,10 +36,13 @@ IDENT = ({LETTER}|{DIGIT}|['_])
 <YYINITIAL>> { return new Symbol(sym._SYMB_9); }
 <YYINITIAL>\[ { return new Symbol(sym._SYMB_10); }
 <YYINITIAL>\] { return new Symbol(sym._SYMB_11); }
-<YYINITIAL>, { return new Symbol(sym._SYMB_12); }
-<YYINITIAL>false { return new Symbol(sym._SYMB_13); }
-<YYINITIAL>true { return new Symbol(sym._SYMB_14); }
-<YYINITIAL>val { return new Symbol(sym._SYMB_15); }
+<YYINITIAL>\+ { return new Symbol(sym._SYMB_12); }
+<YYINITIAL>\* { return new Symbol(sym._SYMB_13); }
+<YYINITIAL>- { return new Symbol(sym._SYMB_14); }
+<YYINITIAL>, { return new Symbol(sym._SYMB_15); }
+<YYINITIAL>false { return new Symbol(sym._SYMB_16); }
+<YYINITIAL>true { return new Symbol(sym._SYMB_17); }
+<YYINITIAL>val { return new Symbol(sym._SYMB_18); }
 <YYINITIAL>"//"[^\n]*\n { /* BNFC single-line comment */ }
 <YYINITIAL>"/*" { yybegin(COMMENT); }
 <COMMENT>"*/" { yybegin(YYINITIAL); }

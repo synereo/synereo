@@ -23,7 +23,7 @@ public class Test
     p = new parser(l);
     /* The default parser is the first-defined entry point. */
     /* You may want to change this. Other options are: */
-    /* pExpression, pVariableExpr, pValueExpr, pNumeric, pBool, pListVariableExpr, pListExpression */
+    /* pExpression, pVariableExpr, pValueExpr, pArithemeticExpr, pArithmeticExpr, pNumeric, pLogical, pListVariableExpr, pListExpression */
     try
     {
       com.biosimilarity.lift.lib.scalar.Absyn.Program parse_tree = p.pProgram();

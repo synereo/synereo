@@ -13,7 +13,7 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Application p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Abstraction p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Mention p, A arg) { return visitDefault(p, arg); }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Calculation p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Embedding p, A arg) { return visitDefault(p, arg); }
     public R visitDefault(com.biosimilarity.lift.lib.scalar.Absyn.Expression p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
@@ -32,16 +32,33 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
     public R visitDefault(com.biosimilarity.lift.lib.scalar.Absyn.ValueExpr p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
+/* ArithemeticExpr */
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Summation p, A arg) { return visitDefault(p, arg); }
+    public R visitDefault(com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr p, A arg) {
+      throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
+    }
+/* ArithmeticExpr */
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Multiplication p, A arg) { return visitDefault(p, arg); }
+
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Negation p, A arg) { return visitDefault(p, arg); }
+
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Reduction p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Variation p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg) { return visitDefault(p, arg); }
+
+    public R visitDefault(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr p, A arg) {
+      throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
+    }
 /* Numeric */
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Measure p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Count p, A arg) { return visitDefault(p, arg); }
     public R visitDefault(com.biosimilarity.lift.lib.scalar.Absyn.Numeric p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
-/* Bool */
+/* Logical */
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Verity p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Absurdity p, A arg) { return visitDefault(p, arg); }
-    public R visitDefault(com.biosimilarity.lift.lib.scalar.Absyn.Bool p, A arg) {
+    public R visitDefault(com.biosimilarity.lift.lib.scalar.Absyn.Logical p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
 

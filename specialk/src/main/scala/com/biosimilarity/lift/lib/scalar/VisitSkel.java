@@ -69,11 +69,11 @@ public class VisitSkel
 
       return null;
     }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg)
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Calculation p, A arg)
     {
-      /* Code For Value Goes Here */
+      /* Code For Calculation Goes Here */
 
-      p.valueexpr_.accept(new ValueExprVisitor<R,A>(), arg);
+      p.arithemeticexpr_.accept(new ArithemeticExprVisitor<R,A>(), arg);
 
       return null;
     }
@@ -130,7 +130,7 @@ public class VisitSkel
     {
       /* Code For Quality Goes Here */
 
-      p.bool_.accept(new BoolVisitor<R,A>(), arg);
+      p.logical_.accept(new LogicalVisitor<R,A>(), arg);
 
       return null;
     }
@@ -139,6 +139,66 @@ public class VisitSkel
       /* Code For Utterance Goes Here */
 
       //p.string_;
+
+      return null;
+    }
+
+  }
+  public class ArithemeticExprVisitor<R,A> implements ArithemeticExpr.Visitor<R,A>
+  {
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Summation p, A arg)
+    {
+      /* Code For Summation Goes Here */
+
+      p.arithmeticexpr_1.accept(new ArithmeticExprVisitor<R,A>(), arg);
+      p.arithmeticexpr_2.accept(new ArithmeticExprVisitor<R,A>(), arg);
+
+      return null;
+    }
+
+  }
+  public class ArithmeticExprVisitor<R,A> implements ArithmeticExpr.Visitor<R,A>
+  {
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Multiplication p, A arg)
+    {
+      /* Code For Multiplication Goes Here */
+
+      p.arithmeticexpr_1.accept(new ArithmeticExprVisitor<R,A>(), arg);
+      p.arithmeticexpr_2.accept(new ArithmeticExprVisitor<R,A>(), arg);
+
+      return null;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Negation p, A arg)
+    {
+      /* Code For Negation Goes Here */
+
+      p.arithmeticexpr_.accept(new ArithmeticExprVisitor<R,A>(), arg);
+
+      return null;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Reduction p, A arg)
+    {
+      /* Code For Reduction Goes Here */
+
+      p.expression_.accept(new ExpressionVisitor<R,A>(), arg);
+      for (Expression x : p.listexpression_) {
+      }
+
+      return null;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Variation p, A arg)
+    {
+      /* Code For Variation Goes Here */
+
+      p.variableexpr_.accept(new VariableExprVisitor<R,A>(), arg);
+
+      return null;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg)
+    {
+      /* Code For Value Goes Here */
+
+      p.valueexpr_.accept(new ValueExprVisitor<R,A>(), arg);
 
       return null;
     }
@@ -164,7 +224,7 @@ public class VisitSkel
     }
 
   }
-  public class BoolVisitor<R,A> implements Bool.Visitor<R,A>
+  public class LogicalVisitor<R,A> implements Logical.Visitor<R,A>
   {
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Verity p, A arg)
     {

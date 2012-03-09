@@ -8,8 +8,10 @@ public class ComposVisitor<A> implements
   com.biosimilarity.lift.lib.scalar.Absyn.Expression.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.Expression,A>,
   com.biosimilarity.lift.lib.scalar.Absyn.VariableExpr.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.VariableExpr,A>,
   com.biosimilarity.lift.lib.scalar.Absyn.ValueExpr.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.ValueExpr,A>,
+  com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr,A>,
+  com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr,A>,
   com.biosimilarity.lift.lib.scalar.Absyn.Numeric.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.Numeric,A>,
-  com.biosimilarity.lift.lib.scalar.Absyn.Bool.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.Bool,A>
+  com.biosimilarity.lift.lib.scalar.Absyn.Logical.Visitor<com.biosimilarity.lift.lib.scalar.Absyn.Logical,A>
 {
 /* Program */
     public Program visit(com.biosimilarity.lift.lib.scalar.Absyn.Progression p, A arg)
@@ -60,11 +62,11 @@ public class ComposVisitor<A> implements
 
       return new com.biosimilarity.lift.lib.scalar.Absyn.Mention(variableexpr_);
     }
-    public Expression visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg)
+    public Expression visit(com.biosimilarity.lift.lib.scalar.Absyn.Calculation p, A arg)
     {
-      ValueExpr valueexpr_ = p.valueexpr_.accept(this, arg);
+      ArithemeticExpr arithemeticexpr_ = p.arithemeticexpr_.accept(this, arg);
 
-      return new com.biosimilarity.lift.lib.scalar.Absyn.Value(valueexpr_);
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Calculation(arithemeticexpr_);
     }
     public Expression visit(com.biosimilarity.lift.lib.scalar.Absyn.Embedding p, A arg)
     {
@@ -105,15 +107,61 @@ public class ComposVisitor<A> implements
     }
     public ValueExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Quality p, A arg)
     {
-      Bool bool_ = p.bool_.accept(this, arg);
+      Logical logical_ = p.logical_.accept(this, arg);
 
-      return new com.biosimilarity.lift.lib.scalar.Absyn.Quality(bool_);
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Quality(logical_);
     }
     public ValueExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Utterance p, A arg)
     {
       String string_ = p.string_;
 
       return new com.biosimilarity.lift.lib.scalar.Absyn.Utterance(string_);
+    }
+
+/* ArithemeticExpr */
+    public ArithemeticExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Summation p, A arg)
+    {
+      ArithmeticExpr arithmeticexpr_1 = p.arithmeticexpr_1.accept(this, arg);
+      ArithmeticExpr arithmeticexpr_2 = p.arithmeticexpr_2.accept(this, arg);
+
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Summation(arithmeticexpr_1, arithmeticexpr_2);
+    }
+
+/* ArithmeticExpr */
+    public ArithmeticExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Multiplication p, A arg)
+    {
+      ArithmeticExpr arithmeticexpr_1 = p.arithmeticexpr_1.accept(this, arg);
+      ArithmeticExpr arithmeticexpr_2 = p.arithmeticexpr_2.accept(this, arg);
+
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Multiplication(arithmeticexpr_1, arithmeticexpr_2);
+    }
+    public ArithmeticExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Negation p, A arg)
+    {
+      ArithmeticExpr arithmeticexpr_ = p.arithmeticexpr_.accept(this, arg);
+
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Negation(arithmeticexpr_);
+    }
+    public ArithmeticExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Reduction p, A arg)
+    {
+      Expression expression_ = p.expression_.accept(this, arg);
+      ListExpression listexpression_ = new ListExpression();
+      for (Expression x : p.listexpression_) {
+        listexpression_.add(x.accept(this,arg));
+      }
+
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Reduction(expression_, listexpression_);
+    }
+    public ArithmeticExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Variation p, A arg)
+    {
+      VariableExpr variableexpr_ = p.variableexpr_.accept(this, arg);
+
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Variation(variableexpr_);
+    }
+    public ArithmeticExpr visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg)
+    {
+      ValueExpr valueexpr_ = p.valueexpr_.accept(this, arg);
+
+      return new com.biosimilarity.lift.lib.scalar.Absyn.Value(valueexpr_);
     }
 
 /* Numeric */
@@ -130,13 +178,13 @@ public class ComposVisitor<A> implements
       return new com.biosimilarity.lift.lib.scalar.Absyn.Count(integer_);
     }
 
-/* Bool */
-    public Bool visit(com.biosimilarity.lift.lib.scalar.Absyn.Verity p, A arg)
+/* Logical */
+    public Logical visit(com.biosimilarity.lift.lib.scalar.Absyn.Verity p, A arg)
     {
 
       return new com.biosimilarity.lift.lib.scalar.Absyn.Verity();
     }
-    public Bool visit(com.biosimilarity.lift.lib.scalar.Absyn.Absurdity p, A arg)
+    public Logical visit(com.biosimilarity.lift.lib.scalar.Absyn.Absurdity p, A arg)
     {
 
       return new com.biosimilarity.lift.lib.scalar.Absyn.Absurdity();

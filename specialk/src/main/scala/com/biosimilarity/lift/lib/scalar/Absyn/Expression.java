@@ -6,7 +6,7 @@ public abstract class Expression implements java.io.Serializable {
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Application p, A arg);
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Abstraction p, A arg);
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Mention p, A arg);
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg);
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Calculation p, A arg);
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Embedding p, A arg);
 
   }
