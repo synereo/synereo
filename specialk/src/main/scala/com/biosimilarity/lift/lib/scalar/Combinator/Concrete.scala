@@ -51,22 +51,33 @@ trait CoreLanguageForms {
 	}
       }    
     def expressionXform : Parser[Expression] =
-      (
-	applicationXform
-	| abstractionXform
-	| valueXform
-	| mentionXform
-//	| arithmeticXform
-	| embeddingXform
-	| "("~expressionXform~")" ^^ {
-	  case "("~term~")" => term
-	}
-      )
-
+      arithmeticXform | embeddingXform
+    def embeddingXform : Parser[Expression] =
+      "{"~programXform~"}" ^^ {
+	case "("~expr~")" => expr
+      }    
+    def arithmeticXform : Parser[Expression] =
+      repsep( multiplicationXform, "+" ) ^^ {
+	case summands => SummationLiteral( summands )
+      }
+    def multiplicationXform : Parser[Expression] = 
+      repsep( factorXform, "*" ) ^^ {
+	case factors => MultiplicationLiteral( factors )
+      }
+    def factorXform : Parser[Expression] =
+      negationXform | lambdaXform
+    def negationXform : Parser[Expression] =
+      "-"~( negationXform | lambdaXform ) ^^ {
+	case "-"~expr => NegationLiteral( expr )
+      }
+    def lambdaXform : Parser[Expression] =
+      applicationXform | lambda1Xform
     def applicationXform : Parser[Application] =
-      expressionXform~"("~repsep( expressionXform, "," )~")" ^^ {
+      lambda1Xform~"("~repsep( lambda1Xform, "," )~")" ^^ {
 	case op~"("~actls~")" => Application( op, actls )
       }
+    def lambda1Xform : Parser[Expression] =
+      abstractionXform | mentionXform | valueXform
     def abstractionXform : Parser[Abstraction] =
       "("~repsep( mentionXform, "," )~")"~"=>"~"{"~programXform~"}" ^^ {
 	case "("~fmls~")"~"=>"~"{"~body~"}" =>
@@ -76,7 +87,6 @@ trait CoreLanguageForms {
       (
 	ident ^^ ( x => Mention( StringVariable( x ) ) )
 	| quotationXform ^^ ( x => Mention( x ) )
-	//| URL ^^ ( x => Mention( URLVariable( x ) ) )
       )
     def valueXform : Parser[Expression] =
       (
@@ -91,35 +101,10 @@ trait CoreLanguageForms {
  	| "false" ^^ ( x => BooleanLiteral( false ) )
  	| "bot" ^^ ( x => BottomLiteral )
       );
-//     def arithmeticXform : Parser[Expression] =
-//       ( summationXform | multiplicationXform | negationXform 
-//        | reductionXform | mentionXform | valueXform )
-//     def summationXform : Parser[Expression] = 
-//       repsep( multiplicationXform, "+" ) ^^ {
-// 	case summands => SummationLiteral( summands )
-//       }
-//     def multiplicationXform : Parser[Expression] = 
-//       repsep( factorXform, "*" ) ^^ {
-// 	case factors => MultiplicationLiteral( factors )
-//       }
-//     def factorXform : Parser[Expression] =
-//       negationXform | reductionXform | mentionXform | valueXform | groupXform
-//     def negationXform : Parser[Expression] =
-//       "-"~( reductionXform | mentionXform | valueXform ) ^^ {
-// 	case "-"~expr => NegationLiteral( expr )
-//       }
-//     def reductionXform : Parser[Expression] = 
-//       "("~expressionXform~"("~repsep( expressionXform, "," )~")"~")" ^^ {
-// 	case "("~op~"("~actls~")"~")" => Application( op, actls )
-//       }
-//     def groupXform : Parser[Expression] =
-//       "("~arithmeticXform~")" ^^ {
-// 	case "("~expr~")" => expr
-//       }
-    def embeddingXform : Parser[Expression] =
-      "{"~programXform~"}" ^^ {
+    def groupXform : Parser[Expression] =
+      "("~arithmeticXform~")" ^^ {
 	case "("~expr~")" => expr
-      }
+      }    
     def quotationXform : Parser[Nominal] =
       "@"~"<"~expressionXform~">" ^^ {
 	case "@"~"<"~term~">" => Transcription( term )
