@@ -30,10 +30,46 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
     }
 
 /* Expression */
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Calculation p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.arithmeticexpr_.accept(this, arg), r, arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Embedding p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.program_.accept(this, arg), r, arg);
+      return r;
+    }
+
+/* ArithmeticExpr */
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Summation p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.arithmeticexpr_1.accept(this, arg), r, arg);
+      r = combine(p.arithmeticexpr_2.accept(this, arg), r, arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Multiplication p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.arithmeticexpr_1.accept(this, arg), r, arg);
+      r = combine(p.arithmeticexpr_2.accept(this, arg), r, arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Negation p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.arithmeticexpr_.accept(this, arg), r, arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Function p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.lambdaexpr_.accept(this, arg), r, arg);
+      return r;
+    }
+
+/* LambdaExpr */
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Application p, A arg) {
       R r = leaf(arg);
-      r = combine(p.expression_.accept(this, arg), r, arg);
-      for (Expression x : p.listexpression_) {
+      r = combine(p.lambdaexpr_.accept(this, arg), r, arg);
+      for (LambdaExpr x : p.listlambdaexpr_) {
         r = combine(x.accept(this,arg), r, arg);
       }
       return r;
@@ -51,14 +87,14 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
       r = combine(p.variableexpr_.accept(this, arg), r, arg);
       return r;
     }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Calculation p, A arg) {
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg) {
       R r = leaf(arg);
-      r = combine(p.arithemeticexpr_.accept(this, arg), r, arg);
+      r = combine(p.valueexpr_.accept(this, arg), r, arg);
       return r;
     }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Embedding p, A arg) {
+    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Association p, A arg) {
       R r = leaf(arg);
-      r = combine(p.program_.accept(this, arg), r, arg);
+      r = combine(p.arithmeticexpr_.accept(this, arg), r, arg);
       return r;
     }
 
@@ -93,45 +129,6 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
     }
     public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Utterance p, A arg) {
       R r = leaf(arg);
-      return r;
-    }
-
-/* ArithemeticExpr */
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Summation p, A arg) {
-      R r = leaf(arg);
-      r = combine(p.arithmeticexpr_1.accept(this, arg), r, arg);
-      r = combine(p.arithmeticexpr_2.accept(this, arg), r, arg);
-      return r;
-    }
-
-/* ArithmeticExpr */
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Multiplication p, A arg) {
-      R r = leaf(arg);
-      r = combine(p.arithmeticexpr_1.accept(this, arg), r, arg);
-      r = combine(p.arithmeticexpr_2.accept(this, arg), r, arg);
-      return r;
-    }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Negation p, A arg) {
-      R r = leaf(arg);
-      r = combine(p.arithmeticexpr_.accept(this, arg), r, arg);
-      return r;
-    }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Reduction p, A arg) {
-      R r = leaf(arg);
-      r = combine(p.expression_.accept(this, arg), r, arg);
-      for (Expression x : p.listexpression_) {
-        r = combine(x.accept(this,arg), r, arg);
-      }
-      return r;
-    }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Variation p, A arg) {
-      R r = leaf(arg);
-      r = combine(p.variableexpr_.accept(this, arg), r, arg);
-      return r;
-    }
-    public R visit(com.biosimilarity.lift.lib.scalar.Absyn.Value p, A arg) {
-      R r = leaf(arg);
-      r = combine(p.valueexpr_.accept(this, arg), r, arg);
       return r;
     }
 

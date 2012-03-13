@@ -90,6 +90,36 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
+  public static String print(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo)
+  {
+    pp(foo, 0);
+    trim();
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String show(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo)
+  {
+    sh(foo);
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String print(com.biosimilarity.lift.lib.scalar.Absyn.LambdaExpr foo)
+  {
+    pp(foo, 0);
+    trim();
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String show(com.biosimilarity.lift.lib.scalar.Absyn.LambdaExpr foo)
+  {
+    sh(foo);
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
   public static String print(com.biosimilarity.lift.lib.scalar.Absyn.VariableExpr foo)
   {
     pp(foo, 0);
@@ -114,36 +144,6 @@ public class PrettyPrinter
     return temp;
   }
   public static String show(com.biosimilarity.lift.lib.scalar.Absyn.ValueExpr foo)
-  {
-    sh(foo);
-    String temp = buf_.toString();
-    buf_.delete(0,buf_.length());
-    return temp;
-  }
-  public static String print(com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr foo)
-  {
-    pp(foo, 0);
-    trim();
-    String temp = buf_.toString();
-    buf_.delete(0,buf_.length());
-    return temp;
-  }
-  public static String show(com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr foo)
-  {
-    sh(foo);
-    String temp = buf_.toString();
-    buf_.delete(0,buf_.length());
-    return temp;
-  }
-  public static String print(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo)
-  {
-    pp(foo, 0);
-    trim();
-    String temp = buf_.toString();
-    buf_.delete(0,buf_.length());
-    return temp;
-  }
-  public static String show(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo)
   {
     sh(foo);
     String temp = buf_.toString();
@@ -210,6 +210,21 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
+  public static String print(com.biosimilarity.lift.lib.scalar.Absyn.ListLambdaExpr foo)
+  {
+    pp(foo, 0);
+    trim();
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String show(com.biosimilarity.lift.lib.scalar.Absyn.ListLambdaExpr foo)
+  {
+    sh(foo);
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
   /***   You shouldn't need to change anything beyond this point.   ***/
 
   private static void pp(com.biosimilarity.lift.lib.scalar.Absyn.Program foo, int _i_)
@@ -245,41 +260,11 @@ public class PrettyPrinter
 
   private static void pp(com.biosimilarity.lift.lib.scalar.Absyn.Expression foo, int _i_)
   {
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Application)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Application _application = (com.biosimilarity.lift.lib.scalar.Absyn.Application) foo;
-       if (_i_ > 0) render(_L_PAREN);
-       pp(_application.expression_, 0);
-       render("(");
-       pp(_application.listexpression_, 0);
-       render(")");
-       if (_i_ > 0) render(_R_PAREN);
-    }
-    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Abstraction)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Abstraction _abstraction = (com.biosimilarity.lift.lib.scalar.Absyn.Abstraction) foo;
-       if (_i_ > 0) render(_L_PAREN);
-       render("(");
-       pp(_abstraction.listvariableexpr_, 0);
-       render(")");
-       render("=>");
-       render("{");
-       pp(_abstraction.program_, 0);
-       render("}");
-       if (_i_ > 0) render(_R_PAREN);
-    }
-    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Mention)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Mention _mention = (com.biosimilarity.lift.lib.scalar.Absyn.Mention) foo;
-       if (_i_ > 0) render(_L_PAREN);
-       pp(_mention.variableexpr_, 0);
-       if (_i_ > 0) render(_R_PAREN);
-    }
-    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Calculation)
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Calculation)
     {
        com.biosimilarity.lift.lib.scalar.Absyn.Calculation _calculation = (com.biosimilarity.lift.lib.scalar.Absyn.Calculation) foo;
        if (_i_ > 0) render(_L_PAREN);
-       pp(_calculation.arithemeticexpr_, 0);
+       pp(_calculation.arithmeticexpr_, 0);
        if (_i_ > 0) render(_R_PAREN);
     }
     else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Embedding)
@@ -290,6 +275,93 @@ public class PrettyPrinter
        pp(_embedding.program_, 0);
        render("}");
        if (_i_ > 0) render(_R_PAREN);
+    }
+  }
+
+  private static void pp(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo, int _i_)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Summation)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Summation _summation = (com.biosimilarity.lift.lib.scalar.Absyn.Summation) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_summation.arithmeticexpr_1, 0);
+       render("+");
+       pp(_summation.arithmeticexpr_2, 1);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Multiplication)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Multiplication _multiplication = (com.biosimilarity.lift.lib.scalar.Absyn.Multiplication) foo;
+       if (_i_ > 1) render(_L_PAREN);
+       pp(_multiplication.arithmeticexpr_1, 1);
+       render("*");
+       pp(_multiplication.arithmeticexpr_2, 2);
+       if (_i_ > 1) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Negation)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Negation _negation = (com.biosimilarity.lift.lib.scalar.Absyn.Negation) foo;
+       if (_i_ > 2) render(_L_PAREN);
+       render("-");
+       pp(_negation.arithmeticexpr_, 2);
+       if (_i_ > 2) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Function)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Function _function = (com.biosimilarity.lift.lib.scalar.Absyn.Function) foo;
+       if (_i_ > 2) render(_L_PAREN);
+       pp(_function.lambdaexpr_, 0);
+       if (_i_ > 2) render(_R_PAREN);
+    }
+  }
+
+  private static void pp(com.biosimilarity.lift.lib.scalar.Absyn.LambdaExpr foo, int _i_)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Application)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Application _application = (com.biosimilarity.lift.lib.scalar.Absyn.Application) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_application.lambdaexpr_, 1);
+       render("(");
+       pp(_application.listlambdaexpr_, 0);
+       render(")");
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Abstraction)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Abstraction _abstraction = (com.biosimilarity.lift.lib.scalar.Absyn.Abstraction) foo;
+       if (_i_ > 1) render(_L_PAREN);
+       render("(");
+       pp(_abstraction.listvariableexpr_, 0);
+       render(")");
+       render("=>");
+       render("{");
+       pp(_abstraction.program_, 0);
+       render("}");
+       if (_i_ > 1) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Mention)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Mention _mention = (com.biosimilarity.lift.lib.scalar.Absyn.Mention) foo;
+       if (_i_ > 1) render(_L_PAREN);
+       pp(_mention.variableexpr_, 0);
+       if (_i_ > 1) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Value)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Value _value = (com.biosimilarity.lift.lib.scalar.Absyn.Value) foo;
+       if (_i_ > 1) render(_L_PAREN);
+       pp(_value.valueexpr_, 0);
+       if (_i_ > 1) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Association)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Association _association = (com.biosimilarity.lift.lib.scalar.Absyn.Association) foo;
+       if (_i_ > 1) render(_L_PAREN);
+       render("{");
+       pp(_association.arithmeticexpr_, 0);
+       render("}");
+       if (_i_ > 1) render(_R_PAREN);
     }
   }
 
@@ -345,66 +417,6 @@ public class PrettyPrinter
        if (_i_ > 0) render(_L_PAREN);
        printQuoted(_utterance.string_);
        if (_i_ > 0) render(_R_PAREN);
-    }
-  }
-
-  private static void pp(com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr foo, int _i_)
-  {
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Summation)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Summation _summation = (com.biosimilarity.lift.lib.scalar.Absyn.Summation) foo;
-       if (_i_ > 0) render(_L_PAREN);
-       pp(_summation.arithmeticexpr_1, 0);
-       render("+");
-       pp(_summation.arithmeticexpr_2, 1);
-       if (_i_ > 0) render(_R_PAREN);
-    }
-  }
-
-  private static void pp(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo, int _i_)
-  {
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Multiplication)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Multiplication _multiplication = (com.biosimilarity.lift.lib.scalar.Absyn.Multiplication) foo;
-       if (_i_ > 1) render(_L_PAREN);
-       pp(_multiplication.arithmeticexpr_1, 1);
-       render("*");
-       pp(_multiplication.arithmeticexpr_2, 2);
-       if (_i_ > 1) render(_R_PAREN);
-    }
-    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Negation)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Negation _negation = (com.biosimilarity.lift.lib.scalar.Absyn.Negation) foo;
-       if (_i_ > 2) render(_L_PAREN);
-       render("-");
-       pp(_negation.arithmeticexpr_, 3);
-       if (_i_ > 2) render(_R_PAREN);
-    }
-    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Reduction)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Reduction _reduction = (com.biosimilarity.lift.lib.scalar.Absyn.Reduction) foo;
-       if (_i_ > 3) render(_L_PAREN);
-       render("(");
-       pp(_reduction.expression_, 0);
-       render("(");
-       pp(_reduction.listexpression_, 0);
-       render(")");
-       render(")");
-       if (_i_ > 3) render(_R_PAREN);
-    }
-    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Variation)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Variation _variation = (com.biosimilarity.lift.lib.scalar.Absyn.Variation) foo;
-       if (_i_ > 3) render(_L_PAREN);
-       pp(_variation.variableexpr_, 0);
-       if (_i_ > 3) render(_R_PAREN);
-    }
-    else     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Value)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Value _value = (com.biosimilarity.lift.lib.scalar.Absyn.Value) foo;
-       if (_i_ > 3) render(_L_PAREN);
-       pp(_value.valueexpr_, 0);
-       if (_i_ > 3) render(_R_PAREN);
     }
   }
 
@@ -470,6 +482,19 @@ public class PrettyPrinter
      }
   }
 
+  private static void pp(com.biosimilarity.lift.lib.scalar.Absyn.ListLambdaExpr foo, int _i_)
+  {
+     for (java.util.Iterator<LambdaExpr> it = foo.iterator(); it.hasNext();)
+     {
+       pp(it.next(), 0);
+       if (it.hasNext()) {
+         render(",");
+       } else {
+         render("");
+       }
+     }
+  }
+
 
   private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.Program foo)
   {
@@ -501,14 +526,72 @@ public class PrettyPrinter
 
   private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.Expression foo)
   {
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Calculation)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Calculation _calculation = (com.biosimilarity.lift.lib.scalar.Absyn.Calculation) foo;
+       render("(");
+       render("Calculation");
+       sh(_calculation.arithmeticexpr_);
+       render(")");
+    }
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Embedding)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Embedding _embedding = (com.biosimilarity.lift.lib.scalar.Absyn.Embedding) foo;
+       render("(");
+       render("Embedding");
+       sh(_embedding.program_);
+       render(")");
+    }
+  }
+
+  private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Summation)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Summation _summation = (com.biosimilarity.lift.lib.scalar.Absyn.Summation) foo;
+       render("(");
+       render("Summation");
+       sh(_summation.arithmeticexpr_1);
+       sh(_summation.arithmeticexpr_2);
+       render(")");
+    }
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Multiplication)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Multiplication _multiplication = (com.biosimilarity.lift.lib.scalar.Absyn.Multiplication) foo;
+       render("(");
+       render("Multiplication");
+       sh(_multiplication.arithmeticexpr_1);
+       sh(_multiplication.arithmeticexpr_2);
+       render(")");
+    }
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Negation)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Negation _negation = (com.biosimilarity.lift.lib.scalar.Absyn.Negation) foo;
+       render("(");
+       render("Negation");
+       sh(_negation.arithmeticexpr_);
+       render(")");
+    }
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Function)
+    {
+       com.biosimilarity.lift.lib.scalar.Absyn.Function _function = (com.biosimilarity.lift.lib.scalar.Absyn.Function) foo;
+       render("(");
+       render("Function");
+       sh(_function.lambdaexpr_);
+       render(")");
+    }
+  }
+
+  private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.LambdaExpr foo)
+  {
     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Application)
     {
        com.biosimilarity.lift.lib.scalar.Absyn.Application _application = (com.biosimilarity.lift.lib.scalar.Absyn.Application) foo;
        render("(");
        render("Application");
-       sh(_application.expression_);
+       sh(_application.lambdaexpr_);
        render("[");
-       sh(_application.listexpression_);
+       sh(_application.listlambdaexpr_);
        render("]");
        render(")");
     }
@@ -531,20 +614,20 @@ public class PrettyPrinter
        sh(_mention.variableexpr_);
        render(")");
     }
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Calculation)
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Value)
     {
-       com.biosimilarity.lift.lib.scalar.Absyn.Calculation _calculation = (com.biosimilarity.lift.lib.scalar.Absyn.Calculation) foo;
+       com.biosimilarity.lift.lib.scalar.Absyn.Value _value = (com.biosimilarity.lift.lib.scalar.Absyn.Value) foo;
        render("(");
-       render("Calculation");
-       sh(_calculation.arithemeticexpr_);
+       render("Value");
+       sh(_value.valueexpr_);
        render(")");
     }
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Embedding)
+    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Association)
     {
-       com.biosimilarity.lift.lib.scalar.Absyn.Embedding _embedding = (com.biosimilarity.lift.lib.scalar.Absyn.Embedding) foo;
+       com.biosimilarity.lift.lib.scalar.Absyn.Association _association = (com.biosimilarity.lift.lib.scalar.Absyn.Association) foo;
        render("(");
-       render("Embedding");
-       sh(_embedding.program_);
+       render("Association");
+       sh(_association.arithmeticexpr_);
        render(")");
     }
   }
@@ -607,67 +690,6 @@ public class PrettyPrinter
     }
   }
 
-  private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr foo)
-  {
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Summation)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Summation _summation = (com.biosimilarity.lift.lib.scalar.Absyn.Summation) foo;
-       render("(");
-       render("Summation");
-       sh(_summation.arithmeticexpr_1);
-       sh(_summation.arithmeticexpr_2);
-       render(")");
-    }
-  }
-
-  private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr foo)
-  {
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Multiplication)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Multiplication _multiplication = (com.biosimilarity.lift.lib.scalar.Absyn.Multiplication) foo;
-       render("(");
-       render("Multiplication");
-       sh(_multiplication.arithmeticexpr_1);
-       sh(_multiplication.arithmeticexpr_2);
-       render(")");
-    }
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Negation)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Negation _negation = (com.biosimilarity.lift.lib.scalar.Absyn.Negation) foo;
-       render("(");
-       render("Negation");
-       sh(_negation.arithmeticexpr_);
-       render(")");
-    }
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Reduction)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Reduction _reduction = (com.biosimilarity.lift.lib.scalar.Absyn.Reduction) foo;
-       render("(");
-       render("Reduction");
-       sh(_reduction.expression_);
-       render("[");
-       sh(_reduction.listexpression_);
-       render("]");
-       render(")");
-    }
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Variation)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Variation _variation = (com.biosimilarity.lift.lib.scalar.Absyn.Variation) foo;
-       render("(");
-       render("Variation");
-       sh(_variation.variableexpr_);
-       render(")");
-    }
-    if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Value)
-    {
-       com.biosimilarity.lift.lib.scalar.Absyn.Value _value = (com.biosimilarity.lift.lib.scalar.Absyn.Value) foo;
-       render("(");
-       render("Value");
-       sh(_value.valueexpr_);
-       render(")");
-    }
-  }
-
   private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.Numeric foo)
   {
     if (foo instanceof com.biosimilarity.lift.lib.scalar.Absyn.Measure)
@@ -715,6 +737,16 @@ public class PrettyPrinter
   private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.ListExpression foo)
   {
      for (java.util.Iterator<Expression> it = foo.iterator(); it.hasNext();)
+     {
+       sh(it.next());
+       if (it.hasNext())
+         render(",");
+     }
+  }
+
+  private static void sh(com.biosimilarity.lift.lib.scalar.Absyn.ListLambdaExpr foo)
+  {
+     for (java.util.Iterator<LambdaExpr> it = foo.iterator(); it.hasNext();)
      {
        sh(it.next());
        if (it.hasNext())

@@ -24,34 +24,34 @@ public void unrecovered_syntax_error(java_cup.runtime.Symbol cur_token) throws j
 
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.Program Program;
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.Expression Expression;
-nonterminal com.biosimilarity.lift.lib.scalar.Absyn.VariableExpr VariableExpr;
-nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ValueExpr ValueExpr;
-nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ArithemeticExpr ArithemeticExpr;
+nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr ArithmeticExpr;
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr ArithmeticExpr1;
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr ArithmeticExpr2;
-nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr ArithmeticExpr3;
-nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ArithmeticExpr ArithmeticExpr;
+nonterminal com.biosimilarity.lift.lib.scalar.Absyn.LambdaExpr LambdaExpr;
+nonterminal com.biosimilarity.lift.lib.scalar.Absyn.LambdaExpr LambdaExpr1;
+nonterminal com.biosimilarity.lift.lib.scalar.Absyn.VariableExpr VariableExpr;
+nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ValueExpr ValueExpr;
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.Numeric Numeric;
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.Logical Logical;
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ListVariableExpr ListVariableExpr;
 nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ListExpression ListExpression;
-nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ListExpression ListExpression1;
+nonterminal com.biosimilarity.lift.lib.scalar.Absyn.ListLambdaExpr ListLambdaExpr;
 
 terminal _SYMB_0;    //   ;
 terminal _SYMB_1;    //   =
-terminal _SYMB_2;    //   (
-terminal _SYMB_3;    //   )
-terminal _SYMB_4;    //   =>
-terminal _SYMB_5;    //   {
-terminal _SYMB_6;    //   }
-terminal _SYMB_7;    //   @
-terminal _SYMB_8;    //   <
-terminal _SYMB_9;    //   >
-terminal _SYMB_10;    //   [
-terminal _SYMB_11;    //   ]
-terminal _SYMB_12;    //   +
-terminal _SYMB_13;    //   *
-terminal _SYMB_14;    //   -
+terminal _SYMB_2;    //   {
+terminal _SYMB_3;    //   }
+terminal _SYMB_4;    //   +
+terminal _SYMB_5;    //   *
+terminal _SYMB_6;    //   -
+terminal _SYMB_7;    //   (
+terminal _SYMB_8;    //   )
+terminal _SYMB_9;    //   =>
+terminal _SYMB_10;    //   @
+terminal _SYMB_11;    //   <
+terminal _SYMB_12;    //   >
+terminal _SYMB_13;    //   [
+terminal _SYMB_14;    //   ]
 terminal _SYMB_15;    //   ,
 terminal _SYMB_16;    //   false
 terminal _SYMB_17;    //   true
@@ -72,33 +72,33 @@ Program ::= Expression:p_1 _SYMB_0 Program:p_3  {: RESULT = new com.biosimilarit
   |  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Completion(); :}
   | _SYMB_18 VariableExpr:p_2 _SYMB_1 Expression:p_4 _SYMB_0 Program:p_6  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Binding(p_2,p_4,p_6); :}
 ;
-Expression ::= Expression:p_1 _SYMB_2 ListExpression:p_3 _SYMB_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Application(p_1,p_3); :} 
-  | _SYMB_2 ListVariableExpr:p_2 _SYMB_3 _SYMB_4 _SYMB_5 Program:p_6 _SYMB_6  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Abstraction(p_2,p_6); :}
+Expression ::= ArithmeticExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Calculation(p_1); :} 
+  | _SYMB_2 Program:p_2 _SYMB_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Embedding(p_2); :}
+;
+ArithmeticExpr ::= ArithmeticExpr:p_1 _SYMB_4 ArithmeticExpr1:p_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Summation(p_1,p_3); :} 
+  | ArithmeticExpr1:p_1  {: RESULT = p_1; :}
+;
+ArithmeticExpr1 ::= ArithmeticExpr1:p_1 _SYMB_5 ArithmeticExpr2:p_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Multiplication(p_1,p_3); :} 
+  | ArithmeticExpr2:p_1  {: RESULT = p_1; :}
+;
+ArithmeticExpr2 ::= _SYMB_6 ArithmeticExpr2:p_2  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Negation(p_2); :} 
+  | LambdaExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Function(p_1); :}
+;
+LambdaExpr ::= LambdaExpr1:p_1 _SYMB_7 ListLambdaExpr:p_3 _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Application(p_1,p_3); :} 
+  | LambdaExpr1:p_1  {: RESULT = p_1; :}
+;
+LambdaExpr1 ::= _SYMB_7 ListVariableExpr:p_2 _SYMB_8 _SYMB_9 _SYMB_2 Program:p_6 _SYMB_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Abstraction(p_2,p_6); :} 
   | VariableExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Mention(p_1); :}
-  | ArithemeticExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Calculation(p_1); :}
-  | _SYMB_5 Program:p_2 _SYMB_6  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Embedding(p_2); :}
+  | ValueExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Value(p_1); :}
+  | _SYMB_2 ArithmeticExpr:p_2 _SYMB_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Association(p_2); :}
 ;
 VariableExpr ::= _IDENT_:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Atom(p_1); :} 
-  | _SYMB_7 _SYMB_8 Expression:p_3 _SYMB_9  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Transcription(p_3); :}
+  | _SYMB_10 _SYMB_11 Expression:p_3 _SYMB_12  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Transcription(p_3); :}
 ;
-ValueExpr ::= _SYMB_10 ListExpression:p_2 _SYMB_11  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Listed(p_2); :} 
+ValueExpr ::= _SYMB_13 ListExpression:p_2 _SYMB_14  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Listed(p_2); :} 
   | Numeric:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Quantity(p_1); :}
   | Logical:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Quality(p_1); :}
   | _STRING_:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Utterance(p_1); :}
-;
-ArithemeticExpr ::= ArithmeticExpr:p_1 _SYMB_12 ArithmeticExpr1:p_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Summation(p_1,p_3); :} 
-;
-ArithmeticExpr1 ::= ArithmeticExpr1:p_1 _SYMB_13 ArithmeticExpr2:p_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Multiplication(p_1,p_3); :} 
-  | ArithmeticExpr2:p_1  {: RESULT = p_1; :}
-;
-ArithmeticExpr2 ::= _SYMB_14 ArithmeticExpr3:p_2  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Negation(p_2); :} 
-  | ArithmeticExpr3:p_1  {: RESULT = p_1; :}
-;
-ArithmeticExpr3 ::= _SYMB_2 Expression:p_2 _SYMB_2 ListExpression:p_4 _SYMB_3 _SYMB_3  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Reduction(p_2,p_4); :} 
-  | VariableExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Variation(p_1); :}
-  | ValueExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Value(p_1); :}
-;
-ArithmeticExpr ::= ArithmeticExpr1:p_1  {: RESULT = p_1; :} 
 ;
 Numeric ::= _DOUBLE_:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Measure(p_1); :} 
   | _INTEGER_:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.Count(p_1); :}
@@ -114,8 +114,8 @@ ListExpression ::=  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.scal
   | Expression:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.ListExpression(); RESULT.addLast(p_1); :}
   | Expression:p_1 _SYMB_15 ListExpression:p_3  {: RESULT = p_3; p_3.addFirst(p_1); :}
 ;
-ListExpression1 ::=  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.ListExpression(); :} 
-  | Expression:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.ListExpression(); RESULT.addLast(p_1); :}
-  | Expression:p_1 _SYMB_0 ListExpression1:p_3  {: RESULT = p_3; p_3.addFirst(p_1); :}
+ListLambdaExpr ::=  /* empty */  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.ListLambdaExpr(); :} 
+  | LambdaExpr:p_1  {: RESULT = new com.biosimilarity.lift.lib.scalar.Absyn.ListLambdaExpr(); RESULT.addLast(p_1); :}
+  | LambdaExpr:p_1 _SYMB_15 ListLambdaExpr:p_3  {: RESULT = p_3; p_3.addFirst(p_1); :}
 ;
 

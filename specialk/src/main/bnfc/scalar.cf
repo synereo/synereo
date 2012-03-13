@@ -16,17 +16,31 @@ Completion      . Program       ::=                                         ;
 -- desugar( val v = e1 ; e ) = ( ( v ) => e )( e1 )
 Binding         . Program       ::= "val" VariableExpr "=" Expression ";" Program ;
 
--- Core lambda calculus in scala-style syntax
-Application     . Expression    ::= Expression "(" [Expression] ")"         ;
-Abstraction     . Expression    ::= "(" [VariableExpr] ")" "=>" "{" Program "}" ;
-Mention         . Expression    ::= VariableExpr                            ;
-
--- Endowing the core computational model with values 
--- (other than lambda expressions) and arithmetic over them
-Calculation     . Expression    ::= ArithemeticExpr                         ;
+-- Endowing the core computational model with (polymorphic) arithmetic expressions
+Calculation     . Expression    ::= ArithmeticExpr                          ;
 
 -- Programs are Expressions
 Embedding       . Expression    ::= "{" Program "}"                         ;
+
+-- Basic arithmetic syntax
+Summation       . ArithmeticExpr  ::= ArithmeticExpr "+" ArithmeticExpr1    ;
+Multiplication  . ArithmeticExpr1 ::= ArithmeticExpr1 "*" ArithmeticExpr2   ;
+Negation        . ArithmeticExpr2 ::= "-" ArithmeticExpr2                   ;
+Function        . ArithmeticExpr2 ::= LambdaExpr                            ;
+
+_               . ArithmeticExpr  ::= ArithmeticExpr1                       ;
+_               . ArithmeticExpr1 ::= ArithmeticExpr2                       ;
+
+-- Core lambda calculus in scala-style syntax
+Application     . LambdaExpr      ::= LambdaExpr1 "(" [LambdaExpr] ")"      ;
+Abstraction     . LambdaExpr1     ::= "(" [VariableExpr] ")" "=>" "{" Program "}" ;
+Mention         . LambdaExpr1     ::= VariableExpr                          ;
+
+-- enriched with values and arithmetic expressions
+Value           . LambdaExpr1     ::= ValueExpr                             ;
+Association     . LambdaExpr1     ::= "{" ArithmeticExpr "}"                ;
+
+_               . LambdaExpr      ::= LambdaExpr1                           ;
 
 -- Traditionally, some form of identifier is assumed
 Atom            . VariableExpr  ::= Ident                                   ;
@@ -37,18 +51,6 @@ Transcription   . VariableExpr  ::= "@" "<" Expression ">"                  ;
 -- Basic list syntax
 Listed          . ValueExpr     ::= "[" [Expression] "]"                    ;
 
--- Basic arithmetic syntax
-Summation       . ArithemeticExpr ::= ArithmeticExpr "+" ArithmeticExpr1    ;
-Multiplication  . ArithmeticExpr1 ::= ArithmeticExpr1 "*" ArithmeticExpr2   ;
-Negation        . ArithmeticExpr2 ::= "-" ArithmeticExpr3                   ;
-Reduction       . ArithmeticExpr3 ::= "(" Expression "(" [Expression] ")" ")" ;
-Variation       . ArithmeticExpr3 ::= VariableExpr                          ;
-Value           . ArithmeticExpr3 ::= ValueExpr                             ;
-
-_               . ArithmeticExpr  ::= ArithmeticExpr1                       ;
-_               . ArithmeticExpr1 ::= ArithmeticExpr2                       ;
-_               . ArithmeticExpr2 ::= ArithmeticExpr3                       ;
-
 -- Ground value are restricted to Numeric types, Booleans, and Strings
 Quantity        . ValueExpr     ::= Numeric                                 ;
 Quality         . ValueExpr     ::= Logical                                 ;
@@ -58,8 +60,8 @@ Utterance       . ValueExpr     ::= String                                  ;
 Measure         . Numeric       ::= Double                                  ;
 Count           . Numeric       ::= Integer                                 ;
 
-Verity          . Logical        ::= "true"                                  ;
-Absurdity       . Logical        ::= "false"                                 ;
+Verity          . Logical        ::= "true"                                 ;
+Absurdity       . Logical        ::= "false"                                ;
 
 -- Syntactic repetition constructs
 []              . [VariableExpr] ::=                                        ;
@@ -70,9 +72,9 @@ Absurdity       . Logical        ::= "false"                                 ;
 (: [])          . [Expression]   ::= Expression                             ;
 (:)             . [Expression]   ::= Expression "," [Expression]            ;
 
-[]              . [Expression1]  ::=                                        ;
-(: [])          . [Expression1]  ::= Expression                             ;
-(:)             . [Expression1]  ::= Expression ";" [Expression1]           ;
+[]              . [LambdaExpr]   ::=                                        ;
+(: [])          . [LambdaExpr]   ::= LambdaExpr                             ;
+(:)             . [LambdaExpr]   ::= LambdaExpr "," [LambdaExpr]            ;
 
 comment "//" ;
 comment "/*" "*/" ;
