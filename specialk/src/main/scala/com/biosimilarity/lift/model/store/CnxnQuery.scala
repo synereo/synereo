@@ -259,7 +259,15 @@ with PrologMgr {
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : Option[HashMap[Var,Tag]] = {
-        
+    println(
+      (
+	"in matchMap with\n clabel1 : "
+	+ clabel1
+	+ "\n clabel2 : "
+	+ clabel2
+      )
+    )
+
     val solution : Solution[Tag] =
       getProver().solve(
 	cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "."
@@ -273,8 +281,16 @@ with PrologMgr {
       val hmSoln = new HashMap[Var,Tag]()
     
       for( v <- varSet ) {
-	solution.on( v + "" )
-	hmSoln += ( v -> solution.get )
+	println( "mapping free var : " + v )
+	try {
+	  solution.on( v + "" )
+	  hmSoln += ( v -> solution.get )
+	}
+	catch {
+	  case e : org.prolog4j.UnknownVariableException => {
+	    println( "warning: variable not bound: " + v )
+	  }
+	}
       }
       
       Some( hmSoln )
