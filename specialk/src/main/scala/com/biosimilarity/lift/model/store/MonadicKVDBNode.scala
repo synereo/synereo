@@ -96,9 +96,9 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
       tweet( "unwrapping transport message : " + txPortMsg )
       val xstrm = new XStream( new JettisonMappedXmlDriver )
-      val fmsg = xstrm.fromXML( txPortMsg ).asInstanceOf[A]
+      val fmsg = xstrm.fromXML( txPortMsg )
       tweet( "resulting framed message : " + fmsg )
-      fmsg 
+      fmsg.asInstanceOf[A]
     }
     override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
       tweet( "wrapping framed message : " + txPortMsg )

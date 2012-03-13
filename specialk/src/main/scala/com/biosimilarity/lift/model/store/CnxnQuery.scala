@@ -283,7 +283,7 @@ with PrologMgr {
       for( v <- varSet ) {
 	println( "mapping free var : " + v )
 	try {
-	  solution.on( v + "" )
+	  solution.on( "X" + v )
 	  hmSoln += ( v -> solution.get )
 	}
 	catch {
