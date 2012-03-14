@@ -453,19 +453,20 @@ trait CnxnXML[Namespace,Var,Tag] {
   def caseClassAccessors( 
     //cc : ScalaObject with Product with Serializable
     cc : java.lang.Object
-  ) : Array[java.lang.reflect.Method] = {
+  ) : /* Array[java.lang.reflect.Method] */ Array[java.lang.reflect.Field] = {
     // this is what you call a heuristic
     // and heuristic is probably better than myistic 	      
-    cc.getClass.getMethods.filter(
-      ( m : java.lang.reflect.Method ) => {
-	((! javaBuiltins.contains( m.getName ) )
-	 && (( m.getParameterTypes.size ) == 0)
-	 && (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
-	 && (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
-	 && (! java.lang.reflect.Modifier.isStatic( m.getModifiers() ) )
-       )
-      }
-    )
+//     cc.getClass.getMethods.filter(
+//       ( m : java.lang.reflect.Method ) => {      
+// 	((! javaBuiltins.contains( m.getName ) )
+// 	 && (( m.getParameterTypes.size ) == 0)
+// 	 && (!java.util.regex.Pattern.matches( "product.*" , m.getName ))
+// 	 && (!java.util.regex.Pattern.matches( "copy.default.*" , m.getName ))
+// 	 && (! java.lang.reflect.Modifier.isStatic( m.getModifiers() ) )
+//        )
+//       }
+//     )
+    cc.getClass.getDeclaredFields
   }
 
   def caseClassNameSpace(
@@ -544,9 +545,15 @@ trait CnxnXML[Namespace,Var,Tag] {
 	  val facts =
 	    (
 	      for( m <- caseClassAccessors( cc ) ) yield {
+		val faccess = m.isAccessible
+		m.setAccessible( true )
+		val fval = m.get( cc )
+		m.setAccessible( faccess )
+
 		new CnxnCtxtBranch[Namespace,Var,Tag](
 		  labelToNS( m.getName ),
-		  List( fromCC( m.invoke( cc ) ) )
+		  //List( fromCC( m.invoke( cc ) ) )
+		  List( fromCC( fval ) )
 		)
 	      }
 	    ).toList
