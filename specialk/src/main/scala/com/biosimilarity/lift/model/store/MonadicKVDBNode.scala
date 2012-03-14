@@ -573,37 +573,44 @@ package usage {
       }
 
       def mkMolQry( kinase : Kinase ) : CnxnCtxtLabel[String,String,String] = {
-	val molType =
-	  kinase.getClass.getName.split( "\\." ).toList.last.split( "\\$" ).toList.last
-	new CnxnCtxtBranch[String,String,String](
-	  "comBiosimilarityLiftModelStoreUsageMolecularUseCase_KinaseSpecifications_" + molType,
-	  List( 
-	    new CnxnCtxtBranch[String,String,String](
-	      "b",
-	      List(
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String]( kinase.b + "" )
-		)
-	      )
-	    ),
-	    new CnxnCtxtBranch[String,String,String](
-	      "i",
-	      List(
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String]( kinase.i + "" )
-		)
-	      )
-	    ),
-	    new CnxnCtxtBranch[String,String,String](
-	      "state",
-	      List(
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String]( kinase.state )
-		)
-	      )
-	    )
-	  )
-	)
+	// val molType =
+// 	  kinase.getClass.getName.split( "\\." ).toList.last.split( "\\$" ).toList.last
+// 	new CnxnCtxtBranch[String,String,String](
+// 	  "comBiosimilarityLiftModelStoreUsageMolecularUseCase_KinaseSpecifications_" + molType,
+// 	  List( 
+// 	    new CnxnCtxtBranch[String,String,String](
+// 	      "b",
+// 	      List(
+// 		new CnxnCtxtLeaf[String,String,String](
+// 		  Left[String,String]( kinase.b + "" )
+// 		)
+// 	      )
+// 	    ),
+// 	    new CnxnCtxtBranch[String,String,String](
+// 	      "i",
+// 	      List(
+// 		new CnxnCtxtLeaf[String,String,String](
+// 		  Left[String,String]( kinase.i + "" )
+// 		)
+// 	      )
+// 	    ),
+// 	    new CnxnCtxtBranch[String,String,String](
+// 	      "state",
+// 	      List(
+// 		new CnxnCtxtLeaf[String,String,String](
+// 		  Left[String,String]( kinase.state )
+// 		)
+// 	      )
+// 	    )
+// 	  )
+// 	)
+	import CnxnConversionStringScope._
+	kinase match {
+	  case cc : ScalaObject with Product with Serializable => {
+	    asCnxnCtxtLabel( cc )
+	  }
+	  case _ => throw new Exception( "non concrete kinase: " + kinase )
+	}	
       }
 
       val RASPtn : CnxnCtxtLabel[String,String,String] =
