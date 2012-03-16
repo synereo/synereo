@@ -178,73 +178,100 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     }
 
     def dispatchDMsg( dreq : FramedMsg ) : Unit = {
-      val Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) = dreq
-
-      body match {
-	case dgreq@Msgs.MDGetRequest( path ) => {	  
-	  tweet( ( this + " getting locally for location : " + path ) )
-	  reset {
-	    for( v <- get( List( msrc ) )( false )( path ) ) {
-	      tweet(
-		(
-		  this 
-		  + " returning from local get for location : "
-		  + path
-		  + "\nwith value : " + v
-		)
-	      )
-	      handleValue( dgreq, v, msrc )
+      dreq match {
+	case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
+	  body match {
+	    case dgreq@Msgs.MDGetRequest( path ) => {	  
+	      tweet( ( this + " getting locally for location : " + path ) )
+	      reset {
+		for( v <- get( List( msrc ) )( false )( path ) ) {
+		  tweet(
+		    (
+		      this 
+		      + " returning from local get for location : "
+		      + path
+		      + "\nwith value : " + v
+		    )
+		  )
+		  handleValue( dgreq, v, msrc )
+		}
+	      }
+	    }
+	    
+	    case dfreq@Msgs.MDFetchRequest( path ) => {
+	      tweet( ( this + "fetching locally for location : " + path ) )
+	      reset {
+		for( v <- fetch( List( msrc ) )( false )( path ) ) {
+		  tweet(
+		    (
+		      this 
+		      + " returning from local fetch for location : "
+		      + path
+		      + "\nwith value : " + v
+		    )
+		  )
+		  handleValue( dfreq, v, msrc )
+		}
+	      }
+	    }
+	    
+	    case dsreq@Msgs.MDSubscribeRequest( path ) => {
+	      tweet( ( this + "subscribing locally for location : " + path ) )
+	      reset {
+		for( v <- subscribe( List( msrc ) )( path ) ) {
+		  tweet(
+		    (
+		      this 
+		      + " returning from local subscribe for location : "
+		      + path
+		      + "\nwith value : " + v
+		    )
+		  )
+		  handleValue( dsreq, v, msrc )
+		}
+	      }
+	    }
+	    
+	    case dpreq@Msgs.MDPutRequest( path, value ) => {	
+	      reset { cache.put( path, mTT.Ground( value ) ) }
+	      for( q <- stblQMap.get( msrc ) ) {
+		q ! wrapResponse( msrc, dpreq )
+	      }
+	    }
+	    case dpbreq@Msgs.MDPublishRequest( path, value ) => {	
+	      reset { cache.publish( path, mTT.Ground( value ) ) }
+	      for( q <- stblQMap.get( msrc ) ) {
+		q ! wrapResponse( msrc, dpbreq )
+	      }
 	    }
 	  }
 	}
-	
-	case dfreq@Msgs.MDFetchRequest( path ) => {
-	  tweet( ( this + "fetching locally for location : " + path ) )
-	  reset {
-	    for( v <- fetch( List( msrc ) )( false )( path ) ) {
+	case Right( JustifiedResponse( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
+	  body match {
+	    case RsrcMsgs.MDGetResponseRsrc( path, rsrc ) => {
+	      reset { cache.put( path, rsrc ) }
+	    }
+	    case RsrcMsgs.MDFetchResponseRsrc( path, rsrc ) => {
+	      reset { cache.put( path, rsrc ) }
+	    }
+	    case RsrcMsgs.MDSubscribeResponseRsrc( path, rsrc ) => {
+	      reset { cache.publish( path, rsrc ) }
+	    }	    
+	    case dput : RsrcMsgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
+	    }
+	    case _ => {
 	      tweet(
 		(
 		  this 
-		  + " returning from local fetch for location : "
-		  + path
-		  + "\nwith value : " + v
+		  + " handling unexpected message : "
+		  + body
 		)
 	      )
-	      handleValue( dfreq, v, msrc )
 	    }
 	  }
 	}
-	
-	case dsreq@Msgs.MDSubscribeRequest( path ) => {
-	  tweet( ( this + "subscribing locally for location : " + path ) )
-	  reset {
-	    for( v <- subscribe( List( msrc ) )( path ) ) {
-	      tweet(
-		(
-		  this 
-		  + " returning from local subscribe for location : "
-		  + path
-		  + "\nwith value : " + v
-		)
-	      )
-	      handleValue( dsreq, v, msrc )
-	    }
-	  }
-	}
-	  
-	case dpreq@Msgs.MDPutRequest( path, value ) => {	
-	  reset { cache.put( path, mTT.Ground( value ) ) }
-	  for( q <- stblQMap.get( msrc ) ) {
-	    q ! wrapResponse( msrc, dpreq )
-	  }
-	}
-	case dpbreq@Msgs.MDPublishRequest( path, value ) => {	
-	  reset { cache.publish( path, mTT.Ground( value ) ) }
-	  for( q <- stblQMap.get( msrc ) ) {
-	    q ! wrapResponse( msrc, dpbreq )
-	  }
-	}
-      }
+      }      
+      
     }
 
     def mkGetRsp( path : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {

@@ -196,7 +196,7 @@ extends MonadicGenerators {
 	throw new Exception( "non-portable resource: " + rsrc )
       }
     }
-  }
+  }  
 
   type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  
 
