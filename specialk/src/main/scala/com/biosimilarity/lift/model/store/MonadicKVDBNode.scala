@@ -649,12 +649,12 @@ package usage {
 	}	
       }
 
-      val RASPtn : CnxnCtxtLabel[String,String,String] =
-	mkMolPtn( "RAS" )
-
       val RAFPtn : CnxnCtxtLabel[String,String,String] =
 	mkMolPtn( "RAF" )
       
+      val RASPtn : CnxnCtxtLabel[String,String,String] =
+	mkMolPtn( "RAS" )
+
       val MEK1Ptn : CnxnCtxtLabel[String,String,String] =
 	mkMolPtn( "MEK1" )
 
@@ -697,7 +697,10 @@ package usage {
 	    if ( kamt < amt ) {
 	      val inc = random * 25
 	      cellCytoplasm += ( kinase -> ( kamt + inc ) )
-	      reset { kvdbNode.put( mkMolQry( kinase ), inc ) }
+	      reset { 
+		println( "releasing an increment " + inc + " of " + kinase )
+		kvdbNode.put( mkMolQry( kinase ), inc )
+	      }
 	      loop( kinase, amt )
 	    }
 	  }
@@ -706,72 +709,15 @@ package usage {
 
 	}
       }.start
-    }
+    }    
 
     def runClient( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
-      import scala.math._
-      import KinaseSpecifications._
-      // map-reduce-style protocol             
-
-      new Thread {
-	override def run() : Unit = {
-	  reset {
-	    for( rasRsrc <- kvdbNode.get( RASPtn ) ) {
-	      println( kvdbNode + " received: " + rasRsrc )
-	      rasRsrc match {
-		case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
-		  println( kvdbNode + " received an increment, " + inc + ", of RAS" )
-		  val currAmt : Double = cellCytoplasm.amt( RASProto )
-		  cellCytoplasm += ( ( RASProto, ( inc + currAmt ) ) )
-		  for( amt <- cellCytoplasm.get( RASProto ) ) {
-		    if ( amt > ras2MEK1 ) {
-		      supplyKinase( kvdbNode, cellCytoplasm, MEK1Proto, mek12MEK2 )
-		      reset {
-			for( mek2Rsrc <- kvdbNode.get( MEK2Ptn ) ) {
-			  println( kvdbNode + " received: " + mek2Rsrc )
-			  mek2Rsrc match {
-			    case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
-			      println( kvdbNode + " received an increment, " + inc + ", of MEK2" )
-			      val currAmt : Double = cellCytoplasm.amt( MEK2Proto )
-			      cellCytoplasm += ( ( MEK2Proto, ( currAmt + inc ) ) )
-			      for( amt <- cellCytoplasm.get( MEK2Proto ) ) {
-				if ( amt > mek22MAPK ) {
-				  supplyKinase( kvdbNode, cellCytoplasm, MAPKProto, mapk2Protein )
-				  println( "MAPK produced." )
-				}
-			      }
-			    }
-			    case unExpected@_ => {
-			      throw new Exception( "Protocol violated. Received: " + unExpected )
-			    }
-			  }
-			}
-		      }
-		    }
-		  }
-		}
-		case None => {
-		  println( "Waiting is, Water Brother." )
-		}
-		case unExpected@_ => {
-		  throw new Exception( "Protocol violated. Received: " + unExpected )
-		}	    
-	      }
-	    }
-	  }
-	}
-      }.start
-    }
-
-    def runServer( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
       // map-reduce-style protocol checking                        
 
       new Thread {
-	override def run() : Unit = {
-	  supplyKinase( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
-
+	override def run() : Unit = {	  
 	  reset {
 	    for( rafRsrc <- kvdbNode.get( RAFPtn ) ) {
 	      println( kvdbNode + " received: " + rafRsrc )
@@ -826,6 +772,62 @@ package usage {
 		    }
 		  }
 		}		
+		case None => {
+		  println( "Waiting is, Water Brother." )
+		}
+		case unExpected@_ => {
+		  throw new Exception( "Protocol violated. Received: " + unExpected )
+		}	    
+	      }
+	    }
+	  }
+	}
+      }.start
+    }
+
+    def runServer( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
+      import scala.math._
+      import KinaseSpecifications._
+      // map-reduce-style protocol             
+
+      new Thread {
+	override def run() : Unit = {
+	  supplyKinase( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
+	  reset {
+	    for( rasRsrc <- kvdbNode.get( RASPtn ) ) {
+	      println( kvdbNode + " received: " + rasRsrc )
+	      rasRsrc match {
+		case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+		  println( kvdbNode + " received an increment, " + inc + ", of RAS" )
+		  val currAmt : Double = cellCytoplasm.amt( RASProto )
+		  cellCytoplasm += ( ( RASProto, ( inc + currAmt ) ) )
+		  for( amt <- cellCytoplasm.get( RASProto ) ) {
+		    if ( amt > ras2MEK1 ) {
+		      supplyKinase( kvdbNode, cellCytoplasm, MEK1Proto, mek12MEK2 )
+		      reset {
+			for( mek2Rsrc <- kvdbNode.get( MEK2Ptn ) ) {
+			  println( kvdbNode + " received: " + mek2Rsrc )
+			  mek2Rsrc match {
+			    case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+			      println( kvdbNode + " received an increment, " + inc + ", of MEK2" )
+			      val currAmt : Double = cellCytoplasm.amt( MEK2Proto )
+			      cellCytoplasm += ( ( MEK2Proto, ( currAmt + inc ) ) )
+			      for( amt <- cellCytoplasm.get( MEK2Proto ) ) {
+				if ( amt > mek22MAPK ) {
+				  supplyKinase( kvdbNode, cellCytoplasm, MAPKProto, mapk2Protein )
+				  println( "MAPK produced." )
+				}
+			      }
+			    }
+			    case unExpected@_ => {
+			      throw new Exception( "Protocol violated. Received: " + unExpected )
+			    }
+			  }
+			}
+		      }
+		    }
+		  }
+		}
 		case None => {
 		  println( "Waiting is, Water Brother." )
 		}
