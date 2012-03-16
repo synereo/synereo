@@ -21,6 +21,7 @@ import PersistedMonadicTS._
 import Being._
 
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.LinkedHashMap
 import scala.util.parsing.combinator._
 import scala.util.continuations._ 
 
@@ -209,7 +210,7 @@ with UUIDOps {
 class RLambdaApplicationEvaluationService(
   override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
-  def evalInSession( appEvalReq : String, subst : HashMap[String,String] ) = {
+  def evalInSession( appEvalReq : String, subst : LinkedHashMap[String,String] ) = {
     throw new Exception( "tbd" )
   }
   def appEvalReqStr : String = {
@@ -237,7 +238,7 @@ class RLambdaApplicationEvaluationService(
 class RLambdaAbstractionEvaluationService(
   override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
-  def evalInSession( absEvalReq : String, subst : HashMap[String,String] ) = {
+  def evalInSession( absEvalReq : String, subst : LinkedHashMap[String,String] ) = {
     throw new Exception( "tbd" )
   }
   def absEvalReqStr : String = {
@@ -265,7 +266,7 @@ class RLambdaAbstractionEvaluationService(
 class RLambdaMentionEvaluationService(
   override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
-  def evalInSession( mntnEvalReq : String, subst : HashMap[String,String] ) = {
+  def evalInSession( mntnEvalReq : String, subst : LinkedHashMap[String,String] ) = {
     throw new Exception( "tbd" )
   }
   def mntnEvalReqStr : String = {

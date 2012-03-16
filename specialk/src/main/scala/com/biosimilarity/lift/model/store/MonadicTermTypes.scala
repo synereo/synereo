@@ -52,7 +52,8 @@ extends MonadicGenerators {
   trait RBound extends Resource {
     def rsrc : Option[Resource]
     def soln : Option[Solution[String]]
-    def sbst : Option[HashMap[Var,Tag]]
+    def sbst : Option[LinkedHashMap[Var,Tag]]
+    def assoc : Option[List[( Var, Tag )]]
   } 
   object RBound {
     def apply(
@@ -67,8 +68,13 @@ extends MonadicGenerators {
     }
     def unapply(
       rsrc : RBoundHM
-    ) : Option[( Option[Resource], Option[HashMap[Var,Tag]] )] = {
+    ) : Option[( Option[Resource], Option[LinkedHashMap[Var,Tag]] )] = {
       Some( ( rsrc.rsrc, rsrc.sbst ) )
+    }
+    def unapply(
+      rsrc : RBoundAList
+    ) : Option[( Option[Resource], Option[List[( Var, Tag )]] )] = {
+      Some( ( rsrc.rsrc, rsrc.assoc ) )
     }
   }
   case class Ground( v : Value ) extends Resource
@@ -79,12 +85,117 @@ extends MonadicGenerators {
   case class RBoundP4JSoln(
     rsrc : Option[Resource], soln : Option[Solution[String]]
   ) extends RBound {
-    override def sbst : Option[HashMap[Var,Tag]] = None
+    override def sbst : Option[LinkedHashMap[Var,Tag]] = None
+    override def assoc : Option[List[( Var, Tag )]] = None
   }
   case class RBoundHM(
-    rsrc : Option[Resource], sbst : Option[HashMap[Var,Tag]]
+    rsrc : Option[Resource], sbst : Option[LinkedHashMap[Var,Tag]]
   ) extends RBound {
     override def soln : Option[Solution[String]] = None
+    override def assoc : Option[List[( Var, Tag )]] = None
+  }
+  case class RBoundAList(
+    rsrc : Option[Resource], assoc : Option[List[( Var, Tag )]]
+  ) extends RBound {
+    override def soln : Option[Solution[String]] = None
+    override def sbst : Option[LinkedHashMap[Var,Tag]] = {
+      assoc match {
+	case Some( alist ) => {
+	  val lhm = new LinkedHashMap[Var,Tag]()
+	  for( ( v, t ) <- alist ) {
+	    lhm += ( v -> t )
+	  }
+	  Some( lhm )
+	}
+	case _ => None
+      }      
+    }
+  }
+
+  implicit def prover : Prover = ProverFactory.getProver()
+
+  implicit def asRBoundHM(
+    rsrc : RBoundP4JSoln,
+    pattern : CnxnCtxtLabel[Namespace,Var,Tag]
+  )( implicit prover : Prover ) : RBoundHM = {
+    val pVars =
+      ( ( Nil : List[Var] ) /: pattern.atoms )(
+	( acc : List[Var], atom : Either[Tag,Var] ) => {
+	  atom match {
+	    case Right( v ) => acc ++ List( v )
+	    case _ => acc
+	  }
+	}
+      ).toSet
+
+    RBoundHM(
+      rsrc.rsrc,      
+      pVars.isEmpty match {
+	case false => {
+	  val hmSoln = new LinkedHashMap[Var,Tag]()
+	  for( soln <- rsrc.soln; v <- pVars ) {
+	    try {
+	      val solnTag : Solution[Tag] = soln.on( "X" + v )
+	      hmSoln += ( v -> solnTag.get )
+	    }
+	    catch {
+	      case e : org.prolog4j.UnknownVariableException => {
+		println( "warning: variable not bound: " + v )
+	      }
+	    }
+	  }
+	  Some( hmSoln )
+	}
+	case _ => None
+      }
+    )    
+  }
+
+  implicit def asRBoundHM( rsrc : RBoundAList ) : RBoundHM = {
+    RBoundHM( rsrc.rsrc, rsrc.sbst )
+  }
+  implicit def asRBoundAList( rsrc : RBoundHM ) : RBoundAList = {
+    RBoundAList( rsrc.rsrc, for( map <- rsrc.sbst ) yield { map.toList } )
+  }
+  
+  def portRsrc(
+    rsrc : Resource, path : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : Resource = {
+    rsrc match {
+      case rsrcGnd : Ground => rsrc
+      // BUGBUG -- lgm : Cursor might contain innerRsrc's
+      case rsrcCrsr : Cursor => rsrc
+      case rsrcBnd : RBound => {
+	// BUGBUG -- lgm : we don't know that path applies to innerRsrc
+	rsrcBnd match {
+	  case RBoundP4JSoln( Some( innerRsrc ), optSoln ) => {
+	    asRBoundAList(
+	      asRBoundHM(
+		RBoundP4JSoln( Some( portRsrc( innerRsrc, path ) ), optSoln ),
+		path
+	      )
+	    )
+	  }
+	  case rsrcP4J@RBoundP4JSoln( None, optSoln ) => {
+	    asRBoundAList( asRBoundHM( rsrcP4J, path ) )
+	  }
+	  case RBoundHM( Some( innerRsrc ), optSoln ) => {
+	    asRBoundAList(
+	      RBoundHM( Some( portRsrc( innerRsrc, path ) ), optSoln )
+	    )
+	  }
+	  case rsrcHM@RBoundHM( None, optSoln ) => {
+	    asRBoundAList( rsrcHM )
+	  }
+	  case rsrcAL : RBoundAList => {
+	    rsrcAL
+	  }
+	}
+      }
+      case _ => {
+	throw new Exception( "non-portable resource: " + rsrc )
+      }
+    }
   }
 
   type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  

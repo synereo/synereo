@@ -12,6 +12,7 @@ import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.lib._
 
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.LinkedHashMap
 
 import org.prolog4j._
 
@@ -258,7 +259,7 @@ with PrologMgr {
   def matchMap(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) : Option[HashMap[Var,Tag]] = {
+  ) : Option[LinkedHashMap[Var,Tag]] = {
     println(
       (
 	"in matchMap with\n clabel1 : "
@@ -278,7 +279,7 @@ with PrologMgr {
       val clbl2Vars = patternVars( clabel2 ).toSet
       val varSet = clbl1Vars ++ clbl2Vars
       
-      val hmSoln = new HashMap[Var,Tag]()
+      val hmSoln = new LinkedHashMap[Var,Tag]()
     
       for( v <- varSet ) {
 	println( "mapping free var : " + v )

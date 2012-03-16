@@ -100,7 +100,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     class TMapK[Namespace,Var,Tag,Value]
     extends HashMap[mTT.GetRequest,List[RK]]
 
-    case class PrologSubstitution( soln : HashMap[Var,Tag] )
+    case class PrologSubstitution( soln : LinkedHashMap[Var,Tag] )
 	 extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	   override def apply( rsrc : mTT.Resource ) = {
 	     Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
@@ -140,7 +140,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       val matchRslts = matchMap( ptn, place )
       //println( "match results in fitsK on " + this + " are " + matchRslts )
       matchRslts match {
-	case Some( soln : HashMap[Var,Tag] ) => {
+	case Some( soln : LinkedHashMap[Var,Tag] ) => {
 	  Some( PrologSubstitution( soln ) )
 	}
 	case None => {

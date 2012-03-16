@@ -125,20 +125,20 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   ) extends AbstractMonadicKVDBNode[KVDBNodeRequest,KVDBNodeResponse](
     cache, acquaintances
   ) {    
-
+    
     def wrapResponse(
       msrc : Moniker, dreq : Msgs.DReq, rsrc : mTT.Resource
     ) : FramedMsg = {
       frameResponse( msrc )(
 	dreq match {
 	  case Msgs.MDGetRequest( path ) => {
-	    RsrcMsgs.MDGetResponseRsrc[Namespace,Var,Tag,Value]( path, rsrc )	  
+	    RsrcMsgs.MDGetResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )	  
 	  }
 	  case Msgs.MDFetchRequest( path ) => {
-	    RsrcMsgs.MDFetchResponseRsrc[Namespace,Var,Tag,Value]( path, rsrc )
+	    RsrcMsgs.MDFetchResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )
 	  }
 	  case Msgs.MDSubscribeRequest( path ) => {
-	    RsrcMsgs.MDSubscribeResponseRsrc[Namespace,Var,Tag,Value]( path, rsrc )
+	    RsrcMsgs.MDSubscribeResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )
 	  }
 	  case _ => {
 	    throw new Exception( "unexpected request type " + dreq )
@@ -240,6 +240,10 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	  }
 	}
       }
+    }
+
+    def mkGetRsp( path : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
+      RsrcMsgs.MDGetResponseRsrc[Namespace,Var,Tag,Value]( path, rsrc )
     }
 
     def dispatchDMsgs()  : Unit = {

@@ -1398,7 +1398,7 @@ package usage {
       object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
        with Serializable
       {
-	case class PrologSubstitution( soln : HashMap[String,String] )
+	case class PrologSubstitution( soln : LinkedHashMap[String,String] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
 	       Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
@@ -1981,7 +1981,7 @@ object StdPersistedMonadicTS
       object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
 	with Serializable
       {
-	case class PrologSubstitution( soln : HashMap[Symbol,Any] )
+	case class PrologSubstitution( soln : LinkedHashMap[Symbol,Any] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
 	       Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
