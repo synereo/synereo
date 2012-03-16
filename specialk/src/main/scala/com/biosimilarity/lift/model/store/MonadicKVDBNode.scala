@@ -711,9 +711,7 @@ package usage {
     def runClient( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
-      // map-reduce-style protocol       
-
-      supplyKinase( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
+      // map-reduce-style protocol             
 
       new Thread {
 	override def run() : Unit = {
@@ -772,6 +770,8 @@ package usage {
 
       new Thread {
 	override def run() : Unit = {
+	  supplyKinase( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
+
 	  reset {
 	    for( rafRsrc <- kvdbNode.get( RAFPtn ) ) {
 	      println( kvdbNode + " received: " + rafRsrc )
