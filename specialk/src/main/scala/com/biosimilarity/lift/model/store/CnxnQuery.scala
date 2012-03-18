@@ -284,8 +284,8 @@ with PrologMgr {
       for( v <- varSet ) {
 	println( "mapping free var : " + v )
 	try {
-	  solution.on( "X" + v )
-	  hmSoln += ( v -> solution.get )
+	  val soln : Solution[Tag] = solution.on( "X" + v )
+	  hmSoln += ( v -> soln.get )
 	}
 	catch {
 	  case e : org.prolog4j.UnknownVariableException => {
