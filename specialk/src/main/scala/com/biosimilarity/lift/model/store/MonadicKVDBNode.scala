@@ -413,6 +413,13 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
       subscribe( Nil )( path )    
     }
 
+    override def put( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
+      mput( cache.theMeetingPlace, cache.theWaiters, false )( ptn, rsrc )
+    }
+    override def publish( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
+      mput( cache.theChannels, cache.theSubscriptions, true )( ptn, rsrc )
+    }
+
     override def configFileName : Option[String] = None
     override def configurationDefaults : ConfigurationDefaults = {
       ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
