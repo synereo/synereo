@@ -157,13 +157,14 @@ with UUIDOps {
     ptrnVars : List[String],
     rsrc : stblKVDBScope.mTT.RBound
   ) : Option[String] = {
-    def resolve( subst : Solution[String], pVar : String ) : String = {
+    def resolve( subst : Solution[Object], pVar : String ) : String = {
       subst.on( pVar )
-      subst.get( )
+      // BUGBUG -- lgm : should convert to CCL
+      subst.get( ) + ""
     }
 
     def asJSONPairs(
-      subst : Solution[String],
+      subst : Solution[Object],
       ptrnVars : List[String]
     ) : String = {
       ptrnVars match {
@@ -767,7 +768,7 @@ class KVDBJSONAPIDispatcher(
       object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
        with Serializable
       {
-	case class PrologSubstitution( soln : Solution[String] )
+	case class PrologSubstitution( soln : Solution[Object] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
 	       Some( mTT.RBoundP4JSoln( Some( rsrc ), Some( soln ) ) )

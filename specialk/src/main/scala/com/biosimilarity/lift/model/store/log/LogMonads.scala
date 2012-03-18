@@ -73,7 +73,7 @@ class SimpleStoreScope[A]( )
       object theEMTypes
       extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
 	{
-	case class PrologSubstitution( soln : Solution[String] )
+	case class PrologSubstitution( soln : Solution[Object] )
 	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	     override def apply( rsrc : mTT.Resource ) = {
 	       Some( mTT.RBound( Some( rsrc ), Some( soln ) ) )

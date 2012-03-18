@@ -26,7 +26,7 @@ trait TermTypes[Namespace,Var,Tag,Value] {
     m : TMap[Namespace,Var,Tag,Value]
   ) extends Resource
   case class RBound(
-    rsrc : Option[Resource], soln : Option[Solution[String]]
+    rsrc : Option[Resource], soln : Option[Solution[Object]]
   ) extends Resource
 
   type WhatNext = Option[Resource] => Option[Resource]
@@ -181,7 +181,7 @@ with UUIDOps {
   def places(
     path : CnxnCtxtLabel[Namespace,Var,Tag],
     parity : IOParity
-  ) : Seq[(CnxnCtxtLabel[Namespace,Var,Tag], Option[Solution[String]])]
+  ) : Seq[(CnxnCtxtLabel[Namespace,Var,Tag], Option[Solution[Object]])]
   = {
     (parity match {
       case Input => _labelMap

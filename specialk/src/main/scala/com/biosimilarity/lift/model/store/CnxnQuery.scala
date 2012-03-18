@@ -172,7 +172,7 @@ trait PrologMgr {
   def unifyQuery(
     qStr1 : String,
     qStr2 : String
-  ) : Solution[String] = {
+  ) : Solution[Object] = {
     val prover = getProver()
     val queryStr = qStr1 + " = " + qStr2 + "."
     prover.solve( queryStr )
@@ -185,7 +185,7 @@ trait PrologTermQuery[Namespace,Var,Tag] {
     clabel1 : CnxnLabel[Namespace,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
   ) :
-    Option[Solution[String]]
+    Option[Solution[Object]]
     = {
     val solution =
       unifyQuery(
@@ -204,12 +204,12 @@ trait PrologTermQuery[Namespace,Var,Tag] {
   def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]]
+  ) : Option[Solution[Object]]
 
   def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) : Option[Solution[String]]
+  ) : Option[Solution[Object]]
 
 }
 
@@ -217,10 +217,33 @@ trait CnxnUnificationTermQuery[Namespace,Var,Tag]
 extends PrologTermQuery[Namespace,Var,Tag] 
 with PrologMgr {
   self : CnxnConversions[Namespace,Var,Tag] with UUIDOps =>               
+
+  def toNameSpace( str : String ) : Namespace = {
+    // BUGBUG -- lgm : should at least report to log
+    println( "warning: coercing String, " + str + " to Namespace" )
+    str.asInstanceOf[Namespace]
+  }
+  def asCnxnCtxtLabel(
+    obj : Object
+  ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+    obj match {
+      case cmpnd : Compound => {
+	new CnxnCtxtBranch[Namespace,Var,Tag](
+	  toNameSpace( cmpnd.getFunctor ),
+	  cmpnd.getArgs.map( asCnxnCtxtLabel ).toList
+	)
+      }
+      case atom => {
+	new CnxnCtxtLeaf[Namespace,Var,Tag](
+	  Left[Tag,Var]( atom.asInstanceOf[Tag] )
+	)
+      }
+    }    
+  }
   def matchesOne(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]] = {
+  ) : Option[Solution[Object]] = {
     val solution =
       unifyQuery(
 	cnxnCtxtLabelToTermStr( clabel1 ),
@@ -238,7 +261,7 @@ with PrologMgr {
   override def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]]
+  ) : Option[Solution[Object]]
     = {      
       matchesOne( clabel1, clabel2 )      
     }
@@ -259,7 +282,7 @@ with PrologMgr {
   def matchMap(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) : Option[LinkedHashMap[Var,Tag]] = {
+  ) : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]] = {
     println(
       (
 	"in matchMap with\n clabel1 : "
@@ -269,7 +292,7 @@ with PrologMgr {
       )
     )
 
-    val solution : Solution[Tag] =
+    val solution : Solution[Object] =
       getProver().solve(
 	cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "."
       )
@@ -279,13 +302,13 @@ with PrologMgr {
       val clbl2Vars = patternVars( clabel2 ).toSet
       val varSet = clbl1Vars ++ clbl2Vars
       
-      val hmSoln = new LinkedHashMap[Var,Tag]()
+      val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
     
       for( v <- varSet ) {
 	println( "mapping free var : " + v )
 	try {
-	  val soln : Solution[Tag] = solution.on( "X" + v )
-	  hmSoln += ( v -> soln.get )
+	  val soln : Solution[Object] = solution.on( "X" + v )
+	  hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
 	}
 	catch {
 	  case e : org.prolog4j.UnknownVariableException => {
@@ -304,7 +327,7 @@ with PrologMgr {
   override def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) : Option[Solution[String]]
+  ) : Option[Solution[Object]]
   = {
     println( "in matches with " + clabel1 + " and " + clabel2 )
     val solution =
@@ -333,11 +356,11 @@ with PrologMgr {
   def doMatching(
     clabel1 : CnxnCtxtConjunction[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]] = {
+  ) : Option[Solution[Object]] = {
     def loopAnd(
-      acc : Option[Solution[String]],
+      acc : Option[Solution[Object]],
       lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
-    ) : Option[Solution[String]] = {
+    ) : Option[Solution[Object]] = {
       lbls match {
 	case lbl :: rlbls => {
 	  // BUGBUG -- lgm -- must compose solutions...
@@ -355,11 +378,11 @@ with PrologMgr {
   def doMatching(
     clabel1 : CnxnCtxtDisjunction[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]] = {
+  ) : Option[Solution[Object]] = {
     def loopOr(
-      acc : Option[Solution[String]],
+      acc : Option[Solution[Object]],
       lbls : List[CnxnCtxtLabel[Namespace,Var,Tag]]
-    ) : Option[Solution[String]] = {
+    ) : Option[Solution[Object]] = {
       lbls match {
 	case lbl :: rlbls => {
 	  // BUGBUG -- lgm -- must compose solutions...
@@ -377,7 +400,7 @@ with PrologMgr {
   override def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]]
+  ) : Option[Solution[Object]]
     = {      
       clabel1 match {
 	case ccc : CnxnCtxtConjunction[Namespace,Var,Tag] => {
@@ -400,7 +423,7 @@ with PrologMgr {
   def doMatching(
     clabel1 : CnxnRule[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]] = {
+  ) : Option[Solution[Object]] = {
     // To do
     None
   }
@@ -408,7 +431,7 @@ with PrologMgr {
   def doMatching(
     clabel1 : CnxnTheory[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]] = {
+  ) : Option[Solution[Object]] = {
     // To do
     None
   }
@@ -416,7 +439,7 @@ with PrologMgr {
   override def matches(
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnLabel[Namespace,Tag]
-  ) : Option[Solution[String]]
+  ) : Option[Solution[Object]]
     = {
       
       clabel1 match {

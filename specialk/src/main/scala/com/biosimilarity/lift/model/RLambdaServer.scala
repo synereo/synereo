@@ -144,7 +144,7 @@ with UUIDOps {
 	    println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
 	    	    
 	    ( soln.get( flowIdVar ), soln.get( exprVar ) ) match {
-	      case ( Some( flowId ), Some( e ) ) => {
+	      case ( Some( CnxnCtxtLeaf( Left( flowId ) ) ), Some( CnxnCtxtLeaf( Left( e ) ) ) ) => {		
 		val evalExprRsp =
 		  theDEvalMsgs.evalExprResponse(
 		    sessId.toString,
@@ -210,7 +210,7 @@ with UUIDOps {
 class RLambdaApplicationEvaluationService(
   override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
-  def evalInSession( appEvalReq : String, subst : LinkedHashMap[String,String] ) = {
+  def evalInSession( appEvalReq : String, subst : LinkedHashMap[String,CnxnCtxtLabel[String,String,String]] ) = {
     throw new Exception( "tbd" )
   }
   def appEvalReqStr : String = {
@@ -238,7 +238,7 @@ class RLambdaApplicationEvaluationService(
 class RLambdaAbstractionEvaluationService(
   override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
-  def evalInSession( absEvalReq : String, subst : LinkedHashMap[String,String] ) = {
+  def evalInSession( absEvalReq : String, subst : LinkedHashMap[String,CnxnCtxtLabel[String,String,String]] ) = {
     throw new Exception( "tbd" )
   }
   def absEvalReqStr : String = {
@@ -266,7 +266,7 @@ class RLambdaAbstractionEvaluationService(
 class RLambdaMentionEvaluationService(
   override val exchange : PersistedStringMGJ
 ) extends RLambdaEvaluationService( exchange ) {
-  def evalInSession( mntnEvalReq : String, subst : LinkedHashMap[String,String] ) = {
+  def evalInSession( mntnEvalReq : String, subst : LinkedHashMap[String,CnxnCtxtLabel[String,String,String]] ) = {
     throw new Exception( "tbd" )
   }
   def mntnEvalReqStr : String = {

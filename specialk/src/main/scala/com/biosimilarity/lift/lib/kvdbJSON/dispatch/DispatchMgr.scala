@@ -93,7 +93,7 @@ with ConfigurationTrampoline {
   }
 
   def parseRequest(
-    subst : org.prolog4j.Solution[String]
+    subst : org.prolog4j.Solution[Object]
   ) : Option[DispatcherManagementMessage] = {
     tweet( "parsing request using substitution: " + subst )
     val reqV = requestVar.getOrElse( "Request" )

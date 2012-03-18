@@ -51,29 +51,29 @@ extends MonadicGenerators {
   trait Resource extends Serializable
   trait RBound extends Resource {
     def rsrc : Option[Resource]
-    def soln : Option[Solution[String]]
-    def sbst : Option[LinkedHashMap[Var,Tag]]
-    def assoc : Option[List[( Var, Tag )]]
+    def soln : Option[Solution[Object]]
+    def sbst : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]]
+    def assoc : Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]]
   } 
   object RBound {
     def apply(
-      rsrc : Option[Resource], soln : Option[Solution[String]]
+      rsrc : Option[Resource], soln : Option[Solution[Object]]
     ) : RBound = {
       RBoundP4JSoln( rsrc, soln )
     }
     def unapply(
       rsrc : RBoundP4JSoln
-    ) : Option[( Option[Resource], Option[Solution[String]] )] = {
+    ) : Option[( Option[Resource], Option[Solution[Object]] )] = {
       Some( ( rsrc.rsrc, rsrc.soln ) )
     }
     def unapply(
       rsrc : RBoundHM
-    ) : Option[( Option[Resource], Option[LinkedHashMap[Var,Tag]] )] = {
+    ) : Option[( Option[Resource], Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]] )] = {
       Some( ( rsrc.rsrc, rsrc.sbst ) )
     }
     def unapply(
       rsrc : RBoundAList
-    ) : Option[( Option[Resource], Option[List[( Var, Tag )]] )] = {
+    ) : Option[( Option[Resource], Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]] )] = {
       Some( ( rsrc.rsrc, rsrc.assoc ) )
     }
   }
@@ -83,25 +83,25 @@ extends MonadicGenerators {
     m : TMapR[Namespace,Var,Tag,Value]
   ) extends Resource
   case class RBoundP4JSoln(
-    rsrc : Option[Resource], soln : Option[Solution[String]]
+    rsrc : Option[Resource], soln : Option[Solution[Object]]
   ) extends RBound {
-    override def sbst : Option[LinkedHashMap[Var,Tag]] = None
-    override def assoc : Option[List[( Var, Tag )]] = None
+    override def sbst : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]] = None
+    override def assoc : Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]] = None
   }
   case class RBoundHM(
-    rsrc : Option[Resource], sbst : Option[LinkedHashMap[Var,Tag]]
+    rsrc : Option[Resource], sbst : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]]
   ) extends RBound {
-    override def soln : Option[Solution[String]] = None
-    override def assoc : Option[List[( Var, Tag )]] = None
+    override def soln : Option[Solution[Object]] = None
+    override def assoc : Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]] = None
   }
   case class RBoundAList(
-    rsrc : Option[Resource], assoc : Option[List[( Var, Tag )]]
+    rsrc : Option[Resource], assoc : Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]]
   ) extends RBound {
-    override def soln : Option[Solution[String]] = None
-    override def sbst : Option[LinkedHashMap[Var,Tag]] = {
+    override def soln : Option[Solution[Object]] = None
+    override def sbst : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]] = {
       assoc match {
 	case Some( alist ) => {
-	  val lhm = new LinkedHashMap[Var,Tag]()
+	  val lhm = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
 	  for( ( v, t ) <- alist ) {
 	    lhm += ( v -> t )
 	  }
@@ -113,6 +113,13 @@ extends MonadicGenerators {
   }
 
   implicit def prover : Prover = ProverFactory.getProver()
+  object theCnxnTool
+       extends CnxnUnificationTermQuery[Namespace,Var,Tag]
+       with CnxnConversions[Namespace,Var,Tag]
+       with UUIDOps
+  implicit def cnxnTool : CnxnUnificationTermQuery[Namespace,Var,Tag] = {
+    theCnxnTool
+  }
 
   implicit def asRBoundHM(
     rsrc : RBoundP4JSoln,
@@ -132,11 +139,11 @@ extends MonadicGenerators {
       rsrc.rsrc,      
       pVars.isEmpty match {
 	case false => {
-	  val hmSoln = new LinkedHashMap[Var,Tag]()
+	  val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
 	  for( soln <- rsrc.soln; v <- pVars ) {
 	    try {
-	      val solnTag : Solution[Tag] = soln.on( "X" + v )
-	      hmSoln += ( v -> solnTag.get )
+	      val solnTag : Solution[Object] = soln.on( "X" + v )
+	      hmSoln += ( v -> cnxnTool.asCnxnCtxtLabel( solnTag.get ) )
 	    }
 	    catch {
 	      case e : org.prolog4j.UnknownVariableException => {

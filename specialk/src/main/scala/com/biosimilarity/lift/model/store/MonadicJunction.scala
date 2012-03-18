@@ -712,7 +712,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     case class Rejoin(
       path : CnxnCtxtLabel[Namespace,Var,Tag],
       rsrc : Option[Resource],
-      soln : Option[Solution[String]]
+      soln : Option[Solution[Object]]
     ) extends Resource
 
     case class PartialResult(
