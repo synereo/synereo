@@ -211,8 +211,15 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
 		tweet( "did not find a resource, storing a continuation: " + rk )
+		tweet( "registered continuation storage: " + registered )
+		tweet( "theWaiters: " + theWaiters )
+		tweet( "theSubscriptions: " + theSubscriptions )
 		registered( place ) =
 		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		tweet( "stored a continuation: " + rk )
+		tweet( "registered continuation storage: " + registered )
+		tweet( "theWaiters: " + theWaiters )
+		tweet( "theSubscriptions: " + theSubscriptions )
 		rk( None )
 	      }
 	      else {

@@ -355,7 +355,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     def get( hops : List[Moniker] )( cursor : Boolean )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Generator[Option[mTT.Resource],Unit,Unit] = {              
-      mget( dAT.AGetNum, hops )( theMeetingPlace, theWaiters, true, cursor )( path )    
+      mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, cursor )( path )    
     }
     
     def get( cursor : Boolean )(
@@ -377,7 +377,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AFetchNum, hops )(
-	theMeetingPlace, theWaiters, false, cursor
+	cache.theMeetingPlace, cache.theWaiters, false, cursor
       )( path )    
     }
     
@@ -402,7 +402,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       mget( dAT.ASubscribeNum, hops )(
-	theChannels, theSubscriptions, true, false
+	cache.theChannels, cache.theSubscriptions, true, false
       )( path )    
     }
     
@@ -609,37 +609,6 @@ package usage {
       }
 
       def mkMolQry( kinase : Kinase ) : CnxnCtxtLabel[String,String,String] = {
-	// val molType =
-// 	  kinase.getClass.getName.split( "\\." ).toList.last.split( "\\$" ).toList.last
-// 	new CnxnCtxtBranch[String,String,String](
-// 	  "comBiosimilarityLiftModelStoreUsageMolecularUseCase_KinaseSpecifications_" + molType,
-// 	  List( 
-// 	    new CnxnCtxtBranch[String,String,String](
-// 	      "b",
-// 	      List(
-// 		new CnxnCtxtLeaf[String,String,String](
-// 		  Left[String,String]( kinase.b + "" )
-// 		)
-// 	      )
-// 	    ),
-// 	    new CnxnCtxtBranch[String,String,String](
-// 	      "i",
-// 	      List(
-// 		new CnxnCtxtLeaf[String,String,String](
-// 		  Left[String,String]( kinase.i + "" )
-// 		)
-// 	      )
-// 	    ),
-// 	    new CnxnCtxtBranch[String,String,String](
-// 	      "state",
-// 	      List(
-// 		new CnxnCtxtLeaf[String,String,String](
-// 		  Left[String,String]( kinase.state )
-// 		)
-// 	      )
-// 	    )
-// 	  )
-// 	)
 	import CnxnConversionStringScope._
 	kinase match {
 	  case cc : ScalaObject with Product with Serializable => {
