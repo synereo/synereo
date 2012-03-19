@@ -103,7 +103,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     case class PrologSubstitution( soln : LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]] )
 	 extends Function1[mTT.Resource,Option[mTT.Resource]] {
 	   override def apply( rsrc : mTT.Resource ) = {
-	     Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
+	     soln.isEmpty match {
+	       case true => Some( rsrc )
+	       case _ => Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
+	     }
 	   }
 	 }
 
