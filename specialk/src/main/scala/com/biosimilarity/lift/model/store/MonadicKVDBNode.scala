@@ -743,6 +743,7 @@ package usage {
 	      // Got none... so wait
 	      case None => {
 		println( "Waiting is, Water Brother." )
+		rafLoop()
 	      }
 	      case unExpected@_ => {
 		throw new Exception( "Protocol violated. Received: " + unExpected )
