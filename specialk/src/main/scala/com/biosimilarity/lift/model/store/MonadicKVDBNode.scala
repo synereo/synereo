@@ -698,7 +698,7 @@ package usage {
 	    for( rafRsrc <- kvdbNode.get( RAFPtn ) ) {
 	      println( kvdbNode + " received: " + rafRsrc )
 	      rafRsrc match {
-		case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+		case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
 		  println( kvdbNode + " received an increment, " + inc + ", of RAF" )
 		  val currAmt : Double = cellCytoplasm.amt( RAFProto )
 		  cellCytoplasm += ( ( RAFProto, ( currAmt + inc ) ) )
@@ -709,7 +709,7 @@ package usage {
 			for( mek1Rsrc <- kvdbNode.get( MEK1Ptn ) ) {
 			  println( kvdbNode + " received: " + mek1Rsrc )
 			  mek1Rsrc match {
-			    case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+			    case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
 			      println( kvdbNode + " received an increment, " + inc + ", of MEK1" )
 			      val currAmt : Double = cellCytoplasm.amt( MEK1Proto )
 			      cellCytoplasm += ( ( MEK1Proto, ( currAmt + inc ) ) )
@@ -720,7 +720,7 @@ package usage {
 				    for( mapkRsrc <- kvdbNode.get( MAPKPtn ) ) {
 				      println( kvdbNode + " received: " + mapkRsrc )
 				      mapkRsrc match {
-					case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+					case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
 					  println( kvdbNode + " received an increment, " + inc + ", of MAPK" )
 					  val currAmt : Double = cellCytoplasm.amt( MAPKProto )
 					  cellCytoplasm += ( ( MAPKProto, ( currAmt + inc ) ) )
@@ -773,7 +773,7 @@ package usage {
 	    for( rasRsrc <- kvdbNode.get( RASPtn ) ) {
 	      println( kvdbNode + " received: " + rasRsrc )
 	      rasRsrc match {
-		case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+		case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
 		  println( kvdbNode + " received an increment, " + inc + ", of RAS" )
 		  val currAmt : Double = cellCytoplasm.amt( RASProto )
 		  cellCytoplasm += ( ( RASProto, ( inc + currAmt ) ) )
@@ -784,7 +784,7 @@ package usage {
 			for( mek2Rsrc <- kvdbNode.get( MEK2Ptn ) ) {
 			  println( kvdbNode + " received: " + mek2Rsrc )
 			  mek2Rsrc match {
-			    case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+			    case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
 			      println( kvdbNode + " received an increment, " + inc + ", of MEK2" )
 			      val currAmt : Double = cellCytoplasm.amt( MEK2Proto )
 			      cellCytoplasm += ( ( MEK2Proto, ( currAmt + inc ) ) )
