@@ -291,36 +291,42 @@ with PrologMgr {
 	+ clabel2
       )
     )
-
-    val solution : Solution[Object] =
-      getProver().solve(
-	cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "."
-      )
-
-    if ( solution.isSuccess ) {
-      val clbl1Vars = patternVars( clabel1 ).toSet
-      val clbl2Vars = patternVars( clabel2 ).toSet
-      val varSet = clbl1Vars ++ clbl2Vars
-      
-      val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
     
-      for( v <- varSet ) {
-	println( "mapping free var : " + v )
-	try {
-	  val soln : Solution[Object] = solution.on( "X" + v )
-	  hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
-	}
-	catch {
-	  case e : org.prolog4j.UnknownVariableException => {
-	    println( "warning: variable not bound: " + v )
-	  }
-	}
-      }
-      
-      Some( hmSoln )
+    // BUGBUG -- lgm : is this a reasonable optimization to do at this level?
+    if ( clabel1.equals( clabel2 ) ) {
+      Some( new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]() )
     }
     else {
-      None
+      val solution : Solution[Object] =
+	getProver().solve(
+	  cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "."
+	)
+      
+      if ( solution.isSuccess ) {
+	val clbl1Vars = patternVars( clabel1 ).toSet
+	val clbl2Vars = patternVars( clabel2 ).toSet
+	val varSet = clbl1Vars ++ clbl2Vars
+	
+	val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
+	
+	for( v <- varSet ) {
+	  println( "mapping free var : " + v )
+	  try {
+	    val soln : Solution[Object] = solution.on( "X" + v )
+	    hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
+	  }
+	  catch {
+	    case e : org.prolog4j.UnknownVariableException => {
+	      println( "warning: variable not bound: " + v )
+	    }
+	  }
+	}
+	
+	Some( hmSoln )
+      }
+      else {
+	None
+      }
     }
   }
 
