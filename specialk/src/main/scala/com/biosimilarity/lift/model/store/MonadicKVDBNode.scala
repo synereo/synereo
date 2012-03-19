@@ -690,129 +690,158 @@ package usage {
     def runClient( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
-      // map-reduce-style protocol checking                        
-
-      new Thread {
-	override def run() : Unit = {	  
-	  reset {
-	    for( rafRsrc <- kvdbNode.get( RAFPtn ) ) {
-	      println( kvdbNode + " received: " + rafRsrc )
-	      rafRsrc match {
-		case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-		  println( kvdbNode + " received an increment, " + inc + ", of RAF" )
-		  val currAmt : Double = cellCytoplasm.amt( RAFProto )
-		  cellCytoplasm += ( ( RAFProto, ( currAmt + inc ) ) )
-		  for( amt <- cellCytoplasm.get( RAFProto ) ) {
-		    if ( amt > raf2RAS ) {
-		      supplyKinase( kvdbNode, cellCytoplasm, RASProto, ras2MEK1 )
-		      reset {
-			for( mek1Rsrc <- kvdbNode.get( MEK1Ptn ) ) {
-			  println( kvdbNode + " received: " + mek1Rsrc )
-			  mek1Rsrc match {
-			    case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-			      println( kvdbNode + " received an increment, " + inc + ", of MEK1" )
-			      val currAmt : Double = cellCytoplasm.amt( MEK1Proto )
-			      cellCytoplasm += ( ( MEK1Proto, ( currAmt + inc ) ) )
-			      for( amt <- cellCytoplasm.get( MEK1Proto ) ) {
-				if ( amt > mek12MEK2 ) {
-				  supplyKinase( kvdbNode, cellCytoplasm, MEK2Proto, mek22MAPK )
-				  reset {
-				    for( mapkRsrc <- kvdbNode.get( MAPKPtn ) ) {
-				      println( kvdbNode + " received: " + mapkRsrc )
-				      mapkRsrc match {
-					case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-					  println( kvdbNode + " received an increment, " + inc + ", of MAPK" )
-					  val currAmt : Double = cellCytoplasm.amt( MAPKProto )
-					  cellCytoplasm += ( ( MAPKProto, ( currAmt + inc ) ) )
-					  for( amt <- cellCytoplasm.get( MAPKProto ) ) {
-					    if ( amt > mapk2Protein ) {
-					      println( "Protein produced." )
-					    }
-					  }
-					}
-					case unExpected@_ => {
-					  throw new Exception( "Protocol violated. Received: " + unExpected )
-					}
-				      }
-				    }
-				  }
-				}
-			      }
-			    }
-			    case unExpected@_ => {
-			      throw new Exception( "Protocol violated. Received: " + unExpected )
-			    }
-			  }
-			}
-		      }
-		    }
+      // map-reduce-style protocol checking
+      def rafLoop() : Unit = {
+	reset {
+	  for( rafRsrc <- kvdbNode.get( RAFPtn ) ) {
+	    println( kvdbNode + " received: " + rafRsrc )
+	    rafRsrc match {
+	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
+		println( kvdbNode + " received an increment, " + inc + ", of RAF" )
+		val currAmt : Double = cellCytoplasm.amt( RAFProto )
+		cellCytoplasm += ( ( RAFProto, ( currAmt + inc ) ) )
+		for( amt <- cellCytoplasm.get( RAFProto ) ) {
+		  if ( amt > raf2RAS ) {
+		    supplyKinase( kvdbNode, cellCytoplasm, RASProto, ras2MEK1 )
+		    mek1Loop()
 		  }
-		}		
-		case None => {
-		  println( "Waiting is, Water Brother." )
+		  else {
+		    rafLoop()
+		  }
 		}
-		case unExpected@_ => {
-		  throw new Exception( "Protocol violated. Received: " + unExpected )
-		}	    
+	      }		
+	      case None => {
+		println( "Waiting is, Water Brother." )
+	      }
+	      case unExpected@_ => {
+		throw new Exception( "Protocol violated. Received: " + unExpected )
+	      }	    
+	    }
+	  }
+	}
+      }
+      def mek1Loop() : Unit = {
+	reset {
+	  for( mek1Rsrc <- kvdbNode.get( MEK1Ptn ) ) {
+	    println( kvdbNode + " received: " + mek1Rsrc )
+	    mek1Rsrc match {
+	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
+		println( kvdbNode + " received an increment, " + inc + ", of MEK1" )
+		val currAmt : Double = cellCytoplasm.amt( MEK1Proto )
+		cellCytoplasm += ( ( MEK1Proto, ( currAmt + inc ) ) )
+		for( amt <- cellCytoplasm.get( MEK1Proto ) ) {
+		  if ( amt > mek12MEK2 ) {
+		    supplyKinase( kvdbNode, cellCytoplasm, MEK2Proto, mek22MAPK )
+		    mapKLoop()
+		  }
+		  else {
+		    mek1Loop()
+		  }
+		}
+	      }
+	      case unExpected@_ => {
+		throw new Exception( "Protocol violated. Received: " + unExpected )
 	      }
 	    }
 	  }
 	}
+      }
+      def mapKLoop() : Unit = {
+	reset {
+	  for( mapkRsrc <- kvdbNode.get( MAPKPtn ) ) {
+	    println( kvdbNode + " received: " + mapkRsrc )
+	    mapkRsrc match {
+	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
+		println( kvdbNode + " received an increment, " + inc + ", of MAPK" )
+		val currAmt : Double = cellCytoplasm.amt( MAPKProto )
+		cellCytoplasm += ( ( MAPKProto, ( currAmt + inc ) ) )
+		for( amt <- cellCytoplasm.get( MAPKProto ) ) {
+		  if ( amt > mapk2Protein ) {
+		    println( "Protein produced." )
+		  }
+		  else {
+		    mapKLoop()
+		  }
+		}
+	      }
+	      case unExpected@_ => {
+		throw new Exception( "Protocol violated. Received: " + unExpected )
+	      }
+	    }
+	  }
+	}
+      }
+
+      new Thread {
+	override def run() : Unit = rafLoop()
       }.start
     }
 
     def runServer( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
-      // map-reduce-style protocol             
+      // map-reduce-style protocol  
+
+      def rasLoop() : Unit = {
+	reset {
+	  for( rasRsrc <- kvdbNode.get( RASPtn ) ) {
+	    println( kvdbNode + " received: " + rasRsrc )
+	    rasRsrc match {
+	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
+		println( kvdbNode + " received an increment, " + inc + ", of RAS" )
+		val currAmt : Double = cellCytoplasm.amt( RASProto )
+		cellCytoplasm += ( ( RASProto, ( inc + currAmt ) ) )
+		for( amt <- cellCytoplasm.get( RASProto ) ) {
+		  if ( amt > ras2MEK1 ) {
+		    supplyKinase( kvdbNode, cellCytoplasm, MEK1Proto, mek12MEK2 )
+		    mek2Loop()
+		  }
+		  else {
+		    rasLoop()
+		  }
+		}
+	      }
+	      case None => {
+		println( "Waiting is, Water Brother." )
+	      }
+	      case unExpected@_ => {
+		throw new Exception( "Protocol violated. Received: " + unExpected )
+	      }	    
+	    }
+	  }
+	}
+      }
+      def mek2Loop() : Unit = {
+	reset {
+	  for( mek2Rsrc <- kvdbNode.get( MEK2Ptn ) ) {
+	    println( kvdbNode + " received: " + mek2Rsrc )
+	    mek2Rsrc match {
+	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
+		println( kvdbNode + " received an increment, " + inc + ", of MEK2" )
+		val currAmt : Double = cellCytoplasm.amt( MEK2Proto )
+		cellCytoplasm += ( ( MEK2Proto, ( currAmt + inc ) ) )
+		for( amt <- cellCytoplasm.get( MEK2Proto ) ) {
+		  if ( amt > mek22MAPK ) {
+		    supplyKinase( kvdbNode, cellCytoplasm, MAPKProto, mapk2Protein )
+		    println( "MAPK produced." )
+		  }
+		  else {
+		    mek2Loop()
+		  }
+		}
+	      }
+	      case unExpected@_ => {
+		throw new Exception( "Protocol violated. Received: " + unExpected )
+	      }
+	    }
+	  }
+	}
+      }
 
       new Thread {
 	override def run() : Unit = {
 	  supplyKinase( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
-	  reset {
-	    for( rasRsrc <- kvdbNode.get( RASPtn ) ) {
-	      println( kvdbNode + " received: " + rasRsrc )
-	      rasRsrc match {
-		case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-		  println( kvdbNode + " received an increment, " + inc + ", of RAS" )
-		  val currAmt : Double = cellCytoplasm.amt( RASProto )
-		  cellCytoplasm += ( ( RASProto, ( inc + currAmt ) ) )
-		  for( amt <- cellCytoplasm.get( RASProto ) ) {
-		    if ( amt > ras2MEK1 ) {
-		      supplyKinase( kvdbNode, cellCytoplasm, MEK1Proto, mek12MEK2 )
-		      reset {
-			for( mek2Rsrc <- kvdbNode.get( MEK2Ptn ) ) {
-			  println( kvdbNode + " received: " + mek2Rsrc )
-			  mek2Rsrc match {
-			    case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-			      println( kvdbNode + " received an increment, " + inc + ", of MEK2" )
-			      val currAmt : Double = cellCytoplasm.amt( MEK2Proto )
-			      cellCytoplasm += ( ( MEK2Proto, ( currAmt + inc ) ) )
-			      for( amt <- cellCytoplasm.get( MEK2Proto ) ) {
-				if ( amt > mek22MAPK ) {
-				  supplyKinase( kvdbNode, cellCytoplasm, MAPKProto, mapk2Protein )
-				  println( "MAPK produced." )
-				}
-			      }
-			    }
-			    case unExpected@_ => {
-			      throw new Exception( "Protocol violated. Received: " + unExpected )
-			    }
-			  }
-			}
-		      }
-		    }
-		  }
-		}
-		case None => {
-		  println( "Waiting is, Water Brother." )
-		}
-		case unExpected@_ => {
-		  throw new Exception( "Protocol violated. Received: " + unExpected )
-		}	    
-	      }
-	    }
-	  }
+	  rasLoop()
 	}
       }.start
     }
