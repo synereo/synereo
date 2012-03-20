@@ -131,7 +131,10 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     cache, acquaintances
   ) {    
     override def toString() : String = {
-      this.getClass.getName.split( "\\." ).last + "@" + name + acquaintances
+      (
+	this.getClass.getName.split( "\\." ).last + "@"
+	+ ( name match { case MURI( uri ) => uri; case _ => name } )
+      )
     }
     def wrapResponse(
       msrc : Moniker, dreq : Msgs.DReq, rsrc : mTT.Resource
@@ -710,7 +713,13 @@ package usage {
 	      val inc = random * 25
 	      cellCytoplasm += ( kinase -> ( kamt + inc ) )
 	      reset { 
-		println( "releasing an increment " + inc + " of " + kinase )
+		println(
+		  (
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		    + kvdbNode + "releasing an increment " + inc + " of " + kinase + "\n"
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  )
+		)
 		kvdbNode.put( mkMolQry( kinase ), inc )
 	      }
 	      loop( kinase, amt )
@@ -739,7 +748,13 @@ package usage {
 	    val inc = random * 25
 	    cellCytoplasm += ( kinase -> ( kamt + inc ) )
 	    reset { 
-	      println( "releasing an increment " + inc + " of " + kinase )
+	      println(
+		(
+		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  + kvdbNode + "releasing an increment " + inc + " of " + kinase + "\n"
+		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		)
+	      )
 	      kvdbNode.put( mkMolQry( kinase ), inc )
 	    }
 	  }
@@ -762,7 +777,13 @@ package usage {
 	reset {
 	  // Wait for kinase
 	  for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
-	    println( kvdbNode + " received: " + kinaseRsrc )
+	    println(
+	      (
+		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		+ kvdbNode + " received resource : " + kinaseRsrc + "\n"
+		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	      )
+	    )
 	    kinaseRsrc match {
 	      // Got some!
 	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
