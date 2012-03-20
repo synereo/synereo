@@ -743,7 +743,7 @@ package usage {
 	      // Got none... so wait
 	      case None => {
 		println( "Waiting is, Water Brother." )
-		rafLoop()
+		//rafLoop()
 	      }
 	      case unExpected@_ => {
 		throw new Exception( "Protocol violated. Received: " + unExpected )
@@ -779,7 +779,7 @@ package usage {
 	      case None => {
 		// so supply a little more RAS and keep waiting for MEK1
 		supplyKinaseInc( kvdbNode, cellCytoplasm, RASProto, ras2MEK1 )
-		mek1Loop()
+		//mek1Loop()
 	      }
 	      case unExpected@_ => {
 		throw new Exception( "Protocol violated. Received: " + unExpected )
@@ -814,7 +814,7 @@ package usage {
 	      case None =>  {
 		// Supply a little more MEK2 and keep waiting for MAPK
 		supplyKinaseInc( kvdbNode, cellCytoplasm, MEK2Proto, mek22MAPK )
-		mapKLoop()
+		//mapKLoop()
 	      }
 	      case unExpected@_ => {
 		throw new Exception( "Protocol violated. Received: " + unExpected )
@@ -856,7 +856,7 @@ package usage {
 	      case None => {
 		supplyKinaseInc( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )		
 		println( "Waiting is, Water Brother." )
-		rasLoop()
+		//rasLoop()
 	      }
 	      case unExpected@_ => {
 		throw new Exception( "Protocol violated. Received: " + unExpected )
@@ -886,7 +886,7 @@ package usage {
 	      }
 	      case None => {
 		supplyKinaseInc( kvdbNode, cellCytoplasm, MEK1Proto, mek12MEK2 )
-		mek2Loop()
+		//mek2Loop()
 	      }
 	      case unExpected@_ => {
 		throw new Exception( "Protocol violated. Received: " + unExpected )
