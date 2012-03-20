@@ -130,7 +130,9 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   ) extends AbstractMonadicKVDBNode[KVDBNodeRequest,KVDBNodeResponse](
     cache, acquaintances
   ) {    
-    
+    override def toString() : String = {
+      this.getClass.getName.split( "\\." ).last + "@" + name + acquaintances
+    }
     def wrapResponse(
       msrc : Moniker, dreq : Msgs.DReq, rsrc : mTT.Resource
     ) : FramedMsg = {
@@ -560,12 +562,7 @@ package usage {
 
     object KinaseSpecifications {
       import scala.math._
-      def raf2RAS : Double = random * 100
-      def ras2MEK1 : Double = random * 100
-      def mek12MEK2 : Double = random * 100
-      def mek22MAPK : Double = random * 100
-      def mapk2Protein : Double = random * 100
-
+      
       trait Kinase {
 	def b : Boolean
 	def i : Int
@@ -587,11 +584,21 @@ package usage {
 	b : Boolean, i : Int, state : String
       ) extends Kinase    
       
-      val RAFProto : RAF = RAF( true, 0, "Phosphorylated" )
-      val RASProto : RAS = RAS( true, 0, "Phosphorylated" )
-      val MEK1Proto : MEK1 = MEK1( true, 0, "Phosphorylated" )
-      val MEK2Proto : MEK2 = MEK2( true, 0, "Phosphorylated" )      
-      val MAPKProto : MAPK = MAPK( true, 0, "Phosphorylated" )
+      lazy val RAFProto : RAF = RAF( true, 0, "Phosphorylated" )
+      lazy val RASProto : RAS = RAS( true, 0, "Phosphorylated" )
+      lazy val MEK1Proto : MEK1 = MEK1( true, 0, "Phosphorylated" )
+      lazy val MEK2Proto : MEK2 = MEK2( true, 0, "Phosphorylated" )      
+      lazy val MAPKProto : MAPK = MAPK( true, 0, "Phosphorylated" )      
+
+      def mkMolQry( kinase : Kinase ) : CnxnCtxtLabel[String,String,String] = {
+	import CnxnConversionStringScope._
+	kinase match {
+	  case cc : ScalaObject with Product with Serializable => {
+	    asCnxnCtxtLabel( cc )
+	  }
+	  case _ => throw new Exception( "non concrete kinase: " + kinase )
+	}	
+      }
 
       def mkMolPtn( molType : String ) : CnxnCtxtLabel[String,String,String] = {
 	new CnxnCtxtBranch[String,String,String](
@@ -615,30 +622,59 @@ package usage {
 	)
       }
 
-      def mkMolQry( kinase : Kinase ) : CnxnCtxtLabel[String,String,String] = {
-	import CnxnConversionStringScope._
-	kinase match {
-	  case cc : ScalaObject with Product with Serializable => {
-	    asCnxnCtxtLabel( cc )
-	  }
-	  case _ => throw new Exception( "non concrete kinase: " + kinase )
-	}	
+      type ConcreteKinase = Kinase with Product with Serializable
+
+      lazy val molPtnMap : HashMap[ConcreteKinase,CnxnCtxtLabel[String,String,String]] = {	
+	val map = new HashMap[ConcreteKinase,CnxnCtxtLabel[String,String,String]]()
+	map += ( RAFProto -> mkMolPtn( "RAF" ) )
+	map += ( RASProto -> mkMolPtn( "RAS" ) )
+	map += ( MEK1Proto -> mkMolPtn( "MEK1" ) )
+	map += ( MEK2Proto -> mkMolPtn( "MEK2" ) )
+	map += ( MAPKProto -> mkMolPtn( "MAPK" ) )
+	map
       }
 
-      val RAFPtn : CnxnCtxtLabel[String,String,String] =
-	mkMolPtn( "RAF" )
+      lazy val cascade : Seq[ConcreteKinase] =
+	List[ConcreteKinase](
+	  RAFProto, RASProto, MEK1Proto, MEK2Proto, MAPKProto
+	)
+
+      implicit lazy val cascadeInitialState : List[( ConcreteKinase, Option[ConcreteKinase] )] = {
+	cascade.zip( cascade.drop( 1 ).map( Some( _ ) ) ++ List( None ) ).toList
+      }
+
+      def raf2RAS : Double = random * 100
+      def ras2MEK1 : Double = random * 100
+      def mek12MEK2 : Double = random * 100
+      def mek22MAPK : Double = random * 100
+      def mapk2Protein : Double = random * 100            
+
+      lazy val cascadeTransitionMap : HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double] = {
+	val map = new HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double]()
+	map += ( ( RAFProto, Some( RASProto ) ) -> raf2RAS )
+	map += ( ( RAFProto, None ) -> raf2RAS ) // Assume transition to RAS
+	map += ( ( RASProto, Some( MEK1Proto ) ) -> ras2MEK1 )
+	map += ( ( RASProto, None ) -> ras2MEK1 ) // Assume transition to MEK1
+	map += ( ( MEK1Proto, Some( MEK2Proto ) ) -> mek12MEK2 )
+	map += ( ( MEK1Proto, None ) -> mek12MEK2 ) // Assume transition to MEK2
+	map += ( ( MAPKProto, None ) -> mapk2Protein )
+	map
+      }
+
+      lazy val RAFPtn : CnxnCtxtLabel[String,String,String] =
+	molPtnMap( RAFProto )
       
-      val RASPtn : CnxnCtxtLabel[String,String,String] =
-	mkMolPtn( "RAS" )
+      lazy val RASPtn : CnxnCtxtLabel[String,String,String] =
+	molPtnMap( RASProto )
 
-      val MEK1Ptn : CnxnCtxtLabel[String,String,String] =
-	mkMolPtn( "MEK1" )
+      lazy val MEK1Ptn : CnxnCtxtLabel[String,String,String] =
+	molPtnMap( MEK1Proto )
 
-      val MEK2Ptn : CnxnCtxtLabel[String,String,String] =
-	mkMolPtn( "MEK2" )
+      lazy val MEK2Ptn : CnxnCtxtLabel[String,String,String] =
+	molPtnMap( MEK2Proto )
             
-      val MAPKPtn : CnxnCtxtLabel[String,String,String] =
-	mkMolPtn( "MAPK" )
+      lazy val MAPKPtn : CnxnCtxtLabel[String,String,String] =
+	molPtnMap( MAPKProto )
     }
 
     import KinaseSpecifications._
@@ -660,7 +696,7 @@ package usage {
     def supplyKinase(
       kvdbNode : MonadicKVDBNode,
       cellCytoplasm : Cytoplasm,
-      kinase : Kinase with ScalaObject with Product with Serializable,
+      kinase : ConcreteKinase,
       trigger : Double
     ) : Unit = {
       import scala.math._
@@ -668,7 +704,7 @@ package usage {
       import cnxnConversions._
       new Thread {
 	override def run() : Unit = {
-	  def loop( kinase : Kinase with ScalaObject with Product with Serializable, amt : Double ) : Unit = {
+	  def loop( kinase : ConcreteKinase, amt : Double ) : Unit = {
 	    val kamt = cellCytoplasm.amt( kinase )
 	    if ( kamt < amt ) {
 	      val inc = random * 25
@@ -690,7 +726,7 @@ package usage {
     def supplyKinaseInc(
       kvdbNode : MonadicKVDBNode,
       cellCytoplasm : Cytoplasm,
-      kinase : Kinase with ScalaObject with Product with Serializable,
+      kinase : ConcreteKinase,
       trigger : Double
     ) : Unit = {
       import scala.math._
@@ -711,6 +747,141 @@ package usage {
       }.start
     }
 
+    def consumeKinase(
+      kvdbNode : MonadicKVDBNode,
+      cellCytoplasm : Cytoplasm
+    )(
+      implicit cascadeState : List[( ConcreteKinase, Option[ConcreteKinase] )]
+    ) : Unit = {
+      if ( !cascadeState.isEmpty ) {
+
+	val state@( kinaseToConsumeProto, optKinaseToProduceProto ) = cascadeState.head
+	val kinasePtn = molPtnMap( kinaseToConsumeProto )
+	val trigger = cascadeTransitionMap.get( state ).getOrElse( java.lang.Double.MAX_VALUE )
+
+	reset {
+	  // Wait for kinase
+	  for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
+	    println( kvdbNode + " received: " + kinaseRsrc )
+	    kinaseRsrc match {
+	      // Got some!
+	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
+		println(
+		  (
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    + kvdbNode
+		    + " received an increment, "
+		    + inc
+		    + ", of "
+		    + kinaseToConsumeProto
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  )
+		)
+		val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProto )
+		cellCytoplasm += ( ( kinaseToConsumeProto, ( currAmt + inc ) ) )
+
+		println(
+		  (
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    + kvdbNode
+		    + " has accumulated "
+		    + currAmt + inc
+		    + " of "
+		    + kinaseToConsumeProto
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  )
+		)
+
+		optKinaseToProduceProto match {
+		  case Some( kinaseToProduceProto ) => {
+		    for( amt <- cellCytoplasm.get( kinaseToConsumeProto ) ) {
+		      // Got enough!
+		      if ( amt > trigger ) {		    		    
+			println( 
+			  (
+			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			    + kvdbNode
+			    + " received enough "
+			    + kinaseToConsumeProto
+			    + " to produce "
+			    + kinaseToProduceProto 
+			    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			  )
+			)
+			
+			val nextCascadeState = cascadeState.drop( 2 )
+			
+			for( nextTrigger <- cascadeTransitionMap.get( nextCascadeState.head ) ) {
+			  // Supply some RAS
+			  supplyKinaseInc(
+			    kvdbNode,
+			    cellCytoplasm,
+			    kinaseToProduceProto,
+			    nextTrigger
+			  )
+			  
+			  // Begin waiting for MEK1
+			  consumeKinase(
+			    kvdbNode,
+			    cellCytoplasm
+			  )(
+			    nextCascadeState
+			  )
+			}
+		      }
+		      // Not quite enough...
+		      else {
+			println(
+			  (
+			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			    + kvdbNode
+			    + " still waiting for enough "
+			    + kinaseToConsumeProto
+			    + " to produce "
+			    + kinaseToProduceProto 
+			    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			  )
+			)
+			consumeKinase(
+			  kvdbNode,
+			  cellCytoplasm
+			)(
+			  cascadeState
+			)
+		      }
+		    }		    		    
+		  }
+		  case _ => {
+		    println( 
+		      (
+			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			+ kvdbNode + " producing Protein. "
+			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		      )
+		    )
+		  }
+		}		
+	      }
+	      // Got none... so wait
+	      case None => {
+		println( 
+		  (
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    + kvdbNode + " received nothing; waiting for kinase, "
+		    + kinaseToConsumeProto + ". "
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  )
+		)
+	      }
+	      case unExpected@_ => {
+		throw new Exception( "Protocol violated. Received: " + unExpected )
+	      }	    
+	    }
+	  }
+	}
+      }
+    }
+
     def runClient( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
@@ -723,12 +894,23 @@ package usage {
 	    rafRsrc match {
 	      // Got some!
 	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-		println( kvdbNode + " received an increment, " + inc + ", of RAF" )
+		println( kvdbNode + " received an increment, " + inc + ", of " + RAFProto )
 		val currAmt : Double = cellCytoplasm.amt( RAFProto )
 		cellCytoplasm += ( ( RAFProto, ( currAmt + inc ) ) )
 		for( amt <- cellCytoplasm.get( RAFProto ) ) {
 		  // Got enough!
 		  if ( amt > raf2RAS ) {
+		    println( 
+		      (
+			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			+ kvdbNode
+			+ " received enough "
+			+ RAFProto
+			+ " to produce "
+			+ RASProto 
+			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		      )
+		    )
 		    // Supply some RAS
 		    supplyKinaseInc( kvdbNode, cellCytoplasm, RASProto, ras2MEK1 )
 		    // Begin waiting for MEK1
@@ -736,6 +918,17 @@ package usage {
 		  }
 		  // Not quite enough...
 		  else {
+		    println(
+		      (
+			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			+ kvdbNode
+			+ " still waiting for enough "
+			+ RAFProto
+			+ " to produce "
+			+ RASProto 
+			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		      )
+		    )
 		    rafLoop()
 		  }
 		}
@@ -825,7 +1018,8 @@ package usage {
       }
 
       new Thread {
-	override def run() : Unit = rafLoop()
+	//override def run() : Unit = rafLoop()
+	override def run() : Unit = consumeKinase( kvdbNode, cellCytoplasm )
       }.start
     }
 
@@ -899,7 +1093,8 @@ package usage {
       new Thread {
 	override def run() : Unit = {
 	  supplyKinaseInc( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
-	  rasLoop()
+	  //rasLoop()
+	  consumeKinase( kvdbNode, cellCytoplasm )( cascadeInitialState.drop( 1 ) )
 	}
       }.start
     }
