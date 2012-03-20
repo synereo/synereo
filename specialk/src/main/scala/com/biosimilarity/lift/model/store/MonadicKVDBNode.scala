@@ -768,12 +768,12 @@ package usage {
 	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
 		println(
 		  (
-		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode
 		    + " received an increment, "
 		    + inc
 		    + ", of "
-		    + kinaseToConsumeProto
+		    + kinaseToConsumeProto + "\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		  )
 		)
@@ -782,12 +782,12 @@ package usage {
 
 		println(
 		  (
-		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode
 		    + " has accumulated "
 		    + currAmt + inc
 		    + " of "
-		    + kinaseToConsumeProto
+		    + kinaseToConsumeProto + "\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		  )
 		)
@@ -799,12 +799,12 @@ package usage {
 		      if ( amt > trigger ) {		    		    
 			println( 
 			  (
-			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			    + kvdbNode
 			    + " received enough "
 			    + kinaseToConsumeProto
 			    + " to produce "
-			    + kinaseToProduceProto 
+			    + kinaseToProduceProto + "\n"
 			    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 			  )
 			)
@@ -833,12 +833,12 @@ package usage {
 		      else {
 			println(
 			  (
-			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			    + kvdbNode
 			    + " still waiting for enough "
 			    + kinaseToConsumeProto
 			    + " to produce "
-			    + kinaseToProduceProto 
+			    + kinaseToProduceProto + "\n"
 			    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 			  )
 			)
@@ -854,8 +854,8 @@ package usage {
 		  case _ => {
 		    println( 
 		      (
-			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			+ kvdbNode + " producing Protein. "
+			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			+ kvdbNode + " producing Protein.\n"
 			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		      )
 		    )
@@ -866,9 +866,9 @@ package usage {
 	      case None => {
 		println( 
 		  (
-		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + " received nothing; waiting for kinase, "
-		    + kinaseToConsumeProto + ". "
+		    + kinaseToConsumeProto + ".\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		  )
 		)
