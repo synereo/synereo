@@ -901,7 +901,7 @@ package usage {
 		      cascadeTransitionMap.get(	s ).getOrElse( java.lang.Double.MAX_VALUE )
 		    )
 		  }
-		  case _ => {
+		  case None => {
 		    println( 
 		      (
 			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
