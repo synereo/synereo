@@ -766,13 +766,123 @@ package usage {
       }.start
     }
 
+    def handleRsrc(
+      kvdbNode : MonadicKVDBNode,
+      cellCytoplasm : Cytoplasm,
+      cascadeState : List[( ConcreteKinase, Option[ConcreteKinase] )]
+    )(
+      state : ( ConcreteKinase, Option[ConcreteKinase] ),
+      trigger : Double,
+      inc : Double
+    ) : Unit = {
+      val ( kinaseToConsumeProto, optKinaseToProduceProto ) = state
+      println(
+	(
+	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  + kvdbNode
+	  + " received an increment, "
+	  + inc
+	  + ", of "
+	  + kinaseToConsumeProto + "\n"
+	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	)
+      )
+      val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProto )
+      cellCytoplasm += ( ( kinaseToConsumeProto, ( currAmt + inc ) ) )
+      
+      println(
+	(
+	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  + kvdbNode
+	  + " has accumulated "
+	  + currAmt + inc
+	  + " of "
+	  + kinaseToConsumeProto + "\n"
+	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	)
+      )
+      
+      optKinaseToProduceProto match {
+	case Some( kinaseToProduceProto ) => {
+	  for( amt <- cellCytoplasm.get( kinaseToConsumeProto ) ) {
+	    // Got enough!
+	    if ( amt > trigger ) {		    		    
+	      println( 
+		(
+		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  + kvdbNode
+		  + " received enough "
+		  + kinaseToConsumeProto
+		  + " to produce "
+		  + kinaseToProduceProto + "\n"
+		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		)
+	      )
+	      
+	      val nextCascadeState = cascadeState.drop( 2 )
+	      
+	      for( nextTrigger <- cascadeTransitionMap.get( nextCascadeState.head ) ) {
+		// Supply some RAS
+		supplyKinaseInc(
+		  kvdbNode,
+		  cellCytoplasm,
+		  kinaseToProduceProto,
+		  nextTrigger
+		)
+		
+		// Begin waiting for MEK1
+		consumeKinase(
+		  kvdbNode,
+		  cellCytoplasm,
+		  Some( state )
+		)(
+		  nextCascadeState
+		)
+	      }
+	    }
+	    // Not quite enough...
+	    else {
+	      println(
+		(
+		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  + kvdbNode
+		  + " still waiting for enough "
+		  + kinaseToConsumeProto
+		  + " to produce "
+		  + kinaseToProduceProto + "\n"
+		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		)
+	      )
+	      consumeKinase(
+		kvdbNode,
+		cellCytoplasm,
+		Some( state )
+	      )(
+		cascadeState
+	      )
+	    }
+	  }		    		    
+	}
+	case _ => {
+	  println( 
+	    (
+	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + kvdbNode + " producing Protein.\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	    )
+	  )
+	}
+      }		
+    }
+    
     def consumeKinase(
       kvdbNode : MonadicKVDBNode,
       cellCytoplasm : Cytoplasm,
       previous : Option[( ConcreteKinase, Option[ConcreteKinase] )]
     )(
       implicit cascadeState : List[( ConcreteKinase, Option[ConcreteKinase] )]
-    ) : Unit = {
+    ) : Unit = {            
+      val handleKinase = handleRsrc( kvdbNode, cellCytoplasm, cascadeState ) _
       if ( !cascadeState.isEmpty ) {
 
 	val state@( kinaseToConsumeProto, optKinaseToProduceProto ) = cascadeState.head
@@ -792,103 +902,10 @@ package usage {
 	    kinaseRsrc match {
 	      // Got some!
 	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-		println(
-		  (
-		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		    + kvdbNode
-		    + " received an increment, "
-		    + inc
-		    + ", of "
-		    + kinaseToConsumeProto + "\n"
-		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		  )
-		)
-		val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProto )
-		cellCytoplasm += ( ( kinaseToConsumeProto, ( currAmt + inc ) ) )
-
-		println(
-		  (
-		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		    + kvdbNode
-		    + " has accumulated "
-		    + currAmt + inc
-		    + " of "
-		    + kinaseToConsumeProto + "\n"
-		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		  )
-		)
-
-		optKinaseToProduceProto match {
-		  case Some( kinaseToProduceProto ) => {
-		    for( amt <- cellCytoplasm.get( kinaseToConsumeProto ) ) {
-		      // Got enough!
-		      if ( amt > trigger ) {		    		    
-			println( 
-			  (
-			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-			    + kvdbNode
-			    + " received enough "
-			    + kinaseToConsumeProto
-			    + " to produce "
-			    + kinaseToProduceProto + "\n"
-			    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			  )
-			)
-			
-			val nextCascadeState = cascadeState.drop( 2 )
-			
-			for( nextTrigger <- cascadeTransitionMap.get( nextCascadeState.head ) ) {
-			  // Supply some RAS
-			  supplyKinaseInc(
-			    kvdbNode,
-			    cellCytoplasm,
-			    kinaseToProduceProto,
-			    nextTrigger
-			  )
-			  
-			  // Begin waiting for MEK1
-			  consumeKinase(
-			    kvdbNode,
-			    cellCytoplasm,
-			    Some( state )
-			  )(
-			    nextCascadeState
-			  )
-			}
-		      }
-		      // Not quite enough...
-		      else {
-			println(
-			  (
-			    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-			    + kvdbNode
-			    + " still waiting for enough "
-			    + kinaseToConsumeProto
-			    + " to produce "
-			    + kinaseToProduceProto + "\n"
-			    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			  )
-			)
-			consumeKinase(
-			  kvdbNode,
-			  cellCytoplasm,
-			  Some( state )
-			)(
-			  cascadeState
-			)
-		      }
-		    }		    		    
-		  }
-		  case _ => {
-		    println( 
-		      (
-			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-			+ kvdbNode + " producing Protein.\n"
-			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		      )
-		    )
-		  }
-		}		
+		handleKinase( state, trigger, inc )
+	      }
+	      case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+		handleKinase( state, trigger, inc )
 	      }
 	      // Got none... so wait
 	      case None => {
