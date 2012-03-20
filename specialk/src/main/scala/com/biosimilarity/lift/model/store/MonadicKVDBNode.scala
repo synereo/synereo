@@ -872,7 +872,7 @@ package usage {
 			consumeKinase(
 			  kvdbNode,
 			  cellCytoplasm,
-			  previous
+			  Some( state )
 			)(
 			  cascadeState
 			)
