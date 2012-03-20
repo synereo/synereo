@@ -755,7 +755,8 @@ package usage {
 	      println(
 		(
 		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		  + kvdbNode + "releasing an increment " + inc + " of " + kinase + "\n"
+		  + kvdbNode + ":\n"
+		  + "releasing an increment " + inc + " of " + kinase + "\n"
 		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		)
 	      )
@@ -779,8 +780,8 @@ package usage {
       println(
 	(
 	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	  + kvdbNode
-	  + " received an increment, "
+	  + kvdbNode + "\n"
+	  + "received an increment, "
 	  + inc
 	  + ", of "
 	  + kinaseToConsumeProto + "\n"
@@ -793,8 +794,8 @@ package usage {
       println(
 	(
 	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	  + kvdbNode
-	  + " has accumulated "
+	  + kvdbNode + "\n"
+	  + "has accumulated "
 	  + currAmt + inc
 	  + " of "
 	  + kinaseToConsumeProto + "\n"
@@ -810,8 +811,8 @@ package usage {
 	      println( 
 		(
 		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		  + kvdbNode
-		  + " received enough "
+		  + kvdbNode + "\n"
+		  + "received enough "
 		  + kinaseToConsumeProto
 		  + " to produce "
 		  + kinaseToProduceProto + "\n"
@@ -822,6 +823,15 @@ package usage {
 	      val nextCascadeState = cascadeState.drop( 2 )
 	      
 	      for( nextTrigger <- cascadeTransitionMap.get( nextCascadeState.head ) ) {
+		println(
+		  (
+		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		    + kvdbNode + "\n"
+		    + "the trigger for the next transition is: " + nextTrigger + "\n"
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  )
+		)
+		
 		// Supply some RAS
 		supplyKinaseInc(
 		  kvdbNode,
@@ -845,8 +855,8 @@ package usage {
 	      println(
 		(
 		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		  + kvdbNode
-		  + " still waiting for enough "
+		  + kvdbNode + "\n"
+		  + "still waiting for enough "
 		  + kinaseToConsumeProto
 		  + " to produce "
 		  + kinaseToProduceProto + "\n"
@@ -867,7 +877,8 @@ package usage {
 	  println( 
 	    (
 	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	      + kvdbNode + " producing Protein.\n"
+	      + kvdbNode + "\n"
+	      + "producing Protein.\n"
 	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 	    )
 	  )
