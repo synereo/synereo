@@ -811,7 +811,8 @@ package usage {
 	case Some( kinaseToProduceProto ) => {
 	  for( amt <- cellCytoplasm.get( kinaseToConsumeProto ) ) {
 	    // Got enough!
-	    if ( amt > trigger ) {		    		    	      	      
+	    if ( amt > trigger ) {
+	      val intermediateState = cascadeState.drop( 1 )
 	      val nextCascadeState = cascadeState.drop( 2 )
 	      println( 
 		(
@@ -849,7 +850,7 @@ package usage {
 		consumeKinase(
 		  kvdbNode,
 		  cellCytoplasm,
-		  Some( state )
+		  Some( intermediateState.head )
 		)(
 		  nextCascadeState
 		)
