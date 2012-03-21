@@ -938,6 +938,9 @@ package usage {
 	      case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
 		handleKinase( state, previous, trigger, inc )
 	      }
+	      case Some( mTT.Ground( inc ) ) => {
+		handleKinase( state, previous, trigger, inc )
+	      }
 	      // Got none... so wait
 	      case None => {
 		previous match {
