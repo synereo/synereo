@@ -893,6 +893,16 @@ package usage {
     )(
       implicit cascadeState : List[( ConcreteKinase, Option[ConcreteKinase] )]
     ) : Unit = {            
+      println( 
+	(
+	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  + kvdbNode + "\n"
+	  + "entering state " + cascadeState.head + ".\n"
+	  + "previous state " + previous + ".\n"
+	  + "next state " + cascadeState.drop( 1 ).head + ".\n"
+	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	)
+      )
       val handleKinase = handleRsrc( kvdbNode, cellCytoplasm, cascadeState ) _
       if ( !cascadeState.isEmpty ) {
 
@@ -922,6 +932,14 @@ package usage {
 	      case None => {
 		previous match {
 		  case Some( s@( pktp, poktc ) ) => {
+		    println( 
+		      (
+			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			+ kvdbNode + " about to supply kinase \n"
+			+ pktp + ".\n"
+			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		      )
+		    )
 		    supplyKinaseInc(
 		      kvdbNode,
 		      cellCytoplasm,
