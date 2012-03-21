@@ -45,8 +45,8 @@ with Timeouts
 
   val pairedWriter = createJunction(sourceAddress, List(acquaintanceAddress))
   val pairedReader = createJunction(acquaintanceAddress, List(sourceAddress))
-  pairedWriter.agentTwistedPairs
-  pairedReader.agentTwistedPairs
+//  pairedWriter.agentTwistedPairs
+//  pairedReader.agentTwistedPairs
 
   val timeoutBetween = TIMEOUT_LONG
   //issues with race conditions in tests, 5 fail but shouldn't
@@ -54,5 +54,6 @@ with Timeouts
   testWildcardWithPut(pairedWriter, pairedReader)
   testWildcardWithStore(pairedWriter, pairedReader)
   testWildcardWithCursor(pairedWriter, pairedReader)
+  testWildcardWithCursorBefore(pairedWriter, pairedReader)
 
 }

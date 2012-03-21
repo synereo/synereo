@@ -654,4 +654,79 @@ with Timeouts
     }
   }
 
+  def testWildcardWithCursorBefore(writer: PartitionedStringMGJ, reader: PartitionedStringMGJ) = {
+    "Wildcard Search before put with Cursor" should {
+       skip("BUG 54 - BROKEN until bug is fixed")
+       Thread.sleep(timeoutBetween)
+
+       val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
+       val value = "tests@protegra.com"
+
+      "find many results by Get" in {
+        val sync = new AnyRef()
+
+        val key = "contentChannel(_)"
+        var found = 0
+        val lblSearch = key.toLabel
+
+        reset {
+          for ( c <- reader.get(true)(cnxnRandom)(lblSearch) ) {
+            if ( c != None ) {
+              for ( e <- c.dispatchCursor ) {
+                println("*************getCount - received : " + e.dispatch.toString)
+                if ( e.dispatch.toString != "" ) {sync.synchronized {found += 1}}
+              }
+            }
+          }
+        }
+
+        putWildcardData(writer, cnxnRandom, value)
+
+        sync.synchronized {found} must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+
+      "find many results by Fetch" in {
+        val sync = new AnyRef()
+
+        val key = "contentChannel(_)"
+        var found = 0
+        val lblSearch = key.toLabel
+        reset {
+          for ( c <- reader.fetch(true)(cnxnRandom)(lblSearch) ) {
+            if ( c != None ) {
+              for ( e <- c.dispatchCursor ) {
+                println("*************getCount - received : " + e.dispatch.toString)
+                if ( e.dispatch.toString != "" ) {sync.synchronized {found += 1}}
+              }
+            }
+          }
+        }
+
+        putWildcardData(writer, cnxnRandom, value)
+
+        sync.synchronized {found} must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+      //
+//       "not find a value by Get" in {
+//         getCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(20, TIMEOUT_EVENTUALLY)
+//       }
+//
+//       "not find a nested value by Get" in {
+//         getCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(20, TIMEOUT_EVENTUALLY)
+//       }
+//
+//       "find many results by Fetch" in {
+//         fetchCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(20, TIMEOUT_EVENTUALLY)
+//       }
+//
+//       "not find a value by Fetch" in {
+//         fetchCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(20, TIMEOUT_EVENTUALLY)
+//       }
+//
+//       "not find a nested value by Fetch" in {
+//         fetchCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(20, TIMEOUT_EVENTUALLY)
+//       }
+    }
+  }
+
 }

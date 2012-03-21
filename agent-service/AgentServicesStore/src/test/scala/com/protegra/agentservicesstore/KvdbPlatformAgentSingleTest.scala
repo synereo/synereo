@@ -49,6 +49,7 @@ with Timeouts
   testWildcardWithPut(_localQ, _localQ)
   testWildcardWithStore(_localQ, _localQ)
   testWildcardWithCursor(_localQ, _localQ)
+  testWildcardWithCursorBefore(_localQ, _localQ)
 
   val sourceId = UUID.randomUUID
   val targetId = sourceId
