@@ -658,12 +658,14 @@ package usage {
 
       lazy val cascadeTransitionMap : HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double] = {
 	val map = new HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double]()
-	map += ( ( RAFProto, Some( RASProto ) ) -> raf2RAS )
+	map += ( cascadeInitialState( 0 ) -> raf2RAS )
 	map += ( ( RAFProto, None ) -> raf2RAS ) // Assume transition to RAS
-	map += ( ( RASProto, Some( MEK1Proto ) ) -> ras2MEK1 )
+	map += ( cascadeInitialState( 1 ) -> ras2MEK1 )
 	map += ( ( RASProto, None ) -> ras2MEK1 ) // Assume transition to MEK1
-	map += ( ( MEK1Proto, Some( MEK2Proto ) ) -> mek12MEK2 )
+	map += ( cascadeInitialState( 2 ) -> mek12MEK2 )
 	map += ( ( MEK1Proto, None ) -> mek12MEK2 ) // Assume transition to MEK2
+	map += ( cascadeInitialState( 3 ) -> mek22MAPK )
+	map += ( ( MEK2Proto, None ) -> mek22MAPK ) // Assume transition to MAPK
 	map += ( ( MAPKProto, None ) -> mapk2Protein )
 	map
       }
@@ -720,7 +722,8 @@ package usage {
 		println(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		    + kvdbNode + "releasing an increment " + inc + " of " + kinase + "\n"
+		    + kvdbNode + "\n"
+		    + "releasing an increment " + inc + " of " + kinase + "\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
 		)
@@ -808,7 +811,8 @@ package usage {
 	case Some( kinaseToProduceProto ) => {
 	  for( amt <- cellCytoplasm.get( kinaseToConsumeProto ) ) {
 	    // Got enough!
-	    if ( amt > trigger ) {		    		    
+	    if ( amt > trigger ) {		    		    	      	      
+	      val nextCascadeState = cascadeState.drop( 2 )
 	      println( 
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -817,12 +821,12 @@ package usage {
 		  + kinaseToConsumeProto
 		  + " to produce "
 		  + kinaseToProduceProto + "\n"
+		  + "next cascade state : " + nextCascadeState + "\n"
+		  + "nextTrigger : " + cascadeTransitionMap.get( nextCascadeState.head ) + "\n"
 		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		)
 	      )
-	      
-	      val nextCascadeState = cascadeState.drop( 2 )
-	      
+
 	      for( nextTrigger <- cascadeTransitionMap.get( nextCascadeState.head ) ) {
 		println(
 		  (
