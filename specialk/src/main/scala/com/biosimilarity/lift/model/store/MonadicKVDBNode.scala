@@ -897,9 +897,11 @@ package usage {
 	(
 	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
-	  + "entering state " + cascadeState.head + ".\n"
+	  + "entering state "
+	  + ( cascadeState match { case s :: ss => Some( s ); case _ => None } ) + ".\n"
 	  + "previous state " + previous + ".\n"
-	  + "next state " + cascadeState.drop( 1 ).head + ".\n"
+	  + "next state "
+	  + ( cascadeState.drop( 2 ) match { case s :: ss => Some( s ); case _ => None } ) + ".\n"
 	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 	)
       )
