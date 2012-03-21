@@ -945,18 +945,11 @@ package usage {
 			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		      )
 		    )
-		    supplyKinaseInc(
+		    supplyKinase(
 		      kvdbNode,
 		      cellCytoplasm,
 		      pktp,
 		      cascadeTransitionMap.get(	s ).getOrElse( java.lang.Double.MAX_VALUE )
-		    )
-		    consumeKinase(
-		      kvdbNode,
-		      cellCytoplasm,
-		      previous
-		    )(
-		      cascadeState
 		    )
 		  }
 		  case None => {
