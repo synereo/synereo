@@ -719,9 +719,9 @@ package usage {
 	      reset { 
 		println(
 		  (
-		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "releasing an increment " + inc + " of " + kinase + "\n"
-		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
 		)
 		kvdbNode.put( mkMolQry( kinase ), inc )
@@ -754,10 +754,10 @@ package usage {
 	    reset { 
 	      println(
 		(
-		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + ":\n"
 		  + "releasing an increment " + inc + " of " + kinase + "\n"
-		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		)
 	      )
 	      kvdbNode.put( mkMolQry( kinase ), inc )
@@ -773,19 +773,20 @@ package usage {
       cascadeState : List[( ConcreteKinase, Option[ConcreteKinase] )]
     )(
       state : ( ConcreteKinase, Option[ConcreteKinase] ),
+      previous : Option[( ConcreteKinase, Option[ConcreteKinase] )],
       trigger : Double,
       inc : Double
     ) : Unit = {
       val ( kinaseToConsumeProto, optKinaseToProduceProto ) = state
       println(
 	(
-	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
 	  + "received an increment, "
 	  + inc
 	  + ", of "
 	  + kinaseToConsumeProto + "\n"
-	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	)
       )
       val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProto )
@@ -793,13 +794,13 @@ package usage {
       
       println(
 	(
-	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
 	  + "has accumulated "
 	  + currAmt + inc
 	  + " of "
 	  + kinaseToConsumeProto + "\n"
-	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	)
       )
       
@@ -810,13 +811,13 @@ package usage {
 	    if ( amt > trigger ) {		    		    
 	      println( 
 		(
-		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + "\n"
 		  + "received enough "
 		  + kinaseToConsumeProto
 		  + " to produce "
 		  + kinaseToProduceProto + "\n"
-		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		)
 	      )
 	      
@@ -825,10 +826,10 @@ package usage {
 	      for( nextTrigger <- cascadeTransitionMap.get( nextCascadeState.head ) ) {
 		println(
 		  (
-		    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
 		    + "the trigger for the next transition is: " + nextTrigger + "\n"
-		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
 		)
 		
@@ -854,19 +855,19 @@ package usage {
 	    else {
 	      println(
 		(
-		  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + "\n"
 		  + "still waiting for enough "
 		  + kinaseToConsumeProto
 		  + " to produce "
 		  + kinaseToProduceProto + "\n"
-		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		)
 	      )
 	      consumeKinase(
 		kvdbNode,
 		cellCytoplasm,
-		Some( state )
+		previous
 	      )(
 		cascadeState
 	      )
@@ -876,10 +877,10 @@ package usage {
 	case _ => {
 	  println( 
 	    (
-	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + kvdbNode + "\n"
 	      + "producing Protein.\n"
-	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	    )
 	  )
 	}
@@ -895,17 +896,19 @@ package usage {
     ) : Unit = {            
       println( 
 	(
-	  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
 	  + "entering state "
 	  + ( cascadeState match { case s :: ss => Some( s ); case _ => None } ) + ".\n"
 	  + "previous state " + previous + ".\n"
 	  + "next state "
 	  + ( cascadeState.drop( 2 ) match { case s :: ss => Some( s ); case _ => None } ) + ".\n"
-	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	)
       )
+
       val handleKinase = handleRsrc( kvdbNode, cellCytoplasm, cascadeState ) _
+
       if ( !cascadeState.isEmpty ) {
 
 	val state@( kinaseToConsumeProto, optKinaseToProduceProto ) = cascadeState.head
@@ -917,18 +920,18 @@ package usage {
 	  for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
 	    println(
 	      (
-		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		+ kvdbNode + " received resource : " + kinaseRsrc + "\n"
-		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      )
 	    )
 	    kinaseRsrc match {
 	      // Got some!
 	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-		handleKinase( state, trigger, inc )
+		handleKinase( state, previous, trigger, inc )
 	      }
 	      case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
-		handleKinase( state, trigger, inc )
+		handleKinase( state, previous, trigger, inc )
 	      }
 	      // Got none... so wait
 	      case None => {
@@ -936,10 +939,10 @@ package usage {
 		  case Some( s@( pktp, poktc ) ) => {
 		    println( 
 		      (
-			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			+ kvdbNode + " about to supply kinase \n"
 			+ pktp + ".\n"
-			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		      )
 		    )
 		    supplyKinaseInc(
@@ -948,14 +951,21 @@ package usage {
 		      pktp,
 		      cascadeTransitionMap.get(	s ).getOrElse( java.lang.Double.MAX_VALUE )
 		    )
+		    consumeKinase(
+		      kvdbNode,
+		      cellCytoplasm,
+		      previous
+		    )(
+		      cascadeState
+		    )
 		  }
 		  case None => {
 		    println( 
 		      (
-			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			+ kvdbNode + " received nothing; waiting for kinase, "
 			+ kinaseToConsumeProto + ".\n"
-			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		      )
 		    )
 		  }
