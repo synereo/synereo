@@ -1840,11 +1840,16 @@ package usage {
 	cascade.head
       }	
 
-      def raf2RAS : Double = random * 100
-      def ras2MEK1 : Double = random * 100
-      def mek12MEK2 : Double = random * 100
-      def mek22MAPK : Double = random * 100
-      def mapk2Protein : Double = random * 100            
+      //def raf2RAS : Double = random * 100
+      def raf2RAS : Double = .10 * 100
+      //def ras2MEK1 : Double = random * 100
+      def ras2MEK1 : Double = .20 * 100
+      //def mek12MEK2 : Double = random * 100
+      def mek12MEK2 : Double = .30 * 100
+      //def mek22MAPK : Double = random * 100
+      def mek22MAPK : Double = .40 * 100
+      //def mapk2Protein : Double = random * 100            
+      def mapk2Protein : Double = .50 * 100            
 
       lazy val cascadeTransitionMap : HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double] = {
 	val map = new HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double]()
