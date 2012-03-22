@@ -121,11 +121,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       ptn : mTT.GetRequest,
       place : mTT.GetRequest
     ) : Boolean = {
-      //println( "in fits on " + this )
-      //matches( ptn, place ) match {
       matchMap( ptn, place ) match {
 	case Some( soln ) => {
-	  //PrologSubstitution( soln )
 	  true
 	}
 	case None => {
@@ -138,10 +135,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       ptn : mTT.GetRequest,
       place : mTT.GetRequest
     ) : Option[Substitution] = {
-      //println( "in fitsK on " + this )
-      //println( "in fitsK with ptn = " + ptn + "\n place = " + place )
       val matchRslts = matchMap( ptn, place )
-      //println( "match results in fitsK on " + this + " are " + matchRslts )
       matchRslts match {
 	case Some( soln : LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]] ) => {
 	  Some( PrologSubstitution( soln ) )
@@ -214,13 +208,11 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     override type Trgt = Msgs.JTSReqOrRsp
 
     @transient override lazy val agentTwistedPairs
-    : //Map[URI,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
-    Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
+    : Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       meetNGreet( acquaintances )
 
     def forward(
       ask : dAT.Ask,
-      //hops : List[URI],
       hops : List[Moniker],
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
@@ -267,7 +259,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     
     def forward(
       ask : dAT.AskNum,
-      //hops : List[URI],
       hops : List[Moniker],
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
@@ -395,11 +386,8 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     def handleValue(
       dreq : Msgs.DReq,
       oV : Option[mTT.Resource],
-      //msrc : URI
       msrc : Moniker
     ) : Unit = {
-      //tap( v )            
-
       for(
 	atp <- agentTwistedPairs.get( msrc );
 	value <- oV
@@ -601,7 +589,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       }
     }
 
-    //def mget( ask : dAT.Ask, hops : List[URI] )(
     def mget( ask : dAT.Ask, hops : List[Moniker] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
@@ -632,7 +619,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       }
     }
 
-    //def mget( ask : dAT.AskNum, hops : List[URI] )(
     def mget( ask : dAT.AskNum, hops : List[Moniker] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
@@ -664,7 +650,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       }
     }
   
-    //def get( hops : List[URI] )(
     def get( hops : List[Moniker] )(
       cursor : Boolean
     )(
@@ -707,8 +692,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	k : ( Value => Unit @suspendable ) =>
 	  for(
 	    orsrc <- get( path )
-	    //rsrc <- orsrc
-	    //gv <- getGV( rsrc )
 	  ) {
 	    orsrc match {
 	      case Some( rsrc ) => {
@@ -732,8 +715,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	k : ( Value => Unit @suspendable ) =>
 	  for(
 	    orsrc <- get( path )
-	    //rsrc <- orsrc
-	    //gv <- getGV( rsrc )
 	  ) {
 	    orsrc match {
 	      case Some( rsrc ) => {
@@ -747,7 +728,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	  }
       }
 
-    //def fetch( hops : List[URI] )(
     def fetch( hops : List[Moniker] )(
       cursor : Boolean
     )(
@@ -818,8 +798,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	k : ( Value => Unit @suspendable ) =>
 	  for(
 	    orsrc <- subscribe( path )
-	    //rsrc <- orsrc
-	    //gv <- getGV( rsrc )
 	  ) {
 	    orsrc match {
 	      case Some( rsrc ) => {
