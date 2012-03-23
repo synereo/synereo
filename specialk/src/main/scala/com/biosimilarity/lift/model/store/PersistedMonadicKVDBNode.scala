@@ -1760,32 +1760,32 @@ package usage {
 	def b : Boolean
 	def i : Int
 	def state : String
-	def update( j : Int ) : Kinase 
+	def update( j : Int ) : ConcreteKinase 
       }
       case class RAF(
 	b : Boolean, i : Int, state : String
       ) extends Kinase {
-	override def update( j : Int ) : Kinase = RAF( b, j, state )
+	override def update( j : Int ) : ConcreteKinase = RAF( b, j, state )
       }
       case class RAS(
 	b : Boolean, i : Int, state : String
       ) extends Kinase {
-	override def update( j : Int ) : Kinase = RAS( b, j, state )
+	override def update( j : Int ) : ConcreteKinase = RAS( b, j, state )
       }
       case class MEK1(
 	b : Boolean, i : Int, state : String
       ) extends Kinase {
-	override def update( j : Int ) : Kinase = MEK1( b, j, state )
+	override def update( j : Int ) : ConcreteKinase = MEK1( b, j, state )
       }
       case class MEK2(
 	b : Boolean, i : Int, state : String
       ) extends Kinase {
-	override def update( j : Int ) : Kinase = MEK2( b, j, state )
+	override def update( j : Int ) : ConcreteKinase = MEK2( b, j, state )
       }
       case class MAPK(
 	b : Boolean, i : Int, state : String
       ) extends Kinase {
-	override def update( j : Int ) : Kinase = MAPK( b, j, state )
+	override def update( j : Int ) : ConcreteKinase = MAPK( b, j, state )
       }
       
       lazy val RAFProto : RAF = RAF( true, 0, "Phosphorylated" )
@@ -1919,6 +1919,7 @@ package usage {
 	    val kamt = cellCytoplasm.amt( kinase )
 	    if ( kamt < amt ) {
 	      val inc = random * 25
+	      val nkinase = kinase.update( count )
 	      cellCytoplasm += ( kinase -> ( kamt + inc ) )
 	      reset { 
 		println(
@@ -1929,9 +1930,9 @@ package usage {
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
 		)
-		kvdbNode.put( mkMolQry( kinase.update( count ) ), inc )
+		kvdbNode.put( mkMolQry( nkinase ), inc )
 	      }
-	      loop( kinase, amt, ( count + 1 ) )
+	      loop( nkinase, amt, ( count + 1 ) )
 	    }
 	  }
 
