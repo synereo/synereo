@@ -1891,18 +1891,18 @@ package usage {
     import KinaseSpecifications._
 
     trait CellularEnvironment {
-      def kinaseMap : HashMap[Kinase,Double] 
-      def amt [K <: Kinase] ( proto : K ) : Double = {
+      def kinaseMap : HashMap[CnxnCtxtLabel[String,String,String],Double] 
+      def amt [K <: CnxnCtxtLabel[String,String,String]] ( proto : K ) : Double = {
 	kinaseMap.get( proto ).getOrElse( 0 )
       }      
     }
     
-    case class Cytoplasm( kinaseMap : HashMap[Kinase,Double] )
-	 extends CellularEnvironment with MapProxy[Kinase,Double] {
+    case class Cytoplasm( kinaseMap : HashMap[CnxnCtxtLabel[String,String,String],Double] )
+	 extends CellularEnvironment with MapProxy[CnxnCtxtLabel[String,String,String],Double] {
 	   override def self = kinaseMap
 	 }
 
-    implicit lazy val cellCytoplasm : Cytoplasm = Cytoplasm( new HashMap[Kinase,Double]() )    
+    implicit lazy val cellCytoplasm : Cytoplasm = Cytoplasm( new HashMap[CnxnCtxtLabel[String,String,String],Double]() )    
 
     def supplyKinase(
       kvdbNode : Being.PersistedMonadicKVDBNode,
@@ -1916,11 +1916,12 @@ package usage {
       new Thread {
 	override def run() : Unit = {
 	  def loop( kinase : ConcreteKinase, amt : Double, count : Int ) : Unit = {
-	    val kamt = cellCytoplasm.amt( kinase )
+	    val kinasePtn = molPtnMap( kinase )
+	    val kamt = cellCytoplasm.amt( kinasePtn )
 	    if ( kamt < amt ) {
 	      val inc = random * 25
 	      val nkinase = kinase.update( count )
-	      cellCytoplasm += ( kinase -> ( kamt + inc ) )
+	      cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
 	      reset { 
 		println(
 		  (
@@ -1953,10 +1954,11 @@ package usage {
       import cnxnConversions._
       new Thread {
 	override def run() : Unit = {
-	  val kamt = cellCytoplasm.amt( kinase )
+	  val kinasePtn = molPtnMap( kinase )
+	  val kamt = cellCytoplasm.amt( kinasePtn )
 	  if ( kamt < trigger ) {
 	    val inc = random * 25
-	    cellCytoplasm += ( kinase -> ( kamt + inc ) )
+	    cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
 	    reset { 
 	      println(
 		(
@@ -1982,6 +1984,7 @@ package usage {
       inc : Double
     ) : Unit = {
       val ( kinaseToConsumeProto, optKinaseToProduceProto ) = kinasePair
+      val kinaseToConsumeProtoPtn = molPtnMap( kinaseToConsumeProto )
       println(
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -1993,8 +1996,8 @@ package usage {
 	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	)
       )
-      val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProto )
-      cellCytoplasm += ( ( kinaseToConsumeProto, ( currAmt + inc ) ) )
+      val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProtoPtn )
+      cellCytoplasm += ( ( kinaseToConsumeProtoPtn, ( currAmt + inc ) ) )
       
       println(
 	(
@@ -2010,7 +2013,7 @@ package usage {
       
       optKinaseToProduceProto match {
 	case Some( kinaseToProduceProto ) => {
-	  for( amt <- cellCytoplasm.get( kinaseToConsumeProto ) ) {
+	  for( amt <- cellCytoplasm.get( kinaseToConsumeProtoPtn ) ) {
 	    // Got enough!
 	    if ( amt > trigger ) {
 	      println( 
