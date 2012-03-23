@@ -1795,7 +1795,7 @@ package usage {
 
       def mkMolPtn( molType : String ) : CnxnCtxtLabel[String,String,String] = {
 	new CnxnCtxtBranch[String,String,String](
-	  "comBiosimilarityLiftModelStoreUsageMolecularUseCase_KinaseSpecifications_" + molType,
+	  "comBiosimilarityLiftModelStoreUsagePersistedMolecularUseCase_KinaseSpecifications_" + molType,
 	  List( 
 	    new CnxnCtxtLeaf[String,String,String](
 	      Right[String,String]( "B" )
