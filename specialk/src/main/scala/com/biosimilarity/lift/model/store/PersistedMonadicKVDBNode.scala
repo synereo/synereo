@@ -1851,17 +1851,13 @@ package usage {
       //def mapk2Protein : Double = random * 100            
       def mapk2Protein : Double = .50 * 100            
 
-      lazy val cascadeTransitionMap : HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double] = {
-	val map = new HashMap[( ConcreteKinase,	Option[ConcreteKinase] ),Double]()
-	map += ( cascadeInitialState( 0 ) -> raf2RAS )
-	map += ( ( RAFProto, None ) -> raf2RAS ) // Assume transition to RAS
-	map += ( cascadeInitialState( 1 ) -> ras2MEK1 )
-	map += ( ( RASProto, None ) -> ras2MEK1 ) // Assume transition to MEK1
-	map += ( cascadeInitialState( 2 ) -> mek12MEK2 )
-	map += ( ( MEK1Proto, None ) -> mek12MEK2 ) // Assume transition to MEK2
-	map += ( cascadeInitialState( 3 ) -> mek22MAPK )
-	map += ( ( MEK2Proto, None ) -> mek22MAPK ) // Assume transition to MAPK
-	map += ( ( MAPKProto, None ) -> mapk2Protein )
+      lazy val cascadeTransitionMap : HashMap[ConcreteKinase,Double] = {
+	val map = new HashMap[ConcreteKinase,Double]()
+	map += ( RAFProto -> raf2RAS )
+	map += ( RASProto -> ras2MEK1 )
+	map += ( MEK1Proto -> mek12MEK2 )
+	map += ( MEK2Proto -> mek22MAPK )
+	map += ( MAPKProto -> mapk2Protein )
 	map
       }
 
@@ -1968,14 +1964,12 @@ package usage {
     def handleRsrc(
       kvdbNode : Being.PersistedMonadicKVDBNode,
       cellCytoplasm : Cytoplasm,
-      cascadeState : List[( ConcreteKinase, Option[ConcreteKinase] )]
+      kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     )(
-      state : ( ConcreteKinase, Option[ConcreteKinase] ),
-      previous : Option[( ConcreteKinase, Option[ConcreteKinase] )],
       trigger : Double,
       inc : Double
     ) : Unit = {
-      val ( kinaseToConsumeProto, optKinaseToProduceProto ) = state
+      val ( kinaseToConsumeProto, optKinaseToProduceProto ) = kinasePair
       println(
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -2007,8 +2001,6 @@ package usage {
 	  for( amt <- cellCytoplasm.get( kinaseToConsumeProto ) ) {
 	    // Got enough!
 	    if ( amt > trigger ) {
-	      val intermediateState = cascadeState.drop( 1 )
-	      val nextCascadeState = cascadeState.drop( 2 )
 	      println( 
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -2017,13 +2009,11 @@ package usage {
 		  + kinaseToConsumeProto
 		  + " to produce "
 		  + kinaseToProduceProto + "\n"
-		  + "next cascade state : " + nextCascadeState + "\n"
-		  + "nextTrigger : " + cascadeTransitionMap.get( nextCascadeState.head ) + "\n"
 		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		)
 	      )
 
-	      for( nextTrigger <- cascadeTransitionMap.get( nextCascadeState.head ) ) {
+	      for( nextTrigger <- cascadeTransitionMap.get( kinaseToProduceProto ) ) {
 		println(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -2034,21 +2024,12 @@ package usage {
 		)
 		
 		// Supply some RAS
-		supplyKinaseInc(
+		supplyKinase(
 		  kvdbNode,
 		  cellCytoplasm,
 		  kinaseToProduceProto,
 		  nextTrigger
-		)
-		
-		// Begin waiting for MEK1
-		consumeKinase(
-		  kvdbNode,
-		  cellCytoplasm,
-		  Some( intermediateState.head )
-		)(
-		  nextCascadeState
-		)
+		)				
 	      }
 	    }
 	    // Not quite enough...
@@ -2064,12 +2045,10 @@ package usage {
 		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		)
 	      )
-	      consumeKinase(
+	      processKinasePair(
 		kvdbNode,
 		cellCytoplasm,
-		previous
-	      )(
-		cascadeState
+		kinasePair
 	      )
 	    }
 	  }		    		    
@@ -2087,90 +2066,62 @@ package usage {
       }		
     }
     
-    def consumeKinase(
+    def processKinasePair(
       kvdbNode : Being.PersistedMonadicKVDBNode,
       cellCytoplasm : Cytoplasm,
-      previous : Option[( ConcreteKinase, Option[ConcreteKinase] )]
-    )(
-      implicit cascadeState : List[( ConcreteKinase, Option[ConcreteKinase] )]
+      kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     ) : Unit = {            
       println( 
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
-	  + "entering state "
-	  + ( cascadeState match { case s :: ss => Some( s ); case _ => None } ) + ".\n"
-	  + "previous state " + previous + ".\n"
-	  + "next state "
-	  + ( cascadeState.drop( 2 ) match { case s :: ss => Some( s ); case _ => None } ) + ".\n"
+	  + "processing kinase pair "
+	  + kinasePair + ".\n"
 	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	)
       )
 
-      val handleKinase = handleRsrc( kvdbNode, cellCytoplasm, cascadeState ) _
+      val handleKinase = handleRsrc( kvdbNode, cellCytoplasm, kinasePair ) _
 
-      if ( !cascadeState.isEmpty ) {
-
-	val state@( kinaseToConsumeProto, optKinaseToProduceProto ) = cascadeState.head
-	val kinasePtn = molPtnMap( kinaseToConsumeProto )
-	val trigger = cascadeTransitionMap.get( state ).getOrElse( java.lang.Double.MAX_VALUE )
-
-	reset {
-	  // Wait for kinase
-	  for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
-	    println(
-	      (
-		"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		+ kvdbNode + " received resource : " + kinaseRsrc + "\n"
-		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	      )
+      val ( kinaseToConsumeProto, optKinaseToProduceProto ) = kinasePair
+      val kinasePtn = molPtnMap( kinaseToConsumeProto )
+      val trigger = cascadeTransitionMap.get( kinaseToConsumeProto ).getOrElse( java.lang.Double.MAX_VALUE )
+      
+      reset {
+	// Wait for kinase
+	for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
+	  println(
+	    (
+	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + kvdbNode + " received resource : " + kinaseRsrc + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	    )
-	    kinaseRsrc match {
-	      // Got some!
-	      case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
-		handleKinase( state, previous, trigger, inc )
-	      }
-	      case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
-		handleKinase( state, previous, trigger, inc )
-	      }
-	      case Some( mTT.Ground( inc ) ) => {
-		handleKinase( state, previous, trigger, inc )
-	      }
-	      // Got none... so wait
-	      case None => {
-		previous match {
-		  case Some( s@( pktp, poktc ) ) => {
-		    println( 
-		      (
-			"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-			+ kvdbNode + " about to supply kinase \n"
-			+ pktp + ".\n"
-			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		      )
-		    )
-		    supplyKinase(
-		      kvdbNode,
-		      cellCytoplasm,
-		      pktp,
-		      cascadeTransitionMap.get(	s ).getOrElse( java.lang.Double.MAX_VALUE )
-		    )
-		  }
-		  case None => {
-		    println( 
-		      (
-			"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-			+ kvdbNode + " received nothing; waiting for kinase, "
-			+ kinaseToConsumeProto + ".\n"
-			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		      )
-		    )
-		  }
-		}
-	      }
-	      case unExpected@_ => {
-		throw new Exception( "Protocol violated. Received: " + unExpected )
-	      }	    
+	  )
+	  kinaseRsrc match {
+	    // Got some!
+	    case Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), soln ) ) => {
+	      handleKinase( trigger, inc )
 	    }
+	    case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
+	      handleKinase( trigger, inc )
+	    }
+	    case Some( mTT.Ground( inc ) ) => {
+	      handleKinase( trigger, inc )
+	    }
+	    // Got none... so wait
+	    case None => {
+	      println( 
+		(
+		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  + kvdbNode + " received nothing; waiting for kinase, "
+		  + kinaseToConsumeProto + ".\n"
+		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		)
+	      )
+	    }
+	    case unExpected@_ => {
+	      throw new Exception( "Protocol violated. Received: " + unExpected )
+	    }	    
 	  }
 	}
       }
@@ -2181,8 +2132,19 @@ package usage {
       import KinaseSpecifications._
       // map-reduce-style protocol checking      
       new Thread {
-	//override def run() : Unit = rafLoop()
-	override def run() : Unit = consumeKinase( kvdbNode, cellCytoplasm, None )
+	override def run() : Unit = {
+	  processKinasePair( kvdbNode, cellCytoplasm, cascadeInitialState( 0 ) )
+	}
+      }.start
+      new Thread {
+	override def run() : Unit = {
+	  processKinasePair( kvdbNode, cellCytoplasm, cascadeInitialState( 2 ) )
+	}
+      }.start
+      new Thread {
+	override def run() : Unit = {
+	  processKinasePair( kvdbNode, cellCytoplasm, cascadeInitialState( 4 ) )
+	}
       }.start
     }
 
@@ -2192,11 +2154,17 @@ package usage {
       // map-reduce-style protocol             
       new Thread {
 	override def run() : Unit = {
-	  supplyKinaseInc( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
-	  //rasLoop()
-	  consumeKinase(
-	    kvdbNode, cellCytoplasm, Some( cascadeInitialState.head )
-	  )( cascadeInitialState.drop( 1 ) )
+	  supplyKinase( kvdbNode, cellCytoplasm, RAFProto, raf2RAS )
+	}
+      }.start
+      new Thread {
+	override def run() : Unit = {	  
+	  processKinasePair( kvdbNode, cellCytoplasm, cascadeInitialState( 1 ) )
+	}
+      }.start
+      new Thread {
+	override def run() : Unit = {
+	  processKinasePair( kvdbNode, cellCytoplasm, cascadeInitialState( 3 ) )
 	}
       }.start
     }
