@@ -1915,8 +1915,8 @@ package usage {
       import cnxnConversions._
       new Thread {
 	override def run() : Unit = {
-	  def loop( kinase : ConcreteKinase, amt : Double, count : Int ) : Unit = {
-	    val kinasePtn = molPtnMap( kinase )
+	  def loop( proto : ConcreteKinase, kinase : ConcreteKinase, amt : Double, count : Int ) : Unit = {
+	    val kinasePtn = molPtnMap( proto )
 	    val kamt = cellCytoplasm.amt( kinasePtn )
 	    if ( kamt < amt ) {
 	      val inc = random * 25
@@ -1933,11 +1933,11 @@ package usage {
 		)
 		kvdbNode.put( mkMolQry( nkinase ), inc )
 	      }
-	      loop( nkinase, amt, ( count + 1 ) )
+	      loop( kinase, nkinase, amt, ( count + 1 ) )
 	    }
 	  }
 
-	  loop( kinase, trigger, 0 )
+	  loop( kinase, kinase, trigger, 0 )
 
 	}
       }.start
