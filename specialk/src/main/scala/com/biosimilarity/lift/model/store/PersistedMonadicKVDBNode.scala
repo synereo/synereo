@@ -1966,15 +1966,14 @@ package usage {
 	)
       )
       val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProtoPtn )
-      cellCytoplasm += ( ( kinaseToConsumeProtoPtn, ( currAmt + inc ) ) )
+      val nAmt : Double = ( currAmt + inc )
+      cellCytoplasm += ( ( kinaseToConsumeProtoPtn, nAmt ) )
       
       println(
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
-	  + "has accumulated "
-	  + currAmt + inc
-	  + " of "
+	  + "has accumulated " + nAmt + " of "
 	  + kinaseToConsumeProto + "\n"
 	  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	)
