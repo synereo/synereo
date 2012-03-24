@@ -1915,25 +1915,26 @@ package usage {
       import cnxnConversions._
       new Thread {
 	override def run() : Unit = {
-	  def loop( proto : ConcreteKinase, kinase : ConcreteKinase, amt : Double, count : Int ) : Unit = {
+	  def loop( proto : ConcreteKinase, kns : ConcreteKinase, amt : Double, count : Int ) : Unit = {
 	    val kinasePtn = molPtnMap( proto )
 	    val kamt = cellCytoplasm.amt( kinasePtn )
 	    if ( kamt < amt ) {
 	      val inc = random * 25
-	      val nkinase = kinase.update( count )
+	      val nkns = kns.update( count )
 	      cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
 	      reset { 
 		println(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
-		    + "releasing an increment " + inc + " of " + kinase + "\n"
+		    + "releasing an increment " + inc + " of " + kns + "\n"
+		    + "loop count: " + count + "\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
 		)
-		kvdbNode.put( mkMolQry( nkinase ), inc )
+		kvdbNode.put( mkMolQry( nkns ), inc )
 	      }
-	      loop( kinase, nkinase, amt, ( count + 1 ) )
+	      loop( kinase, nkns, amt, ( count + 1 ) )
 	    }
 	  }
 
@@ -1941,39 +1942,7 @@ package usage {
 
 	}
       }.start
-    }
-
-    def supplyKinaseInc(
-      kvdbNode : Being.PersistedMonadicKVDBNode,
-      cellCytoplasm : Cytoplasm,
-      kinase : ConcreteKinase,
-      trigger : Double
-    ) : Unit = {
-      import scala.math._
-      import CnxnConversionStringScope._
-      import cnxnConversions._
-      new Thread {
-	override def run() : Unit = {
-	  val kinasePtn = molPtnMap( kinase )
-	  val kamt = cellCytoplasm.amt( kinasePtn )
-	  if ( kamt < trigger ) {
-	    val inc = random * 25
-	    cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
-	    reset { 
-	      println(
-		(
-		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		  + kvdbNode + ":\n"
-		  + "releasing an increment " + inc + " of " + kinase + "\n"
-		  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		)
-	      )
-	      kvdbNode.put( mkMolQry( kinase ), inc )
-	    }
-	  }
-	}
-      }.start
-    }
+    }    
 
     def handleRsrc(
       kvdbNode : Being.PersistedMonadicKVDBNode,
