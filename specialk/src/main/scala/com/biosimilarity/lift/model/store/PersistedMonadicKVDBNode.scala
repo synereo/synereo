@@ -1920,7 +1920,7 @@ package usage {
 	    val kamt = cellCytoplasm.amt( kinasePtn )
 	    if ( kamt < amt ) {
 	      val inc = random * 25
-	      val nkns = kns.update( count )
+	      val nkns = kns.update( count + 1 )
 	      cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
 	      reset { 
 		println(
