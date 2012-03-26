@@ -872,11 +872,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    waitlist match {
 	      // Yes!
 	      case waiter :: waiters => {
-		tweet( "found waiters waiting for a value at " + ptn )
+		tweet( "found waiters " + waitlist + " waiting for a value at " + ptn )
 		val itr = waitlist.toList.iterator	    
+		var nPI : emT.PlaceInstance = null
 		while( itr.hasNext ) {
 		  // BUGBUG -- lgm : SHOULD NOT HAVE TO CAST
-		  k( itr.next.asInstanceOf[emT.PlaceInstance] )
+		  nPI  = itr.next.asInstanceOf[emT.PlaceInstance]
+		  tweet( "calling " + k + " on " + nPI )
+		  k( nPI )
 		}
 	      }
 	      // No...
@@ -1499,7 +1502,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
 	  consume : Boolean,
-	  cursor : Boolean
+	  cursor : Boolean,
+	  collName : Option[String]
 	)(
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
@@ -1529,7 +1533,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def get( hops : List[Moniker] )( cursor : Boolean )(
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	) : Generator[Option[mTT.Resource],Unit,Unit] = {              
-	  mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, cursor )( path )    
+	  val perD = cache.persistenceManifest
+	  val xmlCollName = 
+	    perD match {
+	      case None => None
+	      case Some( pd ) => Some( pd.storeUnitStr )
+	    }
+	  mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, cursor, xmlCollName )( path )    
 	}
 	
 	def get( cursor : Boolean )(
@@ -1550,8 +1560,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
 	: Generator[Option[mTT.Resource],Unit,Unit] = {              
+	  val perD = cache.persistenceManifest
+	  val xmlCollName = 
+	    perD match {
+	      case None => None
+	      case Some( pd ) => Some( pd.storeUnitStr )
+	    }
 	  mget( dAT.AFetchNum, hops )(
-	    cache.theMeetingPlace, cache.theWaiters, false, cursor
+	    cache.theMeetingPlace, cache.theWaiters, false, cursor, xmlCollName
 	  )( path )    
 	}
 	
@@ -1575,8 +1591,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
 	: Generator[Option[mTT.Resource],Unit,Unit] = {        
+	  val perD = cache.persistenceManifest
+	  val xmlCollName = 
+	    perD match {
+	      case None => None
+	      case Some( pd ) => Some( pd.storeUnitStr )
+	    }
 	  mget( dAT.ASubscribeNum, hops )(
-	    cache.theChannels, cache.theSubscriptions, true, false
+	    cache.theChannels, cache.theSubscriptions, true, false, xmlCollName
 	  )( path )    
 	}
 	
@@ -1588,10 +1610,22 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}
 	
 	override def put( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
-	  mput( cache.theMeetingPlace, cache.theWaiters, false )( ptn, rsrc )
+	  val perD = cache.persistenceManifest
+	  val xmlCollName = 
+	    perD match {
+	      case None => None
+	      case Some( pd ) => Some( pd.storeUnitStr )
+	    }
+	  cache.mput( perD )( cache.theMeetingPlace, cache.theWaiters, false, xmlCollName )( ptn, rsrc )
 	}
 	override def publish( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
-	  mput( cache.theChannels, cache.theSubscriptions, true )( ptn, rsrc )
+	  val perD = cache.persistenceManifest
+	  val xmlCollName = 
+	    perD match {
+	      case None => None
+	      case Some( pd ) => Some( pd.storeUnitStr )
+	    }
+	  cache.mput( perD )( cache.theChannels, cache.theSubscriptions, true, xmlCollName )( ptn, rsrc )
 	}
 	
 	override def configFileName : Option[String] = None
