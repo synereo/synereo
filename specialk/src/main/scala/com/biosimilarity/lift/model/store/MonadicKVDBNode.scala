@@ -731,18 +731,20 @@ package usage {
 	    if ( kamt < amt ) {
 	      val inc = random * 25
 	      val nkns = kns.update( count + 1 )
+	      val nknsLoc = mkMolQry( nkns )
 	      cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
 	      reset { 
 		println(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
-		    + "releasing an increment " + inc + " of " + kns + "\n"
+		    + "releasing an increment " + inc + " of " + kns
+		    + " to " + nknsLoc + "\n"
 		    + "loop count: " + count + "\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
 		)
-		kvdbNode.put( mkMolQry( nkns ), inc )
+		kvdbNode.put( nknsLoc, inc )
 	      }
 	      loop( proto, nkns, amt, count + 1 )
 	    }
