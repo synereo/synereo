@@ -1712,7 +1712,7 @@ package usage {
       override def protoEMTypes : EMTypes =
 	theEMTypes
 
-      object PersistedKVDBNodeFactory extends	PersistedKVDBNodeFactoryT {	  
+      object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT {	  
 	def mkCache( here : URI ) : PersistedMonadicKVDB = {
 	  new PersistedMonadicKVDB( MURI( here ) ) with Blobify with AMQPMonikerOps {		
 	    class StringXMLDBManifest(
@@ -2262,7 +2262,7 @@ package usage {
 		)
 		kvdbNode.put( mkMolQry( nkns ), inc )
 	      }
-	      loop( kinase, nkns, amt, ( count + 1 ) )
+	      loop( proto, nkns, amt, ( count + 1 ) )
 	    }
 	  }
 
