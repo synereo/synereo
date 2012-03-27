@@ -744,7 +744,25 @@ package usage {
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
 		)
+		println(
+		  (
+		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		    + kvdbNode + "\n"
+		    + "meeting place: " + kvdbNode.theMeetingPlace + "\n"
+		    + "cache meeting place: " + kvdbNode.cache.theMeetingPlace + "\n"
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  )
+		)
 		kvdbNode.put( nknsLoc, inc )
+		println(
+		  (
+		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		    + kvdbNode + "\n"
+		    + "meeting place: " + kvdbNode.theMeetingPlace + "\n"
+		    + "cache meeting place: " + kvdbNode.cache.theMeetingPlace + "\n"
+		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		  )
+		)
 	      }
 	      loop( proto, nkns, amt, count + 1 )
 	    }
@@ -884,11 +902,29 @@ package usage {
       
       reset {
 	// Wait for kinase
+	println(
+	  (
+	    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    + kvdbNode + "\n"
+	    + "meeting place: " + kvdbNode.theMeetingPlace + "\n"
+	    + "cache meeting place: " + kvdbNode.cache.theMeetingPlace + "\n"
+	    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  )
+	)
 	for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
 	  println(
 	    (
 	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + kvdbNode + " received resource : " + kinaseRsrc + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
+	  println(
+	    (
+	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + kvdbNode + "\n"
+	      + "meeting place: " + kvdbNode.theMeetingPlace + "\n"
+	      + "cache meeting place: " + kvdbNode.cache.theMeetingPlace + "\n"
 	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	    )
 	  )
