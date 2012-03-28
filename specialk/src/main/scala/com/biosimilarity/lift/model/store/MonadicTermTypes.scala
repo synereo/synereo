@@ -65,17 +65,16 @@ extends MonadicGenerators {
 	ptn : CnxnCtxtLabel[Namespace,Var,Tag],
 	hm : LinkedHashMap[Var, CnxnCtxtLabel[Namespace,Var,Tag]]
       ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-	pattern match {
+	ptn match {
 	  case CnxnCtxtBranch( ns, branches ) => {
-	    println( "branches : " + branches )
-	    val nbranches =
+	    new CnxnCtxtBranch[Namespace,Var,Tag](
+	      ns,
 	      branches.map(
 		( ccl : CnxnCtxtLabel[Namespace,Var,Tag] ) => {
 		  loop( ccl, hm )
 		}
 	      )
-	    println( "nbranches : " + nbranches )
-	    new CnxnCtxtBranch[Namespace,Var,Tag]( ns, nbranches )
+	    )
 	  }
 	  case CnxnCtxtLeaf( Left( t ) ) => {
 	    new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( t ) )
