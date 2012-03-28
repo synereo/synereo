@@ -738,7 +738,7 @@ package usage {
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
-		    + "releasing an increment " + inc + " of " + kns
+		    + "releasing an increment " + inc + " of " + proto
 		    + " to " + nknsLoc + "\n"
 		    + "loop count: " + count + "\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"

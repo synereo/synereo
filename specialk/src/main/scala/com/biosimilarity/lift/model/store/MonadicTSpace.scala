@@ -351,7 +351,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  }
 	}
 	case Nil => {
-	  channels( wtr ) = rsrc	  
+	  //channels( wtr ) = rsrc	  
+	  //channels( ptn ) = rsrc	  
+	  if ( ptn.isInstanceOf[Place] ) {
+	    channels( ptn.asInstanceOf[Place] ) = rsrc
+	  }
+	  else {
+	    channels( wtr ) = rsrc
+	  }
 	}
       }
     }
