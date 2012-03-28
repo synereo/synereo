@@ -48,13 +48,59 @@ import java.io.OutputStreamWriter
 
 trait MonadicTermTypes[Namespace,Var,Tag,Value] 
 extends MonadicGenerators {
-  trait Resource extends Serializable
-  trait RBound extends Resource {
+  type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  
+  trait Resource extends Serializable with Function1[CnxnCtxtLabel[Namespace,Var,Tag],Option[CnxnCtxtLabel[Namespace,Var,Tag]]] {
+    override def apply(
+      pattern : CnxnCtxtLabel[Namespace,Var,Tag]
+    ) : Option[CnxnCtxtLabel[Namespace,Var,Tag]] = Some( pattern )
+  }
+  trait RBound extends Resource { 
     def rsrc : Option[Resource]
     def soln : Option[Solution[Object]]
     def sbst : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]]
     def assoc : Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]]
+
+    override def apply( pattern : CnxnCtxtLabel[Namespace,Var,Tag] ) : Option[CnxnCtxtLabel[Namespace,Var,Tag]] = {
+      def loop(
+	ptn : CnxnCtxtLabel[Namespace,Var,Tag],
+	hm : LinkedHashMap[Var, CnxnCtxtLabel[Namespace,Var,Tag]]
+      ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+	pattern match {
+	  case CnxnCtxtBranch( ns, branches ) => {
+	    new CnxnCtxtBranch[Namespace,Var,Tag]( ns, branches.map( loop( _, hm ) ) )
+	  }
+	  case CnxnCtxtLeaf( Left( t ) ) => {
+	    new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( t ) )
+	  }
+	  case CnxnCtxtLeaf( Right( v ) ) => {
+	    hm.get( v ) match {
+	      case Some( ccl : CnxnCtxtLabel[Namespace,Var,Tag] with Factual ) => ccl
+	      case None => {
+		new CnxnCtxtLeaf[Namespace,Var,Tag]( Right( v ) )
+	      }
+	    }
+	  }
+	}
+      }
+
+      sbst match {
+	case Some( hm ) => Some( loop( pattern, hm ) )
+	case None => {
+	  assoc match {
+	    case Some( alst ) => {
+	      val hm = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()	    
+	      for( ( v, ccl ) <- alst ) { hm += ( v -> ccl ) }
+	      Some( loop( pattern, hm ) )
+	    }
+	    case None => {
+	      for( s <- soln; hm <- asHM( s, pattern ) ) yield { loop( pattern, hm ) }
+	    }
+	  }
+	}
+      }      
+    }
   } 
+
   object RBound {
     def apply(
       rsrc : Option[Resource], soln : Option[Solution[Object]]
@@ -86,7 +132,7 @@ extends MonadicGenerators {
     rsrc : Option[Resource], soln : Option[Solution[Object]]
   ) extends RBound {
     override def sbst : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]] = None
-    override def assoc : Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]] = None
+    override def assoc : Option[List[( Var, CnxnCtxtLabel[Namespace,Var,Tag] )]] = None        
   }
   case class RBoundHM(
     rsrc : Option[Resource], sbst : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]]
@@ -121,10 +167,9 @@ extends MonadicGenerators {
     theCnxnTool
   }
 
-  implicit def asRBoundHM(
-    rsrc : RBoundP4JSoln,
-    pattern : CnxnCtxtLabel[Namespace,Var,Tag]
-  )( implicit prover : Prover ) : RBoundHM = {
+  implicit def asHM(
+    soln : Solution[Object], pattern : CnxnCtxtLabel[Namespace,Var,Tag]
+  ) : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]] = {
     val pVars =
       ( ( Nil : List[Var] ) /: pattern.atoms )(
 	( acc : List[Var], atom : Either[Tag,Var] ) => {
@@ -135,26 +180,33 @@ extends MonadicGenerators {
 	}
       ).toSet
 
-    RBoundHM(
-      rsrc.rsrc,      
-      pVars.isEmpty match {
-	case false => {
-	  val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
-	  for( soln <- rsrc.soln; v <- pVars ) {
-	    try {
-	      val solnTag : Solution[Object] = soln.on( "X" + v )
-	      hmSoln += ( v -> cnxnTool.asCnxnCtxtLabel( solnTag.get ) )
-	    }
-	    catch {
-	      case e : org.prolog4j.UnknownVariableException => {
-		println( "warning: variable not bound: " + v )
-	      }
+    pVars.isEmpty match {
+      case false => {
+	val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
+	for( v <- pVars ) {
+	  try {
+	    val solnTag : Solution[Object] = soln.on( "X" + v )
+	    hmSoln += ( v -> cnxnTool.asCnxnCtxtLabel( solnTag.get ) )
+	  }
+	  catch {
+	    case e : org.prolog4j.UnknownVariableException => {
+	      println( "warning: variable not bound: " + v )
 	    }
 	  }
-	  Some( hmSoln )
 	}
-	case _ => None
+	Some( hmSoln )
       }
+      case _ => None
+    }
+  }
+
+  implicit def asRBoundHM(
+    rsrc : RBoundP4JSoln,
+    pattern : CnxnCtxtLabel[Namespace,Var,Tag]
+  )( implicit prover : Prover ) : RBoundHM = {    
+    RBoundHM(
+      rsrc.rsrc,
+      (for( s <- rsrc.soln ) yield { asHM( s, pattern ) }).flatMap( ( x ) => x )
     )    
   }
 
@@ -203,9 +255,7 @@ extends MonadicGenerators {
 	throw new Exception( "non-portable resource: " + rsrc )
       }
     }
-  }  
-
-  type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  
+  }    
 
   class TMapR[Namespace,Var,Tag,Value]
   extends HashMap[GetRequest,Resource]  

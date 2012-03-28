@@ -251,16 +251,40 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    }
 	  }
 	}
+	// BUGBUG -- lgm : need to instantiate path with substitution
+	// from rsrc -- if it exists -- and put at the more specific
+	// location
 	case Right( JustifiedResponse( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	  body match {
 	    case RsrcMsgs.MDGetResponseRsrc( path, rsrc ) => {
-	      reset { cache.put( path, rsrc ) }
+	      rsrc( path ) match {
+		case Some( spec ) => {
+		  reset { cache.put( spec, rsrc ) }
+		}
+		case None => {
+		  reset { cache.put( path, rsrc ) }
+		}
+	      }
 	    }
 	    case RsrcMsgs.MDFetchResponseRsrc( path, rsrc ) => {
-	      reset { cache.put( path, rsrc ) }
+	      rsrc( path ) match {
+		case Some( spec ) => {
+		  reset { cache.put( spec, rsrc ) }
+		}
+		case None => {
+		  reset { cache.put( path, rsrc ) }
+		}
+	      }
 	    }
 	    case RsrcMsgs.MDSubscribeResponseRsrc( path, rsrc ) => {
-	      reset { cache.publish( path, rsrc ) }
+	      rsrc( path ) match {
+		case Some( spec ) => {
+		  reset { cache.publish( spec, rsrc ) }
+		}
+		case None => {
+		  reset { cache.publish( path, rsrc ) }
+		}
+	      }
 	    }	    
 	    case dput : RsrcMsgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
 	    }
