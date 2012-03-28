@@ -168,7 +168,15 @@ trait CnxnConversions[Namespace,Var,Tag] {
 }
 
 trait PrologMgr {
-  def getProver() = { ProverFactory.getProver() }
+  def getProver() = {
+    try{
+      ProverFactory.getProver()
+    } catch {
+      case e : java.lang.IllegalStateException => {
+	ProverFactory.getProver()
+      }
+    }
+  }
   def unifyQuery(
     qStr1 : String,
     qStr2 : String
