@@ -49,8 +49,8 @@ import java.io.OutputStreamWriter
 trait MonadicTermTypes[Namespace,Var,Tag,Value] 
 extends MonadicGenerators {
   type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  
-  trait Resource extends Serializable with Function1[CnxnCtxtLabel[Namespace,Var,Tag],Option[CnxnCtxtLabel[Namespace,Var,Tag]]] {
-    override def apply(
+  trait Resource extends Serializable {
+    def apply(
       pattern : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Option[CnxnCtxtLabel[Namespace,Var,Tag]] = Some( pattern )
   }
