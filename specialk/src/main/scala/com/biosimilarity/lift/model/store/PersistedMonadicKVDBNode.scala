@@ -1423,16 +1423,70 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		}
 	      }
 	    }
+	    // BUGBUG -- lgm : DRY this please
 	    case Right( JustifiedResponse( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	      body match {
 		case RsrcMsgs.MDGetResponseRsrc( path, rsrc ) => {
-		  reset { cache.put( path, rsrc ) }
+		  rsrc match {
+		    // if the rsrc comes with a substitution
+		    // apply that to the path
+		    case rbnd : mTT.RBound => {
+		      rsrc( path ) match {
+			// if the application results in a specialization
+			// put the results there
+			case Some( spec ) => {
+			  for( inrRsrc <- rbnd.rsrc ) {
+			    reset { cache.put( spec, inrRsrc ) }
+			  }		      		  
+			}
+			// else put the results at the path
+			case None => {
+			  reset { cache.put( path, rsrc ) }
+			}
+		      }		  
+		    }
+		    case _ => {
+		      reset { cache.put( path, rsrc ) }
+		    }
+		  }	      
 		}
 		case RsrcMsgs.MDFetchResponseRsrc( path, rsrc ) => {
-		  reset { cache.put( path, rsrc ) }
+		  rsrc match {
+		    case rbnd : mTT.RBound => {
+		      rsrc( path ) match {
+			case Some( spec ) => {
+			  for( inrRsrc <- rbnd.rsrc ) {
+			    reset { cache.put( spec, inrRsrc ) }
+			  }		      		  
+			}
+			case None => {
+			  reset { cache.put( path, rsrc ) }
+			}
+		      }		  
+		    }
+		    case _ => {
+		      reset { cache.put( path, rsrc ) }
+		    }
+		  }
 		}
 		case RsrcMsgs.MDSubscribeResponseRsrc( path, rsrc ) => {
-		  reset { cache.publish( path, rsrc ) }
+		  rsrc match {
+		    case rbnd : mTT.RBound => {
+		      rsrc( path ) match {
+			case Some( spec ) => {
+			  for( inrRsrc <- rbnd.rsrc ) {
+			    reset { cache.publish( spec, inrRsrc ) }
+			  }		      		  
+			}
+			case None => {
+			  reset { cache.publish( path, rsrc ) }
+			}
+		      }		  
+		    }
+		    case _ => {
+		      reset { cache.publish( path, rsrc ) }
+		    }
+		  }
 		}	    
 		case dput : RsrcMsgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
 		}
