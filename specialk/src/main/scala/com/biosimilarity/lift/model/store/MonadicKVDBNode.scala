@@ -251,37 +251,67 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    }
 	  }
 	}
-	// BUGBUG -- lgm : need to instantiate path with substitution
-	// from rsrc -- if it exists -- and put at the more specific
-	// location
+	// BUGBUG -- lgm : DRY this please
 	case Right( JustifiedResponse( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	  body match {
 	    case RsrcMsgs.MDGetResponseRsrc( path, rsrc ) => {
-	      rsrc( path ) match {
-		case Some( spec ) => {
-		  reset { cache.put( spec, rsrc ) }
+	      rsrc match {
+		// if the rsrc comes with a substitution
+		// apply that to the path
+		case rbnd : mTT.RBound => {
+		  rsrc( path ) match {
+		    // if the application results in a specialization
+		    // put the results there
+		    case Some( spec ) => {
+		      for( inrRsrc <- rbnd.rsrc ) {
+			reset { cache.put( spec, inrRsrc ) }
+		      }		      		  
+		    }
+		    // else put the results at the path
+		    case None => {
+		      reset { cache.put( path, rsrc ) }
+		    }
+		  }		  
 		}
-		case None => {
+		case _ => {
 		  reset { cache.put( path, rsrc ) }
 		}
-	      }
+	      }	      
 	    }
 	    case RsrcMsgs.MDFetchResponseRsrc( path, rsrc ) => {
-	      rsrc( path ) match {
-		case Some( spec ) => {
-		  reset { cache.put( spec, rsrc ) }
+	      rsrc match {
+		case rbnd : mTT.RBound => {
+		  rsrc( path ) match {
+		    case Some( spec ) => {
+		      for( inrRsrc <- rbnd.rsrc ) {
+			reset { cache.put( spec, inrRsrc ) }
+		      }		      		  
+		    }
+		    case None => {
+		      reset { cache.put( path, rsrc ) }
+		    }
+		  }		  
 		}
-		case None => {
+		case _ => {
 		  reset { cache.put( path, rsrc ) }
 		}
 	      }
 	    }
 	    case RsrcMsgs.MDSubscribeResponseRsrc( path, rsrc ) => {
-	      rsrc( path ) match {
-		case Some( spec ) => {
-		  reset { cache.publish( spec, rsrc ) }
+	      rsrc match {
+		case rbnd : mTT.RBound => {
+		  rsrc( path ) match {
+		    case Some( spec ) => {
+		      for( inrRsrc <- rbnd.rsrc ) {
+			reset { cache.publish( spec, inrRsrc ) }
+		      }		      		  
+		    }
+		    case None => {
+		      reset { cache.publish( path, rsrc ) }
+		    }
+		  }		  
 		}
-		case None => {
+		case _ => {
 		  reset { cache.publish( path, rsrc ) }
 		}
 	      }
