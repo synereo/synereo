@@ -168,22 +168,36 @@ trait CnxnConversions[Namespace,Var,Tag] {
 }
 
 trait PrologMgr {
-  def getProver() = {
-    try{
-      ProverFactory.getProver()
-    } catch {
-      case e : java.lang.IllegalStateException => {
+  import org.apache.commons.pool.BasePoolableObjectFactory
+  import org.apache.commons.pool.impl.GenericObjectPool
+  case class LocalProverFactory() extends BasePoolableObjectFactory[Prover] {
+    override def makeObject() : Prover = {
+      try{
 	ProverFactory.getProver()
+      } catch {
+	case e : java.lang.IllegalStateException => {
+	  ProverFactory.getProver()
+	}
       }
     }
   }
+
+  lazy val localProverFactory = new GenericObjectPool[Prover]( LocalProverFactory() )
+
+  def getProver() = { localProverFactory.borrowObject() }
+  def dropProver( prover : Prover ) = {
+    localProverFactory.returnObject( prover )
+  }
+
   def unifyQuery(
     qStr1 : String,
     qStr2 : String
   ) : Solution[Object] = {
     val prover = getProver()
-    val queryStr = qStr1 + " = " + qStr2 + "."
-    prover.solve( queryStr )
+    val soln : Solution[Object] =
+      prover.solve( qStr1 + " = " + qStr2 + "." )
+    dropProver( prover )
+    soln
   }  
 }
 
@@ -305,10 +319,12 @@ with PrologMgr {
       Some( new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]() )
     }
     else {
+      val prover = getProver()
       val solution : Solution[Object] =
-	getProver().solve(
+	prover.solve(
 	  cnxnCtxtLabelToTermStr( clabel1 ) + " = " + cnxnCtxtLabelToTermStr( clabel2 ) + "."
 	)
+      dropProver( prover )
       
       if ( solution.isSuccess ) {
 	val clbl1Vars = patternVars( clabel1 ).toSet

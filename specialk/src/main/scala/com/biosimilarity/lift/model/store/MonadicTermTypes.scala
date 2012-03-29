@@ -47,7 +47,7 @@ import java.io.FileInputStream
 import java.io.OutputStreamWriter
 
 trait MonadicTermTypes[Namespace,Var,Tag,Value] 
-extends MonadicGenerators {
+extends MonadicGenerators with PrologMgr {
   type GetRequest = CnxnCtxtLabel[Namespace,Var,Tag]  
   trait Resource extends Serializable {
     def apply(
@@ -165,7 +165,6 @@ extends MonadicGenerators {
     }
   }
 
-  implicit def prover : Prover = ProverFactory.getProver()
   object theCnxnTool
        extends CnxnUnificationTermQuery[Namespace,Var,Tag]
        with CnxnConversions[Namespace,Var,Tag]
@@ -210,7 +209,7 @@ extends MonadicGenerators {
   implicit def asRBoundHM(
     rsrc : RBoundP4JSoln,
     pattern : CnxnCtxtLabel[Namespace,Var,Tag]
-  )( implicit prover : Prover ) : RBoundHM = {    
+  ) : RBoundHM = {    
     RBoundHM(
       rsrc.rsrc,
       (for( s <- rsrc.soln ) yield { asHM( s, pattern ) }).flatMap( ( x ) => x )
