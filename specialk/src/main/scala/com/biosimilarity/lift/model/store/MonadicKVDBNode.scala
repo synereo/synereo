@@ -960,6 +960,9 @@ package usage {
 	    case Some( mTT.RBoundHM( Some( mTT.Ground( inc ) ), soln ) ) => {
 	      handleKinase( trigger, inc )
 	    }
+	    case Some( mTT.RBoundHM( Some( mTT.RBoundAList( Some( mTT.Ground( inc ) ), innerSoln ) ), soln ) ) => {
+	      handleKinase( trigger, inc )
+	    }
 	    case Some( mTT.Ground( inc ) ) => {
 	      handleKinase( trigger, inc )
 	    }
