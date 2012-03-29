@@ -306,6 +306,17 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     Generator {
       k : ( PlaceInstance => Unit @suspendable ) => 
 	// Are there outstanding waiters at this pattern?    
+	tweet(
+	  (
+	    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    + "in putPlaces\n"
+	    + "channels : " + channels + "\n"
+	    + "registered : " + registered + "\n"
+	    + "ptn : " + ptn + "\n"
+	    + "rsrc : " + rsrc + "\n"
+	    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  )
+	)
 	val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
 	val waitlist = locations( map, ptn )
 
@@ -353,12 +364,34 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	case Nil => {
 	  //channels( wtr ) = rsrc	  
 	  //channels( ptn ) = rsrc	  
+	  tweet(
+	    (
+	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + "in mput with empty waitlist; about to put rsrc\n"
+	      + "channels : " + channels + "\n"
+	      + "registered : " + registered + "\n"
+	      + "ptn : " + ptn + "\n"
+	      + "rsrc : " + rsrc + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
 	  if ( ptn.isInstanceOf[Place] ) {
 	    channels( ptn.asInstanceOf[Place] ) = rsrc
 	  }
 	  else {
 	    channels( wtr ) = rsrc
 	  }
+	  tweet(
+	    (
+	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + "in mput with empty waitlist; having put rsrc\n"
+	      + "channels : " + channels + "\n"
+	      + "registered : " + registered + "\n"
+	      + "ptn : " + ptn + "\n"
+	      + "rsrc : " + rsrc + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
 	}
       }
     }
