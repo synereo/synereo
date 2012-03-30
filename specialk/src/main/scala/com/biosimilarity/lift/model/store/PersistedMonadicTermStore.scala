@@ -334,7 +334,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
 	) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
-	  println( "in asStoreKRecord with kvKNameSpace = " + kvKNameSpace )
+	  //println( "in asStoreKRecord with kvKNameSpace = " + kvKNameSpace )
 	  asStoreEntry( key, value )( kvKNameSpace )
 	}
 
@@ -1566,7 +1566,7 @@ package usage {
 	    val ttt = ( x : String ) => x
 	    
 	    val ptn = asPatternString( key )
-	    println( "ptn : " + ptn )		
+	    //println( "ptn : " + ptn )		
 	    
 	    val oRsrc : Option[emT.PlaceInstance] =
 	      for(

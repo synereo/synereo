@@ -111,11 +111,11 @@ extends FJTaskRunners
 
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
-		println( "did not find a resource, storing a continuation: " + rk )
+		//println( "did not find a resource, storing a continuation: " + rk )
 		registered( place ) =
 		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
 		//rk( None )
-		println( "get suspending" )
+		//println( "get suspending" )
 		//outerk()
 	      }
 	      else {
@@ -126,12 +126,12 @@ extends FJTaskRunners
 		) {
 		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
-		  println( "found a resource: " + rsrc )		  
+		  //println( "found a resource: " + rsrc )		  
 		  if ( consume ) {
 		    channels -= place
 		  }
 		  rk( s( rsrc ) )
-		  println( "get returning" )
+		  //println( "get returning" )
 		  outerk()
 		  //shift { k : ( Unit => Unit ) => k() }
 		}
@@ -165,7 +165,7 @@ extends FJTaskRunners
 
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
-		println( "did not find a resource, storing a continuation: " + rk )
+		//println( "did not find a resource, storing a continuation: " + rk )
 		registered( place ) =
 		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
 		rk( None )
@@ -178,7 +178,7 @@ extends FJTaskRunners
 		) {
 		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
-		  println( "found a resource: " + rsrc )		  
+		  //println( "found a resource: " + rsrc )		  
 		  if ( consume ) {
 		    channels -= place
 		  }
@@ -187,7 +187,7 @@ extends FJTaskRunners
 		  //shift { k : ( Unit => Unit ) => k() }
 		}
 	      }
-	      println( "get returning" )
+	      //println( "get returning" )
 	      outerk()
 	    }
 	}
@@ -216,7 +216,7 @@ extends FJTaskRunners
 	waitlist match {
 	  // Yes!
 	  case waiter :: waiters => {
-	    println( "found waiters waiting for a value at " + ptn )
+	    //println( "found waiters waiting for a value at " + ptn )
 	    val itr = waitlist.toList.iterator	    
 	    while( itr.hasNext ) {
 	      k( itr.next )
@@ -225,7 +225,7 @@ extends FJTaskRunners
 	  // No...
 	  case Nil => {
 	    // Store the rsrc at a representative of the ptn
-	    println( "no waiters waiting for a value at " + ptn )
+	    //println( "no waiters waiting for a value at " + ptn )
 	    channels( representative( ptn ) ) = rsrc
 	  }
 	}
@@ -239,7 +239,7 @@ extends FJTaskRunners
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
     for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-      println( "waiters waiting for a value at " + wtr + " : " + rks )
+      //println( "waiters waiting for a value at " + wtr + " : " + rks )
       rks match {
 	case rk :: rrks => {	
 	  if ( consume ) {
@@ -297,7 +297,7 @@ extends FJTaskRunners
 		k( trgtElem )
 	      }
 	      
-	      println( "mapStream returning" )
+	      //println( "mapStream returning" )
   	      outerK()
 	    }
 	}

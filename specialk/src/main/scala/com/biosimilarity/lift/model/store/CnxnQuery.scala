@@ -305,14 +305,14 @@ with PrologMgr {
     clabel1 : CnxnCtxtLabel[Namespace,Var,Tag], 
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : Option[LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]] = {
-    println(
-      (
-	"in matchMap with\n clabel1 : "
-	+ clabel1
-	+ "\n clabel2 : "
-	+ clabel2
-      )
-    )
+    // println(
+//       (
+// 	"in matchMap with\n clabel1 : "
+// 	+ clabel1
+// 	+ "\n clabel2 : "
+// 	+ clabel2
+//       )
+//     )
     
     // BUGBUG -- lgm : is this a reasonable optimization to do at this level?
     if ( clabel1.equals( clabel2 ) ) {
@@ -334,7 +334,7 @@ with PrologMgr {
 	val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
 	
 	for( v <- varSet ) {
-	  println( "mapping free var : " + v )
+	  //println( "mapping free var : " + v )
 	  try {
 	    val soln : Solution[Object] = solution.on( "X" + v )
 	    hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
@@ -359,7 +359,7 @@ with PrologMgr {
     clabel2 : CnxnCtxtLabel[Namespace,Var,Tag]
   ) : Option[Solution[Object]]
   = {
-    println( "in matches with " + clabel1 + " and " + clabel2 )
+    //println( "in matches with " + clabel1 + " and " + clabel2 )
     val solution =
       unifyQuery(
 	cnxnCtxtLabelToTermStr( clabel1 ),

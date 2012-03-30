@@ -158,7 +158,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
-		println( "did not find a resource, storing a continuation: " + rk )
+		//println( "did not find a resource, storing a continuation: " + rk )
 		val bk = new BlockableContinuation( rk )
 		registered( place ) =
 		  (
@@ -166,7 +166,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		    ++ List( bk )
 		  )
 		//rk( None )
-		println( "get suspending" )
+		//println( "get suspending" )
 		bk.blockForValue()
 		//outerk()
 	      }
@@ -178,12 +178,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		) {
 		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
-		  println( "found a resource: " + rsrc )		  
+		  //println( "found a resource: " + rsrc )		  
 		  if ( consume ) {
 		    channels -= place
 		  }
 		  rk( s( rsrc ) )
-		  println( "get returning" )
+		  //println( "get returning" )
 		  outerk()
 		  //shift { k : ( Unit => Unit ) => k() }
 		}
@@ -239,7 +239,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  //shift { k : ( Unit => Unit ) => k() }
  		}
  	      }
- 	      tweet( "get returning" )
+ 	      //tweet( "get returning" )
  	      outerk()
  	    }
  	}
