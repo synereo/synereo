@@ -94,22 +94,22 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     import identityConversions._
   
     override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
-      tweet( "unwrapping transport message : " + txPortMsg )
+      //tweet( "unwrapping transport message : " + txPortMsg )
       // BUGBUG -- lgm : there's a bug in the JettisonMappedXmlDriver
       // that misses the option declaration inside the RBound subtype
       // of Resource; so, the workaround is to use XML instead of JSON
       //val xstrm = new XStream( new JettisonMappedXmlDriver )
       val xstrm = new XStream( )
       val fmsg = xstrm.fromXML( txPortMsg )
-      tweet( "resulting framed message : " + fmsg )
+      //tweet( "resulting framed message : " + fmsg )
       fmsg.asInstanceOf[A]
     }
     override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
-      tweet( "wrapping framed message : " + txPortMsg )
+      //tweet( "wrapping framed message : " + txPortMsg )
       //val xstrm = new XStream( new JettisonMappedXmlDriver )
       val xstrm = new XStream( )
       val xmsg = xstrm.toXML( txPortMsg )
-      tweet( "resulting transport message : " + xmsg )
+      //tweet( "resulting transport message : " + xmsg )
       xmsg
     }
   }
