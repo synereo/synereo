@@ -174,11 +174,11 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <
 	}
       },
       ( fmsg : FMsg ) => {
-	tweet( "calling framedMsg2TxPort" )
+	//tweet( "calling framedMsg2TxPort" )
 	fmsg match {
 	  case trgt : FramedMsg => {
 	    val txPortMsg = framedMsg2TxPort[FramedMsg]( fmsg.asInstanceOf[FramedMsg] )
-	    tweet( "txPortMsg : " + txPortMsg )
+	    //tweet( "txPortMsg : " + txPortMsg )
 	    txPortMsg
 	  }
 	  case _ => {
@@ -368,10 +368,10 @@ class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
   import identityConversions._
   
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
-    tweet( "message before xform : " + txPortMsg )
+    //tweet( "message before xform : " + txPortMsg )
     val xstrm = new XStream( new JettisonMappedXmlDriver )
     val msgA = xstrm.fromXML( txPortMsg ).asInstanceOf[A]
-    tweet( "message after xform : " + msgA )
+    //tweet( "message after xform : " + msgA )
     msgA
   }
   def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {

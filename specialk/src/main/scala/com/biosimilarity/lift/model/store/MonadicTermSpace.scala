@@ -638,7 +638,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 		) {
 		  oV match {
 		    case None => {
-		      tweet( ">>>>> forwarding..." )
+		      //tweet( ">>>>> forwarding..." )
 		      forward( ask, hops, path )
 		      rk( oV )
 		    }

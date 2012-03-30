@@ -949,8 +949,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 			case None => {
 			  persist match {
 			    case None => {
-			      tweet( ">>>>> no persistence manifest..." )
-			      tweet( ">>>>> forwarding..." )
+			      //tweet( ">>>>> no persistence manifest..." )
+			      //tweet( ">>>>> forwarding..." )
 			      forward( ask, hops, path )
 			      rk( oV )
 			    }
@@ -976,7 +976,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 				  oQry match {
 				    case None => {
 				      tweet( ">>>>> unable to compile query for path " + path )
-				      tweet( ">>>>> forwarding..." )
+				      //tweet( ">>>>> forwarding..." )
 				      forward( ask, hops, path )
 				      rk( oV )
 				    }
@@ -1155,7 +1155,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 				  }			      
 				}
 				case false => {
-				  tweet( ">>>>> forwarding..." )
+				  //tweet( ">>>>> forwarding..." )
 				  forward( ask, hops, path )
 				  rk( oV )
 				}
