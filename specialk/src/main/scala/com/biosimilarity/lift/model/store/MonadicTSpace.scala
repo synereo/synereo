@@ -78,6 +78,8 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
       with ConfiggyReporting 
       with ConfigurationTrampoline =>
 
+  val spaceLock : AnyRef = new Object()
+
   def theMeetingPlace : Map[Place,Resource]
   def theChannels : Map[Place,Resource]
   def theWaiters : Map[Place,List[RK]]
@@ -122,18 +124,16 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     }
 
     val triples =
-      map.synchronized {
-	map match {
-	  case Left( m ) => {
-	    lox[Resource,Either[Resource,List[RK]]](
-	      m, ( r ) => Left[Resource,List[RK]]( r )
-	    )
-	  }
-	  case Right( m ) => {
-	    lox[List[RK],Either[Resource,List[RK]]](
-	      m, ( r ) => Right[Resource,List[RK]]( r )
-	    )
-	  }
+      map match {
+	case Left( m ) => {
+	  lox[Resource,Either[Resource,List[RK]]](
+	    m, ( r ) => Left[Resource,List[RK]]( r )
+	  )
+	}
+	case Right( m ) => {
+	  lox[List[RK],Either[Resource,List[RK]]](
+	    m, ( r ) => Right[Resource,List[RK]]( r )
+	  )
 	}
       }
     triples.map(
@@ -165,8 +165,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		val bk = new BlockableContinuation( rk )
 		registered( place ) =
 		  (
-		    registered.get( place ).getOrElse( Nil )
-		    ++ List( bk )
+		    registered.get( place ).getOrElse( Nil ) ++ List( bk )
 		  )
 		//rk( None )
 		//println( "get suspending" )
@@ -208,44 +207,45 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	shift {
 	  outerk : ( Unit => Unit ) =>
 	    reset {
-	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
-	      val meets = locations( map, ptn )
-
-	      if ( meets.isEmpty )  {
-		val place = representative( ptn )
-		tweet( "did not find a resource, storing a continuation: " + rk )
-		tweet( "registered continuation storage: " + registered )
-		tweet( "theWaiters: " + theWaiters )
-		tweet( "theSubscriptions: " + theSubscriptions )
-
-	        registered.synchronized {
+	      spaceLock.synchronized {
+		val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
+		val meets = locations( map, ptn )
+		
+		if ( meets.isEmpty ) {
+		  val place = representative( ptn )
+		  tweet( "did not find a resource, storing a continuation: " + rk )
+		  tweet( "registered continuation storage: " + registered )
+		  tweet( "theWaiters: " + theWaiters )
+		  tweet( "theSubscriptions: " + theSubscriptions )
+		  
 		  registered( place ) =
 		    registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		  
+		  tweet( "stored a continuation: " + rk )
+		  tweet( "registered continuation storage: " + registered )
+		  tweet( "theWaiters: " + theWaiters )
+		  tweet( "theSubscriptions: " + theSubscriptions )
+		  rk( None )
 		}
-
-		tweet( "stored a continuation: " + rk )
-		tweet( "registered continuation storage: " + registered )
-		tweet( "theWaiters: " + theWaiters )
-		tweet( "theSubscriptions: " + theSubscriptions )
-		rk( None )
-	      }
-	      else {
-		for(
-		  placeNRrscNSubst <- itergen[PlaceInstance](
-		    meets
-		  )
-		) {
-		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
-		  
-		  tweet( "found a resource: " + rsrc )		  
-		  if ( consume ) {
-		    channels -= place
-		  }
-		  rk( s( rsrc ) )
-		  
-		  //shift { k : ( Unit => Unit ) => k() }
+		else {
+		  for(
+		    placeNRrscNSubst <- itergen[PlaceInstance](
+		      meets
+		    )
+		  ) {
+		    val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+		    
+		    tweet( "found a resource: " + rsrc )		  
+		    if ( consume ) {
+		      channels -= place
+		    }
+		    rk( s( rsrc ) )
+		    
+		    //shift { k : ( Unit => Unit ) => k() }
+ 		  }
  		}
- 	      }
+		spaceLock.notifyAll()
+	      }
  	      //tweet( "get returning" )
  	      outerk()
  	    }
@@ -328,7 +328,6 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
       val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
       val waitlist = locations( map, ptn )
 
-
 	waitlist match {
 	  // Yes!
 	  case waiter :: waiters => {
@@ -342,9 +341,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  case Nil => {
 	    // Store the rsrc at a representative of the ptn
 	    tweet( "no waiters waiting for a value at " + ptn )
-	    channels.synchronized {
-	      channels( representative( ptn ) ) = rsrc
-	    }
+	    channels( representative( ptn ) ) = rsrc
 	  }
 	}
     }
@@ -355,64 +352,61 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     registered : Map[Place,List[RK]],
     consume : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
-    for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
-      val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-      tweet( "waiters waiting for a value at " + wtr + " : " + rks )
-      rks match {
-	case rk :: rrks => {	
-	  if ( consume ) {
-	    for( sk <- rks ) {
-	      spawn {
-		sk( s( rsrc ) )
+    spaceLock.synchronized {
+      for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
+	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
+	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+	rks match {
+	  case rk :: rrks => {	
+	    if ( consume ) {
+	      for( sk <- rks ) {
+		spawn {
+		  sk( s( rsrc ) )
+		}
 	      }
 	    }
-	  }
-	  else {
-	    registered.synchronized {
+	    else {
 	      registered( wtr ) = rrks
+	      rk( s( rsrc ) )
 	    }
-	    rk( s( rsrc ) )
 	  }
-	}
-	case Nil => {
-	  //channels( wtr ) = rsrc	  
-	  //channels( ptn ) = rsrc	  
-	  tweet(
-	    (
-	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	      + "in mput with empty waitlist; about to put rsrc\n"
-	      + "channels : " + channels + "\n"
-	      + "registered : " + registered + "\n"
-	      + "ptn : " + ptn + "\n"
-	      + "rsrc : " + rsrc + "\n"
-	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  case Nil => {
+	    //channels( wtr ) = rsrc	  
+	    //channels( ptn ) = rsrc	  
+	    tweet(
+	      (
+		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		+ "in mput with empty waitlist; about to put rsrc\n"
+		+ "channels : " + channels + "\n"
+		+ "registered : " + registered + "\n"
+		+ "ptn : " + ptn + "\n"
+		+ "rsrc : " + rsrc + "\n"
+		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      )
 	    )
-	  )
-	  if ( ptn.isInstanceOf[Place] ) {
-	    channels.synchronized {
+	    if ( ptn.isInstanceOf[Place] ) {
 	      channels( ptn.asInstanceOf[Place] ) = rsrc
 	    }
-	  }
-	  else {
-	    channels.synchronized {
+	    else {
 	      channels( wtr ) = rsrc
 	    }
-	  }
-	  tweet(
-	    (
-	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	      + "in mput with empty waitlist; having put rsrc\n"
-	      + "channels : " + channels + "\n"
-	      + "registered : " + registered + "\n"
-	      + "ptn : " + ptn + "\n"
-	      + "rsrc : " + rsrc + "\n"
-	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    tweet(
+	      (
+		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		+ "in mput with empty waitlist; having put rsrc\n"
+		+ "channels : " + channels + "\n"
+		+ "registered : " + registered + "\n"
+		+ "ptn : " + ptn + "\n"
+		+ "rsrc : " + rsrc + "\n"
+		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      )
 	    )
-	  )
+	  }
 	}
       }
+      spaceLock.notifyAll()
     }
-        
+    
   }
 
   def put( ptn : Pattern, rsrc : Resource ) =
