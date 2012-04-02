@@ -1055,6 +1055,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
 	  consume : Boolean,
+	  keep : Boolean,
 	  cursor : Boolean,
 	  collName : Option[String]
 	)(
@@ -1067,7 +1068,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		outerk : ( Unit => Unit ) =>
 		  reset {
 		    for(
-		      oV <- mget( channels, registered, consume )( path ) 
+		      oV <- mget( channels, registered, consume, keep )( path ) 
 		    ) {
 		      oV match {
 			case None => {
@@ -1556,6 +1557,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
 	  consume : Boolean,
+	  keep : Boolean,
 	  cursor : Boolean,
 	  collName : Option[String]
 	)(
@@ -1568,7 +1570,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		outerk : ( Unit => Unit ) =>
 		  reset {
 		    for(
-		      oV <- cache.mget( channels, registered, consume )( path ) 
+		      oV <- cache.mget( channels, registered, consume, keep )( path ) 
 		    ) {
 		      oV match {
 			case None => {
@@ -1593,7 +1595,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, cursor, xmlCollName )( path )    
+	  mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, true, cursor, xmlCollName )( path )    
 	}
 	
 	def get( cursor : Boolean )(
@@ -1621,7 +1623,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( dAT.AFetchNum, hops )(
-	    cache.theMeetingPlace, cache.theWaiters, false, cursor, xmlCollName
+	    cache.theMeetingPlace, cache.theWaiters, false, false, cursor, xmlCollName
 	  )( path )    
 	}
 	
@@ -1652,7 +1654,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( dAT.ASubscribeNum, hops )(
-	    cache.theChannels, cache.theSubscriptions, true, false, xmlCollName
+	    cache.theChannels, cache.theSubscriptions, true, true, false, xmlCollName
 	  )( path )    
 	}
 	

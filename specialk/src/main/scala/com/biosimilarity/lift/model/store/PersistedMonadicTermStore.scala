@@ -931,6 +931,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
 	  consume : Boolean,
+	  keep : Boolean,
 	  cursor : Boolean,
 	  collName : Option[String]
 	)(
@@ -943,7 +944,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 		outerk : ( Unit => Unit ) =>
 		  reset {
 		    for(
-		      oV <- mget( channels, registered, consume )( path ) 
+		      oV <- mget( channels, registered, consume, keep )( path ) 
 		    ) {
 		      oV match {
 			case None => {
@@ -1292,7 +1293,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.AGet, hops )(
-	    theMeetingPlace, theWaiters, true, cursor, xmlCollName
+	    theMeetingPlace, theWaiters, true, true, cursor, xmlCollName
 	  )( path )    
 	}
 	override def get(
@@ -1323,7 +1324,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.AFetch, hops )(
-	    theMeetingPlace, theWaiters, false, cursor, xmlCollName
+	    theMeetingPlace, theWaiters, false, false, cursor, xmlCollName
 	  )( path )    
 	}
 	override def fetch(
@@ -1352,7 +1353,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.ASubscribe, hops )(
-	    theChannels, theSubscriptions, true, false, xmlCollName
+	    theChannels, theSubscriptions, true, true, false, xmlCollName
 	  )( path )    
 	}
 	override def subscribe(

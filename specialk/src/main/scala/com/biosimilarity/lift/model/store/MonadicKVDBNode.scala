@@ -384,6 +384,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean,
+      keep : Boolean,
       cursor : Boolean
     )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -395,7 +396,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    outerk : ( Unit => Unit ) =>
 	      reset {
 		for(
-		  oV <- cache.mget( channels, registered, consume )( path ) 
+		  oV <- cache.mget( channels, registered, consume, keep )( path ) 
 		) {
 		  oV match {
 		    case None => {
@@ -414,7 +415,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     def get( hops : List[Moniker] )( cursor : Boolean )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Generator[Option[mTT.Resource],Unit,Unit] = {              
-      mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, cursor )( path )    
+      mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, true, cursor )( path )    
     }
     
     def get( cursor : Boolean )(
@@ -436,7 +437,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AFetchNum, hops )(
-	cache.theMeetingPlace, cache.theWaiters, false, cursor
+	cache.theMeetingPlace, cache.theWaiters, false, false, cursor
       )( path )    
     }
     
@@ -461,7 +462,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       mget( dAT.ASubscribeNum, hops )(
-	cache.theChannels, cache.theSubscriptions, true, false
+	cache.theChannels, cache.theSubscriptions, true, true, false
       )( path )    
     }
     

@@ -199,7 +199,8 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
-    consume : Boolean
+    consume : Boolean,
+    keep : Boolean
   )( ptn : Pattern )
   : Generator[Option[Resource],Unit,Unit] =
     Generator {
@@ -217,10 +218,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  tweet( "registered continuation storage: " + registered )
 		  tweet( "theWaiters: " + theWaiters )
 		  tweet( "theSubscriptions: " + theSubscriptions )
-		  
-		  registered( place ) =
-		    registered.get( place ).getOrElse( Nil ) ++ List( rk )
-		  
+
+		  if ( keep ) {
+		    registered( place ) =
+		      registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		  }
+
 		  tweet( "stored a continuation: " + rk )
 		  tweet( "registered continuation storage: " + registered )
 		  tweet( "theWaiters: " + theWaiters )
@@ -256,11 +259,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
      }
 
   def get( ptn : Pattern ) =
-    mget( theMeetingPlace, theWaiters, true )( ptn )
+    mget( theMeetingPlace, theWaiters, true, true )( ptn )
   def fetch( ptn : Pattern ) =
-    mget( theMeetingPlace, theWaiters, false )( ptn )
+    mget( theMeetingPlace, theWaiters, false, false )( ptn )
   def subscribe( ptn : Pattern ) =
-    mget( theChannels, theSubscriptions, true )( ptn )  
+    mget( theChannels, theSubscriptions, true, true )( ptn )  
 
   def mputWithSuspension(
     channels : Map[Place,Resource],

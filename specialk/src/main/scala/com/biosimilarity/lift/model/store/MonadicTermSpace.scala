@@ -593,6 +593,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean,
+      keep : Boolean,
       cursor : Boolean
     )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -604,7 +605,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	    outerk : ( Unit => Unit ) =>
 	      reset {
 		for(
-		  oV <- mget( channels, registered, consume )( path ) 
+		  oV <- mget( channels, registered, consume, keep )( path ) 
 		) {
 		  oV match {
 		    case None => {
@@ -623,6 +624,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
       consume : Boolean,
+      keep : Boolean,
       cursor : Boolean
     )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -634,7 +636,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	    outerk : ( Unit => Unit ) =>
 	      reset {
 		for(
-		  oV <- mget( channels, registered, consume )( path ) 
+		  oV <- mget( channels, registered, consume, keep )( path ) 
 		) {
 		  oV match {
 		    case None => {
@@ -657,7 +659,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AGetNum, hops )(
-	theMeetingPlace, theWaiters, true, cursor
+	theMeetingPlace, theWaiters, true, true, cursor
       )( path )    
     }
 
@@ -735,7 +737,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AFetchNum, hops )(
-	theMeetingPlace, theWaiters, false, cursor
+	theMeetingPlace, theWaiters, false, false, cursor
       )( path )    
     }
 
@@ -780,7 +782,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       mget( dAT.ASubscribeNum, hops )(
-	theChannels, theSubscriptions, true, false
+	theChannels, theSubscriptions, true, true, false
       )( path )    
     }
 

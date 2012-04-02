@@ -98,7 +98,8 @@ extends FJTaskRunners
   def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
-    consume : Boolean
+    consume : Boolean,
+    keep : Boolean
   )( ptn : Pattern )
   : Generator[Option[Resource],Unit,Unit] =
     Generator {
@@ -112,8 +113,10 @@ extends FJTaskRunners
 	      if ( meets.isEmpty )  {
 		val place = representative( ptn )
 		//println( "did not find a resource, storing a continuation: " + rk )
-		registered( place ) =
-		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		if ( keep ) {
+		  registered( place ) =
+		    registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		}
 		//rk( None )
 		//println( "get suspending" )
 		//outerk()
@@ -194,11 +197,11 @@ extends FJTaskRunners
     }
 
   def get( ptn : Pattern ) =
-    mget( theMeetingPlace, theWaiters, true )( ptn )
+    mget( theMeetingPlace, theWaiters, true, true )( ptn )
   def fetch( ptn : Pattern ) =
-    mget( theMeetingPlace, theWaiters, false )( ptn )
+    mget( theMeetingPlace, theWaiters, false, false )( ptn )
   def subscribe( ptn : Pattern ) =
-    mget( theChannels, theSubscriptions, true )( ptn )
+    mget( theChannels, theSubscriptions, true, true )( ptn )
 
   def putPlaces(
     channels : Map[Place,Resource],
