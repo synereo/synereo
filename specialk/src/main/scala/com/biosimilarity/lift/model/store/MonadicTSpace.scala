@@ -244,7 +244,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		    //shift { k : ( Unit => Unit ) => k() }
  		  }
  		}
-		spaceLock.notifyAll()
+		
+		spaceLock.synchronized {
+		  spaceLock.notifyAll()
+		}
 	      }
  	      //tweet( "get returning" )
  	      outerk()
@@ -404,7 +407,9 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  }
 	}
       }
-      spaceLock.notifyAll()
+      spaceLock.synchronized {
+	spaceLock.notifyAll()
+      }
     }
     
   }
