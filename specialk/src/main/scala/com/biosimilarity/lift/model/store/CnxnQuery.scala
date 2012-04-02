@@ -170,24 +170,33 @@ trait CnxnConversions[Namespace,Var,Tag] {
 trait PrologMgr {
   import org.apache.commons.pool.BasePoolableObjectFactory
   import org.apache.commons.pool.impl.GenericObjectPool
+
+  val _prover = ProverFactory.getProver()
+
   case class LocalProverFactory() extends BasePoolableObjectFactory[Prover] {
     override def makeObject() : Prover = {
-      try{
-	ProverFactory.getProver()
-      } catch {
-	case e : java.lang.IllegalStateException => {
-	  ProverFactory.getProver()
-	}
-      }
+      ProverFactory.getProver()
     }
   }
 
   lazy val localProverFactory = new GenericObjectPool[Prover]( LocalProverFactory() )
 
-  def getProver() = { localProverFactory.borrowObject() }
-  def dropProver( prover : Prover ) = {
-    localProverFactory.returnObject( prover )
+  def getProver() = {
+    try {
+      localProverFactory.borrowObject()
+    }
+    catch {
+      case e : java.lang.IllegalStateException => {
+	//ProverFactory.getProver()
+	_prover
+      }
+    }
   }
+  def dropProver( prover : Prover ) = {
+    if ( prover != _prover ) {
+      localProverFactory.returnObject( prover )
+    }
+  }  
 
   def unifyQuery(
     qStr1 : String,
