@@ -81,6 +81,18 @@
     </repository>
 
     <repository>
+      <id>ibiblio</id>
+      <name>ibiblio maven2 mirror</name>
+      <url>http://mirrors.ibiblio.org/pub/mirrors/maven2</url>
+    </repository>
+
+    <repository>
+      <id>sonatype</id>
+      <name>sonatype repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+
+    <repository>
       <id>biosim</id>
       <url>http://biosimrepomirror.googlecode.com/svn/trunk</url>
     </repository>     
