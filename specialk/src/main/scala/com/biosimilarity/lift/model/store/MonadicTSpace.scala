@@ -120,17 +120,20 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	}
       )
     }
+
     val triples =
-      map match {
-	case Left( m ) => {
-	  lox[Resource,Either[Resource,List[RK]]](
-	    m, ( r ) => Left[Resource,List[RK]]( r )
-	  )
-	}
-	case Right( m ) => {
-	  lox[List[RK],Either[Resource,List[RK]]](
-	    m, ( r ) => Right[Resource,List[RK]]( r )
-	  )
+      map.synchronized {
+	map match {
+	  case Left( m ) => {
+	    lox[Resource,Either[Resource,List[RK]]](
+	      m, ( r ) => Left[Resource,List[RK]]( r )
+	    )
+	  }
+	  case Right( m ) => {
+	    lox[List[RK],Either[Resource,List[RK]]](
+	      m, ( r ) => Right[Resource,List[RK]]( r )
+	    )
+	  }
 	}
       }
     triples.map(
@@ -214,8 +217,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		tweet( "registered continuation storage: " + registered )
 		tweet( "theWaiters: " + theWaiters )
 		tweet( "theSubscriptions: " + theSubscriptions )
-		registered( place ) =
-		  registered.get( place ).getOrElse( Nil ) ++ List( rk )
+
+	        registered.synchronized {
+		  registered( place ) =
+		    registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		}
+
 		tweet( "stored a continuation: " + rk )
 		tweet( "registered continuation storage: " + registered )
 		tweet( "theWaiters: " + theWaiters )
@@ -317,8 +324,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  )
 	)
-	val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
-	val waitlist = locations( map, ptn )
+
+      val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
+      val waitlist = locations( map, ptn )
+
 
 	waitlist match {
 	  // Yes!
@@ -333,7 +342,9 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  case Nil => {
 	    // Store the rsrc at a representative of the ptn
 	    tweet( "no waiters waiting for a value at " + ptn )
-	    channels( representative( ptn ) ) = rsrc
+	    channels.synchronized {
+	      channels( representative( ptn ) ) = rsrc
+	    }
 	  }
 	}
     }
@@ -357,7 +368,9 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	    }
 	  }
 	  else {
-	    registered( wtr ) = rrks
+	    registered.synchronized {
+	      registered( wtr ) = rrks
+	    }
 	    rk( s( rsrc ) )
 	  }
 	}
@@ -376,10 +389,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	    )
 	  )
 	  if ( ptn.isInstanceOf[Place] ) {
-	    channels( ptn.asInstanceOf[Place] ) = rsrc
+	    channels.synchronized {
+	      channels( ptn.asInstanceOf[Place] ) = rsrc
+	    }
 	  }
 	  else {
-	    channels( wtr ) = rsrc
+	    channels.synchronized {
+	      channels( wtr ) = rsrc
+	    }
 	  }
 	  tweet(
 	    (
