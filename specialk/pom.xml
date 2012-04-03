@@ -38,60 +38,38 @@
       <id>scala-tools.releases</id>
       <name>Scala-Tools Dependencies Repository for Releases</name>
       <url>http://scala-tools.org/repo-releases</url>
-    </repository>
-    
+    </repository>    
     <repository>
       <id>scala-tools.org</id>
       <name>Scala-Tools Maven2 Repository</name>
       <url>http://scala-tools.org/repo-snapshots</url>
       <snapshots />
     </repository>
-
-    <repository>
-      <id>stax-releases</id>
-      <url>http://mvn.stax.net/content/repositories/releases</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>stax-snapshots</id>
-      <url>http://mvn.stax.net/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-    </repository>
-
     <repository>
       <id>repository.codehaus.org</id>
       <name>Codehaus</name>
       <url>http://repository.codehaus.org/com/thoughtworks</url>
     </repository>
-
     <repository>
       <id>repository.gwt.rewraps</id>
       <name>gwt-maven-rewraps</name>
       <url>http://gwt-maven-rewraps.googlecode.com/hg/</url>
-    </repository>
-    
+    </repository>    
     <repository>
       <id>basex</id>
       <name>BaseX Maven Repository</name>
       <url>http://files.basex.org/maven</url>
     </repository>
-
     <repository>
       <id>ibiblio</id>
       <name>ibiblio maven2 mirror</name>
       <url>http://mirrors.ibiblio.org/pub/mirrors/maven2</url>
     </repository>
-
     <repository>
       <id>sonatype</id>
       <name>sonatype repository</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
-
     <repository>
       <id>biosim</id>
       <url>http://biosimrepomirror.googlecode.com/svn/trunk</url>
@@ -256,7 +234,7 @@
     <!-- for Prolog capabilities -->
     <dependency>
       <groupId>it.unibo.alice.tuprolog</groupId>
-      <artifactId>tuProlog</artifactId>
+      <artifactId>tuprolog</artifactId>
       <version>2.1.1</version>
     </dependency>
 
