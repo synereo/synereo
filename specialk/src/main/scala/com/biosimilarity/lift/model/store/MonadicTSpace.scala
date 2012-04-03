@@ -78,6 +78,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
       with ConfiggyReporting 
       with ConfigurationTrampoline =>
 
+  @transient
   val spaceLock : AnyRef = new Object()
 
   def theMeetingPlace : Map[Place,Resource]
