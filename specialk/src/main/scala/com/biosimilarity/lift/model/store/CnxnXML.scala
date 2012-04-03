@@ -1048,7 +1048,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	)
       }
       case CnxnCtxtLeaf( Right( v ) ) =>
-	( "" )
+	( "true" )
       case CnxnCtxtBranch( ns, facts ) => {
 	val nxqv = nextXQV
 
@@ -1084,8 +1084,16 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 		    val accfC =
 		      fC match {
 			case "" => ccs 
-			case _ =>
-			  ccs + " and " + "(" + " " + fC + " " + ")"
+			case _ => {
+			  val ans = ccs + " and " + "(" + " " + fC + " " + ")"
+			  // println(
+// 			    "\n******************************************************************\n"
+// 			    + "recursive descent, compound 'and' accumulation\n"
+// 			    + "ccs : " + "'" + ccs + "'" + " fC : " + fC + "\n"
+// 			    + "******************************************************************\n"
+// 			  )
+			  ans
+			}
 		      }
 
 		    ( ( accLEs, accfC ), w+1 )
@@ -1114,30 +1122,48 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	  + " where "
 	  + (
 	    childCs match {
-	      case "" =>
-		(
-		  arityC
-		  + (
-		    ( letVar, xqcc.parent ) match {
-		      case ( Some( v ), Some( _ ) ) =>
-			" and " + "(" + " " + v + " = " + nxqv + " " + ")"
-		      case _ => ""
+	      case "" => {
+		val rVC = 
+		  ( letVar, xqcc.parent ) match {
+		    case ( Some( v ), Some( _ ) ) => {
+		      " and " + "(" + " " + v + " = " + nxqv + " " + ")"
 		    }
-		  )
-		)
-	      case _ =>
-		(
-		  arityC + " "
-		  + " and "
-		  + childCs
-		  + (
-		    ( letVar, xqcc.parent ) match {
-		      case ( Some( v ), Some( _ ) ) =>
-			" and " + "(" + " " + v + " = " + nxqv + " " + ")"
-		      case _ => ""
+		    case _ => ""
+		  }
+
+		val ans = arityC + rVC
+
+		// println(
+// 		  "\n******************************************************************\n"
+// 		  + "existential constraints case 1, compound 'and' accumulation\n"
+// 		  + "arityC : " + arityC + "childCs : " + childCs + "\n"
+// 		  + "rVC : " + "'" + rVC + "'" + "\n"
+// 		  + "******************************************************************\n"
+// 		)
+
+		ans
+	      }
+	      case _ => {
+		val rVC =
+		  ( letVar, xqcc.parent ) match {
+		    case ( Some( v ), Some( _ ) ) => {
+		      " and " + "(" + " " + v + " = " + nxqv + " " + ")"
 		    }
-		  )
-		)
+		    case _ => ""		    
+		  }
+
+		val ans = arityC + " " + " and " + childCs + rVC;
+
+		// println(
+// 		  "\n******************************************************************\n"
+// 		  + "existential constraints case 2, compound 'and' accumulation\n"
+// 		  + "arityC : " + arityC + "childCs : " + childCs + "\n"
+// 		  + "rVC : " + "'" + rVC + "'" + "\n"
+// 		  + "******************************************************************\n"
+// 		)
+
+		ans
+	      }
 	    } 
 	  )
 	  + " return " + nxqv

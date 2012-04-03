@@ -171,6 +171,7 @@ trait PrologMgr {
   import org.apache.commons.pool.BasePoolableObjectFactory
   import org.apache.commons.pool.impl.GenericObjectPool
 
+  @transient
   val _prover = ProverFactory.getProver()
 
   case class LocalProverFactory() extends BasePoolableObjectFactory[Prover] {
@@ -179,6 +180,7 @@ trait PrologMgr {
     }
   }
 
+  @transient
   lazy val localProverFactory = new GenericObjectPool[Prover]( LocalProverFactory() )
 
   def getProver() = {

@@ -1049,7 +1049,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	
 	def mget(
 	  persist : Option[PersistenceManifest],
-	  ask : dAT.Ask,
+	  ask : dAT.AskNum,
 	  hops : List[Moniker]
 	)(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
@@ -1061,7 +1061,24 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	)(
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
-	: Generator[Option[mTT.Resource],Unit,Unit] = {        
+	: Generator[Option[mTT.Resource],Unit,Unit] = {
+	  tweet( 
+	    (
+	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + "mgetting " + path + ".\n"
+	      + "on " + this + ".\n"
+	      + "checking if this is a cache or a node: "
+	      + (if ( this.isInstanceOf[PersistedMonadicKVDB] ) { "cache" } else { "node"}) + "\n"
+	    )
+	  )
+	  tweet( 
+	    (
+	      "persistence manifest: " + persist + "\n"
+	      + "xml collection name: " + collName + "\n"
+	      + "consume data : " + consume + ", keep continuation : " + keep + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
 	  Generator {	
 	    rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
 	      shift {
@@ -1077,12 +1094,25 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			      // tweet( ">>>>> no persistence manifest..." )
 // 			      tweet( ">>>>> forwarding..." )
 // 			      forward( ask, hops, path )
+			      tweet( 
+				(
+				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				  + "mgetting " + path + ".\n"
+				  + "on " + this + "without a persistence manifest.\n"
+				  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				)
+			      )
 			      rk( oV )
 			    }
 			    case Some( pd ) => {
-			      tweet( ">>>>> found a persistence manifest..." )
-			      tweet(
-				"accessing db : " + pd.db
+			      tweet( 
+				(
+				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				  + "mgetting " + path + ".\n"
+				  + "on " + this + "with a persistence manifest.\n"
+				  + "accessing db: " + pd.db + ".\n"
+				  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				)
 			      )
 			      
 			      val xmlCollName =
@@ -1553,7 +1583,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  }
 	}
 	
-	def mget( ask : dAT.AskNum, hops : List[Moniker] )(
+	def mget( persist : Option[PersistenceManifest], ask : dAT.AskNum, hops : List[Moniker] )(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
 	  consume : Boolean,
@@ -1569,12 +1599,34 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      shift {
 		outerk : ( Unit => Unit ) =>
 		  reset {
+		    tweet( 
+		      (
+			"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			+ "mgetting " + path + ".\n"
+			+ "on " + this + ".\n"
+			+ "checking local cache " + cache + ".\n"
+			+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		      )
+		    )
 		    for(
-		      oV <- cache.mget( channels, registered, consume, keep )( path ) 
+		      oV <- cache.mget( persist, ask, hops )( channels, registered, consume, keep, cursor, collName )( path ) 
 		    ) {
 		      oV match {
 			case None => {
 			  //tweet( ">>>>> forwarding..." )
+			  tweet( 
+			    (
+			      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			      + "mgetting " + path + ".\n"
+			      + "on " + cache + " did not find a resource.\n"
+			      + "xml collection name: " + collName + "\n"
+			      + "consume data : " + true + "\n"
+			      + "keep continuation : " + true + "\n"
+			      + "forwarding to acquaintances.\n"
+			      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			    )
+			  )
+
 			  forward( ask, hops, path )
 			  rk( oV )
 			}
@@ -1588,14 +1640,26 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	
 	def get( hops : List[Moniker] )( cursor : Boolean )(
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
-	) : Generator[Option[mTT.Resource],Unit,Unit] = {              
+	) : Generator[Option[mTT.Resource],Unit,Unit] = {	  
 	  val perD = cache.persistenceManifest
 	  val xmlCollName = 
 	    perD match {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, true, cursor, xmlCollName )( path )    
+	  tweet( 
+	    (
+	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + "mgetting " + path + ".\n"
+	      + "on " + this + "\n"
+	      + "persistence manifest: " + perD + "\n"
+	      + "xml collection name: " + xmlCollName + "\n"
+	      + "consume data : " + true + "\n"
+	      + "keep continuation : " + true + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
+	  mget( perD, dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, true, cursor, xmlCollName )( path )    
 	}
 	
 	def get( cursor : Boolean )(
@@ -1622,7 +1686,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  mget( dAT.AFetchNum, hops )(
+	  mget( perD, dAT.AFetchNum, hops )(
 	    cache.theMeetingPlace, cache.theWaiters, false, false, cursor, xmlCollName
 	  )( path )    
 	}
@@ -1653,7 +1717,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  mget( dAT.ASubscribeNum, hops )(
+	  mget( perD, dAT.ASubscribeNum, hops )(
 	    cache.theChannels, cache.theSubscriptions, true, true, false, xmlCollName
 	  )( path )    
 	}
