@@ -65,10 +65,30 @@ with Schema
       true
     }
     catch {
-      case e: BaseXException => {
+      case bxe : BaseXException => {
+	bxe.printStackTrace
 	val clientSession = clientSessionFromConfig
         val records = toRecords( "" )	
-	create(clientSession, collectionName).execute(new Add(records, "database"))
+	try {
+	  val cs = create(clientSession, collectionName)
+	  try {
+	    cs.execute(new Add(records, "database"))
+	  }
+	  catch {
+	    case inrBxe : BaseXException => {
+	      inrBxe.printStackTrace
+	      false
+	    }
+	  }
+	}
+	catch {
+	  case subBxe : BaseXException => {
+	    subBxe.printStackTrace
+	    clientSession.execute(new Close())
+	    false
+	  }
+	}	
+
 	if (!leaveOpen) {
           clientSession.execute(new Close())
 	}
