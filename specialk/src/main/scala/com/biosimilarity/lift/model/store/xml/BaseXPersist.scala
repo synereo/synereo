@@ -66,17 +66,18 @@ with Schema
     }
     catch {
       case bxe : BaseXException => {
-	bxe.printStackTrace
 	val clientSession = clientSessionFromConfig
         val records = toRecords( "" )	
 	try {
 	  val cs = create(clientSession, collectionName)
 	  try {
+	    cs.execute(new Open(collectionName))
 	    cs.execute(new Add(records, "database"))
 	  }
 	  catch {
 	    case inrBxe : BaseXException => {
 	      inrBxe.printStackTrace
+	      clientSession.execute(new Close())
 	      false
 	    }
 	  }
@@ -396,32 +397,94 @@ with Schema
   }
 
   def executeWithResults(query: String): List[Elem] =
-  {
-    val clientSession = clientSessionFromConfig
+  {    
+    val clientSession = clientSessionFromConfig    
     val srvrRspStrm = new java.io.ByteArrayOutputStream()
-    clientSession.setOutputStream(srvrRspStrm)
 
-    clientSession.execute(new XQuery(query))
+    try {      
+      clientSession.setOutputStream(srvrRspStrm)
+      clientSession.execute(new XQuery(query))
+      val results = srvrRspStrm.toString("UTF-8")
+      srvrRspStrm.close
 
-    val results = srvrRspStrm.toString("UTF-8")
-    srvrRspStrm.close
-
-    results match {
-      case "" => {
-        Nil
-      }
-      case _ => {
-        XML.loadString(
-          "<results>" + results + "</results>"
-        ).child.toList.filter(
-          (x: Node) => x.isInstanceOf[Elem]
-        ).asInstanceOf[List[Elem]]
+      results match {
+	case "" => {
+          Nil
+	}
+	case _ => {
+          XML.loadString(
+            "<results>" + results + "</results>"
+          ).child.toList.filter(
+            (x: Node) => x.isInstanceOf[Elem]
+          ).asInstanceOf[List[Elem]]
+	}
       }
     }
+    catch {
+      case bxe : BaseXException => {
+	srvrRspStrm.close
+	clientSession.execute(new Close())
+	throw( bxe )
+      }
+    }    
   }
+
+  def executeWithResults(  collectionName : String, query : String ) : List[Elem] =
+  {
+    def getRslts(
+      srStrm : java.io.ByteArrayOutputStream
+    ) : List[Elem] = {
+      val results = srStrm.toString("UTF-8")
+      println( "results: " + results )
+      srStrm.close
+
+      results match {
+	case "" => {
+          Nil
+	}
+	case _ => {
+          XML.loadString(
+            "<results>" + results + "</results>"
+          ).child.toList.filter(
+            (x: Node) => x.isInstanceOf[Elem]
+          ).asInstanceOf[List[Elem]]
+	}
+      }
+    }
+
+    val clientSession = clientSessionFromConfig    
+    val srvrRspStrm = new java.io.ByteArrayOutputStream()
+
+    try {      
+      clientSession.execute(new Open(collectionName))
+      clientSession.setOutputStream(srvrRspStrm)
+      clientSession.execute(new XQuery(query))
+      getRslts( srvrRspStrm )
+    }
+    catch {
+      case bxe : BaseXException => {
+	println( "warning: " + bxe.getMessage )
+	srvrRspStrm.close
+	clientSession.execute(new Close())
+
+	val cs = clientSessionFromConfig
+	val srStrm = new java.io.ByteArrayOutputStream()
+	
+	cs.execute(new Open(collectionName))
+	cs.setOutputStream(srStrm)
+
+	cs.execute(new XQuery(query))
+	getRslts( srStrm )
+      }
+    }    
+  }  
 
   def executeWithResults(queries: List[String]): List[Elem] =
   {
     queries.flatMap(executeWithResults)
+  }
+  def executeWithResults( collectionName : String, queries : List[String] ): List[Elem] =
+  {
+    queries.flatMap(executeWithResults( collectionName, _ ))
   }
 }

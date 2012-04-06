@@ -753,7 +753,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 		}
 		case Some( kqry ) => {
 		  tweet( "kqry : " + kqry )
-		  val krslts = executeWithResults( kqry )
+		  val krslts = executeWithResults( xmlCollName, kqry )
 		  krslts match {
 		    case Nil => {
 		      // Nothing to do
@@ -989,7 +989,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 					)
 				      )
 				      
-				      val rslts = executeWithResults( qry )
+				      val rslts = executeWithResults( xmlCollName, qry )
 				      
 				      rslts match {
 					case Nil => {	
@@ -1012,7 +1012,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 					      )				  
 					    }
 					    case Some( kqry ) => {
-					      val krslts = executeWithResults( qry )
+					      val krslts = executeWithResults( xmlCollName, qry )
 					      
 					      // This is the easy case!
 					      // There are no locations

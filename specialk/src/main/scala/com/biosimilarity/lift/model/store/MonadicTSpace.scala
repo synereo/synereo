@@ -21,7 +21,15 @@ import scala.collection.mutable.HashMap
 
 trait ExcludedMiddleTypes[Place,Pattern,Resource] {
   type RK = Option[Resource] => Unit @suspendable
-  
+
+  trait RetentionPolicy
+  trait RetainInCache extends RetentionPolicy
+  //trait RetainInStore extends RetentionPolicy
+  case object DoNotRetain extends RetentionPolicy 
+  case object Cache extends RetainInCache
+  //case object Store extends RetainInStore
+  //case object CacheAndStore extends RetainInCache with RetainInStore
+
   class BlockableContinuation(
     val rk : RK
   ) extends Function1[Option[Resource],Unit @suspendable] {

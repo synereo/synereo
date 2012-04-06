@@ -27,8 +27,10 @@ trait Persist[OpenReturn]
   // representation for return values. Should this decision be revisited?
 
   def executeWithResults(query: String): List[Elem]
+  def executeWithResults( collectionName : String, query : String ) : List[Elem]
 
   def executeWithResults(queries: List[String]): List[Elem]
+  def executeWithResults( collectionName : String, queries : List[String] ) : List[Elem]
 
   //def count
 }

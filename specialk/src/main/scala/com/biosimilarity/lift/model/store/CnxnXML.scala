@@ -1048,7 +1048,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	)
       }
       case CnxnCtxtLeaf( Right( v ) ) =>
-	( "true" )
+	( "1 = 1" ) // the no-op -- true, it turns out, trips a bug in BaseX
       case CnxnCtxtBranch( ns, facts ) => {
 	val nxqv = nextXQV
 

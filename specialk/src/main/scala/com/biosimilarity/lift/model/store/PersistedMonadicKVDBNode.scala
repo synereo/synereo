@@ -61,6 +61,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
   trait PersistenceScope
     extends ExcludedMiddleScope[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
     with Serializable {
+
+      trait RetainInStore extends emT.RetentionPolicy
+      case object Store extends RetainInStore
+      case object CacheAndStore extends emT.RetainInCache with RetainInStore
+
       trait PersistenceManifest extends Serializable {
 	def db : Database
 	def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String
@@ -793,7 +798,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		}
 		case Some( kqry ) => {
 		  tweet( "kqry : " + kqry )
-		  val krslts = executeWithResults( kqry )
+		  val krslts = executeWithResults( xmlCollName, kqry )
 		  krslts match {
 		    case Nil => {
 		      // Nothing to do
@@ -1143,7 +1148,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					)
 				      )
 				      
-				      val rslts = executeWithResults( qry )
+				      val rslts = executeWithResults( xmlCollName, qry )
 				      
 				      rslts match {
 					case Nil => {	
@@ -1166,7 +1171,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					      )				  
 					    }
 					    case Some( kqry ) => {
-					      val krslts = executeWithResults( qry )
+					      val krslts = executeWithResults( xmlCollName, qry )
 					      
 					      // This is the easy case!
 					      // There are no locations
