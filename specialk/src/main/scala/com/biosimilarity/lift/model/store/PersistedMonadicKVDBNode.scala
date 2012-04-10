@@ -1278,47 +1278,47 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                               //tweet( "returning cursor" + rsrcCursor )
                                               rk( rsrcCursor )
 					    }
-						else
-						  {
-						    for( rslt <- itergen[Elem]( rslts ) ) {
-						      tweet( "retrieved " + rslt.toString )
-						      val ersrc = pd.asResource( path, rslt )
-						      						      
-						      consume match {
-							case policy : RetainInStore => {
-							  tweet( "removing from store " + rslt )
-							  removeFromStore( 
-							    persist,
-							    rslt,
-							    collName
-							  )
-							}
-							case _ => {
-							  tweet( "policy indicates not to remove from store" + rslt )
-							}
-						      }
-						      
-						      // BUGBUG -- LGM : This is a
-						      // window of possible
-						      // failure; if we crash here,
-						      // then the result is out of
-						      // the store, but we haven't
-						      // completed processing. This is
-						      // where we need Tx.
-						      
-						      ersrc.stuff match {
-							case Left( r ) => {
-							  tweet( "returning " + r )
-							  rk( Some( r ) )
-							}
-							case _ => {
-							  throw new Exception(
-							    "violated excluded middle contract: " + ersrc
-							  )
-							}
-						      }					  
-						    }
+					  else
+					    {
+					      for( rslt <- itergen[Elem]( rslts ) ) {
+						tweet( "retrieved " + rslt.toString )
+						val ersrc = pd.asResource( path, rslt )
+						
+						consume match {
+						  case policy : RetainInStore => {
+						    tweet( "removing from store " + rslt )
+						    removeFromStore( 
+						      persist,
+						      rslt,
+						      collName
+						    )
 						  }
+						  case _ => {
+						    tweet( "policy indicates not to remove from store" + rslt )
+						  }
+						}
+						
+						// BUGBUG -- LGM : This is a
+						// window of possible
+						// failure; if we crash here,
+						// then the result is out of
+						// the store, but we haven't
+						// completed processing. This is
+						// where we need Tx.
+						
+						ersrc.stuff match {
+						  case Left( r ) => {
+						    tweet( "returning " + r )
+						    rk( Some( r ) )
+						  }
+						  case _ => {
+						    throw new Exception(
+						      "violated excluded middle contract: " + ersrc
+						    )
+						  }
+						}					  
+					      }
+					    }
 					}
 				      }
 				    }			    
@@ -1333,7 +1333,109 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			    }		      
 			  }
 			}
-			case _ => rk( oV )
+			case _ => {			  
+			  persist match {
+			    case None => {
+			      tweet( 
+				(
+				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				  + "mgetting " + path + ".\n"
+				  + "result in cache on " + this + "without a persistence manifest.\n"
+				  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				)
+			      )
+			      rk( oV )
+			    }
+			    case Some( pd ) => {
+			      val xmlCollName =
+				collName.getOrElse(
+				  storeUnitStr.getOrElse(
+				    bail()
+				  )
+				)
+			      
+			      // Defensively check that db is actually available
+			      
+			      checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
+				case false => {
+				  tweet( 
+				    (
+				      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				      + "mgetting " + path + ".\n"
+				      + "result in cache on " + this + " without a database.\n"
+				      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+				    )
+				  )
+				  rk( oV )
+				}
+				case true => {
+				  query( xmlCollName, path ) match {
+				    case None => {
+				      tweet( 
+					(
+					  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+					  + "mgetting " + path + ".\n"
+					  + "result in cache on " + this + " without a query.\n"
+					  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+					)
+				      )
+				      rk( oV )
+				    }
+				    case Some( qry ) => {
+				      executeWithResults( xmlCollName, qry ) match {
+					case Nil => {
+					  tweet( 
+					    (
+					      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+					      + "mgetting " + path + ".\n"
+					      + "result in cache on " + this + " no matching results in store.\n"
+					      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+					    )
+					  )
+					  rk( oV )
+					}
+					case rslts => {
+					  tweet(
+					    (
+					      "database "
+					      + xmlCollName
+					      + " had "
+					      + rslts.length
+					      + " matching resources."
+					    )
+					  )
+					  // BUGBUG -- lgm : what to
+					  // do in the case that
+					  // what's in store doesn't
+					  // match what's in cache?
+					  for( rslt <- itergen[Elem]( rslts ) ) {
+					    tweet( "retrieved " + rslt.toString )					    
+						
+					    consume match {
+					      case policy : RetainInStore => {
+						tweet( "removing from store " + rslt )
+						removeFromStore( 
+						  persist,
+						  rslt,
+						  collName
+						)
+					      }
+					      case _ => {
+						tweet( "policy indicates not to remove from store" + rslt )
+					      }
+					    }
+											    					  
+					  }
+					  rk( oV )
+					}
+				      }
+				    }
+				  }				  
+				}				
+			      }
+			    }
+			  }			  
+			}
 		      }
 		    }
 		  }
@@ -2391,6 +2493,7 @@ package usage {
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
 		    + "releasing an increment " + inc + " of " + kns + "\n"
+		    + "total amount released: " + ( kamt + inc )
 		    + "loop count: " + count + "\n"
 		    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  )
