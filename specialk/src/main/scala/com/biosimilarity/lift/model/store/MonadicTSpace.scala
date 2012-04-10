@@ -19,16 +19,16 @@ import scala.collection.MapProxy
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 
-trait ExcludedMiddleTypes[Place,Pattern,Resource] {
-  type RK = Option[Resource] => Unit @suspendable
+trait RetentionPolicy
+trait RetainInCache extends RetentionPolicy
+trait RetainInStore extends RetentionPolicy
+case object DoNotRetain extends RetentionPolicy 
+case object Cache extends RetainInCache
+case object Store extends RetainInStore
+case object CacheAndStore extends RetainInCache with RetainInStore
 
-  trait RetentionPolicy
-  trait RetainInCache extends RetentionPolicy
-  //trait RetainInStore extends RetentionPolicy
-  case object DoNotRetain extends RetentionPolicy 
-  case object Cache extends RetainInCache
-  //case object Store extends RetainInStore
-  //case object CacheAndStore extends RetainInCache with RetainInStore
+trait ExcludedMiddleTypes[Place,Pattern,Resource] {
+  type RK = Option[Resource] => Unit @suspendable  
 
   class BlockableContinuation(
     val rk : RK
@@ -156,8 +156,8 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def mgetWithSuspension(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
-    consume : Boolean,
-    cursor : Boolean
+    consume : RetentionPolicy,
+    cursor : RetentionPolicy
   )( ptn : Pattern )
   : Generator[Option[Resource],Unit,Unit] =
     Generator {
@@ -189,10 +189,16 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		) {
 		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
-		  //println( "found a resource: " + rsrc )		  
-		  if ( consume ) {
-		    channels -= place
+		  //println( "found a resource: " + rsrc )		  		  
+		  consume match {
+		    case policy : RetainInCache => {
+		      channels -= place
+		    }
+		    case _ => {
+		      tweet( "policy indicates not to remove from cache: " + place )
+		    }
 		  }
+
 		  rk( s( rsrc ) )
 		  //println( "get returning" )
 		  outerk()
@@ -208,8 +214,8 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
-    consume : Boolean,
-    keep : Boolean
+    consume : RetentionPolicy,
+    keep : RetentionPolicy
   )( ptn : Pattern )
   : Generator[Option[Resource],Unit,Unit] =
     Generator {
@@ -226,11 +232,16 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  tweet( "did not find a resource, storing a continuation: " + rk )
 		  tweet( "registered continuation storage: " + registered )
 		  tweet( "theWaiters: " + theWaiters )
-		  tweet( "theSubscriptions: " + theSubscriptions )
+		  tweet( "theSubscriptions: " + theSubscriptions )		  
 
-		  if ( keep ) {
-		    registered( place ) =
-		      registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		  keep match {
+		    case policy : RetainInCache => {
+		      registered( place ) =
+			registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		    }
+		    case _ => {
+		      tweet( "policy indicates not to retain in cache: " + rk )
+		    }
 		  }
 
 		  tweet( "stored a continuation: " + rk )
@@ -247,9 +258,15 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  ) {
 		    val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		    
-		    tweet( "found a resource: " + rsrc )		  
-		    if ( consume ) {
-		      channels -= place
+		    tweet( "found a resource: " + rsrc )		    
+
+		    consume match {
+		      case policy : RetainInCache => {
+			channels -= place
+		      }
+		      case _ => {
+			tweet( "policy indicates not to consume from cache: " + place )
+		      }
 		    }
 		    rk( s( rsrc ) )
 		    
@@ -268,11 +285,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
      }
 
   def get( ptn : Pattern ) =
-    mget( theMeetingPlace, theWaiters, true, true )( ptn )
+    mget( theMeetingPlace, theWaiters, Cache, Cache )( ptn )
   def fetch( ptn : Pattern ) =
-    mget( theMeetingPlace, theWaiters, false, false )( ptn )
+    mget( theMeetingPlace, theWaiters, DoNotRetain, DoNotRetain )( ptn )
   def subscribe( ptn : Pattern ) =
-    mget( theChannels, theSubscriptions, true, true )( ptn )  
+    mget( theChannels, theSubscriptions, Cache, Cache )( ptn )  
 
   def mputWithSuspension(
     channels : Map[Place,Resource],

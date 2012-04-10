@@ -62,9 +62,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
     extends ExcludedMiddleScope[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
     with Serializable {
 
-      trait RetainInStore extends emT.RetentionPolicy
-      case object Store extends RetainInStore
-      case object CacheAndStore extends emT.RetainInCache with RetainInStore
+      // trait RetainInStore extends emT.RetentionPolicy
+//       case object Store extends RetainInStore
+//       case object CacheAndStore extends emT.RetainInCache with RetainInStore
 
       trait PersistenceManifest extends Serializable {
 	def db : Database
@@ -1059,8 +1059,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	)(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
-	  consume : Boolean,
-	  keep : Boolean,
+	  consume : RetentionPolicy,
+	  keep : RetentionPolicy,
 	  cursor : Boolean,
 	  collName : Option[String]
 	)(
@@ -1243,14 +1243,19 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                               var rsrcRslts : List[mTT.Resource] = Nil
                                               for( rslt <- itergen[Elem]( rslts ) ) {
 						tweet( "retrieved " + rslt.toString )
-						
-						if ( consume ) {
-						  tweet( "removing from store " + rslt )
-						  removeFromStore(
-						    persist,
-						    rslt,
-						    collName
-						  )
+												
+						consume match {
+						  case policy : RetainInStore => {
+						    tweet( "removing from store " + rslt )
+						    removeFromStore(
+						      persist,
+						      rslt,
+						      collName
+						    )
+						  }
+						  case _ => {
+						    tweet( "policy indicates not to remove from store " + rslt )
+						  }
 						}
 						
 						// BUGBUG -- LGM : This is a
@@ -1278,14 +1283,19 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						    for( rslt <- itergen[Elem]( rslts ) ) {
 						      tweet( "retrieved " + rslt.toString )
 						      val ersrc = pd.asResource( path, rslt )
-						      
-						      if ( consume ) {
-							tweet( "removing from store " + rslt )
-							removeFromStore( 
-							  persist,
-							  rslt,
-							  collName
-							)
+						      						      
+						      consume match {
+							case policy : RetainInStore => {
+							  tweet( "removing from store " + rslt )
+							  removeFromStore( 
+							    persist,
+							    rslt,
+							    collName
+							  )
+							}
+							case _ => {
+							  tweet( "policy indicates not to remove from store" + rslt )
+							}
 						      }
 						      
 						      // BUGBUG -- LGM : This is a
@@ -1591,8 +1601,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def mget( persist : Option[PersistenceManifest], ask : dAT.AskNum, hops : List[Moniker] )(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
-	  consume : Boolean,
-	  keep : Boolean,
+	  consume : RetentionPolicy,
+	  keep : RetentionPolicy,
 	  cursor : Boolean,
 	  collName : Option[String]
 	)(
@@ -1664,7 +1674,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	    )
 	  )
-	  mget( perD, dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, true, cursor, xmlCollName )( path )    
+	  mget( perD, dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, Store, Store, cursor, xmlCollName )( path )    
 	}
 	
 	def get( cursor : Boolean )(
@@ -1692,7 +1702,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.AFetchNum, hops )(
-	    cache.theMeetingPlace, cache.theWaiters, false, false, cursor, xmlCollName
+	    cache.theMeetingPlace, cache.theWaiters, DoNotRetain, DoNotRetain, cursor, xmlCollName
 	  )( path )    
 	}
 	
@@ -1723,7 +1733,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.ASubscribeNum, hops )(
-	    cache.theChannels, cache.theSubscriptions, true, true, false, xmlCollName
+	    cache.theChannels, cache.theSubscriptions, Store, Store, false, xmlCollName
 	  )( path )    
 	}
 	

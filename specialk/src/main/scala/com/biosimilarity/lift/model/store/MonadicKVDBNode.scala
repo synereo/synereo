@@ -383,8 +383,8 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     def mget( ask : dAT.AskNum, hops : List[Moniker] )(
       channels : Map[mTT.GetRequest,mTT.Resource],
       registered : Map[mTT.GetRequest,List[RK]],
-      consume : Boolean,
-      keep : Boolean,
+      consume : RetentionPolicy,
+      keep : RetentionPolicy,
       cursor : Boolean
     )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -415,7 +415,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     def get( hops : List[Moniker] )( cursor : Boolean )(
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Generator[Option[mTT.Resource],Unit,Unit] = {              
-      mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, true, true, cursor )( path )    
+      mget( dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, Cache, Cache, cursor )( path )    
     }
     
     def get( cursor : Boolean )(
@@ -437,7 +437,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AFetchNum, hops )(
-	cache.theMeetingPlace, cache.theWaiters, false, false, cursor
+	cache.theMeetingPlace, cache.theWaiters, DoNotRetain, DoNotRetain, cursor
       )( path )    
     }
     
@@ -462,7 +462,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       mget( dAT.ASubscribeNum, hops )(
-	cache.theChannels, cache.theSubscriptions, true, true, false
+	cache.theChannels, cache.theSubscriptions, Cache, Cache, false
       )( path )    
     }
     

@@ -930,8 +930,8 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	)(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
 	  registered : Map[mTT.GetRequest,List[RK]],
-	  consume : Boolean,
-	  keep : Boolean,
+	  consume : RetentionPolicy,
+	  keep : RetentionPolicy,
 	  cursor : Boolean,
 	  collName : Option[String]
 	)(
@@ -1083,15 +1083,20 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 					    {
                                               var rsrcRslts : List[mTT.Resource] = Nil
                                               for( rslt <- itergen[Elem]( rslts ) ) {
-						tweet( "retrieved " + rslt.toString )
-						
-						if ( consume ) {
-						  tweet( "removing from store " + rslt )
-						  removeFromStore(
-						    persist,
-						    rslt,
-						    collName
-						  )
+						tweet( "retrieved " + rslt.toString )												
+
+						consume match {
+						  case policy : RetainInStore => {
+						    tweet( "removing from store " + rslt )
+						    removeFromStore(
+						      persist,
+						      rslt,
+						      collName
+						    )
+						  }
+						  case _ => {
+						    tweet( "policy indicates not to remove from store " + rslt )
+						  }
 						}
 						
 						// BUGBUG -- LGM : This is a
@@ -1119,14 +1124,19 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 						    for( rslt <- itergen[Elem]( rslts ) ) {
 						      tweet( "retrieved " + rslt.toString )
 						      val ersrc = pd.asResource( path, rslt )
-						      
-						      if ( consume ) {
-							tweet( "removing from store " + rslt )
-							removeFromStore( 
-							  persist,
-							  rslt,
-							  collName
-							)
+						      						      
+						      consume match {
+							case policy : RetainInStore => {
+							  tweet( "removing from store " + rslt )
+							  removeFromStore( 
+							    persist,
+							    rslt,
+							    collName
+							  )
+							}
+							case _ => {
+							  tweet( "policy indicates not to remove from store" + rslt )
+							}
 						      }
 						      
 						      // BUGBUG -- LGM : This is a
@@ -1293,7 +1303,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.AGet, hops )(
-	    theMeetingPlace, theWaiters, true, true, cursor, xmlCollName
+	    theMeetingPlace, theWaiters, Store, Store, cursor, xmlCollName
 	  )( path )    
 	}
 	override def get(
@@ -1324,7 +1334,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.AFetch, hops )(
-	    theMeetingPlace, theWaiters, false, false, cursor, xmlCollName
+	    theMeetingPlace, theWaiters, DoNotRetain, DoNotRetain, cursor, xmlCollName
 	  )( path )    
 	}
 	override def fetch(
@@ -1353,7 +1363,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.ASubscribe, hops )(
-	    theChannels, theSubscriptions, true, true, false, xmlCollName
+	    theChannels, theSubscriptions, Store, Store, false, xmlCollName
 	  )( path )    
 	}
 	override def subscribe(
