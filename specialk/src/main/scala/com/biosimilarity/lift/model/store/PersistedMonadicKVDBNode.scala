@@ -1674,7 +1674,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	    )
 	  )
-	  mget( perD, dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, Store, Store, cursor, xmlCollName )( path )    
+	  mget( perD, dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, CacheAndStore, Store, cursor, xmlCollName )( path )    
 	}
 	
 	def get( cursor : Boolean )(
@@ -1733,7 +1733,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.ASubscribeNum, hops )(
-	    cache.theChannels, cache.theSubscriptions, Store, Store, false, xmlCollName
+	    cache.theChannels, cache.theSubscriptions, CacheAndStore, Store, false, xmlCollName
 	  )( path )    
 	}
 	
