@@ -1303,7 +1303,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.AGet, hops )(
-	    theMeetingPlace, theWaiters, Store, Store, cursor, xmlCollName
+	    theMeetingPlace, theWaiters, CacheAndStore, Store, cursor, xmlCollName
 	  )( path )    
 	}
 	override def get(
@@ -1363,7 +1363,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.ASubscribe, hops )(
-	    theChannels, theSubscriptions, Store, Store, false, xmlCollName
+	    theChannels, theSubscriptions, CacheAndStore, Store, false, xmlCollName
 	  )( path )    
 	}
 	override def subscribe(
