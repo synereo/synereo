@@ -223,6 +223,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	shift {
 	  outerk : ( Unit => Unit ) =>
 	    reset {
+	      tweet( "Locking " + this + " for mget on " + ptn + "." )
 	      spaceLock.synchronized {
 		val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
 		val meets = locations( map, ptn )
@@ -274,6 +275,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
  		  }
  		}
 		
+		tweet( "Unlocking " + this + " for mget on " + ptn + "." )
 		spaceLock.synchronized {
 		  spaceLock.notifyAll()
 		}
@@ -384,6 +386,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     registered : Map[Place,List[RK]],
     consume : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
+    tweet( "Locking " + this + " for mput on " + ptn + "." )
     spaceLock.synchronized {
       for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
 	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
@@ -436,6 +439,9 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  }
 	}
       }
+
+      tweet( "Unlocking " + this + " for mput on " + ptn + "." )
+
       spaceLock.synchronized {
 	spaceLock.notifyAll()
       }
