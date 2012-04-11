@@ -474,10 +474,12 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     }
 
     override def put( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
-      mput( cache.theMeetingPlace, cache.theWaiters, false )( ptn, rsrc )
+      //mput( cache.theMeetingPlace, cache.theWaiters, false )( ptn, rsrc )
+      cache.mput( cache.theMeetingPlace, cache.theWaiters, false )( ptn, rsrc )
     }
     override def publish( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
-      mput( cache.theChannels, cache.theSubscriptions, true )( ptn, rsrc )
+      //mput( cache.theChannels, cache.theSubscriptions, true )( ptn, rsrc )
+      cache.mput( cache.theChannels, cache.theSubscriptions, true )( ptn, rsrc )
     }
 
     override def configFileName : Option[String] = None

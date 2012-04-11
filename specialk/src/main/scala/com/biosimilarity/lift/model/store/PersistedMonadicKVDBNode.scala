@@ -890,7 +890,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      // No...
 	      case Nil => {
 		// Store the rsrc at a representative of the ptn
-		tweet( "no waiters waiting for a value at " + ptn )
+		tweet( "in PersistedMonadicKVDB level putPlaces: no waiters waiting for a value at " + ptn )
 		//channels( representative( ptn ) ) = rsrc
 		updateKStore( persist )(
 		  ptn, consume, collName
