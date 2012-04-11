@@ -123,6 +123,12 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     override def configurationDefaults : ConfigurationDefaults = {
       ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
     } 
+    override def toString() : String = {
+      (
+	this.getClass.getName.split( "\\." ).last + "@"
+	+ ( name match { case MURI( uri ) => uri; case _ => name } )
+      )
+    }
   }
   case class MonadicKVDBNode(
     cache : MonadicKVDB,
