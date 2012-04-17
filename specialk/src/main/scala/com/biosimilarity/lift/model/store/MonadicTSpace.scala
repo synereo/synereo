@@ -316,12 +316,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	shift {
 	  outerk : ( Unit => Unit ) =>
 	    reset {
-	      tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
 	      // if ( ! spaceLock.available ) {
 // 		rk( None )
 // 	      }
 // 	      else {
-		spaceLock.occupy( TheReaderKey )
+	      spaceLock.occupy( TheReaderKey )
+	      tweet( "Reader has occupied spaceLock on " + this + " for mget on " + ptn + "." )
 		val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
 		val meets = locations( map, ptn )
 		
@@ -483,67 +483,67 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
     consume : Boolean
-  )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
-    tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
+  )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {        
     /* spaceLock. */ //synchronized {
     //if ( ! spaceLock.available ) {
     //}
     //else {
-      spaceLock.occupy( TheWriterKey )
-      for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
-	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
-	rks match {
-	  case rk :: rrks => {	
-	    if ( consume ) {
-	      for( sk <- rks ) {
-		spawn {
-		  sk( s( rsrc ) )
-		}
+    spaceLock.occupy( TheWriterKey )
+    tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
+    for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
+      val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
+      tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+      rks match {
+	case rk :: rrks => {	
+	  if ( consume ) {
+	    for( sk <- rks ) {
+	      spawn {
+		sk( s( rsrc ) )
 	      }
 	    }
-	    else {
-	      registered( wtr ) = rrks
-	      rk( s( rsrc ) )
-	    }
 	  }
-	  case Nil => {
-	    //channels( wtr ) = rsrc	  
-	    //channels( ptn ) = rsrc	  
-	    tweet(
-	      (
-		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		+ "in mput with empty waitlist; about to put rsrc\n"
-		+ "channels : " + channels + "\n"
-		+ "registered : " + registered + "\n"
-		+ "ptn : " + ptn + "\n"
-		+ "rsrc : " + rsrc + "\n"
-		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	      )
-	    )
-	    if ( ptn.isInstanceOf[Place] ) {
-	      channels( ptn.asInstanceOf[Place] ) = rsrc
-	    }
-	    else {
-	      channels( wtr ) = rsrc
-	    }
-	    tweet(
-	      (
-		">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-		+ "in mput with empty waitlist; having put rsrc\n"
-		+ "channels : " + channels + "\n"
-		+ "registered : " + registered + "\n"
-		+ "ptn : " + ptn + "\n"
-		+ "rsrc : " + rsrc + "\n"
-		+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	      )
-	    )
+	  else {
+	    registered( wtr ) = rrks
+	    rk( s( rsrc ) )
 	  }
 	}
+	case Nil => {
+	  //channels( wtr ) = rsrc	  
+	  //channels( ptn ) = rsrc	  
+	  tweet(
+	    (
+	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + "in mput with empty waitlist; about to put rsrc\n"
+	      + "channels : " + channels + "\n"
+	      + "registered : " + registered + "\n"
+	      + "ptn : " + ptn + "\n"
+	      + "rsrc : " + rsrc + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
+	  if ( ptn.isInstanceOf[Place] ) {
+	    channels( ptn.asInstanceOf[Place] ) = rsrc
+	  }
+	  else {
+	    channels( wtr ) = rsrc
+	  }
+	  tweet(
+	    (
+	      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + "in mput with empty waitlist; having put rsrc\n"
+	      + "channels : " + channels + "\n"
+	      + "registered : " + registered + "\n"
+	      + "ptn : " + ptn + "\n"
+	      + "rsrc : " + rsrc + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
+	}
       }
-      
-      tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
-      spaceLock.depart( TheWriterKey )
+    }
+    
+    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+    spaceLock.depart( TheWriterKey )
     //}
     /* spaceLock. */ //synchronized {
     /* spaceLock. */ //notifyAll()
