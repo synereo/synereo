@@ -86,8 +86,101 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
       with ConfiggyReporting 
       with ConfigurationTrampoline =>
 
+  trait PortKey
+  case class ReaderKey() extends PortKey
+  case class WriterKey() extends PortKey
+
   @transient
-  val spaceLock : AnyRef = new Object()
+  val TheReaderKey : ReaderKey = ReaderKey()
+  @transient
+  val TheWriterKey : WriterKey = WriterKey() 
+
+  case class SpaceLock( theRoom : HashMap[PortKey,Int] ) {
+    def allowedIn( 
+      theRoom : HashMap[PortKey,Int], token : ReaderKey
+    ) : Boolean = {
+      theRoom.get( TheWriterKey ) match {
+	case None => {
+	  theRoom += ( TheReaderKey -> ( theRoom.get( TheReaderKey ).getOrElse( 0 ) + 1 ) )
+	  true
+	}
+	case _ => false
+      }
+    }
+
+    def allowedIn( 
+      theRoom : HashMap[PortKey,Int], token : WriterKey
+    ) : Boolean = {
+      theRoom.get( TheReaderKey ) match {
+	case None => {
+	  theRoom += ( TheWriterKey -> ( theRoom.get( TheWriterKey ).getOrElse( 0 ) + 1 ) )
+	  true
+	}
+	case _ => false
+      }
+    }
+
+    def leave( 
+      theRoom : HashMap[PortKey,Int], token : WriterKey
+    ) : Unit = {
+      theRoom.get( TheWriterKey ) match {
+	case Some( 1 ) => {
+	  theRoom -= TheWriterKey
+	}
+	case Some( i : Int ) => {
+	  theRoom += ( TheWriterKey -> ( i - 1 ) )
+	}
+	case _ => {
+	  throw new Exception( "leaving without entering: " + token )
+	}
+      }      
+    }
+
+    def leave( 
+      theRoom : HashMap[PortKey,Int], token : ReaderKey
+    ) : Unit = {
+      theRoom.get( TheReaderKey ) match {
+	case Some( 1 ) => {
+	  theRoom -= TheReaderKey
+	  notify()
+	}
+	case Some( i : Int ) => {
+	  theRoom += ( TheReaderKey -> ( i - 1 ) )
+	}
+	case _ => {
+	  throw new Exception( "leaving without entering: " + token )
+	}
+      }      
+    }
+
+    def occupy( portKey : PortKey ) = synchronized {
+      // We test and set in one operation
+      portKey match {
+	case rk : ReaderKey => {
+	  while ( ! allowedIn( theRoom, rk ) ) wait()
+	}
+	case wk : WriterKey => {
+	  while ( ! allowedIn( theRoom, wk ) ) wait()
+	}
+	case _ => {
+	  throw new Exception( "Unexpected portKey type: " + portKey )
+	}
+      }      
+    }
+
+    def depart( portKey : PortKey ) = synchronized {
+      portKey match {
+	case rk : ReaderKey => leave( theRoom, rk )
+	case wk : WriterKey => leave( theRoom, wk )
+	case _ => 
+	  throw new Exception( "Unexpected portKey type: " + portKey )
+      }
+      
+    }
+  }
+
+  @transient
+  val spaceLock : SpaceLock = new SpaceLock( new HashMap[PortKey,Int] )
 
   def theMeetingPlace : Map[Place,Resource]
   def theChannels : Map[Place,Resource]
@@ -223,8 +316,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	shift {
 	  outerk : ( Unit => Unit ) =>
 	    reset {
-	      tweet( "Locking " + this + " for mget on " + ptn + "." )
-	      /* spaceLock. */ synchronized {
+	      tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
+	      // if ( ! spaceLock.available ) {
+// 		rk( None )
+// 	      }
+// 	      else {
+		spaceLock.occupy( TheReaderKey )
 		val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
 		val meets = locations( map, ptn )
 		
@@ -234,7 +331,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  tweet( "registered continuation storage: " + registered )
 		  tweet( "theWaiters: " + theWaiters )
 		  tweet( "theSubscriptions: " + theSubscriptions )		  
-
+		  
 		  keep match {
 		    case policy : RetainInCache => {
 		      registered( place ) =
@@ -244,11 +341,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		      tweet( "policy indicates not to retain in cache: " + rk )
 		    }
 		  }
-
+		  
 		  tweet( "stored a continuation: " + rk )
 		  tweet( "registered continuation storage: " + registered )
 		  tweet( "theWaiters: " + theWaiters )
 		  tweet( "theSubscriptions: " + theSubscriptions )
+
+		  tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+		  spaceLock.depart( TheReaderKey )
 		  rk( None )
 		}
 		else {
@@ -260,7 +360,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		    val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		    
 		    tweet( "found a resource: " + rsrc )		    
-
+		    
 		    consume match {
 		      case policy : RetainInCache => {
 			channels -= place
@@ -269,23 +369,21 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 			tweet( "policy indicates not to consume from cache: " + place )
 		      }
 		    }
+
+		    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+		    spaceLock.depart( TheReaderKey )
 		    rk( s( rsrc ) )
 		    
 		    //shift { k : ( Unit => Unit ) => k() }
  		  }
- 		}
-		
-		tweet( "Unlocking " + this + " for mget on " + ptn + "." )
-		/* spaceLock. */ synchronized {
-		  /* spaceLock. */ notifyAll()
-		}
-	      }
+ 		}				
+	      //}
  	      //tweet( "get returning" )
  	      outerk()
  	    }
  	}
-     }
-
+    }
+  
   def get( ptn : Pattern ) =
     mget( theMeetingPlace, theWaiters, Cache, Cache )( ptn )
   def fetch( ptn : Pattern ) =
@@ -386,8 +484,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     registered : Map[Place,List[RK]],
     consume : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
-    tweet( "Locking " + this + " for mput on " + ptn + "." )
-    /* spaceLock. */ synchronized {
+    tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
+    /* spaceLock. */ //synchronized {
+    //if ( ! spaceLock.available ) {
+    //}
+    //else {
+      spaceLock.occupy( TheWriterKey )
       for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
 	val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
 	tweet( "waiters waiting for a value at " + wtr + " : " + rks )
@@ -439,13 +541,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  }
 	}
       }
-
-      tweet( "Unlocking " + this + " for mput on " + ptn + "." )
-
-      /* spaceLock. */ synchronized {
-	/* spaceLock. */ notifyAll()
-      }
-    }
+      
+      tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+      spaceLock.depart( TheWriterKey )
+    //}
+    /* spaceLock. */ //synchronized {
+    /* spaceLock. */ //notifyAll()
+    //}
+    //}
     
   }
 

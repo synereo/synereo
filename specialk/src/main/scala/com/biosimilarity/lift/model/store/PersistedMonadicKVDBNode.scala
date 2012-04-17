@@ -581,7 +581,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	override def configurationDefaults : ConfigurationDefaults = {
 	  ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
 	} 
-
+	override def toString() : String = {
+	  (
+	    this.getClass.getName.split( "\\." ).last + "@"
+	    + ( name match { case MURI( uri ) => uri; case _ => name } )
+	  )
+	}
 	override def tmpDirStr : String = {
 	  val tds = config.getString( "storageDir", "tmp" )       
 	  val tmpDir = new java.io.File( tds )
