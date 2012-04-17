@@ -18,6 +18,8 @@ import scala.util.continuations._
 import scala.collection.MapProxy
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.Buffer
+import scala.collection.mutable.ListBuffer
 
 trait RetentionPolicy
 trait RetainInCache extends RetentionPolicy
@@ -26,6 +28,125 @@ case object DoNotRetain extends RetentionPolicy
 case object Cache extends RetainInCache
 case object Store extends RetainInStore
 case object CacheAndStore extends RetainInCache with RetainInStore
+
+case class SpaceLock[RK](
+  theReadingRoom : HashMap[RK,Boolean],
+  theWritingRoom : Buffer[Int]
+) {
+  def allowedIn( 
+    readingRoom : HashMap[RK, Boolean], writingRoom : Buffer[Int], rk : RK
+  ) : Boolean = {
+    if ( writingRoom.size < 1 ) {
+      true
+    }
+    else {
+      writingRoom( 0 ) match {
+	case 0 => {	  
+	  readingRoom += ( rk -> true )
+	  true
+	}
+	case _ => false
+      }
+    }
+  }
+  
+  def allowedIn( 
+    readingRoom : HashMap[RK, Boolean], writingRoom : Buffer[Int]
+  ) : Boolean = {
+    readingRoom.keys match {
+      case Nil => {
+	writingRoom.size match {
+	  case 0 => {
+	    writingRoom += 1
+	  }
+	  case 1 => {
+	    writingRoom( 0 ) += 1
+	  }
+	  case _ => {
+	    throw new Exception( "oddly shaped writing room: " + writingRoom )
+	  }
+	}
+	true
+      }
+      case _ => {
+	val p =
+	  ( false /: readingRoom.values )( 
+	    { ( acc, b ) => { acc || b } }
+	  )
+	if ( !p ) {
+	  writingRoom.size match {
+	    case 0 => {
+	      writingRoom += 1
+	    }
+	    case 1 => {
+	      writingRoom( 0 ) += 1
+	    }
+	    case _ => {
+	      throw new Exception( "oddly shaped writing room: " + writingRoom )
+	    }
+	  }
+	  true
+	}
+	else {
+	  false
+	}
+      }
+    }
+  }
+  
+  def leave( writingRoom : Buffer[Int] ) : Unit = {
+    if ( writingRoom.size > 0 ) {
+      writingRoom( 0 ) match {
+	case 1 => {
+	  writingRoom.clear
+	}
+	case i : Int => {
+	  writingRoom( 0 ) -= 1
+	}
+	case _ => {
+	  throw new Exception( "leaving writing room without entering" )
+	}
+      }
+    }
+    else {
+      throw new Exception( "leaving writing room without entering" )
+    }
+  }
+  
+  def leave( readingRoom : HashMap[RK, Boolean], rk : RK ) : Unit = {
+    readingRoom.get( rk ) match {
+      case Some( false ) => {
+	readingRoom -= rk
+      }
+      case Some( true ) => {
+	readingRoom += ( rk -> false )
+      }
+      case _ => {
+	throw new Exception( "leaving reading room without entering: " + rk )
+      }
+    }      
+  }
+  
+  def occupy( ork : Option[RK] ) = synchronized {
+    // We test and set in one operation
+    ork match {
+      case Some( rk ) => {
+	while ( ! allowedIn( theReadingRoom, theWritingRoom, rk ) ) wait()
+      }
+      case None => {
+	while ( ! allowedIn( theReadingRoom, theWritingRoom ) ) wait()
+      }
+    }      
+  }
+  
+  def depart( ork : Option[RK] ) = synchronized {
+    ork match {
+      case Some( rk ) => leave( theReadingRoom, rk )
+      case None => leave( theWritingRoom )
+    }
+    
+  }
+}
 
 trait ExcludedMiddleTypes[Place,Pattern,Resource] {
   type RK = Option[Resource] => Unit @suspendable  
@@ -84,103 +205,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   self : WireTap
       with Journalist
       with ConfiggyReporting 
-      with ConfigurationTrampoline =>
-
-  trait PortKey
-  case class ReaderKey() extends PortKey
-  case class WriterKey() extends PortKey
+      with ConfigurationTrampoline =>		
 
   @transient
-  val TheReaderKey : ReaderKey = ReaderKey()
-  @transient
-  val TheWriterKey : WriterKey = WriterKey() 
-
-  case class SpaceLock( theRoom : HashMap[PortKey,Int] ) {
-    def allowedIn( 
-      theRoom : HashMap[PortKey,Int], token : ReaderKey
-    ) : Boolean = {
-      theRoom.get( TheWriterKey ) match {
-	case None => {
-	  theRoom += ( TheReaderKey -> ( theRoom.get( TheReaderKey ).getOrElse( 0 ) + 1 ) )
-	  true
-	}
-	case _ => false
-      }
-    }
-
-    def allowedIn( 
-      theRoom : HashMap[PortKey,Int], token : WriterKey
-    ) : Boolean = {
-      theRoom.get( TheReaderKey ) match {
-	case None => {
-	  theRoom += ( TheWriterKey -> ( theRoom.get( TheWriterKey ).getOrElse( 0 ) + 1 ) )
-	  true
-	}
-	case _ => false
-      }
-    }
-
-    def leave( 
-      theRoom : HashMap[PortKey,Int], token : WriterKey
-    ) : Unit = {
-      theRoom.get( TheWriterKey ) match {
-	case Some( 1 ) => {
-	  theRoom -= TheWriterKey
-	}
-	case Some( i : Int ) => {
-	  theRoom += ( TheWriterKey -> ( i - 1 ) )
-	}
-	case _ => {
-	  throw new Exception( "leaving without entering: " + token )
-	}
-      }      
-    }
-
-    def leave( 
-      theRoom : HashMap[PortKey,Int], token : ReaderKey
-    ) : Unit = {
-      theRoom.get( TheReaderKey ) match {
-	case Some( 1 ) => {
-	  theRoom -= TheReaderKey
-	  notify()
-	}
-	case Some( i : Int ) => {
-	  theRoom += ( TheReaderKey -> ( i - 1 ) )
-	}
-	case _ => {
-	  throw new Exception( "leaving without entering: " + token )
-	}
-      }      
-    }
-
-    def occupy( portKey : PortKey ) = synchronized {
-      // We test and set in one operation
-      portKey match {
-	case rk : ReaderKey => {
-	  while ( ! allowedIn( theRoom, rk ) ) wait()
-	}
-	case wk : WriterKey => {
-	  while ( ! allowedIn( theRoom, wk ) ) wait()
-	}
-	case _ => {
-	  throw new Exception( "Unexpected portKey type: " + portKey )
-	}
-      }      
-    }
-
-    def depart( portKey : PortKey ) = synchronized {
-      portKey match {
-	case rk : ReaderKey => leave( theRoom, rk )
-	case wk : WriterKey => leave( theRoom, wk )
-	case _ => 
-	  throw new Exception( "Unexpected portKey type: " + portKey )
-      }
-      
-    }
-  }
-
-  @transient
-  val spaceLock : SpaceLock = new SpaceLock( new HashMap[PortKey,Int] )
+  val spaceLock : SpaceLock[RK] =
+    new SpaceLock[RK]( new HashMap[RK, Boolean](), new ListBuffer() )
 
   def theMeetingPlace : Map[Place,Resource]
   def theChannels : Map[Place,Resource]
@@ -320,7 +349,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 // 		rk( None )
 // 	      }
 // 	      else {
-	      spaceLock.occupy( TheReaderKey )
+	      spaceLock.occupy( Some( rk ) )
 	      tweet( "Reader has occupied spaceLock on " + this + " for mget on " + ptn + "." )
 		val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
 		val meets = locations( map, ptn )
@@ -348,7 +377,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  tweet( "theSubscriptions: " + theSubscriptions )
 
 		  tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		  spaceLock.depart( TheReaderKey )
+		  spaceLock.depart( Some( rk ) )
 		  rk( None )
 		}
 		else {
@@ -371,7 +400,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		    }
 
 		    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		    spaceLock.depart( TheReaderKey )
+		    spaceLock.depart( Some( rk ) )
 		    rk( s( rsrc ) )
 		    
 		    //shift { k : ( Unit => Unit ) => k() }
@@ -488,7 +517,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     //if ( ! spaceLock.available ) {
     //}
     //else {
-    spaceLock.occupy( TheWriterKey )
+    spaceLock.occupy( None )
     tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
     for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
@@ -543,7 +572,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     }
     
     tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
-    spaceLock.depart( TheWriterKey )
+    spaceLock.depart( None )
     //}
     /* spaceLock. */ //synchronized {
     /* spaceLock. */ //notifyAll()
