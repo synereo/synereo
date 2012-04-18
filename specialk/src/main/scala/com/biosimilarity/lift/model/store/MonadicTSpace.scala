@@ -31,7 +31,8 @@ case object CacheAndStore extends RetainInCache with RetainInStore
 
 case class SpaceLock[RK](
   readingRoom : HashMap[RK,Boolean],
-  writingRoom : Buffer[Int]
+  writingRoom : Buffer[Int],
+  history : Buffer[RK]
 ) {
   def allowedIn( rk : RK ) : Boolean = {
     if ( writingRoom.size < 1 ) {
@@ -115,12 +116,19 @@ case class SpaceLock[RK](
     readingRoom.get( rk ) match {
       case Some( false ) => {
 	readingRoom -= rk
+	history += rk
       }
       case Some( true ) => {
 	readingRoom += ( rk -> false )
       }
       case _ => {
-	throw new Exception( "leaving reading room without entering: " + rk )
+	history.contains( rk ) match {
+	  case true => {
+	  }
+	  case false => {
+	    throw new Exception( "leaving reading room without entering: " + rk )
+	  }
+	}	
       }
     }
     readingRoom.keys match {
@@ -217,7 +225,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 
   @transient
   val spaceLock : SpaceLock[RK] =
-    new SpaceLock[RK]( new HashMap[RK, Boolean](), new ListBuffer() )
+    new SpaceLock[RK](
+      new HashMap[RK, Boolean](),
+      new ListBuffer[Int](),
+      new ListBuffer[RK]
+    )
 
   def theMeetingPlace : Map[Place,Resource]
   def theChannels : Map[Place,Resource]
