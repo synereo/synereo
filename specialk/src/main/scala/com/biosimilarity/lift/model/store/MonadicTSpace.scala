@@ -517,8 +517,13 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  // No...
 	  case Nil => {
 	    // Store the rsrc at a representative of the ptn
-	    tweet( "no waiters waiting for a value at " + ptn )
+	    tweet( "no waiters waiting for a value at " + ptn )	    
 	    channels( representative( ptn ) ) = rsrc
+
+	    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+	    spaceLock.depart( None )
+	    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 	  }
 	}
     }
