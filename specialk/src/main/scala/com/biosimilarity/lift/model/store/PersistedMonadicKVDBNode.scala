@@ -1589,17 +1589,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			// put the results there
 			case Some( spec ) => {
 			  for( inrRsrc <- rbnd.rsrc ) {
-			    reset { cache.put( spec, inrRsrc ) }
+			    reset { put( spec, inrRsrc ) }
 			  }		      		  
 			}
 			// else put the results at the path
 			case None => {
-			  reset { cache.put( path, rsrc ) }
+			  reset { put( path, rsrc ) }
 			}
 		      }		  
 		    }
 		    case _ => {
-		      reset { cache.put( path, rsrc ) }
+		      reset { put( path, rsrc ) }
 		    }
 		  }	      
 		}
@@ -1609,16 +1609,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      rsrc( path ) match {
 			case Some( spec ) => {
 			  for( inrRsrc <- rbnd.rsrc ) {
-			    reset { cache.put( spec, inrRsrc ) }
+			    reset { put( spec, inrRsrc ) }
 			  }		      		  
 			}
 			case None => {
-			  reset { cache.put( path, rsrc ) }
+			  reset { put( path, rsrc ) }
 			}
 		      }		  
 		    }
 		    case _ => {
-		      reset { cache.put( path, rsrc ) }
+		      reset { put( path, rsrc ) }
 		    }
 		  }
 		}
@@ -1628,16 +1628,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      rsrc( path ) match {
 			case Some( spec ) => {
 			  for( inrRsrc <- rbnd.rsrc ) {
-			    reset { cache.publish( spec, inrRsrc ) }
+			    reset { publish( spec, inrRsrc ) }
 			  }		      		  
 			}
 			case None => {
-			  reset { cache.publish( path, rsrc ) }
+			  reset { publish( path, rsrc ) }
 			}
 		      }		  
 		    }
 		    case _ => {
-		      reset { cache.publish( path, rsrc ) }
+		      reset { publish( path, rsrc ) }
 		    }
 		  }
 		}	    
