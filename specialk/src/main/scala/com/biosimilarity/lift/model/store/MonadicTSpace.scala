@@ -96,6 +96,7 @@ case class SpaceLock[RK](
       writingRoom( 0 ) match {
 	case 1 => {
 	  writingRoom.clear
+	  notify()
 	}
 	case i : Int => {
 	  writingRoom( 0 ) -= 1
@@ -121,7 +122,17 @@ case class SpaceLock[RK](
       case _ => {
 	throw new Exception( "leaving reading room without entering: " + rk )
       }
-    }      
+    }
+    readingRoom.keys match {
+      case Nil => notify()
+      case _ => {
+	val p =
+	  ( false /: readingRoom.values )( 
+	    { ( acc, b ) => { acc || b } }
+	  )
+	if ( !p ) { notify() }
+      }
+    }
   }
   
   def occupy( ork : Option[RK] ) = synchronized {
