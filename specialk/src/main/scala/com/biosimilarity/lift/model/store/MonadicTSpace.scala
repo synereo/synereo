@@ -540,6 +540,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
       rks match {
 	case rk :: rrks => {	
 	  if ( consume ) {
+
+	    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+	    spaceLock.depart( None )
+	    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
 	    for( sk <- rks ) {
 	      spawn {
 		sk( s( rsrc ) )
@@ -547,7 +553,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	    }
 	  }
 	  else {
+
+	    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+	    spaceLock.depart( None )
+	    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
 	    registered( wtr ) = rrks
+
 	    rk( s( rsrc ) )
 	  }
 	}
@@ -582,14 +595,15 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	    )
 	  )
+
+	  tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+	  spaceLock.depart( None )
+	  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
 	}
       }
-    }
-    
-    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
-    spaceLock.depart( None )
-    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+    }        
     
   }
 
