@@ -350,62 +350,70 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 // 	      }
 // 	      else {
 	      spaceLock.occupy( Some( rk ) )
-	      tweet( "Reader has occupied spaceLock on " + this + " for mget on " + ptn + "." )
-		val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
-		val meets = locations( map, ptn )
+
+	      tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
+	      tweet( "spaceLock reading room: " + spaceLock.theReadingRoom )
+	      tweet( "spaceLock writing room: " + spaceLock.theWritingRoom )
+
+	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
+	      val meets = locations( map, ptn )
+	      
+	      if ( meets.isEmpty ) {
+		val place = representative( ptn )
+		tweet( "did not find a resource, storing a continuation: " + rk )
+		tweet( "registered continuation storage: " + registered )
+		tweet( "theWaiters: " + theWaiters )
+		tweet( "theSubscriptions: " + theSubscriptions )		  
 		
-		if ( meets.isEmpty ) {
-		  val place = representative( ptn )
-		  tweet( "did not find a resource, storing a continuation: " + rk )
-		  tweet( "registered continuation storage: " + registered )
-		  tweet( "theWaiters: " + theWaiters )
-		  tweet( "theSubscriptions: " + theSubscriptions )		  
+		keep match {
+		  case policy : RetainInCache => {
+		    registered( place ) =
+		      registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		  }
+		  case _ => {
+		    tweet( "policy indicates not to retain in cache: " + rk )
+		  }
+		}
+		
+		tweet( "stored a continuation: " + rk )
+		tweet( "registered continuation storage: " + registered )
+		tweet( "theWaiters: " + theWaiters )
+		tweet( "theSubscriptions: " + theSubscriptions )
+		
+		tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+		spaceLock.depart( Some( rk ) )
+		tweet( "spaceLock reading room: " + spaceLock.theReadingRoom )
+		tweet( "spaceLock writing room: " + spaceLock.theWritingRoom )
+		rk( None )
+	      }
+	      else {
+		for(
+		  placeNRrscNSubst <- itergen[PlaceInstance](
+		    meets
+		  )
+		) {
+		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
 		  
-		  keep match {
+		  tweet( "found a resource: " + rsrc )		    
+		  
+		  consume match {
 		    case policy : RetainInCache => {
-		      registered( place ) =
-			registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		      channels -= place
 		    }
 		    case _ => {
-		      tweet( "policy indicates not to retain in cache: " + rk )
+		      tweet( "policy indicates not to consume from cache: " + place )
 		    }
 		  }
 		  
-		  tweet( "stored a continuation: " + rk )
-		  tweet( "registered continuation storage: " + registered )
-		  tweet( "theWaiters: " + theWaiters )
-		  tweet( "theSubscriptions: " + theSubscriptions )
-
 		  tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
 		  spaceLock.depart( Some( rk ) )
-		  rk( None )
-		}
-		else {
-		  for(
-		    placeNRrscNSubst <- itergen[PlaceInstance](
-		      meets
-		    )
-		  ) {
-		    val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
-		    
-		    tweet( "found a resource: " + rsrc )		    
-		    
-		    consume match {
-		      case policy : RetainInCache => {
-			channels -= place
-		      }
-		      case _ => {
-			tweet( "policy indicates not to consume from cache: " + place )
-		      }
-		    }
-
-		    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		    spaceLock.depart( Some( rk ) )
-		    rk( s( rsrc ) )
-		    
-		    //shift { k : ( Unit => Unit ) => k() }
- 		  }
- 		}				
+		  tweet( "spaceLock reading room: " + spaceLock.theReadingRoom )
+		  tweet( "spaceLock writing room: " + spaceLock.theWritingRoom )
+		  rk( s( rsrc ) )
+		  
+		  //shift { k : ( Unit => Unit ) => k() }
+ 		}
+ 	      }				
 	      //}
  	      //tweet( "get returning" )
  	      outerk()
@@ -513,12 +521,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     registered : Map[Place,List[RK]],
     consume : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {        
-    /* spaceLock. */ //synchronized {
-    //if ( ! spaceLock.available ) {
-    //}
-    //else {
     spaceLock.occupy( None )
     tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
+    tweet( "spaceLock reading room: " + spaceLock.theReadingRoom )
+    tweet( "spaceLock writing room: " + spaceLock.theWritingRoom )
+
     for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
       tweet( "waiters waiting for a value at " + wtr + " : " + rks )
@@ -573,11 +580,8 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     
     tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
     spaceLock.depart( None )
-    //}
-    /* spaceLock. */ //synchronized {
-    /* spaceLock. */ //notifyAll()
-    //}
-    //}
+    tweet( "spaceLock reading room: " + spaceLock.theReadingRoom )
+    tweet( "spaceLock writing room: " + spaceLock.theWritingRoom )
     
   }
 
