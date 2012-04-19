@@ -32,11 +32,13 @@ trait SociallyZipped[ReqBody,RspBody,SZ[_,_] <: SociallyZipped[_,_,SZ]]
 
 class Individual[ReqBody,RspBody,SZ[_,_] <: SociallyZipped[_,_,SZ]](
   override val name : Moniker,
+  @transient
   override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
+  @transient
   override val responses : ListBuffer[JustifiedResponse[ReqBody,RspBody]]
 ) extends TreeItem[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]])](
   ( name, requests, responses )
-) with SociallyZipped[ReqBody,RspBody,SZ] {
+) with SociallyZipped[ReqBody,RspBody,SZ] with Serializable {
   override val self = new IHashMap[Moniker,SZ[ReqBody,RspBody]]()    
   override def equals( o : Any ) : Boolean = {
     o match {

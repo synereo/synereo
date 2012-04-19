@@ -540,6 +540,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	       with PersistenceManifestTrampoline
 	       with BaseXXMLStore           
 	       with BaseXCnxnStorage[Namespace,Var,Tag]
+	       with Serializable
       {    
       }
   
@@ -548,7 +549,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	override val acquaintances : List[Moniker]
       ) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,AbstractPersistedMonadicKVDBNode](
 	localCache, acquaintances
-      ) with MonadicTermStoreT {
+      ) with MonadicTermStoreT
+	       with Serializable {
 	import identityConversions._
 	
 	override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
