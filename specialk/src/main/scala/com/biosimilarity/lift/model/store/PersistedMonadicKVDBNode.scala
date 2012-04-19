@@ -1888,6 +1888,7 @@ package usage {
   object PersistedMonadicKVDBNet
        extends PersistedMonadicKVDBNodeScope[String,String,String,Double]
        with UUIDOps
+  with Serializable
   {
     import SpecialKURIDefaults._
     import identityConversions._
@@ -1905,7 +1906,8 @@ package usage {
 
     val protoDreqUUID = getUUID()
     val protoDrspUUID = getUUID()    
-    
+
+    @transient
     lazy val aLabel = new CnxnCtxtLeaf[String,String,String]( Left( "a" ) )
 
     object MonadicDRsrcMsgs extends RsrcMsgTypes with Serializable {
@@ -1954,7 +1956,7 @@ package usage {
       override def protoEMTypes : EMTypes =
 	theEMTypes
 
-      object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT {	  
+      object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT with Serializable {	  
 	def mkCache( here : URI ) : PersistedMonadicKVDB = {
 	  new PersistedMonadicKVDB( MURI( here ) ) with Blobify with AMQPMonikerOps {		
 	    class StringXMLDBManifest(
@@ -2279,7 +2281,7 @@ package usage {
     }
   }
   
-  object PersistedMolecularUseCase {
+  object PersistedMolecularUseCase extends Serializable {
     import PersistedMonadicKVDBNet._   
     import Being._
     import PersistedKVDBNodeFactory._
@@ -2323,7 +2325,7 @@ package usage {
       }
     }
 
-    object KinaseSpecifications {
+    object KinaseSpecifications extends Serializable {
       import scala.math._
       
       trait Kinase {
@@ -2398,6 +2400,7 @@ package usage {
 
       type ConcreteKinase = Kinase with Product with Serializable
 
+      @transient
       lazy val molPtnMap : HashMap[ConcreteKinase,CnxnCtxtLabel[String,String,String]] = {	
 	val map = new HashMap[ConcreteKinase,CnxnCtxtLabel[String,String,String]]()
 	map += ( RAFProto -> mkMolPtn( "RAF" ) )
@@ -2408,15 +2411,18 @@ package usage {
 	map
       }
 
+      @transient
       implicit lazy val cascade : Seq[ConcreteKinase] =
 	List[ConcreteKinase](
 	  RAFProto, RASProto, MEK1Proto, MEK2Proto, MAPKProto
 	)
 
+      @transient
       implicit lazy val cascadeInitialState : List[( ConcreteKinase, Option[ConcreteKinase] )] = {
 	cascade.zip( cascade.drop( 1 ).map( Some( _ ) ) ++ List( None ) ).toList
       }
 
+      @transient
       implicit lazy val initialKinaseToProduce : ConcreteKinase = {	
 	cascade.head
       }	
@@ -2432,6 +2438,7 @@ package usage {
       //def mapk2Protein : Double = random * 100            
       def mapk2Protein : Double = .50 * 100            
 
+      @transient
       lazy val cascadeTransitionMap : HashMap[ConcreteKinase,Double] = {
 	val map = new HashMap[ConcreteKinase,Double]()
 	map += ( RAFProto -> raf2RAS )
@@ -2472,6 +2479,7 @@ package usage {
 	   override def self = kinaseMap
 	 }
 
+    @transient
     implicit lazy val cellCytoplasm : Cytoplasm = Cytoplasm( new HashMap[CnxnCtxtLabel[String,String,String],Double]() )    
 
     def supplyKinase(
