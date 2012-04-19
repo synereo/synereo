@@ -8,7 +8,7 @@
 
 package com.biosimilarity.lift.model
 
-object ApplicationDefaults {
+object ApplicationDefaults extends Serializable {
   // BaseX
   implicit val URI : String  =
     "xmldb:basex://localhost:1984/"
@@ -36,7 +36,7 @@ object ApplicationDefaults {
   implicit val tmpDirStr = "tmp"
 }
 
-object BaseXDefaults {
+object BaseXDefaults extends Serializable {
   implicit val URI : String  =
     "xmldb:basex://localhost:1984/"
   val dbHost : String = "localhost"
