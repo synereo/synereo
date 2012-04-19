@@ -1019,6 +1019,19 @@ trait CnxnXQuery[Namespace,Var,Tag] {
     }
   }
 
+  def xqCompVarConstraints(
+    pfxqv : String, cfxqv : String, olxqv : Option[String]
+  ) : Option[String] = {
+    for( lxqv <- olxqv ) yield {
+      (
+	"for" + " " + cfxqv + " " + "in" + " " + pfxqv + "/var"
+	+ " " + "where" + " "
+	+ "(" + " " + lxqv + " " + "=" + " " + cfxqv + " " + ")"
+	+ " " + "return" + " " + cfxqv
+      )
+    }
+  }
+
   def xqRecConstraints(
     ccl : CnxnCtxtLabel[Namespace,Var,Tag],
     xqcc : XQueryCompilerContext
@@ -1051,6 +1064,7 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	( "1 = 1" ) // the no-op -- true, it turns out, trips a bug in BaseX
       case CnxnCtxtBranch( ns, facts ) => {
 	val nxqv = nextXQV
+	val nxqcv = nextXQV
 
 	val ( ( childLEs, childCs ), _ ) =
 	  facts match {
@@ -1063,8 +1077,22 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 	      val factC =
 		xqRecConstraints( fact, fxqcc ) match {
 		  case "" => ""
-		  case fC@_ =>
-		    "(" + " " + fC + " " + ")"
+		  case fC@_ => {
+		    xqCompVarConstraints( nxqv, nxqcv, lxqv ) match {
+		      case Some( fCV ) => {
+			(
+			  "(" + " "
+			  + "(" + " " + fC + " " + ")"
+			  + " " + "or" + " "
+			  + "(" + " " + fCV + " " + ")"
+			  + " " + ")"
+			)
+		      }
+		      case None => {
+			"(" + " " + fC + " " + ")"
+		      }
+		    }		    
+		  }
 		}	
 
 	      ( ( ( factLE, factC ), 1 ) /: fs )( 
@@ -1084,8 +1112,25 @@ trait CnxnXQuery[Namespace,Var,Tag] {
 		    val accfC =
 		      fC match {
 			case "" => ccs 
-			case _ => {
-			  val ans = ccs + " and " + "(" + " " + fC + " " + ")"
+			case _ => {			  
+			  val ans = 
+			    xqCompVarConstraints( nxqv, nxqcv, lxqv ) match {
+			      case Some( fCV ) => {
+				(
+				  ccs + " and "
+				  + "(" + " "
+				  + "(" + " " + fC + " " + ")"
+				  + " " + "or" + " "
+				  + "(" + " " + fCV + " " + ")"
+				  + " " + ")"
+				)
+			      }
+			      case None => {
+				"(" + " " + fC + " " + ")"
+			      }
+			    }
+			  
+			  
 			  // println(
 // 			    "\n******************************************************************\n"
 // 			    + "recursive descent, compound 'and' accumulation\n"
