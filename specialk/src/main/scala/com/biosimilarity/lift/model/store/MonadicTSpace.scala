@@ -21,12 +21,12 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.ListBuffer
 
-trait RetentionPolicy
+trait RetentionPolicy extends Serializable
 trait RetainInCache extends RetentionPolicy
 trait RetainInStore extends RetentionPolicy
 case object DoNotRetain extends RetentionPolicy 
-case object Cache extends RetainInCache
-case object Store extends RetainInStore
+case object Cache extends RetainInCache 
+case object Store extends RetainInStore 
 case object CacheAndStore extends RetainInCache with RetainInStore
 
 case class SpaceLock[RK](

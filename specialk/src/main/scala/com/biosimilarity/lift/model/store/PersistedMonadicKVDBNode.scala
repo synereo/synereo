@@ -1905,8 +1905,10 @@ package usage {
     
     override type MsgTypes = DTSMSHRsrc   
     override type RsrcMsgTypes = DTSMSHRsrc   
-
+    
+    @transient
     val protoDreqUUID = getUUID()
+    @transient
     val protoDrspUUID = getUUID()    
 
     @transient
@@ -1914,8 +1916,11 @@ package usage {
 
     object MonadicDRsrcMsgs extends RsrcMsgTypes with Serializable {
       
+      @transient
       override def protoDreq : DReq = MDGetRequest( aLabel )
+      @transient
       override def protoDrsp : DRsp = MDGetResponse( aLabel, 0.0 )
+      @transient
       override def protoJtsreq : JTSReq =
 	JustifiedRequest(
 	  protoDreqUUID,
@@ -1925,6 +1930,7 @@ package usage {
 	  protoDreq,
 	  None
 	)
+      @transient
       override def protoJtsrsp : JTSRsp = 
 	JustifiedResponse(
 	  protoDreqUUID,
@@ -2362,10 +2368,15 @@ package usage {
 	override def update( j : Int ) : ConcreteKinase = MAPK( b, j, state )
       }
       
+      @transient
       lazy val RAFProto : RAF = RAF( true, 0, "Phosphorylated" )
+      @transient
       lazy val RASProto : RAS = RAS( true, 0, "Phosphorylated" )
+      @transient
       lazy val MEK1Proto : MEK1 = MEK1( true, 0, "Phosphorylated" )
+      @transient
       lazy val MEK2Proto : MEK2 = MEK2( true, 0, "Phosphorylated" )      
+      @transient
       lazy val MAPKProto : MAPK = MAPK( true, 0, "Phosphorylated" )      
 
       def mkMolQry( kinase : Kinase ) : CnxnCtxtLabel[String,String,String] = {
@@ -2451,18 +2462,23 @@ package usage {
 	map
       }
 
+      @transient
       lazy val RAFPtn : CnxnCtxtLabel[String,String,String] =
 	molPtnMap( RAFProto )
       
+      @transient
       lazy val RASPtn : CnxnCtxtLabel[String,String,String] =
 	molPtnMap( RASProto )
 
+      @transient
       lazy val MEK1Ptn : CnxnCtxtLabel[String,String,String] =
 	molPtnMap( MEK1Proto )
 
+      @transient
       lazy val MEK2Ptn : CnxnCtxtLabel[String,String,String] =
 	molPtnMap( MEK2Proto )
             
+      @transient
       lazy val MAPKPtn : CnxnCtxtLabel[String,String,String] =
 	molPtnMap( MAPKProto )
     }
@@ -2476,10 +2492,12 @@ package usage {
       }      
     }
     
-    case class Cytoplasm( kinaseMap : HashMap[CnxnCtxtLabel[String,String,String],Double] )
-	 extends CellularEnvironment with MapProxy[CnxnCtxtLabel[String,String,String],Double] {
+    case class Cytoplasm(
+      @transient
+      kinaseMap : HashMap[CnxnCtxtLabel[String,String,String],Double]
+    ) extends CellularEnvironment with MapProxy[CnxnCtxtLabel[String,String,String],Double] {
 	   override def self = kinaseMap
-	 }
+    }
 
     @transient
     implicit lazy val cellCytoplasm : Cytoplasm = Cytoplasm( new HashMap[CnxnCtxtLabel[String,String,String],Double]() )    
