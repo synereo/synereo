@@ -2123,25 +2123,31 @@ package usage {
 			    case _ => throw new Exception( "xml roundtrip failed " + key )
 			  }
 			
-			val Some( soln ) = matchMap( cclKey, k )
-			
-			emT.PlaceInstance(
-			  k,
-			  oGvOrK match {
-			    case Some( Left( gv ) ) => {
-			      Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( gv )
-			    }
-			    case Some( Right( mTT.Continuation( ks ) ) ) => {
-			      Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( ks )
-			    }
-			    case _ => {
-			      throw new Exception( "excluded middle contract broken: " + oGvOrK )
-			    }
-			  },
-			  // BUGBUG -- lgm : why can't the compiler determine
-			  // that this cast is not necessary?
-			  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-			)
+			matchMap( cclKey, k ) match {
+			  case Some( soln ) => {
+			    emT.PlaceInstance(
+			      k,
+			      oGvOrK match {
+				case Some( Left( gv ) ) => {
+				  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( gv )
+				}
+				case Some( Right( mTT.Continuation( ks ) ) ) => {
+				  Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( ks )
+				}
+				case _ => {
+				  throw new Exception( "excluded middle contract broken: " + oGvOrK )
+				}
+			      },
+			      // BUGBUG -- lgm : why can't the compiler determine
+			      // that this cast is not necessary?
+			      theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+			    )
+			  }
+			  case None => {
+			    tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
+			    throw new Exception( "matchMap failure " + cclKey + " " + k )
+			  }
+			}						
 		      }
 		      case _ => {
 			throw new Exception( "unexpected record format : " + value )
