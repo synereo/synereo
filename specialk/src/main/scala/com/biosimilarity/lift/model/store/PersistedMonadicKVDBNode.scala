@@ -2499,14 +2499,32 @@ package usage {
     }
     
     case class Cytoplasm(
-      @transient
-      kinaseMap : HashMap[CnxnCtxtLabel[String,String,String],Double]
+      pkm : ListBuffer[(CnxnCtxtLabel[String,String,String],Double)]
     ) extends CellularEnvironment with MapProxy[CnxnCtxtLabel[String,String,String],Double] {
-	   override def self = kinaseMap
+      @transient var _kmap : Option[HashMap[CnxnCtxtLabel[String,String,String],Double]] = None
+      override def self = kinaseMap
+      override def kinaseMap = {
+	_kmap match {
+	  case Some( kmap ) => {
+	    kmap
+	  }
+	  case None => {
+	    val kmap = new HashMap[CnxnCtxtLabel[String,String,String],Double]()
+	    for( ( ccl, amt ) <- pkm ) {
+	      kmap += ( ccl -> amt )
+	    }
+	    _kmap = Some( kmap )
+	    kmap
+	  }
+	}	
+      }
     }
 
     @transient
-    implicit lazy val cellCytoplasm : Cytoplasm = Cytoplasm( new HashMap[CnxnCtxtLabel[String,String,String],Double]() )    
+    implicit lazy val cellCytoplasm : Cytoplasm =
+      Cytoplasm(
+	new ListBuffer[(CnxnCtxtLabel[String,String,String],Double)]()
+      )    
 
     def supplyKinase(
       kvdbNode : Being.PersistedMonadicKVDBNode,
@@ -2526,6 +2544,7 @@ package usage {
 	      val inc = random * 25
 	      val nkns = kns.update( count + 1 )
 	      cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
+	      cellCytoplasm.pkm += ( ( kinasePtn, ( kamt + inc ) ) )
 	      reset { 
 		println(
 		  (
@@ -2571,8 +2590,9 @@ package usage {
 	)
       )
       val currAmt : Double = cellCytoplasm.amt( kinaseToConsumeProtoPtn )
-      val nAmt : Double = ( currAmt + inc )
+      val nAmt : Double = ( currAmt + inc );
       cellCytoplasm += ( ( kinaseToConsumeProtoPtn, nAmt ) )
+      cellCytoplasm.pkm += ( ( kinaseToConsumeProtoPtn, nAmt ) )
       
       println(
 	(

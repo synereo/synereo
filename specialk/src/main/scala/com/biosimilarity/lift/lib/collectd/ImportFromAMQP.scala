@@ -20,6 +20,22 @@ import scala.collection.mutable.ListBuffer
 
 trait BulkCollectDImport extends UUIDOps {
   // """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+  def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
+    // create an AMQP scope
+    val collectDAMQPScope = new AMQPStdScope[String]()
+    // create an AMQP Queue monad
+    val collectDQM =
+      new collectDAMQPScope.AMQPQueueHostExchangeM[String](
+	host,
+	queue
+      )
+    // get an empty queue
+    val collectDQ = collectDQM.zero[String]    
+    for( i <- 1 to numOfEntries ) {
+      val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+      collectDQ ! entry
+    }
+  }
   def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
     for(
       JObject( fvs ) <- json \\ "putval" ;
@@ -54,7 +70,7 @@ trait BulkCollectDImport extends UUIDOps {
     acc
   }
   def readEntries( host : String, queue : String, file : String, dbChunk : Int ) : Unit = {
-  // create an AMQP scope
+    // create an AMQP scope
     val collectDAMQPScope = new AMQPStdScope[String]()
     // create an AMQP Queue monad
     val collectDQM =
