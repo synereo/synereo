@@ -229,6 +229,16 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def spaceLock : SpaceLock[RK] = {
     _spaceLock match {
       case Some( sl ) => sl
+      case null => {
+	val sl =
+	  new SpaceLock[RK](
+	    new HashMap[RK, Boolean](),
+	    new ListBuffer[Int](),
+	    new ListBuffer[RK]
+	  )
+	_spaceLock = Some( sl )
+	sl
+      }
       case None => {
 	val sl =
 	  new SpaceLock[RK](
