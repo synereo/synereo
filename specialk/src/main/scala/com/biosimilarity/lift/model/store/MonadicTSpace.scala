@@ -12,7 +12,7 @@ import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.lib._
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 
 import scala.util.continuations._ 
 import scala.collection.MapProxy
@@ -239,6 +239,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def fits( ptn : Pattern, place : Place ) : Boolean
   def fitsK( ptn : Pattern, place : Place ) : Option[Substitution]
   def representative( ptn : Pattern ) : Place  
+
+  def spawn(ctx: =>(Any @cps[Unit]))(implicit sched: AbstractTaskRunner): Unit = {
+    sched.submitTask(() => run(ctx))
+  }
 
   //def self = theMeetingPlace
 

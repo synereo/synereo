@@ -6,7 +6,12 @@ import scala.util.continuations._
 object cpsops {
   
   def spawn(ctx: =>(Any @cps[Unit]))(implicit sched: AbstractTaskRunner): Unit = {
-    sched.submitTask(() => run(ctx))
+    if ( sched == null ) {
+      println( ">>>>>>>>>>>>>>>>>>>>>> sched is null >>>>>>>>>>>>>>>>>>>>>>>>>" )
+    }
+    else {
+      sched.submitTask(() => run(ctx))
+    }
   }
   
   
