@@ -126,7 +126,7 @@ case class SpaceLock[RK](
 	  case true => {
 	  }
 	  case false => {
-	    throw new Exception( "leaving reading room without entering: " + rk )
+	    //throw new Exception( "leaving reading room without entering: " + rk )
 	  }
 	}	
       }
