@@ -8,6 +8,6 @@ trait TaskRunnersBase {
   type TaskRunner <: AbstractTaskRunner
   
   def createDefaultTaskRunner(): TaskRunner
-  @transient implicit val mainTaskRunner: TaskRunner = createDefaultTaskRunner()
+  @transient implicit lazy val mainTaskRunner: TaskRunner = createDefaultTaskRunner()
   
 }

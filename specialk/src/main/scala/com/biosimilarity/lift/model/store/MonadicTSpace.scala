@@ -241,7 +241,13 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def representative( ptn : Pattern ) : Place  
 
   def spawn(ctx: =>(Any @cps[Unit]))(implicit sched: AbstractTaskRunner): Unit = {
-    sched.submitTask(() => run(ctx))
+    if ( sched != null ) {
+      sched.submitTask(() => run(ctx))
+    }
+    else {
+      tweet( "warning: implicit argument, sched, is null" )
+      createDefaultTaskRunner().submitTask(() => run(ctx))
+    }
   }
 
   //def self = theMeetingPlace
