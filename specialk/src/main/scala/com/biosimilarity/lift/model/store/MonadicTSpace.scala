@@ -224,12 +224,23 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
       with ConfigurationTrampoline =>		
 
   @transient
-  val spaceLock : SpaceLock[RK] =
-    new SpaceLock[RK](
-      new HashMap[RK, Boolean](),
-      new ListBuffer[Int](),
-      new ListBuffer[RK]
-    )
+  var _spaceLock : Option[SpaceLock[RK]] = None
+
+  def spaceLock : SpaceLock[RK] = {
+    _spaceLock match {
+      case Some( sl ) => sl
+      case None => {
+	val sl =
+	  new SpaceLock[RK](
+	    new HashMap[RK, Boolean](),
+	    new ListBuffer[Int](),
+	    new ListBuffer[RK]
+	  )
+	_spaceLock = Some( sl )
+	sl
+      }
+    }
+  }
 
   def theMeetingPlace : Map[Place,Resource]
   def theChannels : Map[Place,Resource]
