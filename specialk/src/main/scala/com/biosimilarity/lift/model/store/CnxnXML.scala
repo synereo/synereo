@@ -596,6 +596,13 @@ trait CnxnXML[Namespace,Var,Tag] {
     cciElem : Node
   ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
     cciElem match {
+      case <var>{ Text( c ) }</var> => {
+	Some(
+	  new CnxnCtxtLeaf[Namespace,Var,Tag](
+	    Right( text2Var( c ) )
+	  )
+	)
+      }
       case e : Elem => {
 	//println( "elem with children = " + cciElem.child.toList )
 	val attrs =
