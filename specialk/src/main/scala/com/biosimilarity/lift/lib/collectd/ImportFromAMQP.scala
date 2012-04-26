@@ -53,9 +53,9 @@ trait BulkCollectDImport extends UUIDOps {
       acc +=
       <record>
 	<putval>
-	  <values>{valueArray}</values>
-	  <dstypes>{dstypes}</dstypes>
-	  <dsnames>{dsnames}</dsnames>
+	  <values>{for( JInt( v ) <- valueArray ) yield {<int>{v}</int>}}</values>
+	  <dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
+	  <dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
           <time>{time}</time>
 	  <interval>{interval}</interval>
           <host>{host}</host>
@@ -94,3 +94,13 @@ trait BulkCollectDImport extends UUIDOps {
   }
 }
 
+package usage {
+  object BulkCollectDImporter extends BulkCollectDImport {
+    def loadData() : Unit = {
+      supplyEntries( "localhost", "collectDSample", 1000 )
+    }
+    def importData() : Unit = {
+      readEntries( "localhost", "collectDSample", "collectDImport", 500 )
+    }
+  }
+}

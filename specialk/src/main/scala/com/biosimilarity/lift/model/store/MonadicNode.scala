@@ -36,7 +36,7 @@ import java.net.URI
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
-abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,SZ[_,_] <: MonadicTxPortFramedMsgDispatcher[_,_,_,SZ]](
+abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[_,_] <: MonadicTxPortFramedMsgDispatcher[_,_,_,SZ]](
   override val individuality : Individual[ReqBody,RspBody,SZ],
   override val acquaintances : List[Moniker]
 ) extends RemoteSociety[ReqBody,RspBody,SZ](

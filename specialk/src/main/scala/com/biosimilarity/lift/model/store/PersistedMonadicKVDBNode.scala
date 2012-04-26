@@ -46,7 +46,6 @@ import javax.xml.transform.OutputKeys
 import java.util.UUID
 import java.net.URI
 import java.util.Properties
-import java.net.URI
 import java.io.File
 import java.io.FileInputStream
 import java.io.OutputStreamWriter

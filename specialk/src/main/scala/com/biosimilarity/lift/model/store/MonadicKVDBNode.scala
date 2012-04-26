@@ -84,7 +84,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   ) with MonadicTermStoreT
   {    
   }
-  
+
   abstract class AbstractMonadicKVDBNode[ReqBody, RspBody](
     val localCache : AbstractMonadicKVDB[ReqBody,RspBody],
     override val acquaintances : List[Moniker]
@@ -112,6 +112,67 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
       //tweet( "resulting transport message : " + xmsg )
       xmsg
     }
+  }
+
+  abstract class AbstractMonadicKVDBBase[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, +Node[Rq,Rs] <: AbstractMonadicKVDBNodeBase[ReqBody,RspBody,Node]](
+    override val name : Moniker
+  ) extends Individual[ReqBody,RspBody,Node](
+    name,
+    new ListBuffer[JustifiedRequest[ReqBody,RspBody]](),
+    new ListBuffer[JustifiedResponse[ReqBody,RspBody]]()
+  ) with MonadicTermStoreT
+  {    
+    override def configFileName : Option[String] = None
+    override def configurationDefaults : ConfigurationDefaults = {
+      ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
+    } 
+    override def toString() : String = {
+      (
+	this.getClass.getName.split( "\\." ).last + "@"
+	+ ( name match { case MURI( uri ) => uri; case _ => name } )
+      )
+    }
+  }
+  
+  abstract class AbstractMonadicKVDBNodeBase[
+    ReqBody <: KVDBNodeRequest, 
+    RspBody <: KVDBNodeResponse, 
+    +Node[Rq,Rs] <: AbstractMonadicKVDBNodeBase[ReqBody,RspBody,Node]
+  ](
+    val localCache : AbstractMonadicKVDBBase[ReqBody,RspBody,Node],
+    override val acquaintances : List[Moniker]
+  ) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,Node](
+    localCache, acquaintances
+  ) with MonadicTermStoreT {
+    import identityConversions._
+  
+    override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
+      //tweet( "unwrapping transport message : " + txPortMsg )
+      // BUGBUG -- lgm : there's a bug in the JettisonMappedXmlDriver
+      // that misses the option declaration inside the RBound subtype
+      // of Resource; so, the workaround is to use XML instead of JSON
+      //val xstrm = new XStream( new JettisonMappedXmlDriver )
+      val xstrm = new XStream( )
+      val fmsg = xstrm.fromXML( txPortMsg )
+      //tweet( "resulting framed message : " + fmsg )
+      fmsg.asInstanceOf[A]
+    }
+    override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
+      //tweet( "wrapping framed message : " + txPortMsg )
+      //val xstrm = new XStream( new JettisonMappedXmlDriver )
+      val xstrm = new XStream( )
+      val xmsg = xstrm.toXML( txPortMsg )
+      //tweet( "resulting transport message : " + xmsg )
+      xmsg
+    }
+
+    override def toString() : String = {
+      (
+	this.getClass.getName.split( "\\." ).last + "@"
+	+ ( name match { case MURI( uri ) => uri; case _ => name } )
+      )
+    }        
+    
   }
 
   case class MonadicKVDB(

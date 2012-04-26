@@ -20,7 +20,7 @@ import scala.collection.MapProxy
 import scala.collection.mutable.{ HashMap => MHashMap, ListBuffer }
 import scala.collection.immutable.{ HashMap => IHashMap }
 
-trait SociallyZipped[ReqBody,RspBody,SZ[_,_] <: SociallyZipped[_,_,SZ]]
+trait SociallyZipped[ReqBody,RspBody,+SZ[_,_] <: SociallyZipped[_,_,SZ]]
  extends Tree[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]])]
   with MapProxy[Moniker,SZ[ReqBody,RspBody]] {
     def name : Moniker
@@ -30,7 +30,7 @@ trait SociallyZipped[ReqBody,RspBody,SZ[_,_] <: SociallyZipped[_,_,SZ]]
       ( name, requests, responses )
 }
 
-class Individual[ReqBody,RspBody,SZ[_,_] <: SociallyZipped[_,_,SZ]](
+class Individual[ReqBody,RspBody,+SZ[_,_] <: SociallyZipped[_,_,SZ]](
   override val name : Moniker,
   @transient
   override val requests : ListBuffer[JustifiedRequest[ReqBody,RspBody]],
@@ -78,7 +78,7 @@ object Individual {
   }
 }
 
-class Society[ReqBody,RspBody,SZ[_,_] <: Society[_,_,SZ]](
+class Society[ReqBody,RspBody,+SZ[_,_] <: Society[_,_,SZ]](
   val individuality : Individual[ReqBody,RspBody,SZ],
   val nameSpace : Map[Moniker,SZ[ReqBody,RspBody]]
 ) extends TreeSection[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]])](
@@ -129,7 +129,7 @@ object Society {
   }
 }
 
-class RemoteSociety[ReqBody,RspBody,SZ[_,_] <: RemoteSociety[_,_,SZ]](
+class RemoteSociety[ReqBody,RspBody,+SZ[_,_] <: RemoteSociety[_,_,SZ]](
   val individuality : Individual[ReqBody,RspBody,SZ],
   val acquaintances : List[Moniker]
 ) extends TreeSection[(Moniker,ListBuffer[JustifiedRequest[ReqBody,RspBody]],ListBuffer[JustifiedResponse[ReqBody,RspBody]])](
