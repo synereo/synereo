@@ -57,6 +57,12 @@ import java.io.ByteArrayOutputStream
 
 trait PersistedMonadicKVDBNodeScope[Namespace,Var,Tag,Value] 
 extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {  
+  //type PersistedKVDBNodeRequest = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeRequest
+  //type PersistedKVDBNodeResponse = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeResponse
+  
+  type PersistedKVDBNodeRequest = Msgs.MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
+  type PersistedKVDBNodeResponse = RsrcMsgs.RsrcResponse[Namespace,Var,Tag,Value]
+
   trait PersistenceScope
     extends ExcludedMiddleScope[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
     with Serializable {
@@ -529,53 +535,31 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}
       }
 
-      abstract class AbstractPersistedMonadicKVDB[ReqBody, RspBody](
+      abstract class AbstractPersistedMonadicKVDB[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse, +Node[Rq <: ReqBody,Rs <: RspBody] <: AbstractPersistedMonadicKVDBNode[Rq,Rs,Node]](
 	override val name : Moniker
-      ) extends Individual[ReqBody,RspBody,AbstractPersistedMonadicKVDBNode](
-	name,
-	new ListBuffer[JustifiedRequest[ReqBody,RspBody]](),
-	new ListBuffer[JustifiedResponse[ReqBody,RspBody]]()
-      ) with MonadicTermStoreT
-	       with PersistenceManifestTrampoline
+      ) extends AbstractMonadicKVDB[ReqBody,RspBody,Node](
+	name
+      ) with PersistenceManifestTrampoline
 	       with BaseXXMLStore           
 	       with BaseXCnxnStorage[Namespace,Var,Tag]
 	       with Serializable
       {    
       }
   
-      abstract class AbstractPersistedMonadicKVDBNode[ReqBody, RspBody](
-	val localCache : AbstractPersistedMonadicKVDB[ReqBody,RspBody],
+      abstract class AbstractPersistedMonadicKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse, +Node[Rq <: ReqBody,Rs <: RspBody] <: AbstractPersistedMonadicKVDBNode[Rq,Rs,Node]](
+	override val localCache : AbstractPersistedMonadicKVDB[ReqBody,RspBody,Node],
 	override val acquaintances : List[Moniker]
-      ) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,AbstractPersistedMonadicKVDBNode](
+      ) extends AbstractMonadicKVDBNode[ReqBody,RspBody,Node](
 	localCache, acquaintances
       ) with MonadicTermStoreT
 	       with Serializable {
-	import identityConversions._
-	
-	override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
-	  //tweet( "unwrapping transport message : " + txPortMsg )
-	  // BUGBUG -- lgm : there's a bug in the JettisonMappedXmlDriver
-	  // that misses the option declaration inside the RBound subtype
-	  // of Resource; so, the workaround is to use XML instead of JSON
-	  //val xstrm = new XStream( new JettisonMappedXmlDriver )
-	  val xstrm = new XStream( )
-	  val fmsg = xstrm.fromXML( txPortMsg )
-	  //tweet( "resulting framed message : " + fmsg )
-	  fmsg.asInstanceOf[A]
-	}
-	override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
-	  //tweet( "wrapping framed message : " + txPortMsg )
-	  //val xstrm = new XStream( new JettisonMappedXmlDriver )
-	  val xstrm = new XStream( )
-	  val xmsg = xstrm.toXML( txPortMsg )
-	  //tweet( "resulting transport message : " + xmsg )
-	  xmsg
-	}
+	self : MessageFraming[String,ReqBody,RspBody] =>
+	import identityConversions._			 
       }
       
-      case class PersistedMonadicKVDB(
+      class BasePersistedMonadicKVDB[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse, +KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]](
 	override val name : Moniker
-      ) extends AbstractPersistedMonadicKVDB[KVDBNodeRequest,KVDBNodeResponse](
+      ) extends AbstractPersistedMonadicKVDB[ReqBody,RspBody,KVDBNode](
 	name
       ) {
 	override def configFileName : Option[String] = None
@@ -586,6 +570,22 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  (
 	    this.getClass.getName.split( "\\." ).last + "@"
 	    + ( name match { case MURI( uri ) => uri; case _ => name } )
+	  )
+	}
+
+	override def equals( o : Any ) : Boolean = {
+	  o match {
+	    case that : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode] => {
+	      (
+		name.equals( that.name ) 
+	      )
+	    }
+	    case _ => false
+	  }
+	}
+	override def hashCode( ) : Int = {
+	  (
+	    ( 37 * name.hashCode )
 	  )
 	}
 	override def tmpDirStr : String = {
@@ -896,7 +896,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      // No...
 	      case Nil => {
 		// Store the rsrc at a representative of the ptn
-		tweet( "in PersistedMonadicKVDB level putPlaces: no waiters waiting for a value at " + ptn )
+		tweet( "in BasePersistedMonadicKVDB level putPlaces: no waiters waiting for a value at " + ptn )
 		//channels( representative( ptn ) ) = rsrc
 		updateKStore( persist )(
 		  ptn, consume, collName
@@ -1079,7 +1079,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      + "mgetting " + path + ".\n"
 	      + "on " + this + ".\n"
 	      + "checking if this is a cache or a node: "
-	      + (if ( this.isInstanceOf[PersistedMonadicKVDB] ) { "cache" } else { "node"}) + "\n"
+	      + (if ( this.isInstanceOf[BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode]] ) { "cache" } else { "node"}) + "\n"
 	    )
 	  )
 	  tweet( 
@@ -1450,22 +1450,52 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}
       }
 
-      case class PersistedMonadicKVDBNode(
-	cache : PersistedMonadicKVDB,
+      object BasePersistedMonadicKVDB {
+	def apply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] ( 
+	  name : Moniker
+	) : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode] = {
+	  new BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode]( name )
+	}
+	def unapply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] (
+	  pmkvdb : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode]
+	) : Option[( Moniker )] = {
+	  Some( ( pmkvdb.name ) )
+	}
+      }
+
+      class BasePersistedMonadicKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,+KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]](
+	val cache : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode],
 	override val acquaintances : List[Moniker]
-      ) extends AbstractPersistedMonadicKVDBNode[KVDBNodeRequest,KVDBNodeResponse](
+      ) extends AbstractPersistedMonadicKVDBNode[ReqBody,RspBody,KVDBNode](
 	cache, acquaintances
-      ) {    
+      ) with MessageFraming[String,ReqBody,RspBody] {    
 	override def toString() : String = {
 	  (
 	    this.getClass.getName.split( "\\." ).last + "@"
 	    + ( name match { case MURI( uri ) => uri; case _ => name } )
 	  )
 	}
+	override def equals( o : Any ) : Boolean = {
+	  o match {
+	    case that : BasePersistedMonadicKVDBNode[ReqBody,RspBody,KVDBNode] => {
+	      (
+		cache.equals( that.cache ) 
+		&& acquaintances.equals( that.acquaintances )
+	      )
+	    }
+	    case _ => false
+	  }
+	}
+	override def hashCode( ) : Int = {
+	  (
+	    ( 37 * cache.hashCode )
+	    + ( 37 * acquaintances.hashCode )
+	  )
+	}
 	def wrapResponse(
 	  msrc : Moniker, dreq : Msgs.DReq, rsrc : mTT.Resource
 	) : FramedMsg = {
-	  frameResponse( msrc )(
+	  val rsp = 
 	    dreq match {
 	      case Msgs.MDGetRequest( path ) => {
 		RsrcMsgs.MDGetResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )	  
@@ -1480,13 +1510,21 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		throw new Exception( "unexpected request type " + dreq )
 	      }	  
 	    }
-	  )
+
+	  rsp match {
+	    case rsbdy : RspBody => {
+	      frameResponse( msrc )( rsbdy )
+	    }
+	    case _ => {
+	      throw new Exception( "unable to frame response: " + rsp )
+	    }
+	  }	  
 	}
 	
 	def wrapResponse(
 	  msrc : Moniker, dreq : Msgs.DReq
 	) : FramedMsg = {
-	  frameResponse( msrc )(
+	  val rsp = 
 	    dreq match {	  
 	      case Msgs.MDPutRequest( path, _ ) => {
 		RsrcMsgs.MDPutResponseRsrc[Namespace,Var,Tag,Value]( path )
@@ -1498,7 +1536,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		throw new Exception( "unexpected request type " + dreq )
 	      }
 	    }
-	  )
+
+	  rsp match {
+	    case rsbdy : RspBody => {
+	      frameResponse( msrc )( rsbdy )
+	    }
+	    case _ => {
+	      throw new Exception( "unable to frame response: " + rsp )
+	    }
+	  }
 	}
 	
 	def handleValue( dreq : Msgs.DReq, oV : Option[mTT.Resource], msrc : Moniker ) : Unit = {
@@ -1699,10 +1745,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )
 		}
 	      }
-	    
-	    val framedReq = frameRequest( trgt )( request )
-	    tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
-	    q ! framedReq
+
+	    request match {
+	      case rqbdy : ReqBody => {
+		val framedReq = frameRequest( trgt )( rqbdy )
+		tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
+		q ! framedReq
+	      }
+	      case _ => {
+		throw new Exception( "unable to frame request: " + request )
+	      }
+	    }	    
 	  }
 	}
 	
@@ -1876,10 +1929,37 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
 	} 
       }
+
+      object BasePersistedMonadicKVDBNode {
+	def apply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] ( 
+	  cache : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode],
+	  acquaintances : List[Moniker]
+	) : BasePersistedMonadicKVDBNode[ReqBody,RspBody,KVDBNode] = {
+	  new BasePersistedMonadicKVDBNode[ReqBody,RspBody,KVDBNode]( cache, acquaintances )
+	}
+	def unapply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] (
+	  pmkvdbnode : BasePersistedMonadicKVDBNode[ReqBody,RspBody,KVDBNode]
+	) : Option[( BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode], List[Moniker] )] = {
+	  Some( ( pmkvdbnode.cache, pmkvdbnode.acquaintances ) )
+	}
+      }
+
+      case class PersistedMonadicKVDB[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+	override val name : Moniker
+      ) extends BasePersistedMonadicKVDB[ReqBody,RspBody,PersistedMonadicKVDBNode](
+	name
+      ) 
+
+      case class PersistedMonadicKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+	override val cache : PersistedMonadicKVDB[ReqBody,RspBody],
+	override val acquaintances : List[Moniker]
+      ) extends BasePersistedMonadicKVDBNode[ReqBody,RspBody,PersistedMonadicKVDBNode](
+	cache, acquaintances
+      ) 
       
       trait PersistedKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunners {
-	def ptToPt( here : URI, there : URI ) : PersistedMonadicKVDBNode
-	def loopBack( here : URI ) : PersistedMonadicKVDBNode
+	def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody]
+	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody]
       }
     }
 }
@@ -1964,8 +2044,8 @@ package usage {
 	theEMTypes
 
       object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT with Serializable {	  
-	def mkCache( here : URI ) : PersistedMonadicKVDB = {
-	  new PersistedMonadicKVDB( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+	def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDB[ReqBody,RspBody] = {
+	  new PersistedMonadicKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
 	    class StringXMLDBManifest(
 	      override val storeUnitStr : String,
 	      @transient override val labelToNS : Option[String => String],
@@ -2250,16 +2330,16 @@ package usage {
 	    def dfStoreUnitStr : String = mnkrExchange( name )
 	  }
 	}
-	def ptToPt( here : URI, there : URI ) : PersistedMonadicKVDBNode = {
+	def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody] = {
 	  val node =
-	    PersistedMonadicKVDBNode(
+	    PersistedMonadicKVDBNode[ReqBody,RspBody](
 	      mkCache( MURI( here ) ),
 	      List( MURI( there ) )
 	    )
 	  spawn { node.dispatchDMsgs() }
 	  node
 	}
-	def loopBack( here : URI ) : PersistedMonadicKVDBNode = {
+	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody] = {
 	  val exchange = uriExchange( here )
 	  val hereNow =
 	    new URI(
@@ -2283,7 +2363,7 @@ package usage {
 	    )	    
 	  
 	  val node =
-	    PersistedMonadicKVDBNode(
+	    PersistedMonadicKVDBNode[ReqBody, RspBody](
 	      mkCache( MURI( hereNow ) ),
 	      List( MURI( thereNow ) )
 	    )
@@ -2300,12 +2380,12 @@ package usage {
     import PersistedKVDBNodeFactory._
 
     implicit val retTwist : Boolean = false
-    def setup(
+    def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
     )(
       implicit returnTwist : Boolean
-    ) : Either[Being.PersistedMonadicKVDBNode,(Being.PersistedMonadicKVDBNode,Being.PersistedMonadicKVDBNode)] = {
+    ) : Either[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
 	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
 	  ( "/molecularUseCaseProtocolLocal", "/molecularUseCaseProtocolRemote" )	  
@@ -2315,13 +2395,13 @@ package usage {
 	}
 
       if ( returnTwist ) {
-	Right[Being.PersistedMonadicKVDBNode,(Being.PersistedMonadicKVDBNode,Being.PersistedMonadicKVDBNode)](
+	Right[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])](
 	  (
-	    ptToPt(
+	    ptToPt[ReqBody, RspBody](
 	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
 	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
 	    ),
-	    ptToPt(	      
+	    ptToPt[ReqBody, RspBody](	      
 	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
 	      new URI( "agent", null, localHost, localPort, localExchange, null, null )
 	    )
@@ -2329,7 +2409,7 @@ package usage {
 	)
       }
       else {
-	Left[Being.PersistedMonadicKVDBNode,(Being.PersistedMonadicKVDBNode,Being.PersistedMonadicKVDBNode)](
+	Left[Being.PersistedMonadicKVDBNode[ReqBody, RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])](
 	  ptToPt(
 	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
 	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
@@ -2533,8 +2613,8 @@ package usage {
 	new ListBuffer[(CnxnCtxtLabel[String,String,String],Double)]()
       )    
 
-    def supplyKinase(
-      kvdbNode : Being.PersistedMonadicKVDBNode,
+    def supplyKinase[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      kvdbNode : Being.PersistedMonadicKVDBNode[ReqBody,RspBody],
       cellCytoplasm : Cytoplasm,
       kinase : ConcreteKinase,
       trigger : Double
@@ -2575,8 +2655,8 @@ package usage {
       }.start
     }    
 
-    def handleRsrc(
-      kvdbNode : Being.PersistedMonadicKVDBNode,
+    def handleRsrc[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      kvdbNode : Being.PersistedMonadicKVDBNode[ReqBody,RspBody],
       cellCytoplasm : Cytoplasm,
       kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     )(
@@ -2681,8 +2761,8 @@ package usage {
       }		
     }
     
-    def processKinasePair(
-      kvdbNode : Being.PersistedMonadicKVDBNode,
+    def processKinasePair[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      kvdbNode : Being.PersistedMonadicKVDBNode[ReqBody,RspBody],
       cellCytoplasm : Cytoplasm,
       kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     ) : Unit = {            
@@ -2742,7 +2822,7 @@ package usage {
       }
     }
 
-    def runClient( kvdbNode : Being.PersistedMonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
+    def runClient[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( kvdbNode : Being.PersistedMonadicKVDBNode[ReqBody,RspBody] )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
       // map-reduce-style protocol checking      
@@ -2763,7 +2843,7 @@ package usage {
       }.start
     }
 
-    def runServer( kvdbNode : Being.PersistedMonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
+    def runServer[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( kvdbNode : Being.PersistedMonadicKVDBNode[ReqBody,RspBody] )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
       // map-reduce-style protocol             

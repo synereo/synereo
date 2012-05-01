@@ -75,46 +75,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   type KVDBNodeRequest = Msgs.MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
   type KVDBNodeResponse = RsrcMsgs.RsrcResponse[Namespace,Var,Tag,Value]
 
-  abstract class AbstractMonadicKVDB[ReqBody, RspBody](
-    override val name : Moniker
-  ) extends Individual[ReqBody,RspBody,AbstractMonadicKVDBNode](
-    name,
-    new ListBuffer[JustifiedRequest[ReqBody,RspBody]](),
-    new ListBuffer[JustifiedResponse[ReqBody,RspBody]]()
-  ) with MonadicTermStoreT
-  {    
-  }
-
-  abstract class AbstractMonadicKVDBNode[ReqBody, RspBody](
-    val localCache : AbstractMonadicKVDB[ReqBody,RspBody],
-    override val acquaintances : List[Moniker]
-  ) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,AbstractMonadicKVDBNode](
-    localCache, acquaintances
-  ) with MonadicTermStoreT {
-    import identityConversions._
-  
-    override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
-      //tweet( "unwrapping transport message : " + txPortMsg )
-      // BUGBUG -- lgm : there's a bug in the JettisonMappedXmlDriver
-      // that misses the option declaration inside the RBound subtype
-      // of Resource; so, the workaround is to use XML instead of JSON
-      //val xstrm = new XStream( new JettisonMappedXmlDriver )
-      val xstrm = new XStream( )
-      val fmsg = xstrm.fromXML( txPortMsg )
-      //tweet( "resulting framed message : " + fmsg )
-      fmsg.asInstanceOf[A]
-    }
-    override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
-      //tweet( "wrapping framed message : " + txPortMsg )
-      //val xstrm = new XStream( new JettisonMappedXmlDriver )
-      val xstrm = new XStream( )
-      val xmsg = xstrm.toXML( txPortMsg )
-      //tweet( "resulting transport message : " + xmsg )
-      xmsg
-    }
-  }
-
-  abstract class AbstractMonadicKVDBBase[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, +Node[Rq,Rs] <: AbstractMonadicKVDBNodeBase[ReqBody,RspBody,Node]](
+  abstract class AbstractMonadicKVDB[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, +Node[Rq <: ReqBody,Rs <: RspBody] <: AbstractMonadicKVDBNode[Rq,Rs,Node]](
     override val name : Moniker
   ) extends Individual[ReqBody,RspBody,Node](
     name,
@@ -122,30 +83,17 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     new ListBuffer[JustifiedResponse[ReqBody,RspBody]]()
   ) with MonadicTermStoreT
   {    
-    override def configFileName : Option[String] = None
-    override def configurationDefaults : ConfigurationDefaults = {
-      ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
-    } 
-    override def toString() : String = {
-      (
-	this.getClass.getName.split( "\\." ).last + "@"
-	+ ( name match { case MURI( uri ) => uri; case _ => name } )
-      )
-    }
   }
-  
-  abstract class AbstractMonadicKVDBNodeBase[
-    ReqBody <: KVDBNodeRequest, 
-    RspBody <: KVDBNodeResponse, 
-    +Node[Rq,Rs] <: AbstractMonadicKVDBNodeBase[ReqBody,RspBody,Node]
-  ](
-    val localCache : AbstractMonadicKVDBBase[ReqBody,RspBody,Node],
+
+  abstract class AbstractMonadicKVDBNode[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, +Node[Rq <: ReqBody,Rs <: RspBody] <: AbstractMonadicKVDBNode[Rq,Rs,Node]](
+    val localCache : AbstractMonadicKVDB[ReqBody,RspBody,Node],
     override val acquaintances : List[Moniker]
   ) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,Node](
     localCache, acquaintances
-  ) with MonadicTermStoreT {
-    import identityConversions._
+  ) with MonadicTermStoreT {    
+    self : MessageFraming[String,ReqBody,RspBody] =>
   
+    import identityConversions._
     override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
       //tweet( "unwrapping transport message : " + txPortMsg )
       // BUGBUG -- lgm : there's a bug in the JettisonMappedXmlDriver
@@ -165,19 +113,11 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
       //tweet( "resulting transport message : " + xmsg )
       xmsg
     }
+  }  
 
-    override def toString() : String = {
-      (
-	this.getClass.getName.split( "\\." ).last + "@"
-	+ ( name match { case MURI( uri ) => uri; case _ => name } )
-      )
-    }        
-    
-  }
-
-  case class MonadicKVDB(
+  class BaseMonadicKVDB[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, +Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]](
     override val name : Moniker
-  ) extends AbstractMonadicKVDB[KVDBNodeRequest,KVDBNodeResponse](
+  ) extends AbstractMonadicKVDB[ReqBody,RspBody,Node](
     name
   ) {
     override def configFileName : Option[String] = None
@@ -190,23 +130,65 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	+ ( name match { case MURI( uri ) => uri; case _ => name } )
       )
     }
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : BaseMonadicKVDB[ReqBody,RspBody,Node] => {
+	  (
+	    name.equals( that.name ) 
+	  )
+	}
+	case _ => false
+      }
+    }
+    override def hashCode( ) : Int = {
+      (
+	( 37 * name.hashCode )
+      )
+    }
   }
-  case class MonadicKVDBNode(
-    cache : MonadicKVDB,
+
+  object BaseMonadicKVDB {
+    def apply [ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]]( name : Moniker ) : BaseMonadicKVDB[ReqBody,RspBody,Node] = {
+      new BaseMonadicKVDB[ReqBody,RspBody,Node]( name )
+    }
+    def unapply [ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse,Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]]( mkvdb : BaseMonadicKVDB[ReqBody,RspBody,Node] ) : Option[(Moniker)] = {
+      Some( ( mkvdb.name ) )
+    }
+  }
+
+  class BaseMonadicKVDBNode[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse,+Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]](
+    val cache : BaseMonadicKVDB[ReqBody,RspBody,Node],
     override val acquaintances : List[Moniker]
-  ) extends AbstractMonadicKVDBNode[KVDBNodeRequest,KVDBNodeResponse](
+  ) extends AbstractMonadicKVDBNode[ReqBody,RspBody,Node](
     cache, acquaintances
-  ) {    
+  ) with MessageFraming[String,ReqBody,RspBody] {    
     override def toString() : String = {
       (
 	this.getClass.getName.split( "\\." ).last + "@"
 	+ ( name match { case MURI( uri ) => uri; case _ => name } )
       )
     }
+    override def equals( o : Any ) : Boolean = {
+      o match {
+	case that : BaseMonadicKVDBNode[ReqBody,RspBody,Node] => {
+	  (
+	    cache.equals( that.cache ) 
+	    && acquaintances.equals( that.acquaintances )
+	  )
+	}
+	case _ => false
+      }
+    }
+    override def hashCode( ) : Int = {
+      (
+	( 37 * cache.hashCode )
+	+ ( 37 * acquaintances.hashCode )
+      )
+    }
     def wrapResponse(
       msrc : Moniker, dreq : Msgs.DReq, rsrc : mTT.Resource
     ) : FramedMsg = {
-      frameResponse( msrc )(
+      val rsp = 
 	dreq match {
 	  case Msgs.MDGetRequest( path ) => {
 	    RsrcMsgs.MDGetResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )	  
@@ -221,13 +203,21 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    throw new Exception( "unexpected request type " + dreq )
 	  }	  
 	}
-      )
+      
+      rsp match {
+	case rsbdy : RspBody => {
+	  frameResponse( msrc )( rsbdy )
+	}
+	case _ => {
+	  throw new Exception( "unable to frame response: " + rsp )
+	}
+      }
     }
 
     def wrapResponse(
       msrc : Moniker, dreq : Msgs.DReq
     ) : FramedMsg = {
-      frameResponse( msrc )(
+      val rsp = 
 	dreq match {	  
 	  case Msgs.MDPutRequest( path, _ ) => {
 	    RsrcMsgs.MDPutResponseRsrc[Namespace,Var,Tag,Value]( path )
@@ -239,7 +229,14 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    throw new Exception( "unexpected request type " + dreq )
 	  }
 	}
-      )
+      rsp match {
+	case rsbdy : RspBody => {
+	  frameResponse( msrc )( rsbdy )
+	}
+	case _ => {
+	  throw new Exception( "unable to frame response: " + rsp )
+	}
+      }
     }
 
     def handleValue( dreq : Msgs.DReq, oV : Option[mTT.Resource], msrc : Moniker ) : Unit = {
@@ -441,9 +438,16 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    }
 	  }
 
-	val framedReq = frameRequest( trgt )( request )
-	tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
-	q ! framedReq
+	request match {
+	  case rqbdy : ReqBody => {
+	    val framedReq = frameRequest( trgt )( rqbdy )
+	    tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
+	    q ! framedReq
+	  }
+	  case _ => {
+	    throw new Exception( "unable to frame request: " + request )
+	  }
+	}	
       }
     }
 
@@ -555,13 +559,35 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     } 
   }
 
+  object BaseMonadicKVDBNode {
+    def apply [ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse,Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]] ( cache : BaseMonadicKVDB[ReqBody,RspBody,Node], acquaintances : List[Moniker] ) : BaseMonadicKVDBNode[ReqBody,RspBody,Node] = {
+      new BaseMonadicKVDBNode[ReqBody,RspBody,Node]( cache, acquaintances )
+    }
+    def unapply [ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse,Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]] ( mkvdbnode : BaseMonadicKVDBNode[ReqBody,RspBody,Node] ) : Option[( BaseMonadicKVDB[ReqBody,RspBody,Node], List[Moniker] )] = {
+      Some( ( mkvdbnode.cache, mkvdbnode.acquaintances ) )
+    }
+  }
+
+  case class MonadicKVDB[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse](
+    override val name : Moniker
+  ) extends BaseMonadicKVDB[ReqBody,RspBody,MonadicKVDBNode](
+    name
+  )
+
+  case class MonadicKVDBNode[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse](
+    override val cache : MonadicKVDB[ReqBody,RspBody],
+    override val acquaintances : List[Moniker]
+  ) extends BaseMonadicKVDBNode[ReqBody,RspBody,MonadicKVDBNode](
+    cache, acquaintances
+  )
+
   object KVDBNodeFactory extends AMQPURIOps with FJTaskRunners {
-    def ptToPt( here : URI, there : URI ) : MonadicKVDBNode = {
-      val node = MonadicKVDBNode( MonadicKVDB( MURI( here ) ), List( MURI( there ) ) )
+    def ptToPt[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse]( here : URI, there : URI ) : MonadicKVDBNode[ReqBody,RspBody] = {
+      val node = MonadicKVDBNode[ReqBody,RspBody]( MonadicKVDB[ReqBody,RspBody]( MURI( here ) ), List( MURI( there ) ) )
       spawn { node.dispatchDMsgs() }
       node
     }
-    def loopBack( here : URI ) : MonadicKVDBNode = {
+    def loopBack[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse]( here : URI ) : MonadicKVDBNode[ReqBody,RspBody] = {
       val exchange = uriExchange( here )
       val hereNow =
 	new URI(
@@ -583,7 +609,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	  here.getQuery,
 	  here.getFragment
 	)
-      val node = MonadicKVDBNode( MonadicKVDB( MURI( hereNow ) ), List( MURI( thereNow ) ) )
+      val node = MonadicKVDBNode[ReqBody,RspBody]( MonadicKVDB( MURI( hereNow ) ), List( MURI( thereNow ) ) )
       spawn { node.dispatchDMsgs() }
       node
     }
@@ -649,12 +675,12 @@ package usage {
     import KVDBNodeFactory._
 
     implicit val retTwist : Boolean = false
-    def setup(
+    def setup[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse](
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
     )(
       implicit returnTwist : Boolean
-    ) : Either[MonadicKVDBNode,(MonadicKVDBNode,MonadicKVDBNode)] = {
+    ) : Either[MonadicKVDBNode[ReqBody,RspBody],(MonadicKVDBNode[ReqBody,RspBody],MonadicKVDBNode[ReqBody,RspBody])] = {
       val ( localExchange, remoteExchange ) = 
 	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
 	  ( "/molecularUseCaseProtocolLocal", "/molecularUseCaseProtocolRemote" )	  
@@ -664,7 +690,7 @@ package usage {
 	}
 
       if ( returnTwist ) {
-	Right[MonadicKVDBNode,(MonadicKVDBNode,MonadicKVDBNode)](
+	Right[MonadicKVDBNode[ReqBody,RspBody],(MonadicKVDBNode[ReqBody,RspBody],MonadicKVDBNode[ReqBody,RspBody])](
 	  (
 	    ptToPt(
 	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
@@ -678,7 +704,7 @@ package usage {
 	)
       }
       else {
-	Left[MonadicKVDBNode,(MonadicKVDBNode,MonadicKVDBNode)](
+	Left[MonadicKVDBNode[ReqBody,RspBody],(MonadicKVDBNode[ReqBody,RspBody],MonadicKVDBNode[ReqBody,RspBody])](
 	  ptToPt(
 	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
 	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
@@ -838,8 +864,8 @@ package usage {
 
     implicit lazy val cellCytoplasm : Cytoplasm = Cytoplasm( new HashMap[CnxnCtxtLabel[String,String,String],Double]() )    
 
-    def supplyKinase(
-      kvdbNode : MonadicKVDBNode,
+    def supplyKinase[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse](
+      kvdbNode : MonadicKVDBNode[ReqBody,RspBody],
       cellCytoplasm : Cytoplasm,
       kinase : ConcreteKinase,
       trigger : Double
@@ -898,8 +924,8 @@ package usage {
       }.start
     }
 
-    def handleRsrc(
-      kvdbNode : MonadicKVDBNode,
+    def handleRsrc[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse](
+      kvdbNode : MonadicKVDBNode[ReqBody,RspBody],
       cellCytoplasm : Cytoplasm,
       kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     )(
@@ -1003,8 +1029,8 @@ package usage {
       }		
     }
     
-    def processKinasePair(
-      kvdbNode : MonadicKVDBNode,
+    def processKinasePair[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse](
+      kvdbNode : MonadicKVDBNode[ReqBody,RspBody],
       cellCytoplasm : Cytoplasm,
       kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     ) : Unit = {            
@@ -1085,7 +1111,7 @@ package usage {
       }
     }        
 
-    def runClient( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
+    def runClient[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse]( kvdbNode : MonadicKVDBNode[ReqBody,RspBody] )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
       // map-reduce-style protocol checking      
@@ -1106,7 +1132,7 @@ package usage {
       }.start
     }
 
-    def runServer( kvdbNode : MonadicKVDBNode )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
+    def runServer[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse]( kvdbNode : MonadicKVDBNode[ReqBody,RspBody] )( implicit cellCytoplasm : Cytoplasm ) : Unit = {
       import scala.math._
       import KinaseSpecifications._
       // map-reduce-style protocol             

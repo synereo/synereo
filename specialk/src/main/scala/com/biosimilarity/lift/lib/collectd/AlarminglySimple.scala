@@ -129,8 +129,8 @@ package usage {
 	theEMTypes
 
       object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT with Serializable {	  
-	def mkCache( here : URI ) : PersistedMonadicKVDB = {
-	  new PersistedMonadicKVDB( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+	def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDB[ReqBody,RspBody] = {
+	  new PersistedMonadicKVDB[ReqBody,RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
 	    class StringXMLDBManifest(
 	      override val storeUnitStr : String,
 	      @transient override val labelToNS : Option[String => String],
@@ -415,16 +415,16 @@ package usage {
 	    def dfStoreUnitStr : String = mnkrExchange( name )
 	  }
 	}
-	def ptToPt( here : URI, there : URI ) : PersistedMonadicKVDBNode = {
+	def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody] = {
 	  val node =
-	    PersistedMonadicKVDBNode(
+	    PersistedMonadicKVDBNode[ReqBody,RspBody](
 	      mkCache( MURI( here ) ),
 	      List( MURI( there ) )
 	    )
 	  spawn { node.dispatchDMsgs() }
 	  node
 	}
-	def loopBack( here : URI ) : PersistedMonadicKVDBNode = {
+	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody] = {
 	  val exchange = uriExchange( here )
 	  val hereNow =
 	    new URI(
@@ -448,7 +448,7 @@ package usage {
 	    )	    
 	  
 	  val node =
-	    PersistedMonadicKVDBNode(
+	    PersistedMonadicKVDBNode[ReqBody,RspBody](
 	      mkCache( MURI( hereNow ) ),
 	      List( MURI( thereNow ) )
 	    )

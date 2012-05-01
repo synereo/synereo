@@ -36,22 +36,11 @@ import java.net.URI
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
-abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[_,_] <: MonadicTxPortFramedMsgDispatcher[_,_,_,SZ]](
-  override val individuality : Individual[ReqBody,RspBody,SZ],
-  override val acquaintances : List[Moniker]
-) extends RemoteSociety[ReqBody,RspBody,SZ](
-  individuality, acquaintances
-) with MonadicGenerators
-  with MonadicConcurrentGenerators
-  with AMQPMonikerOps
-  with FJTaskRunners
-  with UUIDOps
-  with WireTap 
-  with Journalist
-{  
+trait MessageFraming[TxPort,ReqBody,RspBody] {
+  self : UUIDOps =>
   import identityConversions._
-
   type FramedMsg = Either[JustifiedRequest[ReqBody,RspBody],JustifiedResponse[ReqBody,RspBody]]
+  def name : Moniker
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : TxPort ) : A
   def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : TxPort
   implicit def requestJustification : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]] = 
@@ -96,6 +85,24 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[_,_] 
       }
     }
   }
+}
+
+abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <: ReqBody, Rs <: RspBody] <: MonadicTxPortFramedMsgDispatcher[_,Rq,Rs,SZ]](
+  override val individuality : Individual[ReqBody,RspBody,SZ],
+  override val acquaintances : List[Moniker]
+) extends RemoteSociety[ReqBody,RspBody,SZ](
+  individuality, acquaintances
+) with MonadicGenerators
+  with MonadicConcurrentGenerators
+  with AMQPMonikerOps
+  with FJTaskRunners
+  with UUIDOps
+  with WireTap 
+  with Journalist
+{ 
+  self : MessageFraming[TxPort,ReqBody,RspBody] =>
+
+  import identityConversions._
 
   case class AMQPTxPortFramedMsgScope(
     srcMnkr : Moniker,
@@ -364,7 +371,7 @@ class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
   override val acquaintances : List[Moniker]
 ) extends MonadicTxPortFramedMsgDispatcher[String,ReqBody,RspBody,MonadicJSONFramedMsgDispatcher](
   individuality, acquaintances
-) {
+) with MessageFraming[String,ReqBody,RspBody] {
   import identityConversions._
   
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
