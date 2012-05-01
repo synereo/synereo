@@ -16,7 +16,7 @@ object ResourceExtensions
   class ResourceExt(source: Resource) {
     def dispatch :String = {
       source match {
-        case RBound(Some( Ground( gv ) ), _ ) => {
+        case RBoundHM(Some( Ground( gv ) ), _ ) => {
             gv.toString
           }
         case _ => {println("dispatch: ground value not found");new String}
@@ -30,7 +30,7 @@ object ResourceExtensions
     def dispatch :String = {
       val message = source.getOrElse(new Ground(new String))
       message match {
-        case RBound(Some( Ground( gv ) ), _ ) => {
+        case RBoundHM(Some( Ground( gv ) ), _ ) => {
             gv.toString
           }
         case _ => {println("dispatch: ground value not found");new String}
@@ -40,7 +40,7 @@ object ResourceExtensions
     def dispatchCursor : Generator[Resource, Unit, Unit] = {
       val message = source.getOrElse(new Ground(new String))
       message match {
-        case RBound(Some( Cursor( iterator: Generator[Resource, Unit, Unit] ) ), _ ) => {
+        case RBoundHM(Some( Cursor( iterator: Generator[Resource, Unit, Unit] ) ), _ ) => {
             iterator
           }
         case _ => {
