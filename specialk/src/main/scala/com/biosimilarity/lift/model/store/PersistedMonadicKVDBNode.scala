@@ -559,35 +559,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
       
       class BasePersistedMonadicKVDB[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse, +KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]](
 	override val name : Moniker
-      ) extends AbstractPersistedMonadicKVDB[ReqBody,RspBody,KVDBNode](
+      ) extends BaseMonadicKVDB[ReqBody,RspBody,KVDBNode](
 	name
-      ) {
-	override def configFileName : Option[String] = None
-	override def configurationDefaults : ConfigurationDefaults = {
-	  ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
-	} 
-	override def toString() : String = {
-	  (
-	    this.getClass.getName.split( "\\." ).last + "@"
-	    + ( name match { case MURI( uri ) => uri; case _ => name } )
-	  )
-	}
-
-	override def equals( o : Any ) : Boolean = {
-	  o match {
-	    case that : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode] => {
-	      (
-		name.equals( that.name ) 
-	      )
-	    }
-	    case _ => false
-	  }
-	}
-	override def hashCode( ) : Int = {
-	  (
-	    ( 37 * name.hashCode )
-	  )
-	}
+      ) with PersistenceManifestTrampoline
+	       with BaseXXMLStore           
+	       with BaseXCnxnStorage[Namespace,Var,Tag]
+	       with Serializable 
+      {	 		
 	override def tmpDirStr : String = {
 	  val tds = config.getString( "storageDir", "tmp" )       
 	  val tmpDir = new java.io.File( tds )
@@ -1464,97 +1442,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
       }
 
       class BasePersistedMonadicKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,+KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]](
-	val cache : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode],
+	override val cache : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode],
 	override val acquaintances : List[Moniker]
-      ) extends AbstractPersistedMonadicKVDBNode[ReqBody,RspBody,KVDBNode](
+      ) extends BaseMonadicKVDBNode[ReqBody,RspBody,KVDBNode](
 	cache, acquaintances
-      ) with MessageFraming[String,ReqBody,RspBody] {    
-	override def toString() : String = {
-	  (
-	    this.getClass.getName.split( "\\." ).last + "@"
-	    + ( name match { case MURI( uri ) => uri; case _ => name } )
-	  )
-	}
-	override def equals( o : Any ) : Boolean = {
-	  o match {
-	    case that : BasePersistedMonadicKVDBNode[ReqBody,RspBody,KVDBNode] => {
-	      (
-		cache.equals( that.cache ) 
-		&& acquaintances.equals( that.acquaintances )
-	      )
-	    }
-	    case _ => false
-	  }
-	}
-	override def hashCode( ) : Int = {
-	  (
-	    ( 37 * cache.hashCode )
-	    + ( 37 * acquaintances.hashCode )
-	  )
-	}
-	def wrapResponse(
-	  msrc : Moniker, dreq : Msgs.DReq, rsrc : mTT.Resource
-	) : FramedMsg = {
-	  val rsp = 
-	    dreq match {
-	      case Msgs.MDGetRequest( path ) => {
-		RsrcMsgs.MDGetResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )	  
-	      }
-	      case Msgs.MDFetchRequest( path ) => {
-		RsrcMsgs.MDFetchResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )
-	      }
-	      case Msgs.MDSubscribeRequest( path ) => {
-		RsrcMsgs.MDSubscribeResponseRsrc[Namespace,Var,Tag,Value]( path, mTT.portRsrc( rsrc, path ) )
-	      }
-	      case _ => {
-		throw new Exception( "unexpected request type " + dreq )
-	      }	  
-	    }
-
-	  rsp match {
-	    case rsbdy : RspBody => {
-	      frameResponse( msrc )( rsbdy )
-	    }
-	    case _ => {
-	      throw new Exception( "unable to frame response: " + rsp )
-	    }
-	  }	  
-	}
-	
-	def wrapResponse(
-	  msrc : Moniker, dreq : Msgs.DReq
-	) : FramedMsg = {
-	  val rsp = 
-	    dreq match {	  
-	      case Msgs.MDPutRequest( path, _ ) => {
-		RsrcMsgs.MDPutResponseRsrc[Namespace,Var,Tag,Value]( path )
-	      }
-	      case Msgs.MDPublishRequest( path, _ ) => {
-		RsrcMsgs.MDPublishResponseRsrc[Namespace,Var,Tag,Value]( path )
-	      }
-	      case _ => {
-		throw new Exception( "unexpected request type " + dreq )
-	      }
-	    }
-
-	  rsp match {
-	    case rsbdy : RspBody => {
-	      frameResponse( msrc )( rsbdy )
-	    }
-	    case _ => {
-	      throw new Exception( "unable to frame response: " + rsp )
-	    }
-	  }
-	}
-	
-	def handleValue( dreq : Msgs.DReq, oV : Option[mTT.Resource], msrc : Moniker ) : Unit = {
-	  for( q <- stblQMap.get( msrc ); value <- oV ) {	
-	    tweet( ( this + " sending value " + oV + " back " ) )	   
-	    q ! wrapResponse( msrc, dreq, value )
-	  }
-	}
-	
-	def dispatchDMsg( dreq : FramedMsg ) : Unit = {
+      ) with Serializable
+      {    		
+	override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
 	  dreq match {
 	    case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	      body match {
@@ -1703,61 +1597,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    }
 	  }      
 	  
-	}
-	
-	def mkGetRsp( path : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
-	  RsrcMsgs.MDGetResponseRsrc[Namespace,Var,Tag,Value]( path, rsrc )
-	}
-	
-	def dispatchDMsgs()  : Unit = {
-	  reset {
-	    for( dreq <- ??() ) {
-	      tweet( this + " handling : " + dreq )	
-	      dispatchDMsg( dreq )
-	    }
-	  }
-	}
-	
-	def forward(
-	  ask : dAT.AskNum,
-	  hops : List[Moniker],
-	  path : CnxnCtxtLabel[Namespace,Var,Tag]
-	) : Unit = {
-	  
-	  tweet( ( this + " in forwardGet with hops: " + hops ) )
-	  
-	  for( trgt <- acquaintances; q <- stblQMap.get( trgt ) if !hops.contains( trgt ) ) {	
-	    val request : KVDBNodeRequest = 
-	      ask match {
-		case dAT.AGetNum => {
-		  Msgs.MDGetRequest[Namespace,Var,Tag,Value](
-		    path
-		  )
-		}
-		case dAT.AFetchNum => {
-		  Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
-		    path
-		  )
-		}
-		case dAT.ASubscribeNum => {
-		  Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
-		    path
-		  )
-		}
-	      }
-
-	    request match {
-	      case rqbdy : ReqBody => {
-		val framedReq = frameRequest( trgt )( rqbdy )
-		tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
-		q ! framedReq
-	      }
-	      case _ => {
-		throw new Exception( "unable to frame request: " + request )
-	      }
-	    }	    
-	  }
-	}
+	}		
 	
 	def mget( persist : Option[PersistenceManifest], ask : dAT.AskNum, hops : List[Moniker] )(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
@@ -1814,7 +1654,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  }      
 	}
 	
-	def get( hops : List[Moniker] )( cursor : Boolean )(
+	override def get( hops : List[Moniker] )( cursor : Boolean )(
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	) : Generator[Option[mTT.Resource],Unit,Unit] = {	  
 	  val perD = cache.persistenceManifest
@@ -1837,20 +1677,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  )
 	  mget( perD, dAT.AGetNum, hops )( cache.theMeetingPlace, cache.theWaiters, CacheAndStore, Store, cursor, xmlCollName )( path )    
 	}
-	
-	def get( cursor : Boolean )(
-	  path : CnxnCtxtLabel[Namespace,Var,Tag]
-	): Generator[Option[mTT.Resource],Unit,Unit] = {
-	  get( Nil )( cursor )( path )
-	}    
-	
-	override def get(
-	  path : CnxnCtxtLabel[Namespace,Var,Tag]
-	) : Generator[Option[mTT.Resource],Unit,Unit] = {        
-	  get( Nil )( false )( path )    
-	}
-	
-	def fetch( hops : List[Moniker] )(
+		    			
+	override def fetch( hops : List[Moniker] )(
 	  cursor : Boolean
 	)(
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
@@ -1865,25 +1693,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  mget( perD, dAT.AFetchNum, hops )(
 	    cache.theMeetingPlace, cache.theWaiters, DoNotRetain, DoNotRetain, cursor, xmlCollName
 	  )( path )    
-	}
+	}				
 	
-	def fetch(
-	  cursor : Boolean
-	)(
-	  path : CnxnCtxtLabel[Namespace,Var,Tag]
-	)
-	: Generator[Option[mTT.Resource],Unit,Unit] = {
-	  get( Nil )( cursor )( path )
-	}
-	
-	override def fetch(
-	  path : CnxnCtxtLabel[Namespace,Var,Tag]
-	)
-	: Generator[Option[mTT.Resource],Unit,Unit] = {        
-	  fetch( Nil )( false )( path )    
-	}
-	
-	def subscribe( hops : List[Moniker] )(
+	override def subscribe( hops : List[Moniker] )(
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
 	: Generator[Option[mTT.Resource],Unit,Unit] = {        
@@ -1897,14 +1709,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    cache.theChannels, cache.theSubscriptions, CacheAndStore, Store, false, xmlCollName
 	  )( path )    
 	}
-	
-	override def subscribe(
-	  path : CnxnCtxtLabel[Namespace,Var,Tag]
-	)
-	: Generator[Option[mTT.Resource],Unit,Unit] = {        
-	  subscribe( Nil )( path )    
-	}
-	
+			
 	override def put( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
 	  val perD = cache.persistenceManifest
 	  val xmlCollName = 
@@ -1923,11 +1728,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    }
 	  cache.mput( perD )( cache.theChannels, cache.theSubscriptions, true, xmlCollName )( ptn, rsrc )
 	}
-	
-	override def configFileName : Option[String] = None
-	override def configurationDefaults : ConfigurationDefaults = {
-	  ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
-	} 
+		 
       }
 
       object BasePersistedMonadicKVDBNode {
