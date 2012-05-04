@@ -65,6 +65,198 @@ with AgentCnxnTypeScope {
     ) extends BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode](
       name
     ) {
+      def mget( cnxn : acT.AgentCnxn )(
+	persist : Option[PersistenceManifest],
+	ask : dAT.AskNum,
+	hops : List[Moniker]
+      )(
+	channels : Map[mTT.GetRequest,mTT.Resource],
+	registered : Map[mTT.GetRequest,List[RK]],
+	consume : RetentionPolicy,
+	keep : RetentionPolicy,
+	cursor : Boolean,
+	collName : Option[String]
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {
+	Generator {
+	  rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+	    shift {
+	      outerk : ( Unit => Unit ) =>
+		reset {
+                  val results = mget( channels, registered, consume, keep )( path )
+                  var processed = false
+		  
+                  for(
+                    oV <-results
+                  ) {
+                    oV match {
+                      case None => {
+                        persist match {
+                          case None => {
+                            rk(oV)
+                          }
+                          case Some(pd) => {
+                            tweet(
+                              "accessing db : " + pd.db
+                            )
+                            val xmlCollName =
+                              collName.getOrElse(
+                                storeUnitStr.getOrElse(
+                                  bail()
+                                )
+                              )
+			    
+                            // Defensively check that db is actually available
+			    
+                            checkIfDBExists(xmlCollName, true) match {
+                              case true => {
+                                val oQry = query(xmlCollName, path)
+				
+                                oQry match {
+                                  case None => {
+                                    rk(oV)
+                                  }
+                                  case Some(qry) => {
+                                    tweet(
+                                      (
+                                        "querying db : " + pd.db
+                                        + " from coll " + xmlCollName
+                                        + " where " + qry
+					
+                                      )
+                                    )
+				    
+                                    val rslts = executeWithResults(qry)
+				    
+                                    rslts match {
+                                      case Nil => {
+                                        tweet(
+                                          (
+                                            "database "
+                                            + xmlCollName
+                                            + " had no matching resources."
+                                          )
+                                        )
+                                        rk(oV)
+                                      }
+                                      case _ => {
+                                        tweet(
+                                          (
+                                            "database "
+                                            + xmlCollName
+                                            + " had "
+                                            + rslts.length
+                                            + " matching resources."
+                                          )
+                                        )
+					
+                                        // BUGBUG -- LGM : This is a
+                                        // window of possible
+                                        // failure; if we crash here,
+                                        // then the result is out of
+                                        // the store, but we haven't
+                                        // completed processing. This is
+                                        // where we need Tx.
+					
+                                        if ( cursor ) {
+                                          var rsrcRslts: List[ mTT.Resource ] = Nil
+					  
+                                          for ( rslt <- itergen[ Elem ](rslts) ) {
+                                            tweet("retrieved " + rslt.toString)
+					    
+                                             consume match {
+					       case policy : RetainInStore => {
+						 tweet("removing from store " + rslt)
+						 removeFromStore(
+                                                   persist,
+                                                   rslt,
+                                                   collName
+						 )
+					       }
+					       case _ => {
+						 tweet( "policy indicates not to remove from store " + rslt )
+					       }
+                                            }
+					    
+                                            val ersrc: emT.PlaceInstance = pd.asResource(path, rslt)
+                                            ersrc.stuff match {
+                                              case Left( r ) => rsrcRslts = r :: rsrcRslts
+                                              case _ => {}
+                                            }
+                                          }
+                                          val rsrcCursor = asCursor(rsrcRslts)
+                                          //tweet( "returning cursor" + rsrcCursor )
+                                          rk(rsrcCursor)
+                                        }
+                                            else {
+                                              for ( rslt <- itergen[ Elem ](rslts) ) {
+						
+						tweet("retrieved " + rslt.toString)
+						
+						 consume match {
+						   case policy : RetainInStore => {
+						     tweet("removing from store " + rslt)
+						     removeFromStore(
+                                                       persist,
+                                                       rslt,
+                                                       collName
+						     )
+						   }
+						   case _ => {
+						     tweet( "policy indicates not to remove from store" + rslt )
+						   }
+						}
+						
+						val ersrc = pd.asResource(path, rslt)
+						tweet("returning " + ersrc)						
+						ersrc.stuff match {
+						  case Left( r ) => rk( Some( r ) )
+						  case _ => {}
+						}
+                                              }
+                                            }
+					
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                              case false => {
+                                rk(oV)
+                              }
+                            }
+                          }
+                        }
+                      }
+                      case _ if ( !cursor )=> {
+                        rk(oV)
+                      }
+                      case _ if ( cursor && !processed ) => {
+                        var rsrcRslts: List[ mTT.Resource ] = Nil
+                        for ( rslt <- results ) {
+                          tweet("retrieved " + rslt.toString)
+			  
+                          rslt match {
+                            case Some(r) => rsrcRslts = r :: rsrcRslts
+                            case _ => {}
+                          }
+                        }
+                        val rsrcCursor = asCursor(rsrcRslts)
+                        //tweet( "returning cursor" + rsrcCursor )
+                        processed = true
+                        rk(rsrcCursor)
+                      }
+                      case _ => {
+                        //cursor and processed, do nothing
+                      }
+                    }
+                  }
+		}
+            }
+	}
+      }
     }
 
     object BaseAgentKVDB {
@@ -441,10 +633,51 @@ with AgentCnxnTypeScope {
       )(
 	path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
-      : Generator[Option[mTT.Resource],Unit,Unit] = {
-	throw new Exception( "TBD" )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {        
+	Generator {
+	  rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+	    shift {
+	      outerk : ( Unit => Unit ) =>
+		reset {
+		  tweet( 
+		    (
+		      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		      + "mgetting " + path + ".\n"
+		      + "on " + this + ".\n"
+		      + "checking local cache " + cache + ".\n"
+		      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+		    )
+		  )
+		  for(
+		    oV <- cache.mget( persist, ask, hops )( channels, registered, consume, keep, cursor, collName )( path ) 
+		  ) {
+		    oV match {
+		      case None => {
+			//tweet( ">>>>> forwarding..." )
+			tweet( 
+			  (
+			    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			    + "mgetting " + path + ".\n"
+			    + "on " + cache + " did not find a resource.\n"
+			    + "xml collection name: " + collName + "\n"
+			    + "consume data : " + true + "\n"
+			    + "keep continuation : " + true + "\n"
+			    + "forwarding to acquaintances.\n"
+			    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			  )
+			)
+			
+			forward( ask, hops, path )
+			rk( oV )
+		      }
+		      case _ => rk( oV )
+		    }
+		  }
+		}
+	    }
+	}      
       }
-
+      
       def remotePut( cnxn : acT.AgentCnxn )(
 	ptn : mTT.GetRequest, rsrc : mTT.Resource
       ) = {
