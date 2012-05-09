@@ -14,6 +14,7 @@ import com.biosimilarity.lift.lib.zipper._
 
 import scala.xml._
 import scala.util.parsing.combinator._
+import scala.collection.mutable.HashMap
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
@@ -568,6 +569,93 @@ trait CnxnXML[Namespace,Var,Tag] {
     fromCC( cc )
   }
 
+  def partialCaseClassDerivative [Namespace,Var,Tag] (
+    filter : java.lang.reflect.Method => Boolean
+  )(
+    labelToNS : String => Namespace,
+    valToTag : java.lang.Object => Tag,
+    strToVar : String => Var
+  )(
+    cc : ScalaObject with Product with Serializable,
+    vars : List[(String,String)]
+  ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {    
+    def fromCC(
+      cc : java.lang.Object
+    ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+      if ( isGroundValueType( cc ) ) {
+	new CnxnCtxtLeaf[Namespace,Var,Tag](
+	  Left( valToTag( cc ) )
+	)
+      }
+      else {
+	if ( cc.isInstanceOf[Option[_]] ) {
+	  cc match {
+	    case Some(
+	      thing : ScalaObject with Product with Serializable
+	    ) => {
+	      new CnxnCtxtBranch[Namespace,Var,Tag](
+		labelToNS( "some" ),
+		List(
+		  partialCaseClassDerivative( filter )( labelToNS, valToTag, strToVar )( thing, vars )
+		)
+	      )
+	    }
+	    case Some(
+	      thingElse : AnyRef
+	    ) => {
+	      new CnxnCtxtLeaf[Namespace,Var,Tag](
+		Left( valToTag( thingElse ) )
+	      )
+	    }
+	    case None => {
+	      new CnxnCtxtLeaf[Namespace,Var,Tag](
+		Left( valToTag( "none" ) )
+	      )
+	    }
+	  }	  
+	}
+	else {
+	  val varMap = new HashMap[String,String]()
+	  for( ( fld, v ) <- vars ) { varMap += ( fld -> v ) }
+	  val varFlds = varMap.keys
+	  
+	  val facts =
+	    (
+	      for(
+		m <- caseClassAccessors( cc )
+	      ) yield {
+		varMap.get( m.getName ) match {
+		  case Some( v ) => {
+		    new CnxnCtxtLeaf[Namespace,Var,Tag](
+		      Right( strToVar( v ) )
+		    )
+		  }
+		  case None => {
+		    val faccess = m.isAccessible
+		    m.setAccessible( true )
+		    val fval = m.get( cc )
+		    m.setAccessible( faccess )
+		    
+		    new CnxnCtxtBranch[Namespace,Var,Tag](
+		      labelToNS( m.getName ),
+		      //List( fromCC( m.invoke( cc ) ) )
+		      List( fromCC( fval ) )
+		    )
+		  }
+		}		
+	      }
+	    ).toList
+	  
+	  new CnxnCtxtBranch[Namespace,Var,Tag] (
+	    labelToNS( caseClassNameSpace( cc ) ),
+	    facts
+	  )
+	}
+      }
+    }
+    fromCC( cc )
+  }
+
   def fromCaseClass [Namespace,Var,Tag] (
     labelToNS : String => Namespace,
     valToTag : java.lang.Object => Tag
@@ -585,6 +673,21 @@ trait CnxnXML[Namespace,Var,Tag] {
       ( x : java.lang.Object ) => x.toString      
     )(
       cc 
+    )
+  }
+
+  def partialCaseClassDerivative(
+    cc : ScalaObject with Product with Serializable,
+    vars : List[(String,String)]
+  ) : CnxnCtxtLabel[String,String,String] with Factual = {    
+    partialCaseClassDerivative [String,String,String] (
+      ( m :java.lang.reflect.Method ) => true 
+    )(
+      ( x : String ) => x,
+      ( x : java.lang.Object ) => x + "",
+      ( x : String ) => x      
+    )(
+      cc, vars
     )
   }
 
@@ -775,6 +878,7 @@ object CnxnConversionStringScope
       case _ => obj + ""
     }
   }
+  def s2v( s : String ) : String = s
 
   implicit def asCnxnCtxtLabel(
     s : String
@@ -790,6 +894,13 @@ object CnxnConversionStringScope
     cc : ScalaObject with Product with Serializable
   ) : CnxnCtxtLabel[String,String,String] with Factual = {        
     cnxnConversions.fromCaseClass( l2ns, v2t )( cc )
+  }
+
+  implicit def partialCaseClassDerivative(
+    cc : ScalaObject with Product with Serializable,
+    vars : List[(String,String)]
+  ) : CnxnCtxtLabel[String,String,String] with Factual = {        
+    cnxnConversions.partialCaseClassDerivative( ( m : java.lang.reflect.Method ) => true )( l2ns, v2t, s2v )( cc, vars )
   }
 
   implicit def asCnxnCtxtLabel(

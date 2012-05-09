@@ -52,14 +52,14 @@ case class PutVal(
 
 package usage {
   object PersistedMonadicKVDBCollectD
-       extends PersistedMonadicKVDBNodeScope[String,String,String,Double]
+       extends PersistedMonadicKVDBNodeScope[String,String,String,String]
        with UUIDOps
   with Serializable
   {
     import SpecialKURIDefaults._
     import identityConversions._
 
-    type MTTypes = MonadicTermTypes[String,String,String,Double]
+    type MTTypes = MonadicTermTypes[String,String,String,String]
     object TheMTT extends MTTypes with Serializable
     override def protoTermTypes : MTTypes = TheMTT
 
@@ -83,7 +83,7 @@ package usage {
       @transient
       override def protoDreq : DReq = MDGetRequest( aLabel )
       @transient
-      override def protoDrsp : DRsp = MDGetResponse( aLabel, 0.0 )
+      override def protoDrsp : DRsp = MDGetResponse( aLabel, "" )
       @transient
       override def protoJtsreq : JTSReq =
 	JustifiedRequest(
@@ -217,7 +217,7 @@ package usage {
 	      
 	      def asCacheValue(
 		ccl : CnxnCtxtLabel[String,String,String]
-	      ) : Double = {
+	      ) : String = {
 		tweet(
 		  "converting to cache value"
 		)
@@ -231,7 +231,7 @@ package usage {
 		    
 		    unBlob match {
 		      case rsrc : mTT.Resource => {
-			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+			getGV( rsrc ).getOrElse( "" )
 		      }
 		    }
 		  }
@@ -456,6 +456,62 @@ package usage {
 	  node
 	}
       }
+    }
+  }
+
+  object CollectDPutValUseCase extends Serializable {
+    import PersistedMonadicKVDBCollectD._
+    import Being._
+    import PersistedKVDBNodeFactory._
+
+    import CnxnConversionStringScope._
+
+    def mkPutValQry( putval : PutVal ) : CnxnCtxtLabel[String,String,String] = {
+      import CnxnConversionStringScope._
+      putval match {
+	case cc : ScalaObject with Product with Serializable => {
+	  asCnxnCtxtLabel( cc )
+	}
+	case _ => throw new Exception( "non concrete putval: " + putval )
+      }
+    }
+    
+    def mkPutValPtn( putval : PutVal, vars : List[(String,String)] ) : CnxnCtxtLabel[String,String,String] = {      
+      putval match {
+	case cc : ScalaObject with Product with Serializable => {
+	  partialCaseClassDerivative( cc, vars )
+	}
+	case _ => throw new Exception( "non concrete putval: " + putval )
+      }
+    }
+
+    /*
+    PutVal( li, ls, t, _, host, _, _, _, _ ) -> {
+      println( "on " + host + " at " + t " observed: " + li.zip( ls ) )
+    }
+    
+    ( pv1 / List( ( "values", "li" ), ( "dstypes", "ls" ), ( "time", "t" ), ( "host", "host" ) ) ) -> {
+      println( "on " + host + " at " + t " observed: " + li.zip( ls ) )
+    }
+    */
+    
+    case class CCWrapper[ReqBody <: PersistedKVDBNodeRequest,RspBody <: PersistedKVDBNodeResponse](
+      cc : ScalaObject with Product with Serializable,
+      kvdb : PersistedMonadicKVDBNode[ReqBody,RspBody]
+    ) {
+      def /( vars : List[(String,String)] ) : CnxnCtxtLabel[String,String,String] = {
+	partialCaseClassDerivative( cc, vars )
+      }
+      def ->( ptn : CnxnCtxtLabel[String,String,String] )( body : Unit => Unit ) = {
+	reset {
+	  for( rsrc <- kvdb.get( ptn ) ) { body() }
+	}
+      }
+    }
+    implicit def putval2Ptn[ReqBody <: PersistedKVDBNodeRequest,RspBody <: PersistedKVDBNodeResponse]( putval : PutVal )(
+      implicit kvdb : PersistedMonadicKVDBNode[ReqBody,RspBody]
+    ) : CCWrapper[ReqBody,RspBody] = {
+      CCWrapper( putval, kvdb )
     }
   }
 }
