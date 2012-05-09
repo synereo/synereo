@@ -494,10 +494,56 @@ package usage {
       println( "on " + host + " at " + t " observed: " + li.zip( ls ) )
     }
     */
-    
-    case class CCWrapper[ReqBody <: PersistedKVDBNodeRequest,RspBody <: PersistedKVDBNodeResponse](
+
+    implicit val retTwist : Boolean = false
+    def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      localHost : String, localPort : Int,
+      remoteHost : String, remotePort : Int
+    )(
+      implicit returnTwist : Boolean
+    ) : Either[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])] = {
+      val ( localExchange, remoteExchange ) = 
+	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
+	  ( "/molecularUseCaseProtocolLocal", "/molecularUseCaseProtocolRemote" )	  
+	}
+	else {
+	  ( "/molecularUseCaseProtocol", "/molecularUseCaseProtocol" )	  
+	}
+
+      if ( returnTwist ) {
+	Right[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])](
+	  (
+	    ptToPt[ReqBody, RspBody](
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	    ),
+	    ptToPt[ReqBody, RspBody](	      
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null )
+	    )
+	  )
+	)
+      }
+      else {
+	Left[Being.PersistedMonadicKVDBNode[ReqBody, RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])](
+	  ptToPt(
+	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	  )
+	)
+      }
+    }
+
+    implicit val kvdb : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
+      val Right( ( client, server ) ) =
+	setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+	  "localhost", 5672, "localhost", 5672
+	)( true )
+      client
+    }
+    case class CCWrapper(
       cc : ScalaObject with Product with Serializable,
-      kvdb : PersistedMonadicKVDBNode[ReqBody,RspBody]
+      kvdb : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
     ) {
       def /( vars : List[(String,String)] ) : CnxnCtxtLabel[String,String,String] = {
 	partialCaseClassDerivative( cc, vars )
@@ -508,10 +554,15 @@ package usage {
 	}
       }
     }
-    implicit def putval2Ptn[ReqBody <: PersistedKVDBNodeRequest,RspBody <: PersistedKVDBNodeResponse]( putval : PutVal )(
-      implicit kvdb : PersistedMonadicKVDBNode[ReqBody,RspBody]
-    ) : CCWrapper[ReqBody,RspBody] = {
+    implicit def putval2Ptn( putval : PutVal )(
+      implicit kvdb : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+    ) : CCWrapper = {
       CCWrapper( putval, kvdb )
+    }
+    def alarm1( pv : PutVal ) = {      
+      ( pv / List( ( "time", "t" ), ( "host", "host" ) ) ) -> {
+	println( "Alarmed!" )
+      }
     }
   }
 }
