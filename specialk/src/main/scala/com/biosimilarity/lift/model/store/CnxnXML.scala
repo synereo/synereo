@@ -473,11 +473,7 @@ trait CnxnXML[Namespace,Var,Tag] {
     cc.getClass.getDeclaredFields
   }
 
-  def caseClassNameSpace(
-    //cc : ScalaObject with Product with Serializable
-    cc : java.lang.Object
-  ) : String = {
-    val initialName = cc.getClass.getName
+  def nameStrCleansing( initialName : String ) : String = {
     val nameComponents = initialName.split( "\\." ).toList
     val ccns =
       if ( nameComponents.length > 1 ) {
@@ -500,6 +496,13 @@ trait CnxnXML[Namespace,Var,Tag] {
 	initialName
       }
     ccns.replace( "$", "_" )
+  }
+
+  def caseClassNameSpace(
+    //cc : ScalaObject with Product with Serializable
+    cc : java.lang.Object
+  ) : String = {
+    nameStrCleansing( cc.getClass.getName )
   }
 
   def fromCaseClass [Namespace,Var,Tag] (
@@ -555,7 +558,7 @@ trait CnxnXML[Namespace,Var,Tag] {
 		m.setAccessible( faccess )
 
 		new CnxnCtxtBranch[Namespace,Var,Tag](
-		  labelToNS( m.getName ),
+		  labelToNS( nameStrCleansing( m.getName ) ),
 		  //List( fromCC( m.invoke( cc ) ) )
 		  List( fromCC( fval ) )
 		)
@@ -651,9 +654,12 @@ trait CnxnXML[Namespace,Var,Tag] {
 		    
 		    //println( "recursing on the value, " + fval + ", of " + cc + "'s field, " + m.getName + " is not in the list of vars" )
 		    new CnxnCtxtBranch[Namespace,Var,Tag](
-		      labelToNS( m.getName ),
+		      labelToNS( nameStrCleansing( m.getName ) ),
 		      //List( fromCC( m.invoke( cc ) ) )
-		      List( fromCC( fval ) )
+		      fval match {
+			case fvs : List[_] => fvs.map( ( x ) => fromCC( x.asInstanceOf[AnyRef] ) )
+			case _ => List( fromCC( fval ) )
+		      }
 		    )
 		  }
 		}		

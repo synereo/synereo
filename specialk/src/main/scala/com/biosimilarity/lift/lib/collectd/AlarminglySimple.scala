@@ -505,10 +505,10 @@ package usage {
     ) : Either[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
 	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-	  ( "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681", "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681Remote" )	  
+	  ( "/collectDImport04bb7a8b-01a0-4f5d-9d27-b7fe709a95da", "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681Remote" )	  
 	}
 	else {
-	  ( "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681", "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681" )	  
+	  ( "/collectDImport04bb7a8b-01a0-4f5d-9d27-b7fe709a95da", "/collectDImport04bb7a8b-01a0-4f5d-9d27-b7fe709a95da" )	  
 	}
 
       if ( returnTwist ) {

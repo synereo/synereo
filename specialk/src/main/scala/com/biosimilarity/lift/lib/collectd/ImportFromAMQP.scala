@@ -51,19 +51,34 @@ trait BulkCollectDImport extends UUIDOps {
       JString( type_instance ) <- json \\ "type_instance"
     ) {
       acc +=
+      // <record>
+// 	<putval>
+// 	  <values>{for( JInt( v ) <- valueArray ) yield {<int>{v}</int>}}</values>
+// 	  <dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
+// 	  <dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
+//           <time>{time}</time>
+// 	  <interval>{interval}</interval>
+//           <host>{host}</host>
+//           <plugin>{plugin}</plugin>
+//           <plugin_instance>{plugin_instance}</plugin_instance>
+//           <type>{cdtype}</type>
+//           <type_instance>{type_instance}</type_instance>
+// 	</putval>
+// 	<string>{getUUID + ""}</string>
+//       </record>
       <record>
-	<putval>
-	  <values>{for( JInt( v ) <- valueArray ) yield {<int>{v}</int>}}</values>
+	<comBiosimilarityLiftLibAlarmPutVal>
+	  <values>{for( JInt( v ) <- valueArray ) yield {<string>{v}</string>}}</values>
 	  <dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
 	  <dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
-          <time>{time}</time>
-	  <interval>{interval}</interval>
-          <host>{host}</host>
-          <plugin>{plugin}</plugin>
-          <plugin_instance>{plugin_instance}</plugin_instance>
-          <type>{cdtype}</type>
-          <type_instance>{type_instance}</type_instance>
-	</putval>
+          <time>{<string>{time}</string>}</time>
+	  <interval>{<string>{interval}</string>}</interval>
+          <host>{<string>{host}</string>}</host>
+          <plugin>{<string>{plugin}</string>}</plugin>
+          <plugin_instance>{<string>{plugin_instance}</string>}</plugin_instance>
+          <type>{<string>{cdtype}</string>}</type>
+          <type_instance>{<string>{type_instance}</string>}</type_instance>
+	</comBiosimilarityLiftLibAlarmPutVal>
 	<string>{getUUID + ""}</string>
       </record>
     }
