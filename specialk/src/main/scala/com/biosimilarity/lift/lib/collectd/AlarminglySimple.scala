@@ -41,6 +41,7 @@ import java.io.ByteArrayOutputStream
 case class PutVal(
   values : List[Int],
   dstypes : List[String],
+  dsnames : List[String],
   time : Double,
   interval : Double,
   host : String,
@@ -504,10 +505,10 @@ package usage {
     ) : Either[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
 	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-	  ( "/molecularUseCaseProtocolLocal", "/molecularUseCaseProtocolRemote" )	  
+	  ( "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681", "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681Remote" )	  
 	}
 	else {
-	  ( "/molecularUseCaseProtocol", "/molecularUseCaseProtocol" )	  
+	  ( "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681", "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681" )	  
 	}
 
       if ( returnTwist ) {
@@ -533,8 +534,8 @@ package usage {
 	)
       }
     }
-
-    implicit val kvdb : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
+    
+    implicit lazy val kvdb : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
       val Right( ( client, server ) ) =
 	setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
 	  "localhost", 5672, "localhost", 5672
@@ -559,7 +560,20 @@ package usage {
     ) : CCWrapper = {
       CCWrapper( putval, kvdb )
     }
-    def alarm1( pv : PutVal ) = {      
+    implicit lazy val pvOne =
+      PutVal(
+	List( 558815, 43649779 ),
+	List( "derive", "derive" ),
+	List( "rx", "tx" ),
+	1334349094.633,
+	10.000,
+	"server-75530.localdomain",
+	"interface",
+	"eth0",
+	"if_octets",
+	""
+      )
+    def alarm1( implicit pv : PutVal ) = {      
       ( pv / List( ( "time", "t" ), ( "host", "host" ) ) ) -> {
 	println( "Alarmed!" )
       }

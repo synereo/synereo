@@ -408,8 +408,11 @@ trait CnxnXML[Namespace,Var,Tag] {
   ) : Boolean = {
     ((value.isInstanceOf[Boolean]) 
      || (value.isInstanceOf[Int]) 
+     || (value.isInstanceOf[Long]) 
      || (value.isInstanceOf[Float])
+     || (value.isInstanceOf[Double])
      || (value.isInstanceOf[String])
+     || ((value.isInstanceOf[List[_]]) && (value.asInstanceOf[List[_]].isEmpty))
      //|| (value.isInstanceOf[Option[_]])
      // put more ground types here
    )
@@ -579,20 +582,28 @@ trait CnxnXML[Namespace,Var,Tag] {
     cc : ScalaObject with Product with Serializable,
     vars : List[(String,String)]
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {    
+    val varMap = new HashMap[String,String]()
+    for( ( fld, v ) <- vars ) { varMap += ( fld -> v ) }
+    val varFlds = varMap.keys
+
     def fromCC(
       cc : java.lang.Object
     ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-      if ( isGroundValueType( cc ) ) {
+      //println( "in fromCC with " + cc )
+      if ( isGroundValueType( cc.asInstanceOf[AnyRef] ) ) {	
+	//println( cc + " is a ground value" )
 	new CnxnCtxtLeaf[Namespace,Var,Tag](
 	  Left( valToTag( cc ) )
 	)
       }
       else {
 	if ( cc.isInstanceOf[Option[_]] ) {
+	  //println( cc + " is an option" )
 	  cc match {
 	    case Some(
 	      thing : ScalaObject with Product with Serializable
 	    ) => {
+	      //println( cc + " is Some( <case class instance> )" )
 	      new CnxnCtxtBranch[Namespace,Var,Tag](
 		labelToNS( "some" ),
 		List(
@@ -603,22 +614,22 @@ trait CnxnXML[Namespace,Var,Tag] {
 	    case Some(
 	      thingElse : AnyRef
 	    ) => {
+	      //println( cc + " is Some( <some other kind of instance> )" )
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( valToTag( thingElse ) )
 	      )
 	    }
 	    case None => {
+	      //println( cc + " is None" )
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( valToTag( "none" ) )
 	      )
 	    }
 	  }	  
 	}
-	else {
-	  val varMap = new HashMap[String,String]()
-	  for( ( fld, v ) <- vars ) { varMap += ( fld -> v ) }
-	  val varFlds = varMap.keys
-	  
+	else {	  	  
+	  //println( cc + " is a plain old case class" )
+	  //println( "iterating through fields" )
 	  val facts =
 	    (
 	      for(
@@ -626,16 +637,19 @@ trait CnxnXML[Namespace,Var,Tag] {
 	      ) yield {
 		varMap.get( m.getName ) match {
 		  case Some( v ) => {
+		    //println( cc + "'s field, " + m.getName + " is in the list of vars" )
 		    new CnxnCtxtLeaf[Namespace,Var,Tag](
 		      Right( strToVar( v ) )
 		    )
 		  }
 		  case None => {
+		    //println( cc + "'s field, " + m.getName + " is not in the list of vars" )
 		    val faccess = m.isAccessible
 		    m.setAccessible( true )
 		    val fval = m.get( cc )
 		    m.setAccessible( faccess )
 		    
+		    //println( "recursing on the value, " + fval + ", of " + cc + "'s field, " + m.getName + " is not in the list of vars" )
 		    new CnxnCtxtBranch[Namespace,Var,Tag](
 		      labelToNS( m.getName ),
 		      //List( fromCC( m.invoke( cc ) ) )
