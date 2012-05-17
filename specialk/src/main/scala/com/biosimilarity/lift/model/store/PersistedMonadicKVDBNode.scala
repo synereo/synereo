@@ -716,6 +716,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      + " in coll : " + sus
 		    )
 		  )
+		  println(
+		    (
+		      "storing to db : " + pd.db
+		      + " pair : " + rcrd
+		      + " in coll : " + sus
+		    )
+		  )
 		  store( sus )( rcrd )
 		}
 	      }
@@ -744,6 +751,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  sus <- collName
 		) {
 		  tweet(
+		    (
+		      "storing to db : " + pd.db
+		      + " pair : " + rcrd
+		      + " in coll : " + sus
+		    )
+		  )
+		  println(
 		    (
 		      "storing to db : " + pd.db
 		      + " pair : " + rcrd

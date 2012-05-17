@@ -142,9 +142,9 @@ trait CnxnConversions[Namespace,Var,Tag] {
 	  case Nil => {
 	    (
 	      cnxnNamespaceTermStr( nspace ) 
-	      + "("
-	      + " "
-	      + ")"
+	      //+ "("
+	      //+ " "
+	      //+ ")"
 	    )
 	  }
 	  case lbl :: lbls => {

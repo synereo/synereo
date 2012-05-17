@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.lib.alarm
 
+import com.biosimilarity.lift.lib.bulk._
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.store._
@@ -29,6 +30,8 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
 
 import biz.source_code.base64Coder.Base64Coder
+import com.thoughtworks.xstream.XStream
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
 import java.util.UUID
 import java.net.URI
@@ -53,9 +56,10 @@ case class PutVal(
 
 package usage {
   object PersistedMonadicKVDBCollectD
-       extends PersistedMonadicKVDBNodeScope[String,String,String,String]
-       with UUIDOps
-  with Serializable
+     extends PersistedMonadicKVDBNodeScope[String,String,String,String]
+     with BulkCollectDImport
+     with UUIDOps
+     with Serializable
   {
     import SpecialKURIDefaults._
     import identityConversions._
@@ -227,6 +231,11 @@ package usage {
 		    "string",
 		    CnxnCtxtLeaf( Left( rv ) ) :: Nil
 		  ) => {
+
+		    tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
+		    tweet( "unpacking rv: " + rv )
+		    tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" )
+
 		    val unBlob =
 		      fromXQSafeJSONBlob( rv )
 		    
@@ -458,6 +467,156 @@ package usage {
 	}
       }
     }
+
+    @transient
+    lazy val testRunID = getUUID
+    @transient
+    var runNum = 0
+
+    override def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
+      // create an AMQP scope
+      val collectDAMQPScope = new AMQPStdScope[String]()
+      // create an AMQP Queue monad
+      val collectDQM =
+	new collectDAMQPScope.AMQPQueueHostExchangeM[String](
+	  host,
+	  queue
+	)
+      // get an empty queue
+      val collectDQ = collectDQM.zero[String]    
+      println( "creating entries" )
+      for( i <- 1 to numOfEntries ) {
+	print( "." )
+	val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+	collectDQ ! entry
+      }
+      println( "\nentries created" )
+    }
+    
+    override def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+      for(
+	JObject( fvs ) <- json \\ "putval" ;
+	JArray( valueArray ) <- json \\ "values" ;
+	JArray( dstypes ) <- json \\ "dstypes" ;
+	JArray( dsnames ) <- json \\ "dsnames" ;
+	JDouble( time ) <- json \\ "time" ;
+	JDouble( interval ) <- json \\ "interval" ; 
+	JString( host ) <- json \\ "host" ; 
+	JString( plugin ) <- json \\ "plugin" ;
+	JString( plugin_instance ) <- json \\ "plugin_instance" ;
+	JString( cdtype ) <- json \\ "type" ;
+	JString( type_instance ) <- json \\ "type_instance"
+      ) {
+	val gvStr =
+	  new XStream( new JettisonMappedXmlDriver() ).toXML( mTT.Ground( ( getUUID + "" ) ) )
+	
+	acc +=
+	// <record>
+	// 	<putval>
+	// 	  <values>{for( JInt( v ) <- valueArray ) yield {<int>{v}</int>}}</values>
+	// 	  <dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
+	// 	  <dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
+	//           <time>{time}</time>
+	// 	  <interval>{interval}</interval>
+	//           <host>{host}</host>
+	//           <plugin>{plugin}</plugin>
+	//           <plugin_instance>{plugin_instance}</plugin_instance>
+	//           <type>{cdtype}</type>
+	//           <type_instance>{type_instance}</type_instance>
+	// 	</putval>
+	// 	<string>{getUUID + ""}</string>
+	//       </record>            
+	<record>
+	  <comBiosimilarityLiftLibAlarmPutVal>
+	    <values>{for( JInt( v ) <- valueArray ) yield {<string>{v}</string>}}</values>
+	    <dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
+	    <dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
+            <time>{<string>{time}</string>}</time>
+	    <interval>{<string>{interval}</string>}</interval>
+            <host>{<string>{host}</string>}</host>
+            <plugin>{<string>{plugin}</string>}</plugin>
+            <plugin_instance>{<string>{plugin_instance}</string>}</plugin_instance>
+            <type>{<string>{cdtype}</string>}</type>
+            <type_instance>{<string>{type_instance}</string>}</type_instance>
+	  </comBiosimilarityLiftLibAlarmPutVal>
+	  <string>{gvStr}</string>
+	</record>
+      }
+      acc
+    }
+
+    override def readEntries( host : String, queue : String, file : String, dbChunk : Int ) : ListBuffer[String] = {
+      // create an AMQP scope
+      val collectDAMQPScope = new AMQPStdScope[String]()
+    // create an AMQP Queue monad
+      val collectDQM =
+	new collectDAMQPScope.AMQPQueueHostExchangeM[String](
+	  host,
+	  queue
+	)
+      // get an empty queue
+      val collectDQ = collectDQM.zero[String]    
+      
+      val acc = new ListBuffer[Elem]()      
+      val fileNames = new ListBuffer[String]()      
+      val lock = new Lock()
+      
+      println( "reading entries" )
+      for ( entry <- collectDQM( collectDQ ) ) {
+	print( "." )
+	handleEntry( parse( entry ), acc )
+	lock.acquire
+	if ( acc.size > dbChunk ) {
+	  runNum += 1
+	  val recordsFileName = ( file + testRunID + runNum + ".xml" )	    
+	  val db = <records>{acc.toList}</records>
+	  
+	  println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+	  scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
+	  fileNames += recordsFileName
+	  acc.clear
+	}
+	lock.release	
+      }      
+      println( "\nentries read" )      
+      fileNames
+    }
+
+    def loadData() : Unit = {
+      supplyEntries( "localhost", "collectDSample", 1000 )
+    }
+    def importData() : List[String] = {
+      val s = new Object {
+	def chill() {
+	  synchronized {
+	    this.wait
+	  }
+	}
+	def go() {
+	  synchronized {
+	    this.notifyAll()
+	  }
+	}
+      }
+      
+      val lb = readEntries( "localhost", "collectDSample", "collectDImport", 500 )
+
+      def spin( n : Int ) {
+	print( "*" )
+	if ( lb.size < 1 ) { 
+	  (new Thread {
+	    override def run() : Unit = {	      
+	      spin( n+1 )
+	    }
+	  }).start
+	  if ( n < 1 ) { s.chill }
+	}
+	else { s.go }
+      }
+
+      spin( 0 )
+      lb.toList
+    }
   }
 
   object CollectDPutValUseCase extends Serializable {
@@ -497,7 +656,12 @@ package usage {
     */
 
     implicit val retTwist : Boolean = false
+    implicit lazy val defaultDataLocation : String =
+      //"/collectDImport" + testRunID + runNum
+      "/collectDImport" + "0b61b90e-3ef7-4e47-b046-ffa5ac6b0ee08"
+
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      dataLocation : String,
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
     )(
@@ -505,10 +669,10 @@ package usage {
     ) : Either[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
 	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-	  ( "/collectDImport04bb7a8b-01a0-4f5d-9d27-b7fe709a95da", "/collectDImport0b6ffb58-aa04-47cc-9fad-8589e052c681Remote" )	  
+	  ( dataLocation, dataLocation + "Remote" )	  
 	}
 	else {
-	  ( "/collectDImport04bb7a8b-01a0-4f5d-9d27-b7fe709a95da", "/collectDImport04bb7a8b-01a0-4f5d-9d27-b7fe709a95da" )	  
+	  ( dataLocation, dataLocation )	  
 	}
 
       if ( returnTwist ) {
@@ -535,10 +699,10 @@ package usage {
       }
     }
     
-    implicit lazy val kvdb : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
+    def kvdb( dataLocation : String ) : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
       val Right( ( client, server ) ) =
 	setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
-	  "localhost", 5672, "localhost", 5672
+	  dataLocation, "localhost", 5672, "localhost", 5672
 	)( true )
       client
     }
@@ -555,10 +719,8 @@ package usage {
 	}
       }
     }
-    implicit def putval2Ptn( putval : PutVal )(
-      implicit kvdb : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
-    ) : CCWrapper = {
-      CCWrapper( putval, kvdb )
+    def putval2Ptn( dataSource : String, putval : PutVal ) : CCWrapper = {
+      CCWrapper( putval, kvdb( dataSource ) )
     }
     implicit lazy val pvOne =
       PutVal(
@@ -573,8 +735,8 @@ package usage {
 	"if_octets",
 	""
       )
-    def alarm1( implicit pv : PutVal ) = {      
-      ( pv / List( ( "time", "t" ), ( "host", "host" ) ) ) -> {
+    def alarm1( dataSource : String, pv : PutVal ) = {      
+      ( putval2Ptn( dataSource, pv ) / List( ( "time", "t" ), ( "host", "host" ) ) ) -> {
 	println( "Alarmed!" )
       }
     }
