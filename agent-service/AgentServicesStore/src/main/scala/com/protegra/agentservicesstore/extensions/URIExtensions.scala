@@ -68,3 +68,37 @@ object URMExtensions
     }
   }
 }
+
+object MonikerExtensions
+{
+  implicit def monikerExt(source: Moniker) = new MonikerExt(source)
+
+  class MonikerExt(source: Moniker) {
+
+     def withPort(port: Int) : Moniker = {
+      new URM(
+        source.getScheme,
+        Some(source.getUserInfo),
+        Some(source.getAuthority),
+        source.getHost,
+        Some(port),
+        source.getPath,
+        Some(source.getQuery),
+        Some(source.getFragment)
+      )
+    }
+
+     def withPath(path: String) : Moniker = {
+      new URM(
+        source.getScheme,
+        Some(source.getUserInfo),
+        Some(source.getAuthority),
+        source.getHost,
+        Some(source.getPort),
+        path,
+        Some(source.getQuery),
+        Some(source.getFragment)
+      )
+    }
+  }
+}
