@@ -26,6 +26,7 @@ import org.specs.runner.ConsoleRunner
 import com.biosimilarity.lift.lib.moniker._
 import com.biosimilarity.lift.model.store._
 import scala.util.continuations._
+import com.protegra.agentservicesstore.AgentTS.Being.PartitionedStringMGJ
 
 class PartitionedStringMGJCombinedTest
   extends JUnit4(PartitionedStringMGJCombinedTestSpecs)
