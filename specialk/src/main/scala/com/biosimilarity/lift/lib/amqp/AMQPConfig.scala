@@ -50,6 +50,7 @@ trait AMQPMonikerOps {
       case 0 => AMQPDefaults.defaultExchange
       case 1 => AMQPDefaults.defaultExchange
       case 2 => spath( 1 )
+      case n : Int if ( n > 2 ) => spath( 1 )
     }
   }
   def mnkrRoutingKey( src : Moniker ) : String = {
@@ -75,6 +76,7 @@ trait AMQPURIOps {
       case 0 => AMQPDefaults.defaultExchange
       case 1 => AMQPDefaults.defaultExchange
       case 2 => spath( 1 )
+      case n : Int if ( n > 2 ) => spath( 1 )
     }
   }
   def uriRoutingKey( src : URI ) : String = {

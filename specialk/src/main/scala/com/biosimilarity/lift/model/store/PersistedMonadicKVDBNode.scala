@@ -2154,6 +2154,15 @@ package usage {
 	  spawn { node.dispatchDMsgs() }
 	  node
 	}
+	def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : List[URI] ) : PersistedMonadicKVDBNode[ReqBody,RspBody] = {
+	  val node =
+	    PersistedMonadicKVDBNode[ReqBody,RspBody](
+	      mkCache( MURI( here ) ),
+	      there.map( MURI( _ ) )
+	    )
+	  spawn { node.dispatchDMsgs() }
+	  node
+	}
 	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody] = {
 	  val exchange = uriExchange( here )
 	  val hereNow =
