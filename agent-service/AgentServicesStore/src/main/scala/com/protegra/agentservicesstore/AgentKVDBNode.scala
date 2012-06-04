@@ -731,6 +731,55 @@ with AgentCnxnTypeScope {
 	}      
       }
       
+      def put( cnxn : acT.AgentCnxn )(
+	ptn : mTT.GetRequest, rsrc : mTT.Resource
+      ) = {
+	tweet(
+	  "In cnxn-based put with cnxn " + cnxn
+	)
+	
+	tweet(
+	  "Partitions : " + cnxnPartition.toList
+          
+	)
+	
+	val ( pmgj, perD, xmlCollName ) =
+	  getLocalPartitionActuals( cnxn )
+	
+	tweet(
+	  "Partitions : " + cnxnPartition.toList
+          
+	)
+	
+	tweet(
+	  "Storing " + ptn + " " + rsrc + " in partition " + pmgj
+          
+	)
+	
+	pmgj.cache.mput( perD )(
+	  pmgj.theMeetingPlace, pmgj.theWaiters, false, xmlCollName
+	)( ptn, rsrc )
+      }
+      
+      def publish( cnxn : acT.AgentCnxn )(
+	ptn : mTT.GetRequest, rsrc : mTT.Resource
+      ) = {
+	tweet(
+	  "In cnxn-based publish with cnxn " + cnxn
+          
+	)
+	val ( pmgj, perD, xmlCollName ) =	getLocalPartitionActuals( cnxn )
+	
+	tweet(
+	  "Publishing " + rsrc + " on " + ptn + " in partition " + pmgj
+          
+	)
+	
+	pmgj.cache.mput( perD )(
+	  pmgj.theChannels, pmgj.theSubscriptions, true, xmlCollName
+	)( ptn, rsrc )
+      }
+
       def remotePut( cnxn : acT.AgentCnxn )(
 	ptn : mTT.GetRequest, rsrc : mTT.Resource
       ) = {
