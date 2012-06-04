@@ -1224,7 +1224,7 @@ with AgentCnxnTypeScope {
 
 package usage {
   object AgentKVDBScope
-       extends AgentKVDBNodeScope[String,String,String,Double]
+       extends AgentKVDBNodeScope[String,String,String,String]
        with UUIDOps
   with Serializable
   {
@@ -1235,7 +1235,7 @@ package usage {
     object TheACT extends ACTypes
     override def protoAgentCnxnTypes : ACTypes = TheACT
 
-    type MTTypes = MonadicTermTypes[String,String,String,Double]
+    type MTTypes = MonadicTermTypes[String,String,String,String]
     object TheMTT extends MTTypes with Serializable
     override def protoTermTypes : MTTypes = TheMTT
 
@@ -1259,7 +1259,7 @@ package usage {
       @transient
       override def protoDreq : DReq = MDGetRequest( aLabel )
       @transient
-      override def protoDrsp : DRsp = MDGetResponse( aLabel, 0.0 )
+      override def protoDrsp : DRsp = MDGetResponse( aLabel, "" )
       @transient
       override def protoJtsreq : JTSReq =
 	JustifiedRequest(
@@ -1399,7 +1399,7 @@ package usage {
 	      
 	      def asCacheValue(
 		ccl : CnxnCtxtLabel[String,String,String]
-	      ) : Double = {
+	      ) : String = {
 		tweet(
 		  "converting to cache value"
 		)
@@ -1413,7 +1413,7 @@ package usage {
 		    
 		    unBlob match {
 		      case rsrc : mTT.Resource => {
-			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+			getGV( rsrc ).getOrElse( "" )
 		      }
 		    }
 		  }
@@ -1696,7 +1696,7 @@ package usage {
 		    
 		    def asCacheValue(
 		      ccl : CnxnCtxtLabel[String,String,String]
-		    ) : Double = {
+		    ) : String = {
 		      tweet(
 			"converting to cache value"
 		      )
@@ -1710,7 +1710,7 @@ package usage {
 			  
 			  unBlob match {
 			    case rsrc : mTT.Resource => {
-			      getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+			      getGV( rsrc ).getOrElse( "" )
 			    }
 			  }
 			}
@@ -1997,7 +1997,7 @@ package usage {
 		    
 		    def asCacheValue(
 		      ccl : CnxnCtxtLabel[String,String,String]
-		    ) : Double = {
+		    ) : String = {
 		      tweet(
 			"converting to cache value"
 		      )
@@ -2011,7 +2011,7 @@ package usage {
 			  
 			  unBlob match {
 			    case rsrc : mTT.Resource => {
-			      getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+			      getGV( rsrc ).getOrElse( "" )
 			    }
 			  }
 			}
@@ -2320,7 +2320,7 @@ package usage {
 		    
 		    def asCacheValue(
 		      ccl : CnxnCtxtLabel[String,String,String]
-		    ) : Double = {
+		    ) : String = {
 		      tweet(
 			"converting to cache value"
 		      )
@@ -2334,7 +2334,7 @@ package usage {
 			  
 			  unBlob match {
 			    case rsrc : mTT.Resource => {
-			      getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+			      getGV( rsrc ).getOrElse( "" )
 			    }
 			  }
 			}
