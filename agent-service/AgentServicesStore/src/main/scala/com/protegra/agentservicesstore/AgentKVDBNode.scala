@@ -2524,5 +2524,49 @@ package usage {
 	}
       }
     }
-  }    
+  }
+
+  object AgentUseCase extends Serializable {
+    import AgentKVDBScope._
+    import Being._
+    import AgentKVDBNodeFactory._
+
+    def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      localHost : String, localPort : Int,
+      remoteHost : String, remotePort : Int
+    )(
+      implicit returnTwist : Boolean
+    ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
+      val ( localExchange, remoteExchange ) = 
+	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
+	  ( "/molecularUseCaseProtocolLocal", "/molecularUseCaseProtocolRemote" )	  
+	}
+	else {
+	  ( "/molecularUseCaseProtocol", "/molecularUseCaseProtocol" )	  
+	}
+
+      if ( returnTwist ) {
+	Right[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+	  (
+	    ptToPt[ReqBody, RspBody](
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	    ),
+	    ptToPt[ReqBody, RspBody](	      
+	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
+	      new URI( "agent", null, localHost, localPort, localExchange, null, null )
+	    )
+	  )
+	)
+      }
+      else {
+	Left[Being.AgentKVDBNode[ReqBody, RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+	  ptToPt(
+	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	  )
+	)
+      }
+    }
+  }
 }
