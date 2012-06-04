@@ -770,6 +770,62 @@ with AgentCnxnTypeScope {
 	)( ptn, rsrc )
       }
 
+      def get( hops : List[Moniker] )(
+	cursor : Boolean
+      )(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {
+	tweet(
+	  "In cnxn-based get with cnxn " + cnxn
+          
+	)
+	
+	tweet(
+	  "Partitions : " + cnxnPartition.toList
+          
+	)
+	
+	val ( pmgj, perD, xmlCollName ) =
+	  getLocalPartitionActuals( cnxn )
+	
+	tweet(
+	  "Partitions : " + cnxnPartition.toList
+          
+	)
+	
+	tweet(
+	  "Retrieving " + path + " from partition " + pmgj
+          
+	)
+	
+	pmgj.mget( cnxn )( perD, dAT.AGetNum, hops )(
+	  pmgj.theMeetingPlace, pmgj.theWaiters, CacheAndStore, Store, cursor, xmlCollName
+	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
+      }    
+      
+      def get(
+	cursor : Boolean
+      )(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {
+	get( Nil )( cursor )( cnxn )( path )
+      }
+      
+      def get(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {
+	get( Nil )( false )( cnxn )( path )
+      }
+
       def remoteGet( hops : List[Moniker] )(
 	cnxn : acT.AgentCnxn
       )(
@@ -792,6 +848,51 @@ with AgentCnxnTypeScope {
 	  pmgj.theMeetingPlace, pmgj.theWaiters, CacheAndStore, Store, false, xmlCollName
 	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
       }
+
+      def fetch( hops : List[Moniker] )(
+	cursor: Boolean
+      )(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {   
+	tweet(
+	  "In cnxn-based fetch with cnxn " + cnxn
+          
+	)
+	
+	val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
+	
+	tweet(
+	  "Retrieving " + path + " from partition " + pmgj
+          
+	)
+	
+	pmgj.mget( cnxn )( perD, dAT.AFetchNum, hops )(
+	  pmgj.theMeetingPlace, pmgj.theWaiters, DoNotRetain, DoNotRetain, cursor, xmlCollName
+	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
+      }
+      
+      def fetch(
+	cursor: Boolean
+      )(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {        
+	fetch( Nil )( cursor )( cnxn )( path )
+      }
+      
+      def fetch(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {
+	fetch( Nil )( false )( cnxn )( path )
+      }            
 
       def remoteFetch( hops : List[Moniker] )(
 	cnxn : acT.AgentCnxn
@@ -816,6 +917,38 @@ with AgentCnxnTypeScope {
 	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
       }
 
+      def subscribe( hops : List[Moniker] )(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {    
+	tweet(
+	  "In cnxn-based subscribe with cnxn " + cnxn
+          
+	)
+	
+	val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
+	
+	tweet(
+	  "Retrieving " + path + " from partition " + pmgj
+          
+	)
+	
+	pmgj.mget( cnxn )( perD, dAT.ASubscribeNum, hops )(
+	  pmgj.theChannels, pmgj.theSubscriptions, CacheAndStore, Store, false, xmlCollName
+	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
+      }
+      
+      def subscribe(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {        
+	subscribe( Nil )( cnxn )( path )    
+      }
+      
       def remoteSubscribe( hops : List[Moniker] )(
 	cnxn : acT.AgentCnxn
       )(
