@@ -38,7 +38,7 @@ extends CnxnXQueryParser
     }
 
     val scheme  = "agent"
-    val path = "/invitation"
+    val path = ""
     val fragment = ""
     def toURI : URI = {
       new URI( scheme, source, path, fragment )
