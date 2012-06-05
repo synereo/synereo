@@ -19,7 +19,7 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 //import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
-object Cookery {
+object Instrument extends Serializable {
   import java.net.InetAddress
   val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
   def localIP : String = {

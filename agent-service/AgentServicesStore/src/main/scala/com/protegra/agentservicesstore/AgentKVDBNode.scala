@@ -2535,6 +2535,12 @@ package usage {
     import Being._
     import AgentKVDBNodeFactory._
 
+    import CnxnConversionStringScope._
+
+    import com.protegra.agentservicesstore.extensions.StringExtensions._
+
+    val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
+
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
@@ -2572,5 +2578,34 @@ package usage {
 	)
       }
     }
+
+    def runClient[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      kvdbNode : Being.AgentKVDBNode[ReqBody,RspBody]
+    ) : Unit = {
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    for( rsrc <- kvdbNode.get( cnxnGlobal )( asCnxnCtxtLabel( "XandY" ) ) ) {
+	      println( "received: " + rsrc )
+	    }
+	  }
+	}
+      }.start
+    }
+
+    def runServer[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      kvdbNode : Being.AgentKVDBNode[ReqBody,RspBody]
+    ) : Unit = {
+      new Thread {
+	override def run() : Unit = {
+	  reset {
+	    kvdbNode.put( cnxnGlobal )(
+	      asCnxnCtxtLabel( "XandY" ), mTT.Ground( "ColdPlay" )
+	    )
+	  }
+	}
+      }.start
+    }
+ 
   }
 }
