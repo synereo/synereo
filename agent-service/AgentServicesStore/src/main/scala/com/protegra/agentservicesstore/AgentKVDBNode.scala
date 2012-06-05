@@ -599,7 +599,7 @@ with AgentCnxnTypeScope {
 	partFn : acT.AgentCnxn => HashAgentKVDBNode[ReqBody,RspBody]
       ) = {
 	val pmgj : HashAgentKVDBNode[ReqBody,RspBody] = partFn( cnxn )
-	val perD = pmgj.persistenceManifest
+	val perD = pmgj.cache.persistenceManifest
 	val xmlCollName = 
 	  perD match {
 	    case None => None
@@ -1330,6 +1330,7 @@ package usage {
 	      override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
 		cnxn match {
 		  case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+		  case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
 		}	    
 	      }	
 	      
@@ -1627,6 +1628,7 @@ package usage {
 		    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
 		      cnxn match {
 			case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+			case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
 		      }	    
 		    }	
 		    
@@ -1928,6 +1930,7 @@ package usage {
 		    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
 		      cnxn match {
 			case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+			case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
 		      }	    
 		    }	
 		    
@@ -2251,6 +2254,7 @@ package usage {
 		    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
 		      cnxn match {
 			case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+			case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
 		      }	    
 		    }	
 		    
@@ -2539,10 +2543,10 @@ package usage {
     ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
 	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-	  ( "/molecularUseCaseProtocolLocal", "/molecularUseCaseProtocolRemote" )	  
+	  ( "/agentUseCaseProtocolLocal", "/agentUseCaseProtocolRemote" )	  
 	}
 	else {
-	  ( "/molecularUseCaseProtocol", "/molecularUseCaseProtocol" )	  
+	  ( "/agentUseCaseProtocol", "/agentUseCaseProtocol" )	  
 	}
 
       if ( returnTwist ) {
