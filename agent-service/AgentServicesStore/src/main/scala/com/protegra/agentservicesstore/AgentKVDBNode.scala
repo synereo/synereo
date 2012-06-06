@@ -352,6 +352,21 @@ with AgentCnxnTypeScope {
 	    _cnxnPartition = Some( pm )
 	    pm
 	  }
+	  case null => {
+	    val pm = new HashMap[acT.AgentCnxn,HashAgentKVDBNode[ReqBody,RspBody]]( )
+	    for( ( cnxn, node ) <- partitionMap ) {
+	      node match {
+		case hakvdbn : HashAgentKVDBNode[ReqBody,RspBody] => {
+		  pm += ( cnxn -> hakvdbn )
+		}
+		case _ => {
+		  tweet( "warning: not hashing " + ( cnxn, node ) + " because node is not a compatible type" )
+		}
+	      }
+	    }
+	    _cnxnPartition = Some( pm )
+	    pm
+	  }
 	}
       }
 

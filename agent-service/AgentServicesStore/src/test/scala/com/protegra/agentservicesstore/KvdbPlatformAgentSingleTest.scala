@@ -25,6 +25,7 @@ import java.util.UUID
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
 
@@ -89,7 +90,9 @@ with Timeouts
     Thread.sleep(timeoutBetween)
     "retrieve" in {
 //      val writer = new PartitionedStringMGJ("127.0.0.1".toURM, List[URM](), None)
-      val writer = AgentKVDBNodeFactory.ptToMany("127.0.0.1".toURI, List[URI]())
+      //AgentKVDBNodeFactory.ptToMany("127.0.0.1".toURI, List[URI]())
+      val Right( ( writerClnt, writerSrvr ) ) = 
+	setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( "localhost", 5672, "localhost", 5672 )( true )
 
       val lblGlobalRequest = "globalRequest(\"email\")".toLabel
       val lblGlobalResponse = "globalResponse(\"email\")".toLabel
@@ -103,7 +106,7 @@ with Timeouts
       def listenGlobalRequest: Unit =
       {
         reset {
-          for (e <- writer.get(cnxnGlobal)(lblGlobalRequest)) {
+          for (e <- writerClnt.get(cnxnGlobal)(lblGlobalRequest)) {
             if (e != None) {
               println("************* REQUEST RECEIVED : " + e.dispatch)
               getCount += 1;
@@ -119,7 +122,7 @@ with Timeouts
       def listenGlobalResponse: Unit =
       {
         reset {
-          for (e <- writer.get(cnxnGlobal)(lblGlobalResponse)) {
+          for (e <- writerClnt.get(cnxnGlobal)(lblGlobalResponse)) {
             if (e != None) {
               println("************* RESPONSE RECEIVED : " + e.dispatch)
               // No message should be received on this label
@@ -134,8 +137,8 @@ with Timeouts
       listenGlobalResponse
 
       val valueGlobalRequest = "START THE GLOBAL REQUEST"
-      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 1"))}
-      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 2"))}
+      reset {writerClnt.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 1"))}
+      reset {writerClnt.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 2"))}
 
       getCount must be_==(2).eventually(5, TIMEOUT_EVENTUALLY)
     }
