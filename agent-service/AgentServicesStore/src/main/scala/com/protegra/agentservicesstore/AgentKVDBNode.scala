@@ -1035,6 +1035,91 @@ with AgentCnxnTypeScope {
 	  pmgj.theChannels, pmgj.theSubscriptions, CacheAndStore, Store, false, xmlCollName
 	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
       }            
+
+      def store(
+	cnxn : acT.AgentCnxn
+      )(
+	ptn : mTT.GetRequest,
+	rsrc : mTT.Resource
+      ) : Unit = {
+	// BUGBUG -- LGM this should store at all patterns
+	// It looks as if putPlaces is not doing the full calculation
+	tweet(
+	  "In cnxn-based store with cnxn " + cnxn
+          
+	)
+	
+	val pmgj = getLocalPartition( cnxn )
+	
+	tweet(
+	  "In cnxn-based store with partition " + pmgj
+          
+	)
+	
+	for( pd <- pmgj.cache.persistenceManifest ) {
+	  spawn {
+	    val rcrd = pd.asStoreRecord( ptn, rsrc )
+	    tweet(
+	      (
+		"storing to db : " + pd.db
+		+ " pair : " + rcrd
+		+ " in coll : " + pd.storeUnitStr( cnxn )
+	      )
+	    )
+	    pmgj.cache.store( pd.storeUnitStr( cnxn ) )( rcrd )
+	  }
+	}
+      }    
+      
+      def delete(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,String]
+      )
+      : Unit = {
+	tweet(
+	  "In cnxn-based delete with cnxn " + cnxn
+	)
+	
+	val pmgj = getLocalPartition( cnxn )
+	
+	tweet(
+	  "In cnxn-based delete with partition " + pmgj
+	)
+	
+	for( pd <- pmgj.cache.persistenceManifest ) {
+	  spawn {
+	    tweet(
+	      "deleting from db : " + pd.db
+	      + " key : " + path.toString
+	      + " in coll : " + pd.storeUnitStr( cnxn ) 
+	    )
+	    pmgj.cache.delete(pd.storeUnitStr( cnxn ), path)
+	  }
+	}
+      }
+      
+      def drop ( cnxn:acT.AgentCnxn )
+      : Unit = {
+        tweet(
+          "In cnxn-based drop with cnxn " + cnxn
+        )
+	
+        val pmgj = getLocalPartition( cnxn )
+	
+        tweet(
+          "In cnxn-based drop with partition " + pmgj
+        )
+	
+        for( pd <- pmgj.cache.persistenceManifest ) {
+          spawn {
+            tweet(
+              "dropping coll " + pd.storeUnitStr( cnxn ) 
+            )
+            pmgj.cache.drop(pd.storeUnitStr( cnxn ))
+          }
+        }
+      }           
       
       override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
 	dreq match {
