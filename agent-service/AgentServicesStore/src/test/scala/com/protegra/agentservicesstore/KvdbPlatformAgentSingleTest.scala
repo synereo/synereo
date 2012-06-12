@@ -28,6 +28,8 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
+import actors.threadpool.LinkedBlockingQueue
+import com.protegra.agentservicesstore.extensions.LinkedBlockingQueueExtensions._
 
 class KvdbPlatformAgentSingleTest
   extends JUnit4(KvdbPlatformAgentSingleTestSpecs)
@@ -101,7 +103,7 @@ with Timeouts
 
       println("ready")
 
-      var getCount = 0
+      val resultQ = new LinkedBlockingQueue[String]
 
       def listenGlobalRequest: Unit =
       {
@@ -109,7 +111,7 @@ with Timeouts
           for (e <- writerClnt.get(cnxnGlobal)(lblGlobalRequest)) {
             if (e != None) {
               println("************* REQUEST RECEIVED : " + e.dispatch)
-              getCount += 1;
+              resultQ.add(e.dispatch)
 
               listenGlobalRequest
             }
@@ -138,9 +140,10 @@ with Timeouts
 
       val valueGlobalRequest = "START THE GLOBAL REQUEST"
       reset {writerClnt.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 1"))}
+      Thread.sleep(TIMEOUT_MED)
       reset {writerClnt.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 2"))}
 
-      getCount must be_==(2).eventually(5, TIMEOUT_EVENTUALLY)
+      resultQ.size() must be_==(2).eventually(10, TIMEOUT_EVENTUALLY)
     }
   }
 }
