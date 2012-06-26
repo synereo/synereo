@@ -35,10 +35,21 @@ object Instrument extends Serializable {
       AgentKVDBScope.importData()( 0 )
     val recordsFileNameRoot = recordsFileName.replace( ".xml", "" )
     val node = agent( "/" + ( recordsFileNameRoot ) )
+    val cnxn = new acT.AgentCnxn( recordsFileNameRoot.toURI, "", recordsFileNameRoot.toURI )
+    
+    val nodePart = node.getLocalPartition( cnxn )
+
+    val dbName =
+      nodePart.cache.persistenceManifest match {
+	case Some( pd ) => pd.storeUnitStr( cnxn )
+	case None => throw new Exception( "missing persistence manifest" )
+      }
+
     val clientSession = node.cache.clientSessionFromConfig
     val currentDir = new java.io.File(".").getAbsolutePath()
     val recordsFullFileName = currentDir.replace( "/.", "/" + recordsFileName )
-    clientSession.execute( new CreateDB( recordsFileNameRoot ) )
+
+    clientSession.execute( new CreateDB( dbName ) )
     clientSession.execute( new Add( recordsFullFileName ) )
     node
   }
