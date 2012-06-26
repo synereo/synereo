@@ -1333,9 +1333,10 @@ package usage {
   import scala.collection.mutable.ListBuffer
 
   object AgentKVDBScope
-       extends AgentKVDBNodeScope[String,String,String,String]
-       with UUIDOps
-  with Serializable
+	 extends AgentKVDBNodeScope[String,String,String,String]
+	 with UUIDOps
+	 with BulkCollectDImport
+	 with Serializable
   {
     import SpecialKURIDefaults._
     import identityConversions._
@@ -2637,9 +2638,7 @@ package usage {
 	}
       }
     }
-  }
-  
-  object BulkCollectDImporter extends BulkCollectDImport {
+
     override def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
       handleEntry(
 	"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground",
@@ -2649,12 +2648,39 @@ package usage {
 	json, acc
       )
     }
+   
+    @transient
+    lazy val testRunID = getUUID
+    @transient
+    var runNum = 0
+
+    override def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
+      // create an AMQP scope
+      val collectDAMQPScope = new AMQPStdScope[String]()
+      // create an AMQP Queue monad
+      val collectDQM =
+	new collectDAMQPScope.AMQPQueueHostExchangeM[String](
+	  host,
+	  queue
+	)
+      // get an empty queue
+      val collectDQ = collectDQM.zero[String]    
+      println( "creating entries" )
+      for( i <- 1 to numOfEntries ) {
+	print( "." )
+	val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+	collectDQ ! entry
+      }
+      println( "\nentries created" )
+    }
+
     def loadData() : Unit = {
       supplyEntries( "localhost", "collectDSample", 1000 )
     }
     def importData() : Unit = {
       readEntries( "localhost", "collectDSample", "collectDImport", 500 )
     }
+
   }
 
   object AgentUseCase extends Serializable {
@@ -2669,6 +2695,7 @@ package usage {
     val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
 
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      dataLocation : String,
       localHost : String, localPort : Int,
       remoteHost : String, remotePort : Int
     )(
@@ -2676,10 +2703,10 @@ package usage {
     ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
 	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-	  ( "/agentUseCaseProtocolLocal", "/agentUseCaseProtocolRemote" )	  
+	  ( dataLocation, dataLocation + "Remote" )	  
 	}
 	else {
-	  ( "/agentUseCaseProtocol", "/agentUseCaseProtocol" )	  
+	  ( dataLocation, dataLocation )	  
 	}
 
       if ( returnTwist ) {
@@ -2704,6 +2731,23 @@ package usage {
 	  )
 	)
       }
+    }
+
+    def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      localHost : String, localPort : Int,
+      remoteHost : String, remotePort : Int
+    )(
+      implicit returnTwist : Boolean
+    ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
+      setup( "/agentUseCaseProtocol", localHost, localPort, remoteHost, remotePort )
+    }
+
+    def agent( dataLocation : String ) : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
+      val Right( ( client, server ) ) = 
+	setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+	  dataLocation, "localhost", 5672, "localhost", 5672
+	)( true )
+      client
     }
 
     def uriStream( seed : URI )( fresh : URI => URI ) : Stream[URI] = {

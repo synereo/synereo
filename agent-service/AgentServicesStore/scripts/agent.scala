@@ -19,9 +19,30 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 //import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
+import org.basex.core._
+import org.basex.core.cmd.Open
+import org.basex.core.cmd.Add
+import org.basex.core.cmd.CreateDB
+
 object Instrument extends Serializable {
   import java.net.InetAddress
   val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
+
+  def setup() : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+  = {
+    AgentKVDBScope.loadData()
+    val recordsFileName = 
+      AgentKVDBScope.importData()( 0 )
+    val recordsFileNameRoot = recordsFileName.replace( ".xml", "" )
+    val node = agent( "/" + ( recordsFileNameRoot ) )
+    val clientSession = node.cache.clientSessionFromConfig
+    val currentDir = new java.io.File(".").getAbsolutePath()
+    val recordsFullFileName = currentDir.replace( "/.", "/" + recordsFileName )
+    clientSession.execute( new CreateDB( recordsFileNameRoot ) )
+    clientSession.execute( new Add( recordsFullFileName ) )
+    node
+  }
+
   def localIP : String = {
     InetAddress.getLocalHost().getHostAddress
   }
