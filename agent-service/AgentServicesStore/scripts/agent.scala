@@ -28,7 +28,7 @@ object Instrument extends Serializable {
   import java.net.InetAddress
   val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
 
-  def setup() : PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+  def setupTestData() : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
   = {
     AgentKVDBScope.loadData()
     val recordsFileName = 

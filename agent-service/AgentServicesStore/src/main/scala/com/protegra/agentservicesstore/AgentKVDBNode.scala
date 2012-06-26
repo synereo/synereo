@@ -2677,8 +2677,37 @@ package usage {
     def loadData() : Unit = {
       supplyEntries( "localhost", "collectDSample", 1000 )
     }
-    def importData() : Unit = {
-      readEntries( "localhost", "collectDSample", "collectDImport", 500 )
+    def importData() : List[String] = {
+      val s = new Object {
+	def chill() {
+	  synchronized {
+	    this.wait
+	  }
+	}
+	def go() {
+	  synchronized {
+	    this.notifyAll()
+	  }
+	}
+      }
+      
+      val lb = readEntries( "localhost", "collectDSample", "collectDImport", 500 )
+
+      def spin( n : Int ) {
+	print( "*" )
+	if ( lb.size < 1 ) { 
+	  (new Thread {
+	    override def run() : Unit = {	      
+	      spin( n+1 )
+	    }
+	  }).start
+	  if ( n < 1 ) { s.chill }
+	}
+	else { s.go }
+      }
+
+      spin( 0 )
+      lb.toList
     }
 
   }
