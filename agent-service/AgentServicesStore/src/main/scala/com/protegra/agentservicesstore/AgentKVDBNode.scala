@@ -1323,6 +1323,15 @@ with AgentCnxnTypeScope {
 }
 
 package usage {
+  import com.biosimilarity.lift.lib.bulk._
+
+  import net.liftweb.json._
+
+  import scala.xml._
+  import scala.xml.XML._
+  import scala.collection.mutable.Buffer
+  import scala.collection.mutable.ListBuffer
+
   object AgentKVDBScope
        extends AgentKVDBNodeScope[String,String,String,String]
        with UUIDOps
@@ -2629,6 +2638,24 @@ package usage {
       }
     }
   }
+  
+  object BulkCollectDImporter extends BulkCollectDImport {
+    override def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+      handleEntry(
+	"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground",
+	"com.protegra.agentservicestore.usage.BulkCollectDImporter",
+	"com.protegra.agentservicestore.usage.AgentKVDBScope$TheMTT"
+      )(
+	json, acc
+      )
+    }
+    def loadData() : Unit = {
+      supplyEntries( "localhost", "collectDSample", 1000 )
+    }
+    def importData() : Unit = {
+      readEntries( "localhost", "collectDSample", "collectDImport", 500 )
+    }
+  }
 
   object AgentUseCase extends Serializable {
     import AgentKVDBScope._
@@ -2676,6 +2703,79 @@ package usage {
 	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
 	  )
 	)
+      }
+    }
+
+    def uriStream( seed : URI )( fresh : URI => URI ) : Stream[URI] = {
+      lazy val loopStrm : Stream[URI] =
+	( List( seed ) ).toStream append ( loopStrm map fresh );
+      loopStrm
+    }
+    def agentURIStream( seed : URI ) : Stream[URI] = {
+      def fresh( uri : URI ) : URI = {
+	val ( scheme, host, port, path ) =
+	  ( uri.getScheme, uri.getHost, uri.getPort, uri.getPath );
+	val spath = path.split( '/' )
+	val exchange =
+	  spath.length match {
+	    case 2 => spath( 1 )
+	    case m : Int if m > 2 => spath( 1 )
+	    case n : Int if n < 2 => "defaultAgentExchange_0"
+	  }
+	val sExch = exchange.split( '_' )
+	val ( exchRoot, exchCount ) =
+	  sExch.length match {
+	    case 2 => { ( sExch( 0 ), sExch( 1 ).toInt ) }
+	    case 1 => { ( sExch( 0 ), 0 ) }
+	    case n : Int if n > 2 => {
+	      ( ( "" /: sExch )( _ + "_" + _ ), sExch( sExch.length - 1 ).toInt )
+	    }
+	  }
+	val nExchCount = exchCount + 1
+
+	new URI( scheme, null, host, port, exchRoot + nExchCount, null, null )
+      }
+      uriStream( seed )( fresh )
+    }
+
+    def kvdbStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      localHost : String, localPort : Int,
+      remoteHost : String, remotePort : Int
+    )(
+      implicit returnTwist : Boolean
+    ) : Stream[Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])]] = {
+      val ( localExchange, remoteExchange ) = 
+	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
+	  ( "/agentUseCaseProtocolLocal_0", "/agentUseCaseProtocolRemote_0" )	  
+	}
+	else {
+	  ( "/agentUseCaseProtocol_0", "/agentUseCaseProtocol_0" )	  
+	}
+
+      val localURI = new URI( "agent", null, localHost, localPort, localExchange, null, null )
+      val remoteURI = new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+      val localURIStrm = agentURIStream( localURI )
+      val remoteURIStrm = agentURIStream( remoteURI )
+      val lrURIStrm = localURIStrm zip remoteURIStrm
+
+      if ( returnTwist ) {		
+	lrURIStrm map {
+	  ( lrURI : ( URI, URI ) ) =>
+	    Right[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+	      (
+		ptToPt[ReqBody,RspBody]( lrURI._1, lrURI._2 ),
+		ptToPt[ReqBody,RspBody]( lrURI._2, lrURI._1 )
+	      )
+	    )
+	}
+      }
+      else {
+	lrURIStrm map {
+	  ( lrURI : ( URI, URI ) ) =>
+	    Left[Being.AgentKVDBNode[ReqBody, RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+	      ptToPt[ReqBody,RspBody]( lrURI._1, lrURI._2 )
+	    )
+	}	
       }
     }
 
