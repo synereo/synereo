@@ -42,7 +42,8 @@ trait BulkCollectDImport extends UUIDOps {
       collectDQ ! entry
     }
   }
-  def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+  
+  def handleEntry( grndTypeStr : String, imprtTypeStr : String, mTTTypeStr : String )( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
     for(
       JObject( fvs ) <- json \\ "putval" ;
       JArray( valueArray ) <- json \\ "values" ;
@@ -61,31 +62,16 @@ trait BulkCollectDImport extends UUIDOps {
 	  new JettisonMappedXmlDriver()
 	).toXML( UUIDWrapper( ( getUUID + "" ) ) ).replace(
 	  "com.biosimilarity.lift.lib.bulk.BulkCollectDImport$UUIDWrapper",
-	  "com.biosimilarity.lift.model.store.MonadicTermTypes$Ground"
+	  grndTypeStr
 	).replace(
-	  "com.biosimilarity.lift.lib.bulk.usage.BulkCollectDImporter",
-	  "com.biosimilarity.lift.model.store.usage.PersistedMonadicKVDBCollectD$TheMTT"
+	  imprtTypeStr,
+	  mTTTypeStr
 	).replace(
 	  "youyouid",
 	  "v"
 	)
 
       acc +=
-      // <record>
-// 	<putval>
-// 	  <values>{for( JInt( v ) <- valueArray ) yield {<int>{v}</int>}}</values>
-// 	  <dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
-// 	  <dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
-//           <time>{time}</time>
-// 	  <interval>{interval}</interval>
-//           <host>{host}</host>
-//           <plugin>{plugin}</plugin>
-//           <plugin_instance>{plugin_instance}</plugin_instance>
-//           <type>{cdtype}</type>
-//           <type_instance>{type_instance}</type_instance>
-// 	</putval>
-// 	<string>{getUUID + ""}</string>
-//       </record>            
       <record>
 	<comBiosimilarityLiftLibAlarmPutVal>
 	  <values>{for( JInt( v ) <- valueArray ) yield {<string>{v}</string>}}</values>
@@ -104,6 +90,70 @@ trait BulkCollectDImport extends UUIDOps {
     }
     acc
   }
+
+  def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+    handleEntry(
+      "com.biosimilarity.lift.model.store.MonadicTermTypes$Ground",
+      "com.biosimilarity.lift.lib.bulk.usage.BulkCollectDImporter",
+      "com.biosimilarity.lift.model.store.usage.PersistedMonadicKVDBCollectD$TheMTT"
+    )(
+      json, acc
+    )
+  }
+
+  def json2Key( json : JValue ) : List[Elem] = {
+    for(
+      JObject( fvs ) <- json \\ "putval" ;
+      JArray( valueArray ) <- json \\ "values" ;
+      JArray( dstypes ) <- json \\ "dstypes" ;
+      JArray( dsnames ) <- json \\ "dsnames" ;
+      JDouble( time ) <- json \\ "time" ;
+      JDouble( interval ) <- json \\ "interval" ; 
+      JString( host ) <- json \\ "host" ; 
+      JString( plugin ) <- json \\ "plugin" ;
+      JString( plugin_instance ) <- json \\ "plugin_instance" ;
+      JString( cdtype ) <- json \\ "type" ;
+      JString( type_instance ) <- json \\ "type_instance"
+    ) yield {
+      <comBiosimilarityLiftLibAlarmPutVal>
+        <values>{for( JInt( v ) <- valueArray ) yield {<string>{v}</string>}}</values>
+	<dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
+	<dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
+	<time>{<string>{time}</string>}</time>
+	<interval>{<string>{interval}</string>}</interval>
+	<host>{<string>{host}</string>}</host>
+	<plugin>{<string>{plugin}</string>}</plugin>
+	<plugin_instance>{<string>{plugin_instance}</string>}</plugin_instance>
+	<type>{<string>{cdtype}</string>}</type>
+	<type_instance>{<string>{type_instance}</string>}</type_instance>
+      </comBiosimilarityLiftLibAlarmPutVal>
+    }
+  }
+
+  def handleEntryGeneric( grndTypeStr : String, imprtTypeStr : String, mTTTypeStr : String )( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+    for(
+      key <- json2Key( json )
+    ) {
+      val gvStr =
+	new XStream(
+	  new JettisonMappedXmlDriver()
+	).toXML( UUIDWrapper( ( getUUID + "" ) ) ).replace(
+	  "com.biosimilarity.lift.lib.bulk.BulkCollectDImport$UUIDWrapper",
+	  grndTypeStr
+	).replace(
+	  imprtTypeStr,
+	  mTTTypeStr
+	).replace(
+	  "youyouid",
+	  "v"
+	)
+
+      acc +=
+      <record>{key}<string>{gvStr}</string></record>
+    }
+    acc
+  }
+
   def readEntries( host : String, queue : String, file : String, dbChunk : Int ) : ListBuffer[String] = {
     // create an AMQP scope
     val collectDAMQPScope = new AMQPStdScope[String]()
