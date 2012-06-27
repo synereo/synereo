@@ -2674,6 +2674,43 @@ package usage {
       println( "\nentries created" )
     }
 
+    override def readEntries( host : String, queue : String, file : String, dbChunk : Int ) : ListBuffer[String] = {
+      // create an AMQP scope
+      val collectDAMQPScope = new AMQPStdScope[String]()
+    // create an AMQP Queue monad
+      val collectDQM =
+	new collectDAMQPScope.AMQPQueueHostExchangeM[String](
+	  host,
+	  queue
+	)
+      // get an empty queue
+      val collectDQ = collectDQM.zero[String]    
+      
+      val acc = new ListBuffer[Elem]()      
+      val fileNames = new ListBuffer[String]()      
+      val lock = new Lock()
+      
+      println( "reading entries" )
+      for ( entry <- collectDQM( collectDQ ) ) {
+	print( "." )
+	handleEntry( parse( entry ), acc )
+	lock.acquire
+	if ( acc.size > dbChunk ) {
+	  runNum += 1
+	  val recordsFileName = ( file + testRunID + runNum + ".xml" )	    
+	  val db = <records>{acc.toList}</records>
+	  
+	  println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+	  scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
+	  fileNames += recordsFileName
+	  acc.clear
+	}
+	lock.release	
+      }      
+      println( "\nentries read" )      
+      fileNames
+    }
+
     def loadData() : Unit = {
       supplyEntries( "localhost", "collectDSample", 1000 )
     }
