@@ -10,6 +10,7 @@ import com.biosimilarity.lift.model.store._
 import CnxnConversionStringScope._
 import com.biosimilarity.lift.lib._
 import scala.util.continuations._ 
+import scala.collection.mutable.HashMap
 
 import com.protegra.agentservicesstore._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -26,33 +27,7 @@ import org.basex.core.cmd.CreateDB
 
 object Instrument extends Serializable {
   import java.net.InetAddress
-  val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
-
-  def setupTestData() : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
-  = {
-    AgentKVDBScope.loadData()
-    val recordsFileName = 
-      AgentKVDBScope.importData()( 0 )
-    val recordsFileNameRoot = recordsFileName.replace( ".xml", "" )
-    val node = agent( "/" + ( recordsFileNameRoot ) )
-    val cnxn = new acT.AgentCnxn( recordsFileNameRoot.toURI, "", recordsFileNameRoot.toURI )
-    
-    val nodePart = node.getLocalPartition( cnxn )
-
-    val dbName =
-      nodePart.cache.persistenceManifest match {
-	case Some( pd ) => pd.storeUnitStr( cnxn )
-	case None => throw new Exception( "missing persistence manifest" )
-      }
-
-    val clientSession = node.cache.clientSessionFromConfig
-    val currentDir = new java.io.File(".").getAbsolutePath()
-    val recordsFullFileName = currentDir.replace( "/.", "/" + recordsFileName )
-
-    clientSession.execute( new CreateDB( dbName ) )
-    clientSession.execute( new Add( recordsFullFileName ) )
-    node
-  }
+  val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)  
 
   def localIP : String = {
     InetAddress.getLocalHost().getHostAddress

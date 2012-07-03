@@ -1322,6 +1322,19 @@ with AgentCnxnTypeScope {
   }
 }
 
+case class PutVal(
+  values : List[Int],
+  dstypes : List[String],
+  dsnames : List[String],
+  time : Double,
+  interval : Double,
+  host : String,
+  plugin : String,
+  plugin_instance : String,
+  `type` : String,
+  type_instance : String
+)
+
 package usage {
   import com.biosimilarity.lift.lib.bulk._
 
@@ -2639,6 +2652,54 @@ package usage {
       }
     }
 
+    import java.util.regex.{Pattern => RegexPtn, Matcher => RegexMatcher}
+    
+    def createExchange[Rsrc]() : MonadicTupleSpace[String,String,Rsrc] = {
+      new MonadicTupleSpace[String,String,Rsrc] with WireTap with Journalist
+		  with ConfiggyReporting
+		  with ConfiguredJournal
+		  with ConfigurationTrampoline {
+
+		    override type Substitution = IdentitySubstitution
+
+		    override val theMeetingPlace = new HashMap[String,Rsrc]()
+		    override val theChannels = new HashMap[String,Rsrc]()
+		    override val theWaiters = new HashMap[String,List[RK]]()
+		    override val theSubscriptions = new HashMap[String,List[RK]]()
+		    
+		    override def tap [A] ( fact : A ) : Unit = {
+		      reportage( fact )
+		    }
+		    
+		    override def configFileName : Option[String] = None
+		    override def configurationDefaults : ConfigurationDefaults = {
+		      ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
+		    }
+	 
+		    def representative( ptn : String ) : String = {
+		      ptn
+		    }
+		    
+		    def fits( ptn : String, place : String ) : Boolean = {
+		      RegexPtn.matches( ptn, place ) || RegexPtn.matches( place, ptn )
+		    }
+		    
+		    def fitsK(
+		      ptn : String,
+		      place : String
+		    ) : Option[Substitution] = {
+		      //println( "in fitsK on " + this )
+		      if ( fits( ptn, place ) ) {
+			Some( IdentitySubstitution() )
+		      }
+		      else {
+			None
+		      }
+		    }
+		    
+		  }      
+    }
+
     override def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
       handleEntry(
 	"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground",
@@ -2653,6 +2714,21 @@ package usage {
     lazy val testRunID = getUUID
     @transient
     var runNum = 0
+
+    @transient
+    implicit lazy val pvOne =
+      PutVal(
+	List( 558815, 43649779 ),
+	List( "derive", "derive" ),
+	List( "rx", "tx" ),
+	1334349094.633,
+	10.000,
+	"server-75530.localdomain",
+	"interface",
+	"eth0",
+	"if_octets",
+	""
+      )
 
     override def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
       // create an AMQP scope
@@ -2674,7 +2750,14 @@ package usage {
       println( "\nentries created" )
     }
 
-    override def readEntries( host : String, queue : String, file : String, dbChunk : Int ) : ListBuffer[String] = {
+    @transient
+    val entryExchange : MonadicTupleSpace[String,String,String] = createExchange[String]()
+    @transient
+    val dataChunkExchange : MonadicTupleSpace[String,String,ListBuffer[Elem]] = createExchange[ListBuffer[Elem]]()
+
+    def readEntries(
+      host : String, queue : String, file : String, lthrd : String, dbChunk : Int
+    ) : ListBuffer[String] = {
       // create an AMQP scope
       val collectDAMQPScope = new AMQPStdScope[String]()
     // create an AMQP Queue monad
@@ -2695,14 +2778,18 @@ package usage {
 	print( "." )
 	handleEntry( parse( entry ), acc )
 	lock.acquire
-	if ( acc.size > dbChunk ) {
+	if ( acc.size >= dbChunk ) {
 	  runNum += 1
-	  val recordsFileName = ( file + testRunID + runNum + ".xml" )	    
+	  val rcrdsFileNameSfx = "" + testRunID + runNum + ""
+	  val recordsFileName = ( file + rcrdsFileNameSfx + ".xml" )	    
 	  val db = <records>{acc.toList}</records>
 	  
 	  println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
 	  scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
 	  fileNames += recordsFileName
+	  reset {
+	    entryExchange.putS( lthrd + "_" + recordsFileName, rcrdsFileNameSfx )
+	  }
 	  acc.clear
 	}
 	lock.release	
@@ -2711,40 +2798,31 @@ package usage {
       fileNames
     }
 
-    def loadData() : Unit = {
-      supplyEntries( "localhost", "collectDSample", 1000 )
+    def loadData( numOfEntries : Int ) : Unit = {
+      supplyEntries( "localhost", "collectDSample", numOfEntries )
     }
-    def importData() : List[String] = {
-      val s = new Object {
-	def chill() {
-	  synchronized {
-	    this.wait
-	  }
-	}
-	def go() {
-	  synchronized {
-	    this.notifyAll()
-	  }
-	}
-      }
-      
-      val lb = readEntries( "localhost", "collectDSample", "collectDImport", 500 )
+    def importData( lthrd : String, chunkSize : Int ) : List[String] = {            
+      val fileNameRoot = "collectDImport"
+      val filePtn = ( fileNameRoot + ".*" )
+      val lb = readEntries( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )
+      val s = new scala.collection.mutable.HashSet[String]( )
 
-      def spin( n : Int ) {
-	print( "*" )
-	if ( lb.size < 1 ) { 
-	  (new Thread {
-	    override def run() : Unit = {	      
-	      spin( n+1 )
+      reset {
+	for( rsrc <- entryExchange.getS( lthrd + "_" + filePtn ) ) {
+	  rsrc match {
+	    case Some( fileNameSfx ) => {
+	      val fileName = fileNameRoot + fileNameSfx + ".xml"
+	      s += fileName
+	      println( "alerted that " + fileName + ".xml" + " has been written." )
 	    }
-	  }).start
-	  if ( n < 1 ) { s.chill }
+	    case _ => {
+	    }
+	  };
+	  ()
 	}
-	else { s.go }
       }
 
-      spin( 0 )
-      lb.toList
+      s.toList
     }
 
   }
@@ -2757,6 +2835,11 @@ package usage {
     import CnxnConversionStringScope._
 
     import com.protegra.agentservicesstore.extensions.StringExtensions._
+
+    import org.basex.core._
+    import org.basex.core.cmd.Open
+    import org.basex.core.cmd.Add
+    import org.basex.core.cmd.CreateDB
 
     val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
 
@@ -2808,18 +2891,60 @@ package usage {
       setup( "/agentUseCaseProtocol", localHost, localPort, remoteHost, remotePort )
     }
 
-    def agent( dataLocation : String ) : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
+    def agent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
+      dataLocation : String
+    ) : Being.AgentKVDBNode[ReqBody,RspBody] = {
       val Right( ( client, server ) ) = 
-	setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+	setup[ReqBody,RspBody](
 	  dataLocation, "localhost", 5672, "localhost", 5672
 	)( true )
       client
     }
 
-    def uriStream( seed : URI )( fresh : URI => URI ) : Stream[URI] = {
-      lazy val loopStrm : Stream[URI] =
+    def setupTestData[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      numOfEntries : Int, chunkSize : Int
+    ) : scala.collection.Map[String,Being.AgentKVDBNode[ReqBody,RspBody]]
+    = {
+      val currentDir = new java.io.File(".").getAbsolutePath()
+      val rslt = new HashMap[String,Being.AgentKVDBNode[ReqBody,RspBody]]()
+      val lthrd = AgentKVDBScope.getUUID + ""
+
+      AgentKVDBScope.loadData( numOfEntries )
+      for(	
+	recordsFileName <- importData( lthrd, chunkSize ); 
+	recordsFileNameRoot = recordsFileName.replace( ".xml", "" );
+	recordsFullFileName = currentDir.replace( "/.", "/" + recordsFileName );
+	node = agent[ReqBody,RspBody]( "/" + ( "prebuiltCnxnProtocol" ) );
+	clientSession = node.cache.clientSessionFromConfig;
+	cnxn = new acT.AgentCnxn( recordsFileNameRoot.toURI, "", recordsFileNameRoot.toURI );
+	nodePart = node.getLocalPartition( cnxn )
+      ) {
+	val dbName =
+	  nodePart.cache.persistenceManifest match {
+	    case Some( pd ) => pd.storeUnitStr( cnxn )
+	    case None => throw new Exception( "missing persistence manifest" )
+	  }
+	
+	clientSession.execute( new CreateDB( dbName ) )
+	clientSession.execute( new Add( recordsFullFileName ) )
+	rslt += ( recordsFullFileName -> node )
+      }        
+      rslt
+    }
+
+    def fileNameToCnxn( fileName : String ) : acT.AgentCnxn = {
+      val fileNameRoot = fileName.split( '/' ).last
+      new acT.AgentCnxn( fileNameRoot.toURI, "", fileNameRoot.toURI )
+    }
+
+    def tStream[T]( seed : T )( fresh : T => T ) : Stream[T] = {
+      lazy val loopStrm : Stream[T] =
 	( List( seed ) ).toStream append ( loopStrm map fresh );
       loopStrm
+    }
+
+    def uriStream( seed : URI )( fresh : URI => URI ) : Stream[URI] = {
+      tStream[URI]( seed )( fresh )
     }
     def agentURIStream( seed : URI ) : Stream[URI] = {
       def fresh( uri : URI ) : URI = {
@@ -2889,6 +3014,73 @@ package usage {
       }
     }
 
+    def cnxnStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      node : Being.AgentKVDBNode[ReqBody,RspBody],
+      numOfEntries : Int,
+      chunkSize : Int
+    ) : Stream[acT.AgentCnxn] = {
+      val currentDir = new java.io.File(".").getAbsolutePath()
+      val cnxnExchange = createExchange[acT.AgentCnxn]()
+
+      def fresh( seed : acT.AgentCnxn ) : acT.AgentCnxn = {
+	AgentKVDBScope.loadData( numOfEntries )
+	val s = new scala.collection.mutable.HashSet[acT.AgentCnxn]()
+	val cnxnPtn = "cnxn_"
+	val cnxnId = AgentKVDBScope.getUUID
+	val lthrd = cnxnId + ""
+
+	for(
+	  recordsFileName <- importData( lthrd, chunkSize ); 
+	  recordsFileNameRoot = recordsFileName.replace( ".xml", "" );
+	  recordsFullFileName = currentDir.replace( "/.", "/" + recordsFileName );       
+	  clientSession = node.cache.clientSessionFromConfig;
+	  cnxn = new acT.AgentCnxn( recordsFileNameRoot.toURI, "", recordsFileNameRoot.toURI );
+	  nodePart = node.getLocalPartition( cnxn )
+	) {
+	  val dbName =
+	    nodePart.cache.persistenceManifest match {
+	      case Some( pd ) => pd.storeUnitStr( cnxn )
+	      case None => throw new Exception( "missing persistence manifest" )
+	    }
+	  
+	  clientSession.execute( new CreateDB( dbName ) )
+	  clientSession.execute( new Add( recordsFullFileName ) )
+
+	  println( "adding cnxn: " + cnxn )	  
+	  
+	  reset {
+	    cnxnExchange.putS( cnxnPtn + cnxnId, cnxn )
+	  }	  
+	}
+
+	reset {
+	  for( rsrc <- cnxnExchange.getS( cnxnPtn ) ) {
+	    rsrc match {
+	      case Some( cnxn ) => {
+		println( "Should have a cnxn now: " + cnxn )
+		s += cnxn		
+	      }
+	      case _ => {
+	      }
+	    };
+	    ()
+	  }
+	}
+	s.toList( 0 )
+      }
+      val dummy =
+	new acT.AgentCnxn( "dummy".toURI, "", "dummy".toURI ); 
+
+      tStream[acT.AgentCnxn]( dummy )( fresh ).drop( 1 )
+    }
+
+    def setupTestStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      numOfEntries : Int, chunkSize : Int
+    ) : ( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] ) = {
+      val node = agent[ReqBody,RspBody]( "/" + ( "prebuiltCnxnProtocol" ) )
+      ( node, cnxnStream( node, numOfEntries, chunkSize ) )
+    }
+      
     def runClient[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       kvdbNode : Being.AgentKVDBNode[ReqBody,RspBody]
     ) : Unit = {
