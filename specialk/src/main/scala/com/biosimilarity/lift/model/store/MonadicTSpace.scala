@@ -474,17 +474,61 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   
   def get( ptn : Pattern ) =
     mget( theMeetingPlace, theWaiters, Cache, Cache )( ptn )
+  def getS( ptn : Pattern ) =
+    mgetWithSuspension( theMeetingPlace, theWaiters, Cache, Cache )( ptn )
   def fetch( ptn : Pattern ) =
     mget( theMeetingPlace, theWaiters, DoNotRetain, DoNotRetain )( ptn )
   def subscribe( ptn : Pattern ) =
     mget( theChannels, theSubscriptions, Cache, Cache )( ptn )  
+
+  def putPlacesWithSuspension(
+    channels : Map[Place,Resource],
+    registered : Map[Place,List[RK]],
+    ptn : Pattern,
+    rsrc : Resource
+  )
+  : Generator[PlaceInstance,Unit,Unit] = {    
+    Generator {
+      k : ( PlaceInstance => Unit @suspendable ) => 
+	// Are there outstanding waiters at this pattern?    
+	tweet(
+	  (
+	    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    + "in putPlaces\n"
+	    + "channels : " + channels + "\n"
+	    + "registered : " + registered + "\n"
+	    + "ptn : " + ptn + "\n"
+	    + "rsrc : " + rsrc + "\n"
+	    + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	  )
+	)
+
+      val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
+      val waitlist = locations( map, ptn )
+
+	waitlist match {
+	  // Yes!
+	  case waiter :: waiters => {
+	    tweet( "found waiters waiting for a value at " + ptn )
+	    val itr = waitlist.toList.iterator	    
+	    while( itr.hasNext ) {
+	      k( itr.next )
+	    }
+	  }
+	  // No...
+	  case Nil => {
+	    // Store the rsrc at a representative of the ptn	    
+	  }
+	}
+    }
+  }
 
   def mputWithSuspension(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
     consume : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
-    for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
+    for( placeNRKsNSubst <- putPlacesWithSuspension( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
       tweet( "waiters waiting for a value at " + wtr + " : " + rks )
       rks match {
@@ -498,6 +542,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		case _ => {
 		}
 	      }
+
 	      spawn {
 		sk( s( rsrc ) )
 	      }
@@ -516,7 +561,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  }
 	}
 	case Nil => {
-	  channels( wtr ) = rsrc	  
+	  if ( ptn.isInstanceOf[Place] ) {
+	    channels( ptn.asInstanceOf[Place] ) = rsrc
+	  }
+	  else {
+	    channels( wtr ) = rsrc	  
+	  }
 	}
       }
     }
@@ -657,6 +707,8 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 
   def put( ptn : Pattern, rsrc : Resource ) =
     mput( theMeetingPlace, theWaiters, false )( ptn, rsrc )
+  def putS( ptn : Pattern, rsrc : Resource ) =
+    mputWithSuspension( theMeetingPlace, theWaiters, false )( ptn, rsrc )
   def publish( ptn : Pattern, rsrc : Resource ) =
     mput( theChannels, theSubscriptions, true )( ptn, rsrc )
   
