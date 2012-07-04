@@ -518,6 +518,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  // No...
 	  case Nil => {
 	    // Store the rsrc at a representative of the ptn	    
+	    channels( representative( ptn ) ) = rsrc
 	  }
 	}
     }
