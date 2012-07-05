@@ -3164,13 +3164,19 @@ package usage {
     }
 
     def setupTestCnxnStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      node : Being.AgentKVDBNode[ReqBody,RspBody]
+    )(
       numOfEntries : Int, chunkSize : Int
-    ) : ( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] ) = {
-      val node = agent[ReqBody,RspBody]( "/" + ( "prebuiltCnxnProtocol" ) )
+    ) : ( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] ) = {      
       ( node, cnxnStream( node, numOfEntries, chunkSize ) )
     }    
 
     case class TestConfigurationGenerator(
+      localHost : String,
+      localPort : Int,
+      remoteHost : String,
+      remotePort : Int,
+      dataLocation : String,
       numEntriesSeed : Int,
       chunkSizeSeed : Int,
       numEntriesFloor : Int,
@@ -3197,7 +3203,15 @@ package usage {
       val dataStrm : Stream[( Int, Int )] =
 	tStream[( Int, Int )]( dataPair )( ( seed : ( Int, Int ) ) => dataPair )
       val agntStrm : Stream[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )] =
-	dataStrm map ( ( dp : ( Int, Int ) ) => setupTestCnxnStream[ReqBody,RspBody]( dp._1, dp._2 ) )
+	dataStrm map {
+	  ( dp : ( Int, Int ) ) => {
+	    val Right( ( client, server ) ) =
+	      setup[ReqBody,RspBody](
+		tc.dataLocation, tc.localHost, tc.localPort, tc.remoteHost, tc.remotePort
+	      )( true )
+	    setupTestCnxnStream[ReqBody,RspBody]( client )( dp._1, dp._2 )
+	  }
+	}
 
       val testAgentStream = agntStrm.take( max( ( random * tc.numNodesSeed ).toInt, tc.nodesFloor ) )
       
