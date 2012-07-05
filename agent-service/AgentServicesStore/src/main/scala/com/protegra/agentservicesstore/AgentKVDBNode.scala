@@ -2729,6 +2729,54 @@ package usage {
 	"if_octets",
 	""
       )
+    @transient
+    lazy val entryStr = 
+      """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+
+    @transient
+    implicit lazy val entryStream : Stream[String] =
+      ( List( entryStr ) ).toStream append ( entryStream map { ( s : String ) => /* print( "." );*/ s } )    
+
+    @transient
+    lazy val rcrdStream : Stream[Elem] = {
+      val acc = new ListBuffer[Elem]()
+      val rcrd = handleEntry( parse( entryStr ), acc )( 0 )
+      ( List( rcrd ) ).toStream append ( rcrdStream map { ( rcrd : Elem ) => /* print( "." ); */ rcrd } )
+    }
+
+    def readEntries(
+      host : String, queue : String, file : String, lthrd : String, dbChunk : Int
+    )( implicit eStrm : Stream[String] ) : String = {      
+            
+      val acc = rcrdStream.take( dbChunk )
+
+      val rcrdsFileNameSfx = "" + getUUID + "-" + runNum + ""
+      val recordsFileName = ( file + rcrdsFileNameSfx + ".xml" )
+      val db = <records>{acc.toList}</records>
+
+      println( "---------------------------******>>>>>>******---------------------------" )
+      println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+      println( "---------------------------******>>>>>>******---------------------------" )
+
+      scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
+
+      recordsFileName
+    }
+
+    def importData( lthrd : String, chunkSize : Int )( implicit eStrm : Stream[String] ) : List[String] = {            
+      List(
+	readEntries( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )( eStrm )
+      )
+    }
+
+    def loadData( numOfEntries : Int ) : Unit = {
+      // Nothing to do
+    }
+
+    @transient
+    val entryExchange : MonadicTupleSpace[String,String,String] = createExchange[String]()
+    @transient
+    val dataChunkExchange : MonadicTupleSpace[String,String,ListBuffer[Elem]] = createExchange[ListBuffer[Elem]]()
 
     override def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
       // create an AMQP scope
@@ -2741,21 +2789,23 @@ package usage {
 	)
       // get an empty queue
       val collectDQ = collectDQM.zero[String]    
+      println( "---------------------------******>>>>>>******---------------------------" )
       println( "creating entries" )
-      for( i <- 1 to numOfEntries ) {
-	print( "." )
-	val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
-	collectDQ ! entry
-      }
+      println( "---------------------------******>>>>>>******---------------------------" )
+
+      val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+
+      lazy val entryStream : Stream[String] =
+	( List( entry ) ).toStream append ( entryStream map { ( s : String ) => print( "." ); s } )
+
+      for( i <- 1 to numOfEntries ) { collectDQ ! entryStream( i ) }
+
+      println( "---------------------------******>>>>>>******---------------------------" )
       println( "\nentries created" )
+      println( "---------------------------******>>>>>>******---------------------------" )
     }
 
-    @transient
-    val entryExchange : MonadicTupleSpace[String,String,String] = createExchange[String]()
-    @transient
-    val dataChunkExchange : MonadicTupleSpace[String,String,ListBuffer[Elem]] = createExchange[ListBuffer[Elem]]()
-
-    def readEntries(
+    def readEntriesFromRabbitMQ(
       host : String, queue : String, file : String, lthrd : String, dbChunk : Int
     ) : ListBuffer[String] = {
       // create an AMQP scope
@@ -2787,8 +2837,36 @@ package usage {
 	  println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
 	  scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
 	  fileNames += recordsFileName
+
+	  println( "---------------------------******>>>>>>******---------------------------" )
+	  println( "putting @ " + ( lthrd + "_" + recordsFileName ) )
+	  println( "to trigger adding the data file to the kvdb node db" )
+	  println( "---------------------------******>>>>>>******---------------------------" )
+
 	  reset {
 	    entryExchange.putS( lthrd + "_" + recordsFileName, rcrdsFileNameSfx )
+
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    println( "waiting @ " + ( lthrd + rcrdsFileNameSfx ) )
+	    println( "to be able to continue processing json entries" )
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    
+	    for( rsrc <- entryExchange.getS( lthrd + rcrdsFileNameSfx ) ) {
+
+	      println( "---------------------------******>>>>>>******---------------------------" )
+	      println( "got " + rsrc + " @ " + lthrd + rcrdsFileNameSfx )
+	      println( "---------------------------******>>>>>>******---------------------------" )
+
+	      rsrc match {
+		case Some( msg ) => {
+		  println( "found the droids we were looking for. " + msg )
+		}
+		case _ => {
+		  throw new Exception( "unexpected communication: " + rsrc )
+		}
+	      }
+
+	    }
 	  }
 	  acc.clear
 	}
@@ -2798,36 +2876,108 @@ package usage {
       fileNames
     }
 
-    def loadData( numOfEntries : Int ) : Unit = {
+    def loadDataToRabbitMQ( numOfEntries : Int ) : Unit = {
       supplyEntries( "localhost", "collectDSample", numOfEntries )
     }
-    def importData( lthrd : String, chunkSize : Int ) : List[String] = {            
+    def importDataFromRabbitMQ( lthrd : String, chunkSize : Int ) : List[String] = {            
       val fileNameRoot = "collectDImport"
       val filePtn = ( fileNameRoot + ".*" )
-      val lb = readEntries( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )
+      val lb = readEntriesFromRabbitMQ( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )
       val s = new scala.collection.mutable.HashSet[String]( )
 
-      reset {
-	for( rsrc <- entryExchange.getS( lthrd + "_" + filePtn ) ) {
-	  rsrc match {
-	    case Some( fileNameSfx ) => {
-	      val fileName = fileNameRoot + fileNameSfx + ".xml"
-	      s += fileName
-	      println( "alerted that " + fileName + ".xml" + " has been written." )
-	    }
-	    case _ => {
-	    }
-	  };
-	  ()
+      def loop( s : scala.collection.mutable.HashSet[String], n : Int ) : Unit = {
+	println( "---------------------------******>>>>>>******---------------------------" )
+	println( "waiting @ " + ( lthrd + "_" + filePtn ) )
+	println( "to add a filename to the queue for adding to kvdb node db" )
+	println( "---------------------------******>>>>>>******---------------------------" )
+
+	reset {
+	  for( rsrc <- entryExchange.getS( lthrd + "_" + filePtn ) ) {
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    println( "got " + rsrc + " @ " + lthrd + "_" + filePtn )
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    rsrc match {
+	      case Some( fileNameSfx ) => {
+		val fileName = fileNameRoot + fileNameSfx + ".xml"
+		
+		println( "---------------------------******>>>>>>******---------------------------" )
+		println( "alerted that " + fileName + ".xml" + " has been written." )
+		println( "---------------------------******>>>>>>******---------------------------" )
+		
+		s += fileName	      
+		
+		println( "---------------------------******>>>>>>******---------------------------" )
+		println( "putting @ " + ( lthrd + fileNameSfx ) )
+		println( "---------------------------******>>>>>>******---------------------------" )
+		
+		entryExchange.putS( lthrd + fileNameSfx, "move along." );
+		
+		if ( s.size < n ) { loop( s, n ) }
+		
+		() // to keep the type checker happy
+	      }
+	      case _ => {
+		throw new Exception( "shouldn't be in this case" )
+	      }
+	    };
+	    ()
+	  }
 	}
       }
+
+      loop( s, 1 )
 
       s.toList
     }
 
   }
 
-  object AgentUseCase extends Serializable {
+  object TestConfigurationDefaults {
+    val localHost : String = "localhost"
+    val localPort : Int = 5672
+    val remoteHost : String = "localhost"
+    val remotePort : Int = 5672
+    val dataLocation : String = "/cnxnTestProtocol"
+    val numEntriesSeed : Int = 1000
+    val chunkSizeSeed : Int = 250
+    val numEntriesFloor : Int = 250
+    val chunkSizeFloor : Int = 250
+    val numNodesSeed : Int = 10
+    val numCnxnsSeed : Int = 100
+    val nodesFloor : Int = 1
+    val cnxnsFloor : Int = 10
+  }
+
+  trait TestGenerationConfiguration extends ConfigurationTrampoline {
+    def localHost : String =
+      configurationFromFile.get( "localHost" ).getOrElse( bail() )
+    def localPort : Int =
+      configurationFromFile.get( "localPort" ).getOrElse( bail() ).toInt
+    def remoteHost : String =
+      configurationFromFile.get( "remoteHost" ).getOrElse( bail() )
+    def remotePort : Int =
+      configurationFromFile.get( "remotePort" ).getOrElse( bail() ).toInt
+    def dataLocation : String = 
+      configurationFromFile.get( "dataLocation" ).getOrElse( bail() )
+    def numEntriesSeed : Int = 
+      configurationFromFile.get( "numEntriesSeed" ).getOrElse( bail() ).toInt
+    def chunkSizeSeed : Int = 
+      configurationFromFile.get( "chunkSizeSeed" ).getOrElse( bail() ).toInt
+    def numEntriesFloor : Int = 
+      configurationFromFile.get( "numEntriesFloor" ).getOrElse( bail() ).toInt
+    def chunkSizeFloor : Int = 
+      configurationFromFile.get( "chunkSizeFloor" ).getOrElse( bail() ).toInt
+    def numNodesSeed : Int = 
+      configurationFromFile.get( "numNodesSeed" ).getOrElse( bail() ).toInt
+    def numCnxnsSeed : Int = 
+      configurationFromFile.get( "numCnxnsSeed" ).getOrElse( bail() ).toInt
+    def nodesFloor : Int = 
+      configurationFromFile.get( "nodesFloor" ).getOrElse( bail() ).toInt
+    def cnxnsFloor : Int = 
+      configurationFromFile.get( "cnxnsFloor" ).getOrElse( bail() ).toInt
+  }
+
+  object AgentUseCase extends Serializable with TestGenerationConfiguration {
     import AgentKVDBScope._
     import Being._
     import AgentKVDBNodeFactory._
@@ -2840,6 +2990,11 @@ package usage {
     import org.basex.core.cmd.Open
     import org.basex.core.cmd.Add
     import org.basex.core.cmd.CreateDB
+
+    override def configFileName : Option[String] = None
+    override def configurationDefaults : ConfigurationDefaults = {
+      TestConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
+    }
 
     val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
 
@@ -3047,25 +3202,9 @@ package usage {
 	  clientSession.execute( new Add( recordsFullFileName ) )
 
 	  println( "adding cnxn: " + cnxn )	  
-	  
-	  reset {
-	    cnxnExchange.putS( cnxnPtn + cnxnId, cnxn )
-	  }	  
+	  s += cnxn			  
 	}
-
-	reset {
-	  for( rsrc <- cnxnExchange.getS( cnxnPtn ) ) {
-	    rsrc match {
-	      case Some( cnxn ) => {
-		println( "Should have a cnxn now: " + cnxn )
-		s += cnxn		
-	      }
-	      case _ => {
-	      }
-	    };
-	    ()
-	  }
-	}
+	
 	s.toList( 0 )
       }
       val dummy =
@@ -3074,13 +3213,143 @@ package usage {
       tStream[acT.AgentCnxn]( dummy )( fresh ).drop( 1 )
     }
 
-    def setupTestStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+    def setupTestCnxnStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      node : Being.AgentKVDBNode[ReqBody,RspBody]
+    )(
       numOfEntries : Int, chunkSize : Int
-    ) : ( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] ) = {
-      val node = agent[ReqBody,RspBody]( "/" + ( "prebuiltCnxnProtocol" ) )
+    ) : ( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] ) = {      
       ( node, cnxnStream( node, numOfEntries, chunkSize ) )
+    }    
+
+    case class TestConfigurationGenerator(
+      localHost : String,
+      localPort : Int,
+      remoteHost : String,
+      remotePort : Int,
+      dataLocation : String,
+      numEntriesSeed : Int,
+      chunkSizeSeed : Int,
+      numEntriesFloor : Int,
+      chunkSizeFloor : Int,
+      numNodesSeed : Int,
+      numCnxnsSeed : Int,
+      nodesFloor : Int,
+      cnxnsFloor : Int      
+    )
+
+    object StdTestConfigurationGenerator
+	 extends TestConfigurationGenerator(
+	   localHost,
+	   localPort,
+	   remoteHost,
+	   remotePort,
+	   dataLocation,
+	   numEntriesSeed,
+	   chunkSizeSeed,
+	   numEntriesFloor,
+	   chunkSizeFloor,
+	   numNodesSeed,
+	   numCnxnsSeed,
+	   nodesFloor,
+	   cnxnsFloor
+	 )
+
+    case class TestConfiguration[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      @transient
+      generator : TestConfigurationGenerator,
+      @transient
+      pv : PutVal,
+      @transient
+      vars : Option[List[( String, String )]],
+      @transient
+      testData : Option[Seq[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )]]
+    )    
+
+    object StdTestConfiguration
+	 extends TestConfiguration[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+	   StdTestConfigurationGenerator,
+	   pvOne,
+	   None,
+	   None
+	 )
+
+    def configureTest[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      tc : TestConfigurationGenerator
+    ) : Seq[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )] = {
+      import scala.math._
+      def dataPair() : ( Int, Int ) =
+	( max( ( random * tc.numEntriesSeed ).toInt, tc.numEntriesFloor ), max( ( random * tc.chunkSizeSeed ).toInt, tc.chunkSizeFloor ) )
+      val dataStrm : Stream[( Int, Int )] =
+	tStream[( Int, Int )]( dataPair )( ( seed : ( Int, Int ) ) => dataPair )
+      val agntStrm : Stream[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )] =
+	dataStrm map {
+	  ( dp : ( Int, Int ) ) => {
+	    val Right( ( client, server ) ) =
+	      setup[ReqBody,RspBody](
+		tc.dataLocation, tc.localHost, tc.localPort, tc.remoteHost, tc.remotePort
+	      )( true )
+	    setupTestCnxnStream[ReqBody,RspBody]( client )( dp._1, dp._2 )
+	  }
+	}
+
+      val testAgentStream = agntStrm.take( max( ( random * tc.numNodesSeed ).toInt, tc.nodesFloor ) )
+      
+      for( ( kvdbNode, cnxnStrm ) <- testAgentStream ) yield {
+	( kvdbNode, cnxnStrm.take( max( ( random * tc.numCnxnsSeed ).toInt, tc.cnxnsFloor ) ) )
+      }
+	
     }
       
+    def sporeGet[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      testConfig : TestConfiguration[ReqBody,RspBody]
+    )( k : Option[mTT.Resource] => Unit ) : Unit = {
+      import scala.math._      
+
+      for(
+	( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) )	
+      ) {
+	val ptn =
+	  testConfig.vars match {
+	    case Some( vars ) => {
+	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv, vars )
+	    }
+	    case None => {
+	      asCnxnCtxtLabel( testConfig.pv )
+	    }
+	  }
+	for( cnxn <- cnxnStrm ) {
+	  reset {
+	    for( rsrc <- kvdbNode.get( cnxn )( ptn ) ) {
+	      k( rsrc )
+	    }
+	  }
+	}
+      }
+    }
+
+    def sporePut[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      testConfig : TestConfiguration[ReqBody,RspBody]
+    )( vStream : Stream[String] ) : Unit = {
+      import scala.math._      
+
+      for( ( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) ) ) {
+	val ptn =
+	  testConfig.vars match {
+	    case Some( vars ) => {
+	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv, vars )
+	    }
+	    case None => {
+	      asCnxnCtxtLabel( testConfig.pv )
+	    }
+	  }
+	for( cnxn <- cnxnStrm; v <- vStream ) {
+	  reset {
+	    kvdbNode.put( cnxn )( ptn, v )
+	  }
+	}
+      }
+    }
+
     def runClient[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       kvdbNode : Being.AgentKVDBNode[ReqBody,RspBody]
     ) : Unit = {
