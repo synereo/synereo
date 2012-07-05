@@ -5,9 +5,9 @@
 // Copyright:   Not supplied
 // Description:
 // ------------------------------------------------------------------------
-
+   
 package com.protegra.agentservicesstore
- 
+
 import org.specs._
 import org.specs.util._
 import org.specs.runner.JUnit4
@@ -37,9 +37,9 @@ object KvdbPlatformAgentSingleTestSpecsRunner
   extends ConsoleRunner(KvdbPlatformAgentSingleTestSpecs)
 
 object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
-  with SpecsKVDBHelpers
-  with Timeouts
-  with RabbitTestSetup
+with SpecsKVDBHelpers
+with Timeouts
+with RabbitTestSetup
 {
   val timeoutBetween = 0
 
@@ -47,7 +47,7 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
   val acquaintanceAddresses = List[ URI ]()
   val _localQ = createNode(sourceAddress.toURI, acquaintanceAddresses)
 
-    testMessaging(_localQ, _localQ)
+  testMessaging(_localQ, _localQ)
   //  testWildcardWithPut(_localQ, _localQ)
   //  testWildcardWithStore(_localQ, _localQ)
   //  testWildcardWithCursor(_localQ, _localQ)
@@ -75,7 +75,7 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
   //ISSUE 37: different labels get1get2 put1put1 keep going down alternating gets
   "2 Cached Get/Put" should {
 
-    val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB),  List[ URI ]())
+    val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
     val testId = UUID.randomUUID().toString()
     val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 

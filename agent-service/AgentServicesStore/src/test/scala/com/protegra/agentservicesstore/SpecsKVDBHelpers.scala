@@ -9,7 +9,7 @@ import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
-
+  
 import scala.util.continuations._
 
 import java.net.URI
@@ -49,18 +49,16 @@ trait SpecsKVDBHelpers
     val testId = UUID.randomUUID().toString()
     val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
-    val lblResult = ( "result(" + key + ")" ).toLabel
-
     reset {
       for ( e <- q.get(cnxn)(key) ) {
-        reset {_resultsQ.put(cnxnTest)(lblResult, e.dispatch)}
-        println("storing to resultQ : " +  e.dispatch)
+        reset {_resultsQ.put(cnxnTest)(key, e.dispatch)}
+        println("storing to resultQ : " + e.dispatch)
       }
     }
 
     var actual = ""
     reset {
-      for ( e <- _resultsQ.fetch(cnxnTest)(lblResult) ) {
+      for ( e <- _resultsQ.fetch(cnxnTest)(key) ) {
         actual = e.dispatch
         println("getMustBe - get received : " + actual)
       }
