@@ -81,8 +81,8 @@ with RabbitTestSetup
         getMustBe(value + "3")(writer, cnxn, key)
       }
     }
-//
-//    //invalid when #23 resolved
+
+    //invalid when #23 resolved
 //    "Persisted Put/Get" should {
 //      Thread.sleep(timeoutBetween)
 //      "respect connection" in {
@@ -109,18 +109,6 @@ with RabbitTestSetup
 //        //second get takes it out db
 //        getMustBe(value)(reader, cnxn, key)
 //      }
-//
-//      //      "work with UUID" in {
-//      //        val key = ("testChannel(\"" + UUID.randomUUID.toString + "\")").toLabel
-//      //        val value = "uuid@protegra.com"
-//      //        reset {writer.put(cnxn)(key, Ground(value))}
-//      //
-//      //        //first get takes it out of cache
-//      //        getMustBe(value)(reader, cnxn, key)
-//      //        //second get takes it out db
-//      //        //Thread.sleep(TIMEOUT_MED)
-//      //        getMustBe(value)(reader, cnxn, key)
-//      //      }
 //
 //      "retrieve from existing db" in {
 //        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
@@ -153,176 +141,170 @@ with RabbitTestSetup
 //        getMustBe(value + "3")(writer, cnxn, key)
 //      }
 //    }
-//
-//    "Cached Put/Fetch" should {
-//      Thread.sleep(timeoutBetween)
-//      "respect connection" in {
-//        val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        fetchMustBe("")(reader, cnxnRandom, key)
-//      }
-//
-//      "retrieve " in {
-//        val key = "contentChannel(cachedPutFetch(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//
-//      "work with UUID" in {
-//        val key = ( "testChannel(\"" + UUID.randomUUID.toString + "\")" ).toLabel
-//        val value = "uuid@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//
-//      "update" in {
-//        val key = "contentChannel(cachedPutFetch(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value + "1"))}
-//        reset {writer.put(cnxn)(key, Ground(value + "2"))}
-//        reset {writer.put(cnxn)(key, Ground(value + "3"))}
-//
-//        fetchMustBe(value + "3")(writer, cnxn, key)
-//      }
-//    }
-//
-//    "Store/Get" should {
-//      Thread.sleep(timeoutBetween)
-//
-//      "respect connection" in {
-//        val key = "testChannel(storeGetRespectingCnxn(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        getMustBe("")(reader, cnxnRandom, key)
-//      }
-//
-//      "retrieve " in {
-//        val key = "contentChannel(storeFetch(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        //Thread.sleep(TIMEOUT_LONG)
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//
-//      "work with UUID" in {
-//        val key = ( "testChannel(\"" + UUID.randomUUID.toString + "\")" ).toLabel
-//        val value = "uuid@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        //Thread.sleep(TIMEOUT_LONG)
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//
-//      "retrieve from existing db" in {
-//        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
-//
-//        val key = "testChannel(testData(\"name\"))".toLabel
-//        val value = "tests@protegra.com"
-//        writer.store(cnxnNew)(key, Ground(value))
-//
-//        //Thread.sleep(TIMEOUT_LONG)
-//        getMustBe(value)(reader, cnxnNew, key)
-//      }
-//
-//      "update" in {
-//        val key = "contentChannel(updateStoreGet(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//
-//        writer.store(cnxn)(key, Ground(value + "1"))
-//        Thread.sleep(TIMEOUT_MED)
-//        writer.store(cnxn)(key, Ground(value + "2"))
-//        Thread.sleep(TIMEOUT_MED)
-//        writer.store(cnxn)(key, Ground(value + "3"))
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        //wont break but theres actually 3 results in the db
-//        getMustBe(value + "3")(reader, cnxn, key)
-//      }
-//
-//      "consume" in {
-//        val cnxnRandom = new AgentCnxn("Test".toURI, "", UUID.randomUUID.toString.toURI)
-//
-//        val key = "testChannel(persistedStoreGetShouldConsume(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        writer.store(cnxnRandom)(key, Ground(value))
-//
-//        //Thread.sleep(TIMEOUT_MED)
-//        //first get takes it out of db
-//        getMustBe(value)(reader, cnxnRandom, key)
-//
-//        //Thread.sleep(TIMEOUT_MED)
-//        //second get should not find
-//        getMustBe("")(reader, cnxnRandom, key)
-//      }
-//    }
-//
-//    "Store/Fetch" should {
-//      Thread.sleep(timeoutBetween)
-//      "respect connection" in {
-//        val key = "testChannel(storeFetchRespectingCnxn(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        fetchMustBe("")(reader, cnxnRandom, key)
-//      }
-//
-//      //      "retrieve " in {
-//      //        val key = "contentChannel(storeFetch(\"email\"))".toLabel
-//      //        val value = "tests@protegra.com"
-//      //        writer.store(cnxn)(key, Ground(value))
-//      //        //Thread.sleep(TIMEOUT_MED)
-//      //        fetchMustBe(value)(reader, cnxn, key)
-//      //      }
-//
-//      "work with UUID" in {
-//        val key = ( "testChannel(\"" + UUID.randomUUID.toString + "\")" ).toLabel
-//        val value = "uuid@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        //Thread.sleep(TIMEOUT_MED)
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//
-//      "update" in {
-//        val key = "contentChannel(updateStoreFetch(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        writer.store(cnxn)(key, Ground(value + "1"))
-//        Thread.sleep(TIMEOUT_MED)
-//        writer.store(cnxn)(key, Ground(value + "2"))
-//        Thread.sleep(TIMEOUT_MED)
-//        writer.store(cnxn)(key, Ground(value + "3"))
-//
-//        //wont break but theres actually 3 results in the db
-//        fetchMustBe(value + "3")(reader, cnxn, key)
-//      }
-//
-//      "search" in {
-//        val key = "profile(\"999\",\"Terry\",\"Bunio\",\"123456789\")".toLabel
-//        val value = "profile for terry bunio"
-//        writer.store(cnxn)(key, Ground(value))
-//        //Thread.sleep(TIMEOUT_MED)
-//        val searchKey = "profile(\"999\",_,_,_)".toLabel
-//        fetchMustBe(value)(reader, cnxn, searchKey)
-//      }
-//    }
-//
+
+    "Cached Put/Fetch" should {
+      Thread.sleep(timeoutBetween)
+      "respect connection" in {
+        val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        fetchMustBe("")(reader, cnxnRandom, key)
+      }
+
+      "retrieve " in {
+        val key = "contentChannel(cachedPutFetch(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
+      "work with UUID" in {
+        val key = ( "testChannel(\"" + UUID.randomUUID.toString + "\")" ).toLabel
+        val value = "uuid@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
+      "update" in {
+        val key = "contentChannel(cachedPutFetch(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value + "1"))}
+        reset {writer.put(cnxn)(key, Ground(value + "2"))}
+        reset {writer.put(cnxn)(key, Ground(value + "3"))}
+
+        fetchMustBe(value + "3")(writer, cnxn, key)
+      }
+    }
+
+    "Store/Get" should {
+      Thread.sleep(timeoutBetween)
+
+      "respect connection" in {
+        val key = "testChannel(storeGetRespectingCnxn(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+        getMustBe("")(reader, cnxnRandom, key)
+      }
+
+      "retrieve " in {
+        val key = "contentChannel(storeGetRetrieve(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+        //Thread.sleep(TIMEOUT_LONG)
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
+      "work with UUID" in {
+        val key = ( "testChannel(\"" + UUID.randomUUID.toString + "\")" ).toLabel
+        val value = "uuid@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+        //Thread.sleep(TIMEOUT_LONG)
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
+      //this will probably fail once after deleting all databases
+      "retrieve from existing db" in {
+        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
+
+        val key = "testChannel(storeGetRetrieveExisting(\"name\"))".toLabel
+        val value = "tests@protegra.com"
+        writer.store(cnxnNew)(key, Ground(value))
+
+        getMustBe(value)(reader, cnxnNew, key)
+      }
+
+      "update" in {
+        val key = "contentChannel(storeGetUpdate(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+
+        writer.store(cnxn)(key, Ground(value + "1"))
+        Thread.sleep(TIMEOUT_MED)
+        writer.store(cnxn)(key, Ground(value + "2"))
+        Thread.sleep(TIMEOUT_MED)
+        writer.store(cnxn)(key, Ground(value + "3"))
+        Thread.sleep(TIMEOUT_MED)
+
+        //wont break but theres actually 3 results in the db
+        getMustBe(value + "3")(reader, cnxn, key)
+      }
+
+      "consume" in {
+        val cnxnRandom = new AgentCnxn("Test".toURI, "", UUID.randomUUID.toString.toURI)
+
+        val key = "testChannel(persistedStoreGetShouldConsume(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        writer.store(cnxnRandom)(key, Ground(value))
+
+        //Thread.sleep(TIMEOUT_MED)
+        //first get takes it out of db
+        getMustBe(value)(reader, cnxnRandom, key)
+
+        //Thread.sleep(TIMEOUT_MED)
+        //second get should not find
+        getMustBe("")(reader, cnxnRandom, key)
+      }
+    }
+
+    "Store/Fetch" should {
+      Thread.sleep(timeoutBetween)
+      "respect connection" in {
+        val key = "testChannel(storeFetchRespectingCnxn(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+        fetchMustBe("")(reader, cnxnRandom, key)
+      }
+
+      //      "retrieve " in {
+      //        val key = "contentChannel(storeFetch(\"email\"))".toLabel
+      //        val value = "tests@protegra.com"
+      //        writer.store(cnxn)(key, Ground(value))
+      //        //Thread.sleep(TIMEOUT_MED)
+      //        fetchMustBe(value)(reader, cnxn, key)
+      //      }
+
+      "work with UUID" in {
+        val key = ( "testChannel(\"" + UUID.randomUUID.toString + "\")" ).toLabel
+        val value = "uuid@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+        //Thread.sleep(TIMEOUT_MED)
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
+      "update" in {
+        val key = "contentChannel(storeFetchUpdate(\"email\"))".toLabel
+        val value = "tests@protegra.com"
+        writer.store(cnxn)(key, Ground(value + "1"))
+        Thread.sleep(TIMEOUT_MED)
+        writer.store(cnxn)(key, Ground(value + "2"))
+        Thread.sleep(TIMEOUT_MED)
+        writer.store(cnxn)(key, Ground(value + "3"))
+
+        //wont break but theres actually 3 results in the db
+        fetchMustBe(value + "3")(reader, cnxn, key)
+      }
+
+//      java.lang.Exception: matchMap failure profile(string(999), '_, '_, '_) profile(string(999), string(Terry), string(Bunio), string(123456789))
+      "search" in {
+        val key = "profile(\"999\",\"Terry\",\"Bunio\",\"123456789\")".toLabel
+        val value = "profile for terry bunio"
+        writer.store(cnxn)(key, Ground(value))
+        //Thread.sleep(TIMEOUT_MED)
+        val searchKey = "profile(\"999\",_,_,_)".toLabel
+        fetchMustBe(value)(reader, cnxn, searchKey)
+      }
+    }
+
 //    "Cached Get/Put" should {
 //      Thread.sleep(timeoutBetween)
 //      "retrieve" in {
 //        val key = "contentChannel(cacheGetPut(\"email\"))".toLabel
 //        val value = "tests@protegra.com"
 //
-//        var result = ""
-//        reset {
-//          for ( e <- reader.get(cnxn)(key) ) {
-//            result = e.dispatch
-//            println("get received : " + result)
-//          }
-//        }
+//        getMustBe(value)(reader, cnxn, key)
 //        reset {writer.put(cnxn)(key, Ground(value))}
-//        result must be_==(value).eventually(20, TIMEOUT_EVENTUALLY)
 //      }
 //    }
-//
+
 //    "Cached Fetch/Put" should {
 //      Thread.sleep(timeoutBetween)
 //      "retrieve" in {
