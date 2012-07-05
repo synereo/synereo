@@ -3255,9 +3255,13 @@ package usage {
 	 )
 
     case class TestConfiguration[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      @transient
       generator : TestConfigurationGenerator,
+      @transient
       pv : PutVal,
+      @transient
       vars : Option[List[( String, String )]],
+      @transient
       testData : Option[Seq[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )]]
     )    
 
