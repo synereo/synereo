@@ -2729,6 +2729,54 @@ package usage {
 	"if_octets",
 	""
       )
+    @transient
+    lazy val entryStr = 
+      """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+
+    @transient
+    implicit lazy val entryStream : Stream[String] =
+      ( List( entryStr ) ).toStream append ( entryStream map { ( s : String ) => /* print( "." );*/ s } )    
+
+    @transient
+    lazy val rcrdStream : Stream[Elem] = {
+      val acc = new ListBuffer[Elem]()
+      val rcrd = handleEntry( parse( entryStr ), acc )( 0 )
+      ( List( rcrd ) ).toStream append ( rcrdStream map { ( rcrd : Elem ) => /* print( "." ); */ rcrd } )
+    }
+
+    def readEntries(
+      host : String, queue : String, file : String, lthrd : String, dbChunk : Int
+    )( implicit eStrm : Stream[String] ) : String = {      
+            
+      val acc = rcrdStream.take( dbChunk )
+
+      val rcrdsFileNameSfx = "" + getUUID + "-" + runNum + ""
+      val recordsFileName = ( file + rcrdsFileNameSfx + ".xml" )
+      val db = <records>{acc.toList}</records>
+
+      println( "---------------------------******>>>>>>******---------------------------" )
+      println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+      println( "---------------------------******>>>>>>******---------------------------" )
+
+      scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
+
+      recordsFileName
+    }
+
+    def importData( lthrd : String, chunkSize : Int )( implicit eStrm : Stream[String] ) : List[String] = {            
+      List(
+	readEntries( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )( eStrm )
+      )
+    }
+
+    def loadData( numOfEntries : Int ) : Unit = {
+      // Nothing to do
+    }
+
+    @transient
+    val entryExchange : MonadicTupleSpace[String,String,String] = createExchange[String]()
+    @transient
+    val dataChunkExchange : MonadicTupleSpace[String,String,ListBuffer[Elem]] = createExchange[ListBuffer[Elem]]()
 
     override def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
       // create an AMQP scope
@@ -2741,21 +2789,23 @@ package usage {
 	)
       // get an empty queue
       val collectDQ = collectDQM.zero[String]    
+      println( "---------------------------******>>>>>>******---------------------------" )
       println( "creating entries" )
-      for( i <- 1 to numOfEntries ) {
-	print( "." )
-	val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
-	collectDQ ! entry
-      }
+      println( "---------------------------******>>>>>>******---------------------------" )
+
+      val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
+
+      lazy val entryStream : Stream[String] =
+	( List( entry ) ).toStream append ( entryStream map { ( s : String ) => print( "." ); s } )
+
+      for( i <- 1 to numOfEntries ) { collectDQ ! entryStream( i ) }
+
+      println( "---------------------------******>>>>>>******---------------------------" )
       println( "\nentries created" )
+      println( "---------------------------******>>>>>>******---------------------------" )
     }
 
-    @transient
-    val entryExchange : MonadicTupleSpace[String,String,String] = createExchange[String]()
-    @transient
-    val dataChunkExchange : MonadicTupleSpace[String,String,ListBuffer[Elem]] = createExchange[ListBuffer[Elem]]()
-
-    def readEntries(
+    def readEntriesFromRabbitMQ(
       host : String, queue : String, file : String, lthrd : String, dbChunk : Int
     ) : ListBuffer[String] = {
       // create an AMQP scope
@@ -2787,8 +2837,36 @@ package usage {
 	  println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
 	  scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
 	  fileNames += recordsFileName
+
+	  println( "---------------------------******>>>>>>******---------------------------" )
+	  println( "putting @ " + ( lthrd + "_" + recordsFileName ) )
+	  println( "to trigger adding the data file to the kvdb node db" )
+	  println( "---------------------------******>>>>>>******---------------------------" )
+
 	  reset {
 	    entryExchange.putS( lthrd + "_" + recordsFileName, rcrdsFileNameSfx )
+
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    println( "waiting @ " + ( lthrd + rcrdsFileNameSfx ) )
+	    println( "to be able to continue processing json entries" )
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    
+	    for( rsrc <- entryExchange.getS( lthrd + rcrdsFileNameSfx ) ) {
+
+	      println( "---------------------------******>>>>>>******---------------------------" )
+	      println( "got " + rsrc + " @ " + lthrd + rcrdsFileNameSfx )
+	      println( "---------------------------******>>>>>>******---------------------------" )
+
+	      rsrc match {
+		case Some( msg ) => {
+		  println( "found the droids we were looking for. " + msg )
+		}
+		case _ => {
+		  throw new Exception( "unexpected communication: " + rsrc )
+		}
+	      }
+
+	    }
 	  }
 	  acc.clear
 	}
@@ -2798,29 +2876,56 @@ package usage {
       fileNames
     }
 
-    def loadData( numOfEntries : Int ) : Unit = {
+    def loadDataToRabbitMQ( numOfEntries : Int ) : Unit = {
       supplyEntries( "localhost", "collectDSample", numOfEntries )
     }
-    def importData( lthrd : String, chunkSize : Int ) : List[String] = {            
+    def importDataFromRabbitMQ( lthrd : String, chunkSize : Int ) : List[String] = {            
       val fileNameRoot = "collectDImport"
       val filePtn = ( fileNameRoot + ".*" )
-      val lb = readEntries( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )
+      val lb = readEntriesFromRabbitMQ( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )
       val s = new scala.collection.mutable.HashSet[String]( )
 
-      reset {
-	for( rsrc <- entryExchange.getS( lthrd + "_" + filePtn ) ) {
-	  rsrc match {
-	    case Some( fileNameSfx ) => {
-	      val fileName = fileNameRoot + fileNameSfx + ".xml"
-	      s += fileName
-	      println( "alerted that " + fileName + ".xml" + " has been written." )
-	    }
-	    case _ => {
-	    }
-	  };
-	  ()
+      def loop( s : scala.collection.mutable.HashSet[String], n : Int ) : Unit = {
+	println( "---------------------------******>>>>>>******---------------------------" )
+	println( "waiting @ " + ( lthrd + "_" + filePtn ) )
+	println( "to add a filename to the queue for adding to kvdb node db" )
+	println( "---------------------------******>>>>>>******---------------------------" )
+
+	reset {
+	  for( rsrc <- entryExchange.getS( lthrd + "_" + filePtn ) ) {
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    println( "got " + rsrc + " @ " + lthrd + "_" + filePtn )
+	    println( "---------------------------******>>>>>>******---------------------------" )
+	    rsrc match {
+	      case Some( fileNameSfx ) => {
+		val fileName = fileNameRoot + fileNameSfx + ".xml"
+		
+		println( "---------------------------******>>>>>>******---------------------------" )
+		println( "alerted that " + fileName + ".xml" + " has been written." )
+		println( "---------------------------******>>>>>>******---------------------------" )
+		
+		s += fileName	      
+		
+		println( "---------------------------******>>>>>>******---------------------------" )
+		println( "putting @ " + ( lthrd + fileNameSfx ) )
+		println( "---------------------------******>>>>>>******---------------------------" )
+		
+		entryExchange.putS( lthrd + fileNameSfx, "move along." );
+		
+		if ( s.size < n ) { loop( s, n ) }
+		
+		() // to keep the type checker happy
+	      }
+	      case _ => {
+		throw new Exception( "shouldn't be in this case" )
+	      }
+	    };
+	    ()
+	  }
 	}
       }
+
+      loop( s, 1 )
 
       s.toList
     }
@@ -3047,25 +3152,9 @@ package usage {
 	  clientSession.execute( new Add( recordsFullFileName ) )
 
 	  println( "adding cnxn: " + cnxn )	  
-	  
-	  reset {
-	    cnxnExchange.putS( cnxnPtn + cnxnId, cnxn )
-	  }	  
+	  s += cnxn			  
 	}
-
-	reset {
-	  for( rsrc <- cnxnExchange.getS( cnxnPtn ) ) {
-	    rsrc match {
-	      case Some( cnxn ) => {
-		println( "Should have a cnxn now: " + cnxn )
-		s += cnxn		
-	      }
-	      case _ => {
-	      }
-	    };
-	    ()
-	  }
-	}
+	
 	s.toList( 0 )
       }
       val dummy =
