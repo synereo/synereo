@@ -3163,13 +3163,100 @@ package usage {
       tStream[acT.AgentCnxn]( dummy )( fresh ).drop( 1 )
     }
 
-    def setupTestStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+    def setupTestCnxnStream[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       numOfEntries : Int, chunkSize : Int
     ) : ( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] ) = {
       val node = agent[ReqBody,RspBody]( "/" + ( "prebuiltCnxnProtocol" ) )
       ( node, cnxnStream( node, numOfEntries, chunkSize ) )
+    }    
+
+    case class TestConfigurationGenerator(
+      numEntriesSeed : Int,
+      chunkSizeSeed : Int,
+      numEntriesFloor : Int,
+      chunkSizeFloor : Int,
+      numNodesSeed : Int,
+      numCnxnsSeed : Int,
+      nodesFloor : Int,
+      cnxnsFloor : Int      
+    )
+
+    case class TestConfiguration[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      generator : TestConfigurationGenerator,
+      pv : PutVal,
+      vars : Option[List[( String, String )]],
+      testData : Option[Seq[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )]]
+    )
+      
+    def configureTest[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      tc : TestConfigurationGenerator
+    ) : Seq[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )] = {
+      import scala.math._
+      def dataPair() : ( Int, Int ) =
+	( max( ( random * tc.numEntriesSeed ).toInt, tc.numEntriesFloor ), max( ( random * tc.chunkSizeSeed ).toInt, tc.chunkSizeFloor ) )
+      val dataStrm : Stream[( Int, Int )] =
+	tStream[( Int, Int )]( dataPair )( ( seed : ( Int, Int ) ) => dataPair )
+      val agntStrm : Stream[( Being.AgentKVDBNode[ReqBody,RspBody], Stream[acT.AgentCnxn] )] =
+	dataStrm map ( ( dp : ( Int, Int ) ) => setupTestCnxnStream[ReqBody,RspBody]( dp._1, dp._2 ) )
+
+      val testAgentStream = agntStrm.take( max( ( random * tc.numNodesSeed ).toInt, tc.nodesFloor ) )
+      
+      for( ( kvdbNode, cnxnStrm ) <- testAgentStream ) yield {
+	( kvdbNode, cnxnStrm.take( max( ( random * tc.numCnxnsSeed ).toInt, tc.cnxnsFloor ) ) )
+      }
+	
     }
       
+    def sporeGet[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      testConfig : TestConfiguration[ReqBody,RspBody]
+    )( k : Option[mTT.Resource] => Unit ) : Unit = {
+      import scala.math._      
+
+      for(
+	( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) )	
+      ) {
+	val ptn =
+	  testConfig.vars match {
+	    case Some( vars ) => {
+	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv, vars )
+	    }
+	    case None => {
+	      asCnxnCtxtLabel( testConfig.pv )
+	    }
+	  }
+	for( cnxn <- cnxnStrm ) {
+	  reset {
+	    for( rsrc <- kvdbNode.get( cnxn )( ptn ) ) {
+	      k( rsrc )
+	    }
+	  }
+	}
+      }
+    }
+
+    def sporePut[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      testConfig : TestConfiguration[ReqBody,RspBody]
+    )( vStream : Stream[String] ) : Unit = {
+      import scala.math._      
+
+      for( ( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) ) ) {
+	val ptn =
+	  testConfig.vars match {
+	    case Some( vars ) => {
+	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv, vars )
+	    }
+	    case None => {
+	      asCnxnCtxtLabel( testConfig.pv )
+	    }
+	  }
+	for( cnxn <- cnxnStrm; v <- vStream ) {
+	  reset {
+	    kvdbNode.put( cnxn )( ptn, v )
+	  }
+	}
+      }
+    }
+
     def runClient[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       kvdbNode : Being.AgentKVDBNode[ReqBody,RspBody]
     ) : Unit = {
