@@ -2700,6 +2700,54 @@ package usage {
 		  }      
     }
 
+    override def handleEntry( grndTypeStr : String, imprtTypeStr : String, mTTTypeStr : String )( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+      for(
+	JObject( fvs ) <- json \\ "putval" ;
+	JArray( valueArray ) <- json \\ "values" ;
+	JArray( dstypes ) <- json \\ "dstypes" ;
+	JArray( dsnames ) <- json \\ "dsnames" ;
+	JDouble( time ) <- json \\ "time" ;
+	JDouble( interval ) <- json \\ "interval" ; 
+	JString( host ) <- json \\ "host" ; 
+	JString( plugin ) <- json \\ "plugin" ;
+	JString( plugin_instance ) <- json \\ "plugin_instance" ;
+	JString( cdtype ) <- json \\ "type" ;
+	JString( type_instance ) <- json \\ "type_instance"
+      ) {
+	val gvStr =
+	  new XStream(
+	    new JettisonMappedXmlDriver()
+	  ).toXML( UUIDWrapper( ( getUUID + "" ) ) ).replace(
+	    "com.biosimilarity.lift.lib.bulk.BulkCollectDImport$UUIDWrapper",
+	    grndTypeStr
+	  ).replace(
+	    imprtTypeStr,
+	    mTTTypeStr
+	  ).replace(
+	    "youyouid",
+	    "v"
+	  )
+	
+	acc +=
+	<record>
+	  <comProtegraAgentservicesstorePutVal>
+	    <values>{for( JInt( v ) <- valueArray ) yield {<string>{v}</string>}}</values>
+	    <dstypes>{for( JString( t ) <- dstypes ) yield {<string>{t}</string>}}</dstypes>
+	    <dsnames>{for( JString( n ) <- dsnames ) yield {<string>{n}</string>}}</dsnames>
+            <time>{<string>{time}</string>}</time>
+	    <interval>{<string>{interval}</string>}</interval>
+            <host>{<string>{host}</string>}</host>
+            <plugin>{<string>{plugin}</string>}</plugin>
+            <plugin_instance>{<string>{plugin_instance}</string>}</plugin_instance>
+            <type>{<string>{cdtype}</string>}</type>
+            <type_instance>{<string>{type_instance}</string>}</type_instance>
+	  </comProtegraAgentservicesstorePutVal>
+	  <string>{gvStr}</string>
+	</record>
+      }
+      acc
+    }
+
     override def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
       handleEntry(
 	"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground",
@@ -3269,7 +3317,7 @@ package usage {
 	 extends TestConfiguration[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
 	   StdTestConfigurationGenerator,
 	   pvOne,
-	   None,
+	   Some( List( ( "time", "t" ), ( "host", "host" ) ) ),
 	   None
 	 )
 
