@@ -5,9 +5,9 @@
 // Copyright:   Not supplied
 // Description:
 // ------------------------------------------------------------------------
-
+   
 package com.protegra.agentservicesstore
- 
+
 import org.specs._
 import org.specs.util._
 import org.specs.runner.JUnit4
@@ -29,8 +29,6 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
-import actors.threadpool.LinkedBlockingQueue
-import com.protegra.agentservicesstore.extensions.LinkedBlockingQueueExtensions._
 
 class KvdbPlatformAgentSingleTest
   extends JUnit4(KvdbPlatformAgentSingleTestSpecs)
@@ -38,23 +36,18 @@ class KvdbPlatformAgentSingleTest
 object KvdbPlatformAgentSingleTestSpecsRunner
   extends ConsoleRunner(KvdbPlatformAgentSingleTestSpecs)
 
-object KvdbPlatformAgentSingleTestSpecs //extends KvdbPlatformAgentBase
-  extends Specification
-  with SpecsKVDBHelpers
-  with Timeouts
-  with RabbitTestSetup
+object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
+with SpecsKVDBHelpers
+with Timeouts
+with RabbitTestSetup
 {
   val timeoutBetween = 0
 
   val sourceAddress = "127.0.0.1"
   val acquaintanceAddresses = List[ URI ]()
-//    val _localQ = AgentKVDBNodeFactory.ptToMany(sourceAddress.toURI, acquaintanceAddresses)
-  val _localQ: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = AgentKVDBNodeFactory.ptToMany(sourceAddress.toURI, acquaintanceAddresses)
-  //  val _localQ = createJunction(sourceAddress.toURM, acquaintanceAddresses)
-  //  def createJunction(sourceAddress: URM, acquaintanceAddresses: List[URM]): PartitionedStringMGJ = new PartitionedStringMGJ(sourceAddress, acquaintanceAddresses, None)
+  val _localQ = createNode(sourceAddress.toURI, acquaintanceAddresses)
 
-
-  //  testMessaging(_localQ, _localQ)
+  testMessaging(_localQ, _localQ)
   //  testWildcardWithPut(_localQ, _localQ)
   //  testWildcardWithStore(_localQ, _localQ)
   //  testWildcardWithCursor(_localQ, _localQ)
@@ -82,11 +75,12 @@ object KvdbPlatformAgentSingleTestSpecs //extends KvdbPlatformAgentBase
   //ISSUE 37: different labels get1get2 put1put1 keep going down alternating gets
   "2 Cached Get/Put" should {
 
+    val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
+    val testId = UUID.randomUUID().toString()
+    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
     Thread.sleep(timeoutBetween)
     "retrieve" in {
-      val resultsDb: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = AgentKVDBNodeFactory.ptToMany("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
-      val testId = UUID.randomUUID().toString()
-      val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
       val writer = AgentKVDBNodeFactory.ptToMany("127.0.0.1".toURI, List[ URI ]())
 
@@ -102,7 +96,7 @@ object KvdbPlatformAgentSingleTestSpecs //extends KvdbPlatformAgentBase
           for ( e <- writer.get(cnxnGlobal)(lblGlobalRequest) ) {
             if ( e != None ) {
               val lblResult = ( "result(\"" + UUID.randomUUID() + "\")" ).toLabel
-              reset {resultsDb.put(cnxnTest)(lblResult, e.dispatch)}
+              reset {_resultsQ.put(cnxnTest)(lblResult, e.dispatch)}
               listenGlobalRequest
             }
           }
@@ -133,7 +127,7 @@ object KvdbPlatformAgentSingleTestSpecs //extends KvdbPlatformAgentBase
       reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 2"))}
 
       val strResultSearch = "result(_)"
-      countMustBe(2)(resultsDb, cnxnTest, strResultSearch)
+      countMustBe(2)(_resultsQ, cnxnTest, strResultSearch)
     }
   }
 }
