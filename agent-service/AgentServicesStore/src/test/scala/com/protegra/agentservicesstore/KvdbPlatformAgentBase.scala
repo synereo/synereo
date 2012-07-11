@@ -43,7 +43,7 @@ case class KvdbPlatformAgentBase() extends Specification
     val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
     val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
-    "Cached Put/Get" should {
+    "Persisted Put/Get" should {
 
       Thread.sleep(timeoutBetween)
       "respect connection" in {
@@ -59,8 +59,17 @@ case class KvdbPlatformAgentBase() extends Specification
         val value = "cachedPutGetRetrieve@protegra.com"
         reset {writer.put(cnxn)(key, Ground(value))}
         Thread.sleep(TIMEOUT_MED)
-        //first get takes it out of cache
         getMustBe(value)(reader, cnxn, key)
+      }
+
+      "consume " in {
+        val key = "contentChannel(cachedPutGetConsume(\"email\"))".toLabel
+        val value = "cachedPutGetConsume@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        Thread.sleep(TIMEOUT_MED)
+        getMustBe(value)(reader, cnxn, key)
+        Thread.sleep(TIMEOUT_MED)
+        fetchMustBe("")(reader, cnxn, key)
       }
 
       "work with UUID" in {
@@ -84,67 +93,68 @@ case class KvdbPlatformAgentBase() extends Specification
       }
     }
 
-    //invalid when #23 resolved
-//    "Persisted Put/Get" should {
-//      Thread.sleep(timeoutBetween)
-//      "respect connection" in {
-//        val key = "testChannel(persistedPutGetRespectingCnxn(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//
-//        //first get takes it out of cache
-//        getMustBe("")(reader, cnxnRandom, key)
-//        //second get takes it out db
-//        //Thread.sleep(TIMEOUT_MED)
-//        getMustBe("")(reader, cnxnRandom, key)
-//      }
-//
-//      "retrieve " in {
-//        val key = "contentChannel(persistedPutGet(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//
-//        Thread.sleep(timeoutBetween)
-//        //Thread.sleep(TIMEOUT_LONG)
-//        //first get takes it out of cache
-//        getMustBe(value)(reader, cnxn, key)
-//        //second get takes it out db
-//        getMustBe(value)(reader, cnxn, key)
-//      }
-//
-//      "retrieve from existing db" in {
-//        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
-//
-//        val key = "testChannel(newData(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        reset {writer.put(cnxnNew)(key, Ground(value))}
-//
-//        //first get takes it out of cache
-//        getMustBe(value)(reader, cnxnNew, key)
-//        //second get takes it out db
-//        //Thread.sleep(TIMEOUT_MED)
-//        getMustBe(value)(reader, cnxnNew, key)
-//      }
-//
-//      "update" in {
-//        val key = "contentChannel(persistedPutGet(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value + "1"))}
-//        Thread.sleep(TIMEOUT_MED)
-//        reset {writer.put(cnxn)(key, Ground(value + "2"))}
-//        Thread.sleep(TIMEOUT_MED)
-//        reset {writer.put(cnxn)(key, Ground(value + "3"))}
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        //first get takes it out of cache
-//        getMustBe(value + "3")(writer, cnxn, key)
-//        //second get takes it out db
-//        Thread.sleep(TIMEOUT_SHORT)
-//        getMustBe(value + "3")(writer, cnxn, key)
-//      }
-//    }
+    "Cached Get/Put" should {
+       Thread.sleep(timeoutBetween)
 
-    "Cached Put/Fetch" should {
+       "retrieve" in {
+         val sourceId = UUID.randomUUID
+         val targetId = sourceId
+         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+
+         val testId = UUID.randomUUID().toString()
+         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+         val key = "contentChannel(cacheGetPutRetrieve(\"email\"))".toLabel
+         val value = "cacheGetPutRetrieve@protegra"
+
+         reset {
+           for ( e <- reader.get(cnxn)(key) ) {
+             if ( e != None ) {
+               val result = e.dispatch
+               reset {_resultsQ.put(cnxnTest)(key, result)}
+             }
+           }
+         }
+         println("Sleeping for 300")
+         Thread.sleep(TIMEOUT_MED)
+         reset {writer.put(cnxn)(key, Ground(value))}
+         println("Sleeping again for 300")
+         Thread.sleep(TIMEOUT_MED)
+
+         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+       }
+
+      "consume" in {
+        val sourceId = UUID.randomUUID
+        val targetId = sourceId
+        val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+
+        val testId = UUID.randomUUID().toString()
+        val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+        val key = "contentChannel(cacheGetPutConsume(\"email\"))".toLabel
+        val value = "cacheGetPutConsume@protegra"
+
+        reset {
+          for ( e <- reader.get(cnxn)(key) ) {
+            if ( e != None ) {
+              val result = e.dispatch
+              reset {_resultsQ.put(cnxnTest)(key, result)}
+            }
+          }
+        }
+        println("Sleeping for 300")
+        Thread.sleep(TIMEOUT_MED)
+        reset {writer.put(cnxn)(key, Ground(value))}
+        println("Sleeping again for 300")
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+        fetchMustBe("")(reader, cnxn, key)
+      }
+     }
+
+    "Persisted Put/Fetch" should {
       Thread.sleep(timeoutBetween)
       "respect connection" in {
         val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
@@ -181,6 +191,67 @@ case class KvdbPlatformAgentBase() extends Specification
         fetchMustBe(value + "3")(writer, cnxn, key)
       }
     }
+
+    "Cached Fetch/Put" should {
+       Thread.sleep(timeoutBetween)
+
+       "retrieve" in {
+         val sourceId = UUID.randomUUID
+         val targetId = sourceId
+         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+
+         val testId = UUID.randomUUID().toString()
+         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+         val key = "contentChannel(cacheFetchPutRetrieve(\"email\"))".toLabel
+         val value = "cacheFetchPutRetrieve@protegra"
+
+         reset {
+           for ( e <- reader.fetch(cnxn)(key) ) {
+             if ( e != None ) {
+               val result = e.dispatch
+               reset {_resultsQ.put(cnxnTest)(key, result)}
+             }
+           }
+         }
+         println("Sleeping for 300")
+         Thread.sleep(TIMEOUT_MED)
+         reset {writer.put(cnxn)(key, Ground(value))}
+         println("Sleeping again for 300")
+         Thread.sleep(TIMEOUT_MED)
+
+         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+       }
+
+       "consume" in {
+         val sourceId = UUID.randomUUID
+         val targetId = sourceId
+         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+
+         val testId = UUID.randomUUID().toString()
+         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+         val key = "contentChannel(cacheFetchPutConsumeByWaiter(\"email\"))".toLabel
+         val value = "cacheFetchPutConsumeByWaiter@protegra"
+
+         reset {
+           for ( e <- reader.fetch(cnxn)(key) ) {
+             if ( e != None ) {
+               val result = e.dispatch
+               reset {_resultsQ.put(cnxnTest)(key, result)}
+             }
+           }
+         }
+         println("Sleeping for 300")
+         Thread.sleep(TIMEOUT_MED)
+         reset {writer.put(cnxn)(key, Ground(value))}
+         println("Sleeping again for 300")
+         Thread.sleep(TIMEOUT_MED)
+
+         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+         fetchMustBe("")(reader, cnxn, key)
+       }
+     }
 
     "Store/Get" should {
       Thread.sleep(timeoutBetween)
@@ -274,6 +345,17 @@ case class KvdbPlatformAgentBase() extends Specification
         fetchMustBe(value)(reader, cnxn, key)
       }
 
+      "not consume " in {
+        val key = "testChannel(storeFetchNotConsume(\"email\"))".toLabel
+        val value = "storeFetchNotConsume@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+
+        Thread.sleep(TIMEOUT_MED)
+        fetchMustBe(value)(reader, cnxn, key)
+        fetchMustBe(value)(reader, cnxn, key)
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
       "work with UUID" in {
         val key = ( "testChannel(storeFetchUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
         val value = "storeFetchUUID@protegra.com"
@@ -310,120 +392,6 @@ case class KvdbPlatformAgentBase() extends Specification
       }
     }
 
-    "Cached Get/Put" should {
-       Thread.sleep(timeoutBetween)
-
-       "retrieve" in {
-         val sourceId = UUID.randomUUID
-         val targetId = sourceId
-         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
-
-         val testId = UUID.randomUUID().toString()
-         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-
-         val key = "contentChannel(cacheGetPut(\"email\"))".toLabel
-         val value = "cacheGetPut@protegra"
-
-         reset {
-           for ( e <- reader.get(cnxn)(key) ) {
-             if ( e != None ) {
-               val result = e.dispatch
-               reset {_resultsQ.put(cnxnTest)(key, result)}
-             }
-           }
-         }
-         println("Sleeping for 300")
-         Thread.sleep(TIMEOUT_MED)
-         reset {writer.put(cnxn)(key, Ground(value))}
-         println("Sleeping again for 300")
-         Thread.sleep(TIMEOUT_MED)
-
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
-       }
-     }
-
-    "Cached Fetch/Put" should {
-       Thread.sleep(timeoutBetween)
-
-       "retrieve" in {
-         val sourceId = UUID.randomUUID
-         val targetId = sourceId
-         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
-
-         val testId = UUID.randomUUID().toString()
-         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-
-         val key = "contentChannel(cacheFetchPut(\"email\"))".toLabel
-         val value = "cacheFetchPut@protegra"
-
-         reset {
-           for ( e <- reader.fetch(cnxn)(key) ) {
-             if ( e != None ) {
-               val result = e.dispatch
-               reset {_resultsQ.put(cnxnTest)(key, result)}
-             }
-           }
-         }
-         println("Sleeping for 300")
-         Thread.sleep(TIMEOUT_MED)
-         reset {writer.put(cnxn)(key, Ground(value))}
-         println("Sleeping again for 300")
-         Thread.sleep(TIMEOUT_MED)
-
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
-       }
-     }
-
-//    "Cached Fetch/Put" should {
-//      skip("isolate")
-//      Thread.sleep(timeoutBetween)
-//
-//      val testId = UUID.randomUUID().toString()
-//      val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-//
-//      "retrieve" in {
-//        val key = "contentChannel(cacheFetchPut(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//
-//        reset {
-//          for ( e <- reader.fetch(cnxn)(key) ) {
-//            if ( e != None ) {
-//              reset {_resultsQ.put(cnxnTest)(key, e.dispatch)}
-//            }
-//          }
-//        }
-//        //remove these timeouts when greg fixes
-//        Thread.sleep(TIMEOUT_MED)
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//
-//        Thread.sleep(TIMEOUT_MED)
-//        fetchMustBe(value)(_resultsQ, cnxnTest, key)
-//      }
-//    }
-    //
-    //    "Cached Fetch/Put" should {
-    //      skip("broken until Greg's fix is in place")
-    //      Thread.sleep(timeoutBetween)
-    //      "retrieve" in {
-    //        val key = "contentChannel(cachedFetchPut(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//
-//        var result = ""
-//        reset {
-//          for ( e <- reader.fetch(cnxn)(key) ) {
-//            if ( e != None ) {
-//              result = e.dispatch
-//              println("Fetch received : " + result)
-//            }
-//          }
-//        }
-//        Thread.sleep(TIMEOUT_MED)
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        Thread.sleep(TIMEOUT_MED)
-//        result must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//    }
-//
 //    "Get/Store" should {
 //      // get/fetch before store, store doesnt look at waiters
 //    }
@@ -433,77 +401,6 @@ case class KvdbPlatformAgentBase() extends Specification
 //    }
 //
 
-//    "Multiple Get/Put" should {
-//      Thread.sleep(timeoutBetween)
-//
-//      val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
-//      val testId = UUID.randomUUID().toString()
-//      val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-//
-//      "retrieve" in {
-//        val key = "contentChannel(multipleGetPut(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//
-//        reset {
-//          for ( e <- reader.get(cnxn)(key) ) {
-//            if ( e != None ) {
-//              reset {_resultsQ.put(cnxnTest)(key, e.dispatch)}
-//            }
-//          }
-//        }
-//
-//        //remove these timeouts when greg fixes
-//        Thread.sleep(TIMEOUT_MED)
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        Thread.sleep(TIMEOUT_MED)
-//        fetchMustBe(value)(_resultsQ, cnxnTest, key)
-//        //is this necessary?
-//        Thread.sleep(TIMEOUT_MED)
-////        getMustBe("")(reader, cnxn, key)
-//      }
-//    }
-//
-//    "Multiple Fetch/Put" should {
-//      Thread.sleep(timeoutBetween)
-//      "retrieve" in {
-//        val key = "contentChannel(multipleFetchPut(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        var result = ""
-//        reset {
-//          for ( e <- reader.fetch(cnxn)(key) ) {
-//            result = e.dispatch
-//            println("get received : " + result)
-//          }
-//        }
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        result must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
-//        //is this necessary?
-//        //Thread.sleep(TIMEOUT_MED)
-//        fetchMustBe("")(reader, cnxn, key)
-//        fetchMustBe("")(reader, cnxn, key)
-//
-//      }
-//    }
-//
-//    "Multiple Fetch/Store" should {
-//      // get/fetch before store does put a waiter
-//    }
-//
-//    "Multiple Store/Fetch" should {
-//      Thread.sleep(timeoutBetween)
-//      "retrieve" in {
-//        val key = "contentChannel(multipleStoreFetch(\"email\"))".toLabel
-//        val value = "tests@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        //is this really necessary?
-//        //Thread.sleep(TIMEOUT_MED)
-//        fetchMustBe(value)(reader, cnxn, key)
-//        fetchMustBe(value)(reader, cnxn, key)
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//    }
-//  }
-//
 //  def testWildcardWithPut(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcard(writer, reader, "put", putWildcardData(_, _, _))
 //
 //  def testWildcardWithStore(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcard(writer, reader, "store", storeWildcardData(_, _, _))
