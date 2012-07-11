@@ -36,7 +36,7 @@ class KvdbPlatformAgentSingleTest
 object KvdbPlatformAgentSingleTestSpecsRunner
   extends ConsoleRunner(KvdbPlatformAgentSingleTestSpecs)
 
-object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBaseRace
+object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
 {
   val timeoutBetween = 0
 

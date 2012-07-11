@@ -36,7 +36,7 @@ class KvdbPlatformAgentLocalDistributedTest
 object KvdbPlatformAgentLocalDistributedTestSpecsRunner
   extends ConsoleRunner(KvdbPlatformAgentLocalDistributedTestSpecs)
 
-object KvdbPlatformAgentLocalDistributedTestSpecs extends KvdbPlatformAgentBaseRace
+object KvdbPlatformAgentLocalDistributedTestSpecs extends KvdbPlatformAgentBase
 {
   val timeoutBetween = TIMEOUT_LONG
 
