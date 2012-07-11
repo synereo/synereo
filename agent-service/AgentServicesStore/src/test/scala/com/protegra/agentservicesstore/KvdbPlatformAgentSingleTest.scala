@@ -29,19 +29,19 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
-@transient
+
 class KvdbPlatformAgentSingleTest
   extends JUnit4(KvdbPlatformAgentSingleTestSpecs)
-@transient
+
 object KvdbPlatformAgentSingleTestSpecsRunner
   extends ConsoleRunner(KvdbPlatformAgentSingleTestSpecs)
-@transient
+
 object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
 {
-  @transient val timeoutBetween = 0
+  val timeoutBetween = 0
 
-  @transient val sourceAddress = "127.0.0.1"
-  @transient val acquaintanceAddresses = List[ URI ]()
+  val sourceAddress = "127.0.0.1"
+  val acquaintanceAddresses = List[ URI ]()
   val writer = createNode(sourceAddress.toURI, acquaintanceAddresses)
   val reader = writer
 

@@ -31,7 +31,7 @@ trait SpecsKVDBHelpers
 {
   self: Specification =>
 
-  @transient val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
+  val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
 
 
   def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
@@ -46,10 +46,10 @@ trait SpecsKVDBHelpers
     getString(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
   }
 
-  def getString(@transient q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], @transient cnxn: AgentCnxn, @transient key: CnxnCtxtLabel[ String, String, String ]): String =
+  def getString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
   {
-    @transient val testId = UUID.randomUUID().toString()
-    @transient val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+    val testId = UUID.randomUUID().toString()
+    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
     reset {
       for ( e <- q.get(cnxn)(key) ) {

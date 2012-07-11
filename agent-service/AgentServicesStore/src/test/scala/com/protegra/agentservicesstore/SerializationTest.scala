@@ -30,19 +30,19 @@ import biz.source_code.base64Coder.Base64Coder
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import java.net.URI
 
-@transient class SerializationTest
+class SerializationTest
   extends JUnit4(SerializationTestSpecs)
 
-@transient object SerializationTestSpecsRunner
+object SerializationTestSpecsRunner
   extends ConsoleRunner(SerializationTestSpecs)
 
-@transient object SerializationTestSpecs extends Specification
+object SerializationTestSpecs extends Specification
 with SpecsKVDBHelpers
 with Timeouts
 with RabbitTestSetup
 {
 
-  @transient val timeoutBetween = 0
+   val timeoutBetween = 0
 
   "Serialize" should {
     "cnxn" in {
