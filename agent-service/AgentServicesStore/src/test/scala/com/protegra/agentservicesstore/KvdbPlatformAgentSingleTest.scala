@@ -40,9 +40,9 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
 {
   val timeoutBetween = 0
 
-  val sourceAddress = "127.0.0.1"
+  val sourceAddress = "127.0.0.1".toURI
   val acquaintanceAddresses = List[ URI ]()
-  val writer = createNode(sourceAddress.toURI, acquaintanceAddresses)
+  val writer = createNode(sourceAddress, acquaintanceAddresses)
   val reader = writer
 
   //  testWildcardWithPut(_localQ, _localQ)
