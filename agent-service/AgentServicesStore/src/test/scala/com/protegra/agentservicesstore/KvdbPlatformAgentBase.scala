@@ -115,10 +115,8 @@ case class KvdbPlatformAgentBase() extends Specification
              }
            }
          }
-         println("Sleeping for 300")
          Thread.sleep(TIMEOUT_MED)
          reset {writer.put(cnxn)(key, Ground(value))}
-         println("Sleeping again for 300")
          Thread.sleep(TIMEOUT_MED)
 
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
@@ -391,6 +389,36 @@ case class KvdbPlatformAgentBase() extends Specification
         fetchMustBe(value)(reader, cnxn, searchKey)
       }
     }
+
+//
+//    "Put/Delete" should {
+//
+//      Thread.sleep(timeoutBetween)
+//
+//      "delete when found" in {
+//        val key = "contentChannel(putDeleteWhenFound(\"email\"))".toLabel
+//        val value = "putDeleteWhenFound@protegra.com"
+//        reset {writer.put(cnxn)(key, Ground(value))}
+//        Thread.sleep(TIMEOUT_MED)
+//        writer.delete(cnxn)(key)
+//        Thread.sleep(TIMEOUT_MED)
+//        fetchMustBe("")(reader, cnxn, key)
+//      }
+//
+//      "not delete when missing " in {
+//        val key = "contentChannel(putDeleteWhenMissing(\"email\"))".toLabel
+//        val keyMissing = "contentChannel(putDeleteWhenMissing(\"missing\"))".toLabel
+//        val value = "putDeleteWhenMissing@protegra.com"
+//        reset {writer.put(cnxn)(key, Ground(value))}
+//        Thread.sleep(TIMEOUT_MED)
+//        writer.delete(cnxn)(keyMissing)
+//        Thread.sleep(TIMEOUT_MED)
+//        fetchMustBe(value)(reader, cnxn, key)
+//      }
+//
+//    }
+
+  }
 
 //    "Get/Store" should {
 //      // get/fetch before store, store doesnt look at waiters
@@ -721,6 +749,5 @@ case class KvdbPlatformAgentBase() extends Specification
 //      //         fetchCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
 //      //       }
 //    }
-  }
 
 }

@@ -12,7 +12,7 @@ import org.specs._
 import org.specs.util._
 import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
-
+ 
 import com.biosimilarity.lift.model.store._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
@@ -36,7 +36,7 @@ class KvdbPlatformAgentLocalDistributedTest
 object KvdbPlatformAgentLocalDistributedTestSpecsRunner
   extends ConsoleRunner(KvdbPlatformAgentLocalDistributedTestSpecs)
 
-object KvdbPlatformAgentLocalDistributedTestSpecs extends KvdbPlatformAgentBase
+object KvdbPlatformAgentLocalDistributedTestSpecs extends KvdbPlatformAgentBaseRace
 {
   val timeoutBetween = TIMEOUT_LONG
 
@@ -46,7 +46,6 @@ object KvdbPlatformAgentLocalDistributedTestSpecs extends KvdbPlatformAgentBase
   val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress))
   val pairedReader = createNode(acquaintanceAddress, List(sourceAddress))
 
-  //issues with race conditions in tests, 5 fail but shouldn't
   testMessaging(pairedWriter, pairedReader)
 //  testWildcardWithPut(pairedWriter, pairedReader)
 //  testWildcardWithStore(pairedWriter, pairedReader)
