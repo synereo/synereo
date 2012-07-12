@@ -61,6 +61,7 @@ trait SpecsKVDBHelpers
       }
     }
 
+    Thread.sleep(TIMEOUT_MED)
     val actual = fetchString(_resultsQ, cnxnTest, key)
     return actual
   }
@@ -106,7 +107,27 @@ trait SpecsKVDBHelpers
   def fetchMustBe(expected: String)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    fetchString(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
+    fetchResultString(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
+  }
+
+  def fetchResultString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
+  {
+    val testId = UUID.randomUUID().toString()
+    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+    reset {
+      for ( e <- q.fetch(cnxn)(key) ) {
+        if (e != None)
+        {
+          reset {_resultsQ.put(cnxnTest)(key, e.dispatch)}
+          println("storing to resultQ : " + e.dispatch)
+        }
+      }
+    }
+
+    Thread.sleep(TIMEOUT_MED)
+    val actual = fetchString(_resultsQ, cnxnTest, key)
+    return actual
   }
 
   def fetchString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =

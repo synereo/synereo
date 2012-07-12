@@ -16,7 +16,7 @@ import com.protegra.agentservicesstore.extensions.URIExtensions._
 import scala.util.continuations._
 
 import java.net.URI
-import java.util.UUID
+import java.util.{concurrent, UUID}
 
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
@@ -26,6 +26,7 @@ import Being.AgentKVDBNodeFactory
 
 import scala.concurrent.ops._
 import com.biosimilarity.lift.lib.moniker._
+import actors.threadpool.LinkedBlockingQueue
 
 case class KvdbPlatformAgentBase() extends Specification
     with SpecsKVDBHelpers
@@ -390,7 +391,7 @@ case class KvdbPlatformAgentBase() extends Specification
       }
     }
 
-//
+
 //    "Put/Delete" should {
 //
 //      Thread.sleep(timeoutBetween)
@@ -400,8 +401,13 @@ case class KvdbPlatformAgentBase() extends Specification
 //        val value = "putDeleteWhenFound@protegra.com"
 //        reset {writer.put(cnxn)(key, Ground(value))}
 //        Thread.sleep(TIMEOUT_MED)
+//
+//        fetchMustBe(value)(reader, cnxn, key)
+//        Thread.sleep(TIMEOUT_MED)
+//
 //        writer.delete(cnxn)(key)
 //        Thread.sleep(TIMEOUT_MED)
+//
 //        fetchMustBe("")(reader, cnxn, key)
 //      }
 //
@@ -411,14 +417,54 @@ case class KvdbPlatformAgentBase() extends Specification
 //        val value = "putDeleteWhenMissing@protegra.com"
 //        reset {writer.put(cnxn)(key, Ground(value))}
 //        Thread.sleep(TIMEOUT_MED)
+//
+//        fetchMustBe(value)(reader, cnxn, key)
+//        Thread.sleep(TIMEOUT_MED)
+//
 //        writer.delete(cnxn)(keyMissing)
 //        Thread.sleep(TIMEOUT_MED)
+//
 //        fetchMustBe(value)(reader, cnxn, key)
 //      }
 //
 //    }
-
-  }
+//
+//    "Store/Delete" should {
+//
+//      Thread.sleep(timeoutBetween)
+//
+//      "delete when found" in {
+//        val key = "contentChannel(storeDeleteWhenFound(\"email\"))".toLabel
+//        val value = "storeDeleteWhenFound@protegra.com"
+//        writer.store(cnxn)(key, Ground(value))
+//        Thread.sleep(TIMEOUT_MED)
+//
+//        fetchMustBe(value)(reader, cnxn, key)
+//        Thread.sleep(TIMEOUT_MED)
+//
+//        writer.delete(cnxn)(key)
+//        Thread.sleep(TIMEOUT_MED)
+//
+//        fetchMustBe("")(reader, cnxn, key)
+//      }
+//
+//      "not delete when missing " in {
+//        val key = "contentChannel(storeDeleteWhenMissing(\"email\"))".toLabel
+//        val keyMissing = "contentChannel(storeDeleteWhenMissing(\"missing\"))".toLabel
+//        val value = "storeDeleteWhenMissing@protegra.com"
+//        writer.store(cnxn)(key, Ground(value))
+//        Thread.sleep(TIMEOUT_MED)
+//
+//        fetchMustBe(value)(reader, cnxn, key)
+//        Thread.sleep(TIMEOUT_MED)
+//
+//        writer.delete(cnxn)(keyMissing)
+//        Thread.sleep(TIMEOUT_MED)
+//
+//        fetchMustBe(value)(reader, cnxn, key)
+//      }
+//
+//    }
 
 //    "Get/Store" should {
 //      // get/fetch before store, store doesnt look at waiters
@@ -429,85 +475,89 @@ case class KvdbPlatformAgentBase() extends Specification
 //    }
 //
 
-//  def testWildcardWithPut(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcard(writer, reader, "put", putWildcardData(_, _, _))
-//
-//  def testWildcardWithStore(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcard(writer, reader, "store", storeWildcardData(_, _, _))
-//
-//  private def putWildcardData(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, value: String) =
-//  {
-//    val key1 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key2 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key3 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key4 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key5 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key6 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key7 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val keyEmail = "surveyChannel(level1(\"email\"), level2(\"name\"))"
-//    reset {writer.put(cnxn)(key1.toLabel, Ground(value + "1"))}
-//    reset {writer.put(cnxn)(key2.toLabel, Ground(value + "2"))}
-//    reset {writer.put(cnxn)(key3.toLabel, Ground(value + "3"))}
-//    reset {writer.put(cnxn)(key4.toLabel, Ground(value + "4"))}
-//    reset {writer.put(cnxn)(key5.toLabel, Ground(value + "5"))}
-//    reset {writer.put(cnxn)(key6.toLabel, Ground(value + "6"))}
-//    reset {writer.put(cnxn)(key7.toLabel, Ground(value + "7"))}
-//    reset {writer.put(cnxn)(keyEmail.toLabel, Ground(value))}
-//    Thread.sleep(TIMEOUT_LONG)
-//  }
-//
-//  //with 28 resolved timeouts can be shortened, still needed it appears
-//  private def storeWildcardData(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, value: String) =
-//  {
-//    val key1 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key2 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key3 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key4 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key5 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key6 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val key7 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
-//    val keyEmail = "surveyChannel(level1(\"email\"), level2(\"name\"))"
-//    val value = "tests@protegra.com"
-//    writer.store(cnxn)(key1.toLabel, Ground(value + "1"))
-//    //    Thread.sleep(TIMEOUT_SHORT)
-//    writer.store(cnxn)(key2.toLabel, Ground(value + "2"))
-//    //    Thread.sleep(TIMEOUT_SHORT)
-//    writer.store(cnxn)(key3.toLabel, Ground(value + "3"))
-//    //    Thread.sleep(TIMEOUT_SHORT)
-//    writer.store(cnxn)(key4.toLabel, Ground(value + "4"))
-//    //    Thread.sleep(TIMEOUT_SHORT)
-//    writer.store(cnxn)(key5.toLabel, Ground(value + "5"))
-//    //    Thread.sleep(TIMEOUT_SHORT)
-//    writer.store(cnxn)(key6.toLabel, Ground(value + "6"))
-//    //    Thread.sleep(TIMEOUT_SHORT)
-//    writer.store(cnxn)(key7.toLabel, Ground(value + "7"))
-//    //    Thread.sleep(TIMEOUT_SHORT)
-//    writer.store(cnxn)(keyEmail.toLabel, Ground(value))
-//    Thread.sleep(TIMEOUT_LONG)
-//  }
-//
-//  private def setupExpectedResults(value: String) =
-//  {
-//    val expectedResults = List(1, 2, 3, 4, 5) map ( f => value + f.toString )
-//    val expectedCollection: java.util.List[ String ] = new java.util.ArrayList[ String ]
-//    for ( p <- expectedResults ) expectedCollection.add(p)
-//    expectedCollection
-//  }
-//
-//  private def testWildcard(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], storageMethod: String, setupData: (Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], AgentCnxn, String) => Unit) =
-//  {
-//    "Wildcard Search after " + storageMethod should {
-//      Thread.sleep(timeoutBetween)
-//
-//      var resultQ = new LinkedBlockingQueue[ String ]
-//      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-//      val value = "tests@protegra.com"
-//      setupData(writer, cnxnRandom, value)
-//      val expectedCollection = setupExpectedResults(value)
+  }
+
+  def testWildcardWithPut(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcard(writer, reader, "put", putWildcardData(_, _, _))
+
+  def testWildcardWithStore(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcard(writer, reader, "store", storeWildcardData(_, _, _))
+
+  private def putWildcardData(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, value: String) =
+  {
+    val key1 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key2 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key3 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key4 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key5 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key6 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key7 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
+    val keyEmail = "surveyChannel(level1(\"email\"), level2(\"name\"))"
+    reset {writer.put(cnxn)(key1.toLabel, Ground(value + "1"))}
+    reset {writer.put(cnxn)(key2.toLabel, Ground(value + "2"))}
+    reset {writer.put(cnxn)(key3.toLabel, Ground(value + "3"))}
+    reset {writer.put(cnxn)(key4.toLabel, Ground(value + "4"))}
+    reset {writer.put(cnxn)(key5.toLabel, Ground(value + "5"))}
+    reset {writer.put(cnxn)(key6.toLabel, Ground(value + "6"))}
+    reset {writer.put(cnxn)(key7.toLabel, Ground(value + "7"))}
+    reset {writer.put(cnxn)(keyEmail.toLabel, Ground(value))}
+    Thread.sleep(TIMEOUT_LONG)
+  }
+
+  //with 28 resolved timeouts can be shortened, still needed it appears
+  private def storeWildcardData(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, value: String) =
+  {
+    val key1 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key2 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key3 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key4 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key5 = "contentChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key6 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
+    val key7 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
+    val keyEmail = "surveyChannel(level1(\"email\"), level2(\"name\"))"
+    val value = "tests@protegra.com"
+    writer.store(cnxn)(key1.toLabel, Ground(value + "1"))
+    //    Thread.sleep(TIMEOUT_SHORT)
+    writer.store(cnxn)(key2.toLabel, Ground(value + "2"))
+    //    Thread.sleep(TIMEOUT_SHORT)
+    writer.store(cnxn)(key3.toLabel, Ground(value + "3"))
+    //    Thread.sleep(TIMEOUT_SHORT)
+    writer.store(cnxn)(key4.toLabel, Ground(value + "4"))
+    //    Thread.sleep(TIMEOUT_SHORT)
+    writer.store(cnxn)(key5.toLabel, Ground(value + "5"))
+    //    Thread.sleep(TIMEOUT_SHORT)
+    writer.store(cnxn)(key6.toLabel, Ground(value + "6"))
+    //    Thread.sleep(TIMEOUT_SHORT)
+    writer.store(cnxn)(key7.toLabel, Ground(value + "7"))
+    //    Thread.sleep(TIMEOUT_SHORT)
+    writer.store(cnxn)(keyEmail.toLabel, Ground(value))
+    Thread.sleep(TIMEOUT_LONG)
+  }
+
+  private def setupExpectedResults(value: String) =
+  {
+    val expectedResults = List(1, 2, 3, 4, 5) map ( f => value + f.toString )
+    val expectedCollection: java.util.List[ String ] = new java.util.ArrayList[ String ]
+    for ( p <- expectedResults ) expectedCollection.add(p)
+    expectedCollection
+  }
+
+  private def testWildcard(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], storageMethod: String, setupData: (Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], AgentCnxn, String) => Unit) =
+  {
+    val timeoutBetween: Int = 300
+
+    "Wildcard Search after " + storageMethod should {
+      Thread.sleep(timeoutBetween)
+
+      var resultQ = new LinkedBlockingQueue[ String ]
+      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
+      val value = "tests@protegra.com"
+      setupData(writer, cnxnRandom, value)
+      val expectedCollection = setupExpectedResults(value)
 //
 //      "find many results by Get" in {
 //        println("attempting assert")
-//        getCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+//        getCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
 //      }
-//
+
 //      "find many values by Get" in {
 //        val lblSearch = "contentChannel(X)".toLabel
 //        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
@@ -589,15 +639,15 @@ case class KvdbPlatformAgentBase() extends Specification
 //        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
 //      }
 //
-//      "find many results by Fetch" in {
-//        countMustBe(5)(reader, cnxnRandom, "contentChannel(X)")
-//        //        fetchCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//
-//    }
-//  }
-//
+      "find many results by Fetch" in {
+        countMustBe(5)(reader, cnxnRandom, "contentChannel(X)")
+        //        fetchCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+
+
+    }
+  }
+
 //  def testWildcardWithCursor(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) =
 //  {
 //    "Wildcard Search after store with Cursor" should {

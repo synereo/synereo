@@ -47,10 +47,10 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
 
   testMessaging(writer, reader)
 
-  //  testWildcardWithPut(_localQ, _localQ)
-  //  testWildcardWithStore(_localQ, _localQ)
-  //  testWildcardWithCursor(_localQ, _localQ)
-  //  testWildcardWithCursorBefore(_localQ, _localQ)
+//    testWildcardWithPut(writer, reader)
+  //  testWildcardWithStore(writer, reader)
+  //  testWildcardWithCursor(writer, reader)
+  //  testWildcardWithCursorBefore(writer, reader)
 
   val sourceId = UUID.randomUUID
   val targetId = sourceId
