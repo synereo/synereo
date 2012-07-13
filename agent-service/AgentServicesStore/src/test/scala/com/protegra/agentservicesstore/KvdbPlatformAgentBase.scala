@@ -392,79 +392,81 @@ case class KvdbPlatformAgentBase() extends Specification
     }
 
 
-//    "Put/Delete" should {
-//
-//      Thread.sleep(timeoutBetween)
-//
-//      "delete when found" in {
-//        val key = "contentChannel(putDeleteWhenFound(\"email\"))".toLabel
-//        val value = "putDeleteWhenFound@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        writer.delete(cnxn)(key)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe("")(reader, cnxn, key)
-//      }
-//
-//      "not delete when missing " in {
-//        val key = "contentChannel(putDeleteWhenMissing(\"email\"))".toLabel
-//        val keyMissing = "contentChannel(putDeleteWhenMissing(\"missing\"))".toLabel
-//        val value = "putDeleteWhenMissing@protegra.com"
-//        reset {writer.put(cnxn)(key, Ground(value))}
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        writer.delete(cnxn)(keyMissing)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//
-//    }
-//
-//    "Store/Delete" should {
-//
-//      Thread.sleep(timeoutBetween)
-//
-//      "delete when found" in {
-//        val key = "contentChannel(storeDeleteWhenFound(\"email\"))".toLabel
-//        val value = "storeDeleteWhenFound@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        writer.delete(cnxn)(key)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe("")(reader, cnxn, key)
-//      }
-//
-//      "not delete when missing " in {
-//        val key = "contentChannel(storeDeleteWhenMissing(\"email\"))".toLabel
-//        val keyMissing = "contentChannel(storeDeleteWhenMissing(\"missing\"))".toLabel
-//        val value = "storeDeleteWhenMissing@protegra.com"
-//        writer.store(cnxn)(key, Ground(value))
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        writer.delete(cnxn)(keyMissing)
-//        Thread.sleep(TIMEOUT_MED)
-//
-//        fetchMustBe(value)(reader, cnxn, key)
-//      }
-//
-//    }
+    "Put/Delete" should {
+
+      Thread.sleep(timeoutBetween)
+
+      "delete when found" in {
+        skip("Greg is fixing this")
+        val key = "contentChannel(putDeleteWhenFound(\"email\"))".toLabel
+        val value = "putDeleteWhenFound@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe(value)(reader, cnxn, key)
+        Thread.sleep(TIMEOUT_MED)
+
+        writer.delete(cnxn)(key)
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe("")(reader, cnxn, key)
+      }
+
+      "not delete when missing " in {
+        val key = "contentChannel(putDeleteWhenMissing(\"email\"))".toLabel
+        val keyMissing = "contentChannel(putDeleteWhenMissing(\"missing\"))".toLabel
+        val value = "putDeleteWhenMissing@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe(value)(reader, cnxn, key)
+        Thread.sleep(TIMEOUT_MED)
+
+        writer.delete(cnxn)(keyMissing)
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
+    }
+
+    "Store/Delete" should {
+
+      Thread.sleep(timeoutBetween)
+
+      "delete when found" in {
+        skip("Greg is fixing this")
+        val key = "contentChannel(storeDeleteWhenFound(\"email\"))".toLabel
+        val value = "storeDeleteWhenFound@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe(value)(reader, cnxn, key)
+        Thread.sleep(TIMEOUT_MED)
+
+        writer.delete(cnxn)(key)
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe("")(reader, cnxn, key)
+      }
+
+      "not delete when missing " in {
+        val key = "contentChannel(storeDeleteWhenMissing(\"email\"))".toLabel
+        val keyMissing = "contentChannel(storeDeleteWhenMissing(\"missing\"))".toLabel
+        val value = "storeDeleteWhenMissing@protegra.com"
+        writer.store(cnxn)(key, Ground(value))
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe(value)(reader, cnxn, key)
+        Thread.sleep(TIMEOUT_MED)
+
+        writer.delete(cnxn)(keyMissing)
+        Thread.sleep(TIMEOUT_MED)
+
+        fetchMustBe(value)(reader, cnxn, key)
+      }
+
+    }
 
 //    "Get/Store" should {
 //      // get/fetch before store, store doesnt look at waiters
