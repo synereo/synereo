@@ -97,7 +97,8 @@ case class KvdbPlatformAgentBaseRace() extends Specification
        //      Thread.sleep(TIMEOUT_MED)
          reset {writer.put(cnxn)(key, Ground(value))}
        //      Thread.sleep(TIMEOUT_MED)
-
+	 
+	 Thread.sleep( 1000 )
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(1, TIMEOUT_EVENTUALLY)
        }
      }

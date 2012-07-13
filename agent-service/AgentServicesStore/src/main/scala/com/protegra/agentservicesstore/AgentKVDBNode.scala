@@ -3133,7 +3133,8 @@ package usage {
       configurationFromFile.get( "cnxnsFloor" ).getOrElse( bail() ).toInt
   }
 
-  object AgentUseCase extends Serializable with TestGenerationConfiguration {
+  case class AgentUseCase( override val configFileName : Option[String] )
+       extends TestGenerationConfiguration {
     import AgentKVDBScope._
     import Being._
     import AgentKVDBNodeFactory._
@@ -3147,7 +3148,7 @@ package usage {
     import org.basex.core.cmd.Add
     import org.basex.core.cmd.CreateDB
 
-    override def configFileName : Option[String] = None
+    //override def configFileName : Option[String] = None
     override def configurationDefaults : ConfigurationDefaults = {
       TestConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
     }
@@ -3535,4 +3536,6 @@ package usage {
     }
  
   }
+
+  object StdAgentUseCase extends AgentUseCase( None )
 }
