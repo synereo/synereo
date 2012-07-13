@@ -1231,9 +1231,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						    collName
 						  )( Some( ( skey, stbl ) ) )
 						  
-						  while ( stbl( skey ) > 0 ){ 
-						    tweet( "Still waiting for " + stbl( skey ) + "continuations to store" )
-						  }
+						  while ( stbl( skey ) > 0 ){}
 						  tweet( "Reader departing spaceLock PMKVDBNode Version 3 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
 						  spaceLock.depart( Some( rk ) )
 						  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
@@ -1274,9 +1272,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						    }
 						  }
 
-						  while ( stbl( skey ) > 0 ){ 
-						    tweet( "Still waiting for " + stbl( skey ) + "continuations to store" )
-						  }
+						  while ( stbl( skey ) > 0 ){ }
 						  tweet( "Reader departing spaceLock PMKVDBNode Version 3 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
 						  spaceLock.depart( Some( rk ) )
 						  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
