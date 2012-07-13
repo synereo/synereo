@@ -42,35 +42,35 @@ case class KvdbPlatformAgentBaseRace() extends Specification
     val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
     val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
-    "Cached Get/Put" should {
-       Thread.sleep(timeoutBetween)
+//     "Cached Get/Put" should {
+//        Thread.sleep(timeoutBetween)
 
-       "retrieve" in {
-         val sourceId = UUID.randomUUID
-         val targetId = sourceId
-         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+//        "retrieve" in {
+//          val sourceId = UUID.randomUUID
+//          val targetId = sourceId
+//          val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
 
-         val testId = UUID.randomUUID().toString()
-         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+//          val testId = UUID.randomUUID().toString()
+//          val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
-         val key = "contentChannel(cacheGetPutRetrieve(\"email\"))".toLabel
-         val value = "cacheGetPutRetrieve@protegra"
+//          val key = "contentChannel(cacheGetPutRetrieve(\"email\"))".toLabel
+//          val value = "cacheGetPutRetrieve@protegra"
 
-         reset {
-           for ( e <- reader.get(cnxn)(key) ) {
-             if ( e != None ) {
-               val result = e.dispatch
-               reset {_resultsQ.put(cnxnTest)(key, result)}
-             }
-           }
-         }
-      //      Thread.sleep(TIMEOUT_MED)
-         reset {writer.put(cnxn)(key, Ground(value))}
-         //      Thread.sleep(TIMEOUT_MED)
+//          reset {
+//            for ( e <- reader.get(cnxn)(key) ) {
+//              if ( e != None ) {
+//                val result = e.dispatch
+//                reset {_resultsQ.put(cnxnTest)(key, result)}
+//              }
+//            }
+//          }
+//       //      Thread.sleep(TIMEOUT_MED)
+//          reset {writer.put(cnxn)(key, Ground(value))}
+//          //      Thread.sleep(TIMEOUT_MED)
 
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
-       }
-     }
+//          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+//        }
+//      }
 
     "Cached Fetch/Put" should {
        Thread.sleep(timeoutBetween)
@@ -98,7 +98,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
          reset {writer.put(cnxn)(key, Ground(value))}
        //      Thread.sleep(TIMEOUT_MED)
 
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(1, TIMEOUT_EVENTUALLY)
        }
      }
 

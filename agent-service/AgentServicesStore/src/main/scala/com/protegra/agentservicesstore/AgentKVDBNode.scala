@@ -89,7 +89,7 @@ with AgentCnxnTypeScope {
 	    shift {
 	      outerk : ( Unit => Unit ) =>
 		reset {
-                  val results = mget( channels, registered, consume, keep )( path )
+                  val results = mget( channels, registered, consume, keep )( path )( Some( rk ) )
                   var processed = false
 		  
                   for(
@@ -99,6 +99,12 @@ with AgentCnxnTypeScope {
                       case None => {
                         persist match {
                           case None => {
+			    
+			    tweet( "Reader departing spaceLock AgentKVDBNode Version 1 on " + this + " for mget on " + path + "." )
+			    spaceLock.depart( Some( rk ) )
+			    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
                             rk(oV)
                           }
                           case Some(pd) => {
@@ -120,6 +126,12 @@ with AgentCnxnTypeScope {
 				
                                 oQry match {
                                   case None => {
+
+				    tweet( "Reader departing spaceLock AgentKVDBNode Version 2 on " + this + " for mget on " + path + "." )
+				    spaceLock.depart( Some( rk ) )
+				    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
                                     rk(oV)
                                   }
                                   case Some(qry) => {
@@ -143,6 +155,78 @@ with AgentCnxnTypeScope {
                                             + " had no matching resources."
                                           )
                                         )
+
+					// Need to store the
+					// continuation on the tail of
+					// the continuation entry
+					val oKQry = kquery( xmlCollName, path )
+					oKQry match {
+					  case None => {
+					    throw new Exception(
+					      "failed to compile a continuation query" 
+					    )				  
+					  }
+					  case Some( kqry ) => {
+					    val krslts = executeWithResults( xmlCollName, qry )
+					    
+					    // This is the easy case!
+					    // There are no locations
+					    // matching the pattern with
+					    // stored continuations	  					  
+					    krslts match {
+					      case Nil => {
+						putKInStore(
+						  persist,
+						  path,
+						  mTT.Continuation( List( rk ) ),
+						  collName
+						)
+					      }
+					      case _ => {
+						// A more subtle
+						// case. Do we store
+						// the continutation on
+						// each match?
+						// Answer: Yes!
+						for( krslt <- itergen[Elem]( krslts ) ) {
+						  tweet( "retrieved " + krslt.toString )
+						  val ekrsrc = pd.asResource( path, krslt )
+						  
+						  ekrsrc.stuff match {
+						    case Right( ks ) => {  
+						      tweet( "removing from store " + krslt )
+						      removeFromStore( 
+							persist,
+							krslt,
+							collName
+						      )
+						      putKInStore(
+							persist,
+							path,
+							mTT.Continuation( ks ++ List( rk ) ),
+							collName
+						      )
+						    }
+						    case _ => {
+						      throw new Exception(
+							"Non-continuation resource stored in kRecord" + ekrsrc
+						      )
+						    }
+						  }
+						}
+					      }
+					    }				  
+					  }
+					}	
+					  
+					// Then forward the request
+					//forward( ask, hops, path )
+
+					tweet( "Reader departing spaceLock AgentKVDBNode Version 3 on " + this + " for mget on " + path + "." )
+					spaceLock.depart( Some( rk ) )
+					tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					
                                         rk(oV)
                                       }
                                       case _ => {
@@ -192,6 +276,12 @@ with AgentCnxnTypeScope {
                                           }
                                           val rsrcCursor = asCursor(rsrcRslts)
                                           //tweet( "returning cursor" + rsrcCursor )
+
+					  tweet( "Reader departing spaceLock AgentKVDBNode Version 4 on " + this + " for mget on " + path + "." )
+					  spaceLock.depart( Some( rk ) )
+					  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					  
                                           rk(rsrcCursor)
                                         }
                                             else {
@@ -228,6 +318,12 @@ with AgentCnxnTypeScope {
                                 }
                               }
                               case false => {
+
+				tweet( "Reader departing spaceLock AgentKVDBNode Version 5 on " + this + " for mget on " + path + "." )
+				spaceLock.depart( Some( rk ) )
+				tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
                                 rk(oV)
                               }
                             }
@@ -235,6 +331,12 @@ with AgentCnxnTypeScope {
                         }
                       }
                       case _ if ( !cursor )=> {
+
+			tweet( "Reader departing spaceLock AgentKVDBNode Version 6 on " + this + " for mget on " + path + "." )
+			spaceLock.depart( Some( rk ) )
+			tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
                         rk(oV)
                       }
                       case _ if ( cursor && !processed ) => {
@@ -250,6 +352,12 @@ with AgentCnxnTypeScope {
                         val rsrcCursor = asCursor(rsrcRslts)
                         //tweet( "returning cursor" + rsrcCursor )
                         processed = true
+
+			tweet( "Reader departing spaceLock AgentKVDBNode Version 7 on " + this + " for mget on " + path + "." )
+			spaceLock.depart( Some( rk ) )
+			tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
                         rk(rsrcCursor)
                       }
                       case _ => {
@@ -934,7 +1042,7 @@ with AgentCnxnTypeScope {
 	)
 	
 	pmgj.mget( cnxn )( perD, dAT.AFetchNum, hops )(
-	  pmgj.theMeetingPlace, pmgj.theWaiters, DoNotRetain, DoNotRetain, cursor, xmlCollName
+	  pmgj.theMeetingPlace, pmgj.theWaiters, DoNotRetain, Store, cursor, xmlCollName
 	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
       }
       
@@ -977,7 +1085,7 @@ with AgentCnxnTypeScope {
 	)
 	
 	pmgj.mget( cnxn )( perD, dAT.AFetchNum, hops )(
-	  pmgj.theMeetingPlace, pmgj.theWaiters, DoNotRetain, DoNotRetain, false, xmlCollName
+	  pmgj.theMeetingPlace, pmgj.theWaiters, DoNotRetain, Store, false, xmlCollName
 	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
       }
 
