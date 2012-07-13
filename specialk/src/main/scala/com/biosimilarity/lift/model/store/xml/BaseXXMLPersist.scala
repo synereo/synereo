@@ -117,8 +117,26 @@ trait BaseXCnxnStorage[Namespace,Var,Tag]
    xmlCollStr : String, path : CnxnCtxtLabel[Namespace, Var, String]
  ): Unit =
   {
+    deleteData( xmlCollStr, path )
+    deleteContinuation( xmlCollStr, path )
+  }
+
+ def deleteData(
+   xmlCollStr : String, path : CnxnCtxtLabel[Namespace, Var, String]
+ ): Unit =
+  {
     val key = xmlIfier.asXML( path )
-    delete( key.label )( xmlCollStr, key.toString )
+
+    // BUGBUG -- lgm : should get record types from persistence manifest
+    delete( "record" )( xmlCollStr, key.toString )
+  }
+ def deleteContinuation(
+   xmlCollStr : String, path : CnxnCtxtLabel[Namespace, Var, String]
+ ): Unit =
+  {
+    val key = xmlIfier.asXML( path )
+    // BUGBUG -- lgm : should get record types from persistence manifest
+    delete( "kRecord" )( xmlCollStr, key.toString )
   }
 }
 

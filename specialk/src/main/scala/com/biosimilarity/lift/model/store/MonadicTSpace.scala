@@ -384,12 +384,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	}
     }
 
+  implicit val spaceLockTumbler : Option[Option[Resource] => Unit @suspendable] = None
+
   def mget(
     channels : Map[Place,Resource],
     registered : Map[Place,List[RK]],
     consume : RetentionPolicy,
     keep : RetentionPolicy
-  )( ptn : Pattern )
+  )( ptn : Pattern )( implicit spaceLockKey : Option[Option[Resource] => Unit @suspendable] )
   : Generator[Option[Resource],Unit,Unit] =
     Generator {
       rk : ( Option[Resource] => Unit @suspendable ) =>
@@ -400,7 +402,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 // 		rk( None )
 // 	      }
 // 	      else {
-	      spaceLock.occupy( Some( rk ) )
+	      val slk = spaceLockKey match {
+		case None => Some( rk )
+		case _ => spaceLockKey
+	      }
+
+	      spaceLock.occupy( slk )
 
 	      tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
 	      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
@@ -430,11 +437,18 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		tweet( "registered continuation storage: " + registered )
 		tweet( "theWaiters: " + theWaiters )
 		tweet( "theSubscriptions: " + theSubscriptions )
+				
+		keep match {
+		  case storagePolicy : RetainInStore => {
+		  }
+		  case _ => {
+		    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+		    spaceLock.depart( slk )
+		    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		  }
+		}
 		
-		tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		spaceLock.depart( Some( rk ) )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		rk( None )
 	      }
 	      else {
@@ -456,10 +470,17 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		    }
 		  }
 		  
-		  tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		  spaceLock.depart( Some( rk ) )
-		  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		  keep match {
+		    case storagePolicy : RetainInStore => {
+		    }
+		    case _ => {
+		      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+		      spaceLock.depart( slk )
+		      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		    }
+		  }
+
 		  rk( s( rsrc ) )
 		  
 		  //shift { k : ( Unit => Unit ) => k() }
