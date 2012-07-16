@@ -733,6 +733,106 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     mputWithSuspension( theMeetingPlace, theWaiters, false )( ptn, rsrc )
   def publish( ptn : Pattern, rsrc : Resource ) =
     mput( theChannels, theSubscriptions, true )( ptn, rsrc )
+
+  def mdelete(
+    channels : Map[Place,Resource],
+    registered : Map[Place,List[RK]]
+  )( ptn : Pattern )(
+    implicit spaceLockKey : Option[Option[Resource] => Unit @suspendable]
+  ) : Generator[Option[PlaceInstance],Unit,Unit] = {
+    Generator {
+      rk : ( Option[PlaceInstance] => Unit @suspendable ) =>
+	shift {
+	  outerk : ( Unit => Unit ) =>
+	    reset {
+	      val slk = spaceLockKey match {
+		case None => Some( ( orsrc : Option[Resource] ) => rk( None ) )
+		case _ => spaceLockKey
+	      }
+
+	      spaceLock.occupy( slk )
+	      tweet( "Delete occupying spaceLock on " + this + " for delete on " + ptn + "." )
+	      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
+	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
+	      val meets = locations( map, ptn )
+	      
+	      if ( meets.isEmpty ) {
+		tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
+		spaceLock.depart( slk )
+		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		
+		spaceLock.occupy( None )
+		tweet( "Delete occupying spaceLock on " + this + " for mdelete on " + ptn + "." )
+		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
+		val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
+		val waitlist = locations( map, ptn )
+
+		tweet( "Delete departing spaceLock on " + this + " for mdelete on " + ptn + "." )
+		spaceLock.depart( None )
+		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
+		waitlist match {
+		  // Yes!
+		  case waiter :: waiters => {
+		    tweet( "found waiters waiting for a value at " + ptn )
+		    val itr = waitlist.toList.iterator
+		    // BUGBUG : lgm -- the compiler crashes if we
+		    // attempt to use std pattern matching inside
+		    // the while loop
+		    var plcInst : PlaceInstance = null
+		    while( itr.hasNext ) {
+		      //val PlaceInstance( wtr, Right( rks ), s ) = itr.next
+		      plcInst = itr.next
+		      registered -= plcInst.place
+		      rk( Some( plcInst ) )
+		      //rk( None )
+		    }
+		  }
+		  // No...
+		  case Nil => {
+		    // Store the rsrc at a representative of the ptn
+		    tweet( "no waiters waiting for a value at " + ptn )	    
+		    rk( None )		    		    
+		  }
+		}				
+	      }
+	      else {
+		for(
+		  placeNRrscNSubst <- itergen[PlaceInstance](
+		    meets
+		  )
+		) {
+		  val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+		  
+		  tweet( "found a resource: " + rsrc )		    
+		  
+		  channels -= place		  		  
+
+		  tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
+		  spaceLock.depart( slk )
+		  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+
+		  rk( Some( placeNRrscNSubst ) )
+		  
+		  //shift { k : ( Unit => Unit ) => k() }
+ 		}
+ 	      }
+	      
+	      outerk()
+	    }
+	}
+    }
+  }
+
+  def delete( ptn : Pattern ) =
+    mdelete( theMeetingPlace, theWaiters )( ptn )
   
 }
 
