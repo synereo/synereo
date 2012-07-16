@@ -18,7 +18,7 @@ import com.protegra.agentservicesstore.usage._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 //import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being._
 //import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory._
-import com.protegra.agentservicesstore.usage.AgentUseCase._
+//import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import org.basex.core._
 import org.basex.core.cmd.Open
@@ -26,29 +26,78 @@ import org.basex.core.cmd.Add
 import org.basex.core.cmd.CreateDB
 
 object Instrument extends Serializable {
-  import java.net.InetAddress
-  val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)  
+  import java.util.UUID
+  implicit val pvTwo =
+    PutVal(
+      List( 558816, 43649770 ),
+      List( "derive", "derive" ),
+      List( "rx", "tx" ),
+      1334349094.633,
+      12.000,
+      "server-75530.localdomain",
+      "interface",
+      "eth0",
+      "if_octets",
+      ""
+    )
 
-  def localIP : String = {
-    InetAddress.getLocalHost().getHostAddress
+  implicit val configurationFileName : String = "stressTest.conf"
+
+  implicit def mkUseCaseFromFileName( implicit fileName : String ) : AgentUseCase = {
+    AgentUseCase( Some( fileName ) )
   }
-  def play() = {
-    val Right( ( client, server ) ) =
-      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( "localhost", 5672, "localhost", 5672 )( true )
-    //runClient( client )
-    //runServer( server )
-    ( client, server )
+
+  implicit def testDataStream( implicit agentUseCase : AgentUseCase ) : Stream[String] = {
+    agentUseCase.tStream(
+      UUID.randomUUID + ""
+    )( ( s : String ) => UUID.randomUUID + "" )
   }
-  def playClient( serverIP : String ) = {
-    val Left( client ) =
-      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( localIP, 5672, serverIP, 5672 )( false )
-    //runClient( client )
-    client
+
+  implicit def testDataHandler : Option[mTT.Resource] => Unit = {
+    ( orsrc : Option[mTT.Resource] ) => {
+      orsrc match {
+	case Some( rsrc ) => {
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> >>>>>>>>>>>>>>>>>>>>>>>>>>>>>" ) 
+	  println( "received: " + rsrc ) 
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> >>>>>>>>>>>>>>>>>>>>>>>>>>>>>" ) 
+	}
+	case None => {
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> >>>>>>>>>>>>>>>>>>>>>>>>>>>>>" ) 
+	  println( "No resource received, yet." )
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> >>>>>>>>>>>>>>>>>>>>>>>>>>>>>" ) 
+	}
+      }
+    }
   }
-  def playServer( clientIP : String ) = {
-    val Left( server ) =
-      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( localIP, 5672, clientIP, 5672 )( false )
-    //runServer( server )
-    server
+
+  def getTest( implicit agentUseCase : AgentUseCase ) : Unit = {
+    import agentUseCase._
+    val tc =
+      TestConfiguration[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+	StdTestConfigurationGenerator,
+	pvTwo,
+	Some( List( ( "time", "t" ), ( "host", "host" ) ) ),
+	Some(
+	  configureTest[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( 
+	    StdTestConfigurationGenerator
+	  )
+	)
+      )
+    sporeGet[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( tc )( testDataHandler )
+  }
+  def putTest( implicit agentUseCase : AgentUseCase ) : Unit = {
+    import agentUseCase._
+    val tc =
+      TestConfiguration[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+	StdTestConfigurationGenerator,
+	pvTwo,
+	Some( List( ( "time", "t" ), ( "host", "host" ) ) ),
+	Some(
+	  configureTest[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( 
+	    StdTestConfigurationGenerator
+	  )
+	)
+      )
+    sporePut[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( tc )( testDataStream )
   }
 }

@@ -1182,7 +1182,7 @@ with AgentCnxnTypeScope {
       def delete(
 	cnxn : acT.AgentCnxn
       )(
-	path : CnxnCtxtLabel[Namespace,Var,String]
+	path : mTT.GetRequest
       )
       : Unit = {
 	tweet(
@@ -1197,12 +1197,25 @@ with AgentCnxnTypeScope {
 	
 	for( pd <- pmgj.cache.persistenceManifest ) {
 	  spawn {
+	    reset{
+	      for( pI <- pmgj.cache.delete( path ) ) {
+		tweet( "place deleted from cache: " + pI )
+	      }
+	    }
 	    tweet(
 	      "deleting from db : " + pd.db
 	      + " key : " + path.toString
 	      + " in coll : " + pd.storeUnitStr( cnxn ) 
 	    )
-	    pmgj.cache.delete(pd.storeUnitStr( cnxn ), path)
+
+	    path match {
+	      case cclStr : CnxnCtxtLabel[Namespace,Var,String] => {
+		pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)
+	      }
+	      case _ => {
+		tweet( "warning: unable to delete key from db" )
+	      }
+	    }	    
 	  }
 	}
       }
