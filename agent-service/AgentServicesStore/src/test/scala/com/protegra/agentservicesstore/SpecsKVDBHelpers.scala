@@ -203,6 +203,7 @@ trait SpecsKVDBHelpers
   //    return found
   //  }
 
+
   def fetchCount(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: String): Int =
   {
     var found = 0
@@ -221,5 +222,4 @@ trait SpecsKVDBHelpers
     trySleep(found)
     return found
   }
-
 }
