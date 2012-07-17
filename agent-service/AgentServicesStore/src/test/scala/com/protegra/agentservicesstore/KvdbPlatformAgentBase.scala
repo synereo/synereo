@@ -405,7 +405,7 @@ case class KvdbPlatformAgentBase() extends Specification
         fetchMustBe(value)(reader, cnxn, key)
         Thread.sleep(TIMEOUT_MED)
 
-        writer.delete(cnxn)(key)
+        reader.delete(cnxn)(key)
         Thread.sleep(TIMEOUT_MED)
         Thread.sleep(TIMEOUT_MED)
         Thread.sleep(TIMEOUT_MED)
