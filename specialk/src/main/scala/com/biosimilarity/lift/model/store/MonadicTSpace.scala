@@ -759,6 +759,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	      val meets = locations( map, ptn )
 	      
 	      if ( meets.isEmpty ) {
+		tweet( "Delete found no locations matching pattern: " + ptn )
 		tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
 		spaceLock.depart( slk )
 		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
@@ -803,6 +804,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		}				
 	      }
 	      else {
+		tweet( "Delete found " + meets.length + " locations matching pattern: " + ptn )
 		for(
 		  placeNRrscNSubst <- itergen[PlaceInstance](
 		    meets
