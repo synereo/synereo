@@ -67,7 +67,11 @@ trait CnxnConversions[Namespace,Var,Tag] {
   
   def cnxnVarTermStr( variable : Var )
   : String = {
-    ("X" + variable).replace( "'", "" )
+    import java.util.UUID
+    variable + "" match {
+      case "_" => "X" + ( UUID.randomUUID + "" ).replace( "-", "" ) + "_"
+      case _ => ("X" + variable).replace( "'", "" )
+    }    
   }
 
   def cnxnLabelToTermStr(
@@ -347,7 +351,12 @@ with PrologMgr {
 	for( v <- varSet ) {
 	  //println( "mapping free var : " + v )
 	  try {
-	    val soln : Solution[Object] = solution.on( "X" + v )
+	    val sV =
+	      v + "" match {
+		case "_" => "_"
+		case _ => "X" + v
+	      }
+	    val soln : Solution[Object] = solution.on( sV )
 	    hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
 	  }
 	  catch {
