@@ -551,89 +551,89 @@ case class KvdbPlatformAgentBase() extends Specification
       val expectedCollection = setupExpectedResults(value)
 
       "find many results by Get" in {
-        skip("needs cursor fix")
+//        skip("needs cursor fix")
         println("attempting assert")
         getCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
       }
 
-      "find many values by Get" in {
-        val lblSearch = "contentChannel(X)".toLabel
-        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-      }
-
-      "find many values by underscore Get" in {
-        val lblSearch = "contentChannel(_)".toLabel
-        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-      }
-
-      "not find a value by Get" in {
-        val lblSearch = "fail(X)".toLabel
-        getMustBe("")(reader, cnxnRandom, lblSearch)
-      }
-
-      "not find a nested value by Get" in {
-        val lblSearch = "abc(xyz(X))".toLabel
-        getMustBe("")(reader, cnxnRandom, lblSearch)
-      }
-
-//      this is only valid if WildcardSearchShouldNotFind works
-
-      "find a value by Get" in {
-        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
-        getMustBe(value)(reader, cnxnRandom, lblSearch)
-      }
-
-      "find a channel by Get" in {
-        val lblSearch = "surveyChannel(X, Y)".toLabel
-        getMustBe(value)(reader, cnxnRandom, lblSearch)
-      }
-
-      "find a channel by underscore Get" in {
-        val lblSearch = "surveyChannel(_, _)".toLabel
-        getMustBe(value)(reader, cnxnRandom, lblSearch)
-      }
-
-      "find many results by Fetch" in {
-        skip("needs cursor fix")
-        println("attempting assert")
-        fetchCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
-      }
-
-      "find many values by Fetch" in {
-        val lblSearch = "contentChannel(X)".toLabel
-        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-      }
-
-      "find many values by underscore Fetch" in {
-        val lblSearch = "contentChannel(_)".toLabel
-        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-      }
-
-      "not find a value by Fetch" in {
-        val lblSearch = "fail(X)".toLabel
-        fetchMustBe("")(reader, cnxnRandom, lblSearch)
-      }
-
-      "not find a nested value by Fetch" in {
-        val lblSearch = "abc(xyz(X))".toLabel
-        fetchMustBe("")(reader, cnxnRandom, lblSearch)
-      }
-
-      //this is only valid if WildcardSearchShouldNotFind works
-      "find a value by Fetch" in {
-        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
-        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-      }
-
-      "find a channel by Fetch" in {
-        val lblSearch = "surveyChannel(X, Y)".toLabel
-        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-      }
-
-      "find a channel by underscore Fetch" in {
-        val lblSearch = "surveyChannel(_, _)".toLabel
-        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-      }
+//      "find many values by Get" in {
+//        val lblSearch = "contentChannel(X)".toLabel
+//        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "find many values by underscore Get" in {
+//        val lblSearch = "contentChannel(_)".toLabel
+//        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "not find a value by Get" in {
+//        val lblSearch = "fail(X)".toLabel
+//        getMustBe("")(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "not find a nested value by Get" in {
+//        val lblSearch = "abc(xyz(X))".toLabel
+//        getMustBe("")(reader, cnxnRandom, lblSearch)
+//      }
+//
+////      this is only valid if WildcardSearchShouldNotFind works
+//
+//      "find a value by Get" in {
+//        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
+//        getMustBe(value)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "find a channel by Get" in {
+//        val lblSearch = "surveyChannel(X, Y)".toLabel
+//        getMustBe(value)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "find a channel by underscore Get" in {
+//        val lblSearch = "surveyChannel(_, _)".toLabel
+//        getMustBe(value)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "find many results by Fetch" in {
+//        skip("needs cursor fix")
+//        println("attempting assert")
+//        fetchCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
+//      }
+//
+//      "find many values by Fetch" in {
+//        val lblSearch = "contentChannel(X)".toLabel
+//        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "find many values by underscore Fetch" in {
+//        val lblSearch = "contentChannel(_)".toLabel
+//        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "not find a value by Fetch" in {
+//        val lblSearch = "fail(X)".toLabel
+//        fetchMustBe("")(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "not find a nested value by Fetch" in {
+//        val lblSearch = "abc(xyz(X))".toLabel
+//        fetchMustBe("")(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      //this is only valid if WildcardSearchShouldNotFind works
+//      "find a value by Fetch" in {
+//        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
+//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "find a channel by Fetch" in {
+//        val lblSearch = "surveyChannel(X, Y)".toLabel
+//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+//      }
+//
+//      "find a channel by underscore Fetch" in {
+//        val lblSearch = "surveyChannel(_, _)".toLabel
+//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+//      }
     }
   }
 

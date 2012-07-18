@@ -45,7 +45,7 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
   val writer = createNode(sourceAddress, acquaintanceAddresses)
   val reader = writer
 
-  testMessaging(writer, reader)
+//  testMessaging(writer, reader)
 
   testWildcardWithPut(writer, reader)
   //  testWildcardWithStore(writer, reader)
