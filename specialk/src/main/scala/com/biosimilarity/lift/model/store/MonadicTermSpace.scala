@@ -152,10 +152,186 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	case mTT.RBoundHM( Some( nrsrc ), _ ) => getGV( nrsrc )
 	case _ => None
       }
+    }    
+
+    def asCursor(
+      values : List[mTT.Resource]
+    ) : Option[mTT.Resource] = {
+      
+      val ig : mTT.Generator[mTT.Resource, Unit, Unit]  = mTT.itergen[mTT.Resource]( values )
+	  
+      // BUGBUG -- LGM need to return the Solution
+      // Currently the PersistenceManifest has no access to the
+      // unification machinery
+      Some (
+        mTT.RBoundHM(
+	  Some( mTT.Cursor( ig ) ),
+	  None
+  	)
+      )
     }
+
+    override def mget(
+      channels : Map[mTT.GetRequest,mTT.Resource],
+      registered : Map[mTT.GetRequest,List[RK]],
+      consume : RetentionPolicy,
+      keep : RetentionPolicy
+    )( ptn : mTT.GetRequest )( implicit spaceLockKey : Option[Option[mTT.Resource] => Unit @suspendable] )
+    : Generator[Option[mTT.Resource],Unit,Unit] = {
+      mget( channels, registered, consume, keep, false )( ptn )( spaceLockKey )
+    }
+
+    def mget(
+      channels : Map[mTT.GetRequest,mTT.Resource],
+      registered : Map[mTT.GetRequest,List[RK]],
+      consume : RetentionPolicy,
+      keep : RetentionPolicy,
+      cursor : Boolean
+    )( ptn : mTT.GetRequest )( implicit spaceLockKey : Option[Option[mTT.Resource] => Unit @suspendable] )
+    : Generator[Option[mTT.Resource],Unit,Unit] =
+      Generator {
+	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+	  shift {
+	    outerk : ( Unit => Unit ) =>
+	      reset {
+		// if ( ! spaceLock.available ) {
+		// 		rk( None )
+		// 	      }
+		// 	      else {
+		val slk = spaceLockKey match {
+		  case None => Some( rk )
+		  case _ => spaceLockKey
+		}
+		
+		spaceLock.occupy( slk )
+		
+		tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
+		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		
+		val map = Left[Map[mTT.GetRequest,mTT.Resource],Map[mTT.GetRequest,List[RK]]]( channels )
+		val meets = locations( map, ptn )
+		
+		if ( meets.isEmpty ) {
+		  val place = representative( ptn )
+		  tweet( "did not find a resource, storing a continuation: " + rk )
+		  tweet( "registered continuation storage: " + registered )
+		  tweet( "theWaiters: " + theWaiters )
+		  tweet( "theSubscriptions: " + theSubscriptions )		  
+		  
+		  keep match {
+		    case policy : RetainInCache => {
+		      registered( place ) =
+			registered.get( place ).getOrElse( Nil ) ++ List( rk )
+		    }
+		    case _ => {
+		      tweet( "policy indicates not to retain in cache: " + rk )
+		    }
+		  }
+		  
+		  tweet( "stored a continuation: " + rk )
+		  tweet( "registered continuation storage: " + registered )
+		  tweet( "theWaiters: " + theWaiters )
+		  tweet( "theSubscriptions: " + theSubscriptions )
+		  
+		  keep match {
+		    case storagePolicy : RetainInStore => {
+		    }
+		    case _ => {
+		      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+		      spaceLock.depart( slk )
+		      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		    }
+		  }
+		  
+		  rk( None )
+		}
+		else {
+		  cursor match {
+		    case true => {
+		      val rsrcRslts : ListBuffer[mTT.Resource] = new ListBuffer[mTT.Resource]()
+		      for( placeNRrscNSubst <- meets ) {
+			val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+			
+			tweet( "found a resource: " + rsrc )
+			
+			rsrcRslts += rsrc
+			
+			consume match {
+			  case policy : RetainInCache => {
+			    channels -= place
+			  }
+			  case _ => {
+			    tweet( "policy indicates not to consume from cache: " + place )
+			  }
+			}
+		      	
+			//shift { k : ( Unit => Unit ) => k() }
+ 		      }
+		      
+		      val rsrcCursor = asCursor( rsrcRslts.toList )
+		      
+		      keep match {
+			case storagePolicy : RetainInStore => {
+			}
+			case _ => {
+			  tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+			  spaceLock.depart( slk )
+			  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			}
+		      }
+		      
+		      rk( rsrcCursor )
+		    }
+		    case false => {
+		      for(
+			placeNRrscNSubst <- itergen[PlaceInstance](
+			  meets
+			)
+		      ) {
+			val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+			
+			tweet( "found a resource: " + rsrc )		    
+			
+			consume match {
+			  case policy : RetainInCache => {
+			    channels -= place
+			  }
+			  case _ => {
+			    tweet( "policy indicates not to consume from cache: " + place )
+			  }
+			}
+			
+			keep match {
+			  case storagePolicy : RetainInStore => {
+			  }
+			  case _ => {
+			    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+			    spaceLock.depart( slk )
+			    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			  }
+			}
+			
+			rk( s( rsrc ) )
+			
+			//shift { k : ( Unit => Unit ) => k() }
+ 		      }
+		    }
+		  }
+		  
+ 		}				
+		//}
+ 		//tweet( "get returning" )
+ 		outerk()
+ 	      }
+ 	  }
+      }
     
   }
-
+  
   class MonadicTermStore(
   ) extends MonadicTermStoreT {    
     override def configFileName : Option[String] = None
@@ -605,7 +781,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	    outerk : ( Unit => Unit ) =>
 	      reset {
 		for(
-		  oV <- mget( channels, registered, consume, keep )( path ) 
+		  oV <- mget( channels, registered, consume, keep, cursor )( path ) 
 		) {
 		  oV match {
 		    case None => {
@@ -636,7 +812,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	    outerk : ( Unit => Unit ) =>
 	      reset {
 		for(
-		  oV <- mget( channels, registered, consume, keep )( path ) 
+		  oV <- mget( channels, registered, consume, keep, cursor )( path ) 
 		) {
 		  oV match {
 		    case None => {

@@ -546,23 +546,6 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	  ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
 	} 
 	
-	def asCursor(
-	  values : List[mTT.Resource]
-	) : Option[mTT.Resource] = {
-	  
-	  val ig : mTT.Generator[mTT.Resource, Unit, Unit]  = mTT.itergen[mTT.Resource]( values )
-	  
-	  // BUGBUG -- LGM need to return the Solution
-	  // Currently the PersistenceManifest has no access to the
-	  // unification machinery
-	  Some (
-            mTT.RBoundHM(
-	      Some( mTT.Cursor( ig ) ),
-	      None
-  	    )
-          )
-	}
-	
 	override def asCacheValue(
 	  ltns : String => Namespace,
 	  ttv : String => Var,
@@ -944,7 +927,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 		outerk : ( Unit => Unit ) =>
 		  reset {
 		    for(
-		      oV <- mget( channels, registered, consume, keep )( path ) 
+		      oV <- mget( channels, registered, consume, keep, cursor )( path ) 
 		    ) {
 		      oV match {
 			case None => {
