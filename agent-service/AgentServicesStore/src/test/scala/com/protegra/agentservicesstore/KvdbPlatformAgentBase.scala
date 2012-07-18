@@ -380,7 +380,6 @@ case class KvdbPlatformAgentBase() extends Specification
 
 //      java.lang.Exception: matchMap failure profile(string(999), '_, '_, '_) profile(string(999), string(Terry), string(Bunio), string(123456789))
       "search" in {
-        skip("Greg is fixing this")
         val key = "profile(\"999\",\"Terry\",\"Bunio\",\"123456789\")".toLabel
         val value = "profile for terry bunio"
         writer.store(cnxn)(key, Ground(value))
@@ -552,6 +551,7 @@ case class KvdbPlatformAgentBase() extends Specification
       val expectedCollection = setupExpectedResults(value)
 
       "find many results by Get" in {
+        skip("needs cursor fix")
         println("attempting assert")
         getCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
       }
@@ -594,7 +594,7 @@ case class KvdbPlatformAgentBase() extends Specification
       }
 
       "find many results by Fetch" in {
-        skip("greg fixing")
+        skip("needs cursor fix")
         println("attempting assert")
         fetchCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
       }

@@ -47,7 +47,7 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
 
   testMessaging(writer, reader)
 
-//    testWildcardWithPut(writer, reader)
+  testWildcardWithPut(writer, reader)
   //  testWildcardWithStore(writer, reader)
   //  testWildcardWithCursor(writer, reader)
   //  testWildcardWithCursorBefore(writer, reader)
