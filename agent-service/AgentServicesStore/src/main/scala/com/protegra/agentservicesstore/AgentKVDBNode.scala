@@ -2276,8 +2276,8 @@ package usage {
 		      val ttt = ( x : String ) => x
 		      
 		      val ptn = asPatternString( key )
-		      //println( "ptn : " + ptn )		
-		      
+		      //println( "ptn : " + ptn )		      
+
 		      val oRsrc : Option[emT.PlaceInstance] =
 			for(
 			  ltns <- labelToNS;
@@ -2313,6 +2313,11 @@ package usage {
 				  case Some( cclX ) => cclX
 				  case _ => throw new Exception( "xml roundtrip failed " + key )
 				}
+
+			      tweet( "******************* asResource *********************" )
+			      tweet( "cclKey : " + cclKey )
+			      tweet( "k : " + k )
+			      tweet( "******************* asResource *********************" )
 			      
 			      matchMap( cclKey, k ) match {
 				case Some( soln ) => {

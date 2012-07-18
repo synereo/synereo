@@ -585,12 +585,12 @@ case class KvdbPlatformAgentBase() extends Specification
 //      this is only valid if WildcardSearchShouldNotFind works
 
       "find a value by Get" in {
-        val lblSearch = "surveyChannel(level1(X), level2(X))".toLabel
+        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
         getMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
       "find a channel by Get" in {
-        val lblSearch = "surveyChannel(X, X)".toLabel
+        val lblSearch = "surveyChannel(X, Y)".toLabel
         getMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
@@ -627,12 +627,12 @@ case class KvdbPlatformAgentBase() extends Specification
 
       //this is only valid if WildcardSearchShouldNotFind works
       "find a value by Fetch" in {
-        val lblSearch = "surveyChannel(level1(X), level2(X))".toLabel
+        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
         fetchMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
       "find a channel by Fetch" in {
-        val lblSearch = "surveyChannel(X, X)".toLabel
+        val lblSearch = "surveyChannel(X, Y)".toLabel
         fetchMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
