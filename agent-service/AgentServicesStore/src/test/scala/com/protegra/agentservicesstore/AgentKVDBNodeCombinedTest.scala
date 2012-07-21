@@ -34,8 +34,8 @@ with Timeouts
 {
 
   "AgentKVDBNode" should {
-    val cnxnUIStore = new AgentCnxn(( "UI" ).toURI, "", ( "Store" ).toURI);
-    var cnxnRandom = new AgentCnxn("CombinedTest".toURI, "", "User".toURI)
+    val cnxnUIStore = new AgentCnxn(( "UI" + UUID.randomUUID.toString ).toURI, "", ( "Store" + UUID.randomUUID.toString ).toURI);
+    var cnxnRandom = new AgentCnxn(("CombinedTest" + UUID.randomUUID.toString).toURI, "", ("User" + UUID.randomUUID.toString).toURI)
 
     val ui_location = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
     val store_location = "localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
