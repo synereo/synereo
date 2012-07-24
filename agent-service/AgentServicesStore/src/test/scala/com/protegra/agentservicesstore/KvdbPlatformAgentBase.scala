@@ -550,243 +550,186 @@ case class KvdbPlatformAgentBase() extends Specification
       setupData(writer, cnxnRandom, value)
       val expectedCollection = setupExpectedResults(value)
 
-      "find many results by Get" in {
-//        skip("needs cursor fix")
-        println("attempting assert")
-        getCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
+      "find many values by Get" in {
+        val lblSearch = "contentChannel(X)".toLabel
+        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
       }
 
-//      "find many values by Get" in {
-//        val lblSearch = "contentChannel(X)".toLabel
-//        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find many values by underscore Get" in {
-//        val lblSearch = "contentChannel(_)".toLabel
-//        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a value by Get" in {
-//        val lblSearch = "fail(X)".toLabel
-//        getMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a nested value by Get" in {
-//        val lblSearch = "abc(xyz(X))".toLabel
-//        getMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-////      this is only valid if WildcardSearchShouldNotFind works
-//
-//      "find a value by Get" in {
-//        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
-//        getMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by Get" in {
-//        val lblSearch = "surveyChannel(X, Y)".toLabel
-//        getMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by underscore Get" in {
-//        val lblSearch = "surveyChannel(_, _)".toLabel
-//        getMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find many results by Fetch" in {
-//        skip("needs cursor fix")
-//        println("attempting assert")
-//        fetchCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(3, TIMEOUT_EVENTUALLY)
-//      }
-//
-//      "find many values by Fetch" in {
-//        val lblSearch = "contentChannel(X)".toLabel
-//        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find many values by underscore Fetch" in {
-//        val lblSearch = "contentChannel(_)".toLabel
-//        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a value by Fetch" in {
-//        val lblSearch = "fail(X)".toLabel
-//        fetchMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a nested value by Fetch" in {
-//        val lblSearch = "abc(xyz(X))".toLabel
-//        fetchMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      //this is only valid if WildcardSearchShouldNotFind works
-//      "find a value by Fetch" in {
-//        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
-//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by Fetch" in {
-//        val lblSearch = "surveyChannel(X, Y)".toLabel
-//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by underscore Fetch" in {
-//        val lblSearch = "surveyChannel(_, _)".toLabel
-//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
+      "find many values by underscore Get" in {
+        val lblSearch = "contentChannel(_)".toLabel
+        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a value by Get" in {
+        val lblSearch = "fail(X)".toLabel
+        getMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a nested value by Get" in {
+        val lblSearch = "abc(xyz(X))".toLabel
+        getMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+//      this is only valid if WildcardSearchShouldNotFind works
+
+      "find a value by Get" in {
+        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
+        getMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by Get" in {
+        val lblSearch = "surveyChannel(X, Y)".toLabel
+        getMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by underscore Get" in {
+        val lblSearch = "surveyChannel(_, _)".toLabel
+        getMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find many values by Fetch" in {
+        val lblSearch = "contentChannel(X)".toLabel
+        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find many values by underscore Fetch" in {
+        val lblSearch = "contentChannel(_)".toLabel
+        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a value by Fetch" in {
+        val lblSearch = "fail(X)".toLabel
+        fetchMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a nested value by Fetch" in {
+        val lblSearch = "abc(xyz(X))".toLabel
+        fetchMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+      //this is only valid if WildcardSearchShouldNotFind works
+      "find a value by Fetch" in {
+        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
+        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by Fetch" in {
+        val lblSearch = "surveyChannel(X, Y)".toLabel
+        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by underscore Fetch" in {
+        val lblSearch = "surveyChannel(_, _)".toLabel
+        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
     }
   }
 
-//  def testWildcardWithCursor(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) =
-//  {
-//    "Wildcard Search after store with Cursor" should {
-//      Thread.sleep(timeoutBetween)
-//
-//      var resultQ = new LinkedBlockingQueue[ String ]
-//      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-//      val value = "tests@protegra.com"
-//      storeWildcardData(writer, cnxnRandom, value)
-//      val expectedCollection = setupExpectedResults(value)
-//
-//      "find many results by Get" in {
-//        getCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//      "not find a value by Get" in {
-//        getCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//      "not find a nested value by Get" in {
-//        getCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//      "find many results by Fetch" in {
-//        fetchCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//      "not find a value by Fetch" in {
-//        fetchCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//      "not find a nested value by Fetch" in {
-//        fetchCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//
-//      //
-//      //       "find many results by Fetch" in {
-//      //         fetchCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
-//      //       }
-//      //
-//      //       "find many values by Fetch" in {
-//      //         val lblSearch = "contentChannel(X)".toLabel
-//      //         fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      //       }
-//      //
-//      //       "find many values by underscore Fetch" in {
-//      //         val lblSearch = "contentChannel(_)".toLabel
-//      //         fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      //       }
-//      //
-//      //       "not find a value by Fetch" in {
-//      //         val lblSearch = "fail(X)".toLabel
-//      //         fetchMustBe("")(reader, cnxnRandom, lblSearch)
-//      //       }
-//      //
-//      //       "not find a nested value by Fetch" in {
-//      //         val lblSearch = "abc(xyz(X))".toLabel
-//      //         fetchMustBe("")(reader, cnxnRandom, lblSearch)
-//      //       }
-//      //
-//      //       //this is only valid if WildcardSearchShouldNotFind works
-//      //       "find a value by Fetch" in {
-//      //         val lblSearch = "surveyChannel(level1(X))".toLabel
-//      //         fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      //       }
-//      //       //
-//      //       //    "find a channel by Fetch" in {
-//      //       //      val lblSearch = "surveyChannel(X)".toLabel
-//      //       //      fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      //       //    }
-//      //
-//      //     }
-//
-//    }
-//  }
-//
-//  def testWildcardWithCursorBefore(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) =
-//  {
-//    "Wildcard Search before put with Cursor" should {
-//      skip("BUG 54 - BROKEN until bug is fixed")
-//      Thread.sleep(timeoutBetween)
-//
-//      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-//      val value = "tests@protegra.com"
-//
-//      "find many results by Get" in {
-//        val sync = new AnyRef()
-//
-//        val key = "contentChannel(_)"
-//        var found = 0
-//        val lblSearch = key.toLabel
-//
-//        reset {
-//          for ( c <- reader.get(true)(cnxnRandom)(lblSearch) ) {
-//            if ( c != None ) {
-//              for ( e <- c.dispatchCursor ) {
-//                println("*************getCount - received : " + e.dispatch.toString)
-//                if ( e.dispatch.toString != "" ) {sync.synchronized {found += 1}}
-//              }
-//            }
-//          }
-//        }
-//
-//        putWildcardData(writer, cnxnRandom, value)
-//
-//        sync.synchronized {found} must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//
-//      "find many results by Fetch" in {
-//        val sync = new AnyRef()
-//
-//        val key = "contentChannel(_)"
-//        var found = 0
-//        val lblSearch = key.toLabel
-//        reset {
-//          for ( c <- reader.fetch(true)(cnxnRandom)(lblSearch) ) {
-//            if ( c != None ) {
-//              for ( e <- c.dispatchCursor ) {
-//                println("*************getCount - received : " + e.dispatch.toString)
-//                if ( e.dispatch.toString != "" ) {sync.synchronized {found += 1}}
-//              }
-//            }
-//          }
-//        }
-//
-//        putWildcardData(writer, cnxnRandom, value)
-//
-//        sync.synchronized {found} must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
-//      }
-//      //
-//      //       "not find a value by Get" in {
-//      //         getCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      //       }
-//      //
-//      //       "not find a nested value by Get" in {
-//      //         getCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      //       }
-//      //
-//      //       "find many results by Fetch" in {
-//      //         fetchCount(reader, cnxnRandom, "contentChannel(X)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
-//      //       }
-//      //
-//      //       "not find a value by Fetch" in {
-//      //         fetchCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      //       }
-//      //
-//      //       "not find a nested value by Fetch" in {
-//      //         fetchCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-//      //       }
-//    }
+  def testWildcardWithPutAndCursor(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcardWithCursor(writer, reader, "put", putWildcardData(_, _, _))
 
+  def testWildcardWithStoreAndCursor(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) = testWildcardWithCursor(writer, reader, "store", storeWildcardData(_, _, _))
+
+  def testWildcardWithCursor(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], storageMethod: String, setupData: (Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], AgentCnxn, String) => Unit) =
+  {
+    "Wildcard Search after store with Cursor" should {
+      val timeoutBetween: Int = 300
+
+      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
+      val value = "tests@protegra.com"
+      setupData(writer, cnxnRandom, value)
+
+      "find many results by Get" in {
+        getCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+
+      "not find a value by Get" in {
+        getCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+
+      "not find a nested value by Get" in {
+        getCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+
+      "find many results by Fetch" in {
+        fetchCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+
+      "not find a value by Fetch" in {
+        fetchCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+
+      "not find a nested value by Fetch" in {
+        fetchCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+      }
+    }
+  }
+
+  def testWildcardWithCursorBefore(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) =
+  {
+    "Wildcard Search before put with Cursor" should {
+      val timeoutBetween: Int = 300
+
+      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
+      val value = "tests@protegra.com"
+
+      val testId = UUID.randomUUID().toString()
+      val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+      "find many results by Get" in {
+        skip("bug 54")
+        val key = "getCountChannel(_)".toLabel
+        val resultKey = "result(getCountChannel(\"1\"))".toLabel
+
+        reset {
+          for ( c <- reader.get(true)(cnxnRandom)(key) ) {
+            if ( c != None ) {
+              var found = 0
+              for ( e <- c.dispatchCursor ) {
+                if ( e != None ) {
+                  val result = e.dispatch
+                  println("*************getCount - received : " + result.toString)
+                  found += 1
+                  println("*************getCount - found : " + found)
+                }
+              }
+              println("*************getCount - found : " + found)
+              reset {_resultsQ.put(cnxnTest)(resultKey, found.toString)}
+            }
+          }
+        }
+
+        putWildcardData(writer, cnxnRandom, value)
+
+        fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(5, TIMEOUT_EVENTUALLY)
+      }
+
+      "find many results by Fetch" in {
+        skip("bug 54")
+        val key = "fetchCountChannel(_)".toLabel
+        val resultKey = "result(fetchCountChannel(\"1\"))".toLabel
+
+        reset {
+          for ( c <- reader.fetch(true)(cnxnRandom)(key) ) {
+            if ( c != None ) {
+              var found = 0
+              for ( e <- c.dispatchCursor ) {
+                if ( e != None ) {
+                  val result = e.dispatch
+                  println("*************fetchCount - received : " + result.toString)
+                  found += 1
+                  println("*************fetchCount - found : " + found)
+                }
+              }
+              println("*************fetchCount - found : " + found)
+              reset {_resultsQ.put(cnxnTest)(resultKey, found.toString)}
+            }
+          }
+        }
+
+        putWildcardData(writer, cnxnRandom, value)
+
+        fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(5, TIMEOUT_EVENTUALLY)
+      }
+    }
+  }
 }
