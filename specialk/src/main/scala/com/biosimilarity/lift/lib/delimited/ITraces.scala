@@ -70,56 +70,90 @@ trait CSControl {
     override def isEmpty = trace.isEmpty
   }    
 
+  case class GameState(
+    history : GameHistory,
+    oCK : Option[GameState => GameState],
+    oSK : Option[GameState => GameState]
+  )
+
   def handleClientStream(
     history : GameHistory,
-    oSK : Option[GameHistory => GameHistory],
-    oCK : Option[GameHistory => GameHistory]
-  )( loop : Boolean ) : GameHistory = {
-    history.take( 1 )( 0 ) match {
-      case Left( qn ) => {
-	qn match {
-	  case CO => {
-	    print( CO )
-	    reset {
-	      shift {
-		( k : GameHistory => GameHistory ) => {
-		  val revisedHistory =
-		    handleServerStream( history.drop( 1 ).asInstanceOf[GameHistory], Some( k ), oCK )( loop )
-		  oCK match {
-		    case Some( cK ) => cK( revisedHistory )
-		    case None => {
-		      if ( loop ) {
-			handleClientStream( revisedHistory, oSK, oCK )( loop )
-		      }
-		      else {
-			revisedHistory
-		      }
-		    }
+    oCK : Option[GameState => GameState],
+    oSK : Option[GameState => GameState]
+  )( loop : Boolean ) : GameState = {
+    println( "handling client stream: " + history + " , " + oSK + " , " + oCK )
+
+    val ghist = history.drop( 1 ).asInstanceOf[GameHistory]
+
+    reset {
+      history.take( 1 )( 0 ) match {
+	case Left( qn ) => {
+	  println( "handling: " + qn )
+	  qn match {
+	    case CO => {
+	      //print( CO )
+	      val gs =	      
+		shift {
+		  ( k : GameState => GameState ) => {		  
+		    println( "co-recursively calling handleServerStream: " + ghist + " , " + Some( k ) + " , " + oSK )
+		    handleServerStream( ghist, Some( k ), oSK )( loop )		  
 		  }
+		}	      
+
+	      val ngs =
+		if ( loop ) {
+		  println( "looping on server stream: " + gs.history + " , " + oCK + " , " + oSK )
+		  if ( !gs.history.isEmpty ) {
+		    handleServerStream( gs.history, gs.oCK, oSK )( loop )
+		  }
+		  else {
+		    gs
+		  }
+		} else {
+		  gs
+		}	    
+  	      
+	      oSK match {
+		case Some( sK ) => {		      
+		  println( "calling server continuation (1): " + ngs.history )
+		    sK( ngs )
+		}
+		case None => {
+		  ngs
 		}
 	      }
 	    }
-	  }
-	  case SO => {
-	    throw new Exception( "unexpected move: " + SO )
-	  }
-	}
-      }
-      case Right( ans ) => {
-	ans match {
-	  case SC => {
-	    oSK match {
-	      case Some( sK ) => {
-		print( SC )
-		sK( history.drop( 1 ).asInstanceOf[GameHistory] )
-	      }
-	      case None => {
-		throw new Exception( "unexpected move: " + CC )
-	      }
+	    case SO => {
+	      throw new Exception( "unexpected move in handleClientStream: " + SO + " , " + ghist + " , " + oCK + " , " + oSK )
 	    }
 	  }
-	  case CC => {
-	    throw new Exception( "unexpected move: " + SC )
+	}
+	case Right( ans ) => {
+	  println( "handling: " + ans )
+	  ans match {
+	    case CC => {
+	      oSK match {
+		case Some( sK ) => {
+		  //print( SC )
+		  println( "calling server continuation (2): " + ghist )
+		  sK( GameState( ghist, oCK, oSK ) )
+		}
+		case None => {
+		  GameState( ghist, oCK, oSK )
+		}
+	      }
+	    }
+	    case SC => {
+	      oCK match {
+		case Some( cK ) => {
+		  println( "calling client continuation (2): " + ghist )
+		  cK( GameState( ghist, oCK, oSK ) )
+		}
+		case None => {
+		  GameState( ghist, oCK, oSK )
+		}
+	      }
+	    }
 	  }
 	}
       }
@@ -128,61 +162,89 @@ trait CSControl {
 
   def handleServerStream( 
     history : GameHistory,
-    oCK : Option[GameHistory => GameHistory],
-    oSK : Option[GameHistory => GameHistory]
-  )( loop : Boolean ) : GameHistory = {
-    history.take( 1 )( 0 ) match {
-      case Left( qn ) => {
-	qn match {
-	  case SO => {
-	    print( SO )
-	    reset {
-	      shift {
-		( k : GameHistory => GameHistory ) => {
-		  val revisedHistory =
-		    handleClientStream( history.drop( 1 ).asInstanceOf[GameHistory], Some( k ), oCK )( loop )
-		  oCK match {
-		    case Some( cK ) => cK( revisedHistory )
-		    case None => {
-		      if ( loop ) {
-			handleServerStream( revisedHistory, oCK, oSK )( loop )
-		      }
-		      else {
-			revisedHistory
-		      }
-		    }
-		  }		  
+    oCK : Option[GameState => GameState],
+    oSK : Option[GameState => GameState]
+  )( loop : Boolean ) : GameState = {
+    println( "handling server stream: " + history + " , " + oCK + " , " + oSK )
+
+    val ghist = history.drop( 1 ).asInstanceOf[GameHistory]
+
+    reset {
+      history.take( 1 )( 0 ) match {
+	case Left( qn ) => {
+	  println( "handling: " + qn )
+	  qn match {
+	    case SO => {
+	      //print( SO )
+	      val gs =
+		shift {
+		  ( k : GameState => GameState ) => {
+		    println( "co-recursively calling handleClientStream: " + ghist + " , " + oCK + " , " + Some( k ) )
+		    handleClientStream( ghist, oCK, Some( k ) )( loop )		      		  		  
+		  }
+		}
+
+	      val ngs =
+		if ( loop ) {
+		  println( "looping on client stream: " + gs.history + " , " + oCK + " , " + oSK )
+		  if ( !gs.history.isEmpty ) {
+		    handleClientStream( gs.history, oCK, gs.oSK )( loop )
+		  }
+		  else {
+		    gs
+		  }
+		} else {
+		  gs
+		}
+	      
+	      oCK match {
+		case Some( cK ) => {		      
+		  println( "calling client continuation (1): " + ngs.history )
+		  cK( ngs )
+		}
+		case None => {
+		  ngs
 		}
 	      }
 	    }
-	  }
-	  case CO => {
-	    throw new Exception( "unexpected move: " + SO )
-	  }
-	}
-      }
-      case Right( ans ) => {
-	ans match {
-	  case CC => {
-	    oCK match {
-	      case Some( cK ) => {
-		print( CC )
-		cK( history.drop( 1 ).asInstanceOf[GameHistory] )
-	      }
-	      case None => {
-		throw new Exception( "unexpected move: " + CC )
-	      }
+	    case CO => {
+	      throw new Exception( "unexpected move in handleServerStream: " + CO + " , " + ghist + " , " + oCK + " , " + oSK )
 	    }
 	  }
-	  case SC => {
-	    throw new Exception( "unexpected move: " + SC )
+	}
+	case Right( ans ) => {
+	  println( "handling: " + ans )
+	  ans match {
+	    case SC => {
+	      oCK match {
+		case Some( cK ) => {
+		  //print( CC )
+		  println( "calling client continuation (2): " + ghist )
+		  cK( GameState( ghist, oCK, oSK ) )
+		}
+		case None => {
+		  GameState( ghist, oCK, oSK )
+		}
+	      }
+	    }
+	    case CC => {
+	      oSK match {
+		case Some( sK ) => {
+		  println( "calling server continuation (2): " + ghist )
+		  sK( GameState( ghist, oCK, oSK ) )
+		}
+		case None => {
+		  GameState( ghist, oCK, oSK )
+		}
+	      }
+	    }
 	  }
 	}
       }
     }
   }
 }
-
+    
 trait CSIO {
   self : CSData =>
   class StreamMaker extends JavaTokenParsers {
@@ -194,59 +256,100 @@ trait CSIO {
       )
     }
     def clientTrace : Parser[List[Stream[Either[Question,Answer]]]] =
-      ">>"~repsep( "("~serverTrace~")", ":" )~">>" ^^ {
-	case ">>"~clientTraces~">>" => {
-	  clientTraces match {
-	    case "("~serverTrace~")" :: cTraces => {
-	      val cTrs =
-		( List[Stream[Either[Question,Answer]]]( ) /: cTraces )( 
-		  ( acc, e ) => {
-		    e match {
-		      case "("~serverTrace~")" => { serverTrace ++ acc }
-		    }
+      repsep( "("~serverTrace~")", ":" ) ^^ {
+	case "("~serverTrace~")" :: cTraces => {
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>> clientTrace >>>>>>>>>>>>>>>>>>>>>>>>>>" )
+	  println( "parsed server trace: " + serverTrace )
+	  println( "remaining client traces: " + serverTrace )
+
+	  val sTr = foldTrace( serverTrace )
+	  val cTr =
+	    List[Stream[Either[Question,Answer]]](
+	      (
+		List( Left[Question,Answer]( CO ) ).toStream
+		append sTr
+		append List( Right[Question,Answer]( CC ) ).toStream		  
+	      )
+	    ) 
+	  val cTrs =
+	    ( List[Stream[Either[Question,Answer]]]( ) /: cTraces )( 
+	      ( acc, e ) => {
+		e match {
+		  case "("~serverTrace~")" => {
+		    val sTr = foldTrace( serverTrace )
+		    val cTr =
+		      List[Stream[Either[Question,Answer]]](
+			(
+			  List( Left[Question,Answer]( CO ) ).toStream
+			  append sTr
+			  append List( Right[Question,Answer]( CC ) ).toStream		  
+			)
+		      ) 
+
+		    cTr ++ acc
 		  }
-		)
-	      List[Stream[Either[Question,Answer]]](
-		(
-		  List( Left[Question,Answer]( CO ) ).toStream
-		  append ( foldTrace( serverTrace ) )
-		  append List( Right[Question,Answer]( CC ) ).toStream		  
-		)
-	      ) ++ cTrs
-	    }
-	    case Nil => {
-	      List[Stream[Either[Question,Answer]]]( )
-	    }
-	  }
+		}
+	      }
+	    )
+
+	  println( "folded server trace: " + sTr )
+	  println( "client trace: " + cTr )
+	  println( "folded client traces: " + cTrs )
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>> clientTrace >>>>>>>>>>>>>>>>>>>>>>>>>>" )
+	  
+	  cTr ++ cTrs
+	}
+	case Nil => {
+	  List[Stream[Either[Question,Answer]]]( )
 	}	
       }
 
     def serverTrace : Parser[List[Stream[Either[Question,Answer]]]] =
-      "<<"~repsep( "["~clientTrace~"]", ":" )~"<<" ^^ {	
-	case "<<"~serverTraces~"<<" => {
-	  //List[Either[Question,Answer]]( ).toStream
-	  serverTraces match {
-	    case "["~clientTrace~"]" :: sTraces => {
-	      val sTrs =
-		( List[Stream[Either[Question,Answer]]]( ) /: sTraces )( 
-		  ( acc, e ) => {
-		    e match {
-		      case "["~clientTrace~"]" => { clientTrace ++ acc }
-		    }
+      repsep( "["~clientTrace~"]", ":" ) ^^ {	
+	case "["~clientTrace~"]" :: sTraces => {
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>> serverTrace >>>>>>>>>>>>>>>>>>>>>>>>>>" )
+	  println( "parsed client trace: " + clientTrace )
+	  println( "remaining server traces: " + sTraces )
+	  
+	  val cTr = foldTrace( clientTrace )
+	  val sTr =
+	    List[Stream[Either[Question,Answer]]](
+	      (
+		List( Left[Question,Answer]( SO ) ).toStream
+		append cTr 
+		append List( Right[Question,Answer]( SC ) ).toStream		  
+	      )
+	    )
+	  val sTrs =
+	    ( List[Stream[Either[Question,Answer]]]( ) /: sTraces )( 
+	      ( acc, e ) => {
+		e match {
+		  case "["~clientTrace~"]" => {
+		    val cTr = foldTrace( clientTrace )
+		    val sTr =
+		      List[Stream[Either[Question,Answer]]](
+			(
+			  List( Left[Question,Answer]( SO ) ).toStream
+			  append cTr 
+			  append List( Right[Question,Answer]( SC ) ).toStream		  
+			)
+		      )
+
+		    sTr ++ acc
 		  }
-		)
-	      List[Stream[Either[Question,Answer]]](
-		(
-		  List( Left[Question,Answer]( SO ) ).toStream
-		  append ( foldTrace( clientTrace ) )
-		  append List( Right[Question,Answer]( SC ) ).toStream		  
-		)
-	      ) ++ sTrs
-	    }
-	    case Nil => {
-	      List[Stream[Either[Question,Answer]]]( )
-	    }
-	  }
+		}
+	      }
+	    )	  
+
+	  println( "folded client trace: " + cTr )
+	  println( "server trace: " + sTr )
+	  println( "folded server traces: " + sTrs )
+	  println( ">>>>>>>>>>>>>>>>>>>>>>>>>>> serverTrace >>>>>>>>>>>>>>>>>>>>>>>>>>" )
+
+	  sTr ++ sTrs
+	}
+	case Nil => {
+	  List[Stream[Either[Question,Answer]]]( )
 	}	
       }
   }
@@ -257,12 +360,12 @@ trait CSIO {
     parseAll(
       clientTrace,
       new java.io.StringReader(
-	s.replace( "(", ">>(" )
+	s /* .replace( "(", ">>(" )
 	.replace( ")", ")>>" )
 	.replace( "[", "<<[" )
 	.replace( "]", "]<<" )
 	.replace( "()","(<<<<)" )
-	.replace( "[]", "[>>>>]" )
+	.replace( "[]", "[>>>>]" ) */
       )
     ) match {
       case Success( r, _ ) => r
@@ -276,12 +379,12 @@ trait CSIO {
     parseAll(
       serverTrace,
       new java.io.StringReader(
-	s.replace( "(", ">>(" )
+	s /* .replace( "(", ">>(" )
 	.replace( ")", ")>>" )
 	.replace( "[", "<<[" )
 	.replace( "]", "]<<" )
 	.replace( "()","(<<<<)" )
-	.replace( "[]", "[>>>>]" )
+	.replace( "[]", "[>>>>]" ) */
       )
     ) match {
       case Success( r, _ ) => r
