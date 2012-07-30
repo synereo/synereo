@@ -150,7 +150,14 @@ trait CSControl {
 		  cK( GameState( ghist, oCK, oSK ) )
 		}
 		case None => {
-		  GameState( ghist, oCK, oSK )
+		  oSK match {
+		    case Some( sK ) => {
+		      sK( GameState( ghist, None, None ) )
+		    }
+		    case None => {
+		      GameState( ghist, oCK, oSK )
+		    }
+		  }		  
 		}
 	      }
 	    }
@@ -234,7 +241,15 @@ trait CSControl {
 		  sK( GameState( ghist, oCK, oSK ) )
 		}
 		case None => {
-		  GameState( ghist, oCK, oSK )
+		  oCK match {
+		    case Some( cK ) => {
+		      println( "calling client continuation (3): " + ghist )
+		      cK( GameState( ghist, None, None ) )
+		    }
+		    case None => {
+		      GameState( ghist, oCK, oSK )
+		    }
+		  }		  
 		}
 	      }
 	    }
