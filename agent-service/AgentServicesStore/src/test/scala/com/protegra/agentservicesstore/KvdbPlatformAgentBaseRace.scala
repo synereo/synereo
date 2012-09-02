@@ -43,6 +43,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
     val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
      "Cached Get/Put" should {
+       skip("isolate")
        Thread.sleep(timeoutBetween)
 
         "retrieve" in {
@@ -71,7 +72,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
       }
 
     "Cached Fetch/Put" should {
-      skip("greg")
+      skip("isolate")
        Thread.sleep(timeoutBetween)
 
        "retrieve" in {
@@ -98,6 +99,48 @@ case class KvdbPlatformAgentBaseRace() extends Specification
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
        }
      }
+
+    //issue 55
+    "Fetch/Store" should {
+//         Thread.sleep(timeoutBetween)
+
+         "retrieve" in {
+           val sourceId = UUID.randomUUID
+           val targetId = sourceId
+           val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+
+           val testId = UUID.randomUUID().toString()
+           val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+           val key = "contentChannel(fetchStoreRetrieve(\"email\"))".toLabel
+           val value = "fetchStoreRetrieve@protegra"
+
+           writer.store(cnxn)(key, Ground(value))
+
+           //with 1000 sleep the race condition turns into store/fetch which works without watiers.
+//           Thread.sleep(1000)
+           fetchString(reader, cnxn, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+         }
+       }
+
+    "Fetch Waiter" should {
+      skip("just for illustrating the behavior")
+         Thread.sleep(timeoutBetween)
+
+         "work" in {
+           val sourceId = UUID.randomUUID
+           val targetId = sourceId
+           val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+
+           val testId = UUID.randomUUID().toString()
+           val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+
+           val key = "contentChannel(fetchWatierRetrieve(\"email\"))".toLabel
+           val value = "fetchWatierRetrieve@protegra"
+
+           fetchString(reader, cnxn, key) must be_==(value).eventually(3, TIMEOUT_EVENTUALLY)
+         }
+       }
 
   }
 
