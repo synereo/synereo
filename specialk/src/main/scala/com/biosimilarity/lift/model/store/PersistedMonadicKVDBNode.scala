@@ -824,7 +824,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			    }
 			    case _ => {
 			      throw new Exception(
-				"Non-continuation resource stored in kRecord" + ekrsrc
+				"Non-continuation resource (1) stored in kRecord" + ekrsrc
 			      )
 			    }
 			  }
@@ -1195,7 +1195,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					      )				  
 					    }
 					    case Some( kqry ) => {
-					      val krslts = executeWithResults( xmlCollName, qry )
+					      //tweet( ">>>>>>***>>>>>>***>>>>>>" )
+					      //tweet( "kqry: " + kqry )
+					      //println( "query text: " + kqry )
+					      //tweet( "<<<<<<***<<<<<<***<<<<<<" )
+					      val krslts = executeWithResults( xmlCollName, kqry )
 
 					      val stbl = new HashMap[UUID,Int]()
 					      val skey = getUUID		      
@@ -1229,9 +1233,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						  // Answer: Yes!
 						  stbl += ( skey -> krslts.length )  	  
 						  for( krslt <- itergen[Elem]( krslts ) ) {
+						    tweet( ">>>>>>***>>>>>>***>>>>>>" )
 						    tweet( "retrieved " + krslt.toString )
+						    tweet( "<<<<<<***<<<<<<***<<<<<<" )
 						    val ekrsrc = pd.asResource( path, krslt )
 						    
+						    tweet( ">>>>>>***>>>>>>***>>>>>>" )
+						    tweet( "retrieved " + ekrsrc )
+						    tweet( "<<<<<<***<<<<<<***<<<<<<" )
+
 						    ekrsrc.stuff match {
 						      case Right( ks ) => {  
 							tweet( "removing from store " + krslt )
@@ -1249,7 +1259,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						      }
 						      case _ => {
 							throw new Exception(
-							  "Non-continuation resource stored in kRecord" + ekrsrc
+							  "Non-continuation resource (2) stored in kRecord" + ekrsrc
 							)
 						      }
 						    }
