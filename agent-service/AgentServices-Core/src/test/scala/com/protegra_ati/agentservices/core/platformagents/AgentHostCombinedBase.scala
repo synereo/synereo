@@ -82,14 +82,14 @@ Timeouts
 
   def setupIncrementalDisclosure(pa: AgentHostStorePlatformAgent, cnxn: AgentCnxn) =
   {
-//    MockProfileDisclosedDataFactory
-    // new DisclosedData[ MockProfile ](classOf[ MockProfile ], "Empty", "")
-    val authorizedContentEmpty = MockProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
-    //new DisclosedData[ MockProfile ](classOf[ MockProfile ], "Basic", "id,localeCode,firstName,lastName")
-    val authorizedContentBasic = MockProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
-    // new DisclosedData[ MockProfile ](classOf[ MockProfile ], "Full", "id,localeCode,firstName,lastName,description,emailAddress,country,region,city")
-    val authorizedContentFull = MockProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
-    //save MockProfile authorized content for basic and full
+//    ProfileDisclosedDataFactory
+    // new DisclosedData[ Profile ](classOf[ Profile ], "Empty", "")
+    val authorizedContentEmpty = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
+    //new DisclosedData[ Profile ](classOf[ Profile ], "Basic", "id,localeCode,firstName,lastName")
+    val authorizedContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
+    // new DisclosedData[ Profile ](classOf[ Profile ], "Full", "id,localeCode,firstName,lastName,description,emailAddress,country,region,city")
+    val authorizedContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+    //save Profile authorized content for basic and full
     pa.store(pa._dbQ, cnxn, authorizedContentEmpty.toStoreKey, Serializer.serialize[ Data ](authorizedContentEmpty))
     pa.store(pa._dbQ, cnxn, authorizedContentBasic.toStoreKey, Serializer.serialize[ Data ](authorizedContentBasic))
     pa.store(pa._dbQ, cnxn, authorizedContentFull.toStoreKey, Serializer.serialize[ Data ](authorizedContentFull))
@@ -203,22 +203,22 @@ Timeouts
     Thread.sleep(500)
   }
 
-  def setMockProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: String): Unit =
+  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: String): Unit =
   {
-    val MockProfile = new MockProfile("testFirst", "testLast", "testDesc", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
-    setMockProfile(ui, cnxn, agentSessionId, tag, localeCode, MockProfile)
+    val Profile = new Profile("testFirst", "testLast", "testDesc", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+    setProfile(ui, cnxn, agentSessionId, tag, localeCode, Profile)
   }
 
-  def setMockProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Unit =
+  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Unit =
   {
-    val MockProfile = new MockProfile("testFirst", "testLast", "testDesc", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
-    setMockProfile(ui, cnxn, agentSessionId, tag, Locale.ENGLISH.toString(), MockProfile)
+    val Profile = new Profile("testFirst", "testLast", "testDesc", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+    setProfile(ui, cnxn, agentSessionId, tag, Locale.ENGLISH.toString(), Profile)
   }
 
-  def setMockProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: String, MockProfile: MockProfile): Unit =
+  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: String, Profile: Profile): Unit =
   {
-    MockProfile.localeCode = localeCode
-    val setReq = new SetContentRequest(new EventKey(agentSessionId, tag), MockProfile, null)
+    Profile.localeCode = localeCode
+    val setReq = new SetContentRequest(new EventKey(agentSessionId, tag), Profile, null)
     setReq.originCnxn = cnxn
     setReq.targetCnxn = cnxn
     ui.send(setReq)
@@ -244,15 +244,15 @@ Timeouts
   }
 
 
-  def countMockProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Int =
+  def countProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Int =
   {
-    countMockProfile(ui, cnxn, agentSessionId, tag, None)
+    countProfile(ui, cnxn, agentSessionId, tag, None)
 
   }
 
-  def countMockProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: Option[ String ]): Int =
+  def countProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: Option[ String ]): Int =
   {
-    val query: MockProfile = new MockProfile()
+    val query: Profile = new Profile()
     localeCode match {
       case Some(x) => query.localeCode = x
       case _ => {}
@@ -300,9 +300,9 @@ Timeouts
     sync.synchronized {count}
   }
 
-  def countCompositeMockProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Int =
+  def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Int =
   {
-    val query = new CompositeData[ MockProfile ](new Connection(), new MockProfile());
+    val query = new CompositeData[ Profile ](new Connection(), new Profile());
     countComposite(ui, cnxn, agentSessionId, tag, query)
   }
 

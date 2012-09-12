@@ -132,6 +132,7 @@ object SearchableDataTestSpecs extends Specification
   "toSearchKey " should {
     val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
 
+    //Connection needs to be updated to output the right key again
     "generate search key correctly for a Connection" in {
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
       val expectedSearchKey = "connection(fields(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralDisabled, searchDisabled]\"),created(_)))"

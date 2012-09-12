@@ -50,6 +50,7 @@ object StorableDataTestSpecs extends Specification
       storeKey must be_==("mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\")))")
     }
 
+    //Connection needs to be updated to output the right key again
     "generate store key correctly for Connection" in {
       val storeKey = connection.toStoreKey
       println("storeKey: " + storeKey)
