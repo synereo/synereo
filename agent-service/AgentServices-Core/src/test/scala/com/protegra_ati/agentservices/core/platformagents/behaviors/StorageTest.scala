@@ -68,7 +68,7 @@ with SpecsPAHelpers
   "updateData" should {
 
     val MockProfileId = UUID.randomUUID
-    val mockMockProfile = new MockProfile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+    val mockProfile = new MockProfile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
     val basicMockProfile = new MockProfile("FirstName", "LastName", "", "", "", "", "", "", "")
 
     val JenId = ( "Jen" + UUID.randomUUID )
@@ -78,7 +78,7 @@ with SpecsPAHelpers
 
     "insert new data" in {
       var oldData: MockProfile = null
-      pa.updateData(connSteve.writeCnxn, mockMockProfile.authorizedData(authorizedContentBasic.fields), oldData)
+      pa.updateData(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields), oldData)
       val MockProfileSearch: MockProfile = new MockProfile()
 
       fetchMustBe(basicMockProfile)(pa, connSteve.writeCnxn, MockProfileSearch.toSearchKey)
@@ -86,7 +86,7 @@ with SpecsPAHelpers
     }
 
     "delete and insert existing data" in {
-      val data = mockMockProfile.authorizedData(authorizedContentBasic.fields)
+      val data = mockProfile.authorizedData(authorizedContentBasic.fields)
       pa.store(pa._dbQ, connSteve.writeCnxn, data.toStoreKey, Serializer.serialize[ Data ](data))
       Thread.sleep(TIMEOUT_MED)
       pa.updateData(connSteve.writeCnxn, data, data)

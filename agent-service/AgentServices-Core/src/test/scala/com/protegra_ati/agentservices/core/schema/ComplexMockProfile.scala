@@ -1,33 +1,21 @@
 package com.protegra_ati.agentservices.core.schema
 
-import java.io.Serializable
 import java.util.HashMap
-import java.util.Properties
-import java.io.File
-import java.io.Reader
-import java.io.FileReader
-import java.io.IOException
 import persistence.SearchableChildData
 import scala.reflect.BeanProperty
-import com.protegra.agentservicesstore.extensions._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
 import scala.collection.JavaConversions._
-
+import java.util.{Properties}
 
 /**
  * Personal profile data object
  * @param firstName first name
- * @param lastName last name
- * @param description descr.
- * @param emailAddress valid email address
+ * @param lastName  last name
+ * @param emailAddress valid email address of type
  * @param country uppercase two letter ISO-3166 country code supported by a java.util.Locale class
  * @param region country specific forms of sub-national government (e.g province, state, etc.)
  * @param city city
- * @param postalCode zip
- * @param website web site
- * @param image personal avatar picture, usually very small
  */
-case class MockProfile(
+case class ComplexMockProfile(
   @BeanProperty var firstName: String,
   @BeanProperty var lastName: String,
   @BeanProperty var description: String,
@@ -36,21 +24,32 @@ case class MockProfile(
   @BeanProperty var region: String,
   @BeanProperty var city: String,
   @BeanProperty var postalCode: String,
-  @BeanProperty var website: String
+  @BeanProperty var website: String,
+  @BeanProperty var image: Image
   )
   extends Data
   with SearchableChildData
 {
 
+  def this(firstName: String
+    , lastName: String
+    , description: String
+    , emailAddress: String
+    , country: String
+    , region: String
+    , city: String
+    , postalCode: String
+    , website: String) = this(firstName, lastName, description, emailAddress, country, region, city, postalCode, website, new Image())
+
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
-  def this() = this("", "", "", "", "", "", "", "", "")
+  def this() = this("", "", "", "", "", "", "", "", "", new Image())
 
 
   //TODO: The Displayable names should really come from a resource lookup by language related to a country
   //TODO: will be deleted next step
   //this hashmap needs to be replaced by resources
 
-  override def getDisplayableFieldNames: HashMap[ String, String ] =
+  protected override def getDisplayableFieldNames: HashMap[ String, String ] =
   {
     val map = new HashMap[ String, String ]()
     map.put("firstName", "First Name")
@@ -80,6 +79,10 @@ case class MockProfile(
     List(( new AppId ).toSearchKey)
   }
 
-//  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
-//  {List()}
+
+}
+
+object ComplexMockProfile
+{
+
 }

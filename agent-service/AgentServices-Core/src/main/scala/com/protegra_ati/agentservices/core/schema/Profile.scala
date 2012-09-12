@@ -37,7 +37,7 @@ case class Profile(
   @BeanProperty var city: String,
   @BeanProperty var postalCode: String,
   @BeanProperty var website: String,
-  @BeanProperty var image: String
+  @BeanProperty var image: Image
   )
   extends Data
   with SearchableChildData
@@ -52,10 +52,10 @@ case class Profile(
     , region: String
     , city: String
     , postalCode: String
-    , website: String) = this(firstName, lastName, description, emailAddress, country, region, city, postalCode, website, "")
+    , website: String) = this(firstName, lastName, description, emailAddress, country, region, city, postalCode, website, new Image())
 
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
-  def this() = this("", "", "", "", "", "", "", "", "", "")
+  def this() = this("", "", "", "", "", "", "", "", "", new Image())
 
 
   //TODO: The Displayable names should really come from a resource lookup by language related to a country
@@ -110,7 +110,7 @@ object Profile
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "city"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "postalCode"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "website"),
-      "" // for the moment empty image, later may files be loaded from a file system
+      new Image() // for the moment empty image, later may files be loaded from a file system
     )
   }
 

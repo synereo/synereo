@@ -226,7 +226,7 @@ Timeouts
 
   def setAppId(ui: AgentHostUIPlatformAgent, self: Connection): AppId =
   {
-    val appId = AppId("BizNetwork")
+    val appId = AppId("TestApp")
     appId.setDefaultValues(false)
     setContent(ui, self, appId)
     appId

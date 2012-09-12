@@ -46,3 +46,4 @@ build.log
 build.log
 
 *.log
+*.kryobin
