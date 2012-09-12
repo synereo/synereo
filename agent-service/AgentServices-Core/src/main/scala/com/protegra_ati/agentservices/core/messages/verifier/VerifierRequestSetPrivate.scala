@@ -1,0 +1,27 @@
+package com.protegra_ati.agentservices.core.messages.verifier
+
+import com.protegra_ati.agentservices.core.platformagents._
+import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.messages._
+import com.protegra.agentservicesstore.util.Severity
+import com.protegra_ati.agentservices.core.schema._
+
+
+/* User: jviolago
+*/
+
+trait VerifierRequestSetPrivate {
+  self:AgentHostStorePlatformAgent =>
+
+  def listenPrivateVerifierResponse(cnxn: AgentCnxn) = {
+    listen(_privateQ, _cnxnUIStore, Channel.Verify, ChannelType.Request, ChannelLevel.Private, handlePrivateVerifyRequestChannel(_: AgentCnxn, _: Message))
+  }
+
+  def handlePrivateVerifyRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  {
+    report("entering handlePrivateVerifyRequestChannel in StorePlatform", Severity.Trace)
+    msg.channelLevel = Some(ChannelLevel.Public)
+    send(_publicQ, msg.targetCnxn, msg)
+    report("exiting handlePrivateVerifyRequestChannel in StorePlatform", Severity.Trace)
+  }
+}
