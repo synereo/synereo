@@ -24,7 +24,7 @@ trait IntroductionResponseSet
   //
   //  }
 
-  private def handlePublicIntroductionCreatorResponseChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicIntroductionCreatorResponseChannel(cnxn: AgentCnxn, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -42,7 +42,7 @@ trait IntroductionResponseSet
     report("exiting handlePublicIntroductionCreatorResponseChannel in ConnectionBroker", Severity.Trace)
   }
 
-  private def processCreateIntroductionResponse(cnxnBroker_A: AgentCnxn, createInviteRequest: CreateIntroductionResponse) =
+  protected def processCreateIntroductionResponse(cnxnBroker_A: AgentCnxn, createInviteRequest: CreateIntroductionResponse) =
   {
     //send to self to update the state of the intro, then send out 2 InviteRequests. logic should flow through existing Invite package after that
   }

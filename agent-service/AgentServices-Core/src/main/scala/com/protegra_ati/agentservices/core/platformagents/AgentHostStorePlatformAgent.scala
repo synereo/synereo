@@ -141,7 +141,7 @@ with MessageStore
     //observeWatchLists()
   }
 
-  private def listenForUICnxns() =
+  protected def listenForUICnxns() =
   {
     //ui store
     //all responses come on individual cnxns
@@ -161,7 +161,7 @@ with MessageStore
     //    listenPrivateIntroductionCreatorResponses(_cnxnUIStore)
   }
 
-  private def listenForVerifierCnxns() =
+  protected def listenForVerifierCnxns() =
   {
     //hack for tests
     //    if ( _cnxnRAVerifier != null )

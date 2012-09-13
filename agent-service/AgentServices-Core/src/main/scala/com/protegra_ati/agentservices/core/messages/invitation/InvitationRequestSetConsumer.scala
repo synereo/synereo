@@ -26,7 +26,7 @@ trait InvitationRequestSetConsumer
     listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Public, handlePublicInvitationConsumerRequestChannel(_: AgentCnxn, _: Message))
   }
 
-  private def handlePublicInvitationConsumerRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicInvitationConsumerRequestChannel(cnxn: AgentCnxn, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -44,7 +44,7 @@ trait InvitationRequestSetConsumer
     report("exiting handlePublicInvitationConsumerRequestChannel in ConnectionBroker", Severity.Trace)
   }
 
-  private def processInvitationRequest(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
+  protected def processInvitationRequest(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
   {
 
     println("----------------------------------------------->>>> cnxnA_Broker= cnxnA_Broker.scr" + cnxnA_Broker.src + ", cnxnA_Broker.trgt=" + cnxnA_Broker.trgt + ", inviteRequest=" + inviteRequest)
@@ -63,7 +63,7 @@ trait InvitationRequestSetConsumer
 
   }
 
-  private def processInvitationRequestOnPAOnBehalfOfInitiatorAgent(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
+  protected def processInvitationRequestOnPAOnBehalfOfInitiatorAgent(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
   {
     report("****Post invite request, auto processing on behalf of initiator : " + cnxnA_Broker.trgt)
     var requestedCategory = ConnectionCategory.Person.toString
@@ -108,7 +108,7 @@ trait InvitationRequestSetConsumer
 
   }
 
-  private def processInvitationRequestOnPAOnBehalfOfRequestedAgent(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
+  protected def processInvitationRequestOnPAOnBehalfOfRequestedAgent(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
   {
     println("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
@@ -116,7 +116,7 @@ trait InvitationRequestSetConsumer
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationRequest(_: AgentCnxn, _: SystemData[ Connection ], inviteRequest))
   }
 
-  private def handleSystemDataLookupStoreInvitationRequest(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], inviteRequest: InvitationRequest): Unit =
+  protected def handleSystemDataLookupStoreInvitationRequest(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], inviteRequest: InvitationRequest): Unit =
   {
     report("STORE INVITATIONS FOR LATER RESPONSE: inviteRequest=" + inviteRequest + ", cnxn=" + cnxn, Severity.Info)
     val selfConnection = systemConnection.data
@@ -127,7 +127,7 @@ trait InvitationRequestSetConsumer
 
   }
 
-  private def notificationHandler(cnxn: AgentCnxn, user: Data, inviteRequest: InvitationRequest) =
+  protected def notificationHandler(cnxn: AgentCnxn, user: Data, inviteRequest: InvitationRequest) =
   {
 //    user match {
 //      case p: Profile => {

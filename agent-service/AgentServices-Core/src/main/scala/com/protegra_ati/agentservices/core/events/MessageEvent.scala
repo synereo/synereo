@@ -20,7 +20,7 @@ abstract class MessageEvent[T <: Message](source:T, _msg:T) extends EventObject(
   def getMsg: T = this.msg
   //End BeanProperty
 
-  def trigger(listeners:List[MessageEventAdapter])
+  def trigger(listeners:List[ _ <: MessageEventAdapter ])
 }
 
 

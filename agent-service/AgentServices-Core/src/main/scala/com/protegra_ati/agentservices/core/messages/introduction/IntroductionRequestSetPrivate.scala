@@ -20,7 +20,7 @@ trait IntroductionRequestSetPrivate
   }
 
   //overriding listen for hosted connections and putting broker listen logic in
-  private def handlePrivateIntroductionRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePrivateIntroductionRequestChannel(cnxn: AgentCnxn, msg: Message) =
   {
     report("entering handlePrivateIntroductionRequestChannel in ConnectionBroker", Severity.Trace)
 

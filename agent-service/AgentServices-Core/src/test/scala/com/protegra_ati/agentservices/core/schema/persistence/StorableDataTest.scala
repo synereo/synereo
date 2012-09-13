@@ -75,16 +75,16 @@ object StorableDataTestSpecs extends Specification
       storeKey must be_==("systemData(mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\"))))")
     }
 
-    "generate store key correctly for a MockProfile" in {
+    "generate store key correctly for a Profile" in {
       val idN = "MY_ID"
-      val mockProfile = new MockProfile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+      val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
       mockProfile.image = new Image("name", "", "content hasn't be visible in a toStoreKey", "meta1 meta2 meta3")
       mockProfile.id = idN
       mockProfile.localeCode = "en"
       val storeKey = mockProfile.toStoreKey
       val expectedStoreKey = "mockProfile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"\"),emailAddress(\"123456789@test.com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
-//      System.err.println("created  storeKey4MockProfile: " + storeKey)
-//      System.err.println("expected storeKey4MockProfile: " + expectedStoreKey)
+//      System.err.println("created  storeKey4Profile: " + storeKey)
+//      System.err.println("expected storeKey4Profile: " + expectedStoreKey)
       storeKey must be_==(expectedStoreKey)
     }
 
@@ -102,10 +102,10 @@ object StorableDataTestSpecs extends Specification
 
     "generate store key correctly for Data with a Message and a Hashmap" in {
       val fromDetails = new java.util.HashMap[ String, Data ]();
-      val tempMockProfile = new MockProfile();
-      tempMockProfile.setFirstName("first");
-      tempMockProfile.setLastName("last");
-      fromDetails.put(tempMockProfile.formattedClassName, tempMockProfile);
+      val tempProfile = new Profile();
+      tempProfile.setFirstName("first");
+      tempProfile.setLastName("last");
+      fromDetails.put(tempProfile.formattedClassName, tempProfile);
 
       val postToTarget = new Post("subject2Target", "body", fromDetails);
       val postToBroker = new Post("subject2Broker", "body", fromDetails);

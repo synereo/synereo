@@ -32,7 +32,7 @@ trait MessageStore extends Reporting
     storage += ( requestMsg.ids.conversationId + DELIMITER + cnxn.src.toString + DELIMITER + cnxn.trgt.toString -> storageMoment )
   }
 
-  private def isCaptured(messageConversationId: String, srcUID: String, targetUID: String): Boolean = synchronized {
+  protected def isCaptured(messageConversationId: String, srcUID: String, targetUID: String): Boolean = synchronized {
     storage.contains(messageConversationId + DELIMITER + srcUID + DELIMITER + targetUID)
   }
 

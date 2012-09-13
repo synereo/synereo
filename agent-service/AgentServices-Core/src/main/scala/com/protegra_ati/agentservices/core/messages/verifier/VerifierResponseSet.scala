@@ -17,10 +17,10 @@ trait VerifierResponseSet
 
   def listenPublicVerifierResponse(cnxn: AgentCnxn) =
   {
-    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyChannel(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyResponseChannel(_: AgentCnxn, _: Message))
   }
 
-  private def handleVerifyChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handleVerifyResponseChannel(cnxn: AgentCnxn, msg: Message) =
   {
     report("entering handleVerifyChannel in VerifierPlatformAgent", Severity.Trace)
     //    if (!_processedMessages.contains(msg.ids.id)) {
@@ -49,13 +49,13 @@ trait VerifierResponseSet
     report("exiting handleVerifyChannel in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def sendPrivateMessage(cnxn: AgentCnxn, msg: Message)
+  protected def sendPrivateMessage(cnxn: AgentCnxn, msg: Message)
   {
     msg.channelLevel = None
     send(_privateQ, msg.originCnxn, msg)
   }
 
-  private def processVerifyPermissionResponse(cnxn: AgentCnxn, msg: VerifyPermissionResponse) =
+  protected def processVerifyPermissionResponse(cnxn: AgentCnxn, msg: VerifyPermissionResponse) =
   {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     //TODO it is necessary to create 'companion objects' with a reasonable named factory methods to create reusable singletons of default constructed Data objects like connection()
@@ -64,7 +64,7 @@ trait VerifierResponseSet
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def sendVerifyPermissionResponse(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], msg: VerifyPermissionResponse)
+  protected def sendVerifyPermissionResponse(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], msg: VerifyPermissionResponse)
   {
     report("entering processVerifyPermissionResponse in VerifierPlatformAgent", Severity.Trace)
 
@@ -83,7 +83,7 @@ trait VerifierResponseSet
     report("exiting processVerifyPermissionResponse in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def processClaim(cnxn: AgentCnxn, data: Data, verifyRequest: VerifyRequest, parent: Message) =
+  protected def processClaim(cnxn: AgentCnxn, data: Data, verifyRequest: VerifyRequest, parent: Message) =
   {
     report("entering processClaim in VerifierPlatformAgent", Severity.Trace)
     data match {
@@ -124,7 +124,7 @@ trait VerifierResponseSet
     fetch[ Data ](_dbQ, cnxn, search.toSearchKey, handleFetchClaimContent(_: AgentCnxn, _: Data, getClaimResponse))
   }
 
-  private def getSearch(className: String) =
+  protected def getSearch(className: String) =
   {
     //    val claimClass = Class.forName(getClaimResponse.claimObject.toCamelCase)
     //    TODO: figure out how to create the search generically

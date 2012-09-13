@@ -17,7 +17,7 @@ trait LoginResponseSetPrivate {
     listen(_privateQ, cnxn, Channel.Security, ChannelType.Response, ChannelLevel.Private, handleSecurityResponseChannel(_: AgentCnxn, _: Message))
   }
 
-  private def handleSecurityResponseChannel( cnxn: AgentCnxn, msg: Message) =
+  protected def handleSecurityResponseChannel( cnxn: AgentCnxn, msg: Message) =
   {
     report("entering handleSecurityResponse for connection:" + cnxn.toString, Severity.Trace)
 

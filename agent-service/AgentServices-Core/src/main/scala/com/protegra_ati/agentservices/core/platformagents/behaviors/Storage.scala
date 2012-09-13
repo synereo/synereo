@@ -48,7 +48,7 @@ trait Storage
     }
   }
 
-  private def processDeleteConnection(cnxn: AgentCnxn, connection: Connection) =
+  protected def processDeleteConnection(cnxn: AgentCnxn, connection: Connection) =
   {
     //delete connection in target connection list
     delete(_dbQ, cnxn, connection.toStoreKey)
@@ -59,20 +59,20 @@ trait Storage
     //don't drop the read cnxn collection - the other party in the connection will do that.
   }
 
-  private def processDeleteDataForSelf(cnxn: AgentCnxn, dataToDelete: Data) =
+  protected def processDeleteDataForSelf(cnxn: AgentCnxn, dataToDelete: Data) =
   {
     delete(_dbQ, cnxn, dataToDelete.toStoreKey)
 
     deleteDataForAllConnections(cnxn, dataToDelete)
   }
 
-  private def deleteDataForAllConnections(cnxn: AgentCnxn, dataToDelete: Data) =
+  protected def deleteDataForAllConnections(cnxn: AgentCnxn, dataToDelete: Data) =
   {
     val search = new Connection()
     fetch[ Connection ](_dbQ, cnxn, search.toSearchKey, handleDeleteDataByConnectionFetch(_: AgentCnxn, _: Connection, dataToDelete))
   }
 
-  private def handleDeleteDataByConnectionFetch(cnxn: AgentCnxn, conn: Connection, dataToDelete: Data) =
+  protected def handleDeleteDataByConnectionFetch(cnxn: AgentCnxn, conn: Connection, dataToDelete: Data) =
   {
     delete(_dbQ, conn.writeCnxn, dataToDelete.toStoreKey)
   }
@@ -108,13 +108,13 @@ trait Storage
   }
 
   //could use a notion of retries if it isn't safe to delete
-  private def handleDeleteAfterFetch(cnxn: AgentCnxn, dataToDelete: List[ Data ], newData: Option[ Data ])
+  protected def handleDeleteAfterFetch(cnxn: AgentCnxn, dataToDelete: List[ Data ], newData: Option[ Data ])
   {
     dataToDelete.map(x => safeDelete(cnxn, x, newData))
   }
 
   //exception to the convention of newData, oldData
-  private def safeDelete(cnxn: AgentCnxn, dataToDelete: Data, dataToPreserve: Option[ Data ]) =
+  protected def safeDelete(cnxn: AgentCnxn, dataToDelete: Data, dataToPreserve: Option[ Data ]) =
   {
     if ( dataToDelete != null ) {
 

@@ -18,10 +18,10 @@ trait VerifierRequestSet {
   self:AgentHostStorePlatformAgent =>
 
   def listenPublicVerifierRequest(cnxn: AgentCnxn) = {
-    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Request, ChannelLevel.Public, handleVerifyChannel(_:AgentCnxn, _:Message))
+    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Request, ChannelLevel.Public, handleVerifyRequestChannel(_:AgentCnxn, _:Message))
   }
 
-  private def handleVerifyChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handleVerifyRequestChannel(cnxn: AgentCnxn, msg: Message) =
   {
     report("entering handleVerifyChannel in VerifierPlatformAgent", Severity.Trace)
 //    if (!_processedMessages.contains(msg.ids.id )) {
@@ -49,7 +49,7 @@ trait VerifierRequestSet {
     report("exiting handleVerifyChannel in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def processGetClaimRequest(request: GetClaimRequest) =
+  protected def processGetClaimRequest(request: GetClaimRequest) =
   {
     report("entering processGetClaimRequest in StorePlatform", Severity.Trace)
 
@@ -66,7 +66,7 @@ trait VerifierRequestSet {
     report("exiting processGetClaimRequest in StorePlatform", Severity.Trace)
   }
 
-  private def fetchVerifierConnection(msg:VerifyRequest) = {
+  protected def fetchVerifierConnection(msg:VerifyRequest) = {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     _verifyRequests.put(msg.ids.conversationId , msg)
     val search = new SystemData[Connection]( new Connection())
@@ -74,14 +74,14 @@ trait VerifierRequestSet {
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def fetchClaimingAgentConnection(cnxn:AgentCnxn, systemConnection:SystemData[Connection], verifyRequest:VerifyRequest) {
+  protected def fetchClaimingAgentConnection(cnxn:AgentCnxn, systemConnection:SystemData[Connection], verifyRequest:VerifyRequest) {
     report("entering fetchClaimingAgentConnection in VerifierPlatformAgent", Severity.Trace)
     val search = new AliasConnection(verifyRequest.alias, "")
     fetch(_dbQ, systemConnection.data.readCnxn, search.toSearchKey, fetchConnection(_:AgentCnxn, _:Data, verifyRequest, systemConnection.data.readCnxn))
     report("exiting fetchClaimingAgentConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def fetchConnection(cnxn:AgentCnxn, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxn) = {
+  protected def fetchConnection(cnxn:AgentCnxn, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxn) = {
     report("entering fetchConnection in VerifierPlatformAgent", Severity.Trace)
 
     data match {
@@ -99,7 +99,7 @@ trait VerifierRequestSet {
     report("exiting fetchConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def requestVerifyPermission(cnxn:AgentCnxn, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxn) {
+  protected def requestVerifyPermission(cnxn:AgentCnxn, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxn) {
     report("entering requestVerifyPermission in VerifierPlatformAgent", Severity.Trace)
 
     data match {
@@ -118,7 +118,7 @@ trait VerifierRequestSet {
    report("exiting requestVerifyPermission in VerifierPlatformAgent", Severity.Trace)
   }
 
-  private def processVerifyPermissionRequest(cnxn: AgentCnxn, request: VerifyPermissionRequest) =
+  protected def processVerifyPermissionRequest(cnxn: AgentCnxn, request: VerifyPermissionRequest) =
   {
     report("entering processVerifyPermissionRequest in StorePlatform", Severity.Trace)
 
@@ -129,7 +129,7 @@ trait VerifierRequestSet {
     report("exiting processVerifyPermissionRequest in StorePlatform", Severity.Trace)
   }
 
-  private def handleContentVerifierFetch(targetCnxn: AgentCnxn, data: ContentVerifier, request: VerifyPermissionRequest, cnxn: AgentCnxn) =
+  protected def handleContentVerifierFetch(targetCnxn: AgentCnxn, data: ContentVerifier, request: VerifyPermissionRequest, cnxn: AgentCnxn) =
   {
     report("entering handleContentVerifierFetch in StorePlatform", Severity.Trace)
 
@@ -156,7 +156,7 @@ trait VerifierRequestSet {
     report("exiting handleContentVerifierFetch in StorePlatform", Severity.Trace)
   }
 
-  private def processVerifyContentRequest(request: VerifyContentRequest) =
+  protected def processVerifyContentRequest(request: VerifyContentRequest) =
   {
     report("entering processVerifyContentRequest", Severity.Trace)
 

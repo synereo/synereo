@@ -364,7 +364,7 @@ abstract class BasePlatformAgent
      recursiveFetch(queue, cnxn, keyList, Nil, handler)
   }
 
-  private def recursiveFetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, remainKeyList: List[ String ], intermediateResults: List[ T ], finalHandler: (AgentCnxn, List[ T ]) => Unit): Unit =
+  protected def recursiveFetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, remainKeyList: List[ String ], intermediateResults: List[ T ], finalHandler: (AgentCnxn, List[ T ]) => Unit): Unit =
   {
     val lbl = remainKeyList.head.toLabel
     reset {

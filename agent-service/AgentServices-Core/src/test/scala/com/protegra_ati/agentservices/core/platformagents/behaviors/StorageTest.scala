@@ -42,9 +42,9 @@ with SpecsPAHelpers
 
   //val pa = new AgentHostStorePlatformAgent()
 
-  val authorizedContentEmpty = MockProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
-  val authorizedContentBasic = MockProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
-  val authorizedContentFull = MockProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+  val authorizedContentEmpty = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
+  val authorizedContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
+  val authorizedContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
 
   //  def createPA: AgentHostStorePlatformAgent =
   //  {
@@ -67,9 +67,9 @@ with SpecsPAHelpers
 
   "updateData" should {
 
-    val MockProfileId = UUID.randomUUID
-    val mockProfile = new MockProfile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
-    val basicMockProfile = new MockProfile("FirstName", "LastName", "", "", "", "", "", "", "")
+    val ProfileId = UUID.randomUUID
+    val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+    val basicProfile = new Profile("FirstName", "LastName", "", "", "", "", "", "", "")
 
     val JenId = ( "Jen" + UUID.randomUUID )
     val SteveId = ( "Steve" + UUID.randomUUID )
@@ -77,12 +77,12 @@ with SpecsPAHelpers
     val connSteve = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Basic", JenId, SteveId)
 
     "insert new data" in {
-      var oldData: MockProfile = null
+      var oldData: Profile = null
       pa.updateData(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields), oldData)
-      val MockProfileSearch: MockProfile = new MockProfile()
+      val ProfileSearch: Profile = new Profile()
 
-      fetchMustBe(basicMockProfile)(pa, connSteve.writeCnxn, MockProfileSearch.toSearchKey)
-      countMustBe(1)(pa, connSteve.writeCnxn, MockProfileSearch.toSearchKey)
+      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, ProfileSearch.toSearchKey)
+      countMustBe(1)(pa, connSteve.writeCnxn, ProfileSearch.toSearchKey)
     }
 
     "delete and insert existing data" in {
@@ -90,10 +90,10 @@ with SpecsPAHelpers
       pa.store(pa._dbQ, connSteve.writeCnxn, data.toStoreKey, Serializer.serialize[ Data ](data))
       Thread.sleep(TIMEOUT_MED)
       pa.updateData(connSteve.writeCnxn, data, data)
-      val MockProfileSearch: MockProfile = new MockProfile()
+      val ProfileSearch: Profile = new Profile()
 
-      fetchMustBe(basicMockProfile)(pa, connSteve.writeCnxn, MockProfileSearch.toSearchKey)
-      countMustBe(1)(pa, connSteve.writeCnxn, MockProfileSearch.toSearchKey)
+      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, ProfileSearch.toSearchKey)
+      countMustBe(1)(pa, connSteve.writeCnxn, ProfileSearch.toSearchKey)
     }
   }
 }

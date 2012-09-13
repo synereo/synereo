@@ -247,7 +247,7 @@ trait ContentRequestSet
     fetch[ Data ](_dbQ, selfCnxn, contentSearch.toSearchKey, handleSetContentForAllConnectionsAndTargetSelfFetch(_: AgentCnxn, _: Data, parentRequestIds, parentRequestEventKey, newData, oldData))
   }
 
-  private def handleSetContentForAllConnectionsAndTargetSelfFetch(cnxn: AgentCnxn, disclosedData: Data, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
+  protected def handleSetContentForAllConnectionsAndTargetSelfFetch(cnxn: AgentCnxn, disclosedData: Data, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
   {
     report("entering handleSetContentForAllConnectionsFetch in StorePlatform", Severity.Trace)
 
@@ -264,7 +264,7 @@ trait ContentRequestSet
   }
 
 
-  private def handleSetContentForAllConnectionsFetch(cnxn: AgentCnxn, disclosedData: Data, newData: Data, oldData: Data)
+  protected def handleSetContentForAllConnectionsFetch(cnxn: AgentCnxn, disclosedData: Data, newData: Data, oldData: Data)
   {
     report("entering handleSetContentForAllConnectionsFetch in StorePlatform", Severity.Trace)
 
@@ -472,14 +472,14 @@ trait ContentRequestSet
     }
   }
 
-  private def processSetContentAuthorizationRequest(msg: SetContentAuthorizationRequest)
+  protected def processSetContentAuthorizationRequest(msg: SetContentAuthorizationRequest)
   {
     val search = new AuthorizationRequest()
     search.setId(msg.authorizationReqForConnection.data.id.toString)
     fetch[ AuthorizationRequest ](_dbQ, msg.targetCnxn, search.toSearchKey, handleSetContentAuthorizationRequestFetch(_: AgentCnxn, _: AuthorizationRequest, msg))
   }
 
-  private def handleSetContentAuthorizationRequestFetch(cnxn: AgentCnxn, request: AuthorizationRequest, msg: SetContentAuthorizationRequest)
+  protected def handleSetContentAuthorizationRequestFetch(cnxn: AgentCnxn, request: AuthorizationRequest, msg: SetContentAuthorizationRequest)
   {
     report("entering handleSetContentAuthorizationRequestFetch in StorePlatform", Severity.Trace)
     delete(_dbQ, msg.targetCnxn, request.toStoreKey)
@@ -493,7 +493,7 @@ trait ContentRequestSet
     report("exiting handleSetContentAuthorizationRequestFetch in StorePlatform", Severity.Trace)
   }
 
-  private def authorizeRequest(msg: GetContentRequest, manuallyApproved: Boolean)
+  protected def authorizeRequest(msg: GetContentRequest, manuallyApproved: Boolean)
   {
     val auditSearchItem = new AuthorizedContentAuditItem() // msg.queryObject)
     // TODO bug is here possible
@@ -501,7 +501,7 @@ trait ContentRequestSet
     fetch[ AuthorizedContentAuditItem ](_dbQ, msg.targetCnxn, auditSearchItem.toSearchKey, handleAuthorizeRequestAuthorizedContentAuditItem(_: AgentCnxn, _: AuthorizedContentAuditItem, msg, manuallyApproved))
   }
 
-  private def handleAuthorizeRequestAuthorizedContentAuditItem(cnxn: AgentCnxn, authorizedContentItemInstance: AuthorizedContentAuditItem, msg: GetContentRequest, manuallyApproved: Boolean)
+  protected def handleAuthorizeRequestAuthorizedContentAuditItem(cnxn: AgentCnxn, authorizedContentItemInstance: AuthorizedContentAuditItem, msg: GetContentRequest, manuallyApproved: Boolean)
   {
     report("entering handleAuthorizeRequestAuthorizedContentAuditItem in StorePlatform", Severity.Trace)
     if ( !manuallyApproved )
@@ -519,7 +519,7 @@ trait ContentRequestSet
 
   }
 
-  private def persistAuthorizationRequest(msg: GetContentRequest)
+  protected def persistAuthorizationRequest(msg: GetContentRequest)
   {
     val objectName = msg.queryObject.className.trimPackage.fromCamelCase
     val authReq = new AuthorizationRequest(objectName, msg, new DateTime(), "false")
@@ -543,7 +543,7 @@ trait ContentRequestSet
     report("exiting entering in StorePlatform", Severity.Trace)
   }
 
-  private def processSetContentPersistedRequest(msg: SetContentPersistedRequest) =
+  protected def processSetContentPersistedRequest(msg: SetContentPersistedRequest) =
   {
     val search = new PersistedRequest()
     search.id = ( msg.persistedRequestData.data.id )
@@ -551,7 +551,7 @@ trait ContentRequestSet
 
   }
 
-  private def handleSetContentPersistedRequestFetch(cnxn: AgentCnxn, request: PersistedRequest, msg: SetContentPersistedRequest)
+  protected def handleSetContentPersistedRequestFetch(cnxn: AgentCnxn, request: PersistedRequest, msg: SetContentPersistedRequest)
   {
     report("entering handleSetContentPersistedRequestFetch in StorePlatform", Severity.Trace)
     delete(_dbQ, msg.targetCnxn, request.toStoreKey)
@@ -564,7 +564,7 @@ trait ContentRequestSet
     report("exiting handleSetContentPersistedRequestFetch in StorePlatform", Severity.Trace)
   }
 
-  private def lookupConnection[ T <: Data ](queryObject: T, connection: Connection): AgentCnxn =
+  protected def lookupConnection[ T <: Data ](queryObject: T, connection: Connection): AgentCnxn =
   {
     //auditlog item is inverse of normal lookup because reading a connection causes data to be written on the read side
     queryObject match {
@@ -578,7 +578,7 @@ trait ContentRequestSet
     }
   }
 
-  private def processSelfContentRequest(cnxnA_Broker: AgentCnxn, setSelfContentRequest: SetSelfContentRequest) =
+  protected def processSelfContentRequest(cnxnA_Broker: AgentCnxn, setSelfContentRequest: SetSelfContentRequest) =
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
@@ -587,7 +587,7 @@ trait ContentRequestSet
   }
 
 
-  private def handleSystemDataLookupSelfContentRequest(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], setSelfContentRequest: SetSelfContentRequest): Unit =
+  protected def handleSystemDataLookupSelfContentRequest(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], setSelfContentRequest: SetSelfContentRequest): Unit =
   {
 
     //save conn on self cnxn, send back response

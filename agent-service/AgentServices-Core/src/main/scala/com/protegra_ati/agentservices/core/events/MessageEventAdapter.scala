@@ -6,6 +6,7 @@
 package com.protegra_ati.agentservices.core.events
 
 //strictly for java api compatibility, using the trait directly is compiled as interface
-case class MessageEventAdapter(eventTag:String) extends MessageEventListener {
+class MessageEventAdapter(_eventTag:String) extends MessageEventListener {
   def this() = this("")
+  var eventTag: String = _eventTag
 }

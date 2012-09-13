@@ -17,7 +17,7 @@ trait LoginRequestSet {
     listen(_publicQ, cnxn, Channel.Security, ChannelType.Request, ChannelLevel.Public, handlePublicSecurityRequestChannel(_: AgentCnxn, _: Message))
   }
 
-  private def handlePublicSecurityRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicSecurityRequestChannel(cnxn: AgentCnxn, msg: Message) =
   {
     report("entering handlePrivateSecurityRequestChannel in StorePlatform", Severity.Trace)
     msg match {
@@ -32,7 +32,7 @@ trait LoginRequestSet {
 
   }
 
-  private def processSetLoginRequest(msg: SetLoginRequest)
+  protected def processSetLoginRequest(msg: SetLoginRequest)
   {
     val loginToken = msg.loginToken
     //for each connection in the user's data silo, clear out any existing token and save the new login token
@@ -46,7 +46,7 @@ trait LoginRequestSet {
     send(_publicQ, msg.originCnxn, response)
   }
 
-  private def handleSetLoginByConnectionFetch(cnxn: AgentCnxn, userConnection: Connection, token: LoginToken)
+  protected def handleSetLoginByConnectionFetch(cnxn: AgentCnxn, userConnection: Connection, token: LoginToken)
   {
     updateDataBySearch(userConnection.writeCnxn, new LoginToken (), token)
   }

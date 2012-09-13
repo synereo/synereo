@@ -21,7 +21,7 @@ trait InvitationRequestSetPrivate {
   }
 
   //overriding listen for hosted connections and putting broker listen logic in
-  private def handlePrivateInvitationRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePrivateInvitationRequestChannel(cnxn: AgentCnxn, msg: Message) =
   {
     report("entering handlePrivateInvitationRequestChannel in ConnectionBroker", Severity.Trace)
 

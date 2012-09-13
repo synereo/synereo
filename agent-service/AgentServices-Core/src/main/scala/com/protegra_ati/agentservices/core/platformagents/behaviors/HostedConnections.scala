@@ -22,7 +22,7 @@ trait HostedConnections
     fetch[ Connection ](_dbQ, _storeCnxn, userCnxns.toSearchKey, handleUserCnxnsFetchOnStartup(_: AgentCnxn, _: Connection))
   }
 
-  private def handleUserCnxnsFetchOnStartup(storeCnxn: AgentCnxn, userConnection: Connection)
+  protected def handleUserCnxnsFetchOnStartup(storeCnxn: AgentCnxn, userConnection: Connection)
   {
     _cnxnUserSelfConnectionsList = List[ AgentCnxn ](userConnection.writeCnxn) ::: _cnxnUserSelfConnectionsList
   }
@@ -57,7 +57,7 @@ trait HostedConnections
   // If Jen is on PA
   // on publicQ listen for all requests on JenMike
   // on publicQ listen for all responses on MikeJen
-  private def handleUserConnectionPostFetch(cnxn: AgentCnxn, userConnection: Connection) =
+  protected def handleUserConnectionPostFetch(cnxn: AgentCnxn, userConnection: Connection) =
   {
     listenPublicRequests(userConnection.writeCnxn)
     listenPublicResponses(userConnection.readCnxn)

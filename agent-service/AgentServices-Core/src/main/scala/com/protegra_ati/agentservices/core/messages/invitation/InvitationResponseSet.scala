@@ -23,7 +23,7 @@ trait InvitationResponseSet
   }
 
 
-  private def handlePublicInvitationCreatorResponseChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicInvitationCreatorResponseChannel(cnxn: AgentCnxn, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -40,7 +40,7 @@ trait InvitationResponseSet
     report("exiting handlePublicInvitationCreatorResponseChannel in ConnectionBroker", Severity.Trace)
   }
 
-  private def processReferralResponse(cnxnBroker_Broker: AgentCnxn, referralResponse: ReferralResponse): Unit =
+  protected def processReferralResponse(cnxnBroker_Broker: AgentCnxn, referralResponse: ReferralResponse): Unit =
   {
     val query = new Connection()
     fetchList[ Connection ](_dbQ, cnxnBroker_Broker, query.toSearchKey, findConnections(_: AgentCnxn, _: List[ Connection ], referralResponse))
@@ -52,7 +52,7 @@ trait InvitationResponseSet
    * @param connsBroker
    * @param referralResponse
    */
-  private def findConnections(cnxnBroker_Broker: AgentCnxn, connsBroker: List[ Connection ], referralResponse: ReferralResponse) =
+  protected def findConnections(cnxnBroker_Broker: AgentCnxn, connsBroker: List[ Connection ], referralResponse: ReferralResponse) =
   {
     val createInviteRequest = referralResponse.source
     val refereePostToTarget = referralResponse.postToTarget
@@ -83,7 +83,7 @@ trait InvitationResponseSet
   }
 
   // search for ALL persisted Requests instead of just specified one ????
-  private def findReferralRequestToArchive(cnxnBroker_Broker: AgentCnxn, referralResponse: ReferralResponse) =
+  protected def findReferralRequestToArchive(cnxnBroker_Broker: AgentCnxn, referralResponse: ReferralResponse) =
   {
     //TODO: fix toSearchKey to work with the nested id, for now pull back everything
     val query = new PersistedMessage[ ReferralRequest ]()

@@ -56,7 +56,7 @@ trait ConnectionBroker
   //
   //  }
   //
-  //  private def generateIntroduction(targetAlias: String, brokerCnxn:AgentCnxn) = {
+  //  protected def generateIntroduction(targetAlias: String, brokerCnxn:AgentCnxn) = {
   //    val oldData: Connection = null
   //    val intro = new Introduction(UUID.randomUUID(), targetAlias, )
   //    updateData(connection.writeCnxn, intro, oldData)

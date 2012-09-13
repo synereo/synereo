@@ -15,7 +15,7 @@ trait LoginRequestSetPrivate {
     listen(_privateQ, _cnxnUIStore, Channel.Security, ChannelType.Request, ChannelLevel.Private, handlePrivateSecurityRequestChannel(_: AgentCnxn, _: Message))
   }
 
-  private def handlePrivateSecurityRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePrivateSecurityRequestChannel(cnxn: AgentCnxn, msg: Message) =
   {
     //just putting it on the publicQ
     //see the comment in  handlePublicContentResponseChannel(cnxn: AgentCnxn, msg: Message)
