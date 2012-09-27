@@ -24,7 +24,7 @@ class EventKeySerializer() extends Serializer[ EventKey ]
       kryo.writeObject(output, EventKeySerializer.NULL)
     else {
       kryo.writeObject(output, EventKeySerializer.NOT_NULL)
-      System.err.println("KRYO EventKeySerializer in USE! TO WRITE" + obj)
+     // System.err.println("KRYO EventKeySerializer in USE! TO WRITE" + obj)
       kryo.writeObjectOrNull(output, obj.agentSessionId, classOf[ java.util.UUID ])
       kryo.writeObjectOrNull(output, obj.eventTag, classOf[ String ])
     }
@@ -32,17 +32,17 @@ class EventKeySerializer() extends Serializer[ EventKey ]
 
   override def read(kryo: Kryo, input: Input, typ: Class[ EventKey ]): EventKey =
   {
-    System.err.println("KRYO EventKeySerializer in USE! READ")
+    //System.err.println("KRYO EventKeySerializer in USE! READ")
     val label: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( label == EventKeySerializer.NULL ) {
-      System.err.println("EventKey IS NULL")
+    //  System.err.println("EventKey IS NULL")
       return null
     }
-    System.err.println("EventKey NOT NULL")
+    //System.err.println("EventKey NOT NULL")
     val agentSessionId = kryo.readObjectOrNull(input, classOf[ java.util.UUID ])
     // TODO eventuell nullcheck for UUID
     val eventTag = kryo.readObjectOrNull(input, classOf[ String ])
-    System.err.println("KRYO EventKeySerializer deserialized =" + eventTag + ", sesID:" + agentSessionId)
+    //System.err.println("KRYO EventKeySerializer deserialized =" + eventTag + ", sesID:" + agentSessionId)
     return new EventKey(agentSessionId, eventTag)
   }
 

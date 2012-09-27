@@ -26,6 +26,7 @@ import java.util.UUID;
  */
 public final class KryoSerializer extends AbstractToStringSerializer
 {
+ // TODO eventually logging has to be restored
     private final StackObjectPool pool;
     private final ReportingImpl4Java logger;
     private static final String HEADER_4_STRING_SERIALIZATION = "KryoSerializer_";
@@ -64,18 +65,19 @@ public final class KryoSerializer extends AbstractToStringSerializer
         try {
             try {
                 serializer = (Kryo) pool.borrowObject();
+
             } catch ( Exception e ) {
-                logger.report( "can't borrow serializer from a pool" + e.getMessage(), Severity.Error() );
+                //   logger.report( "can't borrow serializer from a pool" + e.getMessage(), Severity.Error() );
             }
             serializer.writeClassAndObject( buffer, toBeSerialized );
 
 
         } catch ( Exception e ) {
             e.printStackTrace();
-            logger.report( "object " + toBeSerialized + "  can't be serialized:" + e.getMessage(), Severity.Error() );
+            // logger.report( "object " + toBeSerialized + "  can't be serialized:" + e.getMessage(), Severity.Error() );
         } catch ( Error er ) {
             er.printStackTrace();
-            logger.report( "object " + toBeSerialized + "  can't be serialized:" + er.getMessage(), Severity.Error() );
+            //  logger.report( "object " + toBeSerialized + "  can't be serialized:" + er.getMessage(), Severity.Error() );
         } finally {
 
             if ( buffer != null ) {
@@ -84,7 +86,7 @@ public final class KryoSerializer extends AbstractToStringSerializer
                     buffer.clear();
                     buffer.close();
                 } catch ( Exception e ) {
-                    logger.report( "buffer can't be closed:" + e.getMessage(), Severity.Warning() );
+                    //   logger.report( "buffer can't be closed:" + e.getMessage(), Severity.Warning() );
                 }
             }
 
@@ -92,7 +94,7 @@ public final class KryoSerializer extends AbstractToStringSerializer
                 try {
                     pool.returnObject( serializer );
                 } catch ( Exception e ) {
-                    logger.report( "can't return serializer back to the pool:" + e.getMessage(), Severity.Warning() );
+                    //  logger.report( "can't return serializer back to the pool:" + e.getMessage(), Severity.Warning() );
                 }
             }
         }
@@ -107,8 +109,8 @@ public final class KryoSerializer extends AbstractToStringSerializer
     protected String serializeRaw( Object objToBeSerialized )
     {
         String uid5CharLong = UUID.randomUUID().toString().substring( 0, 5 );
-        System.err.println( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized );
-
+        //System.err.println( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized );
+        // logger.report( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized, Severity.Warning() );
         BufferedOutputStream oos = null;
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         //try {
@@ -143,7 +145,7 @@ public final class KryoSerializer extends AbstractToStringSerializer
             try {
                 serializer = (Kryo) pool.borrowObject();
             } catch ( Exception e ) {
-                logger.report( "ERROR: can't borrow serializer from a pool" + e.getMessage(), Severity.Error() );
+                //     logger.report( "ERROR: can't borrow serializer from a pool" + e.getMessage(), Severity.Error() );
             }
             final Input buffer = new Input( fromInputStream, 5000 );
             data = serializer.readClassAndObject( buffer );
@@ -152,16 +154,16 @@ public final class KryoSerializer extends AbstractToStringSerializer
             return (T) data;
         } catch ( Exception e ) {
             e.printStackTrace();
-            logger.report( "ERROR: object " + data + " can't be deserialized:" + e.getMessage(), Severity.Error() );
+            //    logger.report( "ERROR: object " + data + " can't be deserialized:" + e.getMessage(), Severity.Error() );
         } catch ( Error er ) {
             er.printStackTrace();
-            logger.report( "ERROR: object " + data + " can't be deserialized:" + er.getMessage(), Severity.Error() );
+            //   logger.report( "ERROR: object " + data + " can't be deserialized:" + er.getMessage(), Severity.Error() );
         } finally {
             if ( fromInputStream != null ) {
                 try {
                     fromInputStream.close();
                 } catch ( IOException e ) {
-                    logger.report( "buffer can't be closed:" + e.getMessage(), Severity.Warning() );
+                    //  logger.report( "buffer can't be closed:" + e.getMessage(), Severity.Warning() );
                 }
             }
 
@@ -169,7 +171,7 @@ public final class KryoSerializer extends AbstractToStringSerializer
                 try {
                     pool.returnObject( serializer );
                 } catch ( Exception e ) {
-                    logger.report( "can't return serializer back to the pool:" + e.getMessage(), Severity.Warning() );
+                    //   logger.report( "can't return serializer back to the pool:" + e.getMessage(), Severity.Warning() );
                 }
             }
         }
@@ -181,16 +183,19 @@ public final class KryoSerializer extends AbstractToStringSerializer
     {
         try {
             String uid = source.substring( 0, 5 );
-            System.err.println( "#####-deserialize KRYO-- UID:" + uid  );
+            //System.err.println( "#####-deserialize KRYO-- UID:" + uid );
+            //   logger.report( "#####-deserialize KRYO-- UID:" + uid, Severity.Warning() );
+
             final byte[] byteArrayMsg = Base64.decode( source.substring( 5, source.length() ) );
             final InputStream ois = new BufferedInputStream( new ByteArrayInputStream( byteArrayMsg ) );
             final T obj = deserialize( ois ); // closes the stream
-            System.err.println( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj );
+            //System.err.println( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj );
+            // logger.report( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj, Severity.Warning() );
             return obj;
         } catch ( Base64.DecodingException e ) {
-            logger.report( "ERROR: object can't be deserialized due to base64 decoding problem:" + e.getMessage(), Severity.Error() );
+            //   logger.report( "ERROR: object can't be deserialized due to base64 decoding problem:" + e.getMessage(), Severity.Error() );
         } catch ( Exception e ) {
-            logger.report( "object can't be deserialized:" + e.getMessage(), Severity.Error() );
+            //   logger.report( "object can't be deserialized:" + e.getMessage(), Severity.Error() );
         }
         return (T) null;
     }
@@ -200,8 +205,9 @@ public final class KryoSerializer extends AbstractToStringSerializer
         long bytesInAKilobyte = 1024;
         long maxBytes = 100 * bytesInAKilobyte;
         //each char roughly 1 byte
-        if ( encodedMsg.length() > maxBytes )
-            logger.report( "serialized message is more than " + maxBytes / bytesInAKilobyte + " KB for obj " + obj.toString(), Severity.Warning() );
+        if ( encodedMsg.length() > maxBytes ) {
+            //   logger.report( "serialized message is more than " + maxBytes / bytesInAKilobyte + " KB for obj " + obj.toString(), Severity.Warning() );
+        }
     }
 
 }
@@ -249,8 +255,7 @@ class SerializerPoolableFactory extends BasePoolableObjectFactory
         jConversionSer.setElementsCanBeNull( true );
         _kryo.register( JavaConversionsSeqWrapperSerializer.FITS_TO(), jConversionSer, 1014 );
         _kryo.register( NilSerializer.FITS_TO(), new NilSerializer(), 10015 );
-
-
+        _kryo.setAutoReset( true );
 
         // TODO load from config
         return _kryo;

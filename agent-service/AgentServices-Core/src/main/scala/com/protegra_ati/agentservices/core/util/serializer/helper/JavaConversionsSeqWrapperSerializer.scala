@@ -63,15 +63,15 @@ class JavaConversionsSeqWrapperSerializer() extends Serializer[ SeqWrapper[ Any 
 
   override def read(kryo: Kryo, input: Input, typ: Class[ SeqWrapper[ Any ] ]): SeqWrapper[ Any ] =
   {
-    System.err.println("READ JavaConversionsSeqWrapperSerializer")
-    System.err.println("READ START")
+    //System.err.println("READ JavaConversionsSeqWrapperSerializer")
+   // System.err.println("READ START")
     val l: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( l == JavaConversionsSeqWrapperSerializer.NULL ) return null
 
     val len = if ( length != 0 ) length else input.readInt(true)
     // val inst = kryo.newInstance(typ)
     var coll: List[ Any ] = Nil
-    System.err.println("READ COLL SIZE:" + len)
+    //System.err.println("READ COLL SIZE:" + len)
     //val coll = inst.asInstanceOf[ SeqWrapper[ Any ] ].genericBuilder[ Any ]
     //inst.asInstanceOf[ Traversable[ Any ] ].genericBuilder[ Any ]
     if ( len != 0 ) {
@@ -110,13 +110,13 @@ class JavaConversionsSeqWrapperSerializer() extends Serializer[ SeqWrapper[ Any 
   override def write(kryo: Kryo, output: Output, obj: SeqWrapper[ Any ]) =
   {
 
-    System.err.println("WRITE JavaConversionsSeqWrapperSerializer")
+   // System.err.println("WRITE JavaConversionsSeqWrapperSerializer")
     //System.err.println("WRITE START")
     if ( obj == null ) {
       kryo.writeObject(output, JavaConversionsSeqWrapperSerializer.NULL)
     }
     else {
-      if ( obj == Nil ) System.err.println("-----------------NILLLLLLLLLLLLLLLLLLLLLLLLLLLLLL")
+     // if ( obj == Nil ) System.err.println("Nil Object to be serialized")
       kryo.writeObject(output, JavaConversionsSeqWrapperSerializer.NOT_NULL)
       val collection: Traversable[ Any ] = obj
       val len = if ( length != 0 ) length

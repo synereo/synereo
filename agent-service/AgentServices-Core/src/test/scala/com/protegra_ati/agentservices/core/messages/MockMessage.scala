@@ -9,9 +9,10 @@ import java.lang.reflect._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.schema.KVDBSerializable
+import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
- class MockMessage(@BeanProperty val ids: Identification, @BeanProperty val eventKey: MockEventKey, @BeanProperty val eventKey2: MockEventKey) extends Serializable with
-KVDBSerializable
+class MockMessage(@BeanProperty val ids: Identification, @BeanProperty val eventKey: MockEventKey, @BeanProperty val eventKey2: MockEventKey) extends Serializable with
+KVDBSerializable  with UseKryoSerialization
 {
   //using null instead of none for java interop
   //  def this(ids: Identification) = this (ids, null)

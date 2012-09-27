@@ -15,6 +15,7 @@ import java.net.URI
 import java.util.UUID
 import com.biosimilarity.lift.lib.UUIDOps
 import com.biosimilarity.lift.model.store.Cnxn
+import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 
 object credentialVendor extends UUIDOps with Serializable
@@ -24,7 +25,7 @@ case class MockAgentCnxn(
   override val label: String,
   override val trgt: URI //,
   //val credential: UUID
-  ) extends Cnxn[ URI, String, URI ]
+  ) extends Cnxn[ URI, String, URI ] with UseKryoSerialization
 {
   def this() = this(null, null, null) //, credentialVendor.getUUID)
 

@@ -24,7 +24,7 @@ class AgentCnxnSerializer() extends Serializer[ AgentCnxn ]
       kryo.writeObject(output, AgentCnxnSerializer.NULL)
     }
     else {
-      System.err.println("KRYO AGENT_CNXN WRITE.... ")
+     // System.err.println("KRYO AGENT_CNXN WRITE.... ")
       kryo.writeObject(output, AgentCnxnSerializer.NOT_NULL)
       kryo.writeObject(output, ( if ( obj.src != null ) {obj.src.toString} else {"NULL"} ))
       kryo.writeObject(output, ( if ( obj.trgt != null ) obj.trgt.toString else "NULL" ))
@@ -40,7 +40,7 @@ class AgentCnxnSerializer() extends Serializer[ AgentCnxn ]
 
   override def read(kryo: Kryo, input: Input, typ: Class[ AgentCnxn ]): AgentCnxn =
   {
-    System.err.println("KRYO AGENT_CNXN READ.... ")
+   // System.err.println("KRYO AGENT_CNXN READ.... ")
     val l: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( l == AgentCnxnSerializer.NULL ) return null
 

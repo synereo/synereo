@@ -21,17 +21,17 @@ class MockEventKeySerializer() extends Serializer[ MockEventKey ]
   override def write(kryo: Kryo, output: Output, obj: MockEventKey): Unit =
   {
     //  ## error here somewhere
-    System.err.println("KRYO  MockEventKeySerializer in USE! WRITE")
+    //System.err.println("KRYO  MockEventKeySerializer in USE! WRITE")
     kryo.writeObject(output, obj.agentSessionId)
     kryo.writeObject(output, obj.eventTag)
   }
 
   override def read(kryo: Kryo, input: Input, typ: Class[ MockEventKey ]): MockEventKey =
   {
-    System.err.println("KRYO  MockEventKeySerializer in USE! READ")
+    //System.err.println("KRYO  MockEventKeySerializer in USE! READ")
     val agentSessionId = kryo.readObject(input, classOf[ UUID ])
     val eventTag = kryo.readObject(input, classOf[ String ])
-    System.err.println("MockEventKeySerializer read:=" + eventTag + ", sesID:" + agentSessionId)
+   // System.err.println("MockEventKeySerializer read:=" + eventTag + ", sesID:" + agentSessionId)
     return new MockEventKey(agentSessionId, eventTag)
   }
 

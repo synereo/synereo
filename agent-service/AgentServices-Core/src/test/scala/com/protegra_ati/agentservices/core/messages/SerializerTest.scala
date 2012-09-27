@@ -92,7 +92,7 @@ Timeouts
     }
 
     "serialize and deserialize SystemData with Connection" in {
-      // skip("")
+      //skip("")
       val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
 
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
@@ -114,7 +114,6 @@ Timeouts
 
     "deserialize mock Data " in {
       val data = new MockConnection()
-
       val serializedData = Serializer.serialize[ Data ](data)
       val deserializedData = Serializer.deserialize[ Data ](serializedData)
 
@@ -226,7 +225,7 @@ Timeouts
 
 
     "deserialize persisted InvitationRequest" in {
-      //  skip("")
+      // skip("")
 
       val inviteRequest = new InvitationRequest(new Identification(), new EventKey(UUID.randomUUID(), "tydegfrtew"),
         "IntroID", None, Some("Basic"), Some("Test Connection"), new Post() :: Nil)
@@ -253,7 +252,7 @@ Timeouts
 
 
     "deserialize persisted ReferralRequest" in {
-      //  skip("")
+      // skip("")
 
       val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
       val req = new ReferralRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, sourceRequest)
@@ -283,6 +282,24 @@ Timeouts
       val post2 = new Post("theSubject", "theBody", new java.util.HashMap(), new java.util.HashMap())
 
       val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "requestedCategory", "requestedConnectionType", "requestedConnectionName", post1, post2) //, postToTarget, postToBroker);
+
+      Serializer.evaluateSerializerClass(sourceRequest) mustEqual ( KryoSerializer.getInstance().getClass.getName )
+      val serializedRequest = Serializer.serialize[ CreateInvitationRequest ](sourceRequest)
+      val deserializedRequest = Serializer.deserialize[ CreateInvitationRequest ](serializedRequest)
+
+      deserializedRequest match {
+        case x: CreateInvitationRequest => {
+          System.err.println("InvitationRequest before :" + sourceRequest)
+          System.err.println("InvitationRequest after :" + x)
+          x.toString must be_==(sourceRequest.toString)
+          x.channelRole.toString must be_==(sourceRequest.channelRole.toString)
+          x.channel.toString must be_==(sourceRequest.channel.toString)
+          x must be_==(sourceRequest)
+        }
+        case _ => fail
+      }
+
+
       val data = new PersistedMessage[ CreateInvitationRequest ](sourceRequest)
       Serializer.evaluateSerializerClass(data) mustEqual ( KryoSerializer.getInstance().getClass.getName )
       val serialized = Serializer.serialize[ PersistedMessage[ CreateInvitationRequest ] ](data)
@@ -295,6 +312,7 @@ Timeouts
           System.err.println("InvitationRequest before :" + sourceRequest)
           System.err.println("InvitationRequest after :" + x.message)
           x.getMessage().toString must be_==(data.getMessage().toString)
+          x.getMessage().channelRole.toString must be_==(sourceRequest.channelRole.toString)
           x must be_==(data)
         }
         case _ => fail
@@ -305,8 +323,7 @@ Timeouts
 
 
     "deserialize persisted GetContentRequest with PersistedMessage[ ReferralRequest ]" in {
-      //  skip("")
-
+      // skip("")
 
       val query: PersistedMessage[ ReferralRequest ] = new PersistedMessage[ ReferralRequest ]()
 
@@ -316,7 +333,7 @@ Timeouts
 
       deserializedData match {
         case x: PersistedMessage[ ReferralRequest ] => {
-
+          // empty message
           if ( x.getMessage() != null && query.getMessage() != null ) fail("")
           x must be_==(query)
           x.toString must be_==(query.toString)

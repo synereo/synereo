@@ -47,7 +47,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
 
   "serializing mock data" should {
-    skip("") // doesn't work for mocks can be deleted
+    // skip("") // doesn't work for mocks can be deleted
 
     "serialize and deserialize mock object with a nested collection" in {
 
@@ -158,7 +158,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
 
     "deserialize simple mock profile of a version with less parameter" in {
-      // skip("ignore")
+      skip("ignore")
       val mockSimpleProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.profile1).asInstanceOf[ SimpleMockProfile1 ]
       mockSimpleProfile.id = "UID"
       mockSimpleProfile.localeCode = "br"
@@ -181,7 +181,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
     }
 
     "deserialize simple mock profile of a version with less parameter in the middle" in {
-      // skip("ignore")
+      skip("ignore")
       val mockSimpleProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.profile1).asInstanceOf[ SimpleMockProfile1 ]
       mockSimpleProfile.id = "UID"
       mockSimpleProfile.localeCode = "br"
@@ -205,7 +205,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
 
     "deserialize simple mock profile of a version with more parameter" in {
-      // skip("ignore")
+      skip("ignore")
       val mockSimpleProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.profile1).asInstanceOf[ SimpleMockProfile1 ]
       mockSimpleProfile.id = "UID"
       mockSimpleProfile.localeCode = "br"
@@ -228,7 +228,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
 
     "deserialize simple mock profile of a version with renamed parameter of same type" in {
-      //   skip("ignore")
+      skip("ignore")
       val mockSimpleProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.profile1).asInstanceOf[ SimpleMockProfile1 ]
       mockSimpleProfile.id = "UID"
       mockSimpleProfile.localeCode = "br"
@@ -251,7 +251,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
     }
 
     "deserialize simple mock profile of a version with a parameter of changed type" in {
-      //  skip("ignore")
+      skip("ignore")
       val mockSimpleProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.profile1).asInstanceOf[ SimpleMockProfile1 ]
       mockSimpleProfile.id = "UID"
       mockSimpleProfile.localeCode = "br"
@@ -303,7 +303,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
 
     "deserialize composite mock profile with one parameter more in the nested image object" in {
-      //  skip("ignore")
+      skip("ignore")
       val compositeMockProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.compositeProfile).asInstanceOf[ CompositeMockProfile1 ]
       compositeMockProfile.id = "UID"
       compositeMockProfile.localeCode = "br"
@@ -329,7 +329,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
     }
 
     "deserialize composite mock profile with one parameter more in the composite profile" in {
-      //  skip("ignore")
+      skip("ignore")
       val compositeMockProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.compositeProfile).asInstanceOf[ CompositeMockProfile1 ]
       compositeMockProfile.id = "UID"
       compositeMockProfile.localeCode = "br"
@@ -356,7 +356,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
     "deserialize composite mock profile with one parameter less in the nested image object" in {
 
-      // skip("ignore")
+      skip("ignore")
       val compositeMockProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.compositeProfile).asInstanceOf[ CompositeMockProfile1 ]
       compositeMockProfile.id = "UID"
       compositeMockProfile.localeCode = "br"

@@ -8,8 +8,8 @@ package com.protegra_ati.agentservices.core.util.serializer
 import org.apache.ws.commons.util.Base64
 import com.protegra.agentservicesstore.util._
 import java.io._
-
-object Serializer extends Reporting
+// TODO eventually Reporting has to be activation again
+object Serializer// extends Reporting
 {
 
   /**
@@ -27,40 +27,42 @@ object Serializer extends Reporting
   private def serialize[ T ](obj: T, debug: Boolean): String =
   {
     if ( obj == null ) {
-      report("NULL -object can't be serialized", Severity.Error)
+     // report("NULL -object can't be serialized", Severity.Error)
       return null
     } else {
 
-    //TODO:re-enable when possible
-//      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !(obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated) ) {
-//        if ( debug )
-//          debugSerializer[ T ](obj)
-//        return JavaIOSerializer.getInstance().serialize(obj)
-//      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !(obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated )) {
-//
-//        if ( debug )
-//          debugSerializer[ T ](obj)
-//        return KryoSerializer.getInstance().serialize(obj)
-//      }
+      //TODO:re-enable when possible
+      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !( obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) ) {
+        //        if ( debug )
+        //          debugSerializer[ T ](obj)
+        return JavaIOSerializer.getInstance().serialize(obj)
+      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !( obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated ) ) {
+        //
+        //        if ( debug )
+        //          debugSerializer[ T ](obj)
+        return KryoSerializer.getInstance().serialize(obj)
+      }
       // rest should be java io serialized
-//      else {
-//        report("object " + obj + " does extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
+      else {
+        //        report("object " + obj + " does extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
 
         try {
 
-//          if ( debug )
-//            debugSerializer[ T ](obj)
+          //          if ( debug )
+          //            debugSerializer[ T ](obj)
+
           return JavaIOSerializer.getInstance().serialize(obj)
+
         } catch {
           case ex: NotSerializableException => {
-            report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
+         //   report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
           }
           case ex: InvalidClassException => {
-            report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
+          //  report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
           }
         }
       }
-//    }
+    }
     return null // not reachable
   }
 
@@ -68,15 +70,15 @@ object Serializer extends Reporting
   def deserialize[ T ](source: String): T =
   {
     if ( source == null ) {
-      report("NULL string can't be deserialized to an object", Severity.Error)
+     // report("NULL string can't be deserialized to an object", Severity.Error)
       return null.asInstanceOf[ T ]
     } else {
 
       //TODO:re-enable when possible
-//      if ( source.startsWith(KryoSerializer.getInstance().getHeader) )
-//        return KryoSerializer.getInstance().deserialize(source)
+      if ( source.startsWith(KryoSerializer.getInstance().getHeader) )
+        return KryoSerializer.getInstance().deserialize(source)
       // everything else deserialized using javaIO serializer
-//      else return JavaIOSerializer.getInstance().deserialize(source)
+      else return JavaIOSerializer.getInstance().deserialize(source)
       return JavaIOSerializer.getInstance().deserialize(source)
 
     }
@@ -85,7 +87,8 @@ object Serializer extends Reporting
 
 
   def debugSerializer[ T ](obj: T)
-  { System.err.println("DEBUG_SERIALIZATION")
+  {
+    System.err.println("DEBUG_SERIALIZATION")
     val serialized = serialize[ T ](obj, false)
     val deserialized = deserialize[ T ](serialized)
     if ( serialized == null || deserialized == null ) {
@@ -107,19 +110,19 @@ object Serializer extends Reporting
   {
 
     if ( obj == null ) {
-      report("NULL -object can't be serialized", Severity.Error)
+     // report("NULL -object can't be serialized", Severity.Error)
       return null
     } else {
 
       //TODO:re-enable when possible
-//      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) {
+      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) {
         return JavaIOSerializer.getInstance().getClass().getName
-//      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated ) {
-//        return KryoSerializer.getInstance().getClass().getName
-//      } else {
-//        report("object " + obj + " does not extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
-//        return JavaIOSerializer.getInstance().getClass().getName // rest also with Java IO
-//      }
+      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated ) {
+        return KryoSerializer.getInstance().getClass().getName
+      } else {
+        //        report("object " + obj + " does not extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
+        return JavaIOSerializer.getInstance().getClass().getName // rest also with Java IO
+      }
 
     }
   }

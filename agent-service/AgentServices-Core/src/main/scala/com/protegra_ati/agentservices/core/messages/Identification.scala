@@ -1,8 +1,9 @@
 package com.protegra_ati.agentservices.core.messages
 
 import java.util.UUID
+import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
-case class Identification(val id: String, var parentId: String, var conversationId: String)
+case class Identification(val id: String, var parentId: String, var conversationId: String) extends UseKryoSerialization
 {
   def this(id: String, parentId: String) = this (id, parentId, parentId)
 

@@ -4,7 +4,7 @@ import com.protegra.agentservicesstore.util.Reporting
 
 /* User: mgevantmakher
 */
-
-class ReportingImpl4Java extends Reporting {
+// TODO reporting has to be eventually reaktivated
+class ReportingImpl4Java {//extends Reporting {
 
 }

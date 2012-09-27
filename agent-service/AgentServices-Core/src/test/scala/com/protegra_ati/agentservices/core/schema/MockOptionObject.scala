@@ -2,10 +2,9 @@ package com.protegra_ati.agentservices.core.schema
 
 import com.protegra_ati.agentservices.core.messages._
 import reflect.BeanProperty
+import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
-case class MockOptionObject(
-
-  )
+case class MockOptionObject( ) extends UseKryoSerialization
 {
   
   //  val channelTestRole: Option[ String ] = None //channelRole describes the cnxn who should be listening for the request

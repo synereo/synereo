@@ -17,7 +17,7 @@ class NoneSerializer extends Serializer[ AnyRef ]
 
   override def write(kryo: Kryo, output: Output, obj: AnyRef): Unit =
   {
-    System.err.println("KRYO NONE in USE! WRITE")
+    //System.err.println("KRYO NONE in USE! WRITE")
     if ( obj == null )
       kryo.writeObject(output, NoneSerializer.NULL)
     else kryo.writeObject(output, NoneSerializer.NOT_NULL)
@@ -25,7 +25,7 @@ class NoneSerializer extends Serializer[ AnyRef ]
 
   override def read(kryo: Kryo, input: Input, typ: Class[ AnyRef ]): AnyRef =
   {
-    System.err.println("KRYO NONE in USE! READ")
+    //System.err.println("KRYO NONE in USE! READ")
     val label: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( label == NoneSerializer.NULL ) return null
     else return None

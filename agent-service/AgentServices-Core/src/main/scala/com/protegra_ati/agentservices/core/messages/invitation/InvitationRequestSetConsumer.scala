@@ -135,7 +135,7 @@ trait InvitationRequestSetConsumer
 //          val locale: Locale = new Locale(p.localeCode)
 //          val resourceBundle = ResourceManager.getResourceBundle(locale)
 //          val templateResourceBundle = ResourceManager.getTemplateResourceBundle(locale)
-//          val messageTemplate = templateResourceBundle.getString("watchlist_notification_email")
+//          val messageTemplate = templateResourceBundle.getString("connection_request_notification_email")
 //          val formatter: DateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
 //          // replacement logic for variables in a template
 //          var valuesMap: Map[ String, String ] = Map[ String, String ]()

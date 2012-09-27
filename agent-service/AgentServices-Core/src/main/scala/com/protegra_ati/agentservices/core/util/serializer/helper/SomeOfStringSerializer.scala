@@ -16,7 +16,7 @@ class SomeOfStringSerializer() extends Serializer[ Some[ String ] ]
 
   override def write(kryo: Kryo, output: Output, obj: Some[ String ]): Unit =
   {
-    System.err.println("KRYO SOME OF STRING in USE! WRITE:" + obj)
+    //System.err.println("KRYO SOME OF STRING in USE! WRITE:" + obj)
     if ( obj == null )
       kryo.writeObject(output, SomeOfStringSerializer.NULL)
     else {
@@ -31,7 +31,7 @@ class SomeOfStringSerializer() extends Serializer[ Some[ String ] ]
     if ( label == SomeOfStringSerializer.NULL ) return null
 
     val o = kryo.readObject(input, classOf[ String ])
-    System.err.println("KRYO SOME OF STRING in USE! READ:" + o)
+   // System.err.println("KRYO SOME OF STRING in USE! READ:" + o)
     return Some(o)
   }
 

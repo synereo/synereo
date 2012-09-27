@@ -5,7 +5,7 @@ import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 
-
+// TODO has to be cleaned up
 class SomeSerializer() extends Serializer[ Some[ AnyRef ] ]
 {
 
@@ -17,38 +17,60 @@ class SomeSerializer() extends Serializer[ Some[ AnyRef ] ]
 
   override def write(kryo: Kryo, output: Output, obj: Some[ AnyRef ]): Unit =
   {
-
+    //System.err.println("SERIALIZE SOME: " + obj)
     if ( obj == null )
       kryo.writeObject(output, SomeSerializer.NULL)
     else {
-      kryo.writeObject(output, SomeSerializer.NOT_NULL)
+      //kryo.writeObject(output, SomeSerializer.NOT_NULL)
 
       // TODO eventually bug with none
       val someClass = cacheSomeValue(obj)
-      if ( someClass == None ) System.err.println("KRYO SOME in USE! WRITE: NONE")
-      else
-        System.err.println("KRYO SOME in USE! WRITE: " + someClass.getName)
-      kryo.writeObject(output, someClass.getName)
-      kryo.writeObject(output, obj.get)
-    }
-    //kryo.writeObject(output, obj.get)
-    //    if ( someClass == scala.Enumeration$Val ) {
-    //      System.err.println("KRYO IN SOME ENUM WRITE")
-    //    }
-    //    if ( obj.get.isInstanceOf[ scala.Enumeration#Value ] )
-    //      kryo.writeObject(output, obj.get.asInstanceOf[ scala.Enumeration#Value ])//, new EnumerationSerializer())
-    //    else
 
+      if ( classOf[ scala.Enumeration$Val ].equals(someClass)
+      /*scala.Enumeration$Val*/ ) {
+        //System.err.println("SER KRYO SOME in USE! WRITE:  Enumeration$Value:" +obj.get)
+        kryo.writeObject(output, SomeSerializer.NOT_NULL_ENUM)
+        kryo.writeClassAndObject(output, obj.get)
+       // kryo.writeObject(output, obj.get, new EnumerationSerializer())
+      }
+      else {
+        //System.err.println("SER KRYO SOME in USE! WRITE:  SOMETHING BUT NOT ENUM: " + someClass.getName)
+        kryo.writeObject(output, SomeSerializer.NOT_NULL_NOT_ENUM)
+        kryo.writeObject(output, someClass.getName)
+        kryo.writeObject(output, obj.get)
+      }
+
+      // if ( someClass == None ) System.err.println("KRYO SOME in USE! WRITE: NONE")
+      //else
+      //System.err.println("SER KRYO SOME in USE! WRITE: " + someClass.getName)
+
+
+      //}
+      //kryo.writeObject(output, obj.get)
+      //    if ( someClass == scala.Enumeration$Val ) {
+      //      System.err.println("KRYO IN SOME ENUM WRITE")
+      //    }
+      //    if ( obj.get.isInstanceOf[ scala.Enumeration#Value ] )
+      //      kryo.writeObject(output, obj.get.asInstanceOf[ scala.Enumeration#Value ])//, new EnumerationSerializer())
+      //    else
+
+    }
   }
 
   override def read(kryo: Kryo, input: Input, typ: Class[ Some[ AnyRef ] ]): Some[ AnyRef ] =
   {
     val label: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( label == SomeSerializer.NULL ) return null
+    else if ( label == SomeSerializer.NOT_NULL_ENUM ) {
+      val o =  kryo.readClassAndObject(input)
+      //System.err.println("DESER KRYO SOME ENUM in USE! READ:"+ o)
+      return Some(o)
+    }
     else {
       val someClass = kryo.readObject(input, classOf[ String ])
-      System.err.println("KRYO SOME in USE! READ:" + someClass)
+      //System.err.println("KRYO SOME in USE! READ:" + someClass)
       val o = kryo.readObject(input, Class.forName(someClass))
+      //System.err.println("DESER KRYO SOME NON  in USE! READ:"+ o)
       return Some(o.asInstanceOf[ AnyRef ])
     }
   }
@@ -70,7 +92,8 @@ class SomeSerializer() extends Serializer[ Some[ AnyRef ] ]
 object SomeSerializer
 {
   val NULL: Byte = 0;
-  val NOT_NULL: Byte = 1;
+  val NOT_NULL_NOT_ENUM: Byte = 1;
+  val NOT_NULL_ENUM: Byte = 2;
 
   def FITS_TO: Class[ Some[ AnyRef ] ] = classOf[ Some[ AnyRef ] ]
 

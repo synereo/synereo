@@ -15,13 +15,13 @@ class NilSerializer extends Serializer[ List[ Nothing ] ]
 
   override def write(kryo: Kryo, output: Output, obj: List[ Nothing ]): Unit =
   {
-    System.err.println("KRYO NIL in USE! WRITE")
+   // System.err.println("KRYO NIL in USE! WRITE")
     kryo.writeObject(output, NilSerializer.NIL)
   }
 
   override def read(kryo: Kryo, input: Input, typ: Class[ List[ Nothing ] ]): List[ Nothing ] =
   {
-    System.err.println("KRYO NIL in USE! READ")
+   // System.err.println("KRYO NIL in USE! READ")
     val label: Byte = kryo.readObject(input, classOf[ Byte ])
     return Nil
   }

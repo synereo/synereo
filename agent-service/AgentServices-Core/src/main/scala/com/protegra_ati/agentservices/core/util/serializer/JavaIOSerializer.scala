@@ -14,8 +14,8 @@ import com.protegra.agentservicesstore.util._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions._
 import java.util.UUID
-
-class JavaIOSerializer extends AbstractToStringSerializer with Reporting
+// TODO reporting ha to eventually reaktivated
+class JavaIOSerializer extends AbstractToStringSerializer //with Reporting
 {
   private val HEADER_4_STRING_SERIALIZATION = "JavaIOSerializer_"
 
@@ -44,8 +44,8 @@ class JavaIOSerializer extends AbstractToStringSerializer with Reporting
     val bytesInAKilobyte = 1024
     val maxBytes = 100 * bytesInAKilobyte
     //each char roughly 1 byte
-    if ( encodedMsg.size > maxBytes )
-      report("serialized message is more than " + maxBytes / bytesInAKilobyte + " KB for obj " + obj.toString, Severity.Warning)
+   // if ( encodedMsg.size > maxBytes )
+      //report("serialized message is more than " + maxBytes / bytesInAKilobyte + " KB for obj " + obj.toString, Severity.Warning)
   }
 
   def deserializeRaw[ T ](source: String): T =
@@ -63,7 +63,7 @@ class JavaIOSerializer extends AbstractToStringSerializer with Reporting
       }
     }
     catch {
-      case _ => report("Failed to deserialize the class, have you recently upgraded the scala version without recreating test data?", Severity.Fatal)
+      case _ => {} // report("Failed to deserialize the class, have you recently upgraded the scala version without recreating test data?", Severity.Fatal)
       return null.asInstanceOf[ T ]
     }
 

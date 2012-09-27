@@ -10,9 +10,10 @@ import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.extensions._
 import com.protegra_ati.agentservices.core.schema.Constants._
 import java.util.HashMap
+import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 
-class MockData(_id: String, _localeCode: String, _classVersionNumber: String) extends Serializable
+class MockData(_id: String, _localeCode: String, _classVersionNumber: String) extends Serializable  with UseKryoSerialization
 {
   def this(_id: String, _localeCode: String) = this(_id, _localeCode, MockData.currentVersion)
 
