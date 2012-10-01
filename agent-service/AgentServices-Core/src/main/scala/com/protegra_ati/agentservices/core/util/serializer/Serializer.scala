@@ -32,18 +32,18 @@ object Serializer// extends Reporting
     } else {
 
       //TODO:re-enable when possible
-      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !( obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) ) {
-        //        if ( debug )
-        //          debugSerializer[ T ](obj)
-        return JavaIOSerializer.getInstance().serialize(obj)
-      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !( obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated ) ) {
-        //
-        //        if ( debug )
-        //          debugSerializer[ T ](obj)
-        return KryoSerializer.getInstance().serialize(obj)
-      }
-      // rest should be java io serialized
-      else {
+//      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !( obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) ) {
+//        //        if ( debug )
+//        //          debugSerializer[ T ](obj)
+//        return JavaIOSerializer.getInstance().serialize(obj)
+//      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !( obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated ) ) {
+//        //
+//        //        if ( debug )
+//        //          debugSerializer[ T ](obj)
+//        return KryoSerializer.getInstance().serialize(obj)
+//      }
+//      // rest should be java io serialized
+//      else {
         //        report("object " + obj + " does extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
 
         try {
@@ -61,7 +61,7 @@ object Serializer// extends Reporting
           //  report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
           }
         }
-      }
+//      }
     }
     return null // not reachable
   }
@@ -75,10 +75,10 @@ object Serializer// extends Reporting
     } else {
 
       //TODO:re-enable when possible
-      if ( source.startsWith(KryoSerializer.getInstance().getHeader) )
-        return KryoSerializer.getInstance().deserialize(source)
-      // everything else deserialized using javaIO serializer
-      else return JavaIOSerializer.getInstance().deserialize(source)
+//      if ( source.startsWith(KryoSerializer.getInstance().getHeader) )
+//        return KryoSerializer.getInstance().deserialize(source)
+//      // everything else deserialized using javaIO serializer
+//      else return JavaIOSerializer.getInstance().deserialize(source)
       return JavaIOSerializer.getInstance().deserialize(source)
 
     }
@@ -115,14 +115,14 @@ object Serializer// extends Reporting
     } else {
 
       //TODO:re-enable when possible
-      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) {
-        return JavaIOSerializer.getInstance().getClass().getName
-      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated ) {
-        return KryoSerializer.getInstance().getClass().getName
-      } else {
+//      if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) {
+//        return JavaIOSerializer.getInstance().getClass().getName
+//      } else if ( obj.isInstanceOf[ UseKryoSerialization ] && !obj.asInstanceOf[ UseKryoSerialization ].isKryoSerializationDeprecated ) {
+//        return KryoSerializer.getInstance().getClass().getName
+//      } else {
         //        report("object " + obj + " does not extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
         return JavaIOSerializer.getInstance().getClass().getName // rest also with Java IO
-      }
+//      }
 
     }
   }

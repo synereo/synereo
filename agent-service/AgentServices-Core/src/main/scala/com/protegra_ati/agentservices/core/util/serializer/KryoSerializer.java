@@ -109,7 +109,7 @@ public final class KryoSerializer extends AbstractToStringSerializer
     protected String serializeRaw( Object objToBeSerialized )
     {
         String uid5CharLong = UUID.randomUUID().toString().substring( 0, 5 );
-        //System.err.println( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized );
+        System.err.println( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized );
         // logger.report( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized, Severity.Warning() );
         BufferedOutputStream oos = null;
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -183,13 +183,13 @@ public final class KryoSerializer extends AbstractToStringSerializer
     {
         try {
             String uid = source.substring( 0, 5 );
-            //System.err.println( "#####-deserialize KRYO-- UID:" + uid );
+            System.err.println( "#####-deserialize KRYO-- UID:" + uid );
             //   logger.report( "#####-deserialize KRYO-- UID:" + uid, Severity.Warning() );
 
             final byte[] byteArrayMsg = Base64.decode( source.substring( 5, source.length() ) );
             final InputStream ois = new BufferedInputStream( new ByteArrayInputStream( byteArrayMsg ) );
             final T obj = deserialize( ois ); // closes the stream
-            //System.err.println( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj );
+            System.err.println( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj );
             // logger.report( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj, Severity.Warning() );
             return obj;
         } catch ( Base64.DecodingException e ) {
