@@ -5,6 +5,7 @@ package com.protegra_ati.agentservices.core.messages.invitation
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
@@ -15,12 +16,12 @@ import com.protegra_ati.agentservices.core.events._
 trait InvitationResponseSetCreatorPrivate {
   self:AgentHostStorePlatformAgent =>
 
-  def listenPrivateInvitationCreatorResponses(cnxn:AgentCnxn) =
+  def listenPrivateInvitationCreatorResponses(cnxn:AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxn, _: Message))
+    listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  def handleInvitationResponseChannel(cnxn:AgentCnxn, msg:Message)
+  def handleInvitationResponseChannel(cnxn:AgentCnxnProxy, msg:Message)
   {
     report("entering handlePrivateInvitationResponseChannel", Severity.Trace)
 

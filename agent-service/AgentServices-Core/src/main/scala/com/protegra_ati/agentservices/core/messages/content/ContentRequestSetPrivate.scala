@@ -2,6 +2,7 @@ package com.protegra_ati.agentservices.core.messages.content
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 
 /* User: jklassen
@@ -10,12 +11,12 @@ import com.protegra_ati.agentservices.core.messages._
 trait ContentRequestSetPrivate {
   self:AgentHostStorePlatformAgent =>
 
-  def listenPrivateContentRequest(cnxn: AgentCnxn) =
+  def listenPrivateContentRequest(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handlePrivateContentRequestChannel(_: AgentCnxn, _: Message))
+    listen(_privateQ, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  def handlePrivateContentRequestChannel( cnxn: AgentCnxn, msg: Message) =
+  def handlePrivateContentRequestChannel( cnxn: AgentCnxnProxy, msg: Message) =
   {
     msg.channelLevel = Some(ChannelLevel.Public)
     //we have one case where we need to help a message out

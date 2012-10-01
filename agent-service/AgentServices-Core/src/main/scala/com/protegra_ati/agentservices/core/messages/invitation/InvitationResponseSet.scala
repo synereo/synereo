@@ -4,6 +4,7 @@ import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
 import com.rits.cloning.Cloner;
 
@@ -11,19 +12,19 @@ trait InvitationResponseSet
 {
   self: AgentHostStorePlatformAgent =>
 
-  def listenPublicInvitationConsumerResponses(cnxn: AgentCnxn) =
+  def listenPublicInvitationConsumerResponses(cnxn: AgentCnxnProxy) =
   {
-    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Public, sendPrivate(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Public, sendPrivate(_: AgentCnxnProxy, _: Message))
   }
 
   //mostly this is single listens on single but ReferralResponses will come in here
-  def listenPublicInvitationCreatorResponses(cnxn: AgentCnxn) =
+  def listenPublicInvitationCreatorResponses(cnxn: AgentCnxnProxy) =
   {
-    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Public, handlePublicInvitationCreatorResponseChannel(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Public, handlePublicInvitationCreatorResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
 
-  protected def handlePublicInvitationCreatorResponseChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicInvitationCreatorResponseChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -40,10 +41,10 @@ trait InvitationResponseSet
     report("exiting handlePublicInvitationCreatorResponseChannel in ConnectionBroker", Severity.Trace)
   }
 
-  protected def processReferralResponse(cnxnBroker_Broker: AgentCnxn, referralResponse: ReferralResponse): Unit =
+  protected def processReferralResponse(cnxnBroker_Broker: AgentCnxnProxy, referralResponse: ReferralResponse): Unit =
   {
     val query = new Connection()
-    fetchList[ Connection ](_dbQ, cnxnBroker_Broker, query.toSearchKey, findConnections(_: AgentCnxn, _: List[ Connection ], referralResponse))
+    fetchList[ Connection ](_dbQ, cnxnBroker_Broker, query.toSearchKey, findConnections(_: AgentCnxnProxy, _: List[ Connection ], referralResponse))
   }
 
   /**
@@ -52,7 +53,7 @@ trait InvitationResponseSet
    * @param connsBroker
    * @param referralResponse
    */
-  protected def findConnections(cnxnBroker_Broker: AgentCnxn, connsBroker: List[ Connection ], referralResponse: ReferralResponse) =
+  protected def findConnections(cnxnBroker_Broker: AgentCnxnProxy, connsBroker: List[ Connection ], referralResponse: ReferralResponse) =
   {
     val createInviteRequest = referralResponse.source
     val refereePostToTarget = referralResponse.postToTarget
@@ -83,15 +84,15 @@ trait InvitationResponseSet
   }
 
   // search for ALL persisted Requests instead of just specified one ????
-  protected def findReferralRequestToArchive(cnxnBroker_Broker: AgentCnxn, referralResponse: ReferralResponse) =
+  protected def findReferralRequestToArchive(cnxnBroker_Broker: AgentCnxnProxy, referralResponse: ReferralResponse) =
   {
     //TODO: fix toSearchKey to work with the nested id, for now pull back everything
     val query = new PersistedMessage[ ReferralRequest ]()
-    fetchList[ PersistedMessage[ ReferralRequest ] ](_dbQ, cnxnBroker_Broker, query.toSearchKey, archivePersistedMessage(_: AgentCnxn, _: List[ PersistedMessage[ ReferralRequest ] ], referralResponse.ids.parentId, referralResponse.accept))
+    fetchList[ PersistedMessage[ ReferralRequest ] ](_dbQ, cnxnBroker_Broker, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ ReferralRequest ] ], referralResponse.ids.parentId, referralResponse.accept))
   }
 
   //TODO:refactor to common spot
-  def archivePersistedMessage(cnxnBroker_Broker: AgentCnxn, messages: List[ PersistedMessage[ _ <: Message ] ], parentId: String, isAccepted: Boolean) =
+  def archivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, messages: List[ PersistedMessage[ _ <: Message ] ], parentId: String, isAccepted: Boolean) =
   {
     //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
     for ( msg <- messages ) {

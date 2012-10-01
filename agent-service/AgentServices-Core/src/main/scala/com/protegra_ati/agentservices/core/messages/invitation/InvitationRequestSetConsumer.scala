@@ -4,6 +4,7 @@ import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
@@ -21,12 +22,12 @@ trait InvitationRequestSetConsumer
 {
   self: AgentHostStorePlatformAgent =>
 
-  def listenPublicInvitationConsumerRequests(cnxn: AgentCnxn) =
+  def listenPublicInvitationConsumerRequests(cnxn: AgentCnxnProxy) =
   {
-    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Public, handlePublicInvitationConsumerRequestChannel(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Public, handlePublicInvitationConsumerRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  protected def handlePublicInvitationConsumerRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicInvitationConsumerRequestChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -44,7 +45,7 @@ trait InvitationRequestSetConsumer
     report("exiting handlePublicInvitationConsumerRequestChannel in ConnectionBroker", Severity.Trace)
   }
 
-  protected def processInvitationRequest(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
+  protected def processInvitationRequest(cnxnA_Broker: AgentCnxnProxy, inviteRequest: InvitationRequest) =
   {
 
     println("----------------------------------------------->>>> cnxnA_Broker= cnxnA_Broker.scr" + cnxnA_Broker.src + ", cnxnA_Broker.trgt=" + cnxnA_Broker.trgt + ", inviteRequest=" + inviteRequest)
@@ -63,7 +64,7 @@ trait InvitationRequestSetConsumer
 
   }
 
-  protected def processInvitationRequestOnPAOnBehalfOfInitiatorAgent(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
+  protected def processInvitationRequestOnPAOnBehalfOfInitiatorAgent(cnxnA_Broker: AgentCnxnProxy, inviteRequest: InvitationRequest) =
   {
     report("****Post invite request, auto processing on behalf of initiator : " + cnxnA_Broker.trgt)
     var requestedCategory = ConnectionCategory.Person.toString
@@ -108,26 +109,26 @@ trait InvitationRequestSetConsumer
 
   }
 
-  protected def processInvitationRequestOnPAOnBehalfOfRequestedAgent(cnxnA_Broker: AgentCnxn, inviteRequest: InvitationRequest) =
+  protected def processInvitationRequestOnPAOnBehalfOfRequestedAgent(cnxnA_Broker: AgentCnxnProxy, inviteRequest: InvitationRequest) =
   {
     println("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
     val queryObject = new SystemData(new Connection())
-    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationRequest(_: AgentCnxn, _: SystemData[ Connection ], inviteRequest))
+    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], inviteRequest))
   }
 
-  protected def handleSystemDataLookupStoreInvitationRequest(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], inviteRequest: InvitationRequest): Unit =
+  protected def handleSystemDataLookupStoreInvitationRequest(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], inviteRequest: InvitationRequest): Unit =
   {
     report("STORE INVITATIONS FOR LATER RESPONSE: inviteRequest=" + inviteRequest + ", cnxn=" + cnxn, Severity.Info)
     val selfConnection = systemConnection.data
     val persistedInvitationRequestMessage = new PersistedMessage[ InvitationRequest ](inviteRequest)
     store(_dbQ, selfConnection.writeCnxn, persistedInvitationRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](persistedInvitationRequestMessage))
     val profileQuery = new Profile()
-    fetch[ Data ](_dbQ, selfConnection.writeCnxn, profileQuery.toSearchKey, notificationHandler(_: AgentCnxn, _: Data, inviteRequest))
+    fetch[ Data ](_dbQ, selfConnection.writeCnxn, profileQuery.toSearchKey, notificationHandler(_: AgentCnxnProxy, _: Data, inviteRequest))
 
   }
 
-  protected def notificationHandler(cnxn: AgentCnxn, user: Data, inviteRequest: InvitationRequest) =
+  protected def notificationHandler(cnxn: AgentCnxnProxy, user: Data, inviteRequest: InvitationRequest) =
   {
 //    user match {
 //      case p: Profile => {

@@ -22,6 +22,7 @@ import com.protegra_ati.agentservices.core.schema.util._
 import org.junit._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import scala.util.Random
 import java.net.URI
@@ -48,7 +49,7 @@ with Timeouts
 
   val sourceId = UUID.randomUUID()
   val targetId = sourceId
-  val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+  val cnxn = new AgentCnxnProxy(sourceId.toString.toURI, "", targetId.toString.toURI)
 
   def createPA: MockPlatformAgent =
   {
@@ -128,7 +129,7 @@ with Timeouts
 //      result.value must be_==(mockMsg).eventually(20, TIMEOUT_EVENTUALLY)
 //    }
 //
-//    def handleGet(cnxn: AgentCnxn, msg: Message) =
+//    def handleGet(cnxn: AgentCnxnProxy, msg: Message) =
 //    {
 //      msg match {
 //        case x: GetContentResponse => {
@@ -158,13 +159,13 @@ with Timeouts
       fetchData(pa._dbQ, cnxn, search.toSearchKey) must be_==(mockDataFetch).eventually(20, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxn, searchKey: String): Any =
+    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, searchKey: String): Any =
     {
       pa.fetch[ Data ](queue, cnxn, searchKey, handleFetch)
       return result.value
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       data match {
         case x: Profile => {
@@ -186,16 +187,16 @@ with Timeouts
       val mockMsg = new GetContentRequest(new EventKey(UUID.randomUUID(), ""), mockSearch)
 
       pa.store(pa._privateQ, cnxn, mockMsg.getChannelKey, Serializer.serialize[ Message ](mockMsg))
-      listen(pa._privateQ, cnxn, handlePrivateContentRequestChannel(_: AgentCnxn, _: Message)).value must be_==(mockMsg).eventually(20, TIMEOUT_EVENTUALLY)
+      listen(pa._privateQ, cnxn, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message)).value must be_==(mockMsg).eventually(20, TIMEOUT_EVENTUALLY)
     }
 
-    def listen(q: PartitionedStringMGJ, cnxn: AgentCnxn, handler: (AgentCnxn, Message) => Unit) =
+    def listen(q: PartitionedStringMGJ, cnxn: AgentCnxnProxy, handler: (AgentCnxnProxy, Message) => Unit) =
     {
-      pa.listen(q, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handler(_: AgentCnxn, _: Message))
+      pa.listen(q, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handler(_: AgentCnxnProxy, _: Message))
       result
     }
 
-    def handlePrivateContentRequestChannel[T <:Data](cnxn: AgentCnxn, msg: Message) =
+    def handlePrivateContentRequestChannel[T <:Data](cnxn: AgentCnxnProxy, msg: Message) =
     {
       msg match {
         case x: GetContentRequest => {
@@ -218,14 +219,14 @@ with Timeouts
       fetchData(pa._dbQ, cnxn, mockProfile1.toStoreKey) must be_==(None).eventually(3, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String): Option[ Data ] =
+    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       result = None
       pa.fetch[ Data ](queue, cnxn, key, handleFetch)
       return result
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       data match {
         case x: Profile => {
@@ -240,7 +241,7 @@ with Timeouts
 
   "createDrop" should {
     val newId = "Collection" + UUID.randomUUID
-    val newCnxn = new AgentCnxn(newId.toURI, "", newId.toURI)
+    val newCnxn = new AgentCnxnProxy(newId.toURI, "", newId.toURI)
 
     val newProfile = new Profile("firstName", "lastName", "test Description", "111111111@test.com","CA", "someCAprovince", "city", "postalCode", "website" )
     var result: Option[ Profile ] = None
@@ -255,14 +256,14 @@ with Timeouts
       fetchData(pa._dbQ, newCnxn, newProfile.toStoreKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String): Option[ Data ] =
+    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       result = None
       pa.fetch[ Data ](queue, cnxn, key, handleFetch)
       return result
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       data match {
         case x: Profile => result = Some(x)
@@ -281,7 +282,7 @@ with Timeouts
     val JenId = "Jen" + UUID.randomUUID
     val MikeId = "Mike" + UUID.randomUUID
     val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId.toString, MikeId.toString)
-    val newCnxn = new AgentCnxn(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
+    val newCnxn = new AgentCnxnProxy(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
     pa1.store(pa1._dbQ, newCnxn, conn.toStoreKey, Serializer.serialize[ Data ](conn))
     Thread.sleep(TIMEOUT_LONG)
 
@@ -298,17 +299,17 @@ with Timeouts
       sync.synchronized {msgReceived} must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
     }
 
-    def handleFetchConnection(cnxn: AgentCnxn, data: Data) =
+    def handleFetchConnection(cnxn: AgentCnxnProxy, data: Data) =
     {
       data match {
         case x: Connection => {
-          pa1.listen(pa1._privateQ, x.readCnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, listenHandler(_: AgentCnxn, _: Message))
+          pa1.listen(pa1._privateQ, x.readCnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, listenHandler(_: AgentCnxnProxy, _: Message))
         }
         case _ => {}
       }
     }
 
-    def listenHandler(cnxn: AgentCnxn, msg: Message)
+    def listenHandler(cnxn: AgentCnxnProxy, msg: Message)
     {
       sync.synchronized {msgReceived = true}
     }

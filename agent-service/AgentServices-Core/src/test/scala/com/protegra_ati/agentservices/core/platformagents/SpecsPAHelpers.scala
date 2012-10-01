@@ -16,6 +16,7 @@ import java.util.UUID
 
 //import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 //import com.protegra.agentservicesstore.AgentTS.mTT._
 
 import actors.threadpool.LinkedBlockingQueue
@@ -27,7 +28,7 @@ import scala.concurrent.ops._
 trait SpecsPAHelpers extends Timeouts{
   self: Specification =>
   //
-  //  def getMustBe(expected: String)(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  //  def getMustBe(expected: String)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   //  {
   //    println("attempting assert")
   //    println("getMustBe expecting: " + expected)
@@ -35,13 +36,13 @@ trait SpecsPAHelpers extends Timeouts{
   //
   //    var actual: Data = null
   //
-  //    def getData(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String):Data = {
-  //      q.getData(q._dbQ, cnxn, key, handleGet(_: AgentCnxn, _: Data))
+  //    def getData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String):Data = {
+  //      q.getData(q._dbQ, cnxn, key, handleGet(_: AgentCnxnProxy, _: Data))
   //      trySleep(actual)
   //      return actual
   //    }
   //
-  //    def handleGet(cnxn: AgentCnxn, data: Data) =
+  //    def handleGet(cnxn: AgentCnxnProxy, data: Data) =
   //    {
   //      println("getMustBe - get received : " + data)
   //      actual = data;
@@ -49,7 +50,7 @@ trait SpecsPAHelpers extends Timeouts{
   //
   //  }
 
-  def fetchMustBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def fetchMustBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     var actual: Data = null
 
@@ -58,14 +59,14 @@ trait SpecsPAHelpers extends Timeouts{
     fetchData(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
     println("fetchMustBe expecting: " + expected)
 
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Data =
+    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Data =
     {
-      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: Data))
+      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data))
       trySleep(actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       actual = data;
     }
@@ -73,21 +74,21 @@ trait SpecsPAHelpers extends Timeouts{
   }
 
 
-  def fetchMustBeWithHandler(expectationCheckHandler: (Data, Data) => Unit)(expected: Data, q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Unit =
+  def fetchMustBeWithHandler(expectationCheckHandler: (Data, Data) => Unit)(expected: Data, q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Unit =
   {
     var actual: Data = null
     expectationCheckHandler(fetchData(q, cnxn, key), expected) // expectationCheckHandler must implement something like this: fetchData(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
 
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Data =
+    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Data =
     {
       println("BasePlatformAgent is = " + q)
-      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: Data))
+      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data))
       trySleep(actual)
       println("----fetched data:" + actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       println("-----getMustBe - get received : " + data)
       actual = data;
@@ -95,7 +96,7 @@ trait SpecsPAHelpers extends Timeouts{
 
   }
 
-  def fetchMustExclusivelyBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def fetchMustExclusivelyBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     @volatile var actual: List[ Data ] = Nil
     //println("attempting assert")
@@ -105,16 +106,16 @@ trait SpecsPAHelpers extends Timeouts{
     fetchData(q, cnxn, key) must be_==(expectedList).eventually(5, TIMEOUT_EVENTUALLY)
     //println("fetchMustBe expecting: " + expected)
 
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): List[ Data ] =
+    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): List[ Data ] =
     {
       //println("BasePlatformAgent is = " + q)
-      q.fetchList[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: List[ Data ]))
+      q.fetchList[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: List[ Data ]))
       trySleep(actual)
       //println("----fetched data:" + actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: List[ Data ]) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: List[ Data ]) =
     {
       //println("Number of hits: " + data.size)
       if ( data == null )
@@ -124,21 +125,21 @@ trait SpecsPAHelpers extends Timeouts{
   }
 
 
-  def countMustBe(expected: Int)(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def countMustBe(expected: Int)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     var found = 0
 
     println("attempting count")
     fetchCount(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
 
-    def fetchCount(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Int =
+    def fetchCount(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Int =
     {
-      q.fetchList[ Any ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: List[ Any ]))
+      q.fetchList[ Any ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: List[ Any ]))
       trySleep(found)
       return found
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: List[ Any ]) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: List[ Any ]) =
     {
       println("getMustBe - get received : " + data)
       for ( e <- data ) {

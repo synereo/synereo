@@ -11,8 +11,8 @@ case class MockConn(
   @BeanProperty val category: String,
   @BeanProperty val connectionType: String,
   @BeanProperty val alias: String,
-  @BeanProperty val readCnxn: MockAgentCnxn,
-  @BeanProperty val writeCnxn: MockAgentCnxn,
+  @BeanProperty val readCnxn: MockAgentCnxnProxy,
+  @BeanProperty val writeCnxn: MockAgentCnxnProxy,
   @BeanProperty val autoApprove: String,
   @BeanProperty val policies: java.util.List[ String ]) extends Data
 // @BeanProperty var policies: java.util.List[ ConnectionPolicy.Value ]) extends Data
@@ -49,8 +49,8 @@ object MockConnFactory
     autoApprove: String,
     policies: List[ String ]): MockConn =
   {
-    val readCnxn = new MockAgentCnxn(targetId.toURI, "", sourceId.toURI)
-    val writeCnxn = new MockAgentCnxn(sourceId.toURI, "", targetId.toURI)
+    val readCnxn = new MockAgentCnxnProxy(targetId.toURI, "", sourceId.toURI)
+    val writeCnxn = new MockAgentCnxnProxy(sourceId.toURI, "", targetId.toURI)
     new MockConn(category, connectionType, alias, readCnxn, writeCnxn, autoApprove, policies)
     // TODO eventually validation should here take place
   }
@@ -59,8 +59,8 @@ object MockConnFactory
   def createConnection(alias: String,
     category: String,
     connectionType: String,
-    readCnxn: MockAgentCnxn,
-    writeCnxn: MockAgentCnxn, autoApprove: String): MockConn =
+    readCnxn: MockAgentCnxnProxy,
+    writeCnxn: MockAgentCnxnProxy, autoApprove: String): MockConn =
   {
     new MockConn(category, connectionType, alias, readCnxn, writeCnxn, autoApprove, List[ String ]())
     // TODO eventually validation should here take place

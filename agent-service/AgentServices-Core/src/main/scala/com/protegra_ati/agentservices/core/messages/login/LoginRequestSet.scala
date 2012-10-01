@@ -5,6 +5,7 @@ package com.protegra_ati.agentservices.core.messages.login
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util.Severity
@@ -13,11 +14,11 @@ import com.protegra_ati.agentservices.core.schema.util._
 trait LoginRequestSet {
   self:AgentHostStorePlatformAgent =>
 
-  def listenPublicLoginRequest(cnxn: AgentCnxn) = {
-    listen(_publicQ, cnxn, Channel.Security, ChannelType.Request, ChannelLevel.Public, handlePublicSecurityRequestChannel(_: AgentCnxn, _: Message))
+  def listenPublicLoginRequest(cnxn: AgentCnxnProxy) = {
+    listen(_publicQ, cnxn, Channel.Security, ChannelType.Request, ChannelLevel.Public, handlePublicSecurityRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  protected def handlePublicSecurityRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicSecurityRequestChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     report("entering handlePrivateSecurityRequestChannel in StorePlatform", Severity.Trace)
     msg match {
@@ -38,7 +39,7 @@ trait LoginRequestSet {
     //for each connection in the user's data silo, clear out any existing token and save the new login token
     updateDataBySearch(msg.targetCnxn, new  LoginToken (), loginToken)
     val connectionSearch = new Connection ()
-    fetch[ Connection ](_dbQ, msg.targetCnxn, connectionSearch.toSearchKey, handleSetLoginByConnectionFetch(_: AgentCnxn, _: Connection, loginToken))
+    fetch[ Connection ](_dbQ, msg.targetCnxn, connectionSearch.toSearchKey, handleSetLoginByConnectionFetch(_: AgentCnxnProxy, _: Connection, loginToken))
 
     val response = new SetLoginResponse(msg.ids.copyAsChild(), msg.eventKey.copy())
     response.originCnxn = msg.originCnxn
@@ -46,7 +47,7 @@ trait LoginRequestSet {
     send(_publicQ, msg.originCnxn, response)
   }
 
-  protected def handleSetLoginByConnectionFetch(cnxn: AgentCnxn, userConnection: Connection, token: LoginToken)
+  protected def handleSetLoginByConnectionFetch(cnxn: AgentCnxnProxy, userConnection: Connection, token: LoginToken)
   {
     updateDataBySearch(userConnection.writeCnxn, new LoginToken (), token)
   }

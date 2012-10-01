@@ -12,6 +12,7 @@ import com.protegra_ati.agentservices.core.events._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages.login._
 import invitation._
@@ -80,13 +81,13 @@ with MessageStore
 //with WatchListListener
 //with Notifier
 {
-  var _storeCnxn: AgentCnxn = null
-  var _cnxnUIStore = new AgentCnxn("UI".toURI, "", "Store".toURI)
+  var _storeCnxn: AgentCnxnProxy = null
+  var _cnxnUIStore = new AgentCnxnProxy("UI".toURI, "", "Store".toURI)
   val BIZNETWORK_AGENT_ID = "f5bc533a-d417-4d71-ad94-8c766907381b"
 
   //hack for testing
-  var _cnxnRAVerifier: AgentCnxn = null
-  var _cnxnCAVerifier: AgentCnxn = null
+  var _cnxnRAVerifier: AgentCnxnProxy = null
+  var _cnxnCAVerifier: AgentCnxnProxy = null
 
   var _forwardedMessages = new HashMap[ String, Message ]
 
@@ -102,7 +103,7 @@ with MessageStore
     initResultDb(configUtil)
     initPublic(configUtil)
 
-    _storeCnxn = new AgentCnxn(this._id.toString.toURI, "", this._id.toString.toURI)
+    _storeCnxn = new AgentCnxnProxy(this._id.toString.toURI, "", this._id.toString.toURI)
   }
 
   def initForTest(publicAddress: URM, publicAcquaintanceAddresses: List[ URM ], privateAddress: URM, privateAcquaintanceAddresses: List[ URM ], dbAddress: URM, resultAddress: URM, id: UUID)
@@ -112,7 +113,7 @@ with MessageStore
     initDb(dbAddress)
     initResultDb(resultAddress)
 
-    _storeCnxn = new AgentCnxn(id.toString.toURI, "", id.toString.toURI)
+    _storeCnxn = new AgentCnxnProxy(id.toString.toURI, "", id.toString.toURI)
     super.initForTest(id)
   }
 
@@ -165,13 +166,13 @@ with MessageStore
   {
     //hack for tests
     //    if ( _cnxnRAVerifier != null )
-    //      listen(_msgQ, _cnxnRAVerifier, Channel.Verify, ChannelType.Response, handlePublicVerifyResponseChannel(_: AgentCnxn, _: Message))
+    //      listen(_msgQ, _cnxnRAVerifier, Channel.Verify, ChannelType.Response, handlePublicVerifyResponseChannel(_: AgentCnxnProxy, _: Message))
     //
     //    if ( _cnxnCAVerifier != null )
-    //      listen(_msgQ, _cnxnCAVerifier, Channel.Verify, ChannelType.Request, handlePublicVerifyRequestChannel(_: AgentCnxn, _: Message))
+    //      listen(_msgQ, _cnxnCAVerifier, Channel.Verify, ChannelType.Request, handlePublicVerifyRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  def listenPublicRequests(cnxn: AgentCnxn)
+  def listenPublicRequests(cnxn: AgentCnxnProxy)
   {
     listenPublicContentRequest(cnxn)
 //    listenPublicSearchRequest(cnxn)
@@ -193,7 +194,7 @@ with MessageStore
     //    listenPublicIntroductionConsumerRequests(cnxn)
   }
 
-  def listenPublicResponses(cnxn: AgentCnxn)
+  def listenPublicResponses(cnxn: AgentCnxnProxy)
   {
     listenPublicContentResponse(cnxn)
 //    listenPublicSearchResponse(cnxn)
@@ -209,14 +210,14 @@ with MessageStore
 //    listenPublicRegistrationCreatorResponses(cnxn)
   }
 
-  def sendPrivate(cnxn: AgentCnxn, msg: Message)
+  def sendPrivate(cnxn: AgentCnxnProxy, msg: Message)
   {
     report("!!! Received on Public channel...Sending on privateQ!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
     msg.channelLevel = Some(ChannelLevel.Private)
     send(_privateQ, _cnxnUIStore, msg)
   }
 
-  override def send(queue: PartitionedStringMGJ, cnxn: AgentCnxn, msg: Message)
+  override def send(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, msg: Message)
   {
     msg match {
       case x: CreateInvitationRequest => {

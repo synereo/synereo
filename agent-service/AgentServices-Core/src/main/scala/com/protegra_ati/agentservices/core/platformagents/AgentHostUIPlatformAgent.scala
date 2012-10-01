@@ -12,6 +12,7 @@ import com.protegra_ati.agentservices.core.messages.admin._
 
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import net.lag.configgy.Config
 import com.biosimilarity.lift.lib.moniker._
 import java.util.UUID
@@ -37,7 +38,7 @@ with VerifierNotificationSetPrivate
 with InvitationResponseSetConsumerPrivate
 with IntroductionResponseSetConsumerPrivate
 {
-  var _cnxnUIStore = new AgentCnxn("UI".toURI, "", "Store".toURI)
+  var _cnxnUIStore = new AgentCnxnProxy("UI".toURI, "", "Store".toURI)
     var _agentSessionId: UUID = null
 
   override def init(configUtil: Config)
@@ -63,7 +64,7 @@ with IntroductionResponseSetConsumerPrivate
     listenPrivate(_cnxnUIStore)
   }
 
-  def listenPrivate(cnxn: AgentCnxn) =
+  def listenPrivate(cnxn: AgentCnxnProxy) =
   {
     listenPrivateContentResponse(cnxn)
     listenPrivateContentNotification(cnxn)
@@ -71,7 +72,7 @@ with IntroductionResponseSetConsumerPrivate
     listenPrivateVerifierResponse(cnxn)
     listenPrivateVerifierNotification(cnxn)
     listenPrivateLoginResponse(cnxn)
-    //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxn, _: Message))
+    //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
     listenPrivateInvitationConsumerResponses(cnxn)
     listenPrivateIntroductionConsumerResponses(cnxn)
 //    listenPrivateReferralResponses(cnxn)

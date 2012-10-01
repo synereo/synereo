@@ -9,6 +9,7 @@ import org.junit._
 import Assert._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages._

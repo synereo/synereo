@@ -10,6 +10,7 @@ import com.protegra_ati.agentservices.core._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import messages._
 import invitation.CreateInvitationRequest
 import org.specs.runner.JUnit4
@@ -147,22 +148,22 @@ Timeouts
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(mockOption)
 
 
-      val agentCnxn = new MockAgentCnxn("targetId".toURI, "I'm also here", "sourceId".toURI)
+      val agentCnxn = new MockAgentCnxnProxy("targetId".toURI, "I'm also here", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serialize(agentCnxn, new File("data//agentCnxn1.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn)
 
-      val agentCnxn1 = new MockAgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val agentCnxn1 = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serialize(agentCnxn1, new File("data//agentCnxn2.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn1)
 
-      val agentCnxn2 = new MockAgentCnxn("targetId".toURI, "Hi", null)
+      val agentCnxn2 = new MockAgentCnxnProxy("targetId".toURI, "Hi", null)
       DataCreator4KryoDeserializationTestInitializer.serialize(agentCnxn2, new File("data//agentCnxn3.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn2)
 
     }
 
     "serialize with same reference inside of " in {
-      val reference = new MockAgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val reference = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val duplicateHolder = new DuplicateMockObject(reference, reference, "test")
       DataCreator4KryoDeserializationTestInitializer.serialize(duplicateHolder, new File("data//test.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(duplicateHolder)
@@ -170,14 +171,14 @@ Timeouts
     }
 
     "serialize SystemData with Connection" in {
-      val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       val systemConnection = new SystemData[ Connection ](selfCnxns)
       DataCreator4KryoDeserializationTestInitializer.serialize(systemConnection, new File("data//serializedSystemConnection.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(systemConnection)
     }
     "serialize connection using serializer class" in {
-      val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       DataCreator4KryoDeserializationTestInitializer.serialize(selfCnxns, new File("data//serializedConnection.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(selfCnxns)
@@ -257,22 +258,22 @@ Timeouts
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(mockOption)
 
 
-      val agentCnxn = new MockAgentCnxn("targetId".toURI, "I'm also here", "sourceId".toURI)
+      val agentCnxn = new MockAgentCnxnProxy("targetId".toURI, "I'm also here", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(agentCnxn, new File("data//agentCnxn1.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn)
 
-      val agentCnxn1 = new MockAgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val agentCnxn1 = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(agentCnxn1, new File("data//agentCnxn2.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn1)
 
-      val agentCnxn2 = new MockAgentCnxn("targetId".toURI, "Hi", null)
+      val agentCnxn2 = new MockAgentCnxnProxy("targetId".toURI, "Hi", null)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(agentCnxn2, new File("data//agentCnxn3.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn2)
 
     }
 
     "serialize with same reference inside of " in {
-      val reference = new MockAgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val reference = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val duplicateHolder = new DuplicateMockObject(reference, reference, "test")
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(duplicateHolder, new File("data//test.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(duplicateHolder)
@@ -280,14 +281,14 @@ Timeouts
     }
 
     "serialize SystemData with Connection" in {
-      val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       val systemConnection = new SystemData[ Connection ](selfCnxns)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(systemConnection, new File("data//serializedSystemConnection.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(systemConnection)
     }
     "serialize connection using serializer class" in {
-      val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(selfCnxns, new File("data//serializedConnection.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(selfCnxns)

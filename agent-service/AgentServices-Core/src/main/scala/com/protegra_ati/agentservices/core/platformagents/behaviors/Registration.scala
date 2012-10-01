@@ -14,6 +14,7 @@ import com.protegra_ati.agentservices.core.platformagents.AgentHostUIPlatformAge
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util.{Severity, Reporting}
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import content.{SetContentAdminRequest, SetContentAdminResponse, SetContentResponse, SetContentRequest}
 import scala.collection.JavaConversions._
 

@@ -8,10 +8,11 @@ import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.messages.{Identification, MockMessage}
 import com.protegra.agentservicesstore.AgentTS.acT._
 import com.protegra_ati.agentservices.core.schema._
+import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import java.util.UUID
 
-abstract class MockAgentCnxnSerializer() extends Serializer[ MockAgentCnxn ]
+abstract class MockAgentCnxnProxySerializer() extends Serializer[ MockAgentCnxnProxy ]
 {
 
   locally {
@@ -20,7 +21,7 @@ abstract class MockAgentCnxnSerializer() extends Serializer[ MockAgentCnxn ]
   }
 
 
-//  override def write(kryo: Kryo, output: Output, obj: MockAgentCnxn): Unit =
+//  override def write(kryo: Kryo, output: Output, obj: MockAgentCnxnProxy): Unit =
 //  {
 //    System.err.println("KRYO MOCK_AGENT_CNXN WRITE.... ")
 //    kryo.writeObject(output, obj.src)
@@ -35,7 +36,7 @@ abstract class MockAgentCnxnSerializer() extends Serializer[ MockAgentCnxn ]
 //
 //  }
 
-//  override def read(kryo: Kryo, input: Input, typ: Class[ MockAgentCnxn ]): MockAgentCnxn =
+//  override def read(kryo: Kryo, input: Input, typ: Class[ MockAgentCnxnProxy ]): MockAgentCnxnProxy =
 //  {
 //    System.err.println("KRYO MOCK_AGENT_CNXN READ.... ")
 //    val src = kryo.readObject(input, classOf[ URI ])
@@ -46,7 +47,7 @@ abstract class MockAgentCnxnSerializer() extends Serializer[ MockAgentCnxn ]
 //    val credential = UUID.fromString(kryo.readObject(input, classOf[ String ]))
 //
 //
-//    val cnxn = MockAgentCnxn(src, label, trgt, credential)
+//    val cnxn = MockAgentCnxnProxy(src, label, trgt, credential)
 //    System.err.println("KRYO MOCK_AGENT_CNXN READ: " + cnxn)
 //    return cnxn
 //
@@ -88,8 +89,8 @@ abstract class MockAgentCnxnSerializer() extends Serializer[ MockAgentCnxn ]
 
 }
 
-object MockAgentCnxnSerializer
+object MockAgentCnxnProxySerializer
 {
-  def FITS_TO: Class[ MockAgentCnxn ] = classOf[ MockAgentCnxn ]
+  def FITS_TO: Class[ MockAgentCnxnProxy ] = classOf[ MockAgentCnxnProxy ]
 }
 

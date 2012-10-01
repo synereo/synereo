@@ -5,6 +5,7 @@ import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
@@ -23,12 +24,12 @@ trait InvitationRequestSetCreator
 {
   self: AgentHostStorePlatformAgent =>
 
-  def listenPublicInvitationCreatorRequests(cnxn: AgentCnxn) =
+  def listenPublicInvitationCreatorRequests(cnxn: AgentCnxnProxy) =
   {
-    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Public, handlePublicInvitationCreatorRequestChannel(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Public, handlePublicInvitationCreatorRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  protected def handlePublicInvitationCreatorRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicInvitationCreatorRequestChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -49,7 +50,7 @@ trait InvitationRequestSetCreator
     report("exiting handlePublicInvitationCreatorRequestChannel in ConnectionBroker", Severity.Trace)
   }
 
-  protected def processCreateInvitationRequest(cnxnBroker_A: AgentCnxn, createInviteRequest: CreateInvitationRequest) =
+  protected def processCreateInvitationRequest(cnxnBroker_A: AgentCnxnProxy, createInviteRequest: CreateInvitationRequest) =
   {
     //agent likes the introduction/search result and wants to invite the other agent to establish a connection
     //as broker you control this initial invite protocol
@@ -61,12 +62,12 @@ trait InvitationRequestSetCreator
 
     //we need to do a lookup of the targetConnection by id in Broker Self Connection to find the agent to invite
     val query = new SystemData(new Connection())
-    fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxn, _: SystemData[ Connection ], createInviteRequest, cnxnBroker_A))
+    fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxnProxy, _: SystemData[ Connection ], createInviteRequest, cnxnBroker_A))
   }
 
-  protected def handleSystemDataLookupCreateReferral(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], createInviteRequest: CreateInvitationRequest, cnxnBroker_A: AgentCnxn): Unit =
+  protected def handleSystemDataLookupCreateReferral(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], createInviteRequest: CreateInvitationRequest, cnxnBroker_A: AgentCnxnProxy): Unit =
   {
-    //TODO: innefficient but best we can do until toSearchKey can handle lookup by AgentCnxn
+    //TODO: innefficient but best we can do until toSearchKey can handle lookup by AgentCnxnProxy
     //comes in as write=BrokerSelf, read=RandomSelf, we want BrokerSelf
     generateReferralRequest(createInviteRequest, systemConnection.data)
   }
@@ -101,7 +102,7 @@ trait InvitationRequestSetCreator
       map.put( tempProfile.formattedClassName, tempProfile )
       return map
   }
-  protected def processReferralRequest(cnxnSelf: AgentCnxn, referralRequest: ReferralRequest) =
+  protected def processReferralRequest(cnxnSelf: AgentCnxnProxy, referralRequest: ReferralRequest) =
   {
     report("STORE REFERRAL FOR LATER RESPONSE: referralRequest=" + referralRequest + ", cnxn=" + cnxnSelf, Severity.Info)
     // persists ReferralRequest for the broker
@@ -142,7 +143,7 @@ trait InvitationRequestSetCreator
   def generateRejectToInvitationRequest(eventKey: EventKey, targetToBrokerConnection: Connection, targetToBroker: Post): Unit =
   {
     val queryObject = new SystemData(new Connection())
-    fetch[ SystemData[ Connection ] ](_dbQ, targetToBrokerConnection.readCnxn, queryObject.toSearchKey, findSelfConToSendPost(_: AgentCnxn, _: SystemData[ Connection ], eventKey, targetToBrokerConnection, targetToBroker))
+    fetch[ SystemData[ Connection ] ](_dbQ, targetToBrokerConnection.readCnxn, queryObject.toSearchKey, findSelfConToSendPost(_: AgentCnxnProxy, _: SystemData[ Connection ], eventKey, targetToBrokerConnection, targetToBroker))
   }
 
   /**
@@ -153,7 +154,7 @@ trait InvitationRequestSetCreator
    * @param targetToBrokerConnection target- broker connection
    * @param targetToBroker post to be sent
    */
-  protected def findSelfConToSendPost(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], eventKey: EventKey, targetToBrokerConnection: Connection, targetToBroker: Post): Unit =
+  protected def findSelfConToSendPost(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], eventKey: EventKey, targetToBrokerConnection: Connection, targetToBroker: Post): Unit =
   {
     val req = SetContentRequest(eventKey, new CompositeData[ Post ](targetToBrokerConnection, targetToBroker), null)
     req.targetCnxn = systemConnection.data.writeCnxn
@@ -261,7 +262,7 @@ trait InvitationRequestSetCreator
     req
   }
 
-  protected def waitForInvitationResponse(cnxnBroker_A: AgentCnxn, inviteA: InvitationRequest, inviteB: InvitationRequest) =
+  protected def waitForInvitationResponse(cnxnBroker_A: AgentCnxnProxy, inviteA: InvitationRequest, inviteB: InvitationRequest) =
   {
     //we need to start listening for the one time InvitationResponse messages from both sides
     report("single listen: channel: " + inviteA.getResponseChannelKey + " cnxn: " + inviteA.originCnxn, Severity.Info)
@@ -271,10 +272,11 @@ trait InvitationRequestSetCreator
     println("single listen: channel: " + inviteB.getResponseChannelKey.toLabel + " cnxn: " + inviteB.originCnxn)
 
 
-    //    listen(_publicQ, invite1.originCnxn, invite1.getResponseChannelKey, handleFirstResponseReceived(_: AgentCnxn,  _: Message, invite2))
+    //    listen(_publicQ, invite1.originCnxn, invite1.getResponseChannelKey, handleFirstResponseReceived(_: AgentCnxnProxy,  _: Message, invite2))
 
+    val agentCnxnA = inviteA.originCnxn.toAgentCnxn()
     reset {
-      for ( e <- _publicQ.get(inviteA.originCnxn)(inviteA.getResponseChannelKey.toLabel) ) {
+      for ( e <- _publicQ.get(agentCnxnA)(inviteA.getResponseChannelKey.toLabel) ) {
         //TODO: temporary hack until multiple get can be used. right now we get e & none or none & f
         if ( e != None ) {
 
@@ -284,9 +286,10 @@ trait InvitationRequestSetCreator
 
           report("!!! Listen Received FOR FIRST InvitationResponse !!!: ", Severity.Debug)
           //TODO: see if this is really necessary or only a unit test issue, may go away once "multiple get for" is in place
+          val agentCnxnB = inviteB.originCnxn.toAgentCnxn()
 
           reset {
-            for ( f <- _publicQ.get(inviteB.originCnxn)(inviteB.getResponseChannelKey.toLabel) ) {
+            for ( f <- _publicQ.get(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
               if ( e != None && f != None ) {
                 report("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!: ", Severity.Debug)
                 println("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!")
@@ -338,18 +341,18 @@ trait InvitationRequestSetCreator
     }
   }
 
-  protected def processInvitationResponseToArchive(cnxnA_Broker: AgentCnxn, invitationResponse: InvitationResponse) =
+  protected def processInvitationResponseToArchive(cnxnA_Broker: AgentCnxnProxy, invitationResponse: InvitationResponse) =
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
     val queryObject = new SystemData(new Connection())
-    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxn, _: SystemData[ Connection ], invitationResponse))
+    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
   }
 
-  protected def findInvitationResponseToArchive(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
+  protected def findInvitationResponseToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
   {
     val query = new PersistedMessage[ InvitationResponse ]()
-    fetchList[ PersistedMessage[ InvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxn, _: List[ PersistedMessage[ InvitationRequest ] ], invitationResponse.ids.parentId, invitationResponse.accept))
+    fetchList[ PersistedMessage[ InvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ InvitationRequest ] ], invitationResponse.ids.parentId, invitationResponse.accept))
   }
 
   protected def sendCreateConnectionRequest(inviteResponse: InvitationResponse, conn: Connection) =
@@ -361,7 +364,7 @@ trait InvitationRequestSetCreator
     send(_publicQ, inviteResponse.originCnxn, req)
   }
 
-  //  protected def deleteIntroduction(cnxnBroker_A: AgentCnxn, introductionId: String) =
+  //  protected def deleteIntroduction(cnxnBroker_A: AgentCnxnProxy, introductionId: String) =
   //  {
   //    if ( introductionId != "" ) {
   //      val query = new Introduction()
@@ -372,7 +375,7 @@ trait InvitationRequestSetCreator
   //  }
 
   //
-  //  protected def deleteIntroductionState(cnxnBroker_A: AgentCnxn, introductionId: String) =
+  //  protected def deleteIntroductionState(cnxnBroker_A: AgentCnxnProxy, introductionId: String) =
   //  {
   //    val introductionStateSearch = new IntroductionState (introductionId, null, null)
   //

@@ -8,6 +8,7 @@ import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import org.junit._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages._
@@ -40,10 +41,10 @@ with Timeouts
   val uiR = AgentHostCombinedBase.uiRef
   val storeR = AgentHostCombinedBase.storeRef
   val jenUID = UUID.randomUUID()
-  var cnxnJenJen = new AgentCnxn(( "Jen" + jenUID.toString ).toURI, "CombinedTestUser", ( "Jen" + jenUID.toString ).toURI)
+  var cnxnJenJen = new AgentCnxnProxy(( "Jen" + jenUID.toString ).toURI, "CombinedTestUser", ( "Jen" + jenUID.toString ).toURI)
 
   val mikeUID = UUID.randomUUID()
-  var cnxnMikeMike = new AgentCnxn(( "Mike" + mikeUID.toString ).toURI, "CombinedTestUser", ( "Mike" + mikeUID.toString ).toURI)
+  var cnxnMikeMike = new AgentCnxnProxy(( "Mike" + mikeUID.toString ).toURI, "CombinedTestUser", ( "Mike" + mikeUID.toString ).toURI)
   storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
   //  as soon as an new connection is stored, (esp. self connection) it is necessary to listen to this connection or like here to ALL selfconnections
   //  If no listening happened than connection as if would be "not visible"

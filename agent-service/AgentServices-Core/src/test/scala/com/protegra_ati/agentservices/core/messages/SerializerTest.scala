@@ -25,6 +25,7 @@ import com.protegra_ati.agentservices.core._
 import persistence.MockConnection
 import scala.collection.JavaConversions._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 import org.joda.time.DateTime
@@ -93,7 +94,7 @@ Timeouts
 
     "serialize and deserialize SystemData with Connection" in {
       //skip("")
-      val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 

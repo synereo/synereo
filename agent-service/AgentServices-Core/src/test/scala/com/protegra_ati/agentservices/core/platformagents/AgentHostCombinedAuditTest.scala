@@ -9,6 +9,7 @@ import org.junit._
 import Assert._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.content._
@@ -35,10 +36,10 @@ object AgentHostCombinedAuditTestSpecs extends Specification
 with Timeouts
 {
   val jenUID = UUID.randomUUID()
-  var cnxnJenJen = new AgentCnxn(( "Jen" + jenUID.toString ).toURI, "CombinedTestUser", ( "Jen" + jenUID.toString ).toURI)
+  var cnxnJenJen = new AgentCnxnProxy(( "Jen" + jenUID.toString ).toURI, "CombinedTestUser", ( "Jen" + jenUID.toString ).toURI)
 
   val mikeUID = UUID.randomUUID()
-  var cnxnMikeMike = new AgentCnxn(( "Mike" + mikeUID.toString ).toURI, "CombinedTestUser", ( "Mike" + mikeUID.toString ).toURI)
+  var cnxnMikeMike = new AgentCnxnProxy(( "Mike" + mikeUID.toString ).toURI, "CombinedTestUser", ( "Mike" + mikeUID.toString ).toURI)
 
 
   AgentHostCombinedBase.setup(this)

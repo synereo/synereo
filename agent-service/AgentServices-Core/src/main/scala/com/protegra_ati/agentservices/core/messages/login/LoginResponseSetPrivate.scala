@@ -5,6 +5,7 @@ package com.protegra_ati.agentservices.core.messages.login
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
 import com.protegra_ati.agentservices.core.events._
@@ -13,11 +14,11 @@ import com.protegra.agentservicesstore.util.Severity
 trait LoginResponseSetPrivate {
   self:AgentHostUIPlatformAgent =>
 
-  def listenPrivateLoginResponse(cnxn: AgentCnxn) = {
-    listen(_privateQ, cnxn, Channel.Security, ChannelType.Response, ChannelLevel.Private, handleSecurityResponseChannel(_: AgentCnxn, _: Message))
+  def listenPrivateLoginResponse(cnxn: AgentCnxnProxy) = {
+    listen(_privateQ, cnxn, Channel.Security, ChannelType.Response, ChannelLevel.Private, handleSecurityResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  protected def handleSecurityResponseChannel( cnxn: AgentCnxn, msg: Message) =
+  protected def handleSecurityResponseChannel( cnxn: AgentCnxnProxy, msg: Message) =
   {
     report("entering handleSecurityResponse for connection:" + cnxn.toString, Severity.Trace)
 

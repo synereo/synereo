@@ -15,6 +15,7 @@ import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import moniker._
 import com.protegra_ati.agentservices.core.messages._
 import org.specs.runner._
@@ -60,10 +61,10 @@ with SpecsPAHelpers
       //if intermittent put this back in
 //      Thread.sleep(TIMEOUT_LONG)
       val resultSearchKey1 = pa.getResultSearchKey(parentId1)
-      pa.getList[String](pa._resultQ, pa._cnxnResult, resultSearchKey1, handleGetList(_: AgentCnxn, _:List[String], expected))
+      pa.getList[String](pa._resultQ, pa._cnxnResult, resultSearchKey1, handleGetList(_: AgentCnxnProxy, _:List[String], expected))
     }
 
-    def handleGetList(cnxn: AgentCnxn, data: List[String], expected: List[String]) =
+    def handleGetList(cnxn: AgentCnxnProxy, data: List[String], expected: List[String]) =
     {
       val allResults = data ::: expected
       allResults.distinct.size must be_==(expected.size)

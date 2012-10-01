@@ -6,6 +6,7 @@ package com.protegra_ati.agentservices.core.schema.util
  */
 
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import java.util.UUID
 import java.net.URI
@@ -37,8 +38,8 @@ object ConnectionFactory
     autoApprove: String,
     policies: List[ String ]): Connection =
   {
-    val readCnxn = new AgentCnxn(targetId.toURI, "", sourceId.toURI)
-    val writeCnxn = new AgentCnxn(sourceId.toURI, "", targetId.toURI)
+    val readCnxn = new AgentCnxnProxy(targetId.toURI, "", sourceId.toURI)
+    val writeCnxn = new AgentCnxnProxy(sourceId.toURI, "", targetId.toURI)
     new Connection(category, connectionType, alias, readCnxn, writeCnxn, autoApprove, policies)
     // TODO eventually validation should here take place
   }
@@ -68,8 +69,8 @@ object ConnectionFactory
 //  def createConnection(alias: String,
 //    category: String,
 //    connectionType: String,
-//    readCnxn: AgentCnxn,
-//    writeCnxn: AgentCnxn,
+//    readCnxn: AgentCnxnProxy,
+//    writeCnxn: AgentCnxnProxy,
 //    autoApprove: String,
 //    policies: List[ ConnectionPolicy.Value ]): Connection =
 //  {
@@ -79,8 +80,8 @@ object ConnectionFactory
 
   def createTempConnection(alias: String,
     connectionType: String,
-    readCnxn: AgentCnxn,
-    writeCnxn: AgentCnxn): Connection =
+    readCnxn: AgentCnxnProxy,
+    writeCnxn: AgentCnxnProxy): Connection =
   {
     new Connection(ConnectionCategory.None.toString, connectionType, alias, readCnxn, writeCnxn, "true", List[ String ]())
     // TODO eventually validation should here take place

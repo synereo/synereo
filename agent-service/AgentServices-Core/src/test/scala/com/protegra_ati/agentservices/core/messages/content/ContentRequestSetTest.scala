@@ -23,6 +23,7 @@ import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.mTT._
 import moniker._
 import scala.util.continuations._
@@ -51,7 +52,7 @@ with RabbitTestSetup
 with Timeouts
 with SpecsPAHelpers
 {
-  var cnxnUIStore = new AgentCnxn("UI".toURI, "", "Store".toURI)
+  var cnxnUIStore = new AgentCnxnProxy("UI".toURI, "", "Store".toURI)
   val eventKey = "content"
   //val pa = new AgentHostStorePlatformAgent()
   //Profile
@@ -69,7 +70,7 @@ with SpecsPAHelpers
    // skip("")
     val JenId = ( "Jen" + UUID.randomUUID )
     val MikeId = ( "Mike" + UUID.randomUUID )
-    val cnxn = new AgentCnxn(JenId.toURI, "", JenId.toURI)
+    val cnxn = new AgentCnxnProxy(JenId.toURI, "", JenId.toURI)
     val profileId = UUID.randomUUID
     val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
     val basicProfile = new Profile("FirstName", "LastName", "", "", "", "", "", "", "")
@@ -134,7 +135,7 @@ with SpecsPAHelpers
     val MikeId = ( "Mike" + UUID.randomUUID )
     val SteveId = ( "Steve" + UUID.randomUUID )
 
-    val cnxnJenSelf = new AgentCnxn(JenId.toURI, "", JenId.toURI)
+    val cnxnJenSelf = new AgentCnxnProxy(JenId.toURI, "", JenId.toURI)
     val connMikeIntroduced = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Introduced", JenId, MikeId)
     val connSteveFull = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId, SteveId)
     pa.addToHostedCnxn(cnxnJenSelf)
@@ -242,7 +243,7 @@ with SpecsPAHelpers
     val MikeId = ( "Mike" + UUID.randomUUID )
     val SteveId = ( "Steve" + UUID.randomUUID )
 
-    val cnxnJenSelf = new AgentCnxn(JenId.toURI, "", JenId.toURI)
+    val cnxnJenSelf = new AgentCnxnProxy(JenId.toURI, "", JenId.toURI)
     val connMikeBasic = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Basic", JenId, MikeId)
     val connSteveFull = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId, SteveId)
     pa.addToHostedCnxn(cnxnJenSelf)
@@ -281,7 +282,7 @@ with SpecsPAHelpers
     val MikeId = ( "Mike" + UUID.randomUUID )
     val SteveId = ( "Steve" + UUID.randomUUID )
 
-    val cnxn = new AgentCnxn(JenId.toURI, "", JenId.toURI)
+    val cnxn = new AgentCnxnProxy(JenId.toURI, "", JenId.toURI)
     val connMikeBasic = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Basic", JenId, MikeId)
     val connSteveFull = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId, SteveId)
 
@@ -338,7 +339,7 @@ with SpecsPAHelpers
     val JenId = ( "Jen" + UUID.randomUUID )
     val MikeId = ( "Mike" + UUID.randomUUID )
 
-    val jenSelfCnxn = new AgentCnxn(JenId.toURI, "", JenId.toURI)
+    val jenSelfCnxn = new AgentCnxnProxy(JenId.toURI, "", JenId.toURI)
     val connJenMike = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId, MikeId)
     pa.addToHostedCnxn(jenSelfCnxn)
 
@@ -376,21 +377,21 @@ with SpecsPAHelpers
       fetchProfileData(pa._dbQ, connJenMike.writeCnxn, profileSearch.toSearchKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchProfileData(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String): Option[ Data ] =
+    def fetchProfileData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       resultProfile = None
       pa.fetch[ Data ](queue, cnxn, key, handleProfileFetch)
       return resultProfile
     }
 
-    def fetchConnectionData(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String): Option[ Data ] =
+    def fetchConnectionData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       resultConnection = None
       pa.fetch[ Data ](queue, cnxn, key, handleConnectionFetch)
       return resultConnection
     }
 
-    def handleProfileFetch(cnxn: AgentCnxn, data: Data) =
+    def handleProfileFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       data match {
         case x: Profile => resultProfile = Some(x)
@@ -398,7 +399,7 @@ with SpecsPAHelpers
       }
     }
 
-    def handleConnectionFetch(cnxn: AgentCnxn, data: Data) =
+    def handleConnectionFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       data match {
         case x: Connection => resultConnection = Some(x)
@@ -438,7 +439,7 @@ with SpecsPAHelpers
 
   }
 
-  def setContentToSelfConnection(cnxSelf: AgentCnxn, data: Data) =
+  def setContentToSelfConnection(cnxSelf: AgentCnxnProxy, data: Data) =
   {
     val msg = new SetContentRequest(new EventKey(UUID.randomUUID, ""), data, null)
     msg.targetCnxn = cnxSelf
@@ -447,7 +448,7 @@ with SpecsPAHelpers
     Thread.sleep(500)
   }
 
-  def setAppId(self: AgentCnxn): AppId =
+  def setAppId(self: AgentCnxnProxy): AppId =
   {
     val appId = AppId("TestApp")
     setContentToSelfConnection(self, appId)

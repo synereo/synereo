@@ -7,6 +7,7 @@ import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.biosimilarity.lift.lib.moniker._
 import net.lag.configgy._
@@ -22,7 +23,7 @@ trait ResultStorage
   var _resultQ: PartitionedStringMGJ = null //persistedJunction
 
   val _resultId = UUID.randomUUID().toString()
-  val _cnxnResult = new AgentCnxn(( "ResultDB" + _resultId ).toURI, "", ( "ResultDB" + _resultId ).toURI)
+  val _cnxnResult = new AgentCnxnProxy(( "ResultDB" + _resultId ).toURI, "", ( "ResultDB" + _resultId ).toURI)
 
   def initResultDb(configUtil: Config)
   {
@@ -58,10 +59,10 @@ trait ResultStorage
     put(_resultQ, _cnxnResult, storeKey, Serializer.serialize[ T ](resultToStore))
   }
 
-  def fetchResults[ T ](partialResultSearchKey: String, resultHandler: (AgentCnxn, List[ T ]) => Unit) =
+  def fetchResults[ T ](partialResultSearchKey: String, resultHandler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
     val resultSearchKey = getResultSearchKey(partialResultSearchKey)
-    getList[ T ](_resultQ, _cnxnResult, resultSearchKey, resultHandler(_: AgentCnxn, _: List[ T ]))
+    getList[ T ](_resultQ, _cnxnResult, resultSearchKey, resultHandler(_: AgentCnxnProxy, _: List[ T ]))
   }
 
 }

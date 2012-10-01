@@ -13,6 +13,7 @@ import org.junit._
 import Assert._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages.content._
 //import com.protegra_ati.agentservices.core.messages.search._
@@ -45,7 +46,7 @@ Timeouts
   // inits test configuration
 //  ConfigurationManager.getConfigurationManager().initForTest()
 
-  val cnxnUIStore = new AgentCnxn(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
   val uiRef: AgentHostUIPlatformAgent = new AgentHostUIPlatformAgent()
   val storeRef: AgentHostStorePlatformAgent = new AgentHostStorePlatformAgent()
 
@@ -80,7 +81,7 @@ Timeouts
   }
 
 
-  def setupIncrementalDisclosure(pa: AgentHostStorePlatformAgent, cnxn: AgentCnxn) =
+  def setupIncrementalDisclosure(pa: AgentHostStorePlatformAgent, cnxn: AgentCnxnProxy) =
   {
 //    ProfileDisclosedDataFactory
     // new DisclosedData[ Profile ](classOf[ Profile ], "Empty", "")
@@ -120,7 +121,7 @@ Timeouts
   def setupConnection(store: AgentHostStorePlatformAgent, selfId: String, targetId: String): Connection =
   {
     val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Introduced", selfId, targetId);
-    val sourceSelfCnxn = new AgentCnxn(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
+    val sourceSelfCnxn = new AgentCnxnProxy(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
 
     store.processNewConnection(newConn, sourceSelfCnxn)
     Thread.sleep(TIMEOUT_SHORT)
@@ -129,7 +130,7 @@ Timeouts
 
   def setupConnection(store: AgentHostStorePlatformAgent, newConn: Connection): Connection =
   {
-    val sourceSelfCnxn = new AgentCnxn(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
+    val sourceSelfCnxn = new AgentCnxnProxy(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
     store.processNewConnection(newConn, sourceSelfCnxn)
     Thread.sleep(TIMEOUT_SHORT)
     newConn
@@ -143,7 +144,7 @@ Timeouts
   def setupPersistedConnection(pa: AgentHostStorePlatformAgent, selfId: String, targetId: String): Connection =
   {
     val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Full", selfId, targetId);
-    val sourceSelfCnxn = new AgentCnxn(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
+    val sourceSelfCnxn = new AgentCnxnProxy(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
 
     pa.processNewConnection(newConn, sourceSelfCnxn)
     if ( selfId != targetId )
@@ -161,7 +162,7 @@ Timeouts
    */
   def setupPersistedConnection(pa: AgentHostStorePlatformAgent, selfTargetConn: Connection): Connection =
   {
-    val sourceSelfCnxn = new AgentCnxn(selfTargetConn.writeCnxn.src, "", selfTargetConn.writeCnxn.src)
+    val sourceSelfCnxn = new AgentCnxnProxy(selfTargetConn.writeCnxn.src, "", selfTargetConn.writeCnxn.src)
 
     pa.processNewConnection(selfTargetConn, sourceSelfCnxn)
     if ( !selfTargetConn.readCnxn.src.toString.equals(selfTargetConn.readCnxn.trgt.toString) )
@@ -175,7 +176,7 @@ Timeouts
   def setupPersistedConnection(pa: AgentHostStorePlatformAgent, alias: String, connectionType: String, selfId: String, targetId: String): Connection =
   {
     val newConn = ConnectionFactory.createConnection(alias, ConnectionCategory.None.toString, ConnectionCategory.None.toString, connectionType, selfId, targetId);
-    val sourceSelfCnxn = new AgentCnxn(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
+    val sourceSelfCnxn = new AgentCnxnProxy(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
 
     pa.processNewConnection(newConn, sourceSelfCnxn)
     if ( selfId != targetId )
@@ -185,7 +186,7 @@ Timeouts
     newConn
   }
 
-  def setupSelfConnection(pa: AgentHostStorePlatformAgent, cnxn: AgentCnxn, alias: String, id: String, connectionType: String): Connection =
+  def setupSelfConnection(pa: AgentHostStorePlatformAgent, cnxn: AgentCnxnProxy, alias: String, id: String, connectionType: String): Connection =
   {
     val self = ConnectionFactory.createConnection(alias, ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, connectionType, id, id)
     pa.store(pa._dbQ, cnxn, self.toStoreKey, Serializer.serialize[ Data ](self))
@@ -203,19 +204,19 @@ Timeouts
     Thread.sleep(500)
   }
 
-  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: String): Unit =
+  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, localeCode: String): Unit =
   {
     val Profile = new Profile("testFirst", "testLast", "testDesc", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
     setProfile(ui, cnxn, agentSessionId, tag, localeCode, Profile)
   }
 
-  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Unit =
+  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Unit =
   {
     val Profile = new Profile("testFirst", "testLast", "testDesc", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
     setProfile(ui, cnxn, agentSessionId, tag, Locale.ENGLISH.toString(), Profile)
   }
 
-  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: String, Profile: Profile): Unit =
+  def setProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, localeCode: String, Profile: Profile): Unit =
   {
     Profile.localeCode = localeCode
     val setReq = new SetContentRequest(new EventKey(agentSessionId, tag), Profile, null)
@@ -244,13 +245,13 @@ Timeouts
   }
 
 
-  def countProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Int =
+  def countProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
   {
     countProfile(ui, cnxn, agentSessionId, tag, None)
 
   }
 
-  def countProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: Option[ String ]): Int =
+  def countProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, localeCode: Option[ String ]): Int =
   {
     val query: Profile = new Profile()
     localeCode match {
@@ -260,7 +261,7 @@ Timeouts
     count(ui, cnxn, agentSessionId, tag, query)
   }
 
-  def countPersistedInvitationRequests(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, localeCode: Option[ String ]): Int =
+  def countPersistedInvitationRequests(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, localeCode: Option[ String ]): Int =
   {
     val query: PersistedMessage[ InvitationRequest ] = new PersistedMessage[ InvitationRequest ]()
     localeCode match {
@@ -270,7 +271,7 @@ Timeouts
     count(ui, cnxn, agentSessionId, tag, query)
   }
 
-  def count(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, query: Data): Int =
+  def count(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data): Int =
   {
     val sync = new AnyRef()
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
@@ -300,19 +301,19 @@ Timeouts
     sync.synchronized {count}
   }
 
-  def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Int =
+  def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
   {
     val query = new CompositeData[ Profile ](new Connection(), new Profile());
     countComposite(ui, cnxn, agentSessionId, tag, query)
   }
 
-  def countAudit(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String): Int =
+  def countAudit(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
   {
     val query = new CompositeData[ AuditLogItem ](new Connection(), new AuditLogItem());
     countComposite(ui, cnxn, agentSessionId, tag, query)
   }
 
-  def countComposite(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, query: CompositeData[ _ <: Data ]): Int =
+  def countComposite(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: CompositeData[ _ <: Data ]): Int =
   {
     @volatile var count = 0
     val tagUnique = tag + UUID.randomUUID().toString
@@ -339,21 +340,21 @@ Timeouts
     count
   }
 
-  def performOperationOnFetchedData(handler: (Data, AgentCnxn) => Unit,
-    q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def performOperationOnFetchedData(handler: (Data, AgentCnxnProxy) => Unit,
+    q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     var actual: Data = null
     handler(fetchData(q, cnxn, key), cnxn)
 
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Data =
+    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Data =
     {
-      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: Data))
+      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data))
       trySleep(actual)
       println("----fetched data:" + actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       println("-----getMustBe - get received : " + data)
       actual = data;
@@ -362,20 +363,20 @@ Timeouts
   }
 
 
-  def performAssertOperationOnFetchedData(handler: (Data, AgentCnxn) => Boolean, q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def performAssertOperationOnFetchedData(handler: (Data, AgentCnxnProxy) => Boolean, q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     var actual: Data = null
     handler(fetchData(q, cnxn, key), cnxn) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
 
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Data =
+    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Data =
     {
-      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: Data))
+      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data))
       trySleep(actual)
       println("----fetched data:" + actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       println("-----getMustBe - get received : " + data)
       actual = data;
@@ -383,7 +384,7 @@ Timeouts
 
   }
 
-  def performOperationOnFetchedPost(handler: (Post, AgentCnxn, AgentCnxn) => Boolean, q: BasePlatformAgent with Storage, selfCnxn: AgentCnxn, directCnxn: AgentCnxn, key: String) =
+  def performOperationOnFetchedPost(handler: (Post, AgentCnxnProxy, AgentCnxnProxy) => Boolean, q: BasePlatformAgent with Storage, selfCnxn: AgentCnxnProxy, directCnxn: AgentCnxnProxy, key: String) =
   {
     var actual: Post = null
 
@@ -391,16 +392,16 @@ Timeouts
 
     handler(fetchPost(q, directCnxn, key), selfCnxn, directCnxn) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
 
-    def fetchPost(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Post =
+    def fetchPost(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Post =
     {
       println("BasePlatformAgent is = " + q)
-      q.fetch[ Post ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: Post))
+      q.fetch[ Post ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Post))
       trySleep(actual)
       println("----fetched data:" + actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Post) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Post) =
     {
       println("-----getMustBe - get received : " + data)
       actual = data;
@@ -409,7 +410,7 @@ Timeouts
   }
 
 
-  def fetchMustBe(handler: ( Post ) => Boolean)(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def fetchMustBe(handler: ( Post ) => Boolean)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     var actual: Post = null
 
@@ -417,16 +418,16 @@ Timeouts
 
     ( handler(fetchPost(q, cnxn, key)) ) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
 
-    def fetchPost(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Post =
+    def fetchPost(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Post =
     {
       println("BasePlatformAgent is = " + q)
-      q.fetch[ Post ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: Post))
+      q.fetch[ Post ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Post))
       trySleep(actual)
       println("----fetched data:" + actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Post) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Post) =
     {
       println("-----getMustBe - get received : " + data)
       actual = data;
@@ -435,7 +436,7 @@ Timeouts
   }
 
 
-  def fetchMustBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def fetchMustBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     var actual: Data = null
 
@@ -443,16 +444,16 @@ Timeouts
 
     fetchData(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
     println("fetchMustBe expecting: " + expected)
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Data =
+    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Data =
     {
       println("BasePlatformAgent is = " + q)
-      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: Data))
+      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data))
       trySleep(actual)
       println("----fetched data:" + actual)
       return actual
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       println("-----getMustBe - get received : " + data)
       actual = data;
@@ -460,21 +461,21 @@ Timeouts
 
   }
 
-  def countMustBe(expected: Int)(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String) =
+  def countMustBe(expected: Int)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
     var found = 0
 
     println("attempting count")
     fetchCount(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
 
-    def fetchCount(q: BasePlatformAgent with Storage, cnxn: AgentCnxn, key: String): Int =
+    def fetchCount(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Int =
     {
-      q.fetchList[ Any ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxn, _: List[ Any ]))
+      q.fetchList[ Any ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: List[ Any ]))
       trySleep(found)
       return found
     }
 
-    def handleFetch(cnxn: AgentCnxn, data: List[ Any ]) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: List[ Any ]) =
     {
       println("getMustBe - get received : " + data)
       for ( e <- data ) {
@@ -485,7 +486,7 @@ Timeouts
     }
   }
 
-  def countConnectionsByCategory(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, query: Data, category: String): Int =
+  def countConnectionsByCategory(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data, category: String): Int =
   {
     countConnectionsByComparison(ui, cnxn, agentSessionId, tag, query, compareConnectionCategory(_: Connection, category))
   }
@@ -496,7 +497,7 @@ Timeouts
   }
 
 
-  def countConnectionsByType(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, query: Data, connectionType: String): Int =
+  def countConnectionsByType(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data, connectionType: String): Int =
   {
     countConnectionsByComparison(ui, cnxn, agentSessionId, tag, query, compareConnectionType(_: Connection, connectionType))
   }
@@ -507,7 +508,7 @@ Timeouts
   }
 
 
-  def countConnectionsByName(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, query: Data, connectionName: String): Int =
+  def countConnectionsByName(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data, connectionName: String): Int =
   {
     countConnectionsByComparison(ui, cnxn, agentSessionId, tag, query, compareConnectionName(_: Connection, connectionName))
   }
@@ -518,7 +519,7 @@ Timeouts
   }
 
 
-  def countConnectionsByComparison(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxn, agentSessionId: UUID, tag: String, query: Data, compare: ( Connection ) => Boolean): Int =
+  def countConnectionsByComparison(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data, compare: ( Connection ) => Boolean): Int =
   {
     val sync = new AnyRef()
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==

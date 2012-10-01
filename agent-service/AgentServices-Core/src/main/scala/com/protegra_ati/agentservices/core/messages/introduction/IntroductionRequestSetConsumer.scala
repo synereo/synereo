@@ -2,6 +2,7 @@ package com.protegra_ati.agentservices.core.messages.introduction
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
@@ -13,12 +14,12 @@ trait IntroductionRequestSetConsumer
 {
   self: AgentHostStorePlatformAgent =>
 
-  def listenPublicIntroductionConsumerRequests(cnxn: AgentCnxn) =
+  def listenPublicIntroductionConsumerRequests(cnxn: AgentCnxnProxy) =
   {
-    listen(_publicQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Public, handlePublicIntroductionConsumerRequestChannel(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Public, handlePublicIntroductionConsumerRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  protected def handlePublicIntroductionConsumerRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicIntroductionConsumerRequestChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -36,17 +37,17 @@ trait IntroductionRequestSetConsumer
     report("exiting handlePublicIntroductionConsumerRequestChannel in ConnectionBroker", Severity.Trace)
   }
 
-  protected def processIntroductionRequest(cnxnA_Broker: AgentCnxn, introRequest: IntroductionRequest) =
+  protected def processIntroductionRequest(cnxnA_Broker: AgentCnxnProxy, introRequest: IntroductionRequest) =
   {
     println("----------------------------------------------->>>> cnxnA_Broker= cnxnA_Broker.scr" + cnxnA_Broker.src + ", cnxnA_Broker.trgt=" + cnxnA_Broker.trgt + ", introRequest=" + introRequest)
 //    val agentIsIntroductionInitiator = isCaptured(cnxnA_Broker, introRequest) //only needed for invite
 //    println("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
     val queryObject = new SystemData(new Connection())
-    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreIntroductionRequest(_: AgentCnxn, _: SystemData[ Connection ], introRequest))
+    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreIntroductionRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], introRequest))
   }
 
-  protected def handleSystemDataLookupStoreIntroductionRequest(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], introRequest: IntroductionRequest): Unit =
+  protected def handleSystemDataLookupStoreIntroductionRequest(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], introRequest: IntroductionRequest): Unit =
   {
     println("$$$$$$$$$$$ STORE INTRODUCTIONS FOR LATER RESPONSE, cnxn=" + cnxn + ", systemConnection=" + systemConnection + ", introRequest=" + introRequest)
     val selfConnection = systemConnection.data

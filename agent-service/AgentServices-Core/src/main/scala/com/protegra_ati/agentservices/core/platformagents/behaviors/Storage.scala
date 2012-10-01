@@ -7,6 +7,7 @@ import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.biosimilarity.lift.lib.moniker._
 import net.lag.configgy._
@@ -36,7 +37,7 @@ trait Storage
     _dbQ = new PartitionedStringMGJ(_dbLocation, List(), None)
   }
 
-  def deleteDataForSelf(cnxn: AgentCnxn, dataToDelete: Data) =
+  def deleteDataForSelf(cnxn: AgentCnxnProxy, dataToDelete: Data) =
   {
     dataToDelete match {
       case x: Connection => {
@@ -48,7 +49,7 @@ trait Storage
     }
   }
 
-  protected def processDeleteConnection(cnxn: AgentCnxn, connection: Connection) =
+  protected def processDeleteConnection(cnxn: AgentCnxnProxy, connection: Connection) =
   {
     //delete connection in target connection list
     delete(_dbQ, cnxn, connection.toStoreKey)
@@ -59,25 +60,25 @@ trait Storage
     //don't drop the read cnxn collection - the other party in the connection will do that.
   }
 
-  protected def processDeleteDataForSelf(cnxn: AgentCnxn, dataToDelete: Data) =
+  protected def processDeleteDataForSelf(cnxn: AgentCnxnProxy, dataToDelete: Data) =
   {
     delete(_dbQ, cnxn, dataToDelete.toStoreKey)
 
     deleteDataForAllConnections(cnxn, dataToDelete)
   }
 
-  protected def deleteDataForAllConnections(cnxn: AgentCnxn, dataToDelete: Data) =
+  protected def deleteDataForAllConnections(cnxn: AgentCnxnProxy, dataToDelete: Data) =
   {
     val search = new Connection()
-    fetch[ Connection ](_dbQ, cnxn, search.toSearchKey, handleDeleteDataByConnectionFetch(_: AgentCnxn, _: Connection, dataToDelete))
+    fetch[ Connection ](_dbQ, cnxn, search.toSearchKey, handleDeleteDataByConnectionFetch(_: AgentCnxnProxy, _: Connection, dataToDelete))
   }
 
-  protected def handleDeleteDataByConnectionFetch(cnxn: AgentCnxn, conn: Connection, dataToDelete: Data) =
+  protected def handleDeleteDataByConnectionFetch(cnxn: AgentCnxnProxy, conn: Connection, dataToDelete: Data) =
   {
     delete(_dbQ, conn.writeCnxn, dataToDelete.toStoreKey)
   }
 
-  def updateData(cnxn: AgentCnxn, newData: Data, oldData: Data)
+  def updateData(cnxn: AgentCnxnProxy, newData: Data, oldData: Data)
   {
     if (newData != null)
       safeDelete(cnxn, oldData, Some(newData))
@@ -89,7 +90,7 @@ trait Storage
     store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
   }
 
-  def updateDataBySearch [T<:Data](cnxn: AgentCnxn, search: T, newData: Data)
+  def updateDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data)
   {
     //this will delete ALL occurrences of the specified data in the search object
     if (newData != null)
@@ -102,19 +103,19 @@ trait Storage
     store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
   }
 
-  def deleteDataBySearch [T<:Data](cnxn: AgentCnxn, search: T, newData: Option[ Data ]) : Unit =
+  def deleteDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Option[ Data ]) : Unit =
   {
-    fetchList[ Data ](_dbQ, cnxn, search.toSearchKey, handleDeleteAfterFetch(_: AgentCnxn, _: List[ Data ], newData))
+    fetchList[ Data ](_dbQ, cnxn, search.toSearchKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))
   }
 
   //could use a notion of retries if it isn't safe to delete
-  protected def handleDeleteAfterFetch(cnxn: AgentCnxn, dataToDelete: List[ Data ], newData: Option[ Data ])
+  protected def handleDeleteAfterFetch(cnxn: AgentCnxnProxy, dataToDelete: List[ Data ], newData: Option[ Data ])
   {
     dataToDelete.map(x => safeDelete(cnxn, x, newData))
   }
 
   //exception to the convention of newData, oldData
-  protected def safeDelete(cnxn: AgentCnxn, dataToDelete: Data, dataToPreserve: Option[ Data ]) =
+  protected def safeDelete(cnxn: AgentCnxnProxy, dataToDelete: Data, dataToPreserve: Option[ Data ]) =
   {
     if ( dataToDelete != null ) {
 

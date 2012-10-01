@@ -28,7 +28,7 @@ KVDBSerializable with UseJavaIOSerialization
 
   var channelLevel: Option[ ChannelLevel.Value ] = None
   //java shouldn't be setting this
-    var originCnxn: AgentCnxn = null
+    var originCnxn: AgentCnxnProxy = null
 
   def getChannelKey: String =
   {
@@ -57,5 +57,5 @@ KVDBSerializable with UseJavaIOSerialization
 
 
   //java to set or read values
-  @BeanProperty var targetCnxn: AgentCnxn = null
+  @BeanProperty var targetCnxn: AgentCnxnProxy = null
 }

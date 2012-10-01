@@ -5,6 +5,7 @@ import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
 import com.protegra_ati.agentservices.core.schema._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import org.joda.time.{DateTime, Instant}
 import java.util.{UUID, HashMap}
@@ -17,16 +18,16 @@ trait ConnectionBroker
 {
   self: AgentHostStorePlatformAgent =>
 
-  //  def handleBrokerTaskForNewConnection(selfCnxn:AgentCnxn, newConnection:Connection)
+  //  def handleBrokerTaskForNewConnection(selfCnxn:AgentCnxnProxy, newConnection:Connection)
   //  {
   //    //if the self (agentCnxn) contains a broker token, then it is a broker connection
   //    //and we want to generate Introduction objects on the connection.writeCnxn silo
   //    //so the other side can view and interact with those objects
   //    val queryObject = new Search[BrokerToken](classOf[BrokerToken])
-  //    fetch[BrokerToken](_dbQ, selfCnxn, queryObject.toSearchKey, handlePostBrokerTokenFetch(_: AgentCnxn, _: BrokerToken, newConnection))
+  //    fetch[BrokerToken](_dbQ, selfCnxn, queryObject.toSearchKey, handlePostBrokerTokenFetch(_: AgentCnxnProxy, _: BrokerToken, newConnection))
   //  }
   //
-  //  def handlePostBrokerTokenFetch(selfCnxn: AgentCnxn, brokerToken: BrokerToken, newConnection:Connection) =
+  //  def handlePostBrokerTokenFetch(selfCnxn: AgentCnxnProxy, brokerToken: BrokerToken, newConnection:Connection) =
   //  {
   //    //there is a token so for connection, generate connectionintro objects
   //    //for each connection in the brokers self silo....that is the design pattern
@@ -56,20 +57,20 @@ trait ConnectionBroker
   //
   //  }
   //
-  //  protected def generateIntroduction(targetAlias: String, brokerCnxn:AgentCnxn) = {
+  //  protected def generateIntroduction(targetAlias: String, brokerCnxn:AgentCnxnProxy) = {
   //    val oldData: Connection = null
   //    val intro = new Introduction(UUID.randomUUID(), targetAlias, )
   //    updateData(connection.writeCnxn, intro, oldData)
   //  }
 
-  def generateSystemData(selfCnxn: AgentCnxn, connection: Connection): SystemData[ Connection ] =
+  def generateSystemData(selfCnxn: AgentCnxnProxy, connection: Connection): SystemData[ Connection ] =
   {
     //we need to store a SystemData object here at this time as well which contains the self cnxn's for both parties
     //of the connection....the cnxn passed in is one of the self connections, we need a way to get the other....
     //faking it out for now
     //the lines below needs to be replaced by a new message that can go across the publicQ to the right PA and
     //retrieve the "read" side's self connection
-//    val targetSelfCnxn = AgentCnxn(connection.writeCnxn.src, "", connection.writeCnxn.src)
+//    val targetSelfCnxn = AgentCnxnProxy(connection.writeCnxn.src, "", connection.writeCnxn.src)
     val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ]())
 
     val systemConnection = new SystemData[ Connection ](selfCnxns)

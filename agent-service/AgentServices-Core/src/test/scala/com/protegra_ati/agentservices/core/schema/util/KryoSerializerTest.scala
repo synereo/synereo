@@ -10,6 +10,7 @@ import com.protegra_ati.agentservices.core._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import messages._
 import invitation.CreateInvitationRequest
 import org.specs.runner.JUnit4
@@ -537,13 +538,13 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
 
 
-      val agentCnxn = new MockAgentCnxn("targetId".toURI, "I'm also here", "sourceId".toURI)
+      val agentCnxn = new MockAgentCnxnProxy("targetId".toURI, "I'm also here", "sourceId".toURI)
 
       KryoSerializerTestDataInitializer.serialize(agentCnxn, new File("agentCnxn.kryobin"))
-      val deserializedAgentCnxn = KryoSerializerTestDataInitializer.deserialize[ MockAgentCnxn ](new File("agentCnxn.kryobin"))
-      deserializedAgentCnxn must_!= null
-      deserializedAgentCnxn match {
-        case x: MockAgentCnxn => {
+      val deserializedAgentCnxnProxy = KryoSerializerTestDataInitializer.deserialize[ MockAgentCnxnProxy ](new File("agentCnxn.kryobin"))
+      deserializedAgentCnxnProxy must_!= null
+      deserializedAgentCnxnProxy match {
+        case x: MockAgentCnxnProxy => {
           x must be_==(agentCnxn)
 
         }
@@ -551,13 +552,13 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
       }
 
 
-      val agentCnxn1 = new MockAgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val agentCnxn1 = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 
       KryoSerializerTestDataInitializer.serialize(agentCnxn1, new File("agentCnxn.kryobin"))
-      val deserializedAgentCnxn1 = KryoSerializerTestDataInitializer.deserialize[ MockAgentCnxn ](new File("agentCnxn.kryobin"))
-      deserializedAgentCnxn1 must_!= null
-      deserializedAgentCnxn1 match {
-        case x: MockAgentCnxn => {
+      val deserializedAgentCnxnProxy1 = KryoSerializerTestDataInitializer.deserialize[ MockAgentCnxnProxy ](new File("agentCnxn.kryobin"))
+      deserializedAgentCnxnProxy1 must_!= null
+      deserializedAgentCnxnProxy1 match {
+        case x: MockAgentCnxnProxy => {
           x must be_==(agentCnxn1)
           // x.conversationId must be_==(id.conversationId)
         }
@@ -565,13 +566,13 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
       }
 
 
-      val agentCnxn2 = new MockAgentCnxn("targetId".toURI, "Hi", null)
+      val agentCnxn2 = new MockAgentCnxnProxy("targetId".toURI, "Hi", null)
 
       KryoSerializerTestDataInitializer.serialize(agentCnxn2, new File("agentCnxn.kryobin"))
-      val deserializedAgentCnxn2 = KryoSerializerTestDataInitializer.deserialize[ MockAgentCnxn ](new File("agentCnxn.kryobin"))
-      deserializedAgentCnxn2 must_!= null
-      deserializedAgentCnxn2 match {
-        case x: MockAgentCnxn => {
+      val deserializedAgentCnxnProxy2 = KryoSerializerTestDataInitializer.deserialize[ MockAgentCnxnProxy ](new File("agentCnxn.kryobin"))
+      deserializedAgentCnxnProxy2 must_!= null
+      deserializedAgentCnxnProxy2 match {
+        case x: MockAgentCnxnProxy => {
           x must be_==(agentCnxn2)
           // x.conversationId must be_==(id.conversationId)
         }
@@ -596,8 +597,8 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
 
 
-      val selfCnxn = new MockAgentCnxn("targetId".toURI, "", "sourceId".toURI)
-      val selfCnxn1 = new MockAgentCnxn("targetId1".toURI, "", "sourceId1".toURI)
+      val selfCnxn = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn1 = new MockAgentCnxnProxy("targetId1".toURI, "", "sourceId1".toURI)
 
 
 
@@ -621,7 +622,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
     "serialize and deserialize with same reference inside of " in {
       //skip("")
       // up to 2 level references to the same object work, deeper levels require kryo.setReferences( false ) !!!
-      val reference = new MockAgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val reference = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 
       val duplicateHolder = new DuplicateMockObject(reference, reference, "test")
 
@@ -641,7 +642,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
     "serialize and deserialize SystemData with Connection" in {
       // skip("")
-      val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 
@@ -660,7 +661,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
     }
     "serialize and deserialize connection using serializer class" in {
-      val selfCnxn = new AgentCnxn("targetId".toURI, "", "sourceId".toURI)
+      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 
       KryoSerializerTestDataInitializer.serialize(selfCnxns, new File("serializedConnection.kryobin"))

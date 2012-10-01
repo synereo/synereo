@@ -3,6 +3,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
 import com.protegra_ati.agentservices.core.schema._
@@ -15,15 +16,15 @@ import com.protegra_ati.agentservices.core.schema.util._
 trait Notifications {
   self: BasePlatformAgent with Storage with Private =>
 
-  def notifyUser(cnxn: AgentCnxn, msg: Message)
+  def notifyUser(cnxn: AgentCnxnProxy, msg: Message)
   {
     //check to see if there is a logged in token for the target cnxn
     //if there is, send a notification
     val loginSearch =new LoginToken ()
-    fetch[ LoginToken ](_dbQ, cnxn, loginSearch.toSearchKey, handleLoginSearchFetch(_: AgentCnxn, _: LoginToken, msg))
+    fetch[ LoginToken ](_dbQ, cnxn, loginSearch.toSearchKey, handleLoginSearchFetch(_: AgentCnxnProxy, _: LoginToken, msg))
   }
 
-  def handleLoginSearchFetch(cnxn: AgentCnxn, token: LoginToken, msg: Message)
+  def handleLoginSearchFetch(cnxn: AgentCnxnProxy, token: LoginToken, msg: Message)
   {
     //note that this method sends directory on the privateQ which should be
     //fine as the login token should only exist on the PA which is hosting

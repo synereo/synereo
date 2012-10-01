@@ -3,6 +3,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.extensions.ClassExtensions._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.platformagents._
@@ -33,29 +34,29 @@ trait Authorization
     bypassAuthorization
   }
 
-  def changeDisclosedContentOnConnection(newConnection: Connection, oldConnection: Connection, selfCnxn: AgentCnxn) =
+  def changeDisclosedContentOnConnection(newConnection: Connection, oldConnection: Connection, selfCnxn: AgentCnxnProxy) =
   {
     if ( oldConnection != null ) {
       //search new auth content by conn type
       val disclosedDataExistingSearch = new DisclosedData(oldConnection.connectionType)
-      fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataExistingSearch.toSearchKey, findNewDisclosure(_: AgentCnxn, _: List[ DisclosedData[ Data ] ], newConnection))
+      fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataExistingSearch.toSearchKey, findNewDisclosure(_: AgentCnxnProxy, _: List[ DisclosedData[ Data ] ], newConnection))
     }
     else {
       findNewDisclosure(selfCnxn, List[ DisclosedData[ Data ] ](), newConnection)
     }
   }
 
-  def findNewDisclosure(selfCnxn: AgentCnxn, oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
+  def findNewDisclosure(selfCnxn: AgentCnxnProxy, oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
   {
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
     val disclosedDataToSetSearch = new DisclosedData(newConnection.connectionType)
-    fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataToSetSearch.toSearchKey, findAllDataAndChangeDisclosure(_: AgentCnxn, _: List[ DisclosedData[ Data ] ], oldDisclosedData, newConnection))
+    fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataToSetSearch.toSearchKey, findAllDataAndChangeDisclosure(_: AgentCnxnProxy, _: List[ DisclosedData[ Data ] ], oldDisclosedData, newConnection))
 
     report("exiting findAllDataAndChangeDisclosure", Severity.Trace)
   }
 
-  def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxn, newDisclosedData: List[ DisclosedData[ Data ] ], oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
+  def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: List[ DisclosedData[ Data ] ], oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
   {
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
     val classNames = newDisclosedData.map(x => x.dataDisplayClassName) ::: oldDisclosedData.map(x => x.dataDisplayClassName)
@@ -80,30 +81,30 @@ trait Authorization
     data.headOption
   }
 
-  def compareDisclosure(selfCnxn: AgentCnxn, newDisclosedData: Option[ DisclosedData[ Data ] ], oldDisclosedData: Option[ DisclosedData[ Data ] ], newConnection: Connection) =
+  def compareDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: Option[ DisclosedData[ Data ] ], oldDisclosedData: Option[ DisclosedData[ Data ] ], newConnection: Connection) =
   {
 
     (newDisclosedData, oldDisclosedData) match {
       //no disclosed data found should delete existing data
       case (None, _) => {
         //        val dataToChangeSearchKey = SearchFactory.toSearchKeyFromClassName(className)
-        //        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, delete(_: AgentCnxn, _: Data))
+        //        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, delete(_: AgentCnxnProxy, _: Data))
         //delete
       }
       //TODO: more efficient to combine in one case
       case (Some(newDisclosedDatum), None) => {
         val dataToChangeSearchKey = newDisclosedDatum.toSearchKeyFromDataClassType()
-        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxn, _: Data, newDisclosedDatum, null, newConnection))
+        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxnProxy, _: Data, newDisclosedDatum, null, newConnection))
       }
       case (Some(newDisclosedDatum), Some(oldDisclosedDatum)) if newDisclosedDatum != oldDisclosedDatum => {
         //TODO: possibly optimize of oldData not found but let the insertUpdate logic handle for now
         val dataToChangeSearchKey = newDisclosedDatum.toSearchKeyFromDataClassType()
-        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxn, _: Data, newDisclosedDatum, oldDisclosedDatum, newConnection))
+        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxnProxy, _: Data, newDisclosedDatum, oldDisclosedDatum, newConnection))
       }
     }
   }
 
-  def findOldDataAndChangeDisclosure(cnxn: AgentCnxn, selfData: Data, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
+  def findOldDataAndChangeDisclosure(cnxn: AgentCnxnProxy, selfData: Data, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
   {
     report("entering findOldDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
@@ -118,14 +119,14 @@ trait Authorization
   }
 
 
-  //  def retrieveNewAuthorizationInfo(cnxn: AgentCnxn, oldAuthorization: DisclosedData[ Data ], oldConnection: Connection, newConnection: Connection, data: Data)
+  //  def retrieveNewAuthorizationInfo(cnxn: AgentCnxnProxy, oldAuthorization: DisclosedData[ Data ], oldConnection: Connection, newConnection: Connection, data: Data)
   //  {
   //    val contentSearch = new DisclosedData(data.getClassOf, newConnection.connectionType, "")
   //
-  //    fetch[ DisclosedData[ Data ] ](_dbQ, cnxn, contentSearch.toSearchKey, handlePermissionsOnViewableItemByCnxnFetch(_: AgentCnxn, _: DisclosedData[ Data ], oldAuthorization, data, newConnection, oldConnection))
+  //    fetch[ DisclosedData[ Data ] ](_dbQ, cnxn, contentSearch.toSearchKey, handlePermissionsOnViewableItemByCnxnFetch(_: AgentCnxnProxy, _: DisclosedData[ Data ], oldAuthorization, data, newConnection, oldConnection))
   //  }
   //
-  //  def handlePermissionsOnViewableItemByCnxnFetch(cnxn: AgentCnxn, newAuthorizationPermissions: DisclosedData[ Data ], oldAuthorizationPermissions: DisclosedData[ Data ], viewableItem: Data, newConnection: Connection, oldConnection: Connection)
+  //  def handlePermissionsOnViewableItemByCnxnFetch(cnxn: AgentCnxnProxy, newAuthorizationPermissions: DisclosedData[ Data ], oldAuthorizationPermissions: DisclosedData[ Data ], viewableItem: Data, newConnection: Connection, oldConnection: Connection)
   //  {
   //    val newFieldList = newAuthorizationPermissions.fields.split(',').toList
   //    val newAuthorizedData = viewableItem.authorizedData(newFieldList)
@@ -144,13 +145,13 @@ trait Authorization
   //    updateData(newConnection.writeCnxn, newAuthorizationPermissions.forAudit(newConnection), oldAuditItem)
   //  }
   //
-  //  def retrievePreviousAuthorizationInfo(cnxn: AgentCnxn, data: Data, newConnection: Connection, oldConnection: Connection)
+  //  def retrievePreviousAuthorizationInfo(cnxn: AgentCnxnProxy, data: Data, newConnection: Connection, oldConnection: Connection)
   //  {
   //    val contentSearch = new DisclosedData(data.getClassOf, oldConnection.connectionType, "")
   //
   //    val oldAuthorizedContentKey = contentSearch.toSearchKey
   //
-  //    fetch[ DisclosedData[ Data ] ](_dbQ, cnxn, contentSearch.toSearchKey, retrieveNewAuthorizationInfo(_: AgentCnxn, _: DisclosedData[ Data ], oldConnection, newConnection, data))
+  //    fetch[ DisclosedData[ Data ] ](_dbQ, cnxn, contentSearch.toSearchKey, retrieveNewAuthorizationInfo(_: AgentCnxnProxy, _: DisclosedData[ Data ], oldConnection, newConnection, data))
   //
   //  }
 }

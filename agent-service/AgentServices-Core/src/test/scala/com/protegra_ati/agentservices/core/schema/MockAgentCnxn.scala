@@ -20,7 +20,7 @@ import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 object credentialVendor extends UUIDOps with Serializable
 
-case class MockAgentCnxn(
+case class MockAgentCnxnProxy(
   override val src: URI,
   override val label: String,
   override val trgt: URI //,
@@ -36,9 +36,9 @@ case class MockAgentCnxn(
   // Note that since a + b == b + a and
   // (on JVM1) <URI>.hashCode == (on JVM2) <URI>.hashCode
   //
-  // AgentCnxn( s, l, t )._symmetricIdentity
+  // AgentCnxnProxy( s, l, t )._symmetricIdentity
   // ==
-  // AgentCnxn( t, l, a )._symmetricIdentity
+  // AgentCnxnProxy( t, l, a )._symmetricIdentity
   //
 
   def code(uri: URI): scala.math.BigInt =
@@ -68,7 +68,7 @@ case class MockAgentCnxn(
   // be carefull by changing toString, see equals
   override def toString(): String =
   {
-    "MockAgentCnxn[ src=" + src + ", label=" + label + ", trgt=" + trgt + ", credential=" + credential + "]"
+    "MockAgentCnxnProxy[ src=" + src + ", label=" + label + ", trgt=" + trgt + ", credential=" + credential + "]"
   }
 
 
@@ -80,7 +80,7 @@ case class MockAgentCnxn(
   override def equals(other: Any) =
   {
     other match {
-      case that: MockAgentCnxn => {
+      case that: MockAgentCnxnProxy => {
         if ( this eq that ) true
         if ( null == that ) false
         else {
@@ -106,7 +106,7 @@ case class MockAgentCnxn(
   }
 
   override def canEqual(other: Any) =
-    other.isInstanceOf[ MockAgentCnxn ]
+    other.isInstanceOf[ MockAgentCnxnProxy ]
 
 }
 

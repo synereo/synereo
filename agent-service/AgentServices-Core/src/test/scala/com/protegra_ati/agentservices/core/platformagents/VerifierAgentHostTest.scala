@@ -12,6 +12,7 @@
 //import com.protegra_ati.agentservices.core.messages._
 //import com.protegra.agentservicesstore.AgentTS._
 //import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 //import com.protegra.agentservicesstore.AgentTS.mTT._
 //import com.biosimilarity.lift.lib.moniker._
 //import content.{GetContentResponse, SetContentPersistedRequest}
@@ -35,15 +36,15 @@
 //with Timeouts
 //{
 //
-//  var cnxnRandom = new AgentCnxn("CombinedTest".toURI, "", "User".toURI)
+//  var cnxnRandom = new AgentCnxnProxy("CombinedTest".toURI, "", "User".toURI)
 //
 //  val relyingAgentId = "RelyingAgent" + UUID.randomUUID.toString
 //  val claimingAgentId = "ClaimingAgent" + UUID.randomUUID.toString
 //  val verifierId = "Verifier" + UUID.randomUUID.toString
 //
-//  val cnxnCASelf = AgentCnxn(claimingAgentId.toURI, "", claimingAgentId.toURI)
-//  val cnxnRASelf = AgentCnxn(relyingAgentId.toURI, "", relyingAgentId.toURI)
-//  val cnxnVerifierSelf = AgentCnxn(verifierId.toURI, "", verifierId.toURI)
+//  val cnxnCASelf = AgentCnxnProxy(claimingAgentId.toURI, "", claimingAgentId.toURI)
+//  val cnxnRASelf = AgentCnxnProxy(relyingAgentId.toURI, "", relyingAgentId.toURI)
+//  val cnxnVerifierSelf = AgentCnxnProxy(verifierId.toURI, "", verifierId.toURI)
 //
 //  AgentHostCombinedBase.setup(this)
 //  val uiPA = AgentHostCombinedBase.uiRef
@@ -74,8 +75,8 @@
 //    var triggered = false
 //    var getClaimResponse: GetClaimResponse = null
 //
-//    val cnxnRACA = AgentCnxn(relyingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnCARA = AgentCnxn(claimingAgentId.toURI, "", relyingAgentId.toURI)
+//    val cnxnRACA = AgentCnxnProxy(relyingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnCARA = AgentCnxnProxy(claimingAgentId.toURI, "", relyingAgentId.toURI)
 //
 //    val verifier = Verifier("Government of Manitoba")
 //    val verifiers = List(verifier)
@@ -148,11 +149,11 @@
 //    val agentSessionId = UUID.randomUUID()
 //
 //
-//    val cnxnRACA = AgentCnxn(relyingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnCARA = AgentCnxn(claimingAgentId.toURI, "", relyingAgentId.toURI)
-//    val cnxnRAVerifier = AgentCnxn(relyingAgentId.toURI, "", verifierId.toURI)
-//    val cnxnVerifierRA = AgentCnxn(verifierId.toURI, "", relyingAgentId.toURI)
-//    val cnxnCAVerifier = AgentCnxn(claimingAgentId.toURI, "", verifierId.toURI)
+//    val cnxnRACA = AgentCnxnProxy(relyingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnCARA = AgentCnxnProxy(claimingAgentId.toURI, "", relyingAgentId.toURI)
+//    val cnxnRAVerifier = AgentCnxnProxy(relyingAgentId.toURI, "", verifierId.toURI)
+//    val cnxnVerifierRA = AgentCnxnProxy(verifierId.toURI, "", relyingAgentId.toURI)
+//    val cnxnCAVerifier = AgentCnxnProxy(claimingAgentId.toURI, "", verifierId.toURI)
 //
 //    val verifier = Verifier("Government of Manitoba")
 //    val verifiers = List(verifier)
@@ -200,7 +201,7 @@
 //    var verifyPermissionRequest: VerifyPermissionRequest = null
 //    var triggered = false
 //
-//    def handleVerifyPermissionRequest(cnxn: AgentCnxn, msg: Message) =
+//    def handleVerifyPermissionRequest(cnxn: AgentCnxnProxy, msg: Message) =
 //    {
 //      msg match {
 //        case x: VerifyPermissionRequest => {
@@ -211,7 +212,7 @@
 //      triggered = true
 //    }
 //
-//    def handleVerifyResponse(cnxn: AgentCnxn, msg: Message) =
+//    def handleVerifyResponse(cnxn: AgentCnxnProxy, msg: Message) =
 //    {
 //      msg match {
 //        case x: VerifyResponse => {
@@ -222,13 +223,13 @@
 //      triggered = true
 //    }
 //
-//    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxn, searchKey: String): VerifyPermissionRequest =
+//    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, searchKey: String): VerifyPermissionRequest =
 //    {
 //      storePA.fetch[ Data ](queue, cnxn, searchKey, handleFetch)
 //      return verifyPermissionRequest
 //    }
 //
-//    def handleFetch(cnxn: AgentCnxn, data: Data) =
+//    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
 //    {
 //      data match {
 //        case x: PersistedRequest => {
@@ -331,9 +332,9 @@
 //    val agentSessionId = UUID.randomUUID()
 //
 //
-//    val cnxnRACA = AgentCnxn(relyingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnVerifierCA = AgentCnxn(verifierId.toURI, "", claimingAgentId.toURI)
-//    val cnxnCAVerifier = AgentCnxn(claimingAgentId.toURI, "", verifierId.toURI)
+//    val cnxnRACA = AgentCnxnProxy(relyingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnVerifierCA = AgentCnxnProxy(verifierId.toURI, "", claimingAgentId.toURI)
+//    val cnxnCAVerifier = AgentCnxnProxy(claimingAgentId.toURI, "", verifierId.toURI)
 //
 //    //store a CA/RA connection on the CA self connection
 //    val connCARA = ConnectionFactory.createConnection("RA", ConnectionCategory.Self.toString, "Full", claimingAgentId, relyingAgentId, "false", List())
@@ -362,7 +363,7 @@
 //
 //    var verifyPermissionResponse: VerifyPermissionResponse = null
 //
-//    def handleVerifyPermissionResponse(cnxn: AgentCnxn, msg: Message) =
+//    def handleVerifyPermissionResponse(cnxn: AgentCnxnProxy, msg: Message) =
 //    {
 //      msg match {
 //        case x: VerifyPermissionResponse => {

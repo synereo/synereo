@@ -12,6 +12,7 @@
 //import com.protegra_ati.agentservices.core.messages._
 //import com.protegra.agentservicesstore.AgentTS._
 //import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 //import com.protegra.agentservicesstore.AgentTS.mTT._
 //import com.biosimilarity.lift.lib.moniker._
 //import content.SetContentPersistedRequest
@@ -51,7 +52,7 @@
 //    pa
 //  }
 //
-//  def createClaimingAgent(selfConnections:List[AgentCnxn]): AgentHostStorePlatformAgent =
+//  def createClaimingAgent(selfConnections:List[AgentCnxnProxy]): AgentHostStorePlatformAgent =
 //  {
 //    val sourceAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_CLAIMING_AGENT)
 //    val acquaintanceAddresses = List[ URM ]()
@@ -63,7 +64,7 @@
 //    pa
 //  }
 //
-//  def createRelyingAgent(selfConnections:List[AgentCnxn]): AgentHostStorePlatformAgent =
+//  def createRelyingAgent(selfConnections:List[AgentCnxnProxy]): AgentHostStorePlatformAgent =
 //  {
 //    val sourceAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_RELYING_AGENT)
 //    val acquaintanceAddresses = List[ URM ]()
@@ -82,10 +83,10 @@
 //    val relyingAgentId = "RelyingAgent" + UUID.randomUUID.toString
 //    val claimingAgentId = "ClaimingAgent" + UUID.randomUUID.toString
 //
-//    val cnxnCASelf = AgentCnxn(claimingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnRASelf = AgentCnxn(relyingAgentId.toURI, "", relyingAgentId.toURI)
-//    val cnxnRACA = AgentCnxn(relyingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnCARA = AgentCnxn(claimingAgentId.toURI, "", relyingAgentId.toURI)
+//    val cnxnCASelf = AgentCnxnProxy(claimingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnRASelf = AgentCnxnProxy(relyingAgentId.toURI, "", relyingAgentId.toURI)
+//    val cnxnRACA = AgentCnxnProxy(relyingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnCARA = AgentCnxnProxy(claimingAgentId.toURI, "", relyingAgentId.toURI)
 //
 //    val relyingAgentPA = createRelyingAgent(List(cnxnRASelf,cnxnCASelf))
 //    val claimingAgentPA = createClaimingAgent(List(cnxnRASelf, cnxnCASelf))
@@ -108,12 +109,12 @@
 //
 //    var selectVerifierRequest:SelectVerifierRequest = null
 //
-//    def fetchData(queue:PartitionedStringMGJ, cnxn:AgentCnxn, searchKey:String):SelectVerifierRequest = {
+//    def fetchData(queue:PartitionedStringMGJ, cnxn:AgentCnxnProxy, searchKey:String):SelectVerifierRequest = {
 //      claimingAgentPA.fetch[Data](queue, cnxn, searchKey, handleFetch)
 //      return selectVerifierRequest
 //    }
 //
-//    def handleFetch(cnxn: AgentCnxn, data: Data) =
+//    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
 //    {
 //      data match {
 //        case x: PersistedRequest => {
@@ -161,10 +162,10 @@
 //    val claimingAgentId = "ClaimingAgent" + UUID.randomUUID.toString
 //    val verifierId = "Verifier" + UUID.randomUUID.toString
 //
-//    val cnxnCASelf = AgentCnxn(claimingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnRASelf = AgentCnxn(relyingAgentId.toURI, "", relyingAgentId.toURI)
-//    val cnxnRACA = AgentCnxn(relyingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnCARA = AgentCnxn(claimingAgentId.toURI, "", relyingAgentId.toURI)
+//    val cnxnCASelf = AgentCnxnProxy(claimingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnRASelf = AgentCnxnProxy(relyingAgentId.toURI, "", relyingAgentId.toURI)
+//    val cnxnRACA = AgentCnxnProxy(relyingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnCARA = AgentCnxnProxy(claimingAgentId.toURI, "", relyingAgentId.toURI)
 //
 //    val relyingAgentPA = createRelyingAgent(List(cnxnRASelf,cnxnCASelf))
 //    val claimingAgentPA = createClaimingAgent(List(cnxnRASelf, cnxnCASelf))
@@ -200,7 +201,7 @@
 //
 //    var getClaimResponse:GetClaimResponse = null
 //
-//     def handleGetClaimResponse(cnxn:AgentCnxn, msg:Message) = {
+//     def handleGetClaimResponse(cnxn:AgentCnxnProxy, msg:Message) = {
 //       msg match {
 //         case x:GetClaimResponse => {
 //           getClaimResponse = x
@@ -231,7 +232,7 @@
 //      claimingAgentPA.send(claimingAgentPA._msgQ, cnxnCARA, msg)
 //      //Thread.sleep(TIMEOUT_LONG)
 //
-//      relyingAgentPA.listen(relyingAgentPA._msgQ, cnxnRACA, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleGetClaimResponse(_:AgentCnxn, _:Message))
+//      relyingAgentPA.listen(relyingAgentPA._msgQ, cnxnRACA, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleGetClaimResponse(_:AgentCnxnProxy, _:Message))
 //
 //      val expectedMsg = GetClaimResponse(request.ids.copyAsChild(), null, "profile", "lastName", verifier)
 //
@@ -249,11 +250,11 @@
 //     val relyingAgentId = "RelyingAgent" + UUID.randomUUID.toString
 //     val claimingAgentId = "ClaimingAgent" + UUID.randomUUID.toString
 //
-//     val cnxnRAVerifier = AgentCnxn(relyingAgentId.toURI, "", verifierId.toURI)
-//     val cnxnVerifierRA = AgentCnxn(verifierId.toURI, "", relyingAgentId.toURI)
-//     val cnxnCAVerifier = AgentCnxn(claimingAgentId.toURI, "", verifierId.toURI)
-//     val cnxnCASelf = AgentCnxn(claimingAgentId.toURI, "", claimingAgentId.toURI)
-//     val cnxnRASelf = AgentCnxn(relyingAgentId.toURI, "", relyingAgentId.toURI)
+//     val cnxnRAVerifier = AgentCnxnProxy(relyingAgentId.toURI, "", verifierId.toURI)
+//     val cnxnVerifierRA = AgentCnxnProxy(verifierId.toURI, "", relyingAgentId.toURI)
+//     val cnxnCAVerifier = AgentCnxnProxy(claimingAgentId.toURI, "", verifierId.toURI)
+//     val cnxnCASelf = AgentCnxnProxy(claimingAgentId.toURI, "", claimingAgentId.toURI)
+//     val cnxnRASelf = AgentCnxnProxy(relyingAgentId.toURI, "", relyingAgentId.toURI)
 //
 //     val relyingAgentPA = createRelyingAgent(List(cnxnRASelf,cnxnCASelf))
 //     val claimingAgentPA = createClaimingAgent(List(cnxnRASelf, cnxnCASelf))
@@ -301,7 +302,7 @@
 //     var verifyPermissionRequest:VerifyPermissionRequest = null
 //     var msgReceived = false
 //
-//     def handleVerifyPermissionRequest(cnxn:AgentCnxn, msg:Message) = {
+//     def handleVerifyPermissionRequest(cnxn:AgentCnxnProxy, msg:Message) = {
 //       msg match {
 //         case x:VerifyPermissionRequest => {
 //           verifyPermissionRequest = x
@@ -311,7 +312,7 @@
 //       msgReceived = true
 //     }
 //
-//     def handleVerifyResponse(cnxn:AgentCnxn, msg:Message) = {
+//     def handleVerifyResponse(cnxn:AgentCnxnProxy, msg:Message) = {
 //       msg match {
 //         case x:VerifyResponse => {
 //           verifyResponse = x
@@ -321,12 +322,12 @@
 //       msgReceived = true
 //     }
 //
-//     def fetchData(queue:PartitionedStringMGJ, cnxn:AgentCnxn, searchKey:String):VerifyPermissionRequest = {
+//     def fetchData(queue:PartitionedStringMGJ, cnxn:AgentCnxnProxy, searchKey:String):VerifyPermissionRequest = {
 //       claimingAgentPA.fetch[Data](queue, cnxn, searchKey, handleFetch)
 //       return verifyPermissionRequest
 //     }
 //
-//     def handleFetch(cnxn: AgentCnxn, data: Data) =
+//     def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
 //     {
 //       data match {
 //         case x: PersistedRequest => {
@@ -349,7 +350,7 @@
 //       relyingAgentPA.send(relyingAgentPA._msgQ, cnxnVerifierRA, msg)
 //       //Thread.sleep(1000)
 //
-//       claimingAgentPA.listen(claimingAgentPA._msgQ, cnxnCAVerifier, Channel.Verify, ChannelType.Request, ChannelLevel.Public, handleVerifyPermissionRequest(_:AgentCnxn, _:Message))
+//       claimingAgentPA.listen(claimingAgentPA._msgQ, cnxnCAVerifier, Channel.Verify, ChannelType.Request, ChannelLevel.Public, handleVerifyPermissionRequest(_:AgentCnxnProxy, _:Message))
 //
 //       msgReceived must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
 //       verifyPermissionRequest.claimKey must be_==(msg.claimKey).eventually(20, TIMEOUT_EVENTUALLY)
@@ -371,7 +372,7 @@
 //       verifierPA.listenForHostedCnxns
 //       //Thread.sleep(TIMEOUT_LONG)
 //
-//       relyingAgentPA.listen(relyingAgentPA._msgQ, cnxnRAVerifier, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyResponse(_:AgentCnxn, _:Message))
+//       relyingAgentPA.listen(relyingAgentPA._msgQ, cnxnRAVerifier, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyResponse(_:AgentCnxnProxy, _:Message))
 //
 //       val expectedMsg = VerifyResponse(msg.ids.copyAsChild(), msg.eventKey, msg.alias, msg.claimKey, true)
 //
@@ -420,7 +421,7 @@
 //       verifierPA.listenForHostedCnxns
 //       //Thread.sleep(TIMEOUT_LONG)
 //
-//       relyingAgentPA.listen(relyingAgentPA._msgQ, cnxnRAVerifier, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyResponse(_:AgentCnxn, _:Message))
+//       relyingAgentPA.listen(relyingAgentPA._msgQ, cnxnRAVerifier, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyResponse(_:AgentCnxnProxy, _:Message))
 //
 //       val expectedMsg = VerifyResponse(msg.ids.copyAsChild(), msg.eventKey, msg.alias, msg.claimKey, false)
 //
@@ -441,11 +442,11 @@
 //    val claimingAgentId = "ClaimingAgent" + UUID.randomUUID.toString
 //    val verifierId = "Verifier" + UUID.randomUUID.toString
 //
-//    val cnxnCASelf = AgentCnxn(claimingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnRASelf = AgentCnxn(relyingAgentId.toURI, "", relyingAgentId.toURI)
-//    val cnxnRACA = AgentCnxn(relyingAgentId.toURI, "", claimingAgentId.toURI)
-//    val cnxnVerifierCA = AgentCnxn(verifierId.toURI, "", claimingAgentId.toURI)
-//    val cnxnCAVerifier= AgentCnxn(claimingAgentId.toURI, "", verifierId.toURI)
+//    val cnxnCASelf = AgentCnxnProxy(claimingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnRASelf = AgentCnxnProxy(relyingAgentId.toURI, "", relyingAgentId.toURI)
+//    val cnxnRACA = AgentCnxnProxy(relyingAgentId.toURI, "", claimingAgentId.toURI)
+//    val cnxnVerifierCA = AgentCnxnProxy(verifierId.toURI, "", claimingAgentId.toURI)
+//    val cnxnCAVerifier= AgentCnxnProxy(claimingAgentId.toURI, "", verifierId.toURI)
 //
 //    val relyingAgentPA = createRelyingAgent(List(cnxnRASelf,cnxnCASelf))
 //    val claimingAgentPA = createClaimingAgent(List(cnxnRASelf, cnxnCASelf))
@@ -482,7 +483,7 @@
 //
 //    var verifyPermissionResponse:VerifyPermissionResponse = null
 //
-//     def handleVerifyPermissionResponse(cnxn:AgentCnxn, msg:Message) = {
+//     def handleVerifyPermissionResponse(cnxn:AgentCnxnProxy, msg:Message) = {
 //       msg match {
 //         case x:VerifyPermissionResponse => {
 //           verifyPermissionResponse = x
@@ -509,7 +510,7 @@
 //      claimingAgentPA.send(claimingAgentPA._msgQ, cnxnCAVerifier, msg)
 //      //Thread.sleep(TIMEOUT_LONG)
 //
-//      verifierPA.listen(verifierPA._msgQ, cnxnVerifierCA, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyPermissionResponse(_:AgentCnxn, _:Message))
+//      verifierPA.listen(verifierPA._msgQ, cnxnVerifierCA, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyPermissionResponse(_:AgentCnxnProxy, _:Message))
 //      //Thread.sleep(TIMEOUT_LONG)
 //
 //      val expectedMsg = VerifyPermissionResponse(request.ids.copyAsChild, true)

@@ -5,6 +5,7 @@ package com.protegra_ati.agentservices.core.messages.introduction
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 
@@ -13,12 +14,12 @@ trait IntroductionResponseSetCreatorPrivate
 {
   self: AgentHostStorePlatformAgent =>
 
-  def listenPrivateIntroductionCreatorResponses(cnxn: AgentCnxn) =
+  def listenPrivateIntroductionCreatorResponses(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleIntroductionResponseChannel(_: AgentCnxn, _: Message))
+    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleIntroductionResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  def handleIntroductionResponseChannel(cnxn: AgentCnxn, msg: Message)
+  def handleIntroductionResponseChannel(cnxn: AgentCnxnProxy, msg: Message)
   {
     report("entering handlePrivateIntroductionResponseChannel", Severity.Trace)
 

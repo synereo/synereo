@@ -247,8 +247,8 @@ class SerializerPoolableFactory extends BasePoolableObjectFactory
         //  _kryo.register( MockMessageSerializer.FITS_TO(), new MockMessageSerializer(), 1010 );
         // _kryo.register( MockEventKeySerializer.FITS_TO(), new MockEventKeySerializer(), 1011 );
         //_kryo.register( MockConnSerializer.FITS_TO(), new  MockConnSerializer(), 1012 );
-        // _kryo.register( MockAgentCnxnSerializer.FITS_TO(), new MockAgentCnxnSerializer(), 1013 );
-        _kryo.register( AgentCnxnSerializer.FITS_TO(), new AgentCnxnSerializer(), 1013 );
+        // _kryo.register( MockAgentCnxnProxySerializer.FITS_TO(), new MockAgentCnxnProxySerializer(), 1013 );
+        _kryo.register( AgentCnxnProxySerializer.FITS_TO(), new AgentCnxnProxySerializer(), 1013 );
         JavaConversionsSeqWrapperSerializer jConversionSer = new JavaConversionsSeqWrapperSerializer();
 //        jConversionSer.setGenerics( _kryo, new Class[]{ String.class, Post.class, WatchListItem.class } );
         jConversionSer.setGenerics( _kryo, new Class[]{ String.class, Post.class } );

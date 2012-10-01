@@ -8,6 +8,7 @@ import com.protegra_ati.agentservices.core.messages._
 import scala.collection.mutable.Map
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
 
 //TODO create the store and save references to the CreateInvitationRequests
@@ -25,7 +26,7 @@ trait MessageStore extends Reporting
    */
   val ONE_HOUR_TTL = 3600000
 
-  def capture(cnxn: AgentCnxn, requestMsg: Message) = synchronized {
+  def capture(cnxn: AgentCnxnProxy, requestMsg: Message) = synchronized {
     val storageMoment = new DateTime()
     report("MESSAGE TEMPORARY STORED: " + cnxn + ", message ids=" + requestMsg.ids + " AT " + storageMoment, Severity.Trace)
     // key can be reduced to id + snxn.src
@@ -36,8 +37,8 @@ trait MessageStore extends Reporting
     storage.contains(messageConversationId + DELIMITER + srcUID + DELIMITER + targetUID)
   }
 
-  def isCaptured(cnxn: AgentCnxn, responseMsg: Message): Boolean = synchronized {
-    //in case of response  AgentCnxn has reverse order of the src and target point
+  def isCaptured(cnxn: AgentCnxnProxy, responseMsg: Message): Boolean = synchronized {
+    //in case of response  AgentCnxnProxy has reverse order of the src and target point
     isCaptured(responseMsg.ids.conversationId, cnxn.trgt.toString, cnxn.src.toString)
   }
 
@@ -48,8 +49,8 @@ trait MessageStore extends Reporting
    * @param beforeNowWithinMilliseconds  time to life of the message
    * @return true if captured within given period of time
    */
-  def isCaptured(cnxn: AgentCnxn, responseMsg: Message, beforeNowWithinMilliseconds: Long): Boolean = synchronized {
-    //in case of response  AgentCnxn has reverse order of the src and target point
+  def isCaptured(cnxn: AgentCnxnProxy, responseMsg: Message, beforeNowWithinMilliseconds: Long): Boolean = synchronized {
+    //in case of response  AgentCnxnProxy has reverse order of the src and target point
     val key = responseMsg.ids.conversationId + DELIMITER + cnxn.trgt.toString + DELIMITER + cnxn.src.toString
     storage.get(key) match {
       case None => {

@@ -6,6 +6,7 @@ package com.protegra_ati.agentservices.core.messages.verifier
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util.Severity
 import com.protegra_ati.agentservices.core.schema._
@@ -14,11 +15,11 @@ import com.protegra_ati.agentservices.core.events.{VerifyContentResponseReceived
 trait VerifierResponseSetPrivate {
   self:AgentHostUIPlatformAgent =>
 
-  def listenPrivateVerifierResponse(cnxn: AgentCnxn) = {
-     listen(_privateQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Private, handleVerifyResponseChannel(_: AgentCnxn, _: Message))
+  def listenPrivateVerifierResponse(cnxn: AgentCnxnProxy) = {
+     listen(_privateQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Private, handleVerifyResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  def handleVerifyResponseChannel(cnxn: AgentCnxn, msg: Message) =
+  def handleVerifyResponseChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     report("entering handleVerifyResponseChannel for connection:" + cnxn.toString, Severity.Trace)
 

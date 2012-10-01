@@ -6,6 +6,7 @@ package com.protegra_ati.agentservices.core.messages.verifier
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util.Severity
@@ -17,11 +18,11 @@ import com.protegra_ati.agentservices.core.schema.util._
 trait VerifierRequestSet {
   self:AgentHostStorePlatformAgent =>
 
-  def listenPublicVerifierRequest(cnxn: AgentCnxn) = {
-    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Request, ChannelLevel.Public, handleVerifyRequestChannel(_:AgentCnxn, _:Message))
+  def listenPublicVerifierRequest(cnxn: AgentCnxnProxy) = {
+    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Request, ChannelLevel.Public, handleVerifyRequestChannel(_:AgentCnxnProxy, _:Message))
   }
 
-  protected def handleVerifyRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handleVerifyRequestChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     report("entering handleVerifyChannel in VerifierPlatformAgent", Severity.Trace)
 //    if (!_processedMessages.contains(msg.ids.id )) {
@@ -70,18 +71,18 @@ trait VerifierRequestSet {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     _verifyRequests.put(msg.ids.conversationId , msg)
     val search = new SystemData[Connection]( new Connection())
-    fetch(_dbQ, msg.targetCnxn, search.toSearchKey, fetchClaimingAgentConnection(_:AgentCnxn, _:SystemData[Connection], msg))
+    fetch(_dbQ, msg.targetCnxn, search.toSearchKey, fetchClaimingAgentConnection(_:AgentCnxnProxy, _:SystemData[Connection], msg))
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  protected def fetchClaimingAgentConnection(cnxn:AgentCnxn, systemConnection:SystemData[Connection], verifyRequest:VerifyRequest) {
+  protected def fetchClaimingAgentConnection(cnxn:AgentCnxnProxy, systemConnection:SystemData[Connection], verifyRequest:VerifyRequest) {
     report("entering fetchClaimingAgentConnection in VerifierPlatformAgent", Severity.Trace)
     val search = new AliasConnection(verifyRequest.alias, "")
-    fetch(_dbQ, systemConnection.data.readCnxn, search.toSearchKey, fetchConnection(_:AgentCnxn, _:Data, verifyRequest, systemConnection.data.readCnxn))
+    fetch(_dbQ, systemConnection.data.readCnxn, search.toSearchKey, fetchConnection(_:AgentCnxnProxy, _:Data, verifyRequest, systemConnection.data.readCnxn))
     report("exiting fetchClaimingAgentConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  protected def fetchConnection(cnxn:AgentCnxn, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxn) = {
+  protected def fetchConnection(cnxn:AgentCnxnProxy, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxnProxy) = {
     report("entering fetchConnection in VerifierPlatformAgent", Severity.Trace)
 
     data match {
@@ -89,7 +90,7 @@ trait VerifierRequestSet {
         val search = new Connection()
         search.id = x.connectionId.toString
 //        search.setSearchFieldValue("id", x.connectionId.toString)
-        fetch(_dbQ, selfCnxn, search.toSearchKey, requestVerifyPermission(_:AgentCnxn, _:Data, verifyRequest, selfCnxn))
+        fetch(_dbQ, selfCnxn, search.toSearchKey, requestVerifyPermission(_:AgentCnxnProxy, _:Data, verifyRequest, selfCnxn))
     }
       case _ => {
         report("fetchConnection - unexpected data", Severity.Trace)
@@ -99,7 +100,7 @@ trait VerifierRequestSet {
     report("exiting fetchConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  protected def requestVerifyPermission(cnxn:AgentCnxn, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxn) {
+  protected def requestVerifyPermission(cnxn:AgentCnxnProxy, data:Data, verifyRequest:VerifyRequest, selfCnxn:AgentCnxnProxy) {
     report("entering requestVerifyPermission in VerifierPlatformAgent", Severity.Trace)
 
     data match {
@@ -118,18 +119,18 @@ trait VerifierRequestSet {
    report("exiting requestVerifyPermission in VerifierPlatformAgent", Severity.Trace)
   }
 
-  protected def processVerifyPermissionRequest(cnxn: AgentCnxn, request: VerifyPermissionRequest) =
+  protected def processVerifyPermissionRequest(cnxn: AgentCnxnProxy, request: VerifyPermissionRequest) =
   {
     report("entering processVerifyPermissionRequest in StorePlatform", Severity.Trace)
 
     val search = new  ContentVerifier("", "", request.claimKey, "", "", "", "")
     
-    fetch[ ContentVerifier ](_dbQ, request.targetCnxn, search.toSearchKey, handleContentVerifierFetch(_: AgentCnxn, _: ContentVerifier, request, cnxn))
+    fetch[ ContentVerifier ](_dbQ, request.targetCnxn, search.toSearchKey, handleContentVerifierFetch(_: AgentCnxnProxy, _: ContentVerifier, request, cnxn))
 
     report("exiting processVerifyPermissionRequest in StorePlatform", Severity.Trace)
   }
 
-  protected def handleContentVerifierFetch(targetCnxn: AgentCnxn, data: ContentVerifier, request: VerifyPermissionRequest, cnxn: AgentCnxn) =
+  protected def handleContentVerifierFetch(targetCnxn: AgentCnxnProxy, data: ContentVerifier, request: VerifyPermissionRequest, cnxn: AgentCnxnProxy) =
   {
     report("entering handleContentVerifierFetch in StorePlatform", Severity.Trace)
 
@@ -164,7 +165,7 @@ trait VerifierRequestSet {
     var oldData: PersistedRequest = null
     updateData(request.targetCnxn, persistedRequest, oldData)
     logAuditItem(request.targetCnxn, generateAuditLogVerifyContentRequest(request))
-    notifyUser(request.claimingAgentCnxn, request)
+    notifyUser(request.claimingAgentCnxnProxy, request)
 
     report("exiting processVerifyContentRequest in StorePlatform", Severity.Trace)
   }

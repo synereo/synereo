@@ -5,6 +5,7 @@ package com.protegra_ati.agentservices.core.messages.verifier
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util.Severity
 import com.protegra_ati.agentservices.core.schema._
@@ -15,12 +16,12 @@ trait VerifierResponseSet
 {
   self: AgentHostStorePlatformAgent =>
 
-  def listenPublicVerifierResponse(cnxn: AgentCnxn) =
+  def listenPublicVerifierResponse(cnxn: AgentCnxnProxy) =
   {
-    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyResponseChannel(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Public, handleVerifyResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  protected def handleVerifyResponseChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handleVerifyResponseChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     report("entering handleVerifyChannel in VerifierPlatformAgent", Severity.Trace)
     //    if (!_processedMessages.contains(msg.ids.id)) {
@@ -49,22 +50,22 @@ trait VerifierResponseSet
     report("exiting handleVerifyChannel in VerifierPlatformAgent", Severity.Trace)
   }
 
-  protected def sendPrivateMessage(cnxn: AgentCnxn, msg: Message)
+  protected def sendPrivateMessage(cnxn: AgentCnxnProxy, msg: Message)
   {
     msg.channelLevel = None
     send(_privateQ, msg.originCnxn, msg)
   }
 
-  protected def processVerifyPermissionResponse(cnxn: AgentCnxn, msg: VerifyPermissionResponse) =
+  protected def processVerifyPermissionResponse(cnxn: AgentCnxnProxy, msg: VerifyPermissionResponse) =
   {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     //TODO it is necessary to create 'companion objects' with a reasonable named factory methods to create reusable singletons of default constructed Data objects like connection()
     val search = new SystemData[ Connection ](new Connection())
-    fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyPermissionResponse(_: AgentCnxn, _: SystemData[ Connection ], msg))
+    fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyPermissionResponse(_: AgentCnxnProxy, _: SystemData[ Connection ], msg))
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }
 
-  protected def sendVerifyPermissionResponse(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], msg: VerifyPermissionResponse)
+  protected def sendVerifyPermissionResponse(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], msg: VerifyPermissionResponse)
   {
     report("entering processVerifyPermissionResponse in VerifierPlatformAgent", Severity.Trace)
 
@@ -72,25 +73,25 @@ trait VerifierResponseSet
     if ( msg.isPermissionGranted ) {
       report("verify permission granted!", Severity.Trace)
       val search = new VerifiedData(verifyRequest.alias, verifyRequest.claimKey, "")
-      fetch(_dbQ, systemConnection.data.readCnxn, search.toSearchKey, processClaim(_: AgentCnxn, _: Data, verifyRequest: VerifyRequest, msg))
+      fetch(_dbQ, systemConnection.data.readCnxn, search.toSearchKey, processClaim(_: AgentCnxnProxy, _: Data, verifyRequest: VerifyRequest, msg))
     }
     else {
       report("verify permission denied!", Severity.Trace)
       val response = VerifyResponse(verifyRequest.ids.copyAsChild(), verifyRequest.eventKey.copy(), verifyRequest.alias, verifyRequest.claimKey, false)
       response.originCnxn = verifyRequest.originCnxn
-      send(_publicQ, verifyRequest.relyingAgentCnxn, response)
+      send(_publicQ, verifyRequest.relyingAgentCnxnProxy, response)
     }
     report("exiting processVerifyPermissionResponse in VerifierPlatformAgent", Severity.Trace)
   }
 
-  protected def processClaim(cnxn: AgentCnxn, data: Data, verifyRequest: VerifyRequest, parent: Message) =
+  protected def processClaim(cnxn: AgentCnxnProxy, data: Data, verifyRequest: VerifyRequest, parent: Message) =
   {
     report("entering processClaim in VerifierPlatformAgent", Severity.Trace)
     data match {
       case x: VerifiedData => {
         val response = VerifyResponse(parent.ids.copyAsChild(), verifyRequest.eventKey.copy(), verifyRequest.alias, verifyRequest.claimKey, verifyRequest.claimData == x.value)
         response.originCnxn = verifyRequest.originCnxn
-        send(_publicQ, verifyRequest.relyingAgentCnxn, response)
+        send(_publicQ, verifyRequest.relyingAgentCnxnProxy, response)
         val reportMsg = if ( verifyRequest.claimData == x.value ) "claim verified!" else "claim rejected!"
         report(reportMsg, Severity.Trace)
         _verifyRequests.remove(parent.ids.conversationId)
@@ -113,15 +114,15 @@ trait VerifierResponseSet
     getClaimResponse.targetCnxn = response.targetCnxn
     getClaimResponse.originCnxn = request.originCnxn
     val search = new ContentVerifier("", "", response.claimObject + "." + response.claimField, "", "", "false", "")
-    fetch[ ContentVerifier ](_dbQ, response.targetCnxn, search.toSearchKey, handleFetchClaimContentVerifier(_: AgentCnxn, _: ContentVerifier, getClaimResponse))
+    fetch[ ContentVerifier ](_dbQ, response.targetCnxn, search.toSearchKey, handleFetchClaimContentVerifier(_: AgentCnxnProxy, _: ContentVerifier, getClaimResponse))
     report("entering processSelectVerifierResponse", Severity.Trace)
   }
 
-  def handleFetchClaimContentVerifier(cnxn: AgentCnxn, contentVerifier: ContentVerifier, getClaimResponse: GetClaimResponse) =
+  def handleFetchClaimContentVerifier(cnxn: AgentCnxnProxy, contentVerifier: ContentVerifier, getClaimResponse: GetClaimResponse) =
   {
     getClaimResponse.alias = contentVerifier.claimingAgentAlias
     val search = getSearch(getClaimResponse.claimObject)
-    fetch[ Data ](_dbQ, cnxn, search.toSearchKey, handleFetchClaimContent(_: AgentCnxn, _: Data, getClaimResponse))
+    fetch[ Data ](_dbQ, cnxn, search.toSearchKey, handleFetchClaimContent(_: AgentCnxnProxy, _: Data, getClaimResponse))
   }
 
   protected def getSearch(className: String) =
@@ -136,20 +137,20 @@ trait VerifierResponseSet
     }
   }
 
-  def handleFetchClaimContent(cnxn: AgentCnxn, data: Data, getClaimResponse: GetClaimResponse) =
+  def handleFetchClaimContent(cnxn: AgentCnxnProxy, data: Data, getClaimResponse: GetClaimResponse) =
   {
     getClaimResponse.claimValue = data.getValue(getClaimResponse.claimField)
     send(_publicQ, getClaimResponse.targetCnxn, getClaimResponse)
     logAuditItem(getClaimResponse.targetCnxn, generateAuditLogGetClaimResponse(getClaimResponse))
   }
 
-  def processVerifyContentResponse(cnxn: AgentCnxn, msg: VerifyContentResponse) =
+  def processVerifyContentResponse(cnxn: AgentCnxnProxy, msg: VerifyContentResponse) =
   {
     val search = new SystemData[ Connection ](new Connection())
-    fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyContentResponse(_: AgentCnxn, _: SystemData[ Connection ], msg))
+    fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyContentResponse(_: AgentCnxnProxy, _: SystemData[ Connection ], msg))
   }
 
-  def sendVerifyContentResponse(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], response: VerifyContentResponse) =
+  def sendVerifyContentResponse(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], response: VerifyContentResponse) =
   {
     val newContentVerifier = response.contentVerifier.copy()
     if ( response.isApproved ) {

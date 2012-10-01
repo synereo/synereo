@@ -4,6 +4,7 @@ import java.io.Serializable
 import java.util.UUID
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import reflect.BeanProperty
 import java.lang.reflect._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -28,10 +29,10 @@ KVDBSerializable  with UseKryoSerialization
   //  val channelLevel: Option[ ChannelLevel.Value ] = None
   //
   //  //java shouldn't be setting this
-  //  var originCnxn: AgentCnxn = null
+  //  var originCnxn: AgentCnxnProxy = null
   //var str1 = "NO"
   // var channelRole: Option[ String ] = None
   //java shouldn't be setting this
-  //var originCnxn: AgentCnxn = null
+  //var originCnxn: AgentCnxnProxy = null
 
 }

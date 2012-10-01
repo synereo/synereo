@@ -26,6 +26,7 @@ import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.mTT._
 import com.protegra_ati.agentservices.core.messages._
 import moniker._
@@ -51,7 +52,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 
   val sourceId = UUID.randomUUID()
   val targetId = sourceId
-  val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+  val cnxn = new AgentCnxnProxy(sourceId.toString.toURI, "", targetId.toString.toURI)
 
   def createPA: AgentHostUIPlatformAgent =
   {
@@ -68,8 +69,9 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
     val pa = createPA
     "add a partition" in {
       val startSize = pa._privateQ.cnxnPartition.size
-      val cnxn = new AgentCnxn("test".toURI, "", UUID.randomUUID().toString.toURI)
-      pa._privateQ.getPartition(cnxn)
+      val cnxn = new AgentCnxnProxy("test".toURI, "", UUID.randomUUID().toString.toURI)
+      val agentCnxn = cnxn.toAgentCnxn()
+      pa._privateQ.getPartition(agentCnxn)
       pa._privateQ.cnxnPartition.size must be_==(startSize+1).eventually(20, TIMEOUT_EVENTUALLY)
     }
   }

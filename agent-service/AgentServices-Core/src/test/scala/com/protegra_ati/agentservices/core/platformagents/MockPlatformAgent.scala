@@ -10,6 +10,7 @@ import com.protegra_ati.agentservices.core.events._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import java.net.URI
 import java.util.UUID

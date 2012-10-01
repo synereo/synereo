@@ -5,6 +5,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util.Severity
@@ -14,17 +15,17 @@ trait HostedConnections
 {
   self: AgentHostStorePlatformAgent =>
   // TODO this list has to be extended every time new self connection is created (in a registration process)
- @volatile var _cnxnUserSelfConnectionsList = List[ AgentCnxn ]()
+ @volatile var _cnxnUserSelfConnectionsList = List[ AgentCnxnProxy ]()
 
   def loadUserCnxnList()
   {
     val userCnxns = new Connection()
-    fetch[ Connection ](_dbQ, _storeCnxn, userCnxns.toSearchKey, handleUserCnxnsFetchOnStartup(_: AgentCnxn, _: Connection))
+    fetch[ Connection ](_dbQ, _storeCnxn, userCnxns.toSearchKey, handleUserCnxnsFetchOnStartup(_: AgentCnxnProxy, _: Connection))
   }
 
-  protected def handleUserCnxnsFetchOnStartup(storeCnxn: AgentCnxn, userConnection: Connection)
+  protected def handleUserCnxnsFetchOnStartup(storeCnxn: AgentCnxnProxy, userConnection: Connection)
   {
-    _cnxnUserSelfConnectionsList = List[ AgentCnxn ](userConnection.writeCnxn) ::: _cnxnUserSelfConnectionsList
+    _cnxnUserSelfConnectionsList = List[ AgentCnxnProxy ](userConnection.writeCnxn) ::: _cnxnUserSelfConnectionsList
   }
 
   def listenForHostedCnxns() =
@@ -34,14 +35,14 @@ trait HostedConnections
     }
   }
 
-  def addToHostedCnxn(selfCnxn: AgentCnxn) =
+  def addToHostedCnxn(selfCnxn: AgentCnxnProxy) =
   {
     if ( _cnxnUserSelfConnectionsList.contains(selfCnxn) ) {/*do nothing already exists*/}
     else _cnxnUserSelfConnectionsList = selfCnxn :: _cnxnUserSelfConnectionsList
   }
 
   //used in AgentHostCombinedStoreUIPlatformAgentTest
-  def listenForHostedCnxn(selfCnxn: AgentCnxn) =
+  def listenForHostedCnxn(selfCnxn: AgentCnxnProxy) =
   {
     //these are user self connections, doesn't matter whether we use
     //the read or write connection
@@ -51,13 +52,13 @@ trait HostedConnections
     //for each other these connections, listen for all the connection.writeCnxn
     //in each of their silos
     val search = new Connection()
-    fetch[ Connection ](_dbQ, selfCnxn, search.toSearchKey, handleUserConnectionPostFetch(_: AgentCnxn, _: Connection))
+    fetch[ Connection ](_dbQ, selfCnxn, search.toSearchKey, handleUserConnectionPostFetch(_: AgentCnxnProxy, _: Connection))
   }
 
   // If Jen is on PA
   // on publicQ listen for all requests on JenMike
   // on publicQ listen for all responses on MikeJen
-  protected def handleUserConnectionPostFetch(cnxn: AgentCnxn, userConnection: Connection) =
+  protected def handleUserConnectionPostFetch(cnxn: AgentCnxnProxy, userConnection: Connection) =
   {
     listenPublicRequests(userConnection.writeCnxn)
     listenPublicResponses(userConnection.readCnxn)
@@ -65,7 +66,7 @@ trait HostedConnections
   }
 
   //  deprecated from store
-  //  def handleUserConnectionPostFetch(cnxn: AgentCnxn, userConnection: Connection) =
+  //  def handleUserConnectionPostFetch(cnxn: AgentCnxnProxy, userConnection: Connection) =
   //  {
   //    listenPublicRequests(userConnection.readCnxn)
   //    listenPublicResponses(userConnection.readCnxn)

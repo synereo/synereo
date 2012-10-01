@@ -4,6 +4,7 @@ import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
 import com.protegra_ati.agentservices.core.schema._
@@ -16,27 +17,27 @@ import com.protegra_ati.agentservices.core.schema.util._
 trait Auditing {
 self: BasePlatformAgent with Storage =>
 
-  def logDataRequested(cnxn: AgentCnxn, auditItem: AuthorizedContentAuditItem, msg: Message)
+  def logDataRequested(cnxn: AgentCnxnProxy, auditItem: AuthorizedContentAuditItem, msg: Message)
   {
     logAuditItem(cnxn, generateAuditLogDetailRequested(auditItem, cnxn, msg.originCnxn))
   }
 
-  def logDataApproved(cnxn: AgentCnxn, auditItem: AuthorizedContentAuditItem, msg: Message)
+  def logDataApproved(cnxn: AgentCnxnProxy, auditItem: AuthorizedContentAuditItem, msg: Message)
   {
     logAuditItem(cnxn, generateAuditLogDetailApproved(auditItem, cnxn, msg.originCnxn))
   }
 
-  def logDataViewed(cnxn: AgentCnxn, data: Data, requestingCnxn: AgentCnxn)
+  def logDataViewed(cnxn: AgentCnxnProxy, data: Data, requestingCnxn: AgentCnxnProxy)
   {
     spawn {
       //we need to grab the DisclosedData object for the cnxn to determine
       //what the requestingCnxn has access to
      // val searchItem = SearchFactory.getAuthorizedContentAuditSearchItem(data)
-      fetch[ AuthorizedContentAuditItem ](_dbQ, cnxn, new AuthorizedContentAuditItem ().toSearchKey, handleLogDataViewedFetchAuthorizedContent(_: AgentCnxn, _: AuthorizedContentAuditItem, data, requestingCnxn))
+      fetch[ AuthorizedContentAuditItem ](_dbQ, cnxn, new AuthorizedContentAuditItem ().toSearchKey, handleLogDataViewedFetchAuthorizedContent(_: AgentCnxnProxy, _: AuthorizedContentAuditItem, data, requestingCnxn))
     }
   }
 
-  def handleLogDataViewedFetchAuthorizedContent(cnxn: AgentCnxn, authorizedContentItem: AuthorizedContentAuditItem, data: Data, requestingCnxn: AgentCnxn)
+  def handleLogDataViewedFetchAuthorizedContent(cnxn: AgentCnxnProxy, authorizedContentItem: AuthorizedContentAuditItem, data: Data, requestingCnxn: AgentCnxnProxy)
   {
     data match {
       case x: ExcludeFromAudit => {
@@ -47,7 +48,7 @@ self: BasePlatformAgent with Storage =>
     }
   }
 
-  def logAuditItem(cnxn: AgentCnxn, logDetail: String)
+  def logAuditItem(cnxn: AgentCnxnProxy, logDetail: String)
   {
     spawn {
       val item = new AuditLogItem("", new DateTime())
@@ -79,17 +80,17 @@ self: BasePlatformAgent with Storage =>
       }
   */
   //??? Message factory?
-  def generateAuditLogDetailRequestSatisfied(data: Data, authorizedContentItem: AuthorizedContentAuditItem, cnxn: AgentCnxn, requestingCnxn: AgentCnxn): String =
+  def generateAuditLogDetailRequestSatisfied(data: Data, authorizedContentItem: AuthorizedContentAuditItem, cnxn: AgentCnxnProxy, requestingCnxn: AgentCnxnProxy): String =
   {
     data.authorizedFieldNames(authorizedContentItem) + " fields of your " + data.getDisplayName() + " were viewed."
   }
 
-  def generateAuditLogDetailRequested(authorizedContentItem: AuthorizedContentAuditItem, cnxn: AgentCnxn, originatingCnxn: AgentCnxn): String =
+  def generateAuditLogDetailRequested(authorizedContentItem: AuthorizedContentAuditItem, cnxn: AgentCnxnProxy, originatingCnxn: AgentCnxnProxy): String =
   {
     "Permission to view your " + authorizedContentItem.objectType.fromCamelCase + " was requested."
   }
 
-  def generateAuditLogDetailApproved(authorizedContentItem: AuthorizedContentAuditItem, cnxn: AgentCnxn, originatingCnxn: AgentCnxn): String =
+  def generateAuditLogDetailApproved(authorizedContentItem: AuthorizedContentAuditItem, cnxn: AgentCnxnProxy, originatingCnxn: AgentCnxnProxy): String =
   {
     "You approved viewing of your " + authorizedContentItem.objectType.fromCamelCase
   }

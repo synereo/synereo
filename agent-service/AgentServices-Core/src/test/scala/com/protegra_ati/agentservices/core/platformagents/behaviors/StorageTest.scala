@@ -15,6 +15,7 @@ import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import moniker._
 import com.protegra_ati.agentservices.core.messages._
 import org.specs.runner._
@@ -37,8 +38,8 @@ with RabbitTestSetup
 with Timeouts
 with SpecsPAHelpers
 {
-  //var cnxnUIStore = new AgentCnxn("UI".toURI, "", "Store".toURI)
-  //var cnxnMike = new AgentCnxn("Mike".toURI, "", "Mike".toURI)
+  //var cnxnUIStore = new AgentCnxnProxy("UI".toURI, "", "Store".toURI)
+  //var cnxnMike = new AgentCnxnProxy("Mike".toURI, "", "Mike".toURI)
 
   //val pa = new AgentHostStorePlatformAgent()
 

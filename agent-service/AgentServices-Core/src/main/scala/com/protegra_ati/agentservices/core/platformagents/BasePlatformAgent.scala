@@ -10,6 +10,7 @@ import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.mTT._
 import com.protegra_ati.agentservices.core.messages._
 //import com.protegra.config.ConfigurationManager
@@ -57,7 +58,7 @@ abstract class BasePlatformAgent
 
   var _id: UUID = null
 
-  protected def agentCnxn(sourceId: UUID, targetId: UUID) = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+  protected def agentCnxn(sourceId: UUID, targetId: UUID) = new AgentCnxnProxy(sourceId.toString.toURI, "", targetId.toString.toURI)
 
   def initFromConfig(configFilePath: String)
   {
@@ -101,7 +102,7 @@ abstract class BasePlatformAgent
   protected def startListening()
 
   //deprecate these 3?
-  //  def listen (queue: PartitionedStringMGJ, cnxn: AgentCnxn, channel:Channel.Value,  channelType:ChannelType.Value, handler:(AgentCnxn, Message) => Unit) :Unit =
+  //  def listen (queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel:Channel.Value,  channelType:ChannelType.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //  {
   ////    val key = channel.toString + channelType.toString + "(_)"
   //    listen(queue, cnxn, channel, channelType, ChannelLevel.Private, handler)
@@ -111,7 +112,7 @@ abstract class BasePlatformAgent
   //temporary solution is to ignore duplicate processing of the same request msg by id
   var _processedMessages = new LinkedBlockingQueue[ String ]()
 
-  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxn, channel: Channel.Value, channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxn, Message) => Unit): Unit =
+  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel: Channel.Value, channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxnProxy, Message) => Unit): Unit =
   {
     listen(queue, cnxn, channel, None, channelType, channelLevel, handler)
   }
@@ -122,7 +123,7 @@ abstract class BasePlatformAgent
     else _processedMessages = new LinkedBlockingQueue[ String ]()
   }
 
-  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxn, channel: Channel.Value, channelRole: Option[ ChannelRole.Value ], channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxn, Message) => Unit): Unit =
+  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel: Channel.Value, channelRole: Option[ ChannelRole.Value ], channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxnProxy, Message) => Unit): Unit =
   {
     val key = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.toString + "(_)"
     listen(queue, cnxn, key, handler, None)
@@ -130,12 +131,11 @@ abstract class BasePlatformAgent
 
   // TODO we are continue to listen on especial channel after one message is consumed and not expired yet. Potentially we have one waiting thread per channel, if no expired message is recived.
   // TODO solution: to create artificial expired dummy message as soon as we have enought results or timeout, so that we don't need to continue to wait
-  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, handler: (AgentCnxn, Message) => Unit, expiry: Option[ DateTime ]): Unit =
+  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, Message) => Unit, expiry: Option[ DateTime ]): Unit =
   {
     val lblChannel = key.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + cnxn.toString + " key: " + key, Severity.Info)
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
@@ -151,12 +151,12 @@ abstract class BasePlatformAgent
             //temporary solution is to ignore duplicate processing of the same request msg by id
             if ( !_processedMessages.contains(key + msg.ids.id) ) {
               _processedMessages.add(key + msg.ids.id)
-              handler(agentCnxn, msg)
+              handler(cnxn, msg)
             }
             else
               report("already processed id : " + msg.ids.id, Severity.Info)
           }
-          listen(queue, agentCnxn, key, handler, expiry)
+          listen(queue, cnxn, key, handler, expiry)
         }
         else {
           report("listen received - none", Severity.Info)
@@ -181,7 +181,7 @@ abstract class BasePlatformAgent
   }
 
   //  //new style
-  //  def listenList(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key:String, handler:(AgentCnxn, List[Message]) => Unit) :Unit =
+  //  def listenList(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key:String, handler:(AgentCnxnProxy, List[Message]) => Unit) :Unit =
   //  {
   //    val lblChannel = key.toLabel
   //
@@ -207,12 +207,11 @@ abstract class BasePlatformAgent
   //    }
   //  }
 
-  def singleListen[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, handler: (AgentCnxn, T) => Unit): Unit =
+  def singleListen[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit): Unit =
   {
     val lblChannel = key.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + agentCnxn.toString + " key: " + key, Severity.Info)
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
@@ -223,7 +222,7 @@ abstract class BasePlatformAgent
           spawn {
             val msg = Serializer.deserialize[ T ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
-            handler(agentCnxn, msg)
+            handler(cnxn, msg)
           }
         }
         else {
@@ -243,7 +242,7 @@ abstract class BasePlatformAgent
   //  }
 
   //make everything below here protected once tests are sorted out
-  def send(queue: PartitionedStringMGJ, cnxn: AgentCnxn, msg: Message)
+  def send(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, msg: Message)
   {
     report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Info)
     if ( msg.eventKey != null ) {
@@ -252,118 +251,110 @@ abstract class BasePlatformAgent
     put(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
 
-  def singleSend(queue: PartitionedStringMGJ, cnxn: AgentCnxn, msg: Message)
+  def singleSend(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, msg: Message)
   {
     msg.channelLevel = Some(ChannelLevel.Single)
     send(queue, cnxn, msg)
   }
 
-  def put(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, value: String) =
+  def put(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, value: String) =
   {
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     report("put --- key: " + key + ", value: " + value.short + " cnxn: " + cnxn.toString)
     val lbl = key.toLabel
     reset {queue.put(agentCnxn)(lbl, Ground(value))}
   }
 
-  def get[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, handler: (AgentCnxn, T) => Unit) =
+  def get[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
     report("get --- key: " + key)
     val lbl = key.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     var result = ""
     reset {
       for ( e <- queue.get(agentCnxn)(lbl) ) {
         if ( e != None ) {
           //multiple results will call handler multiple times
-          handler(agentCnxn, Serializer.deserialize[ T ](e.dispatch))
+          handler(cnxn, Serializer.deserialize[ T ](e.dispatch))
         }
       }
     }
   }
 
-  def getList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, handler: (AgentCnxn, List[ T ]) => Unit) =
+  def getList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
     report("get --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
     val lbl = key.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     reset {
       for ( e <- queue.get(true)(agentCnxn)(lbl) ) {
         if ( e != None ) {
           val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
-          handler(agentCnxn, results)
+          handler(cnxn, results)
         }
       }
     }
   }
 
-  def getData(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, handler: (AgentCnxn, Data) => Unit) =
+  def getData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, Data) => Unit) =
   {
     report("get --- key: " + key)
     val lbl = key.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     var result = ""
     reset {
       for ( e <- queue.get(agentCnxn)(lbl) ) {
         if ( e != None ) {
           //multiple results will call handler multiple times
-          handler(agentCnxn, Serializer.deserialize[ Data ](e.dispatch))
+          handler(cnxn, Serializer.deserialize[ Data ](e.dispatch))
         }
       }
     }
   }
 
-  def store(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, value: String) =
+  def store(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, value: String) =
   {
     report("store --- key: " + key + ", cnxn: " + cnxn.toString + ", value: " + value.short, Severity.Info)
     val lbl = key.toLabel
-
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
+    val agentCnxn = cnxn.toAgentCnxn()
     //this should really be store
     queue.store(agentCnxn)(lbl, Ground(value))
   }
 
-  def fetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, handler: (AgentCnxn, T) => Unit) =
+  def fetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
     report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
     val lbl = key.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     reset {
       for ( e <- queue.fetch(agentCnxn)(lbl) ) {
         if ( e != None ) {
           //multiple results will call handler multiple times
           val result = Serializer.deserialize[ T ](e.dispatch)
           if (result != null)
-            handler(agentCnxn, result)
+            handler(cnxn, result)
         }
       }
     }
   }
 
-  def fetchList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String, handler: (AgentCnxn, List[ T ]) => Unit) =
+  def fetchList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
     report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
     val lbl = key.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
-
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     reset {
       for ( e <- queue.fetch(true)(agentCnxn)(lbl) ) {
         if ( e != None ) {
           val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
           val cleanResults = results.filter(x => x != null)
-          handler(agentCnxn, cleanResults)
+          handler(cnxn, cleanResults)
         }
       }
     }
@@ -381,16 +372,16 @@ abstract class BasePlatformAgent
    * @tparam T type of the data to be fetched, if different types are expected, use a common interface
    * @return
    */
-  def fetchList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, keyList: List[ String ], handler: (AgentCnxn, List[ T ]) => Unit) =
+  def fetchList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, keyList: List[ String ], handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
      recursiveFetch(queue, cnxn, keyList, Nil, handler)
   }
 
-  protected def recursiveFetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxn, remainKeyList: List[ String ], intermediateResults: List[ T ], finalHandler: (AgentCnxn, List[ T ]) => Unit): Unit =
+  protected def recursiveFetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, remainKeyList: List[ String ], intermediateResults: List[ T ], finalHandler: (AgentCnxnProxy, List[ T ]) => Unit): Unit =
   {
     val lbl = remainKeyList.head.toLabel
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
+    
+    val agentCnxn = cnxn.toAgentCnxn()
     reset {
       for ( e <- queue.fetch(true)(agentCnxn)(lbl) ) {
         if ( e != None ) {
@@ -400,7 +391,7 @@ abstract class BasePlatformAgent
           // last search is performed execute final handler
           if ( newRemainKeyList.isEmpty ) finalHandler(cnxn, newIntermediateResults)
           // next step of the fetch
-          else recursiveFetch(queue, agentCnxn, newRemainKeyList, newIntermediateResults, finalHandler)
+          else recursiveFetch(queue, cnxn, newRemainKeyList, newIntermediateResults, finalHandler)
         }
       }
     }
@@ -408,34 +399,32 @@ abstract class BasePlatformAgent
 
   //note:  this doesn't work with wildcards right now
   //delete must use an exact key, no unification like get/fetch use occurs
-  def delete(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key: String) =
+  def delete(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String) =
   {
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
+    val agentCnxn = cnxn.toAgentCnxn()
     report("delete --- key: " + key.toLabel + " cnxn: " + cnxn.toString, Severity.Info)
     queue.delete(agentCnxn)(key.toLabel)
   }
 
-  def drop(queue: PartitionedStringMGJ, cnxn: AgentCnxn) =
+  def drop(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy) =
   {
-    val proxy = new AgentCnxnProxy(cnxn.src,cnxn.label,cnxn.trgt)
-    val agentCnxn = proxy.toAgentCnxn()
+    val agentCnxn = cnxn.toAgentCnxn()
     report("drop --- cnxn: " + cnxn.toString, Severity.Trace)
     queue.drop(agentCnxn)
   }
 
 
   //// tests for when BUG 54 is fixed
-  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxn, channel:Channel.Value, channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxn, Message) => Unit) :Unit =
+  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel:Channel.Value, channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //  {
   //    listenCursor(queue, cnxn, channel, None, channelType, channelLevel, handler)
   //  }
-  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxn, channel:Channel.Value, channelRole:Option[ChannelRole.Value], channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxn, Message) => Unit) :Unit =
+  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel:Channel.Value, channelRole:Option[ChannelRole.Value], channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //  {
   //    val key = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.toString + "(_)"
   //    listenCursor(queue, cnxn, key, handler)
   //  }
-  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxn, key:String, handler:(AgentCnxn, Message) => Unit) :Unit =
+  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key:String, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //    {
   //      val lblChannel = key.toLabel
   //

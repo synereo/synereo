@@ -4,6 +4,7 @@ import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
@@ -16,12 +17,12 @@ trait IntroductionRequestSetCreator
 {
   self: AgentHostStorePlatformAgent =>
 
-  def listenPublicIntroductionCreatorRequests(cnxn: AgentCnxn) =
+  def listenPublicIntroductionCreatorRequests(cnxn: AgentCnxnProxy) =
   {
-    listen(_publicQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Public, handlePublicIntroductionCreatorRequestChannel(_: AgentCnxn, _: Message))
+    listen(_publicQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Public, handlePublicIntroductionCreatorRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
-  protected def handlePublicIntroductionCreatorRequestChannel(cnxn: AgentCnxn, msg: Message) =
+  protected def handlePublicIntroductionCreatorRequestChannel(cnxn: AgentCnxnProxy, msg: Message) =
   {
     //these are request coming on the public channel (from us or other PAs)
     //if we get in this handler, it means the message was meant for us and we should process it
@@ -39,24 +40,24 @@ trait IntroductionRequestSetCreator
     report("exiting handlePublicIntroductionCreatorRequestChannel in ConnectionBroker", Severity.Trace)
   }
 
-  protected def processCreateIntroductionRequest(cnxnBroker_A: AgentCnxn, createIntroductionsRequest: CreateIntroductionRequest) =
+  protected def processCreateIntroductionRequest(cnxnBroker_A: AgentCnxnProxy, createIntroductionsRequest: CreateIntroductionRequest) =
   {
     //agent wants available introductions from the broker cnxn, intros are one-sided
     //need to get to broker self cnxn, then lookup introduction profiles/packages
     report("****CREATE INTRODUCTIONS REQUEST RECEIVED:****", Severity.Debug)
     val queryObject = new SystemData[ Connection ](new Connection())
 
-    fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, queryObject.toSearchKey, handleSystemDataLookupCreateIntroductions(_: AgentCnxn, _: SystemData[ Connection ], cnxnBroker_A, createIntroductionsRequest))
+    fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, queryObject.toSearchKey, handleSystemDataLookupCreateIntroductions(_: AgentCnxnProxy, _: SystemData[ Connection ], cnxnBroker_A, createIntroductionsRequest))
   }
 
-  protected def handleSystemDataLookupCreateIntroductions(cnxn: AgentCnxn, systemConnection: SystemData[ Connection ], cnxnBroker_A: AgentCnxn, createIntroductionsRequest: CreateIntroductionRequest): Unit =
+  protected def handleSystemDataLookupCreateIntroductions(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], cnxnBroker_A: AgentCnxnProxy, createIntroductionsRequest: CreateIntroductionRequest): Unit =
   {
     //find all connections the broker has
     val queryObject = new Connection ()
-    fetchList[ Connection ](_dbQ, systemConnection.data.writeCnxn, queryObject.toSearchKey, generateIntroductions(_: AgentCnxn, _: List[ Connection ], cnxnBroker_A, createIntroductionsRequest))
+    fetchList[ Connection ](_dbQ, systemConnection.data.writeCnxn, queryObject.toSearchKey, generateIntroductions(_: AgentCnxnProxy, _: List[ Connection ], cnxnBroker_A, createIntroductionsRequest))
   }
 
-  protected def generateIntroductions(cnxnBrokerSelf: AgentCnxn, connsBroker: List[ Connection ], cnxnBroker_A: AgentCnxn, createIntroductionsRequest: CreateIntroductionRequest) =
+  protected def generateIntroductions(cnxnBrokerSelf: AgentCnxnProxy, connsBroker: List[ Connection ], cnxnBroker_A: AgentCnxnProxy, createIntroductionsRequest: CreateIntroductionRequest) =
   {
     report("****GENERATE INTRODUCTIONS REQUEST:****", Severity.Debug)
     val findConnBroker_A = connsBroker.filter(x => x.writeCnxn == cnxnBroker_A)
@@ -84,10 +85,10 @@ trait IntroductionRequestSetCreator
   {
     //find all introduction profiles that are shared - should only be 1
     val queryObject = new IntroductionProfile ()
-    fetchList[ IntroductionProfile ](_dbQ, connBroker_B.readCnxn, queryObject.toSearchKey, generateIntroduction(_: AgentCnxn, _: List[ IntroductionProfile ], connBroker_A, connBroker_B))
+    fetchList[ IntroductionProfile ](_dbQ, connBroker_B.readCnxn, queryObject.toSearchKey, generateIntroduction(_: AgentCnxnProxy, _: List[ IntroductionProfile ], connBroker_A, connBroker_B))
   }
 
-  protected def generateIntroduction(cnxnB_Broker: AgentCnxn, introductionProfiles: List[ IntroductionProfile ], connBroker_A: Connection, connBroker_B: Connection) =
+  protected def generateIntroduction(cnxnB_Broker: AgentCnxnProxy, introductionProfiles: List[ IntroductionProfile ], connBroker_A: Connection, connBroker_B: Connection) =
   {
     introductionProfiles.headOption match {
       case None => report("cannot generate introduction, no introduction profile is shared ", Severity.Debug)
