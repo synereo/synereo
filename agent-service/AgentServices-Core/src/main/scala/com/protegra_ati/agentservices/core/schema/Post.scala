@@ -1,6 +1,8 @@
 package com.protegra_ati.agentservices.core.schema
 
 import behaviors.Tracking
+import behaviors.Archive
+import behaviors.Ignore
 import scala.reflect.BeanProperty
 import org.joda.time.DateTime
 import java.util.UUID
@@ -17,7 +19,10 @@ case class Post(
   @BeanProperty var toDetails: java.util.HashMap[String, Data],
   @BeanProperty var fromDetails: java.util.HashMap[String, Data],
   @BeanProperty var threadId: String)
-  extends Data with Tracking
+  extends Data
+  with Tracking
+  with Archive
+  with Ignore
 {
 
   def this() = this("", "", new java.util.HashMap(), new java.util.HashMap(), "")
