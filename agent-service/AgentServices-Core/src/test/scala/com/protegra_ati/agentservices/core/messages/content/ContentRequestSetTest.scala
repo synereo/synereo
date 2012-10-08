@@ -73,7 +73,7 @@ with SpecsPAHelpers
     val cnxn = new AgentCnxnProxy(JenId.toURI, "", JenId.toURI)
     val profileId = UUID.randomUUID
     val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
-    val basicProfile = new Profile("FirstName", "LastName", "", "", "", "", "", "", "")
+    val basicProfile = new Profile("FirstName", "LastName", "", "", "CA", "", "", "", "")
 
     val jensCnxn = ConnectionFactory.createConnection("alias", ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, "connectionType", JenId, JenId)
     val connMike = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Basic", JenId, MikeId)
@@ -128,7 +128,7 @@ with SpecsPAHelpers
     val profileId = UUID.randomUUID
     val mockProfile = new Profile("first", "last", "test Description", "firstLast@test.com", "CA", "someprovince", "city", "postalCode", "website")
     val emptyProfile = new Profile()
-    val introducedProfile = new Profile("", "last", "", "", "", "", "", "", "")
+    val introducedProfile = new Profile("", "last", "", "", "CA", "", "", "", "")
     val fullProfile = mockProfile.copy()
 
     val JenId = ( "Jen" + UUID.randomUUID )
@@ -275,7 +275,7 @@ with SpecsPAHelpers
     val profileId = UUID.randomUUID
     val mockProfile = new Profile("FirstName", "LastName", "managerProfile", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
     val noProfile = new Profile("", "", "", "", "", "", "", "", "")
-    val basicProfile = new Profile("FirstName", "LastName", "", "", "", "", "", "", "")
+    val basicProfile = new Profile("FirstName", "LastName", "", "", "CA", "", "", "", "")
     val fullProfile = new Profile("FirstName", "LastName", "managerProfile", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
 
     val JenId = ( "Jen" + UUID.randomUUID )

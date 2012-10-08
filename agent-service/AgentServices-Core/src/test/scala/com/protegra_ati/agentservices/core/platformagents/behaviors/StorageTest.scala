@@ -70,7 +70,7 @@ with SpecsPAHelpers
 
     val ProfileId = UUID.randomUUID
     val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
-    val basicProfile = new Profile("FirstName", "LastName", "", "", "", "", "", "", "")
+    val basicProfile = new Profile("FirstName", "LastName", "", "", "CA", "", "", "", "")
 
     val JenId = ( "Jen" + UUID.randomUUID )
     val SteveId = ( "Steve" + UUID.randomUUID )
