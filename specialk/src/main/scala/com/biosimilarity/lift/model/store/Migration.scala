@@ -55,7 +55,7 @@ import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 
 package services {
-  class MigrationTool[Namespace,Var,Tag,Value](
+  class ServiceCore[Namespace,Var,Tag,Value](
     seedTag : Tag, seedVal : Value,
     seedKVNameSpace : Namespace, seedKVKNameSpace : Namespace
   ) extends PersistedMonadicKVDBNodeScope[Namespace,Var,Tag,Value]
@@ -121,7 +121,7 @@ package services {
       object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
        with Serializable {
 	 
-	 object PersistedKVDBNodeFactory
+	 object ServiceFactory
 	  extends PersistedKVDBNodeFactoryT with Serializable {	  
 	    def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDB[ReqBody,RspBody] = {
 	      new PersistedMonadicKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
