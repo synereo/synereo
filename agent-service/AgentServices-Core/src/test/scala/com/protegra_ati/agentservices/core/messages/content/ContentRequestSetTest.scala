@@ -126,10 +126,14 @@ with SpecsPAHelpers
     val authorizedProfileContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
 
     val profileId = UUID.randomUUID
-    val mockProfile = new Profile("first", "last", "test Description", "firstLast@test.com", "CA", "someprovince", "city", "postalCode", "website")
+    val mockProfile = new Profile("JenFirst", "JenLast", "test Description", "firstLast@test.com", "CA", "someprovince", "city", "postalCode", "website")
     val emptyProfile = new Profile()
-    val introducedProfile = new Profile("", "last", "", "", "CA", "", "", "", "")
+    val introducedProfile = new Profile("", "JenLast", "", "", "CA", "", "", "", "")
     val fullProfile = mockProfile.copy()
+    val reducedFullProfile = mockProfile.copy()
+    reducedFullProfile.website = ""
+    reducedFullProfile.region = ""
+    reducedFullProfile.image = new Image()
 
     val JenId = ( "Jen" + UUID.randomUUID )
     val MikeId = ( "Mike" + UUID.randomUUID )
@@ -165,21 +169,24 @@ with SpecsPAHelpers
     Thread.sleep(TIMEOUT_LONG)
 
     "save full object to own connection" in {
+      // skip("")
       fetchMustBe(fullProfile)(pa, cnxnJenSelf, queryProfile.toSearchKey)
     }
 
     "save object to all connections with Full disclosure" in {
+      // skip("")
       fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
     }
 
 
     "save object to all connections with Introduced disclosure" in {
+      // skip("")
       fetchMustBe(introducedProfile)(pa, connMikeIntroduced.writeCnxn, queryProfile.toSearchKey)
     }
 
     "save object to all connections with Introduced disclosure then upgrade to Full disclosure" in {
+      // skip("")
       fetchMustBe(introducedProfile)(pa, connMikeIntroduced.writeCnxn, queryProfile.toSearchKey)
-
       val connMikeFull = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId, MikeId)
       //create a setcontentrequest message  to upgrade the conn. level
       val reqFull = SetContentRequest(new EventKey(UUID.randomUUID, ""), connMikeFull, connMikeIntroduced)
@@ -192,9 +199,8 @@ with SpecsPAHelpers
     }
 
     "save object to all connections with Full disclosure then downgrade to Introduced disclosure" in {
-
+      //skip("")
       fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-
       val connSteveIntroduced = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, TrustLevel.Introduced.toString, JenId, SteveId)
       System.err.println("introduced connection: " + connSteveIntroduced)
       System.err.println("introduced full: " + connSteveFull)
@@ -211,6 +217,7 @@ with SpecsPAHelpers
     }
 
     "save object to all connections with Full disclosure then downgrade to Empty disclosure" in {
+      // skip("")
       //check that the profile saved to AliceJen has no blue cross number
       fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
 
@@ -224,49 +231,34 @@ with SpecsPAHelpers
       fetchMustBe(emptyProfile)(pa, connSteveEmpty.writeCnxn, queryProfile.toSearchKey)
     }
 
-  }
 
-
-  "processSetContentRequest with CompositeData" should {
+    "change full disclosure by profile reducing number of fields applied to all connections" in {
    //skip("")
-    val postId = UUID.randomUUID
+      fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      // fields: website and image are removed
+      val fullProfileNewDisclosedData = DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Full.toString, "id,localeCode,firstName,lastName,description,emailAddress,country,city,postalCode")
+      val fullProfileOldDisclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
 
-    val fromData = new java.util.HashMap[ String, Data ]()
-    val fromProfile = new Profile()
-    fromProfile.firstName = "Jen"
-    fromData.put(fromProfile.formattedClassName, fromProfile)
+      System.err.println("IN TEST self conn:" + cnxnJenSelf)
+      //create a setcontentrequest message to downgrate to introduced
+      val reqFullDisclosedDataChanged = SetContentRequest(new EventKey(UUID.randomUUID, ""), fullProfileNewDisclosedData, fullProfileOldDisclosedData)
+      reqFullDisclosedDataChanged.targetCnxn = cnxnJenSelf
+      reqFullDisclosedDataChanged.originCnxn = cnxnJenSelf
+      pa.processSetContentRequest(reqFullDisclosedDataChanged)
+      System.err.println("-------------------------------------------------------------------------")
+      Thread.sleep(TIMEOUT_VERY_LONG * 3)
+      Thread.sleep(TIMEOUT_VERY_LONG * 3)
+      // check profile if image and webseite are deleted
+      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBeWithHandler(expectationCheckHandler(_: Data, _: Data))(reducedFullProfile, pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustExclusivelyBe(reducedFullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
 
-    val mockPost = new Post("theSubject", "theBody", fromData)
-    val data = new Post("theSubject", "theBody", fromData)
-
-    val JenId = ( "Jen" + UUID.randomUUID )
-    val MikeId = ( "Mike" + UUID.randomUUID )
-    val SteveId = ( "Steve" + UUID.randomUUID )
-
-    val cnxnJenSelf = new AgentCnxnProxy(JenId.toURI, "", JenId.toURI)
-    val connMikeBasic = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Basic", JenId, MikeId)
-    val connSteveFull = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId, SteveId)
-    pa.addToHostedCnxn(cnxnJenSelf)
-
-    //save profile authorized content for basic and full
-    pa.put(pa._dbQ, cnxnJenSelf, connMikeBasic.toStoreKey, Serializer.serialize[ Data ](connMikeBasic))
-    pa.put(pa._dbQ, cnxnJenSelf, connSteveFull.toStoreKey, Serializer.serialize[ Data ](connSteveFull))
-    Thread.sleep(TIMEOUT_LONG)
-
-    //create a setcontentrequest message
-    val req = SetContentRequest(new EventKey(UUID.randomUUID, ""), new CompositeData[ Post ](connMikeBasic, mockPost), null)
-    req.targetCnxn = cnxnJenSelf
-    req.originCnxn = cnxnJenSelf
-
-    pa.processSetContentRequest(req)
-    Thread.sleep(TIMEOUT_LONG)
-
-    val query: Post = new Post()
-
-    "save full object to own connection and CompositeConnection" in {
-      Thread.sleep(TIMEOUT_LONG)
-      fetchMustBe(mockPost)(pa, cnxnJenSelf, query.toSearchKey)
-      fetchMustBe(mockPost)(pa, connMikeBasic.writeCnxn, query.toSearchKey)
+      def expectationCheckHandler(result: Data, expected: Data): Unit =
+      {
+        if ( result != expected ) fail()
+        System.err.println("%%%%%%%%%%%%%%%%%%%%%%%% result=" + result + ", expected=" + expected)
+      }
     }
   }
 

@@ -25,6 +25,27 @@ object ConnectionFactory
     createConnection(alias, categoryTarget, connectionType, sourceId, targetId, "true", getPolicies(categorySource,categoryTarget))
   }
 
+  /**
+   * to be used for search for all connections, all fields are empty strings, policies object is Nil
+   * @return empty connection for search
+   */
+  def createConnection(): Connection =
+  {
+    createConnection("", "", "", "", "", "", Nil)
+  }
+
+
+  /**
+   * to be used for search for all connections with an specified connectionType
+   * @param connectionType
+   * @return connection with only one parameter "connectionType" for search
+   */
+  def createTypedConnection(connectionType: String): Connection =
+  {
+    createConnection("", "", connectionType, "", "", "", Nil)
+  }
+
+
 //  def createConnection(alias: String, categorySource: String, categoryTarget: String, connectionType: String, sourceId: String, targetId: String, autoApprove: String): Connection =
 //  {
 //    createConnection(alias, categoryTarget, connectionType, sourceId, targetId, autoApprove, getPolicies(categorySource,categoryTarget))

@@ -200,6 +200,7 @@ trait ContentRequestSet
           case _ => {}
         }
         //standard save functionality
+        setContentIfDisclosedDataChanged(msg)
         setContentForSelfAndAllConnectionsAndTargetSelf(msg.targetCnxn, msg.ids, msg.eventKey, msg.newData, msg.oldData)
         setContentIfConnectionChanged(msg)
       }
@@ -449,6 +450,35 @@ trait ContentRequestSet
       case _ => {
       } //TODO: throw an exception
     }
+  }
+
+
+  def setContentIfDisclosedDataChanged(msg: SetContentRequest) =
+  {
+    (msg.newData, msg.oldData) match {
+      case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
+        //System.err.println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
+
+        val query = new Connection() //ConnectionFactory.createTypedConnection(x.getConnectionType())
+        //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
+        fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, x, y))
+      }
+      case (x: DisclosedData[ _ ], _) => {
+        // ignore this case
+      }
+      case _ => {
+        // ignore this case
+      }
+    }
+  }
+
+
+  protected def processConnectionsLookupForDiscloseDataUpdate(selfCnxn: AgentCnxnProxy, connection: Connection, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ]): Unit =
+  {
+   // println("$$$$$$$$$$$ ALL CONNECTIONS TO BE UPDATET selfCnxn=" + selfCnxn + " " + connection + "/n" + ",  newDisclosedData+" + newDisclosedData + ", oldDisclosedData=" + oldDisclosedData)
+
+    changeDisclosedContentOnConnection(selfCnxn, connection, newDisclosedData, oldDisclosedData)
+
   }
 
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
