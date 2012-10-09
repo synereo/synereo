@@ -291,18 +291,23 @@ trait CnxnCtxtInjector[Namespace,Var,Tag] {
   }
 }
 
-trait Cnxn[Src,Label,Trgt] {
+trait Cnxn[Src,+Label,Trgt] {
   def src   : Src
   def label : Label
   def trgt  : Trgt
 }
-class CCnxn[Src,Label,Trgt](
+class CCnxn[Src,+Label,Trgt](
   override val src : Src,
   override val label : Label,
   override val trgt : Trgt
 ) extends Cnxn[Src,Label,Trgt]
 
 object CCnxn {
+  def apply[Src,Label,Trgt](
+    src : Src, lbl : Label, trgt : Trgt 
+  ) : CCnxn[Src,Label,Trgt] = {
+    new CCnxn[Src,Label,Trgt]( src, lbl, trgt )
+  }
   def unapply[Src,Label,Trgt](
     cnxn : CCnxn[Src,Label,Trgt]
   ) : Option[(Src,Label,Trgt)] = {
