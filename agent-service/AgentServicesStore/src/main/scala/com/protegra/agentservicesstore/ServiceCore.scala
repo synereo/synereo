@@ -60,13 +60,16 @@ import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 
 package services {
-  class PlatformServiceCore[Namespace,Var,Tag,Value](
-    seedTag : Tag, seedVal : Value,
-    seedKVNameSpace : Namespace, seedKVKNameSpace : Namespace
-  ) extends AgentKVDBNodeScope[Namespace,Var,Tag,Value]
-  with UUIDOps {
+  trait PlatformServiceCoreT[Namespace,Var,Tag,Value]
+   extends AgentKVDBNodeScope[Namespace,Var,Tag,Value]
+    with UUIDOps {    
     import SpecialKURIDefaults._
     import identityConversions._
+
+    def seedTag : Tag 
+    def seedVal : Value
+    def seedKVNameSpace : Namespace
+    def seedKVKNameSpace : Namespace
 
     type ACTypes = AgentCnxnTypes
     object TheACT extends ACTypes
@@ -291,4 +294,12 @@ package services {
       override def protoEMTypes : EMTypes = theEMTypes
     }
   }
+
+  class PlatformServiceCore[Namespace,Var,Tag,Value](
+    override val seedTag : Tag,
+    override val seedVal : Value,
+    override val seedKVNameSpace : Namespace,
+    override val seedKVKNameSpace : Namespace
+  ) extends PlatformServiceCoreT[Namespace,Var,Tag,Value]
+  with Serializable
 }
