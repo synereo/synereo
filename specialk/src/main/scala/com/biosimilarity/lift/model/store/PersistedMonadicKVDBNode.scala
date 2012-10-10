@@ -1899,6 +1899,30 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    }
 	  cache.mput( perD )( cache.theChannels, cache.theSubscriptions, true, xmlCollName )( ptn, rsrc )
 	}
+
+	def unbindAndResubmit( hops : List[Moniker] )(
+	  path : CnxnCtxtLabel[Namespace,Var,Tag]
+	) : Unit = {	  
+	  val perD = cache.persistenceManifest
+	  val xmlCollName = 
+	    perD match {
+	      case None => None
+	      case Some( pd ) => Some( pd.storeUnitStr )
+	    }
+	  tweet( 
+	    (
+	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	      + "unbinding cached continuations " + path + ".\n"
+	      + "on " + this + "\n"
+	      + "persistence manifest: " + perD + "\n"
+	      + "xml collection name: " + xmlCollName + "\n"
+	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+	    )
+	  )
+	  for( placeInstances <- cache.pullKRecords( perD, path, xmlCollName ) ) {
+	    resubmitRequests( perD, placeInstances, xmlCollName )
+	  }
+	}
 		 
       }
 
