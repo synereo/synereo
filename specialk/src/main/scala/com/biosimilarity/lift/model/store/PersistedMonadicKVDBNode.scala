@@ -1596,7 +1596,29 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
       ) extends BaseMonadicKVDBNode[ReqBody,RspBody,KVDBNode](
 	cache, acquaintances
       ) with Serializable
-      {    		
+      { 
+	@transient
+	implicit val resubmissionAsk : dAT.AskNum = dAT.AGetNum
+
+	def resubmitRequests(
+	  persist : Option[PersistenceManifest],
+	  placeInstances : List[emT.PlaceInstance],
+	  collName : Option[String]
+	)( implicit resubmissionAsk : dAT.AskNum ) : Unit = {
+	  val xmlCollName =
+	    collName.getOrElse( cache.storeUnitStr.getOrElse( bail( ) ) )
+
+	  for(
+	    pd <- persist;
+	    pI <- placeInstances
+	  ) {
+	    tweet( ">>>>>>***>>>>>>***>>>>>>" )
+	    tweet( "resubmitting " + pI.toString + " as an AMQP request" )
+	    tweet( "<<<<<<***<<<<<<***<<<<<<" )
+	    forward( resubmissionAsk, List[Moniker]( ), pI.place )
+	  }
+	    
+	}
 	override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
 	  dreq match {
 	    case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
