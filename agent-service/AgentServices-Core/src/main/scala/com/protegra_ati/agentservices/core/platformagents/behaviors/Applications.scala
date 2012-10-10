@@ -4,8 +4,8 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS._
-import com.biosimilarity.lift.lib.moniker._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import java.net.URI
 import net.lag.configgy._
 import java.util.UUID
 

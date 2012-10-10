@@ -2,12 +2,12 @@ package com.protegra_ati.agentservices.core.platformagents
 
 import scala.collection.JavaConversions._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import org.junit._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages.content._

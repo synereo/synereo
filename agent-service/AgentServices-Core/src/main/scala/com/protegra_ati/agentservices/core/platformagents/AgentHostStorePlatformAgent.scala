@@ -10,8 +10,8 @@ import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra_ati.agentservices.core.events._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages.login._
@@ -33,10 +33,12 @@ import com.protegra_ati.agentservices.core.schema._
 import org.joda.time.{DateTime, Instant}
 import java.util.{UUID, HashMap}
 import scala.collection.mutable._
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 import java.lang.reflect._
+import Being.AgentKVDBNodeFactory
 
 class AgentHostStorePlatformAgent extends BasePlatformAgent
+with Serializable
 with Storage
 with ResultStorage
 with Public
@@ -106,7 +108,7 @@ with MessageStore
     _storeCnxn = new AgentCnxnProxy(this._id.toString.toURI, "", this._id.toString.toURI)
   }
 
-  def initForTest(publicAddress: URM, publicAcquaintanceAddresses: List[ URM ], privateAddress: URM, privateAcquaintanceAddresses: List[ URM ], dbAddress: URM, resultAddress: URM, id: UUID)
+  def initForTest(publicAddress: URI, publicAcquaintanceAddresses: List[ URI ], privateAddress: URI, privateAcquaintanceAddresses: List[ URI ], dbAddress: URI, resultAddress: URI, id: UUID)
   {
     initPublic(publicAddress, publicAcquaintanceAddresses)
     initPrivate(privateAddress, privateAcquaintanceAddresses)
@@ -217,7 +219,7 @@ with MessageStore
     send(_privateQ, _cnxnUIStore, msg)
   }
 
-  override def send(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, msg: Message)
+  override def send(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
   {
     msg match {
       case x: CreateInvitationRequest => {

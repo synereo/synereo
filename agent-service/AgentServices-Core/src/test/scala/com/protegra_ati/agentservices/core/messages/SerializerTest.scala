@@ -24,7 +24,7 @@ import org.specs._
 import com.protegra_ati.agentservices.core._
 import persistence.MockConnection
 import scala.collection.JavaConversions._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}

@@ -8,13 +8,13 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 import org.specs._
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import java.util.UUID
 import com.protegra_ati.agentservices.core.schema._
 import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import moniker._
 import com.protegra_ati.agentservices.core.messages._
@@ -49,11 +49,11 @@ with SpecsPAHelpers
 
   //  def createPA: AgentHostStorePlatformAgent =
   //  {
-  //    val dbAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_DB)
-  //    val privateAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_PRIVATE)
-  //    val privateAcquaintanceAddresses = List[ URM ]()
-  //    val publicAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_PUBLIC)
-  //    val publicAcquaintanceAddresses = List[ URM ]()
+  //    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_DB)
+  //    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+  //    val privateAcquaintanceAddresses = List[ URI ]()
+  //    val publicAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PUBLIC)
+  //    val publicAcquaintanceAddresses = List[ URI ]()
   //    val pa = new AgentHostStorePlatformAgent()
   //    // pa._cnxnUIStore = cnxn
   //    pa.initForTest(publicAddress, publicAcquaintanceAddresses, privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)

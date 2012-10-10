@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.extensions.ClassExtensions._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._

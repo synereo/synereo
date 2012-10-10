@@ -8,13 +8,13 @@
 //import java.net.URI
 //
 //import com.protegra.agentservicesstore.extensions.StringExtensions._
-//import com.protegra.agentservicesstore.extensions.URMExtensions._
+//import com.protegra.agentservicesstore.extensions.URIExtensions._
 //import com.protegra_ati.agentservices.core.messages._
-//import com.protegra.agentservicesstore.AgentTS._
-//import com.protegra.agentservicesstore.AgentTS.acT._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra.agentservicesstore.AgentTS.mTT._
-//import com.biosimilarity.lift.lib.moniker._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+//import java.net.URI
 //import content.SetContentPersistedRequest
 //import verifier._
 //import org.joda.time.{DateTime, Instant}
@@ -42,8 +42,8 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //  def createVerifier():AgentHostStorePlatformAgent =
 //  {
-//    val sourceAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_Verifier)
-//    val acquaintanceAddresses = List[ URM ]("127.0.0.1".toURM.withPort(RABBIT_PORT_CLAIMING_AGENT),"127.0.0.1".toURM.withPort(RABBIT_PORT_RELYING_AGENT))
+//    val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_Verifier)
+//    val acquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_CLAIMING_AGENT),"127.0.0.1".toURI.withPort(RABBIT_PORT_RELYING_AGENT))
 //
 //    val pa = new AgentHostStorePlatformAgent()
 //    pa.init(sourceAddress, acquaintanceAddresses, UUID.randomUUID)
@@ -54,9 +54,9 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //  def createClaimingAgent(selfConnections:List[AgentCnxnProxy]): AgentHostStorePlatformAgent =
 //  {
-//    val sourceAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_CLAIMING_AGENT)
-//    val acquaintanceAddresses = List[ URM ]()
-//    val publicAcquaintanceAddresses = List[ URM ]("127.0.0.1".toURM.withPort(RABBIT_PORT_Verifier))
+//    val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_CLAIMING_AGENT)
+//    val acquaintanceAddresses = List[ URI ]()
+//    val publicAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_Verifier))
 //    val pa = new AgentHostStorePlatformAgent()
 //    pa._cnxnUserSelfConnectionsList = selfConnections
 //    pa.init(sourceAddress, acquaintanceAddresses, publicAcquaintanceAddresses, UUID.randomUUID)
@@ -66,9 +66,9 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //  def createRelyingAgent(selfConnections:List[AgentCnxnProxy]): AgentHostStorePlatformAgent =
 //  {
-//    val sourceAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_RELYING_AGENT)
-//    val acquaintanceAddresses = List[ URM ]()
-//    val publicAcquaintanceAddresses = List[ URM ]("127.0.0.1".toURM.withPort(RABBIT_PORT_Verifier))
+//    val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_RELYING_AGENT)
+//    val acquaintanceAddresses = List[ URI ]()
+//    val publicAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_Verifier))
 //    val pa = new AgentHostStorePlatformAgent()
 //    pa._cnxnUserSelfConnectionsList = selfConnections
 //    pa.init(sourceAddress, acquaintanceAddresses, publicAcquaintanceAddresses, UUID.randomUUID)
@@ -109,7 +109,7 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //    var selectVerifierRequest:SelectVerifierRequest = null
 //
-//    def fetchData(queue:PartitionedStringMGJ, cnxn:AgentCnxnProxy, searchKey:String):SelectVerifierRequest = {
+//    def fetchData(queue:Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn:AgentCnxnProxy, searchKey:String):SelectVerifierRequest = {
 //      claimingAgentPA.fetch[Data](queue, cnxn, searchKey, handleFetch)
 //      return selectVerifierRequest
 //    }
@@ -322,7 +322,7 @@ import com.protegra_ati.agentservices.core.schema._
 //       msgReceived = true
 //     }
 //
-//     def fetchData(queue:PartitionedStringMGJ, cnxn:AgentCnxnProxy, searchKey:String):VerifyPermissionRequest = {
+//     def fetchData(queue:Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn:AgentCnxnProxy, searchKey:String):VerifyPermissionRequest = {
 //       claimingAgentPA.fetch[Data](queue, cnxn, searchKey, handleFetch)
 //       return verifyPermissionRequest
 //     }

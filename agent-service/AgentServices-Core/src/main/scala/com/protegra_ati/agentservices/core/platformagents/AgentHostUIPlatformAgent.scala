@@ -10,16 +10,17 @@ import com.protegra_ati.agentservices.core.messages.invitation._
 import com.protegra_ati.agentservices.core.messages.introduction._
 import com.protegra_ati.agentservices.core.messages.admin._
 
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import net.lag.configgy.Config
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 import java.util.UUID
 import com.protegra.agentservicesstore.util.Severity
 import com.protegra_ati.agentservices.core.messages._
 
 class AgentHostUIPlatformAgent extends BasePlatformAgent
+with Serializable
 with Private
 with Listeners
 with Applications
@@ -47,7 +48,7 @@ with IntroductionResponseSetConsumerPrivate
     initApps(configUtil)
   }
 
-  def initForTest(privateLocation: URM, privateAcquaintanceAddresses: List[ URM ], id: UUID)
+  def initForTest(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], id: UUID)
   {
     initPrivate(privateLocation, privateAcquaintanceAddresses)
     super.initForTest(id)

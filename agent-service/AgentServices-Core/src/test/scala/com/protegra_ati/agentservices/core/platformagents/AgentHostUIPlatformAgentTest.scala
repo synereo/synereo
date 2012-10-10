@@ -24,10 +24,10 @@ import org.junit._
 import Assert._
 import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS.mTT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra_ati.agentservices.core.messages._
 import moniker._
 import scala.util.continuations._
@@ -56,8 +56,8 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 
   def createPA: AgentHostUIPlatformAgent =
   {
-    val sourceAddress = "127.0.0.1".toURM
-    val acquaintanceAddresses = List[URM]()
+    val sourceAddress = "127.0.0.1".toURI
+    val acquaintanceAddresses = List[URI]()
     val pa = new AgentHostUIPlatformAgent()
 //    pa._cnxnUIStore = cnxn
     pa.initForTest(sourceAddress, acquaintanceAddresses, UUID.randomUUID)
@@ -66,7 +66,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 
   //really a kvdb test
   "privateQ" should {
-    val pa = createPA
+    @transient val pa = createPA
     "add a partition" in {
       val startSize = pa._privateQ.cnxnPartition.size
       val cnxn = new AgentCnxnProxy("test".toURI, "", UUID.randomUUID().toString.toURI)
@@ -77,7 +77,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
   }
 
   "receiving a response message" should {
-    val pa = createPA
+    @transient val pa = createPA
     var triggered = false
     "raise a SetContentResponseReceivedEvent" in {
       val agentSessionId = UUID.randomUUID
@@ -122,7 +122,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
   }
 
   "listeners" should {
-    val pa = createPA
+    @transient val pa = createPA
     var triggered = false
     "trigger the right event" in {
 

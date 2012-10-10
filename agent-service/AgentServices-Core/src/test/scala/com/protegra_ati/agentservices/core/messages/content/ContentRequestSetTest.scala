@@ -11,7 +11,7 @@ import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra.agentservicesstore.extensions.OptionExtensions._
 import actors.threadpool.LinkedBlockingQueue
@@ -21,10 +21,10 @@ import disclosure._
 import org.junit._
 import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS.mTT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import moniker._
 import scala.util.continuations._
 import com.protegra_ati.agentservices.core.messages._
@@ -369,14 +369,14 @@ with SpecsPAHelpers
       fetchProfileData(pa._dbQ, connJenMike.writeCnxn, profileSearch.toSearchKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchProfileData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
+    def fetchProfileData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       resultProfile = None
       pa.fetch[ Data ](queue, cnxn, key, handleProfileFetch)
       return resultProfile
     }
 
-    def fetchConnectionData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
+    def fetchConnectionData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       resultConnection = None
       pa.fetch[ Data ](queue, cnxn, key, handleConnectionFetch)

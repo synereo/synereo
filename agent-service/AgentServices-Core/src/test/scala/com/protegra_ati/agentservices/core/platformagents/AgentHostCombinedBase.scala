@@ -6,13 +6,13 @@ import com.protegra_ati.agentservices.core._
 
 import scala.collection.JavaConversions._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import org.junit._
 import Assert._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages.content._
@@ -30,7 +30,7 @@ import org.specs.util._
 import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 import com.protegra_ati.agentservices.core.events._
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import java.util.{Locale, UUID}
@@ -55,19 +55,19 @@ Timeouts
   {
     println(" in SharedContext constructor:")
     // ui
-    val privateAddressUI = "localhost".toURM.withPort(RABBIT_PORT_UI_PRIVATE)
-    val privateAcquaintanceAddressesUI = List[ URM ]("localhost".toURM.withPort(RABBIT_PORT_STORE_PRIVATE))
+    val privateAddressUI = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
+    val privateAcquaintanceAddressesUI = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
     uiRef._cnxnUIStore = cnxnUIStore
     val idUI = UUID.randomUUID
     uiRef.initForTest(privateAddressUI, privateAcquaintanceAddressesUI, idUI)
 
     // store
-    val publicAddress = "localhost".toURM.withPort(RABBIT_PORT_STORE_PUBLIC)
-    val publicAcquaintanceAddresses = List[ URM ]("localhost".toURM.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))
-    val privateAddress = "localhost".toURM.withPort(RABBIT_PORT_STORE_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URM ]("localhost".toURM.withPort(RABBIT_PORT_UI_PRIVATE))
-    val dbAddress = "localhost".toURM.withPort(RABBIT_PORT_STORE_DB)
-    val resultAddress = "localhost".toURM.withPort(RABBIT_PORT_TEST_RESULTS_DB)
+    val publicAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC)
+    val publicAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))
+    val privateAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+    val privateAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE))
+    val dbAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_DB)
+    val resultAddress = "localhost".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB)
     storeRef._cnxnUIStore = cnxnUIStore
     val id = UUID.randomUUID
     //storeRef._cnxnUserSelfConnectionsList = List(cnxnJenSelf, cnxnMikeSelf)
