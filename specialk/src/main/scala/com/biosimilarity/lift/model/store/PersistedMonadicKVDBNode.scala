@@ -758,6 +758,36 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    }
 	  }
 	}
+
+	def pullKRecords(
+	  persist : Option[PersistenceManifest],
+	  path : CnxnCtxtLabel[Namespace,Var,Tag],
+	  collName : Option[String]
+	) : Option[List[emT.PlaceInstance]] = {
+	  val xmlCollName =
+	    collName.getOrElse( storeUnitStr.getOrElse( bail( ) ) )
+
+	  for(
+	    pd <- persist;	    
+	    kqry <- kquery( xmlCollName, path );
+	    if checkIfDBExists( xmlCollName, true )
+	  ) yield {
+	    for( krslt <- executeWithResults( xmlCollName, kqry ) ) yield {
+	      tweet( ">>>>>>***>>>>>>***>>>>>>" )
+	      tweet( "retrieved " + krslt.toString )
+	      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+	      val ekrsrc = pd.asResource( path, krslt )
+	      
+	      tweet( ">>>>>>***>>>>>>***>>>>>>" )
+	      tweet( "retrieved " + ekrsrc )
+	      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+	      
+	      removeFromStore( persist, krslt, collName )
+	      
+	      ekrsrc
+	    }
+	  }
+	}
 	
 	def updateKStore( persist : Option[PersistenceManifest] )( 
 	  ptn : mTT.GetRequest,
@@ -1544,7 +1574,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  }
 	      }
 	  }
-	}
+	}	
       }
 
       object BasePersistedMonadicKVDB {
