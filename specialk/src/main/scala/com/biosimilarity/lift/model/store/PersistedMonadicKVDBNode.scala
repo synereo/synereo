@@ -1628,6 +1628,25 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    }
 	  }	    
 	}
+
+	def resubmitRequests(
+	  persist : Option[PersistenceManifest],
+	  path : CnxnCtxtLabel[Namespace,Var,Tag],
+	  collName : Option[String]
+	)(
+	  implicit resubmissionAsk : dAT.AskNum
+	) : Option[Generator[emT.PlaceInstance,Unit,Unit]] = {
+	  resubmitRequests(
+	    persist,
+	    cache.pullKRecords(
+	      persist,
+	      path,
+	      collName
+	    ).getOrElse( List[emT.PlaceInstance]( ) ),
+	    collName
+	  )( resubmissionAsk )
+	}
+
 	override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
 	  dreq match {
 	    case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
