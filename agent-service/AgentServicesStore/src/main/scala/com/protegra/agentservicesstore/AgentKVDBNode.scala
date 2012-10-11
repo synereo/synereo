@@ -478,9 +478,6 @@ with AgentCnxnTypeScope {
 	}
       }
 
-      // def makeSpace( cnxn : acT.AgentCnxn ) : HashAgentKVDBNode[ReqBody,RspBody] = {
-// 	throw new Exception( "makeSpace is not defined on " + this )
-//       }
       def makeSpace( cnxn : acT.AgentCnxn ) : HashAgentKVDBNode[ReqBody,RspBody] = {
 	val symmIdStr = cnxn.symmetricIdentityString
 
@@ -556,6 +553,10 @@ with AgentCnxnTypeScope {
 	  }
 	}
       }
+
+      /* --------------------------------------------------------------------
+       *                     Aggregation management API
+       * -------------------------------------------------------------------- */
       
       def cnxnMatch(
 	cnxn1 : acT.AgentCnxn,
@@ -795,6 +796,10 @@ with AgentCnxnTypeScope {
 	}
       }
 
+      /* --------------------------------------------------------------------
+       *                     The underlying API
+       * -------------------------------------------------------------------- */
+
       def mget( cnxn : acT.AgentCnxn )(
 	persist : Option[PersistenceManifest],
 	ask : dAT.AskNum,
@@ -853,6 +858,10 @@ with AgentCnxnTypeScope {
 	    }
 	}      
       }
+
+      /* --------------------------------------------------------------------
+       *                     The standard API
+       * -------------------------------------------------------------------- */
       
       def put( cnxn : acT.AgentCnxn )(
 	ptn : mTT.GetRequest, rsrc : mTT.Resource
@@ -1241,7 +1250,22 @@ with AgentCnxnTypeScope {
           }
         }
       }           
-      
+
+      def resubmitRequests( cnxn : acT.AgentCnxn )(
+	placeInstances : List[emT.PlaceInstance]
+      )(
+	implicit resubmissionAsk : dAT.AskNum
+      ) : Option[HashAgentKVDBNode[ReqBody,RspBody]#Generator[emT.PlaceInstance,Unit,Unit]] = {
+
+	val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
+
+	pmgj.resubmitRequests( perD, placeInstances, xmlCollName )	    
+      }
+
+      /* --------------------------------------------------------------------
+       *                     The dispatching section
+       * -------------------------------------------------------------------- */
+
       override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
 	dreq match {
 	  case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {

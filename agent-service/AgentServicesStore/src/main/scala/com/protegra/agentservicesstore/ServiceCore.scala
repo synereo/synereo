@@ -127,18 +127,18 @@ package services {
     override def protoMsgs : MsgTypes = MonadicDRsrcMsgs
     override def protoRsrcMsgs : RsrcMsgTypes = MonadicDRsrcMsgs
 
-    object Being extends AgentPersistenceScope with Serializable {
+    trait Endurance extends AgentPersistenceScope with Serializable {
       override type EMTypes =
 	ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
-      object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
+      trait StdEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
        with Serializable {
 	 
-	 object PlatformServiceFactory
-	  extends  BaseAgentKVDBNodeFactoryT with AgentKVDBNodeFactoryT with Serializable {	  
+	 trait PlatformServiceFactoryT
+	  extends BaseAgentKVDBNodeFactoryT with AgentKVDBNodeFactoryT with Serializable {
 	    type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
 	    def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : AgentCache[ReqBody,RspBody] = {
 	      new AgentKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
-		class StringXMLDBManifest(
+		class LocalXMLDBManifest(
 		  override val storeUnitStr : String,
 		  @transient override val labelToNS : Option[String => Namespace],
 		  @transient override val textToVar : Option[String => Var],
@@ -291,15 +291,33 @@ package services {
 	  }
 	 
        }
-      override def protoEMTypes : EMTypes = theEMTypes
+      //override def protoEMTypes : EMTypes = theEMTypes
     }
   }
 
+  // This is the smallest possible node-based service
   class PlatformServiceCore[Namespace,Var,Tag,Value](
-    override val seedTag : Tag,
-    override val seedVal : Value,
-    override val seedKVNameSpace : Namespace,
-    override val seedKVKNameSpace : Namespace
+    @transient override val seedTag : Tag,
+    @transient override val seedVal : Value,
+    @transient override val seedKVNameSpace : Namespace,
+    @transient override val seedKVKNameSpace : Namespace
   ) extends PlatformServiceCoreT[Namespace,Var,Tag,Value]
-  with Serializable
+  with Serializable {
+    object Being extends Endurance {
+      object theStdEMTypes extends StdEMTypes {
+	object PlatformServiceFactory extends PlatformServiceFactoryT
+      }
+      override def protoEMTypes : EMTypes = theStdEMTypes    
+    }    
+  }
+
+  class MigrationService[Namespace,Var,Tag,Value](
+    @transient override val seedTag : Tag,
+    @transient override val seedVal : Value,
+    @transient override val seedKVNameSpace : Namespace,
+    @transient override val seedKVKNameSpace : Namespace
+  ) extends PlatformServiceCore[Namespace,Var,Tag,Value](
+    seedTag, seedVal, seedKVNameSpace, seedKVKNameSpace
+  ) {    
+  }
 }
