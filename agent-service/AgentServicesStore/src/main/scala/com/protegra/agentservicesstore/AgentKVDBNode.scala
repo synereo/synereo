@@ -1280,6 +1280,26 @@ with AgentCnxnTypeScope {
 	resubmitRequests( cnxn )( placeInstances )( resubmissionAsk )
       }
 
+      def resubmitCnxnLabelRequests( cnxns : List[acT.AgentCnxn] )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )(
+	implicit resubmissionAsk : dAT.AskNum
+      ) : List[Option[HashAgentKVDBNode[ReqBody,RspBody]#Generator[emT.PlaceInstance,Unit,Unit]]]
+      = {
+	for( cnxn <- cnxns ) yield {
+	  val ( pmgj, perD, xmlCollName ) =
+	    getLocalPartitionActuals( cnxn )
+	  val placeInstances : List[emT.PlaceInstance] =
+	    pmgj.cache.pullKRecords(
+	      perD,
+	      path,
+	      xmlCollName
+	    ).getOrElse( List[emT.PlaceInstance]( ) )
+	  
+	  resubmitRequests( cnxn )( placeInstances )( resubmissionAsk )
+	}
+      }
+
       /* --------------------------------------------------------------------
        *                     The dispatching section
        * -------------------------------------------------------------------- */
