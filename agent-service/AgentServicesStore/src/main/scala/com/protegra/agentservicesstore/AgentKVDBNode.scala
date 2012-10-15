@@ -478,9 +478,6 @@ with AgentCnxnTypeScope {
 	}
       }
 
-      // def makeSpace( cnxn : acT.AgentCnxn ) : HashAgentKVDBNode[ReqBody,RspBody] = {
-// 	throw new Exception( "makeSpace is not defined on " + this )
-//       }
       def makeSpace( cnxn : acT.AgentCnxn ) : HashAgentKVDBNode[ReqBody,RspBody] = {
 	val symmIdStr = cnxn.symmetricIdentityString
 
@@ -556,6 +553,10 @@ with AgentCnxnTypeScope {
 	  }
 	}
       }
+
+      /* --------------------------------------------------------------------
+       *                     Aggregation management API
+       * -------------------------------------------------------------------- */
       
       def cnxnMatch(
 	cnxn1 : acT.AgentCnxn,
@@ -795,6 +796,10 @@ with AgentCnxnTypeScope {
 	}
       }
 
+      /* --------------------------------------------------------------------
+       *                     The underlying API
+       * -------------------------------------------------------------------- */
+
       def mget( cnxn : acT.AgentCnxn )(
 	persist : Option[PersistenceManifest],
 	ask : dAT.AskNum,
@@ -853,6 +858,10 @@ with AgentCnxnTypeScope {
 	    }
 	}      
       }
+
+      /* --------------------------------------------------------------------
+       *                     The standard API
+       * -------------------------------------------------------------------- */
       
       def put( cnxn : acT.AgentCnxn )(
 	ptn : mTT.GetRequest, rsrc : mTT.Resource
@@ -1241,7 +1250,60 @@ with AgentCnxnTypeScope {
           }
         }
       }           
-      
+
+      def resubmitRequests( cnxn : acT.AgentCnxn )(
+	placeInstances : List[emT.PlaceInstance]
+      )(
+	implicit resubmissionAsk : dAT.AskNum
+      ) : Option[HashAgentKVDBNode[ReqBody,RspBody]#Generator[emT.PlaceInstance,Unit,Unit]] = {
+
+	val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
+
+	pmgj.resubmitRequests( perD, placeInstances, xmlCollName )( resubmissionAsk )
+      }
+
+      def resubmitLabelRequests( cnxn : acT.AgentCnxn )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )(
+	implicit resubmissionAsk : dAT.AskNum
+      ) : Option[HashAgentKVDBNode[ReqBody,RspBody]#Generator[emT.PlaceInstance,Unit,Unit]]
+      = {
+	val ( pmgj, perD, xmlCollName ) =
+	  getLocalPartitionActuals( cnxn )
+	val placeInstances : List[emT.PlaceInstance] =
+	  pmgj.cache.pullKRecords(
+	    perD,
+	    path,
+	    xmlCollName
+	  ).getOrElse( List[emT.PlaceInstance]( ) )
+
+	resubmitRequests( cnxn )( placeInstances )( resubmissionAsk )
+      }
+
+      def resubmitCnxnLabelRequests( cnxns : List[acT.AgentCnxn] )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )(
+	implicit resubmissionAsk : dAT.AskNum
+      ) : List[Option[HashAgentKVDBNode[ReqBody,RspBody]#Generator[emT.PlaceInstance,Unit,Unit]]]
+      = {
+	for( cnxn <- cnxns ) yield {
+	  val ( pmgj, perD, xmlCollName ) =
+	    getLocalPartitionActuals( cnxn )
+	  val placeInstances : List[emT.PlaceInstance] =
+	    pmgj.cache.pullKRecords(
+	      perD,
+	      path,
+	      xmlCollName
+	    ).getOrElse( List[emT.PlaceInstance]( ) )
+	  
+	  resubmitRequests( cnxn )( placeInstances )( resubmissionAsk )
+	}
+      }
+
+      /* --------------------------------------------------------------------
+       *                     The dispatching section
+       * -------------------------------------------------------------------- */
+
       override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
 	dreq match {
 	  case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
@@ -1427,18 +1489,27 @@ with AgentCnxnTypeScope {
       name
     ) 
 
+    implicit val defaultConfigFileNameOpt : Option[String] = None
+
     case class AgentKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       override val cache : AgentKVDB[ReqBody,RspBody],
       override val acquaintances : List[Moniker],
-      override val cnxn : Option[acT.AgentCnxn]
+      override val cnxn : Option[acT.AgentCnxn],
+      implicit override val configFileName : Option[String]
     ) extends BaseAgentKVDBNode[ReqBody,RspBody,AgentKVDBNode](
       cache, acquaintances, cnxn, Nil
     ) 
 
     trait AgentKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunners {
-      def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : List[URI] ) : AgentKVDBNode[ReqBody,RspBody]
-      def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : URI ) : AgentKVDBNode[ReqBody,RspBody]      
-      def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : AgentKVDBNode[ReqBody,RspBody]
+      def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+	here : URI, there : List[URI]
+      )( implicit configFileNameOpt : Option[String] ) : AgentKVDBNode[ReqBody,RspBody]
+      def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+	here : URI, there : URI
+      )( implicit configFileNameOpt : Option[String] ) : AgentKVDBNode[ReqBody,RspBody]      
+      def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+	here : URI
+      )( implicit configFileNameOpt : Option[String] ) : AgentKVDBNode[ReqBody,RspBody]
     }
   }
 }
@@ -1844,12 +1915,15 @@ package usage {
 	}
 	override def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
 	  here : URI, there : URI
+	)(
+	  implicit configFileNameOpt : Option[String] 
 	) : AgentKVDBNode[ReqBody,RspBody] = {
 	  val node =
 	    new AgentKVDBNode[ReqBody,RspBody](
 	      mkCache( MURI( here ) ),
 	      List( MURI( there ) ),
-	      None
+	      None,
+	      configFileNameOpt
 	    ) {
 	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
 		here : URI 
@@ -2146,12 +2220,15 @@ package usage {
 	}
 	override def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
 	  here : URI, there : List[URI]
+	)(
+	  implicit configFileNameOpt : Option[String]
 	) : AgentKVDBNode[ReqBody,RspBody] = {
 	  val node =
 	    new AgentKVDBNode[ReqBody,RspBody](
 	      mkCache( MURI( here ) ),
 	      there.map( MURI( _ ) ),
-	      None
+	      None,
+	      configFileNameOpt
 	    ) {
 	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
 		here : URI 
@@ -2453,6 +2530,8 @@ package usage {
 	}
 	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
 	  here : URI
+	)(
+	  implicit configFileNameOpt : Option[String]
 	) : AgentKVDBNode[ReqBody,RspBody] = {
 	  val exchange = uriExchange( here )
 	  val hereNow =
@@ -2480,7 +2559,8 @@ package usage {
 	    new AgentKVDBNode[ReqBody, RspBody](
 	      mkCache( MURI( hereNow ) ),
 	      List( MURI( thereNow ) ),
-	      None
+	      None,
+	      configFileNameOpt
 	    ) {
 	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
 		here : URI 
