@@ -11,6 +11,8 @@ package com.biosimilarity.lift.lib
 import net.lag.configgy._
 import net.lag.logging._
 
+import scala.annotation.elidable
+import scala.annotation.elidable._
 import scala.xml._
 import java.util.UUID
 
@@ -195,6 +197,7 @@ trait Journalist {
     sw.toString
   }
 
+  @elidable(ALL)
   def tweetTrace( e : Exception ) = {
     reportage(exceptionToTraceStr( e ) )
   }
@@ -208,6 +211,7 @@ trait Journalist {
     tweet(fact, level)
   }
 
+  @elidable(ALL)
   def tweet[ A ](fact: A): Unit =
   {
     tweet(fact, Severity.Trace)
@@ -219,6 +223,7 @@ trait Journalist {
     blog(fact, level)
   }
 
+  @elidable(ALL)
   def display[ A ](fact: A): Unit =
   {
     display(fact, Severity.Trace)
@@ -229,6 +234,7 @@ trait Journalist {
     if ( enabled(level, tweetLevel) ) {trace(fact, level)}
   }
 
+  @elidable(ALL)
   private def trace[ A ](fact: A, level: Severity.Value) =
   {
     //todo: worth adding severity to output <report> tag?
@@ -239,6 +245,7 @@ trait Journalist {
     }
   }
 
+  @elidable(ALL)
   def blog[ A ](fact: A): Unit =
   {
     blog(fact, Severity.Debug)
@@ -249,6 +256,7 @@ trait Journalist {
     if ( enabled(level, blogLevel) ) {log(fact, level)}
   }
 
+  @elidable(ALL)
   private def log[ A ](fact: A, level: Severity.Value) =
   {
     level match {
