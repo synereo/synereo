@@ -21,13 +21,13 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
-class AgentKVDBNodeTest
-  extends JUnit4(AgentKVDBNodeTestSpecs)
+class AgentKVDBNodeCombinedTest
+  extends JUnit4(AgentKVDBNodeCombinedTestSpecs)
 
-object AgentKVDBNodeTestSpecsRunner
-  extends ConsoleRunner(AgentKVDBNodeTestSpecs)
+object AgentKVDBNodeCombinedTestSpecsRunner
+  extends ConsoleRunner(AgentKVDBNodeCombinedTestSpecs)
 
-object AgentKVDBNodeTestSpecs extends Specification
+object AgentKVDBNodeCombinedTestSpecs extends Specification
 with SpecsKVDBHelpers
 with RabbitTestSetup
 with Timeouts
