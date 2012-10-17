@@ -414,6 +414,12 @@ abstract class BasePlatformAgent
   }
 
 
+  def createAgentCnxn(src: String, label: String, trgt: String) =
+  {
+    new AgentCnxnProxy(( src ).toURI, label, ( trgt ).toURI)
+  }
+
+
   //// tests for when BUG 54 is fixed
   //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel:Channel.Value, channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //  {

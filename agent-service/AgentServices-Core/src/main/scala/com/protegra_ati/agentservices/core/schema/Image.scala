@@ -2,6 +2,7 @@ package com.protegra_ati.agentservices.core.schema
 
 import scala.reflect.BeanProperty
 import java.lang.reflect.Field
+import java.util.Properties
 import org.apache.commons.codec.binary.Base64;
 
 /* User: mgevantmakher
@@ -97,6 +98,17 @@ case object Image
 
   def toByteArray(base64Encoded: String): Array[ Byte ] =
   {Base64.decodeBase64(base64Encoded.getBytes())}
+
+def fromProperty(src: Properties, parent: String): Image =
+   {
+     new Image(
+       src.getProperty(parent + "." + "name"),
+       src.getProperty(parent + "." + "contentType"),
+       src.getProperty(parent + "." + "content"),
+       src.getProperty(parent + "." + "metadata")
+     )
+   }
+
 }
 
 

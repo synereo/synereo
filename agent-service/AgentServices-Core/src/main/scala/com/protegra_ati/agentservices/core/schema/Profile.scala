@@ -110,7 +110,8 @@ object Profile
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "city"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "postalCode"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "website"),
-      new Image() // for the moment empty image, later may files be loaded from a file system
+      Image.fromProperty(src, Profile.getClass.getName.trimPackage.toCamelCase + "." + "image")
+
     )
   }
 

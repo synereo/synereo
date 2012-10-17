@@ -71,7 +71,9 @@ trait Authorization
 
   def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
   {
-    System.err.println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
+
+   // System.err.println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
+
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
     if ( !newDisclosedData.dataDisplayClassName.equals(oldDisclosedData.dataDisplayClassName()) )
