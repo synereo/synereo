@@ -99,6 +99,14 @@ case class Profile(
 
 object Profile
 {
+  val SEARCH_ALL_KEY = new Profile().toSearchKey
+
+  val SEARCH_ALL = new Profile()
+  {
+    override def toSearchKey(): String = Profile.SEARCH_ALL_KEY
+  }
+
+
   def fromProperty(src: Properties): Profile =
   {
     new Profile(src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "firstName"),

@@ -92,6 +92,47 @@ Timeouts
       }
     }
 
+
+    "deserialize simple overriden singleton Profile" in {
+      val data = Profile.SEARCH_ALL
+
+      data match {
+        case x: Profile => {
+          x must be_==(data)
+          x.id must be_==(data.id)
+        }
+        case _ => fail
+      }
+
+      val serializedData = Serializer.serialize[ Data ](data)
+      val deserializedData = Serializer.deserialize[ Data ](serializedData)
+
+      deserializedData match {
+        case x: Profile => {
+          x must be_==(data)
+          x.id must be_==(data.id)
+          x.firstName must be_==(data.firstName)
+        }
+        case _ => fail
+      }
+
+
+      val experriment = new Profile()
+      {
+        override def toSearchKey(): String = "abc"
+      }
+
+      experriment match {
+        case x: Profile => {
+          x must be_==(experriment)
+          x.toSearchKey must be_==("abc")
+        }
+        case _ => fail
+      }
+
+
+    }
+
     "serialize and deserialize SystemData with Connection" in {
       skip("Until Kryo back in place")
       val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
