@@ -21,6 +21,7 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
+
 class AgentKVDBNodeCombinedTest
   extends JUnit4(AgentKVDBNodeCombinedTestSpecs)
 
@@ -35,7 +36,7 @@ with Timeouts
 
   "AgentKVDBNode" should {
     val cnxnUIStore = new AgentCnxn(( "UI" + UUID.randomUUID.toString ).toURI, "", ( "Store" + UUID.randomUUID.toString ).toURI);
-    var cnxnRandom = new AgentCnxn(("CombinedTest" + UUID.randomUUID.toString).toURI, "", ("User" + UUID.randomUUID.toString).toURI)
+    var cnxnRandom = new AgentCnxn(( "CombinedTest" + UUID.randomUUID.toString ).toURI, "", ( "User" + UUID.randomUUID.toString ).toURI)
 
     val ui_location = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
     val store_location = "localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
@@ -44,17 +45,90 @@ with Timeouts
     val testId = UUID.randomUUID().toString()
     val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
-    "retrieve between UI and Store with a public queue" in {
+//    "retrieve between UI and Store with a public queue" in {
+//
+//      val ui_privateQ = createNode(ui_location, List(store_location))
+//
+//      val store_privateQ = createNode(store_location, List(ui_location))
+//      val store_msgQ = createNode(public_location, List())
+//
+//      val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
+//
+//      val keyPublic = "contentResponsePublic(_)"
+//      reset {
+//        for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
+//      }
+//
+//      val keyPrivate = "contentRequestPrivate(_)"
+//      reset {
+//        for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
+//          if ( e != None ) {
+//            val result = e.dispatch
+//            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
+//          }
+//          else {
+//            println("listen received - none")
+//          }
+//        }
+//      }
+//
+//      val value = "test(1)"
+//      Thread.sleep(TIMEOUT_MED)
+//      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
+//
+//      Thread.sleep(TIMEOUT_MED)
+//      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+//    }
+//
+//    "retrieve between UI and Store with a public queue using the persisted continuation" in {
+//
+//      val ui_privateQ = createNode(ui_location, List(store_location))
+//
+//      var store_privateQ = createNode(store_location, List(ui_location))
+//      val store_msgQ = createNode(public_location, List())
+//
+//      val keyPublic = "contentResponsePublic(_)"
+//      reset {
+//        for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
+//      }
+//
+//      val keyPrivate = "contentRequestPrivate(_)"
+//      reset {
+//        for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
+//          if ( e != None ) {
+//            val result = e.dispatch
+//            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
+//          }
+//          else {
+//            println("listen received - none")
+//          }
+//        }
+//      }
+//
+//      Thread.sleep(TIMEOUT_MED)
+//      store_privateQ = null
+//      Thread.sleep(TIMEOUT_MED)
+//
+//      val restored_msgQ = createNode(public_location, List())
+//
+//      val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
+//      val value = "test(1)"
+//      Thread.sleep(TIMEOUT_MED)
+//      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
+//
+//      Thread.sleep(TIMEOUT_MED)
+//      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+//
+//    }
+
+
+    "retrieve between UI and Store with a public queue using the migrated continuation" in {
 
       val ui_privateQ = createNode(ui_location, List(store_location))
 
-      //removing store causes it to work, empty list of acquaintances also works
-      val store_msgQ = createNode(store_location, List())
-      val store_privateQ = createNode(store_location, List(ui_location))
+      var store_privateQ = createNode(store_location, List(ui_location))
+      val store_msgQ = createNode(public_location, List())
 
-      val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
-
-      //removing the get causes it to work
       val keyPublic = "contentResponsePublic(_)"
       reset {
         for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
@@ -63,10 +137,9 @@ with Timeouts
       val keyPrivate = "contentRequestPrivate(_)"
       reset {
         for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
-          //removing e!= None causing it to work
           if ( e != None ) {
             val result = e.dispatch
-            reset {_resultsQ.put(cnxnTest)(keyMsg.toLabel, result)}
+            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
           }
           else {
             println("listen received - none")
@@ -74,13 +147,40 @@ with Timeouts
         }
       }
 
-      val value = "test"
+      Thread.sleep(TIMEOUT_MED)
+      store_privateQ = null
+      Thread.sleep(TIMEOUT_MED)
+
+      val restored_privateQ = createNode(public_location, List())
+
+      reset {
+        for( generator <- restored_privateQ.resubmitGet( cnxnUIStore )( keyPrivate.toLabel )) {
+          for( placeInstance <- generator ) {
+            reset {
+                for ( e <- restored_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
+                  if ( e != None ) {
+                    val result = e.dispatch
+                    reset {_resultsQ.put(cnxnTest)(result.toLabel, result+"restored")}
+                  }
+                  else {
+                    println("listen received - none")
+                  }
+                }
+              }
+          }
+        }
+      }
+
+      val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
+      val value = "test(1)"
       Thread.sleep(TIMEOUT_MED)
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
       Thread.sleep(TIMEOUT_MED)
-      fetchString(_resultsQ, cnxnTest, keyMsg.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value+"restored").eventually(5, TIMEOUT_EVENTUALLY)
+
     }
+
   }
 
 }
