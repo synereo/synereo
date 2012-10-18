@@ -3655,8 +3655,62 @@ package usage {
 	}
       }.start
     }
+	
+    def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ], configFileName: Option[String]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
+      {
+	ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
+      }       
+    
  
   }
 
   object StdAgentUseCase extends AgentUseCase( None )
+
+  object ResubmissionUseCase extends AgentUseCase( None ) {
+    import AgentKVDBScope._
+    import Being._
+    import AgentKVDBNodeFactory._
+
+    import CnxnConversionStringScope._
+
+    import com.protegra.agentservicesstore.extensions.StringExtensions._
+    @transient
+    lazy val restored_privateQ =
+      createNode( public_location, List(), None )
+    @transient
+    val cnxnUIStore =
+      new acT.AgentCnxn(
+	( "UI" + UUID.randomUUID.toString ).toURI,
+	"",
+	( "Store" + UUID.randomUUID.toString ).toURI
+      )
+    @transient
+    lazy val public_location = "localhost".toURI.withPort( 5672 )
+    @transient
+    val keyPrivate = "contentRequestPrivate(_)"
+
+    def resubmit() {
+      reset {	
+	val generator =
+	  restored_privateQ.resubmitLabelRequests(
+	    cnxnUIStore
+	  )( keyPrivate.toLabel )( dAT.AGetNum ).getOrElse( throw new Exception( "No generator!" ) )
+
+	for( placeInstance <- generator ) {
+          reset {
+            for ( e <- restored_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
+	      if ( e != None ) {
+                //val result = e.dispatch
+                //reset {_resultsQ.put(cnxnTest)(result.toLabel, result+"restored")}
+		println( "listen received - " + e )
+	      }
+	      else {
+                println( "listen received - none" )
+	      }
+            }
+          }
+        }
+      }
+    }
+  }
 }
