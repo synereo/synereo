@@ -64,18 +64,7 @@ case class Profile(
 
   override def getDisplayableFieldNames: HashMap[ String, String ] =
   {
-    val map = new HashMap[ String, String ]()
-    map.put("firstName", "First Name")
-    map.put("lastName", "Last Name")
-    map.put("description", "Description")
-    map.put("emailAddress", "email address")
-    map.put("country", "country")
-    map.put("region", "region")
-    map.put("city", "city")
-    map.put("postalCode", "postal code")
-    map.put("website", "website")
-    map.put("image", "Image")
-    map
+    Profile.DISPLAYABLE_FIELD_NAMES
   }
 
   override def getDisplayName: String =
@@ -99,6 +88,9 @@ case class Profile(
 
 object Profile
 {
+  final val DISPLAYABLE_FIELD_NAMES = createDisplayableFieldNamesMap()
+
+
   final val SEARCH_ALL_KEY = new Profile().toSearchKey
 
   final val SEARCH_ALL = new Profile()
@@ -143,4 +135,23 @@ object Profile
     }
     profile
   }
+
+
+  private def createDisplayableFieldNamesMap(): HashMap[ String, String ] =
+  {
+    val map = new HashMap[ String, String ]()
+    map.put("firstName", "First Name")
+    map.put("lastName", "Last Name")
+    map.put("description", "Description")
+    map.put("emailAddress", "email address")
+    map.put("country", "country")
+    map.put("region", "region")
+    map.put("city", "city")
+    map.put("postalCode", "postal code")
+    map.put("website", "website")
+    map.put("image", "Image")
+    map
+  }
+
+
 }
