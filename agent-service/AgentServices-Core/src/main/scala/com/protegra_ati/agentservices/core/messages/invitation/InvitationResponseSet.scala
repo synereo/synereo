@@ -2,6 +2,7 @@ package com.protegra_ati.agentservices.core.messages.invitation
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.messages._
+import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.acT._
 import com.protegra_ati.agentservices.core.schema._
@@ -43,7 +44,7 @@ trait InvitationResponseSet
 
   protected def processReferralResponse(cnxnBroker_Broker: AgentCnxnProxy, referralResponse: ReferralResponse): Unit =
   {
-    val query = new Connection()
+    val query = ConnectionFactory.createEmptyImmutableConnectionForSearch()
     fetchList[ Connection ](_dbQ, cnxnBroker_Broker, query.toSearchKey, findConnections(_: AgentCnxnProxy, _: List[ Connection ], referralResponse))
   }
 

@@ -99,9 +99,9 @@ case class Profile(
 
 object Profile
 {
-  val SEARCH_ALL_KEY = new Profile().toSearchKey
+  final val SEARCH_ALL_KEY = new Profile().toSearchKey
 
-  val SEARCH_ALL = new Profile()
+  final val SEARCH_ALL = new Profile()
   {
     override def toSearchKey(): String = Profile.SEARCH_ALL_KEY
   }

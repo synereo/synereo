@@ -45,7 +45,7 @@ trait IntroductionRequestSetCreator
     //agent wants available introductions from the broker cnxn, intros are one-sided
     //need to get to broker self cnxn, then lookup introduction profiles/packages
     report("****CREATE INTRODUCTIONS REQUEST RECEIVED:****", Severity.Debug)
-    val queryObject = new SystemData[ Connection ](new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
 
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, queryObject.toSearchKey, handleSystemDataLookupCreateIntroductions(_: AgentCnxnProxy, _: SystemData[ Connection ], cnxnBroker_A, createIntroductionsRequest))
   }
@@ -53,7 +53,7 @@ trait IntroductionRequestSetCreator
   protected def handleSystemDataLookupCreateIntroductions(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], cnxnBroker_A: AgentCnxnProxy, createIntroductionsRequest: CreateIntroductionRequest): Unit =
   {
     //find all connections the broker has
-    val queryObject = new Connection ()
+    val queryObject = ConnectionFactory.createEmptyImmutableConnectionForSearch()
     fetchList[ Connection ](_dbQ, systemConnection.data.writeCnxn, queryObject.toSearchKey, generateIntroductions(_: AgentCnxnProxy, _: List[ Connection ], cnxnBroker_A, createIntroductionsRequest))
   }
 

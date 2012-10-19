@@ -70,7 +70,7 @@ trait VerifierRequestSet {
   protected def fetchVerifierConnection(msg:VerifyRequest) = {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     _verifyRequests.put(msg.ids.conversationId , msg)
-    val search = new SystemData[Connection]( new Connection())
+    val search = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch(_dbQ, msg.targetCnxn, search.toSearchKey, fetchClaimingAgentConnection(_:AgentCnxnProxy, _:SystemData[Connection], msg))
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }
@@ -88,7 +88,7 @@ trait VerifierRequestSet {
     data match {
       case x:AliasConnection => {
         val search = new Connection()
-        search.id = x.connectionId.toString
+        search.id = x.connectionId.toString // DON'T CHANGE here to factory clall !!!
 //        search.setSearchFieldValue("id", x.connectionId.toString)
         fetch(_dbQ, selfCnxn, search.toSearchKey, requestVerifyPermission(_:AgentCnxnProxy, _:Data, verifyRequest, selfCnxn))
     }

@@ -8,6 +8,7 @@ import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
 import content._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
+import util.{SystemDataFactory, ConnectionFactory}
 
 
 trait IntroductionRequestSetConsumer
@@ -43,7 +44,7 @@ trait IntroductionRequestSetConsumer
 //    val agentIsIntroductionInitiator = isCaptured(cnxnA_Broker, introRequest) //only needed for invite
 //    println("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreIntroductionRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], introRequest))
   }
 

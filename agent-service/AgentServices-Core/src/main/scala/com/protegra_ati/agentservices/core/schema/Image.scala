@@ -86,9 +86,13 @@ case class Image(@BeanProperty name: String, @BeanProperty contentType: String, 
     other.isInstanceOf[ Image ]
 }
 
-case object Image
-{
-  final val EMPTY_IMAGE = Image("", "", "", "")
+case object Image {
+  //STRESS TODO use as fare as possible this constant in profile or business profile objects used for search (UI driven)!!!
+  final val SEARCH_ALL_KEY = new Image().toSearchKey
+  final val SEARCH_ALL = new Image() {
+    override def toSearchKey(): String = Image.SEARCH_ALL_KEY
+  }
+
   final val JPEG_MIME_TYPE = "image/jpeg"
   final val PNG_MIME_TYPE = "image/png"
 

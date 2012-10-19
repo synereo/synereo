@@ -61,7 +61,7 @@ trait InvitationRequestSetCreator
     createInviteRequest.deliver();
 
     //we need to do a lookup of the targetConnection by id in Broker Self Connection to find the agent to invite
-    val query = new SystemData(new Connection())
+    val query = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxnProxy, _: SystemData[ Connection ], createInviteRequest, cnxnBroker_A))
   }
 
@@ -96,7 +96,7 @@ trait InvitationRequestSetCreator
 
   def createFromDataForReferral() :HashMap[String, Data] ={
       val map = new HashMap[String, Data]
-      var tempProfile = new Profile( )
+      var tempProfile = new Profile( )  // STRESS TODO eventually it worse to create a singleton like Profile.SEARCH_ALL
       tempProfile.firstName = "App"
 
       map.put( tempProfile.formattedClassName, tempProfile )
@@ -142,7 +142,7 @@ trait InvitationRequestSetCreator
    */
   def generateRejectToInvitationRequest(eventKey: EventKey, targetToBrokerConnection: Connection, targetToBroker: Post): Unit =
   {
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, targetToBrokerConnection.readCnxn, queryObject.toSearchKey, findSelfConToSendPost(_: AgentCnxnProxy, _: SystemData[ Connection ], eventKey, targetToBrokerConnection, targetToBroker))
   }
 
@@ -345,7 +345,7 @@ trait InvitationRequestSetCreator
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
   }
 

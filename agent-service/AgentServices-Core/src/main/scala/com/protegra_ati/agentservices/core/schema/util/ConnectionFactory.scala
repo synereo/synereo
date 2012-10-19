@@ -68,20 +68,16 @@ object ConnectionFactory
   def getPolicies(categorySource: String, categoryTarget: String): List[ String ] =
   {
     var policies = List[ String ]()
-    if (categoryTarget == ConnectionCategory.Group.toString)
-    {
+    if ( categoryTarget == ConnectionCategory.Group.toString ) {
       policies = ConnectionPolicy.DataSharingEnabled.toString :: policies
     }
-    else if (categoryTarget == ConnectionCategory.App.toString)
-    {
+    else if ( categoryTarget == ConnectionCategory.App.toString ) {
       policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.DeleteDisabled.toString :: ConnectionPolicy.ReferralsDisabled.toString :: policies
     }
-    else if (categoryTarget == ConnectionCategory.Business.toString)
-    {
+    else if ( categoryTarget == ConnectionCategory.Business.toString ) {
       policies = ConnectionPolicy.RemoteSearchDisabled.toString :: policies
     }
-    else if (categorySource == ConnectionCategory.Business.toString && categoryTarget == ConnectionCategory.Person.toString  )
-    {
+    else if ( categorySource == ConnectionCategory.Business.toString && categoryTarget == ConnectionCategory.Person.toString ) {
       policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.DataSharingEnabled.toString ::policies
     }
     policies
@@ -106,6 +102,21 @@ object ConnectionFactory
   {
     new Connection(ConnectionCategory.None.toString, connectionType, alias, readCnxn, writeCnxn, "true", List[ String ]())
     // TODO eventually validation should here take place
+  }
+
+
+  final private val SEARCH_ALL_KEY = new Connection().toSearchKey
+
+  final private val SEARCH_ALL = new Connection()
+  {
+    override def toSearchKey(): String = ConnectionFactory.SEARCH_ALL_KEY
+  }
+
+  // use everywhere where before new Connection() was used without any modifications!!!!
+  // NEVER modify connection object returned over this method!!!!!!
+  def createEmptyImmutableConnectionForSearch(): Connection =
+  {
+    SEARCH_ALL
   }
 
 }

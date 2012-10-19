@@ -21,8 +21,7 @@ with ExcludeFromReplication
 
   //important to note that dataDisplayClassName matches up to Data.formattedClassName
   def dataDisplayClassName():String = {
-    if (dataClassType==null)
-     println ("-------------------------------------------NUL NUL NUL NUL NUL-------------------------------------")
+   // if (dataClassType==null)  println ("-------------------------------------------NUL NUL NUL NUL NUL-------------------------------------") for nothing good?
     dataClassType.getName.trimPackage.toCamelCase
   }
 
