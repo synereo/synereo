@@ -64,9 +64,12 @@ abstract class BasePlatformAgent
 
   def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
   {
-    AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)
+    createNode(sourceAddress, acquaintanceAddresses, None )
   }
-
+  def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ], configFileName: Option[String]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
+  {
+    AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
+  }
 
   def initFromConfig(configFilePath: String)
   {

@@ -15,8 +15,9 @@ case class AgentCnxnProxy(
 
   def this() = this(null, null, null)
 
+  //STRESS: AgentCnxn shows up a lot based on AgentCnxnProxy.toAgentCnxn() and selfCnxns - create some pool to pull from?
   def toAgentCnxn() : com.protegra.agentservicesstore.usage.AgentKVDBScope.acT.AgentCnxn = {
-    new AgentCnxn(src, label, trgt)
-  }
+      new AgentCnxn(src, label, trgt)
+    }
 
 }

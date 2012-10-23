@@ -99,107 +99,107 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
     }
 
-    "raise a GetContentResponseReceivedEvent" in {
-      val parentIds = new Identification()
-      val agentSessionId = UUID.randomUUID
-      val req = new GetContentResponse(parentIds.copyAsChild(), new EventKey(agentSessionId, ""), List(new Profile("testFirst", "testLast", "test Description", "123@test.com","CA", "someCAprovince", "city", "postalCode", "website" )))
-      //Responses now default to a public channel level so for this test need to turn that off
-      req.channelLevel = None
-
-      pa.addListener(agentSessionId, "", new MessageEventAdapter()
-      {
-        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
-        {
-          triggered = true
-        }
-      });
-
-      pa.send(req)
-      //Thread.sleep(TIMEOUT_LONG)
-      pa.listenPrivate(pa._cnxnUIStore)
-      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
-    }
-  }
-
-  "listeners" should {
-    @transient val pa = createPA
-    var triggered = false
-    "trigger the right event" in {
-
-      val userAgentId1 = UUID.randomUUID
-      val userAgentId2 = UUID.randomUUID
-
-      pa.addListener(userAgentId1, "", new MessageEventAdapter()
-      {
-        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-        {
-          fail()
-        }
-      })
-
-      pa.addListener(userAgentId2, "get", new MessageEventAdapter()
-      {
-        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
-        {
-          fail()
-        }
-      })
-
-      pa.addListener(userAgentId2, "set", new MessageEventAdapter()
-      {
-        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-        {
-          triggered = true
-        }
-      })
-
-      val parentIds = new Identification()
-      val req = SetContentResponse(parentIds.copyAsChild(), new EventKey(userAgentId2, ""), new Profile("testFirst", "testLast", "test Description", "1@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
-      //Responses now default to a public channel level so for this test need to turn that off
-      req.channelLevel = None
-
-      pa.send(req)
-      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
-    }
-
-    "raise a GetContentAuthorizationRequiredNotification" in {
-
-      val userAgentId1 = UUID.randomUUID
-
-      pa.addListener(userAgentId1, "", new MessageEventAdapter()
-      {
-        override def getContentAuthorizationRequiredNotificationReceived(e: GetContentAuthorizationRequiredNotificationReceivedEvent) =
-        {
-          triggered = true
-        }
-      })
-
-      //why no parent ids on notification    //parentIds.copyAsChild(),
+//    "raise a GetContentResponseReceivedEvent" in {
 //      val parentIds = new Identification()
-      val req = GetContentAuthorizationRequiredNotification(new EventKey(userAgentId1, ""))
-
-      pa.send(req)
-      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
-    }
-    "raise a VerifyContentRequestNotification" in {
-
-      val userAgentId1 = UUID.randomUUID
-
-      pa.addListener(userAgentId1, "", new MessageEventAdapter()
-      {
-        override def verifyContentRequestNotificationReceived(e: VerifyContentRequestNotificationReceivedEvent) =
-        {
-          triggered = true
-        }
-      })
-
-      //why no parent ids on notification    //parentIds.copyAsChild(),
-//      val parentIds = new Identification()
-      val req = VerifyContentRequestNotification(new EventKey(userAgentId1, ""))
-
-      pa.send(req)
-      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
-    }
+//      val agentSessionId = UUID.randomUUID
+//      val req = new GetContentResponse(parentIds.copyAsChild(), new EventKey(agentSessionId, ""), List(new Profile("testFirst", "testLast", "test Description", "123@test.com","CA", "someCAprovince", "city", "postalCode", "website" )))
+//      //Responses now default to a public channel level so for this test need to turn that off
+//      req.channelLevel = None
+//
+//      pa.addListener(agentSessionId, "", new MessageEventAdapter()
+//      {
+//        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
+//        {
+//          triggered = true
+//        }
+//      });
+//
+//      pa.send(req)
+//      //Thread.sleep(TIMEOUT_LONG)
+//      pa.listenPrivate(pa._cnxnUIStore)
+//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//    }
   }
+//
+//  "listeners" should {
+//    @transient val pa = createPA
+//    var triggered = false
+//    "trigger the right event" in {
+//
+//      val userAgentId1 = UUID.randomUUID
+//      val userAgentId2 = UUID.randomUUID
+//
+//      pa.addListener(userAgentId1, "", new MessageEventAdapter()
+//      {
+//        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+//        {
+//          fail()
+//        }
+//      })
+//
+//      pa.addListener(userAgentId2, "get", new MessageEventAdapter()
+//      {
+//        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
+//        {
+//          fail()
+//        }
+//      })
+//
+//      pa.addListener(userAgentId2, "set", new MessageEventAdapter()
+//      {
+//        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+//        {
+//          triggered = true
+//        }
+//      })
+//
+//      val parentIds = new Identification()
+//      val req = SetContentResponse(parentIds.copyAsChild(), new EventKey(userAgentId2, ""), new Profile("testFirst", "testLast", "test Description", "1@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
+//      //Responses now default to a public channel level so for this test need to turn that off
+//      req.channelLevel = None
+//
+//      pa.send(req)
+//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//    }
+//
+//    "raise a GetContentAuthorizationRequiredNotification" in {
+//
+//      val userAgentId1 = UUID.randomUUID
+//
+//      pa.addListener(userAgentId1, "", new MessageEventAdapter()
+//      {
+//        override def getContentAuthorizationRequiredNotificationReceived(e: GetContentAuthorizationRequiredNotificationReceivedEvent) =
+//        {
+//          triggered = true
+//        }
+//      })
+//
+//      //why no parent ids on notification    //parentIds.copyAsChild(),
+////      val parentIds = new Identification()
+//      val req = GetContentAuthorizationRequiredNotification(new EventKey(userAgentId1, ""))
+//
+//      pa.send(req)
+//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//    }
+//    "raise a VerifyContentRequestNotification" in {
+//
+//      val userAgentId1 = UUID.randomUUID
+//
+//      pa.addListener(userAgentId1, "", new MessageEventAdapter()
+//      {
+//        override def verifyContentRequestNotificationReceived(e: VerifyContentRequestNotificationReceivedEvent) =
+//        {
+//          triggered = true
+//        }
+//      })
+//
+//      //why no parent ids on notification    //parentIds.copyAsChild(),
+////      val parentIds = new Identification()
+//      val req = VerifyContentRequestNotification(new EventKey(userAgentId1, ""))
+//
+//      pa.send(req)
+//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//    }
+//  }
 
 }

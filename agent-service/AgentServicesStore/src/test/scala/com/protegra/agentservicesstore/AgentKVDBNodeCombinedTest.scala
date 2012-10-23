@@ -147,37 +147,42 @@ with Timeouts
         }
       }
 
-      Thread.sleep(TIMEOUT_MED)
+      Thread.sleep(TIMEOUT_LONG)
       store_privateQ = null
-      Thread.sleep(TIMEOUT_MED)
 
       val restored_privateQ = createNode(public_location, List())
-
+      val restored = "restored(\"1\")"
       reset {
-        for( generator <- restored_privateQ.resubmitGet( cnxnUIStore )( keyPrivate.toLabel )) {
-          for( placeInstance <- generator ) {
+        val generator = restored_privateQ.resubmitGet(cnxnUIStore)(keyPrivate.toLabel).getOrElse( throw new Exception( "No generator!" ) )
+        for ( placeInstance <- generator ) {
+          Thread.sleep(TIMEOUT_LONG)
+          Thread.sleep(TIMEOUT_LONG)
+          Thread.sleep(TIMEOUT_LONG)
             reset {
-                for ( e <- restored_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
-                  if ( e != None ) {
-                    val result = e.dispatch
-                    reset {_resultsQ.put(cnxnTest)(result.toLabel, result+"restored")}
-                  }
-                  else {
-                    println("listen received - none")
-                  }
+              Thread.sleep(TIMEOUT_LONG)
+              Thread.sleep(TIMEOUT_LONG)
+              Thread.sleep(TIMEOUT_LONG)
+              for ( e <- restored_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
+                if ( e != None ) {
+                  val result = e.dispatch
+                  reset {_resultsQ.put(cnxnTest)(result.toLabel, restored)}
+                }
+                else {
+                  println("listen received - none")
                 }
               }
+            }
           }
-        }
       }
 
+      //intermittent?
       val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
-      val value = "test(1)"
-      Thread.sleep(TIMEOUT_MED)
+      val value = "test(\"1\")"
+      Thread.sleep(TIMEOUT_LONG)
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
       Thread.sleep(TIMEOUT_MED)
-      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value+"restored").eventually(5, TIMEOUT_EVENTUALLY)
+      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(restored).eventually(5, TIMEOUT_EVENTUALLY)
 
     }
 
