@@ -396,6 +396,8 @@ with AgentCnxnTypeScope {
 //       def loopBack[Rq <: ReqBody, Rs <: RspBody]( here : URI ) : AgentNode[Rq,Rs]
     }    
 
+    implicit val defaultConfigFileNameOpt : Option[String] = None
+
     abstract class BaseAgentKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,+KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BaseAgentKVDBNode[Rq,Rs,KVDBNode]](
       override val cache : BaseAgentKVDB[ReqBody,RspBody,KVDBNode], 
       override val acquaintances : List[Moniker],
@@ -416,7 +418,8 @@ with AgentCnxnTypeScope {
       case class HashAgentKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
 	override val cache : HashAgentKVDB[ReqBody,RspBody],
 	override val acquaintances : List[Moniker],
-	override val cnxn : Option[acT.AgentCnxn]
+	override val cnxn : Option[acT.AgentCnxn],
+	implicit override val configFileName : Option[String]
       ) extends BaseAgentKVDBNode[ReqBody,RspBody,HashAgentKVDBNode](
 	cache, acquaintances, cnxn, Nil
       ) 
@@ -430,15 +433,6 @@ with AgentCnxnTypeScope {
       def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
 	here : URI
       ) : HashAgentKVDB[ReqBody,RspBody] = throw new Exception( "mkInnerache not implemented" )
-      // override def ptToMany[Rq <: ReqBody, Rs <: RspBody]( 
-// 	here : URI, there : List[URI] 
-//       ) : KVDBNode[Rq,Rs] = throw new Exception( "ptToMany not implemented" )
-//       override def ptToPt[Rq <: ReqBody, Rs <: RspBody]( 
-// 	here : URI, there : URI
-//       ) : KVDBNode[Rq,Rs] = throw new Exception( "ptToPt not implemented" )
-//       override def loopBack[Rq <: ReqBody, Rs <: RspBody]( 
-// 	here : URI 
-//       ) : KVDBNode[Rq,Rs] = throw new Exception( "loopBack not implemented" )
 
       @transient
       var _cnxnPartition : Option[HashMap[acT.AgentCnxn,HashAgentKVDBNode[ReqBody,RspBody]]] = None
@@ -478,7 +472,9 @@ with AgentCnxnTypeScope {
 	}
       }
 
-      def makeSpace( cnxn : acT.AgentCnxn ) : HashAgentKVDBNode[ReqBody,RspBody] = {
+      def makeSpace(
+	cnxn : acT.AgentCnxn
+      ) : HashAgentKVDBNode[ReqBody,RspBody] = {
 	val symmIdStr = cnxn.symmetricIdentityString
 
 	tweet( "Symmetric cnxn identity is " + symmIdStr )		  
@@ -486,7 +482,8 @@ with AgentCnxnTypeScope {
 	HashAgentKVDBNode(
 	  mkInnerCache( name.withPath(name.getPath + "/" + symmIdStr) ),
 	  for( acq <- acquaintances ) yield { acq.withPath( acq.getPath + "/" + symmIdStr ) },
-	  Some( cnxn )
+	  Some( cnxn ),
+	  configFileName
 	)	
       }
 
@@ -710,7 +707,8 @@ with AgentCnxnTypeScope {
 	    val rp = new HashAgentKVDBNode[ReqBody,RspBody](
 	      cache.asInstanceOf[HashAgentKVDB[ReqBody,RspBody]],
 	      acquaintances,
-	      Some( cnxn )
+	      Some( cnxn ),
+	      configFileName
 	    )
 	    cnxnPartition += ( cnxn -> rp )
 	    rp
@@ -733,11 +731,11 @@ with AgentCnxnTypeScope {
       }
       
       def getLocalPartitionActuals( cnxn : acT.AgentCnxn ) = {
-	getPartitionActuals( cnxn, getLocalPartition )      
+	getPartitionActuals( cnxn, getLocalPartition )
       }
       
       def getRemotePartitionActuals( cnxn : acT.AgentCnxn ) = {
-	getPartitionActuals( cnxn, getRemotePartition ) 
+	getPartitionActuals( cnxn, getRemotePartition )
       }
       
       def forward( cnxn : acT.AgentCnxn )(
@@ -900,7 +898,7 @@ with AgentCnxnTypeScope {
 	  "In cnxn-based publish with cnxn " + cnxn
           
 	)
-	val ( pmgj, perD, xmlCollName ) =	getLocalPartitionActuals( cnxn )
+	val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
 	
 	tweet(
 	  "Publishing " + rsrc + " on " + ptn + " in partition " + pmgj
@@ -1494,9 +1492,7 @@ with AgentCnxnTypeScope {
       override val name : Moniker
     ) extends BaseAgentKVDB[ReqBody,RspBody,AgentKVDBNode](
       name
-    ) 
-
-    implicit val defaultConfigFileNameOpt : Option[String] = None
+    )     
 
     case class AgentKVDBNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       override val cache : AgentKVDB[ReqBody,RspBody],
@@ -3662,8 +3658,62 @@ package usage {
 	}
       }.start
     }
+	
+    def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ], configFileName: Option[String]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
+      {
+	ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
+      }       
+    
  
   }
 
   object StdAgentUseCase extends AgentUseCase( None )
+
+  object ResubmissionUseCase extends AgentUseCase( None ) {
+    import AgentKVDBScope._
+    import Being._
+    import AgentKVDBNodeFactory._
+
+    import CnxnConversionStringScope._
+
+    import com.protegra.agentservicesstore.extensions.StringExtensions._
+    @transient
+    lazy val restored_privateQ =
+      createNode( public_location, List(), None )
+    @transient
+    val cnxnUIStore =
+      new acT.AgentCnxn(
+	( "UI" + UUID.randomUUID.toString ).toURI,
+	"",
+	( "Store" + UUID.randomUUID.toString ).toURI
+      )
+    @transient
+    lazy val public_location = "localhost".toURI.withPort( 5672 )
+    @transient
+    val keyPrivate = "contentRequestPrivate(_)"
+
+    def resubmit() {
+      reset {	
+	val generator =
+	  restored_privateQ.resubmitLabelRequests(
+	    cnxnUIStore
+	  )( keyPrivate.toLabel )( dAT.AGetNum ).getOrElse( throw new Exception( "No generator!" ) )
+
+	for( placeInstance <- generator ) {
+          reset {
+            for ( e <- restored_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
+	      if ( e != None ) {
+                //val result = e.dispatch
+                //reset {_resultsQ.put(cnxnTest)(result.toLabel, result+"restored")}
+		println( "listen received - " + e )
+	      }
+	      else {
+                println( "listen received - none" )
+	      }
+            }
+          }
+        }
+      }
+    }
+  }
 }
