@@ -136,8 +136,13 @@ package services {
 	 trait PlatformServiceFactoryT
 	  extends BaseAgentKVDBNodeFactoryT with AgentKVDBNodeFactoryT with Serializable {
 	    type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
-	    def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : AgentCache[ReqBody,RspBody] = {
-	      new AgentKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+	    def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+	      here : URI,
+	      configFileName : Option[String]
+	    ) : AgentCache[ReqBody,RspBody] = {
+	      new AgentKVDB[ReqBody, RspBody](
+		MURI( here ), configFileName
+	      ) with Blobify with AMQPMonikerOps {		
 		class LocalXMLDBManifest(
 		  override val storeUnitStr : String,
 		  @transient override val labelToNS : Option[String => Namespace],
@@ -210,13 +215,14 @@ package services {
 	    ) : AgentKVDBNode[ReqBody,RspBody] = {
 	      val node =
 		new AgentKVDBNode[ReqBody,RspBody](
-		  mkCache( MURI( here ) ),
+		  mkCache( MURI( here ), configFileNameOpt ),
 		  List( MURI( there ) ),
 		  None,
 		  configFileNameOpt
 		) {
 		  override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		    here : URI 
+		    here : URI,
+		    configFileName : Option[String]
 		  ) : HashAgentKVDB[ReqBody,RspBody] = {
 		    throw new Exception( "method not implemented in service" )
 		  }
@@ -231,13 +237,14 @@ package services {
 	    ) : AgentKVDBNode[ReqBody,RspBody] = {
 	      val node =
 		new AgentKVDBNode[ReqBody,RspBody](
-		  mkCache( MURI( here ) ),
+		  mkCache( MURI( here ), configFileNameOpt ),
 		  there.map( MURI( _ ) ),
 		  None,
 		  configFileNameOpt
 		) {
 		  override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		    here : URI 
+		    here : URI,
+		    configFileName : Option[String]
 		  ) : HashAgentKVDB[ReqBody,RspBody] = {
 		    throw new Exception( "method not implemented in service" )
 		  }
@@ -274,13 +281,14 @@ package services {
 	      
 	      val node =
 		new AgentKVDBNode[ReqBody, RspBody](
-		  mkCache( MURI( hereNow ) ),
+		  mkCache( MURI( hereNow ), configFileNameOpt ),
 		  List( MURI( thereNow ) ),
 		  None,
 		  configFileNameOpt
 		) {
 		  override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		    here : URI 
+		    here : URI,
+		    configFileName : Option[String]
 		  ) : HashAgentKVDB[ReqBody,RspBody] = {
 		    throw new Exception( "method not implemented in service" )
 		  }
