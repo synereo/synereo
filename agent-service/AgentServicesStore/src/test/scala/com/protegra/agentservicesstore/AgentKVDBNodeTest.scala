@@ -41,7 +41,6 @@ with RabbitTestSetup
     val sourceAddress = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
 
     "work if None on default port" in {
-      skip("isolate")
       val configFileName = None
       val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(configFileName)
 
@@ -70,7 +69,6 @@ with RabbitTestSetup
     }
 
     "save in 1985" in {
-      skip("isolate")
       val configFileName = Some("db_test_1985.conf")
       val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(configFileName)
 
