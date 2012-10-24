@@ -390,7 +390,9 @@ with AgentCnxnTypeScope {
       type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]
       //type AgentNode[Rq <: ReqBody,Rs <: RspBody] <: BaseAgentKVDBNode[Rq,Rs,AgentNode]
 
-      def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : AgentCache[ReqBody,RspBody]
+      def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+	here : URI, configFileName : Option[String]
+      ) : AgentCache[ReqBody,RspBody]
       // def ptToMany[Rq <: ReqBody, Rs <: RspBody]( here : URI, there : List[URI] ) : AgentNode[Rq,Rs]
 //       def ptToPt[Rq <: ReqBody, Rs <: RspBody]( here : URI, there : URI ) : AgentNode[Rq,Rs]      
 //       def loopBack[Rq <: ReqBody, Rs <: RspBody]( here : URI ) : AgentNode[Rq,Rs]
@@ -411,7 +413,8 @@ with AgentCnxnTypeScope {
       import identityConversions._
 
       case class HashAgentKVDB[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-	override val name : Moniker
+	override val name : Moniker,
+	implicit override val configFileName : Option[String]
       ) extends BaseAgentKVDB[ReqBody,RspBody,HashAgentKVDBNode](
 	name
       ) 
@@ -428,10 +431,12 @@ with AgentCnxnTypeScope {
       //override type AgentNode[Rq <: ReqBody, Rs <: RspBody] = KVDBNode[Rq,Rs]
 
       override def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-	here : URI
+	here : URI,
+	configFileName : Option[String]
       ) : AgentCache[ReqBody,RspBody] = throw new Exception( "mkCache not implemented" )
       def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-	here : URI
+	here : URI,
+	configFileName : Option[String]
       ) : HashAgentKVDB[ReqBody,RspBody] = throw new Exception( "mkInnerache not implemented" )
 
       @transient
@@ -480,7 +485,10 @@ with AgentCnxnTypeScope {
 	tweet( "Symmetric cnxn identity is " + symmIdStr )		  
 	  
 	HashAgentKVDBNode(
-	  mkInnerCache( name.withPath(name.getPath + "/" + symmIdStr) ),
+	  mkInnerCache(
+	    name.withPath(name.getPath + "/" + symmIdStr),
+	    configFileName
+	  ),
 	  for( acq <- acquaintances ) yield { acq.withPath( acq.getPath + "/" + symmIdStr ) },
 	  Some( cnxn ),
 	  configFileName
@@ -1482,7 +1490,8 @@ with AgentCnxnTypeScope {
     }
 
     case class AgentKVDB[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-      override val name : Moniker
+      override val name : Moniker,
+      implicit override val configFileName : Option[String]
     ) extends BaseAgentKVDB[ReqBody,RspBody,AgentKVDBNode](
       name
     )     
@@ -1621,9 +1630,13 @@ package usage {
         //type AgentNode[Rq <: PersistedKVDBNodeRequest, Rs <: PersistedKVDBNodeResponse] = AgentKVDBNode[Rq,Rs]
 
 	override def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-	  here : URI
+	  here : URI,
+	  configFileName : Option[String]
 	) : AgentCache[ReqBody,RspBody] = {
-	  new AgentKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+	  new AgentKVDB[ReqBody, RspBody](
+	    MURI( here ),
+	    configFileName
+	  ) with Blobify with AMQPMonikerOps {		
 	    class StringXMLDBManifest(
 	      override val storeUnitStr : String,
 	      @transient override val labelToNS : Option[String => String],
@@ -1916,15 +1929,19 @@ package usage {
 	) : AgentKVDBNode[ReqBody,RspBody] = {
 	  val node =
 	    new AgentKVDBNode[ReqBody,RspBody](
-	      mkCache( MURI( here ) ),
+	      mkCache( MURI( here ), configFileNameOpt ),
 	      List( MURI( there ) ),
 	      None,
 	      configFileNameOpt
 	    ) {
 	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		here : URI 
+		here : URI,
+		configFileName : Option[String]
 	      ) : HashAgentKVDB[ReqBody,RspBody] = {
-		new HashAgentKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+		new HashAgentKVDB[ReqBody, RspBody](
+		  MURI( here ),
+		  configFileName
+		) with Blobify with AMQPMonikerOps {		
 		  class StringXMLDBManifest(
 		    override val storeUnitStr : String,
 		    @transient override val labelToNS : Option[String => String],
@@ -2221,15 +2238,19 @@ package usage {
 	) : AgentKVDBNode[ReqBody,RspBody] = {
 	  val node =
 	    new AgentKVDBNode[ReqBody,RspBody](
-	      mkCache( MURI( here ) ),
+	      mkCache( MURI( here ), configFileNameOpt ),
 	      there.map( MURI( _ ) ),
 	      None,
 	      configFileNameOpt
 	    ) {
 	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		here : URI 
+		here : URI,
+		configFileName : Option[String]
 	      ) : HashAgentKVDB[ReqBody,RspBody] = {
-		new HashAgentKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+		new HashAgentKVDB[ReqBody, RspBody](
+		  MURI( here ),
+		  configFileName
+		) with Blobify with AMQPMonikerOps {		
 		  class StringXMLDBManifest(
 		    override val storeUnitStr : String,
 		    @transient override val labelToNS : Option[String => String],
@@ -2553,15 +2574,19 @@ package usage {
 	  
 	  val node =
 	    new AgentKVDBNode[ReqBody, RspBody](
-	      mkCache( MURI( hereNow ) ),
+	      mkCache( MURI( hereNow ), configFileNameOpt ),
 	      List( MURI( thereNow ) ),
 	      None,
 	      configFileNameOpt
 	    ) {
 	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		here : URI 
+		here : URI,
+		configFileName : Option[String]
 	      ) : HashAgentKVDB[ReqBody,RspBody] = {
-		new HashAgentKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+		new HashAgentKVDB[ReqBody, RspBody](
+		  MURI( here ),
+		  configFileName
+		) with Blobify with AMQPMonikerOps {		
 		  class StringXMLDBManifest(
 		    override val storeUnitStr : String,
 		    @transient override val labelToNS : Option[String => String],
