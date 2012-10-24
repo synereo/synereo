@@ -64,12 +64,14 @@ with Serializable
 //        for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
 //      }
 
+      val resultKey = "result(\"1\")"
+
       val keyPrivate = "contentRequestPrivate(_)"
       reset {
         for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
           if ( e != None ) {
             val result = e.dispatch
-            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
+            reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, result)}
           }
           else {
             println("listen received - none")
@@ -77,12 +79,12 @@ with Serializable
         }
       }
 
-      val value = "test(\"1\")"
+      val value = "test@protegra.com"
       Thread.sleep(TIMEOUT_MED)
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
       Thread.sleep(TIMEOUT_MED)
-      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+      fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
 //    "retrieve between UI and Store with a public queue using the persisted continuation" in {
