@@ -5,9 +5,10 @@ package com.protegra_ati.agentservices.core.util.serializer
  * and open the template in the editor.
  */
 
-import org.apache.ws.commons.util.Base64
+
 import com.protegra.agentservicesstore.util._
 import java.io._
+
 // TODO eventually Reporting has to be activation again
 object Serializer// extends Reporting
 {

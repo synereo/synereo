@@ -2,7 +2,6 @@ package com.protegra_ati.agentservices.core.schema
 
 import scala.reflect.BeanProperty
 import java.lang.reflect.Field
-import org.apache.commons.codec.binary.Base64;
 
 /* User: mgevantmakher
 */
@@ -29,7 +28,7 @@ case class MockImage(@BeanProperty var name: String, @BeanProperty var contentTy
    * @return
    */
   def this(name: String, contentType: String, byteContent: Array[ Byte ], isChunked: Boolean, metadata: String ) =
-    this(name, contentType, Image.toBase64String(byteContent, isChunked), metadata)
+    this(name, contentType, Image.toBase64String(byteContent), metadata)
 
 
 }

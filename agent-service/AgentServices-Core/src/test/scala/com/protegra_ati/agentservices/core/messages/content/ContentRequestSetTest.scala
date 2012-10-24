@@ -97,7 +97,7 @@ with SpecsPAHelpers
       val profileSearch: Profile = new Profile()
       fetchMustBe(basicProfile)(pa, connMike.writeCnxn, profileSearch.toSearchKey)
       // simple hashcode check
-      val image: Image = new Image("name", "contentType", null, "metadata")
+      val image: Image = new Image("name", "contentType", null.asInstanceOf[String], "metadata")
       val hashcode1 = image.hashCode
       image.id = "bubu"
       ( hashcode1 ) must be_==(image.hashCode)

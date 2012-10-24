@@ -1,16 +1,6 @@
 package com.protegra_ati.agentservices.core.util.cloner;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.protegra_ati.agentservices.core.util.ReportingImpl4Java;
-import com.protegra_ati.agentservices.core.util.serializer.AbstractToStringSerializer;
 import com.rits.cloning.Cloner;
-import org.apache.commons.pool.impl.StackObjectPool;
-import org.apache.ws.commons.util.Base64;
-
-import java.io.*;
-import java.util.UUID;
 
 /**
  * Cloner factory, with new registered immutable classes.

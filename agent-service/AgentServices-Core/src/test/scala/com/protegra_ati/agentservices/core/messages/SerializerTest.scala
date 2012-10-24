@@ -7,7 +7,6 @@ package com.protegra_ati.agentservices.core.messages
 
 import invitation.{ReferralRequest, CreateInvitationRequest, InvitationRequest}
 import java.util.UUID
-import org.apache.ws.commons.util.Base64
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema.PersistedMessage
