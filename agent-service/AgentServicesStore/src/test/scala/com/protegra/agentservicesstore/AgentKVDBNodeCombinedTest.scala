@@ -151,7 +151,7 @@ with Timeouts
       store_privateQ = null
 
       val restored_privateQ = createNode(public_location, List())
-      val restored = "restored(\"1\")"
+      val restored = "restored"
       reset {
         val generator = restored_privateQ.resubmitGet(cnxnUIStore)(keyPrivate.toLabel).getOrElse( throw new Exception( "No generator!" ) )
         for ( placeInstance <- generator ) {

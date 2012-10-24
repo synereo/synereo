@@ -41,12 +41,23 @@ with RabbitTestSetup
     val sourceAddress = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
 
     "work if None on default port" in {
+      skip("isolate")
       val configFileName = None
-      val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(None)
+      val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(configFileName)
 
       node.configFileName must be_==(configFileName)
       node.configurationFromFile.get( "dbPort" ).getOrElse("") must be_==("1984")
       val clientSession = node.cache.dbPort must be_==("1984")
+     //to debug code path
+      val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
+      val lbl = "content(\"email\")".toLabel
+      node.store(cnxn)(lbl, Ground("defaultPort"))
+
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
     }
 
     "work if found on configured port" in {
@@ -56,14 +67,25 @@ with RabbitTestSetup
       node.configFileName must be_==(configFileName)
       node.configurationFromFile.get( "dbPort" ).getOrElse("") must be_==("1985")
       node.cache.dbPort must be_==("1985")
-
-      //to debug code path
-      //val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
-      //val lbl = "content(\"email\")".toLabel
-      //node.store(cnxn)(lbl, Ground("configuredPort"))
     }
 
-    //throw configgy exception when not found
+    "save in 1985" in {
+      skip("isolate")
+      val configFileName = Some("db_test_1985.conf")
+      val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(configFileName)
+
+      //to debug code path
+      val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
+      val lbl = "content(\"email\")".toLabel
+      node.store(cnxn)(lbl, Ground("configuredPort"))
+
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+    }
+
 
   }
 
