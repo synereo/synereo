@@ -8,8 +8,6 @@ import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
-import scala.util.continuations._
-import scala.concurrent.ops._
 import com.protegra_ati.agentservices.core.schema.util._
 import java.util.UUID
 

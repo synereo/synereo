@@ -22,7 +22,7 @@ public final class ClonerFactory
     }
 
 
-    public <T> T createDepClone( final T o )
+    public <T> T createDeepClone( final T o )
     {
         return cloner.deepClone( o );
     }
@@ -40,7 +40,7 @@ public final class ClonerFactory
 
 
     private void configureClonerFactory( final Cloner cloner )
-    {   // DODO use ConfigurationManager to get class name of the ClonerFactoryConfigurator implementation
+    {   // TODO use ConfigurationManager to get class name of the ClonerFactoryConfigurator implementation
         ClonerFactoryConfigurator configurator = null; // TODO load class from config file
         if ( configurator == null )
             configurator = new DefaultClonerFactoryConfigurator();

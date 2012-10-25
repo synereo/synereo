@@ -15,12 +15,12 @@ import com.protegra.agentservicesstore.AgentTS.mTT._
 import com.protegra_ati.agentservices.core.messages._
 //import com.protegra.config.ConfigurationManager
 
-
+// TODO configgy has to be removed from the project
 import net.lag.configgy._
 
 import scala.util.continuations._
-
-import scala.concurrent.ops._
+import scala.concurrent.{Channel => Chan, _}
+import scala.concurrent.cpsops._
 
 import java.net.URI
 import java.util.UUID
@@ -30,6 +30,8 @@ import actors.threadpool.LinkedBlockingQueue
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 
+
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 object BasePABaseXDefaults
 {
@@ -50,11 +52,20 @@ object BasePABaseXDefaults
   //why not   val valueStorageType : String = "CnxnCtxtLabel"
 }
 
+/**
+ * Be careful, since this class extends FJTaskRunners, each instance of it creates it's own thread pool with defined in a method 'def numWorkers' size.
+ */
 abstract class BasePlatformAgent
   extends Reporting
-  with JunctionConfiguration
+  with JunctionConfiguration with FJTaskRunners
 //  with Scheduler
 {
+
+  /**
+   *  FJTaskRunners setting, defines thread pool size
+   * @return threadpool size
+   */
+  override def numWorkers = 200  // TODO has to be out of config, as soon as configuration manager is separated from portunity services project
 
   var _id: UUID = null
 

@@ -12,7 +12,6 @@ import util.SystemDataFactory
 
 //import com.protegra.i18n.ResourceManager
 //import com.protegra.config.ConfigurationManager
-import scala.concurrent.ops._
 import scala.collection.JavaConversions._
 import java.util.{Locale, UUID, ResourceBundle, Date}
 import java.text.DateFormat

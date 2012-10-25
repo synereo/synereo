@@ -22,7 +22,7 @@ import com.protegra_ati.agentservices.core.schema._
 import actors.threadpool.LinkedBlockingQueue
 import com.protegra.agentservicesstore.extensions.LinkedBlockingQueueExtensions._
 
-import scala.concurrent.ops._
+
 //import com.biosimilarity.lift.lib.moniker._
 
 trait SpecsPAHelpers extends Timeouts{
