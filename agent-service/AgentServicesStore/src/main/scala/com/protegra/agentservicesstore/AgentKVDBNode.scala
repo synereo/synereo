@@ -1268,6 +1268,13 @@ with AgentCnxnTypeScope {
 	pmgj.resubmitRequests( perD, placeInstances, xmlCollName )( resubmissionAsk )
       }
 
+      def resubmitGet( cnxn : acT.AgentCnxn )(
+      	path : CnxnCtxtLabel[Namespace,Var,Tag]
+            ) : Option[HashAgentKVDBNode[ReqBody,RspBody]#Generator[emT.PlaceInstance,Unit,Unit]]
+            = {
+        resubmitLabelRequests(cnxn)(path)(dAT.AGetNum)
+      }
+
       def resubmitLabelRequests( cnxn : acT.AgentCnxn )(
 	path : CnxnCtxtLabel[Namespace,Var,Tag]
       )(

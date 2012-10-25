@@ -43,7 +43,6 @@ case class KvdbPlatformAgentBaseRace() extends Specification
     val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
      "Cached Get/Put" should {
-       skip("isolate")
        Thread.sleep(timeoutBetween)
 
         "retrieve" in {
@@ -72,7 +71,6 @@ case class KvdbPlatformAgentBaseRace() extends Specification
       }
 
     "Cached Fetch/Put" should {
-      skip("isolate")
        Thread.sleep(timeoutBetween)
 
        "retrieve" in {

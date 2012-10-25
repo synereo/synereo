@@ -40,11 +40,19 @@ object KvdbPlatformAgentLocalDistributedTestSpecs extends KvdbPlatformAgentBase
 {
   val timeoutBetween = TIMEOUT_LONG
 
+  //fails with configs
+//  val writerConfigFileName = Some("db_ui.conf")
+//  val readerConfigFileName = Some("db_store.conf")
+//
+  //passes
+  val writerConfigFileName = None
+  val readerConfigFileName = None
+
   val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
   val acquaintanceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
 
-  val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress))
-  val pairedReader = createNode(acquaintanceAddress, List(sourceAddress))
+  val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress), writerConfigFileName)
+  val pairedReader = createNode(acquaintanceAddress, List(sourceAddress), readerConfigFileName)
 
   testMessaging(pairedWriter, pairedReader)
   testWildcardWithPut(pairedWriter, pairedReader)
