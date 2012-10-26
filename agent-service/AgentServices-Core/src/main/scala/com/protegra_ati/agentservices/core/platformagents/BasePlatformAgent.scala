@@ -29,6 +29,7 @@ import com.protegra.agentservicesstore.util._
 import actors.threadpool.LinkedBlockingQueue
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 
 import com.protegra_ati.agentservices.core.util.ThreadRenamer._
@@ -65,7 +66,7 @@ abstract class BasePlatformAgent
    *  FJTaskRunners setting, defines thread pool size
    * @return threadpool size
    */
-  override def numWorkers = 200  // TODO has to be out of config, as soon as configuration manager is separated from portunity services project
+  // override def numWorkers = 5 // TODO has to be out of config, as soon as configuration manager is separated from portunity services project
 
   var _id: UUID = null
 
@@ -155,6 +156,7 @@ abstract class BasePlatformAgent
         if ( e != None && !isExpired(expiry) ) {
           //keep the main thread listening, see if this causes debug headache
           spawn {
+           // rename {
             val msg = Serializer.deserialize[ Message ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             //race condition on get get get with consume bringing back the same item, cursor would get around this problem
@@ -166,6 +168,7 @@ abstract class BasePlatformAgent
             }
             else
               report("already processed id : " + msg.ids.id, Severity.Info)
+           // }("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
           }
           listen(queue, cnxn, key, handler, expiry)
         }
@@ -231,9 +234,11 @@ abstract class BasePlatformAgent
         if ( e != None ) {
           //keep the main thread listening, see if this causes debug headache
           spawn {
+           // rename {
             val msg = Serializer.deserialize[ T ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             handler(cnxn, msg)
+          //  }("inBasePlatformAgent single listen on channel: " + lblChannel)
           }
         }
         else {
