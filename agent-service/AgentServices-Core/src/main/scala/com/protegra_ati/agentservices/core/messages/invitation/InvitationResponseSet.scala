@@ -7,7 +7,8 @@ import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.AgentTS.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
-import com.rits.cloning.Cloner;
+import com.rits.cloning.Cloner
+import com.protegra_ati.agentservices.core.util.cloner.ClonerFactory
 
 trait InvitationResponseSet
 {
@@ -98,7 +99,7 @@ trait InvitationResponseSet
     //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
     for ( msg <- messages ) {
       if ( msg.message.ids.id == parentId ) {
-        val newData = new Cloner().deepClone(msg)
+        val newData = ClonerFactory.getInstance().createDeepClone(msg)
         newData.archive()
         if ( !isAccepted )
           newData.reject()
