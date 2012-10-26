@@ -80,8 +80,7 @@ with Serializable
       }
 
       val value = "test@protegra.com"
-      Thread.sleep(TIMEOUT_MED)
-      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
+//      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
       Thread.sleep(TIMEOUT_MED)
       fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)

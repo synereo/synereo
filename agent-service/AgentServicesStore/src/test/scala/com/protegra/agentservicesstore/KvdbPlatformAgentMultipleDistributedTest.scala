@@ -30,23 +30,19 @@ import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
 
-class KvdbPlatformAgentLocalDistributedTest
-  extends JUnit4(KvdbPlatformAgentLocalDistributedTestSpecs)
+class KvdbPlatformAgentMultipleDistributedTest
+  extends JUnit4(KvdbPlatformAgentMultipleDistributedTestSpecs)
 
-object KvdbPlatformAgentLocalDistributedTestSpecsRunner
-  extends ConsoleRunner(KvdbPlatformAgentLocalDistributedTestSpecs)
+object KvdbPlatformAgentMultipleDistributedTestSpecsRunner
+  extends ConsoleRunner(KvdbPlatformAgentMultipleDistributedTestSpecs)
 
-object KvdbPlatformAgentLocalDistributedTestSpecs extends KvdbPlatformAgentBase
+object KvdbPlatformAgentMultipleDistributedTestSpecs extends KvdbPlatformAgentBase
 {
   val timeoutBetween = TIMEOUT_LONG
 
   //fails with configs
-//  val writerConfigFileName = Some("db_ui.conf")
-//  val readerConfigFileName = Some("db_store.conf")
-//
-  //passes
-  val writerConfigFileName = None
-  val readerConfigFileName = None
+  val writerConfigFileName = Some("db_ui.conf")
+  val readerConfigFileName = Some("db_store.conf")
 
   val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
   val acquaintanceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)

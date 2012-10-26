@@ -24,13 +24,13 @@ import biz.source_code.base64Coder.Base64Coder
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import java.net.URI
 
-class AgentKVDBNodeTest
-  extends JUnit4(AgentKVDBNodeTestSpecs)
+class AgentKVDBNodeConfigurationTest
+  extends JUnit4(AgentKVDBNodeConfigurationTestSpecs)
 
-object AgentKVDBNodeTestSpecsRunner
-  extends ConsoleRunner(AgentKVDBNodeTestSpecs)
+object AgentKVDBNodeConfigurationTestSpecsRunner
+  extends ConsoleRunner(AgentKVDBNodeConfigurationTestSpecs)
 
-object AgentKVDBNodeTestSpecs extends Specification
+object AgentKVDBNodeConfigurationTestSpecs extends Specification
 with SpecsKVDBHelpers
 with Timeouts
 with RabbitTestSetup
