@@ -36,7 +36,7 @@ with Serializable
 {
 
   "AgentKVDBNode" should {
-    val cnxnUIStore = new AgentCnxn(( "UI" + UUID.randomUUID.toString ).toURI, "", ( "Store" + UUID.randomUUID.toString ).toURI);
+    val cnxnUIStore = new AgentCnxn(( "UI" + UUID.randomUUID.toString ).toURI, "", ( "Store" + UUID.randomUUID.toString ).toURI)
     var cnxnRandom = new AgentCnxn(( "CombinedTest" + UUID.randomUUID.toString ).toURI, "", ( "User" + UUID.randomUUID.toString ).toURI)
 
     val ui_location = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
@@ -54,6 +54,15 @@ with Serializable
       val storeConfigFileName = Some("db_store.conf")
       val store_privateQ = createNode(store_location, List(ui_location), storeConfigFileName)
 
+      //prime the dispatcher on ui
+      val keyPrimer = "primer(\"" + UUID.randomUUID() + "\")"
+      val valuePrimer = "start"
+      reset {ui_privateQ.put(cnxnUIStore)(keyPrimer.toLabel, Ground(valuePrimer))}
+      Thread.sleep(1000)
+      Thread.sleep(1000)
+      Thread.sleep(1000)
+      Thread.sleep(1000)
+      Thread.sleep(1000)
 //      val msgConfigFileName = Some("db_store.conf")
 //      val store_msgQ = createNode(public_location, List(), msgConfigFileName)
 
@@ -80,7 +89,7 @@ with Serializable
       }
 
       val value = "test@protegra.com"
-//      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
+      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
       Thread.sleep(TIMEOUT_MED)
       fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
