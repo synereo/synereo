@@ -15,7 +15,7 @@ object ThreadRenamer
       System.err.println("before, will change name from " + reallyName + " to " + newName)
       val t = Thread.currentThread()
       if ( reallyName.equals(t.getName) ) {
-        t.setName(newName)
+        t.setName("renamed to: " + newName + " from:" + reallyName)
       }
       p
     }
