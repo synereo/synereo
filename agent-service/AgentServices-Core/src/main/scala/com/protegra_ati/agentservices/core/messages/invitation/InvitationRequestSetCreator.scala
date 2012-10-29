@@ -11,7 +11,7 @@ import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
 import content.{SetContentRequest, SetSelfContentRequest}
 import scala.util.continuations._
-import scala.concurrent.ops._
+import scala.concurrent.cpsops._
 import com.protegra_ati.agentservices.core.schema.util._
 import java.util.UUID
 import java.util.HashMap
@@ -61,7 +61,7 @@ trait InvitationRequestSetCreator
     createInviteRequest.deliver();
 
     //we need to do a lookup of the targetConnection by id in Broker Self Connection to find the agent to invite
-    val query = new SystemData(new Connection())
+    val query = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxnProxy, _: SystemData[ Connection ], createInviteRequest, cnxnBroker_A))
   }
 
@@ -94,14 +94,16 @@ trait InvitationRequestSetCreator
     send(_publicQ, conn.writeCnxn, req)
   }
 
-  def createFromDataForReferral() :HashMap[String, Data] ={
+  def createFromDataForReferral(): HashMap[ String, Data ] =
+  {
       val map = new HashMap[String, Data]
-      var tempProfile = new Profile( )
+      var tempProfile = new Profile( )  // STRESS TODO eventually it worse to create a singleton like Profile.SEARCH_ALL
       tempProfile.firstName = "App"
 
       map.put( tempProfile.formattedClassName, tempProfile )
       return map
   }
+
   protected def processReferralRequest(cnxnSelf: AgentCnxnProxy, referralRequest: ReferralRequest) =
   {
     report("STORE REFERRAL FOR LATER RESPONSE: referralRequest=" + referralRequest + ", cnxn=" + cnxnSelf, Severity.Info)
@@ -111,8 +113,7 @@ trait InvitationRequestSetCreator
     println("attempting to store " + persistedMessage.toStoreKey)
     store(_dbQ, cnxnSelf, persistedMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](persistedMessage))
 
-    if (cnxnSelf.src.toString.contains(BIZNETWORK_AGENT_ID))
-    {
+    if ( cnxnSelf.src.toString.contains(BIZNETWORK_AGENT_ID) ) {
       val subject = ""
       val body = "Automatically accepting referral for owner"
       val fromDetails = createFromDataForReferral()
@@ -142,7 +143,7 @@ trait InvitationRequestSetCreator
    */
   def generateRejectToInvitationRequest(eventKey: EventKey, targetToBrokerConnection: Connection, targetToBroker: Post): Unit =
   {
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, targetToBrokerConnection.readCnxn, queryObject.toSearchKey, findSelfConToSendPost(_: AgentCnxnProxy, _: SystemData[ Connection ], eventKey, targetToBrokerConnection, targetToBroker))
   }
 
@@ -345,7 +346,7 @@ trait InvitationRequestSetCreator
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
   }
 

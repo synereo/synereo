@@ -14,7 +14,7 @@ import com.esotericsoftware.kryo.serializers.MapSerializer;
 
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.impl.StackObjectPool;
-import org.apache.ws.commons.util.Base64;
+
 
 import java.io.*;
 import java.util.HashMap;
@@ -119,7 +119,7 @@ public final class KryoSerializer extends AbstractToStringSerializer
         serialize( objToBeSerialized, oos );  // closes the stream
         final byte[] bArray = baos.toByteArray();
         serializationErrorCheck( bArray, objToBeSerialized );
-        final String encodedMsg = new String( Base64.encode( bArray ) );
+        final String encodedMsg = new String( biz.source_code.base64Coder.Base64Coder.encode( bArray ) );
         sizeWarning( encodedMsg, ( objToBeSerialized ) );
         return uid5CharLong + encodedMsg;
     }
@@ -185,17 +185,15 @@ public final class KryoSerializer extends AbstractToStringSerializer
             String uid = source.substring( 0, 5 );
             System.err.println( "#####-deserialize KRYO-- UID:" + uid );
             //   logger.report( "#####-deserialize KRYO-- UID:" + uid, Severity.Warning() );
-
-            final byte[] byteArrayMsg = Base64.decode( source.substring( 5, source.length() ) );
+             // STRESS TODO uid has to be removed for production, it is just for debugging purposes
+            final byte[] byteArrayMsg = biz.source_code.base64Coder.Base64Coder.decode( source.substring( 5, source.length() ) );
             final InputStream ois = new BufferedInputStream( new ByteArrayInputStream( byteArrayMsg ) );
             final T obj = deserialize( ois ); // closes the stream
             System.err.println( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj );
             // logger.report( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj, Severity.Warning() );
             return obj;
-        } catch ( Base64.DecodingException e ) {
-            //   logger.report( "ERROR: object can't be deserialized due to base64 decoding problem:" + e.getMessage(), Severity.Error() );
         } catch ( Exception e ) {
-            //   logger.report( "object can't be deserialized:" + e.getMessage(), Severity.Error() );
+            //   logger.report( "ERROR: object can't be deserialized due to base64 decoding problem:" + e.getMessage(), Severity.Error() );
         }
         return (T) null;
     }

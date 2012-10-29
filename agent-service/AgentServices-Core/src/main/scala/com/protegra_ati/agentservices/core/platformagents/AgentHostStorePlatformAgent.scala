@@ -21,7 +21,6 @@ import introduction._
 //import registration._
 //import search._
 import verifier._
-import scala.concurrent.ops._
 import com.protegra.agentservicesstore.util.Severity
 
 import java.net.URI

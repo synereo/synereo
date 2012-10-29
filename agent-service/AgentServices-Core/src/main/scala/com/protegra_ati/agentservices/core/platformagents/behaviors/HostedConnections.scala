@@ -19,7 +19,7 @@ trait HostedConnections
 
   def loadUserCnxnList()
   {
-    val userCnxns = new Connection()
+    val userCnxns = ConnectionFactory.createEmptyImmutableConnectionForSearch()
     fetch[ Connection ](_dbQ, _storeCnxn, userCnxns.toSearchKey, handleUserCnxnsFetchOnStartup(_: AgentCnxnProxy, _: Connection))
   }
 
@@ -51,7 +51,7 @@ trait HostedConnections
 
     //for each other these connections, listen for all the connection.writeCnxn
     //in each of their silos
-    val search = new Connection()
+    val search = ConnectionFactory.createEmptyImmutableConnectionForSearch()
     fetch[ Connection ](_dbQ, selfCnxn, search.toSearchKey, handleUserConnectionPostFetch(_: AgentCnxnProxy, _: Connection))
   }
 

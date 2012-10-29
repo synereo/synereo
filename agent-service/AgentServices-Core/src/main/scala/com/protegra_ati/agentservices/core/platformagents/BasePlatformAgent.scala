@@ -17,12 +17,12 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeF
 
 //import com.protegra.config.ConfigurationManager
 
-
+// TODO configgy has to be removed from the project
 import net.lag.configgy._
 
 import scala.util.continuations._
-
-import scala.concurrent.ops._
+import scala.concurrent.{Channel => Chan, _}
+import scala.concurrent.cpsops._
 
 import java.net.URI
 import java.util.UUID
@@ -31,7 +31,10 @@ import com.protegra.agentservicesstore.util._
 import actors.threadpool.LinkedBlockingQueue
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
+
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 object BasePABaseXDefaults
 {
@@ -52,11 +55,20 @@ object BasePABaseXDefaults
   //why not   val valueStorageType : String = "CnxnCtxtLabel"
 }
 
+/**
+ * Be careful, since this class extends FJTaskRunners, each instance of it creates it's own thread pool with defined in a method 'def numWorkers' size.
+ */
 abstract class BasePlatformAgent
   extends Reporting
-  with JunctionConfiguration
+  with JunctionConfiguration with FJTaskRunners
 //  with Scheduler
 {
+
+  /**
+   *  FJTaskRunners setting, defines thread pool size
+   * @return threadpool size
+   */
+  // override def numWorkers = 5 // TODO has to be out of config, as soon as configuration manager is separated from portunity services project
 
   var _id: UUID = null
 
@@ -155,6 +167,7 @@ abstract class BasePlatformAgent
         if ( e != None && !isExpired(expiry) ) {
           //keep the main thread listening, see if this causes debug headache
           spawn {
+           // rename {
             val msg = Serializer.deserialize[ Message ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             //race condition on get get get with consume bringing back the same item, cursor would get around this problem
@@ -166,6 +179,7 @@ abstract class BasePlatformAgent
             }
             else
               report("already processed id : " + msg.ids.id, Severity.Info)
+           // }("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
           }
           listen(queue, cnxn, key, handler, expiry)
         }
@@ -231,9 +245,11 @@ abstract class BasePlatformAgent
         if ( e != None ) {
           //keep the main thread listening, see if this causes debug headache
           spawn {
+           // rename {
             val msg = Serializer.deserialize[ T ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             handler(cnxn, msg)
+          //  }("inBasePlatformAgent single listen on channel: " + lblChannel)
           }
         }
         else {
@@ -422,6 +438,12 @@ abstract class BasePlatformAgent
     val agentCnxn = cnxn.toAgentCnxn()
     report("drop --- cnxn: " + cnxn.toString, Severity.Trace)
     queue.drop(agentCnxn)
+  }
+
+
+  def createAgentCnxn(src: String, label: String, trgt: String) =
+  {
+    new AgentCnxnProxy(( src ).toURI, label, ( trgt ).toURI)
   }
 
 

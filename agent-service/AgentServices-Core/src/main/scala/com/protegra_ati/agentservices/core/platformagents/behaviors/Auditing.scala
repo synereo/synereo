@@ -11,10 +11,11 @@ import com.protegra_ati.agentservices.core.schema._
 import java.util.UUID
 import org.joda.time.{DateTime, Instant}
 import verifier._
-import scala.concurrent.ops._
 import com.protegra_ati.agentservices.core.schema.util._
+import scala.concurrent.cpsops._
 
-trait Auditing {
+trait Auditing
+{
 self: BasePlatformAgent with Storage =>
 
   def logDataRequested(cnxn: AgentCnxnProxy, auditItem: AuthorizedContentAuditItem, msg: Message)

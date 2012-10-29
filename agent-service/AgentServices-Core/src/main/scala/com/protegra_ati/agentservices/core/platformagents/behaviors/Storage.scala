@@ -69,7 +69,7 @@ trait Storage
 
   protected def deleteDataForAllConnections(cnxn: AgentCnxnProxy, dataToDelete: Data) =
   {
-    val search = new Connection()
+    val search = ConnectionFactory.createEmptyImmutableConnectionForSearch()
     fetch[ Connection ](_dbQ, cnxn, search.toSearchKey, handleDeleteDataByConnectionFetch(_: AgentCnxnProxy, _: Connection, dataToDelete))
   }
 
