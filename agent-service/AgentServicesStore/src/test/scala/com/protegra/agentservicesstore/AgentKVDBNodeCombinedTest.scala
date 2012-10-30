@@ -11,6 +11,8 @@ import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 
 import scala.util.continuations._
+import scala.concurrent.{Channel => Chan, _}
+import scala.concurrent.cpsops._
 
 import java.net.URI
 import java.util.UUID
@@ -33,6 +35,7 @@ with SpecsKVDBHelpers
 with RabbitTestSetup
 with Timeouts
 with Serializable
+with FJTaskRunners
 {
 
   "AgentKVDBNode" should {
@@ -48,10 +51,10 @@ with Serializable
 
     "retrieve between UI and Store with a public queue" in {
 
-      val uiConfigFileName = Some("db_ui.conf")
+      val uiConfigFileName = None //Some("db_ui.conf")
       val ui_privateQ = createNode(ui_location, List(store_location), uiConfigFileName)
 
-      val storeConfigFileName = Some("db_store.conf")
+      val storeConfigFileName = None //Some("db_store.conf")
       val store_privateQ = createNode(store_location, List(ui_location), storeConfigFileName)
 
 //      val msgConfigFileName = Some("db_store.conf")
@@ -67,20 +70,25 @@ with Serializable
       val resultKey = "result(\"1\")"
 
       val keyPrivate = "contentRequestPrivate(_)"
-      reset {
-        for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
-          if ( e != None ) {
-            val result = e.dispatch
-            reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, result)}
-          }
-          else {
-            println("listen received - none")
-          }
-        }
-      }
-
       val value = "test@protegra.com"
-//      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
+
+      spawn {
+	reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
+      }
+      
+      spawn {
+	reset {
+          for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
+            if ( e != None ) {
+              val result = e.dispatch
+              reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, result)}
+            }
+            else {
+              println("listen received - none")
+            }
+          }
+	}
+      }      
 
       Thread.sleep(TIMEOUT_MED)
       fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
