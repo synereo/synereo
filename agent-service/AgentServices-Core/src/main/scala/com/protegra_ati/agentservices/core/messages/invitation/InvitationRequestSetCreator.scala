@@ -11,7 +11,7 @@ import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
 import content.{SetContentRequest, SetSelfContentRequest}
 import scala.util.continuations._
-import scala.concurrent.cpsops._
+import scala.concurrent.ops._
 import com.protegra_ati.agentservices.core.schema.util._
 import java.util.UUID
 import java.util.HashMap

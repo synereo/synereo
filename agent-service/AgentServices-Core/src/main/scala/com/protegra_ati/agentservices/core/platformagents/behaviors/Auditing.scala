@@ -12,7 +12,7 @@ import java.util.UUID
 import org.joda.time.{DateTime, Instant}
 import verifier._
 import com.protegra_ati.agentservices.core.schema.util._
-import scala.concurrent.cpsops._
+import scala.concurrent.ops._
 
 trait Auditing
 {

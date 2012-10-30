@@ -22,7 +22,7 @@ import net.lag.configgy._
 
 import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+import scala.concurrent.ops._
 
 import java.net.URI
 import java.util.UUID
@@ -60,7 +60,7 @@ object BasePABaseXDefaults
  */
 abstract class BasePlatformAgent
   extends Reporting
-  with JunctionConfiguration with FJTaskRunners
+  with JunctionConfiguration
 //  with Scheduler
 {
 
@@ -68,7 +68,7 @@ abstract class BasePlatformAgent
    *  FJTaskRunners setting, defines thread pool size
    * @return threadpool size
    */
-  // override def numWorkers = 5 // TODO has to be out of config, as soon as configuration manager is separated from portunity services project
+//  override def numWorkers = 2 // TODO has to be out of config, as soon as configuration manager is separated from protunity services project
 
   var _id: UUID = null
 
