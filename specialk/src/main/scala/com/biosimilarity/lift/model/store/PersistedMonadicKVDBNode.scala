@@ -1648,6 +1648,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}
 
 	override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
+	  tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : dispatchDMsg "
+	      + "\nthis : " + this
+	      + "\ndreq : " + dreq
+	    )
+	  )
 	  dreq match {
 	    case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	      body match {

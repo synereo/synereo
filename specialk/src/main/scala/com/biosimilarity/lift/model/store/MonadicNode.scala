@@ -350,6 +350,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
 	val acqItr = acquaintances.iterator
 	while( acqItr.hasNext ) {
 	  val trgt = acqItr.next.asInstanceOf[Moniker]
+	  tweet( "getting next message in target queue of " + trgt )
 	  val ( q, tpm, scope ) =
 	    ( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
 	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
@@ -358,6 +359,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
 	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
 	  
 	  for( msg <- tpmp( qp ) ) {
+	    tweet( "handling " + msg + " in target queue of " + trgt )
 	    reset{ k( msg ) }
 	  }
 	}

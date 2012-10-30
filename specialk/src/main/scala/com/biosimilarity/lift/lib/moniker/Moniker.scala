@@ -120,6 +120,15 @@ class URM(
 	    && port.equals( that.port )
 	  )
 	}
+	case that : Moniker => {
+	  (
+	    scheme.equals( that.getScheme )
+	    && host.equals( that.getHost )
+	    && significantBit( path ).equals( significantBit( that.getPath ) )
+	    && fragment.equals( that.getFragment )
+	    && port.equals( that.getPort )
+	  )
+	}
 	case _ => false
       }
     )
@@ -141,6 +150,8 @@ class URM(
   override def getPath : String = uri.getPath
   override def getQuery : String = uri.getQuery
   override def getFragment : String = uri.getFragment
+
+  override def toString() : String = { uri.toString }
 }
 
 
@@ -179,5 +190,18 @@ object identityConversions {
       case murl : MURL => murl.url
       case _ => throw new Exception( "conversion not defined" )
     }
+  }
+
+  implicit def toURM( mnkr : MURI ) : URM = {
+    new URM(
+      mnkr.getScheme,
+      Some( mnkr.getUserInfo ),
+      Some( mnkr.getAuthority ),
+      mnkr.getHost,
+      Some( mnkr.getPort ),
+      mnkr.getPath,
+      Some( mnkr.getQuery ),
+      Some( mnkr.getFragment )
+    )
   }
 }

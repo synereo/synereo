@@ -237,21 +237,57 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	  throw new Exception( "unable to frame response: " + rsp )
 	}
       }
-    }
+    }    
 
-    def handleValue( dreq : Msgs.DReq, oV : Option[mTT.Resource], msrc : Moniker ) : Unit = {
-      for( q <- stblQMap.get( msrc ); value <- oV ) {	
+    def handleValue( dreq : Msgs.DReq, oV : Option[mTT.Resource], msrc : Moniker ) : Unit = {           	   
+      val msrcKey : URM =
+	msrc match {
+	  case msrcMURI : MURI =>
+	    com.biosimilarity.lift.lib.moniker.identityConversions.toURM( msrcMURI )
+	  case msrcURM : URM => msrcURM
+	  case _ => throw new Exception( "unexpected msrc type: " + msrc.getClass )
+	}
+      tweet(
+	(
+	  "BaseAgentKVDBNode : "
+	  + "\nmethod : handleValue "
+	  + "\nthis : " + this
+	  + "\n dreq : " + dreq
+	  + "\n oV : " + oV
+	  + "\n msrc : " + msrc
+	  + "\n------------------"
+	  + "\n msrcKey : " + msrcKey
+	  + "\n q : " + stblQMap.get( msrcKey )
+	)
+      )
+
+      for( q <- stblQMap.get( msrcKey ); value <- oV ) {	
 	tweet( ( this + " sending value " + oV + " back " ) )	   
 	q ! wrapResponse( msrc, dreq, value )
       }
     }
 
     def dispatchDMsg( dreq : FramedMsg ) : Unit = {
+      tweet(
+	(
+	  "BaseMonadicKVDBNode : "
+	  + "\nmethod : dispatchDMsg "
+	  + "\nthis : " + this
+	  + "\ndreq : " + dreq
+	)
+      )
       dreq match {
 	case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	  body match {
 	    case dgreq@Msgs.MDGetRequest( path ) => {	  
-	      tweet( ( this + " getting locally for location : " + path ) )
+	      tweet(
+		(
+		  "BaseMonadicKVDBNode : "
+		  + this
+		  + " getting locally for location : "
+		  + path
+		)
+	      )
 	      reset {
 		for( v <- get( List( msrc ) )( false )( path ) ) {
 		  tweet(
@@ -404,7 +440,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     def dispatchDMsgs()  : Unit = {
       reset {
 	for( dreq <- ??() ) {
-	  tweet( this + " handling : " + dreq )	
+	  tweet( "BaseMonadicKVDBNode: " + this + " handling : " + dreq + " calling dispatchDMsg " )	
 	  dispatchDMsg( dreq )
 	}
       }
