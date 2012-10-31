@@ -31,9 +31,6 @@ import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
-
-import com.protegra_ati.agentservices.core.util.ThreadRenamer._
-
 object BasePABaseXDefaults
 {
   implicit val URI: String =
@@ -58,7 +55,7 @@ object BasePABaseXDefaults
  */
 abstract class BasePlatformAgent
   extends Reporting
-  with JunctionConfiguration with FJTaskRunners
+  with JunctionConfiguration with ThreadPoolRunners
 //  with Scheduler
 {
 
@@ -155,8 +152,13 @@ abstract class BasePlatformAgent
       for ( e <- queue.get(agentCnxn)(lblChannel) ) {
         if ( e != None && !isExpired(expiry) ) {
           //keep the main thread listening, see if this causes debug headache
+          // STRESS TODO separation between different ways how to create/mange threads for different type of requests:
+          //        - for long term running jobs (like referral request with continuations, classical scala default 'spawn' which runs a new Thread per spawn is atractiv)
+          //        - for short lived requests thread pool is nost attractive to keep number of threads under control
+          //        - on KBDB level timeout for continuations is necessary so thread from thread pool for short lived requests can be released after given time
+          //        - HOW continuations are working with running threads !!!!
           spawn {
-           // rename {
+            rename {
             val msg = Serializer.deserialize[ Message ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             //race condition on get get get with consume bringing back the same item, cursor would get around this problem
@@ -168,7 +170,7 @@ abstract class BasePlatformAgent
             }
             else
               report("already processed id : " + msg.ids.id, Severity.Info)
-           // }("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
+            }("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
           }
           listen(queue, cnxn, key, handler, expiry)
         }
@@ -234,11 +236,11 @@ abstract class BasePlatformAgent
         if ( e != None ) {
           //keep the main thread listening, see if this causes debug headache
           spawn {
-           // rename {
+            rename {
             val msg = Serializer.deserialize[ T ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             handler(cnxn, msg)
-          //  }("inBasePlatformAgent single listen on channel: " + lblChannel)
+            }("inBasePlatformAgent single listen on channel: " + lblChannel)
           }
         }
         else {

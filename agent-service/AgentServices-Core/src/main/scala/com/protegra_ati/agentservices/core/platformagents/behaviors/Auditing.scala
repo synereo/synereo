@@ -13,6 +13,7 @@ import org.joda.time.{DateTime, Instant}
 import verifier._
 import com.protegra_ati.agentservices.core.schema.util._
 import scala.concurrent.cpsops._
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 trait Auditing
 {
@@ -31,10 +32,12 @@ self: BasePlatformAgent with Storage =>
   def logDataViewed(cnxn: AgentCnxnProxy, data: Data, requestingCnxn: AgentCnxnProxy)
   {
     spawn {
+     rename{
       //we need to grab the DisclosedData object for the cnxn to determine
       //what the requestingCnxn has access to
      // val searchItem = SearchFactory.getAuthorizedContentAuditSearchItem(data)
       fetch[ AuthorizedContentAuditItem ](_dbQ, cnxn, new AuthorizedContentAuditItem ().toSearchKey, handleLogDataViewedFetchAuthorizedContent(_: AgentCnxnProxy, _: AuthorizedContentAuditItem, data, requestingCnxn))
+    }("inAuditing logDataViewed")
     }
   }
 
@@ -52,10 +55,12 @@ self: BasePlatformAgent with Storage =>
   def logAuditItem(cnxn: AgentCnxnProxy, logDetail: String)
   {
     spawn {
+      rename{
       val item = new AuditLogItem("", new DateTime())
       item.detail = logDetail
       var oldItem: AuditLogItem = null
       updateData(cnxn, item, oldItem)
+      }("inAuditing logAuditItem")
     }
   }
   /*TODO Task: internalisation of messages created by methods below

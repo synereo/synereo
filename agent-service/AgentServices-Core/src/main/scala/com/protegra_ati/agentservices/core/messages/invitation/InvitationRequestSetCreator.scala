@@ -17,7 +17,7 @@ import java.util.UUID
 import java.util.HashMap
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 
 trait InvitationRequestSetCreator
@@ -296,6 +296,7 @@ trait InvitationRequestSetCreator
                 println("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!")
 
                 spawn {
+                  rename {
                   val msgA = Serializer.deserialize[ InvitationResponse ](e.dispatch)
                   val msgB = Serializer.deserialize[ InvitationResponse ](f.dispatch)
                     if ( !msgB.accept ) {
@@ -333,6 +334,7 @@ trait InvitationRequestSetCreator
                   //                  deleteIntroduction(cnxnBroker_A, introductionId)
                   //                  deleteIntroduction(cnxnBroker_A, introductionId)
                   //                deleteIntroductionState(cnxnBroker_A, introductionState.introductionId)
+                  }("waits for invitation responses and create connections")
                 }
               }
             }
