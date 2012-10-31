@@ -481,25 +481,61 @@ with AgentCnxnTypeScope {
 	cnxn : acT.AgentCnxn
       ) : HashAgentKVDBNode[ReqBody,RspBody] = {
 	val symmIdStr = cnxn.symmetricIdentityString
-
-	tweet( "Symmetric cnxn identity is " + symmIdStr )		  
-	  
-	HashAgentKVDBNode(
+	val nodeCache : HashAgentKVDB[ReqBody,RspBody] = 
 	  mkInnerCache(
 	    name.withPath(name.getPath + "/" + symmIdStr),
 	    configFileName
-	  ),
-	  for( acq <- acquaintances ) yield { acq.withPath( acq.getPath + "/" + symmIdStr ) },
-	  Some( cnxn ),
-	  configFileName
-	)	
+	  )
+	val oPM = nodeCache.persistenceManifest
+
+	tweet(
+	  (
+	    "BaseAgentKVDBNode : "
+	    + "\nthis: " + this
+	    + "\n method : makeSpace "
+	    + "\n cnxn : " + cnxn
+	    + "\n this.cache : " + this.cache
+	    + "\n this.name : " + this.name
+	    + "\n --------------- "	    
+	    + "\n symmIdStr : " + symmIdStr
+	    + "\n persistenceManifest : " + oPM
+	  )
+	)       		
+
+	val node : HashAgentKVDBNode[ReqBody,RspBody] =
+	  new HashAgentKVDBNode[ReqBody,RspBody](
+	    nodeCache,
+	    for( acq <- acquaintances ) yield { acq.withPath( acq.getPath + "/" + symmIdStr ) },
+	    Some( cnxn ),
+	    configFileName
+	  ) {
+	    override def persistenceManifest : Option[PersistenceManifest] = oPM
+	  }
+
+	spawn { node.dispatchDMsgs() }
+	
+	node
       }
 
       def ptnCnxnWrapperNamespace : String = "patternConnection"
+
       def embedCnxn(
 	cnxn : acT.AgentCnxn,
 	ptn : CnxnCtxtLabel[Namespace,Var,Tag] with Factual
       ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
+	tweet(
+	  (
+	    "BaseAgentKVDBNode : "
+	    + "\nthis: " + this
+	    + "\n method : embedCnxn "
+	    + "\n cnxn : " + cnxn
+	    + "\n ptn : " + ptn
+	    + "\n --------------- "
+	    + "\n labelToNS : " + labelToNS
+	    + "\n textToTag : " + textToTag
+	    + "\n persistenceManifest : " + persistenceManifest
+	  )
+	)
 	for(
 	  ltns <- labelToNS;
 	  ttt <- textToTag;
@@ -667,6 +703,7 @@ with AgentCnxnTypeScope {
 		  )
 		)
 		val npmgj = makeSpace( cnxn )
+		//spawn { npmgj.dispatchDMsgs() }
 		cnxnPartition( cnxn ) = npmgj
 		npmgj
 	      }
@@ -753,13 +790,38 @@ with AgentCnxnTypeScope {
       ) : Unit = {
 	
 	tweet(
-	  ( this + " in forwardGet with hops: " + hops )
+	  (
+	    "BaseAgentKVDBNode : "
+	    + "\nthis: " + this
+	    + "\n method : forward "
+	    + "\n ask : " + ask
+	    + "\n hops : " + hops
+	    + "\n path : " + path
+	    + "\n --------------- "
+	    + "\n acquaintances : " + acquaintances
+	  )
 	)
 	
 	for( trgt <- acquaintances; q <- stblQMap.get( trgt ) if !hops.contains( trgt ) ) {
-	  tweet(
-	    ( this + " forwarding to " + trgt )
-	  )
+	  val embCnxn = 
+	    embedCnxn(
+	      cnxn,
+	      path.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
+	    )
+	 tweet(
+	   (
+	     "BaseAgentKVDBNode : "
+	     + "\nthis: " + this
+	     + "\n method : forward "
+	     + "\n ask : " + ask
+	     + "\n hops : " + hops
+	     + "\n path : " + path
+	     + "\n --------------- "
+	     + "\n trgt : " + trgt
+	     + "\n q : " + q
+	     + "\n embeddedCnxn: " + embCnxn
+	   )
+	)
 	  // BUGBUG -- LGM: fix typing so we don't have to cast
 	  for(
 	    embeddedCnxn
@@ -791,7 +853,7 @@ with AgentCnxnTypeScope {
 	    request match {
 	      case rqbdy : ReqBody => {
 		val framedReq = frameRequest( trgt )( rqbdy )
-		tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
+		tweet( ( "BaseAgentKVDBNode: " + this + " forwarding " + framedReq + " to " + trgt ) )
 		q ! framedReq
 	      }
 	      case _ => {
@@ -854,7 +916,7 @@ with AgentCnxnTypeScope {
 			  )
 			)
 			
-			forward( ask, hops, path )
+			forward( cnxn )( ask, hops, path )
 			rk( oV )
 		      }
 		      case _ => rk( oV )
@@ -1318,11 +1380,50 @@ with AgentCnxnTypeScope {
        * -------------------------------------------------------------------- */
 
       override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
+	tweet(
+	    (
+	      "BaseAgentKVDBNode : "
+	      + "\nmethod : dispatchDMsg "
+	      + "\nthis : " + this
+	      + "\ndreq : " + dreq
+	    )
+	  )
 	dreq match {
 	  case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
+	    tweet(
+	      (
+		"BaseAgentKVDBNode : "
+		+ "\nmethod : dispatchDMsg "
+		+ "\nthis : " + this
+		+ "\n handling a JustifiedRequest "
+		+ "\n msgId : " + msgId
+		+ "\n mtrgt : " + mtrgt
+		+ "\n msrc : " + msrc
+		+ "\n lbl : " + lbl
+		+ "\n body : " + body
+	      )
+	    )
 	    body match {
 	      case dgreq@Msgs.MDGetRequest( path ) => {	  
-		for( ( cnxn, npath ) <- extractCnxn( path ) ) {
+		tweet(
+		  (
+		    "BaseAgentKVDBNode : "
+		    + "\nmethod : dispatchDMsg "
+		    + "\nthis : " + this
+		    + "\n handling an MDGetRequest "
+		    + "\n path : " + path
+		  )
+		)
+		val cnxnNPath = extractCnxn( path )
+		tweet(
+		  (
+		    "BaseAgentKVDBNode : "
+		    + "\nmethod : dispatchDMsg "
+		    + "\nthis : " + this
+		    + "\n cnxnNPath : " + cnxnNPath
+		  )
+		)
+		for( ( cnxn, npath ) <- cnxnNPath ) {
 		  tweet( ( this + " getting locally for location : " + path ) )
 		  reset {
 		    for( v <- remoteGet( List( msrc ) )( cnxn )( npath ) ) {
@@ -1632,9 +1733,16 @@ package usage {
 	theEMTypes
 
       object AgentKVDBNodeFactory
-	     extends BaseAgentKVDBNodeFactoryT with AgentKVDBNodeFactoryT with Serializable {	  
+	     extends BaseAgentKVDBNodeFactoryT
+	     with AgentKVDBNodeFactoryT
+	     with WireTap with Journalist
+	     with Serializable {	  	       
 	type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
         //type AgentNode[Rq <: PersistedKVDBNodeRequest, Rs <: PersistedKVDBNodeResponse] = AgentKVDBNode[Rq,Rs]
+
+	override def tap [A] ( fact : A ) : Unit = {
+	  reportage( fact )
+	}
 
 	override def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
 	  here : URI,
@@ -1913,6 +2021,13 @@ package usage {
 	      throw new Exception( "shouldn't be calling this version of asCacheK" )
 	    }
 	    override def persistenceManifest : Option[PersistenceManifest] = {
+	      tweet(
+		(
+		  "AgentKVDB : "
+		  + "\nthis: " + this
+		  + "\n method : persistenceManifest "
+		)
+	      )
 	      val sid = Some( ( s : String ) => s )
 	      val kvdb = this;
 	      Some(
@@ -1945,6 +2060,15 @@ package usage {
 		here : URI,
 		configFileName : Option[String]
 	      ) : HashAgentKVDB[ReqBody,RspBody] = {
+		tweet(
+		  (
+		    "AgentKVDBNode : "
+		    + "\nthis: " + this
+		    + "\n method : mkInnerCache "
+		    + "\n here: " + here
+		    + "\n configFileName: " + configFileName
+		  )
+		)
 		new HashAgentKVDB[ReqBody, RspBody](
 		  MURI( here ),
 		  configFileName
@@ -2217,7 +2341,15 @@ package usage {
 		  ) : Option[mTT.Continuation] = {
 		    throw new Exception( "shouldn't be calling this version of asCacheK" )
 		  }
+
 		  override def persistenceManifest : Option[PersistenceManifest] = {
+		    tweet(
+		      (
+			"HashAgentKVDB : "
+			+ "\nthis: " + this
+			+ "\n method : persistenceManifest "
+		      )
+		    )
 		    val sid = Some( ( s : String ) => s )
 		    val kvdb = this;
 		    Some(
@@ -2235,7 +2367,9 @@ package usage {
 		}
 	      }
 	    }
-	  spawn { node.dispatchDMsgs() }
+	  spawn {
+	    node.dispatchDMsgs()
+	  }
 	  node
 	}
 	override def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
@@ -2254,6 +2388,15 @@ package usage {
 		here : URI,
 		configFileName : Option[String]
 	      ) : HashAgentKVDB[ReqBody,RspBody] = {
+		tweet(
+		  (
+		    "AgentKVDBNode : "
+		    + "\nthis: " + this
+		    + "\n method : mkInnerCache "
+		    + "\n here: " + here
+		    + "\n configFileName: " + configFileName
+		  )
+		)
 		new HashAgentKVDB[ReqBody, RspBody](
 		  MURI( here ),
 		  configFileName
@@ -2532,6 +2675,13 @@ package usage {
 		    throw new Exception( "shouldn't be calling this version of asCacheK" )
 		  }
 		  override def persistenceManifest : Option[PersistenceManifest] = {
+		    tweet(
+		      (
+			"HashAgentKVDB : "
+			+ "\nthis: " + this
+			+ "\n method : persistenceManifest "
+		      )
+		    )
 		    val sid = Some( ( s : String ) => s )
 		    val kvdb = this;
 		    Some(
@@ -2549,7 +2699,10 @@ package usage {
 		}
 	      }
 	    }
-	  spawn { node.dispatchDMsgs() }
+	  spawn {
+	    println( "initiating dispatch on " + node )
+	    node.dispatchDMsgs()
+	  }
 	  node
 	}
 	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
@@ -2590,6 +2743,15 @@ package usage {
 		here : URI,
 		configFileName : Option[String]
 	      ) : HashAgentKVDB[ReqBody,RspBody] = {
+		tweet(
+		  (
+		    "AgentKVDBNode : "
+		    + "\nthis: " + this
+		    + "\n method : mkInnerCache "
+		    + "\n here: " + here
+		    + "\n configFileName: " + configFileName
+		  )
+		)
 		new HashAgentKVDB[ReqBody, RspBody](
 		  MURI( here ),
 		  configFileName
@@ -2863,6 +3025,13 @@ package usage {
 		    throw new Exception( "shouldn't be calling this version of asCacheK" )
 		  }
 		  override def persistenceManifest : Option[PersistenceManifest] = {
+		    tweet(
+		      (
+			"HashAgentKVDB : "
+			+ "\nthis: " + this
+			+ "\n method : persistenceManifest "
+		      )
+		    )
 		    val sid = Some( ( s : String ) => s )
 		    val kvdb = this;
 		    Some(
@@ -2880,7 +3049,10 @@ package usage {
 		}
 	      }
 	    }
-	  spawn { node.dispatchDMsgs() }
+	  spawn {
+	    println( "initiating dispatch on " + node )
+	    node.dispatchDMsgs()
+	  }
 	  node
 	}
       }

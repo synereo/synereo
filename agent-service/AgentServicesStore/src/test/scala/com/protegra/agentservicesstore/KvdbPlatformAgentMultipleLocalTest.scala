@@ -40,6 +40,8 @@ object KvdbPlatformAgentMultipleLocalTestSpecs extends KvdbPlatformAgentBase
 {
   val timeoutBetween = TIMEOUT_LONG
 
+
+ //passes
   val writerConfigFileName = None
   val readerConfigFileName = None
 
