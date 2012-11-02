@@ -51,10 +51,10 @@ object KvdbPlatformAgentMultipleDistributedTestSpecs extends KvdbPlatformAgentBa
   val pairedReader = createNode(acquaintanceAddress, List(sourceAddress), readerConfigFileName)
 
   testMessaging(pairedWriter, pairedReader)
-  testWildcardWithPut(pairedWriter, pairedReader)
-  testWildcardWithStore(pairedWriter, pairedReader)
-  testWildcardWithPutAndCursor(pairedWriter, pairedReader)
-  testWildcardWithStoreAndCursor(pairedWriter, pairedReader)
+//  testWildcardWithPut(pairedWriter, pairedReader)
+//  testWildcardWithStore(pairedWriter, pairedReader)
+//  testWildcardWithPutAndCursor(pairedWriter, pairedReader)
+//  testWildcardWithStoreAndCursor(pairedWriter, pairedReader)
 //  testWildcardWithCursorBefore(pairedWriter, pairedReader)
 
 }

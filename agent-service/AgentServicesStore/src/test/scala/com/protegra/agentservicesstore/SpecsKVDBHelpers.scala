@@ -47,7 +47,7 @@ trait SpecsKVDBHelpers
   {
     println("attempting assert")
     println("getMustBe expecting: " + expected)
-    getString(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
+    getString(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
   }
 
   def getString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
@@ -65,7 +65,7 @@ trait SpecsKVDBHelpers
       }
     }
 
-    Thread.sleep(TIMEOUT_MED)
+    Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
     val actual = fetchString(_resultsQ, cnxnTest, key)
     return actual
   }
@@ -73,7 +73,8 @@ trait SpecsKVDBHelpers
   def getMustContain(expected: java.util.List[ String ], resultQ: LinkedBlockingQueue[ String ])(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    getResultQ(resultQ)(q, cnxn, key).containsAll(expected) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
+    Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
+    getResultQ(resultQ)(q, cnxn, key).containsAll(expected) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
   }
 
   def getResultQ(resultQ: LinkedBlockingQueue[ String ])(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): LinkedBlockingQueue[ String ] =
@@ -129,7 +130,7 @@ trait SpecsKVDBHelpers
       }
     }
 
-    Thread.sleep(TIMEOUT_MED)
+    Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
     val actual = fetchString(_resultsQ, cnxnTest, key)
     return actual
   }
@@ -151,7 +152,7 @@ trait SpecsKVDBHelpers
   //  def fetchMustBe(expected: Data)(q: Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse], cnxn: AgentCnxn, key: String) =
   //  {
   //    println("attempting assert")
-  //    fetchData(q, cnxn, key.toLabel) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
+  //    fetchData(q, cnxn, key.toLabel) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
   //  }
   //
   //  def fetchData(q: Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse], cnxn: AgentCnxn, key: CnxnCtxtLabel[String, String, String]):Data = {
@@ -171,7 +172,8 @@ trait SpecsKVDBHelpers
   def fetchMustContain(expected: java.util.List[ String ], resultQ: LinkedBlockingQueue[ String ])(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    fetchResultQ(q, cnxn, key).containsAll(expected) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
+    Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
+    fetchResultQ(q, cnxn, key).containsAll(expected) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
   }
 
   def fetchResultQ(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): LinkedBlockingQueue[ String ] =
@@ -189,7 +191,8 @@ trait SpecsKVDBHelpers
   def countMustBe(expected: Int)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: String) =
   {
     println("attempting count")
-    fetchCount(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
+    Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
+    fetchCount(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
   }
 
   //  def fetchCount(q: Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse], cnxn:AgentCnxn, key:String):Int = {
