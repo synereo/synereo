@@ -435,7 +435,7 @@ with Schema
       srStrm : java.io.ByteArrayOutputStream
     ) : List[Elem] = {
       val results = srStrm.toString("UTF-8")
-      println( "results: " + results )
+      //println( "results: " + results )
       srStrm.close
 
       results match {
