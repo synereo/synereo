@@ -30,3 +30,15 @@ case class Post(
   def this(_subject: String, _body: String, _toDetails: java.util.HashMap[String, Data], _fromDetails: java.util.HashMap[String, Data]) = this(_subject, _body, _toDetails, _fromDetails, UUID.randomUUID().toString())
 
 }
+
+object Post
+{
+
+  final val SEARCH_ALL_KEY = new Post().toSearchKey
+
+  final val SEARCH_ALL = new Post()
+  {
+    override def toSearchKey(): String = Post.SEARCH_ALL_KEY
+  }
+
+}

@@ -83,7 +83,7 @@ object SearchableDataTestSpecs extends Specification
 
     "work with traits" in {
       val id = UUID.randomUUID.toString
-      val expected = "post(" + FIELDS + "(id(\"" + id + "\"),localeCode(_),subject(_),body(_),toDetails(_),fromDetails(_),threadId(_),sent(_),delivered(_),viewed(_)))"
+      val expected = "post(" + FIELDS + "(id(\"" + id + "\"),localeCode(_),subject(_),body(_),toDetails(_),fromDetails(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_)))"
       val test = new Post()
       test.id = id
       println(test.toSearchKey)
@@ -135,7 +135,7 @@ object SearchableDataTestSpecs extends Specification
     //Connection needs to be updated to output the right key again
     "generate search key correctly for a Connection" in {
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
-      val expectedSearchKey = "connection(fields(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralDisabled, searchDisabled]\"),created(_)))"
+      val expectedSearchKey = "connection(fields(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralsDisabled, searchDisabled]\"),created(_)))"
       val data = new Connection(ConnectionCategory.Person.toString, "connectionType", "alias", null, null, "autoApprove", List(ConnectionPolicy.ReferralsDisabled.toString, ConnectionPolicy.SearchDisabled.toString),null)
       data.id = id
       val searchKey = data.toSearchKey

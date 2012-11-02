@@ -59,3 +59,16 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
 //  }
 
 }
+
+
+object PersistedMessage
+{
+
+  final val SEARCH_ALL_KEY = new PersistedMessage().toSearchKey
+
+  final val SEARCH_ALL = new PersistedMessage()
+  {
+    override def toSearchKey(): String = PersistedMessage.SEARCH_ALL_KEY
+  }
+
+}

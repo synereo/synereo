@@ -15,6 +15,13 @@ case class AppId(@BeanProperty val name: String)
 
 object AppId
 {
+//  final val SEARCH_ALL_KEY = new AppId().toSearchKey
+//
+//  final val SEARCH_ALL = new AppId()
+//  {
+//    override def toSearchKey(): String = AppId.SEARCH_ALL_KEY
+//  }
+
 
   def emptyImmutableAppId() =
   {

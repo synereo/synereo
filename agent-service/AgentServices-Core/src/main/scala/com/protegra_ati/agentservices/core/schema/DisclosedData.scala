@@ -36,3 +36,16 @@ with ExcludeFromReplication
   }
 
 }
+
+
+object DisclosedData
+{
+
+  final val SEARCH_ALL_KEY = new DisclosedData().toSearchKey
+
+  final val SEARCH_ALL = new DisclosedData()
+  {
+    override def toSearchKey(): String = DisclosedData.SEARCH_ALL_KEY
+  }
+
+}
