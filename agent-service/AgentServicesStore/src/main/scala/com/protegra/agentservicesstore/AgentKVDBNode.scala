@@ -1443,9 +1443,9 @@ with AgentCnxnTypeScope {
 	      
 	      case dfreq@Msgs.MDFetchRequest( path ) => {
 		for( ( cnxn, npath ) <- extractCnxn( path ) ) {
-		  tweet( ( this + "fetching locally for location : " + path ) )
+		  tweet( ( this + "fetching locally for location : " + npath ) )
 		  reset {
-		    for( v <- remoteFetch( List( msrc ) )( cnxn )( path ) ) {
+		    for( v <- remoteFetch( List( msrc ) )( cnxn )( npath ) ) {
 		      tweet(
 			(
 			  this 
@@ -1462,7 +1462,7 @@ with AgentCnxnTypeScope {
 	      
 	      case dsreq@Msgs.MDSubscribeRequest( path ) => {
 		for( ( cnxn, npath ) <- extractCnxn( path ) ) {
-		  tweet( ( this + "subscribing locally for location : " + path ) )
+		  tweet( ( this + "subscribing locally for location : " + npath ) )
 		  reset {
 		    for( v <- remoteSubscribe( List( msrc ) )( cnxn )( npath ) ) {
 		      tweet(
