@@ -33,6 +33,47 @@ trait SpecsKVDBHelpers
 
   val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
 
+  /* --------------------------------------------------------- *
+   *                 Test data stream generation
+   * --------------------------------------------------------- */
+
+  def tStream[T]( seed : T )( fresh : T => T ) : Stream[T] = {
+    lazy val loopStrm : Stream[T] =
+      ( List( seed ) ).toStream append ( loopStrm map fresh );
+    loopStrm
+  }
+
+  def uuidRandomStream( ) : Stream[UUID] = {
+    tStream[UUID]( UUID.randomUUID )( ( x : UUID ) => UUID.randomUUID )
+  }
+
+  def uriStream( seed : URI ) : Stream[URI] = {
+    def fresh( uri : URI ) : URI = {
+	val ( scheme, host, port, path ) =
+	  ( uri.getScheme, uri.getHost, uri.getPort, uri.getPath );
+	val spath = path.split( '/' )
+	val exchange =
+	  spath.length match {
+	    case 2 => spath( 1 )
+	    case m : Int if m > 2 => spath( 1 )
+	    case n : Int if n < 2 => "defaultAgentExchange_0"
+	  }
+	val sExch = exchange.split( '_' )
+	val ( exchRoot, exchCount ) =
+	  sExch.length match {
+	    case 2 => { ( sExch( 0 ), sExch( 1 ).toInt ) }
+	    case 1 => { ( sExch( 0 ), 0 ) }
+	    case n : Int if n > 2 => {
+	      ( ( "" /: sExch )( _ + "_" + _ ), sExch( sExch.length - 1 ).toInt )
+	    }
+	  }
+	val nExchCount = exchCount + 1
+
+	new URI( scheme, null, host, port, exchRoot + nExchCount, null, null )
+      }
+
+    tStream[URI]( seed )( fresh )
+  }
 
   def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
   {
