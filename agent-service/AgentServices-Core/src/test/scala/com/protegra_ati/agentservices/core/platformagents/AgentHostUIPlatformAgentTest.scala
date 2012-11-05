@@ -72,7 +72,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       val cnxn = new AgentCnxnProxy("test".toURI, "", UUID.randomUUID().toString.toURI)
       val agentCnxn = cnxn.toAgentCnxn()
       pa._privateQ.getPartition(agentCnxn)
-      pa._privateQ.cnxnPartition.size must be_==(startSize+1).eventually(20, TIMEOUT_EVENTUALLY)
+      pa._privateQ.cnxnPartition.size must be_==(startSize+1).eventually(5, TIMEOUT_EVENTUALLY)
     }
   }
 
@@ -96,7 +96,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       pa.send(req)
       //Thread.sleep(TIMEOUT_LONG)
       pa.listenPrivate(pa._cnxnUIStore)
-      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
 //    "raise a GetContentResponseReceivedEvent" in {
@@ -117,7 +117,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 //      pa.send(req)
 //      //Thread.sleep(TIMEOUT_LONG)
 //      pa.listenPrivate(pa._cnxnUIStore)
-//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
   }
 //
@@ -159,7 +159,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 //      req.channelLevel = None
 //
 //      pa.send(req)
-//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //
 //    "raise a GetContentAuthorizationRequiredNotification" in {
@@ -179,7 +179,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 //      val req = GetContentAuthorizationRequiredNotification(new EventKey(userAgentId1, ""))
 //
 //      pa.send(req)
-//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //    "raise a VerifyContentRequestNotification" in {
 //
@@ -198,7 +198,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 //      val req = VerifyContentRequestNotification(new EventKey(userAgentId1, ""))
 //
 //      pa.send(req)
-//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //  }
 

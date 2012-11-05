@@ -359,14 +359,14 @@ with SpecsPAHelpers
 
     "delete the correct connection from the connection list" in {
       //make sure that the Jen/Mike Connection is gone from the Jen/Jen collection
-      fetchConnectionData(pa._dbQ, jenSelfCnxn, connectionSearch.toSearchKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchConnectionData(pa._dbQ, jenSelfCnxn, connectionSearch.toSearchKey) must be_==(None).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     "drop the store collection" in {
       val profileSearch: Profile = new Profile()
 
       //make sure that the Jen/Mike data is gone
-      fetchProfileData(pa._dbQ, connJenMike.writeCnxn, profileSearch.toSearchKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchProfileData(pa._dbQ, connJenMike.writeCnxn, profileSearch.toSearchKey) must be_==(None).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     def fetchProfileData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =

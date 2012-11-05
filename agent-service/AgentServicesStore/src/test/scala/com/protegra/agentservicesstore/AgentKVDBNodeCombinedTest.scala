@@ -82,7 +82,7 @@ with Serializable
       val value = "test@protegra.com"
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
-      Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
+      SleepToPreventContinuation()
       fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
@@ -122,7 +122,7 @@ with Serializable
       Thread.sleep(TIMEOUT_MED)
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
-      Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
+      SleepToPreventContinuation()
       fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
 
     }
@@ -181,7 +181,7 @@ with Serializable
       Thread.sleep(TIMEOUT_LONG)
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
-      Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
+      SleepToPreventContinuation()
       fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(restored).eventually(5, TIMEOUT_EVENTUALLY)
 
     }

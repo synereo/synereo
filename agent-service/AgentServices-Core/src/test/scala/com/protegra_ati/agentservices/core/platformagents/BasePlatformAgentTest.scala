@@ -99,7 +99,7 @@ with Timeouts
       //Thread.sleep(TIMEOUT_LONG)
 
       pa.get(pa._dbQ, cnxn, key, handleGet)
-      result.value must be_==(mockMsg).eventually(20, TIMEOUT_EVENTUALLY)
+      result.value must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     def handleGet(cnxn: AgentCnxnProxy, msg: Message) =
@@ -122,14 +122,14 @@ with Timeouts
 
     "retrieve" in {
       pa.store(pa._dbQ, cnxn, mockDataFetch.toStoreKey, Serializer.serialize[ Data ](mockDataFetch))
-      fetchData(pa._dbQ, cnxn, mockDataFetch.toStoreKey) must be_==(mockDataFetch).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, cnxn, mockDataFetch.toStoreKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
     "search" in {
          //use  mockDataFetch.toStoreKey
       pa.store(pa._dbQ, cnxn, mockDataSearch.toStoreKey, Serializer.serialize[ Data ](mockDataFetch))
       val search = new Profile ()
       search.id = mockDataSearch.id.toString
-      fetchData(pa._dbQ, cnxn, search.toSearchKey) must be_==(mockDataFetch).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, cnxn, search.toSearchKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     def fetchData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, searchKey: String): Any =
@@ -160,7 +160,7 @@ with Timeouts
       val mockMsg = new GetContentRequest(new EventKey(UUID.randomUUID(), ""), mockSearch)
 
       pa.store(pa._privateQ, cnxn, mockMsg.getChannelKey, Serializer.serialize[ Message ](mockMsg))
-      listen(pa._privateQ, cnxn, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message)).value must be_==(mockMsg).eventually(20, TIMEOUT_EVENTUALLY)
+      listen(pa._privateQ, cnxn, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message)).value must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     def listen(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, handler: (AgentCnxnProxy, Message) => Unit) =
@@ -227,7 +227,7 @@ with Timeouts
       pa.drop(pa._dbQ, newCnxn)
       Thread.sleep(TIMEOUT_LONG)
 
-      fetchData(pa._dbQ, newCnxn, newProfile.toStoreKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, newCnxn, newProfile.toStoreKey) must be_==(None).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     def fetchData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
@@ -269,7 +269,7 @@ with Timeouts
 //      val profileSearch = new Profile ()
 //      val request = GetContentRequest(EventKey(UUID.randomUUID(), ""), profileSearch)
 //      pa1.send(pa1._privateQ, conn.readCnxn, request)
-//      msgReceived must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
+//      msgReceived must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //
 //    def handleFetchConnection(cnxn: AgentCnxnProxy, data: Data) =
