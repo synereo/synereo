@@ -155,7 +155,6 @@ case class KvdbPlatformAgentBase() extends Specification
 
 
    "Persisted Put/Fetch" should {
-      skip("issue 220")
           Thread.sleep(timeoutBetween)
           "respect connection" in {
             val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
@@ -164,7 +163,7 @@ case class KvdbPlatformAgentBase() extends Specification
             Thread.sleep(TIMEOUT_MED)
             fetchMustBe("")(reader, cnxnRandom, key)
           }
-    
+
           "retrieve " in {
             val key = "contentChannel(cachedPutFetchRetrieve(\"email\"))".toLabel
             val value = "cachedPutFetchRetrieve@protegra.com"
@@ -172,42 +171,41 @@ case class KvdbPlatformAgentBase() extends Specification
             Thread.sleep(TIMEOUT_MED)
             fetchMustBe(value)(reader, cnxn, key)
           }
-    
-          "consume " in {
+
+          "not consume " in {
             val key = "contentChannel(cachedPutFetchConsume(\"email\"))".toLabel
             val value = "cachedPutFetchConsume@protegra.com"
             reset {writer.put(cnxn)(key, Ground(value))}
             Thread.sleep(TIMEOUT_MED)
             fetchMustBe(value)(reader, cnxn, key)
             Thread.sleep(TIMEOUT_MED)
-            fetchMustBe("")(reader, cnxn, key)
+            fetchMustBe(value)(reader, cnxn, key)
           }
-    
+
           "work with UUID" in {
             val key = ( "testChannel(cachedPutFetchUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
             val value = "cachedPutFetchUUID@protegra.com"
             reset {writer.put(cnxn)(key, Ground(value))}
             Thread.sleep(TIMEOUT_MED)
-    
+
             fetchMustBe(value)(reader, cnxn, key)
           }
-    
+
           "update" in {
             val key = "contentChannel(cachedPutFetchUpdate(\"email\"))".toLabel
             val value = "cachedPutFetchUpdate@protegra.com"
             reset {writer.put(cnxn)(key, Ground(value + "1"))}
             reset {writer.put(cnxn)(key, Ground(value + "2"))}
             reset {writer.put(cnxn)(key, Ground(value + "3"))}
-    
+
             Thread.sleep(TIMEOUT_MED)
             fetchMustBe(value + "3")(reader, cnxn, key)
           }
         }
-    
+
     
 
     "Cached Fetch/Put" should {
-      skip("issue 220")
        Thread.sleep(timeoutBetween)
 
        "retrieve" in {
@@ -230,10 +228,8 @@ case class KvdbPlatformAgentBase() extends Specification
              }
            }
          }
-         println("Sleeping for 300")
-         Thread.sleep(TIMEOUT_MED)
+         Thread.sleep(TIMEOUT_LONG)
          reset {writer.put(cnxn)(key, Ground(value))}
-         println("Sleeping again for 300")
          SleepToPreventContinuation()
 
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
@@ -298,16 +294,16 @@ case class KvdbPlatformAgentBase() extends Specification
       }
 
       //this will probably fail once after deleting all databases
-      "retrieve from existing db" in {
-        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
-
-        val key = "testChannel(storeGetRetrieveExisting(\"name\"))".toLabel
-        val value = "storeGetRetrieveExisting@protegra.com"
-        writer.store(cnxnNew)(key, Ground(value))
-
-        Thread.sleep(TIMEOUT_MED)
-        getMustBe(value)(reader, cnxnNew, key)
-      }
+//      "retrieve from existing db" in {
+//        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
+//
+//        val key = "testChannel(storeGetRetrieveExisting(\"name\"))".toLabel
+//        val value = "storeGetRetrieveExisting@protegra.com"
+//        writer.store(cnxnNew)(key, Ground(value))
+//
+//        Thread.sleep(TIMEOUT_MED)
+//        getMustBe(value)(reader, cnxnNew, key)
+//      }
 
       "update" in {
         val key = "contentChannel(storeGetUpdate(\"email\"))".toLabel
@@ -342,7 +338,6 @@ case class KvdbPlatformAgentBase() extends Specification
     }
 
     "Store/Fetch" should {
-      skip("issue 220")
       Thread.sleep(timeoutBetween)
       "respect connection" in {
         val key = "testChannel(storeFetchRespectingCnxn(\"email\"))".toLabel
@@ -408,7 +403,6 @@ case class KvdbPlatformAgentBase() extends Specification
     }
 
     "Put/Delete" should {
-      skip("issue 220")
 
       Thread.sleep(timeoutBetween)
 
@@ -445,7 +439,6 @@ case class KvdbPlatformAgentBase() extends Specification
     }
 
     "Store/Delete" should {
-      skip("issue 220")
 
       Thread.sleep(timeoutBetween)
 
@@ -482,14 +475,14 @@ case class KvdbPlatformAgentBase() extends Specification
 
     }
 
-//    "Get/Store" should {
-//      // get/fetch before store, store doesnt look at waiters
-//    }
-//
-//    "Fetch/Store" should {
-//      // get/fetch before store, store doesnt look at waiters
-//    }
-//
+    "Get/Store" should {
+      // get/fetch before store, store doesnt look at waiters
+    }
+
+    "Fetch/Store" should {
+      // get/fetch before store, store doesnt look at waiters
+    }
+
 
   }
 

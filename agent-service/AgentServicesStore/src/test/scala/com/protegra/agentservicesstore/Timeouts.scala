@@ -26,5 +26,6 @@ trait Timeouts {
     Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
     Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
     Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
+    Thread.sleep(TIMEOUT_BEFORE_RESULT_FETCH)
   }
 }
