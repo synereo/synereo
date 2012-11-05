@@ -138,14 +138,16 @@ trait SpecsKVDBHelpers
     reset {
       for ( e <- q.get(cnxn)(key) ) {
         if ( e.dispatch.toString != "" ) {
-          reset {_resultsQ.put(cnxnTest)(key, e.dispatch)}
+          val resultKey = "result(\"" + UUID.randomUUID().toString() + "\")"
+          reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, e.dispatch)}
           println("getResultQ - storing to resultQ : " + e.dispatch)
         }
       }
     }
     SleepToPreventContinuation()
 
-    val actual = fetchResultQ(_resultsQ, cnxnTest, key)
+    val resultSearch = "result(_)".toLabel
+    val actual = fetchResultQ(_resultsQ, cnxnTest, resultSearch)
     return actual
   }
 
