@@ -522,7 +522,6 @@ case class KvdbPlatformAgentBase() extends Specification
     val key6 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
     val key7 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
     val keyEmail = "surveyChannel(level1(\"email\"), level2(\"name\"))"
-    val value = "tests@protegra.com"
     writer.store(cnxn)(key1.toLabel, Ground(value + "1"))
     //    Thread.sleep(TIMEOUT_SHORT)
     writer.store(cnxn)(key2.toLabel, Ground(value + "2"))
@@ -558,7 +557,7 @@ case class KvdbPlatformAgentBase() extends Specification
 
       var resultQ = new LinkedBlockingQueue[ String ]
       val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests@protegra.com"
+      val value = "tests"
       setupData(writer, cnxnRandom, value)
       val expectedCollection = setupExpectedResults(value)
 
@@ -567,73 +566,73 @@ case class KvdbPlatformAgentBase() extends Specification
         getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
       }
 
-//      "find many values by underscore Get" in {
-//        val lblSearch = "contentChannel(_)".toLabel
-//        getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a value by Get" in {
-//        val lblSearch = "fail(X)".toLabel
-//        getMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a nested value by Get" in {
-//        val lblSearch = "abc(xyz(X))".toLabel
-//        getMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-////      this is only valid if WildcardSearchShouldNotFind works
-//
-//      "find a value by Get" in {
-//        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
-//        getMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by Get" in {
-//        val lblSearch = "surveyChannel(X, Y)".toLabel
-//        getMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by underscore Get" in {
-//        val lblSearch = "surveyChannel(_, _)".toLabel
-//        getMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find many values by Fetch" in {
-//        val lblSearch = "contentChannel(X)".toLabel
-//        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find many values by underscore Fetch" in {
-//        val lblSearch = "contentChannel(_)".toLabel
-//        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a value by Fetch" in {
-//        val lblSearch = "fail(X)".toLabel
-//        fetchMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "not find a nested value by Fetch" in {
-//        val lblSearch = "abc(xyz(X))".toLabel
-//        fetchMustBe("")(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      //this is only valid if WildcardSearchShouldNotFind works
-//      "find a value by Fetch" in {
-//        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
-//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by Fetch" in {
-//        val lblSearch = "surveyChannel(X, Y)".toLabel
-//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
-//
-//      "find a channel by underscore Fetch" in {
-//        val lblSearch = "surveyChannel(_, _)".toLabel
-//        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
-//      }
+      "find many values by underscore Get" in {
+        val lblSearch = "contentChannel(_)".toLabel
+        getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a value by Get" in {
+        val lblSearch = "fail(X)".toLabel
+        getMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a nested value by Get" in {
+        val lblSearch = "abc(xyz(X))".toLabel
+        getMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+//      this is only valid if WildcardSearchShouldNotFind works
+
+      "find a value by Get" in {
+        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
+        getMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by Get" in {
+        val lblSearch = "surveyChannel(X, Y)".toLabel
+        getMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by underscore Get" in {
+        val lblSearch = "surveyChannel(_, _)".toLabel
+        getMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find many values by Fetch" in {
+        val lblSearch = "contentChannel(X)".toLabel
+        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find many values by underscore Fetch" in {
+        val lblSearch = "contentChannel(_)".toLabel
+        fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a value by Fetch" in {
+        val lblSearch = "fail(X)".toLabel
+        fetchMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+      "not find a nested value by Fetch" in {
+        val lblSearch = "abc(xyz(X))".toLabel
+        fetchMustBe("")(reader, cnxnRandom, lblSearch)
+      }
+
+      //this is only valid if WildcardSearchShouldNotFind works
+      "find a value by Fetch" in {
+        val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
+        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by Fetch" in {
+        val lblSearch = "surveyChannel(X, Y)".toLabel
+        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
+
+      "find a channel by underscore Fetch" in {
+        val lblSearch = "surveyChannel(_, _)".toLabel
+        fetchMustBe(value)(reader, cnxnRandom, lblSearch)
+      }
     }
   }
 
@@ -647,7 +646,7 @@ case class KvdbPlatformAgentBase() extends Specification
       val timeoutBetween: Int = 300
 
       val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests@protegra.com"
+      val value = "tests"
       setupData(writer, cnxnRandom, value)
 
       "find many results by Get" in {
@@ -688,7 +687,7 @@ case class KvdbPlatformAgentBase() extends Specification
       val timeoutBetween: Int = 300
 
       val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests@protegra.com"
+      val value = "tests"
 
       val testId = UUID.randomUUID().toString()
       val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
