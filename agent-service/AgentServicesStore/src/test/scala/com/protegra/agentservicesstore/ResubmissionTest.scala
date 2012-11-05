@@ -99,6 +99,10 @@ with FJTaskRunners
 
     "retrieve between UI and Store with a public queue" in {
 
+      /* --------------------------------------------------------- *
+       *                       KVDBs
+       * --------------------------------------------------------- */
+
       val uiConfigFileName = None //Some("db_ui.conf")
       val ui_privateQ =
 	createNode( ui_location, List( store_location ), uiConfigFileName )
@@ -107,150 +111,164 @@ with FJTaskRunners
       val store_privateQ =
 	createNode( store_location, List( ui_location ), storeConfigFileName )
 
-//      val msgConfigFileName = Some("db_store.conf")
-//      val store_msgQ = createNode(public_location, List(), msgConfigFileName)
+      // val msgConfigFileName = Some("db_store.conf")
+      // val store_msgQ = createNode(public_location, List(), msgConfigFileName)
 
-      val uuidStrm : Stream[UUID] = uuidRandomStream()
+      /* --------------------------------------------------------- *
+       *                      Generated data
+       * --------------------------------------------------------- */
 
-      val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
-      val value = "test@protegra.com"
+      val contentStrm : Stream[UUID] = uuidRandomStream()
+      val sessionStrm : Stream[UUID] = uuidRandomStream()
 
-//      val keyPublic = "contentResponsePublic(_)"
-//      reset {
-//        for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
-//      }
+      val contentSection = contentStrm.take( numberOfStandingRequests )
+      val sessionSection = sessionStrm.take( numberOfStandingRequests )
 
-      val keyPrivate = "contentRequestPrivate(_)"
+      val sessionedContent = sessionSection.zip( contentSection )
+
+      val keyBidsNAsks =
+	for( ( session, content ) <- sessionedContent )
+	yield {
+	  (
+	    (
+	      (
+		"contentRequestPrivate("
+		+ "\"" + session + "\"" 
+		+ " , "
+		+ "\"" + content + "\"" 
+		+ ")"
+	      ),
+	      (
+		"test" + session + "@protegra.com"
+	      )
+	    ),
+	    (
+	      "contentRequestPrivate("
+	      + "\"" + session + "\"" 
+	      + " , "
+	      + "_" 
+	      + ")"
+	    )
+	  )
+	}
+
+      val ( keyBids, keyAsks ) = keyBidsNAsks.unzip
+      val ( keyBs, keyVs ) = keyBids.unzip
 
       val resultKey = "result(\"1\")"      
 
-      spawn {
-	reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
-      }
-      
-      spawn {
-	reset {
-          for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
-            if ( e != None ) {
-              val result = e.dispatch
-              reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, result)}
+      // spawn {
+      //   reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
+      // }
+
+      /* --------------------------------------------------------- *
+       *                   Store continuations
+       * --------------------------------------------------------- */      
+      var barrier : Int = 0
+
+      val keyAskItr = keyAsks.iterator
+
+      while( keyAskItr.hasNext ) { // Delimited continuations don't
+				     // work well with collections, yet
+	val keyPrivate = keyAskItr.next
+
+	spawn {
+	  reset {
+            for ( e <- store_privateQ.get( cnxnUIStore )( keyPrivate.toLabel ) ) {
+	      e match {
+		case Some( _ ) => {
+		  println(
+		    (
+		      "The original behavior for the get on " 
+		      + "("
+		      + cnxnUIStore
+		      + " , "
+		      + keyPrivate
+		      + ")"
+		    )
+		  )
+		  val result = e.dispatch
+		  reset {
+		    _resultsQ.put( cnxnTest )( resultKey.toLabel, result )
+		  }
+		}
+		case None => {
+		  println(
+		    (
+		      "listen received - none - on " 
+		      + "("
+		      + cnxnUIStore
+		      + " , "
+		      + keyPrivate
+		      + ")"
+		    )
+		  )
+		  barrier += 1
+		}
+	      }
             }
-            else {
-              println("listen received - none")
-            }
-          }
+	  }
 	}
-      }      
+      }
 
-      Thread.sleep(TIMEOUT_MED)
-      fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+      /* --------------------------------------------------------- *
+       * Wait at barrier -- will be fixed with a blocking get, soon
+       * --------------------------------------------------------- */
+
+      while ( barrier < keyAsks.length ) {
+	println( "waiting to get past barrier; current height: " + barrier )
+	Thread.sleep(TIMEOUT_MED)
+      }
+
+      /* --------------------------------------------------------- *
+       *                   Resubmit requests
+       * --------------------------------------------------------- */      
+
+      reset {
+	for( pI <- store_privateQ.resubmitRequests( cnxnUIStore )( 1 )) {
+	  spawn {
+	    for( e <- store_privateQ.get( cnxnUIStore )( pI.place ) ) {
+	      e match {
+		case Some( _ ) => {
+		  println(
+		    (
+		      "The new behavior for the get on " 
+		      + "("
+		      + cnxnUIStore
+		      + " , "
+		      + pI.place
+		      + ")"
+		    )
+		  )
+		  val result = e.dispatch
+		  reset {
+		    _resultsQ.put( cnxnTest )( resultKey.toLabel, result )
+		  }
+		}
+		case None => {
+		  println(
+		    (
+		      "listen received - none - on " 
+		      + "("
+		      + cnxnUIStore
+		      + " , "
+		      + keyPrivate
+		      + ")"
+		    )
+		  )
+		}
+	      }
+	    }
+	  }
+	}
+      }
+
+      /* --------------------------------------------------------- *
+       *                   Assert invariant
+       * --------------------------------------------------------- */      
+      
+      //fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
     }
-
-//    "retrieve between UI and Store with a public queue using the persisted continuation" in {
-//
-//      val ui_privateQ = createNode(ui_location, List(store_location))
-//
-//      var store_privateQ = createNode(store_location, List(ui_location))
-//      val store_msgQ = createNode(public_location, List())
-//
-//      val keyPublic = "contentResponsePublic(_)"
-//      reset {
-//        for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
-//      }
-//
-//      val keyPrivate = "contentRequestPrivate(_)"
-//      reset {
-//        for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
-//          if ( e != None ) {
-//            val result = e.dispatch
-//            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
-//          }
-//          else {
-//            println("listen received - none")
-//          }
-//        }
-//      }
-//
-//      Thread.sleep(TIMEOUT_MED)
-//      store_privateQ = null
-//      Thread.sleep(TIMEOUT_MED)
-//
-//      val restored_msgQ = createNode(public_location, List())
-//
-//      val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
-//      val value = "test(1)"
-//      Thread.sleep(TIMEOUT_MED)
-//      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
-//
-//      Thread.sleep(TIMEOUT_MED)
-//      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
-//
-//    }
-//
-//
-//    "retrieve between UI and Store with a public queue using the migrated continuation" in {
-//    skip("isolate")
-//      val ui_privateQ = createNode(ui_location, List(store_location))
-//
-//      var store_privateQ = createNode(store_location, List(ui_location))
-//      val store_msgQ = createNode(public_location, List())
-//
-//      val keyPublic = "contentResponsePublic(_)"
-//      reset {
-//        for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
-//      }
-//
-//      val keyPrivate = "contentRequestPrivate(_)"
-//      reset {
-//        for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
-//          if ( e != None ) {
-//            val result = e.dispatch
-//            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
-//          }
-//          else {
-//            println("listen received - none")
-//          }
-//        }
-//      }
-//
-//      Thread.sleep(TIMEOUT_LONG)
-//      store_privateQ = null
-//
-//      val restored_privateQ = createNode(public_location, List())
-//      val restored = "restored"
-//      reset {
-//        val generator = restored_privateQ.resubmitGet(cnxnUIStore)(keyPrivate.toLabel).getOrElse( throw new Exception( "No generator!" ) )
-//        for ( placeInstance <- generator ) {
-//          Thread.sleep(TIMEOUT_LONG)
-//          Thread.sleep(TIMEOUT_LONG)
-//          Thread.sleep(TIMEOUT_LONG)
-//            reset {
-//              Thread.sleep(TIMEOUT_LONG)
-//              Thread.sleep(TIMEOUT_LONG)
-//              Thread.sleep(TIMEOUT_LONG)
-//              for ( e <- restored_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
-//                if ( e != None ) {
-//                  val result = e.dispatch
-//                  reset {_resultsQ.put(cnxnTest)(result.toLabel, restored)}
-//                }
-//                else {
-//                  println("listen received - none")
-//                }
-//              }
-//            }
-//          }
-//      }
-//
-//      //intermittent?
-//      val keyMsg = "contentRequestPrivate(\"" + UUID.randomUUID() + "\")"
-//      val value = "test(\"1\")"
-//      Thread.sleep(TIMEOUT_LONG)
-//      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
-//
-//      Thread.sleep(TIMEOUT_MED)
-//      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(restored).eventually(5, TIMEOUT_EVENTUALLY)
-//
-//    }
 
   }
 
