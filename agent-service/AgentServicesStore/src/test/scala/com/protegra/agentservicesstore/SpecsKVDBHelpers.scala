@@ -25,14 +25,12 @@ import actors.threadpool.LinkedBlockingQueue
 import scala.concurrent.ops._
 import com.biosimilarity.lift.lib.moniker._
 
-trait SpecsKVDBHelpers
-  extends Timeouts
-  with RabbitTestSetup
-{
-  self: Specification =>
-
-  val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
-
+trait KVDBHelpers extends Timeouts with RabbitTestSetup {
+  val _resultsQ =
+    createNode(
+      "127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB),
+      List[ URI ]()
+    )
   /* --------------------------------------------------------- *
    *                 Test data stream generation
    * --------------------------------------------------------- */
@@ -83,6 +81,12 @@ trait SpecsKVDBHelpers
   {
     AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
   }
+}
+
+trait SpecsKVDBHelpers
+  extends KVDBHelpers
+{
+  self: Specification =>     
 
   def getMustBe(expected: String)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
