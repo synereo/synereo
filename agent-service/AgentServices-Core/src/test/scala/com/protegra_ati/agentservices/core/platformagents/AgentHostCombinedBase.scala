@@ -64,8 +64,10 @@ Timeouts
     // store
     val publicAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC)
     val publicAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))
+
     val privateAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
     val privateAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE))
+
     val dbAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_DB)
     val resultAddress = "localhost".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB)
     storeRef._cnxnUIStore = cnxnUIStore
@@ -273,7 +275,6 @@ Timeouts
 
   def count(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data): Int =
   {
-    val sync = new AnyRef()
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
     @volatile var count = 0
@@ -285,7 +286,8 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-            sync.synchronized {count = x.data.size}
+           count = x.data.size
+            println("size received : " + count)
           }
           case _ => {}
         }
@@ -297,8 +299,8 @@ Timeouts
     getReq.targetCnxn = cnxn
     ui.send(getReq)
 
-    trySleep(sync.synchronized {count})
-    sync.synchronized {count}
+    trySleep(count)
+    count
   }
 
   def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =

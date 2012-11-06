@@ -30,8 +30,8 @@ with Private
 
   def initForTest(privateAddress: URI, privateAcquaintanceAddresses: List[ URI ], dbAddress: URI, id: UUID) =
   {
-    initPrivate(privateAddress, privateAcquaintanceAddresses)
-    initDb(dbAddress)
+    initPrivate(privateAddress, privateAcquaintanceAddresses, None)
+    initDb(dbAddress, None)
 
     super.initForTest(id)
   }

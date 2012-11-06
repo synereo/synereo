@@ -20,21 +20,23 @@ trait Storage
 
   var _dbLocation: URI = null
   var _dbQ: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
-
+  var _dbConfigFileName: Option[String] = None
+     
   def initDb(configUtil: Config)
   {
     val dbSelfMapKey = "db.self"
     _dbLocation = loadFirstURI(configUtil.getConfigMap(dbSelfMapKey))
   }
 
-  def initDb(dbLocation: URI)
+  def initDb(dbLocation: URI, dbConfigFileName: Option[String])
   {
     _dbLocation = dbLocation
+    _dbConfigFileName = dbConfigFileName
   }
 
   def loadStorageQueue() =
   {
-    _dbQ = createNode(_dbLocation, List())
+    _dbQ = createNode(_dbLocation, List(), _dbConfigFileName)
   }
 
   def deleteDataForSelf(cnxn: AgentCnxnProxy, dataToDelete: Data) =

@@ -56,8 +56,11 @@ with Timeouts
 
     "retrieve english Profile between UI and Store with a public queue" in {
       AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Locale.ENGLISH.toString())
-
-      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, None) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
+      Thread.sleep(1000)
+      Thread.sleep(1000)
+      Thread.sleep(1000)
+      Thread.sleep(1000)
+      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, None) must be_==(1).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
 //    "retrieve french and english Profile between UI and Store with a public queue" in {
