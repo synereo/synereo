@@ -2,11 +2,13 @@ package com.protegra_ati.agentservices.core.messages.invitation
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.messages._
+import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
-import com.rits.cloning.Cloner;
+import com.rits.cloning.Cloner
+import com.protegra_ati.agentservices.core.util.cloner.ClonerFactory
 
 trait InvitationResponseSet
 {
@@ -43,7 +45,7 @@ trait InvitationResponseSet
 
   protected def processReferralResponse(cnxnBroker_Broker: AgentCnxnProxy, referralResponse: ReferralResponse): Unit =
   {
-    val query = new Connection()
+    val query = ConnectionFactory.createEmptyImmutableConnectionForSearch()
     fetchList[ Connection ](_dbQ, cnxnBroker_Broker, query.toSearchKey, findConnections(_: AgentCnxnProxy, _: List[ Connection ], referralResponse))
   }
 
@@ -97,7 +99,7 @@ trait InvitationResponseSet
     //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
     for ( msg <- messages ) {
       if ( msg.message.ids.id == parentId ) {
-        val newData = new Cloner().deepClone(msg)
+        val newData = ClonerFactory.getInstance().createDeepClone(msg)
         newData.archive()
         if ( !isAccepted )
           newData.reject()

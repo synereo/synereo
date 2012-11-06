@@ -66,6 +66,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
           }
           reset {writer.put(cnxn)(key, Ground(value))}
 
+          SleepToPreventContinuation()
           fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
         }
       }
@@ -94,6 +95,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
          }
          reset {writer.put(cnxn)(key, Ground(value))}
 
+         SleepToPreventContinuation()
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
        }
      }
@@ -117,6 +119,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
 
            //with 1000 sleep the race condition turns into store/fetch which works without watiers.
 //           Thread.sleep(1000)
+           SleepToPreventContinuation()
            fetchString(reader, cnxn, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
          }
        }
@@ -136,6 +139,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
            val key = "contentChannel(fetchWatierRetrieve(\"email\"))".toLabel
            val value = "fetchWatierRetrieve@protegra"
 
+           SleepToPreventContinuation()
            fetchString(reader, cnxn, key) must be_==(value).eventually(3, TIMEOUT_EVENTUALLY)
          }
        }

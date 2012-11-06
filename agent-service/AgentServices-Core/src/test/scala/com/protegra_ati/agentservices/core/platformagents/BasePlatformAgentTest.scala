@@ -14,21 +14,21 @@ import org.specs.runner.ConsoleRunner
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.OptionExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import java.util.UUID
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema.util._
 import org.junit._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import scala.util.Random
 import java.net.URI
 import org.specs.runner._
-import com.protegra.agentservicesstore.AgentTS._
-import com.biosimilarity.lift.lib.moniker._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import java.net.URI
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import com.protegra.agentservicesstore.util.Severity
@@ -53,9 +53,9 @@ with Timeouts
 
   def createPA: MockPlatformAgent =
   {
-    val dbAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_DB)
-    val privateAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URM ]()
+    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_DB)
+    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+    val privateAcquaintanceAddresses = List[ URI ]()
     val pa = new MockPlatformAgent()
     // pa._cnxnUIStore = cnxn
     pa.initForTest(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
@@ -65,9 +65,9 @@ with Timeouts
   //can't conflict on DB port
   def createPA1: MockPlatformAgent =
   {
-    val dbAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
-    val privateAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_UI_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URM ]("127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_PRIVATE))
+    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
+    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
+    val privateAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
     val pa = new MockPlatformAgent()
     // pa._cnxnUIStore = cnxn
     pa.initForTest(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
@@ -76,71 +76,44 @@ with Timeouts
 
   def createPA2: MockPlatformAgent =
   {
-    val dbAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
-    val privateAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_STORE_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URM ]("127.0.0.1".toURM.withPort(RABBIT_PORT_UI_PRIVATE))
+    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
+    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+    val privateAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE))
     val pa = new MockPlatformAgent()
     // pa._cnxnUIStore = cnxn
     pa.initForTest(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
     pa
   }
 
-  //    @Ignore("these need to be real ips, use vms?") @Test
-  //    def init() {
-  //      val pa = new AgentHostStorePlatformAgent()
-  //      var uri1 = "1.1.1.1".toURI
-  //      var uri2 = "2.2.2.2".toURI
-  //      var uri3 = "3.3.3.3".toURI
-  //      pa.init(uri1, List(uri2, uri3), UUID.randomUUID)
-  //      //didn't blow up
-  //      assertTrue(true)
-  //    }
+  @transient val pa = createPA
 
-  val pa = createPA
+  "putGet" should {
+    val mockDataGet = new Profile("test", "me",  "test Description",  "123@test.com","CA", "someCAprovince", "city", "postalCode","website",null )
+    val parentIds = new Identification()
+    val mockMsg = new GetContentResponse(parentIds.copyAsChild(), null, List(mockDataGet))
+    var result: Option[ GetContentResponse ] = None
 
-//  "send" should {
-//    "not blow up" in {
-//      try {
-//        val queryObject = new Profile ()
-//        val msg = new GetContentRequest(null, queryObject)
-//
-//        //fix this
-//        //        pa.send(_privateQ, msg, sourceId, targetId)
-//        true must be(true)
-//      }
-//      catch {
-//        case _ => fail
-//      }
-//    }
-//  }
+    "retrieve" in {
+      val key = "profile(\"putGet\")"
+      pa.put(pa._dbQ, cnxn, key, Serializer.serialize[ Message ](mockMsg))
+      //Thread.sleep(TIMEOUT_LONG)
 
-//  "putGet" should {
-//    val mockDataGet = new Profile("test", "me",  "test Description",  "123@test.com","CA", "someCAprovince", "city", "postalCode" )
-//    val parentIds = new Identification()
-//    val mockMsg = new GetContentResponse(parentIds.copyAsChild(), null, List(mockDataGet))
-//    var result: Option[ GetContentResponse ] = None
-//
-//    "retrieve" in {
-//      val key = "profile(\"putGet\")"
-//      pa.put(pa._dbQ, cnxn, key, Serializer.serialize[ Message ](mockMsg))
-//      //Thread.sleep(TIMEOUT_LONG)
-//
-//      pa.get(pa._dbQ, cnxn, key, handleGet)
-//      result.value must be_==(mockMsg).eventually(20, TIMEOUT_EVENTUALLY)
-//    }
-//
-//    def handleGet(cnxn: AgentCnxnProxy, msg: Message) =
-//    {
-//      msg match {
-//        case x: GetContentResponse => {
-//          result = Some(x)
-//        }
-//        case _ => {
-//        }
-//      }
-//    }
-//  }
-//
+      pa.get(pa._dbQ, cnxn, key, handleGet)
+      result.value must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
+    }
+
+    def handleGet(cnxn: AgentCnxnProxy, msg: Message) =
+    {
+      msg match {
+        case x: GetContentResponse => {
+          result = Some(x)
+        }
+        case _ => {
+        }
+      }
+    }
+  }
+
   "storeFetch Profile" should {
     val mockDataFetch = new Profile("test", "me",  "test Description", "123@test.com","CA", "someCAprovince", "city", "postalCode", "website" )
     //remove mockDataSearch not needed
@@ -149,17 +122,17 @@ with Timeouts
 
     "retrieve" in {
       pa.store(pa._dbQ, cnxn, mockDataFetch.toStoreKey, Serializer.serialize[ Data ](mockDataFetch))
-      fetchData(pa._dbQ, cnxn, mockDataFetch.toStoreKey) must be_==(mockDataFetch).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, cnxn, mockDataFetch.toStoreKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
     "search" in {
          //use  mockDataFetch.toStoreKey
       pa.store(pa._dbQ, cnxn, mockDataSearch.toStoreKey, Serializer.serialize[ Data ](mockDataFetch))
       val search = new Profile ()
       search.id = mockDataSearch.id.toString
-      fetchData(pa._dbQ, cnxn, search.toSearchKey) must be_==(mockDataFetch).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, cnxn, search.toSearchKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, searchKey: String): Any =
+    def fetchData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, searchKey: String): Any =
     {
       pa.fetch[ Data ](queue, cnxn, searchKey, handleFetch)
       return result.value
@@ -187,10 +160,10 @@ with Timeouts
       val mockMsg = new GetContentRequest(new EventKey(UUID.randomUUID(), ""), mockSearch)
 
       pa.store(pa._privateQ, cnxn, mockMsg.getChannelKey, Serializer.serialize[ Message ](mockMsg))
-      listen(pa._privateQ, cnxn, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message)).value must be_==(mockMsg).eventually(20, TIMEOUT_EVENTUALLY)
+      listen(pa._privateQ, cnxn, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message)).value must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
-    def listen(q: PartitionedStringMGJ, cnxn: AgentCnxnProxy, handler: (AgentCnxnProxy, Message) => Unit) =
+    def listen(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, handler: (AgentCnxnProxy, Message) => Unit) =
     {
       pa.listen(q, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handler(_: AgentCnxnProxy, _: Message))
       result
@@ -214,12 +187,13 @@ with Timeouts
 
     "delete 1 record" in {
       pa.store(pa._dbQ, cnxn, mockProfile1.toStoreKey, Serializer.serialize[ Data ](mockProfile1))
-      fetchData(pa._dbQ, cnxn, mockProfile1.toStoreKey) must be_==(Some(mockProfile1)).eventually(3, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, cnxn, mockProfile1.toStoreKey) must be_==(Some(mockProfile1)).eventually(5, TIMEOUT_EVENTUALLY)
+      Thread.sleep(TIMEOUT_LONG)
       pa.delete(pa._dbQ, cnxn, mockProfile1.toStoreKey)
-      fetchData(pa._dbQ, cnxn, mockProfile1.toStoreKey) must be_==(None).eventually(3, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, cnxn, mockProfile1.toStoreKey) must be_==(None).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
+    def fetchData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       result = None
       pa.fetch[ Data ](queue, cnxn, key, handleFetch)
@@ -248,15 +222,15 @@ with Timeouts
 
     "create and drop collection" in {
       pa.store(pa._dbQ, newCnxn, newProfile.toStoreKey, Serializer.serialize[ Data ](newProfile))
-      //Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
 
       pa.drop(pa._dbQ, newCnxn)
-      //Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
 
-      fetchData(pa._dbQ, newCnxn, newProfile.toStoreKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, newCnxn, newProfile.toStoreKey) must be_==(None).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
+    def fetchData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       result = None
       pa.fetch[ Data ](queue, cnxn, key, handleFetch)
@@ -272,47 +246,46 @@ with Timeouts
     }
   }
 
-  "listen from stored connection" should {
-    val pa1 = createPA1
-    val pa2 = createPA2
-    var msgReceived = false
-    val sync = new AnyRef ()
-
-    //store connection
-    val JenId = "Jen" + UUID.randomUUID
-    val MikeId = "Mike" + UUID.randomUUID
-    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId.toString, MikeId.toString)
-    val newCnxn = new AgentCnxnProxy(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
-    pa1.store(pa1._dbQ, newCnxn, conn.toStoreKey, Serializer.serialize[ Data ](conn))
-    Thread.sleep(TIMEOUT_LONG)
-
-    //fetch connection
-    val connSearch = new  Connection ()
-    pa1.fetch[ Data ](pa1._dbQ, newCnxn, connSearch.toSearchKey, handleFetchConnection)
-    //Thread.sleep(TIMEOUT_LONG)
-
-    //listen on handler
-    "receive message" in {
-      val profileSearch = new Profile ()
-      val request = GetContentRequest(EventKey(UUID.randomUUID(), ""), profileSearch)
-      pa1.send(pa1._privateQ, conn.readCnxn, request)
-      sync.synchronized {msgReceived} must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
-    }
-
-    def handleFetchConnection(cnxn: AgentCnxnProxy, data: Data) =
-    {
-      data match {
-        case x: Connection => {
-          pa1.listen(pa1._privateQ, x.readCnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, listenHandler(_: AgentCnxnProxy, _: Message))
-        }
-        case _ => {}
-      }
-    }
-
-    def listenHandler(cnxn: AgentCnxnProxy, msg: Message)
-    {
-      sync.synchronized {msgReceived = true}
-    }
-  }
+//  "listen from stored connection" should {
+//    @transient val pa1 = createPA1
+////    @transient val pa2 = createPA2
+//    var msgReceived = false
+//
+//    //store connection
+//    val JenId = "Jen" + UUID.randomUUID
+//    val MikeId = "Mike" + UUID.randomUUID
+//    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId.toString, MikeId.toString)
+//    val newCnxn = new AgentCnxnProxy(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
+//    pa1.store(pa1._dbQ, newCnxn, conn.toStoreKey, Serializer.serialize[ Data ](conn))
+//    Thread.sleep(TIMEOUT_LONG)
+//
+//    //fetch connection
+//    val connSearch = new  Connection ()
+//    pa1.fetch[ Data ](pa1._dbQ, newCnxn, connSearch.toSearchKey, handleFetchConnection)
+//    //Thread.sleep(TIMEOUT_LONG)
+//
+//    //listen on handler
+//    "receive message" in {
+//      val profileSearch = new Profile ()
+//      val request = GetContentRequest(EventKey(UUID.randomUUID(), ""), profileSearch)
+//      pa1.send(pa1._privateQ, conn.readCnxn, request)
+//      msgReceived must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+//    }
+//
+//    def handleFetchConnection(cnxn: AgentCnxnProxy, data: Data) =
+//    {
+//      data match {
+//        case x: Connection => {
+//          pa1.listen(pa1._privateQ, x.readCnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, listenHandler(_: AgentCnxnProxy, _: Message))
+//        }
+//        case _ => {}
+//      }
+//    }
+//
+//    def listenHandler(cnxn: AgentCnxnProxy, msg: Message)
+//    {
+//      msgReceived = true
+//    }
+//  }
 
 }

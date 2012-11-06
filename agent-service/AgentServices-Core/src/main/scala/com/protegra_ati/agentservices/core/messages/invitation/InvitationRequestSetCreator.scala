@@ -3,8 +3,8 @@ package com.protegra_ati.agentservices.core.messages.invitation
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -17,7 +17,7 @@ import java.util.UUID
 import java.util.HashMap
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 
 trait InvitationRequestSetCreator
@@ -61,7 +61,7 @@ trait InvitationRequestSetCreator
     createInviteRequest.deliver();
 
     //we need to do a lookup of the targetConnection by id in Broker Self Connection to find the agent to invite
-    val query = new SystemData(new Connection())
+    val query = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxnProxy, _: SystemData[ Connection ], createInviteRequest, cnxnBroker_A))
   }
 
@@ -94,14 +94,16 @@ trait InvitationRequestSetCreator
     send(_publicQ, conn.writeCnxn, req)
   }
 
-  def createFromDataForReferral() :HashMap[String, Data] ={
+  def createFromDataForReferral(): HashMap[ String, Data ] =
+  {
       val map = new HashMap[String, Data]
-      var tempProfile = new Profile( )
+      var tempProfile = new Profile( )  // STRESS TODO eventually it worse to create a singleton like Profile.SEARCH_ALL
       tempProfile.firstName = "App"
 
       map.put( tempProfile.formattedClassName, tempProfile )
       return map
   }
+
   protected def processReferralRequest(cnxnSelf: AgentCnxnProxy, referralRequest: ReferralRequest) =
   {
     report("STORE REFERRAL FOR LATER RESPONSE: referralRequest=" + referralRequest + ", cnxn=" + cnxnSelf, Severity.Info)
@@ -111,8 +113,7 @@ trait InvitationRequestSetCreator
     println("attempting to store " + persistedMessage.toStoreKey)
     store(_dbQ, cnxnSelf, persistedMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](persistedMessage))
 
-    if (cnxnSelf.src.toString.contains(BIZNETWORK_AGENT_ID))
-    {
+    if ( cnxnSelf.src.toString.contains(BIZNETWORK_AGENT_ID) ) {
       val subject = ""
       val body = "Automatically accepting referral for owner"
       val fromDetails = createFromDataForReferral()
@@ -142,7 +143,7 @@ trait InvitationRequestSetCreator
    */
   def generateRejectToInvitationRequest(eventKey: EventKey, targetToBrokerConnection: Connection, targetToBroker: Post): Unit =
   {
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, targetToBrokerConnection.readCnxn, queryObject.toSearchKey, findSelfConToSendPost(_: AgentCnxnProxy, _: SystemData[ Connection ], eventKey, targetToBrokerConnection, targetToBroker))
   }
 
@@ -295,6 +296,7 @@ trait InvitationRequestSetCreator
                 println("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!")
 
                 spawn {
+                  rename {
                   val msgA = Serializer.deserialize[ InvitationResponse ](e.dispatch)
                   val msgB = Serializer.deserialize[ InvitationResponse ](f.dispatch)
                     if ( !msgB.accept ) {
@@ -332,6 +334,7 @@ trait InvitationRequestSetCreator
                   //                  deleteIntroduction(cnxnBroker_A, introductionId)
                   //                  deleteIntroduction(cnxnBroker_A, introductionId)
                   //                deleteIntroductionState(cnxnBroker_A, introductionState.introductionId)
+                  }("waits for invitation responses and create connections")
                 }
               }
             }
@@ -345,7 +348,7 @@ trait InvitationRequestSetCreator
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
   }
 

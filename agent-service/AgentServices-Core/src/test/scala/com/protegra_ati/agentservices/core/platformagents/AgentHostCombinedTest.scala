@@ -2,12 +2,12 @@ package com.protegra_ati.agentservices.core.platformagents
 
 import scala.collection.JavaConversions._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import org.junit._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages.content._
@@ -60,14 +60,14 @@ with Timeouts
       AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, None) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
     }
 
-    "retrieve french and english Profile between UI and Store with a public queue" in {
-      AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Locale.ENGLISH.toString())
-      Thread.sleep(3000)
-      AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Locale.FRENCH.toString())
-
-      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Some(Locale.FRENCH.toString())) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, None) must be_==(2).eventually(10, TIMEOUT_EVENTUALLY)
-    }
+//    "retrieve french and english Profile between UI and Store with a public queue" in {
+//      AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Locale.ENGLISH.toString())
+//      Thread.sleep(3000)
+//      AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Locale.FRENCH.toString())
+//
+//      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Some(Locale.FRENCH.toString())) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
+//      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, None) must be_==(2).eventually(10, TIMEOUT_EVENTUALLY)
+//    }
   }
 
 }

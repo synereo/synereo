@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.extensions.ClassExtensions._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
@@ -71,7 +71,9 @@ trait Authorization
 
   def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
   {
-    System.err.println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
+
+   // System.err.println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
+
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
     if ( !newDisclosedData.dataDisplayClassName.equals(oldDisclosedData.dataDisplayClassName()) )

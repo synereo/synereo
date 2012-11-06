@@ -8,13 +8,13 @@
 //import java.net.URI
 //
 //import com.protegra.agentservicesstore.extensions.StringExtensions._
-//import com.protegra.agentservicesstore.extensions.URMExtensions._
+//import com.protegra.agentservicesstore.extensions.URIExtensions._
 //import com.protegra_ati.agentservices.core.messages._
-//import com.protegra.agentservicesstore.AgentTS._
-//import com.protegra.agentservicesstore.AgentTS.acT._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra.agentservicesstore.AgentTS.mTT._
-//import com.biosimilarity.lift.lib.moniker._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+//import java.net.URI
 //import content.{GetContentResponse, SetContentPersistedRequest}
 //import verifier._
 //import org.joda.time.{DateTime, Instant}
@@ -56,8 +56,8 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //  //  def createVerifier():AgentHostStorePlatformAgent =
 //  //  {
-//  //    val sourceAddress = "127.0.0.1".toURM.withPort(RABBIT_PORT_Verifier)
-//  //    val acquaintanceAddresses = List[ URM ]("127.0.0.1".toURM.withPort(RABBIT_PORT_CLAIMING_AGENT),"127.0.0.1".toURM.withPort(RABBIT_PORT_RELYING_AGENT))
+//  //    val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_Verifier)
+//  //    val acquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_CLAIMING_AGENT),"127.0.0.1".toURI.withPort(RABBIT_PORT_RELYING_AGENT))
 //  //
 //  //    val pa = new AgentHostStorePlatformAgent()
 //  //    pa.init(sourceAddress, acquaintanceAddresses, UUID.randomUUID)
@@ -135,10 +135,10 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //      val expectedMsg = GetClaimResponse(request.ids.copyAsChild(), null, "profile", "lastName", verifier)
 //
-//      expectedMsg.ids.conversationId must be_==(getClaimResponse.ids.conversationId).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.claimObject must be_==(getClaimResponse.claimObject).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.claimField must be_==(getClaimResponse.claimField).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.verifier must be_==(getClaimResponse.verifier).eventually(20, TIMEOUT_EVENTUALLY)
+//      expectedMsg.ids.conversationId must be_==(getClaimResponse.ids.conversationId).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.claimObject must be_==(getClaimResponse.claimObject).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.claimField must be_==(getClaimResponse.claimField).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.verifier must be_==(getClaimResponse.verifier).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //  }
 //
@@ -223,7 +223,7 @@ import com.protegra_ati.agentservices.core.schema._
 //      triggered = true
 //    }
 //
-//    def fetchData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, searchKey: String): VerifyPermissionRequest =
+//    def fetchData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, searchKey: String): VerifyPermissionRequest =
 //    {
 //      storePA.fetch[ Data ](queue, cnxn, searchKey, handleFetch)
 //      return verifyPermissionRequest
@@ -258,11 +258,11 @@ import com.protegra_ati.agentservices.core.schema._
 //      verifyPermissionRequest = fetchData(storePA._dbQ, cnxnCAVerifier, search.toSearchKey)
 //      Thread.sleep(TIMEOUT_LONG)
 //
-//      expectedMsg.ids.conversationId must be_==(verifyPermissionRequest.ids.conversationId).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.claimKey must be_==(verifyPermissionRequest.claimKey).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.claimData must be_==(verifyPermissionRequest.claimData).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.reason must be_==(verifyPermissionRequest.reason).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.relyingAgentDescription must be_==(verifyPermissionRequest.relyingAgentDescription).eventually(20, TIMEOUT_EVENTUALLY)
+//      expectedMsg.ids.conversationId must be_==(verifyPermissionRequest.ids.conversationId).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.claimKey must be_==(verifyPermissionRequest.claimKey).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.claimData must be_==(verifyPermissionRequest.claimData).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.reason must be_==(verifyPermissionRequest.reason).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.relyingAgentDescription must be_==(verifyPermissionRequest.relyingAgentDescription).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //
 //    "trigger a VerifyResponse message when content is auto-approved" in {
@@ -288,11 +288,11 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //      val expectedMsg = VerifyResponse(msg.ids.copyAsChild(), msg.eventKey, msg.alias, msg.claimKey, true)
 //
-//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.ids.conversationId must be_==(expectedMsg.ids.conversationId).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.alias must be_==(expectedMsg.alias).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.claimKey must be_==(expectedMsg.claimKey).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.isVerified must be_==(expectedMsg.isVerified).eventually(20, TIMEOUT_EVENTUALLY)
+//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.ids.conversationId must be_==(expectedMsg.ids.conversationId).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.alias must be_==(expectedMsg.alias).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.claimKey must be_==(expectedMsg.claimKey).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.isVerified must be_==(expectedMsg.isVerified).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //
 //    "trigger a verify response of false when verified data does not match claim" in {
@@ -318,11 +318,11 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //      val expectedMsg = VerifyResponse(msg.ids.copyAsChild(), msg.eventKey, msg.alias, msg.claimKey, false)
 //
-//      triggered must be_==(true).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.ids.conversationId must be_==(expectedMsg.ids.conversationId).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.alias must be_==(expectedMsg.alias).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.claimKey must be_==(expectedMsg.claimKey).eventually(20, TIMEOUT_EVENTUALLY)
-//      verifyResponse.isVerified must be_==(expectedMsg.isVerified).eventually(20, TIMEOUT_EVENTUALLY)
+//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.ids.conversationId must be_==(expectedMsg.ids.conversationId).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.alias must be_==(expectedMsg.alias).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.claimKey must be_==(expectedMsg.claimKey).eventually(5, TIMEOUT_EVENTUALLY)
+//      verifyResponse.isVerified must be_==(expectedMsg.isVerified).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //  }
 //
@@ -391,8 +391,8 @@ import com.protegra_ati.agentservices.core.schema._
 //
 //      val expectedMsg = VerifyPermissionResponse(request.ids.copyAsChild, true)
 //
-//      expectedMsg.ids.conversationId must be_==(verifyPermissionResponse.ids.conversationId).eventually(20, TIMEOUT_EVENTUALLY)
-//      expectedMsg.isPermissionGranted must be_==(verifyPermissionResponse.isPermissionGranted).eventually(20, TIMEOUT_EVENTUALLY)
+//      expectedMsg.ids.conversationId must be_==(verifyPermissionResponse.ids.conversationId).eventually(5, TIMEOUT_EVENTUALLY)
+//      expectedMsg.isPermissionGranted must be_==(verifyPermissionResponse.isPermissionGranted).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
 //  }
 //}

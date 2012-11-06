@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import org.apache.ws.commons.util.Base64
 import com.protegra.agentservicesstore.util._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions._
@@ -27,9 +26,10 @@ class JavaIOSerializer extends AbstractToStringSerializer //with Reporting
     val baos = new ByteArrayOutputStream()
     val oos = new ObjectOutputStream(baos)
     oos.writeObject(objToBeSerialized)
-    val encodedMsg = new String(Base64.encode(baos.toByteArray))
+    val encodedMsg = new String(biz.source_code.base64Coder.Base64Coder.encode(baos.toByteArray))
     oos.close
     sizeWarning(encodedMsg, objToBeSerialized)
+     // STRESS TODO uid5CharLong is just for debugging useful has to be removed from productive code
     return uid5CharLong + encodedMsg
   }
 
@@ -51,8 +51,9 @@ class JavaIOSerializer extends AbstractToStringSerializer //with Reporting
   def deserializeRaw[ T ](source: String): T =
   {
     try {
+      // STRESS TODO id is just for debugging useful has to be removed from productive code
       val uid = source.substring(0, 5);
-      val byteArrayMsg = Base64.decode(source.substring(5, source.length()))
+      val byteArrayMsg = biz.source_code.base64Coder.Base64Coder.decode(source.substring(5, source.length()))
       val ois = new ObjectInputStream(new ByteArrayInputStream(byteArrayMsg))
       val resultMsg = ois.readObject
       ois.close

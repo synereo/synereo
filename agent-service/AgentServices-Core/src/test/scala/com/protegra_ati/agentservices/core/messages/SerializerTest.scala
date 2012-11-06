@@ -7,7 +7,6 @@ package com.protegra_ati.agentservices.core.messages
 
 import invitation.{ReferralRequest, CreateInvitationRequest, InvitationRequest}
 import java.util.UUID
-import org.apache.ws.commons.util.Base64
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema.PersistedMessage
@@ -24,7 +23,7 @@ import org.specs._
 import com.protegra_ati.agentservices.core._
 import persistence.MockConnection
 import scala.collection.JavaConversions._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
@@ -90,6 +89,47 @@ Timeouts
         }
         case _ => fail
       }
+    }
+
+
+    "deserialize simple overriden singleton Profile" in {
+      val data = Profile.SEARCH_ALL
+
+      data match {
+        case x: Profile => {
+          x must be_==(data)
+          x.id must be_==(data.id)
+        }
+        case _ => fail
+      }
+
+      val serializedData = Serializer.serialize[ Data ](data)
+      val deserializedData = Serializer.deserialize[ Data ](serializedData)
+
+      deserializedData match {
+        case x: Profile => {
+          x must be_==(data)
+          x.id must be_==(data.id)
+          x.firstName must be_==(data.firstName)
+        }
+        case _ => fail
+      }
+
+
+      val experriment = new Profile()
+      {
+        override def toSearchKey(): String = "abc"
+      }
+
+      experriment match {
+        case x: Profile => {
+          x must be_==(experriment)
+          x.toSearchKey must be_==("abc")
+        }
+        case _ => fail
+      }
+
+
     }
 
     "serialize and deserialize SystemData with Connection" in {

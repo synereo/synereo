@@ -14,15 +14,16 @@ import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import java.net.URI
 import java.util.UUID
 
-//import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra.agentservicesstore.AgentTS.mTT._
+//import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 
 import actors.threadpool.LinkedBlockingQueue
 import com.protegra.agentservicesstore.extensions.LinkedBlockingQueueExtensions._
 
-import scala.concurrent.ops._
+
+//import java.net.URI
 //import com.biosimilarity.lift.lib.moniker._
 
 trait SpecsPAHelpers extends Timeouts{

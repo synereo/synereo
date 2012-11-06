@@ -8,18 +8,20 @@ import com.protegra_ati.agentservices.core.platformagents.behaviors._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS.mTT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra_ati.agentservices.core.messages._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory
+
 //import com.protegra.config.ConfigurationManager
 
-
+// TODO configgy has to be removed from the project
 import net.lag.configgy._
 
 import scala.util.continuations._
-
+import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.ops._
 
 import java.net.URI
@@ -29,7 +31,7 @@ import com.protegra.agentservicesstore.util._
 import actors.threadpool.LinkedBlockingQueue
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 object BasePABaseXDefaults
 {
@@ -50,15 +52,33 @@ object BasePABaseXDefaults
   //why not   val valueStorageType : String = "CnxnCtxtLabel"
 }
 
+/**
+ * Be careful, since this class extends FJTaskRunners, each instance of it creates it's own thread pool with defined in a method 'def numWorkers' size.
+ */
 abstract class BasePlatformAgent
   extends Reporting
-  with JunctionConfiguration
+  with JunctionConfiguration with ThreadPoolRunners
 //  with Scheduler
 {
+
+  /**
+   *  FJTaskRunners setting, defines thread pool size
+   * @return threadpool size
+   */
+//  override def numWorkers = 2 // TODO has to be out of config, as soon as configuration manager is separated from protunity services project
 
   var _id: UUID = null
 
   protected def agentCnxn(sourceId: UUID, targetId: UUID) = new AgentCnxnProxy(sourceId.toString.toURI, "", targetId.toString.toURI)
+
+  def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
+  {
+    createNode(sourceAddress, acquaintanceAddresses, None )
+  }
+  def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ], configFileName: Option[String]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
+  {
+    AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
+  }
 
   def initFromConfig(configFilePath: String)
   {
@@ -102,7 +122,7 @@ abstract class BasePlatformAgent
   protected def startListening()
 
   //deprecate these 3?
-  //  def listen (queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel:Channel.Value,  channelType:ChannelType.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
+  //  def listen (queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, channel:Channel.Value,  channelType:ChannelType.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //  {
   ////    val key = channel.toString + channelType.toString + "(_)"
   //    listen(queue, cnxn, channel, channelType, ChannelLevel.Private, handler)
@@ -112,7 +132,7 @@ abstract class BasePlatformAgent
   //temporary solution is to ignore duplicate processing of the same request msg by id
   var _processedMessages = new LinkedBlockingQueue[ String ]()
 
-  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel: Channel.Value, channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxnProxy, Message) => Unit): Unit =
+  def listen(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, channel: Channel.Value, channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxnProxy, Message) => Unit): Unit =
   {
     listen(queue, cnxn, channel, None, channelType, channelLevel, handler)
   }
@@ -123,7 +143,7 @@ abstract class BasePlatformAgent
     else _processedMessages = new LinkedBlockingQueue[ String ]()
   }
 
-  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel: Channel.Value, channelRole: Option[ ChannelRole.Value ], channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxnProxy, Message) => Unit): Unit =
+  def listen(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, channel: Channel.Value, channelRole: Option[ ChannelRole.Value ], channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxnProxy, Message) => Unit): Unit =
   {
     val key = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.toString + "(_)"
     listen(queue, cnxn, key, handler, None)
@@ -131,7 +151,7 @@ abstract class BasePlatformAgent
 
   // TODO we are continue to listen on especial channel after one message is consumed and not expired yet. Potentially we have one waiting thread per channel, if no expired message is recived.
   // TODO solution: to create artificial expired dummy message as soon as we have enought results or timeout, so that we don't need to continue to wait
-  def listen(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, Message) => Unit, expiry: Option[ DateTime ]): Unit =
+  def listen(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, Message) => Unit, expiry: Option[ DateTime ]): Unit =
   {
     val lblChannel = key.toLabel
     
@@ -143,7 +163,13 @@ abstract class BasePlatformAgent
       for ( e <- queue.get(agentCnxn)(lblChannel) ) {
         if ( e != None && !isExpired(expiry) ) {
           //keep the main thread listening, see if this causes debug headache
+          // STRESS TODO separation between different ways how to create/mange threads for different type of requests:
+          //        - for long term running jobs (like referral request with continuations, classical scala default 'spawn' which runs a new Thread per spawn is atractiv)
+          //        - for short lived requests thread pool is nost attractive to keep number of threads under control
+          //        - on KBDB level timeout for continuations is necessary so thread from thread pool for short lived requests can be released after given time
+          //        - HOW continuations are working with running threads !!!!
           spawn {
+            rename {
             val msg = Serializer.deserialize[ Message ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             //race condition on get get get with consume bringing back the same item, cursor would get around this problem
@@ -155,6 +181,7 @@ abstract class BasePlatformAgent
             }
             else
               report("already processed id : " + msg.ids.id, Severity.Info)
+            }("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
           }
           listen(queue, cnxn, key, handler, expiry)
         }
@@ -181,7 +208,7 @@ abstract class BasePlatformAgent
   }
 
   //  //new style
-  //  def listenList(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key:String, handler:(AgentCnxnProxy, List[Message]) => Unit) :Unit =
+  //  def listenList(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key:String, handler:(AgentCnxnProxy, List[Message]) => Unit) :Unit =
   //  {
   //    val lblChannel = key.toLabel
   //
@@ -207,7 +234,7 @@ abstract class BasePlatformAgent
   //    }
   //  }
 
-  def singleListen[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit): Unit =
+  def singleListen[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit): Unit =
   {
     val lblChannel = key.toLabel
     
@@ -220,9 +247,11 @@ abstract class BasePlatformAgent
         if ( e != None ) {
           //keep the main thread listening, see if this causes debug headache
           spawn {
+            rename {
             val msg = Serializer.deserialize[ T ](e.dispatch)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
             handler(cnxn, msg)
+            }("inBasePlatformAgent single listen on channel: " + lblChannel)
           }
         }
         else {
@@ -242,7 +271,7 @@ abstract class BasePlatformAgent
   //  }
 
   //make everything below here protected once tests are sorted out
-  def send(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, msg: Message)
+  def send(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
   {
     report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Info)
     if ( msg.eventKey != null ) {
@@ -251,13 +280,13 @@ abstract class BasePlatformAgent
     put(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
 
-  def singleSend(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, msg: Message)
+  def singleSend(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
   {
     msg.channelLevel = Some(ChannelLevel.Single)
     send(queue, cnxn, msg)
   }
 
-  def put(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, value: String) =
+  def put(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, value: String) =
   {
     
     val agentCnxn = cnxn.toAgentCnxn()
@@ -266,7 +295,7 @@ abstract class BasePlatformAgent
     reset {queue.put(agentCnxn)(lbl, Ground(value))}
   }
 
-  def get[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
+  def get[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
     report("get --- key: " + key)
     val lbl = key.toLabel
@@ -283,7 +312,7 @@ abstract class BasePlatformAgent
     }
   }
 
-  def getList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
+  def getList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
     report("get --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
     val lbl = key.toLabel
@@ -299,7 +328,7 @@ abstract class BasePlatformAgent
     }
   }
 
-  def getData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, Data) => Unit) =
+  def getData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, Data) => Unit) =
   {
     report("get --- key: " + key)
     val lbl = key.toLabel
@@ -316,7 +345,7 @@ abstract class BasePlatformAgent
     }
   }
 
-  def store(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, value: String) =
+  def store(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, value: String) =
   {
     report("store --- key: " + key + ", cnxn: " + cnxn.toString + ", value: " + value.short, Severity.Info)
     val lbl = key.toLabel
@@ -325,7 +354,7 @@ abstract class BasePlatformAgent
     queue.store(agentCnxn)(lbl, Ground(value))
   }
 
-  def fetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
+  def fetch[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
     report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
     val lbl = key.toLabel
@@ -343,7 +372,7 @@ abstract class BasePlatformAgent
     }
   }
 
-  def fetchList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
+  def fetchList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
     report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
     val lbl = key.toLabel
@@ -372,12 +401,12 @@ abstract class BasePlatformAgent
    * @tparam T type of the data to be fetched, if different types are expected, use a common interface
    * @return
    */
-  def fetchList[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, keyList: List[ String ], handler: (AgentCnxnProxy, List[ T ]) => Unit) =
+  def fetchList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, keyList: List[ String ], handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
      recursiveFetch(queue, cnxn, keyList, Nil, handler)
   }
 
-  protected def recursiveFetch[ T ](queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, remainKeyList: List[ String ], intermediateResults: List[ T ], finalHandler: (AgentCnxnProxy, List[ T ]) => Unit): Unit =
+  protected def recursiveFetch[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, remainKeyList: List[ String ], intermediateResults: List[ T ], finalHandler: (AgentCnxnProxy, List[ T ]) => Unit): Unit =
   {
     val lbl = remainKeyList.head.toLabel
     
@@ -399,14 +428,14 @@ abstract class BasePlatformAgent
 
   //note:  this doesn't work with wildcards right now
   //delete must use an exact key, no unification like get/fetch use occurs
-  def delete(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String) =
+  def delete(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String) =
   {
     val agentCnxn = cnxn.toAgentCnxn()
     report("delete --- key: " + key.toLabel + " cnxn: " + cnxn.toString, Severity.Info)
     queue.delete(agentCnxn)(key.toLabel)
   }
 
-  def drop(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy) =
+  def drop(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy) =
   {
     val agentCnxn = cnxn.toAgentCnxn()
     report("drop --- cnxn: " + cnxn.toString, Severity.Trace)
@@ -414,17 +443,23 @@ abstract class BasePlatformAgent
   }
 
 
+  def createAgentCnxn(src: String, label: String, trgt: String) =
+  {
+    new AgentCnxnProxy(( src ).toURI, label, ( trgt ).toURI)
+  }
+
+
   //// tests for when BUG 54 is fixed
-  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel:Channel.Value, channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
+  //  def listenCursor(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, channel:Channel.Value, channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //  {
   //    listenCursor(queue, cnxn, channel, None, channelType, channelLevel, handler)
   //  }
-  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, channel:Channel.Value, channelRole:Option[ChannelRole.Value], channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
+  //  def listenCursor(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, channel:Channel.Value, channelRole:Option[ChannelRole.Value], channelType:ChannelType.Value, channelLevel:ChannelLevel.Value, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //  {
   //    val key = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.toString + "(_)"
   //    listenCursor(queue, cnxn, key, handler)
   //  }
-  //  def listenCursor(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key:String, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
+  //  def listenCursor(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key:String, handler:(AgentCnxnProxy, Message) => Unit) :Unit =
   //    {
   //      val lblChannel = key.toLabel
   //

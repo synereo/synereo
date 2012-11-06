@@ -5,11 +5,11 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 import net.lag.configgy._
 import java.util.UUID
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -19,8 +19,8 @@ trait ResultStorage
 {
   self: BasePlatformAgent =>
 
-  var _resultLocation: URM = null
-  var _resultQ: PartitionedStringMGJ = null //persistedJunction
+  var _resultLocation: URI = null
+  var _resultQ: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
 
   val _resultId = UUID.randomUUID().toString()
   val _cnxnResult = new AgentCnxnProxy(( "ResultDB" + _resultId ).toURI, "", ( "ResultDB" + _resultId ).toURI)
@@ -28,17 +28,17 @@ trait ResultStorage
   def initResultDb(configUtil: Config)
   {
     val resultSelfMapKey = "result.self"
-    _resultLocation = loadFirstURM(configUtil.getConfigMap(resultSelfMapKey))
+    _resultLocation = loadFirstURI(configUtil.getConfigMap(resultSelfMapKey))
   }
 
-  def initResultDb(resultLocation: URM)
+  def initResultDb(resultLocation: URI)
   {
     _resultLocation = resultLocation
   }
 
   def loadResultStorageQueue() =
   {
-    _resultQ = new PartitionedStringMGJ(_resultLocation, List(), None)
+    _resultQ = createNode(_resultLocation, List())
   }
 
   //childId for uniqueness, if we just used Id an update would happen

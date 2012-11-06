@@ -11,7 +11,7 @@ import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra.agentservicesstore.extensions.OptionExtensions._
 import actors.threadpool.LinkedBlockingQueue
@@ -21,10 +21,10 @@ import disclosure._
 import org.junit._
 import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS.mTT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import moniker._
 import scala.util.continuations._
 import com.protegra_ati.agentservices.core.messages._
@@ -97,7 +97,7 @@ with SpecsPAHelpers
       val profileSearch: Profile = new Profile()
       fetchMustBe(basicProfile)(pa, connMike.writeCnxn, profileSearch.toSearchKey)
       // simple hashcode check
-      val image: Image = new Image("name", "contentType", null, "metadata")
+      val image: Image = new Image("name", "contentType", null.asInstanceOf[String], "metadata")
       val hashcode1 = image.hashCode
       image.id = "bubu"
       ( hashcode1 ) must be_==(image.hashCode)
@@ -359,24 +359,24 @@ with SpecsPAHelpers
 
     "delete the correct connection from the connection list" in {
       //make sure that the Jen/Mike Connection is gone from the Jen/Jen collection
-      fetchConnectionData(pa._dbQ, jenSelfCnxn, connectionSearch.toSearchKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchConnectionData(pa._dbQ, jenSelfCnxn, connectionSearch.toSearchKey) must be_==(None).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     "drop the store collection" in {
       val profileSearch: Profile = new Profile()
 
       //make sure that the Jen/Mike data is gone
-      fetchProfileData(pa._dbQ, connJenMike.writeCnxn, profileSearch.toSearchKey) must be_==(None).eventually(20, TIMEOUT_EVENTUALLY)
+      fetchProfileData(pa._dbQ, connJenMike.writeCnxn, profileSearch.toSearchKey) must be_==(None).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
-    def fetchProfileData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
+    def fetchProfileData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       resultProfile = None
       pa.fetch[ Data ](queue, cnxn, key, handleProfileFetch)
       return resultProfile
     }
 
-    def fetchConnectionData(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
+    def fetchConnectionData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Option[ Data ] =
     {
       resultConnection = None
       pa.fetch[ Data ](queue, cnxn, key, handleConnectionFetch)

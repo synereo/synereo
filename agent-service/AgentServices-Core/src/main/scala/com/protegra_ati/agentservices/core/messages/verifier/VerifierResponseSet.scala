@@ -4,7 +4,7 @@ package com.protegra_ati.agentservices.core.messages.verifier
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util.Severity
@@ -60,7 +60,7 @@ trait VerifierResponseSet
   {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     //TODO it is necessary to create 'companion objects' with a reasonable named factory methods to create reusable singletons of default constructed Data objects like connection()
-    val search = new SystemData[ Connection ](new Connection())
+    val search = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyPermissionResponse(_: AgentCnxnProxy, _: SystemData[ Connection ], msg))
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }
@@ -130,7 +130,7 @@ trait VerifierResponseSet
     //    val claimClass = Class.forName(getClaimResponse.claimObject.toCamelCase)
     //    TODO: figure out how to create the search generically
     if ( className.toCamelCase == "profile" ) {
-      new Profile()
+      Profile.SEARCH_ALL
     } else {
       // TODO null has to be replaced with some kind null-object
       null
@@ -146,7 +146,7 @@ trait VerifierResponseSet
 
   def processVerifyContentResponse(cnxn: AgentCnxnProxy, msg: VerifyContentResponse) =
   {
-    val search = new SystemData[ Connection ](new Connection())
+    val search = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyContentResponse(_: AgentCnxnProxy, _: SystemData[ Connection ], msg))
   }
 

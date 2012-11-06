@@ -90,7 +90,7 @@ case class KvdbPlatformAgentBase() extends Specification
         reset {writer.put(cnxn)(key, Ground(value + "3"))}
 
         Thread.sleep(TIMEOUT_MED)
-        getMustBe(value + "3")(writer, cnxn, key)
+        getMustBe(value + "3")(reader, cnxn, key)
       }
     }
 
@@ -118,8 +118,8 @@ case class KvdbPlatformAgentBase() extends Specification
          }
          Thread.sleep(TIMEOUT_MED)
          reset {writer.put(cnxn)(key, Ground(value))}
-         Thread.sleep(TIMEOUT_MED)
 
+         SleepToPreventContinuation()
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
        }
 
@@ -138,58 +138,72 @@ case class KvdbPlatformAgentBase() extends Specification
           for ( e <- reader.get(cnxn)(key) ) {
             if ( e != None ) {
               val result = e.dispatch
+              println("cacheGetPutConsume receives a result: " + result)
               reset {_resultsQ.put(cnxnTest)(key, result)}
             }
           }
         }
-        println("Sleeping for 300")
-        Thread.sleep(TIMEOUT_MED)
+        Thread.sleep(TIMEOUT_LONG)
+        Thread.sleep(TIMEOUT_LONG)
         reset {writer.put(cnxn)(key, Ground(value))}
-        println("Sleeping again for 300")
-        Thread.sleep(TIMEOUT_MED)
+        SleepToPreventContinuation()
 
         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
         fetchMustBe("")(reader, cnxn, key)
       }
      }
 
-    "Persisted Put/Fetch" should {
-      Thread.sleep(timeoutBetween)
-      "respect connection" in {
-        val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
-        val value = "cachedPutFetchRespectingCnxn@protegra.com"
-        reset {writer.put(cnxn)(key, Ground(value))}
-        Thread.sleep(TIMEOUT_MED)
-        fetchMustBe("")(reader, cnxnRandom, key)
-      }
 
-      "retrieve " in {
-        val key = "contentChannel(cachedPutFetchRetrieve(\"email\"))".toLabel
-        val value = "cachedPutFetchRetrieve@protegra.com"
-        reset {writer.put(cnxn)(key, Ground(value))}
-        Thread.sleep(TIMEOUT_MED)
-        fetchMustBe(value)(reader, cnxn, key)
-      }
+   "Persisted Put/Fetch" should {
+          Thread.sleep(timeoutBetween)
+          "respect connection" in {
+            val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
+            val value = "cachedPutFetchRespectingCnxn@protegra.com"
+            reset {writer.put(cnxn)(key, Ground(value))}
+            Thread.sleep(TIMEOUT_MED)
+            fetchMustBe("")(reader, cnxnRandom, key)
+          }
 
-      "work with UUID" in {
-        val key = ( "testChannel(cachedPutFetchUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
-        val value = "cachedPutFetchUUID@protegra.com"
-        reset {writer.put(cnxn)(key, Ground(value))}
-        Thread.sleep(TIMEOUT_MED)
-        fetchMustBe(value)(reader, cnxn, key)
-      }
+          "retrieve " in {
+            val key = "contentChannel(cachedPutFetchRetrieve(\"email\"))".toLabel
+            val value = "cachedPutFetchRetrieve@protegra.com"
+            reset {writer.put(cnxn)(key, Ground(value))}
+            Thread.sleep(TIMEOUT_MED)
+            fetchMustBe(value)(reader, cnxn, key)
+          }
 
-      "update" in {
-        val key = "contentChannel(cachedPutFetchUpdate(\"email\"))".toLabel
-        val value = "cachedPutFetchUpdate@protegra.com"
-        reset {writer.put(cnxn)(key, Ground(value + "1"))}
-        reset {writer.put(cnxn)(key, Ground(value + "2"))}
-        reset {writer.put(cnxn)(key, Ground(value + "3"))}
+          "not consume " in {
+            val key = "contentChannel(cachedPutFetchConsume(\"email\"))".toLabel
+            val value = "cachedPutFetchConsume@protegra.com"
+            reset {writer.put(cnxn)(key, Ground(value))}
+            Thread.sleep(TIMEOUT_MED)
+            fetchMustBe(value)(reader, cnxn, key)
+            Thread.sleep(TIMEOUT_MED)
+            fetchMustBe(value)(reader, cnxn, key)
+          }
 
-        Thread.sleep(TIMEOUT_MED)
-        fetchMustBe(value + "3")(writer, cnxn, key)
-      }
-    }
+          "work with UUID" in {
+            val key = ( "testChannel(cachedPutFetchUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
+            val value = "cachedPutFetchUUID@protegra.com"
+            reset {writer.put(cnxn)(key, Ground(value))}
+            Thread.sleep(TIMEOUT_MED)
+
+            fetchMustBe(value)(reader, cnxn, key)
+          }
+
+          "update" in {
+            val key = "contentChannel(cachedPutFetchUpdate(\"email\"))".toLabel
+            val value = "cachedPutFetchUpdate@protegra.com"
+            reset {writer.put(cnxn)(key, Ground(value + "1"))}
+            reset {writer.put(cnxn)(key, Ground(value + "2"))}
+            reset {writer.put(cnxn)(key, Ground(value + "3"))}
+
+            Thread.sleep(TIMEOUT_MED)
+            fetchMustBe(value + "3")(reader, cnxn, key)
+          }
+        }
+
+    
 
     "Cached Fetch/Put" should {
        Thread.sleep(timeoutBetween)
@@ -208,21 +222,21 @@ case class KvdbPlatformAgentBase() extends Specification
          reset {
            for ( e <- reader.fetch(cnxn)(key) ) {
              if ( e != None ) {
+               println("!!!!!!!!!!!!!!!!!!!!!!!!!got into fetch")
                val result = e.dispatch
                reset {_resultsQ.put(cnxnTest)(key, result)}
              }
            }
          }
-         println("Sleeping for 300")
-         Thread.sleep(TIMEOUT_MED)
+         Thread.sleep(TIMEOUT_LONG)
          reset {writer.put(cnxn)(key, Ground(value))}
-         println("Sleeping again for 300")
-         Thread.sleep(TIMEOUT_MED)
+         SleepToPreventContinuation()
 
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
        }
 
        "consume" in {
+         skip("isolate")
          val sourceId = UUID.randomUUID
          val targetId = sourceId
          val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
@@ -245,7 +259,7 @@ case class KvdbPlatformAgentBase() extends Specification
          Thread.sleep(TIMEOUT_MED)
          reset {writer.put(cnxn)(key, Ground(value))}
          println("Sleeping again for 300")
-         Thread.sleep(TIMEOUT_MED)
+         SleepToPreventContinuation()
 
          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
          fetchMustBe("")(reader, cnxn, key)
@@ -267,31 +281,29 @@ case class KvdbPlatformAgentBase() extends Specification
         val key = "contentChannel(storeGetRetrieve(\"email\"))".toLabel
         val value = "storeGetRetrieve@protegra.com"
         writer.store(cnxn)(key, Ground(value))
-        //Thread.sleep(TIMEOUT_LONG)
         Thread.sleep(TIMEOUT_MED)
-        fetchMustBe(value)(reader, cnxn, key)
+        getMustBe(value)(reader, cnxn, key)
       }
 
       "work with UUID" in {
         val key = ( "testChannel(storeGetUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
         val value = "storeGetUUID@protegra.com"
         writer.store(cnxn)(key, Ground(value))
-        //Thread.sleep(TIMEOUT_LONG)
         Thread.sleep(TIMEOUT_MED)
-        fetchMustBe(value)(reader, cnxn, key)
+        getMustBe(value)(reader, cnxn, key)
       }
 
       //this will probably fail once after deleting all databases
-      "retrieve from existing db" in {
-        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
-
-        val key = "testChannel(storeGetRetrieveExisting(\"name\"))".toLabel
-        val value = "storeGetRetrieveExisting@protegra.com"
-        writer.store(cnxnNew)(key, Ground(value))
-
-        Thread.sleep(TIMEOUT_MED)
-        getMustBe(value)(reader, cnxnNew, key)
-      }
+//      "retrieve from existing db" in {
+//        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
+//
+//        val key = "testChannel(storeGetRetrieveExisting(\"name\"))".toLabel
+//        val value = "storeGetRetrieveExisting@protegra.com"
+//        writer.store(cnxnNew)(key, Ground(value))
+//
+//        Thread.sleep(TIMEOUT_MED)
+//        getMustBe(value)(reader, cnxnNew, key)
+//      }
 
       "update" in {
         val key = "contentChannel(storeGetUpdate(\"email\"))".toLabel
@@ -304,7 +316,7 @@ case class KvdbPlatformAgentBase() extends Specification
         writer.store(cnxn)(key, Ground(value + "3"))
         Thread.sleep(TIMEOUT_MED)
 
-        //wont break but theres actually 3 results in the db
+        //wont break but there's actually 3 results in the db
         getMustBe(value + "3")(reader, cnxn, key)
       }
 
@@ -419,7 +431,7 @@ case class KvdbPlatformAgentBase() extends Specification
         Thread.sleep(TIMEOUT_MED)
 
         writer.delete(cnxn)(keyMissing)
-        Thread.sleep(TIMEOUT_MED)
+        Thread.sleep(TIMEOUT_LONG)
 
         fetchMustBe(value)(reader, cnxn, key)
       }
@@ -463,14 +475,14 @@ case class KvdbPlatformAgentBase() extends Specification
 
     }
 
-//    "Get/Store" should {
-//      // get/fetch before store, store doesnt look at waiters
-//    }
-//
-//    "Fetch/Store" should {
-//      // get/fetch before store, store doesnt look at waiters
-//    }
-//
+    "Get/Store" should {
+      // get/fetch before store, store doesnt look at waiters
+    }
+
+    "Fetch/Store" should {
+      // get/fetch before store, store doesnt look at waiters
+    }
+
 
   }
 
@@ -510,7 +522,6 @@ case class KvdbPlatformAgentBase() extends Specification
     val key6 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
     val key7 = "fakeChannel(\"" + UUID.randomUUID.toString + "\")"
     val keyEmail = "surveyChannel(level1(\"email\"), level2(\"name\"))"
-    val value = "tests@protegra.com"
     writer.store(cnxn)(key1.toLabel, Ground(value + "1"))
     //    Thread.sleep(TIMEOUT_SHORT)
     writer.store(cnxn)(key2.toLabel, Ground(value + "2"))
@@ -546,18 +557,18 @@ case class KvdbPlatformAgentBase() extends Specification
 
       var resultQ = new LinkedBlockingQueue[ String ]
       val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests@protegra.com"
+      val value = "tests"
       setupData(writer, cnxnRandom, value)
       val expectedCollection = setupExpectedResults(value)
 
       "find many values by Get" in {
         val lblSearch = "contentChannel(X)".toLabel
-        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+        getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
       }
 
       "find many values by underscore Get" in {
         val lblSearch = "contentChannel(_)".toLabel
-        getMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
+        getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
       }
 
       "not find a value by Get" in {
@@ -635,31 +646,37 @@ case class KvdbPlatformAgentBase() extends Specification
       val timeoutBetween: Int = 300
 
       val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests@protegra.com"
+      val value = "tests"
       setupData(writer, cnxnRandom, value)
 
       "find many results by Get" in {
-        getCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+        SleepToPreventContinuation()
+        getCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(5, TIMEOUT_EVENTUALLY)
       }
 
       "not find a value by Get" in {
-        getCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+        SleepToPreventContinuation()
+        getCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(5, TIMEOUT_EVENTUALLY)
       }
 
       "not find a nested value by Get" in {
-        getCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+        SleepToPreventContinuation()
+        getCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(5, TIMEOUT_EVENTUALLY)
       }
 
       "find many results by Fetch" in {
-        fetchCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(10, TIMEOUT_EVENTUALLY)
+        SleepToPreventContinuation()
+        fetchCount(reader, cnxnRandom, "contentChannel(_)") must be_==(5).eventually(5, TIMEOUT_EVENTUALLY)
       }
 
       "not find a value by Fetch" in {
-        fetchCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+    SleepToPreventContinuation()
+        fetchCount(reader, cnxnRandom, "fail(X)") must be_==(0).eventually(5, TIMEOUT_EVENTUALLY)
       }
 
       "not find a nested value by Fetch" in {
-        fetchCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+    SleepToPreventContinuation()
+        fetchCount(reader, cnxnRandom, "abc(xyz(X))") must be_==(0).eventually(5, TIMEOUT_EVENTUALLY)
       }
     }
   }
@@ -670,7 +687,7 @@ case class KvdbPlatformAgentBase() extends Specification
       val timeoutBetween: Int = 300
 
       val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests@protegra.com"
+      val value = "tests"
 
       val testId = UUID.randomUUID().toString()
       val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
@@ -700,6 +717,7 @@ case class KvdbPlatformAgentBase() extends Specification
 
         putWildcardData(writer, cnxnRandom, value)
 
+        SleepToPreventContinuation()
         fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(5, TIMEOUT_EVENTUALLY)
       }
 
@@ -727,7 +745,7 @@ case class KvdbPlatformAgentBase() extends Specification
         }
 
         putWildcardData(writer, cnxnRandom, value)
-
+        SleepToPreventContinuation()
         fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(5, TIMEOUT_EVENTUALLY)
       }
     }

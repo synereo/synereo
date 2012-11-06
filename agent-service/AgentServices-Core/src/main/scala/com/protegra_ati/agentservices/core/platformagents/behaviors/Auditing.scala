@@ -3,7 +3,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
@@ -11,10 +11,12 @@ import com.protegra_ati.agentservices.core.schema._
 import java.util.UUID
 import org.joda.time.{DateTime, Instant}
 import verifier._
-import scala.concurrent.ops._
 import com.protegra_ati.agentservices.core.schema.util._
+import scala.concurrent.ops._
+import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
-trait Auditing {
+trait Auditing
+{
 self: BasePlatformAgent with Storage =>
 
   def logDataRequested(cnxn: AgentCnxnProxy, auditItem: AuthorizedContentAuditItem, msg: Message)
@@ -30,10 +32,12 @@ self: BasePlatformAgent with Storage =>
   def logDataViewed(cnxn: AgentCnxnProxy, data: Data, requestingCnxn: AgentCnxnProxy)
   {
     spawn {
+     rename{
       //we need to grab the DisclosedData object for the cnxn to determine
       //what the requestingCnxn has access to
      // val searchItem = SearchFactory.getAuthorizedContentAuditSearchItem(data)
       fetch[ AuthorizedContentAuditItem ](_dbQ, cnxn, new AuthorizedContentAuditItem ().toSearchKey, handleLogDataViewedFetchAuthorizedContent(_: AgentCnxnProxy, _: AuthorizedContentAuditItem, data, requestingCnxn))
+    }("inAuditing logDataViewed")
     }
   }
 
@@ -51,10 +55,12 @@ self: BasePlatformAgent with Storage =>
   def logAuditItem(cnxn: AgentCnxnProxy, logDetail: String)
   {
     spawn {
+      rename{
       val item = new AuditLogItem("", new DateTime())
       item.detail = logDetail
       var oldItem: AuditLogItem = null
       updateData(cnxn, item, oldItem)
+      }("inAuditing logAuditItem")
     }
   }
   /*TODO Task: internalisation of messages created by methods below

@@ -3,14 +3,15 @@ package com.protegra_ati.agentservices.core.messages.invitation
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
+import util.SystemDataFactory
+
 //import com.protegra.i18n.ResourceManager
 //import com.protegra.config.ConfigurationManager
-import scala.concurrent.ops._
 import scala.collection.JavaConversions._
 import java.util.{Locale, UUID, ResourceBundle, Date}
 import java.text.DateFormat
@@ -113,7 +114,7 @@ trait InvitationRequestSetConsumer
   {
     println("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = new SystemData(new Connection())
+    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], inviteRequest))
   }
 
@@ -123,7 +124,7 @@ trait InvitationRequestSetConsumer
     val selfConnection = systemConnection.data
     val persistedInvitationRequestMessage = new PersistedMessage[ InvitationRequest ](inviteRequest)
     store(_dbQ, selfConnection.writeCnxn, persistedInvitationRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](persistedInvitationRequestMessage))
-    val profileQuery = new Profile()
+    val profileQuery = Profile.SEARCH_ALL
     fetch[ Data ](_dbQ, selfConnection.writeCnxn, profileQuery.toSearchKey, invitationRequestNotificationHandler(_: AgentCnxnProxy, _: Data, inviteRequest))
 
   }

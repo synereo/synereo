@@ -8,16 +8,17 @@ import com.protegra_ati.agentservices.core.platformagents.behaviors._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.events._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import java.net.URI
 import java.util.UUID
 import net.lag.configgy._
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 
 class MockPlatformAgent extends BasePlatformAgent
+with Serializable
 with Storage
 with Private
 {
@@ -27,7 +28,7 @@ with Private
     loadPrivateQueue()
   }
 
-  def initForTest(privateAddress: URM, privateAcquaintanceAddresses: List[ URM ], dbAddress: URM, id: UUID) =
+  def initForTest(privateAddress: URI, privateAcquaintanceAddresses: List[ URI ], dbAddress: URI, id: UUID) =
   {
     initPrivate(privateAddress, privateAcquaintanceAddresses)
     initDb(dbAddress)
