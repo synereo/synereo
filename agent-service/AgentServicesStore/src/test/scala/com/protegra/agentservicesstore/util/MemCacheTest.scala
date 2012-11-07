@@ -24,8 +24,15 @@ object MemCacheTestSpecs extends Specification
       val key = UUID.randomUUID().toString
       val expected = "test"
       client.set(key, 3600, expected);
-      val found = client.get(key).asInstanceOf[ String ];
+      val found = client.get(key).asInstanceOf[ String ]
       found must be_==(expected)
+    }
+
+    "not find a missing value" in {
+      val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+      val key = UUID.randomUUID().toString
+      val found = client.get(key)
+      found must beNull[ java.lang.Object ]
     }
   }
 
@@ -35,8 +42,15 @@ object MemCacheTestSpecs extends Specification
       val key = UUID.randomUUID().toString
       val expected = "test"
       MemCache.add(key, expected)(client);
-      val found = MemCache.get[ String ](key)(client);
+      val found = MemCache.get[ String ](key)(client)
       found must be_==(expected)
+    }
+
+    "not find a missing value" in {
+      val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+      val key = UUID.randomUUID().toString
+      val found = MemCache.get[ String ](key)(client)
+      found must beNull[ java.lang.Object ]
     }
   }
 

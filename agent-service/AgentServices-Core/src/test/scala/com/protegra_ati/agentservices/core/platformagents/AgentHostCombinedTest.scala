@@ -26,7 +26,7 @@ import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import java.util.{Locale, UUID}
 import Assert._
-import com.protegra_ati.agentservices.core.util.MemCache
+import com.protegra.agentservicesstore.util.MemCache
 
 class AgentHostCombinedTest
   extends JUnit4(AgentHostCombinedTestSpecs)
@@ -57,12 +57,8 @@ with Timeouts
 
     "retrieve english Profile between UI and Store with a public queue" in {
       AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey, Locale.ENGLISH.toString())
-      Thread.sleep(1000)
-      Thread.sleep(1000)
-      Thread.sleep(1000)
-      Thread.sleep(1000)
-      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, None)
-      MemCache.get[String]("count")(AgentHostCombinedBase.client) must be_==("1").eventually(5, TIMEOUT_EVENTUALLY)
+
+      AgentHostCombinedBase.countProfile(uiR, cnxnJenJen, agentSessionId, eventKey, None) must be_==("1").eventually(5, TIMEOUT_EVENTUALLY)
     }
 
 //    "retrieve french and english Profile between UI and Store with a public queue" in {

@@ -10,7 +10,7 @@ import com.protegra_ati.agentservices.core.events._
 import java.util.UUID
 import java.util.HashMap
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.util.{Severity, Reporting}
+import com.protegra.agentservicesstore.util.{MemCache, Severity, Reporting}
 import net.spy.memcached.MemcachedClient
 import java.net.InetSocketAddress
 
@@ -36,7 +36,7 @@ uniqueness is determined primary by agentSession Key and then by subKey + eventT
 
 trait Listeners extends Reporting
 {
-  lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+  @transient lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
 
 //  var _listeners = new MultiMap[ UUID, MessageEventAdapter ]
 //  var _uniqueness = new MultiMap[ UUID, String ]

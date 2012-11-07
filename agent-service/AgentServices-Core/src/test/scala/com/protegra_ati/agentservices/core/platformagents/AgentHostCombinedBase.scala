@@ -16,8 +16,8 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.{InetSocketAddress, URI}
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra_ati.agentservices.core.util.MemCache
 import net.spy.memcached.MemcachedClient
+import com.protegra.agentservicesstore.util.MemCache
 
 //import com.protegra_ati.agentservices.core.messages.search._
 import com.protegra_ati.agentservices.core.messages._
@@ -51,7 +51,7 @@ Timeouts
   val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
   val uiRef: AgentHostUIPlatformAgent = new AgentHostUIPlatformAgent()
   val storeRef: AgentHostStorePlatformAgent = new AgentHostStorePlatformAgent()
-  lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+  @transient lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
 
 
   val setup = new SpecContext
@@ -280,7 +280,6 @@ Timeouts
   {
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
-    @volatile var count = 0
     val tagUnique = tag + UUID.randomUUID().toString
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tagUnique)
     {
@@ -289,10 +288,9 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-           count = x.data.size
-            MemCache.add("count", x.data.size.toString)(client);
+            MemCache.add(agentSessionId.toString, x.data.size.toString)(client);
 
-            println("size received : " + count)
+            println("size received : " +  x.data.size)
           }
           case _ => {}
         }
@@ -304,8 +302,9 @@ Timeouts
     getReq.targetCnxn = cnxn
     ui.send(getReq)
 
-    trySleep(count)
-    count
+   //    trySleep(count)
+    val count = MemCache.get[String](agentSessionId.toString)(AgentHostCombinedBase.client)
+    count.asInstanceOf[Int]
   }
 
   def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
