@@ -29,7 +29,8 @@ import Being.AgentKVDBNodeFactory
 
 trait AgentKVDBNodeResubmitRequestsTestConfigurationT
 extends KVDBHelpers
-with FJTaskRunners {
+with FJTaskRunners
+with Serializable {
   def testId : String
   def numberOfStandingRequests : Int
   def uiConfigFileName : Option[String]
@@ -65,33 +66,30 @@ with FJTaskRunners {
   @transient
   lazy val contentStrm : Stream[UUID] = uuidRandomStream()
   @transient
-  lazy val sessionStrm : Stream[UUID] = uuidRandomStream()
+  lazy val sessionStrm : Stream[UUID] = uuidRandomStream()  
 
   @transient
-  lazy val contentSection = contentStrm.take( numberOfStandingRequests )
-  @transient
-  lazy val sessionSection = sessionStrm.take( numberOfStandingRequests )
-
-  @transient
-  lazy val sessionedContent : Stream[( UUID, UUID )] = sessionSection.zip( contentSection )
-
-  @transient
-  lazy val keyBidsNAsks : Stream[( ( String, String ), String )] = {
-    for( ( session, content ) <- sessionedContent )
-    yield {
-      (
+  lazy val keyBidsNAsks : ( Stream[( String, String )], Stream[String] ) = {
+    (
+      for( ( session, content ) <- sessionStrm.zip( contentStrm ) )
+      yield {
 	(
 	  (
-	    "contentRequestPrivate("
-	    + "\"" + session + "\"" 
-	    + " , "
-	    + "\"" + content + "\"" 
-	    + ")"
-	  ),
-	  (
-	    "test" + session + "@protegra.com"
+	    (
+	      "contentRequestPrivate("
+	      + "\"" + session + "\"" 
+	      + " , "
+	      + "\"" + content + "\"" 
+	      + ")"
+	    ),
+	    (
+	      "test" + session + "@protegra.com"
+	    )
 	  )
-	),
+	)
+      },
+
+      for( session <- sessionStrm ) yield {      
 	(
 	  "contentRequestPrivate("
 	  + "\"" + session + "\"" 
@@ -99,14 +97,9 @@ with FJTaskRunners {
 	  + "_" 
 	  + ")"
 	)
-      )
-    }
-  }
-
-  @transient
-  lazy val keyBidsKeyAsks : ( Stream[( String, String )], Stream[String] ) = {
-    keyBidsNAsks.unzip
-  }
+      }
+    )
+  }  
   
   def resultKey() : String = "result(\"1\")"        
 }
@@ -114,7 +107,9 @@ with FJTaskRunners {
 abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   override val testId : String,
   override val numberOfStandingRequests : Int,
+  @transient
   override val uiConfigFileName : Option[String],
+  @transient
   override val storeConfigFileName : Option[String],
   @transient
   override val cnxnRandom : AgentCnxn,
@@ -232,10 +227,11 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
     }
   }
 
-  def registerContinuations( keyAsks : Stream[String] )(
+  def registerContinuations( @transient keyAsks : Stream[String] )(
     kPresent : CKR => Unit,
     kAbsent : CKR => Unit
   ) : Unit = {    
+    @transient
     val keyAskItr = keyAsks.iterator    
     while( keyAskItr.hasNext ) { // Delimited continuations don't
 				 // work well with collections, yet
@@ -259,9 +255,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
     }
   }
   
-  def resubmitRequests( keyAsks : Stream[String] ) : Unit = {
+  def resubmitRequests( @transient keyAsks : Stream[String] ) : Unit = {
+    @transient
     val keyAskItr2 = keyAsks.iterator
+
+    barrier( 0 )
+
     while( keyAskItr2.hasNext ) {
+      @transient
       val keyAsk = keyAskItr2.next
 	val opIGen : Option[ReqGenerator] =
 	  store_privateQ.resubmitLabelRequests( cnxnUIStore )( keyAsk.toLabel )(dAT.AGetNum)

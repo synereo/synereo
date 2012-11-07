@@ -26,7 +26,8 @@ import scala.concurrent.ops._
 import com.biosimilarity.lift.lib.moniker._
 
 trait KVDBHelpers extends Timeouts with RabbitTestSetup {
-  val _resultsQ =
+  @transient
+  lazy val _resultsQ =
     createNode(
       "127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB),
       List[ URI ]()
