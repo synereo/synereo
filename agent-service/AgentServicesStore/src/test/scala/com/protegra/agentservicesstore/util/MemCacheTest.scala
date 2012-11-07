@@ -52,6 +52,20 @@ object MemCacheTestSpecs extends Specification
       val found = MemCache.get[ String ](key)(client)
       found must beNull[ java.lang.Object ]
     }
+
+    "replace correct value" in {
+      val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+      val key = UUID.randomUUID().toString
+      val expected = "test"
+      MemCache.add(key, expected)(client);
+      val found = MemCache.get[ String ](key)(client)
+      found must be_==(expected)
+
+      val replaced = "replaced"
+      MemCache.replace(key, replaced)(client);
+      val foundAgain = MemCache.get[ String ](key)(client)
+      foundAgain must be_==(replaced)
+    }
   }
 
 }
