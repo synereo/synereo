@@ -50,7 +50,7 @@ with IntroductionResponseSetConsumerPrivate
 
   def initForTest(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], id: UUID)
   {
-    initPrivate(privateLocation, privateAcquaintanceAddresses)
+    initPrivate(privateLocation, privateAcquaintanceAddresses, Some("db_ui.conf"))
     super.initForTest(id)
   }
 

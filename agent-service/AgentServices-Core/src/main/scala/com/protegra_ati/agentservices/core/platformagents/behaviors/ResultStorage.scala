@@ -21,7 +21,8 @@ trait ResultStorage
 
   var _resultLocation: URI = null
   var _resultQ: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
-
+  var _resultConfigFileName: Option[String] = None
+           
   val _resultId = UUID.randomUUID().toString()
   val _cnxnResult = new AgentCnxnProxy(( "ResultDB" + _resultId ).toURI, "", ( "ResultDB" + _resultId ).toURI)
 
@@ -31,14 +32,15 @@ trait ResultStorage
     _resultLocation = loadFirstURI(configUtil.getConfigMap(resultSelfMapKey))
   }
 
-  def initResultDb(resultLocation: URI)
+  def initResultDb(resultLocation: URI, resultConfigFileName: Option[String])
   {
     _resultLocation = resultLocation
+    _resultConfigFileName = resultConfigFileName
   }
 
   def loadResultStorageQueue() =
   {
-    _resultQ = createNode(_resultLocation, List())
+    _resultQ = createNode(_resultLocation, List(), _resultConfigFileName)
   }
 
   //childId for uniqueness, if we just used Id an update would happen

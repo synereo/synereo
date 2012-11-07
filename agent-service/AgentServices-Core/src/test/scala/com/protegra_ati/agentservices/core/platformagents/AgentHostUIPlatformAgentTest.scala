@@ -32,10 +32,12 @@ import com.protegra_ati.agentservices.core.messages._
 import moniker._
 import scala.util.continuations._
 import scala.util.Random
-import java.net.URI
+import java.net.{InetSocketAddress, URI}
 import org.specs.runner._
 import verifier._
 import com.protegra_ati.agentservices.core._
+import net.spy.memcached.MemcachedClient
+import com.protegra.agentservicesstore.util.MemCache
 
 
 class AgentHostUIPlatformAgentTest
@@ -48,6 +50,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
   with Timeouts
 {
 
+  @transient lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
   val rand = new Random()
 
   val sourceId = UUID.randomUUID()
@@ -78,89 +81,93 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 
   "receiving a response message" should {
     @transient val pa = createPA
-    var triggered = false
+    val triggered = "true"
+    val agentSessionId = UUID.randomUUID
+    val key = "result" + agentSessionId.toString
+
     "raise a SetContentResponseReceivedEvent" in {
-      val agentSessionId = UUID.randomUUID
       val parentIds = new Identification()
       val req = new SetContentResponse(parentIds.copyAsChild(), new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
       //Responses now default to a public channel level so for this test need to turn that off
       req.channelLevel = None
+
       pa.addListener(agentSessionId, "", new MessageEventAdapter()
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          triggered = true
+          MemCache.add(key, triggered)(client);
         }
       });
 
       pa.send(req)
       //Thread.sleep(TIMEOUT_LONG)
       pa.listenPrivate(pa._cnxnUIStore)
-      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+      MemCache.get[ String ](key)(client) must be_==(triggered).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
-//    "raise a GetContentResponseReceivedEvent" in {
-//      val parentIds = new Identification()
-//      val agentSessionId = UUID.randomUUID
-//      val req = new GetContentResponse(parentIds.copyAsChild(), new EventKey(agentSessionId, ""), List(new Profile("testFirst", "testLast", "test Description", "123@test.com","CA", "someCAprovince", "city", "postalCode", "website" )))
-//      //Responses now default to a public channel level so for this test need to turn that off
-//      req.channelLevel = None
-//
-//      pa.addListener(agentSessionId, "", new MessageEventAdapter()
-//      {
-//        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
-//        {
-//          triggered = true
-//        }
-//      });
-//
-//      pa.send(req)
-//      //Thread.sleep(TIMEOUT_LONG)
-//      pa.listenPrivate(pa._cnxnUIStore)
-//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
-//    }
+    "raise a GetContentResponseReceivedEvent" in {
+      val parentIds = new Identification()
+      val req = new GetContentResponse(parentIds.copyAsChild(), new EventKey(agentSessionId, ""), List(new Profile("testFirst", "testLast", "test Description", "123@test.com","CA", "someCAprovince", "city", "postalCode", "website" )))
+      //Responses now default to a public channel level so for this test need to turn that off
+      req.channelLevel = None
+
+      pa.addListener(agentSessionId, "", new MessageEventAdapter()
+      {
+        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
+        {
+          MemCache.add(key, triggered)(client);
+        }
+      });
+
+      pa.send(req)
+      //Thread.sleep(TIMEOUT_LONG)
+      pa.listenPrivate(pa._cnxnUIStore)
+      MemCache.get[ String ](key)(client) must be_==(triggered).eventually(5, TIMEOUT_EVENTUALLY)
+    }
   }
-//
-//  "listeners" should {
-//    @transient val pa = createPA
-//    var triggered = false
-//    "trigger the right event" in {
-//
-//      val userAgentId1 = UUID.randomUUID
-//      val userAgentId2 = UUID.randomUUID
-//
-//      pa.addListener(userAgentId1, "", new MessageEventAdapter()
-//      {
-//        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-//        {
-//          fail()
-//        }
-//      })
-//
-//      pa.addListener(userAgentId2, "get", new MessageEventAdapter()
-//      {
-//        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
-//        {
-//          fail()
-//        }
-//      })
-//
-//      pa.addListener(userAgentId2, "set", new MessageEventAdapter()
-//      {
-//        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-//        {
-//          triggered = true
-//        }
-//      })
-//
-//      val parentIds = new Identification()
-//      val req = SetContentResponse(parentIds.copyAsChild(), new EventKey(userAgentId2, ""), new Profile("testFirst", "testLast", "test Description", "1@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
-//      //Responses now default to a public channel level so for this test need to turn that off
-//      req.channelLevel = None
-//
-//      pa.send(req)
-//      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
-//    }
+
+  "listeners" should {
+    @transient val pa = createPA
+    val triggered = "true"
+
+    "trigger the right event" in {
+
+      val userAgentId1 = UUID.randomUUID
+      val userAgentId2 = UUID.randomUUID
+      val key = "result" + userAgentId2.toString
+
+      pa.addListener(userAgentId1, "", new MessageEventAdapter()
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+          fail()
+        }
+      })
+
+      pa.addListener(userAgentId2, "get", new MessageEventAdapter()
+      {
+        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
+        {
+          fail()
+        }
+      })
+
+      pa.addListener(userAgentId2, "set", new MessageEventAdapter()
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+          MemCache.add(key, triggered)(client);
+        }
+      })
+
+      val parentIds = new Identification()
+      val req = SetContentResponse(parentIds.copyAsChild(), new EventKey(userAgentId2, ""), new Profile("testFirst", "testLast", "test Description", "1@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
+      //Responses now default to a public channel level so for this test need to turn that off
+      req.channelLevel = None
+
+      pa.send(req)
+      MemCache.get[ String ](key)(client) must be_==(triggered).eventually(5, TIMEOUT_EVENTUALLY)
+    }
 //
 //    "raise a GetContentAuthorizationRequiredNotification" in {
 //
@@ -200,6 +207,6 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
 //      pa.send(req)
 //      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
 //    }
-//  }
+  }
 
 }

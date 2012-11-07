@@ -13,7 +13,8 @@ trait Private {
   var _privateLocation: URI = null
   var _privateAcquaintanceAddresses = List[URI]()
   var _privateQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
-
+  var _privateConfigFileName: Option[String] = None
+    
   def initPrivate(configUtil: Config)
   {
     val privateSelfMapKey = "private.self"
@@ -23,13 +24,14 @@ trait Private {
     _privateAcquaintanceAddresses = loadURIs(configUtil.getConfigMap(privateAcquaintanceMapKey))  ::: this._privateAcquaintanceAddresses
   }
 
-  def initPrivate(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ])
+  def initPrivate(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], privateConfigFileName: Option[String])
   {
     _privateLocation = privateLocation
     _privateAcquaintanceAddresses = privateAcquaintanceAddresses ::: this._privateAcquaintanceAddresses
+    _privateConfigFileName = privateConfigFileName
   }
 
   def loadPrivateQueue() = {
-    _privateQ = createNode(_privateLocation, _privateAcquaintanceAddresses)
+    _privateQ = createNode(_privateLocation, _privateAcquaintanceAddresses, _privateConfigFileName)
   }
 }

@@ -14,8 +14,11 @@ import Assert._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import java.net.URI
+import java.net.{InetSocketAddress, URI}
 import com.protegra_ati.agentservices.core.messages.content._
+import net.spy.memcached.MemcachedClient
+import com.protegra.agentservicesstore.util.MemCache
+
 //import com.protegra_ati.agentservices.core.messages.search._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
@@ -30,7 +33,6 @@ import org.specs.util._
 import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 import com.protegra_ati.agentservices.core.events._
-import java.net.URI
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import java.util.{Locale, UUID}
@@ -49,6 +51,7 @@ Timeouts
   val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
   val uiRef: AgentHostUIPlatformAgent = new AgentHostUIPlatformAgent()
   val storeRef: AgentHostStorePlatformAgent = new AgentHostStorePlatformAgent()
+  @transient lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
 
 
   val setup = new SpecContext
@@ -64,8 +67,10 @@ Timeouts
     // store
     val publicAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC)
     val publicAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))
+
     val privateAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
     val privateAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE))
+
     val dbAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_DB)
     val resultAddress = "localhost".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB)
     storeRef._cnxnUIStore = cnxnUIStore
@@ -273,11 +278,10 @@ Timeouts
 
   def count(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data): Int =
   {
-    val sync = new AnyRef()
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
-    @volatile var count = 0
     val tagUnique = tag + UUID.randomUUID().toString
+    val countKey = "count" + agentSessionId.toString
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tagUnique)
     {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
@@ -285,7 +289,9 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-            sync.synchronized {count = x.data.size}
+            MemCache.add(countKey, x.data.size.toString)(client);
+
+            println("size received : " +  x.data.size)
           }
           case _ => {}
         }
@@ -297,8 +303,12 @@ Timeouts
     getReq.targetCnxn = cnxn
     ui.send(getReq)
 
-    trySleep(sync.synchronized {count})
-    sync.synchronized {count}
+   //    trySleep(count)
+    val count = MemCache.get[String](countKey)(AgentHostCombinedBase.client)
+    count match {
+      case null => 0
+      case _ => Integer.parseInt(count)
+    }
   }
 
   def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =

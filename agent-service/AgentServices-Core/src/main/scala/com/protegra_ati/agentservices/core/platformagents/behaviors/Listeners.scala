@@ -10,7 +10,9 @@ import com.protegra_ati.agentservices.core.events._
 import java.util.UUID
 import java.util.HashMap
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.util.{Severity, Reporting}
+import com.protegra.agentservicesstore.util.{MemCache, Severity, Reporting}
+import net.spy.memcached.MemcachedClient
+import java.net.InetSocketAddress
 
 //import com.sun.org.apache.xpath.internal.operations._
 import com.protegra_ati.agentservices.core.util._
@@ -34,18 +36,20 @@ uniqueness is determined primary by agentSession Key and then by subKey + eventT
 
 trait Listeners extends Reporting
 {
-  var _listeners = new MultiMap[ UUID, MessageEventAdapter ]
-  var _uniqueness = new MultiMap[ UUID, String ]
+  @transient lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+
+//  var _listeners = new MultiMap[ UUID, MessageEventAdapter ]
+//  var _uniqueness = new MultiMap[ UUID, String ]
 
   //not providing a method with only key, listener. it should be a conscious choice to manage listeners per page
   def addListener(key: UUID, subKey: String, listener: MessageEventAdapter) =
   {
     report("in addListener - adding listener with key: " + key.toString + "for subkey" + subKey + " and eventTag: " + listener.eventTag)
-    val keyUnique = subKey + listener.eventTag
-    if (!_uniqueness.hasValue(key, keyUnique))
+    val keyUnique: String = key.toString + subKey + listener.eventTag
+    if (isUniqueListener(keyUnique))
     {
-      _listeners.add(key, listener)
-      _uniqueness.add(key, keyUnique)
+      MemCache.add(keyUnique, key.toString)(client);
+      MemCache.add(key.toString, listener)(client);
     }
     else
     {
@@ -53,24 +57,36 @@ trait Listeners extends Reporting
     }
   }
 
+  def isUniqueListener(key: String) : Boolean =
+  {
+    val matching = MemCache.get[String](key)(client)
+    matching match {
+      case null => true
+      case _ => false
+    }
+  }
+
   def removeListener(key: UUID, subKey: String, listener: MessageEventAdapter) =
   {
-    report("in removeListener - removing listener with key: " + key.toString + "for subkey" + subKey + " and eventTag: " + listener.eventTag)
-    val keyUnique = subKey + listener.eventTag
-    _listeners.remove(key, listener)
-    _uniqueness.remove(key, keyUnique)
+//    report("in removeListener - removing listener with key: " + key.toString + "for subkey" + subKey + " and eventTag: " + listener.eventTag)
+//    val keyUnique = subKey + listener.eventTag
+//    _listeners.remove(key, listener)
+//    _uniqueness.remove(key, keyUnique)
   }
 
   def getListenersByMessage(msg: Message): List[ MessageEventAdapter ] =
   {
 //    (  && !msg.eventTag.equals("") )
     if ( msg.eventKey != null ) {
-      val matching = _listeners.get(msg.eventKey.agentSessionId)
+//      val matching = _listeners.get(msg.eventKey.agentSessionId)
+      val key = msg.eventKey.agentSessionId
+      val matching = MemCache.get[MessageEventAdapter](key.toString)(client)
       matching match {
         case null => List[ MessageEventAdapter ]()
         case _ => {
-          val filtered = matching.filter(l => l.eventTag == msg.eventKey.eventTag)
-          filtered
+//          val filtered = matching.filter(l => l.eventTag == msg.eventKey.eventTag)
+//          filtered
+          matching :: Nil
         }
       }
     }

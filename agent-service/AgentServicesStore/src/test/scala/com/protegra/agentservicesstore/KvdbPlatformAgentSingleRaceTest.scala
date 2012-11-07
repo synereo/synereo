@@ -30,6 +30,8 @@ import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
 
+import scala.concurrent.ops._
+
 class KvdbPlatformAgentSingleRaceTest
   extends JUnit4(KvdbPlatformAgentSingleRaceTestSpecs)
 
@@ -45,89 +47,67 @@ object KvdbPlatformAgentSingleRaceTestSpecs extends KvdbPlatformAgentBaseRace
   val writer = createNode(sourceAddress, acquaintanceAddresses)
   val reader = writer
 
-  testMessaging(writer, reader)
-//  testWildcardWithPut(writer, reader)
-//  testWildcardWithStore(writer, reader)
-//  testWildcardWithPutAndCursor(writer, reader)
-//  testWildcardWithStoreAndCursor(writer, reader)
-  ////testWildcardWithCursorBefore(writer, reader)
+//  testMessaging(writer, reader)
 
   val sourceId = UUID.randomUUID
   val targetId = sourceId
   val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
   val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
-//
-//  "Get" should {
-//    "not find when key is missing" in {
-//      val key = "contentResponse(nonexistingGet(\"not here\"))".toLabel
-//      getMustBe("")(reader, cnxn, key)
-//    }
-//  }
-//
-//  "Fetch" should {
-//    "not find when key is missing" in {
-//      val key = "contentResponse(nonexistingFetch(\"not here\"))".toLabel
-//      fetchMustBe("")(reader, cnxn, key)
-//    }
-//  }
-//
-//  //ISSUE 37: different labels get1get2 put1put1 keep going down alternating gets
-//  "2 Cached Get/Put" should {
-//
-//    val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
-//    val testId = UUID.randomUUID().toString()
-//    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-//
-//    Thread.sleep(timeoutBetween)
-//    "retrieve" in {
-//
-//      val lblGlobalRequest = "globalRequest(\"email\")".toLabel
-//      val lblGlobalResponse = "globalResponse(\"email\")".toLabel
-//
-//      val globalId = UUID.randomUUID().toString()
-//      val cnxnGlobal = new AgentCnxn(( "Global" + globalId ).toURI, "", ( "Global" + globalId ).toURI)
-//
-//      def listenGlobalRequest(): Unit =
-//      {
-//        reset {
-//          for ( e <- reader.get(cnxnGlobal)(lblGlobalRequest) ) {
-//            if ( e != None ) {
-//              val lblResult = ( "result(\"" + UUID.randomUUID() + "\")" ).toLabel
-//              reset {_resultsQ.put(cnxnTest)(lblResult, e.dispatch)}
-//              listenGlobalRequest
-//            }
-//          }
-//        }
-//      }
-//
-//      def listenGlobalResponse: Unit =
-//      {
-//        reset {
-//          for ( e <- reader.get(cnxnGlobal)(lblGlobalResponse) ) {
-//            if ( e != None ) {
-//              println("************* RESPONSE RECEIVED : " + e.dispatch)
-//              // No message should be received on this label
-//              fail("Response was received, but should not have been.")
-//
-//              listenGlobalResponse
-//            }
-//          }
-//        }
-//      }
-//
-//      listenGlobalResponse
-//
-//      val valueGlobalRequest = "START THE GLOBAL REQUEST"
-//      listenGlobalRequest
-//      Thread.sleep(TIMEOUT_MED)
-//      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 1"))}
-//      Thread.sleep(TIMEOUT_MED)
-//      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 2"))}
-//
-//      val strResultSearch = "result(_)"
-//      countMustBe(2)(_resultsQ, cnxnTest, strResultSearch)
-//    }
-//  }
+  "recursive Get 1 Put" should {
+
+    val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
+    val testId = UUID.randomUUID().toString()
+    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+    val cnxnUIStore = new AgentCnxn(("UI" + sourceId.toString).toURI, "", ("Store" + targetId.toString).toURI)
+
+    val writerConfigFileName = Some("db_ui.conf")
+    val readerConfigFileName = Some("db_store.conf")
+
+    val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+    val acquaintanceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
+
+    val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress), writerConfigFileName)
+    val pairedReader = createNode(acquaintanceAddress, List(sourceAddress), readerConfigFileName)
+
+
+    Thread.sleep(timeoutBetween)
+    "retrieve" in {
+
+      val lblChannel = "contentRequest(_)".toLabel
+
+      def listenContentRequest(): Unit =
+      {
+        reset {
+          for ( e <- pairedReader.get(cnxnUIStore)(lblChannel) ) {
+            if ( e != None ) {
+              spawn {
+              val lblResult = ( "result(\"" + UUID.randomUUID() + "\")" ).toLabel
+              reset {_resultsQ.put(cnxnTest)(lblResult, e.dispatch)}
+              }
+              listenContentRequest
+            }
+          }
+        }
+      }
+
+      val lblContentRequest = ("contentRequest(\"" + UUID.randomUUID().toString + "\")").toLabel
+      val valueContentRequest = "START THE GLOBAL REQUEST"
+      listenContentRequest
+
+      Thread.sleep(TIMEOUT_MED)
+      reset {pairedWriter.put(cnxnUIStore)(lblContentRequest, Ground(valueContentRequest + ": 1"))}
+
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG)
+      val strResultSearch = "result(_)"
+      countMustBe(1)(_resultsQ, cnxnTest, strResultSearch)
+    }
+  }
 
 }

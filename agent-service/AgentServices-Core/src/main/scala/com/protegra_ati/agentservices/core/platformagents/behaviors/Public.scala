@@ -13,6 +13,7 @@ trait Public {
   var _publicLocation: URI = null
   var _publicAcquaintanceAddresses = List[URI]()
   var _publicQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
+  var _publicConfigFileName: Option[String] = None
 
   def initPublic(configUtil: Config)
   {
@@ -23,13 +24,14 @@ trait Public {
     _publicAcquaintanceAddresses = loadURIs(configUtil.getConfigMap(publicAcquaintanceMapKey))  ::: this._publicAcquaintanceAddresses
   }
 
-  def initPublic(publicLocation: URI, publicAcquaintanceAddresses: List[ URI ])
+  def initPublic(publicLocation: URI, publicAcquaintanceAddresses: List[ URI ], publicConfigFileName: Option[String])
   {
     _publicLocation = publicLocation
     _publicAcquaintanceAddresses = publicAcquaintanceAddresses ::: this._publicAcquaintanceAddresses
+    _publicConfigFileName = publicConfigFileName
   }
 
   def loadPublicQueue() = {
-    _publicQ = createNode(_publicLocation, _publicAcquaintanceAddresses)
+    _publicQ = createNode(_publicLocation, _publicAcquaintanceAddresses, _publicConfigFileName)
   }
 }

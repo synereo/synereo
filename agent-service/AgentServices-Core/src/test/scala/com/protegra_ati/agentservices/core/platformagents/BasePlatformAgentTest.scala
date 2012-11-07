@@ -96,12 +96,13 @@ with Timeouts
     "retrieve" in {
       val key = "profile(\"putGet\")"
       pa.put(pa._dbQ, cnxn, key, Serializer.serialize[ Message ](mockMsg))
-      //Thread.sleep(TIMEOUT_LONG)
 
+      SleepToPreventContinuation()
       pa.get(pa._dbQ, cnxn, key, handleGet)
       result.value must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
+    //this assumes there is no continuation on get
     def handleGet(cnxn: AgentCnxnProxy, msg: Message) =
     {
       msg match {
@@ -125,7 +126,6 @@ with Timeouts
       fetchData(pa._dbQ, cnxn, mockDataFetch.toStoreKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
     "search" in {
-         //use  mockDataFetch.toStoreKey
       pa.store(pa._dbQ, cnxn, mockDataSearch.toStoreKey, Serializer.serialize[ Data ](mockDataFetch))
       val search = new Profile ()
       search.id = mockDataSearch.id.toString
@@ -138,6 +138,7 @@ with Timeouts
       return result.value
     }
 
+    //this assumes there is no continuation on fetch
     def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
     {
       data match {
@@ -160,6 +161,7 @@ with Timeouts
       val mockMsg = new GetContentRequest(new EventKey(UUID.randomUUID(), ""), mockSearch)
 
       pa.store(pa._privateQ, cnxn, mockMsg.getChannelKey, Serializer.serialize[ Message ](mockMsg))
+      SleepToPreventContinuation()
       listen(pa._privateQ, cnxn, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message)).value must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
@@ -169,6 +171,7 @@ with Timeouts
       result
     }
 
+    //this assumes there is no continuation on listen
     def handlePrivateContentRequestChannel[T <:Data](cnxn: AgentCnxnProxy, msg: Message) =
     {
       msg match {
