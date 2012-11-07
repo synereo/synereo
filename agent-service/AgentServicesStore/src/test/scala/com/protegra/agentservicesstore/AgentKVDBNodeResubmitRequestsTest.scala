@@ -47,19 +47,6 @@ object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
     val testConfig =
       AgentKVDBNodeResubmitRequestsTestDefaultConfiguration()
     
-    @transient
-    val keyBnA = testConfig.keyBidsNAsks.unzip
-    @transient
-    val keyBids = keyBnA._1
-    @transient
-    val keyAsks = keyBnA._2
-    @transient
-    val keyBnVs = keyBids.unzip
-    @transient
-    val keyBs = keyBnVs._1
-    @transient
-    val keyVs = keyBnVs._1
-
     /* --------------------------------------------------------- *
      *                       Scenarios
      * --------------------------------------------------------- */
@@ -80,14 +67,16 @@ object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
       /* --------------------------------------------------------- *
        *                   Store continuations
        * --------------------------------------------------------- */      
-      testConfig.registerContinuations( keyAsks )( testConfig.ckrReportPresent, testConfig.ckrReportAbsent )
+      testConfig.registerContinuations(
+	testConfig.keyBidsNAsks._2.take( testConfig.numberOfStandingRequests )
+      )( testConfig.ckrReportPresent, testConfig.ckrReportAbsent )
 
       /* --------------------------------------------------------- *
        * Wait at barrier -- will be fixed with a blocking get, soon
        * --------------------------------------------------------- */
 
-      while ( testConfig.barrier() < testConfig.numberOfStandingRequests.length ) {
-	println( "waiting to get past barrier; current height: " + testConfig.barrier )
+      while ( testConfig.barrier() < testConfig.numberOfStandingRequests ) {
+	println( "waiting to get past registration barrier; current height: " + testConfig.barrier )
 	Thread.sleep( testConfig.TIMEOUT_MED )
       }
 
@@ -95,7 +84,14 @@ object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
        *                   Resubmit requests
        * --------------------------------------------------------- */      
 
-      testConfig.resubmitRequests( keyAsks )
+      testConfig.resubmitRequests(
+	testConfig.keyBidsNAsks._2.take( testConfig.numberOfStandingRequests )
+      )
+
+      while ( testConfig.barrier() < testConfig.numberOfStandingRequests ) {
+	println( "waiting to get past resubmission barrier; current height: " + testConfig.barrier )
+	Thread.sleep( testConfig.TIMEOUT_MED )
+      }
 
       /* --------------------------------------------------------- *
        *                   Assert invariant
