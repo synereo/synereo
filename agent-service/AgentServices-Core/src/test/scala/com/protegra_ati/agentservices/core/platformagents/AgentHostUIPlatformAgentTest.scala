@@ -89,7 +89,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       //Responses now default to a public channel level so for this test need to turn that off
       req.channelLevel = None
 
-      val key = agentSessionId.toString
+      val key = "result" + agentSessionId.toString
       pa.addListener(agentSessionId, "", new MessageEventAdapter()
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =

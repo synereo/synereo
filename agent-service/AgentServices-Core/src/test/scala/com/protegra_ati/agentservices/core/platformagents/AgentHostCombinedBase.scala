@@ -281,6 +281,7 @@ Timeouts
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
     val tagUnique = tag + UUID.randomUUID().toString
+    val countKey = "count" + agentSessionId.toString
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tagUnique)
     {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
@@ -288,7 +289,7 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-            MemCache.add(agentSessionId.toString, x.data.size.toString)(client);
+            MemCache.add(countKey, x.data.size.toString)(client);
 
             println("size received : " +  x.data.size)
           }
@@ -303,8 +304,11 @@ Timeouts
     ui.send(getReq)
 
    //    trySleep(count)
-    val count = MemCache.get[String](agentSessionId.toString)(AgentHostCombinedBase.client)
-    count.asInstanceOf[Int]
+    val count = MemCache.get[String](countKey)(AgentHostCombinedBase.client)
+    count match {
+      case null => 0
+      case _ => Integer.parseInt(count)
+    }
   }
 
   def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =

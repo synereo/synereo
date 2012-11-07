@@ -10,7 +10,7 @@ trait Timeouts {
   val TIMEOUT_VERY_LONG = 5000
   val TIMEOUT_BEFORE_RESULT_FETCH = 1000
 
-  @transient val TIMEOUT_EVENTUALLY = new Duration(2000)
+  @transient val TIMEOUT_EVENTUALLY = new Duration(3000)
 
   def trySleep(count: Int) = {
     if (count == 0)
