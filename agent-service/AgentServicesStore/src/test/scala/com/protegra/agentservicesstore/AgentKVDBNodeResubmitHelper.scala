@@ -150,12 +150,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   def ckrReportPresent( ckr : CKR ) : Unit = {
     println(
       (
-	"The original behavior for the get on " 
+	"\n########################################################\n"
+	+ "The original behavior for the get on " 
 	+ "("
 	+ ckr.cnxnRdr
 	+ " , "
 	+ ckr.keyRdr
 	+ ")"
+	+ "\n########################################################\n"
       )
     )
     val result = ckr.rsrc.dispatch
@@ -167,12 +169,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   def ckrReportRepresent( ckr : CKR ) : Unit = {
     println(
       (
-	"The new behavior for the get on "
+	"\n########################################################\n"
+	+ "The new behavior for the get on "
 	+ "("
 	+ ckr.cnxnRdr
 	+ " , "
 	+ ckr.keyRdr
 	+ ")"
+	+ "\n########################################################\n"
       )
     )
     val result = ckr.rsrc.dispatch
@@ -184,12 +188,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   def ckrReportAbsent( ckr : CKR ) : Unit = {
     println(
       (
-	"listen received - none - on " 
+	"\n########################################################\n"
+	+ "listen received - none - on " 
 	+ "("
 	+ ckr.cnxnRdr
 	+ " , "
 	+ ckr.keyRdr
 	+ ")"
+	+ "\n########################################################\n"
       )
     )
     barrier( barrier() + 1 )
@@ -198,12 +204,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   def ckrReportReabsent( ckr : CKR ) : Unit = {
     println(
       (
-	"listen received - none - on " 
+	"\n########################################################\n"
+	+ "listen received - none - on " 
 	+ "("
 	+ ckr.cnxnRdr
 	+ " , "
 	+ ckr.keyRdr
 	+ ")"
+	+ "\n########################################################\n"
       )
     )
     barrier( barrier() + 1 )
@@ -215,6 +223,16 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
     kPresent : CKR => Unit,
     kAbsent : CKR => Unit
   ) : Unit = {
+    println(
+      "\n########################################################\n"
+      + "registering continuation"
+      + "keyRdr : " + keyRdr + "\n"
+      + "keyRdr.toLabel : " + keyRdr.toLabel + "\n"
+      + "keyWrtr : " + keyWrtr + "\n"
+      + "kPresent : " + kPresent + "\n"
+      + "kAbsent : " + kAbsent + "\n"
+      + "\n########################################################\n"
+    )
     reset {
       for ( e <- store_privateQ.get( cnxnUIStore )( keyRdr.toLabel ) ) {
 	val ckr =
@@ -233,6 +251,9 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   ) : Unit = {    
     @transient
     val keyAskItr = keyAsks.iterator    
+
+    barrier( 0 )
+
     while( keyAskItr.hasNext ) { // Delimited continuations don't
 				 // work well with collections, yet
       
@@ -245,8 +266,16 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   def resubmitPlaceInstance( pIGen : ReqGenerator ) : Unit = {
     reset {
       for( pI <- pIGen ) {      
+	println(
+	  "\n########################################################\n"
+	  + "pI : " + pI + "\n"
+	  + "pI.place : " + pI.place + "\n"
+	  + "pI.stuff : " + pI.stuff + "\n"
+	  + "pI.subst : " + pI.subst + "\n"
+	  + "\n########################################################\n"
+	)
 	registerContinuation(
-	  ( pI.place + "" ),
+	  ( pI.place.toString.replace( "'", "" ).replace( "string(", "\"" ).replace( "),", "\"," ) ),
 	  resultKey,
 	  ckrReportRepresent,
 	  ckrReportReabsent
@@ -270,12 +299,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
 	  case Some( pIGen ) => {
 	    println(
 	      (
-		"found a pIGenerator on "
+		"\n########################################################\n"
+		+ "found a pIGenerator on "
 		+ "("
 		+ cnxnUIStore
 		+ " , "
 		+ keyAsk
 		+ ")"
+		+ "\n########################################################\n"
 	      )
 	    )
 	    resubmitPlaceInstance( pIGen )
@@ -283,12 +314,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
 	  case None => {
 	    println(
 	      (
-		"Did not find a pIGenerator on "
+		"\n########################################################\n"
+		+ "Did not find a pIGenerator on "
 		+ "("
 		+ cnxnUIStore
 		+ " , "
 		+ keyAsk
 		+ ")"
+		+ "\n########################################################\n"
 	      )
 	    )
 	  }
