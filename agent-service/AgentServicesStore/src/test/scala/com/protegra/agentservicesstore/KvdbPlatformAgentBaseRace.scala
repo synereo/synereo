@@ -102,7 +102,6 @@ case class KvdbPlatformAgentBaseRace() extends Specification
 
     //issue 55
     "Fetch/Store" should {
-//         Thread.sleep(timeoutBetween)
 
          "retrieve" in {
            val sourceId = UUID.randomUUID
@@ -119,7 +118,6 @@ case class KvdbPlatformAgentBaseRace() extends Specification
 
            //with 1000 sleep the race condition turns into store/fetch which works without watiers.
 //           Thread.sleep(1000)
-           SleepToPreventContinuation()
            fetchString(reader, cnxn, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
          }
        }

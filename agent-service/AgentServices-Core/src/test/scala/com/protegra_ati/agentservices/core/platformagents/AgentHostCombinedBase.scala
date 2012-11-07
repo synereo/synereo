@@ -14,8 +14,11 @@ import Assert._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import java.net.URI
+import java.net.{InetSocketAddress, URI}
 import com.protegra_ati.agentservices.core.messages.content._
+import com.protegra_ati.agentservices.core.util.MemCache
+import net.spy.memcached.MemcachedClient
+
 //import com.protegra_ati.agentservices.core.messages.search._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
@@ -30,7 +33,6 @@ import org.specs.util._
 import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 import com.protegra_ati.agentservices.core.events._
-import java.net.URI
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import java.util.{Locale, UUID}
@@ -49,6 +51,7 @@ Timeouts
   val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
   val uiRef: AgentHostUIPlatformAgent = new AgentHostUIPlatformAgent()
   val storeRef: AgentHostStorePlatformAgent = new AgentHostStorePlatformAgent()
+  lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
 
 
   val setup = new SpecContext
@@ -287,6 +290,8 @@ Timeouts
         e.msg match {
           case x: GetContentResponse => {
            count = x.data.size
+            MemCache.add("count", x.data.size.toString)(client);
+
             println("size received : " + count)
           }
           case _ => {}

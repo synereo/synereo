@@ -40,7 +40,6 @@ object KvdbPlatformAgentMultipleDistributedTestSpecs extends KvdbPlatformAgentBa
 {
   val timeoutBetween = TIMEOUT_LONG
 
-  //fails with configs
   val writerConfigFileName = Some("db_ui.conf")
   val readerConfigFileName = Some("db_store.conf")
 
