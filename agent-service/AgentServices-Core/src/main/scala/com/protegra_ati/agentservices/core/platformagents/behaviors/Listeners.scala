@@ -45,17 +45,25 @@ trait Listeners extends Reporting
   def addListener(key: UUID, subKey: String, listener: MessageEventAdapter) =
   {
     report("in addListener - adding listener with key: " + key.toString + "for subkey" + subKey + " and eventTag: " + listener.eventTag)
-    val keyUnique = subKey + listener.eventTag
-//    if (!_uniqueness.hasValue(key, keyUnique))
-//    {
-//    _listeners.add(key, listener)
-    MemCache.add(key.toString, listener)(client);
-//      _uniqueness.add(key, keyUnique)
-//    }
-//    else
-//    {
-//      report("key + subkey must be unique, this pair already exists. No listener added", Severity.Warning)
-//    }
+    val keyUnique: String = key.toString + subKey + listener.eventTag
+    if (isUniqueListener(keyUnique))
+    {
+      MemCache.add(keyUnique, key.toString)(client);
+      MemCache.add(key.toString, listener)(client);
+    }
+    else
+    {
+      report("key + subkey must be unique, this pair already exists. No listener added", Severity.Warning)
+    }
+  }
+
+  def isUniqueListener(key: String) : Boolean =
+  {
+    val matching = MemCache.get[String](key)(client)
+    matching match {
+      case null => true
+      case _ => false
+    }
   }
 
   def removeListener(key: UUID, subKey: String, listener: MessageEventAdapter) =
