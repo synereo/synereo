@@ -17,6 +17,18 @@ object MemCache
     client.set(key, expiry, value);
   }
 
+  def replace(key: String, value : java.io.Serializable)(client: MemcachedClient) =
+  {
+    //expiry in seconds
+    //default 3h for just in case to keep size from containing stale
+    client.replace(key, 10800, value);
+  }
+
+  def replace(key: String, value : java.io.Serializable, expiry: Int)(client: MemcachedClient) =
+  {
+    client.replace(key, expiry, value);
+  }
+
   //  def remove(key:String) {
   //  }
 
