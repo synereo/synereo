@@ -16,6 +16,7 @@ import com.protegra.agentservicesstore.extensions.URIExtensions._
 import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
+import scala.collection.mutable.HashMap
 
 import java.net.URI
 import java.util.UUID
@@ -114,7 +115,10 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   @transient
   override val cnxnRandom : AgentCnxn,
   @transient
-  override val cnxnUIStore : AgentCnxn
+  override val cnxnUIStore : AgentCnxn,
+  @transient 
+  val keyMap : HashMap[String,Int],
+  val justPullKRecords : Boolean
 ) extends AgentKVDBNodeResubmitRequestsTestConfigurationT {
   @transient
   var _barrier : Int = 0
@@ -137,14 +141,14 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
    * --------------------------------------------------------- */      
   
   case class CKR(
-    @transient
     cnxnRdr : AgentCnxn,
-    @transient
     cnxnWrtr : AgentCnxn,
     keyRdr : String,
     keyWrtr : String,
     @transient
-    rsrc : Option[mTT.Resource]
+    rsrc : Option[mTT.Resource],
+    @transient
+    map : HashMap[String,Int]
   )
 
   def ckrReportPresent( ckr : CKR ) : Unit = {
@@ -198,6 +202,9 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
 	+ "\n########################################################\n"
       )
     )
+    val k = ckr.keyRdr
+    val v = ckr.map.get( ckr.keyRdr ).getOrElse( 0 ) + 1
+    ckr.map += ( ( k, v ) )
     barrier( barrier() + 1 )
   }
 
@@ -214,6 +221,10 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
 	+ "\n########################################################\n"
       )
     )
+    val k = ckr.keyRdr
+    val v = ckr.map.get( ckr.keyRdr ).getOrElse( 0 ) + 1
+    ckr.map += ( ( k, v ) )
+
     barrier( barrier() + 1 )
   }
 
@@ -221,11 +232,12 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
     keyRdr : String,
     keyWrtr : String,
     kPresent : CKR => Unit,
-    kAbsent : CKR => Unit
+    kAbsent : CKR => Unit,
+    map : HashMap[String,Int]
   ) : Unit = {
     println(
       "\n########################################################\n"
-      + "registering continuation"
+      + "registering continuation\n"
       + "keyRdr : " + keyRdr + "\n"
       + "keyRdr.toLabel : " + keyRdr.toLabel + "\n"
       + "keyWrtr : " + keyWrtr + "\n"
@@ -236,7 +248,7 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
     reset {
       for ( e <- store_privateQ.get( cnxnUIStore )( keyRdr.toLabel ) ) {
 	val ckr =
-	  CKR( cnxnUIStore, cnxnTest, keyRdr, keyWrtr, e )
+	  CKR( cnxnUIStore, cnxnTest, keyRdr, keyWrtr, e, map )
 	e match {
 	  case Some( _ ) => { kPresent( ckr ) }
 	  case None => { kAbsent( ckr ) }
@@ -258,7 +270,7 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
 				 // work well with collections, yet
       
       registerContinuation(
-	keyAskItr.next, resultKey, kPresent, kAbsent
+	keyAskItr.next, resultKey, kPresent, kAbsent, keyMap
       )
     }
   }
@@ -275,10 +287,11 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
 	  + "\n########################################################\n"
 	)
 	registerContinuation(
-	  ( pI.place.toString.replace( "'", "" ).replace( "string(", "\"" ).replace( "),", "\"," ) ),
+	  ( pI.place.toString.replace( "'", "" ).replace( "string(", "\"" ).replace( "),", "\" ," ) ),
 	  resultKey,
 	  ckrReportRepresent,
-	  ckrReportReabsent
+	  ckrReportReabsent,
+	  keyMap
 	)
       }
     }
@@ -293,39 +306,86 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
     while( keyAskItr2.hasNext ) {
       @transient
       val keyAsk = keyAskItr2.next
-	val opIGen : Option[ReqGenerator] =
-	  store_privateQ.resubmitLabelRequests( cnxnUIStore )( keyAsk.toLabel )(dAT.AGetNum)
-	opIGen match {
-	  case Some( pIGen ) => {
-	    println(
-	      (
-		"\n########################################################\n"
-		+ "found a pIGenerator on "
-		+ "("
-		+ cnxnUIStore
-		+ " , "
-		+ keyAsk
-		+ ")"
-		+ "\n########################################################\n"
-	      )
+      justPullKRecords match {
+	case true => {
+	  println(
+	    (
+	      "\n########################################################\n"
+	      + " just pulling krecords for "
+	      + "("
+	      + cnxnUIStore
+	      + " , "
+	      + keyAsk
+	      + ")"
+	      + "\n########################################################\n"
 	    )
-	    resubmitPlaceInstance( pIGen )
-	  }
-	  case None => {
-	    println(
-	      (
-		"\n########################################################\n"
-		+ "Did not find a pIGenerator on "
-		+ "("
-		+ cnxnUIStore
-		+ " , "
-		+ keyAsk
-		+ ")"
-		+ "\n########################################################\n"
-	      )
+	  )
+
+	  store_privateQ.pullCnxnKRecords( cnxnUIStore )( keyAsk.toLabel )
+	}
+	case false => {
+	  println(
+	    (
+	      "\n########################################################\n"
+	      + " resubmitting requests for "
+	      + "("
+	      + cnxnUIStore
+	      + " , "
+	      + keyAsk
+	      + ")"
+	      + "\n########################################################\n"
 	    )
+	  )
+
+	  val opIGen : Option[ReqGenerator] =
+	    store_privateQ.resubmitLabelRequests( cnxnUIStore )( keyAsk.toLabel )(dAT.AGetNum)
+
+	  opIGen match {
+	    case Some( pIGen ) => {
+	      println(
+		(
+		  "\n########################################################\n"
+		  + "found a pIGenerator on "
+		  + "("
+		  + cnxnUIStore
+		  + " , "
+		  + keyAsk
+		  + ")"
+		  + "\n########################################################\n"
+		)
+	      )
+	      resubmitPlaceInstance( pIGen )
+	    }
+	    case None => {
+	      println(
+		(
+		  "\n########################################################\n"
+		  + "Did not find a pIGenerator on "
+		  + "("
+		  + cnxnUIStore
+		  + " , "
+		  + keyAsk
+		  + ")"
+		  + "\n########################################################\n"
+		)
+	      )
+	    }
 	  }
-	}	    
+	}
+      }      	    
+    }
+  }
+
+  def probeStandingRequests( @transient keyBids : Stream[( String, String )] ) : Unit = {
+    @transient
+    val keyBidsItr = keyBids.iterator
+
+    while( keyBidsItr.hasNext ) {
+      @transient
+      val ( key, value ) = keyBidsItr.next
+      reset {
+	store_privateQ.put( cnxnUIStore )( key.toLabel, value )
+      }      
     }
   }
 }
@@ -345,7 +405,9 @@ extends AgentKVDBNodeResubmitRequestsTestConfiguration(
     ( "UI" + UUID.randomUUID.toString ).toURI,
     "",
     ( "Store" + UUID.randomUUID.toString ).toURI
-  )  
+  ),
+  new HashMap[String,Int](),
+  false
 ) {
   @transient
   override val cnxnTest =

@@ -88,10 +88,38 @@ object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
 	testConfig.keyBidsNAsks._2.take( testConfig.numberOfStandingRequests )
       )
 
-      while ( testConfig.barrier() < testConfig.numberOfStandingRequests ) {
-	println( "waiting to get past resubmission barrier; current height: " + testConfig.barrier )
-	Thread.sleep( testConfig.TIMEOUT_MED )
-      }
+      testConfig.justPullKRecords match {
+	case false => {
+	  println( "\n########################################################\n" )
+	  println( " Actually resubmitting requests " )
+	  println( "\n########################################################\n" )
+
+	  while ( testConfig.barrier() < testConfig.numberOfStandingRequests ) {
+	    println( "waiting to get past resubmission barrier; current height: " + testConfig.barrier )
+	    Thread.sleep( testConfig.TIMEOUT_MED )
+	  }
+
+	  println( "\n########################################################\n" )
+	  
+	  for( ( k, v ) <- testConfig.keyMap ) {
+	    println( 	  
+	      "registered key : " + k + "\n"
+	      + "number of times registered : " + v + "\n"
+	    )
+	  }
+	  
+	  println( "\n########################################################\n" )
+	  
+	  testConfig.probeStandingRequests(
+	    testConfig.keyBidsNAsks._1.take( testConfig.numberOfStandingRequests )
+	  )
+	}
+	case true => {
+	  println( "\n########################################################\n" )
+	  println( " Just pulled krecords " )
+	  println( "\n########################################################\n" )
+	}
+      }      
 
       /* --------------------------------------------------------- *
        *                   Assert invariant
