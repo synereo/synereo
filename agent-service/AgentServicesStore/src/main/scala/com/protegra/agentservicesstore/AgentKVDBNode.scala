@@ -1319,6 +1319,20 @@ with AgentCnxnTypeScope {
         }
       }           
 
+      def pullCnxnKRecords( cnxn : acT.AgentCnxn )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      ) : List[emT.PlaceInstance]
+      = {
+	val ( pmgj, perD, xmlCollName ) =
+	  getLocalPartitionActuals( cnxn )
+
+	pmgj.cache.pullKRecords(
+	  perD,
+	  path,
+	  xmlCollName
+	).getOrElse( List[emT.PlaceInstance]( ) )
+      }
+
       def resubmitRequests( cnxn : acT.AgentCnxn )(
 	placeInstances : List[emT.PlaceInstance]
       )(
@@ -1353,7 +1367,7 @@ with AgentCnxnTypeScope {
 	  ).getOrElse( List[emT.PlaceInstance]( ) )
 
 	resubmitRequests( cnxn )( placeInstances )( resubmissionAsk )
-      }
+      }      
 
       def resubmitCnxnLabelRequests( cnxns : List[acT.AgentCnxn] )(
 	path : CnxnCtxtLabel[Namespace,Var,Tag]
