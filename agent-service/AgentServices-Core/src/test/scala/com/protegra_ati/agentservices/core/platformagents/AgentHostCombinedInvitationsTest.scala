@@ -10,7 +10,7 @@ import Assert._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import java.net.URI
+import java.net.{InetSocketAddress, URI}
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
@@ -22,11 +22,10 @@ import org.specs.util._
 import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 import com.protegra_ati.agentservices.core.events._
-import java.net.URI
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import java.util.{Locale, UUID}
-
+import com.protegra_ati.agentservices.core.util.Results
 class AgentHostCombinedInvitationsTest
   extends JUnit4(AgentHostCombinedInvitationsTestSpecs)
 
@@ -48,7 +47,7 @@ with ReferralUser
     //    val brokerId = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
     //    val jasonId = UUID.fromString("dbd56858-adfe-4a12-a22c-f356dff4508d")
     val jasonId = "Jason" + UUID.randomUUID()
-    val mikhailId = "Mikhail" + UUID.randomUUID()
+    val mikeId = "Mike" + UUID.randomUUID()
 
 
     "create connections from an accepted CreateInvitationRequest" in {
@@ -74,27 +73,27 @@ with ReferralUser
       val connJasonBroker = AgentHostCombinedBase.setupConnection(storeR, jasonId, brokerId)
       val connBrokerJason = AgentHostCombinedBase.setupConnection(storeR, brokerId, jasonId)
 
-      val connMikhailMikhail = AgentHostCombinedBase.setupConnection(storeR, mikhailId, mikhailId) //inviter
-      storeR.addToHostedCnxn(connMikhailMikhail.writeCnxn)
+      val connMikeMike = AgentHostCombinedBase.setupConnection(storeR, mikeId, mikeId) //inviter
+      storeR.addToHostedCnxn(connMikeMike.writeCnxn)
 
-      val connMikhailBroker = AgentHostCombinedBase.setupConnection(storeR, mikhailId, brokerId)
-      val connBrokerMikhail = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikhailId)
+      val connMikeBroker = AgentHostCombinedBase.setupConnection(storeR, mikeId, brokerId)
+      val connBrokerMike = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikeId)
 
-      // at the end connection between Mikhail and Jason has to be established
+      // at the end connection between Mike and Jason has to be established
       storeR.updateData(connBrokerBroker.writeCnxn, connBrokerJason, null)
-      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMikhail, null)
+      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMike, null)
 
       AgentHostCombinedBase.setProfile(uiR, connJasonJason.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestFull("jason", "klassen", "Jason.Klassen@protegra.com", "CA"))
-      AgentHostCombinedBase.setProfile(uiR, connMikhailMikhail.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestFull("mikhail", "gevantmakher", "Mikhail.Gevantmakher@protegra.com", "US"))
+      AgentHostCombinedBase.setProfile(uiR, connMikeMike.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestFull("mike", "gevantmakher", "Mike.Gevantmakher@protegra.com", "US"))
 
 
 
       Thread.sleep(TIMEOUT_LONG)
       // Jason asks broker to be connected to Mikhaial
-      val postToBroker = new Post("Hi Broker here is Mikhail, connect me to Jason", "theBody", new java.util.HashMap())
-      val postToInvitee = new Post("Hi Jason here is Mikhail, nice to meet you", "theBody", new java.util.HashMap())
+      val postToBroker = new Post("Hi Broker here is Mike, connect me to Jason", "theBody", new java.util.HashMap())
+      val postToInvitee = new Post("Hi Jason here is Mike, nice to meet you", "theBody", new java.util.HashMap())
       // inveiter asks to be connected by broker and send 2 messages: 1 to the broker, 1 to the Invitee
-      requestInvitation(uiR, connMikhailBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
+      requestInvitation(uiR, connMikeBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
       Thread.sleep(TIMEOUT_SHORT)
       // checks if invitation was processed on the store successfully
       assertInvitationResponse(uiR, agentSessionIdMike, eventKey);
@@ -105,7 +104,7 @@ with ReferralUser
       // he forwards the request, creating 2 referral requests to both parties, adds also own posts to both parties
       //Broker reads/compares initial message from the source of the conversation to him
       val postBroker2Target = new Post("Hi Target (Jason) here is a Broker", "theBody", new java.util.HashMap())
-      val postBroker2Source = new Post("Hi Source (Mikhail) here is a Broker", "theBody", new java.util.HashMap())
+      val postBroker2Source = new Post("Hi Source (Mike) here is a Broker", "theBody", new java.util.HashMap())
       // simulates broker which is logged in and forwards manually the referral response to the stored referral request of the conversation initiator
       autoAcceptReferralRequest(uiR, connBrokerBroker, agentSessionIdBroker, eventKey, postBroker2Target, postBroker2Source, compareBrokerPostHandler(_: Post, postToBroker))
       //store bypasses waiters. so if the get happens before the store persisted we're out of luck
@@ -113,17 +112,17 @@ with ReferralUser
       // simulates invitee (jason) which accepts InvitationRequest (after he is logged in and check his stored InvitationRequest list)
       autoAcceptInvitationRequest(uiR, connJasonJason, requestedCategory2, requestedConnectionType2, requestedConnectionName2, agentSessionIdJason, eventKey, compareInviteePostHandler(_: List[ Post ], List(postToInvitee, postBroker2Target)))
       // time for the connection creation
-      Thread.sleep(TIMEOUT_LONG)
+      Thread.sleep(TIMEOUT_LONG * 5)
       // checks established connections
       val query: Connection = new Connection();
-      AgentHostCombinedBase.countConnectionsByType(uiR, connMikhailMikhail.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countConnectionsByName(uiR, connMikhailMikhail.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countConnectionsByType(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionType2) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countConnectionsByName(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionName2) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
+      AgentHostCombinedBase.countConnectionsByType(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
+      AgentHostCombinedBase.countConnectionsByName(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
+      AgentHostCombinedBase.countConnectionsByType(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionType2) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
+      AgentHostCombinedBase.countConnectionsByName(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionName2) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
     }
 
     "broker sends rejecting post & CreateInvitationRequest was not acepted, no connection will be created" in {
-     // skip("")
+     skip("")
       val agentSessionIdBroker = UUID.randomUUID()
       val agentSessionIdMike = UUID.randomUUID()
       val agentSessionIdJason = UUID.randomUUID()
@@ -147,21 +146,21 @@ with ReferralUser
       val connJasonBroker = AgentHostCombinedBase.setupConnection(storeR, jasonId, brokerId)
       val connBrokerJason = AgentHostCombinedBase.setupConnection(storeR, brokerId, jasonId)
 
-      val connMikhailMikhail = AgentHostCombinedBase.setupConnection(storeR, mikhailId, mikhailId) //inviter
-      storeR.addToHostedCnxn(connMikhailMikhail.writeCnxn)
+      val connMikeMike = AgentHostCombinedBase.setupConnection(storeR, mikeId, mikeId) //inviter
+      storeR.addToHostedCnxn(connMikeMike.writeCnxn)
 
-      val connMikhailBroker = AgentHostCombinedBase.setupConnection(storeR, mikhailId, brokerId)
-      val connBrokerMikhail = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikhailId)
+      val connMikeBroker = AgentHostCombinedBase.setupConnection(storeR, mikeId, brokerId)
+      val connBrokerMike = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikeId)
 
-      // at the end connection between Mikhail and Jason has to be established
+      // at the end connection between Mike and Jason has to be established
       storeR.updateData(connBrokerBroker.writeCnxn, connBrokerJason, null)
-      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMikhail, null)
+      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMike, null)
       Thread.sleep(TIMEOUT_LONG)
       // Jason asks broker to be connected to Mikhaial
-      val postToBroker = new Post("Hi Broker here is Mikhail, connect me to Jason", "theBody", new java.util.HashMap())
-      val postToInvitee = new Post("Hi Jason here is Mikhail, nice to meet you", "theBody", new java.util.HashMap())
+      val postToBroker = new Post("Hi Broker here is Mike, connect me to Jason", "theBody", new java.util.HashMap())
+      val postToInvitee = new Post("Hi Jason here is Mike, nice to meet you", "theBody", new java.util.HashMap())
       // inveiter asks to be connected by broker and send 2 messages: 1 to the broker, 1 to the Invitee
-      requestInvitation(uiR, connMikhailBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
+      requestInvitation(uiR, connMikeBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
       Thread.sleep(TIMEOUT_SHORT)
       // checks if invitation was processed on the store successfully
       assertInvitationResponse(uiR, agentSessionIdMike, eventKey);
@@ -170,7 +169,7 @@ with ReferralUser
       Thread.sleep(TIMEOUT_LONG * 5)
       // broker logs in, and see in his GUI all outstanding invitation requests.
       //broker reads/compares initial message from the source of the conversation to him and rejects the request
-      val postBroker2Source = new Post("Hi Source (Mikhail) here is a Broker, I can't connect you, sorry", "theBody", new java.util.HashMap())
+      val postBroker2Source = new Post("Hi Source (Mike) here is a Broker, I can't connect you, sorry", "theBody", new java.util.HashMap())
       // simulates broker which is logged in and forwards manually the referral response to the stored referral request of the conversation initiator
       autoRejectReferralRequest(uiR, connBrokerBroker, agentSessionIdBroker, eventKey, postBroker2Source, compareBrokerPostHandler(_: Post, postToBroker))
       //store bypasses waiters. so if the get happens before the store persisted we're out of luck
@@ -179,18 +178,18 @@ with ReferralUser
       // checks established connections
       val query: Connection = new Connection();
       // no connections should be created
-      AgentHostCombinedBase.countConnectionsByType(uiR, connMikhailMikhail.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countConnectionsByName(uiR, connMikhailMikhail.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countConnectionsByType(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionType2) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countConnectionsByName(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionName2) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+      AgentHostCombinedBase.countConnectionsByType(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(0).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
+      AgentHostCombinedBase.countConnectionsByName(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(0).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
+      AgentHostCombinedBase.countConnectionsByType(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionType2) must be_==(0).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
+      AgentHostCombinedBase.countConnectionsByName(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionName2) must be_==(0).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
       //      Thread.sleep(TIMEOUT_LONG)
       val eventKey1 = "content"
       // checks if rejecting post sent back from Broker and stored properli in conn brokerToInitiator
-      AgentHostCombinedBase.count(uiR, connBrokerMikhail.writeCnxn, UUID.randomUUID(), eventKey1, new Post()) must be_==(1).eventually(10, TIMEOUT_EVENTUALLY)
+      AgentHostCombinedBase.count(uiR, connBrokerMike.writeCnxn, UUID.randomUUID(), eventKey1, new Post()) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
     }
 
-    "inveited person rejects the request, no connection will be created " in {
-     // skip("")
+    "invited person rejects the request, no connection will be created " in {
+     skip("")
       val agentSessionIdBroker = UUID.randomUUID()
       val agentSessionIdMike = UUID.randomUUID()
       val agentSessionIdJason = UUID.randomUUID()
@@ -213,21 +212,21 @@ with ReferralUser
       val connJasonBroker = AgentHostCombinedBase.setupConnection(storeR, jasonId, brokerId)
       val connBrokerJason = AgentHostCombinedBase.setupConnection(storeR, brokerId, jasonId)
 
-      val connMikhailMikhail = AgentHostCombinedBase.setupConnection(storeR, mikhailId, mikhailId) //inviter
-      storeR.addToHostedCnxn(connMikhailMikhail.writeCnxn)
+      val connMikeMike = AgentHostCombinedBase.setupConnection(storeR, mikeId, mikeId) //inviter
+      storeR.addToHostedCnxn(connMikeMike.writeCnxn)
 
-      val connMikhailBroker = AgentHostCombinedBase.setupConnection(storeR, mikhailId, brokerId)
-      val connBrokerMikhail = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikhailId)
+      val connMikeBroker = AgentHostCombinedBase.setupConnection(storeR, mikeId, brokerId)
+      val connBrokerMike = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikeId)
 
-      // at the end connection between Mikhail and Jason has to be established
+      // at the end connection between Mike and Jason has to be established
       storeR.updateData(connBrokerBroker.writeCnxn, connBrokerJason, null)
-      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMikhail, null)
+      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMike, null)
       Thread.sleep(TIMEOUT_LONG)
       // Jason asks broker to be connected to Mikhaial
-      val postToBroker = new Post("Hi Broker here is Mikhail, connect me to Jason", "theBody", new java.util.HashMap())
-      val postToInvitee = new Post("Hi Jason here is Mikhail, nice to meet you", "theBody", new java.util.HashMap())
+      val postToBroker = new Post("Hi Broker here is Mike, connect me to Jason", "theBody", new java.util.HashMap())
+      val postToInvitee = new Post("Hi Jason here is Mike, nice to meet you", "theBody", new java.util.HashMap())
       // inveiter asks to be connected by broker and send 2 messages: 1 to the broker, 1 to the Invitee
-      requestInvitation(uiR, connMikhailBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
+      requestInvitation(uiR, connMikeBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
       Thread.sleep(TIMEOUT_SHORT)
       // checks if invitation was processed on the store successfully
       assertInvitationResponse(uiR, agentSessionIdMike, eventKey);
@@ -238,7 +237,7 @@ with ReferralUser
       // he forwards the request, creating 2 referral requests to both parties, adds also own posts to both parties
       //Broker reads/compares initial message from the source of the conversation to him
       val postBroker2Target = new Post("Hi Target (Jason) here is a Broker", "theBody", new java.util.HashMap())
-      val postBroker2Source = new Post("Hi Source (Mikhail) here is a Broker", "theBody", new java.util.HashMap())
+      val postBroker2Source = new Post("Hi Source (Mike) here is a Broker", "theBody", new java.util.HashMap())
       // simulates broker which is logged in and forwards manually the referral response to the stored referral request of the conversation initiator
       autoAcceptReferralRequest(uiR, connBrokerBroker, agentSessionIdBroker, eventKey, postBroker2Target, postBroker2Source, compareBrokerPostHandler(_: Post, postToBroker))
       //store bypasses waiters. so if the get happens before the store persisted we're out of luck
@@ -249,8 +248,8 @@ with ReferralUser
       Thread.sleep(TIMEOUT_LONG)
       // checks established connections
       val query: Connection = new Connection();
-      AgentHostCombinedBase.countConnectionsByType(uiR, connMikhailMikhail.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
-      AgentHostCombinedBase.countConnectionsByName(uiR, connMikhailMikhail.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+      AgentHostCombinedBase.countConnectionsByType(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
+      AgentHostCombinedBase.countConnectionsByName(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
       AgentHostCombinedBase.countConnectionsByType(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionType2) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
       AgentHostCombinedBase.countConnectionsByName(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionName2) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
       val eventKey1 = "content"
@@ -283,26 +282,22 @@ with ReferralUser
 
     def assertInvitationResponse(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) =
     {
-      val sync = new AnyRef()
-      var triggered = false
-
+      val key = Results.getKey()
       ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
       {
         override def createInvitationResponseReceived(e: CreateInvitationResponseReceivedEvent) =
         {
 
           println("***********invitation response recived ---------------------------:" + e.toString)
-          //          sync.synchronized {triggered = true}
           e.msg.status.toLowerCase() match {
-            case "success" => sync.synchronized {triggered = true}
+            case "success" => Results.trigger(key)
             case _ => {}
           }
         }
 
       });
 
-      Thread.sleep(TIMEOUT_LONG)
-      sync.synchronized {triggered} must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
+      Results.triggered(key) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
   }

@@ -17,7 +17,7 @@ import com.protegra_ati.agentservices.core.schema._
 import java.net.{InetSocketAddress, URI}
 import com.protegra_ati.agentservices.core.messages.content._
 import net.spy.memcached.MemcachedClient
-import com.protegra.agentservicesstore.util.MemCache
+import com.protegra_ati.agentservices.core.util.Results
 
 //import com.protegra_ati.agentservices.core.messages.search._
 import com.protegra_ati.agentservices.core.messages._
@@ -281,7 +281,7 @@ Timeouts
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
     val tagUnique = tag + UUID.randomUUID().toString
-    val countKey = "count" + agentSessionId.toString
+    val countKey = Results.getKey()
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tagUnique)
     {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
@@ -289,7 +289,7 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-            MemCache.add(countKey, x.data.size.toString)(client);
+            Results.count(countKey, x.data.size)
 
             println("size received : " +  x.data.size)
           }
@@ -302,13 +302,7 @@ Timeouts
     getReq.originCnxn = cnxn
     getReq.targetCnxn = cnxn
     ui.send(getReq)
-
-   //    trySleep(count)
-    val count = MemCache.get[String](countKey)(AgentHostCombinedBase.client)
-    count match {
-      case null => 0
-      case _ => Integer.parseInt(count)
-    }
+    Results.counted(countKey)
   }
 
   def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
@@ -531,11 +525,10 @@ Timeouts
 
   def countConnectionsByComparison(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data, compare: ( Connection ) => Boolean): Int =
   {
-    val sync = new AnyRef()
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
-    @volatile var count = 0
     val tagUnique = tag + UUID.randomUUID().toString
+    val countKey = Results.getKey()
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tagUnique)
     {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
@@ -543,38 +536,34 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-            sync.synchronized {
-              count = x.data.size
+              val count = x.data.size
+              Results.count(countKey, count)
               x.data.foreach(response => {
-                if ( count != -999 ) {
                   response match {
                     case x: Connection => {
                       println("connection found=" + x)
                       if ( !compare(x) ) {
-                        count = -999 // Error
+                        Results.voidCount(countKey)
                       }
                     }
                     case _ => {
-                      count = -999 // also something odd
+                      Results.voidCount(countKey)
                     }
                   }
-                }
               }
               )
-            }
           }
           case _ => {}
         }
       }
-    });
+    })
 
     val getReq = new GetContentRequest(new EventKey(agentSessionId, tagUnique), query)
     getReq.originCnxn = cnxn
     getReq.targetCnxn = cnxn
     ui.send(getReq)
 
-    trySleep(sync.synchronized {count})
-    sync.synchronized {count}
+    Results.counted(countKey)
   }
 
 }

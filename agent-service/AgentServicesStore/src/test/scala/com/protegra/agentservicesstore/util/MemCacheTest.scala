@@ -66,6 +66,8 @@ object MemCacheTestSpecs extends Specification
       val foundAgain = MemCache.get[ String ](key)(client)
       foundAgain must be_==(replaced)
     }
+
+
   }
 
 }

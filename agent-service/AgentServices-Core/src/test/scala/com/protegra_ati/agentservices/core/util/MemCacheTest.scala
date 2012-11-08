@@ -47,7 +47,7 @@ object MemCacheTestSpecs extends Specification
       var profile = new Profile()
       profile.firstName = "test"
 
-      MemCache.add(key, profile)(client);
+      MemCache.add(key, profile)(client)
       val found = MemCache.get[ Profile ](key)(client)
       found.firstName must be_==(profile.firstName)
     }

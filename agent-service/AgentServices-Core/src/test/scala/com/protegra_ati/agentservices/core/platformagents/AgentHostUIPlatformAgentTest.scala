@@ -37,7 +37,7 @@ import org.specs.runner._
 import verifier._
 import com.protegra_ati.agentservices.core._
 import net.spy.memcached.MemcachedClient
-import com.protegra.agentservicesstore.util.MemCache
+import com.protegra_ati.agentservices.core.util.Results
 
 
 class AgentHostUIPlatformAgentTest
@@ -56,34 +56,35 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
   val sourceId = UUID.randomUUID()
   val targetId = sourceId
   val cnxn = new AgentCnxnProxy(sourceId.toString.toURI, "", targetId.toString.toURI)
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
 
   def createPA: AgentHostUIPlatformAgent =
   {
     val sourceAddress = "127.0.0.1".toURI
     val acquaintanceAddresses = List[URI]()
     val pa = new AgentHostUIPlatformAgent()
-//    pa._cnxnUIStore = cnxn
+    pa._cnxnUIStore = cnxnUIStore
     pa.initForTest(sourceAddress, acquaintanceAddresses, UUID.randomUUID)
     pa
   }
 
   //really a kvdb test
-  "privateQ" should {
-    @transient val pa = createPA
-    "add a partition" in {
-      val startSize = pa._privateQ.cnxnPartition.size
-      val cnxn = new AgentCnxnProxy("test".toURI, "", UUID.randomUUID().toString.toURI)
-      val agentCnxn = cnxn.toAgentCnxn()
-      pa._privateQ.getPartition(agentCnxn)
-      pa._privateQ.cnxnPartition.size must be_==(startSize+1).eventually(5, TIMEOUT_EVENTUALLY)
-    }
-  }
+//  "privateQ" should {
+//    @transient val pa = createPA
+//    "add a partition" in {
+//      val startSize = pa._privateQ.cnxnPartition.size
+//      val cnxn = new AgentCnxnProxy("test".toURI, "", UUID.randomUUID().toString.toURI)
+//      val agentCnxn = cnxn.toAgentCnxn()
+//      pa._privateQ.getPartition(agentCnxn)
+//      pa._privateQ.cnxnPartition.size must be_==(startSize+1).eventually(5, TIMEOUT_EVENTUALLY)
+//    }
+//  }
 
   "receiving a response message" should {
     @transient val pa = createPA
-    val triggered = "true"
+
     val agentSessionId = UUID.randomUUID
-    val key = "result" + agentSessionId.toString
+    val key = Results.getKey()
 
     "raise a SetContentResponseReceivedEvent" in {
       val parentIds = new Identification()
@@ -95,14 +96,13 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          MemCache.add(key, triggered)(client);
+          Results.trigger(key)
         }
       });
 
       pa.send(req)
-      //Thread.sleep(TIMEOUT_LONG)
-      pa.listenPrivate(pa._cnxnUIStore)
-      MemCache.get[ String ](key)(client) must be_==(triggered).eventually(5, TIMEOUT_EVENTUALLY)
+      Thread.sleep(TIMEOUT_LONG)
+      Results.triggered(key) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
 
     "raise a GetContentResponseReceivedEvent" in {
@@ -115,26 +115,24 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       {
         override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
         {
-          MemCache.add(key, triggered)(client);
+          Results.trigger(key)
         }
       });
 
       pa.send(req)
       //Thread.sleep(TIMEOUT_LONG)
-      pa.listenPrivate(pa._cnxnUIStore)
-      MemCache.get[ String ](key)(client) must be_==(triggered).eventually(5, TIMEOUT_EVENTUALLY)
+      Results.triggered(key) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
   }
 
   "listeners" should {
     @transient val pa = createPA
-    val triggered = "true"
 
     "trigger the right event" in {
 
       val userAgentId1 = UUID.randomUUID
       val userAgentId2 = UUID.randomUUID
-      val key = "result" + userAgentId2.toString
+      val key = Results.getKey()
 
       pa.addListener(userAgentId1, "", new MessageEventAdapter()
       {
@@ -156,7 +154,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          MemCache.add(key, triggered)(client);
+          Results.trigger(key)
         }
       })
 
@@ -166,7 +164,7 @@ object AgentHostUIPlatformAgentTestSpecs extends Specification
       req.channelLevel = None
 
       pa.send(req)
-      MemCache.get[ String ](key)(client) must be_==(triggered).eventually(5, TIMEOUT_EVENTUALLY)
+      Results.triggered(key) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
 //
 //    "raise a GetContentAuthorizationRequiredNotification" in {
