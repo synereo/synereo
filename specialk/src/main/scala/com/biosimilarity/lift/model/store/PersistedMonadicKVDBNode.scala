@@ -140,7 +140,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : emT.PlaceInstance 
 	
 	def recordDeletionQueryTemplate : String = {
-	  "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//record where deep-equal($rcrd/*[1], $key) return $rcrd"
+	  "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//%RECORDTYPE% where deep-equal($rcrd/*[1], $key) return $rcrd"
 	}
       }
       
@@ -965,7 +965,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  for( pd <- persist; clNm <- collName )
 	    {
 	      tweet( "removing from db : " + pd.db )
-	      val rcrdKey =
+	      val ( rcrdKey, rcrdType ) =
 		record match {
 		  case <record>{ kv @_* }</record> => {
 		    val kvs = kv.toList.filter(
@@ -984,7 +984,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      }
 		    )
 		    kvs match {
-		      case k :: v :: Nil => k.toString
+		      case k :: v :: Nil => ( k.toString, "record" )
 		      case _ => 
 			throw new Exception(
 			  "Not a k-v record shape\n" + kvs
@@ -1008,7 +1008,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      }
 		    )
 		    kvs match {
-		      case k :: v :: Nil => k.toString
+		      case k :: v :: Nil => ( k.toString, "kRecord" )
 		      case _ => 
 			throw new Exception(
 			  "Not a k-v record shape\n" + kvs
@@ -1028,8 +1028,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		).replace(
 		  "%COLLNAME%",
 		  clNm
+		).replace(
+		  "%RECORDTYPE%",
+		  rcrdType
 		)
+	      
+	      tweet( "deletion query record type : \n" + rcrdType )
 	      tweet( "deletion query : \n" + deletionQry )
+
 	      val ostrm = new java.io.ByteArrayOutputStream()
 	      execute( List( deletionQry ) )
 	      tweet(
