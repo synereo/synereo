@@ -764,6 +764,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag],
 	  collName : Option[String]
 	) : Option[List[emT.PlaceInstance]] = {
+	  tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+	  tweet( "pulling krecords" )
+	  tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
 	  val xmlCollName =
 	    collName.getOrElse( storeUnitStr.getOrElse( bail( ) ) )
 
@@ -782,6 +785,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      tweet( "retrieved " + ekrsrc )
 	      tweet( "<<<<<<***<<<<<<***<<<<<<" )
 	      
+	      tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+	      tweet(
+		"removing " + krslt + "\n"
+		+ "from " + xmlCollName + "\n"
+	      )
+	      tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
 	      removeFromStore( persist, krslt, collName )
 	      
 	      ekrsrc
@@ -1618,7 +1627,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    reset { 		      
 		      for( pI <- itergen[emT.PlaceInstance]( placeInstances ) ){
 			tweet( ">>>>>>***>>>>>>***>>>>>>" )
-			tweet( "resubmitting " + pI.toString + " as an AMQP request" )
+			tweet( "resubmitting " + pI.toString + " " )
 			tweet( "<<<<<<***<<<<<<***<<<<<<" )
 			//forward( resubmissionAsk, List[Moniker]( ), pI.place )
 			gk( pI )
