@@ -129,7 +129,7 @@ with Serializable
 
 
     "retrieve between UI and Store with a public queue using the migrated continuation" in {
-    skip("bug - greg fixing")
+
       val ui_privateQ = createNode(ui_location, List(store_location))
 
       var store_privateQ = createNode(store_location, List(ui_location))
