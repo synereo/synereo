@@ -112,9 +112,7 @@ abstract class AgentKVDBNodeResubmitRequestsTestConfiguration(
   override val uiConfigFileName : Option[String],
   @transient
   override val storeConfigFileName : Option[String],
-  @transient
   override val cnxnRandom : AgentCnxn,
-  @transient
   override val cnxnUIStore : AgentCnxn,
   @transient 
   val keyMap : HashMap[String,Int],
@@ -409,7 +407,6 @@ extends AgentKVDBNodeResubmitRequestsTestConfiguration(
   new HashMap[String,Int](),
   false
 ) {
-  @transient
   override val cnxnTest =
     new AgentCnxn(
       ( "TestDB" + testId ).toURI,
