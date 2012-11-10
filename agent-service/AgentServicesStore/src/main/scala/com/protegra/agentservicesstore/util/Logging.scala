@@ -85,13 +85,13 @@ trait Reporting
   }
 
   Configgy.configure("log_agentservices.conf")
-  PropertyConfigurator.configure("log_agentservices.properties")
+//  PropertyConfigurator.configure("log_agentservices.properties")
 
   lazy val config = Configgy.config
   var traceLevel = SeverityFromOption(config.getString("traceLevel"))
   var logLevel = SeverityFromOption(config.getString("logLevel"))
 
-  lazy val logger = Logger.getLogger(this.getClass.getName)
+//  lazy val logger = Logger.getLogger(this.getClass.getName)
 
   def header(level: Severity.Value): String =
   {
@@ -150,25 +150,25 @@ trait Reporting
     if ( enabled(level, logLevel) ) {
       level match {
         case Severity.Fatal => {
-          logger.log(Level.FATAL, fact toString)
+//          logger.log(Level.FATAL, fact toString)
         }
         case Severity.Error => {
-          logger.log(Level.ERROR, fact toString)
+//          logger.log(Level.ERROR, fact toString)
         }
         case Severity.Warning => {
-          logger.log(Level.WARN, fact toString)
+//          logger.log(Level.WARN, fact toString)
         }
         case Severity.Info => {
-          logger.log(Level.INFO, fact toString)
+//          logger.log(Level.INFO, fact toString)
         }
         case Severity.Debug => {
-          logger.log(Level.DEBUG, fact toString)
+//          logger.log(Level.DEBUG, fact toString)
         }
         case Severity.Trace => {
-          logger.log(Level.TRACE, fact toString)
+//          logger.log(Level.TRACE, fact toString)
         }
         case _ => {
-          logger.log(Level.DEBUG, fact toString)
+//          logger.log(Level.DEBUG, fact toString)
         }
       }
     }

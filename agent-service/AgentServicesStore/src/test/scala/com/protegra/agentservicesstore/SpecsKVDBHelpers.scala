@@ -24,6 +24,7 @@ import actors.threadpool.LinkedBlockingQueue
 
 import scala.concurrent.ops._
 import com.biosimilarity.lift.lib.moniker._
+import com.protegra.agentservicesstore.util.Results
 
 trait KVDBHelpers extends Timeouts with RabbitTestSetup {
   @transient
@@ -80,6 +81,10 @@ trait KVDBHelpers extends Timeouts with RabbitTestSetup {
   }
   def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ], configFileName: Option[String]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
   {
+    System.err.println("===================================================" )
+    System.err.println("CCCCCCCCCCCCCCC Creating a node CCCCCCCCCCCCCCCCCCC" + configFileName)
+    System.err.println("===================================================")
+
     AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
   }
 }
@@ -93,47 +98,28 @@ trait SpecsKVDBHelpers
   {
     println("attempting assert")
     println("getMustBe expecting: " + expected)
-    getResultString(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
-  }
-
-  def getResultString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
-  {
-    val testId = UUID.randomUUID().toString()
-    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-
-    reset {
-      for ( e <- q.get(cnxn)(key) ) {
-        if (e != None)
-        {
-          reset {_resultsQ.put(cnxnTest)(key, e.dispatch)}
-          println("storing to resultQ : " + e.dispatch)
-        }
-      }
-    }
-
-    SleepToPreventContinuation()
-    val actual = fetchString(_resultsQ, cnxnTest, key)
-    return actual
+    getString(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
   }
 
   def getString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
   {
-    var actual = ""
+    val resultKey = Results.getKey()
     reset {
       for ( e <- q.get(cnxn)(key) ) {
         if ( e != None ) {
-          actual = e.dispatch
+          val actual = e.dispatch
+          Results.saveString(resultKey, actual)
           println("getString received : " + actual)
         }
       }
     }
-    return actual
+    Results.savedString(resultKey)
   }
 
   def getMustContain(expected: java.util.List[ String ])(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    getIntoResultQ(q, cnxn, key).containsAll(expected) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+    getIntoResultQ(q, cnxn, key).containsAll(expected) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
   }
 
   def getIntoResultQ(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): LinkedBlockingQueue[ String ] =
@@ -157,69 +143,31 @@ trait SpecsKVDBHelpers
     return actual
   }
 
-  def getCount(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: String): Int =
-  {
-    var found = 0
-    val lblSearch = key.toLabel
-    reset {
-      for ( c <- q.get(true)(cnxn)(lblSearch) ) {
-        if ( c != None ) {
-          for ( e <- c.dispatchCursor ) {
-            println("*************getCount - received : " + e.dispatch.toString)
-            if ( e.dispatch.toString != "" ) found += 1
-          }
-        }
-      }
-    }
-    println("-------------returning - found: " + found.toString + " for cnxn " + cnxn.toString)
-    trySleep(found)
-    return found
-  }
-
   def fetchMustBe(expected: String)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    fetchResultString(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
-  }
-
-  def fetchResultString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
-  {
-    val testId = UUID.randomUUID().toString()
-    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-
-    reset {
-      for ( e <- q.fetch(cnxn)(key) ) {
-        if (e != None)
-        {
-          reset {_resultsQ.put(cnxnTest)(key, e.dispatch)}
-          println("storing to resultQ : " + e.dispatch)
-        }
-      }
-    }
-
-    SleepToPreventContinuation()
-    val actual = fetchString(_resultsQ, cnxnTest, key)
-    return actual
+    fetchString(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
   }
 
   def fetchString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
   {
-    var actual = ""
+    val resultKey = Results.getKey()
     reset {
       for ( e <- q.fetch(cnxn)(key) ) {
         if ( e != None ) {
-          actual = e.dispatch
+          val actual = e.dispatch
+          Results.saveString(resultKey, actual)
           println("fetchString received : " + actual)
         }
       }
     }
-    return actual
+    Results.savedString(resultKey)
   }
 
   //  def fetchMustBe(expected: Data)(q: Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse], cnxn: AgentCnxn, key: String) =
   //  {
   //    println("attempting assert")
-  //    fetchData(q, cnxn, key.toLabel) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
+  //    fetchData(q, cnxn, key.toLabel) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
   //  }
   //
   //  def fetchData(q: Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse], cnxn: AgentCnxn, key: CnxnCtxtLabel[String, String, String]):Data = {
@@ -239,7 +187,7 @@ trait SpecsKVDBHelpers
   def fetchMustContain(expected: java.util.List[ String ], resultQ: LinkedBlockingQueue[ String ])(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    fetchIntoResultQ(q, cnxn, key).containsAll(expected) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+    fetchIntoResultQ(q, cnxn, key).containsAll(expected) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
   }
 
   def fetchIntoResultQ(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): LinkedBlockingQueue[ String ] =
@@ -280,45 +228,55 @@ trait SpecsKVDBHelpers
     return resultQ
   }
 
+  def getCountMustBe(expected: Int)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: String) =
+  {
+    println("attempting count")
+    getCount(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
+  }
+
+  def getCount(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: String): Int =
+  {
+    val resultKey = Results.getKey()
+    val lblSearch = key.toLabel
+    reset {
+      for ( c <- q.get(true)(cnxn)(lblSearch) ) {
+        if ( c != None ) {
+          var found = 0
+          for ( e <- c.dispatchCursor ) {
+            found += 1
+            println("*************getCount - received : " + e.dispatch.toString)
+          }
+          println("*************getCount - size : " + found)
+          Results.count(resultKey, found)
+        }
+      }
+    }
+    Results.counted(resultKey)
+  }
+
   def countMustBe(expected: Int)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: String) =
   {
     println("attempting count")
-    SleepToPreventContinuation()
-    fetchCount(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
+    fetchCount(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
   }
-
-  //  def fetchCount(q: Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse], cnxn:AgentCnxn, key:String):Int = {
-  //    var found = 0
-  //    val lblSearch = key.toLabel
-  //    reset {
-  //      for (e <- q.fetch(cnxn)(lblSearch)) {
-  //        if (e != None)
-  //        {
-  //          found += 1;
-  //        }
-  //      }
-  //    }
-  //    println("returning count:" + found)
-  //    return found
-  //  }
-
 
   def fetchCount(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: String): Int =
   {
-    var found = 0
+    val resultKey = Results.getKey()
     val lblSearch = key.toLabel
     reset {
       for ( c <- q.fetch(true)(cnxn)(lblSearch) ) {
         if ( c != None ) {
+          var found = 0
           for ( e <- c.dispatchCursor ) {
+            found += 1
             println("*************fetchCount - received : " + e.dispatch.toString)
-            if ( e.dispatch.toString != "" ) found += 1
           }
+          println("*************fetchCount - size : " + found)
+          Results.count(resultKey, found)
         }
       }
     }
-    println("-------------returning - found: " + found.toString + " for cnxn " + cnxn.toString)
-    trySleep(found)
-    return found
+    Results.counted(resultKey)
   }
 }

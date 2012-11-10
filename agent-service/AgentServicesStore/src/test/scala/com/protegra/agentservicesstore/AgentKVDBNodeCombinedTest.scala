@@ -21,6 +21,7 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
+import util.Results
 
 class AgentKVDBNodeCombinedTest
   extends JUnit4(AgentKVDBNodeCombinedTestSpecs)
@@ -64,14 +65,14 @@ with Serializable
         for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
       }
 
-      val resultKey = "result(\"1\")"
+      val resultKey = Results.getKey()
 
       val keyPrivate = "contentRequestPrivate(_)"
       reset {
         for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
           if ( e != None ) {
             val result = e.dispatch
-            reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, result)}
+            Results.saveString(resultKey, result)
           }
           else {
             println("listen received - none")
@@ -82,8 +83,7 @@ with Serializable
       val value = "test@protegra.com"
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
-      SleepToPreventContinuation()
-      fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+      Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
     }
 
     "retrieve between UI and Store with a public queue using the persisted continuation" in {
@@ -92,6 +92,7 @@ with Serializable
 
       var store_privateQ = createNode(store_location, List(ui_location))
       val store_msgQ = createNode(public_location, List())
+      val resultKey = Results.getKey()
 
       val keyPublic = "contentResponsePublic(_)"
       reset {
@@ -103,7 +104,7 @@ with Serializable
         for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
           if ( e != None ) {
             val result = e.dispatch
-            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
+            Results.saveString(resultKey, result)
           }
           else {
             println("listen received - none")
@@ -122,8 +123,7 @@ with Serializable
       Thread.sleep(TIMEOUT_MED)
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
-      SleepToPreventContinuation()
-      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+      Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
 
     }
 
@@ -135,6 +135,7 @@ with Serializable
       var store_privateQ = createNode(store_location, List(ui_location))
       val store_msgQ = createNode(public_location, List())
 
+      val resultKey = Results.getKey()
       val keyPublic = "contentResponsePublic(_)"
       reset {
         for ( e <- store_msgQ.get(cnxnUIStore)(keyPublic.toLabel) ) {}
@@ -145,7 +146,7 @@ with Serializable
         for ( e <- store_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
           if ( e != None ) {
             val result = e.dispatch
-            reset {_resultsQ.put(cnxnTest)(result.toLabel, result)}
+            Results.saveString(resultKey, result)
           }
           else {
             println("listen received - none")
@@ -156,6 +157,7 @@ with Serializable
       Thread.sleep(TIMEOUT_LONG)
       store_privateQ = null
 
+      val restoredKey = Results.getKey()
       val restored_privateQ = createNode(public_location, List())
       val restored = "restored"
       reset {
@@ -165,7 +167,7 @@ with Serializable
               for ( e <- restored_privateQ.get(cnxnUIStore)(keyPrivate.toLabel) ) {
                 if ( e != None ) {
                   val result = e.dispatch
-                  reset {_resultsQ.put(cnxnTest)(result.toLabel, restored)}
+                  Results.saveString(restoredKey, restored)
                 }
                 else {
                   println("listen received - none")
@@ -181,9 +183,7 @@ with Serializable
       Thread.sleep(TIMEOUT_LONG)
       reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
 
-      SleepToPreventContinuation()
-      fetchString(_resultsQ, cnxnTest, value.toLabel) must be_==(restored).eventually(5, TIMEOUT_EVENTUALLY)
-
+      Results.savedString(restoredKey) must be_==(restored).eventually(10, TIMEOUT_EVENTUALLY)
     }
 
   }

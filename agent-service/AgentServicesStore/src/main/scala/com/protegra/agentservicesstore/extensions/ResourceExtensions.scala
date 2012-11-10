@@ -66,7 +66,7 @@ object ResourceExtensions
           iterator
         }
         case _ => {
-          println("dispatch: cursor not found");
+          println("dispatch: cursor not found")
           val iterator: Generator[ Resource, Unit, Unit ] = itergen[ Resource ](Nil)
           iterator
         }

@@ -125,7 +125,7 @@ object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
        *                   Assert invariant
        * --------------------------------------------------------- */      
       
-      //fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+      //fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
     }
 
   }

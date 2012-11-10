@@ -53,6 +53,24 @@ object MemCacheTestSpecs extends Specification
       found must beNull[ java.lang.Object ]
     }
 
+    "hasValue" in {
+       val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+       val key = UUID.randomUUID().toString
+       val expected = "test"
+       MemCache.add(key, expected)(client);
+       val found = MemCache.hasValue(key)(client)
+       found must be_==(true)
+     }
+
+    "hasValue is false" in {
+       val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
+       val key = UUID.randomUUID().toString
+       val expected = "test"
+       MemCache.add(key, expected)(client);
+       val found = MemCache.hasValue(UUID.randomUUID().toString)(client)
+       found must be_==(false)
+     }
+
     "replace correct value" in {
       val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
       val key = UUID.randomUUID().toString

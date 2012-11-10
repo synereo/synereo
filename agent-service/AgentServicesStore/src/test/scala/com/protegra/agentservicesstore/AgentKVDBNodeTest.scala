@@ -51,12 +51,6 @@ with RabbitTestSetup
       val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
       val lbl = "content(\"email\")".toLabel
       node.store(cnxn)(lbl, Ground("defaultPort"))
-
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
     }
 
     "work if found on configured port" in {
@@ -76,12 +70,6 @@ with RabbitTestSetup
       val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
       val lbl = "content(\"email\")".toLabel
       node.store(cnxn)(lbl, Ground("configuredPort"))
-
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
     }
 
 

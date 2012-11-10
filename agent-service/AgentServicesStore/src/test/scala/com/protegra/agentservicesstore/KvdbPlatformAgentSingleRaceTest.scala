@@ -31,6 +31,7 @@ import com.protegra.agentservicesstore.usage.AgentUseCase._
 import Being.AgentKVDBNodeFactory
 
 import scala.concurrent.ops._
+import util.Results
 
 class KvdbPlatformAgentSingleRaceTest
   extends JUnit4(KvdbPlatformAgentSingleRaceTestSpecs)
@@ -76,14 +77,14 @@ object KvdbPlatformAgentSingleRaceTestSpecs extends KvdbPlatformAgentBaseRace
 
       val lblChannel = "contentRequest(_)".toLabel
 
+      val resultKey = Results.getKey()
       def listenContentRequest(): Unit =
       {
         reset {
           for ( e <- pairedReader.get(cnxnUIStore)(lblChannel) ) {
             if ( e != None ) {
               spawn {
-              val lblResult = ( "result(\"" + UUID.randomUUID() + "\")" ).toLabel
-              reset {_resultsQ.put(cnxnTest)(lblResult, e.dispatch)}
+                Results.saveString(resultKey,  e.dispatch)
               }
               listenContentRequest
             }
@@ -96,17 +97,11 @@ object KvdbPlatformAgentSingleRaceTestSpecs extends KvdbPlatformAgentBaseRace
       listenContentRequest
 
       Thread.sleep(TIMEOUT_MED)
-      reset {pairedWriter.put(cnxnUIStore)(lblContentRequest, Ground(valueContentRequest + ": 1"))}
+      val value = valueContentRequest + ": 1"
+      reset {pairedWriter.put(cnxnUIStore)(lblContentRequest, Ground(value))}
 
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
-      Thread.sleep(TIMEOUT_LONG)
       val strResultSearch = "result(_)"
-      countMustBe(1)(_resultsQ, cnxnTest, strResultSearch)
+      Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
     }
   }
 

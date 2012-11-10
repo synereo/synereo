@@ -32,6 +32,11 @@ object MemCache
   //  def remove(key:String) {
   //  }
 
+  def hasValue(key: String)(client: MemcachedClient): Boolean = {
+    val matching = client.get(key)
+    (matching != null)
+  }
+
   def get[ T <: java.io.Serializable ](key: String)(client: MemcachedClient): T =
   {
     val matching = client.get(key)

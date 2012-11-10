@@ -26,6 +26,7 @@ import Being.AgentKVDBNodeFactory
 
 import scala.concurrent.ops._
 import com.biosimilarity.lift.lib.moniker._
+import util.Results
 
 case class KvdbPlatformAgentBaseRace() extends Specification
     with SpecsKVDBHelpers
@@ -56,18 +57,18 @@ case class KvdbPlatformAgentBaseRace() extends Specification
           val key = "contentChannel(cacheGetPutRetrieve(\"email\"))".toLabel
           val value = "cacheGetPutRetrieve@protegra"
 
+          val resultKey = Results.getKey()
           reset {
             for ( e <- reader.get(cnxn)(key) ) {
               if ( e != None ) {
                 val result = e.dispatch
-                reset {_resultsQ.put(cnxnTest)(key, result)}
+                Results.saveString(resultKey, result)
               }
             }
           }
           reset {writer.put(cnxn)(key, Ground(value))}
 
-          SleepToPreventContinuation()
-          fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+          Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
         }
       }
 
@@ -85,18 +86,18 @@ case class KvdbPlatformAgentBaseRace() extends Specification
          val key = "contentChannel(cacheFetchPutRetrieve(\"email\"))".toLabel
          val value = "cacheFetchPutRetrieve@protegra"
 
+         val resultKey = Results.getKey()
          reset {
            for ( e <- reader.fetch(cnxn)(key) ) {
              if ( e != None ) {
                val result = e.dispatch
-               reset {_resultsQ.put(cnxnTest)(key, result)}
+               Results.saveString(resultKey, result)
              }
            }
          }
          reset {writer.put(cnxn)(key, Ground(value))}
 
-         SleepToPreventContinuation()
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+         Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
        }
      }
 
@@ -118,7 +119,7 @@ case class KvdbPlatformAgentBaseRace() extends Specification
 
            //with 1000 sleep the race condition turns into store/fetch which works without watiers.
 //           Thread.sleep(1000)
-           fetchString(reader, cnxn, key) must be_==(value).eventually(5, TIMEOUT_EVENTUALLY)
+           fetchString(reader, cnxn, key) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
          }
        }
 
