@@ -1,62 +1,77 @@
 package com.protegra_ati.agentservices.core.util
 
-import net.spy.memcached.MemcachedClient
-import java.net.InetSocketAddress
-import java.util.UUID
-import com.protegra.agentservicesstore.util.MemCache
+import com.protegra.agentservicesstore.util.{MemCache, ResultsBase}
+import com.protegra_ati.agentservices.core.schema.Data
+import com.protegra_ati.agentservices.core.messages.Message
 
-object Results
+object Results extends DataResultsBase
 {
-  @transient lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
-  //so it's serializable
-  final val strTrue = "true"
+}
 
-  def getKey(): String =
+trait DataResultsBase extends ResultsBase
+{
+
+  def save(key: String, value: Data): Unit =
   {
-    "Result" + UUID.randomUUID.toString
+    MemCache.add(key, value)(client)
   }
 
-  def trigger(key: String): Unit =
+  def saved(key: String): Data =
   {
-    MemCache.add(key, strTrue)(client)
+    saved(key, 5)
   }
 
-  def triggered(key: String): Boolean =
+  def saved(key: String, maxRetries: Int): Data =
   {
-    val found = MemCache.get[ String ](key)(client)
-    ( strTrue.equals(found) )
-  }
-
-  def count(key: String, value: Int): Unit =
-  {
-    MemCache.add(key, value.toString)(client)
-  }
-
-  def voidCount(key: String): Unit =
-  {
-    MemCache.replace(key, "-999")(client)
-  }
-
-  def counted(key: String): Int =
-  {
-    val count = spinlockCount(key)
-    count match {
-      case null => 0
-      case _ => Integer.parseInt(count)
+    val saved = spinlockData(key, maxRetries)
+    saved match {
+      case null => null
+      case _ => saved
     }
   }
 
-  def spinlockCount(key: String): String =
+  def spinlockData(key: String, maxRetries: Int): Data =
   {
-    var count = MemCache.get[ String ](key)(client)
+    var result = MemCache.get[ Data ](key)(client)
     var retries = 0
-    val maxRetries = 10
-    while ( count == null && retries < maxRetries ) {
+    while ( result == null && retries < maxRetries ) {
       Thread.sleep(1000)
       retries = retries + 1
-      count = MemCache.get[ String ](key)(client)
+      result = MemCache.get[ Data ](key)(client)
     }
-    count
+    result
+  }
+  
+  
+  def saveMessage(key: String, value: Message): Unit =
+  {
+    MemCache.add(key, value)(client)
+  }
+
+  def savedMessage(key: String): Message =
+  {
+    savedMessage(key, 5)
+  }
+
+  def savedMessage(key: String, maxRetries: Int): Message =
+  {
+    val saved = spinlockMessage(key, maxRetries)
+    saved match {
+      case null => null
+      case _ => saved
+    }
+  }
+
+  def spinlockMessage(key: String, maxRetries: Int): Message =
+  {
+    var result = MemCache.get[ Message ](key)(client)
+    var retries = 0
+    while ( result == null && retries < maxRetries ) {
+      Thread.sleep(1000)
+      retries = retries + 1
+      result = MemCache.get[ Message ](key)(client)
+    }
+    result
   }
 
 }

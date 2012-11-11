@@ -1,14 +1,10 @@
 package com.protegra_ati.agentservices.core.util.cloner
 
 import org.junit.runners.JUnit4
-import org.specs.runner.ConsoleRunner
-import org.spex.Specification
+import org.specs2.runner._
 import java.util.concurrent.{BrokenBarrierException, CyclicBarrier}
 import com.rits.cloning.Cloner
 import com.protegra_ati.agentservices.core.schema.{Image, Profile}
-
-/* User: mgevantmakher
-*/
 
 class ParallelSingletonClonerPerformanceTest(repetitions: Int)
 {

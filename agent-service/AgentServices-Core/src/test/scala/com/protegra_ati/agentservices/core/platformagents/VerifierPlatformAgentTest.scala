@@ -1,8 +1,8 @@
 //package com.protegra_ati.agentservices.core.platformagents
 //
-//import org.specs._
-//import org.specs.util._
-//import org.specs.runner._
+//import org.specs2.mutable._
+//import org.specs2.time.Duration
+//
 //import org.junit._
 //import java.util.UUID
 //import java.net.URI
@@ -21,13 +21,7 @@ import com.protegra_ati.agentservices.core.schema._
 //import com.protegra_ati.agentservices.core.schema._
 //import com.protegra_ati.agentservices.core.events.{GetClaimResponseReceivedEvent, GetContentResponseReceivedEvent, SetContentResponseReceivedEvent, MessageEventAdapter}
 //
-//class VerifierPlatformAgentTest
-//extends JUnit4(VerifierPlatformAgentTestSpecs)
-//
-//object VerifierPlatformAgentTestSpecsRunner
-//extends ConsoleRunner(VerifierPlatformAgentTestSpecs)
-//
-//object VerifierPlatformAgentTestSpecs extends Specification {
+//class VerifierPlatformAgentTest extends SpecificationWithJUnit {
 //  val TIMEOUT_SHORT = 100
 //  val TIMEOUT_MED = 300
 //  val TIMEOUT_LONG = 750
@@ -77,7 +71,7 @@ import com.protegra_ati.agentservices.core.schema._
 //  }
 //
 //  "Sending a GetClaimRequest message" should {
-//    //skip("don't run unless all three rabbits are running")
+//    //skipped("don't run unless all three rabbits are running")
 //
 //    val agentSessionId = UUID.randomUUID
 //    val relyingAgentId = "RelyingAgent" + UUID.randomUUID.toString
@@ -155,7 +149,7 @@ import com.protegra_ati.agentservices.core.schema._
 //  }
 //
 //  "Sending a SetContentPersistedRequest for a persisted SelectVerifierRequest message" should {
-//    //skip("don't run unless all three rabbits are running")
+//    //skipped("don't run unless all three rabbits are running")
 //    val agentSessionId = UUID.randomUUID()
 //
 //    val relyingAgentId = "RelyingAgent" + UUID.randomUUID.toString
@@ -244,7 +238,7 @@ import com.protegra_ati.agentservices.core.schema._
 //  }
 //
 //   "Sending a VerifyRequest message" should {
-////     skip("don't run unless all three rabbits are running")
+////     skipped("don't run unless all three rabbits are running")
 //
 //     val verifierId = "Verifier" + UUID.randomUUID.toString
 //     val relyingAgentId = "RelyingAgent" + UUID.randomUUID.toString
@@ -434,7 +428,7 @@ import com.protegra_ati.agentservices.core.schema._
 //   }
 //
 //  "Sending a SetContentPersistedRequest for a persisted VerifyPermissionRequest message" should {
-//    //skip("don't run unless all three rabbits are running")
+//    //skipped("don't run unless all three rabbits are running")
 //
 //    val agentSessionId = UUID.randomUUID()
 //

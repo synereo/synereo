@@ -1,10 +1,5 @@
 package com.protegra_ati.agentservices.core.schema.util
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 import java.util.UUID
 import com.protegra_ati.agentservices.core._
 import com.protegra_ati.agentservices.core.messages.content._
@@ -13,9 +8,9 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import messages._
 import invitation.CreateInvitationRequest
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
-import org.specs._
+import org.junit.runner._
+import org.specs2.runner._
+import org.specs2.mutable._
 import com.protegra_ati.agentservices.core.Timeouts
 import scala.collection.JavaConversions._
 import java.io._
@@ -29,17 +24,11 @@ import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 import org.apache.commons.io.FileUtils
 
-class KryoDeserializerTest
-  extends JUnit4(KryoDeserializerTestSpecs)
-
-object KryoDeserializerTestSpecsRunner
-  extends ConsoleRunner(KryoDeserializerTestSpecs)
-
-object KryoDeserializerTestSpecs extends Specification with Timeouts
+class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 {
-
-//  KryoDeserializerTestDataInitializer.setup(this)
-//
+//  System.err.println(" in KryoDeserializerTestDataInitializer constructor")
+//  val profile1: SimpleMockProfile1 = SimpleMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode")
+//  val compositeProfile: CompositeMockProfile1 = CompositeMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode", MockImage.simpleDemoMockImage)
 //
 //  "serializing mock data" should {
 //
@@ -59,7 +48,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          System.err.println("1 KRYO serialization succsessfull: " + x)
 //
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -75,7 +64,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.map1.get("KEY1").asInstanceOf[ Data ].localeCode must be_==(MockWithJavaMap.simpleMockHashMapStringData.map1.get("KEY1").asInstanceOf[ Data ].localeCode)
 //          System.err.println("2 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -92,7 +81,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.map1.get("KEY1").asInstanceOf[ SimpleMockProfile1 ].localeCode must be_==(MockWithJavaMap.simpleMockHashMapStringMockProfile.map1.get("KEY1").asInstanceOf[ SimpleMockProfile1 ].localeCode)
 //          System.err.println("3 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -107,14 +96,14 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.map.get("KEY").asInstanceOf[ Profile ].country must be_==(MockWithJavaMap.simpleMockHashMapStringProfile.map.get("KEY").asInstanceOf[ Profile ].country)
 //          System.err.println("4 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
 //
 //
 //    "deserialize simple mock profile" in {
-//      // skip("ignore")
+//      // skipped("ignore")
 //      val mockSimpleProfile = new Cloner().deepClone(KryoDeserializerTestDataInitializer.profile1).asInstanceOf[ SimpleMockProfile1 ]
 //      mockSimpleProfile.id = "UID"
 //      mockSimpleProfile.localeCode = "br"
@@ -132,7 +121,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.city must be_==(mockSimpleProfile.city) // only in full schema
 //          System.err.println("5 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //    }
 //
@@ -140,7 +129,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //
 //
 //    "deserialize composite mock profile" in {
-//      // skip("ignore")
+//      // skipped("ignore")
 //      val compositeMockProfile = new Cloner().deepClone(KryoDeserializerTestDataInitializer.compositeProfile).asInstanceOf[ CompositeMockProfile1 ]
 //      compositeMockProfile.id = "UID"
 //      compositeMockProfile.localeCode = "br"
@@ -162,7 +151,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.image.name must be_==(compositeMockProfile.image.name) // same nested object
 //          System.err.println("6 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //    }
 //
@@ -193,7 +182,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x must be_==(moc)
 //          System.err.println("7 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -217,7 +206,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToBroker.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
 //          System.err.println("8 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //      val deserializedPost = KryoDeserializerTestDataInitializer.deserialize[ Post ](new File("data//serializedPost.kryobin"))
@@ -231,7 +220,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToSerialized.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
 //          System.err.println("9 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //      val id: Identification = new Identification("ID", "parent", "convers")
@@ -243,7 +232,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.conversationId must be_==(id.conversationId)
 //          System.err.println("10 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -299,7 +288,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.label must be_==(agentCnxn.label)
 //          System.err.println("13 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -311,7 +300,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.label must be_==(agentCnxn1.label)
 //          System.err.println("14 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -324,7 +313,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.trgt mustBe ( null )
 //          System.err.println("15 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -340,7 +329,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.str mustEqual ( duplicateHolder.str )
 //          System.err.println("16 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -357,7 +346,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x mustEqual ( systemConnection )
 //          System.err.println("17 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -372,7 +361,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x mustEqual ( selfCnxns )
 //          System.err.println("18 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //      val serializedConn = Serializer.serialize[ Connection ](selfCnxns)
@@ -383,7 +372,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x mustEqual ( selfCnxns )
 //          System.err.println("19 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //    }
 //
@@ -412,7 +401,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.postToBroker must beNull[ Post ]
 //          System.err.println("20 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //      val deserializedMessage = KryoDeserializerTestDataInitializer.deserialize[ PersistedMessage[ CreateInvitationRequest ] ](new File("data//serializedPersistedMessageCreateInvitationRequest.kryobin"))
@@ -424,7 +413,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x must be_==(deserializedMessage)
 //          System.err.println("21 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -456,7 +445,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x must be_==(moc)
 //          System.err.println("7 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -480,7 +469,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToBroker.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
 //          System.err.println("8 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //      val deserializedPost = KryoDeserializerTestDataInitializer.deserializeFromString[ Post ](new File("data//serializedPost.kryostring"))
@@ -494,7 +483,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToSerialized.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
 //          System.err.println("9 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //      val id: Identification = new Identification("ID", "parent", "convers")
@@ -506,7 +495,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.conversationId must be_==(id.conversationId)
 //          System.err.println("10 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -562,7 +551,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.label must be_==(agentCnxn.label)
 //          System.err.println("13 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -574,7 +563,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.label must be_==(agentCnxn1.label)
 //          System.err.println("14 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -587,7 +576,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.trgt mustBe ( null )
 //          System.err.println("15 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -603,7 +592,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.str mustEqual ( duplicateHolder.str )
 //          System.err.println("16 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //
@@ -620,7 +609,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x mustEqual ( systemConnection )
 //          System.err.println("17 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -637,7 +626,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //            x mustEqual ( selfCnxns )
 //            System.err.println("18 KRYO serialization succsessfull: " + x)
 //          }
-//          case _ => fail
+//          case _ => failure
 //        }
 //        Thread.sleep(50)
 //      i += 1
@@ -651,7 +640,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x mustEqual ( selfCnxns )
 //          System.err.println("19 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //    }
 //
@@ -680,7 +669,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x.postToBroker must beNull[ Post ]
 //          System.err.println("20 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //      val deserializedMessage = KryoDeserializerTestDataInitializer.deserializeFromString[ PersistedMessage[ CreateInvitationRequest ] ](new File("data//serializedPersistedMessageCreateInvitationRequest.kryostring"))
@@ -692,7 +681,7 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 //          x must be_==(deserializedMessage)
 //          System.err.println("21 KRYO serialization succsessfull: " + x)
 //        }
-//        case _ => fail
+//        case _ => failure
 //      }
 //
 //    }
@@ -701,30 +690,20 @@ object KryoDeserializerTestSpecs extends Specification with Timeouts
 
 }
 
-object KryoDeserializerTestDataInitializer extends Specification
+object KryoDeserializerTestDataInitializer
 {
-
-  val profile1: SimpleMockProfile1 = SimpleMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode")
-  val compositeProfile: CompositeMockProfile1 = CompositeMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode", MockImage.simpleDemoMockImage)
-
-
-  val setup = new SpecContext
-  {
-    System.err.println(" in KryoDeserializerTestDataInitializer constructor")
-  }
-
 
   def serialize(data: Object, toFile: File): Unit =
   {
-
     try {
       if ( toFile.exists() ) {toFile.delete()}
     } catch {
       case ex: Exception => {
         /* TODO into log file*/
         System.err.println("something different:" + ex.toString)
-        ex.printStackTrace();
-        fail("previously serialized class can't be deleted")
+        ex.printStackTrace()
+//        failure("previously serialized class can't be deleted")
+        System.err.println("previously serialized class can't be deleted")
       }
     }
     serialize(data, new FileOutputStream(toFile))

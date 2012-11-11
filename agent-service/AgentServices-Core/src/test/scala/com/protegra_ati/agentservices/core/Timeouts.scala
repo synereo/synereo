@@ -1,7 +1,6 @@
 package com.protegra_ati.agentservices.core
 
-
-import org.specs.util._
+import org.specs2.time.Duration
 
 trait Timeouts {
   val TIMEOUT_SHORT = 200

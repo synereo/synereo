@@ -8,9 +8,9 @@ package com.protegra_ati.agentservices.core.schema
 import disclosure.{TrustLevel}
 import org.junit._
 import Assert._
-import org.specs._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+import org.junit.runner._
+import org.specs2.runner._
 import java.util.UUID
 import java.util.Date
 import java.util.Locale
@@ -19,13 +19,7 @@ import com.protegra_ati.agentservices.core.schema.Constants._
 import com.protegra_ati.agentservices.core.schema.validator._
 import scala.collection.JavaConversions._
 
-class DataTest
-  extends JUnit4(DataTestSpecs)
-
-object DataTestSpecsRunner
-  extends ConsoleRunner(DataTestSpecs)
-
-object DataTestSpecs extends Specification
+class DataTest extends SpecificationWithJUnit
 {
 
   "authorizedData" should {

@@ -39,7 +39,7 @@ import Being.AgentKVDBNodeFactory
 class AgentHostStorePlatformAgent extends BasePlatformAgent
 with Serializable
 with Storage
-with ResultStorage
+//with ResultStorage
 with Public
 with Private
 with HostedConnections
@@ -83,7 +83,7 @@ with MessageStore
 //with Notifier
 {
   var _storeCnxn: AgentCnxnProxy = null
-  var _cnxnUIStore = new AgentCnxnProxy("UI".toURI, "", "Store".toURI)
+  var _cnxnUIStore = new AgentCnxnProxy(( "UI" ).toURI, "", ( "Store" ).toURI);
   val BIZNETWORK_AGENT_ID = "f5bc533a-d417-4d71-ad94-8c766907381b"
 
   //hack for testing
@@ -101,7 +101,7 @@ with MessageStore
   {
     initPrivate(configUtil)
     initDb(configUtil)
-    initResultDb(configUtil)
+//    initResultDb(configUtil)
     initPublic(configUtil)
 
     _storeCnxn = new AgentCnxnProxy(this._id.toString.toURI, "", this._id.toString.toURI)
@@ -111,8 +111,8 @@ with MessageStore
   {
     initPublic(publicAddress, publicAcquaintanceAddresses, Some("db_store_public.conf"))
     initPrivate(privateAddress, privateAcquaintanceAddresses, Some("db_store.conf"))
-    initDb(dbAddress, Some("db_store.conf"))
-    initResultDb(resultAddress, Some("db_store.conf"))
+    initDb(dbAddress, Some("db_store_db.conf"))
+//    initResultDb(resultAddress, Some("db_store.conf"))
 
     _storeCnxn = new AgentCnxnProxy(id.toString.toURI, "", id.toString.toURI)
     super.initForTest(id)
@@ -121,24 +121,24 @@ with MessageStore
   override def loadQueues()
   {
     loadStorageQueue()
-    loadResultStorageQueue()
+//    loadResultStorageQueue()
     loadPrivateQueue()
     loadPublicQueue()
     //the same for now, should be initialized properly to separate queues
 
-    loadUserCnxnList()
+//    loadUserCnxnList()
   }
 
   //does not raise events but sends messages back to AgentHostUIPlatformAgent
   def startListening() =
   {
     report("IN THE STORE LISTEN", Severity.Trace)
-    listenPublicRequests(_storeCnxn)
+//    listenPublicRequests(_storeCnxn)
 
     listenForUICnxns()
 
     //    listenForVerifierCnxns()
-    listenForHostedCnxns()
+//    listenForHostedCnxns()
     // watch list observation starts
     //observeWatchLists()
   }
@@ -151,10 +151,10 @@ with MessageStore
 
     listenPrivateContentRequest(_cnxnUIStore)
 //    listenPrivateSearchRequest(_cnxnUIStore)
-    listenPrivateLoginRequest(_cnxnUIStore)
-    listenPrivateVerifierResponse(_cnxnUIStore)
-    listenPrivateInvitationRequest(_cnxnUIStore)
-    listenPrivateInvitationCreatorResponses(_cnxnUIStore)
+//    listenPrivateLoginRequest(_cnxnUIStore)
+//    listenPrivateVerifierResponse(_cnxnUIStore)
+//    listenPrivateInvitationRequest(_cnxnUIStore)
+//    listenPrivateInvitationCreatorResponses(_cnxnUIStore)
 //    listenPrivateReferralRequest(_cnxnUIStore)
 //    listenPrivateRegistrationRequest(_cnxnUIStore)
 //    listenPrivateRegistrationCreatorResponses(_cnxnUIStore)
@@ -178,13 +178,17 @@ with MessageStore
     listenPublicContentRequest(cnxn)
 //    listenPublicSearchRequest(cnxn)
 //    listenPublicSearchRequestOnStore(cnxn)
-    listenPublicLoginRequest(cnxn)
-    listenPublicVerifierRequest(cnxn)
+//    listenPublicLoginRequest(cnxn)
+//    listenPublicVerifierRequest(cnxn)
 
     //listen invitation creator on jen_broker, ie jen_mike. jen is the broker for mike in this case
     listenPublicInvitationCreatorRequests(cnxn)
     //listen invitation consumer on broker_jen, ie mike_jen. mike is the broker for jen in this case
     listenPublicInvitationConsumerRequests(cnxn)
+
+
+
+
 //    listenPublicReferralRequests(cnxn)
 //    listenPublicRegistrationCreatorRequests(cnxn)
 //    listenPublicRegistrationConsumerRequests(cnxn)
@@ -199,8 +203,8 @@ with MessageStore
   {
     listenPublicContentResponse(cnxn)
 //    listenPublicSearchResponse(cnxn)
-    listenPublicLoginResponse(cnxn)
-    listenPublicVerifierResponse(cnxn)
+//    listenPublicLoginResponse(cnxn)
+//    listenPublicVerifierResponse(cnxn)
 
     //listen invitation consumer on broker_jen, ie mike_jen. mike is the broker for jen in this case
     listenPublicInvitationConsumerResponses(cnxn)
@@ -215,7 +219,7 @@ with MessageStore
   {
     report("!!! Received on Public channel...Sending on privateQ!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
     msg.channelLevel = Some(ChannelLevel.Private)
-    send(_privateQ, _cnxnUIStore, msg)
+    super.send(_privateQ, _cnxnUIStore, msg)
   }
 
   override def send(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
@@ -236,7 +240,30 @@ with MessageStore
       //      }
       case _ => {/*ignore*/}
     }
-    super.send(queue, cnxn, msg)
+    route(cnxn, msg)
+    //    super.send(queue, cnxn, msg)
+
+  }
+
+  def route(cnxn: AgentCnxnProxy, msg: Message)
+  {
+    if (msg.channel == Channel.Content && msg.channelType == ChannelType.Request )
+      handlePublicContentRequestChannel(cnxn,msg)
+    else if (msg.channel == Channel.Content && msg.channelType == ChannelType.Response )
+      sendPrivate(cnxn,msg)
+    else
+      println("ROUTE ROUTE COULD NOT ROUTE")
+
+
+//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Request )
+//      handlePublicInvitationCreatorRequestChannel(cnxn,msg)
+//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Response )
+//      handlePublicInvitationCreatorResponseChannel(cnxn,msg)
+//
+//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) && msg.channelType == ChannelType.Request )
+//      handlePublicInvitationConsumerRequestChannel(cnxn,msg)
+//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) &&msg.channelType == ChannelType.Response )
+//      sendPrivate(cnxn,msg)
 
   }
 }

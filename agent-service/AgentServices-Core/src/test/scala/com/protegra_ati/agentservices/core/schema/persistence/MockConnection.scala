@@ -2,9 +2,9 @@ package com.protegra_ati.agentservices.core.schema.persistence
 
 import org.junit._
 import Assert._
-import org.specs._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+import org.junit.runner._
+import org.specs2.runner._
 import java.util.UUID
 import java.util.Date
 import java.util.Locale

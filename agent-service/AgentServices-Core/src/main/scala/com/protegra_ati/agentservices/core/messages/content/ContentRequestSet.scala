@@ -152,7 +152,7 @@ trait ContentRequestSet
           //register self connection in a self connection list
           addToHostedCnxn(selfCnxn)
           //appBizNetwork Conn just needs to listen to it's 1 new conn
-          listenForHostedCnxn(selfCnxn)
+//          listenForHostedCnxn(selfCnxn)
         }
       }
       case _ => {
@@ -484,8 +484,8 @@ trait ContentRequestSet
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
   {
     //start listening
-    listenPublicRequests(newConnection.writeCnxn)
-    listenPublicResponses(newConnection.readCnxn)
+//    listenPublicRequests(newConnection.writeCnxn)
+//    listenPublicResponses(newConnection.readCnxn)
 
     //system Data generation
     generateSystemData(selfCnxn, newConnection)

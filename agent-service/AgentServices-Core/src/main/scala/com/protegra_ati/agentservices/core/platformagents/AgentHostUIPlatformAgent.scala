@@ -39,7 +39,7 @@ with VerifierNotificationSetPrivate
 with InvitationResponseSetConsumerPrivate
 with IntroductionResponseSetConsumerPrivate
 {
-  var _cnxnUIStore = new AgentCnxnProxy("UI".toURI, "", "Store".toURI)
+  var _cnxnUIStore = new AgentCnxnProxy(( "UI" ).toURI, "", ( "Store" ).toURI);
     var _agentSessionId: UUID = null
 
   override def init(configUtil: Config)
@@ -68,14 +68,14 @@ with IntroductionResponseSetConsumerPrivate
   def listenPrivate(cnxn: AgentCnxnProxy) =
   {
     listenPrivateContentResponse(cnxn)
-    listenPrivateContentNotification(cnxn)
+//    listenPrivateContentNotification(cnxn)
 //    listenPrivateSearchResponse(cnxn)
-    listenPrivateVerifierResponse(cnxn)
-    listenPrivateVerifierNotification(cnxn)
-    listenPrivateLoginResponse(cnxn)
+//    listenPrivateVerifierResponse(cnxn)
+//    listenPrivateVerifierNotification(cnxn)
+//    listenPrivateLoginResponse(cnxn)
     //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
-    listenPrivateInvitationConsumerResponses(cnxn)
-    listenPrivateIntroductionConsumerResponses(cnxn)
+//    listenPrivateInvitationConsumerResponses(cnxn)
+//    listenPrivateIntroductionConsumerResponses(cnxn)
 //    listenPrivateReferralResponses(cnxn)
 //    listenPrivateRegistrationConsumerResponses(cnxn)
 

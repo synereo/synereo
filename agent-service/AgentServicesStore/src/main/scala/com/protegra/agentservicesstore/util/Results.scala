@@ -3,7 +3,11 @@ package com.protegra.agentservicesstore.util
 import net.spy.memcached.{AddrUtil, FailureMode, ConnectionFactoryBuilder, MemcachedClient}
 import java.util.UUID
 
-object Results
+object Results extends ResultsBase
+{
+}
+
+trait ResultsBase
 {
   @transient val client = new MemcachedClient(new ConnectionFactoryBuilder().setDaemon(true).setFailureMode(FailureMode.Retry).build(), AddrUtil.getAddresses("127.0.0.1:11211"))
   //so it's serializable

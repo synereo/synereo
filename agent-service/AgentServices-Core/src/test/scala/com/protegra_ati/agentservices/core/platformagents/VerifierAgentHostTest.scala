@@ -1,8 +1,8 @@
 //package com.protegra_ati.agentservices.core.platformagents
 //
-//import org.specs._
-//import org.specs.util._
-//import org.specs.runner._
+//import org.specs2.mutable._
+//import org.specs2.time.Duration
+//
 //import org.junit._
 //import java.util.UUID
 //import java.net.URI
@@ -25,13 +25,7 @@ import com.protegra_ati.agentservices.core.schema._
 //import com.protegra_ati.agentservices.core.schema.util.{ConnectionFactory}
 //import com.protegra_ati.agentservices.core.schema.{PersistedRequest, ContentVerifier, Profile, Verifier, Data, CompositeData, AliasConnection, VerifiedData}
 //
-//class VerifierAgentHostTest
-//  extends JUnit4(VerifierAgentHostTestSpecs)
-//
-//object VerifierAgentHostTestSpecsRunner
-//  extends ConsoleRunner(VerifierAgentHostTestSpecs)
-//
-//object VerifierAgentHostTestSpecs extends Specification
+//class VerifierAgentHostTest extends SpecificationWithJUnit
 //with RabbitTestSetup
 //with Timeouts
 //{
@@ -67,8 +61,8 @@ import com.protegra_ati.agentservices.core.schema._
 //  //  }
 //
 //  "Sending a SetContentPersistedRequest for a persisted SelectVerifierRequest message" should {
-//    skip("listen issues")
-//    //skip("don't run unless all three rabbits are running")
+//    skipped("listen issues")
+//    //skipped("don't run unless all three rabbits are running")
 //    val agentSessionId = UUID.randomUUID()
 //
 //
@@ -143,8 +137,8 @@ import com.protegra_ati.agentservices.core.schema._
 //  }
 //
 //  "Sending a VerifyRequest message" should {
-//    skip("listen issues")
-//    //     skip("don't run unless all three rabbits are running")
+//    skipped("listen issues")
+//    //     skipped("don't run unless all three rabbits are running")
 //
 //    val agentSessionId = UUID.randomUUID()
 //
@@ -327,8 +321,8 @@ import com.protegra_ati.agentservices.core.schema._
 //  }
 //
 //  "Sending a SetContentPersistedRequest for a persisted VerifyPermissionRequest message" should {
-//    skip("listen issues")
-//    //skip("don't run unless all three rabbits are running")
+//    skipped("listen issues")
+//    //skipped("don't run unless all three rabbits are running")
 //    val agentSessionId = UUID.randomUUID()
 //
 //

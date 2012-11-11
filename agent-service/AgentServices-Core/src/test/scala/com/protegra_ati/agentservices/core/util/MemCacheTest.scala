@@ -1,29 +1,23 @@
 package com.protegra_ati.agentservices.core.util
 
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
-import org.specs.Specification
+import org.junit.runner._
+import org.specs2.runner._
+import org.specs2.mutable._
 
 import java.util.UUID
-import net.spy.memcached.MemcachedClient
+import net.spy.memcached.{AddrUtil, FailureMode, ConnectionFactoryBuilder, MemcachedClient}
 import java.net.InetSocketAddress
 import com.protegra_ati.agentservices.core.schema.Profile
 import com.protegra.agentservicesstore.util.MemCache
 
-class MemCacheTest
-  extends JUnit4(MemCacheTestSpecs)
-
-object MemCacheTestSpecsRunner
-  extends ConsoleRunner(MemCacheTestSpecs)
-
-object MemCacheTestSpecs extends Specification
+class MemCacheTest extends SpecificationWithJUnit
 {
 
   val timeoutBetween = 0
+  @transient val client = new MemcachedClient(new ConnectionFactoryBuilder().setDaemon(true).setFailureMode(FailureMode.Retry).build(), AddrUtil.getAddresses("127.0.0.1:11211"))
 
   "spymemcached client set get" should {
     "find correct value" in {
-      val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
       val key = UUID.randomUUID().toString
       var profile = new Profile()
       profile.firstName = "test"
@@ -33,7 +27,6 @@ object MemCacheTestSpecs extends Specification
     }
 
     "not find a missing value" in {
-      val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
       val key = UUID.randomUUID().toString
       val found = client.get(key)
       found must beNull[ java.lang.Object ]
@@ -42,7 +35,6 @@ object MemCacheTestSpecs extends Specification
 
   "MemCache object set get" should {
     "find correct value" in {
-      val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
       val key = UUID.randomUUID().toString
       var profile = new Profile()
       profile.firstName = "test"
@@ -53,7 +45,6 @@ object MemCacheTestSpecs extends Specification
     }
 
     "not find a missing value" in {
-      val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
       val key = UUID.randomUUID().toString
       val found = MemCache.get[ Profile ](key)(client)
       found must beNull[ java.lang.Object ]

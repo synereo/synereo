@@ -6,29 +6,26 @@
 package com.protegra_ati.agentservices.core.util
 
 import com.protegra.agentservicesstore.util.MemCache
-import net.spy.memcached.MemcachedClient
-import java.net.InetSocketAddress
 import java.util.ArrayList
 import scala.collection.JavaConversions._
 
 class MultiCacheMap[ V <: java.io.Serializable ](final val prefix: String) extends java.io.Serializable
 {
-  @transient lazy val client = new MemcachedClient(new InetSocketAddress("localhost", 11211))
   //  private var _map = new HashMap[K, List[V]]()
 
   def add(key: java.lang.String, value: V) =
   {
     val multiKey = prefix + key
-    val cached = MemCache.get[ ArrayList[ V ] ](multiKey)(client)
+    val cached = MemCache.get[ ArrayList[ V ] ](multiKey)(Results.client)
     cached match {
       case null => {
         val list = new ArrayList[ V ]()
         list.add(value)
-        MemCache.add(multiKey, list)(client)
+        MemCache.add(multiKey, list)(Results.client)
       }
       case x: ArrayList[ V ] => {
         x.add(value)
-        MemCache.replace(multiKey, x)(client)
+        MemCache.replace(multiKey, x)(Results.client)
       }
       case _ => { System.out.println(" MultiCacheMap couldn't find an ArrayList for listener " + key)}
     }
@@ -45,7 +42,7 @@ class MultiCacheMap[ V <: java.io.Serializable ](final val prefix: String) exten
     list match {
       case x: ArrayList[ V ] => {
         x.remove(value)
-        MemCache.replace(multiKey, x)(client)
+        MemCache.replace(multiKey, x)(Results.client)
       }
       case _ => { System.out.println(" MultiCacheMap couldn't find an ArrayList to remove item for listener " + key)}
     }
@@ -55,7 +52,7 @@ class MultiCacheMap[ V <: java.io.Serializable ](final val prefix: String) exten
   {
     val multiKey = prefix + key
     //    _map.get(key)
-    val list = MemCache.get[ ArrayList[ V ] ](multiKey)(client)
+    val list = MemCache.get[ ArrayList[ V ] ](multiKey)(Results.client)
     list match {
       case null => new ArrayList[V]()
       case _ => list
