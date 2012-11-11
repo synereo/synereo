@@ -8,10 +8,11 @@
 
 package com.protegra.agentservicesstore
 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+
+import org.specs2.runner._
+import org.junit.runner._
+import org.specs2.matcher._
 
 import com.biosimilarity.lift.model.store._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -32,17 +33,10 @@ import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
 
-class AgentKVDBNodeResubmitRequestsTest
-  extends JUnit4(AgentKVDBNodeResubmitRequestsTestSpecs)
-
-object AgentKVDBNodeResubmitRequestsTestSpecsRunner
-  extends ConsoleRunner(AgentKVDBNodeResubmitRequestsTestSpecs)
-
-object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
+class AgentKVDBNodeResubmitRequestsTest extends SpecificationWithJUnit
 {  
 
   "AgentKVDBNode" should {
-    
     @transient
     val testConfig =
       AgentKVDBNodeResubmitRequestsTestDefaultConfiguration()
@@ -52,6 +46,7 @@ object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
      * --------------------------------------------------------- */
 
     "retrieve between UI and Store with a public queue" in {
+      skipped("no assert")
 
       /* --------------------------------------------------------- *
        *                       KVDBs
@@ -124,7 +119,8 @@ object AgentKVDBNodeResubmitRequestsTestSpecs extends Specification
       /* --------------------------------------------------------- *
        *                   Assert invariant
        * --------------------------------------------------------- */      
-      
+      1 must be_==(1)
+
       //fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
     }
 

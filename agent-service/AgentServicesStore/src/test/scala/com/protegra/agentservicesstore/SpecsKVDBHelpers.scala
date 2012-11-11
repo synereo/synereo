@@ -1,9 +1,10 @@
 package com.protegra.agentservicesstore
 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+
+import org.specs2.runner._
+import org.junit.runner._
+import org.specs2.matcher._
 
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -27,11 +28,13 @@ import com.biosimilarity.lift.lib.moniker._
 import com.protegra.agentservicesstore.util.Results
 
 trait KVDBHelpers extends Timeouts with RabbitTestSetup {
-  @transient
+//  @transient
+  val resultConfigFileName = Some("db_result.conf")
   lazy val _resultsQ =
     createNode(
       "127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB),
-      List[ URI ]()
+      List[ URI ](),
+      resultConfigFileName
     )
   /* --------------------------------------------------------- *
    *                 Test data stream generation
@@ -92,7 +95,7 @@ trait KVDBHelpers extends Timeouts with RabbitTestSetup {
 trait SpecsKVDBHelpers
   extends KVDBHelpers
 {
-  self: Specification =>     
+  self: SpecificationWithJUnit =>
 
   def getMustBe(expected: String)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
@@ -146,7 +149,7 @@ trait SpecsKVDBHelpers
   def fetchMustBe(expected: String)(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    fetchString(q, cnxn, key) must be_==(expected).eventually(10, TIMEOUT_EVENTUALLY)
+    fetchString(q, cnxn, key) must be_== (expected).eventually(10, TIMEOUT_EVENTUALLY)
   }
 
   def fetchString(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): String =
@@ -161,7 +164,7 @@ trait SpecsKVDBHelpers
         }
       }
     }
-    Results.savedString(resultKey)
+    Results.savedString(resultKey,3)
   }
 
   //  def fetchMustBe(expected: Data)(q: Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse], cnxn: AgentCnxn, key: String) =

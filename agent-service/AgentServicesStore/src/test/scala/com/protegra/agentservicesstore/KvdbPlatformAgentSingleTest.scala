@@ -8,10 +8,10 @@
 
 package com.protegra.agentservicesstore
 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+
+import org.specs2.runner._
+import org.junit.runner._
 
 import com.biosimilarity.lift.model.store._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -30,14 +30,10 @@ import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
 
-class KvdbPlatformAgentSingleTest
-  extends JUnit4(KvdbPlatformAgentSingleTestSpecs)
-
-object KvdbPlatformAgentSingleTestSpecsRunner
-  extends ConsoleRunner(KvdbPlatformAgentSingleTestSpecs)
-
-object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
+class KvdbPlatformAgentSingleTest extends KvdbPlatformAgentBase
 {
+  sequential
+
   val timeoutBetween = 0
 
   val sourceAddress = "127.0.0.1".toURI
@@ -59,8 +55,8 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
 
 
   "Store" should {
-    skip("isolate")
     "not pin cpu at 100% for 1" in {
+      skipped("isolate")
       val key = "disclosedData(\"123\")".toLabel
       val value = "not pin cpu 1@protegra.com"
       writer.store(cnxn)(key, Ground(value))
@@ -68,6 +64,7 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
     }
 
     "not pin cpu at 100% for 5" in {
+      skipped("isolate")
       val key1 = "disclosedData(\"1\")".toLabel
       val key2 = "disclosedData(\"2\")".toLabel
       val key3 = "disclosedData(\"3\")".toLabel
@@ -84,6 +81,7 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
     }
 
     "not pin cpu at 100% for 5 complex keys" in {
+      skipped("isolate")
       val key1 = "disclosedData(fields(id(\"1111d264-dfe2-43a9-b161-1366439f7bbd\"),localeCode(\"en\"),dataClassType(\"class com.protegra.protunityservices.schema.Role\"),connectionType(\"Basic\"),fields(\"\")))".toLabel
       val key2 = "disclosedData(fields(id(\"2222d264-dfe2-43a9-b161-1366439f7bbd\"),localeCode(\"en\"),dataClassType(\"class com.protegra.protunityservices.schema.Role\"),connectionType(\"Basic\"),fields(\"\")))".toLabel
       val key3 = "disclosedData(fields(id(\"3333d264-dfe2-43a9-b161-1366439f7bbd\"),localeCode(\"en\"),dataClassType(\"class com.protegra.protunityservices.schema.Role\"),connectionType(\"Basic\"),fields(\"\")))".toLabel
@@ -111,64 +109,6 @@ object KvdbPlatformAgentSingleTestSpecs extends KvdbPlatformAgentBase
   //    "not find when key is missing" in {
   //      val key = "contentResponse(nonexistingFetch(\"not here\"))".toLabel
   //      fetchMustBe("")(reader, cnxn, key)
-  //    }
-  //  }
-  //
-  //  //ISSUE 37: different labels get1get2 put1put1 keep going down alternating gets
-  //  "2 Cached Get/Put" should {
-  //
-  //    val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
-  //    val testId = UUID.randomUUID().toString()
-  //    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
-  //
-  //    Thread.sleep(timeoutBetween)
-  //    "retrieve" in {
-  //
-  //      val lblGlobalRequest = "globalRequest(\"email\")".toLabel
-  //      val lblGlobalResponse = "globalResponse(\"email\")".toLabel
-  //
-  //      val globalId = UUID.randomUUID().toString()
-  //      val cnxnGlobal = new AgentCnxn(( "Global" + globalId ).toURI, "", ( "Global" + globalId ).toURI)
-  //
-  //      def listenGlobalRequest(): Unit =
-  //      {
-  //        reset {
-  //          for ( e <- reader.get(cnxnGlobal)(lblGlobalRequest) ) {
-  //            if ( e != None ) {
-  //              val lblResult = ( "result(\"" + UUID.randomUUID() + "\")" ).toLabel
-  //              reset {_resultsQ.put(cnxnTest)(lblResult, e.dispatch)}
-  //              listenGlobalRequest
-  //            }
-  //          }
-  //        }
-  //      }
-  //
-  //      def listenGlobalResponse: Unit =
-  //      {
-  //        reset {
-  //          for ( e <- reader.get(cnxnGlobal)(lblGlobalResponse) ) {
-  //            if ( e != None ) {
-  //              println("************* RESPONSE RECEIVED : " + e.dispatch)
-  //              // No message should be received on this label
-  //              fail("Response was received, but should not have been.")
-  //
-  //              listenGlobalResponse
-  //            }
-  //          }
-  //        }
-  //      }
-  //
-  //      listenGlobalResponse
-  //
-  //      val valueGlobalRequest = "START THE GLOBAL REQUEST"
-  //      listenGlobalRequest
-  //      Thread.sleep(TIMEOUT_MED)
-  //      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 1"))}
-  //      Thread.sleep(TIMEOUT_MED)
-  //      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 2"))}
-  //
-  //      val strResultSearch = "result(_)"
-  //      countMustBe(2)(_resultsQ, cnxnTest, strResultSearch)
   //    }
   //  }
 

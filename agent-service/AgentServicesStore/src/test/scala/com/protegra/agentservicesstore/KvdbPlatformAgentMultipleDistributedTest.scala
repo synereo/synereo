@@ -8,10 +8,9 @@ package com.protegra.agentservicesstore
 // Description:
 // ------------------------------------------------------------------------
 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+import org.specs2.runner._
+import org.junit.runner._
  
 import com.biosimilarity.lift.model.store._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -30,15 +29,12 @@ import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
 
-class KvdbPlatformAgentMultipleDistributedTest
-  extends JUnit4(KvdbPlatformAgentMultipleDistributedTestSpecs)
-
-object KvdbPlatformAgentMultipleDistributedTestSpecsRunner
-  extends ConsoleRunner(KvdbPlatformAgentMultipleDistributedTestSpecs)
-
-object KvdbPlatformAgentMultipleDistributedTestSpecs extends KvdbPlatformAgentBase
+class KvdbPlatformAgentMultipleDistributedTest extends KvdbPlatformAgentBase
 {
-  val timeoutBetween = TIMEOUT_LONG
+  sequential
+
+//  val timeoutBetween = TIMEOUT_LONG
+  val timeoutBetween = 300
 
   val writerConfigFileName = Some("db_ui.conf")
   val readerConfigFileName = Some("db_store.conf")
@@ -49,12 +45,12 @@ object KvdbPlatformAgentMultipleDistributedTestSpecs extends KvdbPlatformAgentBa
   val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress), writerConfigFileName)
   val pairedReader = createNode(acquaintanceAddress, List(sourceAddress), readerConfigFileName)
 
-//  testMessaging(pairedWriter, pairedReader)
+  testMessaging(pairedWriter, pairedReader)
 //  the testWildcardWithPut tests can be intermittent when distributed
-//  testWildcardWithPut(pairedWriter, pairedReader)
-//  testWildcardWithStore(pairedWriter, pairedReader)
+  testWildcardWithPut(pairedWriter, pairedReader)
+  testWildcardWithStore(pairedWriter, pairedReader)
   testWildcardWithPutAndCursor(pairedWriter, pairedReader)
-//  testWildcardWithStoreAndCursor(pairedWriter, pairedReader)
+  testWildcardWithStoreAndCursor(pairedWriter, pairedReader)
 //  testWildcardWithCursorBefore(pairedWriter, pairedReader)
 
 }

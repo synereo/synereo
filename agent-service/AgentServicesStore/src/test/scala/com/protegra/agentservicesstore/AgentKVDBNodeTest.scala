@@ -1,7 +1,7 @@
 package com.protegra.agentservicesstore
 
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.runner._
+import org.junit.runner._
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
@@ -19,18 +19,12 @@ import com.protegra.agentservicesstore._
 import com.biosimilarity.lift.lib.moniker._
 import java.io.{ObjectOutputStream, ByteArrayOutputStream}
 import java.util.{HashMap, UUID}
-import org.specs.Specification
+import org.specs2.mutable._
 import biz.source_code.base64Coder.Base64Coder
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import java.net.URI
 
-class AgentKVDBNodeTest
-  extends JUnit4(AgentKVDBNodeTestSpecs)
-
-object AgentKVDBNodeTestSpecsRunner
-  extends ConsoleRunner(AgentKVDBNodeTestSpecs)
-
-object AgentKVDBNodeTestSpecs extends Specification
+class AgentKVDBNodeTest extends SpecificationWithJUnit
 with SpecsKVDBHelpers
 with Timeouts
 with RabbitTestSetup
@@ -70,6 +64,7 @@ with RabbitTestSetup
       val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
       val lbl = "content(\"email\")".toLabel
       node.store(cnxn)(lbl, Ground("configuredPort"))
+      1 must be_==(1)
     }
 
 

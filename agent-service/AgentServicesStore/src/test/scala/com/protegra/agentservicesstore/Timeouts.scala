@@ -1,6 +1,7 @@
 package com.protegra.agentservicesstore
 
-import org.specs.util._
+import org.specs2.time.Duration
+
 
 trait Timeouts {
   val TIMEOUT_SHORT = 200
@@ -10,6 +11,7 @@ trait Timeouts {
   val TIMEOUT_BEFORE_RESULT_FETCH = 1000
 
   @transient val TIMEOUT_EVENTUALLY = new Duration(2000)
+  @transient val TIMEOUT_EVENTUALLY_LONG = new Duration(10000)
 
   def trySleep(count: Int) = {
     if (count == 0)

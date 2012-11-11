@@ -1,16 +1,9 @@
 package com.protegra.agentservicesstore.extensions
 
-import org.specs._
-import org.specs.runner._
+import org.specs2.mutable._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 
-class StringExtensionsTest
-extends JUnit4(StringExtensionsTestSpecs)
-
-object StringExtensionsTestSpecsRunner
-extends ConsoleRunner(StringExtensionsTestSpecs)
-
-object StringExtensionsTestSpecs extends Specification {
+class StringExtensionsTest extends SpecificationWithJUnit {
    "toCamelCase" should {
      "capitalize correctly" in {
         val value = "JenniferViolago"

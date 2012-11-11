@@ -3,10 +3,9 @@ package com.protegra.agentservicesstore
 /* User: jklassen
 */
 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+import org.specs2.runner._
+import org.junit.runner._
 
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -27,43 +26,62 @@ import Being.AgentKVDBNodeFactory
 import scala.concurrent.ops._
 import com.biosimilarity.lift.lib.moniker._
 import actors.threadpool.LinkedBlockingQueue
+import org.specs2.specification.Scope
+import util.Results
 
-case class KvdbPlatformAgentBase() extends Specification
-    with SpecsKVDBHelpers
-    with Timeouts
-    with RabbitTestSetup
+case class KvdbPlatformAgentBase() extends SpecificationWithJUnit
+with SpecsKVDBHelpers
+with Timeouts
+with RabbitTestSetup
 {
+
+  trait CnxnSetup extends Scope
+  with Serializable
+  {
+    val sourceId = UUID.randomUUID
+    val targetId = sourceId
+    val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+    val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
+  }
+
+  class WildcardSetup(setupData: (AgentCnxn, String) => Unit) extends Scope
+   with Serializable
+  {
+    var resultQ = new LinkedBlockingQueue[ String ]
+    val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
+    val value = "tests"
+    setupData(cnxnRandom, value)
+  }
 
   //we use this so we can test same/same, local1/local2, remote1/remote2
   //this prevents copy paste and so makes sure the same set of tests is run on each
   def testMessaging(writer: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], reader: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ]) =
   {
     val timeoutBetween: Int = 300
-    val sourceId = UUID.randomUUID
-    val targetId = sourceId
-    val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
-    val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
     "Persisted Put/Get" should {
 
       Thread.sleep(timeoutBetween)
-      "respect connection" in {
+      "respect connection" in new CnxnSetup
+      {
         val key = "testChannel(cachedPutGetRespectingCnxn(\"email\"))".toLabel
         val value = "cachedPutGetRespectingCnxn@protegra.com"
         reset {writer.put(cnxn)(key, Ground(value))}
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
         getMustBe("")(reader, cnxnRandom, key)
       }
 
-      "retrieve " in {
+      "retrieve " in new CnxnSetup
+      {
         val key = "contentChannel(cachedPutGetRetrieve(\"email\"))".toLabel
         val value = "cachedPutGetRetrieve@protegra.com"
         reset {writer.put(cnxn)(key, Ground(value))}
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
         getMustBe(value)(reader, cnxn, key)
       }
 
-      "consume " in {
+      "consume " in new CnxnSetup
+      {
         val key = "contentChannel(cachedPutGetConsume(\"email\"))".toLabel
         val value = "cachedPutGetConsume@protegra.com"
         reset {writer.put(cnxn)(key, Ground(value))}
@@ -73,16 +91,18 @@ case class KvdbPlatformAgentBase() extends Specification
         fetchMustBe("")(reader, cnxn, key)
       }
 
-      "work with UUID" in {
+      "work with UUID" in new CnxnSetup
+      {
         val key = ( "testChannel(cachedPutGetUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
         val value = "cachedPutGetUUID@protegra.com"
         reset {writer.put(cnxn)(key, Ground(value))}
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
 
         getMustBe(value)(reader, cnxn, key)
       }
 
-      "update" in {
+      "update" in new CnxnSetup
+      {
         val key = "contentChannel(cachedPutGetUpdate(\"email\"))".toLabel
         val value = "cachedPutGetUpdate@protegra.com"
         reset {writer.put(cnxn)(key, Ground(value + "1"))}
@@ -95,181 +115,178 @@ case class KvdbPlatformAgentBase() extends Specification
     }
 
     "Cached Get/Put" should {
-       Thread.sleep(timeoutBetween)
+      Thread.sleep(timeoutBetween)
 
-       "retrieve" in {
-         val sourceId = UUID.randomUUID
-         val targetId = sourceId
-         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+      "retrieve" in new CnxnSetup
+      {
+        val testId = UUID.randomUUID().toString()
+        val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
-         val testId = UUID.randomUUID().toString()
-         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+        val key = "contentChannel(cacheGetPutRetrieve(\"email\"))".toLabel
+        val value = "cacheGetPutRetrieve@protegra"
 
-         val key = "contentChannel(cacheGetPutRetrieve(\"email\"))".toLabel
-         val value = "cacheGetPutRetrieve@protegra"
+        val resultKey = Results.getKey()
+        reset {
+          for ( e <- reader.get(cnxn)(key) ) {
+            if ( e != None ) {
+              val result = e.dispatch
+              Results.saveString(resultKey, result)
+            }
+          }
+        }
+        Thread.sleep(TIMEOUT_MED)
+        reset {writer.put(cnxn)(key, Ground(value))}
+        Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
+      }
 
-         reset {
-           for ( e <- reader.get(cnxn)(key) ) {
-             if ( e != None ) {
-               val result = e.dispatch
-               reset {_resultsQ.put(cnxnTest)(key, result)}
-             }
-           }
-         }
-         Thread.sleep(TIMEOUT_MED)
-         reset {writer.put(cnxn)(key, Ground(value))}
-
-//         SleepToPreventContinuation()
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
-       }
-
-      "consume" in {
-        val sourceId = UUID.randomUUID
-        val targetId = sourceId
-        val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
-
+      //RACE: see why it fails intermittently
+      "consume" in new CnxnSetup
+      {
         val testId = UUID.randomUUID().toString()
         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
         val key = "contentChannel(cacheGetPutConsume(\"email\"))".toLabel
         val value = "cacheGetPutConsume@protegra"
 
+        val resultKey = Results.getKey()
         reset {
           for ( e <- reader.get(cnxn)(key) ) {
             if ( e != None ) {
               val result = e.dispatch
               println("cacheGetPutConsume receives a result: " + result)
-              reset {_resultsQ.put(cnxnTest)(key, result)}
+              Results.saveString(resultKey, result)
             }
           }
         }
-//        Thread.sleep(TIMEOUT_LONG)
+        //        Thread.sleep(TIMEOUT_LONG)
         Thread.sleep(TIMEOUT_MED)
         reset {writer.put(cnxn)(key, Ground(value))}
-//        SleepToPreventContinuation()
+        //        SleepToPreventContinuation()
 
-        fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
+        Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
         fetchMustBe("")(reader, cnxn, key)
       }
-     }
+    }
 
 
-   "Persisted Put/Fetch" should {
-          Thread.sleep(timeoutBetween)
-          "respect connection" in {
-            val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
-            val value = "cachedPutFetchRespectingCnxn@protegra.com"
-            reset {writer.put(cnxn)(key, Ground(value))}
-//            Thread.sleep(TIMEOUT_MED)
-            fetchMustBe("")(reader, cnxnRandom, key)
-          }
+    "Persisted Put/Fetch" should {
+      Thread.sleep(timeoutBetween)
+      "respect connection" in new CnxnSetup
+      {
+        val key = "testChannel(cachedPutFetchRespectingCnxn(\"email\"))".toLabel
+        val value = "cachedPutFetchRespectingCnxn@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        //            Thread.sleep(TIMEOUT_MED)
+        fetchMustBe("")(reader, cnxnRandom, key)
+      }
 
-          "retrieve " in {
-            val key = "contentChannel(cachedPutFetchRetrieve(\"email\"))".toLabel
-            val value = "cachedPutFetchRetrieve@protegra.com"
-            reset {writer.put(cnxn)(key, Ground(value))}
-//            Thread.sleep(TIMEOUT_MED)
-            fetchMustBe(value)(reader, cnxn, key)
-          }
+      "retrieve " in new CnxnSetup
+      {
+        val key = "contentChannel(cachedPutFetchRetrieve(\"email\"))".toLabel
+        val value = "cachedPutFetchRetrieve@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        //            Thread.sleep(TIMEOUT_MED)
+        fetchMustBe(value)(reader, cnxn, key)
+      }
 
-          "not consume " in {
-            val key = "contentChannel(cachedPutFetchConsume(\"email\"))".toLabel
-            val value = "cachedPutFetchConsume@protegra.com"
-            reset {writer.put(cnxn)(key, Ground(value))}
-            Thread.sleep(TIMEOUT_MED)
-            fetchMustBe(value)(reader, cnxn, key)
-            Thread.sleep(TIMEOUT_MED)
-            fetchMustBe(value)(reader, cnxn, key)
-          }
+      "not consume " in new CnxnSetup
+      {
+        val key = "contentChannel(cachedPutFetchConsume(\"email\"))".toLabel
+        val value = "cachedPutFetchConsume@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        Thread.sleep(TIMEOUT_MED)
+        fetchMustBe(value)(reader, cnxn, key)
+        Thread.sleep(TIMEOUT_MED)
+        fetchMustBe(value)(reader, cnxn, key)
+      }
 
-          "work with UUID" in {
-            val key = ( "testChannel(cachedPutFetchUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
-            val value = "cachedPutFetchUUID@protegra.com"
-            reset {writer.put(cnxn)(key, Ground(value))}
-            Thread.sleep(TIMEOUT_MED)
+      "work with UUID" in new CnxnSetup
+      {
+        val key = ( "testChannel(cachedPutFetchUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
+        val value = "cachedPutFetchUUID@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value))}
+        Thread.sleep(TIMEOUT_MED)
 
-            fetchMustBe(value)(reader, cnxn, key)
-          }
+        fetchMustBe(value)(reader, cnxn, key)
+      }
 
-          "update" in {
-            val key = "contentChannel(cachedPutFetchUpdate(\"email\"))".toLabel
-            val value = "cachedPutFetchUpdate@protegra.com"
-            reset {writer.put(cnxn)(key, Ground(value + "1"))}
-            reset {writer.put(cnxn)(key, Ground(value + "2"))}
-            reset {writer.put(cnxn)(key, Ground(value + "3"))}
+      "update" in new CnxnSetup
+      {
+        val key = "contentChannel(cachedPutFetchUpdate(\"email\"))".toLabel
+        val value = "cachedPutFetchUpdate@protegra.com"
+        reset {writer.put(cnxn)(key, Ground(value + "1"))}
+        reset {writer.put(cnxn)(key, Ground(value + "2"))}
+        reset {writer.put(cnxn)(key, Ground(value + "3"))}
 
-            Thread.sleep(TIMEOUT_MED)
-            fetchMustBe(value + "3")(reader, cnxn, key)
-          }
-        }
+        Thread.sleep(TIMEOUT_MED)
+        fetchMustBe(value + "3")(reader, cnxn, key)
+      }
+    }
 
-    
+
 
     "Cached Fetch/Put" should {
-       Thread.sleep(timeoutBetween)
+      Thread.sleep(timeoutBetween)
 
-       "retrieve" in {
-         val sourceId = UUID.randomUUID
-         val targetId = sourceId
-         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+           //RACE: see why it fails intermittently
+      "retrieve" in new CnxnSetup
+      {
+        val testId = UUID.randomUUID().toString()
+        val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
-         val testId = UUID.randomUUID().toString()
-         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+        val key = "contentChannel(cacheFetchPutRetrieve(\"email\"))".toLabel
+        val value = "cacheFetchPutRetrieve@protegra"
 
-         val key = "contentChannel(cacheFetchPutRetrieve(\"email\"))".toLabel
-         val value = "cacheFetchPutRetrieve@protegra"
+        val resultKey = Results.getKey()
+        reset {
+          for ( e <- reader.fetch(cnxn)(key) ) {
+            if ( e != None ) {
+              println("!!!!!!!!!!!!!!!!!!!!!!!!!got into fetch")
+              val result = e.dispatch
+              Results.saveString(resultKey, result)
+            }
+          }
+        }
+        Thread.sleep(TIMEOUT_LONG)
+        reset {writer.put(cnxn)(key, Ground(value))}
+        Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
+      }
 
-         reset {
-           for ( e <- reader.fetch(cnxn)(key) ) {
-             if ( e != None ) {
-               println("!!!!!!!!!!!!!!!!!!!!!!!!!got into fetch")
-               val result = e.dispatch
-               reset {_resultsQ.put(cnxnTest)(key, result)}
-             }
-           }
-         }
-         Thread.sleep(TIMEOUT_LONG)
-         reset {writer.put(cnxn)(key, Ground(value))}
-//         SleepToPreventContinuation()
+      "consume" in new CnxnSetup
+      {
+        skipped("isolate")
 
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
-       }
+        val testId = UUID.randomUUID().toString()
+        val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
-       "consume" in {
-         skip("isolate")
-         val sourceId = UUID.randomUUID
-         val targetId = sourceId
-         val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+        val key = "contentChannel(cacheFetchPutConsumeByWaiter(\"email\"))".toLabel
+        val value = "cacheFetchPutConsumeByWaiter@protegra"
 
-         val testId = UUID.randomUUID().toString()
-         val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+        val resultKey = Results.getKey()
+        reset {
+          for ( e <- reader.fetch(cnxn)(key) ) {
+            if ( e != None ) {
+              val result = e.dispatch
+              Results.saveString(resultKey, result)
+            }
+          }
+        }
+        println("Sleeping for 300")
+        Thread.sleep(TIMEOUT_MED)
+        reset {writer.put(cnxn)(key, Ground(value))}
+        println("Sleeping again for 300")
+        //         SleepToPreventContinuation()
 
-         val key = "contentChannel(cacheFetchPutConsumeByWaiter(\"email\"))".toLabel
-         val value = "cacheFetchPutConsumeByWaiter@protegra"
-
-         reset {
-           for ( e <- reader.fetch(cnxn)(key) ) {
-             if ( e != None ) {
-               val result = e.dispatch
-               reset {_resultsQ.put(cnxnTest)(key, result)}
-             }
-           }
-         }
-         println("Sleeping for 300")
-         Thread.sleep(TIMEOUT_MED)
-         reset {writer.put(cnxn)(key, Ground(value))}
-         println("Sleeping again for 300")
-//         SleepToPreventContinuation()
-
-         fetchString(_resultsQ, cnxnTest, key) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
-         fetchMustBe("")(reader, cnxn, key)
-       }
-     }
+        Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
+        fetchMustBe("")(reader, cnxn, key)
+      }
+    }
 
     "Store/Get" should {
       Thread.sleep(timeoutBetween)
 
-      "respect connection" in {
+      "respect connection" in new CnxnSetup
+      {
         val key = "testChannel(storeGetRespectingCnxn(\"email\"))".toLabel
         val value = "storeGetRespectingCnxn@protegra.com"
         writer.store(cnxn)(key, Ground(value))
@@ -277,7 +294,8 @@ case class KvdbPlatformAgentBase() extends Specification
         getMustBe("")(reader, cnxnRandom, key)
       }
 
-      "retrieve " in {
+      "retrieve " in new CnxnSetup
+      {
         val key = "contentChannel(storeGetRetrieve(\"email\"))".toLabel
         val value = "storeGetRetrieve@protegra.com"
         writer.store(cnxn)(key, Ground(value))
@@ -285,7 +303,8 @@ case class KvdbPlatformAgentBase() extends Specification
         getMustBe(value)(reader, cnxn, key)
       }
 
-      "work with UUID" in {
+      "work with UUID" in new CnxnSetup
+      {
         val key = ( "testChannel(storeGetUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
         val value = "storeGetUUID@protegra.com"
         writer.store(cnxn)(key, Ground(value))
@@ -294,18 +313,19 @@ case class KvdbPlatformAgentBase() extends Specification
       }
 
       //this will probably fail once after deleting all databases
-//      "retrieve from existing db" in {
-//        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
-//
-//        val key = "testChannel(storeGetRetrieveExisting(\"name\"))".toLabel
-//        val value = "storeGetRetrieveExisting@protegra.com"
-//        writer.store(cnxnNew)(key, Ground(value))
-//
-//        Thread.sleep(TIMEOUT_MED)
-//        getMustBe(value)(reader, cnxnNew, key)
-//      }
+      //      "retrieve from existing db" in new CnxnSetup {
+      //        val cnxnNew = new AgentCnxn("Test".toURI, "", "NewDB".toURI)
+      //
+      //        val key = "testChannel(storeGetRetrieveExisting(\"name\"))".toLabel
+      //        val value = "storeGetRetrieveExisting@protegra.com"
+      //        writer.store(cnxnNew)(key, Ground(value))
+      //
+      //        Thread.sleep(TIMEOUT_MED)
+      //        getMustBe(value)(reader, cnxnNew, key)
+      //      }
 
-      "update" in {
+      "update" in new CnxnSetup
+      {
         val key = "contentChannel(storeGetUpdate(\"email\"))".toLabel
         val value = "storeGetUpdate@protegra.com"
 
@@ -320,9 +340,8 @@ case class KvdbPlatformAgentBase() extends Specification
         getMustBe(value + "3")(reader, cnxn, key)
       }
 
-      "consume" in {
-        val cnxnRandom = new AgentCnxn("Test".toURI, "", UUID.randomUUID.toString.toURI)
-
+      "consume" in new CnxnSetup
+      {
         val key = "testChannel(persistedStoreGetShouldConsume(\"email\"))".toLabel
         val value = "persistedStoreGetShouldConsume@protegra.com"
         writer.store(cnxnRandom)(key, Ground(value))
@@ -339,43 +358,48 @@ case class KvdbPlatformAgentBase() extends Specification
 
     "Store/Fetch" should {
       Thread.sleep(timeoutBetween)
-      "respect connection" in {
+      "respect connection" in new CnxnSetup
+      {
         val key = "testChannel(storeFetchRespectingCnxn(\"email\"))".toLabel
         val value = "storeFetchRespectingCnxn@protegra.com"
         writer.store(cnxn)(key, Ground(value))
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
         fetchMustBe("")(reader, cnxnRandom, key)
       }
 
-      "retrieve " in {
+      "retrieve " in new CnxnSetup
+      {
         val key = "testChannel(storeFetchRetrieve(\"email\"))".toLabel
         val value = "storeFetchRetrieve@protegra.com"
         writer.store(cnxn)(key, Ground(value))
         //Thread.sleep(TIMEOUT_MED)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
         fetchMustBe(value)(reader, cnxn, key)
       }
 
-      "not consume " in {
+      "not consume " in new CnxnSetup
+      {
         val key = "testChannel(storeFetchNotConsume(\"email\"))".toLabel
         val value = "storeFetchNotConsume@protegra.com"
         writer.store(cnxn)(key, Ground(value))
 
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
         fetchMustBe(value)(reader, cnxn, key)
         fetchMustBe(value)(reader, cnxn, key)
       }
 
-      "work with UUID" in {
+      "work with UUID" in new CnxnSetup
+      {
         val key = ( "testChannel(storeFetchUUID(\"" + UUID.randomUUID.toString + "\"))" ).toLabel
         val value = "storeFetchUUID@protegra.com"
         writer.store(cnxn)(key, Ground(value))
         //Thread.sleep(TIMEOUT_MED)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
         fetchMustBe(value)(reader, cnxn, key)
       }
 
-      "update" in {
+      "update" in new CnxnSetup
+      {
         val key = "contentChannel(storeFetchUpdate(\"email\"))".toLabel
         val value = "storeFetchUpdate@protegra.com"
         writer.store(cnxn)(key, Ground(value + "1"))
@@ -389,8 +413,9 @@ case class KvdbPlatformAgentBase() extends Specification
         fetchMustBe(value + "3")(reader, cnxn, key)
       }
 
-//      java.lang.Exception: matchMap failure profile(string(999), '_, '_, '_) profile(string(999), string(Terry), string(Bunio), string(123456789))
-      "search" in {
+      //      java.lang.Exception: matchMap failure profile(string(999), '_, '_, '_) profile(string(999), string(Terry), string(Bunio), string(123456789))
+      "search" in new CnxnSetup
+      {
         val key = "profile(\"999\",\"Terry\",\"Bunio\",\"123456789\")".toLabel
         val value = "profile for terry bunio"
         writer.store(cnxn)(key, Ground(value))
@@ -405,21 +430,23 @@ case class KvdbPlatformAgentBase() extends Specification
 
       Thread.sleep(timeoutBetween)
 
-      "delete when found" in {
+      "delete when found" in new CnxnSetup
+      {
         val key = "contentChannel(putDeleteWhenFound(\"email\"))".toLabel
         val value = "putDeleteWhenFound@protegra.com"
         reset {writer.put(cnxn)(key, Ground(value))}
         Thread.sleep(TIMEOUT_MED)
 
         fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
 
         writer.delete(cnxn)(key)
 
         fetchMustBe("")(reader, cnxn, key)
       }
 
-      "not delete when missing " in {
+      "not delete when missing " in new CnxnSetup
+      {
         val key = "contentChannel(putDeleteWhenMissing(\"email\"))".toLabel
         val keyMissing = "contentChannel(putDeleteWhenMissing(\"missing\"))".toLabel
         val value = "putDeleteWhenMissing@protegra.com"
@@ -427,10 +454,10 @@ case class KvdbPlatformAgentBase() extends Specification
         Thread.sleep(TIMEOUT_MED)
 
         fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
 
         writer.delete(cnxn)(keyMissing)
-//        Thread.sleep(TIMEOUT_LONG)
+        //        Thread.sleep(TIMEOUT_LONG)
 
         fetchMustBe(value)(reader, cnxn, key)
       }
@@ -441,22 +468,24 @@ case class KvdbPlatformAgentBase() extends Specification
 
       Thread.sleep(timeoutBetween)
 
-      "delete when found" in {
+      "delete when found" in new CnxnSetup
+      {
         val key = "contentChannel(storeDeleteWhenFound(\"email\"))".toLabel
         val value = "storeDeleteWhenFound@protegra.com"
         writer.store(cnxn)(key, Ground(value))
         Thread.sleep(TIMEOUT_MED)
 
         fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
 
         writer.delete(cnxn)(key)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
 
         fetchMustBe("")(reader, cnxn, key)
       }
 
-      "not delete when missing " in {
+      "not delete when missing " in new CnxnSetup
+      {
         val key = "contentChannel(storeDeleteWhenMissing(\"email\"))".toLabel
         val keyMissing = "contentChannel(storeDeleteWhenMissing(\"missing\"))".toLabel
         val value = "storeDeleteWhenMissing@protegra.com"
@@ -464,23 +493,23 @@ case class KvdbPlatformAgentBase() extends Specification
         Thread.sleep(TIMEOUT_MED)
 
         fetchMustBe(value)(reader, cnxn, key)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
 
         writer.delete(cnxn)(keyMissing)
-//        Thread.sleep(TIMEOUT_MED)
+        //        Thread.sleep(TIMEOUT_MED)
 
         fetchMustBe(value)(reader, cnxn, key)
       }
 
     }
 
-    "Get/Store" should {
-      // get/fetch before store, store doesnt look at waiters
-    }
-
-    "Fetch/Store" should {
-      // get/fetch before store, store doesnt look at waiters
-    }
+//    "Get/Store" should {
+//      // get/fetch before store, store doesnt look at waiters
+//    }
+//
+//    "Fetch/Store" should {
+//      // get/fetch before store, store doesnt look at waiters
+//    }
 
 
   }
@@ -554,82 +583,95 @@ case class KvdbPlatformAgentBase() extends Specification
     "Wildcard Search after " + storageMethod should {
       Thread.sleep(timeoutBetween)
 
-      var resultQ = new LinkedBlockingQueue[ String ]
-      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests"
-      setupData(writer, cnxnRandom, value)
-      val expectedCollection = setupExpectedResults(value)
 
-      "find many values by Get" in {
+      "find many values by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        val expectedCollection = setupExpectedResults(value)
         val lblSearch = "contentChannel(X)".toLabel
         getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
       }
 
       //TODO: this fails looks like a race ocndition
-      "find many values by underscore Get" in {
+      "find many values by underscore Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        val expectedCollection = setupExpectedResults(value)
         val lblSearch = "contentChannel(_)".toLabel
         getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
       }
 
-      "not find a value by Get" in {
+      "not find a value by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "fail(X)".toLabel
         getMustBe("")(reader, cnxnRandom, lblSearch)
       }
 
-      "not find a nested value by Get" in {
+      "not find a nested value by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "abc(xyz(X))".toLabel
         getMustBe("")(reader, cnxnRandom, lblSearch)
       }
 
-//      this is only valid if WildcardSearchShouldNotFind works
+      //      this is only valid if WildcardSearchShouldNotFind works
 
-      "find a value by Get" in {
+      "find a value by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
         getMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
-      "find a channel by Get" in {
+      "find a channel by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "surveyChannel(X, Y)".toLabel
         getMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
-      "find a channel by underscore Get" in {
+      "find a channel by underscore Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "surveyChannel(_, _)".toLabel
         getMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
-      "find many values by Fetch" in {
+      "find many values by Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        val expectedCollection = setupExpectedResults(value)
         val lblSearch = "contentChannel(X)".toLabel
         fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
       }
 
-      "find many values by underscore Fetch" in {
+      "find many values by underscore Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        val expectedCollection = setupExpectedResults(value)
         val lblSearch = "contentChannel(_)".toLabel
         fetchMustContain(expectedCollection, resultQ)(reader, cnxnRandom, lblSearch)
       }
 
-      "not find a value by Fetch" in {
+      "not find a value by Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "fail(X)".toLabel
         fetchMustBe("")(reader, cnxnRandom, lblSearch)
       }
 
-      "not find a nested value by Fetch" in {
+      "not find a nested value by Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "abc(xyz(X))".toLabel
         fetchMustBe("")(reader, cnxnRandom, lblSearch)
       }
 
       //this is only valid if WildcardSearchShouldNotFind works
-      "find a value by Fetch" in {
+      "find a value by Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "surveyChannel(level1(X), level2(Y))".toLabel
         fetchMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
-      "find a channel by Fetch" in {
+      "find a channel by Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "surveyChannel(X, Y)".toLabel
         fetchMustBe(value)(reader, cnxnRandom, lblSearch)
       }
 
-      "find a channel by underscore Fetch" in {
+      "find a channel by underscore Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
         val lblSearch = "surveyChannel(_, _)".toLabel
         fetchMustBe(value)(reader, cnxnRandom, lblSearch)
       }
@@ -648,33 +690,37 @@ case class KvdbPlatformAgentBase() extends Specification
     "Wildcard Search after store with Cursor" should {
       val timeoutBetween: Int = 300
 
-      val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-      val value = "tests"
-      setupData(writer, cnxnRandom, value)
-
-//      "find many results by Get" in {
-//        getCountMustBe(5)(reader,  cnxnRandom, "contentChannel(_)")
-//      }
-
-      "not find a value by Get" in {
-      System.err.println("===============start of find many results by ====================")
-        getCountMustBe(0)(reader,  cnxnRandom, "fail(X)")
+      //RACE: see why it fails
+      "find many results by Get" in new CnxnSetup {
+        skipped("see what's wrong with the setup")
+        getCountMustBe(5)(reader,  cnxnRandom, "contentChannel(_)")
       }
 
-      "not find a nested value by Get" in {
-        getCountMustBe(0)(reader,  cnxnRandom, "abc(xyz(X))")
-      }
-//
-//      "find many results by Fetch" in {
-//        countMustBe(5)(reader,  cnxnRandom, "contentChannel(_)")
-//      }
-//
-      "not find a value by Fetch" in {
-        countMustBe(0)(reader,  cnxnRandom, "fail(X)")
+      "not find a value by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        System.err.println("===============start of find many results by ====================")
+        getCountMustBe(0)(reader, cnxnRandom, "fail(X)")
       }
 
-      "not find a nested value by Fetch" in {
-        countMustBe(0)(reader,  cnxnRandom, "abc(xyz(X))")
+      "not find a nested value by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        getCountMustBe(0)(reader, cnxnRandom, "abc(xyz(X))")
+      }
+
+      "find many results by Fetch" in new CnxnSetup
+      {
+        skipped("see what's wrong with the setup")
+        countMustBe(5)(reader, cnxnRandom, "contentChannel(_)")
+      }
+
+      "not find a value by Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        countMustBe(0)(reader, cnxnRandom, "fail(X)")
+      }
+
+      "not find a nested value by Fetch" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
+      {
+        countMustBe(0)(reader, cnxnRandom, "abc(xyz(X))")
       }
     }
   }
@@ -690,8 +736,9 @@ case class KvdbPlatformAgentBase() extends Specification
       val testId = UUID.randomUUID().toString()
       val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
 
-      "find many results by Get" in {
-        skip("bug 54")
+      "find many results by Get" in new CnxnSetup
+      {
+        skipped("bug 54")
         val key = "getCountChannel(_)".toLabel
         val resultKey = "result(getCountChannel(\"1\"))".toLabel
 
@@ -719,8 +766,9 @@ case class KvdbPlatformAgentBase() extends Specification
         fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(10, TIMEOUT_EVENTUALLY)
       }
 
-      "find many results by Fetch" in {
-        skip("bug 54")
+      "find many results by Fetch" in new CnxnSetup
+      {
+        skipped("bug 54")
         val key = "fetchCountChannel(_)".toLabel
         val resultKey = "result(fetchCountChannel(\"1\"))".toLabel
 
