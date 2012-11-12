@@ -65,8 +65,8 @@ trait Listeners extends Reporting
 
   def getListenersByMessage(msg: Message): List[ MessageEventAdapter ] =
   {
-    //    (  && !msg.eventTag.equals("") )
-    if ( msg.eventKey != null ) {
+    //&& !msg.eventKey.eventTag.equals("")
+    if ( msg.eventKey != null) {
       val matching = _listeners.get(msg.eventKey.agentSessionId.toString)
       matching match {
         case x: util.ArrayList[ MessageEventAdapter ] => {

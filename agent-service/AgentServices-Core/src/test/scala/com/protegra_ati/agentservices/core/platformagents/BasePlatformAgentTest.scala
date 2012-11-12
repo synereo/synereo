@@ -52,7 +52,7 @@ with Serializable
   sequential
 
   @transient val rand = new Random()
-  @transient val pa = createPA
+  val pa = createPA
 
   def createPA: MockPlatformAgent =
   {
@@ -216,9 +216,9 @@ with Serializable
   //    var msgReceived = false
   //
   //    //store connection
-  //    val JenId = "Jen" + UUID.randomUUID
-  //    val MikeId = "Mike" + UUID.randomUUID
-  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId.toString, MikeId.toString)
+  //    val jenId = "Jen" + UUID.randomUUID
+  //    val mikeId = "Mike" + UUID.randomUUID
+  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId.toString, mikeId.toString)
   //    val newCnxn = new AgentCnxnProxy(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
   //    pa1.store(pa1._dbQ, newCnxn, conn.toStoreKey, Serializer.serialize[ Data ](conn))
   //    Thread.sleep(TIMEOUT_LONG)

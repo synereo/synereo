@@ -55,14 +55,6 @@ trait SpecsPAHelpers extends Timeouts{
 
   def fetchMustBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
-    println("attempting assert")
-
-    val resultKey = Results.getKey()
-    fetchData(q, cnxn, key, resultKey)
-    Results.saved(resultKey) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
-
-    println("fetchMustBe expecting: " + expected)
-
     def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String, resultKey: String): Unit =
     {
       q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data, resultKey))
@@ -73,27 +65,30 @@ trait SpecsPAHelpers extends Timeouts{
       Results.save(resultKey, data)
     }
 
+    println("fetchMustBe expecting: " + expected)
+
+    val resultKey = Results.getKey()
+    fetchData(q, cnxn, key, resultKey)
+    Results.saved(resultKey) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
+
+
   }
 
 
   def fetchMustBeWithHandler(expectationCheckHandler: (Data, Data) => Unit)(expected: Data, q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Unit =
   {
-    var actual: Data = null
-    expectationCheckHandler(fetchData(q, cnxn, key), expected) // expectationCheckHandler must implement something like this: fetchData(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
+    val resultKey = Results.getKey()
+    expectationCheckHandler(fetchData(q, cnxn, key, resultKey), expected) // expectationCheckHandler must implement something like this: fetchData(q, cnxn, key) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
 
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Data =
+    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String, resultKey: String): Data =
     {
-      println("BasePlatformAgent is = " + q)
-      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data))
-      trySleep(actual)
-      println("----fetched data:" + actual)
-      return actual
+      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data, resultKey))
+      Results.saved(resultKey)
     }
 
-    def handleFetch(cnxn: AgentCnxnProxy, data: Data) =
+    def handleFetch(cnxn: AgentCnxnProxy, data: Data, resultKey: String) =
     {
-      println("-----getMustBe - get received : " + data)
-      actual = data;
+      Results.save(resultKey, data)
     }
 
   }

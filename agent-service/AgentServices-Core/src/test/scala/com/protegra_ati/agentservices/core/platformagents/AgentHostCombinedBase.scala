@@ -51,12 +51,21 @@ Timeouts
   val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
 
   def setupPAs(store: AgentHostStorePlatformAgent, ui: AgentHostUIPlatformAgent) :Unit  ={
+    setupUI(ui)
+    setupStore(store)
+  }
+
+
+  def setupUI(ui: AgentHostUIPlatformAgent) :Unit  ={
     val privateAddressUI = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
     val privateAcquaintanceAddressesUI = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
     ui._cnxnUIStore = cnxnUIStore
     val idUI = UUID.randomUUID
     ui.initForTest(privateAddressUI, privateAcquaintanceAddressesUI, idUI)
 
+  }
+
+  def setupStore(store: AgentHostStorePlatformAgent) :Unit  ={
     // store
     val publicAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC)
     val publicAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))
@@ -70,9 +79,6 @@ Timeouts
     val id = UUID.randomUUID
     //store._cnxnUserSelfConnectionsList = List(cnxnJenSelf, cnxnMikeSelf)
     store.initForTest(publicAddress, publicAcquaintanceAddresses, privateAddress, privateAcquaintanceAddresses, dbAddress, resultAddress, id)
-    //?
-    //base.setupIncrementalDisclosure(store, cnxnJenSelf)
-
   }
  
 

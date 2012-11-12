@@ -156,9 +156,7 @@ abstract class BasePlatformAgent
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
-      val results = queue.get(agentCnxn)(lblChannel)
-      System.err.println("GGGGGGGGGGGGGGGGGGGGGGGG GET RESULTS = " + results)
-      for ( e <- results ) {
+      for ( e <- queue.get(agentCnxn)(lblChannel) ) {
 //        for ( e <- queue.get(agentCnxn)(lblChannel) ) {
         val expired = isExpired(expiry)
         if ( e != None && !expired ) {
@@ -188,8 +186,6 @@ abstract class BasePlatformAgent
               report("already processed id : " + msg.ids.id, Severity.Info)
 //            ("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
           }
-          Thread.sleep(TIMEOUT_LISTEN_TEMPORARY_FIX)
-          System.err.println("SLEEPSLEEPSLEEPSLEEPSLEEP for value : " + e.dispatch.toString.substring(0,40) + " for ms " + TIMEOUT_LISTEN_TEMPORARY_FIX)
           listen(queue, cnxn, key, handler, expiry)
         }
         else {
