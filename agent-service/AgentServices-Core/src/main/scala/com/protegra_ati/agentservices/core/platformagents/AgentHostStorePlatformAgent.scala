@@ -121,7 +121,9 @@ with MessageStore
     loadStorageQueue()
     loadResultStorageQueue()
     loadPrivateQueue()
-    loadPublicQueue()
+
+    if (isDistributedNetworkMode)
+      loadPublicQueue()
     //the same for now, should be initialized properly to separate queues
 
     loadUserCnxnList()
@@ -131,12 +133,16 @@ with MessageStore
   def startListening() =
   {
     report("IN THE STORE LISTEN", Severity.Trace)
-    listenPublicRequests(_storeCnxn)
+
+    if (isDistributedNetworkMode)
+      listenPublicRequests(_storeCnxn)
 
     listenForUICnxns()
 
     //    listenForVerifierCnxns()
-    listenForHostedCnxns()
+    if (isDistributedNetworkMode)
+      listenForHostedCnxns()
+
     // watch list observation starts
     //observeWatchLists()
   }
@@ -195,18 +201,21 @@ with MessageStore
 
   def listenPublicResponses(cnxn: AgentCnxnProxy)
   {
-    listenPublicContentResponse(cnxn)
-//    listenPublicSearchResponse(cnxn)
-    listenPublicLoginResponse(cnxn)
-    listenPublicVerifierResponse(cnxn)
+    if (isDistributedNetworkMode){
 
-    //listen invitation consumer on broker_jen, ie mike_jen. mike is the broker for jen in this case
-    listenPublicInvitationConsumerResponses(cnxn)
-    listenPublicInvitationCreatorResponses(cnxn)
-    listenPublicIntroductionConsumerResponses(cnxn)
-//    listenPublicReferralResponses(cnxn)
-//    listenPublicRegistrationConsumerResponses(cnxn)
-//    listenPublicRegistrationCreatorResponses(cnxn)
+      listenPublicContentResponse(cnxn)
+  //    listenPublicSearchResponse(cnxn)
+      listenPublicLoginResponse(cnxn)
+      listenPublicVerifierResponse(cnxn)
+
+      //listen invitation consumer on broker_jen, ie mike_jen. mike is the broker for jen in this case
+      listenPublicInvitationConsumerResponses(cnxn)
+      listenPublicInvitationCreatorResponses(cnxn)
+      listenPublicIntroductionConsumerResponses(cnxn)
+  //    listenPublicReferralResponses(cnxn)
+  //    listenPublicRegistrationConsumerResponses(cnxn)
+  //    listenPublicRegistrationCreatorResponses(cnxn)
+    }
   }
 
   def sendPrivate(cnxn: AgentCnxnProxy, msg: Message)
@@ -234,7 +243,54 @@ with MessageStore
       //      }
       case _ => {/*ignore*/}
     }
-    super.send(queue, cnxn, msg)
+
+
+    if (msg.channelLevel == Some(ChannelLevel.Public) && isLocalNetworkMode())
+      processPublicSendLocally(cnxn, msg)
+    else
+      super.send(queue, cnxn, msg)
+  }
+
+  /**
+   * To improve performance, when a single store PA is being used, no reason to send requests out onto public q.
+   * The send method (above) intercepts messages that would normally be sent on public queue, and instead sends them to this method
+   * which directs the message directly to the local handler, thus avoiding a round trip to the public q.
+   */
+  protected def processPublicSendLocally(cnxn: AgentCnxnProxy, msg: Message)
+  {
+    report("In processSendLocally", Severity.Trace)
+
+    //TODO remove following println
+    System.err.println(System.currentTimeMillis() + "In processSendLocally - channel = " + msg.channel + ", type = " + msg.channelType + ", cnxn= " + cnxn);
+
+    if (msg.channelType == ChannelType.Response){
+      //TODO remove following println
+      System.err.println(System.currentTimeMillis() +  "SendPrivate called - thread = " + Thread.currentThread().getName);
+      sendPrivate(cnxn, msg)
+    }
+
+    if (msg.channelType == ChannelType.Request){
+      if (msg.channel == Channel.Content )
+        handlePublicContentRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Security)
+        handlePublicSecurityRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Verify)
+        handleVerifyRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator))
+        handlePublicInvitationCreatorRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer))
+        handlePublicInvitationConsumerRequestChannel(cnxn, msg)
+      else{
+        //        System.err.println("In processSendLocally, received request for which there is no handler, type = " + msg.getClass.getName);
+        report("Received request for which there is no handler, message type = " + msg.getClass.getName, Severity.Error)
+      }
+    }
 
   }
+
+
 }

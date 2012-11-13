@@ -14,6 +14,8 @@ trait Public {
   var _publicAcquaintanceAddresses = List[URM]()
   var _publicQ : PartitionedStringMGJ = null //persistedJunction
 
+  var _networkMode = "Distributed"
+
   def initPublic(configUtil: Config)
   {
     val publicSelfMapKey = "public.self"
@@ -21,6 +23,11 @@ trait Public {
 
     val publicAcquaintanceMapKey = "public.acquaintances"
     _publicAcquaintanceAddresses = loadURMs(configUtil.getConfigMap(publicAcquaintanceMapKey))  ::: this._publicAcquaintanceAddresses
+
+    val networkModeMapKey = "networkMode"
+    this._networkMode = configUtil.getString(networkModeMapKey).getOrElse("Distributed")
+    //System.err.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   In initPublic _networkMode = " + _networkMode);
+
   }
 
   def initPublic(publicLocation: URM, publicAcquaintanceAddresses: List[ URM ])
@@ -30,6 +37,17 @@ trait Public {
   }
 
   def loadPublicQueue() = {
-    _publicQ = new PartitionedStringMGJ(_publicLocation, _publicAcquaintanceAddresses, None)
+    if (isDistributedNetworkMode)
+      _publicQ = new PartitionedStringMGJ(_publicLocation, _publicAcquaintanceAddresses, None)
   }
+
+  def isLocalNetworkMode() = {
+    _networkMode == "Local"
+  }
+
+  def isDistributedNetworkMode() = {
+    !isLocalNetworkMode
+  }
+
+
 }
