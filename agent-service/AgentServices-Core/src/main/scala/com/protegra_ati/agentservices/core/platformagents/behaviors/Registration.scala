@@ -90,7 +90,7 @@ trait Registration extends Reporting
   }
   def saveAppId(msg: SetContentAdminResponse, connAppSelf: Connection, connAgentSelf: Connection, agentId: UUID, appAgentId: UUID) =
   {
-    val appId = AppId(BIZNETWORK_APP_NAME)
+    val appId = new AppId(BIZNETWORK_APP_NAME)
     sendSetContentRequest(msg.eventKey.copy(agentSessionId = UUID.randomUUID()), connAgentSelf, appId)
   }
 
