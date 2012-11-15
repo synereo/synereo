@@ -566,6 +566,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	       with BaseXCnxnStorage[Namespace,Var,Tag]
 	       with Serializable 
       {	 		
+	import LogConfiguration._ 
 	override def tmpDirStr : String = {
 	  val tds = config.getString( "storageDir", "tmp" )       
 	  val tmpDir = new java.io.File( tds )

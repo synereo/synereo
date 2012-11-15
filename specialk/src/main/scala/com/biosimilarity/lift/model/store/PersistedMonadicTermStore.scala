@@ -530,6 +530,7 @@ extends MonadicTermStoreScope[Namespace,Var,Tag,Value] with Serializable {
 	       with BaseXXMLStore           
 	       with BaseXCnxnStorage[Namespace,Var,Tag]
       {    
+	import LogConfiguration._    
 	def this() = {
 	  this( MURI( new URI( "agent", "localhost", "/connect", "") ), Nil )
 	}

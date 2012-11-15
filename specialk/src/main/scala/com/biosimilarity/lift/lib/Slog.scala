@@ -84,11 +84,7 @@ extends Luddite(
 )
   
 
-// This design is now officially baroque-en! Fix it into simplicity, please!
-trait Journalist {
-
-  object journalIDVender extends UUIDOps
-
+trait SeverityConversions {
   def SeverityFromOption(level: Option[ String ]): Severity.Value =
   {
     level match {
@@ -127,6 +123,29 @@ trait Journalist {
       }
     }
   }
+}
+
+object LogConfiguration extends SeverityConversions
+with Serializable {
+  Configgy.configure("log.conf")
+
+  @transient lazy val config = Configgy.config
+  var tweetLevel = SeverityFromOption(config.getString("tweetLevel"))
+  var blogLevel = SeverityFromOption(config.getString("blogLevel"))
+
+  @transient lazy val logger = lazyLoadLogger()
+
+  def lazyLoadLogger() = {
+    PropertyConfigurator.configure("log.properties")
+    Logger.getLogger(this.getClass.getName)
+  }
+}
+
+// This design is now officially baroque-en! Fix it into simplicity, please!
+trait Journalist {
+  object journalIDVender extends UUIDOps
+
+  import LogConfiguration._    
 
   def prettyPrint(value: String): String =
   {
@@ -151,20 +170,7 @@ trait Journalist {
       .replace("&lt;", "<")
       .replace("&gt;", ">")
       .toString
-  }
-
-  Configgy.configure("log.conf")
-
-  @transient lazy val config = Configgy.config
-  var tweetLevel = SeverityFromOption(config.getString("tweetLevel"))
-  var blogLevel = SeverityFromOption(config.getString("blogLevel"))
-
-  @transient lazy val logger = lazyLoadLogger()
-
-  def lazyLoadLogger() = {
-    PropertyConfigurator.configure("log.properties")
-    Logger.getLogger(this.getClass.getName)
-  }
+  }  
 
   def header(level: Severity.Value): String =
   {
