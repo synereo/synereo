@@ -11,16 +11,18 @@ trait ResultsBase
 {
   @transient val client = new MemcachedClient(new ConnectionFactoryBuilder().setDaemon(true).setFailureMode(FailureMode.Retry).build(), AddrUtil.getAddresses("127.0.0.1:11211"))
   //so it's serializable
+  final val RESULT_PREFIX = "R"
   final val strTrue = "true"
+
 
   def getKey(): String =
   {
-    "Result" + UUID.randomUUID.toString
+    RESULT_PREFIX + UUID.randomUUID.toString
   }
 
   def trigger(key: String): Unit =
   {
-    MemCache.add(key, strTrue)(client)
+    MemCache.set(key, strTrue)(client)
   }
 
   def triggered(key: String): Boolean =
@@ -31,7 +33,7 @@ trait ResultsBase
 
   def saveString(key: String, value: String): Unit =
   {
-    MemCache.add(key, value)(client)
+    MemCache.set(key, value)(client)
   }
 
   def savedString(key: String): String =
@@ -50,7 +52,7 @@ trait ResultsBase
 
   def count(key: String, value: Int): Unit =
   {
-    MemCache.add(key, value.toString)(client)
+    MemCache.set(key, value.toString)(client)
   }
 
   def voidCount(key: String): Unit =
