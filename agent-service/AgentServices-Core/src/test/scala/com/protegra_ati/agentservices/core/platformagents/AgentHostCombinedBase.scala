@@ -197,7 +197,7 @@ Timeouts
 
   def setAppId(ui: AgentHostUIPlatformAgent, conn: Connection, businessName: String) =
   {
-    val msg = new SetContentRequest(new EventKey(UUID.randomUUID, ""), AppId(businessName), null)
+    val msg = new SetContentRequest(new EventKey(UUID.randomUUID, ""), new AppId(businessName), null)
     msg.targetCnxn = conn.writeCnxn
     msg.originCnxn = ui._cnxnUIStore
     ui.send(msg)
@@ -227,7 +227,7 @@ Timeouts
 
   def setAppId(ui: AgentHostUIPlatformAgent, self: Connection): AppId =
   {
-    val appId = AppId("TestApp")
+    val appId = new AppId("TestApp")
     appId.setDefaultValues(false)
     setContent(ui, self, appId)
     appId

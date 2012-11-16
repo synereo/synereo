@@ -12,10 +12,10 @@ object ThreadRenamer
 
     try {
       // TODO println has to be deleted !!!
-      System.err.println("before, will change name from " + reallyName + " to " + newName)
+      System.err.println(System.currentTimeMillis +  " before, will change name from " + reallyName + " to " + newName)
       val t = Thread.currentThread()
       if ( reallyName.equals(t.getName) ) {
-        t.setName("renamed to: " + newName + " from:" + reallyName)
+        t.setName(" renamed to: " + newName + " from:" + reallyName)
       }
       p
     }
@@ -23,7 +23,7 @@ object ThreadRenamer
       val t = Thread.currentThread()
       if ( !reallyName.equals(t.getName) ) {
         // TODO println has to be deleted !!!
-        System.err.println("after will change back from " + t.getName + " to " + reallyName)
+        System.err.println(System.currentTimeMillis +  " after will change back from " + t.getName + " to " + reallyName)
         t.setName(reallyName)
       }
       // TODO println has to be deleted !!! 
