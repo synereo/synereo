@@ -181,7 +181,7 @@ abstract class BasePlatformAgent
             if ( !MemCache.hasValue(msgKey)(Results.client) ) {
 //              if ( !_processedMessages.contains(key + msg.ids.id) ) {
 //                _processedMessages.add(key + msg.ids.id)
-                MemCache.add(msgKey, "1", 180)(Results.client)
+                MemCache.set(msgKey, "1", 180)(Results.client)
                 handler(cnxn, msg)
               }
               else
