@@ -187,7 +187,6 @@ with Serializable
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
           Results.trigger(resultKey)
-          System.err.println("I triggered")
         }
       });
 

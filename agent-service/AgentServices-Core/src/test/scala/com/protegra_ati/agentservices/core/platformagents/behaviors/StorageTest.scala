@@ -47,8 +47,9 @@ with Serializable
   val authorizedContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
   val authorizedContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
 
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI)
   val pa = new AgentHostStorePlatformAgent
-  AgentHostCombinedBase.setupStore(pa)
+  AgentHostCombinedBase.setupStore(pa, cnxnUIStore)
 
   "updateData" should {
 

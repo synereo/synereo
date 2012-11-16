@@ -29,9 +29,10 @@ import Assert._
 class AgentHostCombinedTest extends SpecificationWithJUnit
 with Timeouts
 {
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI)
   val storeR = new AgentHostStorePlatformAgent
   val uiR = new AgentHostUIPlatformAgent
-  AgentHostCombinedBase.setupPAs(storeR, uiR)
+  AgentHostCombinedBase.setupPAs(storeR, uiR, cnxnUIStore)
 
   val jenUID = UUID.randomUUID()
   var cnxnJenJen = new AgentCnxnProxy(( "Jen" + jenUID.toString ).toURI, "CombinedTestUser", ( "Jen" + jenUID.toString ).toURI)

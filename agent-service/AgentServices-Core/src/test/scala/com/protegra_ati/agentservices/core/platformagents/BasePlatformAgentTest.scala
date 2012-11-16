@@ -162,6 +162,7 @@ with Serializable
       val mockMsg = new GetContentRequest(new EventKey(UUID.randomUUID(), ""), mockSearch)
 
       pa.put(pa._privateQ, cnxn, mockMsg.getChannelKey, Serializer.serialize[ Message ](mockMsg))
+      Thread.sleep(TIMEOUT_MED)
       val resultKey = Results.getKey
       pa.listen(pa._privateQ, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handleMessage(_: AgentCnxnProxy, _: Message, resultKey))
       Results.savedMessage(resultKey) must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)

@@ -41,6 +41,8 @@ class AgentHostUIPlatformAgentTest extends SpecificationWithJUnit
 with Timeouts
 with Serializable
 {
+  sequential
+
   val rand = new Random()
 
   val sourceId = UUID.randomUUID()
@@ -77,8 +79,8 @@ with Serializable
         }
       });
 
+//      Thread.sleep(TIMEOUT_SHORT)
       pa.send(req)
-      Thread.sleep(TIMEOUT_LONG)
       Results.triggered(key) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
 

@@ -48,15 +48,13 @@ Timeouts
   // inits test configuration
 //  ConfigurationManager.getConfigurationManager().initForTest()
 
-  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
-
-  def setupPAs(store: AgentHostStorePlatformAgent, ui: AgentHostUIPlatformAgent) :Unit  ={
-    setupUI(ui)
-    setupStore(store)
+  def setupPAs(store: AgentHostStorePlatformAgent, ui: AgentHostUIPlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
+    setupUI(ui,cnxnUIStore)
+    setupStore(store,cnxnUIStore)
   }
 
 
-  def setupUI(ui: AgentHostUIPlatformAgent) :Unit  ={
+  def setupUI(ui: AgentHostUIPlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
     val privateAddressUI = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
     val privateAcquaintanceAddressesUI = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
     ui._cnxnUIStore = cnxnUIStore
@@ -65,7 +63,7 @@ Timeouts
 
   }
 
-  def setupStore(store: AgentHostStorePlatformAgent) :Unit  ={
+  def setupStore(store: AgentHostStorePlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
     // store
     val publicAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC)
     val publicAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))

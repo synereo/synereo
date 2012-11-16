@@ -143,8 +143,9 @@ with Serializable
   sequential
 
   // Optimization, prevents repeated execution of store initialization
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI)
   val pa = new AgentHostStorePlatformAgent()
-  AgentHostCombinedBase.setupStore(pa)
+  AgentHostCombinedBase.setupStore(pa, cnxnUIStore)
 
   "setContentByConnectionType" should {
 

@@ -35,9 +35,10 @@ with Timeouts
   val mikeUID = UUID.randomUUID()
   var cnxnMikeMike = new AgentCnxnProxy(( "Mike" + mikeUID.toString ).toURI, "CombinedTestUser", ( "Mike" + mikeUID.toString ).toURI)
 
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI)
   val storeR = new AgentHostStorePlatformAgent
   val uiR = new AgentHostUIPlatformAgent
-  AgentHostCombinedBase.setupPAs(storeR, uiR)
+  AgentHostCombinedBase.setupPAs(storeR, uiR, cnxnUIStore)
 
   val eventKey = "content"
   AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)

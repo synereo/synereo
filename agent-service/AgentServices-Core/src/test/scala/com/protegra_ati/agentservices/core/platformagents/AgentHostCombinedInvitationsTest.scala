@@ -31,9 +31,10 @@ with Timeouts
 with InvitationUser
 with ReferralUser
 {
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI)
   val storeR = new AgentHostStorePlatformAgent
   val uiR = new AgentHostUIPlatformAgent
-  AgentHostCombinedBase.setupPAs(storeR, uiR)
+  AgentHostCombinedBase.setupPAs(storeR, uiR, cnxnUIStore)
 
   "Invitations" should {
     "create connections from an accepted CreateInvitationRequest" in {
