@@ -14,11 +14,11 @@ import java.util.HashMap
 import com.protegra_ati.agentservices.core._
 import org.specs2.specification.Scope
 import platformagents.AgentHostUIPlatformAgent
+import com.protegra_ati.agentservices.core.util.Results
 
 trait ListenerScope extends Scope
   with Serializable
 {
-//  val mockListener = new Object with Listeners
   val mockListener = new AgentHostUIPlatformAgent
   val agentSessionId = UUID.randomUUID()
 }
@@ -180,13 +180,13 @@ with Serializable
       val event = new SetContentResponseReceivedEvent(mockMessage)
       event.msg = mockMessage
 
-      var triggered = false
+      val resultKey = Results.getKey()
 
       mockListener.addListener(agentSessionId, "set1", new MessageEventAdapter(mockMessage.eventKey.eventTag)
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          triggered = true
+          Results.trigger(resultKey)
           System.err.println("I triggered")
         }
       });
@@ -206,8 +206,7 @@ with Serializable
       });
 
       mockListener.triggerEvent(event)
-
-      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+      Results.triggered(resultKey) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
   }
 }
