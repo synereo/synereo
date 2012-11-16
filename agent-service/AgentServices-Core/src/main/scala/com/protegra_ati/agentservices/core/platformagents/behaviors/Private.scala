@@ -15,7 +15,7 @@ trait Private {
   var _privateQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _privateConfigFileName: Option[String] = None
     
-  def initPrivate(configUtil: Config)
+  def initPrivate(@transient configUtil: Config)
   {
     val privateSelfMapKey = "private.self"
     _privateLocation = loadFirstURI(configUtil.getConfigMap(privateSelfMapKey))

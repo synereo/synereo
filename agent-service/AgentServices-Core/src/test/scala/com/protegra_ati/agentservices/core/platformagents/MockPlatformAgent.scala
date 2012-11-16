@@ -36,7 +36,7 @@ with Private
     super.initForTest(id)
   }
 
-  def init(configUtil: Config) =
+  def init(@transient configUtil: Config) =
   {
 
   }

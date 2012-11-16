@@ -87,7 +87,7 @@ trait Reporting
   Configgy.configure("log_agentservices.conf")
 //  PropertyConfigurator.configure("log_agentservices.properties")
 
-  lazy val config = Configgy.config
+  @transient lazy val config = Configgy.config
   var traceLevel = SeverityFromOption(config.getString("traceLevel"))
   var logLevel = SeverityFromOption(config.getString("logLevel"))
 

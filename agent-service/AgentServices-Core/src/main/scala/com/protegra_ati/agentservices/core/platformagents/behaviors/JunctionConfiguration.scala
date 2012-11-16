@@ -9,12 +9,12 @@ import java.net.URI
 
 trait JunctionConfiguration
 {
-  def loadFirstURI(configBlock: Option[ ConfigMap ]): URI =
+  def loadFirstURI(@transient configBlock: Option[ ConfigMap ]): URI =
   {
     loadURIs(configBlock).head
   }
 
-  def loadURIs(configBlock: Option[ ConfigMap ]): List[ URI ] =
+  def loadURIs(@transient configBlock: Option[ ConfigMap ]): List[ URI ] =
   {
     var result: List[ URI ] = Nil;
 
