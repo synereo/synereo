@@ -123,6 +123,13 @@ trait InvitationRequestSetCreator
       response.originCnxn = referralRequest.originCnxn
       send(_publicQ, cnxnSelf, response )
     }
+    referralRequestNotificationHandler(cnxnSelf, referralRequest)
+
+  }
+  protected def referralRequestNotificationHandler(cnxn: AgentCnxnProxy, referralRequest: ReferralRequest) =
+  {
+    //email, sms, however you want to notify
+    //also a hook to override in other implementations
   }
 
   def generateInvitationRequests(sourceRequest: CreateInvitationRequest, connBroker_A: Connection, connBroker_B: Connection): Unit =
