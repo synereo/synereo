@@ -52,7 +52,7 @@ with Serializable
   sequential
 
   @transient val rand = new Random()
-  @transient val pa = createPA
+  val pa = createPA
 
   def createPA: MockPlatformAgent =
   {
@@ -162,6 +162,7 @@ with Serializable
       val mockMsg = new GetContentRequest(new EventKey(UUID.randomUUID(), ""), mockSearch)
 
       pa.put(pa._privateQ, cnxn, mockMsg.getChannelKey, Serializer.serialize[ Message ](mockMsg))
+      Thread.sleep(TIMEOUT_MED)
       val resultKey = Results.getKey
       pa.listen(pa._privateQ, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handleMessage(_: AgentCnxnProxy, _: Message, resultKey))
       Results.savedMessage(resultKey) must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
@@ -216,9 +217,9 @@ with Serializable
   //    var msgReceived = false
   //
   //    //store connection
-  //    val JenId = "Jen" + UUID.randomUUID
-  //    val MikeId = "Mike" + UUID.randomUUID
-  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", JenId.toString, MikeId.toString)
+  //    val jenId = "Jen" + UUID.randomUUID
+  //    val mikeId = "Mike" + UUID.randomUUID
+  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId.toString, mikeId.toString)
   //    val newCnxn = new AgentCnxnProxy(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
   //    pa1.store(pa1._dbQ, newCnxn, conn.toStoreKey, Serializer.serialize[ Data ](conn))
   //    Thread.sleep(TIMEOUT_LONG)

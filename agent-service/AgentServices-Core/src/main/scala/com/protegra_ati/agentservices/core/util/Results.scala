@@ -4,16 +4,20 @@ import com.protegra.agentservicesstore.util.{MemCache, ResultsBase}
 import com.protegra_ati.agentservices.core.schema.Data
 import com.protegra_ati.agentservices.core.messages.Message
 
-object Results extends DataResultsBase
+object Results
+  extends ResultsBase
+  with DataResultsBase
+  with MessageResultsBase
 {
 }
 
-trait DataResultsBase extends ResultsBase
+trait DataResultsBase
 {
+  self : ResultsBase =>
 
   def save(key: String, value: Data): Unit =
   {
-    MemCache.add(key, value)(client)
+    MemCache.set(key, value)(client)
   }
 
   def saved(key: String): Data =
@@ -42,10 +46,18 @@ trait DataResultsBase extends ResultsBase
     result
   }
   
-  
+
+
+}
+
+
+trait MessageResultsBase
+{
+  self : ResultsBase =>
+
   def saveMessage(key: String, value: Message): Unit =
   {
-    MemCache.add(key, value)(client)
+    MemCache.set(key, value)(client)
   }
 
   def savedMessage(key: String): Message =
@@ -73,6 +85,45 @@ trait DataResultsBase extends ResultsBase
     }
     result
   }
+
+}
+
+trait ListResultsBase
+{
+  self : ResultsBase =>
+
+  def save(key: String, value: Data): Unit =
+  {
+    MemCache.set(key, value)(client)
+  }
+
+  def saved(key: String): Data =
+  {
+    saved(key, 5)
+  }
+
+  def saved(key: String, maxRetries: Int): Data =
+  {
+    val saved = spinlockData(key, maxRetries)
+    saved match {
+      case null => null
+      case _ => saved
+    }
+  }
+
+  def spinlockData(key: String, maxRetries: Int): Data =
+  {
+    var result = MemCache.get[ Data ](key)(client)
+    var retries = 0
+    while ( result == null && retries < maxRetries ) {
+      Thread.sleep(1000)
+      retries = retries + 1
+      result = MemCache.get[ Data ](key)(client)
+    }
+    result
+  }
+
+
 
 }
 

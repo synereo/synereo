@@ -74,7 +74,7 @@ with IntroductionResponseSetConsumerPrivate
 //    listenPrivateVerifierNotification(cnxn)
 //    listenPrivateLoginResponse(cnxn)
     //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
-//    listenPrivateInvitationConsumerResponses(cnxn)
+    listenPrivateInvitationConsumerResponses(cnxn)
 //    listenPrivateIntroductionConsumerResponses(cnxn)
 //    listenPrivateReferralResponses(cnxn)
 //    listenPrivateRegistrationConsumerResponses(cnxn)

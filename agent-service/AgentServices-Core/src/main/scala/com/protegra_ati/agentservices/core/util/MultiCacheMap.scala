@@ -21,7 +21,7 @@ class MultiCacheMap[ V <: java.io.Serializable ](final val prefix: String) exten
       case null => {
         val list = new ArrayList[ V ]()
         list.add(value)
-        MemCache.add(multiKey, list)(Results.client)
+        MemCache.set(multiKey, list)(Results.client)
       }
       case x: ArrayList[ V ] => {
         x.add(value)

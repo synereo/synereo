@@ -9,10 +9,12 @@ import org.junit._
 import Assert._
 import net.spy.memcached.{FailureMode, ConnectionFactoryBuilder, AddrUtil, MemcachedClient}
 import java.net.InetSocketAddress
+import com.protegra.agentservicesstore.Timeouts
 
 class MemCacheTest extends SpecificationWithJUnit
+with Timeouts
 {
-  val client =new MemcachedClient(new ConnectionFactoryBuilder().setDaemon(true).setFailureMode(FailureMode.Retry).build(), AddrUtil.getAddresses("127.0.0.1:11211"))
+  val client = new MemcachedClient(new ConnectionFactoryBuilder().setDaemon(true).setFailureMode(FailureMode.Retry).build(), AddrUtil.getAddresses("127.0.0.1:11211"))
   "spymemcached client set get" should {
 
     "find correct value" in {
@@ -52,7 +54,7 @@ class MemCacheTest extends SpecificationWithJUnit
     "find correct value" in {
       val key = UUID.randomUUID().toString
       val expected = "test"
-      MemCache.add(key, expected)(client);
+      MemCache.set(key, expected)(client);
       val found = MemCache.get[ String ](key)(client)
       found must be_==(expected)
     }
@@ -64,25 +66,25 @@ class MemCacheTest extends SpecificationWithJUnit
     }
 
     "hasValue" in {
-       val key = UUID.randomUUID().toString
-       val expected = "test"
-       MemCache.add(key, expected)(client);
-       val found = MemCache.hasValue(key)(client)
-       found must be_==(true)
-     }
+      val key = UUID.randomUUID().toString
+      val expected = "test"
+      MemCache.set(key, expected)(client);
+      val found = MemCache.hasValue(key)(client)
+      found must be_==(true)
+    }
 
     "hasValue is false" in {
-       val key = UUID.randomUUID().toString
-       val expected = "test"
-       MemCache.add(key, expected)(client);
-       val found = MemCache.hasValue(UUID.randomUUID().toString)(client)
-       found must be_==(false)
-     }
+      val key = UUID.randomUUID().toString
+      val expected = "test"
+      MemCache.set(key, expected)(client);
+      val found = MemCache.hasValue(UUID.randomUUID().toString)(client)
+      found must be_==(false)
+    }
 
     "replace correct value" in {
       val key = UUID.randomUUID().toString
       val expected = "test"
-      MemCache.add(key, expected)(client);
+      MemCache.set(key, expected)(client);
       val found = MemCache.get[ String ](key)(client)
       found must be_==(expected)
 
@@ -91,8 +93,36 @@ class MemCacheTest extends SpecificationWithJUnit
       val foundAgain = MemCache.get[ String ](key)(client)
       foundAgain must be_==(replaced)
     }
+  }
 
+  "MemCache object list" should {
+    "add value" in {
+      val key = UUID.randomUUID().toString
+      val value = "test"
+      val expected = value :: Nil
+      MemCache.addToList[ String ](key, value)(client)
+      val found = MemCache.getList[ String ](key)(client)
+      found must be_==(expected)
+    }
 
+    "add 100 values" in {
+      val key = UUID.randomUUID().toString
+      val value = "test"
+      val expected = value :: Nil
+      MemCache.addToList[ String ](key, value)(client)
+      val found = MemCache.getList[ String ](key)(client)
+      found must be_==(expected)
+
+      var expectedLoop = expected
+      for (i <- 1 to 100)
+      {
+        val valueLoop = "test" + i
+        expectedLoop = valueLoop :: expectedLoop
+        MemCache.addToList[ String ](key, valueLoop)(client)
+      }
+
+      MemCache.getList[ String ](key)(client) must be_==(expectedLoop).eventually(3, TIMEOUT_EVENTUALLY)
+    }
   }
 
 }
