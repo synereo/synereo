@@ -19,8 +19,9 @@ trait Moniker extends Serializable {
   def getPath : String
   def getQuery : String
   def getFragment : String
+  def uri : URI
 }
-case class MURI( uri : URI ) extends Moniker {
+case class MURI( override val uri : URI ) extends Moniker {
   override def getScheme : String = uri.getScheme
   override def getUserInfo : String = uri.getUserInfo
   override def getAuthority : String = uri.getAuthority
@@ -30,7 +31,7 @@ case class MURI( uri : URI ) extends Moniker {
   override def getQuery : String = uri.getQuery
   override def getFragment : String = uri.getFragment
 }
-case class MURN( uri : URI ) extends Moniker {
+case class MURN( override val uri : URI ) extends Moniker {
   override def getScheme : String = uri.getScheme
   override def getUserInfo : String = uri.getUserInfo
   override def getAuthority : String = uri.getAuthority
@@ -49,6 +50,18 @@ case class MURL( url : URL ) extends Moniker {
   override def getPath : String = url.getPath
   override def getQuery : String = url.getQuery
   override def getFragment : String = ""
+
+  override lazy val uri : URI = {
+    new URI(
+      getScheme,
+      getUserInfo,
+      getHost,
+      getPort,
+      getPath,
+      getQuery,
+      getFragment
+    )
+  }
 }
 
 class URM(
@@ -63,7 +76,7 @@ class URM(
 ) extends Moniker {
   def this(scheme: String, host: String, path: String, fragment: Option[String]) = this (scheme, None, None, host, None, path, None, fragment)
 
-  lazy val uri =
+  override lazy val uri =
     {
       val qry = query.getOrElse( "" )
       val frg = fragment.getOrElse( "" )
@@ -151,7 +164,7 @@ class URM(
   override def getQuery : String = uri.getQuery
   override def getFragment : String = uri.getFragment
 
-  override def toString() : String = { uri.toString }
+  override def toString() : String = { "URM(" + uri.toString + ")" }
 }
 
 

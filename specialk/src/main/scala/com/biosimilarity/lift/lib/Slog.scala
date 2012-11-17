@@ -14,6 +14,7 @@ import net.lag.logging._
 import scala.annotation.elidable
 import scala.annotation.elidable._
 import scala.xml._
+import scala.collection.mutable.HashMap
 import java.util.UUID
 
 import net.lag.configgy._
@@ -97,7 +98,7 @@ trait SeverityConversions {
     }
   }
 
-  def SeverityFromString(level: String): Severity.Value =
+  implicit def SeverityFromString(level: String): Severity.Value =
   {
     level.toLowerCase() match {
       case "fatal" => {
@@ -147,29 +148,37 @@ trait Journalist {
 
   import LogConfiguration._    
 
+  def prettyPrintElisions() : HashMap[String,String] =
+    {
+      val map = new HashMap[String,String]()
+      map += ( "{" -> "" )
+      map += ( "}" -> "" )
+      map += ( "&amp;" -> "&" )
+      map += ( "vamp;" -> "&" )
+      map += ("amp;" -> "&" )
+      map += ( "&quot;" -> "\"" )
+      map += ( "vquot;" -> "\"" )
+      map += ( "quot;" -> "\"" )
+      map += ( "_-" -> "" )
+      //map += ( ":" -> "" )
+      map += ( "@class" -> "" )
+      map += ( "com.biosimilarity.lift.model.store." -> "" )
+      map += ( "com.protegra.agentservices.store." -> "" )
+      map += ( "MonadicTermTypes" -> "" )
+      map += ( "AgentTS$TheMTT$" -> "" )
+      map += ( "Groundvstring,$" -> "" )
+      map += ( "Groundstring,$" -> "" )
+      map += ( ",outer" -> "" )
+      map += ( "&lt;" -> "<" )
+      map += ( "&gt;" -> ">" )
+      map
+    }
+
   def prettyPrint(value: String): String =
   {
-    value.replace("{", "")
-      .replace("}", "")
-      .replace("&amp;", "")
-      .replace("vamp;", "")
-      .replace("amp;", "")
-      .replace("&quot;", "")
-      .replace("vquot;", "")
-      .replace("quot;", "")
-      .replace("_-", "")
-      .replace(":", "")
-      .replace("@class", "")
-      .replace("com.biosimilarity.lift.model.store.", "")
-      .replace("com.protegra.agentservices.store.", "")
-      .replace("MonadicTermTypes", "")
-      .replace("AgentTS$TheMTT$", "")
-      .replace("Groundvstring,$", "")
-      .replace("Groundstring,$", "")
-      .replace(",outer", "")
-      .replace("&lt;", "<")
-      .replace("&gt;", ">")
-      .toString
+    ( value /: prettyPrintElisions )(
+      { ( acc, e ) => { acc.replace( e._1, e._2 ) } }
+    ) 
   }  
 
   def header(level: Severity.Value): String =
