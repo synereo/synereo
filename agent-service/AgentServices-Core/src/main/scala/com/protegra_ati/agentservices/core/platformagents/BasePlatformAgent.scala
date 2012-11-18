@@ -158,7 +158,7 @@ abstract class BasePlatformAgent
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
-      for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
+      for ( e <- queue.get(agentCnxn)(lblChannel) ) {
         //        for ( e <- queue.get(agentCnxn)(lblChannel) ) {
         val expired = isExpired(expiry)
         if ( e != None && !expired ) {
@@ -249,7 +249,7 @@ abstract class BasePlatformAgent
 
       //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
       reset {
-        for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
+        for ( e <- queue.get(agentCnxn)(lblChannel) ) {
           if ( e != None ) {
             //keep the main thread listening, see if this causes debug headache
             spawn {
@@ -284,7 +284,7 @@ abstract class BasePlatformAgent
       if ( msg.eventKey != null ) {
         report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
       }
-      publish(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
+      put(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
     }
 
     def singleSend(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)

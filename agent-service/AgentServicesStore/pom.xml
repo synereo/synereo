@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra</groupId>
     <artifactId>AgentServicesStore</artifactId>
-    <version>1.1.1.11-MERGE</version>
+    <version>1.1.1.12-MERGE</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -204,8 +204,8 @@
                         <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
                     </jvmArgs>
                     <args>
-                        <arg>-Xelide-below</arg>
-                   	    <arg>1</arg>
+                        <!--<arg>-Xelide-below</arg>-->
+                   	    <!--<arg>1</arg>-->
 		<!-- arg>manager.conf</arg -->
 		<!-- <arg>-deprecation</arg> -->
 		<!-- <arg>-unchecked</arg> -->
