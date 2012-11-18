@@ -10,6 +10,8 @@ package com.protegra.agentservicesstore.util
 
 import net.lag.configgy._
 
+import scala.collection.mutable.HashMap
+
 import org.apache.log4j.{PropertyConfigurator, Level, Logger}
 
 object Severity extends Enumeration()
@@ -18,20 +20,7 @@ object Severity extends Enumeration()
   val Fatal, Error, Warning, Info, Debug, Trace = Value
 }
 
-trait Reporting
-{
-  def SeverityFromOption(level: Option[ String ]): Severity.Value =
-  {
-    level match {
-      case Some(x) => {
-        SeverityFromString(x)
-      }
-      case None => {
-        Severity.Debug
-      }
-    }
-  }
-
+object LogConfiguration {
   def SeverityFromString(level: String): Severity.Value =
   {
     level.toLowerCase() match {
@@ -58,40 +47,68 @@ trait Reporting
       }
     }
   }
-
-  def prettyPrint(value: String): String =
+  def SeverityFromOption(level: Option[ String ]): Severity.Value =
   {
-    value.replace("{", "")
-      .replace("}", "")
-      .replace("&amp;", "")
-      .replace("vamp;", "")
-      .replace("amp;", "")
-      .replace("&quot;", "")
-      .replace("vquot;", "")
-      .replace("quot;", "")
-      .replace("_-", "")
-      .replace(":", "")
-      .replace("@class", "")
-      .replace("com.biosimilarity.lift.model.store.", "")
-      .replace("com.protegra.agentservicesstore.", "")
-      .replace("MonadicTermTypes", "")
-      .replace("AgentTS$TheMTT$", "")
-      .replace("Groundvstring,$", "")
-      .replace("Groundstring,$", "")
-      .replace(",outer", "")
-      .replace("&lt;", "<")
-      .replace("&gt;", ">")
-      .toString
+    level match {
+      case Some(x) => {
+        SeverityFromString(x)
+      }
+      case None => {
+        Severity.Debug
+      }
+    }
   }
 
-  Configgy.configure("log_agentservices.conf")
-//  PropertyConfigurator.configure("log_agentservices.properties")
-
-  @transient lazy val config = Configgy.config
+  lazy val config = {
+    val ans = Configgy.config
+    Configgy.configure("log_agentservices.conf")
+    ans
+  }
   var traceLevel = SeverityFromOption(config.getString("traceLevel"))
   var logLevel = SeverityFromOption(config.getString("logLevel"))
 
-//  lazy val logger = Logger.getLogger(this.getClass.getName)
+  lazy val logger = {
+    PropertyConfigurator.configure("log_agentservices.properties")
+    Logger.getLogger(this.getClass.getName)
+  }
+}
+
+trait Reporting
+{
+  import LogConfiguration._    
+
+  def prettyPrintElisions() : HashMap[String,String] =
+    {
+      val map = new HashMap[String,String]()
+      //map += ( "{" -> "" )
+      //map += ( "}" -> "" )
+      map += ( "&amp;" -> "&" )
+      map += ( "vamp;" -> "&" )
+      map += ("amp;" -> "&" )
+      map += ( "&quot;" -> "\"" )
+      map += ( "vquot;" -> "\"" )
+      map += ( "quot;" -> "\"" )
+      map += ( "_-" -> "" )
+      //map += ( ":" -> "" )
+      map += ( "@class" -> "" )
+      map += ( "com.biosimilarity.lift." -> "kvdb:" )
+      map += ( "com.protegra.agentservicesstore." -> "agent-services:" )
+      map += ( "MonadicTermTypes" -> "" )
+      map += ( "AgentTS$TheMTT$" -> "" )
+      map += ( "Groundvstring,$" -> "" )
+      map += ( "Groundstring,$" -> "" )
+      map += ( ",outer" -> "" )
+      map += ( "&lt;" -> "<" )
+      map += ( "&gt;" -> ">" )
+      map
+    }       
+
+  def prettyPrint(value: String): String =
+  {
+    ( value /: prettyPrintElisions )(
+      { ( acc, e ) => { acc.replace( e._1, e._2 ) } }
+    ) 
+  }
 
   def header(level: Severity.Value): String =
   {
@@ -150,25 +167,25 @@ trait Reporting
     if ( enabled(level, logLevel) ) {
       level match {
         case Severity.Fatal => {
-//          logger.log(Level.FATAL, fact toString)
+          logger.log(Level.FATAL, fact toString)
         }
         case Severity.Error => {
-//          logger.log(Level.ERROR, fact toString)
+	  logger.log(Level.ERROR, fact toString)
         }
         case Severity.Warning => {
-//          logger.log(Level.WARN, fact toString)
+          logger.log(Level.WARN, fact toString)
         }
         case Severity.Info => {
-//          logger.log(Level.INFO, fact toString)
+	  logger.log(Level.INFO, fact toString)
         }
         case Severity.Debug => {
-//          logger.log(Level.DEBUG, fact toString)
+          logger.log(Level.DEBUG, fact toString)
         }
         case Severity.Trace => {
-//          logger.log(Level.TRACE, fact toString)
+	  logger.log(Level.TRACE, fact toString)
         }
         case _ => {
-//          logger.log(Level.DEBUG, fact toString)
+          logger.log(Level.DEBUG, fact toString)
         }
       }
     }

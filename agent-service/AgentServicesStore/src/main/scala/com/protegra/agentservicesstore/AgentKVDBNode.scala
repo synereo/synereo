@@ -800,9 +800,27 @@ with AgentCnxnTypeScope {
 	    + "\n --------------- "
 	    + "\n acquaintances : " + acquaintances
 	  )
-	)
-	
-	for( trgt <- acquaintances; q <- stblQMap.get( trgt ) if !hops.contains( trgt ) ) {
+	)		
+
+	def loop( locations : List[URI], there : URI ) : Boolean = {
+	  ( false /: locations )(
+	    {
+	      ( acc, e ) => {
+		val same = there.equals( e )
+		// tweet(
+// 		  ( "comparing " + e + " with " + there + " : " + same )
+// 		)
+		acc || same
+	      }
+	    }
+	  )
+	}
+
+	for(
+	  trgt <- acquaintances;
+	  q <- stblQMap.get( trgt )
+	  if ( ! ( loop( hops.map( _.uri ), trgt.uri ) ) )
+	) {
 	  val embCnxn = 
 	    embedCnxn(
 	      cnxn,
@@ -1082,15 +1100,22 @@ with AgentCnxnTypeScope {
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {
 	tweet(
-	  "In cnxn-based get with cnxn " + cnxn
-          
+	  (
+	    "BaseAgentKVDBNode : "
+	    + "\nthis: " + this
+	    + "\n method : remoteGet "
+	    + "\n cnxn : " + cnxn
+	    + "\n path : " + path
+	    + "\n hops : " + hops
+	    + "\n this.cache : " + this.cache
+	    + "\n this.name : " + this.name
+	  )
 	)
 	
 	val ( pmgj, perD, xmlCollName ) = getRemotePartitionActuals( cnxn )
 	
 	tweet(
-	  "Retrieving " + path + " from partition " + pmgj
-          
+	  "Retrieving " + path + " from partition " + pmgj          
 	)
 	
 	pmgj.mget( cnxn )( perD, dAT.AGetNum, hops )(
