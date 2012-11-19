@@ -251,19 +251,20 @@ with MessageStore
       handlePublicContentRequestChannel(cnxn,msg)
     else if (msg.channel == Channel.Content && msg.channelType == ChannelType.Response )
       sendPrivate(cnxn,msg)
+    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Request )
+      handlePublicInvitationCreatorRequestChannel(cnxn,msg)
+    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Response )
+      handlePublicInvitationCreatorResponseChannel(cnxn,msg)
+
+    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) && msg.channelType == ChannelType.Request )
+      handlePublicInvitationConsumerRequestChannel(cnxn,msg)
+    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) &&msg.channelType == ChannelType.Response )
+      sendPrivate(cnxn,msg)
     else
       println("ROUTE ROUTE COULD NOT ROUTE")
 
 
-//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Request )
-//      handlePublicInvitationCreatorRequestChannel(cnxn,msg)
-//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Response )
-//      handlePublicInvitationCreatorResponseChannel(cnxn,msg)
-//
-//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) && msg.channelType == ChannelType.Request )
-//      handlePublicInvitationConsumerRequestChannel(cnxn,msg)
-//    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) &&msg.channelType == ChannelType.Response )
-//      sendPrivate(cnxn,msg)
+
 
   }
 }
