@@ -921,11 +921,6 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		tweet( "in BasePersistedMonadicKVDB level putPlaces: no waiters waiting for a value at " + ptn )
 		//channels( representative( ptn ) ) = rsrc
 
-		tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
-		spaceLock.depart( None )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
 		updateKStore( persist )(
 		  ptn, consume, collName
 		) match {
@@ -952,7 +947,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      persist, channels, ptn, None, rsrc, collName
 		    )
 		  }
-		}		
+		}
+
+		tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
+		spaceLock.depart( None )
+		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		
 	      }
 	    }
 	  }
