@@ -41,6 +41,7 @@ with ReferralUser
   AgentHostCombinedInvitationsInitializer.setup(this)
   val uiR = AgentHostCombinedInvitationsInitializer.uiR
   val storeR = AgentHostCombinedInvitationsInitializer.storeR
+  storeR.setNetworkMode("Local")
 
   "Invitations" should {
     //"Invitations" ->- immutableTestDataSetupContext should {
