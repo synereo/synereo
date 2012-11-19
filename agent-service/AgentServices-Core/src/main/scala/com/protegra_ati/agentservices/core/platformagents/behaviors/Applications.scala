@@ -16,7 +16,7 @@ trait Applications
 
   var _appBizNetworkId: UUID = null
 
-  def initApps(configUtil: Config)
+  def initApps(@transient configUtil: Config)
   {
     try {
       val privateAppBizNetworkMapKey = "appBizNetworkId"

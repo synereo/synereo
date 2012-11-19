@@ -60,9 +60,8 @@ object LogConfiguration {
   }
 
   lazy val config = {
-    val ans = Configgy.config
     Configgy.configure("log_agentservices.conf")
-    ans
+    Configgy.config
   }
   var traceLevel = SeverityFromOption(config.getString("traceLevel"))
   var logLevel = SeverityFromOption(config.getString("logLevel"))

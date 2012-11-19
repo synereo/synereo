@@ -97,7 +97,7 @@ with MessageStore
 
   var _verifyRequests = new HashMap[ String, VerifyRequest ]
 
-  override def init(configUtil: Config)
+  override def init(@transient configUtil: Config)
   {
     initPrivate(configUtil)
     initDb(configUtil)
