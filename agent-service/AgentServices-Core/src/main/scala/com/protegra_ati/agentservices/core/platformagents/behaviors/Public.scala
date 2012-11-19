@@ -37,7 +37,6 @@ trait Public {
   }
 
   def loadPublicQueue() = {
-    if (isDistributedNetworkMode)
       _publicQ = new PartitionedStringMGJ(_publicLocation, _publicAcquaintanceAddresses, None)
   }
 
@@ -47,6 +46,10 @@ trait Public {
 
   def isDistributedNetworkMode() = {
     !isLocalNetworkMode
+  }
+
+  def setNetworkMode(mode: String) = {
+    _networkMode = mode;
   }
 
 

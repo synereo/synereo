@@ -272,7 +272,8 @@ abstract class BasePlatformAgent
   def singleSend(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, msg: Message)
   {
     msg.channelLevel = Some(ChannelLevel.Single)
-    send(queue, cnxn, msg)
+    //send(queue, cnxn, msg)
+    put(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
 
   def put(queue: PartitionedStringMGJ, cnxn: AgentCnxnProxy, key: String, value: String) =

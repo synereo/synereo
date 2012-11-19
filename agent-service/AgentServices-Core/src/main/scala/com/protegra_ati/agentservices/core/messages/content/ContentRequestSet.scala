@@ -34,10 +34,12 @@ trait ContentRequestSet
     report("entering handlePrivateContentRequestChannel in StorePlatform", Severity.Trace)
     msg match {
       case x: GetContentRequest => {
-        if ( _cnxnUserSelfConnectionsList.contains(x.targetCnxn) || authorizationNotRequired(x) )
+        if ( isLocalNetworkMode() || _cnxnUserSelfConnectionsList.contains(x.targetCnxn) || authorizationNotRequired(x) ) {
           processGetContentRequest(x)
-        else
+        }
+        else{
           authorizeRequest(x, false)
+        }
       }
       case x: SetContentRequest => {
         processSetContentRequest(x)
@@ -105,8 +107,6 @@ trait ContentRequestSet
 
   def handleGetContentRequestCompositeFetch(cnxn: AgentCnxnProxy, data: List[ Data ], originCnxn: AgentCnxnProxy, parent: Message, connection: Connection)
   {
-    report("entering handleGetContentRequestCompositeFetch in StorePlatform", Severity.Trace)
-
     //no audit log generation for these types of requests for now
     val compositeData = data.map(datum => new CompositeData[ datum.type ](connection, datum))
     val response = new GetContentResponse(parent.ids.copyAsChild(), parent.eventKey.copy(), compositeData)
@@ -152,12 +152,14 @@ trait ContentRequestSet
           //register self connection in a self connection list
           addToHostedCnxn(selfCnxn)
           //appBizNetwork Conn just needs to listen to it's 1 new conn
-          listenForHostedCnxn(selfCnxn)
+          if (isDistributedNetworkMode())
+            listenForHostedCnxn(selfCnxn)
         }
       }
       case _ => {
       }
     }
+
 
     val responseEventKey = if ( msg.eventKey == null ) null else msg.eventKey.copy()
     val response = new SetContentAdminResponse(msg.ids.copyAsChild(), responseEventKey, msg.newData)
@@ -215,6 +217,7 @@ trait ContentRequestSet
     }
 
     report("exiting processSetContentRequest in StorePlatform", Severity.Trace)
+
   }
 
   def setContentForSelfAndAllConnections(selfCnxn: AgentCnxnProxy, newData: Data, oldData: Data)
@@ -484,8 +487,10 @@ trait ContentRequestSet
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
   {
     //start listening
-    listenPublicRequests(newConnection.writeCnxn)
-    listenPublicResponses(newConnection.readCnxn)
+    if (isDistributedNetworkMode()) {
+      listenPublicRequests(newConnection.writeCnxn)
+      listenPublicResponses(newConnection.readCnxn)
+    }
 
     //system Data generation
     generateSystemData(selfCnxn, newConnection)

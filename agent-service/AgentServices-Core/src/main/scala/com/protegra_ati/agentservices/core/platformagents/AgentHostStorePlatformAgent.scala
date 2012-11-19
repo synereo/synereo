@@ -34,6 +34,8 @@ import java.util.{UUID, HashMap}
 import scala.collection.mutable._
 import com.biosimilarity.lift.lib.moniker._
 import java.lang.reflect._
+import scala.concurrent.ops._
+
 
 class AgentHostStorePlatformAgent extends BasePlatformAgent
 with Storage
@@ -122,8 +124,7 @@ with MessageStore
     loadResultStorageQueue()
     loadPrivateQueue()
 
-    if (isDistributedNetworkMode)
-      loadPublicQueue()
+    loadPublicQueue()
     //the same for now, should be initialized properly to separate queues
 
     if (isDistributedNetworkMode)
@@ -217,6 +218,7 @@ with MessageStore
   //    listenPublicRegistrationConsumerResponses(cnxn)
   //    listenPublicRegistrationCreatorResponses(cnxn)
     }
+
   }
 
   def sendPrivate(cnxn: AgentCnxnProxy, msg: Message)
@@ -246,10 +248,15 @@ with MessageStore
     }
 
 
-    if (msg.channelLevel == Some(ChannelLevel.Public) && isLocalNetworkMode())
-      processPublicSendLocally(cnxn, msg)
+
+
+    if ((msg.channelLevel == Some(ChannelLevel.Public) || msg.channelLevel == Some(ChannelLevel.Single)) && isLocalNetworkMode())
+      spawn{
+        processPublicSendLocally(cnxn, msg)
+      }
     else
       super.send(queue, cnxn, msg)
+
   }
 
   /**
@@ -261,13 +268,16 @@ with MessageStore
   {
     report("In processSendLocally", Severity.Trace)
 
-    //TODO remove following println
-    System.err.println(System.currentTimeMillis() + "In processSendLocally - channel = " + msg.channel + ", type = " + msg.channelType + ", cnxn= " + cnxn);
-
     if (msg.channelType == ChannelType.Response){
-      //TODO remove following println
-      System.err.println(System.currentTimeMillis() +  "SendPrivate called - thread = " + Thread.currentThread().getName);
-      sendPrivate(cnxn, msg)
+      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator))
+        handlePublicInvitationCreatorResponseChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Verify)
+        handleVerifyResponseChannel(cnxn, msg)
+      else
+      {
+        sendPrivate(cnxn, msg)
+      }
     }
 
     if (msg.channelType == ChannelType.Request){
@@ -290,7 +300,6 @@ with MessageStore
         report("Received request for which there is no handler, message type = " + msg.getClass.getName, Severity.Error)
       }
     }
-
   }
 
 
