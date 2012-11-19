@@ -285,8 +285,8 @@ with Serializable
       reqFullDisclosedDataChanged.originCnxn = cnxnJenSelf
       pa.processSetContentRequest(reqFullDisclosedDataChanged)
       System.err.println("-------------------------------------------------------------------------")
-      Thread.sleep(TIMEOUT_VERY_LONG * 3)
-      Thread.sleep(TIMEOUT_VERY_LONG * 3)
+      Thread.sleep(TIMEOUT_VERY_LONG)
+//      Thread.sleep(TIMEOUT_VERY_LONG * 3)
       // check profile if image and webseite are deleted
       countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
       fetchMustBeWithHandler(expectationCheckHandler(_: Data, _: Data))(reducedFullProfile, pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
