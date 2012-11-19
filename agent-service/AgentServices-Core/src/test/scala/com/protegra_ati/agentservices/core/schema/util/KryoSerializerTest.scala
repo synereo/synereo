@@ -706,7 +706,7 @@ object KryoSerializerTestSpecs extends Specification with Timeouts
 
       newConn.id = "conn id"
 
-      val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
+      val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "targetCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
       //  msg.targetCnxn = newConn.readCnxn
 
       //  msg.ids.conversationId = "conversationId"

@@ -109,7 +109,7 @@ object StorableDataTestSpecs extends Specification
 
       val postToTarget = new Post("subject2Target", "body", fromDetails);
       val postToBroker = new Post("subject2Broker", "body", fromDetails);
-      val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", postToTarget, postToBroker);
+      val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", "", postToTarget, postToBroker);
       val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
       persistedMessage.id = id
 
