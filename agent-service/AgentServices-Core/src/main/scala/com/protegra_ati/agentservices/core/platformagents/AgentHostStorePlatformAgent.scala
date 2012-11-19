@@ -34,7 +34,9 @@ import java.util.{UUID, HashMap}
 import scala.collection.mutable._
 import java.net.URI
 import java.lang.reflect._
+import scala.concurrent.ops._
 import Being.AgentKVDBNodeFactory
+
 
 class AgentHostStorePlatformAgent extends BasePlatformAgent
 with Serializable
@@ -123,22 +125,28 @@ with MessageStore
     loadStorageQueue()
 //    loadResultStorageQueue()
     loadPrivateQueue()
+
     loadPublicQueue()
     //the same for now, should be initialized properly to separate queues
 
-//    loadUserCnxnList()
+    if (isDistributedNetworkMode)
+      loadUserCnxnList()
   }
 
   //does not raise events but sends messages back to AgentHostUIPlatformAgent
   def startListening() =
   {
     report("IN THE STORE LISTEN", Severity.Trace)
-//    listenPublicRequests(_storeCnxn)
+
+    if (isDistributedNetworkMode)
+      listenPublicRequests(_storeCnxn)
 
     listenForUICnxns()
 
     //    listenForVerifierCnxns()
-//    listenForHostedCnxns()
+    if (isDistributedNetworkMode)
+      listenForHostedCnxns()
+
     // watch list observation starts
     //observeWatchLists()
   }
@@ -201,18 +209,22 @@ with MessageStore
 
   def listenPublicResponses(cnxn: AgentCnxnProxy)
   {
-    listenPublicContentResponse(cnxn)
-//    listenPublicSearchResponse(cnxn)
+    if (isDistributedNetworkMode){
+
+      listenPublicContentResponse(cnxn)
+  //    listenPublicSearchResponse(cnxn)
 //    listenPublicLoginResponse(cnxn)
 //    listenPublicVerifierResponse(cnxn)
 
-    //listen invitation consumer on broker_jen, ie mike_jen. mike is the broker for jen in this case
-    listenPublicInvitationConsumerResponses(cnxn)
-    listenPublicInvitationCreatorResponses(cnxn)
-    listenPublicIntroductionConsumerResponses(cnxn)
-//    listenPublicReferralResponses(cnxn)
-//    listenPublicRegistrationConsumerResponses(cnxn)
-//    listenPublicRegistrationCreatorResponses(cnxn)
+      //listen invitation consumer on broker_jen, ie mike_jen. mike is the broker for jen in this case
+      listenPublicInvitationConsumerResponses(cnxn)
+      listenPublicInvitationCreatorResponses(cnxn)
+      listenPublicIntroductionConsumerResponses(cnxn)
+  //    listenPublicReferralResponses(cnxn)
+  //    listenPublicRegistrationConsumerResponses(cnxn)
+  //    listenPublicRegistrationCreatorResponses(cnxn)
+    }
+
   }
 
   def sendPrivate(cnxn: AgentCnxnProxy, msg: Message)
@@ -240,31 +252,62 @@ with MessageStore
       //      }
       case _ => {/*ignore*/}
     }
-    route(cnxn, msg)
-    //    super.send(queue, cnxn, msg)
 
-  }
 
-  def route(cnxn: AgentCnxnProxy, msg: Message)
-  {
-    if (msg.channel == Channel.Content && msg.channelType == ChannelType.Request )
-      handlePublicContentRequestChannel(cnxn,msg)
-    else if (msg.channel == Channel.Content && msg.channelType == ChannelType.Response )
-      sendPrivate(cnxn,msg)
-    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Request )
-      handlePublicInvitationCreatorRequestChannel(cnxn,msg)
-    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) && msg.channelType == ChannelType.Response )
-      handlePublicInvitationCreatorResponseChannel(cnxn,msg)
 
-    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) && msg.channelType == ChannelType.Request )
-      handlePublicInvitationConsumerRequestChannel(cnxn,msg)
-    else if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) &&msg.channelType == ChannelType.Response )
-      sendPrivate(cnxn,msg)
+
+    if ((msg.channelLevel == Some(ChannelLevel.Public) || msg.channelLevel == Some(ChannelLevel.Single)) && isLocalNetworkMode())
+      spawn{
+        processPublicSendLocally(cnxn, msg)
+      }
     else
-      println("ROUTE ROUTE COULD NOT ROUTE")
-
-
-
-
+      super.send(queue, cnxn, msg)
+     
   }
+
+  /**
+   * To improve performance, when a single store PA is being used, no reason to send requests out onto public q.
+   * The send method (above) intercepts messages that would normally be sent on public queue, and instead sends them to this method
+   * which directs the message directly to the local handler, thus avoiding a round trip to the public q.
+   */
+  protected def processPublicSendLocally(cnxn: AgentCnxnProxy, msg: Message)
+  {
+//    report("In processSendLocally", Severity.Trace)
+    System.err.println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL In processSendLocally")
+
+    if (msg.channelType == ChannelType.Response){
+      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator))
+        handlePublicInvitationCreatorResponseChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Verify)
+        handleVerifyResponseChannel(cnxn, msg)
+      else
+      {
+        sendPrivate(cnxn, msg)
+      }
+    }
+
+    if (msg.channelType == ChannelType.Request){
+      if (msg.channel == Channel.Content )
+        handlePublicContentRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Security)
+        handlePublicSecurityRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Verify)
+        handleVerifyRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator))
+        handlePublicInvitationCreatorRequestChannel(cnxn, msg)
+      else
+      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer))
+        handlePublicInvitationConsumerRequestChannel(cnxn, msg)
+      else{
+        //        System.err.println("In processSendLocally, received request for which there is no handler, type = " + msg.getClass.getName);
+        report("Received request for which there is no handler, message type = " + msg.getClass.getName, Severity.Error)
+      }
+    }
+  }
+
+
 }

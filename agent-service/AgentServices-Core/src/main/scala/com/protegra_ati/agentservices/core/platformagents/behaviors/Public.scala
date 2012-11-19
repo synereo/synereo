@@ -15,6 +15,8 @@ trait Public {
   var _publicQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _publicConfigFileName: Option[String] = None
 
+  var _networkMode = "Distributed"
+
   def initPublic(configUtil: Config)
   {
     val publicSelfMapKey = "public.self"
@@ -22,6 +24,11 @@ trait Public {
 
     val publicAcquaintanceMapKey = "public.acquaintances"
     _publicAcquaintanceAddresses = loadURIs(configUtil.getConfigMap(publicAcquaintanceMapKey))  ::: this._publicAcquaintanceAddresses
+
+    val networkModeMapKey = "networkMode"
+    this._networkMode = configUtil.getString(networkModeMapKey).getOrElse("Distributed")
+    //System.err.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   In initPublic _networkMode = " + _networkMode);
+
   }
 
   def initPublic(publicLocation: URI, publicAcquaintanceAddresses: List[ URI ], publicConfigFileName: Option[String])
@@ -34,4 +41,18 @@ trait Public {
   def loadPublicQueue() = {
     _publicQ = createNode(_publicLocation, _publicAcquaintanceAddresses, _publicConfigFileName)
   }
+
+  def isLocalNetworkMode() = {
+    _networkMode == "Local"
+  }
+
+  def isDistributedNetworkMode() = {
+    !isLocalNetworkMode
+  }
+
+  def setNetworkMode(mode: String) = {
+    _networkMode = mode;
+  }
+
+
 }

@@ -303,7 +303,7 @@ Timeouts
     "deserialize persisted ReferralRequest" in {
       // skipped("")
 
-      val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
+      val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "targetCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
       val req = new ReferralRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, sourceRequest)
       val data = new PersistedMessage[ ReferralRequest ](req)
 //      Serializer.evaluateSerializerClass(data) mustEqual ( KryoSerializer.getInstance().getClass.getName )
@@ -331,7 +331,7 @@ Timeouts
       val post1 = new Post("theSubject", "theBody", new java.util.HashMap(), new java.util.HashMap())
       val post2 = new Post("theSubject", "theBody", new java.util.HashMap(), new java.util.HashMap())
 
-      val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "requestedCategory", "requestedConnectionType", "requestedConnectionName", post1, post2) //, postToTarget, postToBroker);
+      val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "targetCategory", "requestedConnectionType", "requestedConnectionName", post1, post2) //, postToTarget, postToBroker);
 
 //      Serializer.evaluateSerializerClass(sourceRequest) mustEqual ( KryoSerializer.getInstance().getClass.getName )
       val serializedRequest = Serializer.serialize[ CreateInvitationRequest ](sourceRequest)

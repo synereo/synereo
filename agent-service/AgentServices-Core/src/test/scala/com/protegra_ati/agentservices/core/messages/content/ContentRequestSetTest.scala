@@ -431,7 +431,7 @@ with Serializable
 
   def setAppId(self: AgentCnxnProxy): AppId =
   {
-    val appId = AppId("TestApp")
+    val appId = new AppId("TestApp")
     setContentToSelfConnection(self, appId)
     appId
   }

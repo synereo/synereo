@@ -124,12 +124,11 @@ trait InvitationRequestSetConsumer
     val selfConnection = systemConnection.data
     val persistedInvitationRequestMessage = new PersistedMessage[ InvitationRequest ](inviteRequest)
     store(_dbQ, selfConnection.writeCnxn, persistedInvitationRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](persistedInvitationRequestMessage))
-    val profileQuery = Profile.SEARCH_ALL
-    fetch[ Data ](_dbQ, selfConnection.writeCnxn, profileQuery.toSearchKey, invitationRequestNotificationHandler(_: AgentCnxnProxy, _: Data, inviteRequest))
+    invitationRequestNotificationHandler(selfConnection.writeCnxn, inviteRequest)
 
   }
 
-  protected def invitationRequestNotificationHandler(cnxn: AgentCnxnProxy, user: Data, inviteRequest: InvitationRequest) =
+  protected def invitationRequestNotificationHandler(cnxn: AgentCnxnProxy, inviteRequest: InvitationRequest) =
   {
     //email, sms, however you want to notify
     //also a hook to override in other implementations

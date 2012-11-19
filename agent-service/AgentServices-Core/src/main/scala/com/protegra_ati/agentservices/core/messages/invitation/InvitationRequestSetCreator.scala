@@ -123,6 +123,13 @@ trait InvitationRequestSetCreator
       response.originCnxn = referralRequest.originCnxn
       send(_publicQ, cnxnSelf, response )
     }
+    referralRequestNotificationHandler(cnxnSelf, referralRequest)
+
+  }
+  protected def referralRequestNotificationHandler(cnxn: AgentCnxnProxy, referralRequest: ReferralRequest) =
+  {
+    //email, sms, however you want to notify
+    //also a hook to override in other implementations
   }
 
   def generateInvitationRequests(sourceRequest: CreateInvitationRequest, connBroker_A: Connection, connBroker_B: Connection): Unit =
@@ -173,8 +180,8 @@ trait InvitationRequestSetCreator
       connBroker_B,
       sourceRequest.selfAlias,
       sourceRequest.targetAlias,
-      sourceRequest.requestedCategory,
-      sourceRequest.requestedCategory,
+      sourceRequest.selfCategory,
+      sourceRequest.targetCategory,
       Some(sourceRequest.requestedConnectionType),
       Some(sourceRequest.requestedConnectionType),
       Some(sourceRequest.requestedConnectionName),
@@ -200,6 +207,8 @@ trait InvitationRequestSetCreator
    * @param connBroker_B
    * @param alias_A
    * @param alias_B
+   * @param category_A
+   * @param category_B
    * @param requestedConnectionType
    * @param requestedConnectionName
    * @param requestedPosts_A  post thread forwarded to A

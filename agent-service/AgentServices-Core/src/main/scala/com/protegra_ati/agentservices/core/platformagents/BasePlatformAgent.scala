@@ -172,7 +172,7 @@ abstract class BasePlatformAgent
           spawn {
             //            rename {
             val msg = Serializer.deserialize[ Message ](e.dispatch)
-            System.err.println("IIIIIIIIIIIIIIIIIIIIIIII msg id : " + msg.ids.id)
+            System.err.println("IIIIIIIIIIIIIIIIIIIIIIII msg id : " + msg.ids.id + " on cnxn " + cnxn)
             report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " msg id: " + msg.ids.id + " cnxn: " + agentCnxn.toString, Severity.Info)
             //race condition on get get get with consume bringing back the same item, cursor would get around this problem
             //BUG 54 - can't use a cursor get before a put because no results are returned, problem with cursors and waiters

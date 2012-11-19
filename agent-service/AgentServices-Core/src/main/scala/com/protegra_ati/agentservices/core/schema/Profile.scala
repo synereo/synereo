@@ -12,7 +12,7 @@ import scala.reflect.BeanProperty
 import com.protegra.agentservicesstore.extensions._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import scala.collection.JavaConversions._
-
+import java.lang.{Integer}
 
 /**
  * Personal profile data object
@@ -67,6 +67,12 @@ case class Profile(
     Profile.DISPLAYABLE_FIELD_NAMES
   }
 
+  override def getDisplayableFieldSortOrder: HashMap[ String, Integer ] =
+  {
+    Profile.DISPLAYABLE_FIELD_SORT_ORDER
+  }
+
+
   override def getDisplayName: String =
   {
     "Profile"
@@ -89,6 +95,8 @@ case class Profile(
 object Profile
 {
   final val DISPLAYABLE_FIELD_NAMES = createDisplayableFieldNamesMap()
+
+  final val DISPLAYABLE_FIELD_SORT_ORDER = createDisplayableFieldSortOrderMap()
 
 
   final val SEARCH_ALL_KEY = new Profile().toSearchKey
@@ -153,5 +161,19 @@ object Profile
     map
   }
 
-
+  private def createDisplayableFieldSortOrderMap(): HashMap[ String, Integer ] =
+  {
+    val map = new HashMap[ String, Integer ]()
+    map.put("firstName", 1)
+    map.put("lastName", 2)
+    map.put("description", 3)
+    map.put("emailAddress", 4)
+    map.put("country", 5)
+    map.put("region", 6)
+    map.put("city", 7)
+    map.put("postalCode", 8)
+    map.put("website", 9)
+    map.put("image", 10)
+    map
+  }
 }

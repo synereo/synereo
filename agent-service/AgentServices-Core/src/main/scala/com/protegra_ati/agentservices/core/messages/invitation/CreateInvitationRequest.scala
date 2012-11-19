@@ -11,7 +11,8 @@ case class CreateInvitationRequest(
   val invitationConnectionId: String,
   @BeanProperty selfAlias: String,
   @BeanProperty targetAlias: String,
-  @BeanProperty requestedCategory: String,
+  @BeanProperty selfCategory: String,
+  @BeanProperty targetCategory: String,
   @BeanProperty requestedConnectionType: String,
   @BeanProperty requestedConnectionName: String,
   @BeanProperty postToTarget: Post,
@@ -19,7 +20,7 @@ case class CreateInvitationRequest(
   ) extends Message(new Identification(), eventKey)//extends Message(eventKey) kryo workaround
    with Request with UseKryoSerialization
 {
-  def this () = this (null,null, null, null, null, null, null, null, null)
+  def this () = this (null,null, null, null, null, null, null, null, null, null)
 
   override def channel = Channel.Invitation
 

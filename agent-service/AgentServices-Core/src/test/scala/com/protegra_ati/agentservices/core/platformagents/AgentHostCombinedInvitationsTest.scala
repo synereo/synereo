@@ -38,7 +38,7 @@ with ReferralUser
 
   "Invitations" should {
     "create connections from an accepted CreateInvitationRequest" in {
-      skipped("issue 242 or specs")
+//      skipped("issue 242 or specs")
 
       def compareBrokerPostHandler(receivedPostToBroker: Post, expectedPostToBroker: Post): Unit =
       {
@@ -53,9 +53,9 @@ with ReferralUser
         if ( !receivedInviteePosts.equals(expectedInviteePosts) ) fail("posts won't be transferred properly to the invitee")
       }
 
-      def requestInvitation(ui: AgentHostUIPlatformAgent, connInviterBroker: Connection, targetConnectionId: String, selfAlias: String, targetAlias: String, requestedCategory: String, requestedConnectionType: String, requestedConnectionName: String, postToBroker: Post, postToInvitee: Post, agentSessionId: UUID, tag: String) =
+      def requestInvitation(ui: AgentHostUIPlatformAgent, connInviterBroker: Connection, targetConnectionId: String, selfAlias: String, targetAlias: String, selfCategory: String, targetCategory: String, requestedConnectionType: String, requestedConnectionName: String, postToBroker: Post, postToInvitee: Post, agentSessionId: UUID, tag: String) =
       {
-        val req = new CreateInvitationRequest(new EventKey(agentSessionId, tag), targetConnectionId.toString, selfAlias, targetAlias, requestedCategory, requestedConnectionType, requestedConnectionName, postToInvitee, postToBroker)
+        val req = new CreateInvitationRequest(new EventKey(agentSessionId, tag), targetConnectionId.toString, selfAlias, targetAlias, selfCategory, targetCategory, requestedConnectionType, requestedConnectionName, postToInvitee, postToBroker)
         // TODO add to the constructor to prevent errors !!!
         req.targetCnxn = connInviterBroker.readCnxn
         ui.send(req)
@@ -126,7 +126,7 @@ with ReferralUser
       val postToBroker = new Post("Hi Broker here is Mike, connect me to Jason", "theBody", new java.util.HashMap())
       val postToInvitee = new Post("Hi Jason here is Mike, nice to meet you", "theBody", new java.util.HashMap())
       // inviter asks to be connected by broker and send 2 messages: 1 to the broker, 1 to the Invitee
-      requestInvitation(uiR, connMikeBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
+      requestInvitation(uiR, connMikeBroker, connBrokerJason.id, connJasonJason.alias, connBrokerJason.alias, requestedCategory1, requestedCategory1, requestedConnectionType1, requestedConnectionName1, postToBroker, postToInvitee, agentSessionIdMike, eventKey)
       Thread.sleep(TIMEOUT_SHORT)
       // checks if invitation was processed on the store successfully
       assertInvitationResponse(uiR, agentSessionIdMike, eventKey);

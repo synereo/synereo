@@ -76,7 +76,7 @@ class SearchableDataTest extends SpecificationWithJUnit
     "work with traits" in {
       skipped("TODO: need to update the test")
       val id = UUID.randomUUID.toString
-      val expected = "post(" + FIELDS + "(id(\"" + id + "\"),localeCode(_),subject(_),body(_),toDetails(_),fromDetails(_),threadId(_),sent(_),delivered(_),viewed(_)))"
+      val expected = "post(" + FIELDS + "(id(\"" + id + "\"),localeCode(_),subject(_),body(_),toDetails(_),fromDetails(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_)))"
       val test = new Post()
       test.id = id
       println(test.toSearchKey)
@@ -91,7 +91,7 @@ class SearchableDataTest extends SpecificationWithJUnit
 
       val postToTarget = new Post("subject: to Target ", "body", fromDetails);
       val postToBroker = new Post("subject: to Broker", "body", fromDetails);
-      val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", postToTarget, postToBroker);
+      val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", "", postToTarget, postToBroker);
       val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
 
       val searchKey = persistedMessage.toSearchKey
@@ -129,7 +129,7 @@ class SearchableDataTest extends SpecificationWithJUnit
     "generate search key correctly for a Connection" in {
       skipped("TODO: need to update the test")
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
-      val expectedSearchKey = "connection(fields(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralDisabled, searchDisabled]\"),created(_)))"
+      val expectedSearchKey = "connection(fields(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralsDisabled, searchDisabled]\"),created(_)))"
       val data = new Connection(ConnectionCategory.Person.toString, "connectionType", "alias", null, null, "autoApprove", List(ConnectionPolicy.ReferralsDisabled.toString, ConnectionPolicy.SearchDisabled.toString), null)
       data.id = id
       val searchKey = data.toSearchKey
