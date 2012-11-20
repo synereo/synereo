@@ -69,7 +69,7 @@ with Serializable
   var vBarrier = 0
   var kBarrier = 0
 
-  def loop() : Unit = {
+  def getLoop() : Unit = {
     reset {
       for (
 	e <- store_privateQ.get(
@@ -85,7 +85,7 @@ with Serializable
 	    
             Results.saveString(resultKey, result)
 	    vBarrier += 1
-	    spawn { loop() }
+	    spawn { getLoop() }
 	  }
 	  else {
             tweet(
@@ -99,15 +99,40 @@ with Serializable
     }
   }
 
+  def putLoop( n : Int, keyMsg : String, value : String ) : Unit = {
+    n match {
+      case i : Int if i > 0 => {
+	tweet(
+	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+	  + "\nwriting " + value + " to " + keyMsg
+	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+	)
+	reset {
+	  ui_privateQ.put(
+	    cnxnUIStore
+	  )( keyMsg.toLabel, Ground( value ) )
+	}
+	putLoop( n - 1, keyMsg, value )
+      }
+      case _ => {
+	tweet(
+	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+	  + "\nputLoop complete"
+	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+	)
+      }
+    }    
+  }
+
   tweet(
     "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-    + "\n calling loop "
+    + "\n calling getLoop "
     + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
   )
-  loop()
+  getLoop()
   tweet(
     "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-    + "\n loop called "
+    + "\n getLoop called "
     + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
   )
 }
@@ -154,20 +179,18 @@ with Serializable
       val value = "test"
       var count = 0
 
+      putLoop( 5, keyMsg, value )
+
       while ( ( kBarrier < 1 ) && ( count < 50 ) ) {
 	tweet( "waiting to get over kBarrier" )
 	tweet( "count = " + count )
 	count += 1
 	Thread.sleep(TIMEOUT_MED)
       }
-      
-      count = 0
 
-      reset {
-	ui_privateQ.put(
-	  cnxnUIStore
-	)( keyMsg.toLabel, Ground( value ) )
-      }
+      putLoop( 5, keyMsg, value )
+      
+      count = 0      
 
       while ( ( vBarrier < 1 ) && ( count < 100 ) ) {
 	tweet( "waiting to get over vBarrier" )
@@ -176,11 +199,7 @@ with Serializable
 	Thread.sleep(TIMEOUT_MED)
       }
 
-      reset {
-	ui_privateQ.put(
-	  cnxnUIStore
-	)( keyMsg.toLabel, Ground( value ) )
-      }
+      putLoop( 5, keyMsg, value )
 
       //Results.savedString(restoredKey) must be_==(restored).eventually(10, TIMEOUT_EVENTUALLY)
 
