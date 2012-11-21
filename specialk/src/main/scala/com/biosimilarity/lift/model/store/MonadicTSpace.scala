@@ -29,10 +29,12 @@ case object Cache extends RetainInCache
 case object Store extends RetainInStore 
 case object CacheAndStore extends RetainInCache with RetainInStore
 
-case class SpaceLock[RK](
-  readingRoom : HashMap[RK,Boolean],
-  writingRoom : Buffer[Int],
-  history : Buffer[RK]
+class SpaceLock[RK](
+  val readingRoom : HashMap[RK,Boolean],
+  val writingRoom : Buffer[Int],
+  val history : Buffer[RK],
+  val maxWROccupancy : Int,
+  val maxRROccupancy : Int
 ) {
   def allowedIn( rk : RK ) : Boolean = {
     if ( writingRoom.size < 1 ) {
@@ -58,13 +60,13 @@ case class SpaceLock[RK](
 	    writingRoom += 1
 	  }
 	  case 1 => {
-	    writingRoom( 0 ) += 1
+	    writingRoom( 0 ) += 1       
 	  }
 	  case _ => {
 	    throw new Exception( "oddly shaped writing room: " + writingRoom )
 	  }
 	}
-	true
+	( writingRoom( 0 ) <= maxWROccupancy )
       }
       case _ => {
 	val p =
@@ -83,7 +85,7 @@ case class SpaceLock[RK](
 	      throw new Exception( "oddly shaped writing room: " + writingRoom )
 	    }
 	  }
-	  true
+	  ( writingRoom( 0 ) <= maxWROccupancy )
 	}
 	else {
 	  false
@@ -164,6 +166,150 @@ case class SpaceLock[RK](
   }
 }
 
+object SpaceLock {
+  def apply [RK] (
+    readingRoom : HashMap[RK,Boolean],
+    writingRoom : Buffer[Int],
+    history : Buffer[RK],
+    maxWROccupancy : Int,
+    maxRROccupancy : Int 
+  ) : SpaceLock[RK] = {
+    new SpaceLock[RK](
+      readingRoom, writingRoom, history, maxWROccupancy, maxRROccupancy
+    )
+  }
+  def unapply [RK] (
+    sl : SpaceLock[RK]
+  ) : Option[( HashMap[RK,Boolean], Buffer[Int], Buffer[RK], Int, Int )] = {
+    Some(
+      (
+	sl.readingRoom,
+	sl.writingRoom,
+	sl.history,
+	sl.maxWROccupancy,
+	sl.maxRROccupancy
+      )
+    )
+  }
+}
+
+trait Mode[RK,Pattern] {
+  def ptn : Pattern
+  def optRK : Option[RK]
+}
+
+case class Station[RK,Pattern](
+  @transient override val ptn : Pattern,
+  @transient override val optRK : Option[RK]
+) extends Mode[RK,Pattern]
+
+trait ModeSpaceLock[RK,Pattern] {
+  type ModeType <: Mode[RK,Pattern]
+  def locker : HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int]
+  def maxOccupancy : Int  
+  /*
+   * Vibratory mode construction
+   */
+  def makeMode( ptn : Pattern, rk : Option[RK] ) : ModeType
+  def makeMode( ptn : Pattern, rk : RK ) : ModeType
+  def makeMode( ptn : Pattern ) : ModeType
+  
+  def allowedIn( s : ModeType ) : Boolean = {
+    locker.get( s ) match {
+      case Some( i ) => {
+	if ( i < maxOccupancy ) {
+	  locker += ( s -> ( i + 1 ) )
+	  true
+	}
+	else {
+	  false
+	}
+      }
+      case None => {
+	locker += ( s -> 1 )
+	true
+      }
+    }
+  }
+  def leave( s : ModeType ) : Unit = {
+    locker.get( s ) match {
+      case Some( 1 ) => {
+	locker -= s
+	notify()
+      }
+      case Some( i ) => {
+	locker += ( s -> ( i - 1 ) )
+	notify()
+      }
+      case None => {
+	/* throw new Exception */ println( "leaving lock without entering" )
+      }
+    }
+  }
+  /*
+   * Occupation of a vibratory mode
+   */
+  def occupy( s : ModeType ) : Unit = synchronized {
+    while ( ! allowedIn( s ) ) wait()
+  }
+  def occupy( ptn : Pattern ) : Unit = {
+    occupy( makeMode( ptn ) )
+  }
+  def occupy( ptn : Pattern, rk : RK ) : Unit  = {
+    occupy( makeMode( ptn, rk ) )
+  }
+  def occupy( ptn : Pattern, optRK : Option[RK] ) : Unit  = {
+    occupy( makeMode( ptn, optRK ) )
+  }
+  /*
+   * Departure of a vibratory mode
+   */
+  def depart( s : ModeType ) : Unit = synchronized {
+    leave( s )
+  }
+  def depart( ptn : Pattern ) : Unit = {
+    depart( makeMode( ptn ) )
+  }
+  def depart( ptn : Pattern, rk : RK ) : Unit = {
+    depart( makeMode( ptn, rk ) )
+  }
+  def depart( ptn : Pattern, optRK : Option[RK] ) : Unit = {
+    depart( makeMode( ptn, optRK ) )
+  }
+}
+
+case class KeyRKSpaceLock[RK,Pattern](
+  @transient override val locker : HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int],
+  override val maxOccupancy : Int
+) extends ModeSpaceLock[RK,Pattern] {  
+  override type ModeType = Station[RK,Pattern]
+  def makeMode( ptn : Pattern, rk : Option[RK] ) : ModeType = {
+    Station[RK,Pattern]( ptn, rk )
+  }
+  def makeMode( ptn : Pattern, rk : RK ) : ModeType = {
+    Station[RK,Pattern]( ptn, Some( rk ) )
+  }
+  def makeMode( ptn : Pattern ) : ModeType = {
+    Station[RK,Pattern]( ptn, None )
+  }
+}
+
+case class KeyNoKSpaceLock[RK,Pattern](
+  @transient override val locker : HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int],
+  override val maxOccupancy : Int
+) extends ModeSpaceLock[RK,Pattern] {  
+  override type ModeType = Station[RK,Pattern]
+  def makeMode( ptn : Pattern, rk : Option[RK] ) : ModeType = {
+    Station[RK,Pattern]( ptn, None )
+  }
+  def makeMode( ptn : Pattern, rk : RK ) : ModeType = {
+    Station[RK,Pattern]( ptn, None )
+  }
+  def makeMode( ptn : Pattern ) : ModeType = {
+    Station[RK,Pattern]( ptn, None )
+  }
+}
+
 trait ExcludedMiddleTypes[Place,Pattern,Resource] {
   type RK = Option[Resource] => Unit @suspendable  
 
@@ -224,27 +370,56 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
       with ConfigurationTrampoline =>		
 
   @transient
-  var _spaceLock : Option[SpaceLock[RK]] = None
+  //var _spaceLock : Option[SpaceLock[RK]] = None
+  var _spaceLock : Option[ModeSpaceLock[RK,Pattern]] = None
 
-  def spaceLock : SpaceLock[RK] = {
+  // def spaceLock : SpaceLock[RK] = {
+//     _spaceLock match {
+//       case Some( sl ) => sl
+//       case null => {
+// 	val sl =
+// 	  new SpaceLock[RK](
+// 	    new HashMap[RK, Boolean](),
+// 	    new ListBuffer[Int](),
+// 	    new ListBuffer[RK],
+// 	    1,
+// 	    1
+// 	  )
+// 	_spaceLock = Some( sl )
+// 	sl
+//       }
+//       case None => {
+// 	val sl =
+// 	  new SpaceLock[RK](
+// 	    new HashMap[RK, Boolean](),
+// 	    new ListBuffer[Int](),
+// 	    new ListBuffer[RK],
+// 	    1,
+// 	    1
+// 	  )
+// 	_spaceLock = Some( sl )
+// 	sl
+//       }
+//     }
+//   }
+
+  def spaceLock : ModeSpaceLock[RK,Pattern] = {
     _spaceLock match {
       case Some( sl ) => sl
       case null => {
 	val sl =
-	  new SpaceLock[RK](
-	    new HashMap[RK, Boolean](),
-	    new ListBuffer[Int](),
-	    new ListBuffer[RK]
+	  KeyNoKSpaceLock[RK,Pattern](
+	    new HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int](),
+	    1
 	  )
 	_spaceLock = Some( sl )
 	sl
       }
       case None => {
 	val sl =
-	  new SpaceLock[RK](
-	    new HashMap[RK, Boolean](),
-	    new ListBuffer[Int](),
-	    new ListBuffer[RK]
+	  KeyNoKSpaceLock[RK,Pattern](
+	    new HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int](),
+	    1
 	  )
 	_spaceLock = Some( sl )
 	sl
@@ -398,20 +573,17 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	shift {
 	  outerk : ( Unit => Unit ) =>
 	    reset {
-	      // if ( ! spaceLock.available ) {
-// 		rk( None )
-// 	      }
-// 	      else {
 	      val slk = spaceLockKey match {
 		case None => Some( rk )
 		case _ => spaceLockKey
 	      }
 
-	      spaceLock.occupy( slk )
+	      //spaceLock.occupy( slk )
+	      spaceLock.occupy( ptn, slk )
 
 	      tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
-	      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
 	      val meets = locations( map, ptn )
@@ -443,9 +615,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  }
 		  case _ => {
 		    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		    spaceLock.depart( slk )
-		    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		    //spaceLock.depart( slk )
+		    spaceLock.depart( ptn, slk )
+		    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		  }
 		}
 		
@@ -475,19 +648,17 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		    }
 		    case _ => {
 		      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		      spaceLock.depart( slk )
-		      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		      //spaceLock.depart( slk )
+		      spaceLock.depart( ptn, slk )
+		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		    }
 		  }
 
-		  rk( s( rsrc ) )
-		  
-		  //shift { k : ( Unit => Unit ) => k() }
+		  rk( s( rsrc ) )		  
  		}
  	      }				
-	      //}
- 	      //tweet( "get returning" )
+
  	      outerk()
  	    }
  	}
@@ -636,9 +807,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	    channels( representative( ptn ) ) = rsrc
 
 	    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
-	    spaceLock.depart( None )
-	    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	    //spaceLock.depart( None )
+	    spaceLock.depart( ptn )
+	    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 	  }
 	}
     }
@@ -649,10 +821,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     registered : Map[Place,List[RK]],
     consume : Boolean
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {        
-    spaceLock.occupy( None )
+    //spaceLock.occupy( None )
+    spaceLock.occupy( ptn )
     tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
-    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
     for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
@@ -662,9 +835,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  if ( consume ) {
 
 	    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
-	    spaceLock.depart( None )
-	    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	    //spaceLock.depart( None )
+	    spaceLock.depart( ptn )
+	    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 	    for( sk <- rks ) {
 	      spawn {
@@ -675,9 +849,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  else {
 
 	    tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
-	    spaceLock.depart( None )
-	    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	    //spaceLock.depart( None )
+	    spaceLock.depart( ptn )
+	    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 	    registered( wtr ) = rrks
 
@@ -717,9 +892,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	  )
 
 	  tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
-	  spaceLock.depart( None )
-	  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	  //spaceLock.depart( None )
+	  spaceLock.depart( ptn )
+	  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 	}
       }
@@ -750,10 +926,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		case _ => spaceLockKey
 	      }
 
-	      spaceLock.occupy( slk )
+	      //spaceLock.occupy( slk )
+	      spaceLock.occupy( ptn, slk )
 	      tweet( "Delete occupying spaceLock on " + this + " for delete on " + ptn + "." )
-	      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 	      val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
 	      val meets = locations( map, ptn )
@@ -761,22 +938,25 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 	      if ( meets.isEmpty ) {
 		tweet( "Delete found no locations matching pattern: " + ptn )
 		tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
-		spaceLock.depart( slk )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		//spaceLock.depart( slk )
+		spaceLock.depart( ptn, slk )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		
-		spaceLock.occupy( None )
+		//spaceLock.occupy( None )
+		spaceLock.occupy( ptn )
 		tweet( "Delete occupying spaceLock on " + this + " for mdelete on " + ptn + "." )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 		val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
 		val waitlist = locations( map, ptn )
 
 		tweet( "Delete departing spaceLock on " + this + " for mdelete on " + ptn + "." )
-		spaceLock.depart( None )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		//spaceLock.depart( None )
+		spaceLock.depart( ptn )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 		waitlist match {
 		  // Yes!
@@ -817,9 +997,10 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 		  channels -= place		  		  
 
 		  tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
-		  spaceLock.depart( slk )
-		  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		  //spaceLock.depart( slk )
+		  spaceLock.depart( ptn, slk )
+		  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 		  rk( Some( placeNRrscNSubst ) )
 		  

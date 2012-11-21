@@ -203,11 +203,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 		  case _ => spaceLockKey
 		}
 		
-		spaceLock.occupy( slk )
+		//spaceLock.occupy( slk )
+		spaceLock.occupy( ptn, slk )
 		
 		tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		
 		val map = Left[Map[mTT.GetRequest,mTT.Resource],Map[mTT.GetRequest,List[RK]]]( channels )
 		val meets = locations( map, ptn )
@@ -239,9 +240,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 		    }
 		    case _ => {
 		      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		      spaceLock.depart( slk )
-		      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		      //spaceLock.depart( slk )
+		      spaceLock.depart( ptn, slk )
+		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		    }
 		  }
 		  
@@ -277,9 +279,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 			}
 			case _ => {
 			  tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-			  spaceLock.depart( slk )
-			  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			  //spaceLock.depart( slk )
+			  spaceLock.depart( ptn, slk )
+			  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 			}
 		      }
 		      
@@ -309,9 +312,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 			  }
 			  case _ => {
 			    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-			    spaceLock.depart( slk )
-			    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			    //spaceLock.depart( slk )
+			    spaceLock.depart( ptn, slk )
+			    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 			  }
 			}
 			

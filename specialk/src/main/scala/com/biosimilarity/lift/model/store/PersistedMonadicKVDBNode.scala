@@ -950,9 +950,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		}
 
 		tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
-		spaceLock.depart( None )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		//spaceLock.depart( None )
+		spaceLock.depart( ptn )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		
 	      }
 	    }
@@ -1055,10 +1056,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ptn : mTT.GetRequest,
 	  rsrc : mTT.Resource
 	) : Unit @suspendable = {                            
-	  spaceLock.occupy( None )
+	  //spaceLock.occupy( None )
+	  spaceLock.occupy( ptn )
 	  tweet( "Writer occupying spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
-	  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 	  for(
 	    placeNRKsNSubst
@@ -1076,9 +1078,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  pI.stuff match {
 		    case Right( k :: ks ) => {		      
 		      tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
-		      spaceLock.depart( None )
-		      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		      //spaceLock.depart( None )
+		      spaceLock.depart( ptn )
+		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 		      for( sk <- ( k :: ks ) ) {			
 			spawn {
@@ -1088,9 +1091,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    }
 		    case Right( Nil ) => {
 		      tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
-		      spaceLock.depart( None )
-		      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		      //spaceLock.depart( None )
+		      spaceLock.depart( ptn )
+		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 		      putInStore(
 			persist, channels, ptn, None, rsrc, collName
@@ -1101,9 +1105,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      }
 	      case None => {
 		tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
-		spaceLock.depart( None )
-		tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		//spaceLock.depart( None )
+		spaceLock.depart( ptn )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 		putInStore(
 		  persist, channels, ptn, None, rsrc, collName
@@ -1170,9 +1175,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			      )
 
 			      tweet( "Reader departing spaceLock PMKVDB Version 1" + this + " for mget on " + path + "." )
-			      spaceLock.depart( Some( rk ) )
-			      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			      //spaceLock.depart( Some( rk ) )
+			      spaceLock.depart( path, Some( rk ) )
+			      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 			      rk( oV )
 			    }
@@ -1207,9 +1213,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 // 				      forward( ask, hops, path )
 
 				      tweet( "Reader departing spaceLock PMKVDBNode 2" + this + " for mget on " + path + "." )
-				      spaceLock.depart( Some( rk ) )
-				      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				      //spaceLock.depart( Some( rk ) )
+				      spaceLock.depart( path, Some( rk ) )
+				      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 				      rk( oV )
 				    }
@@ -1269,9 +1276,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						  
 						  while ( stbl( skey ) > 0 ){}
 						  tweet( "Reader departing spaceLock PMKVDBNode Version 3 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
-						  spaceLock.depart( Some( rk ) )
-						  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-						  tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
+						  //spaceLock.depart( Some( rk ) )
+						  spaceLock.depart( path, Some( rk ) )
+						  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+						  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
 						  
 						}
 						case _ => {
@@ -1316,9 +1324,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
 						  while ( stbl( skey ) > 0 ){ }
 						  tweet( "Reader departing spaceLock PMKVDBNode Version 3 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
-						  spaceLock.depart( Some( rk ) )
-						  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-						  tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
+						  //spaceLock.depart( Some( rk ) )
+						  spaceLock.depart( path, Some( rk ) )
+						  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+						  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
 
 						}
 					      }					      
@@ -1380,9 +1389,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                               //tweet( "returning cursor" + rsrcCursor )
 
 					      tweet( "Reader departing spaceLock PMKVDBNode Version 4" + this + " for mget on " + path + "." )
-					      spaceLock.depart( Some( rk ) )
-					      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					      //spaceLock.depart( Some( rk ) )
+					      spaceLock.depart( path, Some( rk ) )
+					      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 					      
                                               rk( rsrcCursor )
 					    }
@@ -1419,9 +1429,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						    tweet( "returning " + r )
 
 						    tweet( "Reader departing spaceLock PMKVDBNode Version 5 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
-						    spaceLock.depart( Some( rk ) )
-						    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-						    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+						    //spaceLock.depart( Some( rk ) )
+						    spaceLock.depart( path, Some( rk ) )
+						    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+						    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 						    rk( Some( r ) )
 						  }
@@ -1443,9 +1454,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 // 				  forward( ask, hops, path )
 
 				  tweet( "Reader departing spaceLock PMKVDBNode Version 6 " + this + " for mget on " + path + "." )
-				  spaceLock.depart( Some( rk ) )
-				  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				  //spaceLock.depart( Some( rk ) )
+				  spaceLock.depart( path, Some( rk ) )
+				  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 				  
 				  rk( oV )
 				}
@@ -1467,9 +1479,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
 
 			      tweet( "Reader departing spaceLock PMKVDBNode Version 7 " + this + " for mget on " + path + "." )
-			      spaceLock.depart( Some( rk ) )
-			      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			      //spaceLock.depart( Some( rk ) )
+			      spaceLock.depart( path, Some( rk ) )
+			      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 			      rk( oV )
 			    }
@@ -1495,9 +1508,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				  )
 
 				  tweet( "Reader departing spaceLock PMKVDBNode Version 8 " + this + " for mget on " + path + "." )
-				  spaceLock.depart( Some( rk ) )
-				  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				  //spaceLock.depart( Some( rk ) )
+				  spaceLock.depart( path, Some( rk ) )
+				  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 				  rk( oV )
 				}
@@ -1514,9 +1528,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				      )
 
 				      tweet( "Reader departing spaceLock PMKVDBNode Version 9 " + this + " for mget on " + path + "." )
-				      spaceLock.depart( Some( rk ) )
-				      tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				      tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				      //spaceLock.depart( Some( rk ) )
+				      spaceLock.depart( path, Some( rk ) )
+				      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 				      rk( oV )
 				    }
@@ -1533,9 +1548,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					  )
 
 					  tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
-					  spaceLock.depart( Some( rk ) )
-					  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					  //spaceLock.depart( Some( rk ) )
+					  spaceLock.depart( path, Some( rk ) )
+					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 					  rk( oV )
 					}
@@ -1574,9 +1590,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					  }
 
 					  tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
-					  spaceLock.depart( Some( rk ) )
-					  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					  //spaceLock.depart( Some( rk ) )
+					  spaceLock.depart( path, Some( rk ) )
+					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 					  rk( oV )
 					}
