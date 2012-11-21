@@ -15,7 +15,7 @@ class ParallelSingletonClonerPerformanceTest(repetitions: Int)
   {
     override def run()
     {
-      System.err.println("total execution time for " + repetitions + " of parallel clonings with singleton cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
+      println("total execution time for " + repetitions + " of parallel clonings with singleton cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
     }
   });
 
@@ -70,7 +70,7 @@ class ParallelMultiInstancesClonerPerformanceTest(repetitions: Int)
   {
     override def run()
     {
-      System.err.println("total execution time for " + repetitions + " of parallel clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
+      println("total execution time for " + repetitions + " of parallel clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
     }
   });
 
@@ -132,7 +132,7 @@ class SequentialMultiInstancesClonerPerformanceTest(repetitions: Int)
     for ( i <- 0 to this.repetitions ) {
       new CloneWorker().run()
     }
-    System.err.println("total execution time for " + repetitions + " of sequential clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
+    println("total execution time for " + repetitions + " of sequential clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
 
   }
 
@@ -173,7 +173,7 @@ class SequentialSingleInstancesClonerPerformanceTest(repetitions: Int)
     for ( i <- 0 to this.repetitions ) {
       new CloneWorker().run()
     }
-    System.err.println("total execution time for " + repetitions + " of sequential clonings with a single cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
+    println("total execution time for " + repetitions + " of sequential clonings with a single cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
 
   }
 

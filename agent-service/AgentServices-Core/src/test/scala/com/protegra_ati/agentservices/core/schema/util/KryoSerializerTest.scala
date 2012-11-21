@@ -30,7 +30,7 @@ import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSeri
 
 class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 {
-//  System.err.println(" in KryoSerializerTestDataInitializer constructor")
+//  println(" in KryoSerializerTestDataInitializer constructor")
 //  val profile1: SimpleMockProfile1 = SimpleMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode")
 //  val compositeProfile: CompositeMockProfile1 = CompositeMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode", MockImage.simpleDemoMockImage)
 //
@@ -508,8 +508,8 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedMockRequest match {
 //        case x: MockCreateInvitationRequest => {
 //          x must be_==(mockRequest)
-//          System.err.println("-->" + x)
-//          System.err.println("|-->" + mockRequest)
+//          println("-->" + x)
+//          println("|-->" + mockRequest)
 //
 //
 //
@@ -523,7 +523,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 //          //            case Some(role) => {
 //          //              role.toString must be_==("hallo world")
 //          //            }
-//          //            case _ => System.err.println("else:" + x.someTest.getClass) //fail
+//          //            case _ => println("else:" + x.someTest.getClass) //fail
 //          //          }
 //        }
 //      }
@@ -782,10 +782,10 @@ object KryoSerializerTestDataInitializer
     } catch {
       case ex: Exception => {
         /* TODO into log file*/
-        System.err.println("something different:" + ex.toString)
+        println("something different:" + ex.toString)
         ex.printStackTrace();
 //        failure("previously serialized class can't be deleted")
-        System.err.println("previously serialized class can't be deleted")
+        println("previously serialized class can't be deleted")
       }
     }
     serialize(data, new FileOutputStream(toFile))

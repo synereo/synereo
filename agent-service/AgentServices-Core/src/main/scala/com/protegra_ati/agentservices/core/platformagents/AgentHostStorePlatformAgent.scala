@@ -17,9 +17,11 @@ import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages.login._
 import invitation._
 import introduction._
+
 //import referral._
 //import registration._
 //import search._
+
 import verifier._
 import com.protegra.agentservicesstore.util.Severity
 
@@ -65,11 +67,13 @@ with ConnectionBroker
 with InvitationRequestSet
 with InvitationResponseSet
 with InvitationRequestSetPrivate
-with InvitationResponseSetCreatorPrivate //exception to the rule, store listens to a private response but of type creator
+with
+InvitationResponseSetCreatorPrivate //exception to the rule, store listens to a private response but of type creator
 with IntroductionRequestSet
 with IntroductionResponseSet
 with IntroductionRequestSetPrivate
-with IntroductionResponseSetCreatorPrivate //exception to the rule, store listens to a private response but of type creator
+with
+IntroductionResponseSetCreatorPrivate //exception to the rule, store listens to a private response but of type creator
 //with ReferralRequestSet
 //with ReferralResponseSet
 //with ReferralRequestSetPrivate
@@ -101,10 +105,10 @@ with MessageStore
 
   override def init(@transient configUtil: Config)
   {
-    initPrivate(configUtil)
-    initDb(configUtil)
-//    initResultDb(configUtil)
-    initPublic(configUtil)
+    initPublic(configUtil, Some("db_store_public.conf"))
+    initPrivate(configUtil, Some("db_store.conf"))
+    initDb(configUtil, Some("db_store_db.conf"))
+    //    initResultDb(configUtil)
 
     _storeCnxn = new AgentCnxnProxy(this._id.toString.toURI, "", this._id.toString.toURI)
   }
@@ -114,7 +118,7 @@ with MessageStore
     initPublic(publicAddress, publicAcquaintanceAddresses, Some("db_store_public.conf"))
     initPrivate(privateAddress, privateAcquaintanceAddresses, Some("db_store.conf"))
     initDb(dbAddress, Some("db_store_db.conf"))
-//    initResultDb(resultAddress, Some("db_store.conf"))
+    //    initResultDb(resultAddress, Some("db_store.conf"))
 
     _storeCnxn = new AgentCnxnProxy(id.toString.toURI, "", id.toString.toURI)
     super.initForTest(id)
@@ -123,13 +127,13 @@ with MessageStore
   override def loadQueues()
   {
     loadStorageQueue()
-//    loadResultStorageQueue()
+    //    loadResultStorageQueue()
     loadPrivateQueue()
 
     loadPublicQueue()
     //the same for now, should be initialized properly to separate queues
 
-    if (isDistributedNetworkMode)
+    if ( isDistributedNetworkMode )
       loadUserCnxnList()
   }
 
@@ -138,13 +142,13 @@ with MessageStore
   {
     report("IN THE STORE LISTEN", Severity.Trace)
 
-    if (isDistributedNetworkMode)
+    if ( isDistributedNetworkMode )
       listenPublicRequests(_storeCnxn)
 
     listenForUICnxns()
 
     //    listenForVerifierCnxns()
-    if (isDistributedNetworkMode)
+    if ( isDistributedNetworkMode )
       listenForHostedCnxns()
 
     // watch list observation starts
@@ -158,14 +162,14 @@ with MessageStore
     //    listenPublicResponses(_cnxnUIStore)
 
     listenPrivateContentRequest(_cnxnUIStore)
-//    listenPrivateSearchRequest(_cnxnUIStore)
-//    listenPrivateLoginRequest(_cnxnUIStore)
-//    listenPrivateVerifierResponse(_cnxnUIStore)
+    //    listenPrivateSearchRequest(_cnxnUIStore)
+    //    listenPrivateLoginRequest(_cnxnUIStore)
+    //    listenPrivateVerifierResponse(_cnxnUIStore)
     listenPrivateInvitationRequest(_cnxnUIStore)
     listenPrivateInvitationCreatorResponses(_cnxnUIStore)
-//    listenPrivateReferralRequest(_cnxnUIStore)
-//    listenPrivateRegistrationRequest(_cnxnUIStore)
-//    listenPrivateRegistrationCreatorResponses(_cnxnUIStore)
+    //    listenPrivateReferralRequest(_cnxnUIStore)
+    //    listenPrivateRegistrationRequest(_cnxnUIStore)
+    //    listenPrivateRegistrationCreatorResponses(_cnxnUIStore)
     //intros on hold for now
     //    listenPrivateIntroductionRequest(_cnxnUIStore)
     //    listenPrivateIntroductionCreatorResponses(_cnxnUIStore)
@@ -184,10 +188,10 @@ with MessageStore
   def listenPublicRequests(cnxn: AgentCnxnProxy)
   {
     listenPublicContentRequest(cnxn)
-//    listenPublicSearchRequest(cnxn)
-//    listenPublicSearchRequestOnStore(cnxn)
-//    listenPublicLoginRequest(cnxn)
-//    listenPublicVerifierRequest(cnxn)
+    //    listenPublicSearchRequest(cnxn)
+    //    listenPublicSearchRequestOnStore(cnxn)
+    //    listenPublicLoginRequest(cnxn)
+    //    listenPublicVerifierRequest(cnxn)
 
     //listen invitation creator on jen_broker, ie jen_mike. jen is the broker for mike in this case
     listenPublicInvitationCreatorRequests(cnxn)
@@ -197,9 +201,9 @@ with MessageStore
 
 
 
-//    listenPublicReferralRequests(cnxn)
-//    listenPublicRegistrationCreatorRequests(cnxn)
-//    listenPublicRegistrationConsumerRequests(cnxn)
+    //    listenPublicReferralRequests(cnxn)
+    //    listenPublicRegistrationCreatorRequests(cnxn)
+    //    listenPublicRegistrationConsumerRequests(cnxn)
     //Intros on hold for now
     //listen introduction creator on jen_broker, ie jen_mike. jen is the broker for mike in this case
     //    listenPublicIntroductionCreatorRequests(cnxn)
@@ -209,29 +213,37 @@ with MessageStore
 
   def listenPublicResponses(cnxn: AgentCnxnProxy)
   {
-    if (isDistributedNetworkMode){
+    if ( isDistributedNetworkMode ) {
 
       listenPublicContentResponse(cnxn)
-  //    listenPublicSearchResponse(cnxn)
-//    listenPublicLoginResponse(cnxn)
-//    listenPublicVerifierResponse(cnxn)
+      //    listenPublicSearchResponse(cnxn)
+      //    listenPublicLoginResponse(cnxn)
+      //    listenPublicVerifierResponse(cnxn)
 
       //listen invitation consumer on broker_jen, ie mike_jen. mike is the broker for jen in this case
       listenPublicInvitationConsumerResponses(cnxn)
       listenPublicInvitationCreatorResponses(cnxn)
       listenPublicIntroductionConsumerResponses(cnxn)
-  //    listenPublicReferralResponses(cnxn)
-  //    listenPublicRegistrationConsumerResponses(cnxn)
-  //    listenPublicRegistrationCreatorResponses(cnxn)
+      //    listenPublicReferralResponses(cnxn)
+      //    listenPublicRegistrationConsumerResponses(cnxn)
+      //    listenPublicRegistrationCreatorResponses(cnxn)
     }
 
   }
 
   def sendPrivate(cnxn: AgentCnxnProxy, msg: Message)
   {
-    report("!!! Received on Public channel...Sending on privateQ!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
-    msg.channelLevel = Some(ChannelLevel.Private)
-    super.send(_privateQ, _cnxnUIStore, msg)
+    if ( isPrivateKVDBNetworkMode() ) {
+
+      report("!!! Received on Public channel...Sending on privateQ!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
+      msg.channelLevel = Some(ChannelLevel.Private)
+      super.send(_privateQ, _cnxnUIStore, msg)
+    }
+    else {
+      report("!!! Received on Public channel...Sending on private rabbit!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
+      msg.channelLevel = Some(ChannelLevel.Private)
+      sendRabbit(_cnxnUIStore, msg)
+    }
   }
 
   override def send(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
@@ -240,13 +252,13 @@ with MessageStore
       case x: CreateInvitationRequest => {
         capture(cnxn, x)
       }
-//      case x: AffiliateRequest => {
-//        capture(cnxn, x)
-//      }
-//      case x: ApproveRegistrationRequest => {
-//        //an exception where it comes back on the inverse
-//        capture(x.originCnxn, x)
-//      }
+      //      case x: AffiliateRequest => {
+      //        capture(cnxn, x)
+      //      }
+      //      case x: ApproveRegistrationRequest => {
+      //        //an exception where it comes back on the inverse
+      //        capture(x.originCnxn, x)
+      //      }
       //      case x: CreateIntroductionRequest => {
       //        capture(cnxn, x)
       //      }
@@ -256,13 +268,14 @@ with MessageStore
 
 
 
-    if ((msg.channelLevel == Some(ChannelLevel.Public) || msg.channelLevel == Some(ChannelLevel.Single)) && isLocalNetworkMode())
-      spawn{
+    if ( ( msg.channelLevel == Some(ChannelLevel.Public) || msg.channelLevel == Some(ChannelLevel.Single) ) && isLocalNetworkMode() )
+      spawn {
         processPublicSendLocally(cnxn, msg)
       }
-    else
+    else {
       super.send(queue, cnxn, msg)
-     
+    }
+
   }
 
   /**
@@ -272,38 +285,37 @@ with MessageStore
    */
   protected def processPublicSendLocally(cnxn: AgentCnxnProxy, msg: Message)
   {
-//    report("In processSendLocally", Severity.Trace)
-    System.err.println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL In processSendLocally")
+    //    report("In processSendLocally", Severity.Trace)
+//    println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL In processSendLocally")
 
-    if (msg.channelType == ChannelType.Response){
-      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator))
+    if ( msg.channelType == ChannelType.Response ) {
+      if ( msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) )
         handlePublicInvitationCreatorResponseChannel(cnxn, msg)
       else
-      if (msg.channel == Channel.Verify)
+      if ( msg.channel == Channel.Verify )
         handleVerifyResponseChannel(cnxn, msg)
-      else
-      {
+      else {
         sendPrivate(cnxn, msg)
       }
     }
 
-    if (msg.channelType == ChannelType.Request){
-      if (msg.channel == Channel.Content )
+    if ( msg.channelType == ChannelType.Request ) {
+      if ( msg.channel == Channel.Content )
         handlePublicContentRequestChannel(cnxn, msg)
       else
-      if (msg.channel == Channel.Security)
+      if ( msg.channel == Channel.Security )
         handlePublicSecurityRequestChannel(cnxn, msg)
       else
-      if (msg.channel == Channel.Verify)
+      if ( msg.channel == Channel.Verify )
         handleVerifyRequestChannel(cnxn, msg)
       else
-      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator))
+      if ( msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) )
         handlePublicInvitationCreatorRequestChannel(cnxn, msg)
       else
-      if (msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer))
+      if ( msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) )
         handlePublicInvitationConsumerRequestChannel(cnxn, msg)
-      else{
-        //        System.err.println("In processSendLocally, received request for which there is no handler, type = " + msg.getClass.getName);
+      else {
+        //        println("In processSendLocally, received request for which there is no handler, type = " + msg.getClass.getName);
         report("Received request for which there is no handler, message type = " + msg.getClass.getName, Severity.Error)
       }
     }

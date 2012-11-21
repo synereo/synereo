@@ -2,6 +2,7 @@ package com.protegra_ati.agentservices.core.messages.invitation
 
 /* User: jklassen
 */
+
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
@@ -13,15 +14,19 @@ import java.util.UUID
 import com.protegra_ati.agentservices.core.events._
 
 
-trait InvitationResponseSetCreatorPrivate {
-  self:AgentHostStorePlatformAgent =>
+trait InvitationResponseSetCreatorPrivate
+{
+  self: AgentHostStorePlatformAgent =>
 
-  def listenPrivateInvitationCreatorResponses(cnxn:AgentCnxnProxy) =
+  def listenPrivateInvitationCreatorResponses(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
+    if ( isPrivateKVDBNetworkMode() )
+      listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
+    else
+      listenRabbit(cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(cnxn, _: Message))
   }
 
-  def handleInvitationResponseChannel(cnxn:AgentCnxnProxy, msg:Message)
+  def handleInvitationResponseChannel(cnxn: AgentCnxnProxy, msg: Message)
   {
     report("entering handlePrivateInvitationResponseChannel", Severity.Trace)
 

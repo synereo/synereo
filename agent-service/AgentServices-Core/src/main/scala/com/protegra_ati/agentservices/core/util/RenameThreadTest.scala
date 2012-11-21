@@ -16,13 +16,13 @@ object RenameThreadTest extends ThreadPoolRunners
 
   def main(arg: Array[ String ]) =
   {
-    System.err.println("before everything")
+    println("before everything")
     resetSpawnDemo()
     //    rename {
-    //      System.err.println("Running thread has a name:" + Thread.currentThread().getName)
+    //      println("Running thread has a name:" + Thread.currentThread().getName)
     //      val anonFunction = 1 + 1
-    //      System.err.println("some addition in anonymous function: 1+1=" + anonFunction)
-    //      System.err.println("some anonymous function")
+    //      println("some addition in anonymous function: 1+1=" + anonFunction)
+    //      println("some anonymous function")
     //    }("newName")
     //
     //
@@ -34,7 +34,7 @@ object RenameThreadTest extends ThreadPoolRunners
     //        rename {
     //          val in = 1 + 10 + Random.nextString(5)
     //          Thread.sleep(25000)
-    //          System.err.println("function made some things=" + in)
+    //          println("function made some things=" + in)
     //        }("I know who you are " + i)
     //
     //      }
@@ -49,25 +49,25 @@ object RenameThreadTest extends ThreadPoolRunners
   def resetSpawnDemo() =
   {
 
-    System.err.println("reset shift running ...")
+    println("reset shift running ...")
     for ( i <- 0 until 100 ) {
 
       Thread.sleep(5000)
 
       reset {
-        System.err.println("in reset")
+        println("in reset")
         spawn {
           rename {
             val t = Thread.currentThread()
-            System.err.println("running on thread:" + t.getName + " " + t.getId)
+            println("running on thread:" + t.getName + " " + t.getId)
             Thread.sleep(5000)
-            System.err.println("just a test")
+            println("just a test")
             // do something
           }("my renamed thread " + i)
         }
         shift {
           (cont: Unit => Unit) => {
-            System.err.println("in shift")
+            println("in shift")
           }
         }
         //for ( j <- 0 until 100 ) {

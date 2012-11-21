@@ -18,8 +18,8 @@ class SearchableDataTest extends SpecificationWithJUnit
       val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(\"John\"),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),image(_)))"
       val test: Profile = new Profile()
       test.firstName = "John"
-      System.err.println("given:" + test.toSearchKey)
-      System.err.println("expected:" + expected)
+      println("given:" + test.toSearchKey)
+      println("expected:" + expected)
 
       test.toSearchKey must be_==(expected)
     }
@@ -54,8 +54,8 @@ class SearchableDataTest extends SpecificationWithJUnit
       val test: Profile = new Profile()
       test.image = data
       test.lastName = "Adams"
-      //      System.err.println("given:" + test.toSearchKey)
-      //      System.err.println("expected:" + expected)
+      //      println("given:" + test.toSearchKey)
+      //      println("expected:" + expected)
       test.toSearchKey must be_==(expected)
     }
 

@@ -22,10 +22,11 @@ trait Storage
   var _dbQ: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _dbConfigFileName: Option[String] = None
      
-  def initDb(configUtil: Config)
+  def initDb(configUtil: Config, dbConfigFileName: Option[String])
   {
     val dbSelfMapKey = "db.self"
     _dbLocation = loadFirstURI(configUtil.getConfigMap(dbSelfMapKey))
+    _dbConfigFileName = dbConfigFileName
   }
 
   def initDb(dbLocation: URI, dbConfigFileName: Option[String])

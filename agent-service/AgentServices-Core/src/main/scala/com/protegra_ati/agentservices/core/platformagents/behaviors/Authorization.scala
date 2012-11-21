@@ -72,7 +72,7 @@ trait Authorization
   def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
   {
 
-   // System.err.println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
+   // println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
 
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
@@ -89,7 +89,7 @@ trait Authorization
 
   def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: List[ DisclosedData[ Data ] ], oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
   {
-    //System.err.println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
+    //println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
     val classNames = newDisclosedData.map(x => x.dataDisplayClassName) ::: oldDisclosedData.map(x => x.dataDisplayClassName)
     val uniqueClassNames = classNames.distinct
@@ -115,7 +115,7 @@ trait Authorization
 
   def compareDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: Option[ DisclosedData[ Data ] ], oldDisclosedData: Option[ DisclosedData[ Data ] ], newConnection: Connection) =
   {
-    //System.err.println("COMPARE DISCLOSURE!!!!!!!!")
+    //println("COMPARE DISCLOSURE!!!!!!!!")
     (newDisclosedData, oldDisclosedData) match {
       //no disclosed data found should delete existing data
       case (None, _) => {
@@ -129,7 +129,7 @@ trait Authorization
         fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxnProxy, _: Data, newDisclosedDatum, null, newConnection))
       }
       case (Some(newDisclosedDatum), Some(oldDisclosedDatum)) if newDisclosedDatum != oldDisclosedDatum => {
-        //System.err.println("PROCESS DISCLOSURE!!!!!!!!")
+        //println("PROCESS DISCLOSURE!!!!!!!!")
 
         //TODO: possibly optimize of oldData not found but let the insertUpdate logic handle for now
         val dataToChangeSearchKey = newDisclosedDatum.toSearchKeyFromDataClassType()

@@ -23,21 +23,21 @@ class OptionSerializer() extends Serializer[ Option[ AnyRef ] ]
       kryo.writeObject(output, OptionSerializer.NOT_NULL)
 
       try {
-       // System.err.println("KRYO Option in USE! WRITE")
+       // println("KRYO Option in USE! WRITE")
         obj match {
           case None => {
-           // System.err.println("NONE")
+           // println("NONE")
             kryo.writeObject(output, OptionSerializer.NONE)
           }
           case Some(_) => {
-           // System.err.println("SOME")
+           // println("SOME")
             kryo.writeObject(output, OptionSerializer.SOME)
             val someClass = cacheSomeValue(obj)
             kryo.writeObject(output, someClass.getName)
             kryo.writeObject(output, obj.get)
           }
           case _ => {
-            System.err.println("KRYO Option in USE! WRITE PROBLEM!!!!")
+            println("KRYO Option in USE! WRITE PROBLEM!!!!")
           }
         }
       } catch {
@@ -51,7 +51,7 @@ class OptionSerializer() extends Serializer[ Option[ AnyRef ] ]
 
   override def read(kryo: Kryo, input: Input, typ: Class[ Option[ AnyRef ] ]): Option[ AnyRef ] =
   {
-    //System.err.println("KRYO Option in USE! READ")
+    //println("KRYO Option in USE! READ")
     val label: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( label == OptionSerializer.NULL ) return null
 

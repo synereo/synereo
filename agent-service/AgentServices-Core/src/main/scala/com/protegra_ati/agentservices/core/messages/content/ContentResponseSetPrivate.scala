@@ -9,6 +9,7 @@ import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.events._
+import com.protegra_ati.agentservices.core.util.rabbit.MessageAMQPListener
 
 trait ContentResponseSetPrivate
 {
@@ -16,7 +17,10 @@ trait ContentResponseSetPrivate
 
   def listenPrivateContentResponse(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Content, ChannelType.Response, ChannelLevel.Private, handleContentResponseChannel(_: AgentCnxnProxy, _: Message))
+    if ( isPrivateKVDBNetworkMode() )
+      listen(_privateQ, cnxn, Channel.Content, ChannelType.Response, ChannelLevel.Private, handleContentResponseChannel(_: AgentCnxnProxy, _: Message))
+    else
+      listenRabbit(cnxn, Channel.Content, ChannelType.Response, ChannelLevel.Private, handleContentResponseChannel(cnxn, _: Message))
   }
 
   def handleContentResponseChannel(cnxn: AgentCnxnProxy, msg: Message) =

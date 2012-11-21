@@ -40,11 +40,11 @@ with InvitationResponseSetConsumerPrivate
 with IntroductionResponseSetConsumerPrivate
 {
   var _cnxnUIStore = new AgentCnxnProxy(( "UI" ).toURI, "", ( "Store" ).toURI);
-    var _agentSessionId: UUID = null
+  var _agentSessionId: UUID = null
 
   override def init(configUtil: Config)
   {
-    initPrivate(configUtil)
+    initPrivate(configUtil, Some("db_ui.conf"))
     initApps(configUtil)
   }
 
@@ -67,21 +67,21 @@ with IntroductionResponseSetConsumerPrivate
 
   def listenPrivate(cnxn: AgentCnxnProxy) =
   {
-    listenPrivateContentResponse(cnxn)
-//    listenPrivateContentNotification(cnxn)
-//    listenPrivateSearchResponse(cnxn)
-//    listenPrivateVerifierResponse(cnxn)
-//    listenPrivateVerifierNotification(cnxn)
-//    listenPrivateLoginResponse(cnxn)
-    //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
-    listenPrivateInvitationConsumerResponses(cnxn)
-//    listenPrivateIntroductionConsumerResponses(cnxn)
-//    listenPrivateReferralResponses(cnxn)
-//    listenPrivateRegistrationConsumerResponses(cnxn)
+      listenPrivateContentResponse(cnxn)
+      //    listenPrivateContentNotification(cnxn)
+      //    listenPrivateSearchResponse(cnxn)
+      //    listenPrivateVerifierResponse(cnxn)
+      //    listenPrivateVerifierNotification(cnxn)
+      //    listenPrivateLoginResponse(cnxn)
+      //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
+      listenPrivateInvitationConsumerResponses(cnxn)
+      //    listenPrivateIntroductionConsumerResponses(cnxn)
+      //    listenPrivateReferralResponses(cnxn)
+      //    listenPrivateRegistrationConsumerResponses(cnxn)
 
-    //uncomment these lines if you need to create the test data from scratch...don't forget to recomment them :)
-    //createMikesTestConnections();
-    //createBrokerTestData();
+      //uncomment these lines if you need to create the test data from scratch...don't forget to recomment them :)
+      //createMikesTestConnections();
+      //createBrokerTestData();
   }
 
   def send(msg: Message)
@@ -89,19 +89,20 @@ with IntroductionResponseSetConsumerPrivate
     report("AgentUI sending msg on private queue with msg id: " + msg.ids.id.toString + " and parent id: " + msg.ids.parentId.toString)
 
     msg match {
-      case x: RegistrationRequest =>
-      {
+      case x: RegistrationRequest => {
         register(x)
       }
       case _ => {
         msg.channelLevel = Some(ChannelLevel.Private)
         //    msg.originCnxn = _cnxnUIStore
         msg.originCnxn = msg.targetCnxn
-        send(_privateQ, _cnxnUIStore, msg)
+        if ( isPrivateKVDBNetworkMode() )
+          send(_privateQ, _cnxnUIStore, msg)
+        else
+          sendRabbit(_cnxnUIStore, msg)
       }
     }
   }
-
 }
 
 

@@ -321,7 +321,7 @@ Timeouts
 //    if ( !new File("data").exists() ) {
 //      new File("data").mkdir()
 //    }
-//    System.err.println(" in KryoSerializerTestDataInitializer constructor")
+//    println(" in KryoSerializerTestDataInitializer constructor")
 //  }
 //
 //
@@ -333,7 +333,7 @@ Timeouts
 //    } catch {
 //      case ex: Exception => {
 //        /* TODO into log file*/
-//        System.err.println("something different:" + ex.toString)
+//        println("something different:" + ex.toString)
 //        ex.printStackTrace();
 //        failure("previously serialized class can't be deleted")
 //      }
@@ -408,18 +408,18 @@ Timeouts
 //    } catch {
 //      case ex: IOException => {
 //        /* TODO into log file*/
-//        System.err.println("ERROR BY DESERIALIZATION")
+//        println("ERROR BY DESERIALIZATION")
 //        ex.printStackTrace()
 //        return null.asInstanceOf[ T ]
 //      }
 //      case ex: Exception => {
 //        /* TODO into log file*/
-//        System.err.println("ERROR BY DESERIALIZATION")
+//        println("ERROR BY DESERIALIZATION")
 //        ex.printStackTrace()
 //        return null.asInstanceOf[ T ]
 //      }
 //      case _ => {
-//        System.err.println("ERROR BY DESERIALIZATION")
+//        println("ERROR BY DESERIALIZATION")
 //        /* TODO into log file*/
 //        return null.asInstanceOf[ T ]
 //      }

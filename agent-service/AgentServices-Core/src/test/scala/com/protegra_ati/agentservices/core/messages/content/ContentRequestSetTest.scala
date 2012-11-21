@@ -237,15 +237,15 @@ with Serializable
       fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
       //          fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
       val connSteveIntroduced = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, TrustLevel.Introduced.toString, jenId, steveId)
-      System.err.println("introduced connection: " + connSteveIntroduced)
-      System.err.println("introduced full: " + connSteveFull)
-      System.err.println("self conn:" + cnxnJenSelf)
+      println("introduced connection: " + connSteveIntroduced)
+      println("introduced full: " + connSteveFull)
+      println("self conn:" + cnxnJenSelf)
       //create a setcontentrequest message to downgrate to introduced
       val reqIntroduced = SetContentRequest(new EventKey(UUID.randomUUID, ""), connSteveIntroduced, connSteveFull)
       reqIntroduced.targetCnxn = cnxnJenSelf
       reqIntroduced.originCnxn = cnxnJenSelf
       pa.processSetContentRequest(reqIntroduced)
-      System.err.println("-------------------------------------------------------------------------")
+      println("-------------------------------------------------------------------------")
       //          Thread.sleep(TIMEOUT_VERY_LONG * 3)
       // check profile & business profile
       //TODO:fetchMustExclusivelyBe
@@ -278,13 +278,13 @@ with Serializable
       val fullProfileNewDisclosedData = DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Full.toString, "id,localeCode,firstName,lastName,description,emailAddress,country,city,postalCode")
       val fullProfileOldDisclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
 
-      System.err.println("IN TEST self conn:" + cnxnJenSelf)
+      println("IN TEST self conn:" + cnxnJenSelf)
       //create a setcontentrequest message to downgrate to introduced
       val reqFullDisclosedDataChanged = SetContentRequest(new EventKey(UUID.randomUUID, ""), fullProfileNewDisclosedData, fullProfileOldDisclosedData)
       reqFullDisclosedDataChanged.targetCnxn = cnxnJenSelf
       reqFullDisclosedDataChanged.originCnxn = cnxnJenSelf
       pa.processSetContentRequest(reqFullDisclosedDataChanged)
-      System.err.println("-------------------------------------------------------------------------")
+      println("-------------------------------------------------------------------------")
       Thread.sleep(TIMEOUT_VERY_LONG)
 //      Thread.sleep(TIMEOUT_VERY_LONG * 3)
       // check profile if image and webseite are deleted
@@ -297,7 +297,7 @@ with Serializable
       def expectationCheckHandler(result: Data, expected: Data): Unit =
       {
         if ( result != expected ) failure
-        System.err.println("%%%%%%%%%%%%%%%%%%%%%%%% result=" + result + ", expected=" + expected)
+        println("%%%%%%%%%%%%%%%%%%%%%%%% result=" + result + ", expected=" + expected)
       }
     }
   }

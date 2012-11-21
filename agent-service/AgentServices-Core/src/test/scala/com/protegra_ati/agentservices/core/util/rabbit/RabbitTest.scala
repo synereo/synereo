@@ -14,11 +14,11 @@ class RabbitTest extends SpecificationWithJUnit
     "be found by basicConsume" in {
 
       def handleMessage(msg: Message) = {
-        System.err.println("received: " + msg)
+        println("received: " + msg)
       }
 
       val exchange = "mult"
-      val exchangeContent = "content(_)"
+      val exchangeContent = "123content(_)"
       val exchangeSearch = "search"
       val routingKey = "routeroute"
 

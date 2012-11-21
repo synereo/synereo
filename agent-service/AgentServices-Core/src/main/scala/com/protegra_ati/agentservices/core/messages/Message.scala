@@ -47,6 +47,14 @@ KVDBSerializable with UseJavaIOSerialization
     channelKey
   }
 
+  def getExchangeKey: String =
+  {
+    var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.getOrElse(ChannelLevel.Private).toString
+    channelKey += "(_)"
+    channelKey
+  }
+
+
   def isInOriginalState: Boolean =
   {
     if ( ids.conversationId.equals(ids.parentId) && ids.conversationId.equals(ids.id) )

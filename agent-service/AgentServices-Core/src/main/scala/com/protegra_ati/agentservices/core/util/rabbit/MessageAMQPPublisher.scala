@@ -14,15 +14,11 @@ class MessageAMQPSender(cf: ConnectionFactory, host: String, port: Int, exchange
 
 class MessageAMQPPublisher(host: String, port: Int, exchange: String, routingKey: String) {
   // All of the params, exchanges, and queues are all just example data.
-  val factory = new ConnectionFactory()
-  factory.setUsername("guest")
-  factory.setPassword("guest")
-  factory.setVirtualHost("/")
-  factory.setRequestedHeartbeat(0)
+
 
   //under the covers
 //  val queueName = exchangeName + "_queue"
-  val amqp = new MessageAMQPSender(factory, host, port, exchange, routingKey)
+  val amqp = new MessageAMQPSender(RabbitFactory.guest, host, port, exchange, routingKey)
   amqp.start
 
   def send(value: Message) = {

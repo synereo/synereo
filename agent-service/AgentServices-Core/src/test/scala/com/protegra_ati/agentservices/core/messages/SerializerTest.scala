@@ -260,8 +260,8 @@ Timeouts
           x.getIgnored must beNull
           data.getIgnored must beNull
 
-          System.err.println("x=" + x)
-          System.err.println("data=" + data)
+          println("x=" + x)
+          println("data=" + data)
           x.getMessage() must be_==(data.getMessage())
 
         }
@@ -287,8 +287,8 @@ Timeouts
         case x: PersistedMessage[ InvitationRequest ] => {
 
           x.id must be_==(data.id)
-          System.err.println("InvitationRequest before :" + inviteRequest)
-          System.err.println("InvitationRequest after :" + x.message)
+          println("InvitationRequest before :" + inviteRequest)
+          println("InvitationRequest after :" + x.message)
           x.getMessage() must be_==(data.getMessage())
           x must be_==(data)
         }
@@ -314,8 +314,8 @@ Timeouts
         case x: PersistedMessage[ ReferralRequest ] => {
 
           x.id must be_==(data.id)
-          System.err.println("InvitationRequest before :" + req)
-          System.err.println("InvitationRequest after :" + x.message)
+          println("InvitationRequest before :" + req)
+          println("InvitationRequest after :" + x.message)
           x.getMessage().toString must be_==(data.getMessage().toString)
           x must be_==(data)
         }
@@ -339,8 +339,8 @@ Timeouts
 
       deserializedRequest match {
         case x: CreateInvitationRequest => {
-          System.err.println("InvitationRequest before :" + sourceRequest)
-          System.err.println("InvitationRequest after :" + x)
+          println("InvitationRequest before :" + sourceRequest)
+          println("InvitationRequest after :" + x)
           x.toString must be_==(sourceRequest.toString)
           x.channelRole.toString must be_==(sourceRequest.channelRole.toString)
           x.channel.toString must be_==(sourceRequest.channel.toString)
@@ -359,8 +359,8 @@ Timeouts
         case x: PersistedMessage[ CreateInvitationRequest ] => {
 
           x.id must be_==(data.id)
-          System.err.println("InvitationRequest before :" + sourceRequest)
-          System.err.println("InvitationRequest after :" + x.message)
+          println("InvitationRequest before :" + sourceRequest)
+          println("InvitationRequest after :" + x.message)
           x.getMessage().toString must be_==(data.getMessage().toString)
           x.getMessage().channelRole.toString must be_==(sourceRequest.channelRole.toString)
           x must be_==(data)

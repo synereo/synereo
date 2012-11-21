@@ -14,14 +14,20 @@ trait Private {
   var _privateAcquaintanceAddresses = List[URI]()
   var _privateQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _privateConfigFileName: Option[String] = None
-    
-  def initPrivate(@transient configUtil: Config)
+  var _privateNetworkMode = "KVDB"
+
+  def initPrivate(@transient configUtil: Config, privateConfigFileName: Option[String])
   {
     val privateSelfMapKey = "private.self"
     _privateLocation = loadFirstURI(configUtil.getConfigMap(privateSelfMapKey))
 
     val privateAcquaintanceMapKey = "private.acquaintances"
     _privateAcquaintanceAddresses = loadURIs(configUtil.getConfigMap(privateAcquaintanceMapKey))  ::: this._privateAcquaintanceAddresses
+
+    val privateNetworkModeMapKey = "privateNetworkMode"
+    _privateNetworkMode = configUtil.getString(privateNetworkModeMapKey).getOrElse("KVDB")
+    _privateConfigFileName = privateConfigFileName
+
   }
 
   def initPrivate(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], privateConfigFileName: Option[String])
@@ -34,4 +40,21 @@ trait Private {
   def loadPrivateQueue() = {
     _privateQ = createNode(_privateLocation, _privateAcquaintanceAddresses, _privateConfigFileName)
   }
+
+
+  def isPrivateRabbitMQNetworkMode() =
+  {
+    _privateNetworkMode.toLowerCase == "Rabbit".toLowerCase
+  }
+
+  def isPrivateKVDBNetworkMode() =
+  {
+    !isPrivateRabbitMQNetworkMode
+  }
+
+  def setPrivateNetworkMode(mode: String) =
+  {
+    _privateNetworkMode = mode
+  }
+
 }

@@ -37,10 +37,10 @@ object Base64APIsComparison
             }
 
       val end = System.currentTimeMillis()
-      System.err.println("sun.misc.BASE64 approach: " + ( end - start ))
+      println("sun.misc.BASE64 approach: " + ( end - start ))
     } catch {
       case ex: Exception => {
-        System.err.println("sun.misc.BASE64 approach failed")
+        println("sun.misc.BASE64 approach failed")
         ex.printStackTrace()
       }
 
@@ -60,7 +60,7 @@ object Base64APIsComparison
         throw new IOException("org.apache.commons.codec.binary.Base64 approach doesn't work")
       }
       val end = System.currentTimeMillis()
-      System.err.println("org.apache.commons.codec.binary.Base64 approach: " + ( end - start ))
+      println("org.apache.commons.codec.binary.Base64 approach: " + ( end - start ))
     } catch {
       case ex: Exception => {
         ex.printStackTrace()
@@ -84,7 +84,7 @@ object Base64APIsComparison
         throw new IOException("biz.source_code.base64Coder.Base64Coder approach doesn't work")
       }
       val end = System.currentTimeMillis()
-      System.err.println("biz.source_code.base64Coder.Base64Coder approach: " + ( end - start ))
+      println("biz.source_code.base64Coder.Base64Coder approach: " + ( end - start ))
     } catch {
       case ex: Exception => {
         ex.printStackTrace()

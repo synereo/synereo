@@ -51,7 +51,6 @@ with Timeouts
     //  If no listening happened than connection as if would be "not visible"
 //    storeR.listenForHostedCnxns()
 
- // "Viewing a profile" ->- ( AgentHostCombinedBase.setup(this) ) should {
   "Viewing a profile" should {
     "not return audit trail by composite search" in {
       skipped("issue 242 and verify audit is configured")

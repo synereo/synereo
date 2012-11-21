@@ -11,12 +11,12 @@ object RenameThreadTest
 {
   def main(arg: Array[ String ]) =
   {
-    System.err.println("before everything")
+    println("before everything")
     rename {
-      System.err.println("Running thread has a name:" + Thread.currentThread().getName)
+      println("Running thread has a name:" + Thread.currentThread().getName)
       val anonFunction = 1 + 1
-      System.err.println("some addition in anonymous function: 1+1=" + anonFunction)
-      System.err.println("some anonymous function")
+      println("some addition in anonymous function: 1+1=" + anonFunction)
+      println("some anonymous function")
     }("newName")
 
 
@@ -25,7 +25,7 @@ object RenameThreadTest
       spawn {
         rename {
           val in = 1 + 10 + Random.nextString(5)
-          System.err.println("function made some things=" + in)
+          println("function made some things=" + in)
         }("I know who you are " + i)
       }
 

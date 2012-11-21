@@ -38,7 +38,7 @@ with ReferralUser
 
   "Invitations" should {
     "create connections from an accepted CreateInvitationRequest" in {
-//      skipped("issue 242 or specs")
+      skipped("issue 242 or specs")
 
       def compareBrokerPostHandler(receivedPostToBroker: Post, expectedPostToBroker: Post): Unit =
       {

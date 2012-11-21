@@ -460,7 +460,7 @@ trait ContentRequestSet
   {
     (msg.newData, msg.oldData) match {
       case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
-        //System.err.println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
+        //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
 
         val query = new Connection() //ConnectionFactory.createTypedConnection(x.getConnectionType())
         //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))

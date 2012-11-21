@@ -21,7 +21,7 @@ class JavaIOSerializer extends AbstractToStringSerializer //with Reporting
   protected def serializeRaw(objToBeSerialized: Object): String =
   {
     val uid5CharLong = UUID.randomUUID().toString().substring(0, 5)
-   // System.err.println("#####-serialize JAVA IO--ID:" + uid5CharLong + "--: " + objToBeSerialized);
+   // println("#####-serialize JAVA IO--ID:" + uid5CharLong + "--: " + objToBeSerialized);
 
     val baos = new ByteArrayOutputStream()
     val oos = new ObjectOutputStream(baos)
@@ -57,7 +57,7 @@ class JavaIOSerializer extends AbstractToStringSerializer //with Reporting
       val ois = new ObjectInputStream(new ByteArrayInputStream(byteArrayMsg))
       val resultMsg = ois.readObject
       ois.close
-     // System.err.println("#####-deserialize JAVA IO--ID:" + uid + " ----: " + resultMsg);
+     // println("#####-deserialize JAVA IO--ID:" + uid + " ----: " + resultMsg);
       resultMsg match {
         case x: T => return x
         case _ => return null.asInstanceOf[ T ]

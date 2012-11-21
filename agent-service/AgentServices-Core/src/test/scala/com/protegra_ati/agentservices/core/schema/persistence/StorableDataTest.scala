@@ -80,8 +80,8 @@ class StorableDataTest extends SpecificationWithJUnit
       mockProfile.localeCode = "en"
       val storeKey = mockProfile.toStoreKey
       val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"\"),emailAddress(\"123456789@test.com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
-//      System.err.println("created  storeKey4Profile: " + storeKey)
-//      System.err.println("expected storeKey4Profile: " + expectedStoreKey)
+//      println("created  storeKey4Profile: " + storeKey)
+//      println("expected storeKey4Profile: " + expectedStoreKey)
       storeKey must be_==(expectedStoreKey)
     }
 
@@ -123,8 +123,8 @@ class StorableDataTest extends SpecificationWithJUnit
       data.id = id
       val given = data.toStoreKey
       val expected = "image(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"name\"),contentType(\"type\"),content(\"\"),metadata(\"myMetadata\")))"
-//      System.err.println("given:" + given)
-//      System.err.println("expected:" + expected)
+//      println("given:" + given)
+//      println("expected:" + expected)
       given must be_==(expected)
     }
   }

@@ -19,7 +19,7 @@ class MockMessageSerializer() extends Serializer[ MockMessage ]
   override def write(kryo: Kryo, output: Output, obj: MockMessage): Unit =
   {
 
-    System.err.println("KRYO MOCK_MESSAGE IN USE! WRITE: " + obj.toString)
+    println("KRYO MOCK_MESSAGE IN USE! WRITE: " + obj.toString)
     kryo.writeObject(output, obj.ids)
     kryo.writeObject(output, obj.eventKey)
     kryo.writeObject(output, obj.eventKey2)
@@ -33,7 +33,7 @@ class MockMessageSerializer() extends Serializer[ MockMessage ]
     val id = kryo.readObject(input, classOf[ Identification ])
     val eKey = kryo.readObject(input, classOf[ MockEventKey ])
     val eKey2 = kryo.readObject(input, classOf[ MockEventKey ])
-    //System.err.println("KRYO MOCK_MESSAGE  in USE! READ")
+    //println("KRYO MOCK_MESSAGE  in USE! READ")
     return new MockMessage(id,eKey,  eKey2)
 
   }

@@ -15,7 +15,10 @@ trait InvitationResponseSetConsumerPrivate
 
   def listenPrivateInvitationConsumerResponses(cnxn: AgentCnxnProxy) =
   {
-        listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
+    if ( isPrivateKVDBNetworkMode() )
+      listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
+    else
+      listenRabbit(cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(cnxn, _: Message))
   }
 
   def handleInvitationResponseChannel(cnxn: AgentCnxnProxy, msg: Message)

@@ -26,7 +26,7 @@ import org.apache.commons.io.FileUtils
 
 class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 {
-//  System.err.println(" in KryoDeserializerTestDataInitializer constructor")
+//  println(" in KryoDeserializerTestDataInitializer constructor")
 //  val profile1: SimpleMockProfile1 = SimpleMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode")
 //  val compositeProfile: CompositeMockProfile1 = CompositeMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode", MockImage.simpleDemoMockImage)
 //
@@ -45,7 +45,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.map.get("KEY") must be_==(MockWithJavaMap.simpleMockHashMapStringString.map.get("KEY"))
 //          x.map1.get("KEY1") must be_==(MockWithJavaMap.simpleMockHashMapStringString.map1.get("KEY1"))
 //
-//          System.err.println("1 KRYO serialization succsessfull: " + x)
+//          println("1 KRYO serialization succsessfull: " + x)
 //
 //        }
 //        case _ => failure
@@ -62,7 +62,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.map.get("KEY").asInstanceOf[ Data ].id must be_==(MockWithJavaMap.simpleMockHashMapStringData.map.get("KEY").asInstanceOf[ Data ].id)
 //          x.map.get("KEY").asInstanceOf[ Data ].localeCode must be_==(MockWithJavaMap.simpleMockHashMapStringData.map.get("KEY").asInstanceOf[ Data ].localeCode)
 //          x.map1.get("KEY1").asInstanceOf[ Data ].localeCode must be_==(MockWithJavaMap.simpleMockHashMapStringData.map1.get("KEY1").asInstanceOf[ Data ].localeCode)
-//          System.err.println("2 KRYO serialization succsessfull: " + x)
+//          println("2 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -79,7 +79,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.map.get("KEY").asInstanceOf[ SimpleMockProfile1 ].country must be_==(MockWithJavaMap.simpleMockHashMapStringMockProfile.map.get("KEY").asInstanceOf[ SimpleMockProfile1 ].country)
 //          x.map1.get("KEY1").asInstanceOf[ SimpleMockProfile1 ].country must be_==(MockWithJavaMap.simpleMockHashMapStringMockProfile.map1.get("KEY1").asInstanceOf[ SimpleMockProfile1 ].country)
 //          x.map1.get("KEY1").asInstanceOf[ SimpleMockProfile1 ].localeCode must be_==(MockWithJavaMap.simpleMockHashMapStringMockProfile.map1.get("KEY1").asInstanceOf[ SimpleMockProfile1 ].localeCode)
-//          System.err.println("3 KRYO serialization succsessfull: " + x)
+//          println("3 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -94,7 +94,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.map.get("KEY").asInstanceOf[ Profile ].id must be_==(MockWithJavaMap.simpleMockHashMapStringProfile.map.get("KEY").asInstanceOf[ Profile ].id)
 //          x.map.get("KEY").asInstanceOf[ Profile ].localeCode must be_==(MockWithJavaMap.simpleMockHashMapStringProfile.map.get("KEY").asInstanceOf[ Profile ].localeCode)
 //          x.map.get("KEY").asInstanceOf[ Profile ].country must be_==(MockWithJavaMap.simpleMockHashMapStringProfile.map.get("KEY").asInstanceOf[ Profile ].country)
-//          System.err.println("4 KRYO serialization succsessfull: " + x)
+//          println("4 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -119,7 +119,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.firstName must be_==(mockSimpleProfile.firstName)
 //          x.classVersionNumber must be_==(mockSimpleProfile.classVersionNumber)
 //          x.city must be_==(mockSimpleProfile.city) // only in full schema
-//          System.err.println("5 KRYO serialization succsessfull: " + x)
+//          println("5 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -149,7 +149,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.classVersionNumber must be_==(compositeMockProfile.classVersionNumber)
 //          x.city must be_==(compositeMockProfile.city) // only in full schema
 //          x.image.name must be_==(compositeMockProfile.image.name) // same nested object
-//          System.err.println("6 KRYO serialization succsessfull: " + x)
+//          println("6 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -180,7 +180,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.eventKey1 must be_==(moc.eventKey1)
 //          x.created must be_==(moc.created)
 //          x must be_==(moc)
-//          System.err.println("7 KRYO serialization succsessfull: " + x)
+//          println("7 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -204,7 +204,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.id.toString must be_==(postToBroker.id)
 //          x.body must be_==(postToBroker.body)
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToBroker.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
-//          System.err.println("8 KRYO serialization succsessfull: " + x)
+//          println("8 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -218,7 +218,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.id.toString must be_==(postToSerialized.id)
 //          x.body must be_==(postToSerialized.body)
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToSerialized.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
-//          System.err.println("9 KRYO serialization succsessfull: " + x)
+//          println("9 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -230,7 +230,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //        case x: Identification => {
 //          x must be_==(id)
 //          x.conversationId must be_==(id.conversationId)
-//          System.err.println("10 KRYO serialization succsessfull: " + x)
+//          println("10 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -254,15 +254,15 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedMockRequest match {
 //        case x: MockCreateInvitationRequest => {
 //
-//          System.err.println("-->" + x)
-//          System.err.println("|-->" + mockRequest)
+//          println("-->" + x)
+//          println("|-->" + mockRequest)
 //          x must be_==(mockRequest)
 //          x.eventKey must be_==(mockRequest.eventKey)
 //          x.eventKey2 must be_==(mockRequest.eventKey2)
 //          x.selfAlias must be_==(mockRequest.selfAlias)
 //          x.str must be_==(mockRequest.str)
 //          x.invitationConnectionId1 must be_==(mockRequest.invitationConnectionId1)
-//          System.err.println("11 KRYO serialization succsessfull: " + x)
+//          println("11 KRYO serialization succsessfull: " + x)
 //        }
 //      }
 //
@@ -272,7 +272,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedMockOption match {
 //        case x: MockOptionObject => {
 //          x must be_==(mockOption)
-//          System.err.println("12 KRYO serialization succsessfull: " + x)
+//          println("12 KRYO serialization succsessfull: " + x)
 //        }
 //      }
 //
@@ -286,7 +286,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //        case x: MockAgentCnxnProxy => {
 //          x.src.toString must be_==(agentCnxn.src.toString)
 //          x.label must be_==(agentCnxn.label)
-//          System.err.println("13 KRYO serialization succsessfull: " + x)
+//          println("13 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -298,7 +298,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedAgentCnxnProxy1 match {
 //        case x: MockAgentCnxnProxy => {
 //          x.label must be_==(agentCnxn1.label)
-//          System.err.println("14 KRYO serialization succsessfull: " + x)
+//          println("14 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -311,7 +311,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //        case x: MockAgentCnxnProxy => {
 //          x.src.toString must be_==(agentCnxn2.src.toString)
 //          x.trgt mustBe ( null )
-//          System.err.println("15 KRYO serialization succsessfull: " + x)
+//          println("15 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -327,7 +327,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedDuplicateHolder match {
 //        case x: DuplicateMockObject => {
 //          x.str mustEqual ( duplicateHolder.str )
-//          System.err.println("16 KRYO serialization succsessfull: " + x)
+//          println("16 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -344,7 +344,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedSystemConnection match {
 //        case x: SystemData[ Connection ] => {
 //          x mustEqual ( systemConnection )
-//          System.err.println("17 KRYO serialization succsessfull: " + x)
+//          println("17 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -359,7 +359,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedConnection match {
 //        case x: Connection => {
 //          x mustEqual ( selfCnxns )
-//          System.err.println("18 KRYO serialization succsessfull: " + x)
+//          println("18 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -370,7 +370,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedConn match {
 //        case x: Connection => {
 //          x mustEqual ( selfCnxns )
-//          System.err.println("19 KRYO serialization succsessfull: " + x)
+//          println("19 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -399,7 +399,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.invitationConnectionId.toString must be_==(msg.invitationConnectionId)
 //          x.eventKey must be_==(msg.eventKey)
 //          x.postToBroker must beNull[ Post ]
-//          System.err.println("20 KRYO serialization succsessfull: " + x)
+//          println("20 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -411,7 +411,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.id must be_==(deserializedMessage.id)
 //          x.message must be_==(deserializedMessage.message)
 //          x must be_==(deserializedMessage)
-//          System.err.println("21 KRYO serialization succsessfull: " + x)
+//          println("21 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -443,7 +443,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.eventKey1 must be_==(moc.eventKey1)
 //          x.created must be_==(moc.created)
 //          x must be_==(moc)
-//          System.err.println("7 KRYO serialization succsessfull: " + x)
+//          println("7 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -467,7 +467,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.id.toString must be_==(postToBroker.id)
 //          x.body must be_==(postToBroker.body)
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToBroker.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
-//          System.err.println("8 KRYO serialization succsessfull: " + x)
+//          println("8 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -481,7 +481,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.id.toString must be_==(postToSerialized.id)
 //          x.body must be_==(postToSerialized.body)
 //          x.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName must be_==(postToSerialized.fromDetails.get(tempProfile.formattedClassName).asInstanceOf[ Profile ].lastName)
-//          System.err.println("9 KRYO serialization succsessfull: " + x)
+//          println("9 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -493,7 +493,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //        case x: Identification => {
 //          x must be_==(id)
 //          x.conversationId must be_==(id.conversationId)
-//          System.err.println("10 KRYO serialization succsessfull: " + x)
+//          println("10 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -517,15 +517,15 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedMockRequest match {
 //        case x: MockCreateInvitationRequest => {
 //
-//          System.err.println("-->" + x)
-//          System.err.println("|-->" + mockRequest)
+//          println("-->" + x)
+//          println("|-->" + mockRequest)
 //          x must be_==(mockRequest)
 //          x.eventKey must be_==(mockRequest.eventKey)
 //          x.eventKey2 must be_==(mockRequest.eventKey2)
 //          x.selfAlias must be_==(mockRequest.selfAlias)
 //          x.str must be_==(mockRequest.str)
 //          x.invitationConnectionId1 must be_==(mockRequest.invitationConnectionId1)
-//          System.err.println("11 KRYO serialization succsessfull: " + x)
+//          println("11 KRYO serialization succsessfull: " + x)
 //        }
 //      }
 //
@@ -535,7 +535,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedMockOption match {
 //        case x: MockOptionObject => {
 //          x must be_==(mockOption)
-//          System.err.println("12 KRYO serialization succsessfull: " + x)
+//          println("12 KRYO serialization succsessfull: " + x)
 //        }
 //      }
 //
@@ -549,7 +549,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //        case x: MockAgentCnxnProxy => {
 //          x.src.toString must be_==(agentCnxn.src.toString)
 //          x.label must be_==(agentCnxn.label)
-//          System.err.println("13 KRYO serialization succsessfull: " + x)
+//          println("13 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -561,7 +561,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedAgentCnxnProxy1 match {
 //        case x: MockAgentCnxnProxy => {
 //          x.label must be_==(agentCnxn1.label)
-//          System.err.println("14 KRYO serialization succsessfull: " + x)
+//          println("14 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -574,7 +574,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //        case x: MockAgentCnxnProxy => {
 //          x.src.toString must be_==(agentCnxn2.src.toString)
 //          x.trgt mustBe ( null )
-//          System.err.println("15 KRYO serialization succsessfull: " + x)
+//          println("15 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -590,7 +590,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedDuplicateHolder match {
 //        case x: DuplicateMockObject => {
 //          x.str mustEqual ( duplicateHolder.str )
-//          System.err.println("16 KRYO serialization succsessfull: " + x)
+//          println("16 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -607,7 +607,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedSystemConnection match {
 //        case x: SystemData[ Connection ] => {
 //          x mustEqual ( systemConnection )
-//          System.err.println("17 KRYO serialization succsessfull: " + x)
+//          println("17 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -624,7 +624,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //        deserializedConnection match {
 //          case x: Connection => {
 //            x mustEqual ( selfCnxns )
-//            System.err.println("18 KRYO serialization succsessfull: " + x)
+//            println("18 KRYO serialization succsessfull: " + x)
 //          }
 //          case _ => failure
 //        }
@@ -638,7 +638,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //      deserializedConn match {
 //        case x: Connection => {
 //          x mustEqual ( selfCnxns )
-//          System.err.println("19 KRYO serialization succsessfull: " + x)
+//          println("19 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -667,7 +667,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.invitationConnectionId.toString must be_==(msg.invitationConnectionId)
 //          x.eventKey must be_==(msg.eventKey)
 //          x.postToBroker must beNull[ Post ]
-//          System.err.println("20 KRYO serialization succsessfull: " + x)
+//          println("20 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -679,7 +679,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //          x.id must be_==(deserializedMessage.id)
 //          x.message must be_==(deserializedMessage.message)
 //          x must be_==(deserializedMessage)
-//          System.err.println("21 KRYO serialization succsessfull: " + x)
+//          println("21 KRYO serialization succsessfull: " + x)
 //        }
 //        case _ => failure
 //      }
@@ -700,10 +700,10 @@ object KryoDeserializerTestDataInitializer
     } catch {
       case ex: Exception => {
         /* TODO into log file*/
-        System.err.println("something different:" + ex.toString)
+        println("something different:" + ex.toString)
         ex.printStackTrace()
 //        failure("previously serialized class can't be deleted")
-        System.err.println("previously serialized class can't be deleted")
+        println("previously serialized class can't be deleted")
       }
     }
     serialize(data, new FileOutputStream(toFile))
@@ -750,18 +750,18 @@ object KryoDeserializerTestDataInitializer
     } catch {
       case ex: IOException => {
         /* TODO into log file*/
-        System.err.println("ERROR BY DESERIALIZATION")
+        println("ERROR BY DESERIALIZATION")
         ex.printStackTrace()
         return null.asInstanceOf[ T ]
       }
       case ex: Exception => {
         /* TODO into log file*/
-        System.err.println("ERROR BY DESERIALIZATION")
+        println("ERROR BY DESERIALIZATION")
         ex.printStackTrace()
         return null.asInstanceOf[ T ]
       }
       case _ => {
-        System.err.println("ERROR BY DESERIALIZATION")
+        println("ERROR BY DESERIALIZATION")
         /* TODO into log file*/
         return null.asInstanceOf[ T ]
       }

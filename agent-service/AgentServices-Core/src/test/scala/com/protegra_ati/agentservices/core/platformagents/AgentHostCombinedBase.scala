@@ -59,6 +59,7 @@ Timeouts
     val privateAcquaintanceAddressesUI = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
     ui._cnxnUIStore = cnxnUIStore
     val idUI = UUID.randomUUID
+    ui.setPrivateNetworkMode("Rabbit")
     ui.initForTest(privateAddressUI, privateAcquaintanceAddressesUI, idUI)
 
   }
@@ -77,6 +78,7 @@ Timeouts
     val id = UUID.randomUUID
     //store._cnxnUserSelfConnectionsList = List(cnxnJenSelf, cnxnMikeSelf)
     store.setNetworkMode("Local")
+    store.setPrivateNetworkMode("Rabbit")
     store.initForTest(publicAddress, publicAcquaintanceAddresses, privateAddress, privateAcquaintanceAddresses, dbAddress, resultAddress, id)
   }
  

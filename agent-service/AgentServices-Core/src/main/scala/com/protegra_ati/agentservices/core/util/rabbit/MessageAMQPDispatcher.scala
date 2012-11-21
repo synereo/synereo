@@ -6,20 +6,13 @@ import _root_.scala.actors.Actor
 import com.protegra_ati.agentservices.core.messages.{EventKey, Message}
 
 class MessageAMQPListener(host: String, port: Int, exchange: String, routingKey: String, handleMessage: (Message) => Unit) {
-  val factory = new ConnectionFactory()
-  factory.setUsername("guest")
-  factory.setPassword("guest")
-  factory.setVirtualHost("/")
-  factory.setRequestedHeartbeat(0)
-
-
-  val amqp = new MessageAMQPDispatcher(factory, host, port, exchange, routingKey)
+  val amqp = new MessageAMQPDispatcher(RabbitFactory.guest, host, port, exchange, routingKey)
   amqp.start
 
   class MessageListener(handler: (Message) => Unit) extends Actor {
     def act = {
       react {
-	case msg@AMQPMessage(contents: Message) => System.err.println("exchange: " + exchange); handler(contents); act
+	case msg@AMQPMessage(contents: Message) => println("exchange: " + exchange + " for message id: " + contents.ids.id); handler(contents); act
       }
     }
   }
