@@ -102,6 +102,7 @@ with Serializable
   def putLoop( n : Int, keyMsg : String, value : String ) : Unit = {
     n match {
       case i : Int if i > 0 => {
+	val pval : String = value + UUID.randomUUID.toString
 	tweet(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	  + "\nwriting " + value + " to " + keyMsg
@@ -110,7 +111,7 @@ with Serializable
 	reset {
 	  ui_privateQ.put(
 	    cnxnUIStore
-	  )( keyMsg.toLabel, Ground( value ) )
+	  )( keyMsg.toLabel, Ground( pval ) )
 	}
 	putLoop( n - 1, keyMsg, value )
       }
@@ -124,17 +125,49 @@ with Serializable
     }    
   }
 
-  tweet(
-    "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-    + "\n calling getLoop "
-    + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-  )
-  getLoop()
-  tweet(
-    "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-    + "\n getLoop called "
-    + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-  )
+  def testBehavior(
+    value : String, barrierCount : Int, useBarrier : Boolean
+  ) : Unit = {
+    var count = 0      
+   
+    tweet(
+      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+      + "\n calling getLoop "
+      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+    )
+    getLoop()
+    tweet(
+      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+      + "\n getLoop called "
+      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+    )
+    
+    putLoop( 5, keyMsg, value )
+    
+    if ( useBarrier ) {
+      while ( ( kBarrier < 1 ) && ( count < barrierCount ) ) {
+	tweet( "waiting to get over kBarrier" )
+	tweet( "count = " + count )
+	count += 1
+	Thread.sleep(TIMEOUT_MED)
+      }
+    }
+    
+    putLoop( 5, keyMsg, value )
+    
+    count = 0      
+    
+    if ( useBarrier ) {
+      while ( ( vBarrier < 1 ) && ( count < barrierCount ) ) {
+	tweet( "waiting to get over vBarrier" )
+	tweet( "count = " + count )
+	count += 1
+	Thread.sleep(TIMEOUT_MED)
+      }
+    }
+    
+    putLoop( 5, keyMsg, value )
+  }  
 }
 
 class AgentKVDBNodeKUpdateTest extends SpecificationWithJUnit
@@ -145,64 +178,13 @@ with Journalist
 with Serializable
 {
   sequential
-
-    //TODO: they all work individually but not together. need an after spec?
   "AgentKVDBNode" should {
 
-    //    "retrieve between UI and Store with a public queue" in new KNodeSetup{
-    //
-    //      val value = "test@protegra.com"
-    //      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
-    //
-    //      Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
-    //    }
-
-    //    "retrieve between UI and Store with a public queue using the persisted continuation" in new KNodeSetup{
-    //
-    //      Thread.sleep(TIMEOUT_MED)
-    //      store_privateQ = null
-    //      Thread.sleep(TIMEOUT_MED)
-    //
-    //      val restored_privateQ = createNode(store_location, List(ui_location), storeConfigFileName)
-    //      Thread.sleep(TIMEOUT_LONG)
-    //
-    //      val value = "test"
-    //      Thread.sleep(TIMEOUT_MED)
-    //      reset {ui_privateQ.put(cnxnUIStore)(keyMsg.toLabel, Ground(value))}
-    //
-    //      Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
-    //
-    //    }
-    //RACE: see why it fails
     "retrieve between UI and Store with a public queue using the migrated continuation" in new KNodeSetup
     {      
-      val value = "test"
-      var count = 0
-
-      putLoop( 5, keyMsg, value )
-
-      while ( ( kBarrier < 1 ) && ( count < 50 ) ) {
-	tweet( "waiting to get over kBarrier" )
-	tweet( "count = " + count )
-	count += 1
-	Thread.sleep(TIMEOUT_MED)
-      }
-
-      putLoop( 5, keyMsg, value )
-      
-      count = 0      
-
-      while ( ( vBarrier < 1 ) && ( count < 100 ) ) {
-	tweet( "waiting to get over vBarrier" )
-	tweet( "count = " + count )
-	count += 1
-	Thread.sleep(TIMEOUT_MED)
-      }
-
-      putLoop( 5, keyMsg, value )
-
+      testBehavior( "test", 50, true )
+      Thread.sleep(TIMEOUT_MED)
       //Results.savedString(restoredKey) must be_==(restored).eventually(10, TIMEOUT_EVENTUALLY)
-
     }
   }
 

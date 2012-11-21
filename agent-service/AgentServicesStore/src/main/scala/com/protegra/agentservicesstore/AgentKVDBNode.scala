@@ -101,9 +101,10 @@ with AgentCnxnTypeScope {
                           case None => {
 			    
 			    tweet( "Reader departing spaceLock AgentKVDBNode Version 1 on " + this + " for mget on " + path + "." )
-			    spaceLock.depart( Some( rk ) )
-			    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			    //spaceLock.depart( Some( rk ) )
+			    spaceLock.depart( path, rk )
+			    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                             rk(oV)
                           }
@@ -128,9 +129,10 @@ with AgentCnxnTypeScope {
                                   case None => {
 
 				    tweet( "Reader departing spaceLock AgentKVDBNode Version 2 on " + this + " for mget on " + path + "." )
-				    spaceLock.depart( Some( rk ) )
-				    tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				    tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				    //spaceLock.depart( Some( rk ) )
+				    spaceLock.depart( path, rk )
+				    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                                     rk(oV)
                                   }
@@ -223,9 +225,10 @@ with AgentCnxnTypeScope {
 					//forward( ask, hops, path )
 
 					tweet( "Reader departing spaceLock AgentKVDBNode Version 3 on " + this + " for mget on " + path + "." )
-					spaceLock.depart( Some( rk ) )
-					tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					//spaceLock.depart( Some( rk ) )
+					spaceLock.depart( path, rk )
+					//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 					
                                         rk(oV)
                                       }
@@ -278,9 +281,10 @@ with AgentCnxnTypeScope {
                                           //tweet( "returning cursor" + rsrcCursor )
 
 					  tweet( "Reader departing spaceLock AgentKVDBNode Version 4 on " + this + " for mget on " + path + "." )
-					  spaceLock.depart( Some( rk ) )
-					  tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					  tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					  //spaceLock.depart( Some( rk ) )
+					  spaceLock.depart( path, rk )
+					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 					  
                                           rk(rsrcCursor)
                                         }
@@ -320,9 +324,9 @@ with AgentCnxnTypeScope {
                               case false => {
 
 				tweet( "Reader departing spaceLock AgentKVDBNode Version 5 on " + this + " for mget on " + path + "." )
-				spaceLock.depart( Some( rk ) )
-				tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				spaceLock.depart( path, rk )
+				//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                                 rk(oV)
                               }
@@ -333,9 +337,9 @@ with AgentCnxnTypeScope {
                       case _ if ( !cursor )=> {
 
 			tweet( "Reader departing spaceLock AgentKVDBNode Version 6 on " + this + " for mget on " + path + "." )
-			spaceLock.depart( Some( rk ) )
-			tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			spaceLock.depart( path, rk )
+			//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                         rk(oV)
                       }
@@ -354,9 +358,9 @@ with AgentCnxnTypeScope {
                         processed = true
 
 			tweet( "Reader departing spaceLock AgentKVDBNode Version 7 on " + this + " for mget on " + path + "." )
-			spaceLock.depart( Some( rk ) )
-			tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			spaceLock.depart( path, rk )
+			//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                         rk(rsrcCursor)
                       }
