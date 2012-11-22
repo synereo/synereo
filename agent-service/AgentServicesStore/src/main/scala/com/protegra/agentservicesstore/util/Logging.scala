@@ -19,7 +19,7 @@ object Severity extends Enumeration()
   type Severity = Value
   val Fatal, Error, Warning, Info, Debug, Trace = Value
 }
-
+//logging/tracing too expensive to leave on by default
 object LogConfiguration {
   def SeverityFromString(level: String): Severity.Value =
   {
@@ -43,7 +43,7 @@ object LogConfiguration {
         Severity.Trace
       }
       case _ => {
-        Severity.Debug
+        Severity.Fatal
       }
     }
   }
@@ -54,7 +54,7 @@ object LogConfiguration {
         SeverityFromString(x)
       }
       case None => {
-        Severity.Debug
+        Severity.Fatal
       }
     }
   }
