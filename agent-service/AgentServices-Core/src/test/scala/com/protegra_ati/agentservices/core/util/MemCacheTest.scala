@@ -86,24 +86,24 @@ with Timeouts
       MemCache.getList[ Profile ](key)(client) must be_==(expectedLoop).eventually(3, TIMEOUT_EVENTUALLY)
     }
 
-    "add 100 Adapaters" in {
-      val key = UUID.randomUUID().toString
-      val adapter = new MessageEventAdapter(key)
-      val expected = adapter :: Nil
-      MemCache.addToList[ MessageEventAdapter ](key, adapter)(client)
-      val found = MemCache.getList[ MessageEventAdapter ](key)(client)
-      found.head.eventTag must be_==(expected.head.eventTag)
-
-      var expectedLoop = expected
-      for ( i <- 1 to 100 ) {
-        val adapterLoop = new MessageEventAdapter(key + i)
-        expectedLoop = adapterLoop :: expectedLoop
-        MemCache.addToList[ MessageEventAdapter ](key, adapterLoop)(client)
-      }
-
-      MemCache.getList[ MessageEventAdapter ](key)(client).head.eventTag must be_==(expectedLoop.head.eventTag).eventually(3, TIMEOUT_EVENTUALLY)
-      MemCache.getList[ MessageEventAdapter ](key)(client).last.eventTag must be_==(expectedLoop.last.eventTag).eventually(3, TIMEOUT_EVENTUALLY)
-    }
+//    "add 100 Adapaters" in {
+//      val key = UUID.randomUUID().toString
+//      val adapter = new MessageEventAdapter(key)
+//      val expected = adapter :: Nil
+//      MemCache.addToList[ MessageEventAdapter ](key, adapter)(client)
+//      val found = MemCache.getList[ MessageEventAdapter ](key)(client)
+//      found.head.eventTag must be_==(expected.head.eventTag)
+//
+//      var expectedLoop = expected
+//      for ( i <- 1 to 100 ) {
+//        val adapterLoop = new MessageEventAdapter(key + i)
+//        expectedLoop = adapterLoop :: expectedLoop
+//        MemCache.addToList[ MessageEventAdapter ](key, adapterLoop)(client)
+//      }
+//
+//      MemCache.getList[ MessageEventAdapter ](key)(client).head.eventTag must be_==(expectedLoop.head.eventTag).eventually(3, TIMEOUT_EVENTUALLY)
+//      MemCache.getList[ MessageEventAdapter ](key)(client).last.eventTag must be_==(expectedLoop.last.eventTag).eventually(3, TIMEOUT_EVENTUALLY)
+//    }
   }
 
 }

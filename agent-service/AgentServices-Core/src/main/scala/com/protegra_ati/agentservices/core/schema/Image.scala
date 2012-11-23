@@ -17,7 +17,7 @@ import java.util.Properties
 //case class Image(@BeanProperty name: String, @BeanProperty contentType: String, @BeanProperty content: Array[ Byte ], @BeanProperty metadata: String) extends Data
 case class Image(@BeanProperty name: String, @BeanProperty contentType: String, @BeanProperty content: String, @BeanProperty metadata: String) extends Data
 {
-  def this() = this(null, null, null.asInstanceOf[ String ], null)
+  def this() = this("", "", "", "")
 
   /**
    *  constructor

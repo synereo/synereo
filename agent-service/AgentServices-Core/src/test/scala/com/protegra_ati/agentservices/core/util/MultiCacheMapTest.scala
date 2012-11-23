@@ -24,21 +24,12 @@ class MultiCacheMapTest {
 
     @Test
     def listenerMapTest = {
-      val listeners = new MultiCacheMap[MessageEventAdapter]("T")
+      val listeners = new MultiCacheMap[String]("T")
       val agentSessionId1 = UUID.randomUUID
       val agentSessionId2 = UUID.randomUUID
-      listeners.add(agentSessionId1.toString, new MessageEventAdapter("tag1") {
-          override def setContentResponseReceived(e:SetContentResponseReceivedEvent) = {
-          }
-      })
-      listeners.add(agentSessionId2.toString, new MessageEventAdapter("tag2") {
-          override def setContentResponseReceived(e:SetContentResponseReceivedEvent) = {
-          }
-      })
-      listeners.add(agentSessionId2.toString, new MessageEventAdapter("tag3") {
-          override def setContentResponseReceived(e:SetContentResponseReceivedEvent) = {
-          }
-      })
+      listeners.add(agentSessionId1.toString, "tag1")
+      listeners.add(agentSessionId2.toString, "tag2")
+      listeners.add(agentSessionId2.toString, "tag3")
     assertEquals(1, listeners.get(agentSessionId1.toString).toList.length)
     assertEquals(2, listeners.get(agentSessionId2.toString).toList.length)
     }
