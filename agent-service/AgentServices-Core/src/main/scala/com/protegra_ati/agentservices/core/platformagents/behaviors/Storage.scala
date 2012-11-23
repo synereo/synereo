@@ -29,11 +29,11 @@ trait Storage
     _dbConfigFileName = dbConfigFileName
   }
 
-  def initDb(dbLocation: URI, dbConfigFileName: Option[String])
-  {
-    _dbLocation = dbLocation
-    _dbConfigFileName = dbConfigFileName
-  }
+//  def initDb(dbLocation: URI, dbConfigFileName: Option[String])
+//  {
+//    _dbLocation = dbLocation
+//    _dbConfigFileName = dbConfigFileName
+//  }
 
   def loadStorageQueue() =
   {

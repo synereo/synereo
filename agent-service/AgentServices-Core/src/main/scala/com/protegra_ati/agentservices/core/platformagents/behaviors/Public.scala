@@ -35,12 +35,12 @@ trait Public
     _publicConfigFileName = publicConfigFileName
   }
 
-  def initPublic(publicLocation: URI, publicAcquaintanceAddresses: List[ URI ], publicConfigFileName: Option[ String ])
-  {
-    _publicLocation = publicLocation
-    _publicAcquaintanceAddresses = publicAcquaintanceAddresses ::: this._publicAcquaintanceAddresses
-    _publicConfigFileName = publicConfigFileName
-  }
+//  def initPublic(publicLocation: URI, publicAcquaintanceAddresses: List[ URI ], publicConfigFileName: Option[ String ])
+//  {
+//    _publicLocation = publicLocation
+//    _publicAcquaintanceAddresses = publicAcquaintanceAddresses ::: this._publicAcquaintanceAddresses
+//    _publicConfigFileName = publicConfigFileName
+//  }
 
   def loadPublicQueue() =
   {

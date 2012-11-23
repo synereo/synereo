@@ -45,7 +45,7 @@ with Serializable
 
 
 class BasePlatformAgentTest extends SpecificationWithJUnit
-with RabbitTestSetup
+with InitTestSetup
 with Timeouts
 with Serializable
 {
@@ -54,39 +54,17 @@ with Serializable
   @transient val rand = new Random()
   val pa = createPA
 
-  def createPA: MockPlatformAgent =
+  def createPA: AgentHostStorePlatformAgent =
   {
-    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_DB)
-    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URI ]()
-    val pa = new MockPlatformAgent()
+//    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_DB)
+//    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+//    val privateAcquaintanceAddresses = List[ URI ]()
+    val pa = new AgentHostStorePlatformAgent()
     // pa._cnxnUIStore = cnxn
-    pa.initForTest(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
+    pa.initFromConfig(CONFIG_STORE, UUID.randomUUID)
     pa
   }
 
-  //can't conflict on DB port
-  def createPA1: MockPlatformAgent =
-  {
-    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
-    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
-    val pa = new MockPlatformAgent()
-    // pa._cnxnUIStore = cnxn
-    pa.initForTest(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
-    pa
-  }
-
-  def createPA2: MockPlatformAgent =
-  {
-    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
-    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE))
-    val pa = new MockPlatformAgent()
-    // pa._cnxnUIStore = cnxn
-    pa.initForTest(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
-    pa
-  }
 
   def handleData(cnxn: AgentCnxnProxy, data: Data, resultKey: String) =
   {
@@ -109,7 +87,6 @@ with Serializable
       }
     }
   }
-
 
   "putGet" should {
 
@@ -208,6 +185,28 @@ with Serializable
 
     }
 
+//      //can't conflict on DB port
+//  def createPA1: MockPlatformAgent =
+//  {
+//    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
+//    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
+//    val privateAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
+//    val pa = new MockPlatformAgent()
+//    // pa._cnxnUIStore = cnxn
+//    pa.initFromConfig(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
+//    pa
+//  }
+//
+//  def createPA2: MockPlatformAgent =
+//  {
+//    val dbAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED)
+//    val privateAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+//    val privateAcquaintanceAddresses = List[ URI ]("127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE))
+//    val pa = new MockPlatformAgent()
+//    // pa._cnxnUIStore = cnxn
+//    pa.initFromConfig(privateAddress, privateAcquaintanceAddresses, dbAddress, UUID.randomUUID)
+//    pa
+//  }
 
   //  "listen from stored connection" should {
   //    @transient val pa1 = createPA1

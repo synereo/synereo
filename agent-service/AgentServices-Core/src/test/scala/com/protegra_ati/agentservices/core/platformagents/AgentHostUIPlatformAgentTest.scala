@@ -39,6 +39,7 @@ import com.protegra_ati.agentservices.core.util.Results
 
 class AgentHostUIPlatformAgentTest extends SpecificationWithJUnit
 with Timeouts
+with InitTestSetup
 with Serializable
 {
   sequential
@@ -53,11 +54,9 @@ with Serializable
 
   def createPA: AgentHostUIPlatformAgent =
   {
-    val sourceAddress = "127.0.0.1".toURI
-    val acquaintanceAddresses = List[ URI ]()
     val pa = new AgentHostUIPlatformAgent()
     pa._cnxnUIStore = cnxnUIStore
-    pa.initForTest(sourceAddress, acquaintanceAddresses, UUID.randomUUID)
+    pa.initFromConfig(CONFIG_UI, UUID.randomUUID)
     pa
   }
 

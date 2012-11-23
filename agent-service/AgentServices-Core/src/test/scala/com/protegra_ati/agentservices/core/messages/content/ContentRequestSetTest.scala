@@ -39,7 +39,7 @@ import org.specs2.specification.Scope
 
 
 class ContentSetup(pa: AgentHostStorePlatformAgent) extends Scope
-with RabbitTestSetup
+with InitTestSetup
 with Timeouts
 with Serializable
 {
@@ -98,7 +98,7 @@ with Serializable
 }
 
 class DeleteSetup(pa: AgentHostStorePlatformAgent) extends Scope
-with RabbitTestSetup
+with InitTestSetup
 with Timeouts
 with Serializable
 {
@@ -135,7 +135,7 @@ with Serializable
 }
 
 class ContentRequestSetTest extends SpecificationWithJUnit
-with RabbitTestSetup
+with InitTestSetup
 with Timeouts
 with SpecsPAHelpers
 with Serializable

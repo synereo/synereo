@@ -26,7 +26,7 @@ import com.protegra_ati.agentservices.core.schema._
 //import com.protegra_ati.agentservices.core.schema.{PersistedRequest, ContentVerifier, Profile, Verifier, Data, CompositeData, AliasConnection, VerifiedData}
 //
 //class VerifierAgentHostTest extends SpecificationWithJUnit
-//with RabbitTestSetup
+//with InitTestSetup
 //with Timeouts
 //{
 //

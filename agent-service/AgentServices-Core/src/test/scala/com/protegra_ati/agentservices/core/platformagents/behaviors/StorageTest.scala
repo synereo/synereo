@@ -38,7 +38,7 @@ with Serializable
 }
 
 class StorageTest extends SpecificationWithJUnit
-with RabbitTestSetup
+with InitTestSetup
 with Timeouts
 with SpecsPAHelpers
 with Serializable

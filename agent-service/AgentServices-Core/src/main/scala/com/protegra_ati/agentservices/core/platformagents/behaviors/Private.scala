@@ -13,8 +13,10 @@ trait Private {
 
   var _privateLocation: URI = null
   var _privateAcquaintanceAddresses = List[URI]()
+  var _privateRabbitLocation: URI = null
   var _privateQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _privateConfigFileName: Option[String] = None
+
   var _privateNetworkMode = "Rabbit"
   var _privateRabbitConfig: RabbitConfiguration = null
 
@@ -26,21 +28,25 @@ trait Private {
     val privateAcquaintanceMapKey = "private.acquaintances"
     _privateAcquaintanceAddresses = loadURIs(configUtil.getConfigMap(privateAcquaintanceMapKey))  ::: this._privateAcquaintanceAddresses
 
+    val privateRabbitMapKey = "private.rabbit"
+    _privateRabbitLocation = loadFirstURI(configUtil.getConfigMap(privateRabbitMapKey))
+
     val privateNetworkModeMapKey = "privateNetworkMode"
-    _privateNetworkMode = configUtil.getString(privateNetworkModeMapKey).getOrElse("KVDB")
+    _privateNetworkMode = configUtil.getString(privateNetworkModeMapKey).getOrElse("Rabbit")
     _privateConfigFileName = privateConfigFileName
 
   }
-
-  def initPrivate(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], privateConfigFileName: Option[String])
-  {
-    _privateLocation = privateLocation
-    _privateAcquaintanceAddresses = privateAcquaintanceAddresses ::: this._privateAcquaintanceAddresses
-    _privateConfigFileName = privateConfigFileName
-  }
+//
+//  def initPrivate(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], privateRabbitLocation: URI, privateConfigFileName: Option[String])
+//  {
+//    _privateLocation = privateLocation
+//    _privateAcquaintanceAddresses = privateAcquaintanceAddresses ::: this._privateAcquaintanceAddresses
+//    _privateRabbitLocation = privateRabbitLocation
+//    _privateConfigFileName = privateConfigFileName
+//  }
 
   def loadPrivateQueue() = {
-    _privateRabbitConfig = new RabbitConfiguration(_privateLocation.getHost, _privateLocation.getPort)
+    _privateRabbitConfig = new RabbitConfiguration(_privateRabbitLocation.getHost, _privateRabbitLocation.getPort)
     if (isPrivateKVDBNetworkMode)
       _privateQ = createNode(_privateLocation, _privateAcquaintanceAddresses, _privateConfigFileName)
   }

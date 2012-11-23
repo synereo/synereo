@@ -41,7 +41,7 @@ import java.util.{Locale, UUID}
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 
 
-object AgentHostCombinedBase extends SpecificationWithJUnit with RabbitTestSetup with
+object AgentHostCombinedBase extends SpecificationWithJUnit with InitTestSetup with
 Timeouts
 {
 
@@ -55,31 +55,20 @@ Timeouts
 
 
   def setupUI(ui: AgentHostUIPlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
-    val privateAddressUI = "localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
-    val privateAcquaintanceAddressesUI = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE))
     ui._cnxnUIStore = cnxnUIStore
-    val idUI = UUID.randomUUID
-    ui.setPrivateNetworkMode("Rabbit")
-    ui.initForTest(privateAddressUI, privateAcquaintanceAddressesUI, idUI)
-
+    val id = UUID.randomUUID
+//    ui.setPrivateNetworkMode("KVDB")
+    ui.initFromConfig(CONFIG_UI, id)
   }
 
   def setupStore(store: AgentHostStorePlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
-    // store
-    val publicAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC)
-    val publicAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))
 
-    val privateAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URI ]("localhost".toURI.withPort(RABBIT_PORT_UI_PRIVATE))
-
-    val dbAddress = "localhost".toURI.withPort(RABBIT_PORT_STORE_DB)
-    val resultAddress = "localhost".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB)
     store._cnxnUIStore = cnxnUIStore
     val id = UUID.randomUUID
     //store._cnxnUserSelfConnectionsList = List(cnxnJenSelf, cnxnMikeSelf)
     store.setNetworkMode("Local")
-    store.setPrivateNetworkMode("Rabbit")
-    store.initForTest(publicAddress, publicAcquaintanceAddresses, privateAddress, privateAcquaintanceAddresses, dbAddress, resultAddress, id)
+//    store.setPrivateNetworkMode("KVDB")
+    store.initFromConfig(CONFIG_STORE, id)
   }
  
 

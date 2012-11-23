@@ -113,16 +113,16 @@ with MessageStore
     _storeCnxn = new AgentCnxnProxy(this._id.toString.toURI, "", this._id.toString.toURI)
   }
 
-  def initForTest(publicAddress: URI, publicAcquaintanceAddresses: List[ URI ], privateAddress: URI, privateAcquaintanceAddresses: List[ URI ], dbAddress: URI, resultAddress: URI, id: UUID)
-  {
-    initPublic(publicAddress, publicAcquaintanceAddresses, Some("db_store_public.conf"))
-    initPrivate(privateAddress, privateAcquaintanceAddresses, Some("db_store.conf"))
-    initDb(dbAddress, Some("db_store_db.conf"))
-    //    initResultDb(resultAddress, Some("db_store.conf"))
-
-    _storeCnxn = new AgentCnxnProxy(id.toString.toURI, "", id.toString.toURI)
-    super.initForTest(id)
-  }
+//  def initForTest(publicAddress: URI, publicAcquaintanceAddresses: List[ URI ], privateAddress: URI, privateAcquaintanceAddresses: List[ URI ], privateRabbitAddress: URI, dbAddress: URI, resultAddress: URI, id: UUID)
+//  {
+//    initPublic(publicAddress, publicAcquaintanceAddresses, Some("db_store_public.conf"))
+//    initPrivate(privateAddress, privateAcquaintanceAddresses, privateRabbitAddress, Some("db_store.conf"))
+//    initDb(dbAddress, Some("db_store_db.conf"))
+//    //    initResultDb(resultAddress, Some("db_store.conf"))
+//
+//    _storeCnxn = new AgentCnxnProxy(id.toString.toURI, "", id.toString.toURI)
+//    super.initForTest(id)
+//  }
 
   override def loadQueues()
   {

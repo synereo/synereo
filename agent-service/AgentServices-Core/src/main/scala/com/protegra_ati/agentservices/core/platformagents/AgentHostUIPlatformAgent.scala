@@ -48,11 +48,11 @@ with IntroductionResponseSetConsumerPrivate
     initApps(configUtil)
   }
 
-  def initForTest(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], id: UUID)
-  {
-    initPrivate(privateLocation, privateAcquaintanceAddresses, Some("db_ui.conf"))
-    super.initForTest(id)
-  }
+//  def initForTest(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], privateRabbitAddress: URI, id: UUID)
+//  {
+//    initPrivate(privateLocation, privateAcquaintanceAddresses, privateRabbitAddress, Some("db_ui.conf"))
+//    super.initForTest(id)
+//  }
 
   override def loadQueues()
   {

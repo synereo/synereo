@@ -88,12 +88,26 @@ abstract class BasePlatformAgent
 
   def initFromConfig(configFilePath: String)
   {
+    configure(configFilePath)
+    startup
+  }
+
+  def initFromConfig(configFilePath: String, id: UUID)
+  {
+    configure(configFilePath)
+    _id = id
+    startup
+  }
+
+  def configure(configFilePath: String) = {
     Configgy.configure(configFilePath)
 
     //    ConfigurationManager.getConfigurationManager().initForProductive()
     initBase(Configgy.config)
     init(Configgy.config)
 
+  }
+  def startup() = {
     loadQueues
     startListening
   }
@@ -114,13 +128,13 @@ abstract class BasePlatformAgent
   //make this protected and have another public loadFromConfig or similar method to pass in addresses?
   //leaving this method for now for tests so they don't break
   //set it right there.  same arguement for passing in sourceAddress which is our _location
-  def initForTest(id: UUID)
-  {
-    _id = id
-
-    loadQueues
-    startListening
-  }
+//  def initForTest(id: UUID)
+//  {
+//    _id = id
+//
+//    loadQueues
+//    startListening
+//  }
 
   //override with each specialized agent
   protected def loadQueues()
