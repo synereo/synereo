@@ -24,8 +24,8 @@ trait InvitationRequestSetPrivate
       listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(_: AgentCnxnProxy, _: Message))
     }
     else {
-      listenRabbit(cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(cnxn, _: Message))
-      listenRabbit(cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(cnxn, _: Message))
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(cnxn, _: Message))
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(cnxn, _: Message))
     }
   }
 

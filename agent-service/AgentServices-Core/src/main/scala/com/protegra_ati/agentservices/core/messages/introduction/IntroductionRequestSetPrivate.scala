@@ -16,8 +16,8 @@ trait IntroductionRequestSetPrivate
 
   def listenPrivateIntroductionRequest(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
-    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
   //overriding listen for hosted connections and putting broker listen logic in

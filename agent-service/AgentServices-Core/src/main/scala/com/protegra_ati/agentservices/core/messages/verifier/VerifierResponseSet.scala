@@ -53,7 +53,7 @@ trait VerifierResponseSet
   protected def sendPrivateMessage(cnxn: AgentCnxnProxy, msg: Message)
   {
     msg.channelLevel = None
-    send(_privateQ, msg.originCnxn, msg)
+//    send(_privateQ, msg.originCnxn, msg)
   }
 
   protected def processVerifyPermissionResponse(cnxn: AgentCnxnProxy, msg: VerifyPermissionResponse) =

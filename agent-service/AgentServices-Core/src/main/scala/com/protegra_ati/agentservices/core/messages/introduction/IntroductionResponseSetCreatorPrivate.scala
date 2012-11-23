@@ -16,7 +16,7 @@ trait IntroductionResponseSetCreatorPrivate
 
   def listenPrivateIntroductionCreatorResponses(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleIntroductionResponseChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleIntroductionResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
   def handleIntroductionResponseChannel(cnxn: AgentCnxnProxy, msg: Message)

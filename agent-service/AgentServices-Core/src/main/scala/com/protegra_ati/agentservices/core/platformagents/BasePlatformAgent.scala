@@ -15,7 +15,7 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory
 import com.protegra_ati.agentservices.core.util.Results
-import com.protegra_ati.agentservices.core.util.rabbit.{MessageAMQPPublisher, MessageAMQPListener}
+import com.protegra_ati.agentservices.core.util.rabbit.{RabbitConfiguration, MessageAMQPPublisher, MessageAMQPListener}
 
 //import com.protegra.config.ConfigurationManager
 
@@ -136,12 +136,12 @@ abstract class BasePlatformAgent
 
   //TODO: add some smarts around this to purge after certain size/length of time if we keep doing this instead of cursor
   //temporary solution is to ignore duplicate processing of the same request msg by id
-  def listenRabbit(cnxn: AgentCnxnProxy, channel: Channel.Value, channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: ( Message ) => Unit): Unit =
+  def listenRabbit(config: RabbitConfiguration, cnxn: AgentCnxnProxy, channel: Channel.Value, channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: ( Message ) => Unit): Unit =
   {
-    listenRabbit(cnxn, channel, None, channelType, channelLevel, handler)
+    listenRabbit(config, cnxn, channel, None, channelType, channelLevel, handler)
   }
 
-  def listenRabbit(cnxn: AgentCnxnProxy, channel: Channel.Value, channelRole: Option[ ChannelRole.Value ], channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: ( Message ) => Unit): Unit =
+  def listenRabbit(config: RabbitConfiguration, cnxn: AgentCnxnProxy, channel: Channel.Value, channelRole: Option[ ChannelRole.Value ], channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: ( Message ) => Unit): Unit =
   {
     //    val host = _privateLocation.host
     //    val port = _privateLocation.port
@@ -150,12 +150,12 @@ abstract class BasePlatformAgent
       val exchange = cnxn.getExchangeKey + key
       val routingKey = "routeroute"
 
-      val listener = new MessageAMQPListener("localhost", 7000, exchange, routingKey, handler(_: Message))
+      val listener = new MessageAMQPListener(config.host, config.port, exchange, routingKey, handler(_: Message))
     }
   }
 
   //make everything below here protected once tests are sorted out
-  def sendRabbit(cnxn: AgentCnxnProxy, msg: Message)
+  def sendRabbit(config: RabbitConfiguration, cnxn: AgentCnxnProxy, msg: Message)
   {
     spawn {
     report("send --- key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString, Severity.Info)
@@ -166,7 +166,7 @@ abstract class BasePlatformAgent
     //    val port = _privateLocation.port
     val exchange = cnxn.getExchangeKey + msg.getExchangeKey
     val routingKey = "routeroute"
-    val publisher = new MessageAMQPPublisher("localhost", 7000, exchange, routingKey)
+    val publisher = new MessageAMQPPublisher(config.host, config.port, exchange, routingKey)
     publisher.send(msg)
     }
 

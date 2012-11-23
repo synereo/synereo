@@ -153,22 +153,20 @@ with Serializable
       Results.saved(resultKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
   }
-  "putListen" should {
-    "listen and handle request" in new CnxnSetup
+  "listen and send on rabbit" should {
+    "handle request" in new CnxnSetup
     {
       val mockProfile = new Profile("test", "me", "test Description", "123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
       val mockSearch = new Profile()
       mockSearch.id = mockProfile.id.toString
       val mockMsg = new GetContentRequest(new EventKey(UUID.randomUUID(), ""), mockSearch)
 
-      pa.put(pa._privateQ, cnxn, mockMsg.getChannelKey, Serializer.serialize[ Message ](mockMsg))
-      Thread.sleep(TIMEOUT_MED)
       val resultKey = Results.getKey
-      pa.listen(pa._privateQ, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handleMessage(_: AgentCnxnProxy, _: Message, resultKey))
+      pa.listenRabbit(pa._privateRabbitConfig, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handleMessage(cnxn, _: Message, resultKey))
+      pa.sendRabbit(pa._privateRabbitConfig, cnxn, mockMsg)
       Results.savedMessage(resultKey) must be_==(mockMsg).eventually(5, TIMEOUT_EVENTUALLY)
     }
   }
-
 
   def fetchData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String): Data =
   {

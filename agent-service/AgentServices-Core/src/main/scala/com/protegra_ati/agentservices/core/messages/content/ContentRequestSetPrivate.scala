@@ -16,7 +16,7 @@ trait ContentRequestSetPrivate {
     if ( isPrivateKVDBNetworkMode() )
       listen(_privateQ, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handlePrivateContentRequestChannel(_: AgentCnxnProxy, _: Message))
     else
-      listenRabbit(cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handlePrivateContentRequestChannel(cnxn, _: Message))
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Content, ChannelType.Request, ChannelLevel.Private, handlePrivateContentRequestChannel(cnxn, _: Message))
   }
 
   def handlePrivateContentRequestChannel( cnxn: AgentCnxnProxy, msg: Message) =

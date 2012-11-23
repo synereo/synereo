@@ -11,8 +11,8 @@ trait VerifierNotificationSetPrivate {
 
   def listenPrivateVerifierNotification(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Verify, ChannelType.Notification, ChannelLevel.Private, handlePrivateVerifierNotificationChannel(_: AgentCnxnProxy, _: Message))
-//    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, ChannelLevel.Private, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Verify, ChannelType.Notification, ChannelLevel.Private, handlePrivateVerifierNotificationChannel(_: AgentCnxnProxy, _: Message))
+////    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, ChannelLevel.Private, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
   }
 
   def handlePrivateVerifierNotificationChannel( cnxn: AgentCnxnProxy, msg: Message) =

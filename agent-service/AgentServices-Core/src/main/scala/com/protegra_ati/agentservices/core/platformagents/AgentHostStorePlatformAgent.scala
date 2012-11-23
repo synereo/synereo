@@ -242,7 +242,7 @@ with MessageStore
     else {
       report("!!! Received on Public channel...Sending on private rabbit!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
       msg.channelLevel = Some(ChannelLevel.Private)
-      sendRabbit(_cnxnUIStore, msg)
+      sendRabbit(_privateRabbitConfig, _cnxnUIStore, msg)
     }
   }
 

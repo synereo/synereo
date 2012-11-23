@@ -35,7 +35,10 @@ trait Notifications {
     msg match {
       case x: Message with NotificationProducer => {
         val notification = x.generateNotification(token.key)
-        send(_privateQ, token.currentUICnxn.readCnxn, notification)
+        if ( isPrivateKVDBNetworkMode() )
+          send(_privateQ, token.currentUICnxn.readCnxn, notification)
+        else
+          sendRabbit(_privateRabbitConfig, token.currentUICnxn.readCnxn, notification)
       }
 //      case x: VerifyPermissionRequest => {
 //        val notification = new VerifyPermissionRequiredNotification(token.key)

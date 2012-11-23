@@ -16,7 +16,7 @@ trait VerifierResponseSetPrivate {
   self:AgentHostUIPlatformAgent =>
 
   def listenPrivateVerifierResponse(cnxn: AgentCnxnProxy) = {
-     listen(_privateQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Private, handleVerifyResponseChannel(_: AgentCnxnProxy, _: Message))
+//     listen(_privateQ, cnxn, Channel.Verify, ChannelType.Response, ChannelLevel.Private, handleVerifyResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
   def handleVerifyResponseChannel(cnxn: AgentCnxnProxy, msg: Message) =

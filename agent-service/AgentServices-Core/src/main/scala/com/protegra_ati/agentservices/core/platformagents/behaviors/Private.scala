@@ -6,6 +6,7 @@ import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
 import java.net.URI
 import net.lag.configgy._
+import com.protegra_ati.agentservices.core.util.rabbit.RabbitConfiguration
 
 trait Private {
   self:BasePlatformAgent =>
@@ -14,7 +15,8 @@ trait Private {
   var _privateAcquaintanceAddresses = List[URI]()
   var _privateQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _privateConfigFileName: Option[String] = None
-  var _privateNetworkMode = "KVDB"
+  var _privateNetworkMode = "Rabbit"
+  var _privateRabbitConfig: RabbitConfiguration = null
 
   def initPrivate(@transient configUtil: Config, privateConfigFileName: Option[String])
   {
@@ -38,7 +40,9 @@ trait Private {
   }
 
   def loadPrivateQueue() = {
-    _privateQ = createNode(_privateLocation, _privateAcquaintanceAddresses, _privateConfigFileName)
+    _privateRabbitConfig = new RabbitConfiguration(_privateLocation.getHost, _privateLocation.getPort)
+    if (isPrivateKVDBNetworkMode)
+      _privateQ = createNode(_privateLocation, _privateAcquaintanceAddresses, _privateConfigFileName)
   }
 
 

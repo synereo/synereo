@@ -99,7 +99,7 @@ with IntroductionResponseSetConsumerPrivate
         if ( isPrivateKVDBNetworkMode() )
           send(_privateQ, _cnxnUIStore, msg)
         else
-          sendRabbit(_cnxnUIStore, msg)
+          sendRabbit(_privateRabbitConfig, _cnxnUIStore, msg)
       }
     }
   }
