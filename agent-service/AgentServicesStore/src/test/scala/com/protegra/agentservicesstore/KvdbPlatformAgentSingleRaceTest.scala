@@ -120,6 +120,7 @@ class KvdbPlatformAgentSingleRaceTest extends KvdbPlatformAgentBaseRace
        val resultKey = Results.getKey()
        def listenContentRequest(): Unit =
        {
+         System.err.println("listening")
          reset {
            for ( e <- pairedReader.get(cnxnUIStore)(lblChannel) ) {
              if ( e != None ) {
@@ -140,13 +141,25 @@ class KvdbPlatformAgentSingleRaceTest extends KvdbPlatformAgentBaseRace
        val value = "test"
        for (i <- 1 to 20)
        {
-         val lblContentRequest = ( "contentRequest(\"" + UUID.randomUUID().toString + "\")" ).toLabel
+         val lblContentRequest = ( "contentRequest(\"" + i + "\")" ).toLabel
          reset {pairedWriter.put(cnxnUIStore)(lblContentRequest, Ground(value))}
        }
 
 //       Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
+       println("starting sleeping")
        Thread.sleep(1000)
        Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       println("I'm sleeping")
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       println("I'm sleeping")
        Thread.sleep(1000)
        Thread.sleep(1000)
        Thread.sleep(1000)
