@@ -37,7 +37,7 @@ uniqueness is determined primary by agentSession Key and then by subKey + eventT
 
 trait Listeners extends Reporting
 {
-  var _listeners = new MultiMap[ UUID, MessageEventAdapter ]
+  @transient var _listeners = new MultiMap[ UUID, MessageEventAdapter ]
   var _uniqueness = new MultiMap[ UUID, String ]
 
   //not providing a method with only key, listener. it should be a conscious choice to manage listeners per page
