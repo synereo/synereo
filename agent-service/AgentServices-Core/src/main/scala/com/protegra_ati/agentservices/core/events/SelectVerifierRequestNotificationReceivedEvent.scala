@@ -6,8 +6,8 @@ import com.protegra_ati.agentservices.core.messages.verifier._
 */
 
 class SelectVerifierRequestNotificationReceivedEvent(source:SelectVerifierRequestNotification) extends MessageEvent[SelectVerifierRequestNotification](source) {
-   override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.selectVerifierRequestNotificationReceivedEvent(this)}
+   override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.selectVerifierRequestNotificationReceivedEvent(this)
   }
 
 }

@@ -6,8 +6,8 @@ import com.protegra_ati.agentservices.core.messages.verifier._
 */
 
 class VerifyPermissionRequiredNotificationReceivedEvent(source:VerifyPermissionRequiredNotification) extends MessageEvent[VerifyPermissionRequiredNotification](source) {
-   override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.verifyPermissionRequiredNotificationReceived(this)}
+   override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.verifyPermissionRequiredNotificationReceived(this)
   }
 
 }

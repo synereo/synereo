@@ -7,7 +7,7 @@ import com.protegra_ati.agentservices.core.messages.invitation._
 
 class CreateInvitationResponseReceivedEvent (source:CreateInvitationResponse) extends MessageEvent[CreateInvitationResponse](source) {
 
-  override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.createInvitationResponseReceived(this)}
+  override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.createInvitationResponseReceived(this)
   }
 }
