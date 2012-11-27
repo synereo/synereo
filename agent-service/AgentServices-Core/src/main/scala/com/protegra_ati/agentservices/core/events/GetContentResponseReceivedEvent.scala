@@ -9,8 +9,8 @@ import com.protegra_ati.agentservices.core.messages.content._
 
 class GetContentResponseReceivedEvent(source:GetContentResponse) extends MessageEvent[GetContentResponse](source) {
 
-  override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.getContentResponseReceived(this)}
+  override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.getContentResponseReceived(this)
   }
   
 }

@@ -6,8 +6,8 @@ import com.protegra_ati.agentservices.core.messages.login._
 */
 
 class SetLoginResponseReceivedEvent (source:SetLoginResponse) extends MessageEvent[SetLoginResponse](source) {
-   override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.setLoginResponseReceived(this)}
+   override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.setLoginResponseReceived(this)
   }
 
 }

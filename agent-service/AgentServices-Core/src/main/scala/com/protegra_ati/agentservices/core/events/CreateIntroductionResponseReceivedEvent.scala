@@ -8,7 +8,7 @@ import com.protegra_ati.agentservices.core.messages.introduction.CreateIntroduct
 
 class CreateIntroductionResponseReceivedEvent (source:CreateIntroductionResponse) extends MessageEvent[CreateIntroductionResponse](source) {
 
-  override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.createIntroductionResponseReceived(this)}
+  override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.createIntroductionResponseReceived(this)
   }
 }
