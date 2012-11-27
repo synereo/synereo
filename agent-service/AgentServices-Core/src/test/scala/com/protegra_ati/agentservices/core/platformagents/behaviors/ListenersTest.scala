@@ -1,17 +1,18 @@
 package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import java.util.UUID
-import org.junit._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import org.specs._
-import org.specs.util._
 import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 import com.protegra_ati.agentservices.core.events._
-import java.util.HashMap
 import com.protegra_ati.agentservices.core._
+import scala.concurrent.ops._
+import scala.actors.threadpool.AtomicInteger
+import java.util.concurrent.atomic.AtomicBoolean
+
 
 class ListenersTest
   extends JUnit4(ListenersTestSpecs)
@@ -171,6 +172,43 @@ with Timeouts
 
     val mockListener = new Object with Listeners
     val agentSessionId = UUID.randomUUID()
+
+    "trigger synchronous" in {
+      val mockMessage = new SetContentResponse(new Identification(), new EventKey(agentSessionId, "testTag"),
+        new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
+
+      val event = new SetContentResponseReceivedEvent(mockMessage)
+      event.msg = mockMessage
+
+      val locked = new AtomicBoolean(false)
+      val concurrencyError = new AtomicBoolean(false)
+      val numDone = new AtomicInteger(0)
+      val numThreads = 100
+
+      mockListener.addListener(agentSessionId, "set1", new MessageEventAdapter(mockMessage.eventKey.eventTag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+          if (locked.get())
+            concurrencyError.set(true)
+
+          locked.set(true)
+          Thread.sleep(25)
+          locked.set(false)
+
+          numDone.incrementAndGet()
+        }
+      });
+
+      for ( i <- 1 to numThreads) {
+        spawn {
+          mockListener.triggerEvent(event)
+        }
+      }
+
+      numDone.get() must be_==(numThreads).eventually(5, TIMEOUT_EVENTUALLY)
+      concurrencyError.get() must be_==(false)
+    }
 
     "trigger  when found" in {
       val mockMessage = new SetContentResponse(new Identification(), new EventKey(agentSessionId, "testTag"), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
