@@ -15,8 +15,9 @@ object LocalProverFactoryPool {
     }
   }
 
+  // No max # of objects in pool, no max # of idle objects in pool
   @transient
-  lazy val localProverFactory = new GenericObjectPool[Prover]( LocalProverFactory() )
+  lazy val localProverFactory = new GenericObjectPool[Prover]( LocalProverFactory(), -1, GenericObjectPool.WHEN_EXHAUSTED_GROW, -1, -1 )
 
   def getProver() = {
     try {
