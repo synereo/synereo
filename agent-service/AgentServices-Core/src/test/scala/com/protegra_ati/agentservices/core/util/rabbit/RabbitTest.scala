@@ -13,7 +13,8 @@ class RabbitTest extends SpecificationWithJUnit
   "basicPublish" should {
     "be found by basicConsume" in {
 
-      def handleMessage(msg: Message) = {
+      def handleMessage(msg: Message) =
+      {
         println("received: " + msg)
       }
 
@@ -25,18 +26,47 @@ class RabbitTest extends SpecificationWithJUnit
       val default = new MessageAMQPListener("localhost", 5672, exchange, routingKey, handleMessage(_: Message))
       val content = new MessageAMQPListener("localhost", 5672, exchangeContent, routingKey, handleMessage(_: Message))
       val search = new MessageAMQPListener("localhost", 5672, exchangeSearch, routingKey, handleMessage(_: Message))
-      val a = new MessageAMQPPublisher("localhost", 5672, exchangeContent, routingKey)
-      val b = new MessageAMQPPublisher("localhost", 5672, exchangeSearch, routingKey)
-      for (i <- 1 to 100)
-      {
-          a.send(new GetContentRequest(new EventKey(UUID.randomUUID(), i.toString), Profile.SEARCH_ALL))
+      for ( i <- 1 to 10000 ) {
+        val a = new MessageAMQPPublisher("localhost", 5672, exchangeContent, routingKey)
+        a.send(new GetContentRequest(new EventKey(UUID.randomUUID(), i.toString), Profile.SEARCH_ALL))
       }
-      for (i <- 1 to 10)
+      Thread.sleep(10000)
+      success
+    }
+  }
+
+  "basicPublish" should {
+    "be found by basicConsume" in {
+
+      def handleMessage(msg: Message) =
       {
-          b.send(new GetContentRequest(new EventKey(UUID.randomUUID(), i.toString), Profile.SEARCH_ALL))
+        println("received: " + msg)
       }
-      Thread.sleep(1000)
-      Thread.sleep(1000)
+
+      val exchange = "mult"
+      val exchangeContent = "123content(_)"
+      val exchangeSearch = "search"
+      val exchangeRandom = "random"
+      val routingKey = "routeroute"
+
+      val default = new MessageAMQPListener("localhost", 5672, exchange, routingKey, handleMessage(_: Message))
+      val content = new MessageAMQPListener("localhost", 5672, exchangeContent, routingKey, handleMessage(_: Message))
+      val search = new MessageAMQPListener("localhost", 5672, exchangeSearch, routingKey, handleMessage(_: Message))
+      for ( i <- 1 to 1000 ) {
+        val a = new MessageAMQPPublisher("localhost", 5672, exchangeContent, routingKey)
+        a.send(new GetContentRequest(new EventKey(UUID.randomUUID(), i.toString), Profile.SEARCH_ALL))
+      }
+      for ( i <- 1 to 1000 ) {
+        val b = new MessageAMQPPublisher("localhost", 5672, exchangeSearch, routingKey)
+        b.send(new GetContentRequest(new EventKey(UUID.randomUUID(), i.toString), Profile.SEARCH_ALL))
+      }
+
+      //no consumer on this one
+      for ( i <- 1 to 1000 ) {
+        val c = new MessageAMQPPublisher("localhost", 5672, exchangeRandom + i, routingKey)
+        c.send(new GetContentRequest(new EventKey(UUID.randomUUID(), i.toString), Profile.SEARCH_ALL))
+      }
+      Thread.sleep(10000)
       success
     }
   }

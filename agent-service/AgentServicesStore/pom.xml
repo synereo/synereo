@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra</groupId>
     <artifactId>AgentServicesStore</artifactId>
-    <version>1.1.1.14-MERGE</version>
+    <version>1.1.1.15-MERGE</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -16,7 +16,7 @@
         <scala.test.specs2.version>1.8.2</scala.test.specs2.version>
         <!--<scala.version>2.9.2</scala.version>-->
         <!--<scala.test.specs2.version>1.12.1</scala.test.specs2.version>-->
-        <specialk.version>1.1.0.8</specialk.version>
+        <specialk.version>1.1.0.10</specialk.version>
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>

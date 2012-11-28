@@ -4,6 +4,25 @@ import net.liftweb.amqp._
 import com.rabbitmq.client._
 import _root_.scala.actors.Actor
 import com.protegra_ati.agentservices.core.messages.{EventKey, Message}
+import _root_.java.util.Timer
+import _root_.java.util.TimerTask
+import com.biosimilarity.lift.lib.amqp.RabbitFactory
+
+
+class MessageAMQPDispatcher(factory: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String)
+    extends AMQPDispatcher[Message](RabbitFactory.getConnection(factory, host, port)) {
+
+  override def configure(channel: Channel) {
+    // Set up the exchange and queue
+    val queueName = exchange + "_queue"
+
+    channel.exchangeDeclare(exchange, "direct")
+    channel.queueDeclare(queueName, true, false, false, null);
+    channel.queueBind(queueName, exchange, routingKey)
+    // Use the short version of the basicConsume method for convenience.
+    channel.basicConsume(queueName, false, new SerializedConsumer(channel, this))
+  }
+}
 
 class MessageAMQPListener(host: String, port: Int, exchange: String, routingKey: String, handleMessage: (Message) => Unit) {
   val amqp = new MessageAMQPDispatcher(RabbitFactory.guest, host, port, exchange, routingKey)
@@ -22,17 +41,4 @@ class MessageAMQPListener(host: String, port: Int, exchange: String, routingKey:
   amqp ! AMQPAddListener(messageListener)
 }
 
-class MessageAMQPDispatcher(factory: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String)
-    extends AMQPDispatcher[Message](factory, host, port) {
-  override def configure(channel: Channel) {
-    // Set up the exchange and queue
-    val queueName = exchange + "_queue"
-
-    channel.exchangeDeclare(exchange, "direct")
-    channel.queueDeclare(queueName, true, false, false, null);
-    channel.queueBind(queueName, exchange, routingKey)
-    // Use the short version of the basicConsume method for convenience.
-    channel.basicConsume(queueName, false, new SerializedConsumer(channel, this))
-  }
-}
 
