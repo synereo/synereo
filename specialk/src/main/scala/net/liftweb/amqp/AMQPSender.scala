@@ -1,10 +1,42 @@
 package net.liftweb.amqp
 
 import _root_.scala.actors.Actor
-import _root_.scala.actors.Actor._
 import _root_.com.rabbitmq.client._
 import _root_.java.io.ByteArrayOutputStream
 import _root_.java.io.ObjectOutputStream
+import com.biosimilarity.lift.lib.amqp.RabbitFactory
+
+//uses 1 static connection for all on a host:port
+abstract class AMQPSender[ T ](conn: Connection, exchange: String, routingKey: String) extends Actor
+{
+  val channel = conn.createChannel()
+
+  def send(msg: T)
+  {
+    // Now write an object to a byte array and shove it across the wire.
+    val bytes = new ByteArrayOutputStream
+    val store = new ObjectOutputStream(bytes)
+    store.writeObject(msg)
+    store.close
+
+    val qname = ( exchange + "_queue" )
+    channel.exchangeDeclare(exchange, "direct")
+    //queueDeclare(java.lang.String queue, boolean durable, boolean exclusive, boolean autoDelete, java.util.Map<java.lang.String,java.lang.Object> arguments)
+    channel.queueDeclare(qname, true, false, false, null);
+    channel.queueBind(qname, exchange, routingKey)
+
+    channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
+  }
+
+  def act = loop
+
+  def loop
+  {
+    react {
+      case AMQPMessage(msg: T) => send(msg); loop
+    }
+  }
+}
 
 /**
  * An actor with a long-lived connection to an AMQP exchange/queue.
@@ -12,39 +44,39 @@ import _root_.java.io.ObjectOutputStream
  * @see ExampleStringAMQPSender for an example use.
  * @author Steve Jenson (stevej@pobox.com)
  */
-abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends Actor {
-  val conn = cf.newConnection( Array { new Address(host, port) } )
-  val channel = conn.createChannel()
-
-  /**
-   * Override this to use your own AMQP queue/exchange with the given channel.
-  */
-  def configure(channel: Channel)
-
-  def send(msg: T) {
-    // Now write an object to a byte array and shove it across the wire.
-    val bytes = new ByteArrayOutputStream
-    val store = new ObjectOutputStream(bytes)
-    store.writeObject(msg)
-    store.close
-
-    val qname = (exchange + "_queue")
-    channel.exchangeDeclare( exchange, "direct" )
-    //queueDeclare(java.lang.String queue, boolean durable, boolean exclusive, boolean autoDelete, java.util.Map<java.lang.String,java.lang.Object> arguments)
-    channel.queueDeclare(qname, true, false, false, null);
-    channel.queueBind( qname, exchange, routingKey )
-
-    channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
-  }
-
-  def act = loop
-
-  def loop {
-    react {
-      case AMQPMessage(msg: T) => send(msg); loop
-    }
-  }
-}
+//abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends Actor {
+//  val conn = cf.newConnection( Array { new Address(host, port) } )
+//  val channel = conn.createChannel()
+//
+//  /**
+//   * Override this to use your own AMQP queue/exchange with the given channel.
+//  */
+//  def configure(channel: Channel)
+//
+//  def send(msg: T) {
+//    // Now write an object to a byte array and shove it across the wire.
+//    val bytes = new ByteArrayOutputStream
+//    val store = new ObjectOutputStream(bytes)
+//    store.writeObject(msg)
+//    store.close
+//
+//    val qname = (exchange + "_queue")
+//    channel.exchangeDeclare( exchange, "direct" )
+//    //queueDeclare(java.lang.String queue, boolean durable, boolean exclusive, boolean autoDelete, java.util.Map<java.lang.String,java.lang.Object> arguments)
+//    channel.queueDeclare(qname, true, false, false, null);
+//    channel.queueBind( qname, exchange, routingKey )
+//
+//    channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
+//  }
+//
+//  def act = loop
+//
+//  def loop {
+//    react {
+//      case AMQPMessage(msg: T) => send(msg); loop
+//    }
+//  }
+//}
 
 /**
  * An example subclass of AMQPSender[T]
@@ -57,12 +89,8 @@ abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exc
  * If you are planning to send lots of messages to lots of different exchange/queues,
  * consider creating Actor-based Senders, that will help your application to scale.
  */
-class StringAMQPSender(cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends AMQPSender[String](cf, host, port, exchange, routingKey) {
-  override def configure(channel: Channel) = {
-    //BUGBUG: JSK - is this internal code needed anymore now that ticket is obsolete
-    val conn = cf.newConnection( Array { new Address(host, port) } )
-    val channel = conn.createChannel()
-  }
+class StringAMQPSender(cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends AMQPSender[String](RabbitFactory.getConnection(cf, host, port), exchange, routingKey) {
+
 }
 
 /**
@@ -98,7 +126,7 @@ object ExampleDirectAMQPSender {
   }
 
   def send[T](msg: T, factory: ConnectionFactory, host: String, port: Int) {
-    val conn = factory.newConnection( Array { new Address(host, port) } )
+    val conn = RabbitFactory.getConnection(factory, host, port)
     val channel = conn.createChannel()
     // Now write an object to a byte array and shove it across the wire.
     val bytes = new ByteArrayOutputStream

@@ -15,6 +15,7 @@ import _root_.java.io.ObjectOutputStream
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
+import com.biosimilarity.lift.lib.amqp.RabbitFactory
 
 @transient
 class JSONAMQPSender(
@@ -23,12 +24,8 @@ class JSONAMQPSender(
   port: Int,
   exchange: String,
   routingKey: String
-) extends AMQPSender[String](cf, host, port, exchange, routingKey) {
-  override def configure(channel: Channel) = {
-    //BUGBUG: JSK - is this internal code needed anymore now that ticket is obsolete
-    val conn = cf.newConnection( Array { new Address(host, port) } )
-    val channel = conn.createChannel()
-  }
+) extends AMQPSender[String](RabbitFactory.getConnection(cf, host, port), exchange, routingKey) {
+
 }
 
 class BasicJSONAMQPSender {

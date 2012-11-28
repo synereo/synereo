@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.0.9</version>
+  <version>1.1.0.10</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -34,10 +34,6 @@
   </distributionManagement>
 
   <repositories>
-      <repository>
-          <id>protegraRepo</id>
-          <url>ftp://ftp.protegra.com</url>
-      </repository>
     <repository>
       <id>scala-tools.releases</id>
       <name>Scala-Tools Dependencies Repository for Releases</name>
@@ -566,14 +562,7 @@
   <build>
     <sourceDirectory>src/main/scala</sourceDirectory>
     <testSourceDirectory>src/test/scala</testSourceDirectory>
-    <extensions>
-      <extension>
-          <groupId>org.apache.maven.wagon</groupId>
-          <artifactId>wagon-ftp</artifactId>
-          <version>1.0-beta-7</version>
-      </extension>
-    </extensions>
-      <plugins>
+    <plugins>
       <plugin>
 	<groupId>org.apache.maven.plugins</groupId>
 	<artifactId>maven-compiler-plugin</artifactId>

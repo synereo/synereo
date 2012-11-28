@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.lib
 
+import amqp.RabbitFactory
 import com.biosimilarity.lift.lib.moniker._
 
 import net.liftweb.amqp._
@@ -62,8 +63,9 @@ trait MonadicAMQPDispatcher[T]
       k : ( Channel => Unit @suspendable ) => {
 	//shift {
 	  //innerk : (Unit => Unit @suspendable) => {
+
 	    val connection =
-	      factory.newConnection( Array { new Address(host, port) } )
+              RabbitFactory.getConnection(factory, host, port)
 	    val channel =
 	      connection.createChannel()
 	    k( channel );

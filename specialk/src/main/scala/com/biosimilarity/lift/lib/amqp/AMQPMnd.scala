@@ -8,6 +8,7 @@
 
 package com.biosimilarity.lift.lib
 
+import amqp.RabbitFactory
 import com.biosimilarity.lift.lib.moniker._
 import com.biosimilarity.lift.lib.monad._
 
@@ -64,7 +65,7 @@ trait AMQPBrokerScope[T] extends Serializable {
       exchange : String,
       routingKey : String
     ) : Generator[Unit, A, Unit] = {      
-      val conn = factory.newConnection( Array { new Address(host, port) } )
+      val conn = RabbitFactory.getConnection(factory, host, port)
       val channel = conn.createChannel()
       val qname = ( exchange + "_queue" )
 	channel.exchangeDeclare( exchange, "direct" )
@@ -98,7 +99,7 @@ trait AMQPBrokerScope[T] extends Serializable {
     ) : Generator[Channel, Unit, Unit] = {
       Generator {
 	k : ( Channel => Unit @suspendable ) => {
-	  val conn = factory.newConnection( Array { new Address(host, port) } )
+	  val conn = RabbitFactory.getConnection(factory, host, port)
 	  val channel = conn.createChannel()
 	  k( channel )
 	}
@@ -626,7 +627,7 @@ class AMQPNodeJSScope (
       exchange : String,
       routingKey : String
     ) : Generator[Unit, String, Unit] = {      
-      val conn = factory.newConnection( Array { new Address(host, port) } )
+      val conn = RabbitFactory.getConnection(factory, host, port)
       val channel = conn.createChannel()
       val qname = ( exchange + "_queue" )
 	channel.exchangeDeclare( exchange, "direct" )

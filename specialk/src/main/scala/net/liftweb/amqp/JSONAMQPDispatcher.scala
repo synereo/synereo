@@ -23,6 +23,7 @@ import _root_.com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 import javax.persistence.EntityManager
 import javax.persistence.EntityManagerFactory
 import javax.persistence.Persistence
+import com.biosimilarity.lift.lib.amqp.RabbitFactory
 
 //import org.apache.log4j.Logger
 //import org.apache.log4j.PropertyConfigurator
@@ -34,7 +35,7 @@ class JSONAMQPDispatcher[T](
   factory: ConnectionFactory,
   host: String,
   port: Int
-) extends AMQPDispatcher[T](factory, host, port) {  
+) extends AMQPDispatcher[T](RabbitFactory.getConnection(factory, host, port)) {
   override def configure(channel: Channel) {
     // Set up the exchange and queue
     channel.exchangeDeclare("mult", "direct")

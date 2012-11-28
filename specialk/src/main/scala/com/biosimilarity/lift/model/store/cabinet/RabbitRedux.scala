@@ -10,6 +10,7 @@ package com.biosimilarity.lift.model.store.deprecated
 
 import com.biosimilarity.lift.lib._
 
+import amqp.RabbitFactory
 import net.liftweb.amqp._
 
 import scala.util.continuations._ 
@@ -53,7 +54,7 @@ trait Rabbitter {
     host : String,
     port : Int
   ) = {
-    val connection = factory.newConnection( Array { new Address(host, port) } )
+    val connection = RabbitFactory.getConnection(factory, host, port)
     val channel = connection.createChannel()
 //    configure( factory, host, port )( channel )
 
@@ -106,7 +107,7 @@ with JSONOverAMQPListener {
     channel: Channel
   ) : Unit = {
     //BUGBUG: JSK - is this internal code needed anymore now that ticket is obsolete
-    val conn = cf.newConnection( Array { new Address(host, port) } )
+    val conn = RabbitFactory.getConnection(cf, host, port)
     val channel = conn.createChannel()
   }
 
