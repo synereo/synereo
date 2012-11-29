@@ -40,10 +40,12 @@ import org.basex.core.BaseXException
 import org.basex.core.Context
 import org.basex.core.cmd.{ List => BXListx ,_ }
 import org.basex.data.Result
-import org.basex.data.XMLSerializer
+//7.5 no longer supports this import
+//import org.basex.data.XMLSerializer
 import org.basex.query.QueryException
 import org.basex.query.QueryProcessor
-import org.basex.query.item.Item
+//7.5 not longer supports this
+//import org.basex.query.item.Item
 import org.basex.query.iter.Iter
 
 import org.xmldb.api.base._

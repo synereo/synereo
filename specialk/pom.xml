@@ -35,6 +35,10 @@
 
   <repositories>
     <repository>
+      <id>protegraRepo</id>
+      <url>ftp://ftp.protegra.com</url>
+    </repository>
+    <repository>
       <id>scala-tools.releases</id>
       <name>Scala-Tools Dependencies Repository for Releases</name>
       <url>http://scala-tools.org/repo-releases</url>
@@ -498,17 +502,17 @@
       <artifactId>xqj-api</artifactId>
       <version>1.0</version>
     </dependency>
-
+   <!--
     <dependency>
       <groupId>org.basex</groupId>
       <artifactId>basex</artifactId>
       <version>6.6</version>
     </dependency>
-
+    -->
     <dependency>
       <groupId>org.basex</groupId>
       <artifactId>basex-api</artifactId>
-      <version>6.6</version>
+      <version>7.5-SNAPSHOT-PROTEGRA</version>
     </dependency>
 
     <dependency>
@@ -562,7 +566,15 @@
   <build>
     <sourceDirectory>src/main/scala</sourceDirectory>
     <testSourceDirectory>src/test/scala</testSourceDirectory>
-    <plugins>
+      <extensions>
+          <extension>
+              <groupId>org.apache.maven.wagon</groupId>
+              <artifactId>wagon-ftp</artifactId>
+              <version>1.0-beta-7</version>
+          </extension>
+      </extensions>
+
+      <plugins>
       <plugin>
 	<groupId>org.apache.maven.plugins</groupId>
 	<artifactId>maven-compiler-plugin</artifactId>
