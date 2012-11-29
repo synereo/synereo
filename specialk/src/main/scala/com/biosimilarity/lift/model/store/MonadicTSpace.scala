@@ -24,10 +24,13 @@ import scala.collection.mutable.ListBuffer
 trait RetentionPolicy extends Serializable
 trait RetainInCache extends RetentionPolicy
 trait RetainInStore extends RetentionPolicy
+trait Subscription extends RetentionPolicy
 case object DoNotRetain extends RetentionPolicy 
 case object Cache extends RetainInCache 
 case object Store extends RetainInStore 
 case object CacheAndStore extends RetainInCache with RetainInStore
+case object CacheAndStoreSubscription extends RetainInCache
+ with RetainInStore with Subscription
 
 class SpaceLock[RK](
   val readingRoom : HashMap[RK,Boolean],

@@ -806,7 +806,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  consume : Boolean,
 	  collName : Option[String]
 	) : Option[List[emT.PlaceInstance]] = {
-	  tweet( "in updateKStore " )
+	  tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : updateKStore "
+	      + "\nthis : " + this
+	      + "\nptn : " + ptn
+	      + "\nconsume : " + consume
+	      + "\ncollName : " + collName
+	    )
+	  )
 	  val xmlCollName =
 	    collName.getOrElse(
 	      storeUnitStr.getOrElse(
@@ -892,6 +901,18 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  consume : Boolean,
 	  collName : Option[String]
 	) : Generator[emT.PlaceInstance,Unit,Unit] = {    
+	  tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : putPlaces "
+	      + "\nthis : " + this
+	      + "\nchannels : " + channels
+	      + "\nregistered : " + registered
+	      + "\nptn : " + ptn
+	      + "\nconsume : " + consume
+	      + "\ncollName : " + collName
+	    )
+	  )
 	  Generator {
 	    k : ( emT.PlaceInstance => Unit @suspendable ) => 
 	      // Are there outstanding waiters at this pattern?    
@@ -1055,7 +1076,18 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	)(
 	  ptn : mTT.GetRequest,
 	  rsrc : mTT.Resource
-	) : Unit @suspendable = {                            
+	) : Unit @suspendable = {
+	  tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : mput "
+	      + "\nthis : " + this
+	      + "\nchannels : " + channels
+	      + "\nregistered : " + registered
+	      + "\nconsume : " + consume
+	      + "\ncollName : " + collName
+	    )
+	  )
 	  //spaceLock.occupy( None )
 	  spaceLock.occupy( ptn )
 	  tweet( "Writer occupying spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
@@ -1133,23 +1165,139 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
 	: Generator[Option[mTT.Resource],Unit,Unit] = {
-	  tweet( 
+	  tweet(
 	    (
-	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	      + "mgetting " + path + ".\n"
-	      + "on " + this + ".\n"
-	      + "checking if this is a cache or a node: "
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : mget "
+	      + "\nthis : " + this
+	      + "\nchannels : " + channels
+	      + "\nregistered : " + registered
+	      + "\nconsume : " + consume
+	      + "\nkeep : " + keep
+	      + "\ncursor : " + cursor
+	      + "\ncollName : " + collName
+	      + "\npath : " + path
+	      + "\n---------------------------------------"
+	      + "\nchecking if this is a cache or a node: "
 	      + (if ( this.isInstanceOf[BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode]] ) { "cache" } else { "node"}) + "\n"
 	    )
 	  )
-	  tweet( 
-	    (
-	      "persistence manifest: " + persist + "\n"
-	      + "xml collection name: " + collName + "\n"
-	      + "consume data : " + consume + ", keep continuation : " + keep + "\n"
-	      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-	    )
-	  )
+
+	  def storeKQuery( xmlCollName : String, pd : PersistenceManifest )(
+	    path : CnxnCtxtLabel[Namespace,Var,Tag],
+	    rk : ( Option[mTT.Resource] => Unit @suspendable )
+	  ) : Unit @suspendable = {
+	    // Need to store the
+	    // continuation on the tail of
+	    // the continuation entry
+	    val oKQry = kquery( xmlCollName, path )
+	    oKQry match {
+	      case None => {
+		throw new Exception(
+		  "failed to compile a continuation query" 
+		)				  
+	      }
+	      case Some( kqry ) => {
+		//tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		//tweet( "kqry: " + kqry )
+		//println( "query text: " + kqry )
+		//tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		val krslts = executeWithResults( xmlCollName, kqry )
+		
+		val stbl = new HashMap[UUID,Int]()
+		val skey = getUUID		      
+		
+		// This is the easy case!
+		// There are no locations
+		// matching the pattern with
+		// stored continuations	  					  
+		krslts match {
+		  case Nil => {
+		    stbl += ( skey -> 1 )  	  
+		    putKInStore(
+		      persist,
+		      path,
+		      mTT.Continuation( List( rk ) ),
+		      Some( xmlCollName )
+		    )( Some( ( skey, stbl ) ) )
+		    
+		    while ( stbl( skey ) > 0 ){}
+
+		    tweet(
+		      (
+			"Reader departing spaceLock PMKVDBNode Version 3 "
+			+ this
+			+ " on a PersistedMonadicKVDBNode for mget on "
+			+ path + "."
+		      )
+		    )
+		    //spaceLock.depart( Some( rk ) )
+		    spaceLock.depart( path, Some( rk ) )
+		    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
+		    
+		  }
+		  case _ => {
+		    // A more subtle
+		    // case. Do we store
+		    // the continutation on
+		    // each match?
+		    // Answer: Yes!
+		    stbl += ( skey -> krslts.length )  	  
+		    for( krslt <- itergen[Elem]( krslts ) ) {
+		      tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		      tweet( "retrieved " + krslt.toString )
+		      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		      val ekrsrc = pd.asResource( path, krslt )
+		      
+		      tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		      tweet( "retrieved " + ekrsrc )
+		      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		      
+		      ekrsrc.stuff match {
+			case Right( ks ) => {  
+			  tweet( "removing from store " + krslt )
+			  removeFromStore( 
+			    persist,
+			    krslt,
+			    Some( xmlCollName )
+			  )
+			  putKInStore(
+			    persist,
+			    path,
+			    mTT.Continuation( ks ++ List( rk ) ),
+			    Some( xmlCollName )
+			  )( Some( ( skey, stbl ) ) )
+			}
+			case _ => {
+			  throw new Exception(
+			    "Non-continuation resource (2) stored in kRecord" + ekrsrc
+			  )
+			}
+		      }
+		    }
+		    
+		    while ( stbl( skey ) > 0 ){ }
+		    tweet(
+		      (
+			"Reader departing spaceLock PMKVDBNode Version 3 "
+			+ this
+			+ " on a PersistedMonadicKVDBNode for mget on "
+			+ path
+			+ "."
+		      )
+		    )
+		    //spaceLock.depart( Some( rk ) )
+		    spaceLock.depart( path, Some( rk ) )
+		    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
+		    
+		  }
+		}					      
+	      }
+	    }
+	  }
+
 	  Generator {	
 	    rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
 	      shift {
@@ -1160,11 +1308,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    ) {
 		      oV match {
 			case None => {
+			  tweet( 
+			    (
+			      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			      + "mgetting " + path + ".\n"
+			      + "on " + this + "did not find a result in memory cache.\n"
+			      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			    )
+			  )
 			  persist match {
 			    case None => {
-			      // tweet( ">>>>> no persistence manifest..." )
-// 			      tweet( ">>>>> forwarding..." )
-// 			      forward( ask, hops, path )
 			      tweet( 
 				(
 				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -1187,7 +1340,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				(
 				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				  + "mgetting " + path + ".\n"
-				  + "on " + this + "with a persistence manifest.\n"
+				  + "on " + this + " with a persistence manifest.\n"
 				  + "accessing db: " + pd.db + ".\n"
 				  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				)
@@ -1208,10 +1361,6 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				  
 				  oQry match {
 				    case None => {
-				      // tweet( ">>>>> unable to compile query for path " + path )
-// 				      tweet( ">>>>> forwarding..." )
-// 				      forward( ask, hops, path )
-
 				      tweet( "Reader departing spaceLock PMKVDBNode 2" + this + " for mget on " + path + "." )
 				      //spaceLock.depart( Some( rk ) )
 				      spaceLock.depart( path, Some( rk ) )
@@ -1240,99 +1389,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					    )
 					  )
 					  
-					  // Need to store the
-					  // continuation on the tail of
-					  // the continuation entry
-					  val oKQry = kquery( xmlCollName, path )
-					  oKQry match {
-					    case None => {
-					      throw new Exception(
-						"failed to compile a continuation query" 
-					      )				  
-					    }
-					    case Some( kqry ) => {
-					      //tweet( ">>>>>>***>>>>>>***>>>>>>" )
-					      //tweet( "kqry: " + kqry )
-					      //println( "query text: " + kqry )
-					      //tweet( "<<<<<<***<<<<<<***<<<<<<" )
-					      val krslts = executeWithResults( xmlCollName, kqry )
-
-					      val stbl = new HashMap[UUID,Int]()
-					      val skey = getUUID		      
-					      
-					      // This is the easy case!
-					      // There are no locations
-					      // matching the pattern with
-					      // stored continuations	  					  
-					      krslts match {
-						case Nil => {
-						  stbl += ( skey -> 1 )  	  
-						  putKInStore(
-						    persist,
-						    path,
-						    mTT.Continuation( List( rk ) ),
-						    collName
-						  )( Some( ( skey, stbl ) ) )
-						  
-						  while ( stbl( skey ) > 0 ){}
-						  tweet( "Reader departing spaceLock PMKVDBNode Version 3 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
-						  //spaceLock.depart( Some( rk ) )
-						  spaceLock.depart( path, Some( rk ) )
-						  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-						  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
-						  
-						}
-						case _ => {
-						  // A more subtle
-						  // case. Do we store
-						  // the continutation on
-						  // each match?
-						  // Answer: Yes!
-						  stbl += ( skey -> krslts.length )  	  
-						  for( krslt <- itergen[Elem]( krslts ) ) {
-						    tweet( ">>>>>>***>>>>>>***>>>>>>" )
-						    tweet( "retrieved " + krslt.toString )
-						    tweet( "<<<<<<***<<<<<<***<<<<<<" )
-						    val ekrsrc = pd.asResource( path, krslt )
-						    
-						    tweet( ">>>>>>***>>>>>>***>>>>>>" )
-						    tweet( "retrieved " + ekrsrc )
-						    tweet( "<<<<<<***<<<<<<***<<<<<<" )
-
-						    ekrsrc.stuff match {
-						      case Right( ks ) => {  
-							tweet( "removing from store " + krslt )
-							removeFromStore( 
-							  persist,
-							  krslt,
-							  collName
-							)
-							putKInStore(
-							  persist,
-							  path,
-							  mTT.Continuation( ks ++ List( rk ) ),
-							  collName
-							)( Some( ( skey, stbl ) ) )
-						      }
-						      case _ => {
-							throw new Exception(
-							  "Non-continuation resource (2) stored in kRecord" + ekrsrc
-							)
-						      }
-						    }
-						  }
-
-						  while ( stbl( skey ) > 0 ){ }
-						  tweet( "Reader departing spaceLock PMKVDBNode Version 3 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
-						  //spaceLock.depart( Some( rk ) )
-						  spaceLock.depart( path, Some( rk ) )
-						  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-						  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
-
-						}
-					      }					      
-					    }
-					  }	
+					  storeKQuery( xmlCollName, pd )( path, rk )
 					  
 					  // Then forward the request
 					  //forward( ask, hops, path )			  
@@ -1465,7 +1522,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			    }		      
 			  }
 			}
-			case _ => {			  
+			case oCacheV@Some( cacheV ) => {			  
+			  tweet( 
+			    (
+			      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			      + "mgetting " + path + ".\n"
+			      + "on " + this + "found a result in memory cache.\n"
+			      + cacheV
+			      + "\ncleaning store"
+			      + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+			    )
+			  )
 			  persist match {
 			    case None => {
 			      tweet( 
@@ -1546,14 +1613,25 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 					    )
 					  )
-
-					  tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
-					  //spaceLock.depart( Some( rk ) )
-					  spaceLock.depart( path, Some( rk ) )
+					  
 					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
 					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
-					  rk( oV )
+					  // Need to store continuation if
+					  // this is a subscribe
+					  consume match {
+					    case policy : Subscription => {
+					      storeKQuery( xmlCollName, pd )( path, rk )
+					      rk( oV )
+					    }
+					    case _ => {
+					      tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+					      //spaceLock.depart( Some( rk ) )
+					      spaceLock.depart( path, Some( rk ) )
+					      rk( oV )
+					    }
+					  }
+					  
 					}
 					case rslts => {
 					  tweet(
@@ -1589,17 +1667,29 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 											    					  
 					  }
 
-					  tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
+					  //tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
 					  //spaceLock.depart( Some( rk ) )
-					  spaceLock.depart( path, Some( rk ) )
+					  //spaceLock.depart( path, Some( rk ) )
 					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
 					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
-					  rk( oV )
+					  // Need to store continuation if
+					  // this is a subscribe
+					  consume match {
+					    case policy : Subscription => {
+					      storeKQuery( xmlCollName, pd )( path, rk )
+					      rk( oV )
+					    }
+					    case _ => {
+					      tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+					      //spaceLock.depart( Some( rk ) )
+					      spaceLock.depart( path, Some( rk ) )
+					      rk( oV )
+					    }
+					  }					  
 					}
-				      }
+				      }				      
 				    }
-				  }				  
+				  }				  				  
 				}				
 			      }
 			    }
@@ -1853,6 +1943,23 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
 	: Generator[Option[mTT.Resource],Unit,Unit] = {        
+	  tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : mget "
+	      + "\nthis : " + this
+	      + "\nchannels : " + channels
+	      + "\nregistered : " + registered
+	      + "\nconsume : " + consume
+	      + "\nkeep : " + keep
+	      + "\ncursor : " + cursor
+	      + "\ncollName : " + collName
+	      + "\npath : " + path
+	      + "\n---------------------------------------"
+	      + "\nchecking if this is a cache or a node: "
+	      + "node" + "\n"
+	    )
+	  )
 	  Generator {
 	    rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
 	      shift {
@@ -1949,7 +2056,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
 	  mget( perD, dAT.ASubscribeNum, hops )(
-	    cache.theChannels, cache.theSubscriptions, CacheAndStore, Store, false, xmlCollName
+	    cache.theChannels, cache.theSubscriptions, CacheAndStoreSubscription, Store, false, xmlCollName
 	  )( path )    
 	}
 			
