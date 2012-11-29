@@ -5,13 +5,10 @@ import org.basex.server._
 import com.biosimilarity.lift.model._
 import com.biosimilarity.lift.lib._
 import org.basex.core._
-import org.basex.core.cmd.Open
-import org.basex.core.cmd.Close
-import org.basex.core.cmd.CreateDB
-import org.basex.core.cmd.XQuery
-import org.basex.core.cmd.Add
+import cmd._
 import scala.collection._
 import scala.xml._
+import scala.List
 
 trait BaseXPersist extends Persist[ClientSession]
 with XMLStoreConfiguration
@@ -66,34 +63,35 @@ with Schema
     }
     catch {
       case bxe : BaseXException => {
-	val clientSession = clientSessionFromConfig
-        val records = toRecords( "" )	
-	try {
-	  val cs = create(clientSession, collectionName)
-	  try {
-	    cs.execute(new Open(collectionName))
-	    cs.execute(new Add(records, "database"))
-	  }
-	  catch {
-	    case inrBxe : BaseXException => {
-	      inrBxe.printStackTrace
-	      clientSession.execute(new Close())
-	      false
-	    }
-	  }
-	}
-	catch {
-	  case subBxe : BaseXException => {
-	    subBxe.printStackTrace
-	    clientSession.execute(new Close())
-	    false
-	  }
-	}	
+        val clientSession = clientSessionFromConfig
+              val records = toRecords( "" )
+        try {
+          val cs = create(clientSession, collectionName)
+          try {
+            cs.execute(new Open(collectionName))
+            cs.execute(new Add("database", records))
+          }
+          catch {
+            case inrBxe : BaseXException => {
+              inrBxe.printStackTrace
+              clientSession.execute(new Close())
+              false
+            }
+          }
+        }
+        catch {
+          case subBxe : BaseXException => {
+            subBxe.printStackTrace
+            clientSession.execute(new Close())
+            false
+          }
+        }
 
-	if (!leaveOpen) {
-          clientSession.execute(new Close())
-	}
-	true
+        if (!leaveOpen) {
+                clientSession.execute(new Close())
+        }
+        bxe.printStackTrace
+	      false
       }
       case _ => {
 	false
@@ -214,7 +212,7 @@ with Schema
         //            "insertion query failed " + insertQry
         //          )
         val records = toRecords(record)
-        clientSession.execute(new Add(records, "database"))
+        clientSession.execute(new Add("database", records))
 
         //          report(
         //            "adding database doc to " + collectionName
@@ -233,7 +231,7 @@ with Schema
       + "let $key := %KEY% "
       + "for $rcrd in $root/%RECORDTYPE% "
       + "let $rcrdkey := $rcrd/*[1] "
-      + "where deep-equal($rcrdkey, $key) "
+      + "where deep-equal($key, $rcrd/*[1]) "
       + "return if (exists($rcrd)) "
       + "then replace value of node $rcrd/*[2] "
       //+ "return replace value of node $rcrds[1]/*[2] "
@@ -276,7 +274,7 @@ with Schema
       + "let $key := %KEY% "
       + "for $rcrd in $root/%RECORDTYPE% "
       + "let $rcrdkey := $rcrd/*[1] "
-      + "where deep-equal($rcrdkey, $key) "
+      + "where deep-equal($key, $rcrd/*[1]) "
       + "return (exists($rcrd)) "
     ).replace( "%RECORDTYPE%", recordType )
   }
@@ -316,7 +314,7 @@ with Schema
       "delete node "
       + "let $key := %RecordKeyConstraints% "
       + "for $rcrd in collection( '%COLLNAME%' )/records/%RECORDTYPE% "
-      + "where deep-equal($rcrd/*[1], $key) "
+      + "where deep-equal($key, $rcrd/*[1]) "
       + "return $rcrd"
     ).replace( "%RECORDTYPE%", recordType )
   }
