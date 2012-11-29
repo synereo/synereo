@@ -32,6 +32,16 @@ trait AgentKVDBNodeResubmitRequestsTestConfigurationT
 extends KVDBHelpers
 with FJTaskRunners
 with Serializable {
+
+  @transient
+  val resultConfigFileName = Some("db_result.conf")
+  lazy val _resultsQ =
+    createNode(
+      "127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB),
+      List[ URI ](),
+      resultConfigFileName
+    )
+
   def testId : String
   def numberOfStandingRequests : Int
   def uiConfigFileName : Option[String]
