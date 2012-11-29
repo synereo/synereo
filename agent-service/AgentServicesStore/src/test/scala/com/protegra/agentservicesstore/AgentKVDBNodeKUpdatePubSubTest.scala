@@ -32,7 +32,7 @@ trait PubSubKNodeSetup extends Scope
 with KVDBHelpers
 with RabbitTestSetup
 with Timeouts
-with Journalist
+//with Journalist
 with FJTaskRunners
 with Serializable
 {  
@@ -79,7 +79,7 @@ with Serializable
     lazy val srcQ = srcQM.zero[String]
 
     def recordObservation( observation : String ) : String = {
-      tweet(
+      report(
 	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	+ "\nrecording observation: " + observation
 	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -88,7 +88,7 @@ with Serializable
       observation
     }
     def reportObservations( ) : Unit = {
-      tweet(
+      report(
 	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	+ "\nreporting observations"
 	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -97,17 +97,17 @@ with Serializable
 	new HashMap[String,Int]()
 
       for( msg <- srcQM( srcQ ) ) {
-	tweet(
+	report(
 	  "observed " + msg + " " + ( observationMap.get( msg ).getOrElse( 0 ) + 1 ) + " times"
 	)
 	observationMap += ( msg -> ( observationMap.get( msg ).getOrElse( 0 ) + 1 ) )
       }
       for( ( k, v ) <- observationMap ) {
-	tweet(
+	report(
 	  "observed " + k + " " + v + " times"
 	)
       }
-      tweet(
+      report(
 	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	+ "\nobservations report"
 	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -123,7 +123,7 @@ with Serializable
 	)( keyPrivate.toLabel ) ) {
 	  if ( e != None ) {	  
             val result = e.dispatch
-	    tweet(
+	    report(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	      + "\nsubscribe received - " + result
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -136,7 +136,7 @@ with Serializable
 	    //spawn { subscription() }
 	  }
 	  else {
-            tweet(
+            report(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	      + "\nsubscribe received - none"
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -151,7 +151,7 @@ with Serializable
     n match {
       case i : Int if i > 0 => {
 	val pval : String = value + UUID.randomUUID.toString
-	tweet(
+	report(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	  + "\npublishing " + pval + " to " + keyMsg
 	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -164,7 +164,7 @@ with Serializable
 	publication( n - 1, keyMsg, value )
       }
       case _ => {
-	tweet(
+	report(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	  + "\npublication complete"
 	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -178,13 +178,13 @@ with Serializable
   ) : Unit = {
     var count = 0      
    
-    tweet(
+    report(
       "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
       + "\n calling subscription "
       + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
     )
     subscription()
-    tweet(
+    report(
       "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
       + "\n subscription called "
       + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -194,8 +194,8 @@ with Serializable
     
     if ( useBarrier ) {
       while ( ( kBarrier < 1 ) && ( count < barrierCount ) ) {
-	tweet( "waiting to get over kBarrier" )
-	tweet( "count = " + count )
+	report( "waiting to get over kBarrier" )
+	report( "count = " + count )
 	count += 1
 	Thread.sleep(TIMEOUT_MED)
       }
@@ -207,8 +207,8 @@ with Serializable
     
     if ( useBarrier ) {
       while ( ( vBarrier < 1 ) && ( count < barrierCount ) ) {
-	tweet( "waiting to get over vBarrier" )
-	tweet( "count = " + count )
+	report( "waiting to get over vBarrier" )
+	report( "count = " + count )
 	count += 1
 	Thread.sleep(TIMEOUT_MED)
       }
@@ -222,8 +222,8 @@ with Serializable
     
     if ( useBarrier ) {
       while ( ( vBarrier < 1 ) && ( count < barrierCount ) ) {
-	tweet( "waiting to get over vBarrier" )
-	tweet( "count = " + count )
+	report( "waiting to get over vBarrier" )
+	report( "count = " + count )
 	count += 1
 	Thread.sleep(TIMEOUT_MED)
       }
@@ -237,7 +237,7 @@ class AgentKVDBNodeKUpdatePubSubTest extends SpecificationWithJUnit
 with SpecsKVDBHelpers
 with RabbitTestSetup
 with Timeouts
-with Journalist
+//with Journalist
 with Serializable
 {
   sequential

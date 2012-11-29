@@ -23,7 +23,7 @@ import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
 import com.protegra.agentservicesstore.usage.AgentUseCase._
 
-import com.biosimilarity.lift.lib.Journalist
+//import com.biosimilarity.lift.lib.Journalist
 
 import Being.AgentKVDBNodeFactory
 import util.Results
@@ -32,7 +32,7 @@ trait KNodeSetup extends Scope
 with KVDBHelpers
 with RabbitTestSetup
 with Timeouts
-with Journalist
+//with Journalist
 with FJTaskRunners
 with Serializable
 {  
@@ -70,16 +70,16 @@ with Serializable
   var vBarrier = 0
   var kBarrier = 0
 
-  object OutOfMemoryCounter {
+  object OutOfMemoryCounter extends Serializable{
     import com.biosimilarity.lift.lib._
 
-    lazy val srcScope = new AMQPStdScope[String]()
-    lazy val srcQM =
+    @transient lazy val srcScope = new AMQPStdScope[String]()
+    @transient lazy val srcQM =
       new srcScope.AMQPQueueHostExchangeM[String]( "localhost", "TestObservations" )
-    lazy val srcQ = srcQM.zero[String]
+    @transient lazy val srcQ = srcQM.zero[String]
 
     def recordObservation( observation : String ) : String = {
-      tweet(
+      report(
 	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	+ "\nrecording observation: " + observation
 	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -88,7 +88,7 @@ with Serializable
       observation
     }
     def reportObservations( ) : Unit = {
-      tweet(
+      report(
 	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	+ "\nreporting observations"
 	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -97,17 +97,17 @@ with Serializable
 	new HashMap[String,Int]()
 
       for( msg <- srcQM( srcQ ) ) {
-	tweet(
+	report(
 	  "observed " + msg + " " + ( observationMap.get( msg ).getOrElse( 0 ) + 1 ) + " times"
 	)
 	observationMap += ( msg -> ( observationMap.get( msg ).getOrElse( 0 ) + 1 ) )
       }
       for( ( k, v ) <- observationMap ) {
-	tweet(
+	report(
 	  "observed " + k + " " + v + " times"
 	)
       }
-      tweet(
+      report(
 	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	+ "\nobservations report"
 	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -123,7 +123,7 @@ with Serializable
 	)( keyPrivate.toLabel ) ) {
 	  if ( e != None ) {	  
             val result = e.dispatch
-	    tweet(
+	    report(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	      + "\nlisten received - " + result
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -137,7 +137,7 @@ with Serializable
 	    spawn { getLoop() }
 	  }
 	  else {
-            tweet(
+            report(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	      + "\nlisten received - none"
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -152,7 +152,7 @@ with Serializable
     n match {
       case i : Int if i > 0 => {
 	val pval : String = value + UUID.randomUUID.toString
-	tweet(
+	report(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	  + "\nwriting " + value + " to " + keyMsg
 	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -165,7 +165,7 @@ with Serializable
 	putLoop( n - 1, keyMsg, value )
       }
       case _ => {
-	tweet(
+	report(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	  + "\nputLoop complete"
 	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -179,13 +179,13 @@ with Serializable
   ) : Unit = {
     var count = 0      
    
-    tweet(
+    report(
       "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
       + "\n calling getLoop "
       + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
     )
     getLoop()
-    tweet(
+    report(
       "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
       + "\n getLoop called "
       + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
@@ -195,8 +195,8 @@ with Serializable
     
     if ( useBarrier ) {
       while ( ( kBarrier < 1 ) && ( count < barrierCount ) ) {
-	tweet( "waiting to get over kBarrier" )
-	tweet( "count = " + count )
+	report( "waiting to get over kBarrier" )
+	report( "count = " + count )
 	count += 1
 	Thread.sleep(TIMEOUT_MED)
       }
@@ -208,8 +208,8 @@ with Serializable
     
     if ( useBarrier ) {
       while ( ( vBarrier < 1 ) && ( count < barrierCount ) ) {
-	tweet( "waiting to get over vBarrier" )
-	tweet( "count = " + count )
+	report( "waiting to get over vBarrier" )
+	report( "count = " + count )
 	count += 1
 	Thread.sleep(TIMEOUT_MED)
       }
@@ -221,8 +221,8 @@ with Serializable
     
     if ( useBarrier ) {
       while ( ( vBarrier < 1 ) && ( count < barrierCount ) ) {
-	tweet( "waiting to get over vBarrier" )
-	tweet( "count = " + count )
+	report( "waiting to get over vBarrier" )
+	report( "count = " + count )
 	count += 1
 	Thread.sleep(TIMEOUT_MED)
       }
@@ -236,7 +236,7 @@ class AgentKVDBNodeKUpdateTest extends SpecificationWithJUnit
 with SpecsKVDBHelpers
 with RabbitTestSetup
 with Timeouts
-with Journalist
+//with Journalist
 with Serializable
 {
   sequential
