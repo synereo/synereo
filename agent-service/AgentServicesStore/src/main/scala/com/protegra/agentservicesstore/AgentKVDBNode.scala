@@ -84,6 +84,24 @@ with AgentCnxnTypeScope {
 	path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {
+	tweet(
+	  (
+	    "PersistedMonadicKVDBNode : "
+	    + "\nmethod : mget "
+	    + "\nthis : " + this
+	    + "\ncnxn : " + cnxn
+	    + "\nchannels : " + channels
+	    + "\nregistered : " + registered
+	    + "\nconsume : " + consume
+	    + "\nkeep : " + keep
+	    + "\ncursor : " + cursor
+	    + "\ncollName : " + collName
+	    + "\npath : " + path
+	    + "\n---------------------------------------"
+	    + "\nchecking if this is a cache or a node: "
+	    + "cache" + "\n"
+	  )
+	)
 	Generator {
 	  rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
 	    shift {
@@ -905,6 +923,24 @@ with AgentCnxnTypeScope {
 	path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {        
+	tweet(
+	  (
+	    "PersistedMonadicKVDBNode : "
+	    + "\nmethod : mget "
+	    + "\nthis : " + this
+	    + "\ncnxn : " + cnxn
+	    + "\nchannels : " + channels
+	    + "\nregistered : " + registered
+	    + "\nconsume : " + consume
+	    + "\nkeep : " + keep
+	    + "\ncursor : " + cursor
+	    + "\ncollName : " + collName
+	    + "\npath : " + path
+	    + "\n---------------------------------------"
+	    + "\nchecking if this is a cache or a node: "
+	    + "node" + "\n"
+	  )
+	)
 	Generator {
 	  rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
 	    shift {
