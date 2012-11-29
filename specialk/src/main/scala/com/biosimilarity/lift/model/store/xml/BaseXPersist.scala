@@ -90,7 +90,7 @@ with Schema
         if (!leaveOpen) {
                 clientSession.execute(new Close())
         }
-        bxe.printStackTrace
+//        bxe.printStackTrace
 	      false
       }
       case _ => {
