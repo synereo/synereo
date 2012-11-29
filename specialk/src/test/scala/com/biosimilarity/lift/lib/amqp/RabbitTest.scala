@@ -1,13 +1,12 @@
 package com.biosimilarity.lift.lib.amqp {
 
-import usage._
-
 import org.specs._
 import org.specs.util._
 import org.specs.runner.JUnit4
 import org.specs.runner.ConsoleRunner
 
 import java.util.UUID
+import net.liftweb.amqp.usage._
 
 class RabbitTest
   extends JUnit4(RabbitTestSpecs)
