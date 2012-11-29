@@ -56,13 +56,13 @@ object RabbitTestSpecs extends Specification
 
       val default = new StringAMQPListener("localhost", 5672, exchange, routingKey, handleString(_: String))
       val content = new StringAMQPListener("localhost", 5672, exchangeContent, routingKey, handleString(_: String))
-      val search = new StringAMQPListener("localhost", 5672, exchangeSearch, routingKey, handleString(_: String))
+      val search = new StringAMQPListener("localhost", 4000, exchangeSearch, routingKey, handleString(_: String))
       for ( i <- 1 to 1000 ) {
         val a = new StringAMQPPublisher("localhost", 5672, exchangeContent, routingKey)
         a.send("msg: " + i)
       }
       for ( i <- 1 to 1000 ) {
-        val b = new StringAMQPPublisher("localhost", 5672, exchangeSearch, routingKey)
+        val b = new StringAMQPPublisher("localhost", 4000, exchangeSearch, routingKey)
         b.send("msg: " + i)
       }
 
