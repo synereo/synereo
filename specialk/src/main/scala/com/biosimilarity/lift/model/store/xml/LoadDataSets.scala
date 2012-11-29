@@ -122,118 +122,118 @@ with BXGraphQueryResources
     CXQ.xqQuery( innerGraphExprCCL )
  }
 
-object BXToBeDeprecated extends BaseXXMLUtilities
-{ 
-  override def configurationDefaults : ConfigurationDefaults = {
-    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
-  }  
-    
-  def populateDB(
-    dbNameStr : String,      // name of the database
-    contentFileStr : String  // root of the file name of the data
-  ) = {    
-    // new database
-    val bxcoll = new BXCollection( dbNameStr, false )
-
-    // new document
-    val document =
-      bxcoll.createResource(
-	null,
-	XMLResource.RESOURCE_TYPE
-      ).asInstanceOf[XMLResource]
-
-    // add the data
-    document.setContent(
-      new java.io.File(
-	datasetsDir + contentFileStr + ".xml"
-      )
-    )
-
-    // store the data
-    bxcoll.storeResource( document )
-
-    // close the database
-    bxcoll.close
-
-    // open the database for operations
-    new BXCollection( dbNameStr, true )
-  }  
-
-  def loadDataSets = {
-    dbNames.zip( dbSets ).map(
-      { ( dbNData ) => populateDB( dbNData._1, dbNData._2 ) }
-    )
-  }
-
-  lazy val dataSets = loadDataSets
-  
-  def reportGraphs = {
-    for( dataSet <- dataSets.take( 3 ) ) {
-      val xqSrvc =
-	dataSet.getService(
-	  "XPathQueryService",
-	  "1.0"
-	).asInstanceOf[XPathQueryService]
-      val dbName = dataSet.getName
-      val vertexResourceSet = xqSrvc.query( vertexQuery2 )
-      println( 
-	"// *************************************************************"
-      )
-      println( 
-	"// Report for database: " + dbName 
-      )
-      println( 
-	"// *************************************************************"
-      )
-      println(
-	"Number of vertices in this graph is " + vertexResourceSet.getSize + "\n"
-      )
-      val vrsIter = vertexResourceSet.getIterator
-      while( vrsIter.hasMoreResources ) {
-	val vertexElemStr = vrsIter.nextResource.getContent.toString
-	val vertexElem = XML.loadString( vertexElemStr )	
-	val vName = vertexElem \ "VertexString" \ "String" \ "@value"
-	val vertexRoleResourceSet =
-	  xqSrvc.query(
-	    vertexRoleQueryTemplate.replace( "%V", vName.toString )
-	  )
-	val vrrsIter = vertexRoleResourceSet.getIterator
-
-	println( "Vertex name is " + vName )
-	println( vertexElem \ "VertexString" )
-	while( vrrsIter.hasMoreResources ) {
-	  println(
-	    (
-	      "and plays in the role "
-	      +	vrrsIter.nextResource.getContent.toString
-	    )
-	  )
-	}
-	println( "" )
-      }
-
-      val edgeResourceSet = xqSrvc.query( edgeQuery2 )
-
-      println(
-	"\n\nNumber of edges in this graph is " + edgeResourceSet.getSize + "\n"
-      )
-
-      val ersIter = edgeResourceSet.getIterator
-      while( ersIter.hasMoreResources ) {
-	val edgeElemStr = ersIter.nextResource.getContent.toString
-	val edgeElem = XML.loadString( edgeElemStr )
-	val eName = edgeElem \ "EdgeString" \ "String" \ "@value"
-	println( "Edge name is " + eName )	
-	println( edgeElem \ "EdgeString" )
-	println( "" )
-      }
-
-      println( 
-	"// *************************************************************\n\n"
-      )
-    }
-  }  
-}
+//object BXToBeDeprecated extends BaseXXMLUtilities
+//{
+//  override def configurationDefaults : ConfigurationDefaults = {
+//    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
+//  }
+//
+//  def populateDB(
+//    dbNameStr : String,      // name of the database
+//    contentFileStr : String  // root of the file name of the data
+//  ) = {
+//    // new database
+//    val bxcoll = new BXCollection( dbNameStr, false )
+//
+//    // new document
+//    val document =
+//      bxcoll.createResource(
+//	null,
+//	XMLResource.RESOURCE_TYPE
+//      ).asInstanceOf[XMLResource]
+//
+//    // add the data
+//    document.setContent(
+//      new java.io.File(
+//	datasetsDir + contentFileStr + ".xml"
+//      )
+//    )
+//
+//    // store the data
+//    bxcoll.storeResource( document )
+//
+//    // close the database
+//    bxcoll.close
+//
+//    // open the database for operations
+//    new BXCollection( dbNameStr, true )
+//  }
+//
+//  def loadDataSets = {
+//    dbNames.zip( dbSets ).map(
+//      { ( dbNData ) => populateDB( dbNData._1, dbNData._2 ) }
+//    )
+//  }
+//
+//  lazy val dataSets = loadDataSets
+//
+//  def reportGraphs = {
+//    for( dataSet <- dataSets.take( 3 ) ) {
+//      val xqSrvc =
+//	dataSet.getService(
+//	  "XPathQueryService",
+//	  "1.0"
+//	).asInstanceOf[XPathQueryService]
+//      val dbName = dataSet.getName
+//      val vertexResourceSet = xqSrvc.query( vertexQuery2 )
+//      println(
+//	"// *************************************************************"
+//      )
+//      println(
+//	"// Report for database: " + dbName
+//      )
+//      println(
+//	"// *************************************************************"
+//      )
+//      println(
+//	"Number of vertices in this graph is " + vertexResourceSet.getSize + "\n"
+//      )
+//      val vrsIter = vertexResourceSet.getIterator
+//      while( vrsIter.hasMoreResources ) {
+//	val vertexElemStr = vrsIter.nextResource.getContent.toString
+//	val vertexElem = XML.loadString( vertexElemStr )
+//	val vName = vertexElem \ "VertexString" \ "String" \ "@value"
+//	val vertexRoleResourceSet =
+//	  xqSrvc.query(
+//	    vertexRoleQueryTemplate.replace( "%V", vName.toString )
+//	  )
+//	val vrrsIter = vertexRoleResourceSet.getIterator
+//
+//	println( "Vertex name is " + vName )
+//	println( vertexElem \ "VertexString" )
+//	while( vrrsIter.hasMoreResources ) {
+//	  println(
+//	    (
+//	      "and plays in the role "
+//	      +	vrrsIter.nextResource.getContent.toString
+//	    )
+//	  )
+//	}
+//	println( "" )
+//      }
+//
+//      val edgeResourceSet = xqSrvc.query( edgeQuery2 )
+//
+//      println(
+//	"\n\nNumber of edges in this graph is " + edgeResourceSet.getSize + "\n"
+//      )
+//
+//      val ersIter = edgeResourceSet.getIterator
+//      while( ersIter.hasMoreResources ) {
+//	val edgeElemStr = ersIter.nextResource.getContent.toString
+//	val edgeElem = XML.loadString( edgeElemStr )
+//	val eName = edgeElem \ "EdgeString" \ "String" \ "@value"
+//	println( "Edge name is " + eName )
+//	println( edgeElem \ "EdgeString" )
+//	println( "" )
+//      }
+//
+//      println(
+//	"// *************************************************************\n\n"
+//      )
+//    }
+//  }
+//}
 
 object BX extends BaseXXMLUtilities
 {  
