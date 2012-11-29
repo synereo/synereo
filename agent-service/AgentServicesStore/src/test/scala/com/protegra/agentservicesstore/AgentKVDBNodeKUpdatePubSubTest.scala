@@ -28,7 +28,7 @@ import com.biosimilarity.lift.lib.Journalist
 import Being.AgentKVDBNodeFactory
 import util.Results
 
-trait KNodeSetup extends Scope
+trait PubSubKNodeSetup extends Scope
 with KVDBHelpers
 with RabbitTestSetup
 with Timeouts
@@ -115,31 +115,30 @@ with Serializable
     }
   }
 
-  def getLoop() : Unit = {
+  def subscription() : Unit = {
     reset {
       for (
-	e <- store_privateQ.get(
+	e <- store_privateQ.subscribe(
 	  cnxnUIStore
 	)( keyPrivate.toLabel ) ) {
 	  if ( e != None ) {	  
             val result = e.dispatch
 	    tweet(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	      + "\nlisten received - " + result
+	      + "\nsubscribe received - " + result
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	    )
-
-	    OutOfMemoryCounter.recordObservation( result )
+	    )	    
 	    
-            Results.saveString(resultKey, result)
+	    OutOfMemoryCounter.recordObservation( result )
 
+            Results.saveString( resultKey, result )
 	    vBarrier += 1
-	    spawn { getLoop() }
+	    //spawn { subscription() }
 	  }
 	  else {
             tweet(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	      + "\nlisten received - none"
+	      + "\nsubscribe received - none"
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	    )
 	    kBarrier += 1
@@ -148,26 +147,26 @@ with Serializable
     }
   }
 
-  def putLoop( n : Int, keyMsg : String, value : String ) : Unit = {
+  def publication( n : Int, keyMsg : String, value : String ) : Unit = {
     n match {
       case i : Int if i > 0 => {
 	val pval : String = value + UUID.randomUUID.toString
 	tweet(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	  + "\nwriting " + value + " to " + keyMsg
+	  + "\npublishing " + pval + " to " + keyMsg
 	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	)
 	reset {
-	  ui_privateQ.put(
+	  ui_privateQ.publish(
 	    cnxnUIStore
 	  )( keyMsg.toLabel, Ground( pval ) )
 	}
-	putLoop( n - 1, keyMsg, value )
+	publication( n - 1, keyMsg, value )
       }
       case _ => {
 	tweet(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	  + "\nputLoop complete"
+	  + "\npublication complete"
 	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	)
       }
@@ -181,17 +180,17 @@ with Serializable
    
     tweet(
       "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-      + "\n calling getLoop "
+      + "\n calling subscription "
       + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
     )
-    getLoop()
+    subscription()
     tweet(
       "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-      + "\n getLoop called "
+      + "\n subscription called "
       + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
     )
     
-    putLoop( 5, keyMsg, value )
+    //publication( 5, keyMsg, value )
     
     if ( useBarrier ) {
       while ( ( kBarrier < 1 ) && ( count < barrierCount ) ) {
@@ -202,7 +201,7 @@ with Serializable
       }
     }
     
-    putLoop( 5, keyMsg, value )
+    //publication( 5, keyMsg, value )
     
     count = 0      
     
@@ -215,7 +214,9 @@ with Serializable
       }
     }
     
-    putLoop( 5, keyMsg, value )
+    publication( 5, keyMsg, value )
+    publication( 5, keyMsg, value )
+    publication( 5, keyMsg, value )
 
     count = 0      
     
@@ -232,7 +233,7 @@ with Serializable
   }  
 }
 
-class AgentKVDBNodeKUpdateTest extends SpecificationWithJUnit
+class AgentKVDBNodeKUpdatePubSubTest extends SpecificationWithJUnit
 with SpecsKVDBHelpers
 with RabbitTestSetup
 with Timeouts
@@ -242,7 +243,7 @@ with Serializable
   sequential
   "AgentKVDBNode" should {
 
-    "retrieve between UI and Store with a public queue using the migrated continuation" in new KNodeSetup
+    "retrieve between UI and Store with a public queue using the migrated continuation" in new PubSubKNodeSetup
     {      
       testBehavior( "test", 50, true )
       Thread.sleep(TIMEOUT_MED)
