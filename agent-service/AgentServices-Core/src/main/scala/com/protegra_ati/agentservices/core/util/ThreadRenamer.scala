@@ -8,6 +8,7 @@ object ThreadRenamer
 
   def rename(p: => Unit)(newName: String): Unit =
   {
+/*
     val reallyName = Thread.currentThread().getName
 
     try {
@@ -29,6 +30,8 @@ object ThreadRenamer
       // TODO println has to be deleted !!! 
       System.err.println("the thread name is: " + Thread.currentThread().getName)
     }
+*/
+    p
   }
 
 }
