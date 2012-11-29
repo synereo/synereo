@@ -13,6 +13,7 @@ import com.protegra.agentservicesstore.extensions.URIExtensions._
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 import scala.util.continuations._
+import scala.collection.mutable.HashMap
 
 import java.net.URI
 import java.util.UUID
@@ -69,6 +70,51 @@ with Serializable
   var vBarrier = 0
   var kBarrier = 0
 
+  object OutOfMemoryCounter {
+    import com.biosimilarity.lift.lib._
+
+    lazy val srcScope = new AMQPStdScope[String]()
+    lazy val srcQM =
+      new srcScope.AMQPQueueHostExchangeM[String]( "localhost", "TestObservations" )
+    lazy val srcQ = srcQM.zero[String]
+
+    def recordObservation( observation : String ) : String = {
+      tweet(
+	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+	+ "\nrecording observation: " + observation
+	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+      )
+      srcQ ! observation
+      observation
+    }
+    def reportObservations( ) : Unit = {
+      tweet(
+	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+	+ "\nreporting observations"
+	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+      )
+      val observationMap : HashMap[String,Int] =
+	new HashMap[String,Int]()
+
+      for( msg <- srcQM( srcQ ) ) {
+	tweet(
+	  "observed " + msg + " " + ( observationMap.get( msg ).getOrElse( 0 ) + 1 ) + " times"
+	)
+	observationMap += ( msg -> ( observationMap.get( msg ).getOrElse( 0 ) + 1 ) )
+      }
+      for( ( k, v ) <- observationMap ) {
+	tweet(
+	  "observed " + k + " " + v + " times"
+	)
+      }
+      tweet(
+	"----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+	+ "\nobservations report"
+	+ "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
+      )
+    }
+  }
+
   def getLoop() : Unit = {
     reset {
       for (
@@ -82,8 +128,11 @@ with Serializable
 	      + "\nlisten received - " + result
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	    )
+
+	    OutOfMemoryCounter.recordObservation( result )
 	    
             Results.saveString(resultKey, result)
+
 	    vBarrier += 1
 	    spawn { getLoop() }
 	  }
@@ -167,6 +216,19 @@ with Serializable
     }
     
     putLoop( 5, keyMsg, value )
+
+    count = 0      
+    
+    if ( useBarrier ) {
+      while ( ( vBarrier < 1 ) && ( count < barrierCount ) ) {
+	tweet( "waiting to get over vBarrier" )
+	tweet( "count = " + count )
+	count += 1
+	Thread.sleep(TIMEOUT_MED)
+      }
+    }
+    
+    OutOfMemoryCounter.reportObservations()
   }  
 }
 

@@ -125,10 +125,12 @@ with Serializable
             val result = e.dispatch
 	    tweet(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	      + "\nlisten received - " + OutOfMemoryCounter.recordObservation( result )
+	      + "\nsubscribe received - " + result
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	    )	    
 	    
+	    OutOfMemoryCounter.recordObservation( result )
+
             Results.saveString( resultKey, result )
 	    vBarrier += 1
 	    //spawn { subscription() }
@@ -136,7 +138,7 @@ with Serializable
 	  else {
             tweet(
 	      "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	      + "\nlisten received - none"
+	      + "\nsubscribe received - none"
 	      + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	    )
 	    kBarrier += 1
@@ -151,7 +153,7 @@ with Serializable
 	val pval : String = value + UUID.randomUUID.toString
 	tweet(
 	  "----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
-	  + "\nwriting " + pval + " to " + keyMsg
+	  + "\npublishing " + pval + " to " + keyMsg
 	  + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
 	)
 	reset {
@@ -188,7 +190,7 @@ with Serializable
       + "\n----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>----->>>>>"
     )
     
-    publication( 5, keyMsg, value )
+    //publication( 5, keyMsg, value )
     
     if ( useBarrier ) {
       while ( ( kBarrier < 1 ) && ( count < barrierCount ) ) {
@@ -199,7 +201,7 @@ with Serializable
       }
     }
     
-    publication( 5, keyMsg, value )
+    //publication( 5, keyMsg, value )
     
     count = 0      
     
@@ -212,6 +214,8 @@ with Serializable
       }
     }
     
+    publication( 5, keyMsg, value )
+    publication( 5, keyMsg, value )
     publication( 5, keyMsg, value )
 
     count = 0      
@@ -239,7 +243,7 @@ with Serializable
   sequential
   "AgentKVDBNode" should {
 
-    "retrieve between UI and Store with a public queue using the migrated continuation" in new KNodeSetup
+    "retrieve between UI and Store with a public queue using the migrated continuation" in new PubSubKNodeSetup
     {      
       testBehavior( "test", 50, true )
       Thread.sleep(TIMEOUT_MED)
