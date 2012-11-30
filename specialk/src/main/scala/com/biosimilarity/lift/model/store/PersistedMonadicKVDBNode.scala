@@ -140,7 +140,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : emT.PlaceInstance 
 	
 	def recordDeletionQueryTemplate : String = {
-	  "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//%RECORDTYPE% where deep-equal($rcrd/*[1], $key) return $rcrd"
+	  "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//%RECORDTYPE% where deep-equal($key, $rcrd/*[1]) return $rcrd"
 	}
       }
       
