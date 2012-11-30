@@ -34,14 +34,29 @@ with Schema
     )
   }
 
+
   def checkIfDBExists(collectionName: String, leaveOpen: Boolean): Boolean =
   {
+    val clientSession = clientSessionFromConfig
     try {
-      val clientSession = clientSessionFromConfig
       clientSession.execute(new Open(collectionName))
+      true
+    }
+    catch {
+      case e: BaseXException => {
+        false
+      }
+    }
+    finally{
       if (!leaveOpen) {
         clientSession.execute(new Close())
       }
+    }
+  }
+  def checkIfDBExistsAndCreateIfNot(collectionName: String, leaveOpen: Boolean): Boolean =
+  {
+    try {
+      open(collectionName: String)
       true
     }
     catch {
@@ -51,80 +66,62 @@ with Schema
     }
   }
 
-  def checkIfDBExistsAndCreateIfNot(collectionName: String, leaveOpen: Boolean): Boolean =
-  {    
+  private def createDBIfMissing(collectionName: String): ClientSession =
+  {
+    val clientSession = clientSessionFromConfig
     try {      
-      val clientSession = clientSessionFromConfig
+
       clientSession.execute(new Open(collectionName))
-      if (!leaveOpen) {
-        clientSession.execute(new Close())
-      }
-      true
+      clientSession
     }
     catch {
       case bxe : BaseXException => {
-        val clientSession = clientSessionFromConfig
-              val records = toRecords( "" )
-        try {
-          val cs = create(clientSession, collectionName)
+        createAndOpen(collectionName)
+      }
+    }
+    finally {
+      clientSession.execute(new Close())
+    }
+  }
+  private def createAndOpen(collectionName: String): ClientSession =
+  {
+    synchronized {
+      val clientSession = clientSessionFromConfig
+      try {
+        clientSession.execute(new Open(collectionName))
+        clientSession
+      }
+      catch {
+        case bxe : BaseXException => {
+          val records = toRecords( "" )
+          val clientSessionRetry = clientSessionFromConfig
           try {
+            val cs = create(clientSessionRetry, collectionName)
             cs.execute(new Open(collectionName))
             cs.execute(new Add("database", records))
+            cs
           }
           catch {
             case inrBxe : BaseXException => {
               inrBxe.printStackTrace
-              clientSession.execute(new Close())
-              false
+              throw inrBxe
             }
           }
-        }
-        catch {
-          case subBxe : BaseXException => {
-            subBxe.printStackTrace
-            clientSession.execute(new Close())
-            false
+          finally {
+            clientSessionRetry.execute(new Close())
           }
         }
-
-        if (!leaveOpen) {
-                clientSession.execute(new Close())
-        }
-//        bxe.printStackTrace
-	      false
       }
-      case _ => {
-	false
+      finally{
+        clientSession.execute(new Close())
       }
-    }    
-  }
-
-  def open(collectionName: String): ClientSession =
-  {
-    open(collectionName, 50, 100)
+    }
   }
 
   //open and create if missing
-  def open(collectionName: String, retries: Int, wait: Int): ClientSession =
+  def open(collectionName: String): ClientSession =
   {
-    var cs = clientSessionFromConfig
-    for (i <- 1 to retries) {
-      try {
-        cs.execute(new Open(collectionName))
-        //println("stopping at " + i)
-        return cs
-      }
-      catch {
-        case e: BaseXException => {
-          //println(e)
-          cs = create(cs, collectionName)
-        }
-        Thread.sleep(wait)
-      }
-      finally {
-      }
-    }
-    return cs
+    createDBIfMissing(collectionName)
   }
 
   def create(cs: ClientSession, collectionName: String): ClientSession =
@@ -137,8 +134,8 @@ with Schema
     }
     catch {
       case e: BaseXException => {
-        //do nothing
-        //println(e)
+        //should do some logging here, bring in slog functionality?
+        throw e
       }
     }
     cs

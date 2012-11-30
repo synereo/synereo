@@ -9,7 +9,7 @@ trait Persist[OpenReturn]
 {
   def checkIfDBExists(collectionName: String, leaveOpen: Boolean): Boolean
 
-  def open(collectionName: String, retries: Int, wait: Int) : OpenReturn
+  def open(collectionName: String ) : OpenReturn
 
   def drop(collectionName: String) : Unit
 
