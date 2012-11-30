@@ -313,7 +313,7 @@ object BX extends BaseXXMLUtilities
     try {
       for( dbName <- dbNames.take( 3 ) ) {      
 	val vertices =
-	  executeWithResults(
+	  executeWithResults(dbName,
 	    (
 	      "for $p in collection( '%COLLNAME%' )".replace(
 		"%COLLNAME%",
@@ -349,7 +349,7 @@ object BX extends BaseXXMLUtilities
 	      dbName
 	    )
 	  
-	  val vRoles = executeWithResults( vRoleQry )
+	  val vRoles = executeWithResults(dbName, vRoleQry )
 	    
 	  for( vRole <- vRoles ) {
 	    println(
@@ -364,7 +364,7 @@ object BX extends BaseXXMLUtilities
 	}           
 
 	val edges = 
-	  executeWithResults(
+	  executeWithResults(dbName,
 	    (
 	      "for $p in collection( '%COLLNAME%' )".replace(
 		"%COLLNAME%",
