@@ -1061,7 +1061,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      tweet( "deletion query : \n" + deletionQry )
 
 	      val ostrm = new java.io.ByteArrayOutputStream()
-	      execute( List( deletionQry ) )
+
+        //execute( List( deletionQry ) )
+	      execute( clNm, List( deletionQry ) )
 	      tweet(
 		"deletion results: \n" + ostrm.toString
 	      )
