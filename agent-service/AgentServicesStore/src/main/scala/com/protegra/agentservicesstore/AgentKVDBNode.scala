@@ -130,7 +130,8 @@ with AgentCnxnTypeScope {
 		    persist,
 		    path,
 		    mTT.Continuation( List( rk ) ),
-		    collName
+		    collName,
+		    false
 		  )
 		}
 		case _ => {
@@ -155,7 +156,8 @@ with AgentCnxnTypeScope {
 			  persist,
 			  path,
 			  mTT.Continuation( ks ++ List( rk ) ),
-			  collName
+			  collName,
+			  false
 			)
 		      }
 		      case _ => {
