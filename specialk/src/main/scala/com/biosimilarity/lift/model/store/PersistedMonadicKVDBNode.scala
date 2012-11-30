@@ -680,38 +680,41 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ptn : mTT.GetRequest,
 	  wtr : Option[mTT.GetRequest],
 	  rsrc : mTT.Resource,
-	  collName : Option[String]
+	  collName : Option[String],
+	  spawnDBCall : Boolean
 	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
 	  persist match {
 	    case None => {
 	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
 	    }
 	    case Some( pd ) => {
+	      val dbAccessExpr =
+		() => {
+		  for(
+		    rcrd <- asStoreRecord( ptn, rsrc );
+		    sus <- collName
+		  ) {
+		    tweet(
+		      (
+			"storing to db : " + pd.db
+			+ " pair : " + rcrd
+			+ " in coll : " + sus
+		      )
+		    )
+		    store( sus )( rcrd )
+		  }
+		}
+
 	      tweet( "accessing db : " + pd.db )
 	      // remove this line to force to db on get
 	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
-	      spawn {
-		for(
-		  rcrd <- asStoreRecord( ptn, rsrc );
-		  sus <- collName
-		) {
-		  tweet(
-		    (
-		      "storing to db : " + pd.db
-		      + " pair : " + rcrd
-		      + " in coll : " + sus
-		    )
-		  )
-                  //we already tweet
-//		  println(
-//		    (
-//		      "storing to db : " + pd.db
-//		      + " pair : " + rcrd
-//		      + " in coll : " + sus
-//		    )
-//		  )
-		  store( sus )( rcrd )
+	      if ( spawnDBCall ) {
+		spawn {
+		  dbAccessExpr()
 		}
+	      }
+	      else {
+		dbAccessExpr()
 	      }
 	    }
 	  }
@@ -723,7 +726,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  persist : Option[PersistenceManifest],
 	  ptn : mTT.GetRequest,
 	  rsrc : mTT.Resource,
-	  collName : Option[String]
+	  collName : Option[String],
+	  spawnDBCall : Boolean
 	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
 	  persist match {
 	    case None => {
@@ -732,31 +736,32 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    }
 	    case Some( pd ) => {
 	      tweet( "putKInStore accessing db : " + pd.db )
-	      spawn {
-		for(
-		  rcrd <- asStoreKRecord( ptn, rsrc );
-		  sus <- collName
-		) {
-		  tweet(
-		    (
-		      "storing to db : " + pd.db
-		      + " pair : " + rcrd
-		      + " in coll : " + sus
+	      val dbAccessExpr =
+		() => {
+		  for(
+		    rcrd <- asStoreKRecord( ptn, rsrc );
+		    sus <- collName
+		  ) {
+		    tweet(
+		      (
+			"storing to db : " + pd.db
+			+ " pair : " + rcrd
+			+ " in coll : " + sus
+		      )
 		    )
-		  )
-                  //we already tweet
-//		  println(
-//		    (
-//		      "storing to db : " + pd.db
-//		      + " pair : " + rcrd
-//		      + " in coll : " + sus
-//		    )
-//		  )
-		  store( sus )( rcrd )
-		  for( ( sky, stbl ) <- syncTable ) {
-		    stbl( sky ) = stbl( sky ) - 1
+		    store( sus )( rcrd )
+		    for( ( sky, stbl ) <- syncTable ) {
+		      stbl( sky ) = stbl( sky ) - 1
+		    }
 		  }
 		}
+	      if ( spawnDBCall ) {
+		spawn {
+		  dbAccessExpr() 
+		}
+	      }
+	      else {
+		dbAccessExpr() 
 	      }
 	    }
 	  }
@@ -864,7 +869,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				  persist,
 				  ptn,
 				  mTT.Continuation( ks ),
-				  collName
+				  collName,
+				  //true
+				  false
 				)
 			      }
 			      ekrsrc
@@ -957,7 +964,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			}
 			case Right( Nil ) => {
 			  putInStore(
-			    persist, channels, ptn, None, rsrc, collName
+			    persist, channels, ptn, None, rsrc, collName, false //true
 			  )
 			}
 		      }
@@ -965,7 +972,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  }
 		  case None => {
 		    putInStore(
-		      persist, channels, ptn, None, rsrc, collName
+		      persist, channels, ptn, None, rsrc, collName, false //true
 		    )
 		  }
 		}
@@ -1122,29 +1129,29 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      }
 		    }
 		    case Right( Nil ) => {
+		      putInStore(
+			persist, channels, ptn, None, rsrc, collName, false //true
+		      )
+
 		      tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
 		      //spaceLock.depart( None )
 		      spaceLock.depart( ptn )
 		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
-		      putInStore(
-			persist, channels, ptn, None, rsrc, collName
-		      )
+		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )		      
 		    }
 		  }
 		}
 	      }
 	      case None => {
+		putInStore(
+		  persist, channels, ptn, None, rsrc, collName, false //true
+		)
+
 		tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
 		//spaceLock.depart( None )
 		spaceLock.depart( ptn )
 		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
-		putInStore(
-		  persist, channels, ptn, None, rsrc, collName
-		)
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )		
 	      }
 	    }            
 	  }
@@ -1218,7 +1225,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      persist,
 		      path,
 		      mTT.Continuation( List( rk ) ),
-		      Some( xmlCollName )
+		      Some( xmlCollName ),
+		      false
+		      //true
 		    )( Some( ( skey, stbl ) ) )
 		    
 		    while ( stbl( skey ) > 0 ){}
@@ -1266,7 +1275,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			    persist,
 			    path,
 			    mTT.Continuation( ks ++ List( rk ) ),
-			    Some( xmlCollName )
+			    Some( xmlCollName ),
+			    false //true
 			  )( Some( ( skey, stbl ) ) )
 			}
 			case _ => {
