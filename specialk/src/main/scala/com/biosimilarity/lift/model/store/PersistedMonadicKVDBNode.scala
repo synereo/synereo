@@ -140,7 +140,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : emT.PlaceInstance 
 	
 	def recordDeletionQueryTemplate : String = {
-	  "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//%RECORDTYPE% where deep-equal($rcrd/*[1], $key) return $rcrd"
+	  "delete node let $key := %RecordKeyConstraints% for $rcrd in collection( '%COLLNAME%' )//%RECORDTYPE% where deep-equal($key, $rcrd/*[1]) return $rcrd"
 	}
       }
       
@@ -1068,7 +1068,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      tweet( "deletion query : \n" + deletionQry )
 
 	      val ostrm = new java.io.ByteArrayOutputStream()
-	      execute( List( deletionQry ) )
+
+        //execute( List( deletionQry ) )
+	      execute( clNm, List( deletionQry ) )
 	      tweet(
 		"deletion results: \n" + ostrm.toString
 	      )
