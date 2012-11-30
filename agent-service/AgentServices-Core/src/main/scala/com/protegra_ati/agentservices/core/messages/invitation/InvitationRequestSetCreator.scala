@@ -286,7 +286,7 @@ trait InvitationRequestSetCreator
 
     val agentCnxnA = inviteA.originCnxn.toAgentCnxn()
     reset {
-      for ( e <- _publicQ.get(agentCnxnA)(inviteA.getResponseChannelKey.toLabel) ) {
+      for ( e <- _publicQ.subscribe(agentCnxnA)(inviteA.getResponseChannelKey.toLabel) ) {
         //TODO: temporary hack until multiple get can be used. right now we get e & none or none & f
         if ( e != None ) {
 
@@ -299,7 +299,7 @@ trait InvitationRequestSetCreator
           val agentCnxnB = inviteB.originCnxn.toAgentCnxn()
 
           reset {
-            for ( f <- _publicQ.get(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
+            for ( f <- _publicQ.subscribe(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
               if ( e != None && f != None ) {
                 report("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!: ", Severity.Debug)
                 println("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!")
