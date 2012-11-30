@@ -29,14 +29,7 @@ import util.{Reporting, MemCache, Results}
 
 trait KVDBHelpers extends Timeouts with RabbitTestSetup with Reporting
 {
-//  @transient
-  val resultConfigFileName = Some("db_result.conf")
-  lazy val _resultsQ =
-    createNode(
-      "127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB),
-      List[ URI ](),
-      resultConfigFileName
-    )
+
   /* --------------------------------------------------------- *
    *                 Test data stream generation
    * --------------------------------------------------------- */
@@ -209,28 +202,39 @@ trait SpecsKVDBHelpers
   def fetchMustContain(expected: java.util.List[ String ], resultQ: LinkedBlockingQueue[ String ])(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]) =
   {
     println("attempting assert")
-    fetchIntoResultQ(q, cnxn, key).containsAll(expected) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
+    val RESULT_PREFIX = "R"
+    val resultKey = RESULT_PREFIX + Results.getKey()
+//    fetchIntoResultQ(q, cnxn, key, resultKey).containsAll(expected) must be_==(true).eventually(10, TIMEOUT_EVENTUALLY)
+    fetchIntoResultQ(q, cnxn, key, resultKey) must be_==(expected.size()).eventually(10, TIMEOUT_EVENTUALLY)
   }
 
-  def fetchIntoResultQ(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): LinkedBlockingQueue[ String ] =
+  def fetchIntoResultQ(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ],resultKey: String): Int =
   {
-    val cnxnTest = new AgentCnxn(( "TestDB" + cnxn.src.getHost() ).toURI, "", ( "TestDB" + cnxn.trgt.getHost() ).toURI)
+//    val cnxnTest = new AgentCnxn(( "TestDB" + cnxn.src.getHost() ).toURI, "", ( "TestDB" + cnxn.trgt.getHost() ).toURI)
 
     reset {
          for ( e <- q.fetch(cnxn)(key) ) {
            val result = e.dispatch
            if ( result.toString  != "" ) {
-             val resultKey = "result(\"" +   result.toString  +"\")"
-             reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, result)}
-             println("fetchIntoResultQ - storing to resultQ : " + result)
+             report("got a result " + result.toString)
+             val results = MemCache.getList[ String ](resultKey)(Results.client)
+             if ( results == null || !results.contains(result.toString) ) {
+               MemCache.addToList[ String ](resultKey, result.toString)(Results.client);
+               ()
+             }
+//
+//             val resultKey = "result(\"" +   result.toString  +"\")"
+//             reset {_resultsQ.put(cnxnTest)(resultKey.toLabel, result)}
+//             println("fetchIntoResultQ - storing to resultQ : " + result)
            }
          }
        }
-    SleepToPreventContinuation()
+//    SleepToPreventContinuation()
 
-    val resultSearch = "result(_)".toLabel
-    val actual = fetchResultQ(_resultsQ, cnxnTest, resultSearch)
-    return actual
+//    val resultSearch = "result(_)".toLabel
+//    val actual = fetchResultQ(_resultsQ, cnxnTest, resultSearch)
+//    return actual
+    return getSearchResultFromCache(resultKey)
   }
 
   def fetchResultQ(q: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxn, key: CnxnCtxtLabel[ String, String, String ]): LinkedBlockingQueue[ String ] =

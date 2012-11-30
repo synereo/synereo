@@ -10,7 +10,7 @@ import com.protegra_ati.agentservices.core.events._
 import java.util.UUID
 import java.util.HashMap
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.util.{MemCache, Severity, Reporting}
+import com.protegra.agentservicesstore.util.{MultiMap, MemCache, Severity, Reporting}
 import java.util
 import scala.collection.JavaConversions._
 

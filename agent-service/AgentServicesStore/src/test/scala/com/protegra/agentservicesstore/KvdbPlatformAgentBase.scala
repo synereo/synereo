@@ -740,7 +740,8 @@ with RabbitTestSetup
       {
         skipped("bug 54")
         val key = "getCountChannel(_)".toLabel
-        val resultKey = "result(getCountChannel(\"1\"))".toLabel
+        val RESULT_PREFIX = "R"
+        val resultKey = RESULT_PREFIX + Results.getKey()
 
         reset {
           for ( c <- reader.get(true)(cnxnRandom)(key) ) {
@@ -755,22 +756,25 @@ with RabbitTestSetup
                 }
               }
               println("*************getCount - found : " + found)
-              reset {_resultsQ.put(cnxnTest)(resultKey, found.toString)}
+//              reset {_resultsQ.put(cnxnTest)(resultKey, found.toString)}
+              Results.saveString(resultKey, found.toString)
             }
           }
         }
 
         putWildcardData(writer, cnxnRandom, value)
 
-        SleepToPreventContinuation()
-        fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(10, TIMEOUT_EVENTUALLY)
+//        SleepToPreventContinuation()
+//        fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(10, TIMEOUT_EVENTUALLY)
+        Results.savedString(resultKey,3)must be_==("5").eventually(10, TIMEOUT_EVENTUALLY)
       }
 
       "find many results by Fetch" in new CnxnSetup
       {
         skipped("bug 54")
         val key = "fetchCountChannel(_)".toLabel
-        val resultKey = "result(fetchCountChannel(\"1\"))".toLabel
+        val RESULT_PREFIX = "R"
+        val resultKey = RESULT_PREFIX + Results.getKey()
 
         reset {
           for ( c <- reader.fetch(true)(cnxnRandom)(key) ) {
@@ -785,14 +789,16 @@ with RabbitTestSetup
                 }
               }
               println("*************fetchCount - found : " + found)
-              reset {_resultsQ.put(cnxnTest)(resultKey, found.toString)}
+              Results.saveString(resultKey, found.toString)
+//              reset {_resultsQ.put(cnxnTest)(resultKey, found.toString)}
             }
           }
         }
 
         putWildcardData(writer, cnxnRandom, value)
-        SleepToPreventContinuation()
-        fetchString(_resultsQ, cnxnTest, resultKey) must be_==("5").eventually(10, TIMEOUT_EVENTUALLY)
+//        SleepToPreventContinuation()
+//        fetchString(reader, cnxnTest, resultKey) must be_==("5").eventually(10, TIMEOUT_EVENTUALLY)
+        Results.savedString(resultKey,3)must be_==("5").eventually(10, TIMEOUT_EVENTUALLY)
       }
     }
   }

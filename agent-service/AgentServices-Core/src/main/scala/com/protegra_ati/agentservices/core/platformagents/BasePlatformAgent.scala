@@ -208,7 +208,7 @@ abstract class BasePlatformAgent
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
-      for ( e <- queue.get(agentCnxn)(lblChannel) ) {
+      for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
         //        for ( e <- queue.get(agentCnxn)(lblChannel) ) {
         val expired = isExpired(expiry)
         if ( e != None && !expired ) {
@@ -238,7 +238,7 @@ abstract class BasePlatformAgent
               report("already processed id : " + msg.ids.id, Severity.Info)
             //            ("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
           }
-          listen(queue, cnxn, key, handler, expiry)
+//          listen(queue, cnxn, key, handler, expiry)
         }
         else {
           report("listen received - none", Severity.Info)
@@ -298,7 +298,7 @@ abstract class BasePlatformAgent
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
-      for ( e <- queue.get(agentCnxn)(lblChannel) ) {
+      for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
         if ( e != None ) {
           //keep the main thread listening, see if this causes debug headache
           spawn {
@@ -349,11 +349,11 @@ abstract class BasePlatformAgent
 
   def put(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, value: String) =
   {
-
-    val agentCnxn = cnxn.toAgentCnxn()
-    report("put --- key: " + key + ", value: " + value.short + " cnxn: " + cnxn.toString)
-    val lbl = key.toLabel
-    reset {queue.put(agentCnxn)(lbl, Ground(value))}
+    publish(queue, cnxn, key, value)
+//    val agentCnxn = cnxn.toAgentCnxn()
+//    report("put --- key: " + key + ", value: " + value.short + " cnxn: " + cnxn.toString)
+//    val lbl = key.toLabel
+//    reset {queue.put(agentCnxn)(lbl, Ground(value))}
   }
 
   def publish(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, value: String) =
@@ -373,7 +373,7 @@ abstract class BasePlatformAgent
     val agentCnxn = cnxn.toAgentCnxn()
     var result = ""
     reset {
-      for ( e <- queue.get(agentCnxn)(lbl) ) {
+      for ( e <- queue.subscribe(agentCnxn)(lbl) ) {
         if ( e != None ) {
           //multiple results will call handler multiple times
           handler(cnxn, Serializer.deserialize[ T ](e.dispatch))
@@ -382,21 +382,21 @@ abstract class BasePlatformAgent
     }
   }
 
-  def getList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
-  {
-    report("get --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
-    val lbl = key.toLabel
-
-    val agentCnxn = cnxn.toAgentCnxn()
-    reset {
-      for ( e <- queue.get(true)(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
-          handler(cnxn, results)
-        }
-      }
-    }
-  }
+//  def getList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
+//  {
+//    report("get --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+//    val lbl = key.toLabel
+//
+//    val agentCnxn = cnxn.toAgentCnxn()
+//    reset {
+//      for ( e <- queue.subscribe(true)(agentCnxn)(lbl) ) {
+//        if ( e != None ) {
+//          val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
+//          handler(cnxn, results)
+//        }
+//      }
+//    }
+//  }
 
   def getData(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, Data) => Unit) =
   {
@@ -406,7 +406,7 @@ abstract class BasePlatformAgent
     val agentCnxn = cnxn.toAgentCnxn()
     var result = ""
     reset {
-      for ( e <- queue.get(agentCnxn)(lbl) ) {
+      for ( e <- queue.subscribe(agentCnxn)(lbl) ) {
         if ( e != None ) {
           //multiple results will call handler multiple times
           handler(cnxn, Serializer.deserialize[ Data ](e.dispatch))
