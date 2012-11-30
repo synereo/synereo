@@ -333,7 +333,7 @@ abstract class BasePlatformAgent
     if ( msg.eventKey != null ) {
       report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
     }
-    put(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
+    publish(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
 
   def singleSend(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
@@ -344,7 +344,7 @@ abstract class BasePlatformAgent
     if ( msg.eventKey != null ) {
       report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
     }
-    put(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
+    publish(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
 
   def put(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, value: String) =
@@ -432,7 +432,7 @@ abstract class BasePlatformAgent
 
     val agentCnxn = cnxn.toAgentCnxn()
     reset {
-      for ( e <- queue.fetch(agentCnxn)(lbl) ) {
+      for ( e <- queue.read(agentCnxn)(lbl) ) {
         if ( e != None ) {
           //multiple results will call handler multiple times
           val result = Serializer.deserialize[ T ](e.dispatch)
@@ -450,7 +450,7 @@ abstract class BasePlatformAgent
 
     val agentCnxn = cnxn.toAgentCnxn()
     reset {
-      for ( e <- queue.fetch(true)(agentCnxn)(lbl) ) {
+      for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
         if ( e != None ) {
           val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
           val cleanResults = results.filter(x => x != null)
@@ -483,7 +483,7 @@ abstract class BasePlatformAgent
 
     val agentCnxn = cnxn.toAgentCnxn()
     reset {
-      for ( e <- queue.fetch(true)(agentCnxn)(lbl) ) {
+      for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
         if ( e != None ) {
           val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
           val newRemainKeyList = remainKeyList.tail

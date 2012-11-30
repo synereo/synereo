@@ -1637,6 +1637,53 @@ with AgentCnxnTypeScope {
 	  pmgj.theMeetingPlace, pmgj.theWaiters, DoNotRetain, Store, false, xmlCollName
 	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
       }
+      
+      
+      def read( hops : List[Moniker] )(
+	cursor: Boolean
+      )(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {   
+	tweet(
+	  "In cnxn-based read with cnxn " + cnxn
+          
+	)
+	
+	val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
+	
+	tweet(
+	  "Retrieving " + path + " from partition " + pmgj
+          
+	)
+	
+	pmgj.mget( cnxn )( perD, dAT.AFetchNum, hops )(
+	  pmgj.theMeetingPlace, pmgj.theWaiters, DoNotRetain, DoNotRetain, cursor, xmlCollName
+	)( path ).asInstanceOf[Generator[Option[mTT.Resource],Unit,Unit]]
+      }
+      
+      def read(
+	cursor: Boolean
+      )(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {        
+	read( Nil )( cursor )( cnxn )( path )
+      }
+      
+      def read(
+	cnxn : acT.AgentCnxn
+      )(
+	path : CnxnCtxtLabel[Namespace,Var,Tag]
+      )
+      : Generator[Option[mTT.Resource],Unit,Unit] = {
+	read( Nil )( false )( cnxn )( path )
+      }            
+      
 
       def subscribe( hops : List[Moniker] )(
 	cnxn : acT.AgentCnxn

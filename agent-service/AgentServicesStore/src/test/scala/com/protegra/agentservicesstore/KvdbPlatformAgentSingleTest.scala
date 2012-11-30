@@ -42,6 +42,7 @@ class KvdbPlatformAgentSingleTest extends KvdbPlatformAgentBase
   val writer = createNode(sourceAddress, acquaintanceAddresses)
   val reader = writer
 
+  //reenable these
   //  testMessaging(writer, reader)
   //  testWildcardWithPut(writer, reader)
   //  testWildcardWithStore(writer, reader)
@@ -55,32 +56,54 @@ class KvdbPlatformAgentSingleTest extends KvdbPlatformAgentBase
   val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
 
-  "subscribe " should {
-    "find 2 results from publish" in {
-      val key = "pub(_)".toLabel
+  "read " should {
+      "find a results without continuation" in {
+        val key = "pub(_)".toLabel
 
+        val resultKey = Results.getKey()
 
-      val resultKey = Results.getKey()
-      reset {
-        for ( e <- writer.subscribe(cnxn)(key) ) {
-          if (e!= None)
-          {
-            System.err.println("SUBSCRIBED = " + e.dispatch)
-            for ( e <- writer.subscribe(cnxn)(key) ) {
-                     if (e!= None)
-                       System.err.println("SUBSCRIBED = " + e.dispatch)
-                     //        Results.saveString(resultKey, e.dispatch)
-                   }
-          }
-          //        Results.saveString(resultKey, e.dispatch)
-        }
+        val key1 = "pub(\"1\")".toLabel
+//        Thread.sleep(1000)
+//        Thread.sleep(1000)
+          writer.store(cnxn)(key1, Ground("1"))
+        Thread.sleep(1000)
+        reset {
+           for ( e <- writer.read(cnxn)(key) ) {
+             if ( e != None ) {
+               println("Read = " + e.dispatch)
+               //        Results.saveString(resultKey, e.dispatch)
+             }
+           }
 
+         }
+        Thread.sleep(1000)
+        Thread.sleep(1000)
+        Thread.sleep(1000)
+        Thread.sleep(1000)
+        success
       }
-      val key1 = "pub(\"1\")".toLabel
-      val key2 = "pub(\"2\")".toLabel
-      val key3 = "pub(\"3\")".toLabel
-      Thread.sleep(1000)
-      Thread.sleep(1000)
+    }
+//
+//  "subscribe " should {
+//    "find 2 results from publish" in {
+//      val key = "pub(_)".toLabel
+//
+//
+//      val resultKey = Results.getKey()
+//      reset {
+//        for ( e <- writer.subscribe(cnxn)(key) ) {
+//          if ( e != None ) {
+//            println("SUBSCRIBED = " + e.dispatch)
+//            //        Results.saveString(resultKey, e.dispatch)
+//          }
+//        }
+//
+//      }
+//      val key1 = "pub(\"1\")".toLabel
+//      val key2 = "pub(\"2\")".toLabel
+//      val key3 = "pub(\"3\")".toLabel
+//      Thread.sleep(1000)
+//      Thread.sleep(1000)
 //      reset {
 //        writer.publish(cnxn)(key1, Ground("1"))
 //      }
@@ -89,18 +112,22 @@ class KvdbPlatformAgentSingleTest extends KvdbPlatformAgentBase
 //        writer.publish(cnxn)(key2, Ground("2"))
 //      }
 //      Thread.sleep(1000)
-//      reset {
-//        writer.publish(cnxn)(key3, Ground("3"))
-//      }
+//      //      reset {
+//      //        writer.publish(cnxn)(key3, Ground("3"))
+//      //      }
+//
 //      Thread.sleep(1000)
 //      Thread.sleep(1000)
 //      Thread.sleep(1000)
 //      Thread.sleep(1000)
 //      Thread.sleep(1000)
 //      Thread.sleep(1000)
-      success
-    }
-  }
+//      success
+//    }
+//  }
+//
+//
+//
   //  "Store" should {
   //    "not pin cpu at 100% for 1" in {
   //      skipped("isolate")

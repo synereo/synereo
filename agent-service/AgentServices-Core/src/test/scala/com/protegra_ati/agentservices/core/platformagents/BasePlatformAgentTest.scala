@@ -113,6 +113,7 @@ with Serializable
       pa.store(pa._dbQ, cnxn, mockDataFetch.toStoreKey, Serializer.serialize[ Data ](mockDataFetch))
 
       val resultKey = Results.getKey
+      Thread.sleep(TIMEOUT_MED)
       pa.fetch[ Data ](pa._dbQ, cnxn, mockDataFetch.toSearchKey, handleData(_: AgentCnxnProxy, _: Data, resultKey))
       Results.saved(resultKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
@@ -126,6 +127,7 @@ with Serializable
       val search = new Profile()
       search.id = mockDataSearch.id.toString
       val resultKey = Results.getKey
+      Thread.sleep(TIMEOUT_MED)
       pa.fetch[ Data ](pa._dbQ, cnxn, search.toSearchKey, handleData(_: AgentCnxnProxy, _: Data, resultKey))
       Results.saved(resultKey) must be_==(mockDataFetch).eventually(5, TIMEOUT_EVENTUALLY)
     }
