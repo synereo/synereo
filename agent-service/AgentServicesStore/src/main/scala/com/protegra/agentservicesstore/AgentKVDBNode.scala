@@ -130,8 +130,8 @@ with AgentCnxnTypeScope {
 		    persist,
 		    path,
 		    mTT.Continuation( List( rk ) ),
-		    collName
-                    //,false
+		    collName,
+                    false
 		  )
 		}
 		case _ => {
@@ -156,8 +156,8 @@ with AgentCnxnTypeScope {
 			  persist,
 			  path,
 			  mTT.Continuation( ks ++ List( rk ) ),
-			  collName
-                          //,false
+			  collName,
+                          false
 			)
 		      }
 		      case _ => {
@@ -283,7 +283,7 @@ with AgentCnxnTypeScope {
 				      )
 				    )                                    
 				    
-                                    val rslts = executeWithResults(qry)
+                                    val rslts = executeWithResults(xmlCollName, qry)
 				    
                                     rslts match {
                                       case Nil => {

@@ -280,7 +280,7 @@ with AgentCnxnTypeScope {
                                       )
                                     )
 				    
-                                    val rslts = executeWithResults(qry)
+                                    val rslts = executeWithResults(xmlCollName, qry)
 				    
                                     rslts match {
                                       case Nil => {
