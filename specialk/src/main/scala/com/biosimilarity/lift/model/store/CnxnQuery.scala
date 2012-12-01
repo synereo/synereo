@@ -333,7 +333,7 @@ with PrologMgr {
 	  }
 	  catch {
 	    case e : org.prolog4j.UnknownVariableException => {
-	      println( "warning: variable not bound: " + v )
+//	      println( "warning: variable not bound: " + v )
 	    }
 	  }
 	}

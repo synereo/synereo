@@ -34,7 +34,8 @@ class StringAMQPListener(host: String, port: Int, exchange: String, routingKey: 
     def act =
     {
       react {
-        case msg@AMQPMessage(contents: String) => println("exchange: " + exchange + " for value: " + contents); handler(contents); act
+//        case msg@AMQPMessage(contents: String) => println("exchange: " + exchange + " for value: " + contents); handler(contents); act
+        case msg@AMQPMessage(contents: String) => handler(contents); act
       }
     }
   }
