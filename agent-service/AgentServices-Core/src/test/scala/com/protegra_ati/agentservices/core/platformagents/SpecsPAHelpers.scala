@@ -53,26 +53,44 @@ trait SpecsPAHelpers extends Timeouts{
   //
   //  }
 
+
   def fetchMustBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
   {
-    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String, resultKey: String): Unit =
-    {
-      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data, resultKey))
-    }
-
-    def handleFetch(cnxn: AgentCnxnProxy, data: Data, resultKey: String):Unit =
-    {
-      Results.save(resultKey, data)
-    }
-
-    println("fetchMustBe expecting: " + expected)
-
     val resultKey = Results.getKey()
-    fetchData(q, cnxn, key, resultKey)
-    Results.saved(resultKey) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
-
-
+    fetchData(q, cnxn, key, resultKey) must be_== (expected).eventually(5, TIMEOUT_EVENTUALLY)
   }
+
+  def handleFetch(cnxn: AgentCnxnProxy, data: Data, resultKey: String):Unit =
+  {
+    Results.save(resultKey, data)
+  }
+
+  def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String, resultKey: String): Data =
+  {
+    q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data, resultKey))
+    Results.saved(resultKey)
+  }
+
+//  def fetchMustBe(expected: Data)(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String) =
+//  {
+//    def fetchData(q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String, resultKey: String): Unit =
+//    {
+//      q.fetch[ Data ](q._dbQ, cnxn, key, handleFetch(_: AgentCnxnProxy, _: Data, resultKey))
+//    }
+//
+//    def handleFetch(cnxn: AgentCnxnProxy, data: Data, resultKey: String):Unit =
+//    {
+//      Results.save(resultKey, data)
+//    }
+//
+//    println("fetchMustBe expecting: " + expected)
+//
+//    val resultKey = Results.getKey()
+//    fetchData(q, cnxn, key, resultKey)
+//    Results.saved(resultKey) must be_==(expected).eventually(5, TIMEOUT_EVENTUALLY)
+//
+//
+//  }
 
 
   def fetchMustBeWithHandler(expectationCheckHandler: (Data, Data) => Unit)(expected: Data, q: BasePlatformAgent with Storage, cnxn: AgentCnxnProxy, key: String): Unit =

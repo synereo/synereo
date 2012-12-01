@@ -134,6 +134,14 @@ with Serializable
   var resultConnection: Option[ Connection ] = None
 }
 
+class SetContentAdminSetup(pa: AgentHostStorePlatformAgent) extends Scope
+with InitTestSetup
+with Timeouts
+with Serializable
+{
+  pa._storeCnxn = new AgentCnxnProxy(( "Store" + UUID.randomUUID().toString ).toURI, "", ( "Self" + UUID.randomUUID().toString ).toURI)
+}
+
 class ContentRequestSetTest extends SpecificationWithJUnit
 with InitTestSetup
 with Timeouts
@@ -357,16 +365,19 @@ with Serializable
     }
 
     "processSetContentAdminRequest" should {
-      "save object to the store self connection" in {
+      "save object to the store self connection" in new SetContentAdminSetup(pa){
         val cnxnUIStore = pa._cnxnUIStore
+
         val newUserId = ( "NewUser" + UUID.randomUUID )
         val connAdmin = ConnectionFactory.createConnection("admin", ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, "admin", newUserId, newUserId)
-        val req = SetContentAdminRequest(null, connAdmin, null)
+        connAdmin.toStoreKey
+        val req = SetContentAdminRequest(new EventKey(UUID.randomUUID, ""), connAdmin, null)
         req.originCnxn = cnxnUIStore
 
         pa.processSetContentAdminRequest(req)
         val connectionSearch: Connection = new Connection()
-        //      pa.fetch[ Data ](pa._dbQ, pa._storeCnxn, connectionSearch.toSearchKey, handleFetchConnection)
+        connectionSearch.id = connAdmin.id
+        Thread.sleep(1000)
         fetchMustBe(connAdmin)(pa, pa._storeCnxn, connectionSearch.toSearchKey)
       }
 
