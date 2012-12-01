@@ -16,6 +16,7 @@ import org.specs2.specification.Scope
 import platformagents.AgentHostUIPlatformAgent
 import com.protegra_ati.agentservices.core.util.Results
 import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
+import scala.concurrent.ops._
 
 trait ListenerScope extends Scope
   with Serializable
