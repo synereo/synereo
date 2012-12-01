@@ -40,7 +40,7 @@ trait IntroductionRequestSetConsumer
 
   protected def processIntroductionRequest(cnxnA_Broker: AgentCnxnProxy, introRequest: IntroductionRequest) =
   {
-    println("----------------------------------------------->>>> cnxnA_Broker= cnxnA_Broker.scr" + cnxnA_Broker.src + ", cnxnA_Broker.trgt=" + cnxnA_Broker.trgt + ", introRequest=" + introRequest)
+    report("----------------------------------------------->>>> cnxnA_Broker= cnxnA_Broker.scr" + cnxnA_Broker.src + ", cnxnA_Broker.trgt=" + cnxnA_Broker.trgt + ", introRequest=" + introRequest)
 //    val agentIsIntroductionInitiator = isCaptured(cnxnA_Broker, introRequest) //only needed for invite
 //    println("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
@@ -50,7 +50,7 @@ trait IntroductionRequestSetConsumer
 
   protected def handleSystemDataLookupStoreIntroductionRequest(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], introRequest: IntroductionRequest): Unit =
   {
-    println("$$$$$$$$$$$ STORE INTRODUCTIONS FOR LATER RESPONSE, cnxn=" + cnxn + ", systemConnection=" + systemConnection + ", introRequest=" + introRequest)
+    report("$$$$$$$$$$$ STORE INTRODUCTIONS FOR LATER RESPONSE, cnxn=" + cnxn + ", systemConnection=" + systemConnection + ", introRequest=" + introRequest)
     val selfConnection = systemConnection.data
     val persistedIntroductionRequestMessage = new PersistedMessage[ IntroductionRequest ](introRequest)
     store(_dbQ, selfConnection.writeCnxn, persistedIntroductionRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ IntroductionRequest ] ](persistedIntroductionRequestMessage))

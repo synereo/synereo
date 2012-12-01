@@ -56,7 +56,7 @@ trait InvitationRequestSetCreator
     //as broker you control this initial invite protocol
     //generate an invitation to both agents
     // here has to be changed
-    println("-!!!!!!!!!!!!!!!!!--->createInviteRequest:" + createInviteRequest + ", cnxnBroker_A=" + cnxnBroker_A + "createInviteRequest PARENT=" + createInviteRequest.ids.parentId)
+    report("-!!!!!!!!!!!!!!!!!--->createInviteRequest:" + createInviteRequest + ", cnxnBroker_A=" + cnxnBroker_A + "createInviteRequest PARENT=" + createInviteRequest.ids.parentId)
     report("****CREATE INVITATION REQUEST RECEIVED:****", Severity.Debug)
     createInviteRequest.deliver();
 
@@ -76,7 +76,7 @@ trait InvitationRequestSetCreator
     sourceRequest: CreateInvitationRequest,
     connBrokerBroker: Connection) =
   {
-    println("****GENERATE Referral REQUEST:****")
+    report("****GENERATE Referral REQUEST:****")
     report("****Found valid self connection, sending referral for cnxn A: " + sourceRequest.selfAlias + " to cnxn B: " + sourceRequest.targetAlias, Severity.Debug)
 
     //wait on broker permission (sends a message to the brokerSelf to be persisted there)
@@ -90,7 +90,7 @@ trait InvitationRequestSetCreator
     val req = new ReferralRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, sourceRequest)
     req.targetCnxn = conn.writeCnxn
     req.originCnxn = conn.writeCnxn
-    println("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
+    report("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
     send(_publicQ, conn.writeCnxn, req)
   }
 
@@ -110,7 +110,7 @@ trait InvitationRequestSetCreator
     // persists ReferralRequest for the broker
     val persistedMessage = new PersistedMessage[ ReferralRequest ](referralRequest)
 
-    println("attempting to store " + persistedMessage.toStoreKey)
+    report("attempting to store " + persistedMessage.toStoreKey)
     store(_dbQ, cnxnSelf, persistedMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](persistedMessage))
 
     if ( cnxnSelf.src.toString.contains(BIZNETWORK_AGENT_ID) ) {
@@ -231,7 +231,7 @@ trait InvitationRequestSetCreator
     requestedPosts_B: List[ Post ],
     sendResponseHandler: (Message with Request, String) => Unit) =
   {
-    println("****GENERATE INVITATION REQUEST:****")
+    report("****GENERATE INVITATION REQUEST:****")
     report("****Found valid target connection, sending invites to cnxn A: " + connBroker_A.readCnxn.toString + " and cnxn B: " + connBroker_B.readCnxn.toString, Severity.Debug)
 
     //invite both parties with inverse
@@ -267,7 +267,7 @@ trait InvitationRequestSetCreator
     val req = new InvitationRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, alias, category, requestedConnectionType, requestedConnectionName, requestedPosts)
     req.targetCnxn = conn.readCnxn
     req.originCnxn = conn.readCnxn
-    println("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
+    report("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
     send(_publicQ, req.targetCnxn, req)
     req
   }
@@ -276,10 +276,8 @@ trait InvitationRequestSetCreator
   {
     //we need to start listening for the one time InvitationResponse messages from both sides
     report("single listen: channel: " + inviteA.getResponseChannelKey + " cnxn: " + inviteA.originCnxn, Severity.Info)
-    report("single listen: channel: " + inviteB.getResponseChannelKey + " cnxn: " + inviteB.originCnxn, Severity.Info)
 
-    println("single listen: channel: " + inviteA.getResponseChannelKey.toLabel + " cnxn: " + inviteA.originCnxn)
-    println("single listen: channel: " + inviteB.getResponseChannelKey.toLabel + " cnxn: " + inviteB.originCnxn)
+//    report("single listen: channel: " + inviteA.getResponseChannelKey.toLabel + " cnxn: " + inviteA.originCnxn)
 
 
     //    listen(_publicQ, invite1.originCnxn, invite1.getResponseChannelKey, handleFirstResponseReceived(_: AgentCnxnProxy,  _: Message, invite2))
@@ -292,7 +290,7 @@ trait InvitationRequestSetCreator
 
           Thread.sleep(500)
           // val msgA = Serializer.deserialize[ InvitationResponse ](syncE.dispatch)
-          println("!!! Listen Received FOR FIRST InvitationResponse !!!" + inviteA + ", e=" + e)
+//          report("!!! Listen Received FOR FIRST InvitationResponse !!!" + inviteA + ", e=" + e)
 
           report("!!! Listen Received FOR FIRST InvitationResponse !!!: ", Severity.Debug)
           //TODO: see if this is really necessary or only a unit test issue, may go away once "multiple get for" is in place
@@ -302,7 +300,6 @@ trait InvitationRequestSetCreator
             for ( f <- _publicQ.subscribe(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
               if ( e != None && f != None ) {
                 report("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!: ", Severity.Debug)
-                println("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!")
 
                 spawn {
                   rename {
@@ -316,7 +313,6 @@ trait InvitationRequestSetCreator
                   }
                   else if ( msgA.accept && msgB.accept ) {
                     report("****GENERATE CREATE CONNECTION REQUEST:****", Severity.Info)
-                    println("****GENERATE CREATE CONNECTION REQUEST:****")
                     val aId = UUID.randomUUID()
                     val bId = UUID.randomUUID()
                     val connAB = ConnectionFactory.createConnection(msgA.connectionName, msgB.category, msgA.category, msgA.connectionType, aId.toString, bId.toString);
@@ -327,7 +323,6 @@ trait InvitationRequestSetCreator
                     //                handleMutualConnectionAgreement(cnxn, msg1, firstResponse.targetConnectionId, msg2, response.targetConnectionId, systemConnection)
                   }
                   else {
-                    println("At least one invite declined -- A: " + msgA.accept + " B: " + msgB.accept)
                     report("At least one invite declined -- A: " + msgA.accept + " B: " + msgB.accept, Severity.Error)
                   }
 

@@ -31,7 +31,8 @@ class MessageAMQPListener(host: String, port: Int, exchange: String, routingKey:
   class MessageListener(handler: (Message) => Unit) extends Actor {
     def act = {
       react {
-	case msg@AMQPMessage(contents: Message) => println("exchange: " + exchange + " for message id: " + contents.ids.id); handler(contents); act
+//	case msg@AMQPMessage(contents: Message) => println("exchange: " + exchange + " for message id: " + contents.ids.id); handler(contents); act
+        case msg@AMQPMessage(contents: Message) => handler(contents); act
       }
     }
   }

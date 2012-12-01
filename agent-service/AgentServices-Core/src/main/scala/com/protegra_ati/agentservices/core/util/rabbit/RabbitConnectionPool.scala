@@ -50,7 +50,6 @@ object RabbitConnectionPool
   private def putIfAbsent(key: String, value: GenericObjectPool[ Connection ]): GenericObjectPool[ Connection ] =
   {
     if ( !_pools.contains(key) ) {
-      println("NNNNNNNNNNNNNNNNNNNNNNNEEEEEEEEEEEEEEEWWWWWWWWWWWWWWWWW Pool")
       _pools.put(key, value)
       value
     }
@@ -69,7 +68,7 @@ object RabbitConnectionPool
     }
     catch {
       case e: java.lang.IllegalStateException => {
-        println("Exception: " + e)
+//        println("Exception: " + e)
         throw e
       }
     }
@@ -84,7 +83,7 @@ object RabbitConnectionPool
     }
     catch {
       case e: java.lang.IllegalStateException => {
-        println("Exception: " + e)
+//        println("Exception: " + e)
         throw e
       }
     }

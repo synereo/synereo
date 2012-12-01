@@ -49,7 +49,7 @@ trait InvitationRequestSetConsumer
   protected def processInvitationRequest(cnxnA_Broker: AgentCnxnProxy, inviteRequest: InvitationRequest) =
   {
 
-    println("----------------------------------------------->>>> cnxnA_Broker= cnxnA_Broker.scr" + cnxnA_Broker.src + ", cnxnA_Broker.trgt=" + cnxnA_Broker.trgt + ", inviteRequest=" + inviteRequest)
+    report("----------------------------------------------->>>> cnxnA_Broker= cnxnA_Broker.scr" + cnxnA_Broker.src + ", cnxnA_Broker.trgt=" + cnxnA_Broker.trgt + ", inviteRequest=" + inviteRequest)
     val agentIsInvitationInitiator = isCaptured(cnxnA_Broker, inviteRequest)
     //    processInvitationRequestOnPAOnBehalfOfInitiatorAgent(cnxnA_Broker, inviteRequest)
 
@@ -112,7 +112,7 @@ trait InvitationRequestSetConsumer
 
   protected def processInvitationRequestOnPAOnBehalfOfRequestedAgent(cnxnA_Broker: AgentCnxnProxy, inviteRequest: InvitationRequest) =
   {
-    println("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
+    report("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
     val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], inviteRequest))
