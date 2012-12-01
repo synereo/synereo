@@ -15,6 +15,7 @@ import com.protegra_ati.agentservices.core._
 import org.specs2.specification.Scope
 import platformagents.AgentHostUIPlatformAgent
 import com.protegra_ati.agentservices.core.util.Results
+import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
 
 trait ListenerScope extends Scope
   with Serializable
@@ -207,5 +208,44 @@ with Serializable
       mockListener.triggerEvent(event)
       Results.triggered(resultKey) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
+
+    "trigger synchronous" in new ListenerScope{
+      val mockMessage = new SetContentResponse(new Identification(), new EventKey(agentSessionId, "testTag"),
+        new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
+
+      val event = new SetContentResponseReceivedEvent(mockMessage)
+      event.msg = mockMessage
+
+      val locked = new AtomicBoolean(false)
+      val concurrencyError = new AtomicBoolean(false)
+      val numDone = new AtomicInteger(0)
+      val numThreads = 100
+
+      mockListener.addListener(agentSessionId, "set1", new MessageEventAdapter(mockMessage.eventKey.eventTag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+          if (locked.get())
+            concurrencyError.set(true)
+
+          locked.set(true)
+          Thread.sleep(25)
+          locked.set(false)
+
+          numDone.incrementAndGet()
+        }
+      });
+
+      for ( i <- 1 to numThreads) {
+        spawn {
+          mockListener.triggerEvent(event)
+        }
+      }
+
+      numDone.get() must be_==(numThreads).eventually(5, TIMEOUT_EVENTUALLY)
+      concurrencyError.get() must be_==(false)
+    }
+
+
   }
 }

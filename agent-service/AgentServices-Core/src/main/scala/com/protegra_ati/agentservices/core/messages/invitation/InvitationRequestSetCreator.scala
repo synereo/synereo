@@ -18,6 +18,7 @@ import java.util.HashMap
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.protegra_ati.agentservices.core.util.ThreadRenamer._
+import com.protegra_ati.agentservices.core.util.cloner.ClonerFactory
 
 
 trait InvitationRequestSetCreator
@@ -209,8 +210,10 @@ trait InvitationRequestSetCreator
    * @param alias_B
    * @param category_A
    * @param category_B
-   * @param requestedConnectionType
-   * @param requestedConnectionName
+   * @param requestedConnectionType_A
+   * @param requestedConnectionType_B
+   * @param requestedConnectionName_A
+   * @param requestedConnectionName_B
    * @param requestedPosts_A  post thread forwarded to A
    * @param requestedPosts_B  post thread forwarded to B
    * @param sendResponseHandler
@@ -354,12 +357,39 @@ trait InvitationRequestSetCreator
     //lookup the self connection from the systemdata in the connection silo
     val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
+
+    //CLEAN THIS UP  CF
+    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findCreateInvitationRequestToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
   }
 
   protected def findInvitationResponseToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
   {
     val query = new PersistedMessage[ InvitationResponse ]()
     fetchList[ PersistedMessage[ InvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ InvitationRequest ] ], invitationResponse.ids.parentId, invitationResponse.accept))
+  }
+
+  protected def findCreateInvitationRequestToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
+  {
+    val query = new PersistedMessage[ CreateInvitationRequest ]()
+    fetchList[ PersistedMessage[ CreateInvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, myArchivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ CreateInvitationRequest ] ], invitationResponse.ids.conversationId, invitationResponse.accept))
+  }
+
+  //copied from existing archivePersistedMessage
+  //as it compares message sbased on parentId and Id
+  //CIR's can only be matched with IRs via ConversationId
+  def myArchivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, messages: List[ PersistedMessage[ _ <: Message ] ], conversationId: String, isAccepted: Boolean) =
+  {
+    //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
+    for ( msg <- messages ) {
+      if ( msg.message.ids.conversationId == conversationId ) {
+        val newData = ClonerFactory.getInstance().createDeepClone(msg)
+        newData.archive()
+        if ( !isAccepted )
+          newData.reject()
+        //TODO: something is not right, its not safedeleting the old, getting 2 copies!
+        updateData(cnxnBroker_Broker, newData, msg)
+      }
+    }
   }
 
   protected def sendCreateConnectionRequest(inviteResponse: InvitationResponse, conn: Connection) =
