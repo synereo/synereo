@@ -1,7 +1,7 @@
 package com.protegra_ati.agentservices.core.messages.verifier
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -11,8 +11,8 @@ trait VerifierNotificationSetPrivate {
 
   def listenPrivateVerifierNotification(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Verify, ChannelType.Notification, ChannelLevel.Private, handlePrivateVerifierNotificationChannel(_: AgentCnxnProxy, _: Message))
-//    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, ChannelLevel.Private, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Verify, ChannelType.Notification, ChannelLevel.Private, handlePrivateVerifierNotificationChannel(_: AgentCnxnProxy, _: Message))
+////    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, ChannelLevel.Private, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
   }
 
   def handlePrivateVerifierNotificationChannel( cnxn: AgentCnxnProxy, msg: Message) =

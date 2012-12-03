@@ -9,8 +9,8 @@ import com.protegra_ati.agentservices.core.messages.verifier._
 
 class VerifyResponseReceivedEvent(source:VerifyResponse) extends MessageEvent[VerifyResponse](source) {
 
-  override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.verifyResponseReceived(this)}
+  override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.verifyResponseReceived(this)
   }
   
 }

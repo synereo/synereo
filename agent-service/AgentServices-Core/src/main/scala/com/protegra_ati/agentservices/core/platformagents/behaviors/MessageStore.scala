@@ -7,9 +7,10 @@ import org.joda.time.{DateTime, Instant}
 import com.protegra_ati.agentservices.core.messages._
 import scala.collection.mutable.Map
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.util._
+import com.protegra_ati.agentservices.core.util.Results
 
 //TODO create the store and save references to the CreateInvitationRequests
 //     check if the Response fits in a class InvitationRequestSetConsumer. if it is so than  autoaprove
@@ -20,7 +21,6 @@ trait MessageStore extends Reporting
 
   self: AgentHostStorePlatformAgent =>
   val DELIMITER = "++"
-  val storage: Map[ String, DateTime ] = Map[ String, DateTime ]()
   /**
    * message time to life (milliseconds)
    */
@@ -30,11 +30,15 @@ trait MessageStore extends Reporting
     val storageMoment = new DateTime()
     report("MESSAGE TEMPORARY STORED: " + cnxn + ", message ids=" + requestMsg.ids + " AT " + storageMoment, Severity.Trace)
     // key can be reduced to id + snxn.src
-    storage += ( requestMsg.ids.conversationId + DELIMITER + cnxn.src.toString + DELIMITER + cnxn.trgt.toString -> storageMoment )
+    val key = requestMsg.ids.conversationId + DELIMITER + cnxn.src.toString + DELIMITER + cnxn.trgt.toString
+    MemCache.set(key, storageMoment)(Results.client)
   }
 
   protected def isCaptured(messageConversationId: String, srcUID: String, targetUID: String): Boolean = synchronized {
-    storage.contains(messageConversationId + DELIMITER + srcUID + DELIMITER + targetUID)
+
+   val key = messageConversationId + DELIMITER + srcUID + DELIMITER + targetUID
+   val found = MemCache.get[ DateTime ](key)(Results.client)
+   found != null
   }
 
   def isCaptured(cnxn: AgentCnxnProxy, responseMsg: Message): Boolean = synchronized {
@@ -52,12 +56,13 @@ trait MessageStore extends Reporting
   def isCaptured(cnxn: AgentCnxnProxy, responseMsg: Message, beforeNowWithinMilliseconds: Long): Boolean = synchronized {
     //in case of response  AgentCnxnProxy has reverse order of the src and target point
     val key = responseMsg.ids.conversationId + DELIMITER + cnxn.trgt.toString + DELIMITER + cnxn.src.toString
-    storage.get(key) match {
-      case None => {
+    val dateCaptured = MemCache.get[ DateTime ](key)(Results.client)
+    dateCaptured match {
+      case null => {
         report("can't find captured message message conversationID=" + responseMsg.ids.conversationId + ", srcUID=" + cnxn.trgt.toString + ", targetUID=" + cnxn.src.toString, Severity.Trace)
         false
       }
-      case Some(storageMoment) => {
+      case storageMoment:DateTime => {
         if ( !( storageMoment.isBefore(new DateTime().minus(beforeNowWithinMilliseconds)) ) )
           true
         else false

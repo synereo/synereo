@@ -3,7 +3,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
@@ -12,7 +12,7 @@ import java.util.UUID
 import org.joda.time.{DateTime, Instant}
 import verifier._
 import com.protegra_ati.agentservices.core.schema.util._
-import scala.concurrent.cpsops._
+import scala.concurrent.ops._
 import com.protegra_ati.agentservices.core.util.ThreadRenamer._
 
 trait Auditing

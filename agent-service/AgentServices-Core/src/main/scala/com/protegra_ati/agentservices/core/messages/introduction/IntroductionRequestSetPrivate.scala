@@ -4,7 +4,7 @@ package com.protegra_ati.agentservices.core.messages.introduction
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -16,8 +16,8 @@ trait IntroductionRequestSetPrivate
 
   def listenPrivateIntroductionRequest(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
-    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateIntroductionRequestChannel(_: AgentCnxnProxy, _: Message))
   }
 
   //overriding listen for hosted connections and putting broker listen logic in

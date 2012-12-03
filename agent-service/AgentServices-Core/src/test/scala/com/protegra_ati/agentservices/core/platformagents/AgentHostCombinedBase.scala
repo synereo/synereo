@@ -1,21 +1,24 @@
 package com.protegra_ati.agentservices.core.platformagents
 
 import behaviors.Storage
-import org.specs._
+import org.specs2.mutable._
 import com.protegra_ati.agentservices.core._
 
 import scala.collection.JavaConversions._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
+
 import org.junit._
 import Assert._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import java.net.URI
+import java.net.{URI}
 import com.protegra_ati.agentservices.core.messages.content._
+import com.protegra_ati.agentservices.core.util.Results
+
 //import com.protegra_ati.agentservices.core.messages.search._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
@@ -25,12 +28,11 @@ import com.protegra_ati.agentservices.core.schema.PersistedRequest
 import invitation._
 import scala.util.Random
 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+import org.specs2.time.Duration
+import org.junit.runner._
+import org.specs2.runner._
 import com.protegra_ati.agentservices.core.events._
-import com.biosimilarity.lift.lib.moniker._
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import java.util.{Locale, UUID}
@@ -39,47 +41,36 @@ import java.util.{Locale, UUID}
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 
 
-object AgentHostCombinedBase extends Specification with RabbitTestSetup with
+object AgentHostCombinedBase extends SpecificationWithJUnit with InitTestSetup with
 Timeouts
 {
 
   // inits test configuration
 //  ConfigurationManager.getConfigurationManager().initForTest()
 
-  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI);
-  val uiRef: AgentHostUIPlatformAgent = new AgentHostUIPlatformAgent()
-  val storeRef: AgentHostStorePlatformAgent = new AgentHostStorePlatformAgent()
+  def setupPAs(store: AgentHostStorePlatformAgent, ui: AgentHostUIPlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
+    setupUI(ui,cnxnUIStore)
+    setupStore(store,cnxnUIStore)
+  }
 
 
-  val setup = new SpecContext
-  {
-    println(" in SharedContext constructor:")
-    // ui
-    val privateAddressUI = "localhost".toURM.withPort(RABBIT_PORT_UI_PRIVATE)
-    val privateAcquaintanceAddressesUI = List[ URM ]("localhost".toURM.withPort(RABBIT_PORT_STORE_PRIVATE))
-    uiRef._cnxnUIStore = cnxnUIStore
-    val idUI = UUID.randomUUID
-    uiRef.initForTest(privateAddressUI, privateAcquaintanceAddressesUI, idUI)
-
-    // store
-    val publicAddress = "localhost".toURM.withPort(RABBIT_PORT_STORE_PUBLIC)
-    val publicAcquaintanceAddresses = List[ URM ]("localhost".toURM.withPort(RABBIT_PORT_STORE_PUBLIC_UNRELATED))
-    val privateAddress = "localhost".toURM.withPort(RABBIT_PORT_STORE_PRIVATE)
-    val privateAcquaintanceAddresses = List[ URM ]("localhost".toURM.withPort(RABBIT_PORT_UI_PRIVATE))
-    val dbAddress = "localhost".toURM.withPort(RABBIT_PORT_STORE_DB)
-    val resultAddress = "localhost".toURM.withPort(RABBIT_PORT_TEST_RESULTS_DB)
-    storeRef._cnxnUIStore = cnxnUIStore
+  def setupUI(ui: AgentHostUIPlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
+    ui._cnxnUIStore = cnxnUIStore
     val id = UUID.randomUUID
-    //storeRef._cnxnUserSelfConnectionsList = List(cnxnJenSelf, cnxnMikeSelf)
-    storeRef.initForTest(publicAddress, publicAcquaintanceAddresses, privateAddress, privateAcquaintanceAddresses, dbAddress, resultAddress, id)
-    //?
-    //base.setupIncrementalDisclosure(storeRef, cnxnJenSelf)
-  }
-  setup.beforeSpec {
-    // demo
-    println(" --- beforeSpec, SharedContext solution")
+//    ui.setPrivateNetworkMode("KVDB")
+    ui.initFromConfig(CONFIG_UI, id)
   }
 
+  def setupStore(store: AgentHostStorePlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
+
+    store._cnxnUIStore = cnxnUIStore
+    val id = UUID.randomUUID
+    //store._cnxnUserSelfConnectionsList = List(cnxnJenSelf, cnxnMikeSelf)
+    store.setNetworkMode("Local")
+//    store.setPrivateNetworkMode("KVDB")
+    store.initFromConfig(CONFIG_STORE, id)
+  }
+ 
 
   def setupIncrementalDisclosure(pa: AgentHostStorePlatformAgent, cnxn: AgentCnxnProxy) =
   {
@@ -190,7 +181,7 @@ Timeouts
   {
     val self = ConnectionFactory.createConnection(alias, ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, connectionType, id, id)
     pa.store(pa._dbQ, cnxn, self.toStoreKey, Serializer.serialize[ Data ](self))
-    storeRef.generateSystemData(self.writeCnxn, self)
+    pa.generateSystemData(self.writeCnxn, self)
     //
     self
   }
@@ -273,11 +264,10 @@ Timeouts
 
   def count(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data): Int =
   {
-    val sync = new AnyRef()
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
-    @volatile var count = 0
     val tagUnique = tag + UUID.randomUUID().toString
+    val countKey = Results.getKey()
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tagUnique)
     {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
@@ -285,7 +275,9 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-            sync.synchronized {count = x.data.size}
+            Results.count(countKey, x.data.size)
+
+            println("size received : " +  x.data.size)
           }
           case _ => {}
         }
@@ -296,9 +288,7 @@ Timeouts
     getReq.originCnxn = cnxn
     getReq.targetCnxn = cnxn
     ui.send(getReq)
-
-    trySleep(sync.synchronized {count})
-    sync.synchronized {count}
+    Results.counted(countKey)
   }
 
   def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
@@ -315,7 +305,7 @@ Timeouts
 
   def countComposite(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: CompositeData[ _ <: Data ]): Int =
   {
-    @volatile var count = 0
+    val countKey = Results.getKey()
     val tagUnique = tag + UUID.randomUUID().toString
     ui.addListener(agentSessionId, UUID.randomUUID().toString, new MessageEventAdapter(tagUnique)
     {
@@ -323,7 +313,8 @@ Timeouts
       {
         e.msg match {
           case x: GetContentResponse => {
-            count = x.data.size
+            Results.count(countKey, x.data.size)
+            println("size received : " +  x.data.size)
           }
           case _ => {}
         }
@@ -335,9 +326,7 @@ Timeouts
     getReq.originCnxn = cnxn
     getReq.targetCnxn = cnxn
     ui.send(getReq)
-
-    trySleep(count)
-    count
+    Results.counted(countKey)
   }
 
   def performOperationOnFetchedData(handler: (Data, AgentCnxnProxy) => Unit,
@@ -521,11 +510,10 @@ Timeouts
 
   def countConnectionsByComparison(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, query: Data, compare: ( Connection ) => Boolean): Int =
   {
-    val sync = new AnyRef()
     //tag needs to be random otherwise only the 1st listen will wake up by the time the 4th listen is applying the must be_==
     //we intend to do many separate listens
-    @volatile var count = 0
     val tagUnique = tag + UUID.randomUUID().toString
+    val countKey = Results.getKey()
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tagUnique)
     {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
@@ -533,38 +521,34 @@ Timeouts
         println("===========================getContentResponseReceived: " + e)
         e.msg match {
           case x: GetContentResponse => {
-            sync.synchronized {
-              count = x.data.size
+              val count = x.data.size
+              Results.count(countKey, count)
               x.data.foreach(response => {
-                if ( count != -999 ) {
                   response match {
                     case x: Connection => {
                       println("connection found=" + x)
                       if ( !compare(x) ) {
-                        count = -999 // Error
+                        Results.voidCount(countKey)
                       }
                     }
                     case _ => {
-                      count = -999 // also something odd
+                      Results.voidCount(countKey)
                     }
                   }
-                }
               }
               )
-            }
           }
           case _ => {}
         }
       }
-    });
+    })
 
     val getReq = new GetContentRequest(new EventKey(agentSessionId, tagUnique), query)
     getReq.originCnxn = cnxn
     getReq.targetCnxn = cnxn
     ui.send(getReq)
 
-    trySleep(sync.synchronized {count})
-    sync.synchronized {count}
+    Results.counted(countKey)
   }
 
 }

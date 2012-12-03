@@ -1,14 +1,10 @@
 package com.protegra_ati.agentservices.core.util.cloner
 
 import org.junit.runners.JUnit4
-import org.specs.runner.ConsoleRunner
-import org.spex.Specification
+import org.specs2.runner._
 import java.util.concurrent.{BrokenBarrierException, CyclicBarrier}
 import com.rits.cloning.Cloner
 import com.protegra_ati.agentservices.core.schema.{Image, Profile}
-
-/* User: mgevantmakher
-*/
 
 class ParallelSingletonClonerPerformanceTest(repetitions: Int)
 {
@@ -19,7 +15,7 @@ class ParallelSingletonClonerPerformanceTest(repetitions: Int)
   {
     override def run()
     {
-      System.err.println("total execution time for " + repetitions + " of parallel clonings with singleton cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
+      println("total execution time for " + repetitions + " of parallel clonings with singleton cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
     }
   });
 
@@ -74,7 +70,7 @@ class ParallelMultiInstancesClonerPerformanceTest(repetitions: Int)
   {
     override def run()
     {
-      System.err.println("total execution time for " + repetitions + " of parallel clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
+      println("total execution time for " + repetitions + " of parallel clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
     }
   });
 
@@ -136,7 +132,7 @@ class SequentialMultiInstancesClonerPerformanceTest(repetitions: Int)
     for ( i <- 0 to this.repetitions ) {
       new CloneWorker().run()
     }
-    System.err.println("total execution time for " + repetitions + " of sequential clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
+    println("total execution time for " + repetitions + " of sequential clonings with cloner per repetition is " + ( System.currentTimeMillis() - startTime ) + "msec");
 
   }
 
@@ -177,7 +173,7 @@ class SequentialSingleInstancesClonerPerformanceTest(repetitions: Int)
     for ( i <- 0 to this.repetitions ) {
       new CloneWorker().run()
     }
-    System.err.println("total execution time for " + repetitions + " of sequential clonings with a single cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
+    println("total execution time for " + repetitions + " of sequential clonings with a single cloner is " + ( System.currentTimeMillis() - startTime ) + "msec");
 
   }
 
@@ -210,7 +206,7 @@ object SequentialSingleInstancesClonerPerformanceTest
 object ClonerPerformanceTestConstants
 {
   val PROFILE = new Profile("Terry", "Bunio", "test Description", "123456789@gmail.com", "CA", "Manitoba", "Winnipeg", "postalCode", "website", new Image("img", "jpeg", "content", "meta"))
-  val PROFILE0 = new Profile("test", "test", "test", "bubu", "CA", "Manitoba", "Winnipeg", "postalCode", "website", new Image("img0", "jpeg0", "content0", "meta0"))
+  val PROFILE0 = new Profile("test", "test", "test", "temp", "CA", "Manitoba", "Winnipeg", "postalCode", "website", new Image("img0", "jpeg0", "content0", "meta0"))
 
 
 }

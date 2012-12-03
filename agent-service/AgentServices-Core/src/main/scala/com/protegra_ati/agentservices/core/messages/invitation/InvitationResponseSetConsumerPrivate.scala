@@ -4,7 +4,7 @@ package com.protegra_ati.agentservices.core.messages.invitation
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -15,7 +15,10 @@ trait InvitationResponseSetConsumerPrivate
 
   def listenPrivateInvitationConsumerResponses(cnxn: AgentCnxnProxy) =
   {
-        listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
+    if ( isPrivateKVDBNetworkMode() )
+      listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
+    else
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(cnxn, _: Message))
   }
 
   def handleInvitationResponseChannel(cnxn: AgentCnxnProxy, msg: Message)

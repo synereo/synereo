@@ -19,7 +19,7 @@ class IdentificationSerializer() extends Serializer[ Identification ]
 
   override def write(kryo: Kryo, output: Output, obj: Identification): Unit =
   {
-    //System.err.println("KRYO IdentificationSerializer in USE! WRITE")
+    //println("KRYO IdentificationSerializer in USE! WRITE")
     if ( obj == null ) {
       kryo.writeObject(output, IdentificationSerializer.NULL)
     }
@@ -33,7 +33,7 @@ class IdentificationSerializer() extends Serializer[ Identification ]
 
   override def read(kryo: Kryo, input: Input, typ: Class[ Identification ]): Identification =
   {
-    // System.err.println("KRYO IdentificationSerializer in USE! READ")
+    // println("KRYO IdentificationSerializer in USE! READ")
     val l: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( l == IdentificationSerializer.NULL ) return null
 

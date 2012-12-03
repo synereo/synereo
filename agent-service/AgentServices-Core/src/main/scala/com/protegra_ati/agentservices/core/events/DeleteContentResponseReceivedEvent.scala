@@ -9,8 +9,8 @@ import com.protegra_ati.agentservices.core.messages.content._
 
 class DeleteContentResponseReceivedEvent(source:DeleteContentResponse) extends MessageEvent[DeleteContentResponse](source) {
 
-  override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.deleteContentResponseReceived(this)}
+  override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.deleteContentResponseReceived(this)
   }
   
 }

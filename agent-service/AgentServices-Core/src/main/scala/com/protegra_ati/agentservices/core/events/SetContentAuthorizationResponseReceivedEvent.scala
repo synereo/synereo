@@ -9,8 +9,8 @@ import com.protegra_ati.agentservices.core.messages.content._
 
 class SetContentAuthorizationResponseReceivedEvent(source:SetContentAuthorizationResponse) extends MessageEvent[SetContentAuthorizationResponse](source) {
 
-  override def trigger(listeners:List[MessageEventAdapter]){
-    listeners.map {x => x.setContentAuthorizationResponseReceived(this)}
+  override def triggerEvent(adapter: MessageEventAdapter) = {
+    adapter.setContentAuthorizationResponseReceived(this)
   }
   
 }

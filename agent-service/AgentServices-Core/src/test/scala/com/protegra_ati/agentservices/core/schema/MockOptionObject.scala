@@ -23,7 +23,7 @@ case class MockOptionObject( ) extends UseKryoSerialization
  // override def str = "YES"
 
   //toBeOverridden = ChannelRole.Creator
-  val bubu: Option[ String ] = Some("bubu")//ChannelRole.Creator)
+  val temp: Option[ String ] = Some("temp")//ChannelRole.Creator)
 
   //str1 = "yes"
 }

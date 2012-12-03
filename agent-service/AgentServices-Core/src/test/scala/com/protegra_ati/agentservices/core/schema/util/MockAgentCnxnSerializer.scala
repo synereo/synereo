@@ -6,7 +6,7 @@ import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.messages.{Identification, MockMessage}
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
@@ -23,7 +23,7 @@ abstract class MockAgentCnxnProxySerializer() extends Serializer[ MockAgentCnxnP
 
 //  override def write(kryo: Kryo, output: Output, obj: MockAgentCnxnProxy): Unit =
 //  {
-//    System.err.println("KRYO MOCK_AGENT_CNXN WRITE.... ")
+//    println("KRYO MOCK_AGENT_CNXN WRITE.... ")
 //    kryo.writeObject(output, obj.src)
 //    kryo.writeObject(output, obj.trgt)
 //
@@ -32,13 +32,13 @@ abstract class MockAgentCnxnProxySerializer() extends Serializer[ MockAgentCnxnP
 //      label = null
 //    kryo.writeObjectOrNull(output, label, classOf[String])
 //    kryo.writeObject(output, obj.credential.toString)
-//    System.err.println("KRYO MOCK_AGENT_CNXN SERIALIZE WRITE: " + obj)
+//    println("KRYO MOCK_AGENT_CNXN SERIALIZE WRITE: " + obj)
 //
 //  }
 
 //  override def read(kryo: Kryo, input: Input, typ: Class[ MockAgentCnxnProxy ]): MockAgentCnxnProxy =
 //  {
-//    System.err.println("KRYO MOCK_AGENT_CNXN READ.... ")
+//    println("KRYO MOCK_AGENT_CNXN READ.... ")
 //    val src = kryo.readObject(input, classOf[ URI ])
 //    val trgt = kryo.readObject(input, classOf[ URI ])
 //    var label = kryo.readObjectOrNull(input, classOf[ String ])
@@ -48,7 +48,7 @@ abstract class MockAgentCnxnProxySerializer() extends Serializer[ MockAgentCnxnP
 //
 //
 //    val cnxn = MockAgentCnxnProxy(src, label, trgt, credential)
-//    System.err.println("KRYO MOCK_AGENT_CNXN READ: " + cnxn)
+//    println("KRYO MOCK_AGENT_CNXN READ: " + cnxn)
 //    return cnxn
 //
 //  }

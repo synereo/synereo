@@ -27,7 +27,7 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
 
   override def equals(other: Any): Boolean =
   {
-    System.err.println("CALL EQUALS ON PERSISTED MESSAGE")
+//    println("CALL EQUALS ON PERSISTED MESSAGE")
      other match {
 
       case that: PersistedMessage[ Message ] => {

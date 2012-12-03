@@ -2,8 +2,8 @@ package com.protegra_ati.agentservices.core.messages
 
 import java.io.Serializable
 import java.util.UUID
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import reflect.BeanProperty
 import java.lang.reflect._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -46,6 +46,14 @@ KVDBSerializable with UseJavaIOSerialization
     channelKey += "(\"" + ids.conversationId.toString + "\")"
     channelKey
   }
+
+  def getExchangeKey: String =
+  {
+    var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.getOrElse(ChannelLevel.Private).toString
+    channelKey += "(_)"
+    channelKey
+  }
+
 
   def isInOriginalState: Boolean =
   {

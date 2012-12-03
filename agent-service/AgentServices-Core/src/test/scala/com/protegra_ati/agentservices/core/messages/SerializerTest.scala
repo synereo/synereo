@@ -17,30 +17,25 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.io.File
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
-import org.specs._
+import org.junit.runner._
+import org.specs2.runner._
+import org.specs2.mutable._
 import com.protegra_ati.agentservices.core._
 import persistence.MockConnection
 import scala.collection.JavaConversions._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 import org.joda.time.DateTime
-class SerializerTest
-  extends JUnit4(SerializerTestSpecs)
 
-object SerializerTestSpecsRunner
-  extends ConsoleRunner(SerializerTestSpecs)
-
-object SerializerTestSpecs extends Specification with
+class SerializerTest extends SpecificationWithJUnit with
 Timeouts
 {
   "serialize" should {
     val maxKB = 25 * 1024
 
-    "deserialize Message " in {
+    "deserialize Message" in {
       val parentIds = new Identification()
       val msg = new GetContentResponse(parentIds.copyAsChild(), null, null)
 
@@ -54,10 +49,11 @@ Timeouts
           //            assertEquals(x.ids.id, msg.ids.id)
           //            assertEquals(x.ids.parentId, msg.ids.parentId)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
     }
-    "deserialize Request " in {
+    "deserialize Request" in {
       val search = new Connection()
       val msg = new GetContentRequest(null, search)
 
@@ -71,8 +67,10 @@ Timeouts
           //            assertEquals(x.ids.id, msg.ids.id)
           //            assertEquals(x.ids.parentId, msg.ids.parentId)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
+
     }
 
     "deserialize simple Data " in {
@@ -87,8 +85,9 @@ Timeouts
           x.id must be_==(data.id)
           x.firstName must be_==(data.firstName)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
     }
 
 
@@ -100,7 +99,7 @@ Timeouts
           x must be_==(data)
           x.id must be_==(data.id)
         }
-        case _ => fail
+        case _ => failure
       }
 
       val serializedData = Serializer.serialize[ Data ](data)
@@ -112,28 +111,29 @@ Timeouts
           x.id must be_==(data.id)
           x.firstName must be_==(data.firstName)
         }
-        case _ => fail
+        case _ => failure
       }
 
 
-      val experriment = new Profile()
+      val experiment = new Profile()
       {
         override def toSearchKey(): String = "abc"
       }
 
-      experriment match {
+      experiment match {
         case x: Profile => {
-          x must be_==(experriment)
+          x must be_==(experiment)
           x.toSearchKey must be_==("abc")
         }
-        case _ => fail
+        case _ => failure
       }
 
+      success
 
     }
 
     "serialize and deserialize SystemData with Connection" in {
-      skip("Until Kryo back in place")
+      skipped("Until Kryo back in place")
       val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
@@ -148,8 +148,9 @@ Timeouts
 
           x mustEqual ( systemConnection )
         }
-        case _ => fail
+        case _ => failure
       }
+      success
 
     }
 
@@ -162,8 +163,9 @@ Timeouts
         case x: MockConnection => {
           x.name must be_==(data.name)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
     }
 
     "deserialize connection Data " in {
@@ -177,8 +179,9 @@ Timeouts
           x.alias must be_==(data.alias)
           x.policies must be_==(data.policies)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
     }
 
     "deserialize tracking Data " in {
@@ -193,8 +196,9 @@ Timeouts
           x.id must be_==(data.id)
           x.subject must be_==(data.subject)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
     }
 
 
@@ -210,8 +214,9 @@ Timeouts
           x.getIds() must be_==(inviteRequest.getIds())
           x.getEventKey() must be_==(inviteRequest.getEventKey())
         }
-        case _ => fail
+        case _ => failure
       }
+      success
 
     }
 
@@ -230,14 +235,15 @@ Timeouts
           x.eventKey must be_==(message.eventKey)
           x.ids must be_==(message.ids)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
 
     }
 
 
     "deserialize some persisted mock message" in {
-      skip("")
+      skipped("")
       val message = new MockDirectMessage(new Identification(), new EventKey(UUID.randomUUID(), "tydegfrtew"), "works", Some("Hi"), None, Some("Basic"), new Post() :: Nil)
       val data = new PersistedMessage[ MockDirectMessage ](message)
 
@@ -254,19 +260,20 @@ Timeouts
           x.getIgnored must beNull
           data.getIgnored must beNull
 
-          System.err.println("x=" + x)
-          System.err.println("data=" + data)
+          println("x=" + x)
+          println("data=" + data)
           x.getMessage() must be_==(data.getMessage())
 
         }
-        case _ => fail
+        case _ => failure
       }
+      success
 
     }
 
 
     "deserialize persisted InvitationRequest" in {
-      // skip("")
+      // skipped("")
 
       val inviteRequest = new InvitationRequest(new Identification(), new EventKey(UUID.randomUUID(), "tydegfrtew"),
         "IntroID", None, Some("Basic"), Some("Test Connection"), new Post() :: Nil)
@@ -280,20 +287,21 @@ Timeouts
         case x: PersistedMessage[ InvitationRequest ] => {
 
           x.id must be_==(data.id)
-          System.err.println("InvitationRequest before :" + inviteRequest)
-          System.err.println("InvitationRequest after :" + x.message)
+          println("InvitationRequest before :" + inviteRequest)
+          println("InvitationRequest after :" + x.message)
           x.getMessage() must be_==(data.getMessage())
           x must be_==(data)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
 
     }
 
 
 
     "deserialize persisted ReferralRequest" in {
-      // skip("")
+      // skipped("")
 
       val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "targetCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
       val req = new ReferralRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, sourceRequest)
@@ -306,19 +314,20 @@ Timeouts
         case x: PersistedMessage[ ReferralRequest ] => {
 
           x.id must be_==(data.id)
-          System.err.println("InvitationRequest before :" + req)
-          System.err.println("InvitationRequest after :" + x.message)
+          println("InvitationRequest before :" + req)
+          println("InvitationRequest after :" + x.message)
           x.getMessage().toString must be_==(data.getMessage().toString)
           x must be_==(data)
         }
-        case _ => fail
+        case _ => failure
       }
 
+      success
 
     }
 
     "deserialize persisted CreateInvitationRequest" in {
-      //  skip("")
+      //  skipped("")
       val post1 = new Post("theSubject", "theBody", new java.util.HashMap(), new java.util.HashMap())
       val post2 = new Post("theSubject", "theBody", new java.util.HashMap(), new java.util.HashMap())
 
@@ -330,14 +339,14 @@ Timeouts
 
       deserializedRequest match {
         case x: CreateInvitationRequest => {
-          System.err.println("InvitationRequest before :" + sourceRequest)
-          System.err.println("InvitationRequest after :" + x)
+          println("InvitationRequest before :" + sourceRequest)
+          println("InvitationRequest after :" + x)
           x.toString must be_==(sourceRequest.toString)
           x.channelRole.toString must be_==(sourceRequest.channelRole.toString)
           x.channel.toString must be_==(sourceRequest.channel.toString)
           x must be_==(sourceRequest)
         }
-        case _ => fail
+        case _ => failure
       }
 
 
@@ -350,21 +359,22 @@ Timeouts
         case x: PersistedMessage[ CreateInvitationRequest ] => {
 
           x.id must be_==(data.id)
-          System.err.println("InvitationRequest before :" + sourceRequest)
-          System.err.println("InvitationRequest after :" + x.message)
+          println("InvitationRequest before :" + sourceRequest)
+          println("InvitationRequest after :" + x.message)
           x.getMessage().toString must be_==(data.getMessage().toString)
           x.getMessage().channelRole.toString must be_==(sourceRequest.channelRole.toString)
           x must be_==(data)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
 
     }
 
 
 
     "deserialize persisted GetContentRequest with PersistedMessage[ ReferralRequest ]" in {
-      // skip("")
+      // skipped("")
 
       val query: PersistedMessage[ ReferralRequest ] = new PersistedMessage[ ReferralRequest ]()
 
@@ -375,12 +385,13 @@ Timeouts
       deserializedData match {
         case x: PersistedMessage[ ReferralRequest ] => {
           // empty message
-          if ( x.getMessage() != null && query.getMessage() != null ) fail("")
+          if ( x.getMessage() != null && query.getMessage() != null ) failure
           x must be_==(query)
           x.toString must be_==(query.toString)
         }
-        case _ => fail
+        case _ => failure
       }
+      success
 
     }
   }

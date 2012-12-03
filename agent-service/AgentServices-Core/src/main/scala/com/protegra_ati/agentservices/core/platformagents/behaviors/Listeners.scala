@@ -10,9 +10,12 @@ import com.protegra_ati.agentservices.core.events._
 import java.util.UUID
 import java.util.HashMap
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.util.{Severity, Reporting}
+import com.protegra.agentservicesstore.util.{MultiMap, MemCache, Severity, Reporting}
+import java.util
+import scala.collection.JavaConversions._
 
 //import com.sun.org.apache.xpath.internal.operations._
+
 import com.protegra_ati.agentservices.core.util._
 
 /*
@@ -34,7 +37,7 @@ uniqueness is determined primary by agentSession Key and then by subKey + eventT
 
 trait Listeners extends Reporting
 {
-  var _listeners = new MultiMap[ UUID, MessageEventAdapter ]
+  @transient var _listeners = new MultiMap[ UUID, MessageEventAdapter ]
   var _uniqueness = new MultiMap[ UUID, String ]
 
   //not providing a method with only key, listener. it should be a conscious choice to manage listeners per page

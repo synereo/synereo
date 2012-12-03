@@ -1,14 +1,14 @@
 package com.protegra_ati.agentservices.core.platformagents
 
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import java.util.UUID
 import org.junit._
 import Assert._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages._
@@ -17,22 +17,16 @@ import com.protegra_ati.agentservices.core.schema._
 import invitation._
 import scala.util.Random
 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+import org.specs2.time.Duration
+import org.junit.runner._
+import org.specs2.runner._
 import com.protegra_ati.agentservices.core.events._
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 
-class AgentHostCombinedAuditTest
-  extends JUnit4(AgentHostCombinedAuditTestSpecs)
-
-object AgentHostCombinedAuditTestSpecsRunner
-  extends ConsoleRunner(AgentHostCombinedAuditTestSpecs)
-
-object AgentHostCombinedAuditTestSpecs extends Specification
+class AgentHostCombinedAuditTest extends SpecificationWithJUnit
 with Timeouts
 {
   val jenUID = UUID.randomUUID()
@@ -41,27 +35,26 @@ with Timeouts
   val mikeUID = UUID.randomUUID()
   var cnxnMikeMike = new AgentCnxnProxy(( "Mike" + mikeUID.toString ).toURI, "CombinedTestUser", ( "Mike" + mikeUID.toString ).toURI)
 
+  val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI)
+  val storeR = new AgentHostStorePlatformAgent
+  val uiR = new AgentHostUIPlatformAgent
+  AgentHostCombinedBase.setupPAs(storeR, uiR, cnxnUIStore)
 
-  AgentHostCombinedBase.setup(this)
-  val uiR = AgentHostCombinedBase.uiRef
-  val storeR = AgentHostCombinedBase.storeRef
+  val eventKey = "content"
+  AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)
 
+  val connJenMike = AgentHostCombinedBase.setupPersistedConnection(storeR, jenUID, mikeUID)
+  storeR.updateData(cnxnJenJen, connJenMike, null)
 
- // "Viewing a profile" ->- ( AgentHostCombinedBase.setup(this) ) should {
-  "Viewing a profile" should {
-
-    val agentSessionId = UUID.randomUUID()
-    val eventKey = "content"
-    AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)
-    storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
+//    storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
     //  as soon as an new connection is stored, (esp. self connection) it is necessary to listen to this connection or like here to ALL selfconnections
     //  If no listening happened than connection as if would be "not visible"
-    storeR.listenForHostedCnxns()
+//    storeR.listenForHostedCnxns()
 
+  "Viewing a profile" should {
     "not return audit trail by composite search" in {
-
-      val connJenMike = AgentHostCombinedBase.setupPersistedConnection(storeR, jenUID, mikeUID)
-      storeR.updateData(cnxnJenJen, connJenMike, null)
+      skipped("issue 242 and verify audit is configured")
+      val agentSessionId = UUID.randomUUID()
 
       AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey)
       //to create audit
@@ -72,11 +65,11 @@ with Timeouts
 
     //see if this can expose an intermittent 3 audit record write for 1 read
     "return audit trail by composite search" in {
-      AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)
-      storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
+      skipped("issue 242 and verify audit is configured")
+      val agentSessionId = UUID.randomUUID()
 
-      val connJenMike = AgentHostCombinedBase.setupPersistedConnection(storeR, jenUID, mikeUID)
-      storeR.updateData(cnxnJenJen, connJenMike, null)
+//      AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)
+      storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
 
       val connMikeJen = AgentHostCombinedBase.setupPersistedConnection(storeR, mikeUID, jenUID)
 
@@ -89,11 +82,11 @@ with Timeouts
 
     //see if this can expose an intermittent 3 audit record write for 1 read
     "return profile by composite search" in {
-      AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)
-      storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
+      skipped("issue 242 and verify audit is configured")
+      val agentSessionId = UUID.randomUUID()
 
-      val connJenMike = AgentHostCombinedBase.setupPersistedConnection(storeR, jenUID, mikeUID)
-      storeR.updateData(cnxnJenJen, connJenMike, null)
+//      AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)
+      storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
 
       val connMikeJen = AgentHostCombinedBase.setupPersistedConnection(storeR, mikeUID, jenUID)
       storeR.updateData(cnxnMikeMike, connMikeJen, null)

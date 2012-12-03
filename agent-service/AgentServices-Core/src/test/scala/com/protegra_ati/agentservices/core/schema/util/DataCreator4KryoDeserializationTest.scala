@@ -9,13 +9,13 @@ import java.util.UUID
 import com.protegra_ati.agentservices.core._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import messages._
 import invitation.CreateInvitationRequest
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
-import org.specs._
+import org.junit.runner._
+import org.specs2.runner._
+import org.specs2.mutable._
 import com.protegra_ati.agentservices.core.Timeouts
 import scala.collection.JavaConversions._
 import java.io._
@@ -29,13 +29,7 @@ import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 import org.apache.commons.io.FileUtils
 
-class DataCreator4KryoDeserializationTest
-  extends JUnit4(DataCreator4KryoDeserializationTestSpecs)
-
-object DataCreator4KryoDeserializationTestSpecsRunner
-  extends ConsoleRunner(DataCreator4KryoDeserializationTestSpecs)
-
-object DataCreator4KryoDeserializationTestSpecs extends Specification with
+class DataCreator4KryoDeserializationTest extends SpecificationWithJUnit with
 Timeouts
 {
 // TODO: until kryo is back in place
@@ -69,7 +63,7 @@ Timeouts
 //
 //
 //    "serialize simple mock profile" in {
-//      // skip("ignore")
+//      // skipped("ignore")
 //      val mockSimpleProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.profile1).asInstanceOf[ SimpleMockProfile1 ]
 //      mockSimpleProfile.id = "UID"
 //      mockSimpleProfile.localeCode = "br"
@@ -80,7 +74,7 @@ Timeouts
 //
 //
 //    "serialize and deserialize composite mock profile" in {
-//      // skip("ignore")
+//      // skipped("ignore")
 //      val compositeMockProfile = new Cloner().deepClone(KryoSerializerTestDataInitializer.compositeProfile).asInstanceOf[ CompositeMockProfile1 ]
 //      compositeMockProfile.id = "UID"
 //      compositeMockProfile.localeCode = "br"
@@ -96,7 +90,7 @@ Timeouts
 //  "serializing real data" should {
 //
 //    "serialize composite with EventKey" in {
-//      // skip("")
+//      // skipped("")
 //      val agentSessionId: UUID = UUID.fromString("DE3C8348-94C2-4BF1-966A-EE57C14BA073")
 //      val agentSessionId1: UUID = UUID.fromString("AE3C8348-94C2-4BF1-966A-EE57C14BA073")
 //      val eventTag = "content"
@@ -108,7 +102,7 @@ Timeouts
 //    }
 //
 //    "serialize different mock objects" in {
-//      // skip("")
+//      // skipped("")
 //      val anyRefMap = new java.util.HashMap[ String, AnyRef ]();
 //      val fromDetails = new java.util.HashMap[ String, Data ]();
 //      val toDetails = new java.util.HashMap[ String, Data ]();
@@ -206,7 +200,7 @@ Timeouts
 //  "serializing real data into base64String" should {
 //
 //    "serialize composite with EventKey" in {
-//      // skip("")
+//      // skipped("")
 //      val agentSessionId: UUID = UUID.fromString("DE3C8348-94C2-4BF1-966A-EE57C14BA073")
 //      val agentSessionId1: UUID = UUID.fromString("AE3C8348-94C2-4BF1-966A-EE57C14BA073")
 //      val eventTag = "content"
@@ -218,7 +212,7 @@ Timeouts
 //    }
 //
 //    "serialize different mock objects" in {
-//      // skip("")
+//      // skipped("")
 //      val anyRefMap = new java.util.HashMap[ String, AnyRef ]();
 //      val fromDetails = new java.util.HashMap[ String, Data ]();
 //      val toDetails = new java.util.HashMap[ String, Data ]();
@@ -327,7 +321,7 @@ Timeouts
 //    if ( !new File("data").exists() ) {
 //      new File("data").mkdir()
 //    }
-//    System.err.println(" in KryoSerializerTestDataInitializer constructor")
+//    println(" in KryoSerializerTestDataInitializer constructor")
 //  }
 //
 //
@@ -339,9 +333,9 @@ Timeouts
 //    } catch {
 //      case ex: Exception => {
 //        /* TODO into log file*/
-//        System.err.println("something different:" + ex.toString)
+//        println("something different:" + ex.toString)
 //        ex.printStackTrace();
-//        fail("previously serialized class can't be deleted")
+//        failure("previously serialized class can't be deleted")
 //      }
 //    }
 //    serialize(data, new FileOutputStream(toFile))
@@ -391,7 +385,7 @@ Timeouts
 //  def checkIfKryoSerializable(data: Object): Unit =
 //  {
 //    if ( !Serializer.evaluateSerializerClass(data).equals(KryoSerializer.getInstance().getClass.getName) )
-//      fail("not using KryoSerializer")
+//      failure("not using KryoSerializer")
 //  }
 //
 //
@@ -414,18 +408,18 @@ Timeouts
 //    } catch {
 //      case ex: IOException => {
 //        /* TODO into log file*/
-//        System.err.println("ERROR BY DESERIALIZATION")
+//        println("ERROR BY DESERIALIZATION")
 //        ex.printStackTrace()
 //        return null.asInstanceOf[ T ]
 //      }
 //      case ex: Exception => {
 //        /* TODO into log file*/
-//        System.err.println("ERROR BY DESERIALIZATION")
+//        println("ERROR BY DESERIALIZATION")
 //        ex.printStackTrace()
 //        return null.asInstanceOf[ T ]
 //      }
 //      case _ => {
-//        System.err.println("ERROR BY DESERIALIZATION")
+//        println("ERROR BY DESERIALIZATION")
 //        /* TODO into log file*/
 //        return null.asInstanceOf[ T ]
 //      }

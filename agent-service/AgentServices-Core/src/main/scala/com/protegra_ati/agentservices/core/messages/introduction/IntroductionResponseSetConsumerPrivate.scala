@@ -4,7 +4,7 @@ package com.protegra_ati.agentservices.core.messages.introduction
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -15,7 +15,7 @@ trait IntroductionResponseSetConsumerPrivate
 
   def listenPrivateIntroductionConsumerResponses(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleIntroductionResponseChannel(_: AgentCnxnProxy, _: Message))
+//    listen(_privateQ, cnxn, Channel.Introduction, Some(ChannelRole.Consumer), ChannelType.Response, ChannelLevel.Private, handleIntroductionResponseChannel(_: AgentCnxnProxy, _: Message))
   }
 
   def handleIntroductionResponseChannel(cnxn: AgentCnxnProxy, msg: Message)

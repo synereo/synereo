@@ -5,29 +5,34 @@ import org.junit._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+import org.specs2.mutable._
+import org.specs2.time.Duration
+import org.junit.runner._
+import org.specs2.runner._
 import com.protegra_ati.agentservices.core.events._
 import java.util.HashMap
 import com.protegra_ati.agentservices.core._
+import org.specs2.specification.Scope
+import platformagents.AgentHostUIPlatformAgent
+import com.protegra_ati.agentservices.core.util.Results
+import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
+import scala.concurrent.ops._
 
-class ListenersTest
-  extends JUnit4(ListenersTestSpecs)
+trait ListenerScope extends Scope
+  with Serializable
+{
+  val mockListener = new AgentHostUIPlatformAgent
+  val agentSessionId = UUID.randomUUID()
+}
 
-object ListenersTestSpecsRunner
-  extends ConsoleRunner(ListenersTestSpecs)
-
-object ListenersTestSpecs extends Specification
+class ListenersTest extends SpecificationWithJUnit
 with Timeouts
+with Serializable
 {
   "listener" should {
-    val mockListener = new Object with Listeners
-    val agentSessionId = UUID.randomUUID()
 
-    "be found by message" in {
-      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ), null)
+    "be found by message" in new ListenerScope{
+      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
       mockListener.addListener(agentSessionId, "", new MessageEventAdapter()
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
@@ -46,28 +51,29 @@ with Timeouts
       list.size must be_==(1)
     }
 
-    "be found twice by message" in {
-        val mockMessage = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ), null)
-        mockListener.addListener(agentSessionId, "1", new MessageEventAdapter()
+    "be found twice by message" in new ListenerScope{
+      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
+      mockListener.addListener(agentSessionId, "1", new MessageEventAdapter()
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-          {
-          }
-        });
+        }
+      });
 
-        mockListener.addListener(agentSessionId, "2", new MessageEventAdapter()
+      mockListener.addListener(agentSessionId, "2", new MessageEventAdapter()
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-          {
-          }
-        });
+        }
+      });
 
-        val list = mockListener.getListenersByMessage(mockMessage)
-        list.size must be_==(2)
-      }
+      Thread.sleep(TIMEOUT_MED)
+      val list = mockListener.getListenersByMessage(mockMessage)
+      list.size must be_==(2)
+    }
 
-    "found only once for same agentSessionId and subKey plus tag" in {
-      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ), null)
+    "found only once for same agentSessionId and subKey plus tag" in new ListenerScope{
+      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
       mockListener.addListener(agentSessionId, "", new MessageEventAdapter()
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
@@ -75,6 +81,7 @@ with Timeouts
         }
       });
 
+      Thread.sleep(TIMEOUT_MED)
       mockListener.addListener(agentSessionId, "", new MessageEventAdapter()
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
@@ -93,36 +100,36 @@ with Timeouts
       list.size must be_==(1)
     }
 
-    "found twice for same agentSessionId and subKey but different tag" in {
-        val mockMessage1 = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ), null)
-        val mockMessage2 = mockMessage1.copy(eventKey = new EventKey(agentSessionId, "fake1"))
-        mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage1.eventKey.eventTag)
+    "found twice for same agentSessionId and subKey but different tag" in new ListenerScope{
+      val mockMessage1 = new SetContentRequest(new EventKey(agentSessionId, ""), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
+      val mockMessage2 = mockMessage1.copy(eventKey = new EventKey(agentSessionId, "fake1"))
+      mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage1.eventKey.eventTag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-          {
-          }
-        });
+        }
+      });
 
-        mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage1.eventKey.eventTag)
+      mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage1.eventKey.eventTag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-          {
-          }
-        });
+        }
+      });
 
-        mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage2.eventKey.eventTag)
+      mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage2.eventKey.eventTag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-          {
-          }
-        });
+        }
+      });
 
-        mockListener.getListenersByMessage(mockMessage1).size must be_==(1)
-        mockListener.getListenersByMessage(mockMessage2).size must be_==(1)
-      }
+      mockListener.getListenersByMessage(mockMessage1).size must be_==(1)
+      mockListener.getListenersByMessage(mockMessage2).size must be_==(1)
+    }
 
-    "be found by message with tag" in {
-      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, "tag1"), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ), null)
+    "be found by message with tag" in new ListenerScope{
+      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, "tag1"), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
       val fakeMessage = mockMessage.copy(eventKey = new EventKey(agentSessionId, "fake1"))
 
       mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage.eventKey.eventTag)
@@ -143,8 +150,8 @@ with Timeouts
       list.size must be_==(1)
     }
 
-    "be missing by event key with tag" in {
-      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, "tag1"), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ), null)
+    "be missing by event key with tag" in new ListenerScope{
+      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, "tag1"), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
       val fakeMessage = mockMessage.copy(eventKey = new EventKey(agentSessionId, "fake1"))
 
       mockListener.addListener(agentSessionId, "", new MessageEventAdapter(mockMessage.eventKey.eventTag)
@@ -154,7 +161,7 @@ with Timeouts
         }
       });
 
-      mockListener.addListener(UUID.randomUUID(), "",  new MessageEventAdapter(fakeMessage.eventKey.eventTag)
+      mockListener.addListener(UUID.randomUUID(), "", new MessageEventAdapter(fakeMessage.eventKey.eventTag)
       {
         override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
         {
@@ -169,22 +176,19 @@ with Timeouts
 
   "events" should {
 
-    val mockListener = new Object with Listeners
-    val agentSessionId = UUID.randomUUID()
-
-    "trigger  when found" in {
-      val mockMessage = new SetContentResponse(new Identification(), new EventKey(agentSessionId, "testTag"), new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
+    "trigger  when found" in new ListenerScope{
+      val mockMessage = new SetContentResponse(new Identification(), new EventKey(agentSessionId, "testTag"), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"))
 
       val event = new SetContentResponseReceivedEvent(mockMessage)
       event.msg = mockMessage
 
-      var triggered = false
+      val resultKey = Results.getKey()
 
       mockListener.addListener(agentSessionId, "set1", new MessageEventAdapter(mockMessage.eventKey.eventTag)
       {
         override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
         {
-          triggered = true
+          Results.trigger(resultKey)
         }
       });
 
@@ -203,8 +207,46 @@ with Timeouts
       });
 
       mockListener.triggerEvent(event)
-
-      triggered must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+      Results.triggered(resultKey) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
     }
+
+    "trigger synchronous" in new ListenerScope{
+      val mockMessage = new SetContentResponse(new Identification(), new EventKey(agentSessionId, "testTag"),
+        new Profile("testFirst", "testLast", "test Description", "bc123@test.com","CA", "someCAprovince", "city", "postalCode", "website" ))
+
+      val event = new SetContentResponseReceivedEvent(mockMessage)
+      event.msg = mockMessage
+
+      val locked = new AtomicBoolean(false)
+      val concurrencyError = new AtomicBoolean(false)
+      val numDone = new AtomicInteger(0)
+      val numThreads = 100
+
+      mockListener.addListener(agentSessionId, "set1", new MessageEventAdapter(mockMessage.eventKey.eventTag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+          if (locked.get())
+            concurrencyError.set(true)
+
+          locked.set(true)
+          Thread.sleep(25)
+          locked.set(false)
+
+          numDone.incrementAndGet()
+        }
+      });
+
+      for ( i <- 1 to numThreads) {
+        spawn {
+          mockListener.triggerEvent(event)
+        }
+      }
+
+      numDone.get() must be_==(numThreads).eventually(5, TIMEOUT_EVENTUALLY)
+      concurrencyError.get() must be_==(false)
+    }
+
+
   }
 }

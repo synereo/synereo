@@ -4,7 +4,7 @@ package com.protegra_ati.agentservices.core.messages.login
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
@@ -13,7 +13,11 @@ trait LoginRequestSetPrivate {
   self:AgentHostStorePlatformAgent =>
 
   def listenPrivateLoginRequest(cnxn: AgentCnxnProxy) = {
-    listen(_privateQ, _cnxnUIStore, Channel.Security, ChannelType.Request, ChannelLevel.Private, handlePrivateSecurityRequestChannel(_: AgentCnxnProxy, _: Message))
+    if ( isPrivateKVDBNetworkMode() )
+      listen(_privateQ, cnxn, Channel.Security, ChannelType.Request, ChannelLevel.Private, handlePrivateSecurityRequestChannel(_: AgentCnxnProxy, _: Message))
+    else
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Security, ChannelType.Request, ChannelLevel.Private, handlePrivateSecurityRequestChannel(cnxn, _: Message))
+
   }
 
   protected def handlePrivateSecurityRequestChannel(cnxn: AgentCnxnProxy, msg: Message) =

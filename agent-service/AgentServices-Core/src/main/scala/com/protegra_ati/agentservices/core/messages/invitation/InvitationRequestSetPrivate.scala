@@ -2,9 +2,10 @@ package com.protegra_ati.agentservices.core.messages.invitation
 
 /* User: jklassen
 */
+
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -12,13 +13,20 @@ import com.protegra_ati.agentservices.core.schema._
 import java.util.UUID
 
 
-trait InvitationRequestSetPrivate {
-  self:AgentHostStorePlatformAgent =>
+trait InvitationRequestSetPrivate
+{
+  self: AgentHostStorePlatformAgent =>
 
-  def listenPrivateInvitationRequest(cnxn:AgentCnxnProxy) =
+  def listenPrivateInvitationRequest(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(_: AgentCnxnProxy, _: Message))
-    listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(_: AgentCnxnProxy, _: Message))
+    if ( isPrivateKVDBNetworkMode() ) {
+      listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(_: AgentCnxnProxy, _: Message))
+      listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(_: AgentCnxnProxy, _: Message))
+    }
+    else {
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(cnxn, _: Message))
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(cnxn, _: Message))
+    }
   }
 
   //overriding listen for hosted connections and putting broker listen logic in

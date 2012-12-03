@@ -21,7 +21,7 @@ class JodaDateTimeSerializer() extends Serializer[ DateTime ]
 
   override def write(kryo: Kryo, output: Output, obj: DateTime): Unit =
   {
-   // System.err.println("KRYO JodaDateTime in USE! WRITE")
+   // println("KRYO JodaDateTime in USE! WRITE")
     if ( obj == null )
       kryo.writeObject(output, JodaDateTimeSerializer.NULL)
     else {
@@ -35,7 +35,7 @@ class JodaDateTimeSerializer() extends Serializer[ DateTime ]
 
   override def read(kryo: Kryo, input: Input, typ: Class[ DateTime ]): DateTime =
   {
-    //System.err.println("KRYO JodaDateTime in USE! READ")
+    //println("KRYO JodaDateTime in USE! READ")
 
     val label: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( label == JodaDateTimeSerializer.NULL ) return null

@@ -2,23 +2,23 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URMExtensions._
+import com.protegra.agentservicesstore.extensions.URIExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 import net.lag.configgy._
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 
 trait JunctionConfiguration
 {
-  def loadFirstURM(configBlock: Option[ ConfigMap ]): URM =
+  def loadFirstURI(@transient configBlock: Option[ ConfigMap ]): URI =
   {
-    loadURMs(configBlock).head
+    loadURIs(configBlock).head
   }
 
-  def loadURMs(configBlock: Option[ ConfigMap ]): List[ URM ] =
+  def loadURIs(@transient configBlock: Option[ ConfigMap ]): List[ URI ] =
   {
-    var result: List[ URM ] = Nil;
+    var result: List[ URI ] = Nil;
 
-    val URMKey = "URI"
+    val URIKey = "URI"
     val portKey = "port"
 
     configBlock match {
@@ -26,13 +26,13 @@ trait JunctionConfiguration
         for ( key <- block.keys ) {
           block.getConfigMap(key) match {
             case Some(acquaintanceMap) => {
-              val host = acquaintanceMap.getString(URMKey).getOrElse("")
+              val host = acquaintanceMap.getString(URIKey).getOrElse("")
               val portOpt = acquaintanceMap.getInt(portKey)
               val acquaintance = portOpt match {
-                case Some(port) => host.toURM.withPort(port)
-                case _ => host.toURM
+                case Some(port) => host.toURI.withPort(port)
+                case _ => host.toURI
               }
-              result = List[ URM ](acquaintance) ::: result
+              result = List[ URI ](acquaintance) ::: result
             }
             case _ => {}
           }

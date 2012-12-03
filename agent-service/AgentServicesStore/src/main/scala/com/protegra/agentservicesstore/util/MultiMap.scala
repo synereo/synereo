@@ -3,11 +3,11 @@
  * and open the template in the editor.
  */
 
-package com.protegra_ati.agentservices.core.util
+package com.protegra.agentservicesstore.util
 
 import java.util.HashMap
 
-class MultiMap[K, V] {
+class MultiMap[K, V] extends java.io.Serializable{
   private var _map = new HashMap[K, List[V]]()
 
   def add(key:K, value:V) = {

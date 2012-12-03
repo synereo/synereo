@@ -4,7 +4,7 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
@@ -25,7 +25,7 @@ class AgentCnxnProxySerializer() extends Serializer[ AgentCnxnProxy ]
       kryo.writeObject(output, AgentCnxnProxySerializer.NULL)
     }
     else {
-     // System.err.println("KRYO AGENT_CNXN WRITE.... ")
+     // println("KRYO AGENT_CNXN WRITE.... ")
       kryo.writeObject(output, AgentCnxnProxySerializer.NOT_NULL)
       kryo.writeObject(output, ( if ( obj.src != null ) {obj.src.toString} else {"NULL"} ))
       kryo.writeObject(output, ( if ( obj.trgt != null ) obj.trgt.toString else "NULL" ))
@@ -35,13 +35,13 @@ class AgentCnxnProxySerializer() extends Serializer[ AgentCnxnProxy ]
       //        label = null
       kryo.writeObjectOrNull(output, label, classOf[ String ])
 //      kryo.writeObjectOrNull(output, obj.credential, classOf[ java.util.UUID ])
-      System.err.println("KRYO MOCK_AGENT_CNXN SERIALIZE WRITE: " + obj)
+      println("KRYO MOCK_AGENT_CNXN SERIALIZE WRITE: " + obj)
     }
   }
 
   override def read(kryo: Kryo, input: Input, typ: Class[ AgentCnxnProxy ]): AgentCnxnProxy =
   {
-   // System.err.println("KRYO AGENT_CNXN READ.... ")
+   // println("KRYO AGENT_CNXN READ.... ")
     val l: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( l == AgentCnxnProxySerializer.NULL ) return null
 
@@ -54,7 +54,7 @@ class AgentCnxnProxySerializer() extends Serializer[ AgentCnxnProxy ]
 
 //    val cnxn = AgentCnxnProxy(if ( !src.equals("NULL") ) URI.create(src) else null, label, if ( !trgt.equals("NULL") ) URI.create(trgt) else null, credential)
     val cnxn = AgentCnxnProxy(if ( !src.equals("NULL") ) URI.create(src) else null, label, if ( !trgt.equals("NULL") ) URI.create(trgt) else null)
-    System.err.println("KRYO AGENT_CNXN READ: " + cnxn)
+    println("KRYO AGENT_CNXN READ: " + cnxn)
     return cnxn
 
   }

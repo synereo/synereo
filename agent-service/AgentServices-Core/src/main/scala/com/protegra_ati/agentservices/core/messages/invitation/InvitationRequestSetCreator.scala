@@ -3,21 +3,22 @@ package com.protegra_ati.agentservices.core.messages.invitation
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
 import content.{SetContentRequest, SetSelfContentRequest}
 import scala.util.continuations._
-import scala.concurrent.cpsops._
+import scala.concurrent.ops._
 import com.protegra_ati.agentservices.core.schema.util._
 import java.util.UUID
 import java.util.HashMap
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.protegra_ati.agentservices.core.util.ThreadRenamer._
+import com.protegra_ati.agentservices.core.util.cloner.ClonerFactory
 
 
 trait InvitationRequestSetCreator
@@ -56,7 +57,7 @@ trait InvitationRequestSetCreator
     //as broker you control this initial invite protocol
     //generate an invitation to both agents
     // here has to be changed
-    println("-!!!!!!!!!!!!!!!!!--->createInviteRequest:" + createInviteRequest + ", cnxnBroker_A=" + cnxnBroker_A + "createInviteRequest PARENT=" + createInviteRequest.ids.parentId)
+    report("-!!!!!!!!!!!!!!!!!--->createInviteRequest:" + createInviteRequest + ", cnxnBroker_A=" + cnxnBroker_A + "createInviteRequest PARENT=" + createInviteRequest.ids.parentId)
     report("****CREATE INVITATION REQUEST RECEIVED:****", Severity.Debug)
     createInviteRequest.deliver();
 
@@ -76,7 +77,7 @@ trait InvitationRequestSetCreator
     sourceRequest: CreateInvitationRequest,
     connBrokerBroker: Connection) =
   {
-    println("****GENERATE Referral REQUEST:****")
+    report("****GENERATE Referral REQUEST:****")
     report("****Found valid self connection, sending referral for cnxn A: " + sourceRequest.selfAlias + " to cnxn B: " + sourceRequest.targetAlias, Severity.Debug)
 
     //wait on broker permission (sends a message to the brokerSelf to be persisted there)
@@ -90,7 +91,7 @@ trait InvitationRequestSetCreator
     val req = new ReferralRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, sourceRequest)
     req.targetCnxn = conn.writeCnxn
     req.originCnxn = conn.writeCnxn
-    println("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
+    report("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
     send(_publicQ, conn.writeCnxn, req)
   }
 
@@ -110,7 +111,7 @@ trait InvitationRequestSetCreator
     // persists ReferralRequest for the broker
     val persistedMessage = new PersistedMessage[ ReferralRequest ](referralRequest)
 
-    println("attempting to store " + persistedMessage.toStoreKey)
+    report("attempting to store " + persistedMessage.toStoreKey)
     store(_dbQ, cnxnSelf, persistedMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](persistedMessage))
 
     if ( cnxnSelf.src.toString.contains(BIZNETWORK_AGENT_ID) ) {
@@ -209,8 +210,10 @@ trait InvitationRequestSetCreator
    * @param alias_B
    * @param category_A
    * @param category_B
-   * @param requestedConnectionType
-   * @param requestedConnectionName
+   * @param requestedConnectionType_A
+   * @param requestedConnectionType_B
+   * @param requestedConnectionName_A
+   * @param requestedConnectionName_B
    * @param requestedPosts_A  post thread forwarded to A
    * @param requestedPosts_B  post thread forwarded to B
    * @param sendResponseHandler
@@ -231,7 +234,7 @@ trait InvitationRequestSetCreator
     requestedPosts_B: List[ Post ],
     sendResponseHandler: (Message with Request, String) => Unit) =
   {
-    println("****GENERATE INVITATION REQUEST:****")
+    report("****GENERATE INVITATION REQUEST:****")
     report("****Found valid target connection, sending invites to cnxn A: " + connBroker_A.readCnxn.toString + " and cnxn B: " + connBroker_B.readCnxn.toString, Severity.Debug)
 
     //invite both parties with inverse
@@ -267,7 +270,7 @@ trait InvitationRequestSetCreator
     val req = new InvitationRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, alias, category, requestedConnectionType, requestedConnectionName, requestedPosts)
     req.targetCnxn = conn.readCnxn
     req.originCnxn = conn.readCnxn
-    println("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
+    report("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
     send(_publicQ, req.targetCnxn, req)
     req
   }
@@ -276,33 +279,30 @@ trait InvitationRequestSetCreator
   {
     //we need to start listening for the one time InvitationResponse messages from both sides
     report("single listen: channel: " + inviteA.getResponseChannelKey + " cnxn: " + inviteA.originCnxn, Severity.Info)
-    report("single listen: channel: " + inviteB.getResponseChannelKey + " cnxn: " + inviteB.originCnxn, Severity.Info)
 
-    println("single listen: channel: " + inviteA.getResponseChannelKey.toLabel + " cnxn: " + inviteA.originCnxn)
-    println("single listen: channel: " + inviteB.getResponseChannelKey.toLabel + " cnxn: " + inviteB.originCnxn)
+//    report("single listen: channel: " + inviteA.getResponseChannelKey.toLabel + " cnxn: " + inviteA.originCnxn)
 
 
     //    listen(_publicQ, invite1.originCnxn, invite1.getResponseChannelKey, handleFirstResponseReceived(_: AgentCnxnProxy,  _: Message, invite2))
 
     val agentCnxnA = inviteA.originCnxn.toAgentCnxn()
     reset {
-      for ( e <- _publicQ.get(agentCnxnA)(inviteA.getResponseChannelKey.toLabel) ) {
+      for ( e <- _publicQ.subscribe(agentCnxnA)(inviteA.getResponseChannelKey.toLabel) ) {
         //TODO: temporary hack until multiple get can be used. right now we get e & none or none & f
         if ( e != None ) {
 
           Thread.sleep(500)
           // val msgA = Serializer.deserialize[ InvitationResponse ](syncE.dispatch)
-          println("!!! Listen Received FOR FIRST InvitationResponse !!!" + inviteA + ", e=" + e)
+//          report("!!! Listen Received FOR FIRST InvitationResponse !!!" + inviteA + ", e=" + e)
 
           report("!!! Listen Received FOR FIRST InvitationResponse !!!: ", Severity.Debug)
           //TODO: see if this is really necessary or only a unit test issue, may go away once "multiple get for" is in place
           val agentCnxnB = inviteB.originCnxn.toAgentCnxn()
 
           reset {
-            for ( f <- _publicQ.get(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
+            for ( f <- _publicQ.subscribe(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
               if ( e != None && f != None ) {
                 report("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!: ", Severity.Debug)
-                println("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!")
 
                 spawn {
                   rename {
@@ -316,7 +316,6 @@ trait InvitationRequestSetCreator
                   }
                   else if ( msgA.accept && msgB.accept ) {
                     report("****GENERATE CREATE CONNECTION REQUEST:****", Severity.Info)
-                    println("****GENERATE CREATE CONNECTION REQUEST:****")
                     val aId = UUID.randomUUID()
                     val bId = UUID.randomUUID()
                     val connAB = ConnectionFactory.createConnection(msgA.connectionName, msgB.category, msgA.category, msgA.connectionType, aId.toString, bId.toString);
@@ -328,7 +327,6 @@ trait InvitationRequestSetCreator
 
                   }
                   else {
-                    println("At least one invite declined -- A: " + msgA.accept + " B: " + msgB.accept)
                     report("At least one invite declined -- A: " + msgA.accept + " B: " + msgB.accept, Severity.Error)
                   }
 
@@ -360,12 +358,39 @@ trait InvitationRequestSetCreator
     //lookup the self connection from the systemdata in the connection silo
     val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
+
+    //CLEAN THIS UP  CF
+    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, findCreateInvitationRequestToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
   }
 
   protected def findInvitationResponseToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
   {
     val query = new PersistedMessage[ InvitationResponse ]()
     fetchList[ PersistedMessage[ InvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ InvitationRequest ] ], invitationResponse.ids.parentId, invitationResponse.accept))
+  }
+
+  protected def findCreateInvitationRequestToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
+  {
+    val query = new PersistedMessage[ CreateInvitationRequest ]()
+    fetchList[ PersistedMessage[ CreateInvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, myArchivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ CreateInvitationRequest ] ], invitationResponse.ids.conversationId, invitationResponse.accept))
+  }
+
+  //copied from existing archivePersistedMessage
+  //as it compares message sbased on parentId and Id
+  //CIR's can only be matched with IRs via ConversationId
+  def myArchivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, messages: List[ PersistedMessage[ _ <: Message ] ], conversationId: String, isAccepted: Boolean) =
+  {
+    //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
+    for ( msg <- messages ) {
+      if ( msg.message.ids.conversationId == conversationId ) {
+        val newData = ClonerFactory.getInstance().createDeepClone(msg)
+        newData.archive()
+        if ( !isAccepted )
+          newData.reject()
+        //TODO: something is not right, its not safedeleting the old, getting 2 copies!
+        updateData(cnxnBroker_Broker, newData, msg)
+      }
+    }
   }
 
   protected def sendCreateConnectionRequest(inviteResponse: InvitationResponse, conn: Connection) =

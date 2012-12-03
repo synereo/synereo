@@ -63,15 +63,15 @@ class JavaConversionsSeqWrapperSerializer() extends Serializer[ SeqWrapper[ Any 
 
   override def read(kryo: Kryo, input: Input, typ: Class[ SeqWrapper[ Any ] ]): SeqWrapper[ Any ] =
   {
-    //System.err.println("READ JavaConversionsSeqWrapperSerializer")
-   // System.err.println("READ START")
+    //println("READ JavaConversionsSeqWrapperSerializer")
+   // println("READ START")
     val l: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( l == JavaConversionsSeqWrapperSerializer.NULL ) return null
 
     val len = if ( length != 0 ) length else input.readInt(true)
     // val inst = kryo.newInstance(typ)
     var coll: List[ Any ] = Nil
-    //System.err.println("READ COLL SIZE:" + len)
+    //println("READ COLL SIZE:" + len)
     //val coll = inst.asInstanceOf[ SeqWrapper[ Any ] ].genericBuilder[ Any ]
     //inst.asInstanceOf[ Traversable[ Any ] ].genericBuilder[ Any ]
     if ( len != 0 ) {
@@ -101,22 +101,22 @@ class JavaConversionsSeqWrapperSerializer() extends Serializer[ SeqWrapper[ Any 
       }
     }
     coll = coll.reverse
-    //System.err.println("READ DONE:" + coll)
+    //println("READ DONE:" + coll)
     val javaColl: java.util.List[ Any ] = coll
-    //System.err.println("READ DONE:" + javaColl)
+    //println("READ DONE:" + javaColl)
     return javaColl.asInstanceOf[ SeqWrapper[ Any ] ]
   }
 
   override def write(kryo: Kryo, output: Output, obj: SeqWrapper[ Any ]) =
   {
 
-   // System.err.println("WRITE JavaConversionsSeqWrapperSerializer")
-    //System.err.println("WRITE START")
+   // println("WRITE JavaConversionsSeqWrapperSerializer")
+    //println("WRITE START")
     if ( obj == null ) {
       kryo.writeObject(output, JavaConversionsSeqWrapperSerializer.NULL)
     }
     else {
-     // if ( obj == Nil ) System.err.println("Nil Object to be serialized")
+     // if ( obj == Nil ) println("Nil Object to be serialized")
       kryo.writeObject(output, JavaConversionsSeqWrapperSerializer.NOT_NULL)
       val collection: Traversable[ Any ] = obj
       val len = if ( length != 0 ) length
@@ -136,7 +136,7 @@ class JavaConversionsSeqWrapperSerializer() extends Serializer[ SeqWrapper[ Any 
           collection.foreach {element => kryo.writeClassAndObject(output, element)}
         }
       }
-      // System.err.println("WRITE DONE")
+      // println("WRITE DONE")
     }
   }
 }

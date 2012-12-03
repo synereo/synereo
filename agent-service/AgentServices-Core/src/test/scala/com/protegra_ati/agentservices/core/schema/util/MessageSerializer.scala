@@ -24,7 +24,7 @@ import com.protegra_ati.agentservices.core.messages.MockMessage
 //  override def read(kryo: Kryo, input: Input, typ: Class[ MockMessage ]): MockMessage =
 //  {
 //    null.asInstanceOf[MockMessage]
-////    System.err.println("KRYO Option in USE! READ")
+////    println("KRYO Option in USE! READ")
 ////    val optionType = input.readBoolean()
 ////    if ( !optionType )
 ////      return None

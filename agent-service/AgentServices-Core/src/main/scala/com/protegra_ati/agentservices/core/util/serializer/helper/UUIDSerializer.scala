@@ -22,7 +22,7 @@ class UUIDSerializer() extends Serializer[ UUID ]
     }
     else {
       kryo.writeObject(output, UUIDSerializer.NOT_NULL)
-      //System.err.println("KRYO UUID in USE! WRITE: " + obj.toString)
+      //println("KRYO UUID in USE! WRITE: " + obj.toString)
       kryo.writeObject(output, obj.toString.trim())
     }
   }
@@ -33,7 +33,7 @@ class UUIDSerializer() extends Serializer[ UUID ]
     val l: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( l == UUIDSerializer.NULL ) return null
     val o = kryo.readObject(input, classOf[ String ])
-    //System.err.println("KRYO UUID in USE! READ:" + o)
+    //println("KRYO UUID in USE! READ:" + o)
     return UUID.fromString(o.trim())
   }
 

@@ -5,13 +5,12 @@
 // Copyright:   Not supplied
 // Description:
 // ------------------------------------------------------------------------
-   
+
 package com.protegra.agentservicesstore
- 
-import org.specs._
-import org.specs.util._
-import org.specs.runner.JUnit4
-import org.specs.runner.ConsoleRunner
+
+import org.specs2.mutable._
+import org.specs2.runner._
+import org.junit.runner._
 
 import com.biosimilarity.lift.model.store._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
@@ -30,13 +29,10 @@ import com.protegra.agentservicesstore.usage.AgentUseCase._
 
 import Being.AgentKVDBNodeFactory
 
-class KvdbPlatformAgentSingleRaceTest
-  extends JUnit4(KvdbPlatformAgentSingleRaceTestSpecs)
+import scala.concurrent.ops._
+import util.Results
 
-object KvdbPlatformAgentSingleRaceTestSpecsRunner
-  extends ConsoleRunner(KvdbPlatformAgentSingleRaceTestSpecs)
-
-object KvdbPlatformAgentSingleRaceTestSpecs extends KvdbPlatformAgentBaseRace
+class KvdbPlatformAgentSingleRaceTest extends KvdbPlatformAgentBaseRace
 {
   val timeoutBetween = 0
 
@@ -45,89 +41,131 @@ object KvdbPlatformAgentSingleRaceTestSpecs extends KvdbPlatformAgentBaseRace
   val writer = createNode(sourceAddress, acquaintanceAddresses)
   val reader = writer
 
-  testMessaging(writer, reader)
-//  testWildcardWithPut(writer, reader)
-//  testWildcardWithStore(writer, reader)
-//  testWildcardWithPutAndCursor(writer, reader)
-//  testWildcardWithStoreAndCursor(writer, reader)
-  ////testWildcardWithCursorBefore(writer, reader)
+//  testMessaging(writer, reader)
 
-  val sourceId = UUID.randomUUID
-  val targetId = sourceId
-  val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
-  val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
-
+//  example only, must comment out above for it to work , too many nodes
+//  "recursive Get 1 Put" should {
+//    val sourceId = UUID.randomUUID
+//    val targetId = sourceId
+//    val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+//    val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 //
-//  "Get" should {
-//    "not find when key is missing" in {
-//      val key = "contentResponse(nonexistingGet(\"not here\"))".toLabel
-//      getMustBe("")(reader, cnxn, key)
-//    }
-//  }
+//    val cnxnUIStore = new AgentCnxn(( "UI" + sourceId.toString ).toURI, "", ( "Store" + targetId.toString ).toURI)
 //
-//  "Fetch" should {
-//    "not find when key is missing" in {
-//      val key = "contentResponse(nonexistingFetch(\"not here\"))".toLabel
-//      fetchMustBe("")(reader, cnxn, key)
-//    }
-//  }
+//    val writerConfigFileName = Some("db_ui.conf")
+//    val readerConfigFileName = Some("db_store.conf")
 //
-//  //ISSUE 37: different labels get1get2 put1put1 keep going down alternating gets
-//  "2 Cached Get/Put" should {
+//    val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+//    val acquaintanceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
 //
-//    val _resultsQ = createNode("127.0.0.1".toURI.withPort(RABBIT_PORT_TEST_RESULTS_DB), List[ URI ]())
-//    val testId = UUID.randomUUID().toString()
-//    val cnxnTest = new AgentCnxn(( "TestDB" + testId ).toURI, "", ( "TestDB" + testId ).toURI)
+//    val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress), writerConfigFileName)
+//    val pairedReader = createNode(acquaintanceAddress, List(sourceAddress), readerConfigFileName)
+//
 //
 //    Thread.sleep(timeoutBetween)
 //    "retrieve" in {
 //
-//      val lblGlobalRequest = "globalRequest(\"email\")".toLabel
-//      val lblGlobalResponse = "globalResponse(\"email\")".toLabel
+//      val lblChannel = "contentRequest(_)".toLabel
 //
-//      val globalId = UUID.randomUUID().toString()
-//      val cnxnGlobal = new AgentCnxn(( "Global" + globalId ).toURI, "", ( "Global" + globalId ).toURI)
-//
-//      def listenGlobalRequest(): Unit =
+//      val resultKey = Results.getKey()
+//      def listenContentRequest(): Unit =
 //      {
 //        reset {
-//          for ( e <- reader.get(cnxnGlobal)(lblGlobalRequest) ) {
+//          for ( e <- pairedReader.get(cnxnUIStore)(lblChannel) ) {
 //            if ( e != None ) {
-//              val lblResult = ( "result(\"" + UUID.randomUUID() + "\")" ).toLabel
-//              reset {_resultsQ.put(cnxnTest)(lblResult, e.dispatch)}
-//              listenGlobalRequest
+//              spawn {
+//                val result = e.dispatch
+//                System.err.println("received " + result)
+//                Results.saveString(resultKey, result)
+//              }
+//              listenContentRequest
 //            }
 //          }
 //        }
 //      }
 //
-//      def listenGlobalResponse: Unit =
-//      {
-//        reset {
-//          for ( e <- reader.get(cnxnGlobal)(lblGlobalResponse) ) {
-//            if ( e != None ) {
-//              println("************* RESPONSE RECEIVED : " + e.dispatch)
-//              // No message should be received on this label
-//              fail("Response was received, but should not have been.")
+//      listenContentRequest
 //
-//              listenGlobalResponse
-//            }
-//          }
-//        }
-//      }
-//
-//      listenGlobalResponse
-//
-//      val valueGlobalRequest = "START THE GLOBAL REQUEST"
-//      listenGlobalRequest
 //      Thread.sleep(TIMEOUT_MED)
-//      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 1"))}
-//      Thread.sleep(TIMEOUT_MED)
-//      reset {writer.put(cnxnGlobal)(lblGlobalRequest, Ground(valueGlobalRequest + ": 2"))}
+//      val lblContentRequest = ( "contentRequest(\"" + UUID.randomUUID().toString + "\")" ).toLabel
+//      val value = "test"
+//      reset {pairedWriter.put(cnxnUIStore)(lblContentRequest, Ground(value))}
 //
-//      val strResultSearch = "result(_)"
-//      countMustBe(2)(_resultsQ, cnxnTest, strResultSearch)
+//      Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
 //    }
 //  }
+  "20 Gets" should {
+     val sourceId = UUID.randomUUID
+     val targetId = sourceId
+     val cnxn = new AgentCnxn(sourceId.toString.toURI, "", targetId.toString.toURI)
+     val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
+
+     val cnxnUIStore = new AgentCnxn(( "UI" + sourceId.toString ).toURI, "", ( "Store" + targetId.toString ).toURI)
+
+     val writerConfigFileName = Some("db_ui.conf")
+     val readerConfigFileName = Some("db_store.conf")
+
+     val sourceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_STORE_PRIVATE)
+     val acquaintanceAddress = "127.0.0.1".toURI.withPort(RABBIT_PORT_UI_PRIVATE)
+
+     val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress), writerConfigFileName)
+     val pairedReader = createNode(acquaintanceAddress, List(sourceAddress), readerConfigFileName)
+
+
+     Thread.sleep(timeoutBetween)
+     "retrieve" in {
+
+       val lblChannel = "contentRequest(_)".toLabel
+
+       val resultKey = Results.getKey()
+       def listenContentRequest(): Unit =
+       {
+         System.err.println("listening")
+         reset {
+           for ( e <- pairedReader.get(cnxnUIStore)(lblChannel) ) {
+             if ( e != None ) {
+               spawn {
+                 val result = e.dispatch
+                 System.err.println("received " + result)
+                 Results.saveString(resultKey, result)
+               }
+               listenContentRequest
+             }
+           }
+         }
+       }
+
+         listenContentRequest
+
+       Thread.sleep(TIMEOUT_MED)
+       val value = "test"
+       for (i <- 1 to 20)
+       {
+         val lblContentRequest = ( "contentRequest(\"" + i + "\")" ).toLabel
+         reset {pairedWriter.put(cnxnUIStore)(lblContentRequest, Ground(value))}
+       }
+
+//       Results.savedString(resultKey) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
+       println("starting sleeping")
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       println("I'm sleeping")
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       println("I'm sleeping")
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       Thread.sleep(1000)
+       success
+     }
+   }
 
 }

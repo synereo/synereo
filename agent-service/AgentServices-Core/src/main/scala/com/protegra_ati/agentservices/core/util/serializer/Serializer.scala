@@ -89,14 +89,14 @@ object Serializer// extends Reporting
 
   def debugSerializer[ T ](obj: T)
   {
-    System.err.println("DEBUG_SERIALIZATION")
+    println("DEBUG_SERIALIZATION")
     val serialized = serialize[ T ](obj, false)
     val deserialized = deserialize[ T ](serialized)
     if ( serialized == null || deserialized == null ) {
-      System.err.println("ERROR: serialized=" + serialized + ", desedialized=" + deserialized)
+      println("ERROR: serialized=" + serialized + ", desedialized=" + deserialized)
 
       if ( !serialized.equals(deserialized) ) {
-        System.err.println("ERROR: serialized=" + serialized + ", desedialized=" + deserialized)
+        println("ERROR: serialized=" + serialized + ", desedialized=" + deserialized)
       }
 
     }

@@ -8,7 +8,7 @@ import com.protegra_ati.agentservices.core.extensions.ClassExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.schema.behaviors.Tracking
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -460,7 +460,7 @@ trait ContentRequestSet
   {
     (msg.newData, msg.oldData) match {
       case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
-        //System.err.println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
+        //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
 
         val query = new Connection() //ConnectionFactory.createTypedConnection(x.getConnectionType())
         //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))

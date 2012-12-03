@@ -5,11 +5,11 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-import com.biosimilarity.lift.lib.moniker._
+import java.net.URI
 import net.lag.configgy._
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra.agentservicesstore.util._
@@ -18,23 +18,26 @@ trait Storage
 {
   self: BasePlatformAgent =>
 
-  var _dbLocation: URM = null
-  var _dbQ: PartitionedStringMGJ = null //persistedJunction
-
-  def initDb(configUtil: Config)
+  var _dbLocation: URI = null
+  var _dbQ: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
+  var _dbConfigFileName: Option[String] = None
+     
+  def initDb(configUtil: Config, dbConfigFileName: Option[String])
   {
     val dbSelfMapKey = "db.self"
-    _dbLocation = loadFirstURM(configUtil.getConfigMap(dbSelfMapKey))
+    _dbLocation = loadFirstURI(configUtil.getConfigMap(dbSelfMapKey))
+    _dbConfigFileName = dbConfigFileName
   }
 
-  def initDb(dbLocation: URM)
-  {
-    _dbLocation = dbLocation
-  }
+//  def initDb(dbLocation: URI, dbConfigFileName: Option[String])
+//  {
+//    _dbLocation = dbLocation
+//    _dbConfigFileName = dbConfigFileName
+//  }
 
   def loadStorageQueue() =
   {
-    _dbQ = new PartitionedStringMGJ(_dbLocation, List(), None)
+    _dbQ = createNode(_dbLocation, List(), _dbConfigFileName)
   }
 
   def deleteDataForSelf(cnxn: AgentCnxnProxy, dataToDelete: Data) =

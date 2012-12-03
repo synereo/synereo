@@ -4,8 +4,8 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS._
-import com.biosimilarity.lift.lib.moniker._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import java.net.URI
 import net.lag.configgy._
 import java.util.UUID
 
@@ -16,7 +16,7 @@ trait Applications
 
   var _appBizNetworkId: UUID = null
 
-  def initApps(configUtil: Config)
+  def initApps(@transient configUtil: Config)
   {
     try {
       val privateAppBizNetworkMapKey = "appBizNetworkId"

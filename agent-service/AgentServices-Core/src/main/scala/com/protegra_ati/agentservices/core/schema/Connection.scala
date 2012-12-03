@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.core.schema
 
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema.validator.ConnectionValidator
 import com.protegra_ati.agentservices.core.schema._

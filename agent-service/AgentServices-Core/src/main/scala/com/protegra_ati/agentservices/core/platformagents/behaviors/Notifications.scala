@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
@@ -35,7 +35,10 @@ trait Notifications {
     msg match {
       case x: Message with NotificationProducer => {
         val notification = x.generateNotification(token.key)
-        send(_privateQ, token.currentUICnxn.readCnxn, notification)
+        if ( isPrivateKVDBNetworkMode() )
+          send(_privateQ, token.currentUICnxn.readCnxn, notification)
+        else
+          sendRabbit(_privateRabbitConfig, token.currentUICnxn.readCnxn, notification)
       }
 //      case x: VerifyPermissionRequest => {
 //        val notification = new VerifyPermissionRequiredNotification(token.key)

@@ -1,7 +1,7 @@
 package com.protegra_ati.agentservices.core.messages.content
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.AgentTS.acT._
+import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra.agentservicesstore.util._
@@ -11,7 +11,12 @@ trait ContentNotificationSetPrivate {
 
   def listenPrivateContentNotification(cnxn: AgentCnxnProxy) =
   {
-    listen(_privateQ, cnxn, Channel.Content, ChannelType.Notification, ChannelLevel.Private, handlePrivateContentNotificationChannel(_: AgentCnxnProxy, _: Message))
+    if ( isPrivateKVDBNetworkMode() )
+      listen(_privateQ, cnxn, Channel.Content, ChannelType.Notification, ChannelLevel.Private, handlePrivateContentNotificationChannel(_: AgentCnxnProxy, _: Message))
+    else
+      listenRabbit(_privateRabbitConfig, cnxn, Channel.Content, ChannelType.Notification, ChannelLevel.Private, handlePrivateContentNotificationChannel(cnxn, _: Message))
+
+
 //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, ChannelLevel.Private, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
   }
 
