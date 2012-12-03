@@ -17,7 +17,8 @@ class MultiMap[K, V] extends java.io.Serializable{
 
   def remove(key:K, value:V) {
     if (_map.get(key) != null) {
-      _map.get(key) -- List(value)
+      val sublist = _map.get(key).filterNot(x => x == value)
+      _map.put(key, sublist)
     }
   }
 

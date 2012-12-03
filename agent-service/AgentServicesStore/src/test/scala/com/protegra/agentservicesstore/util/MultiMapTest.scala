@@ -27,7 +27,16 @@ class MultiMapTest {
       listeners.add(agentSessionId1, "tag1")
       listeners.add(agentSessionId2, "tag2")
       listeners.add(agentSessionId2, "tag3")
-    assertEquals(1, listeners.get(agentSessionId1).length)
-    assertEquals(2, listeners.get(agentSessionId2).length)
+      assertEquals(1, listeners.get(agentSessionId1).length)
+      assertEquals(2, listeners.get(agentSessionId2).length)
+
+      listeners.remove(agentSessionId1, "tag1")
+      assertEquals(0, listeners.get(agentSessionId1).length)
+
+      listeners.remove(agentSessionId2, "tag2")
+      assertEquals(1, listeners.get(agentSessionId2).length)
+
+      listeners.remove(agentSessionId2, "tag3")
+      assertEquals(0, listeners.get(agentSessionId2).length)
     }
 }

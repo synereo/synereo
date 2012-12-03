@@ -56,6 +56,20 @@ trait Listeners extends Reporting
     }
   }
 
+  def removeListenersByTag(key: UUID, tag: String) =
+  {
+    report("in removeListenersByTag - removing listener with key: " + key.toString + " for tag " + tag)
+    val listeners = getListenersByTag(key, tag)
+    listeners.foreach(l => {
+      _listeners.remove(key, l)
+    })
+
+    val unique = _uniqueness.get(key)
+    unique.foreach(u => {
+      _uniqueness.remove(key, u)
+    })
+  }
+
   def removeListener(key: UUID, subKey: String, listener: MessageEventAdapter) =
   {
     report("in removeListener - removing listener with key: " + key.toString + "for subkey" + subKey + " and eventTag: " + listener.eventTag)
@@ -81,6 +95,24 @@ trait Listeners extends Reporting
       report("in getListenersByMessage - message event not valid")
       Nil
     }
+  }
+
+  def getListenersByTag(key: UUID, tag: String): List[ MessageEventAdapter ] =
+  {
+    if (tag != null) {
+      val matching = _listeners.get(key)
+      matching match {
+      case null => List[ MessageEventAdapter ]()
+      case _ => {
+        val filtered = matching.filter(l => l.eventTag == tag)
+        filtered
+      }
+    }
+  }
+  else {
+    report("in getListenersByTag - tag not valid")
+    Nil
+  }
   }
 
   def triggerEvent(event : MessageEvent[_ <: Message])
