@@ -324,7 +324,8 @@ trait InvitationRequestSetCreator
 
                     sendCreateConnectionRequest(msgA, connAB)
                     sendCreateConnectionRequest(msgB, connBA)
-                    //                handleMutualConnectionAgreement(cnxn, msg1, firstResponse.targetConnectionId, msg2, response.targetConnectionId, systemConnection)
+                    //handleMutualConnectionAgreement(msgA, msgB)
+
                   }
                   else {
                     println("At least one invite declined -- A: " + msgA.accept + " B: " + msgB.accept)
@@ -375,7 +376,11 @@ trait InvitationRequestSetCreator
     req.originCnxn = inviteResponse.originCnxn
     send(_publicQ, inviteResponse.originCnxn, req)
   }
+  protected def  handleMutualConnectionAgreement(msgA: InvitationResponse, msgB: InvitationResponse)
+  {
 
+    //send email sms etc.....to be overridden in above levels.
+  }
   //  protected def deleteIntroduction(cnxnBroker_A: AgentCnxnProxy, introductionId: String) =
   //  {
   //    if ( introductionId != "" ) {
