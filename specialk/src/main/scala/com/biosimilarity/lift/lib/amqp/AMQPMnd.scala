@@ -17,7 +17,7 @@ import net.liftweb.amqp._
 import scala.util.continuations._
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.collection.mutable.HashMap
 
 import com.rabbitmq.client.{ Channel => RabbitChan, _}
@@ -251,7 +251,7 @@ trait AMQPBrokerScope[T] extends Serializable {
   }
 
   trait AMQPQueuePreShivMQT[A, QT[Msg] <: AMQPAbstractQueue[Msg]]
-  extends FJTaskRunners
+  extends FJTaskRunnersX
   with BMonad[QT]
   with MonadPlus[QT]
   with MonadFilter[QT] 
