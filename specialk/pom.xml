@@ -75,6 +75,11 @@
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
     <repository>
+      <id>milton</id>
+      <name>milton</name>
+      <url>http://milton.io/maven/com/ettrema/milton</url>
+    </repository>
+    <repository>
       <id>biosim</id>
       <url>http://biosimrepomirror.googlecode.com/svn/trunk</url>
     </repository>     
