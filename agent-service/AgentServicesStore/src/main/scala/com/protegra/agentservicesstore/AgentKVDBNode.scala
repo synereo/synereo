@@ -105,73 +105,81 @@ with AgentCnxnTypeScope {
 
 	def storeKQuery( xmlCollName : String, pd : PersistenceManifest )(
 	    path : CnxnCtxtLabel[Namespace,Var,Tag],
+            keep : RetentionPolicy,
 	    rk : ( Option[mTT.Resource] => Unit @suspendable )
 	  ) : Unit @suspendable = {
-	  // Need to store the
-	  // continuation on the tail of
-	  // the continuation entry
-	  val oKQry = kquery( xmlCollName, path )
-	  oKQry match {
-	    case None => {
-	      throw new Exception(
-		"failed to compile a continuation query" 
-	      )				  
-	    }
-	    case Some( kqry ) => {
-	      val krslts = executeWithResults( xmlCollName, kqry )
-	      
-	      // This is the easy case!
-	      // There are no locations
-	      // matching the pattern with
-	      // stored continuations	  					  
-	      krslts match {
-		case Nil => {
-		  putKInStore(
-		    persist,
-		    path,
-		    mTT.Continuation( List( rk ) ),
-		    collName,
-                    false
-		  )
-		}
-		case _ => {
-		  // A more subtle
-		  // case. Do we store
-		  // the continutation on
-		  // each match?
-		  // Answer: Yes!
-		  for( krslt <- itergen[Elem]( krslts ) ) {
-		    tweet( "retrieved " + krslt.toString )
-		    val ekrsrc = pd.asResource( path, krslt )
-		    
-		    ekrsrc.stuff match {
-		      case Right( ks ) => {  
-			tweet( "removing from store " + krslt )
-			removeFromStore( 
-			  persist,
-			  krslt,
-			  collName
-			)
-			putKInStore(
-			  persist,
-			  path,
-			  mTT.Continuation( ks ++ List( rk ) ),
-			  collName,
-                          false
-			)
-		      }
-		      case _ => {
-			throw new Exception(
-			  "Non-continuation resource stored in kRecord" + ekrsrc
-			)
-		      }
-		    }
-		  }
-		}
-	      }				  
-	    }
-	  }
-	}
+
+          keep match {
+            case policy: RetainInStore => {
+            } // Need to store the
+            // continuation on the tail of
+            // the continuation entry
+            val oKQry = kquery(xmlCollName, path)
+            oKQry match {
+              case None => {
+                throw new Exception(
+                  "failed to compile a continuation query"
+                )
+              }
+              case Some(kqry) => {
+                val krslts = executeWithResults(xmlCollName, kqry)
+
+                // This is the easy case!
+                // There are no locations
+                // matching the pattern with
+                // stored continuations
+                krslts match {
+                  case Nil => {
+                    putKInStore(
+                      persist,
+                      path,
+                      mTT.Continuation(List(rk)),
+                      collName,
+                      false
+                    )
+                  }
+                  case _ => {
+                    // A more subtle
+                    // case. Do we store
+                    // the continutation on
+                    // each match?
+                    // Answer: Yes!
+                    for ( krslt <- itergen[ Elem ](krslts) ) {
+                      tweet("retrieved " + krslt.toString)
+                      val ekrsrc = pd.asResource(path, krslt)
+
+                      ekrsrc.stuff match {
+                        case Right(ks) => {
+                          tweet("removing from store " + krslt)
+                          removeFromStore(
+                            persist,
+                            krslt,
+                            collName
+                          )
+                          putKInStore(
+                            persist,
+                            path,
+                            mTT.Continuation(ks ++ List(rk)),
+                            collName,
+                            false
+                          )
+                        }
+                        case _ => {
+                          throw new Exception(
+                            "Non-continuation resource stored in kRecord" + ekrsrc
+                          )
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            case _ => {
+              tweet("policy indicates not to store kQuery: " + path)
+            }
+          }
+        }
 
 	Generator {
 	  rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
@@ -287,22 +295,24 @@ with AgentCnxnTypeScope {
 				    
                                     rslts match {
                                       case Nil => {
-                                        tweet( 
-					  (
-					    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-					    + "mgetting " + path + ".\n"
-					    + "on " + this + " from db " + pd.db + "\n"
-					    + "from coll " + xmlCollName + "\n"
-					    + "with query: " + qry
-					    + " had no matching resources."
-					    + "\n-----------------------------------------------------------------"
-					    + "\nstoring continuation query"
-					    + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-					  )
-					)					
 
-					storeKQuery( xmlCollName, pd )( path, rk )
-					  
+                                        tweet(
+                                          (
+                                            "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                              + "mgetting " + path + ".\n"
+                                              + "on " + this + " from db " + pd.db + "\n"
+                                              + "from coll " + xmlCollName + "\n"
+                                              + "with query: " + qry
+                                              + "with keep : " + keep
+                                              + " had no matching resources."
+                                              + "\n-----------------------------------------------------------------"
+                                              + "\nchecking to store continuation query"
+                                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                            )
+                                        )
+
+                                        storeKQuery(xmlCollName, pd)(path, keep, rk)
+
 					// Then forward the request
 					//forward( ask, hops, path )
 
@@ -375,9 +385,10 @@ with AgentCnxnTypeScope {
 					      tweet(
 						"\n===================================================================\n"
 						+ "Storing subscription continuation"
+                                                + "with keep : " + keep
 						+ "\n===================================================================\n"
 					      )
-					      storeKQuery( xmlCollName, pd )( path, rk )
+					      storeKQuery( xmlCollName, pd )( path, keep, rk )
 					      rk( rsrcCursor )
 					    }
 					    case _ => {
@@ -395,6 +406,7 @@ with AgentCnxnTypeScope {
 					      tweet(
 						"\n===================================================================\n"
 						+ "Storing subscription continuation"
+                                                + "with keep : " + keep
 						+ "\n===================================================================\n"
 					      )					      
 					      for ( rslt <- itergen[ Elem ](rslts) ) {
@@ -416,7 +428,7 @@ with AgentCnxnTypeScope {
 						}
 					      }
 
-					      storeKQuery( xmlCollName, pd )( path, rk )
+					      storeKQuery( xmlCollName, pd )( path, keep, rk )
 
 					      for ( rslt <- itergen[ Elem ](rslts) ) {
 						val ersrc = pd.asResource(path, rslt)
@@ -623,9 +635,10 @@ with AgentCnxnTypeScope {
 					    tweet(
 					      "\n===================================================================\n"
 					      + "Storing subscription continuation"
+                                              + "with keep : " + keep
 					      + "\n===================================================================\n"
 					    )
-					    storeKQuery( xmlCollName, pd )( path, rk )
+					    storeKQuery( xmlCollName, pd )( path, keep, rk )
 					    if ( !cursor ) {
 					      rk( oV )
 					    }
@@ -712,9 +725,10 @@ with AgentCnxnTypeScope {
 					    tweet(
 					      "\n===================================================================\n"
 					      + "Storing subscription continuation"
+                                              + "with keep : " + keep
 					      + "\n===================================================================\n"
 					    )
-					    storeKQuery( xmlCollName, pd )( path, rk )
+					    storeKQuery( xmlCollName, pd )( path, keep, rk )
 					    if ( !cursor ) {
 					      rk( oV )
 					    }

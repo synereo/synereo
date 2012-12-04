@@ -45,10 +45,10 @@ class KvdbPlatformAgentMultipleDistributedTest extends KvdbPlatformAgentBase
   val pairedWriter = createNode(sourceAddress, List(acquaintanceAddress), writerConfigFileName)
   val pairedReader = createNode(acquaintanceAddress, List(sourceAddress), readerConfigFileName)
 
-//  testMessaging(pairedWriter, pairedReader)
-////  the testWildcardWithPut tests can be intermittent when distributed
+  testMessaging(pairedWriter, pairedReader)
+//  the testWildcardWithPut tests can be intermittent when distributed
   testWildcardWithPut(pairedWriter, pairedReader)
-//  testWildcardWithStore(pairedWriter, pairedReader)
+  testWildcardWithStore(pairedWriter, pairedReader)
 //  testWildcardWithPutAndCursor(pairedWriter, pairedReader)
 //  testWildcardWithStoreAndCursor(pairedWriter, pairedReader)
 //  testWildcardWithCursorBefore(pairedWriter, pairedReader)
@@ -66,7 +66,7 @@ class KvdbPlatformAgentMultipleDistributedTest extends KvdbPlatformAgentBase
           pairedWriter.store(cnxn)(key1, Ground("1"))
         Thread.sleep(5000)
         reset {
-           for ( e <- pairedReader.fetch(cnxn)(key) ) {
+           for ( e <- pairedReader.read(cnxn)(key) ) {
              if ( e != None ) {
                println("Read = " + e.dispatch)
                //        Results.saveString(resultKey, e.dispatch)
