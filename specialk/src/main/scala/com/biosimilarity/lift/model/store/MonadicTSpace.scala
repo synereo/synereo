@@ -245,7 +245,7 @@ trait ModeSpaceLock[RK,Pattern] {
 	notify()
       }
       case None => {
-	/* throw new Exception */ println( "leaving lock without entering" )
+	/* throw new Exception */ //println( "leaving lock without entering" )
       }
     }
   }
