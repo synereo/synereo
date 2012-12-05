@@ -94,6 +94,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
   individuality, acquaintances
 ) with MonadicGenerators
   with MonadicConcurrentGenerators
+  with FJTaskRunnersX
   with AMQPMonikerOps
   with FJTaskRunners
   with UUIDOps

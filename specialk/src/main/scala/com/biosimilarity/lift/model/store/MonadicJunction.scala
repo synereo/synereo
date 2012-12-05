@@ -17,7 +17,7 @@ import net.liftweb.amqp._
 
 import scala.util.continuations._ 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.LinkedHashMap
@@ -696,7 +696,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   ) extends InMemoryMonadicJunction(
     name,
     acquaintances
-  ) with FJTaskRunners
+  ) with FJTaskRunnersX
   with MonadicConcurrentGenerators {
 
     case class Waiting(

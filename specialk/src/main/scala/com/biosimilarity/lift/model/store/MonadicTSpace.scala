@@ -364,7 +364,7 @@ trait ExcludedMiddleScope[Place,Pattern,Resource] {
 trait MonadicTupleSpace[Place,Pattern,Resource]
 //       extends MapLike[Place,Resource, This]
 extends MonadicGenerators
-with FJTaskRunners
+with FJTaskRunnersX
 with ExcludedMiddleTypes[Place,Pattern,Resource]
 {
   self : WireTap
@@ -439,15 +439,15 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def fitsK( ptn : Pattern, place : Place ) : Option[Substitution]
   def representative( ptn : Pattern ) : Place  
 
-  def spawn(ctx: =>(Any @cps[Unit]))(implicit sched: AbstractTaskRunner): Unit = {
-    if ( sched != null ) {
-      sched.submitTask(() => run(ctx))
-    }
-    else {
-      tweet( "warning: implicit argument, sched, is null" )
-      createDefaultTaskRunner().submitTask(() => run(ctx))
-    }
-  }
+  // def spawn(ctx: =>(Any @cps[Unit]))(implicit sched: AbstractTaskRunner): Unit = {
+//     if ( sched != null ) {
+//       sched.submitTask(() => run(ctx))
+//     }
+//     else {
+//       tweet( "warning: implicit argument, sched, is null" )
+//       createDefaultTaskRunner().submitTask(() => run(ctx))
+//     }
+//   }
 
   //def self = theMeetingPlace
 
