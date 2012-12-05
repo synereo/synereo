@@ -9,7 +9,7 @@
 package com.biosimilarity.lift.model.store.design
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 
 import scala.util.continuations._ 
 import scala.collection.MapProxy
@@ -18,7 +18,7 @@ import scala.collection.mutable.HashMap
 
 trait MonadicTupleSpaceDP[Place,Pattern,Resource]
 //       extends MapLike[Place,Resource, This]
-extends FJTaskRunners
+extends FJTaskRunnersX
 {
   type RK = Option[Resource] => Unit @suspendable
   //type CK = Option[Resource] => Unit @suspendable

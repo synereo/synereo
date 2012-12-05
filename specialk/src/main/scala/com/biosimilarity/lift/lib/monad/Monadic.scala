@@ -12,7 +12,7 @@ package com.biosimilarity.lift.lib
 import scala.util.continuations._
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 
 import _root_.com.rabbitmq.client.{ Channel => RabbitChan,  _}
 
@@ -157,7 +157,7 @@ trait MonadicGenerators {
 }
 
 trait MonadicConcurrentGenerators {
-  self : MonadicGenerators with FJTaskRunners with WireTap with Journalist =>
+  self : MonadicGenerators with FJTaskRunnersX with WireTap with Journalist =>
     def spawnGen[T]( 
       gen : Generator[T,Unit,Unit]
     ) =
@@ -214,7 +214,7 @@ trait MonadicWireToTrgtConversion
 
 trait MonadicDispatcher[T] 
 extends MonadicGenerators
-with FJTaskRunners {
+with FJTaskRunnersX {
   self : WireTap with Journalist =>
 
   type Channel

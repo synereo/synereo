@@ -17,7 +17,7 @@ import net.liftweb.amqp._
 
 import scala.util.continuations._ 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.collection.mutable.Map
 import scala.collection.mutable.MapProxy
 import scala.collection.mutable.HashMap
@@ -617,7 +617,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     cache, acquaintances
   )
 
-  object KVDBNodeFactory extends AMQPURIOps with FJTaskRunners {
+  object KVDBNodeFactory extends AMQPURIOps with FJTaskRunnersX {
     def ptToPt[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse]( here : URI, there : URI ) : MonadicKVDBNode[ReqBody,RspBody] = {
       val node = MonadicKVDBNode[ReqBody,RspBody]( MonadicKVDB[ReqBody,RspBody]( MURI( here ) ), List( MURI( there ) ) )
       spawn { node.dispatchDMsgs() }

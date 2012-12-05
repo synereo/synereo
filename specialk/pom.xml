@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.0.14</version>
+  <version>1.1.1.1</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -73,6 +73,11 @@
       <id>sonatype</id>
       <name>sonatype repository</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+    <repository>
+      <id>milton</id>
+      <name>milton</name>
+      <url>http://milton.io/maven/com/ettrema/milton</url>
     </repository>
     <repository>
       <id>biosim</id>
