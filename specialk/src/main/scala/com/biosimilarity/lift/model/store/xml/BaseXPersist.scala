@@ -79,9 +79,7 @@ with Schema
         createAndOpen(collectionName)
       }
     }
-    finally {
-      clientSession.execute(new Close())
-    }
+
   }
   private def createAndOpen(collectionName: String): ClientSession =
   {
@@ -97,23 +95,18 @@ with Schema
           val clientSessionRetry = clientSessionFromConfig
           try {
             val cs = create(clientSessionRetry, collectionName)
-            cs.execute(new Open(collectionName))
-            cs.execute(new Add("database", records))
+            //cs.execute(new Open(collectionName))
+            //cs.execute(new Add("database", records))
             cs
           }
           catch {
             case inrBxe : BaseXException => {
               inrBxe.printStackTrace
+              clientSessionRetry.execute(new Close())
               throw inrBxe
             }
           }
-          finally {
-            clientSessionRetry.execute(new Close())
-          }
         }
-      }
-      finally{
-        clientSession.execute(new Close())
       }
     }
   }
@@ -128,7 +121,7 @@ with Schema
   {
     try {
       //transaction
-      cs.execute(new CreateDB(collectionName))
+      cs.execute(new CreateDB(collectionName, "<database><records></records></database>"))
       //add database/records
       //end transaction
     }
