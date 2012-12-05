@@ -3,7 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra</groupId>
     <artifactId>AgentServicesStore</artifactId>
+<<<<<<< HEAD
     <version>1.0.1.1</version>
+=======
+    <version>1.0.1.0</version>
+>>>>>>> 128e7128b9a084ee3998dcac88b108d4841ee7db
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>

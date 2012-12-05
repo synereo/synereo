@@ -17,6 +17,7 @@ import platformagents.AgentHostUIPlatformAgent
 import com.protegra_ati.agentservices.core.util.Results
 import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
 import scala.concurrent.ops._
+import com.protegra.agentservicesstore.util.MultiMap
 
 trait ListenerScope extends Scope
   with Serializable
@@ -170,6 +171,74 @@ with Serializable
 
       val list = mockListener.getListenersByMessage(fakeMessage)
       list.size must be_==(0)
+    }
+
+    "remove listener by tag" in new ListenerScope {
+      val tag1 = "REMOVE_LISTENER_TEST"
+      val tag2 = "ANOTHER_TAG"
+      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, tag1), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
+      mockListener.addListener(agentSessionId, UUID.randomUUID().toString, new MessageEventAdapter(tag1)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+        }
+      });
+
+      val mockMessage2 = new SetContentRequest(new EventKey(agentSessionId, tag2), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
+      mockListener.addListener(agentSessionId, UUID.randomUUID().toString, new MessageEventAdapter(tag2)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+        }
+      });
+
+      val tlist1 = mockListener.getListenersByTag(agentSessionId, tag1)
+      tlist1.size must be_==(1)
+      val tlist2 = mockListener.getListenersByTag(agentSessionId, tag2)
+      tlist2.size must be_==(1)
+
+      val list1 = mockListener.getListenersByMessage(mockMessage)
+      list1.size must be_==(1)
+      val list2 = mockListener.getListenersByMessage(mockMessage2)
+      list2.size must be_==(1)
+
+      mockListener.removeListenersByTag(agentSessionId, tag1)
+      val list3 = mockListener.getListenersByMessage(mockMessage)
+      list3.size must be_==(0)
+
+      mockListener.removeListenersByTag(agentSessionId, tag2)
+      val list4 = mockListener.getListenersByMessage(mockMessage)
+      list4.size must be_==(0)
+    }
+
+    "remove listener by tag should remove all tag listeners" in new ListenerScope {
+      var tag = "TAG"
+      val mockMessage = new SetContentRequest(new EventKey(agentSessionId, tag), new Profile("testFirst", "testLast", "test Description", "bc123@test.com", "CA", "someCAprovince", "city", "postalCode", "website"), null)
+      mockListener.addListener(agentSessionId, UUID.randomUUID().toString, new MessageEventAdapter(tag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+        }
+      });
+      mockListener.addListener(agentSessionId, UUID.randomUUID().toString, new MessageEventAdapter(tag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+        }
+      });
+      mockListener.addListener(agentSessionId, UUID.randomUUID().toString, new MessageEventAdapter(tag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+        }
+      });
+
+      val tlist = mockListener.getListenersByTag(agentSessionId, tag)
+      tlist.size must be_==(3)
+
+      mockListener.removeListenersByTag(agentSessionId, tag)
+      val tlistAfter = mockListener.getListenersByTag(agentSessionId, tag)
+      tlistAfter.size must be_==(0)
     }
 
   }
