@@ -91,19 +91,17 @@ with Schema
       }
       catch {
         case bxe : BaseXException => {
-          val records = toRecords( "" )
+
           val clientSessionRetry = clientSessionFromConfig
           try {
             val cs = create(clientSessionRetry, collectionName)
-            //cs.execute(new Open(collectionName))
-            //cs.execute(new Add("database", records))
             cs
           }
           catch {
             case inrBxe : BaseXException => {
               inrBxe.printStackTrace
               clientSessionRetry.execute(new Close())
-              throw inrBxe
+              clientSessionRetry
             }
           }
         }
@@ -172,7 +170,7 @@ with Schema
     val insertTemplate =
       (
         "insert node %NODE% into "
-          + "for $db in collection('%COLLNAME%')/records return $db"
+          + "for $db in collection('%COLLNAME%')//records return $db"
         );
 
     //    report(
@@ -200,11 +198,9 @@ with Schema
         // this is so the very first insert works properly before /database/records node exists
         //can be removed to the create logic with a trans, create, add, close trans
 
-        //          report(
-        //            "insertion query failed " + insertQry
-        //          )
-        val records = toRecords(record)
-        clientSession.execute(new Add("database", records))
+                 e.printStackTrace()
+//        val records = toRecords(record)
+//        clientSession.execute(new Add("database", records))
 
         //          report(
         //            "adding database doc to " + collectionName
@@ -219,7 +215,7 @@ with Schema
 
   def replaceTemplate( recordType : String ) : String = {
     (
-      "let $root := collection('%COLLNAME%')/records "
+      "let $root := collection('%COLLNAME%')//records "
       + "let $key := %KEY% "
       + "for $rcrd in $root/%RECORDTYPE% "
       + "let $rcrdkey := $rcrd/*[1] "
@@ -262,7 +258,7 @@ with Schema
 
   def existsTemplate( recordType : String ) : String = {
     (
-      "let $root := collection('%COLLNAME%')/records "
+      "let $root := collection('%COLLNAME%')//records "
       + "let $key := %KEY% "
       + "for $rcrd in $root/%RECORDTYPE% "
       + "let $rcrdkey := $rcrd/*[1] "
@@ -305,7 +301,7 @@ with Schema
     (
       "delete node "
       + "let $key := %RecordKeyConstraints% "
-      + "for $rcrd in collection( '%COLLNAME%' )/records/%RECORDTYPE% "
+      + "for $rcrd in collection( '%COLLNAME%' )//records/%RECORDTYPE% "
       + "where deep-equal($key, $rcrd/*[1]) "
       + "return $rcrd"
     ).replace( "%RECORDTYPE%", recordType )
@@ -338,7 +334,7 @@ with Schema
 
   def count(collectionName: String): Int =
   {
-    val countQry = "count(collection('" + collectionName + "')/records/record)"
+    val countQry = "count(collection('" + collectionName + "')//records/record)"
     val results = try {
           executeScalar(collectionName, countQry)
         } catch {
