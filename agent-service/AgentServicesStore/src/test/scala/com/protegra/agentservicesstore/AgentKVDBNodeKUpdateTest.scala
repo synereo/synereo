@@ -11,7 +11,7 @@ import com.protegra.agentservicesstore.extensions.ResourceExtensions._
 import com.protegra.agentservicesstore.extensions.URIExtensions._
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.util.continuations._
 import scala.collection.mutable.HashMap
 
@@ -33,7 +33,7 @@ with KVDBHelpers
 with RabbitTestSetup
 with Timeouts
 //with Journalist
-with FJTaskRunners
+with FJTaskRunnersX
 with Serializable
 {  
   val cnxnUIStore = new AgentCnxn(( "UI" + UUID.randomUUID.toString ).toURI, "", ( "Store" + UUID.randomUUID.toString ).toURI)

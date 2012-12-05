@@ -15,7 +15,7 @@ import com.protegra.agentservicesstore.extensions.URIExtensions._
 
 import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.collection.mutable.HashMap
 
 import java.net.URI
@@ -30,7 +30,7 @@ import Being.AgentKVDBNodeFactory
 
 trait AgentKVDBNodeResubmitRequestsTestConfigurationT
 extends KVDBHelpers
-with FJTaskRunners
+with FJTaskRunnersX
 with Serializable {
 
   @transient

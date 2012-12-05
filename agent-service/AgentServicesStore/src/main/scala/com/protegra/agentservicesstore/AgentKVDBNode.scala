@@ -23,7 +23,7 @@ import net.liftweb.amqp._
 
 import scala.util.continuations._ 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.xml._
 import scala.collection.mutable.Map
 import scala.collection.mutable.MapProxy
@@ -796,7 +796,7 @@ with AgentCnxnTypeScope {
       }
     }
 
-    trait BaseAgentKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunners {
+    trait BaseAgentKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunnersX {
       // BUGBUG -- lgm : So far, establishing appropriate bounds has
       // been too hard
       type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]
@@ -2162,7 +2162,7 @@ with AgentCnxnTypeScope {
       cache, acquaintances, cnxn, Nil
     ) 
 
-    trait AgentKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunners {
+    trait AgentKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunnersX {
       def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
 	here : URI, there : List[URI]
       )( implicit configFileNameOpt : Option[String] ) : AgentKVDBNode[ReqBody,RspBody]
