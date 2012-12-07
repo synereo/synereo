@@ -6,7 +6,6 @@ import com.biosimilarity.lift.model.ApplicationDefaults
 import org.basex.core.BaseXException
 import org.basex.core.cmd.{List=>_,_}
 import scala.xml.{Node, XML, Elem}
-import java.util.concurrent.Semaphore
 
 trait BaseXPersist extends Persist[ClientSession]
 with XMLStoreConfiguration
@@ -19,27 +18,15 @@ with Schema
     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
-  private final val semaphore : Semaphore = new Semaphore(65, true)
+  private final val pool : BaseXSessionPool = new BaseXSessionPool(dbHost, dbPort.toInt, dbUser, dbPwd)
 
-  /**
-   * Use a semaphore to ensure excessive socket connections aren't created.
-   * Tests show that creating >~70 sockets simultaneously will cause a deadlock
-   * somewhere in Java code.
-   * @return
-   */
   def clientSessionFromConfig: ClientSession =
   {
-    semaphore.acquire()
-    try {
-      new ClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)
-    }
-    finally {
-      semaphore.release()
-    }
+    pool.borrowClientSession
   }
 
   /**
-   * Any method caller should make sure to close the connection
+   * Any method caller should make sure to return the connection to the pool!
    * @param collectionName
    * @return
    */
@@ -58,7 +45,7 @@ with Schema
       _checkIfDBExists(clientSession, collectionName)
     }
     finally {
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -84,7 +71,7 @@ with Schema
       _checkIfDBExistsAndCreateIfNot(clientSession, collectionName)
     }
     finally {
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -148,7 +135,7 @@ with Schema
       }
     }
     finally {
-      clientSession.close()
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -161,7 +148,7 @@ with Schema
       _exists(recordType, clientSession)(collectionName, key)
     }
     finally {
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -200,7 +187,7 @@ with Schema
       _update(recordType, clientSession)(collectionName, key, value)
     }
     finally {
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -232,13 +219,12 @@ with Schema
       _insert(recordType, clientSession)(collectionName, key, value)
     }
     finally {
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 
   private def _insert( recordType : String, clientSession: ClientSession )( collectionName : String, key : String, value : String ) =
   {
-    val s = System.nanoTime
     val insTemplate : String = insertTemplate()
     val record = toRecord( recordType )( key, value )
 
@@ -313,7 +299,7 @@ with Schema
       }
     }
     finally {
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -338,8 +324,7 @@ with Schema
       _execute(clientSession, collectionName, queries)
     }
     finally {
-      clientSession.close
-      //BaseXConnectionPool.dropConnection(clientSession)
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -358,7 +343,7 @@ with Schema
       _executeScalar(clientSession, collectionName, query)
     }
     finally {
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 
@@ -420,7 +405,7 @@ with Schema
     }
     finally{
       srvrRspStrm.close
-      clientSession.close
+      pool.returnClientSession(clientSession)
     }
   }
 

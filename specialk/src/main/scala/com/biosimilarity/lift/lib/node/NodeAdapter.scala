@@ -59,7 +59,7 @@ import net.liftweb.amqp._
 import scala.util.continuations._
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.collection.immutable.HashMap
 import scala.util.parsing.combinator._
 
@@ -79,7 +79,7 @@ import java.util.TimerTask
 import java.io.StringReader
 
 class JSONRequestREPL
-extends FJTaskRunners
+extends FJTaskRunnersX
 with PrologTermParsing {
   // parsing
   def lexer (str : String) = new Yylex( new StringReader( str ) )

@@ -18,7 +18,7 @@ import net.liftweb.amqp._
 
 import scala.util.continuations._ 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
 import scala.xml._
 import scala.collection.mutable.Map
 import scala.collection.mutable.MapProxy
@@ -2144,7 +2144,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	cache, acquaintances
       ) 
       
-      trait PersistedKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunners {
+      trait PersistedKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunnersX {
 	def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody]
 	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody]
       }

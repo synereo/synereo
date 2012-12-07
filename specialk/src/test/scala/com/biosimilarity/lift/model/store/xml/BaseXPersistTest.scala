@@ -5,11 +5,13 @@ import org.specs.runner.{JUnit4, ConsoleRunner}
 import java.util.{Collections, UUID}
 import util.Random
 import scala.concurrent.ops._
+
 import actors.threadpool.AtomicInteger
 import org.specs.util.Duration
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util
 import util.concurrent.ConcurrentHashMap
+import org.basex.server.ClientSession
 
 /**
  *
@@ -21,7 +23,8 @@ object BaseXPersistTestSpecsRunner
   extends ConsoleRunner(BaseXPersistTestSpecs)
 
 
-object BaseXPersistTestSpecs extends Specification
+object BaseXPersistTestSpecs
+  extends Specification
 {
   /*val dbsToCreate = 1000
   val hitRate = 0.05
@@ -102,10 +105,116 @@ object BaseXPersistTestSpecs extends Specification
 
   }*/
 
-  val numThreads = 50
-  val qPerThread = 10
-  val numDbs = 10
+  val numThreads = 200
+  val qPerThread = 500
+  val numDbs = 100
 
+  "Apache Commons Pool test" should {
+
+    "create and access many objects" in {
+      skip("")
+      val poolSize = 1000
+      val r = new Random
+      val pool = new BaseXSessionPool("localhost", 1984, "admin", "admin")
+
+      val s1 = System.nanoTime()
+      val sessions = Array.fill[ClientSession](poolSize)(pool.borrowClientSession)
+      val t1 = (System.nanoTime - s1)/1000000.0
+      println("Took " + t1 + " ms to get " + poolSize + " ClientSession objects from pool (new objects created, single threaded)")
+
+      val s2 = System.nanoTime()
+      sessions.foreach(cs => pool.returnClientSession(cs))
+      val t2 = (System.nanoTime - s2)/1000000.0
+      println("Took " + t2 + " ms to return " + poolSize + " ClientSession objects to the pool (single threaded)")
+
+      val dbs = Array.fill(numDbs)(UUID.randomUUID.toString)
+      val keys = new ConcurrentHashMap[String, util.List[String]]
+
+      dbs.foreach(db => keys.put(db, Collections.synchronizedList(new util.ArrayList[String]())))
+
+
+
+      /*val s3 = System.nanoTime()
+      val sb2 = Array.fill[StringBuffer](poolSize)(StringBufferPool.getStringBuffer)
+      sb2.foreach(s => StringBufferPool.dropStringBuffer(s))
+      val t3 = (System.nanoTime - s3)/1000000.0
+      println("Took " + t3 + " ms to take and return " + poolSize + " StringBuffer objects to the pool (objects existed, single threaded)")
+
+      val a4 = new AtomicInteger(0)
+      val s4 = System.nanoTime()
+      val e4 = new AtomicLong(0)
+      for (i <- 1 to poolSize) {
+        spawn {
+          if (a4.incrementAndGet() == poolSize) e4.set(System.nanoTime)
+        }
+      }
+
+      a4.get() must be_==(poolSize).eventually(10, new Duration(1000))
+      val t4 = (e4.get - s4)/1000000.0
+      println("Took " + t4 + " ms to spawn " + poolSize + " threads with no work")
+
+      val a5 = new AtomicInteger(0)
+      val s5 = System.nanoTime()
+      val e5 = new AtomicLong(0)
+      for (i <- 1 to poolSize) {
+        spawn {
+          if (a5.incrementAndGet() == poolSize) e5.set(System.nanoTime)
+        }
+      }
+
+      a5.get() must be_==(poolSize).eventually(10, new Duration(1000))
+      val t5 = (e5.get - s5)/1000000.0
+      println("Took " + t5 + " ms to spawn " + poolSize + " threads with no work")
+
+
+      val a6 = new AtomicInteger(0)
+      val s6 = System.nanoTime()
+      val e6 = new AtomicLong(0)
+      for (i <- 1 to poolSize) {
+        spawn {
+          try {
+            val sb = StringBufferPool.getStringBuffer
+            StringBufferPool.dropStringBuffer(sb)
+          } catch {
+            case e => e.printStackTrace
+          }
+
+          if (a6.incrementAndGet() == poolSize) e6.set(System.nanoTime)
+        }
+      }
+
+      a6.get() must be_==(poolSize).eventually(10, new Duration(1000))
+      val t6 = (e6.get - s6)/1000000.0
+      println("Took " + t6 + " ms to spawn " + poolSize + " threads and get/return 1000 objects to the pool")
+
+
+      val a7 = new AtomicInteger(0)
+      val s7 = System.nanoTime()
+      val e7 = new AtomicLong(0)
+      for (i <- 1 to poolSize) {
+        spawn {
+          try {
+            Thread.sleep(r.nextInt(25))
+            val sb = StringBufferPool.getStringBuffer
+            val id = sb.toString
+            println("B i: " + i + " - " + id)
+            StringBufferPool.dropStringBuffer(sb)
+            println("R i: " + i + " - " + id)
+          } catch {
+            case e => e.printStackTrace
+          }
+
+          if (a7.incrementAndGet() == poolSize) e7.set(System.nanoTime)
+        }
+      }
+
+      a7.get() must be_==(poolSize).eventually(10, new Duration(1000))
+      val t7 = (e7.get - s7)/1000000.0
+      println("Took " + t7 + " ms to spawn " + poolSize + " threads and get/return 1000 objects to the pool")*/
+
+      true must be_==(true)
+    }
+  }
 
   "PooledBaseXPersist test" should {
     class BaseXPersistUtils extends BaseXXMLStore
@@ -140,7 +249,7 @@ object BaseXPersistTestSpecs extends Specification
                 val dbKeys = keys.get(db)
 
                 // 5% hit rate for writes (inserts), 95% for reads
-                if (dbKeys.size == 0 || r.nextInt(10) == 5) {
+                if (dbKeys.size == 0 || r.nextInt(20) == 5) {
                   val keyId = UUID.randomUUID.toString
                   val key = "<key>" + keyId + "</key>"
                   val value = "<value>" + UUID.randomUUID.toString + "</value>"
@@ -170,7 +279,7 @@ object BaseXPersistTestSpecs extends Specification
         }
 
 
-        completedThreads.get() must be_==(numThreads).eventually(300, new Duration(1000))
+        completedThreads.get() must be_==(numThreads).eventually(600, new Duration(1000))
         excThrown.get must be_==(false)
 
         val totTime = (end.get - start) / 1000000.0
