@@ -1,22 +1,17 @@
 package com.biosimilarity.lift.model.store.xml
 
-import com.biosimilarity.lift.model.store._
-import org.basex.server._
-import com.biosimilarity.lift.model._
-import com.biosimilarity.lift.lib._
-import org.basex.core._
-import cmd._
-import scala.collection._
-import scala.xml._
-import scala.List
+import com.biosimilarity.lift.model.store.Persist
+import org.basex.server.ClientSession
+import com.biosimilarity.lift.model.ApplicationDefaults
+import org.basex.core.BaseXException
+import org.basex.core.cmd.{List=>_,_}
+import scala.xml.{Node, XML, Elem}
+import java.util.concurrent.Semaphore
 
 trait BaseXPersist extends Persist[ClientSession]
 with XMLStoreConfiguration
 with Schema
 {
-  //  self: Journalist
-  //    with Reporting   =>
-
   override def configFileName: Option[String] = None
 
   override def configurationDefaults: ConfigurationDefaults =
@@ -24,231 +19,194 @@ with Schema
     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
+  private final val semaphore : Semaphore = new Semaphore(65, true)
+
+  /**
+   * Use a semaphore to ensure excessive socket connections aren't created.
+   * Tests show that creating >~70 sockets simultaneously will cause a deadlock
+   * somewhere in Java code.
+   * @return
+   */
   def clientSessionFromConfig: ClientSession =
   {
-    new ClientSession(
-      dbHost,
-      dbPort.toInt,
-      dbUser,
-      dbPwd
-    )
+    semaphore.acquire()
+    try {
+      new ClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)
+    }
+    finally {
+      semaphore.release()
+    }
+  }
+
+  /**
+   * Any method caller should make sure to close the connection
+   * @param collectionName
+   * @return
+   */
+  def open(collectionName: String) = {
+    val clientSession = clientSessionFromConfig
+    _checkIfDBExistsAndCreateIfNot(clientSession, collectionName)
+    clientSession
   }
 
 
+  // Note: leaveOpen is being ignored
   def checkIfDBExists(collectionName: String, leaveOpen: Boolean): Boolean =
   {
     val clientSession = clientSessionFromConfig
     try {
-      clientSession.execute(new Open(collectionName))
-      true
-    }
-    catch {
-      case e: BaseXException => {
-        false
-      }
-    }
-    finally{
-      if (!leaveOpen) {
-        clientSession.execute(new Close())
-      }
-    }
-  }
-  def checkIfDBExistsAndCreateIfNot(collectionName: String, leaveOpen: Boolean): Boolean =
-  {
-    try {
-      open(collectionName: String)
-      true
-    }
-    catch {
-      case e: BaseXException => {
-        false
-      }
-    }
-  }
-
-  private def createDBIfMissing(collectionName: String): ClientSession =
-  {
-    val clientSession = clientSessionFromConfig
-    try {      
-
-      clientSession.execute(new Open(collectionName))
-      clientSession
-    }
-    catch {
-      case bxe : BaseXException => {
-        createAndOpen(collectionName)
-      }
+      _checkIfDBExists(clientSession, collectionName)
     }
     finally {
-      clientSession.execute(new Close())
+      clientSession.close
     }
   }
-  private def createAndOpen(collectionName: String): ClientSession =
+
+  private def _checkIfDBExists(clientSession:ClientSession, collectionName: String): Boolean =
+  {
+    try {
+      clientSession.execute(new Open(collectionName))
+      true
+    }
+    catch {
+      case e: BaseXException => {
+        false
+      }
+    }
+  }
+
+
+  // Note: leaveOpen is being ignored
+  def checkIfDBExistsAndCreateIfNot(collectionName: String, leaveOpen: Boolean): Boolean =
+  {
+    val clientSession = clientSessionFromConfig
+    try {
+      _checkIfDBExistsAndCreateIfNot(clientSession, collectionName)
+    }
+    finally {
+      clientSession.close
+    }
+  }
+
+  private def _checkIfDBExistsAndCreateIfNot(clientSession: ClientSession, collectionName: String): Boolean =
+  {
+    try {
+      val exists = _checkIfDBExists(clientSession, collectionName)
+
+      if (!exists) {
+        createDb(clientSession, collectionName)
+      }
+      true
+    }
+    catch {
+      case e: BaseXException => {
+        e.printStackTrace
+        false
+      }
+    }
+  }
+
+
+  private def createDb(clientSession: ClientSession, collectionName: String) =
   {
     synchronized {
-      val clientSession = clientSessionFromConfig
       try {
         clientSession.execute(new Open(collectionName))
-        clientSession
       }
       catch {
         case bxe : BaseXException => {
-          val records = toRecords( "" )
-          val clientSessionRetry = clientSessionFromConfig
           try {
-            val cs = create(clientSessionRetry, collectionName)
-            cs.execute(new Open(collectionName))
-            cs.execute(new Add("database", records))
-            cs
+            clientSession.execute(new CreateDB(collectionName, emptyDocument()))
           }
           catch {
-            case inrBxe : BaseXException => {
-              inrBxe.printStackTrace
-              throw inrBxe
+            case e => {
+              e.printStackTrace
+              throw e
             }
-          }
-          finally {
-            clientSessionRetry.execute(new Close())
           }
         }
       }
-      finally{
-        clientSession.execute(new Close())
-      }
     }
   }
 
-  //open and create if missing
-  def open(collectionName: String): ClientSession =
-  {
-    createDBIfMissing(collectionName)
-  }
-
-  def create(cs: ClientSession, collectionName: String): ClientSession =
-  {
-    try {
-      //transaction
-      cs.execute(new CreateDB(collectionName))
-      //add database/records
-      //end transaction
-    }
-    catch {
-      case e: BaseXException => {
-        //should do some logging here, bring in slog functionality?
-        throw e
-      }
-    }
-    cs
-  }
-
-  def drop(collectionName: String) : Unit =
-  {
-
-    val clientSession = open(collectionName)
-    try {
-      clientSession.execute("DROP DB " + collectionName)
-    }
-    catch {
-      case e: BaseXException => {
-      }
-    }
-    finally {
-      clientSession.execute(new Close())
-    }
-  }
 
   def insertUpdate( recordType : String )(
     collectionName : String, key : String, value : String
-  ) : Unit =
+    ) : Unit =
   {
     //race condition on the exists. wrap this in a transaction
+    val clientSession = open(collectionName)
 
-    //there may be a more efficient way to achieve this in a single query but the fact that XQUF doesnt return results
-    //and that we need special root node insert handling on very first insert made this cleaner
-    if ( exists( recordType )( collectionName, key ) ) {
-      update( recordType )( collectionName, key, value )
+    try {
+      //there may be a more efficient way to achieve this in a single query but the fact that XQUF doesnt return results
+      //and that we need special root node insert handling on very first insert made this cleaner
+      if ( _exists( recordType, clientSession )( collectionName, key ) ) {
+        _update( recordType, clientSession )(  collectionName, key, value )
+      }
+      else {
+        _insert( recordType, clientSession )( collectionName, key, value )
+      }
     }
-    else {
-      insert( recordType )( collectionName, key, value )
+    finally {
+      clientSession.close()
     }
   }
 
-  def insert( recordType : String )( collectionName : String, key : String, value : String ) =
+
+
+  def exists( recordType : String )(collectionName: String, key: String): Boolean =
   {
     val clientSession = open(collectionName)
-    val insertTemplate =
-      (
-        "insert node %NODE% into "
-          + "for $db in collection('%COLLNAME%')/records return $db"
-        );
+    try {
+      _exists(recordType, clientSession)(collectionName, key)
+    }
+    finally {
+      clientSession.close
+    }
+  }
 
-    //    report(
-    //      "attempting to insert record into database doc in " + collectionName
-    //    )
+  private def _exists( recordType : String, clientSession:ClientSession )(collectionName: String, key: String): Boolean =
+  {
+    val eTemplate : String = existsTemplate( recordType );
 
-    val record = toRecord( recordType )( key, value )
-    //println( "record : \n" + record )
-
-    val insertQry =
-      insertTemplate.replace(
-        "%NODE%",
-        record
+    val existsQry =
+      eTemplate.replace(
+        "%KEY%",
+        key
       ).replace(
         "%COLLNAME%",
         collectionName
       )
 
-//    println("insertion query : \n" + insertQry)
     try {
-      clientSession.execute(new XQuery(insertQry))
+      val results = _executeScalar(clientSession, collectionName, existsQry)
+      results match {
+        case "" => false
+        case _ => true
+      }
     }
     catch {
       case e: BaseXException => {
-        // this is so the very first insert works properly before /database/records node exists
-        //can be removed to the create logic with a trans, create, add, close trans
-
-        //          report(
-        //            "insertion query failed " + insertQry
-        //          )
-        val records = toRecords(record)
-        clientSession.execute(new Add("database", records))
-
-        //          report(
-        //            "adding database doc to " + collectionName
-        //          )
-        //          tweetTrace(e)
+        false
       }
     }
-    finally {
-      clientSession.execute(new Close())
-    }
   }
 
-  def replaceTemplate( recordType : String ) : String = {
-    (
-      "let $root := collection('%COLLNAME%')/records "
-      + "let $key := %KEY% "
-      + "for $rcrd in $root/%RECORDTYPE% "
-      + "let $rcrdkey := $rcrd/*[1] "
-      + "where deep-equal($key, $rcrd/*[1]) "
-      + "return if (exists($rcrd)) "
-      + "then replace value of node $rcrd/*[2] "
-      //+ "return replace value of node $rcrds[1]/*[2] "
-      + "with %VALUE% "
-      + "else ()"
-    ).replace( "%RECORDTYPE%", recordType )
-  }
 
   def update( recordType : String )(collectionName: String, key: String, value: String) =
   {
-    //val clientSession = open(collectionName)
+    val clientSession = open(collectionName)
+    try {
+      _update(recordType, clientSession)(collectionName, key, value)
+    }
+    finally {
+      clientSession.close
+    }
+  }
 
+  private def _update( recordType : String, clientSession: ClientSession )(collectionName: String, key: String, value: String) =
+  {
     val replTemplate : String = replaceTemplate( recordType );
-    //    report(
-    //      "attempting to update record in database doc in " + collectionName
-    //    )
-
-    //println( "record : \n" + nodeStr )
 
     val replaceQry =
       replTemplate.replace(
@@ -262,66 +220,51 @@ with Schema
         collectionName
       )
 
-    //    println("update query : \n" + replaceQry)
-    //XQUF do not return results
-    execute(collectionName, replaceQry)
+    _execute(clientSession, collectionName, replaceQry)
   }
 
-  def existsTemplate( recordType : String ) : String = {
-    (
-      "let $root := collection('%COLLNAME%')/records "
-      + "let $key := %KEY% "
-      + "for $rcrd in $root/%RECORDTYPE% "
-      + "let $rcrdkey := $rcrd/*[1] "
-      + "where deep-equal($key, $rcrd/*[1]) "
-      + "return (exists($rcrd)) "
-    ).replace( "%RECORDTYPE%", recordType )
-  }
 
-  //exist by id (one attr among many) will likely not work with deep-equal
-  def exists( recordType : String )(collectionName: String, key: String): Boolean =
+  def insert( recordType : String )( collectionName : String, key : String, value : String ) =
   {
-    //val clientSession = clientSessionFromConfig
-    val eTemplate : String = existsTemplate( recordType );
+    val clientSession = open(collectionName)
 
-    val existsQry =
-      eTemplate.replace(
-        "%KEY%",
-        key
+    try {
+      _insert(recordType, clientSession)(collectionName, key, value)
+    }
+    finally {
+      clientSession.close
+    }
+  }
+
+  private def _insert( recordType : String, clientSession: ClientSession )( collectionName : String, key : String, value : String ) =
+  {
+    val s = System.nanoTime
+    val insTemplate : String = insertTemplate()
+    val record = toRecord( recordType )( key, value )
+
+    val insertQry =
+      insTemplate.replace(
+        "%NODE%",
+        record
       ).replace(
         "%COLLNAME%",
         collectionName
       )
 
     try {
-      val results = executeScalar(collectionName, existsQry)
-      results match {
-        case "" => false
-        case _ => true
-      }
+      clientSession.execute(new XQuery(insertQry))
     }
     catch {
       case e: BaseXException => {
-//        println(e)
-        false
+        e.printStackTrace
       }
     }
   }
 
-  def recordDeletionQueryTemplate( recordType : String ) : String = {
-    (
-      "delete node "
-      + "let $key := %RecordKeyConstraints% "
-      + "for $rcrd in collection( '%COLLNAME%' )/records/%RECORDTYPE% "
-      + "where deep-equal($key, $rcrd/*[1]) "
-      + "return $rcrd"
-    ).replace( "%RECORDTYPE%", recordType )
-  }
 
   def delete( recordType : String )(collectionName: String, key: String) : Unit =
   {
-    val rcrdDelQryTemplate : String = 
-      recordDeletionQueryTemplate( recordType )
+    val rcrdDelQryTemplate : String = recordDeletionQueryTemplate( recordType )
 
     val deletionQry =
       rcrdDelQryTemplate.replace(
@@ -333,29 +276,47 @@ with Schema
       )
 
     try {
-      val results = executeWithResults(collectionName, List(deletionQry))
+      executeWithResults(collectionName, List(deletionQry))
     }
     catch {
       case e : BaseXException => {
-	// BUGBUG -- lgm : should dump this to log
-        e.printStackTrace()
+        // BUGBUG -- lgm : should dump this to log
+        e.printStackTrace
       }
     }
   }
 
+
   def count(collectionName: String): Int =
   {
-    val countQry = "count(collection('" + collectionName + "')/records/record)"
+    val countQry = "count(collection('" + collectionName + "')//records/record)"
     val results = try {
-          executeScalar(collectionName, countQry)
-        } catch {
-          case e: BaseXException => ""
-        }
+      executeScalar(collectionName, countQry)
+    } catch {
+      case e: BaseXException => ""
+    }
     results match {
       case "" => 0
       case _ => results.toInt
     }
   }
+
+
+  def drop(collectionName: String) = {
+    // Note: we do not need to check if the DB exists to drop it
+    val clientSession = clientSessionFromConfig
+    try {
+      clientSession.execute(new DropDB(collectionName))
+    }
+    catch {
+      case e: BaseXException => {
+      }
+    }
+    finally {
+      clientSession.close
+    }
+  }
+
 
   //executes defer exception handling to parent method
   def execute(collectionName: String, query: String): Unit =
@@ -363,24 +324,51 @@ with Schema
     execute(collectionName: String, List(query))
   }
 
+  //executes defer exception handling to parent method
+  private def _execute(clientSession: ClientSession, collectionName: String, query: String): Unit =
+  {
+    _execute(clientSession, collectionName: String, List(query))
+  }
+
+
   def execute(collectionName: String, queries: List[String]): Unit =
   {
     val clientSession = open(collectionName)
+    try {
+      _execute(clientSession, collectionName, queries)
+    }
+    finally {
+      clientSession.close
+      //BaseXConnectionPool.dropConnection(clientSession)
+    }
+  }
+
+  private def _execute(clientSession: ClientSession, collectionName: String, queries: List[String]): Unit =
+  {
     for (query <- queries) {
       clientSession.execute(new XQuery(query))
     }
   }
 
+
   def executeScalar(collectionName: String, query: String): String =
   {
-
     val clientSession = open(collectionName)
+    try {
+      _executeScalar(clientSession, collectionName, query)
+    }
+    finally {
+      clientSession.close
+    }
+  }
+
+  private def _executeScalar(clientSession: ClientSession, collectionName: String, query: String): String =
+  {
     val srvrRspStrm = new java.io.ByteArrayOutputStream()
     try {
-
       clientSession.setOutputStream(srvrRspStrm)
-
       clientSession.execute(new XQuery(query))
+      clientSession.setOutputStream(null)
       srvrRspStrm.toString
     }
     catch {
@@ -390,92 +378,104 @@ with Schema
       }
     }
     finally {
-      // Reset output stream
-      clientSession.execute(new Close())
       srvrRspStrm.close()
     }
   }
 
-//  def executeWithResults(query: String): List[Elem] =
-//  {
-//    val clientSession = clientSessionFromConfig
-//    val srvrRspStrm = new java.io.ByteArrayOutputStream()
-//
-//    try {
-//      clientSession.setOutputStream(srvrRspStrm)
-//      clientSession.execute(new XQuery(query))
-//      val results = srvrRspStrm.toString("UTF-8")
-//
-//      results match {
-//        case "" => {
-//                Nil
-//        }
-//        case _ => {
-//                XML.loadString(
-//                  "<results>" + results + "</results>"
-//                ).child.toList.filter(
-//                  (x: Node) => x.isInstanceOf[Elem]
-//                ).asInstanceOf[List[Elem]]
-//        }
-//      }
-//    }
-//    catch {
-//      case bxe : BaseXException => {
-//      	throw( bxe )
-//      }
-//    }
-//    finally{
-//      srvrRspStrm.close
-//      clientSession.execute(new Close())
-//    }
-//  }
 
-  def executeWithResults(  collectionName : String, query : String ) : List[Elem] =
+  def executeWithResults( collectionName : String, queries : scala.List[String] ): scala.List[Elem] =
   {
-    def getRslts(
-      srStrm : java.io.ByteArrayOutputStream
-    ) : List[Elem] = {
+    queries.flatMap(executeWithResults( collectionName, _ ))
+  }
+
+  def executeWithResults(  collectionName : String, query : String ) : scala.List[Elem] =
+  {
+    def getRslts( srStrm : java.io.ByteArrayOutputStream ) : scala.List[Elem] = {
       val results = srStrm.toString("UTF-8")
-      //println( "results: " + results )
       results match {
         case "" => {
-                Nil
+          Nil
         }
         case _ => {
-                XML.loadString(
-                  "<results>" + results + "</results>"
-                ).child.toList.filter(
-                  (x: Node) => x.isInstanceOf[Elem]
-                ).asInstanceOf[List[Elem]]
+          XML.loadString(
+            "<results>" + results + "</results>"
+          ).child.toList.filter(
+            (x: Node) => x.isInstanceOf[Elem]
+          ).asInstanceOf[scala.List[Elem]]
         }
       }
     }
+
     val clientSession = open(collectionName)
     val srvrRspStrm = new java.io.ByteArrayOutputStream()
     try {
-
-
       clientSession.setOutputStream(srvrRspStrm)
       clientSession.execute(new XQuery(query))
       getRslts( srvrRspStrm )
     }
     catch {
       case bxe : BaseXException => {
-	      throw bxe
+        throw bxe
       }
     }
     finally{
       srvrRspStrm.close
-      clientSession.execute(new Close())
+      clientSession.close
     }
-  }  
+  }
 
-//  def executeWithResults(queries: List[String]): List[Elem] =
-//  {
-//    queries.flatMap(executeWithResults)
-//  }
-  def executeWithResults( collectionName : String, queries : List[String] ): List[Elem] =
-  {
-    queries.flatMap(executeWithResults( collectionName, _ ))
+
+  def createTemplate( collectionName: String ) : String = {
+    (
+      "if (not(db:exists('%COLLNAME%'))) then"
+        + "("
+        + "db:create('%COLLNAME%', <database>%RECORDS%</database>, '%COLLNAME%.xml')"
+        + ")"
+        + "else () "
+      ).replace("%COLLNAME%", collectionName)
+  }
+
+  def replaceTemplate( recordType : String ) : String = {
+    (
+      "let $root := collection('%COLLNAME%')//records "
+        + "let $key := %KEY% "
+        + "for $rcrd in $root/%RECORDTYPE% "
+        + "let $rcrdkey := $rcrd/*[1] "
+        + "where deep-equal($key, $rcrd/*[1]) "
+        + "return if (exists($rcrd)) "
+        + "then replace value of node $rcrd/*[2] "
+        //+ "return replace value of node $rcrds[1]/*[2] "
+        + "with %VALUE% "
+        + "else ()"
+      ).replace( "%RECORDTYPE%", recordType )
+  }
+
+
+  def existsTemplate( recordType : String ) : String = {
+    (
+      "let $root := collection('%COLLNAME%')//records "
+        + "let $key := %KEY% "
+        + "for $rcrd in $root/%RECORDTYPE% "
+        + "let $rcrdkey := $rcrd/*[1] "
+        + "where deep-equal($key, $rcrd/*[1]) "
+        + "return (exists($rcrd)) "
+      ).replace( "%RECORDTYPE%", recordType )
+  }
+
+  def insertTemplate() : String = {
+    (
+      "insert node %NODE% into "
+        + "for $db in collection('%COLLNAME%')//records return $db"
+      )
+  }
+
+  def recordDeletionQueryTemplate( recordType : String ) : String = {
+    (
+      "delete node "
+        + "let $key := %RecordKeyConstraints% "
+        + "for $rcrd in collection( '%COLLNAME%' )//records/%RECORDTYPE% "
+        + "where deep-equal($key, $rcrd/*[1]) "
+        + "return $rcrd"
+      ).replace( "%RECORDTYPE%", recordType )
   }
 }

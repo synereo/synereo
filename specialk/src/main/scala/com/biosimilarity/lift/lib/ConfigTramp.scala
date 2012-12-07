@@ -41,17 +41,7 @@ extends ConfigurationTrampolineDefaults {
     (new java.lang.Object()).getClass.getMethods.toList.map( _.getName )
 
   // Another way?
-  var _configurationFromFile : Option[Map[String,String]] = None
-  def configurationFromFile : Map[String,String] = {
-    _configurationFromFile match {
-      case Some( env ) => env
-      case None => {
-	val env = processConfigurationFile
-	_configurationFromFile = Some( env )
-	env
-      }
-    }
-  }
+  lazy val configurationFromFile : Map[String,String] = processConfigurationFile
 
   def processConfigurationFile(
     confFileName : String,

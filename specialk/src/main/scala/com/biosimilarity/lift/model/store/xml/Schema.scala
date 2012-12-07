@@ -17,5 +17,10 @@ trait Schema
     "<records>" + record + "</records>"
   }
 
+  def emptyDocument() =
+  {
+    "<database><records></records></database>"
+  }
+
   //put more in here such as /records/record for rootnode, recordname, rootpath?
 }
