@@ -39,16 +39,17 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
   val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
   "prover " should {
-      "find a results without continuation" in {
-        skipped("isolate")
+      "work" in {
         val prover = writer.cache.getProver()
-        val query = "pub(_)"
-        val label = "pub(\"'\"1?\"'\")"
+        val query = "pub( X625f0c472fac420293ea3716fcc008bb_ )"
+        val label = "pub( string( 'X1??' ) )"
+
+//        val query = "pub(_)"
+//        val label = "pub(\"'\"1?\"'\")"
         println(label)
         try
         {
           prover.solve(query + " = " + label + ".")
-
         }
         catch {
           case e: Exception => {
@@ -57,11 +58,31 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
         }
         success
       }
+
+    "fail" in {
+      val prover = writer.cache.getProver()
+      val query = "pub( X625f0c472fac420293ea3716fcc008bb_ )"
+      val label = "pub( string( 'X1?' ) )"
+
+      //        val query = "pub(_)"
+      //        val label = "pub(\"'\"1?\"'\")"
+      println(label)
+      try {
+        prover.solve(query + " = " + label + ".")
+      }
+      catch {
+        case e: Exception => {
+          e.printStackTrace()
+        }
+      }
+      success
+    }
   }
 
 
   "read " should {
       "find a results without continuation" in {
+        skipped("isolate")
         val key = "pub(_)".toLabel
 
         val resultKey = Results.getKey()
