@@ -40,10 +40,9 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
 
   "prover " should {
       "find a results without continuation" in {
-        skipped("isolate")
         val prover = writer.cache.getProver()
         val query = "pub(_)"
-        val label = "pub(\"'\"1?\"'\")"
+        val label = "pub('1$')"
         println(label)
         try
         {
@@ -62,11 +61,13 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
 
   "read " should {
       "find a results without continuation" in {
+        skipped("isolate")
         val key = "pub(_)".toLabel
 
         val resultKey = Results.getKey()
 
-        val key1 = "pub(\"1?\")".toLabel
+//        val key1 = "pub(\"1?\")".toLabel
+        val key1 = "pub(\"ba57e69b-9077-43cb-bc24-0494b2a5505b\")".toLabel
 //        Thread.sleep(1000)
 //        Thread.sleep(1000)
          writer.store(cnxn)(key1, Ground("1"))

@@ -1,16 +1,13 @@
 package com.protegra_ati.agentservices.core.schema.persistence
 
 import com.protegra_ati.agentservices.core.schema.Data
-import com.protegra_ati.agentservices.core.schema.util.ReflectionHelper
+import com.protegra_ati.agentservices.core.schema.util.{PrologFormatter, ReflectionHelper}
 import com.protegra_ati.agentservices.core.schema.Constants._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import java.util.{Locale, UUID}
 import java.util.Properties
 import java.lang.reflect._
 import com.protegra_ati.agentservices.core.messages.Message
-
-/* User: mgevantmakher
-*/
 
 trait StorableData extends StorableDataDefaults
 {
@@ -30,7 +27,7 @@ trait StorableData extends StorableDataDefaults
     val fields = ReflectionHelper.getAllFields(this.getClass)
     val fieldValues = fields map ( f => handleFieldValue(f) /*f.getName().toCamelCase + "(" + this.getFormattedFieldValue(f) + ")" */ )
     val fieldValueList = fieldValues.mkString("", ",", "")
-    this.formattedClassName + "(" + FIELDS + "(" + fieldValueList + "))"
+    this.formattedClassName + "(" + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + "))"
   }
 
 
