@@ -18,11 +18,12 @@ with Schema
     ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
   }
 
-  private final val pool : BaseXSessionPool = new BaseXSessionPool(dbHost, dbPort.toInt, dbUser, dbPwd)
+  @transient
+  private final val pool = BaseXSessionPool
 
   def clientSessionFromConfig: ClientSession =
   {
-    pool.borrowClientSession
+    pool.borrowClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)
   }
 
   /**
@@ -45,7 +46,7 @@ with Schema
       _checkIfDBExists(clientSession, collectionName)
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -71,7 +72,7 @@ with Schema
       _checkIfDBExistsAndCreateIfNot(clientSession, collectionName)
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -135,7 +136,7 @@ with Schema
       }
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -148,7 +149,7 @@ with Schema
       _exists(recordType, clientSession)(collectionName, key)
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -187,7 +188,7 @@ with Schema
       _update(recordType, clientSession)(collectionName, key, value)
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -219,7 +220,7 @@ with Schema
       _insert(recordType, clientSession)(collectionName, key, value)
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -299,7 +300,7 @@ with Schema
       }
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -324,7 +325,7 @@ with Schema
       _execute(clientSession, collectionName, queries)
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -343,7 +344,7 @@ with Schema
       _executeScalar(clientSession, collectionName, query)
     }
     finally {
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
     }
   }
 
@@ -405,7 +406,7 @@ with Schema
     }
     finally{
       srvrRspStrm.close
-      pool.returnClientSession(clientSession)
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd )
     }
   }
 
