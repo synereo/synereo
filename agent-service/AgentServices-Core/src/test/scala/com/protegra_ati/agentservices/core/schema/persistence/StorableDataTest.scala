@@ -34,7 +34,8 @@ class StorableDataTest extends SpecificationWithJUnit
       val storeKey = conn.toStoreKey
       println("storeKey: " + storeKey)
       //      assertEquals("mockConnection(\"Jennifer\",\"true\",\"100\",\"01-02-1901 00:00:00\",\"1.2345\",\"\",\"0\",\"false\",\"\",\"0\",\"0\",\"0.0\",\"0.0\",\"\")", storeKey)
-      storeKey must be_==("mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\")))")
+//      storeKey must be_==("mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\")))")
+      storeKey must be_==("mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00 00 00\"),amt(\"1 2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0 0\"),test8(\"0 0\"),test9(\"\"),test10(\"\")))")
     }
 
     //Connection needs to be updated to output the right key again
@@ -59,7 +60,8 @@ class StorableDataTest extends SpecificationWithJUnit
       val storeKey = conn.toStoreKey
       println("storeKey: " + storeKey)
       //      assertEquals("mockConnection(\"Jennifer\",\"true\",\"100\",\"01-02-1901 00:00:00\",\"1.2345\",\"\",\"0\",\"false\",\"\",\"0\",\"0\",\"0.0\",\"0.0\",\"\")", storeKey)
-      storeKey must be_==("mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"fr\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\")))")
+//      storeKey must be_==("mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"fr\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\")))")
+      storeKey must be_==("mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"fr\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00 00 00\"),amt(\"1 2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0 0\"),test8(\"0 0\"),test9(\"\"),test10(\"\")))")
     }
 
     "generate store key correctly for a System Data" in {
@@ -69,17 +71,19 @@ class StorableDataTest extends SpecificationWithJUnit
       val storeKey = systemData.toStoreKey
       println("storeKey: " + storeKey)
       //      assertEquals("mockConnection(\"Jennifer\",\"true\",\"100\",\"01-02-1901 00:00:00\",\"1.2345\",\"\",\"0\",\"false\",\"\",\"0\",\"0\",\"0.0\",\"0.0\",\"\")", storeKey)
-      storeKey must be_==("systemData(mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\"))))")
+//      storeKey must be_==("systemData(mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\"))))")
+      storeKey must be_==("systemData(mockConnection(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00 00 00\"),amt(\"1 2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0 0\"),test8(\"0 0\"),test9(\"\"),test10(\"\"))))")
     }
 
     "generate store key correctly for a Profile" in {
       val idN = "MY_ID"
-      val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+      val mockProfile = new Profile("FirstName", "LastName", "desc?", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
       mockProfile.image = new Image("name", "", "content hasn't be visible in a toStoreKey", "meta1 meta2 meta3")
       mockProfile.id = idN
       mockProfile.localeCode = "en"
       val storeKey = mockProfile.toStoreKey
-      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"\"),emailAddress(\"123456789@test.com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
+//      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"\"),emailAddress(\"123456789@test.com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
+      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"desc \"),emailAddress(\"123456789 test com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
 //      println("created  storeKey4Profile: " + storeKey)
 //      println("expected storeKey4Profile: " + expectedStoreKey)
       storeKey must be_==(expectedStoreKey)
@@ -93,7 +97,8 @@ class StorableDataTest extends SpecificationWithJUnit
       val storeKey = trackedConn.toStoreKey
       println("storeKey: " + storeKey)
       //      assertEquals("mockConnection(\"Jennifer\",\"true\",\"100\",\"01-02-1901 00:00:00\",\"1.2345\",\"\",\"0\",\"false\",\"\",\"0\",\"0\",\"0.0\",\"0.0\",\"\")", storeKey)
-      val expected = "mockConnectionTracked(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\")))"
+//      val expected = "mockConnectionTracked(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00:00:00\"),amt(\"1.2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0.0\"),test8(\"0.0\"),test9(\"\"),test10(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\")))"
+      val expected = "mockConnectionTracked(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),name(\"Jennifer\"),isBlue(\"true\"),age(\"100\"),birthDate(\"01-02-1901 00 00 00\"),amt(\"1 2345\"),test0(\"[a, b]\"),test0Empty(\"[]\"),test1(\"\"),test2(\"0\"),test3(\"false\"),test4(\"\"),test5(\"0\"),test6(\"0\"),test7(\"0 0\"),test8(\"0 0\"),test9(\"\"),test10(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\")))"
       storeKey must be_==(expected)
     }
 
@@ -114,6 +119,7 @@ class StorableDataTest extends SpecificationWithJUnit
       println("storeKey: " + storeKey)
       //      persistedMessage(fields(id("ec149c51-88f8-476c-bda7-8dd721d14a3f"),localeCode("en"),message(""),persisted("2012-05-02T22:01:02.903-05:00")))
       val expected = "persistedMessage(" + FIELDS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),message(\"\"),persisted(\"" + persistedMessage.persisted + "\"),rejected(\"\"),ignored(\"\"),archived(\"\")))"
+      println("EXPECTED: " + expected)
       storeKey must be_==(expected)
     }
 

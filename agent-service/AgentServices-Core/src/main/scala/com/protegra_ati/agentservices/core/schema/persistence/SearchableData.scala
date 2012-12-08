@@ -1,7 +1,7 @@
 package com.protegra_ati.agentservices.core.schema.persistence
 
-import com.protegra_ati.agentservices.core.schema.Data
-import com.protegra_ati.agentservices.core.schema.util.ReflectionHelper
+import com.protegra_ati.agentservices.core.schema.util.{PrologFormatter, ReflectionHelper}
+import com.protegra_ati.agentservices.core.schema.{Data}
 import com.protegra_ati.agentservices.core.schema.Constants._
 import com.protegra.agentservicesstore.extensions.StringExtensions._
 import java.lang.reflect._
@@ -30,7 +30,7 @@ trait SearchableData
   def toSearchKey: String =
   {
     val searchValueList = this.getSearchValueList()
-    this.formattedClassName + "(" + searchValueList + ")"
+    this.formattedClassName + "(" + PrologFormatter.clean(searchValueList) + ")"
   }
 
   def toSearchKeyFromClass(classType: Class[ _ <: Data ]): String =
