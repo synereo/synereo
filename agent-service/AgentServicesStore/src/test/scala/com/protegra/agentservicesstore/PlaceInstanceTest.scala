@@ -39,15 +39,17 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
   val cnxnRandom = new AgentCnxn("Random".toURI, "", UUID.randomUUID.toString.toURI)
 
   "prover " should {
-      "find a results without continuation" in {
+      "work" in {
         val prover = writer.cache.getProver()
-        val query = "pub(_)"
-        val label = "pub('1$')"
+        val query = "pub( X625f0c472fac420293ea3716fcc008bb_ )"
+        val label = "pub( string( 'X1??' ) )"
+
+//        val query = "pub(_)"
+//        val label = "pub(\"'\"1?\"'\")"
         println(label)
         try
         {
           prover.solve(query + " = " + label + ".")
-
         }
         catch {
           case e: Exception => {
@@ -56,6 +58,25 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
         }
         success
       }
+
+    "fail" in {
+      val prover = writer.cache.getProver()
+      val query = "pub( X625f0c472fac420293ea3716fcc008bb_ )"
+      val label = "pub( string( 'X1?' ) )"
+
+      //        val query = "pub(_)"
+      //        val label = "pub(\"'\"1?\"'\")"
+      println(label)
+      try {
+        prover.solve(query + " = " + label + ".")
+      }
+      catch {
+        case e: Exception => {
+          e.printStackTrace()
+        }
+      }
+      success
+    }
   }
 
 
@@ -66,8 +87,7 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
 
         val resultKey = Results.getKey()
 
-//        val key1 = "pub(\"1?\")".toLabel
-        val key1 = "pub(\"ba57e69b-9077-43cb-bc24-0494b2a5505b\")".toLabel
+        val key1 = "pub(\"1?\")".toLabel
 //        Thread.sleep(1000)
 //        Thread.sleep(1000)
          writer.store(cnxn)(key1, Ground("1"))
