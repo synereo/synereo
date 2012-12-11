@@ -61,7 +61,8 @@ object BasePABaseXDefaults
  */
 abstract class BasePlatformAgent
   extends Reporting
-  with JunctionConfiguration with ThreadPoolRunners
+  with JunctionConfiguration
+  with ThreadPoolRunnersX
   //  with Scheduler
 {
 

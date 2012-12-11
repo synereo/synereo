@@ -796,7 +796,11 @@ with AgentCnxnTypeScope {
       }
     }
 
-    trait BaseAgentKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunnersX {
+    trait BaseAgentKVDBNodeFactoryT
+      extends AMQPURIOps
+      with ThreadPoolRunnersX
+      //with FJTaskRunnersX
+    {
       // BUGBUG -- lgm : So far, establishing appropriate bounds has
       // been too hard
       type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]
@@ -2162,7 +2166,11 @@ with AgentCnxnTypeScope {
       cache, acquaintances, cnxn, Nil
     ) 
 
-    trait AgentKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunnersX {
+    trait AgentKVDBNodeFactoryT
+      extends AMQPURIOps
+      with ThreadPoolRunnersX
+      //with FJTaskRunnersX
+    {
       def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
 	here : URI, there : List[URI]
       )( implicit configFileNameOpt : Option[String] ) : AgentKVDBNode[ReqBody,RspBody]
