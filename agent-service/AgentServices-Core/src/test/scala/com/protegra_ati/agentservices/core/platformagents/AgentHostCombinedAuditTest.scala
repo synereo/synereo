@@ -44,7 +44,7 @@ with Timeouts
   AgentHostCombinedBase.setupIncrementalDisclosure(storeR, cnxnJenJen)
 
   val connJenMike = AgentHostCombinedBase.setupPersistedConnection(storeR, jenUID, mikeUID)
-  storeR.updateData(cnxnJenJen, connJenMike, null)
+  storeR.updateDataById(cnxnJenJen, connJenMike, null)
 
 //    storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
     //  as soon as an new connection is stored, (esp. self connection) it is necessary to listen to this connection or like here to ALL selfconnections
@@ -89,7 +89,7 @@ with Timeouts
       storeR._cnxnUserSelfConnectionsList = List(cnxnJenJen, cnxnMikeMike)
 
       val connMikeJen = AgentHostCombinedBase.setupPersistedConnection(storeR, mikeUID, jenUID)
-      storeR.updateData(cnxnMikeMike, connMikeJen, null)
+      storeR.updateDataById(cnxnMikeMike, connMikeJen, null)
 
       AgentHostCombinedBase.setProfile(uiR, cnxnJenJen, agentSessionId, eventKey)
 

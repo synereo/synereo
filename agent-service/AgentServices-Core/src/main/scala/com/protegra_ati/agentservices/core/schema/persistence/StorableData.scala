@@ -30,6 +30,25 @@ trait StorableData extends StorableDataDefaults
     this.formattedClassName + "(" + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + "))"
   }
 
+  def toDeleteKey(): String =
+  {
+    //TODO: this can be streamlined once we know we have class(keys(),fields(_))
+    val fields = ReflectionHelper.getAllFields(this.getClass)
+    val fieldValues = fields map ( f => handleDeleteFieldValue(f) /*f.getName().toCamelCase + "(" + this.getFormattedFieldValue(f) + ")" */ )
+    val fieldValueList = fieldValues.mkString("", ",", "")
+    this.formattedClassName + "(" + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + "))"
+  }
+
+  private def handleDeleteFieldValue(f: Field): String =
+  {
+    val trimmedfieldName = f.getName.trimPackage.toCamelCase
+    var content: String = ""
+
+    if ( trimmedfieldName.equals("id") ) {content = this.getFormattedFieldValue(f)}
+    else {content = SEARCH_ANY}
+
+    trimmedfieldName + "(" + content + ")"
+  }
 
   private def handleFieldValue(f: Field): String =
   {

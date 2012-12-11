@@ -55,7 +55,7 @@ with Serializable
 
     "insert new data" in new StorageScope{
       var oldData: Profile = null
-      pa.updateData(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields), oldData)
+      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields), oldData)
       val profileSearch: Profile = new Profile()
       Thread.sleep(TIMEOUT_MED)
       fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
@@ -66,7 +66,7 @@ with Serializable
       val data = mockProfile.authorizedData(authorizedContentBasic.fields)
       pa.store(pa._dbQ, connSteve.writeCnxn, data.toStoreKey, Serializer.serialize[ Data ](data))
       Thread.sleep(TIMEOUT_MED)
-      pa.updateData(connSteve.writeCnxn, data, data)
+      pa.updateDataById(connSteve.writeCnxn, data, data)
       val profileSearch: Profile = new Profile()
 
       fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)

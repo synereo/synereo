@@ -46,13 +46,13 @@ trait ConnectionBroker
   //      && newConnection.id != jasonId ) {
   //
   //      val jensConnectionIntro = new Introduction(UUID.randomUUID(), "Jen", jenId, newConnection.id)
-  //      updateData(newConnection.writeCnxn, jensConnectionIntro, oldData)
+  //      updateDataById(newConnection.writeCnxn, jensConnectionIntro, oldData)
   //      val mikesConnectionIntro = new Introduction(UUID.randomUUID(), "Mike", mikeId, newConnection.id)
-  //      updateData(newConnection.writeCnxn, mikesConnectionIntro, oldData)
+  //      updateDataById(newConnection.writeCnxn, mikesConnectionIntro, oldData)
   //      val jasonsConnectionIntro = new Introduction(UUID.randomUUID(), "Jason", jasonId, newConnection.id)
-  //      updateData(newConnection.writeCnxn, jasonsConnectionIntro, oldData)
+  //      updateDataById(newConnection.writeCnxn, jasonsConnectionIntro, oldData)
   //      val colinsConnectionIntro = new Introduction(UUID.randomUUID(), "Colin", colinId, newConnection.id)
-  //      updateData(newConnection.writeCnxn, colinsConnectionIntro, oldData)
+  //      updateDataById(newConnection.writeCnxn, colinsConnectionIntro, oldData)
   //    }
   //
   //  }
@@ -60,7 +60,7 @@ trait ConnectionBroker
   //  protected def generateIntroduction(targetAlias: String, brokerCnxn:AgentCnxnProxy) = {
   //    val oldData: Connection = null
   //    val intro = new Introduction(UUID.randomUUID(), targetAlias, )
-  //    updateData(connection.writeCnxn, intro, oldData)
+  //    updateDataById(connection.writeCnxn, intro, oldData)
   //  }
 
   def generateSystemData(selfCnxn: AgentCnxnProxy, connection: Connection): SystemData[ Connection ] =

@@ -287,7 +287,7 @@ with Serializable
       val fullProfileOldDisclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
 
       println("IN TEST self conn:" + cnxnJenSelf)
-      //create a setcontentrequest message to downgrate to introduced
+      //create a setcontentrequest message to downgrade to introduced
       val reqFullDisclosedDataChanged = SetContentRequest(new EventKey(UUID.randomUUID, ""), fullProfileNewDisclosedData, fullProfileOldDisclosedData)
       reqFullDisclosedDataChanged.targetCnxn = cnxnJenSelf
       reqFullDisclosedDataChanged.originCnxn = cnxnJenSelf

@@ -104,7 +104,7 @@ trait InvitationResponseSet
         if ( !isAccepted )
           newData.reject()
         //TODO: something is not right, its not safedeleting the old, getting 2 copies!
-        updateData(cnxnBroker_Broker, newData, msg)
+        updateDataById(cnxnBroker_Broker, newData, msg)
       }
     }
   }

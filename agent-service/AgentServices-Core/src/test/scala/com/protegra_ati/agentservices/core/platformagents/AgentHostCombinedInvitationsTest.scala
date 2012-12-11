@@ -114,8 +114,8 @@ with ReferralUser
       val connBrokerMike = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikeId)
 
       // at the end connection between Mike and Jason has to be established
-      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerJason, null)
-      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMike, null)
+      storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerJason, null)
+      storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerMike, null)
 
       AgentHostCombinedBase.setProfile(uiR, connJasonJason.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestFull("jason", "klassen", "Jason.Klassen@protegra.com", "CA"))
       Thread.sleep(TIMEOUT_LONG)
@@ -186,8 +186,8 @@ with ReferralUser
     //      val connBrokerMike = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikeId)
     //
     //      // at the end connection between Mike and Jason has to be established
-    //      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerJason, null)
-    //      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMike, null)
+    //      storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerJason, null)
+    //      storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerMike, null)
     //      Thread.sleep(TIMEOUT_LONG)
     //      // Jason asks broker to be connected to Mikhaial
     //      val postToBroker = new Post("Hi Broker here is Mike, connect me to Jason", "theBody", new java.util.HashMap())
@@ -252,8 +252,8 @@ with ReferralUser
     //      val connBrokerMike = AgentHostCombinedBase.setupConnection(storeR, brokerId, mikeId)
     //
     //      // at the end connection between Mike and Jason has to be established
-    //      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerJason, null)
-    //      storeR.updateData(connBrokerBroker.writeCnxn, connBrokerMike, null)
+    //      storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerJason, null)
+    //      storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerMike, null)
     //      Thread.sleep(TIMEOUT_LONG)
     //      // Jason asks broker to be connected to Mikhaial
     //      val postToBroker = new Post("Hi Broker here is Mike, connect me to Jason", "theBody", new java.util.HashMap())

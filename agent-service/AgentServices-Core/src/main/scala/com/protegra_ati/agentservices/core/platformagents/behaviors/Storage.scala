@@ -81,16 +81,21 @@ trait Storage
     delete(_dbQ, conn.writeCnxn, dataToDelete.toStoreKey)
   }
 
-  def updateData(cnxn: AgentCnxnProxy, newData: Data, oldData: Data)
+  def updateDataById(cnxn: AgentCnxnProxy, newData: Data, oldData: Data)
   {
     if (newData != null)
-      safeDelete(cnxn, oldData, Some(newData))
+      deleteDataById(cnxn, newData, Some(newData))
     else
-      safeDelete(cnxn, oldData, None)
+      deleteDataById(cnxn, oldData, None)
 
     //TODO: Issue 49
     Thread.sleep(350)
     store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+  }
+
+  def deleteDataById [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Option[ Data ]) : Unit =
+  {
+    fetchList[ Data ](_dbQ, cnxn, search.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))
   }
 
   def updateDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data)

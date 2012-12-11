@@ -96,9 +96,9 @@ trait IntroductionRequestSetCreator
         //we can be confident that any broker_... connections are persisted on this pa
         //obsolete-intro state should exist before CreateInvitationRequest based on Introduction so we process it first
 //        report("Saving Introduction State for " + connBroker_B.alias + " to " + connBroker_A.writeCnxn.toString, Severity.Trace)
-//        updateData(connBroker_A.writeCnxn, introState, null)
+//        updateDataById(connBroker_A.writeCnxn, introState, null)
         report("Saving Introduction for " + connBroker_B.alias + " to " + connBroker_A.writeCnxn.toString, Severity.Debug)
-        updateData(connBroker_A.writeCnxn, intro, null)
+        updateDataById(connBroker_A.writeCnxn, intro, null)
       }
     }
   }
