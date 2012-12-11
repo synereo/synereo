@@ -332,8 +332,6 @@ trait ContentRequestSet
         //this is going to be a problem if the disclosure level changes
         //need update by search here
         updateData(x.writeCnxn, auditItem, auditItem)
-        //todo: see if necessary, why limit?
-        Thread.sleep(200)
       }
       case _ => {
       }
@@ -381,8 +379,6 @@ trait ContentRequestSet
         //this is going to be a problem if the disclosure level changes
         //need update by search here
         updateData(x.writeCnxn, auditItem, auditItem)
-        //todo: see if necessary, why limit?
-        Thread.sleep(200)
       }
       case _ => {
       }
@@ -399,14 +395,12 @@ trait ContentRequestSet
     req.targetCnxn = connectionToTarget.readCnxn
     req.originCnxn = connectionToTarget.readCnxn
     send(_publicQ, connectionToTarget.readCnxn, req)
-    Thread.sleep(200)
   }
 
   def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
   {
     //store object on self Cnxn
     updateData(selfCnxn, newCompositeData.data, oldData)
-    Thread.sleep(200)
 
     //TODO: make this search all conns
     updateData(newCompositeData.connection.writeCnxn, newCompositeData.data, oldData)
@@ -427,8 +421,6 @@ trait ContentRequestSet
 
       }
     }
-    //todo: see if necessary, why limit?
-    Thread.sleep(200)
   }
 
   def setContentIfConnectionChanged(msg: SetContentRequest) =

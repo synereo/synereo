@@ -1,3 +1,4 @@
+/*
 package scala.concurrent
 
 /* User: mgevantmakher
@@ -66,4 +67,4 @@ trait ThreadPoolRunners extends TaskRunnersBase
   def createDefaultTaskRunner() = new ThreadPoolRunner(numWorkers)
 
 
-}
+}*/
