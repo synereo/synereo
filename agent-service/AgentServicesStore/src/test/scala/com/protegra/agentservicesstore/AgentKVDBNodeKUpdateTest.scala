@@ -33,7 +33,8 @@ with KVDBHelpers
 with RabbitTestSetup
 with Timeouts
 //with Journalist
-with FJTaskRunnersX
+with ThreadPoolRunnersX
+//with FJTaskRunnersX
 with Serializable
 {  
   val cnxnUIStore = new AgentCnxn(( "UI" + UUID.randomUUID.toString ).toURI, "", ( "Store" + UUID.randomUUID.toString ).toURI)

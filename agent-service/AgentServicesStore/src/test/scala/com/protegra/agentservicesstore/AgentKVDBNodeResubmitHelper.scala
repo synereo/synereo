@@ -30,7 +30,8 @@ import Being.AgentKVDBNodeFactory
 
 trait AgentKVDBNodeResubmitRequestsTestConfigurationT
 extends KVDBHelpers
-with FJTaskRunnersX
+with ThreadPoolRunnersX
+//with FJTaskRunnersX
 with Serializable {
 
   @transient
