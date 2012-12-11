@@ -157,7 +157,11 @@ trait MonadicGenerators {
 }
 
 trait MonadicConcurrentGenerators {
-  self : MonadicGenerators with FJTaskRunnersX with WireTap with Journalist =>
+  self : MonadicGenerators
+    //with FJTaskRunnersX
+    with ThreadPoolRunnersX
+    with WireTap
+    with Journalist =>
     def spawnGen[T]( 
       gen : Generator[T,Unit,Unit]
     ) =
@@ -213,8 +217,10 @@ trait MonadicWireToTrgtConversion
 }
 
 trait MonadicDispatcher[T] 
-extends MonadicGenerators
-with FJTaskRunnersX {
+  extends MonadicGenerators
+  with ThreadPoolRunnersX
+  //with FJTaskRunnersX
+{
   self : WireTap with Journalist =>
 
   type Channel

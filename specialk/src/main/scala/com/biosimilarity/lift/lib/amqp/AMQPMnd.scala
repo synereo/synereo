@@ -251,7 +251,8 @@ trait AMQPBrokerScope[T] extends Serializable {
   }
 
   trait AMQPQueuePreShivMQT[A, QT[Msg] <: AMQPAbstractQueue[Msg]]
-  extends FJTaskRunnersX
+  extends ThreadPoolRunnersX
+  //extends FJTaskRunnersX
   with BMonad[QT]
   with MonadPlus[QT]
   with MonadFilter[QT] 

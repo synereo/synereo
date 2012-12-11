@@ -2144,7 +2144,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	cache, acquaintances
       ) 
       
-      trait PersistedKVDBNodeFactoryT extends AMQPURIOps with FJTaskRunnersX {
+      trait PersistedKVDBNodeFactoryT
+        extends AMQPURIOps
+        with ThreadPoolRunnersX
+        //with FJTaskRunnersX
+      {
 	def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI, there : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody]
 	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDBNode[ReqBody,RspBody]
       }

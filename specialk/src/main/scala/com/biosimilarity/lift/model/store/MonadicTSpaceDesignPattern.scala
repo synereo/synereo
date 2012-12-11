@@ -18,7 +18,8 @@ import scala.collection.mutable.HashMap
 
 trait MonadicTupleSpaceDP[Place,Pattern,Resource]
 //       extends MapLike[Place,Resource, This]
-extends FJTaskRunnersX
+  extends ThreadPoolRunnersX
+  //extends FJTaskRunnersX
 {
   type RK = Option[Resource] => Unit @suspendable
   //type CK = Option[Resource] => Unit @suspendable

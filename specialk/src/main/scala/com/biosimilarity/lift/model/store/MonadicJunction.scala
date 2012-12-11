@@ -696,7 +696,9 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   ) extends InMemoryMonadicJunction(
     name,
     acquaintances
-  ) with FJTaskRunnersX
+  )
+  with ThreadPoolRunnersX
+  //with FJTaskRunnersX
   with MonadicConcurrentGenerators {
 
     case class Waiting(

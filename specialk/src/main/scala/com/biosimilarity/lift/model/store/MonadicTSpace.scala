@@ -364,7 +364,8 @@ trait ExcludedMiddleScope[Place,Pattern,Resource] {
 trait MonadicTupleSpace[Place,Pattern,Resource]
 //       extends MapLike[Place,Resource, This]
 extends MonadicGenerators
-with FJTaskRunnersX
+with ThreadPoolRunnersX
+//with FJTaskRunnersX
 with ExcludedMiddleTypes[Place,Pattern,Resource]
 {
   self : WireTap

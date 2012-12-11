@@ -79,7 +79,8 @@ import java.util.TimerTask
 import java.io.StringReader
 
 class JSONRequestREPL
-extends FJTaskRunnersX
+  //extends FJTaskRunnersX
+  extends ThreadPoolRunnersX
 with PrologTermParsing {
   // parsing
   def lexer (str : String) = new Yylex( new StringReader( str ) )

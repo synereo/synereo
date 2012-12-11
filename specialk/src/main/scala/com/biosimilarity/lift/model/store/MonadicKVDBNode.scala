@@ -617,7 +617,11 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     cache, acquaintances
   )
 
-  object KVDBNodeFactory extends AMQPURIOps with FJTaskRunnersX {
+  object KVDBNodeFactory
+    extends AMQPURIOps
+    with ThreadPoolRunnersX
+    //with FJTaskRunnersX
+  {
     def ptToPt[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse]( here : URI, there : URI ) : MonadicKVDBNode[ReqBody,RspBody] = {
       val node = MonadicKVDBNode[ReqBody,RspBody]( MonadicKVDB[ReqBody,RspBody]( MURI( here ) ), List( MURI( there ) ) )
       spawn { node.dispatchDMsgs() }
