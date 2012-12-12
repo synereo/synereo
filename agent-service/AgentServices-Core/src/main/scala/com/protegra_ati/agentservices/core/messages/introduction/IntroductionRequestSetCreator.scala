@@ -98,7 +98,7 @@ trait IntroductionRequestSetCreator
 //        report("Saving Introduction State for " + connBroker_B.alias + " to " + connBroker_A.writeCnxn.toString, Severity.Trace)
 //        updateDataById(connBroker_A.writeCnxn, introState, null)
         report("Saving Introduction for " + connBroker_B.alias + " to " + connBroker_A.writeCnxn.toString, Severity.Debug)
-        updateDataById(connBroker_A.writeCnxn, intro, null)
+        updateDataById(connBroker_A.writeCnxn, intro)
       }
     }
   }

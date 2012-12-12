@@ -142,7 +142,7 @@ trait ContentRequestSet
 
     msg.newData match {
       case x: Connection => {
-        updateDataById(_storeCnxn, msg.newData, msg.oldData)
+        updateDataById(_storeCnxn, msg.newData)
         if ( isNew(msg.newData, msg.oldData) ) {
           //create the systemdata
           val selfCnxn = x.writeCnxn
@@ -223,7 +223,7 @@ trait ContentRequestSet
   def setContentForSelfAndAllConnections(selfCnxn: AgentCnxnProxy, newData: Data, oldData: Data)
   {
     //store object on self Cnxn
-    updateDataById(selfCnxn, newData, oldData)
+    updateDataById(selfCnxn, newData)
 
     //replicate data on all connections with appropriate level of disclosure based on connectionType
     //if no disclosed data is found for an object type (e.g. profile), then nothing is replicated on the related connections for that data
@@ -239,7 +239,7 @@ trait ContentRequestSet
   def setContentForSelfAndAllConnectionsAndTargetSelf(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
   {
     //store object on self Cnxn
-    updateDataById(selfCnxn, newData, oldData)
+    updateDataById(selfCnxn, newData)
 
     //replicate data on all connections with appropriate level of disclosure based on connectionType
     //if no disclosed data is found for an object type (e.g. profile), then nothing is replicated on the related connections for that data
@@ -323,7 +323,7 @@ trait ContentRequestSet
     connection match {
       case x: Connection => {
         report("setContentByConnectionType: found connection: " + x.toString)
-        updateDataById(x.writeCnxn, authorizedData, oldAuthorizedData)
+        updateDataById(x.writeCnxn, authorizedData)
         //we are now storing the authorizedContentAuditItem data on the connection junction as well
         //for audit logging purposes...
         val auditItem = authorizedContent.forAudit(x)
@@ -331,7 +331,7 @@ trait ContentRequestSet
         //auditItem.autoApproved = true
         //this is going to be a problem if the disclosure level changes
         //need update by search here
-        updateDataById(x.writeCnxn, auditItem, auditItem)
+        updateDataById(x.writeCnxn, auditItem)
       }
       case _ => {
       }
@@ -370,7 +370,7 @@ trait ContentRequestSet
 
           }
         }
-        updateDataById(x.writeCnxn, authorizedData, oldAuthorizedData)
+        updateDataById(x.writeCnxn, authorizedData)
         //we are now storing the authorizedContentAuditItem data on the connection junction as well
         //for audit logging purposes...
         val auditItem = authorizedContent.forAudit(x)
@@ -378,7 +378,7 @@ trait ContentRequestSet
         //auditItem.autoApproved = true
         //this is going to be a problem if the disclosure level changes
         //need update by search here
-        updateDataById(x.writeCnxn, auditItem, auditItem)
+        updateDataById(x.writeCnxn, auditItem)
       }
       case _ => {
       }
@@ -400,10 +400,10 @@ trait ContentRequestSet
   def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
   {
     //store object on self Cnxn
-    updateDataById(selfCnxn, newCompositeData.data, oldData)
+    updateDataById(selfCnxn, newCompositeData.data)
 
     //TODO: make this search all conns
-    updateDataById(newCompositeData.connection.writeCnxn, newCompositeData.data, oldData)
+    updateDataById(newCompositeData.connection.writeCnxn, newCompositeData.data)
 
     if ( parentRequestIds != null && newCompositeData.connection.policies != null && !newCompositeData.connection.policies.isEmpty ) {
 
@@ -552,7 +552,7 @@ trait ContentRequestSet
     val objectName = msg.queryObject.className.trimPackage.fromCamelCase
     val authReq = new AuthorizationRequest(objectName, msg, new DateTime(), "false")
     var oldData: AuthorizationRequest = null
-    updateDataById(msg.targetCnxn, authReq, oldData)
+    updateDataById(msg.targetCnxn, authReq)
   }
 
   //public for test

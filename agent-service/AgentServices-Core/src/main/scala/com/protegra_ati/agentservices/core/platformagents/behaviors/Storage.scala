@@ -81,62 +81,47 @@ trait Storage
     delete(_dbQ, conn.writeCnxn, dataToDelete.toStoreKey)
   }
 
-  def updateDataById(cnxn: AgentCnxnProxy, newData: Data, oldData: Data)
+  def updateDataById(cnxn: AgentCnxnProxy, newData: Data)
   {
-    if (newData != null)
-      deleteDataById(cnxn, newData, Some(newData))
-    else
-      deleteDataById(cnxn, oldData, None)
-
-    //TODO: Issue 49
-    Thread.sleep(350)
+    deleteDataById(cnxn, newData)
+//
+//    //TODO: Issue 49
+//    Thread.sleep(350)
     store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
   }
 
-  def deleteDataById [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Option[ Data ]) : Unit =
+  def deleteDataById [T<:Data](cnxn: AgentCnxnProxy, newData: T) : Unit =
   {
-    fetchList[ Data ](_dbQ, cnxn, search.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))
+    fetchList[ Data ](_dbQ, cnxn, newData.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))
   }
 
   def updateDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data)
   {
     //this will delete ALL occurrences of the specified data in the search object
-    if (newData != null)
-      deleteDataBySearch(cnxn, search, Some(newData))
-    else
-      deleteDataBySearch(cnxn, search, None)
+    deleteDataBySearch(cnxn, search, newData)
 
     //TODO: Issue 49
     Thread.sleep(350)
     store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
   }
 
-  def deleteDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Option[ Data ]) : Unit =
+  def deleteDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data) : Unit =
   {
     fetchList[ Data ](_dbQ, cnxn, search.toSearchKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))
   }
 
   //could use a notion of retries if it isn't safe to delete
-  protected def handleDeleteAfterFetch(cnxn: AgentCnxnProxy, dataToDelete: List[ Data ], newData: Option[ Data ])
+  protected def handleDeleteAfterFetch(cnxn: AgentCnxnProxy, dataToDelete: List[ Data ], newData: Data)
   {
     dataToDelete.map(x => safeDelete(cnxn, x, newData))
   }
 
   //exception to the convention of newData, oldData
-  protected def safeDelete(cnxn: AgentCnxnProxy, dataToDelete: Data, dataToPreserve: Option[ Data ]) =
+  protected def safeDelete(cnxn: AgentCnxnProxy, dataToDelete: Data, dataToPreserve: Data) =
   {
-    if ( dataToDelete != null ) {
-
-      //this check prevents the race condition occurring where the new data is saved before the fetch is finished
-      dataToPreserve match {
-        case None => {
-          delete(_dbQ, cnxn, dataToDelete.toStoreKey)
-        }
-        case Some(x) if x != dataToDelete => {
-          delete(_dbQ, cnxn, dataToDelete.toStoreKey)
-        }
-        case _ => {}
-      }
+    //this check prevents the race condition occurring where the new data is saved before the fetch is finished
+    if ( dataToDelete != null && dataToDelete != dataToPreserve ) {
+      delete(_dbQ, cnxn, dataToDelete.toStoreKey)
     }
   }
 

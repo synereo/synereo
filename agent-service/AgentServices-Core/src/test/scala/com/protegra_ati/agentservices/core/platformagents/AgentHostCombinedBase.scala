@@ -139,7 +139,7 @@ Timeouts
 
     pa.processNewConnection(newConn, sourceSelfCnxn)
     if ( selfId != targetId )
-      pa.updateDataById(sourceSelfCnxn, newConn, null)
+      pa.updateDataById(sourceSelfCnxn, newConn)
 
     Thread.sleep(TIMEOUT_SHORT)
     newConn
@@ -157,7 +157,7 @@ Timeouts
 
     pa.processNewConnection(selfTargetConn, sourceSelfCnxn)
     if ( !selfTargetConn.readCnxn.src.toString.equals(selfTargetConn.readCnxn.trgt.toString) )
-      pa.updateDataById(sourceSelfCnxn, selfTargetConn, null)
+      pa.updateDataById(sourceSelfCnxn, selfTargetConn)
 
     Thread.sleep(TIMEOUT_SHORT)
     selfTargetConn
@@ -171,7 +171,7 @@ Timeouts
 
     pa.processNewConnection(newConn, sourceSelfCnxn)
     if ( selfId != targetId )
-      pa.updateDataById(sourceSelfCnxn, newConn, null)
+      pa.updateDataById(sourceSelfCnxn, newConn)
 
     Thread.sleep(TIMEOUT_SHORT)
     newConn

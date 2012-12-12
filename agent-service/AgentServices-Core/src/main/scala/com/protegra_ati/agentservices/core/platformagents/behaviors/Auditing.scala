@@ -59,7 +59,7 @@ self: BasePlatformAgent with Storage =>
       val item = new AuditLogItem("", new DateTime())
       item.detail = logDetail
       var oldItem: AuditLogItem = null
-      updateDataById(cnxn, item, oldItem)
+      updateDataById(cnxn, item)
       }("inAuditing logAuditItem")
     }
   }

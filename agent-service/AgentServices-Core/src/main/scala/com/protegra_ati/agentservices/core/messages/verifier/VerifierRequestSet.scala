@@ -59,7 +59,7 @@ trait VerifierRequestSet {
     selectVerifierRequest.targetCnxn = request.targetCnxn
     val persistedRequest = PersistedRequest("SelectVerifierRequest", selectVerifierRequest, new DateTime()) //change to class
     var oldData: PersistedRequest = null
-    updateDataById(request.targetCnxn, persistedRequest, oldData)
+    updateDataById(request.targetCnxn, persistedRequest)
     logAuditItem(request.targetCnxn, generateAuditLogGetClaimRequest(request))
     logAuditItem(request.targetCnxn, generateAuditLogSelectVerifierRequest(selectVerifierRequest))
     notifyUser(request.notifyCnxn, selectVerifierRequest)
@@ -144,7 +144,7 @@ trait VerifierRequestSet {
       report("handleContentVerifierFetchfound manual-approve content verifier", Severity.Trace)
       val persistedRequest = PersistedRequest("VerifyPermissionRequest", request, new DateTime()) //change to class
       var oldData: PersistedRequest = null
-      updateDataById(cnxn, persistedRequest, oldData)
+      updateDataById(cnxn, persistedRequest)
       logAuditItem(cnxn, generateAuditLogVerifyPermissionRequested(request))
       notifyUser(request.targetCnxn, request)
     }
@@ -163,7 +163,7 @@ trait VerifierRequestSet {
 
     val persistedRequest = PersistedRequest("VerifyContentRequest", request, new DateTime()) //change to class
     var oldData: PersistedRequest = null
-    updateDataById(request.targetCnxn, persistedRequest, oldData)
+    updateDataById(request.targetCnxn, persistedRequest)
     logAuditItem(request.targetCnxn, generateAuditLogVerifyContentRequest(request))
     notifyUser(request.claimingAgentCnxnProxy, request)
 

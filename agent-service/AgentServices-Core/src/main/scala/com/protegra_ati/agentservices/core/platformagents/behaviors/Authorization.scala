@@ -172,11 +172,11 @@ trait Authorization
   //      oldAuthorizedData = viewableItem.authorizedData(oldFieldList)
   //      oldAuditItem = oldAuthorizationPermissions.forAudit(oldConnection)
   //    }
-  //    updateDataById(newConnection.writeCnxn, newAuthorizedData, oldAuthorizedData)
+  //    updateDataById(newConnection.writeCnxn, newAuthorizedData)
   //    //we now need to store an authorizedContentAuditItem object in each Connection junction
   //    //for audit purposes
   //
-  //    updateDataById(newConnection.writeCnxn, newAuthorizationPermissions.forAudit(newConnection), oldAuditItem)
+  //    updateDataById(newConnection.writeCnxn, newAuthorizationPermissions.forAudit(newConnection))
   //  }
   //
   //  def retrievePreviousAuthorizationInfo(cnxn: AgentCnxnProxy, data: Data, newConnection: Connection, oldConnection: Connection)
