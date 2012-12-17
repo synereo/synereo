@@ -371,7 +371,12 @@ trait ContentRequestSet
           }
         }
         updateDataById(x.writeCnxn, authorizedData)
-        updateCache(x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
+
+        if ( x.policies != null && !x.policies.isEmpty ) {
+          if ( !x.policies.contains(ConnectionPolicy.SearchDisabled.toString) ) {
+            updateCache(x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
+          }
+        }
         //we are now storing the authorizedContentAuditItem data on the connection junction as well
         //for audit logging purposes...
         val auditItem = authorizedContent.forAudit(x)
