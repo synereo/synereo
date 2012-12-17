@@ -87,7 +87,9 @@ trait Storage
 //
 //    //TODO: Issue 49
 //    Thread.sleep(350)
-    store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+    spawn {
+      store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+    }
   }
 
   def deleteDataById [T<:Data](cnxn: AgentCnxnProxy, newData: T) : Unit =
