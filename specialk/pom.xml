@@ -517,7 +517,7 @@
     <dependency>
       <groupId>org.basex</groupId>
       <artifactId>basex-api</artifactId>
-      <version>7.5-SNAPSHOT</version>
+      <version>7.5-SNAPSHOT-PROTEGRA-20121812</version>
     </dependency>
 
     <dependency>
