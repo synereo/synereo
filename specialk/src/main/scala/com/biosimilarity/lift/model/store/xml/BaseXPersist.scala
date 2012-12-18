@@ -23,6 +23,11 @@ with Schema
 
   def clientSessionFromConfig: ClientSession =
   {
+    new ClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)
+  }
+
+  private def clientSessionFromPool: ClientSession =
+  {
     pool.borrowClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)
   }
 
@@ -32,21 +37,29 @@ with Schema
    * @return
    */
   def open(collectionName: String) = {
-    val clientSession = clientSessionFromConfig
+    val clientSession = clientSessionFromPool
     _checkIfDBExistsAndCreateIfNot(clientSession, collectionName)
     clientSession
   }
 
-
   // Note: leaveOpen is being ignored
   def checkIfDBExists(collectionName: String, leaveOpen: Boolean): Boolean =
   {
-    val clientSession = clientSessionFromConfig
+    val clientSession = clientSessionFromPool
     try {
-      _checkIfDBExists(clientSession, collectionName)
-    }
-    finally {
+      val res = _checkIfDBExists(clientSession, collectionName)
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -67,12 +80,21 @@ with Schema
   // Note: leaveOpen is being ignored
   def checkIfDBExistsAndCreateIfNot(collectionName: String, leaveOpen: Boolean): Boolean =
   {
-    val clientSession = clientSessionFromConfig
+    val clientSession = clientSessionFromPool
     try {
-      _checkIfDBExistsAndCreateIfNot(clientSession, collectionName)
-    }
-    finally {
+      val res = _checkIfDBExistsAndCreateIfNot(clientSession, collectionName)
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -87,9 +109,13 @@ with Schema
       true
     }
     catch {
-      case e: BaseXException => {
-        e.printStackTrace
+      case bxe: BaseXException => {
+        bxe.printStackTrace
         false
+      }
+      case e => {
+        e.printStackTrace
+        throw e
       }
     }
   }
@@ -128,15 +154,26 @@ with Schema
     try {
       //there may be a more efficient way to achieve this in a single query but the fact that XQUF doesnt return results
       //and that we need special root node insert handling on very first insert made this cleaner
+      var res:Unit = null
       if ( _exists( recordType, clientSession )( collectionName, key ) ) {
-        _update( recordType, clientSession )(  collectionName, key, value )
+        res = _update( recordType, clientSession )(  collectionName, key, value )
       }
       else {
-        _insert( recordType, clientSession )( collectionName, key, value )
+        res = _insert( recordType, clientSession )( collectionName, key, value )
       }
-    }
-    finally {
+
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -146,10 +183,19 @@ with Schema
   {
     val clientSession = open(collectionName)
     try {
-      _exists(recordType, clientSession)(collectionName, key)
-    }
-    finally {
+      val res = _exists(recordType, clientSession)(collectionName, key)
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -185,10 +231,19 @@ with Schema
   {
     val clientSession = open(collectionName)
     try {
-      _update(recordType, clientSession)(collectionName, key, value)
-    }
-    finally {
+      val res = _update(recordType, clientSession)(collectionName, key, value)
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -217,10 +272,19 @@ with Schema
     val clientSession = open(collectionName)
 
     try {
-      _insert(recordType, clientSession)(collectionName, key, value)
-    }
-    finally {
+      val res = _insert(recordType, clientSession)(collectionName, key, value)
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -291,16 +355,21 @@ with Schema
 
   def drop(collectionName: String) = {
     // Note: we do not need to check if the DB exists to drop it
-    val clientSession = clientSessionFromConfig
+    val clientSession = clientSessionFromPool
     try {
-      clientSession.execute(new DropDB(collectionName))
+      val res = clientSession.execute(new DropDB(collectionName))
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
     }
     catch {
-      case e: BaseXException => {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
       }
-    }
-    finally {
-      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -322,10 +391,19 @@ with Schema
   {
     val clientSession = open(collectionName)
     try {
-      _execute(clientSession, collectionName, queries)
-    }
-    finally {
+      val res = _execute(clientSession, collectionName, queries)
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -341,10 +419,19 @@ with Schema
   {
     val clientSession = open(collectionName)
     try {
-      _executeScalar(clientSession, collectionName, query)
-    }
-    finally {
+      val res = _executeScalar(clientSession, collectionName, query)
       pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+      res
+    }
+    catch {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
+      }
     }
   }
 
@@ -355,7 +442,7 @@ with Schema
       clientSession.setOutputStream(srvrRspStrm)
       clientSession.execute(new XQuery(query))
       clientSession.setOutputStream(null)
-      srvrRspStrm.toString
+      srvrRspStrm.toString("UTF-8")
     }
     catch {
       case e: BaseXException => {
@@ -397,16 +484,22 @@ with Schema
     try {
       clientSession.setOutputStream(srvrRspStrm)
       clientSession.execute(new XQuery(query))
-      getRslts( srvrRspStrm )
+      val res = getRslts( srvrRspStrm )
+      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd )
+      res
     }
     catch {
-      case bxe : BaseXException => {
+      case bxe:BaseXException => {
+        pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
+      }
+      case e => {
+        pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
+        throw e
       }
     }
     finally{
       srvrRspStrm.close
-      pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd )
     }
   }
 

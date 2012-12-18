@@ -79,4 +79,19 @@ object BaseXSessionPool {
   def returnClientSession( cs : ClientSession, host: String, port: Int, user: String, pwd: String ) = {
     getPool(host, port, user, pwd).returnObject( cs )
   }
+
+  /**
+   * Remove the client session from the pool and destroy it.  Method is used
+   * in case of non BaseX exceptions, such as socket errors due to disconnects, etc.
+   * @param cs
+   * @param host
+   * @param port
+   * @param user
+   * @param pwd
+   */
+  def evictClientSession( cs : ClientSession, host: String, port: Int, user: String, pwd: String ) = {
+    try {
+      getPool(host, port, user, pwd).invalidateObject(cs)
+    } catch { case _ => }
+  }
 }

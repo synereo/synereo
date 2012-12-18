@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.1.5</version>
+  <version>1.1.1.6</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -517,7 +517,7 @@
     <dependency>
       <groupId>org.basex</groupId>
       <artifactId>basex-api</artifactId>
-      <version>7.5-SNAPSHOT-PROTEGRA</version>
+      <version>7.5-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -580,6 +580,20 @@
       </extensions>
 
       <plugins>
+          <!--<plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-source-plugin</artifactId>
+              <version>2.2</version>
+              <executions>
+                  <execution>
+                      <id>attach-sources</id>
+                      <phase>verify</phase>
+                      <goals>
+                          <goal>jar-no-fork</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>-->
       <plugin>
 	<groupId>org.apache.maven.plugins</groupId>
 	<artifactId>maven-compiler-plugin</artifactId>
