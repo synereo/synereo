@@ -374,7 +374,7 @@ trait ContentRequestSet
 
         if ( x.policies != null && !x.policies.isEmpty ) {
           if ( !x.policies.contains(ConnectionPolicy.SearchDisabled.toString) ) {
-            updateCache(x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
+            updateCache(x.writeCnxn, x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
           }
         }
         //we are now storing the authorizedContentAuditItem data on the connection junction as well
@@ -393,7 +393,7 @@ trait ContentRequestSet
     report("exiting handleSetContentByConnectionTypeFetch in StorePlatform", Severity.Trace)
   }
 
-  def updateCache(readCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data): Unit = {
+  def updateCache(originCnxn: AgentCnxnProxy, targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data): Unit = {
     //hook to implement in higher up libraries
     report("Cache not implemented", Severity.Trace)
   }

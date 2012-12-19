@@ -104,19 +104,12 @@ object ConnectionFactory
     // TODO eventually validation should here take place
   }
 
-
-  final private val SEARCH_ALL_KEY = new Connection().toSearchKey
-
-  final private val SEARCH_ALL = new Connection()
-  {
-    override def toSearchKey(): String = ConnectionFactory.SEARCH_ALL_KEY
-  }
-
   // use everywhere where before new Connection() was used without any modifications!!!!
   // NEVER modify connection object returned over this method!!!!!!
+  //deprecate this in favor of Connection.SEARCH_ALL
   def createEmptyImmutableConnectionForSearch(): Connection =
   {
-    SEARCH_ALL
+    Connection.SEARCH_ALL
   }
 
 }
