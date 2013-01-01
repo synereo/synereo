@@ -61,7 +61,7 @@ with Serializable
   val reducedFullProfile = mockProfile.copy()
   reducedFullProfile.website = ""
   reducedFullProfile.region = ""
-  reducedFullProfile.image = new Image()
+  reducedFullProfile.imageHashCode = ""
 
   val jenId = ( "Jen" + UUID.randomUUID )
   val mikeId = ( "Mike" + UUID.randomUUID )

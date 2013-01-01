@@ -79,12 +79,12 @@ class StorableDataTest extends SpecificationWithJUnit
     "generate store key correctly for a Profile" in {
       val idN = "MY_ID"
       val mockProfile = new Profile("FirstName", "LastName", "desc?", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
-      mockProfile.image = new Image("name", "", "content hasn't be visible in a toStoreKey", "meta1 meta2 meta3")
+      mockProfile.imageHashCode = "1234"
       mockProfile.id = idN
       mockProfile.localeCode = "en"
       val storeKey = mockProfile.toStoreKey
       //      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"\"),emailAddress(\"123456789@test.com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
-      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"desc \"),emailAddress(\"123456789 test com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
+      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"desc \"),emailAddress(\"123456789 test com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),imageHashCode(\"1234\")))"
       //      println("created  storeKey4Profile: " + storeKey)
       //      println("expected storeKey4Profile: " + expectedStoreKey)
       storeKey must be_==(expectedStoreKey)
@@ -140,12 +140,12 @@ class StorableDataTest extends SpecificationWithJUnit
     "generate delete key correctly for a Profile" in {
       val idN = "MY_ID"
       val mockProfile = new Profile("FirstName", "LastName", "desc?", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
-      mockProfile.image = new Image("name", "", "content hasn't be visible in a toStoreKey", "meta1 meta2 meta3")
+      mockProfile.imageHashCode = "1234"
       mockProfile.id = idN
       mockProfile.localeCode = "en"
       val deleteKey = mockProfile.toDeleteKey
       //      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"\"),emailAddress(\"123456789@test.com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
-      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(_),firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),image(_)))"
+      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(_),firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
       //      println("created  storeKey4Profile: " + storeKey)
       //      println("expected storeKey4Profile: " + expectedStoreKey)
       deleteKey must be_==(expectedStoreKey)

@@ -15,7 +15,7 @@ class SearchableDataTest extends SpecificationWithJUnit
   "fields " should {
 
     "set firstname" in {
-      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(\"John\"),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),image(_)))"
+      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(\"John\"),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
       val test: Profile = new Profile()
       test.firstName = "John"
       println("given:" + test.toSearchKey)
@@ -25,7 +25,7 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "set lastname" in {
-      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),image(_)))"
+      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
       val test: Profile = new Profile()
       test.lastName = "Adams"
       println(test.toSearchKey)
@@ -34,14 +34,14 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "set all wildcards" in {
-      val expected = "profile(fields(id(_),localeCode(_),firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),image(_)))"
+      val expected = "profile(_)"
       val test: Profile = new Profile()
       println(test.toSearchKey)
       test.toSearchKey must be_==(expected)
     }
 
     "set locale" in {
-      val expected = "profile(fields(id(_),localeCode(\"en\"),firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),image(_)))"
+      val expected = "profile(fields(id(_),localeCode(\"en\"),firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
       val test: Profile = new Profile()
       test.localeCode = "en"
       println(test.toSearchKey)
@@ -49,10 +49,9 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "generate search key correctly for an embedded Image" in {
-      val data: Image = new Image("name", "", "content hasn't be visible in a toStoreKey", "")
-      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),image(_)))"
+      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
       val test: Profile = new Profile()
-      test.image = data
+      test.imageHashCode = ""
       test.lastName = "Adams"
       //      println("given:" + test.toSearchKey)
       //      println("expected:" + expected)

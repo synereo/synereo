@@ -15,7 +15,10 @@ import java.util.Properties
  * @param metadata keywords describing an image, for search purpose
  */
 //case class Image(@BeanProperty name: String, @BeanProperty contentType: String, @BeanProperty content: Array[ Byte ], @BeanProperty metadata: String) extends Data
-case class Image(@BeanProperty name: String, @BeanProperty contentType: String, @BeanProperty content: String, @BeanProperty metadata: String) extends Data
+case class Image(@BeanProperty override val name: String,
+  @BeanProperty override val contentType: String,
+  @BeanProperty override val content: String,
+  @BeanProperty override val metadata: String) extends ImageBase(name, contentType, content, metadata)
 {
   def this() = this("", "", "", "")
 
@@ -45,18 +48,6 @@ case class Image(@BeanProperty name: String, @BeanProperty contentType: String, 
     this(name, contentType, byteContent, metadata)
 
 
-  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
-  {List("content")}
-
-  override def hashCode = 41 * super.hashCode + name.hashCode + contentType.hashCode + getContentLength + metadata.hashCode
-
-  def getContentLength(): Int =
-  {
-    if ( content == null )
-      0
-    else
-      content.length
-  }
 
   /**
    * returns encoded byte array of image file
@@ -84,16 +75,6 @@ case class Image(@BeanProperty name: String, @BeanProperty contentType: String, 
     ( "\"" + getFieldValue(field) + "\"" )
   }
 
-
-  def sameContent(thatContent: Array[ Byte ]): Boolean =
-  {
-    if ( content == null && thatContent == null )
-      true
-    else if ( content == null )
-      false
-    else
-      content.sameElements(thatContent)
-  }
 
   override def canEqual(other: Any) =
     other.isInstanceOf[ Image ]
