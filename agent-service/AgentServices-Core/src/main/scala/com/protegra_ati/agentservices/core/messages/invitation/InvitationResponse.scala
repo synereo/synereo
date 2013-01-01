@@ -13,7 +13,8 @@ case class InvitationResponse(
   @BeanProperty val connectionName: String,
   @BeanProperty val post: Post,
   @BeanProperty val conversationThread: java.util.List[ Post ],
-  @BeanProperty val accept: Boolean
+  @BeanProperty val accept: Boolean,
+  invitationRequest: InvitationRequest
   )
   extends Message(ids, eventKey)
   with Response
@@ -28,4 +29,10 @@ case class InvitationResponse(
 
   channelRole = Some(ChannelRole.Creator)
   channelLevel = Some(ChannelLevel.Public)
+
+  if  (invitationRequest != null){
+    this.targetCnxn = invitationRequest.targetCnxn;
+    this.originCnxn = invitationRequest.originCnxn;
+  }
 }
+

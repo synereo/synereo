@@ -95,7 +95,9 @@ with IntroductionResponseSetConsumerPrivate
       case _ => {
         msg.channelLevel = Some(ChannelLevel.Private)
         //    msg.originCnxn = _cnxnUIStore
-        msg.originCnxn = msg.targetCnxn
+        if (!msg.isInstanceOf[InvitationResponse]){
+          msg.originCnxn = msg.targetCnxn
+        }
         if ( isPrivateKVDBNetworkMode() )
           send(_privateQ, _cnxnUIStore, msg)
         else

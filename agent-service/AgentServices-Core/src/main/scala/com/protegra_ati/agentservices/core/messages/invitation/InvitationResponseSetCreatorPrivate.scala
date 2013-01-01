@@ -33,7 +33,8 @@ trait InvitationResponseSetCreatorPrivate
     msg match {
 
       case x: InvitationResponse => {
-        singleSend(_publicQ, x.targetCnxn, x)
+        //singleSend(_publicQ, x.targetCnxn, x)
+        singleSend(_publicQ, x.originCnxn, x)
       }
 
       case _ => {

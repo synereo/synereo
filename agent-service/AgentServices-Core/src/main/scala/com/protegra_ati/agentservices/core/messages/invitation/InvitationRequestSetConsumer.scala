@@ -99,14 +99,14 @@ trait InvitationRequestSetConsumer
       }
     }
 
-    val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, requestedCategory, requestedConnectionType, requestedConnectionName, null, inviteRequest.conversationThread, true)
-    response.targetCnxn = inviteRequest.targetCnxn
-    response.originCnxn = inviteRequest.originCnxn
+    val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, requestedCategory, requestedConnectionType, requestedConnectionName, null, inviteRequest.conversationThread, true, inviteRequest)
+//    response.targetCnxn = inviteRequest.targetCnxn
+//    response.originCnxn = inviteRequest.originCnxn
 
     //TODO: jsk - temporary - too close in unit test, causing db concurrency issues?
     Thread.sleep(500)
     report("****Post invite request, sending the accepted response: " + response.getChannelKey + "****", Severity.Info)
-    singleSend(_publicQ, response.targetCnxn, response)
+    singleSend(_publicQ, response.originCnxn, response)
 
   }
 
