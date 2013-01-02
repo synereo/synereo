@@ -42,7 +42,7 @@ trait SearchableData
 
   def toSearchKeyFromClass(classType: Class[ _ <: Data ]): String =
   {
-    formattedClassName(classType) + "(data(" + SEARCH_ANY + "))"
+    formattedClassName(classType) + "(data(" + SEARCH_ANY + "," + SEARCH_ANY + "))"
   }
 
   def getSearchFormattedFieldValue(f: Field): String =

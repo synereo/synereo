@@ -62,6 +62,7 @@ object ConnectionFactory
     val readCnxn = new AgentCnxnProxy(targetId.toURI, "", sourceId.toURI)
     val writeCnxn = new AgentCnxnProxy(sourceId.toURI, "", targetId.toURI)
     new Connection(category, connectionType, alias, readCnxn, writeCnxn, autoApprove, policies)
+    //adding the generation of the
     // TODO eventually validation should here take place
   }
 

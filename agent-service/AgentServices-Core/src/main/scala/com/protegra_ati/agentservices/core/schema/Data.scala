@@ -30,7 +30,7 @@ with UseKryoSerialization
 {
   //def this(_id: String, _localeCode: String) = this(_id, _localeCode, 1)
 
-  def this() = this("", "" /*, Data.currentVersion*/)
+  def this() = this("" , "" /*, Data.currentVersion*/)
 
   @BeanProperty
   var id: String = _id
