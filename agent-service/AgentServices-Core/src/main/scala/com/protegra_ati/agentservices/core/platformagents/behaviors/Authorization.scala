@@ -8,6 +8,7 @@ import com.protegra.agentservicesstore.util._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.messages.content._
+import com.protegra_ati.agentservices.core.messages.{EventKey, Identification}
 
 
 trait Authorization
@@ -41,38 +42,38 @@ trait Authorization
    * @param oldDisclosedData
    * @param selfCnxn
    */
-  def changeDisclosedContentOnConnection(selfCnxn: AgentCnxnProxy, newConnection: Connection, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ]) =
+  def changeDisclosedContentOnConnection(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newConnection: Connection, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ]) =
   {
-    findAllDataAndChangeDisclosure(selfCnxn, newDisclosedData, oldDisclosedData, newConnection)
+    findAllDataAndChangeDisclosure(selfCnxn, parentRequestIds, parentRequestEventKey, newDisclosedData, oldDisclosedData, newConnection)
   }
 
-  def changeDisclosedContentOnConnection(newConnection: Connection, oldConnection: Connection, selfCnxn: AgentCnxnProxy) =
+  def changeDisclosedContentOnConnection(parentRequestIds: Identification, parentRequestEventKey: EventKey, newConnection: Connection, oldConnection: Connection, selfCnxn: AgentCnxnProxy) =
   {
     if ( oldConnection != null ) {
       //search new auth content by conn type
       val disclosedDataExistingSearch = new DisclosedData(oldConnection.connectionType)
-      fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataExistingSearch.toSearchKey, findNewDisclosure(_: AgentCnxnProxy, _: List[ DisclosedData[ Data ] ], newConnection))
+      fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataExistingSearch.toSearchKey, findNewDisclosure(_: AgentCnxnProxy, _: List[ DisclosedData[ Data ] ], parentRequestIds, parentRequestEventKey, newConnection))
     }
     else {
-      findNewDisclosure(selfCnxn, List[ DisclosedData[ Data ] ](), newConnection)
+      findNewDisclosure(selfCnxn, List[ DisclosedData[ Data ] ](), parentRequestIds, parentRequestEventKey, newConnection)
     }
   }
 
-  def findNewDisclosure(selfCnxn: AgentCnxnProxy, oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
+  def findNewDisclosure(selfCnxn: AgentCnxnProxy, oldDisclosedData: List[ DisclosedData[ Data ] ], parentRequestIds: Identification, parentRequestEventKey: EventKey, newConnection: Connection)
   {
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
     val disclosedDataToSetSearch = new DisclosedData(newConnection.connectionType)
-    fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataToSetSearch.toSearchKey, findAllDataAndChangeDisclosure(_: AgentCnxnProxy, _: List[ DisclosedData[ Data ] ], oldDisclosedData, newConnection))
+    fetchList[ DisclosedData[ Data ] ](_dbQ, selfCnxn, disclosedDataToSetSearch.toSearchKey, findAllDataAndChangeDisclosure(_: AgentCnxnProxy, _: List[ DisclosedData[ Data ] ], parentRequestIds, parentRequestEventKey, oldDisclosedData, newConnection))
 
     report("exiting findAllDataAndChangeDisclosure", Severity.Trace)
   }
 
 
-  def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
+  def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
   {
 
-   // println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
+    // println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
 
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
@@ -81,13 +82,15 @@ trait Authorization
 
     compareDisclosure(
       selfCnxn,
+      parentRequestIds,
+      parentRequestEventKey,
       Some(newDisclosedData),
       Some(oldDisclosedData),
       newConnection)
     report("exiting findAllDataAndChangeDisclosure", Severity.Trace)
   }
 
-  def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: List[ DisclosedData[ Data ] ], oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
+  def findAllDataAndChangeDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: List[ DisclosedData[ Data ] ], parentRequestIds: Identification, parentRequestEventKey: EventKey, oldDisclosedData: List[ DisclosedData[ Data ] ], newConnection: Connection)
   {
     //println("!!!!findAllDataAndChangeDisclosure new disclose data: " + newDisclosedData)
     report("entering findAllDataAndChangeDisclosure in StorePlatform", Severity.Trace)
@@ -96,6 +99,8 @@ trait Authorization
 
     uniqueClassNames.map(className => compareDisclosure(
       selfCnxn,
+      parentRequestIds,
+      parentRequestEventKey,
       findDisclosedDataByClassName(className, newDisclosedData),
       findDisclosedDataByClassName(className, oldDisclosedData),
       newConnection)
@@ -113,7 +118,7 @@ trait Authorization
     data.headOption
   }
 
-  def compareDisclosure(selfCnxn: AgentCnxnProxy, newDisclosedData: Option[ DisclosedData[ Data ] ], oldDisclosedData: Option[ DisclosedData[ Data ] ], newConnection: Connection) =
+  def compareDisclosure(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newDisclosedData: Option[ DisclosedData[ Data ] ], oldDisclosedData: Option[ DisclosedData[ Data ] ], newConnection: Connection) =
   {
     //println("COMPARE DISCLOSURE!!!!!!!!")
     (newDisclosedData, oldDisclosedData) match {
@@ -126,19 +131,19 @@ trait Authorization
       //TODO: more efficient to combine in one case
       case (Some(newDisclosedDatum), None) => {
         val dataToChangeSearchKey = newDisclosedDatum.toSearchKeyFromDataClassType()
-        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxnProxy, _: Data, newDisclosedDatum, null, newConnection))
+        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxnProxy, _: Data, parentRequestIds, parentRequestEventKey, newDisclosedDatum, null, newConnection))
       }
       case (Some(newDisclosedDatum), Some(oldDisclosedDatum)) if newDisclosedDatum != oldDisclosedDatum => {
         //println("PROCESS DISCLOSURE!!!!!!!!")
 
         //TODO: possibly optimize of oldData not found but let the insertUpdate logic handle for now
         val dataToChangeSearchKey = newDisclosedDatum.toSearchKeyFromDataClassType()
-        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxnProxy, _: Data, newDisclosedDatum, oldDisclosedDatum, newConnection))
+        fetch[ Data ](_dbQ, selfCnxn, dataToChangeSearchKey, findOldDataAndChangeDisclosure(_: AgentCnxnProxy, _: Data, parentRequestIds, parentRequestEventKey, newDisclosedDatum, oldDisclosedDatum, newConnection))
       }
     }
   }
 
-  def findOldDataAndChangeDisclosure(cnxn: AgentCnxnProxy, selfData: Data, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
+  def findOldDataAndChangeDisclosure(cnxn: AgentCnxnProxy, selfData: Data, parentRequestIds: Identification, parentRequestEventKey: EventKey, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ], newConnection: Connection)
   {
     report("entering findOldDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
@@ -147,7 +152,7 @@ trait Authorization
     if ( oldDisclosedData != null )
       oldAuthorizedData = selfData.authorizedData(oldDisclosedData.fields)
     // eventually  parentRequestIds has to be forwarded
-    handleSetContentByConnectionTypeFetch(cnxn, newConnection, newAuthorizedData, oldAuthorizedData, newDisclosedData)
+    handleSetContentByConnectionTypeFetch(cnxn, newConnection, parentRequestIds, parentRequestEventKey, newAuthorizedData, oldAuthorizedData, newDisclosedData)
 
     report("exiting findOldDataAndChangeDisclosure", Severity.Trace)
   }

@@ -177,7 +177,7 @@ with Serializable
       Thread.sleep(TIMEOUT_MED)
 
       // store Profile
-      pa.setContentByConnectionType(cnxn, profile, profile, authorizedProfileContentBasic)
+      pa.setContentByConnectionType(cnxn, new Identification, new EventKey(), profile, profile, authorizedProfileContentBasic)
       Thread.sleep(TIMEOUT_SHORT)
 
       //check that the Profile saved to MikeJen has a proper values according to applied disclosed data
