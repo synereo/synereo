@@ -16,9 +16,10 @@ import validator._
 import persistence._
 import com.protegra_ati.agentservices.core.util.serializer.{UseKryoSerialization}
 import java.lang.{Integer}
+import java.util
 
 //TODO: see if Data object on DataValidator constructor needs to be made more efficient
-class Data(_id: String, _localeCode: String /*, _classVersionNumber: String*/) extends Serializable
+class Data(_id: String, _localeCode: String /*,_classVersionNumber: String*/) extends Serializable
 with KVDBSerializable
 with StorableDataDefaults
 with StorableData
@@ -27,9 +28,9 @@ with Validable
 with DataValidator
 with UseKryoSerialization
 {
-  //def this(_id: String, _localeCode: String) = this(_id, _localeCode, Data.currentVersion)
+  //def this(_id: String, _localeCode: String) = this(_id, _localeCode, 1)
 
-  def this() = this("", "" /*, Data.currentVersion*/)
+  def this() = this("" , "" /*, Data.currentVersion*/)
 
   @BeanProperty
   var id: String = _id
@@ -37,8 +38,10 @@ with UseKryoSerialization
   @BeanProperty
   var localeCode: String = _localeCode
 
-//  @BeanProperty
-//  val classVersionNumber = _classVersionNumber
+  @BeanProperty
+  var recVerNum: String = ""
+ // @BeanProperty
+ // var classVersionNumber = _classVersionNumber
 
   //default implementation returns an empty map
   //TODO: The Displayable names should really come from a resource lookup by language
@@ -127,7 +130,11 @@ with UseKryoSerialization
   protected def getFormattedFieldValue(field: Field): String =
   {
     // the list can be extended if new complex types has to be excluded from quotation
-    if ( classOf[ Data ].isAssignableFrom(field.getType) )
+    //exceptions of type data need to be first in the condition list
+    //ie image
+    if (ignoredFieldsForSearchAndStoreKey().contains(field.getType.toString.trimPackage.toCamelCase))  {
+      "\"" + "\""
+    } else if ( classOf[ Data ].isAssignableFrom(field.getType) )
       ( getFieldValue(field) )
     //TODO: this is too aggressive problems with hashmap, we need to fix to handle reflection better, likely similar to data
     else if ( classOf[ Message ].isAssignableFrom(field.getType) ) {
@@ -188,7 +195,18 @@ with UseKryoSerialization
   }
 
   protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
-  {Nil}
+  {
+    Nil
+  }
+  protected def keyFieldsForSearchAndStoreKey(): List [ String ] =
+  {
+    var keyList : List[String] = Nil
+    keyList = "id" :: keyList
+    keyList = "localeCode" :: keyList
+    keyList = "recVerNum" :: keyList
+    keyList
+
+  }
 
 
   //FYI:

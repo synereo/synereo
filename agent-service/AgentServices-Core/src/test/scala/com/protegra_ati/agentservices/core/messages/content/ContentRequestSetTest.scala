@@ -53,12 +53,16 @@ with Serializable
 
   val cnxnUIStore = pa._cnxnUIStore
 
-  val profileId = UUID.randomUUID
+  val profileId = UUID.randomUUID.toString
   val mockProfile = new Profile("JenFirst", "JenLast", "test Description", "firstLast@test.com", "CA", "someprovince", "city", "postalCode", "website")
+  mockProfile.id = profileId
   val emptyProfile = new Profile()
   val introducedProfile = new Profile("", "JenLast", "", "", "CA", "", "", "", "")
+  introducedProfile.id = profileId
   val fullProfile = mockProfile.copy()
+  fullProfile.id = profileId
   val reducedFullProfile = mockProfile.copy()
+  reducedFullProfile.id = profileId
   reducedFullProfile.website = ""
   reducedFullProfile.region = ""
   reducedFullProfile.imageHashCode = ""
@@ -227,6 +231,9 @@ with Serializable
     {
       fetchMustBe(introducedProfile)(pa, connMikeIntroduced.writeCnxn, queryProfile.toSearchKey)
       val connMikeFull = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId, mikeId)
+      connMikeFull.id = connMikeIntroduced.id
+      var mike111: String = introducedProfile.toDeleteKey()
+      var mike222: String = introducedProfile.toSearchKey
       //create a setcontentrequest message  to upgrade the conn. level
       val reqFull = SetContentRequest(new EventKey(UUID.randomUUID, ""), connMikeFull, connMikeIntroduced)
       reqFull.targetCnxn = cnxnJenSelf
@@ -245,6 +252,7 @@ with Serializable
       fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
       //          fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
       val connSteveIntroduced = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, TrustLevel.Introduced.toString, jenId, steveId)
+      connSteveIntroduced.id = connSteveFull.id
       println("introduced connection: " + connSteveIntroduced)
       println("introduced full: " + connSteveFull)
       println("self conn:" + cnxnJenSelf)
@@ -267,6 +275,7 @@ with Serializable
       fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
 
       val connSteveEmpty = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Empty", jenId, steveId)
+      connSteveEmpty.id = connSteveFull.id
       //create a setcontentrequest message
       val req = SetContentRequest(new EventKey(UUID.randomUUID, ""), connSteveEmpty, connSteveFull)
       req.targetCnxn = cnxnJenSelf
@@ -285,6 +294,8 @@ with Serializable
       // fields: website and image are removed
       val fullProfileNewDisclosedData = DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Full.toString, "id,localeCode,firstName,lastName,description,emailAddress,country,city,postalCode")
       val fullProfileOldDisclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+      fullProfileNewDisclosedData.id =  fullProfileOldDisclosedData.id
+
 
       println("IN TEST self conn:" + cnxnJenSelf)
       //create a setcontentrequest message to downgrade to introduced

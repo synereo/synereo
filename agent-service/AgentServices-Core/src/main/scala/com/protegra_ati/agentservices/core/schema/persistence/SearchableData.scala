@@ -29,13 +29,20 @@ trait SearchableData
   // builds the search key, for this object to be used for search like a search command repository
   def toSearchKey: String =
   {
-    val searchValueList = this.getSearchValueList()
-    this.formattedClassName + "(" + PrologFormatter.clean(searchValueList) + ")"
+
+    var searchKey = ""
+    if (id.isEmpty) {
+      val searchValueList = this.getSearchValueList(false)
+      searchKey = this.formattedClassName + "(data(" + getSearchHeaderContent() + "," + PrologFormatter.clean(searchValueList) + "))"
+    } else {
+      searchKey = keyByIdOnly()
+    }
+    searchKey
   }
 
   def toSearchKeyFromClass(classType: Class[ _ <: Data ]): String =
   {
-    formattedClassName(classType) + "(" + SEARCH_ANY + ")"
+    formattedClassName(classType) + "(data(" + SEARCH_ANY + "," + SEARCH_ANY + "))"
   }
 
   def getSearchFormattedFieldValue(f: Field): String =
@@ -50,18 +57,19 @@ trait SearchableData
   }
 
 
-  protected def getSearchValueList(): String =
+  protected def getSearchValueList(noValues: Boolean): String =
   {
 
     val fields = ReflectionHelper.getAllFields(this.getClass)
-    val searchParameters = fields map ( f => handleFieldValue(f) /*f.getName().toCamelCase + "(" + getSearchFormattedFieldValue(f) + ")"*/ )
+    val filteredFields = fields.filter(r => !keyFieldsForSearchAndStoreKey.contains(r.getName.trimPackage.toCamelCase))
+    val searchParameters = filteredFields map ( f => handleFieldValue(f) /*f.getName().toCamelCase + "(" + getSearchFormattedFieldValue(f) + ")"*/ )
 
     searchParameters.isEmpty match {
       case true => {
         SEARCH_ANY
       }
       case false => {
-        val onlyValues = fields map ( f => getFormattedFieldValue(f) )
+        val onlyValues = filteredFields map ( f => getFormattedFieldValue(f) )
 
         if ( containsOnlyAcceptedStrings(onlyValues, SEARCH_ANY) )
           SEARCH_ANY
@@ -87,7 +95,11 @@ trait SearchableData
   private def handleFieldValue(f: Field): String =
   {
     val trimmedfieldName = f.getName.trimPackage.toCamelCase
-    val ignored = ignoredFieldsForSearchAndStoreKey.contains(trimmedfieldName)
+    //not sure why but ignored sometimes set to true even when the method returns Nil, adding a check first
+    var ignored:Boolean = false
+    val ignoredFields = ignoredFieldsForSearchAndStoreKey()
+    if (ignoredFields != Nil)
+      ignored = ignoredFieldsForSearchAndStoreKey.contains(trimmedfieldName)
     var content: String = ""
 
     if ( classOf[ Data ].isAssignableFrom(f.getType) ) {
@@ -134,5 +146,16 @@ trait SearchableData
     val containsOnlyAccepted = strings.exists(_.equals(acceptedString) == false)
     !containsOnlyAccepted
   }
+  def getSearchHeaderContent() : String =
+  {
+    var headerContent : String = ""
+    if (id.isEmpty && localeCode.isEmpty && recVerNum.isEmpty){
+      headerContent = SEARCH_ANY
+    } else {
+      headerContent = getHeaderContent().replace("\"\"", SEARCH_ANY)
+    }
+    headerContent
+  }
+
 
 }

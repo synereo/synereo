@@ -289,6 +289,8 @@ trait ContentRequestSet
   {
     val fieldList = disclosedData.fields.split(',').toList
     val authorizedData = newData.authorizedData(fieldList)
+    //need to ensure the id is synched to the master copy
+    authorizedData.id = newData.id
     var oldAuthorizedData: Data = null
     if ( oldData != null ) {
       oldAuthorizedData = oldData.authorizedData(fieldList)

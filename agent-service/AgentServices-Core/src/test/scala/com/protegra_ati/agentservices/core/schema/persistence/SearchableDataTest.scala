@@ -15,7 +15,7 @@ class SearchableDataTest extends SpecificationWithJUnit
   "fields " should {
 
     "set firstname" in {
-      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(\"John\"),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
+      val expected = "profile(data(" +"_," + FIELDS + "(firstName(\"John\"),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.firstName = "John"
       println("given:" + test.toSearchKey)
@@ -25,7 +25,7 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "set lastname" in {
-      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
+      val expected = "profile(data(" +"_," + FIELDS + "(firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.lastName = "Adams"
       println(test.toSearchKey)
@@ -34,14 +34,16 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "set all wildcards" in {
-      val expected = "profile(_)"
+      //val expected = "profile(data(_," + "fields(firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
+      val expected = "profile(data(_,_))"
       val test: Profile = new Profile()
       println(test.toSearchKey)
       test.toSearchKey must be_==(expected)
     }
 
     "set locale" in {
-      val expected = "profile(fields(id(_),localeCode(\"en\"),firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
+      //val expected = "profile(data("  + KEYS + "(id(_),localeCode(\"en\"),recVerNum(_))," + "fields(firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
+      val expected = "profile(data("  + KEYS + "(id(_),localeCode(\"en\"),recVerNum(_)),_))"
       val test: Profile = new Profile()
       test.localeCode = "en"
       println(test.toSearchKey)
@@ -49,7 +51,8 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "generate search key correctly for an embedded Image" in {
-      val expected = "profile(" + FIELDS + "(id(_),localeCode(_),firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_)))"
+      val data: Image = new Image("name", "", "content hasn't be visible in a toStoreKey", "")
+      val expected = "profile(data(_," + FIELDS + "(firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.imageHashCode = ""
       test.lastName = "Adams"
@@ -60,7 +63,8 @@ class SearchableDataTest extends SpecificationWithJUnit
 
     "set all wildcards at the child level" in {
       val id = UUID.randomUUID.toString
-      val expected = "connection(" + FIELDS + "(id(\"" + id + "\"),localeCode(_),category(_),connectionType(_),alias(_),readCnxn(_),writeCnxn(_),autoApprove(_),policies(_),created(_)))"
+      //val expected = "connection(data(" + KEYS + "(id(\"" + id + "\"),localeCode(_),recVerNum(_))," + FIELDS + "(category(_),connectionType(_),alias(_),readCnxn(_),writeCnxn(_),autoApprove(_),policies(_),created(_))))"
+      val expected = "connection(data(" + KEYS + "(id(\"" + id + "\"),localeCode(_),recVerNum(_)),_))"
       val test = new Connection()
       test.id = id
       println(test.toSearchKey)
@@ -73,9 +77,10 @@ class SearchableDataTest extends SpecificationWithJUnit
     //    $Tracking$$viewed(_)))
 
     "work with traits" in {
-      skipped("TODO: need to update the test")
+
       val id = UUID.randomUUID.toString
-      val expected = "post(" + FIELDS + "(id(\"" + id + "\"),localeCode(_),subject(_),body(_),toDetails(_),fromDetails(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_)))"
+      //val expected = "post(data(" + KEYS + "(id(\"" + id + "\"),localeCode(_),recVerNum(_))," + FIELDS + "(subject(_),body(_),toDetails(_),fromDetails(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_))))"
+      val expected = "post(data(" + KEYS + "(id(\"" + id + "\"),localeCode(_),recVerNum(_)),_))"
       val test = new Post()
       test.id = id
       println(test.toSearchKey)
@@ -97,7 +102,7 @@ class SearchableDataTest extends SpecificationWithJUnit
       println("searchKey: " + searchKey)
       //to aggressive, should be like
       //      val expected = "persistedMessage(" + FIELDS + "(id(_),localeCode(_),message(_),persisted(_)))"
-      val expected = "persistedMessage(_)"
+      val expected = "persistedMessage(data(_,_))"
       searchKey must be_==(expected)
     }
 
@@ -126,9 +131,10 @@ class SearchableDataTest extends SpecificationWithJUnit
 
     //Connection needs to be updated to output the right key again
     "generate search key correctly for a Connection" in {
-      skipped("TODO: need to update the test")
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
-      val expectedSearchKey = "connection(fields(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralsDisabled, searchDisabled]\"),created(_)))"
+      //val expectedSearchKey = "connection(data(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_))," + "fields(category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralsDisabled, searchDisabled]\"),created(_))))"
+      //because there is an id expected result is
+      val expectedSearchKey = "connection(data(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_)),_))"
       val data = new Connection(ConnectionCategory.Person.toString, "connectionType", "alias", null, null, "autoApprove", List(ConnectionPolicy.ReferralsDisabled.toString, ConnectionPolicy.SearchDisabled.toString), null)
       data.id = id
       val searchKey = data.toSearchKey
@@ -137,7 +143,8 @@ class SearchableDataTest extends SpecificationWithJUnit
 
     "generate search key correctly for an Image" in {
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
-      val expectedSearchKey = "image(fields(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),name(_),contentType(_),content(_),metadata(_)))"
+      //val expectedSearchKey = "image(data(" +  KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_))," + "fields(name(_),contentType(_),content(_),metadata(_))))"
+      val expectedSearchKey = "image(data(" +  KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_)),_))"
       val data: Image = new Image()
       data.id = id
       val searchKey = data.toSearchKey
@@ -145,7 +152,7 @@ class SearchableDataTest extends SpecificationWithJUnit
 
       val emptyData = new Image()
       val emptySearchKey = emptyData.toSearchKey
-      val expectedEmptySearchKey = "image(_)"
+      val expectedEmptySearchKey = "image(data(_,_))"
       emptySearchKey must be_==(expectedEmptySearchKey)
     }
 

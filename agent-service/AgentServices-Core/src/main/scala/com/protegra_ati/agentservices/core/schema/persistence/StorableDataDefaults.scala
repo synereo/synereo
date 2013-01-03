@@ -23,11 +23,13 @@ trait StorableDataDefaults
     if ( isChild ) {
       id = ""
       localeCode = ""
+      recVerNum = ""
     }
     else {
       // Double check prevents storing of the key without essential data
       if ( id == null || id.isEmpty ) id = UUID.randomUUID().toString()
       if ( localeCode == null || localeCode.isEmpty ) localeCode = Locale.ENGLISH.toString()
+      if ( recVerNum == null || recVerNum.isEmpty ) recVerNum = "1"
     }
   }
 
