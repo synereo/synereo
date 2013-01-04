@@ -66,7 +66,7 @@ trait InvitationResponseSet
     findConnBroker_A.headOption match {
       case None => report("cannot find connBroker_A", Severity.Error)
       case Some(connBroker_A) => {
-        val findConnBroker_B = connsBroker.filter(x => x.id == createInviteRequest.invitationConnectionId.toString)
+        val findConnBroker_B = connsBroker.filter(x => x.writeCnxn.getExchangeKey() == createInviteRequest.invitationConnectionId)
         findConnBroker_B.headOption match {
           case None => report("cannot find connBroker_B", Severity.Error)
           case Some(connBroker_B) => {
