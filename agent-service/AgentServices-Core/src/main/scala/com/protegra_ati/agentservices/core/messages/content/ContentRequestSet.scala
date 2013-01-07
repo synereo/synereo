@@ -363,6 +363,7 @@ trait ContentRequestSet
   {
     report("entering handleSetContentByConnectionTypeAndToTargetSelfFetch in StorePlatform", Severity.Trace)
 
+    handleSetContentByConnectionTypeFetch(cnxn, connection, parentRequestIds, parentRequestEventKey, authorizedData, oldAuthorizedData, authorizedContent)
     connection match {
       case x: Connection => {
         report("setContentByConnectionType: found connection: " + x.toString)
@@ -383,19 +384,6 @@ trait ContentRequestSet
 
           }
         }
-        updateDataById(x.writeCnxn, authorizedData)
-
-//        if ( x.policies != null && !x.policies.contains(ConnectionPolicy.RemoteSearchDisabled.toString) ) {
-          updateCache(x.writeCnxn, x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
-//        }
-        //we are now storing the authorizedContentAuditItem data on the connection junction as well
-        //for audit logging purposes...
-        val auditItem = authorizedContent.forAudit(x)
-        //uncomment after we implement the approval process
-        //auditItem.autoApproved = true
-        //this is going to be a problem if the disclosure level changes
-        //need update by search here
-        updateDataById(x.writeCnxn, auditItem)
       }
       case _ => {
       }
