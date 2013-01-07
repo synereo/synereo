@@ -62,11 +62,11 @@ trait InvitationResponseSet
     val refereePostToSource = referralResponse.postToSource
     val cnxnBroker_A = referralResponse.source.originCnxn
 
-    val findConnBroker_A = connsBroker.filter(x => x.writeCnxn == cnxnBroker_A)
+      val findConnBroker_A = connsBroker.filter(x => x.writeCnxn.getExchangeKey == cnxnBroker_A.getExchangeKey)
     findConnBroker_A.headOption match {
       case None => report("cannot find connBroker_A", Severity.Error)
       case Some(connBroker_A) => {
-        val findConnBroker_B = connsBroker.filter(x => x.writeCnxn.getExchangeKey() == createInviteRequest.invitationConnectionId)
+        val findConnBroker_B = connsBroker.filter(x => x.writeCnxn.getExchangeKey == createInviteRequest.brokerTargetCnxnKey)
         findConnBroker_B.headOption match {
           case None => report("cannot find connBroker_B", Severity.Error)
           case Some(connBroker_B) => {

@@ -105,7 +105,7 @@ trait Registration extends Reporting
     sendSetContentRequest(msg.eventKey.copy(agentSessionId = UUID.randomUUID()), connAppSelf, connAppAgent)
 
     //ok to use the eventKey as the UI won't listen to SetContentResponse on that eventTag, it will listen for RegistrationResponse
-    listenForSetContentResponse(msg.eventKey, sendRegistrationResponse(_: SetContentResponse, agentId, connAppAgent.id))
+    listenForSetContentResponse(msg.eventKey, sendRegistrationResponse(_: SetContentResponse, agentId, connAppAgent.writeCnxn.getExchangeKey))
     sendSetContentRequest(msg.eventKey, connAgentSelf, connAgentApp)
   }
 
