@@ -26,8 +26,9 @@ trait StorageScope extends Scope
 with Serializable
 {
 
-  val ProfileId = UUID.randomUUID
+  val ProfileId = UUID.randomUUID.toString
   val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+  mockProfile.setId(ProfileId)
   val basicProfile = new Profile("FirstName", "LastName", "", "", "CA", "", "", "", "")
 
   val JenId = ( "Jen" + UUID.randomUUID )
@@ -69,6 +70,20 @@ with Serializable
       pa.updateDataById(connSteve.writeCnxn, data)
       val profileSearch: Profile = new Profile()
 
+      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+    }
+
+    "update unmodified data without creating duplicates" in new StorageScope {
+      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
+      val profileSearch: Profile = new Profile()
+      Thread.sleep(TIMEOUT_MED)
+      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+
+      // Update the data using the same profile
+      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
+      Thread.sleep(TIMEOUT_MED)
       fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
       countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
     }
