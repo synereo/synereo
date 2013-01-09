@@ -38,7 +38,7 @@ trait LoginRequestSet {
     val loginToken = msg.loginToken
     //for each connection in the user's data silo, clear out any existing token and save the new login token
     updateDataBySearch(msg.targetCnxn, new  LoginToken (), loginToken)
-    val connectionSearch = ConnectionFactory.createEmptyImmutableConnectionForSearch()
+    val connectionSearch = Connection.SEARCH_ALL
     fetch[ Connection ](_dbQ, msg.targetCnxn, connectionSearch.toSearchKey, handleSetLoginByConnectionFetch(_: AgentCnxnProxy, _: Connection, loginToken))
 
     val response = new SetLoginResponse(msg.ids.copyAsChild(), msg.eventKey.copy())

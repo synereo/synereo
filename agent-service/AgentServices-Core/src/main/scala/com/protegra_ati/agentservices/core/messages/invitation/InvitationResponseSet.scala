@@ -45,7 +45,7 @@ trait InvitationResponseSet
 
   protected def processReferralResponse(cnxnBroker_Broker: AgentCnxnProxy, referralResponse: ReferralResponse): Unit =
   {
-    val query = ConnectionFactory.createEmptyImmutableConnectionForSearch()
+    val query = Connection.SEARCH_ALL
     fetchList[ Connection ](_dbQ, cnxnBroker_Broker, query.toSearchKey, findConnections(_: AgentCnxnProxy, _: List[ Connection ], referralResponse))
   }
 

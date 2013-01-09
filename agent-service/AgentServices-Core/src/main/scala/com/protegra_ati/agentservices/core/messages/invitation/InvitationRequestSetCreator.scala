@@ -62,7 +62,7 @@ trait InvitationRequestSetCreator
     createInviteRequest.deliver();
 
     //we need to do a lookup of the targetConnection by id in Broker Self Connection to find the agent to invite
-    val query = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val query = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker_A, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxnProxy, _: SystemData[ Connection ], createInviteRequest, cnxnBroker_A))
   }
 
@@ -151,7 +151,7 @@ trait InvitationRequestSetCreator
    */
   def generateRejectToInvitationRequest(eventKey: EventKey, targetToBrokerConnection: Connection, targetToBroker: Post): Unit =
   {
-    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val queryObject = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch[ SystemData[ Connection ] ](_dbQ, targetToBrokerConnection.readCnxn, queryObject.toSearchKey, findSelfConToSendPost(_: AgentCnxnProxy, _: SystemData[ Connection ], eventKey, targetToBrokerConnection, targetToBroker))
   }
 
@@ -358,7 +358,7 @@ trait InvitationRequestSetCreator
     //need to get Broker-Broker to persist the InvitationResponse, so need Broker_A (origin cnxn) from message
     val originCnxn = inviteResponse.originCnxn
 
-    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val queryObject = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch[ SystemData[ Connection ] ](_dbQ, originCnxn, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationResponse(_: AgentCnxnProxy, _: SystemData[ Connection ], inviteResponse))
   }
 
@@ -375,7 +375,7 @@ trait InvitationRequestSetCreator
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val queryObject = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch[ SystemData[ Connection ] ](_dbQ, invitationResponse.targetCnxn, queryObject.toSearchKey, findInvitationResponseToArchive(_: AgentCnxnProxy, _: SystemData[ Connection ], invitationResponse))
 
     //CLEAN THIS UP  CF

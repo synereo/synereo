@@ -46,3 +46,13 @@ with StorableConnectionDataDefaults
     }
   }
 }
+
+object Connection
+{
+  final val SEARCH_ALL_KEY = new Connection().toSearchKey
+
+  final val SEARCH_ALL = new Connection()
+  {
+    override def toSearchKey(): String = Connection.SEARCH_ALL_KEY
+  }
+}

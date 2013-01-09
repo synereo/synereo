@@ -114,7 +114,7 @@ trait InvitationRequestSetConsumer
   {
     report("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val queryObject = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], inviteRequest))
   }
 

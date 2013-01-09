@@ -70,7 +70,7 @@ trait VerifierRequestSet {
   protected def fetchVerifierConnection(msg:VerifyRequest) = {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     _verifyRequests.put(msg.ids.conversationId , msg)
-    val search = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val search = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch(_dbQ, msg.targetCnxn, search.toSearchKey, fetchClaimingAgentConnection(_:AgentCnxnProxy, _:SystemData[Connection], msg))
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }

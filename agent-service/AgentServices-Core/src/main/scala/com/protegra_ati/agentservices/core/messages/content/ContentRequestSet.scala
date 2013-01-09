@@ -456,7 +456,7 @@ trait ContentRequestSet
       case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
         //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
 
-        val query = new Connection() //ConnectionFactory.createTypedConnection(x.getConnectionType())
+        val query = Connection.SEARCH_ALL //ConnectionFactory.createTypedConnection(x.getConnectionType())
         //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
         fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, x, y))
       }
@@ -612,7 +612,7 @@ trait ContentRequestSet
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = new SystemData(new Connection())
+    val queryObject = new SystemData(Connection.SEARCH_ALL)
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupSelfContentRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], setSelfContentRequest))
   }
 

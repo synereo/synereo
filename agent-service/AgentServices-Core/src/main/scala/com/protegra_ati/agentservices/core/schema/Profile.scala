@@ -85,7 +85,7 @@ case class Profile(
 
   override def getChildDataSearchKeys: java.util.List[ String ] =
   {
-    List(( new AppId ).toSearchKey)
+    List(AppId.SEARCH_ALL.toSearchKey)
   }
 
   override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
