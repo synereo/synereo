@@ -4,15 +4,12 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra_ati.agentservices.core.schema._
 import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import java.net.URI
 import net.lag.configgy._
 import com.protegra_ati.agentservices.core.schema.util._
-import com.protegra.agentservicesstore.util._
 
 trait Storage
 {
@@ -21,7 +18,7 @@ trait Storage
   var _dbLocation: URI = null
   var _dbQ: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _dbConfigFileName: Option[String] = None
-     
+
   def initDb(configUtil: Config, dbConfigFileName: Option[String])
   {
     val dbSelfMapKey = "db.self"
@@ -84,47 +81,46 @@ trait Storage
   def updateDataById(cnxn: AgentCnxnProxy, newData: Data)
   {
     deleteDataById(cnxn, newData)
-//
-//    //TODO: Issue 49
-//    Thread.sleep(350)
-    spawn {
-      store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
-    }
   }
 
   def deleteDataById [T<:Data](cnxn: AgentCnxnProxy, newData: T) : Unit =
   {
-    fetchList[ Data ](_dbQ, cnxn, newData.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))
-  }
-
-  def updateDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data)
-  {
-    //this will delete ALL occurrences of the specified data in the search object
-    deleteDataBySearch(cnxn, search, newData)
-
-    //TODO: Issue 49
-    Thread.sleep(350)
-    store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
-  }
-
-  def deleteDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data) : Unit =
-  {
-    fetchList[ Data ](_dbQ, cnxn, search.toSearchKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))
+    // Fetch data to delete, or if no data to delete, store newData
+    def handlerElse = store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+    fetchListOrElse[ Data ](_dbQ, cnxn, newData.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))(1, 0, () => handlerElse)
   }
 
   //could use a notion of retries if it isn't safe to delete
   protected def handleDeleteAfterFetch(cnxn: AgentCnxnProxy, dataToDelete: List[ Data ], newData: Data)
   {
-    dataToDelete.map(x => safeDelete(cnxn, x, newData))
+    // Call store if data is empty; otherwise attempt to delete
+    dataToDelete match {
+      case Nil => store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+      case _ => dataToDelete.map(x => safeDelete(cnxn, x, newData))
+    }
   }
 
   //exception to the convention of newData, oldData
   protected def safeDelete(cnxn: AgentCnxnProxy, dataToDelete: Data, dataToPreserve: Data) =
   {
     //this check prevents the race condition occurring where the new data is saved before the fetch is finished
+    // We only want to store the data if we've deleted old data.  We do not want to
+    // call store in case we're not deleting old data, otherwise we'll end up with dupes
     if ( dataToDelete != null && dataToDelete != dataToPreserve ) {
       delete(_dbQ, cnxn, dataToDelete.toStoreKey)
+      store(_dbQ, cnxn, dataToPreserve.toStoreKey, Serializer.serialize[ Data ](dataToPreserve))
     }
   }
 
+  def updateDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data)
+  {
+    //this will delete ALL occurrences of the specified data in the search object
+    deleteDataBySearch(cnxn, search, newData)
+  }
+
+  def deleteDataBySearch [T<:Data](cnxn: AgentCnxnProxy, search: T, newData: Data) : Unit =
+  {
+    def handlerElse = store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+    fetchListOrElse[ Data ](_dbQ, cnxn, search.toSearchKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))(1, 0, () => handlerElse)
+  }
 }

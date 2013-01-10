@@ -461,6 +461,38 @@ abstract class BasePlatformAgent
     }
   }
 
+  def fetchListOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit)
+                          (retries: Int, delay: Int, handlerElse: () => Unit) =
+  {
+    report("fetchListOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    val lbl = key.toLabel
+
+    val agentCnxn = cnxn.toAgentCnxn()
+    var found = false
+    for ( i <- 1 to retries; if (!found) ) {
+      reset {
+        for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
+          if ( e != None ) {
+            val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
+            val cleanResults = results.filter(x => x != null)
+
+            cleanResults match {
+              case Nil => Thread.sleep(delay)
+              case _ => {
+                handler(cnxn, cleanResults)
+                found = true
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!found) {
+      handlerElse()
+    }
+  }
+
   /**
    * Extended fetch to run different searches at once asynchronously.
    * The search happens recursively, so that results of the previous search will be passed to the next search etc.
