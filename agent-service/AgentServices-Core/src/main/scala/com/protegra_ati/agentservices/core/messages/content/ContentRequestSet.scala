@@ -454,11 +454,13 @@ trait ContentRequestSet
   {
     (msg.newData, msg.oldData) match {
       case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
-        //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
+        if (x != y) {
+          //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
 
-        val query = Connection.SEARCH_ALL //ConnectionFactory.createTypedConnection(x.getConnectionType())
-        //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
-        fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, x, y))
+          val query = ConnectionFactory.createTypedConnection(x.getConnectionType())
+          //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
+          fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, x, y))
+        }
       }
       case (x: DisclosedData[ _ ], _) => {
         // ignore this case
@@ -474,10 +476,7 @@ trait ContentRequestSet
   {
    // println("$$$$$$$$$$$ ALL CONNECTIONS TO BE UPDATET selfCnxn=" + selfCnxn + " " + connection + "/n" + ",  newDisclosedData+" + newDisclosedData + ", oldDisclosedData=" + oldDisclosedData)
 
-    if ( connection.connectionType == newDisclosedData.connectionType )
-    {
-      changeDisclosedContentOnConnection(selfCnxn, connection, newDisclosedData, oldDisclosedData)
-    }
+    changeDisclosedContentOnConnection(selfCnxn, connection, newDisclosedData, oldDisclosedData)
   }
 
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
