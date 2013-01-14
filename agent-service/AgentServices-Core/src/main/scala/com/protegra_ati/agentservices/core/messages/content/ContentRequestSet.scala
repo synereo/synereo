@@ -474,8 +474,10 @@ trait ContentRequestSet
   {
    // println("$$$$$$$$$$$ ALL CONNECTIONS TO BE UPDATET selfCnxn=" + selfCnxn + " " + connection + "/n" + ",  newDisclosedData+" + newDisclosedData + ", oldDisclosedData=" + oldDisclosedData)
 
-    changeDisclosedContentOnConnection(selfCnxn, connection, newDisclosedData, oldDisclosedData)
-
+    if ( connection.connectionType == newDisclosedData.connectionType )
+    {
+      changeDisclosedContentOnConnection(selfCnxn, connection, newDisclosedData, oldDisclosedData)
+    }
   }
 
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
