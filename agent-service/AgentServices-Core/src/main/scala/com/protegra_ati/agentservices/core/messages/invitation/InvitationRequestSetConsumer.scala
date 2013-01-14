@@ -103,8 +103,7 @@ trait InvitationRequestSetConsumer
 //    response.targetCnxn = inviteRequest.targetCnxn
 //    response.originCnxn = inviteRequest.originCnxn
 
-    //TODO: jsk - temporary - too close in unit test, causing db concurrency issues?
-    Thread.sleep(500)
+
     report("****Post invite request, sending the accepted response: " + response.getChannelKey + "****", Severity.Info)
     singleSend(_publicQ, response.originCnxn, response)
 

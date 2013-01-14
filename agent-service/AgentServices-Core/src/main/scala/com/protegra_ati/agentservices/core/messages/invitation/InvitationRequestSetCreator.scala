@@ -287,8 +287,6 @@ trait InvitationRequestSetCreator
         //TODO: temporary hack until multiple get can be used. right now we get e & none or none & f
         if ( e != None ) {
 
-          Thread.sleep(500)
-
           //need to provide checkpoint in case of failure, or code updates, so persist this response
           val msgA = Serializer.deserialize[ InvitationResponse ](e.dispatch)
           persistInvitationResponse(msgA)

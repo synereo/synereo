@@ -54,14 +54,15 @@ self: BasePlatformAgent with Storage =>
 
   def logAuditItem(cnxn: AgentCnxnProxy, logDetail: String)
   {
-    spawn {
-      rename{
-      val item = new AuditLogItem("", new DateTime())
-      item.detail = logDetail
-      var oldItem: AuditLogItem = null
-      updateDataById(cnxn, item)
-      }("inAuditing logAuditItem")
-    }
+    //temporarily removing for performance
+//    spawn {
+//      rename{
+//      val item = new AuditLogItem("", new DateTime())
+//      item.detail = logDetail
+//      var oldItem: AuditLogItem = null
+//      updateDataById(cnxn, item)
+//      }("inAuditing logAuditItem")
+//    }
   }
   /*TODO Task: internalisation of messages created by methods below
     Possible Solution:

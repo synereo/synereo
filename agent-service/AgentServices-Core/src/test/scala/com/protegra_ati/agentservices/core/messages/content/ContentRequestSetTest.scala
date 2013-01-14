@@ -324,6 +324,7 @@ with Serializable
     "processGetContentRequest" should {
 
       "save an AuditLogItem for the request" in {
+        skipped("")
         val authorizedProfileContentEmpty = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
         val authorizedProfileContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
         val authorizedProfileContentIntroduced = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Introduced)
