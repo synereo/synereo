@@ -319,6 +319,42 @@ with Serializable
         println("%%%%%%%%%%%%%%%%%%%%%%%% result=" + result + ", expected=" + expected)
       }
     }
+
+    "not change full disclosure connections when reducing number of basic disclosure fields" in new ContentSetup(pa)
+    {
+      //TODO:fetchMustExclusivelyBe
+      //fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+
+      // fields: lastName is removed
+      val basicProfileNewDisclosedData = DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Basic.toString, "id,localeCode,firstName,description,country,imageHashCode")
+      val basicProfileOldDisclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
+      basicProfileNewDisclosedData.id =  basicProfileOldDisclosedData.id
+
+      println("IN TEST self conn:" + cnxnJenSelf)
+
+      //create a setcontentrequest message to remove basic fields
+      val reqBasicDisclosedDataChanged = SetContentRequest(new EventKey(UUID.randomUUID, ""), basicProfileNewDisclosedData, basicProfileOldDisclosedData)
+      reqBasicDisclosedDataChanged.targetCnxn = cnxnJenSelf
+      reqBasicDisclosedDataChanged.originCnxn = cnxnJenSelf
+      pa.processSetContentRequest(reqBasicDisclosedDataChanged)
+      println("-------------------------------------------------------------------------")
+      Thread.sleep(TIMEOUT_VERY_LONG)
+
+      //check profile that no changes were made
+      fetchMustBeWithHandler(expectationCheckHandler(_: Data, _: Data))(fullProfile, pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      //TODO:fetchMustExclusivelyBe
+      //fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+
+      def expectationCheckHandler(result: Data, expected: Data): Unit =
+      {
+        if ( result != expected ) failure
+        println("%%%%%%%%%%%%%%%%%%%%%%%% result=" + result + ", expected=" + expected)
+      }
+    }
   }
 
     "processGetContentRequest" should {
