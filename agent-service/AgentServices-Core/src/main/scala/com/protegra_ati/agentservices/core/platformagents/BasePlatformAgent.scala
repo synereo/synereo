@@ -444,6 +444,41 @@ abstract class BasePlatformAgent
     }
   }
 
+  def fetchOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit)
+    (retries: Int, delay: Int, handlerElse: () => Unit) =
+  {
+    report("fetchOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    val lbl = key.toLabel
+
+    val agentCnxn = cnxn.toAgentCnxn()
+    var found = false
+    for ( i <- 1 to retries; if (!found) ) {
+      reset {
+        for ( e <- queue.read(agentCnxn)(lbl) ) {
+          if ( e != None ) {
+            //multiple results will call handler multiple times
+            val result = Serializer.deserialize[ T ](e.dispatch)
+            if ( result != null )
+            {
+              handler(cnxn, result)
+              found = true
+            }
+            else
+            {
+              Thread.sleep(delay)
+            }
+          }
+        }
+      }
+    }
+
+    if (!found) {
+      handlerElse()
+    }
+
+  }
+
+
   def fetchList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
     report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
