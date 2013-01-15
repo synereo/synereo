@@ -147,7 +147,7 @@ with ReferralUser
       // time for the connection creation
       Thread.sleep(TIMEOUT_LONG * 5)
       // checks established connections
-      val query: Connection = new Connection();
+      val query: Connection = Connection.SEARCH_ALL
       //      AgentHostCombinedBase.countConnectionsByType(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
       //      AgentHostCombinedBase.countConnectionsByName(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
       AgentHostCombinedBase.countConnectionsByType(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionType2) must be_==(1).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
@@ -209,7 +209,7 @@ with ReferralUser
     //      // time for the connection creation
     //      //      Thread.sleep(TIMEOUT_LONG * 5)
     //      // checks established connections
-    //      val query: Connection = new Connection();
+    //      val query: Connection = Connection.SEARCH_ALL
     //      // no connections should be created
     //      AgentHostCombinedBase.countConnectionsByType(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(0).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
     //      AgentHostCombinedBase.countConnectionsByName(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(0).eventually(3, TIMEOUT_EVENTUALLY_FOR_PA_PROCESSING)
@@ -280,7 +280,7 @@ with ReferralUser
     //      // time for the connection creation
     //      Thread.sleep(TIMEOUT_LONG)
     //      // checks established connections
-    //      val query: Connection = new Connection();
+    //      val query: Connection = Connection.SEARCH_ALL
     //      AgentHostCombinedBase.countConnectionsByType(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionType1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
     //      AgentHostCombinedBase.countConnectionsByName(uiR, connMikeMike.writeCnxn, agentSessionIdMike, eventKey, query, requestedConnectionName1) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)
     //      AgentHostCombinedBase.countConnectionsByType(uiR, connJasonJason.writeCnxn, agentSessionIdJason, eventKey, query, requestedConnectionType2) must be_==(0).eventually(10, TIMEOUT_EVENTUALLY)

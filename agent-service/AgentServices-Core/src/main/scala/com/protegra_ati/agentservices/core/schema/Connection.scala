@@ -55,5 +55,4 @@ object Connection
   {
     override def toSearchKey(): String = Connection.SEARCH_ALL_KEY
   }
-
 }

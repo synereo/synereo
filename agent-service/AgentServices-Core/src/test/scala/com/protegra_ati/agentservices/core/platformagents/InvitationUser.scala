@@ -26,9 +26,9 @@ trait InvitationUser
               datum match {
                 case persistedMessage: PersistedMessage[ InvitationRequest ] => {
                   val inviteRequest = persistedMessage.message.asInstanceOf[ InvitationRequest ]
-                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true)
-                  response.targetCnxn = inviteRequest.targetCnxn
-                  response.originCnxn = inviteRequest.originCnxn
+                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, inviteRequest)
+//                  response.targetCnxn = inviteRequest.targetCnxn
+//                  response.originCnxn = inviteRequest.originCnxn
                   // can throw assertion error
                   assertionHandler(ui, connInviteeSelf, connectionType, connectionName, agentSessionId, tag, inviteRequest, response)
                   //TODO: jsk - temporary - too close in unit test, causing db concurrency issues?
@@ -65,9 +65,9 @@ trait InvitationUser
                 case persistedMessage: PersistedMessage[ InvitationRequest ] => {
                   val inviteRequest = persistedMessage.message.asInstanceOf[ InvitationRequest ]
                   handler(inviteRequest.conversationThread.toList)
-                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true)
-                  response.targetCnxn = inviteRequest.targetCnxn
-                  response.originCnxn = inviteRequest.originCnxn
+                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, inviteRequest)
+//                  response.targetCnxn = inviteRequest.targetCnxn
+//                  response.originCnxn = inviteRequest.originCnxn
 
                   //TODO: jsk - temporary - too close in unit test, causing db concurrency issues?
                   Thread.sleep(500)
@@ -107,9 +107,9 @@ trait InvitationUser
                     category,
                     connectionType,
                     connectionName,
-                    new Post("I'm rejecting", "theBody", new java.util.HashMap(), new java.util.HashMap()), inviteRequest.conversationThread, false)
-                  response.targetCnxn = inviteRequest.targetCnxn
-                  response.originCnxn = inviteRequest.originCnxn
+                    new Post("I'm rejecting", "theBody", new java.util.HashMap(), new java.util.HashMap()), inviteRequest.conversationThread, false, inviteRequest)
+//                  response.targetCnxn = inviteRequest.targetCnxn
+//                  response.originCnxn = inviteRequest.originCnxn
                   //TODO: jsk - temporary - too close in unit test, causing db concurrency issues?
                   Thread.sleep(500)
                   ui.send(response)

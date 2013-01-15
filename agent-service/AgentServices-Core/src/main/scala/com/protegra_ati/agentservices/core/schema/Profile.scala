@@ -37,7 +37,7 @@ case class Profile(
   @BeanProperty var city: String,
   @BeanProperty var postalCode: String,
   @BeanProperty var website: String,
-  @BeanProperty var image: Image
+  @BeanProperty var imageHashCode: String
   )
   extends Data
   with SearchableChildData
@@ -52,10 +52,10 @@ case class Profile(
     , region: String
     , city: String
     , postalCode: String
-    , website: String) = this(firstName, lastName, description, emailAddress, country, region, city, postalCode, website, new Image())
+    , website: String) = this(firstName, lastName, description, emailAddress, country, region, city, postalCode, website, "")
 
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
-  def this() = this("", "", "", "", "", "", "", "", "", new Image())
+  def this() = this("", "", "", "", "", "", "", "", "", "")
 
 
   //TODO: The Displayable names should really come from a resource lookup by language related to a country
@@ -89,7 +89,7 @@ case class Profile(
   }
 
   override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
-  {List("image")}
+  {List()}
 }
 
 object Profile
@@ -118,7 +118,7 @@ object Profile
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "city"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "postalCode"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "website"),
-      Image.fromProperty(src, Profile.getClass.getName.trimPackage.toCamelCase + "." + "image")
+      src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "imageHashCode")
 
     )
   }
@@ -157,7 +157,7 @@ object Profile
     map.put("city", "city")
     map.put("postalCode", "postal code")
     map.put("website", "website")
-    map.put("image", "Image")
+    map.put("imageHashCode", "Image")
     map
   }
 
@@ -173,7 +173,7 @@ object Profile
     map.put("city", 7)
     map.put("postalCode", 8)
     map.put("website", 9)
-    map.put("image", 10)
+    map.put("imageHashCode", 10)
     map
   }
 }

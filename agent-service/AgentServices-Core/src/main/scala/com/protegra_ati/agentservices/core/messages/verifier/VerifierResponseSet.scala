@@ -60,7 +60,7 @@ trait VerifierResponseSet
   {
     report("entering fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
     //TODO it is necessary to create 'companion objects' with a reasonable named factory methods to create reusable singletons of default constructed Data objects like connection()
-    val search = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val search = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyPermissionResponse(_: AgentCnxnProxy, _: SystemData[ Connection ], msg))
     report("exiting fetchVerifierConnection in VerifierPlatformAgent", Severity.Trace)
   }
@@ -146,7 +146,7 @@ trait VerifierResponseSet
 
   def processVerifyContentResponse(cnxn: AgentCnxnProxy, msg: VerifyContentResponse) =
   {
-    val search = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val search = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch(_dbQ, cnxn, search.toSearchKey, sendVerifyContentResponse(_: AgentCnxnProxy, _: SystemData[ Connection ], msg))
   }
 

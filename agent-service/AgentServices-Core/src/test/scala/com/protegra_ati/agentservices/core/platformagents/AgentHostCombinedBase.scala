@@ -293,13 +293,13 @@ Timeouts
 
   def countCompositeProfile(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
   {
-    val query = new CompositeData[ Profile ](new Connection(), new Profile());
+    val query = new CompositeData[ Profile ](Connection.SEARCH_ALL, new Profile());
     countComposite(ui, cnxn, agentSessionId, tag, query)
   }
 
   def countAudit(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String): Int =
   {
-    val query = new CompositeData[ AuditLogItem ](new Connection(), new AuditLogItem());
+    val query = new CompositeData[ AuditLogItem ](Connection.SEARCH_ALL, new AuditLogItem());
     countComposite(ui, cnxn, agentSessionId, tag, query)
   }
 

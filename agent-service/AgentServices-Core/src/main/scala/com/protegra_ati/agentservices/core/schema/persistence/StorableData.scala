@@ -25,19 +25,19 @@ trait StorableData extends StorableDataDefaults
     this.setDefaultValues(isChild)
 
     // TODO here should the validation happen, throw the exception to mark illegal values
+    // setting up the "header" portion of the key
+
     val fields = ReflectionHelper.getAllFields(this.getClass)
-    val fieldValues = fields map ( f => handleFieldValue(f) /*f.getName().toCamelCase + "(" + this.getFormattedFieldValue(f) + ")" */ )
+    val filteredFields = fields.filter(r => !keyFieldsForSearchAndStoreKey.contains(r.getName.trimPackage.toCamelCase))
+    val fieldValues = filteredFields map ( f => handleFieldValue(f))
     val fieldValueList = fieldValues.mkString("", ",", "")
-    this.formattedClassName + "(" + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + "))"
+    this.formattedClassName + "(data(" + PrologFormatter.clean(getHeaderContent()) + "," + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + ")))"
   }
 
   def toDeleteKey(): String =
   {
-    //TODO: this can be streamlined once we know we have class(keys(),fields(_))
-    val fields = ReflectionHelper.getAllFields(this.getClass)
-    val fieldValues = fields map ( f => handleDeleteFieldValue(f) /*f.getName().toCamelCase + "(" + this.getFormattedFieldValue(f) + ")" */ )
-    val fieldValueList = fieldValues.mkString("", ",", "")
-    this.formattedClassName + "(" + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + "))"
+    //we will only be deleting by key
+    keyByIdOnly()
   }
 
   private def handleDeleteFieldValue(f: Field): String =
@@ -55,6 +55,7 @@ trait StorableData extends StorableDataDefaults
   {
     val trimmedfieldName = f.getName.trimPackage.toCamelCase
     val ignored = ignoredFieldsForSearchAndStoreKey.contains(trimmedfieldName)
+   // val isKeyField = keyFieldsForSearchAndStoreKey.contains(trimmedfieldName)
     var content: String = ""
     if ( classOf[ Data ].isAssignableFrom(f.getType) ) {
       f.setAccessible(true)
@@ -83,6 +84,7 @@ trait StorableData extends StorableDataDefaults
 
     //TODO: centralize this so both storable and searchable use it
     trimmedfieldName + "(" + content + ")"
+
   }
 
 
@@ -126,6 +128,16 @@ trait StorableData extends StorableDataDefaults
       prop.setProperty(parentElementName + "." + f.getName.trimPackage.toCamelCase, content)
     }
 
+  }
+  def keyByIdOnly(): String =
+  {
+    this.formattedClassName + "(data(" + KEYS + "(id(\"" + id + "\"),localeCode(_),recVerNum(_))," + "_))"
+  }
+
+  def getHeaderContent() : String =
+  {
+    val header = KEYS_TEMPLATE.replace("%ID", id).replace("%LOCALE_CODE", localeCode).replace("%REC_VER_NUM", recVerNum.toString)
+    header
   }
 
 }

@@ -43,5 +43,4 @@ object AppId
   {
     override def toSearchKey(): String = AppId.SEARCH_ALL_KEY
   }
-
 }

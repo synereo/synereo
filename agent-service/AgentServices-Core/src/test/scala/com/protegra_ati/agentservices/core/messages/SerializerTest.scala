@@ -54,7 +54,7 @@ Timeouts
       success
     }
     "deserialize Request" in {
-      val search = new Connection()
+      val search = Connection.SEARCH_ALL
       val msg = new GetContentRequest(null, search)
 
       val serializedMsg = Serializer.serialize[ Message ](msg)

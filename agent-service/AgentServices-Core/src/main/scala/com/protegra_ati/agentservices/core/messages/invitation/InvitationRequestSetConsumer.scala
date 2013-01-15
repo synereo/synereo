@@ -99,14 +99,13 @@ trait InvitationRequestSetConsumer
       }
     }
 
-    val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, requestedCategory, requestedConnectionType, requestedConnectionName, null, inviteRequest.conversationThread, true)
-    response.targetCnxn = inviteRequest.targetCnxn
-    response.originCnxn = inviteRequest.originCnxn
+    val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, requestedCategory, requestedConnectionType, requestedConnectionName, null, inviteRequest.conversationThread, true, inviteRequest)
+//    response.targetCnxn = inviteRequest.targetCnxn
+//    response.originCnxn = inviteRequest.originCnxn
 
-    //TODO: jsk - temporary - too close in unit test, causing db concurrency issues?
-    Thread.sleep(500)
+
     report("****Post invite request, sending the accepted response: " + response.getChannelKey + "****", Severity.Info)
-    singleSend(_publicQ, response.targetCnxn, response)
+    singleSend(_publicQ, response.originCnxn, response)
 
   }
 
@@ -114,7 +113,7 @@ trait InvitationRequestSetConsumer
   {
     report("I'm NOT an initiator: " + cnxnA_Broker.trgt + " just someone wants to be connected to me")
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = SystemDataFactory.createEmptyImmutableSystemDataForConnectionSearch()
+    val queryObject = SystemDataFactory.SEARCH_ALL_CONNECTION
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupStoreInvitationRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], inviteRequest))
   }
 

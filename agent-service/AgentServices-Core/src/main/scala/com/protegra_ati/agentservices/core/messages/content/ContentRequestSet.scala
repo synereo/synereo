@@ -289,6 +289,8 @@ trait ContentRequestSet
   {
     val fieldList = disclosedData.fields.split(',').toList
     val authorizedData = newData.authorizedData(fieldList)
+    //need to ensure the id is synched to the master copy
+    authorizedData.id = newData.id
     var oldAuthorizedData: Data = null
     if ( oldData != null ) {
       oldAuthorizedData = oldData.authorizedData(fieldList)
@@ -464,7 +466,7 @@ trait ContentRequestSet
       case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
         //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
 
-        val query = new Connection() //ConnectionFactory.createTypedConnection(x.getConnectionType())
+        val query = Connection.SEARCH_ALL //ConnectionFactory.createTypedConnection(x.getConnectionType())
         //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
         fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, msg.ids, msg.eventKey, x, y))
       }
@@ -483,7 +485,8 @@ trait ContentRequestSet
    // println("$$$$$$$$$$$ ALL CONNECTIONS TO BE UPDATET selfCnxn=" + selfCnxn + " " + connection + "/n" + ",  newDisclosedData+" + newDisclosedData + ", oldDisclosedData=" + oldDisclosedData)
 
     changeDisclosedContentOnConnection(selfCnxn, parentRequestIds, parentRequestEventKey, connection, newDisclosedData, oldDisclosedData)
-
+    
+    
   }
 
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
@@ -620,7 +623,7 @@ trait ContentRequestSet
   {
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
-    val queryObject = new SystemData(new Connection())
+    val queryObject = new SystemData(Connection.SEARCH_ALL)
     fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupSelfContentRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], setSelfContentRequest))
   }
 

@@ -62,6 +62,7 @@ object ConnectionFactory
     val readCnxn = new AgentCnxnProxy(targetId.toURI, "", sourceId.toURI)
     val writeCnxn = new AgentCnxnProxy(sourceId.toURI, "", targetId.toURI)
     new Connection(category, connectionType, alias, readCnxn, writeCnxn, autoApprove, policies)
+    //adding the generation of the
     // TODO eventually validation should here take place
   }
 
@@ -103,13 +104,4 @@ object ConnectionFactory
     new Connection(ConnectionCategory.None.toString, connectionType, alias, readCnxn, writeCnxn, "true", List[ String ]())
     // TODO eventually validation should here take place
   }
-
-  // use everywhere where before new Connection() was used without any modifications!!!!
-  // NEVER modify connection object returned over this method!!!!!!
-  //deprecate this in favor of Connection.SEARCH_ALL
-  def createEmptyImmutableConnectionForSearch(): Connection =
-  {
-    Connection.SEARCH_ALL
-  }
-
 }

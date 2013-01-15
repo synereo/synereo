@@ -205,8 +205,8 @@ object SequentialSingleInstancesClonerPerformanceTest
 
 object ClonerPerformanceTestConstants
 {
-  val PROFILE = new Profile("Terry", "Bunio", "test Description", "123456789@gmail.com", "CA", "Manitoba", "Winnipeg", "postalCode", "website", new Image("img", "jpeg", "content", "meta"))
-  val PROFILE0 = new Profile("test", "test", "test", "temp", "CA", "Manitoba", "Winnipeg", "postalCode", "website", new Image("img0", "jpeg0", "content0", "meta0"))
+  val PROFILE = new Profile("Terry", "Bunio", "test Description", "123456789@gmail.com", "CA", "Manitoba", "Winnipeg", "postalCode", "website", "1234")
+  val PROFILE0 = new Profile("test", "test", "test", "temp", "CA", "Manitoba", "Winnipeg", "postalCode", "website", "1234")
 
 
 }

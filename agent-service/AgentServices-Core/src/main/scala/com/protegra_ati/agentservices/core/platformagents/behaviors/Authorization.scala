@@ -148,6 +148,7 @@ trait Authorization
     report("entering findOldDataAndChangeDisclosure in StorePlatform", Severity.Trace)
 
     val newAuthorizedData = selfData.authorizedData(newDisclosedData.fields)
+    newAuthorizedData.id = selfData.id
     var oldAuthorizedData: Data = null
     if ( oldDisclosedData != null )
       oldAuthorizedData = selfData.authorizedData(oldDisclosedData.fields)
