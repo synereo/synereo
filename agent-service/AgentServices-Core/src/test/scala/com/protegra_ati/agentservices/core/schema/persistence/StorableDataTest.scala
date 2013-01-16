@@ -126,6 +126,17 @@ class StorableDataTest extends SpecificationWithJUnit
       storeKey must be_==(expected)
     }
 
+    "generate store key correctly for a Post" in {
+        val fromDetails = new java.util.HashMap[ String, Data ]();
+        val data: Post =  new Post("subject2Target", "body", fromDetails);
+        val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
+        data.id = id
+        data.threadId = id
+        val given = data.toStoreKey
+        val expected = "post(data("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(subject(\"subject2Target\"),body(\"\"),toDetails(\"\"),fromDetails(\"\"),threadId(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),ignored(\"\"),archived(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\"))))"
+        given must be_==(expected)
+      }
+
     "generate store key correctly for an Image" in {
       val data: Image = new Image("name", "type", "content hasn't be visible in a toStoreKey", "myMetadata")
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
