@@ -10,7 +10,8 @@ case class AgentCnxnProxy(
   val src: URI,
   val label: String,
   val trgt: URI
-  ) extends UseKryoSerialization
+  )
+  extends Data
 {
 
   def this() = this(null, null, null)
@@ -24,6 +25,17 @@ case class AgentCnxnProxy(
   def getExchangeKey(): String =
   {
     toAgentCnxn()._symmIdCode.toString()
+  }
+}
+
+
+object AgentCnxnProxy
+{
+  final val SEARCH_ALL_KEY = new AgentCnxnProxy().toSearchKey
+
+  final val SEARCH_ALL = new AgentCnxnProxy()
+  {
+    override def toSearchKey(): String = AgentCnxnProxy.SEARCH_ALL_KEY
   }
 
 }

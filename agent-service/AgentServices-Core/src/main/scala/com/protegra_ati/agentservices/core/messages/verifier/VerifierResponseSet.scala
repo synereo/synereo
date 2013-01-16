@@ -160,7 +160,7 @@ trait VerifierResponseSet
       newContentVerifier.status = "DENIED"
       logAuditItem(response.targetCnxn, "Request to verify " + response.contentVerifier.claimKey + " has been denied")
     }
-    setContentForSelfAndAllConnections(systemConnection.data.readCnxn, newContentVerifier, response.contentVerifier)
+    setContentForSelfAndAllConnections(systemConnection.data.readCnxn, response.ids, response.eventKey, newContentVerifier, response.contentVerifier)
   }
 
 }

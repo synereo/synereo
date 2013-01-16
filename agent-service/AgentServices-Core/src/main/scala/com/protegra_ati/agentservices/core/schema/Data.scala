@@ -16,7 +16,6 @@ import validator._
 import persistence._
 import com.protegra_ati.agentservices.core.util.serializer.{UseKryoSerialization}
 import java.lang.{Integer}
-import java.util
 
 //TODO: see if Data object on DataValidator constructor needs to be made more efficient
 class Data(_id: String, _localeCode: String /*,_classVersionNumber: String*/) extends Serializable

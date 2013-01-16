@@ -74,9 +74,9 @@ case class ComplexMockProfile(
     ""
   }
 
-  override def getChildDataSearchKeys: java.util.List[ String ] =
+  override def getChildDataSearchKeys: java.util.List[ Data ] =
   {
-    List(AppId.SEARCH_ALL.toSearchKey)
+    List(AppId.SEARCH_ALL)
   }
 
 

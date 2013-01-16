@@ -12,6 +12,7 @@ import java.util.{UUID, HashMap}
 import com.protegra_ati.agentservices.core.schema.util._
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
+import com.protegra.agentservicesstore.util.Severity
 
 
 trait ConnectionBroker
@@ -76,6 +77,11 @@ trait ConnectionBroker
     val systemConnection = new SystemData[ Connection ](selfCnxns)
     store(_dbQ, connection.writeCnxn, systemConnection.toStoreKey, Serializer.serialize[ SystemData[ Connection ] ](systemConnection))
     systemConnection
+  }
+
+  def generateCacheData(selfCnxn: AgentCnxnProxy, newConnection: Connection): Unit =
+  {
+    report("generateCacheData not implemented", Severity.Trace)
   }
 
 }

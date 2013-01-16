@@ -161,5 +161,21 @@ class StorableDataTest extends SpecificationWithJUnit
       //      println("expected storeKey4Profile: " + expectedStoreKey)
       deleteKey must be_==(expectedStoreKey)
     }
+
+    "generate store key correctly for CompositeData" in {
+        val connection = new Connection()
+        connection.id = id
+
+        val profile = new Profile()
+        profile.firstName = "test"
+
+        val compositeData = new CompositeData(connection, profile)
+
+        val storeKey = compositeData.toStoreKey
+        println("storeKey: " + storeKey)
+        val expected = "compositeData(" + FIELDS + "(" + connection.toStoreKey + "," + profile.toStoreKey + "))"
+        println("expected: " + expected)
+        storeKey must be_==(expected)
+      }
   }
 }

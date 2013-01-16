@@ -18,7 +18,8 @@ trait StorableData extends StorableDataDefaults
   {
     toStoreKey(false)
   }
-  private def toStoreKey(isChild: Boolean): String =
+
+  def toStoreKey(isChild: Boolean): String =
   {
     // presets defaults if required
     this.setDefaultValues(isChild)

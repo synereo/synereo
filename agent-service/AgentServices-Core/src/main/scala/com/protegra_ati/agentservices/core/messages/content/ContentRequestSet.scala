@@ -220,7 +220,7 @@ trait ContentRequestSet
 
   }
 
-  def setContentForSelfAndAllConnections(selfCnxn: AgentCnxnProxy, newData: Data, oldData: Data)
+  def setContentForSelfAndAllConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
   {
     //store object on self Cnxn
     updateDataById(selfCnxn, newData)
@@ -233,7 +233,7 @@ trait ContentRequestSet
     //    newData:Profile => .getClassOf => Class[Profile]
     //  newData:Profile => .getClass => java.lang.Class<Profile>   != Class[Profile]
 
-    fetch[ Data ](_dbQ, selfCnxn, contentSearch.toSearchKey, handleSetContentForAllConnectionsFetch(_: AgentCnxnProxy, _: Data, newData, oldData))
+    fetch[ Data ](_dbQ, selfCnxn, contentSearch.toSearchKey, handleSetContentForAllConnectionsFetch(_: AgentCnxnProxy, _: Data, parentRequestIds, parentRequestEventKey, newData, oldData))
   }
 
   def setContentForSelfAndAllConnectionsAndTargetSelf(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
@@ -269,14 +269,14 @@ trait ContentRequestSet
   }
 
 
-  protected def handleSetContentForAllConnectionsFetch(cnxn: AgentCnxnProxy, disclosedData: Data, newData: Data, oldData: Data)
+  protected def handleSetContentForAllConnectionsFetch(cnxn: AgentCnxnProxy, disclosedData: Data, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
   {
     report("entering handleSetContentForAllConnectionsFetch in StorePlatform", Severity.Trace)
 
     disclosedData match {
       case x: DisclosedData[ Data ] => {
         report("processSetContentRequest: found authorizedContent - connection type: " + x.connectionType)
-        setContentByConnectionType(cnxn, newData, oldData, x)
+        setContentByConnectionType(cnxn, parentRequestIds, parentRequestEventKey, newData, oldData, x)
       }
       case _ => {
       }
@@ -303,7 +303,7 @@ trait ContentRequestSet
   }
 
 
-  def setContentByConnectionType(cnxn: AgentCnxnProxy, newData: Data, oldData: Data, disclosedData: DisclosedData[ Data ]) =
+  def setContentByConnectionType(cnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data, disclosedData: DisclosedData[ Data ]) =
   {
     val fieldList = disclosedData.fields.split(',').toList
     val authorizedData = newData.authorizedData(fieldList)
@@ -315,10 +315,17 @@ trait ContentRequestSet
     //get related connections for the target cnxn
     val connectionSearch = new Connection()
     connectionSearch.setConnectionType(disclosedData.connectionType)
-    fetch[ Data ](_dbQ, cnxn, connectionSearch.toSearchKey, handleSetContentByConnectionTypeFetch(_: AgentCnxnProxy, _: Data, authorizedData, oldAuthorizedData, disclosedData))
+    fetch[ Data ](_dbQ, cnxn, connectionSearch.toSearchKey, handleSetContentByConnectionTypeFetch(_: AgentCnxnProxy, _: Data, parentRequestIds, parentRequestEventKey, authorizedData, oldAuthorizedData, disclosedData))
   }
 
-  def handleSetContentByConnectionTypeFetch(cnxn: AgentCnxnProxy, connection: Data, authorizedData: Data, oldAuthorizedData: Data, authorizedContent: DisclosedData[ Data ])
+  def handleSetContentByConnectionTypeFetch(
+    cnxn: AgentCnxnProxy,
+    connection: Data,
+    parentRequestIds: Identification,
+    parentRequestEventKey: EventKey,
+    authorizedData: Data,
+    oldAuthorizedData: Data,
+    authorizedContent: DisclosedData[ Data ])
   {
     report("entering handleSetContentByConnectionTypeFetch in StorePlatform", Severity.Trace)
 
@@ -326,8 +333,14 @@ trait ContentRequestSet
       case x: Connection => {
         report("setContentByConnectionType: found connection: " + x.toString)
         updateDataById(x.writeCnxn, authorizedData)
+
+        //        if ( x.policies != null && !x.policies.contains(ConnectionPolicy.RemoteSearchDisabled.toString) ) {
+        updateCache(x.writeCnxn, x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
+        //        }
+
         //we are now storing the authorizedContentAuditItem data on the connection junction as well
         //for audit logging purposes...
+
         val auditItem = authorizedContent.forAudit(x)
         //uncomment after we implement the approval process
         //auditItem.autoApproved = true
@@ -352,6 +365,7 @@ trait ContentRequestSet
   {
     report("entering handleSetContentByConnectionTypeAndToTargetSelfFetch in StorePlatform", Severity.Trace)
 
+    handleSetContentByConnectionTypeFetch(cnxn, connection, parentRequestIds, parentRequestEventKey, authorizedData, oldAuthorizedData, authorizedContent)
     connection match {
       case x: Connection => {
         report("setContentByConnectionType: found connection: " + x.toString)
@@ -372,21 +386,17 @@ trait ContentRequestSet
 
           }
         }
-        updateDataById(x.writeCnxn, authorizedData)
-        //we are now storing the authorizedContentAuditItem data on the connection junction as well
-        //for audit logging purposes...
-        val auditItem = authorizedContent.forAudit(x)
-        //uncomment after we implement the approval process
-        //auditItem.autoApproved = true
-        //this is going to be a problem if the disclosure level changes
-        //need update by search here
-        updateDataById(x.writeCnxn, auditItem)
       }
       case _ => {
       }
     }
 
     report("exiting handleSetContentByConnectionTypeFetch in StorePlatform", Severity.Trace)
+  }
+
+  def updateCache(originCnxn: AgentCnxnProxy, targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data): Unit = {
+    //hook to implement in higher up libraries
+    report("Cache not implemented", Severity.Trace)
   }
 
 
@@ -439,7 +449,7 @@ trait ContentRequestSet
           case _ => {
           } //don't throw an exception here as this could be a new connection?
         }
-        processDisclosureDelta(newConnection, oldConnection, msg.targetCnxn)
+        processDisclosureDelta(msg.ids, msg.eventKey, newConnection, oldConnection, msg.targetCnxn)
         if ( oldConnection == null ) {
           processNewConnection(newConnection, msg.targetCnxn)
         }
@@ -454,11 +464,13 @@ trait ContentRequestSet
   {
     (msg.newData, msg.oldData) match {
       case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
-        //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
+        if (x != y) {
+          //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
 
-        val query = Connection.SEARCH_ALL //ConnectionFactory.createTypedConnection(x.getConnectionType())
-        //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
-        fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, x, y))
+          val query = ConnectionFactory.createTypedConnection(x.getConnectionType())
+          //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
+        fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, msg.ids, msg.eventKey, x, y))
+        }
       }
       case (x: DisclosedData[ _ ], _) => {
         // ignore this case
@@ -470,14 +482,11 @@ trait ContentRequestSet
   }
 
 
-  protected def processConnectionsLookupForDiscloseDataUpdate(selfCnxn: AgentCnxnProxy, connection: Connection, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ]): Unit =
+  protected def processConnectionsLookupForDiscloseDataUpdate(selfCnxn: AgentCnxnProxy, connection: Connection, parentRequestIds: Identification, parentRequestEventKey: EventKey, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ]): Unit =
   {
    // println("$$$$$$$$$$$ ALL CONNECTIONS TO BE UPDATET selfCnxn=" + selfCnxn + " " + connection + "/n" + ",  newDisclosedData+" + newDisclosedData + ", oldDisclosedData=" + oldDisclosedData)
 
-    if ( connection.connectionType == newDisclosedData.connectionType )
-    {
-      changeDisclosedContentOnConnection(selfCnxn, connection, newDisclosedData, oldDisclosedData)
-    }
+    changeDisclosedContentOnConnection(selfCnxn, parentRequestIds: Identification, parentRequestEventKey: EventKey, connection, newDisclosedData, oldDisclosedData)
   }
 
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
@@ -490,17 +499,17 @@ trait ContentRequestSet
 
     //system Data generation
     generateSystemData(selfCnxn, newConnection)
-
+    generateCacheData(selfCnxn, newConnection)
     //broker related functionality
     //    handleBrokerTaskForNewConnection(selfCnxn, newConnection)
   }
 
 
-  def processDisclosureDelta(newConnection: Connection, oldConnection: Connection, selfCnxn: AgentCnxnProxy)
+  def processDisclosureDelta( parentRequestIds: Identification, parentRequestEventKey: EventKey, newConnection: Connection, oldConnection: Connection, selfCnxn: AgentCnxnProxy)
   {
     if ( ( oldConnection == null ) || ( oldConnection != null && newConnection.connectionType != oldConnection.connectionType ) ) {
       //this should be transactional
-      changeDisclosedContentOnConnection(newConnection, oldConnection, selfCnxn)
+      changeDisclosedContentOnConnection( parentRequestIds, parentRequestEventKey, newConnection, oldConnection, selfCnxn)
     }
   }
 

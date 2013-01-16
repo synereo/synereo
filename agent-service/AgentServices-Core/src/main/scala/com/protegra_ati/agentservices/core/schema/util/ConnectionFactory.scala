@@ -42,7 +42,7 @@ object ConnectionFactory
    */
   def createTypedConnection(connectionType: String): Connection =
   {
-    createConnection("", "", connectionType, "", "", "", Nil)
+    new Connection("", connectionType, "", null, null, "", Nil)
   }
 
 
