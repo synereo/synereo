@@ -17,7 +17,7 @@ object ConnectionFactory
 {
   def createSelfConnection(alias: String, id: String): Connection =
   {
-    createConnection(alias, ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, "Full", id, id)
+    createConnection(alias, ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, "Trusted", id, id)
   }
 
   def createConnection(alias: String, categorySource: String, categoryTarget: String, connectionType: String, sourceId: String, targetId: String): Connection =

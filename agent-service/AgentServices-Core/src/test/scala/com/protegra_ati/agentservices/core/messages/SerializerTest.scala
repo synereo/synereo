@@ -136,7 +136,7 @@ Timeouts
       skipped("Until Kryo back in place")
       val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 
-      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 
       val systemConnection = new SystemData[ Connection ](selfCnxns)
 

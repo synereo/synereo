@@ -78,7 +78,7 @@ trait InvitationRequestSetConsumer
       }
     }
 
-    // TODO basic, full, etc. into constants pool
+    // TODO basic, trusted, etc. into constants pool
     var requestedConnectionType = "Basic"
     inviteRequest.requestedConnectionType match {
       case None => {

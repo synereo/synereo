@@ -166,14 +166,14 @@ Timeouts
 //
 //    "serialize SystemData with Connection" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      val systemConnection = new SystemData[ Connection ](selfCnxns)
 //      DataCreator4KryoDeserializationTestInitializer.serialize(systemConnection, new File("data//serializedSystemConnection.kryobin"))
 //      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(systemConnection)
 //    }
 //    "serialize connection using serializer class" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      DataCreator4KryoDeserializationTestInitializer.serialize(selfCnxns, new File("data//serializedConnection.kryobin"))
 //      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(selfCnxns)
 //    }
@@ -276,14 +276,14 @@ Timeouts
 //
 //    "serialize SystemData with Connection" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      val systemConnection = new SystemData[ Connection ](selfCnxns)
 //      DataCreator4KryoDeserializationTestInitializer.serializeAsString(systemConnection, new File("data//serializedSystemConnection.kryostring"))
 //      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(systemConnection)
 //    }
 //    "serialize connection using serializer class" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      DataCreator4KryoDeserializationTestInitializer.serializeAsString(selfCnxns, new File("data//serializedConnection.kryostring"))
 //      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(selfCnxns)
 //    }

@@ -72,7 +72,7 @@ trait ConnectionBroker
     //the lines below needs to be replaced by a new message that can go across the publicQ to the right PA and
     //retrieve the "read" side's self connection
 //    val targetSelfCnxn = AgentCnxnProxy(connection.writeCnxn.src, "", connection.writeCnxn.src)
-    val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ]())
+    val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ]())
 
     val systemConnection = new SystemData[ Connection ](selfCnxns)
     store(_dbQ, connection.writeCnxn, systemConnection.toStoreKey, Serializer.serialize[ SystemData[ Connection ] ](systemConnection))

@@ -48,8 +48,8 @@ with Serializable
   //Profile
   val authorizedProfileContentEmpty = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
   val authorizedProfileContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
-  val authorizedProfileContentIntroduced = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Introduced)
-  val authorizedProfileContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+  val authorizedProfileContentCustom = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Custom)
+  val authorizedProfileContentTrusted = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted)
 
   val cnxnUIStore = pa._cnxnUIStore
 
@@ -57,38 +57,37 @@ with Serializable
   val mockProfile = new Profile("JenFirst", "JenLast", "test Description", "firstLast@test.com", "CA", "someprovince", "city", "postalCode", "website")
   mockProfile.id = profileId
   val emptyProfile = new Profile()
-  val introducedProfile = new Profile("", "JenLast", "", "", "CA", "", "", "", "")
-  introducedProfile.id = profileId
-  val fullProfile = mockProfile.copy()
-  fullProfile.id = profileId
-  val reducedFullProfile = mockProfile.copy()
-  reducedFullProfile.id = profileId
-  reducedFullProfile.website = ""
-  reducedFullProfile.region = ""
-  reducedFullProfile.imageHashCode = ""
+  val customProfile = new Profile("", "JenLast", "", "", "CA", "", "", "", "")
+  customProfile.id = profileId
+  val trustedProfile = mockProfile.copy()
+  trustedProfile.id = profileId
+  val reducedTrustedProfile = mockProfile.copy()
+  reducedTrustedProfile.id = profileId
+  reducedTrustedProfile.website = ""
+  reducedTrustedProfile.region = ""
+  reducedTrustedProfile.imageHashCode = ""
 
   val jenId = ( "Jen" + UUID.randomUUID )
   val mikeId = ( "Mike" + UUID.randomUUID )
   val steveId = ( "Steve" + UUID.randomUUID )
 
   val cnxnJenSelf = new AgentCnxnProxy(jenId.toURI, "", jenId.toURI)
-  val connMikeIntroduced = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Introduced", jenId, mikeId)
-  val connSteveFull = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId, steveId)
+  val connMikeCustom = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Custom", jenId, mikeId)
+  val connSteveTrusted = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Trusted", jenId, steveId)
   pa.addToHostedCnxn(cnxnJenSelf)
 
 
-  //save profile & business profile authorized content for empty, basic and full
+  //save profile & business profile authorized content for empty, custom and trusted
   pa.put(pa._dbQ, cnxnJenSelf, authorizedProfileContentEmpty.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentEmpty))
   Thread.sleep(TIMEOUT_LONG)
-  pa.put(pa._dbQ, cnxnJenSelf, authorizedProfileContentIntroduced.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentIntroduced))
+  pa.put(pa._dbQ, cnxnJenSelf, authorizedProfileContentCustom.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentCustom))
   Thread.sleep(TIMEOUT_LONG)
-  pa.put(pa._dbQ, cnxnJenSelf, authorizedProfileContentFull.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentFull))
+  pa.put(pa._dbQ, cnxnJenSelf, authorizedProfileContentTrusted.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentTrusted))
 
-  // initial stat basic
-  pa.put(pa._dbQ, cnxnJenSelf, connMikeIntroduced.toStoreKey, Serializer.serialize[ Data ](connMikeIntroduced))
+  // initial state custom and trusted
+  pa.put(pa._dbQ, cnxnJenSelf, connMikeCustom.toStoreKey, Serializer.serialize[ Data ](connMikeCustom))
   Thread.sleep(TIMEOUT_SHORT)
-  // initial state full
-  pa.put(pa._dbQ, cnxnJenSelf, connSteveFull.toStoreKey, Serializer.serialize[ Data ](connSteveFull))
+  pa.put(pa._dbQ, cnxnJenSelf, connSteveTrusted.toStoreKey, Serializer.serialize[ Data ](connSteveTrusted))
   Thread.sleep(TIMEOUT_LONG)
 
   //create a setcontentrequest messages (save profile)
@@ -112,7 +111,7 @@ with Serializable
   val mikeId = ( "Mike" + UUID.randomUUID )
 
   val jenSelfCnxn = new AgentCnxnProxy(jenId.toURI, "", jenId.toURI)
-  val connJenMike = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId, mikeId)
+  val connJenMike = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Trusted", jenId, mikeId)
   pa.addToHostedCnxn(jenSelfCnxn)
 
   //store the connections
@@ -211,107 +210,107 @@ with Serializable
 
   "processSetContentRequest with Data" should {
 
-    "save full object to own connection" in new ContentSetup(pa)
+    "save trusted object to own connection" in new ContentSetup(pa)
     {
-      fetchMustBe(fullProfile)(pa, cnxnJenSelf, queryProfile.toSearchKey)
+      fetchMustBe(trustedProfile)(pa, cnxnJenSelf, queryProfile.toSearchKey)
     }
 
-    "save object to all connections with Full disclosure" in new ContentSetup(pa)
+    "save object to all connections with Trusted disclosure" in new ContentSetup(pa)
     {
-      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
     }
 
 
-    "save object to all connections with Introduced disclosure" in new ContentSetup(pa)
+    "save object to all connections with Custom disclosure" in new ContentSetup(pa)
     {
-      fetchMustBe(introducedProfile)(pa, connMikeIntroduced.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(customProfile)(pa, connMikeCustom.writeCnxn, queryProfile.toSearchKey)
     }
 
-    "save object to all connections with Introduced disclosure then upgrade to Full disclosure" in new ContentSetup(pa)
+    "save object to all connections with Custom disclosure then upgrade to Trusted disclosure" in new ContentSetup(pa)
     {
-      fetchMustBe(introducedProfile)(pa, connMikeIntroduced.writeCnxn, queryProfile.toSearchKey)
-      val connMikeFull = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId, mikeId)
-      connMikeFull.id = connMikeIntroduced.id
-      var mike111: String = introducedProfile.toDeleteKey()
-      var mike222: String = introducedProfile.toSearchKey
+      fetchMustBe(customProfile)(pa, connMikeCustom.writeCnxn, queryProfile.toSearchKey)
+      val connMikeTrusted = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Trusted", jenId, mikeId)
+      connMikeTrusted.id = connMikeCustom.id
+      var mike111: String = customProfile.toDeleteKey()
+      var mike222: String = customProfile.toSearchKey
       //create a setcontentrequest message  to upgrade the conn. level
-      val reqFull = SetContentRequest(new EventKey(UUID.randomUUID, ""), connMikeFull, connMikeIntroduced)
-      reqFull.targetCnxn = cnxnJenSelf
-      reqFull.originCnxn = cnxnJenSelf
-      pa.processSetContentRequest(reqFull)
+      val reqTrusted = SetContentRequest(new EventKey(UUID.randomUUID, ""), connMikeTrusted, connMikeCustom)
+      reqTrusted.targetCnxn = cnxnJenSelf
+      reqTrusted.originCnxn = cnxnJenSelf
+      pa.processSetContentRequest(reqTrusted)
 
       // check profile & business profile
       //TODO:fetchMustExclusivelyBe
-      fetchMustBe(fullProfile)(pa, connMikeIntroduced.writeCnxn, queryProfile.toSearchKey)
-      //      fetchMustExclusivelyBe(fullProfile)(pa, connMikeIntroduced.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(trustedProfile)(pa, connMikeCustom.writeCnxn, queryProfile.toSearchKey)
+      //      fetchMustExclusivelyBe(trustedProfile)(pa, connMikeCustom.writeCnxn, queryProfile.toSearchKey)
     }
 
-    "save object to all connections with Full disclosure then downgrade to Introduced disclosure" in new ContentSetup(pa)
+    "save object to all connections with Trusted disclosure then downgrade to Custom disclosure" in new ContentSetup(pa)
     {
       //TODO:fetchMustExclusivelyBe
-      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      //          fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      val connSteveIntroduced = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, TrustLevel.Introduced.toString, jenId, steveId)
-      connSteveIntroduced.id = connSteveFull.id
-      println("introduced connection: " + connSteveIntroduced)
-      println("introduced full: " + connSteveFull)
+      fetchMustBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      //          fetchMustExclusivelyBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      val connSteveCustom = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, TrustLevel.Custom.toString, jenId, steveId)
+      connSteveCustom.id = connSteveTrusted.id
+      println("custom connection: " + connSteveCustom)
+      println("custom trusted: " + connSteveTrusted)
       println("self conn:" + cnxnJenSelf)
-      //create a setcontentrequest message to downgrate to introduced
-      val reqIntroduced = SetContentRequest(new EventKey(UUID.randomUUID, ""), connSteveIntroduced, connSteveFull)
-      reqIntroduced.targetCnxn = cnxnJenSelf
-      reqIntroduced.originCnxn = cnxnJenSelf
-      pa.processSetContentRequest(reqIntroduced)
+      //create a setcontentrequest message to downgrate to custom
+      val reqCustom = SetContentRequest(new EventKey(UUID.randomUUID, ""), connSteveCustom, connSteveTrusted)
+      reqCustom.targetCnxn = cnxnJenSelf
+      reqCustom.originCnxn = cnxnJenSelf
+      pa.processSetContentRequest(reqCustom)
       println("-------------------------------------------------------------------------")
       //          Thread.sleep(TIMEOUT_VERY_LONG * 3)
       // check profile & business profile
       //TODO:fetchMustExclusivelyBe
-      fetchMustBe(introducedProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      //          fetchMustExclusivelyBe(introducedProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(customProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      //          fetchMustExclusivelyBe(customProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
     }
 
-    "save object to all connections with Full disclosure then downgrade to Empty disclosure" in new ContentSetup(pa)
+    "save object to all connections with Trusted disclosure then downgrade to Empty disclosure" in new ContentSetup(pa)
     {
       //check that the profile saved to AliceJen has no blue cross number
-      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
 
       val connSteveEmpty = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Empty", jenId, steveId)
-      connSteveEmpty.id = connSteveFull.id
+      connSteveEmpty.id = connSteveTrusted.id
       //create a setcontentrequest message
-      val req = SetContentRequest(new EventKey(UUID.randomUUID, ""), connSteveEmpty, connSteveFull)
+      val req = SetContentRequest(new EventKey(UUID.randomUUID, ""), connSteveEmpty, connSteveTrusted)
       req.targetCnxn = cnxnJenSelf
       req.originCnxn = cnxnJenSelf
 
       pa.processSetContentRequest(req)
       fetchMustBe(emptyProfile)(pa, connSteveEmpty.writeCnxn, queryProfile.toSearchKey)
     }
-    "change full disclosure by profile reducing number of fields applied to all connections" in new ContentSetup(pa)
+    "change trusted disclosure by profile reducing number of fields applied to all connections" in new ContentSetup(pa)
     {
       //skipped("")
          //TODO:fetchMustExclusivelyBe
-//      fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+//      fetchMustExclusivelyBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      countMustBe(1)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
       // fields: website and image are removed
-      val fullProfileNewDisclosedData = DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Full.toString, "id,localeCode,firstName,lastName,description,emailAddress,country,city,postalCode")
-      val fullProfileOldDisclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
-      fullProfileNewDisclosedData.id =  fullProfileOldDisclosedData.id
+      val trustedProfileNewDisclosedData = DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Trusted.toString, "id,localeCode,firstName,lastName,description,emailAddress,country,city,postalCode")
+      val trustedProfileOldDisclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted)
+      trustedProfileNewDisclosedData.id =  trustedProfileOldDisclosedData.id
 
 
       println("IN TEST self conn:" + cnxnJenSelf)
-      //create a setcontentrequest message to downgrade to introduced
-      val reqFullDisclosedDataChanged = SetContentRequest(new EventKey(UUID.randomUUID, ""), fullProfileNewDisclosedData, fullProfileOldDisclosedData)
-      reqFullDisclosedDataChanged.targetCnxn = cnxnJenSelf
-      reqFullDisclosedDataChanged.originCnxn = cnxnJenSelf
-      pa.processSetContentRequest(reqFullDisclosedDataChanged)
+      //create a setcontentrequest message to downgrade to custom
+      val reqTrustedDisclosedDataChanged = SetContentRequest(new EventKey(UUID.randomUUID, ""), trustedProfileNewDisclosedData, trustedProfileOldDisclosedData)
+      reqTrustedDisclosedDataChanged.targetCnxn = cnxnJenSelf
+      reqTrustedDisclosedDataChanged.originCnxn = cnxnJenSelf
+      pa.processSetContentRequest(reqTrustedDisclosedDataChanged)
       println("-------------------------------------------------------------------------")
       Thread.sleep(TIMEOUT_VERY_LONG)
 //      Thread.sleep(TIMEOUT_VERY_LONG * 3)
       // check profile if image and webseite are deleted
-      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      fetchMustBeWithHandler(expectationCheckHandler(_: Data, _: Data))(reducedFullProfile, pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      countMustBe(1)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBeWithHandler(expectationCheckHandler(_: Data, _: Data))(reducedTrustedProfile, pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
            //TODO:fetchMustExclusivelyBe
-//      fetchMustExclusivelyBe(reducedFullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      fetchMustBe(reducedFullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+//      fetchMustExclusivelyBe(reducedTrustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(reducedTrustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
 
       def expectationCheckHandler(result: Data, expected: Data): Unit =
       {
@@ -320,12 +319,12 @@ with Serializable
       }
     }
 
-    "not change full disclosure connections when reducing number of basic disclosure fields" in new ContentSetup(pa)
+    "not change trusted disclosure connections when reducing number of basic disclosure fields" in new ContentSetup(pa)
     {
       //TODO:fetchMustExclusivelyBe
-      //fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      //fetchMustExclusivelyBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      countMustBe(1)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
 
       // fields: lastName is removed
       val basicProfileNewDisclosedData = DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Basic.toString, "id,localeCode,firstName,description,country,imageHashCode")
@@ -343,11 +342,11 @@ with Serializable
       Thread.sleep(TIMEOUT_VERY_LONG)
 
       //check profile that no changes were made
-      fetchMustBeWithHandler(expectationCheckHandler(_: Data, _: Data))(fullProfile, pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBeWithHandler(expectationCheckHandler(_: Data, _: Data))(trustedProfile, pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
       //TODO:fetchMustExclusivelyBe
-      //fetchMustExclusivelyBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      fetchMustBe(fullProfile)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
-      countMustBe(1)(pa, connSteveFull.writeCnxn, queryProfile.toSearchKey)
+      //fetchMustExclusivelyBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      fetchMustBe(trustedProfile)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
+      countMustBe(1)(pa, connSteveTrusted.writeCnxn, queryProfile.toSearchKey)
 
       def expectationCheckHandler(result: Data, expected: Data): Unit =
       {
@@ -363,8 +362,8 @@ with Serializable
         skipped("")
         val authorizedProfileContentEmpty = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
         val authorizedProfileContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
-        val authorizedProfileContentIntroduced = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Introduced)
-        val authorizedProfileContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+        val authorizedProfileContentCustom = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Custom)
+        val authorizedProfileContentTrusted = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted)
 
         val cnxnUIStore = pa._cnxnUIStore
 
@@ -372,7 +371,7 @@ with Serializable
         val mockProfile = new Profile("FirstName", "LastName", "managerProfile", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
         val noProfile = new Profile("", "", "", "", "", "", "", "", "")
         val basicProfile = new Profile("FirstName", "LastName", "", "", "CA", "", "", "", "")
-        val fullProfile = new Profile("FirstName", "LastName", "managerProfile", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+        val trustedProfile = new Profile("FirstName", "LastName", "managerProfile", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
 
         val jenId = ( "Jen" + UUID.randomUUID )
         val mikeId = ( "Mike" + UUID.randomUUID )
@@ -380,15 +379,15 @@ with Serializable
 
         val cnxn = new AgentCnxnProxy(jenId.toURI, "", jenId.toURI)
         val connMikeBasic = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Basic", jenId, mikeId)
-        val connSteveFull = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId, steveId)
+        val connSteveTrusted = ConnectionFactory.createConnection("Steve", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Trusted", jenId, steveId)
 
-        //save profile authorized content for basic and full
+        //save profile authorized content for basic and trusted
         pa.store(pa._dbQ, cnxn, authorizedProfileContentEmpty.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentEmpty))
         pa.store(pa._dbQ, cnxn, authorizedProfileContentBasic.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentBasic))
-        pa.store(pa._dbQ, cnxn, authorizedProfileContentFull.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentFull))
+        pa.store(pa._dbQ, cnxn, authorizedProfileContentTrusted.toStoreKey, Serializer.serialize[ Data ](authorizedProfileContentTrusted))
 
         pa.store(pa._dbQ, cnxn, connMikeBasic.toStoreKey, Serializer.serialize[ Data ](connMikeBasic))
-        pa.store(pa._dbQ, cnxn, connSteveFull.toStoreKey, Serializer.serialize[ Data ](connSteveFull))
+        pa.store(pa._dbQ, cnxn, connSteveTrusted.toStoreKey, Serializer.serialize[ Data ](connSteveTrusted))
         Thread.sleep(TIMEOUT_LONG)
 
         //create a setcontentrequest message
@@ -449,13 +448,13 @@ with Serializable
     }
 
 
-  def createSomeProfilesForTestFull(name: String, country: String): Profile =
+  def createSomeProfilesForTestTrusted(name: String, country: String): Profile =
   {
     new Profile(name, "last", "test Description", name + "@test.com", country, "someprovince", "city", "postalCode", "website")
 
   }
 
-  def createSomeProfilesForTestFull(name: String, lastName: String, country: String): Profile =
+  def createSomeProfilesForTestTrusted(name: String, lastName: String, country: String): Profile =
   {
     new Profile(name, lastName, "test Description", name + "@test.com", country, "someprovince", "city", "postalCode", "website")
   }
@@ -467,14 +466,14 @@ with Serializable
     else if ( "basic".equals(level.toLowerCase) ) {
       result = srcProfile.copy(description = "", emailAddress = "", country = "", region = "", city = "", postalCode = "")
     }
-    else if ( "full".equals(level.toLowerCase) ) {
-      result = srcProfile.copy() // full copy
+    else if ( "trusted".equals(level.toLowerCase) ) {
+      result = srcProfile.copy() // trusted copy
     }
-    else if ( "introduced".equals(level.toLowerCase) ) {
+    else if ( "custom".equals(level.toLowerCase) ) {
       result = srcProfile.copy(firstName = "", description = "", emailAddress = "", country = "", region = "", city = "", postalCode = "")
     }
 
-    else result = srcProfile.copy() // full copy
+    else result = srcProfile.copy() // trusted copy
     result
 
   }

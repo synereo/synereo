@@ -337,7 +337,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //
 //    "deserialize SystemData with Connection" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      val systemConnection = new SystemData[ Connection ](selfCnxns)
 //      val deserializedSystemConnection = KryoDeserializerTestDataInitializer.deserialize[ SystemData[ Connection ] ](new File("data//serializedSystemConnection.kryobin"))
 //      deserializedSystemConnection must_!= null
@@ -353,7 +353,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //
 //    "serialize and deserialize connection using serializer class" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      val deserializedConnection = KryoSerializerTestDataInitializer.deserialize[ Connection ](new File("data//serializedConnection.kryobin"))
 //      deserializedConnection must_!= null
 //      deserializedConnection match {
@@ -600,7 +600,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //
 //    "deserialize SystemData with Connection" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      val systemConnection = new SystemData[ Connection ](selfCnxns)
 //      val deserializedSystemConnection = KryoDeserializerTestDataInitializer.deserializeFromString[ SystemData[ Connection ] ](new File("data//serializedSystemConnection.kryostring"))
 //      deserializedSystemConnection must_!= null
@@ -616,7 +616,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 //
 //    "serialize and deserialize connection using serializer class" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //      var i = 0
 //      while ( i < 5000 ) {
 //        val deserializedConnection = KryoDeserializerTestDataInitializer.deserializeFromString[ Connection ](new File("data//serializedConnection.kryostring"))

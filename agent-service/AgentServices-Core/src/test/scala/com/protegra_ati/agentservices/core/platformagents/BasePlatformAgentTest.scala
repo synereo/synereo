@@ -218,7 +218,7 @@ with Serializable
   //    //store connection
   //    val jenId = "Jen" + UUID.randomUUID
   //    val mikeId = "Mike" + UUID.randomUUID
-  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId.toString, mikeId.toString)
+  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Trusted", jenId.toString, mikeId.toString)
   //    val newCnxn = new AgentCnxnProxy(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
   //    pa1.store(pa1._dbQ, newCnxn, conn.toStoreKey, Serializer.serialize[ Data ](conn))
   //    Thread.sleep(TIMEOUT_LONG)

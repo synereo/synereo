@@ -79,28 +79,28 @@ Timeouts
     val authorizedContentEmpty = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
     //new DisclosedData[ Profile ](classOf[ Profile ], "Basic", "id,localeCode,firstName,lastName")
     val authorizedContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
-    // new DisclosedData[ Profile ](classOf[ Profile ], "Full", "id,localeCode,firstName,lastName,description,emailAddress,country,region,city")
-    val authorizedContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
-    //save Profile authorized content for basic and full
+    // new DisclosedData[ Profile ](classOf[ Profile ], "Trusted", "id,localeCode,firstName,lastName,description,emailAddress,country,region,city")
+    val authorizedContentTrusted = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted)
+    //save Profile authorized content for basic and trusted
     pa.store(pa._dbQ, cnxn, authorizedContentEmpty.toStoreKey, Serializer.serialize[ Data ](authorizedContentEmpty))
     pa.store(pa._dbQ, cnxn, authorizedContentBasic.toStoreKey, Serializer.serialize[ Data ](authorizedContentBasic))
-    pa.store(pa._dbQ, cnxn, authorizedContentFull.toStoreKey, Serializer.serialize[ Data ](authorizedContentFull))
+    pa.store(pa._dbQ, cnxn, authorizedContentTrusted.toStoreKey, Serializer.serialize[ Data ](authorizedContentTrusted))
     Thread.sleep(TIMEOUT_LONG)
 
-    val appIdFull = AppIdDisclosedDataFactory.getDisclosedData(TrustLevel.Full) //DisclosedData[ AppId ](classOf[ AppId ], "Full", "id,localeCode,name");
+    val appIdTrusted = AppIdDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted) //DisclosedData[ AppId ](classOf[ AppId ], "Trusted", "id,localeCode,name");
     val appIdBasic = AppIdDisclosedDataFactory.getDisclosedData(TrustLevel.Basic) //DisclosedData[ AppId ](classOf[ AppId ], "Basic", "id,localeCode,name");
-    val appIdIntroduced = AppIdDisclosedDataFactory.getDisclosedData(TrustLevel.Introduced) //DisclosedData[ AppId ](classOf[ AppId ], "Introduced", "id,localeCode,name");
+    val appIdCustom = AppIdDisclosedDataFactory.getDisclosedData(TrustLevel.Custom) //DisclosedData[ AppId ](classOf[ AppId ], "Custom", "id,localeCode,name");
 
-    //save appId authorized content for basic basic full
-    pa.store(pa._dbQ, cnxn, appIdFull.toStoreKey, Serializer.serialize[ Data ](appIdFull))
+    //save appId authorized content for basic basic trusted
+    pa.store(pa._dbQ, cnxn, appIdTrusted.toStoreKey, Serializer.serialize[ Data ](appIdTrusted))
     pa.store(pa._dbQ, cnxn, appIdBasic.toStoreKey, Serializer.serialize[ Data ](appIdBasic))
-    pa.store(pa._dbQ, cnxn, appIdIntroduced.toStoreKey, Serializer.serialize[ Data ](appIdIntroduced))
+    pa.store(pa._dbQ, cnxn, appIdCustom.toStoreKey, Serializer.serialize[ Data ](appIdCustom))
     Thread.sleep(TIMEOUT_LONG)
   }
 
   def getConnection(selfId: String, targetId: String): Connection =
   {
-    val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Introduced", selfId, targetId);
+    val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Custom", selfId, targetId);
     newConn
   }
 
@@ -111,7 +111,7 @@ Timeouts
 
   def setupConnection(store: AgentHostStorePlatformAgent, selfId: String, targetId: String): Connection =
   {
-    val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Introduced", selfId, targetId);
+    val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Custom", selfId, targetId);
     val sourceSelfCnxn = new AgentCnxnProxy(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
 
     store.processNewConnection(newConn, sourceSelfCnxn)
@@ -134,7 +134,7 @@ Timeouts
 
   def setupPersistedConnection(pa: AgentHostStorePlatformAgent, selfId: String, targetId: String): Connection =
   {
-    val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Full", selfId, targetId);
+    val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.None.toString, ConnectionCategory.None.toString, "Trusted", selfId, targetId);
     val sourceSelfCnxn = new AgentCnxnProxy(newConn.writeCnxn.src, "", newConn.writeCnxn.src)
 
     pa.processNewConnection(newConn, sourceSelfCnxn)

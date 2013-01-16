@@ -584,7 +584,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 //
 //
 //      val category = "bla bla" //ConnectionCategory.None.toString
-//      val conn = MockConnFactory.createConnection("New Connection", category, "Introduced", "self", "target", "false", List[ String ]("POL 1", "POL 2"));
+//      val conn = MockConnFactory.createConnection("New Connection", category, "Custom", "self", "target", "false", List[ String ]("POL 1", "POL 2"));
 //
 //      KryoSerializerTestDataInitializer.serialize(conn, new File("serializedConnection.kryobin"))
 //      val deserializedConnection = KryoSerializerTestDataInitializer.deserialize[ MockConn ](new File("serializedConnection.kryobin"))
@@ -605,7 +605,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 //
 //
 //
-//      val selfCnxns = new MockConn(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ]("DeleteDisabled", "SearchDisabled")) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new MockConn(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ]("DeleteDisabled", "SearchDisabled")) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //
 //      val systemConnection = new MockSystemData[ MockConn ](selfCnxns)
 //
@@ -648,7 +648,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 //      // skipped("")
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 //
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //
 //      val systemConnection = new SystemData[ Connection ](selfCnxns)
 //
@@ -667,7 +667,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 //    }
 //    "serialize and deserialize connection using serializer class" in {
 //      val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
-//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+//      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 //
 //      KryoSerializerTestDataInitializer.serialize(selfCnxns, new File("serializedConnection.kryobin"))
 //      val deserializedConnection = KryoSerializerTestDataInitializer.deserialize[ Connection ](new File("serializedConnection.kryobin"))
