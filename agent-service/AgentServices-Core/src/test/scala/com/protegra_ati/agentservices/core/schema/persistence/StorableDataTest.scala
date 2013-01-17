@@ -49,7 +49,7 @@ class StorableDataTest extends SpecificationWithJUnit
 
       val storeKey = connection.toStoreKey
       println("storeKey: " + storeKey)
-      val expected = ( "connection(data(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(category(\"Self\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(\"AgentCnxnProxy(agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b ,,agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b )\"),writeCnxn(\"AgentCnxnProxy(agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b ,,agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b )\"),autoApprove(\"true\"),policies(\"[]\"),created(\"" +  PrologFormatter.clean(connection.created.toString) + "\"))))" )
+      val expected = ( "connection(data(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(category(\"Self\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(agentCnxnProxy(data(keys(id(\"\"),localeCode(\"\"),recVerNum(\"\")),fields(src(\"agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b \"),label(\"\"),trgt(\"agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b \"))))),writeCnxn(agentCnxnProxy(data(keys(id(\"\"),localeCode(\"\"),recVerNum(\"\")),fields(src(\"agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b \"),label(\"\"),trgt(\"agent   Brokerbbbbbbbb-d417-4d71-ad94-8c766907381b \"))))),autoApprove(\"true\"),policies(\"[]\"),created(\"" +  PrologFormatter.clean(connection.created.toString) + "\"))))" )
       println("expected: " + expected)
       storeKey must be_==(expected)
     }
