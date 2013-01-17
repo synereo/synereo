@@ -7,10 +7,10 @@ import java.net.URI
 import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 case class AgentCnxnProxy(
-  val src: URI,
-  val label: String,
-  val trgt: URI
-  )
+                           val src: URI,
+                           val label: String,
+                           val trgt: URI
+                           )
   extends Data
 {
 
