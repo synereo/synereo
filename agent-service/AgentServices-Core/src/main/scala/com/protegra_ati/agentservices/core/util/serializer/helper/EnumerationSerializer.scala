@@ -33,7 +33,7 @@ class EnumerationSerializer extends Serializer[ Enumeration#Value ]
     //val size = enumClass.asInstanceOf[ Enumeration ].maxId + 1
     //  println("read enum " + enumClass.asInstanceOf[ Enumeration ].values.toSeq(id) + " by Id=" + id)
     val enumValue = kryo.newInstance(enumClass).asInstanceOf[ Enumeration ](id)
-    println("read enum " + enumValue + " by Id=" + id)
+    //println("read enum " + enumValue + " by Id=" + id)
     //    val values = new ArrayBuffer[ Enumeration#Value ](size)
     //    0 until size foreach {e => values += null}
     //
@@ -82,7 +82,7 @@ class EnumerationSerializer extends Serializer[ Enumeration#Value ]
     else {
       kryo.writeObject(output, EnumerationSerializer.NOT_NULL)
       val enumClass = catchEnumClass(obj)
-      println("KRYO ENUM WRITER:" + obj + " class =" + enumClass + "; id=" + obj.id)
+      //println("KRYO ENUM WRITER:" + obj + " class =" + enumClass + "; id=" + obj.id)
       kryo.writeClass(output, enumClass)
       output.writeInt(obj.id)
     }
@@ -90,7 +90,7 @@ class EnumerationSerializer extends Serializer[ Enumeration#Value ]
 
   override def read(kryo: Kryo, input: Input, typ: Class[ Enumeration#Value ]): Enumeration#Value =
   {
-    println("KRYO EnumSerializer in USE! READ")
+    //println("KRYO EnumSerializer in USE! READ")
     val label: Byte = kryo.readObject(input, classOf[ Byte ])
     if ( label == EnumerationSerializer.NULL ) return null
 
@@ -103,7 +103,7 @@ class EnumerationSerializer extends Serializer[ Enumeration#Value ]
     //        }
     //
     // val enumInstance = enumValues(id)
-    println("KRYO ENUM READER:" + enumInstance + " class =" + clazz + "; id=" + id)
+    //println("KRYO ENUM READER:" + enumInstance + " class =" + clazz + "; id=" + id)
     enumInstance
 
   }
