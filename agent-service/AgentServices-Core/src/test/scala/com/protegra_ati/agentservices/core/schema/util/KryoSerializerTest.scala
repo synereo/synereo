@@ -730,7 +730,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
       deserializedRequest match {
         case x: CreateInvitationRequest => {
           x must be_==(msg)
-          x.invitationConnectionId.toString must be_==(msg.invitationConnectionId)
+          x.brokerTargetCnxnKey.toString must be_==(msg.brokerTargetCnxnKey)
           x.eventKey must be_==(msg.eventKey)
           x.postToBroker must beNull[ Post ]
         }
