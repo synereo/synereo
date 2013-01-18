@@ -6,9 +6,9 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-//scala> import com.protegra.agentservicesstore._
-import com.protegra.agentservicesstore._
-//import com.protegra.agentservicesstore._
+//scala> import com.protegra_ati.agentservices.store._
+import com.protegra_ati.agentservices.store._
+//import com.protegra_ati.agentservices.store._
 
 //scala> import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.model.store._
@@ -70,22 +70,22 @@ import AgentTS.mTT._
 
 //scala> import com.biosimilarity.lift.lib.AgentURIDefaults._
 import com.biosimilarity.lift.lib.SpecialKURIDefaults._
-//import com.protegra.agentservicesstore.extensions.StringExtensions._
+//import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 //import com.biosimilarity.lift.lib.AgentURIDefaults._
 
 //scala> val pimgJunq = ptToPt( "10.0.1.9", "10.0.1.5" )
 //val pimgJunq = ptToPt( "10.0.1.9", "10.0.1.5" )
 //val pimgJunq = ptToPt( "10.0.1.5", "10.0.1.9" )
-//pimgJunq: com.protegra.agentservicesstore.AgentTS.PartitionedStringMGJ = agent://10.0.1.9/invitation# -> List(agent://10.0.1.5/invitation#)
+//pimgJunq: com.protegra_ati.agentservices.store.AgentTS.PartitionedStringMGJ = agent://10.0.1.9/invitation# -> List(agent://10.0.1.5/invitation#)
 
 //scala> val atps = pimgJunq.agentTwistedPairs
 //val atps = pimgJunq.agentTwistedPairs
-//atps: scala.collection.mutable.Map[java.net.URI,com.protegra.agentservicesstore.AgentTS.SemiMonadicAgentJSONAMQPTwistedPair[String]] = Map((agent://10.0.1.5/invitation#,com.biosimilarity.lift.model.store.MonadicDTSMsgScope$SMAJATwistedPair@6a7c8bd))
+//atps: scala.collection.mutable.Map[java.net.URI,com.protegra_ati.agentservices.store.AgentTS.SemiMonadicAgentJSONAMQPTwistedPair[String]] = Map((agent://10.0.1.5/invitation#,com.biosimilarity.lift.model.store.MonadicDTSMsgScope$SMAJATwistedPair@6a7c8bd))
 
 //scala> val cnxn = new AgentCnxn("laptop", "testing", "server")
 //val cnxn = new AgentCnxn("laptop", "testing", "server")
 val cnxn = new AgentCnxn("laptop", "moreTesting", "server")
-//cnxn: com.protegra.agentservicesstore.AgentTS.acT.AgentCnxn = AgentCnxn(agent://laptop/invitation#,testing,agent://server/invitation#)
+//cnxn: com.protegra_ati.agentservices.store.AgentTS.acT.AgentCnxn = AgentCnxn(agent://laptop/invitation#,testing,agent://server/invitation#)
 
 //scala> implicit def toPattern( s : String ) : CnxnCtxtLabel[String,String,String] with Factual = CXQ.fromCaseClassInstanceString( s ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
 implicit def toPattern( s : String ) : CnxnCtxtLabel[String,String,String] with Factual = CXQ.fromCaseClassInstanceString( s ).getOrElse( null ).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
@@ -93,7 +93,7 @@ implicit def toPattern( s : String ) : CnxnCtxtLabel[String,String,String] with 
 
 //scala> implicit def toValue( s : String ) : mTT.Resource = mTT.Ground( s )
 implicit def toValue( s : String ) : mTT.Resource = mTT.Ground( s )
-//toValue: (s: String)com.protegra.agentservicesstore.AgentTS.mTT.Resource
+//toValue: (s: String)com.protegra_ati.agentservices.store.AgentTS.mTT.Resource
 
 //scala> val lbl1 = "contentChannel(\"email\")"
 val lbl1 = "contentChannel(\"email\")"

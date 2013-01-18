@@ -3,12 +3,12 @@
 import scala.util.continuations._
 import java.net.URI
 import java.util.UUID
-import com.protegra.agentservicesstore._
-import com.protegra.agentservicesstore.AgentTS._
-import com.protegra.agentservicesstore.AgentTS.acT._
-import com.protegra.agentservicesstore.AgentTS.mTT._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.ResourceExtensions._
+import com.protegra_ati.agentservices.store._
+import com.protegra_ati.agentservices.store.AgentTS._
+import com.protegra_ati.agentservices.store.AgentTS.acT._
+import com.protegra_ati.agentservices.store.AgentTS.mTT._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 
 val sourceAddress = "172.23.32.158"
 val acquaintanceAddresses =  "172.23.32.62"

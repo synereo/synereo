@@ -12,13 +12,13 @@ import com.biosimilarity.lift.lib._
 import scala.util.continuations._ 
 import scala.collection.mutable.HashMap
 
-import com.protegra.agentservicesstore._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.usage._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory._
-//import com.protegra.agentservicesstore.usage.AgentUseCase._
+import com.protegra_ati.agentservices.store._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.usage._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.Being._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory._
+//import com.protegra_ati.agentservices.store.usage.AgentUseCase._
 
 import org.basex.core._
 import org.basex.core.cmd.Open

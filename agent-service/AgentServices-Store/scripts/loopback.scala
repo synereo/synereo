@@ -6,7 +6,7 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-import com.protegra.agentservicesstore._
+import com.protegra_ati.agentservices.store._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.model.store.test._
 import com.biosimilarity.lift.model.store.xml._
@@ -23,17 +23,17 @@ import AgentTS._
 import AgentTS.acT._
 import AgentTS.mTT._
 import com.biosimilarity.lift.lib.SpecialKURIDefaults._
-//import com.protegra.agentservicesstore.extensions.StringExtensions._
+//import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 //import com.biosimilarity.lift.lib.AgentURIDefaults._
 
 //scala> val pimgJunq = ptToPt( "10.0.1.9", "10.0.1.5" )
 //val pimgJunq = ptToPt( "10.0.1.9", "10.0.1.5" )
 //val pimgJunq = ptToPt( "10.0.1.5", "10.0.1.9" )
-//pimgJunq: com.protegra.agentservicesstore.AgentTS.PartitionedStringMGJ = agent://10.0.1.9/invitation# -> List(agent://10.0.1.5/invitation#)
+//pimgJunq: com.protegra_ati.agentservices.store.AgentTS.PartitionedStringMGJ = agent://10.0.1.9/invitation# -> List(agent://10.0.1.5/invitation#)
 
 //scala> val atps = pimgJunq.agentTwistedPairs
 //val atps = pimgJunq.agentTwistedPairs
-//atps: scala.collection.mutable.Map[java.net.URI,com.protegra.agentservicesstore.AgentTS.SemiMonadicAgentJSONAMQPTwistedPair[String]] = Map((agent://10.0.1.5/invitation#,com.biosimilarity.lift.model.store.MonadicDTSMsgScope$SMAJATwistedPair@6a7c8bd))
+//atps: scala.collection.mutable.Map[java.net.URI,com.protegra_ati.agentservices.store.AgentTS.SemiMonadicAgentJSONAMQPTwistedPair[String]] = Map((agent://10.0.1.5/invitation#,com.biosimilarity.lift.model.store.MonadicDTSMsgScope$SMAJATwistedPair@6a7c8bd))
 
 object exchangeConversions {
   implicit def toPattern(

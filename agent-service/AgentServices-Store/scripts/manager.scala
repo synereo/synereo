@@ -6,7 +6,7 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-import com.protegra.agentservicesstore._
+import com.protegra_ati.agentservices.store._
 
 object Manager {
   def main( args : List[String] ) = {
