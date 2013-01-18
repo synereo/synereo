@@ -7,18 +7,18 @@
 //import java.util.UUID
 //import java.net.URI
 //
-//import com.protegra.agentservicesstore.extensions.StringExtensions._
-//import com.protegra.agentservicesstore.extensions.URIExtensions._
+//import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+//import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 //import com.protegra_ati.agentservices.core.messages._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
 //import java.net.URI
 //import content.{GetContentResponse, SetContentPersistedRequest}
 //import verifier._
 //import org.joda.time.{DateTime, Instant}
-//import com.protegra.agentservicesstore._
+//import com.protegra_ati.agentservices.store._
 //import com.protegra_ati.agentservices.core.events._
 //import com.protegra_ati.agentservices.core.schema._
 //import com.protegra_ati.agentservices.core._

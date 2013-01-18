@@ -5,15 +5,15 @@
 package com.protegra_ati.agentservices.core.platformagents
 
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.ResourceExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory
 import com.protegra_ati.agentservices.core.util.Results
 import com.protegra_ati.agentservices.core.util.rabbit.{RabbitConfiguration, MessageAMQPPublisher, MessageAMQPListener}
 
@@ -30,7 +30,7 @@ import scala.concurrent.ops._
 import java.net.{URI}
 import java.util.UUID
 import java.util.ArrayList
-import com.protegra.agentservicesstore.util._
+import com.protegra_ati.agentservices.store.util._
 import actors.threadpool.LinkedBlockingQueue
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer

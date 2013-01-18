@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.core.platformagents
 
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
 import behaviors._
 import com.protegra_ati.agentservices.core.messages.content._
@@ -10,13 +10,13 @@ import com.protegra_ati.agentservices.core.messages.invitation._
 import com.protegra_ati.agentservices.core.messages.introduction._
 import com.protegra_ati.agentservices.core.messages.admin._
 
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import net.lag.configgy.Config
 import java.net.URI
 import java.util.UUID
-import com.protegra.agentservicesstore.util.Severity
+import com.protegra_ati.agentservices.store.util.Severity
 import com.protegra_ati.agentservices.core.messages._
 
 class AgentHostUIPlatformAgent extends BasePlatformAgent

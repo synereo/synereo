@@ -5,7 +5,7 @@ import com.protegra_ati.agentservices.core.schema.validator.ConnectionValidator
 import com.protegra_ati.agentservices.core.schema._
 import scala.reflect.BeanProperty
 import scala.collection.JavaConversions._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
 case class MockConn(
   @BeanProperty val category: String,

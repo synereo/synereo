@@ -2,14 +2,14 @@ package com.protegra_ati.agentservices.core.messages
 
 import java.io.Serializable
 import java.util.UUID
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import reflect.BeanProperty
 import java.lang.reflect._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.schema.KVDBSerializable
+import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 class MockMessage(@BeanProperty val ids: Identification, @BeanProperty val eventKey: MockEventKey, @BeanProperty val eventKey2: MockEventKey) extends Serializable with

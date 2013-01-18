@@ -4,7 +4,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import java.net.URI

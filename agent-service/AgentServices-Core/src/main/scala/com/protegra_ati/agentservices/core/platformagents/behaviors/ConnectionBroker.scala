@@ -2,8 +2,8 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
@@ -12,7 +12,7 @@ import java.util.{UUID, HashMap}
 import com.protegra_ati.agentservices.core.schema.util._
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-import com.protegra.agentservicesstore.util.Severity
+import com.protegra_ati.agentservices.store.util.Severity
 
 
 trait ConnectionBroker

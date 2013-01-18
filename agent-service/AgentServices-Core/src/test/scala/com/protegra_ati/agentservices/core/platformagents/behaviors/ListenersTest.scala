@@ -17,7 +17,7 @@ import platformagents.AgentHostUIPlatformAgent
 import com.protegra_ati.agentservices.core.util.Results
 import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
 import scala.concurrent.ops._
-import com.protegra.agentservicesstore.util.MultiMap
+import com.protegra_ati.agentservices.store.util.MultiMap
 
 trait ListenerScope extends Scope
   with Serializable

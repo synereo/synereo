@@ -12,8 +12,8 @@ import admin.{RegistrationResponse, RegistrationRequest}
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.platformagents.AgentHostUIPlatformAgent
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.util.{Severity, Reporting}
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import content.{SetContentAdminRequest, SetContentAdminResponse, SetContentResponse, SetContentRequest}
 import scala.collection.JavaConversions._

@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.core.schema
 
 import behaviors._
 import java.io.Serializable
-import com.protegra.agentservicesstore.schema.KVDBSerializable
+import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 import com.protegra_ati.agentservices.core.messages.Message
 import com.protegra_ati.agentservices.core.schema.persistence._
 import org.joda.time.{DateTime, Instant}

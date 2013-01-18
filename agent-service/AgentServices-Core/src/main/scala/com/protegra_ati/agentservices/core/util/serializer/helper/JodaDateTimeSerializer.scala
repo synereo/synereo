@@ -8,7 +8,7 @@ import org.joda.time.Chronology
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.chrono._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
 
 class JodaDateTimeSerializer() extends Serializer[ DateTime ]

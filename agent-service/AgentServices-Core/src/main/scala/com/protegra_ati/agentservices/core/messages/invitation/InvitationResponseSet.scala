@@ -4,9 +4,9 @@ import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.util._
+import com.protegra_ati.agentservices.store.util._
 import com.rits.cloning.Cloner
 import com.protegra_ati.agentservices.core.util.cloner.ClonerFactory
 
