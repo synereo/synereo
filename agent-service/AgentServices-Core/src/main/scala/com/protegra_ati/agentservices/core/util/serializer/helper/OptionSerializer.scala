@@ -37,7 +37,7 @@ class OptionSerializer() extends Serializer[ Option[ AnyRef ] ]
             kryo.writeObject(output, obj.get)
           }
           case _ => {
-            println("KRYO Option in USE! WRITE PROBLEM!!!!")
+           // println("KRYO Option in USE! WRITE PROBLEM!!!!")
           }
         }
       } catch {
