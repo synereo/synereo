@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Connected xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="file:/Users/lgm/work/src/projex/biosimilarity/graphatrope/src/main/bnfc/GraphL.xsd">
+    <EdgeName>
+        <EdgeString>
+            <String value="HereToThere"/>
+        </EdgeString>
+        
+    </EdgeName>
+    <VertexSelection>
+        <LRBoundVertex>
+            <VertexExprLabel>
+                <VertexVariable>
+                    <LIdent value="Here"/>
+                </VertexVariable>
+                
+            </VertexExprLabel>
+            <VertexString>
+                <String value="Seattle"/>
+            </VertexString>
+            
+        </LRBoundVertex>
+        <Pointed>
+            <VertexString>
+                <String value="Seattle"/>
+            </VertexString>
+            
+        </Pointed>
+    </VertexSelection>
+    <VertexSelection>
+        <LRBoundVertex>
+            <VertexExprLabel>
+                <VertexVariable>
+                    <LIdent value="There"/>
+                </VertexVariable>
+                
+            </VertexExprLabel>
+            <VertexString>
+                <String value="London"/>
+            </VertexString>
+            
+        </LRBoundVertex>
+        <Pointed>
+            <VertexString>
+                <String value="London"/>
+            </VertexString>
+            
+        </Pointed>
+    </VertexSelection>
+</Connected>
