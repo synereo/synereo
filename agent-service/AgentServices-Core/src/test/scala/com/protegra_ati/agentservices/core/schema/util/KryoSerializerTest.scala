@@ -773,7 +773,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 
     }
     "serialize and deserialize a DisclosedData[Profile] Object" in {
-      val disclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+      val disclosedData = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted)
       KryoSerializerTestDataInitializer.serialize(disclosedData, new File("serializedDisclosedDataProfile.kryobin"))
       val deserializedMessage = KryoSerializerTestDataInitializer.deserialize[ DisclosedData[ Profile ] ](new File("serializedDisclosedDataProfile.kryobin"))
       deserializedMessage must_!= null
@@ -787,7 +787,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
       success
     }
     "serialize and deserialize a DisclosedData[AppId] Object" in {
-      val disclosedData = AppIdDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+      val disclosedData = AppIdDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted)
       KryoSerializerTestDataInitializer.serialize(disclosedData, new File("serializedDisclosedDataAppId.kryobin"))
       val deserializedMessage = KryoSerializerTestDataInitializer.deserialize[ DisclosedData[ Profile ] ](new File("serializedDisclosedDataAppId.kryobin"))
       deserializedMessage must_!= null
