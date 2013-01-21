@@ -46,7 +46,7 @@ trait CnxnConversions[Namespace,Var,Tag] {
 	}
 	case Right( v ) => cnxnVarTermStr( v )
       }
-     )
+     ).replace( "?", "&#161;" )
     useTag match {
       case true => {
 	(
@@ -482,6 +482,162 @@ with PrologMgr {
 	}
       }      
     }
+}
+
+package usage {
+  import java.util.UUID
+  object CnxnCtxtLabelMatcher
+    extends CnxnUnificationTermQuery[String,String,String]
+    with CnxnConversions[String,String,String] with UUIDOps
+  object LabelStream {
+    def tStream[T]( seed : T )( fresh : T => T ) : Stream[T] = {
+      lazy val loopStrm : Stream[T] =
+	( List( seed ) ).toStream append ( loopStrm map fresh );
+      loopStrm
+    }
+    implicit val useUUID : Boolean = false
+    def strings( 
+      seed : String
+    )( implicit useUUID : Boolean ) : Stream[String] = {
+      def freshString( 
+	s : String 
+      ) : String = {
+	useUUID match {
+	  case true => {
+	    s + UUID.randomUUID.toString.replace( "-", "" )
+	  }
+	  case false => {
+	    val a = s.split( seed )
+	    seed + ( a( 1 ).toInt + 1 )
+	  }
+	}
+      }
+      val suffix =
+	useUUID match {
+	  case true => {
+	    UUID.randomUUID.toString.replace( "-", "" )
+	  }
+	  case false => {
+	    1 + ""
+	  }
+	}
+      tStream[String]( seed + suffix )( freshString )
+    }
+    def atoms(
+      seed : String
+    ) : Stream[CnxnCtxtLabel[String,String,String] with Factual] = {
+      def freshTree(
+	tree : CnxnCtxtLabel[String,String,String] with Factual
+      ) : CnxnCtxtLabel[String,String,String] with Factual = {	
+	new CnxnCtxtLeaf[String,String,String](
+	  Left[String,String](
+	    ( UUID.randomUUID.toString.replace( "-", "" ) + seed )
+	  )
+	)
+      }
+      tStream[CnxnCtxtLabel[String,String,String] with Factual](
+	new CnxnCtxtLeaf[String,String,String](
+	  Left[String,String](
+	    ( UUID.randomUUID.toString.replace( "-", "" ) + seed )
+	  )
+	)
+      )( freshTree )
+    }
+    def identifiers(
+      seed : String
+    ) : Stream[CnxnCtxtLabel[String,String,String] with Factual] = {
+      def freshTree(
+	tree : CnxnCtxtLabel[String,String,String] with Factual
+      ) : CnxnCtxtLabel[String,String,String] with Factual = {	
+	new CnxnCtxtLeaf[String,String,String](
+	  Right[String,String](
+	    ( "X" + UUID.randomUUID.toString.replace( "-", "" ) + seed )
+	  )
+	)
+      }
+      tStream[CnxnCtxtLabel[String,String,String] with Factual](
+	new CnxnCtxtLeaf[String,String,String](
+	  Right[String,String](
+	    ( "X" + UUID.randomUUID.toString.replace( "-", "" ) + seed )
+	  )
+	)
+      )( freshTree )
+    }
+    def facts(
+      seed : String
+    ) : Stream[CnxnCtxtLabel[String,String,String] with Factual] = {
+      def freshTree(
+	tree : CnxnCtxtLabel[String,String,String] with Factual
+      ) : CnxnCtxtLabel[String,String,String] with Factual = {	
+	new CnxnCtxtBranch[String,String,String](
+	  ( "t" + UUID.randomUUID.toString.replace( "-", "" ) ),
+	  List(
+	    new CnxnCtxtBranch[String,String,String](
+	      ( "tLeft" + UUID.randomUUID.toString.replace( "-", "" ) ),
+	      List[CnxnCtxtLabel[String,String,String] with Factual](
+		tree,
+		new CnxnCtxtLeaf[String,String,String](
+		  Left[String,String]( ( UUID.randomUUID + seed ) )
+		)
+	      )
+	    ),
+	    new CnxnCtxtBranch[String,String,String](
+	      ( "tRight" + UUID.randomUUID.toString.replace( "-", "" ) ),
+	      List[CnxnCtxtLabel[String,String,String] with Factual](
+		new CnxnCtxtLeaf[String,String,String](
+		  Left[String,String]( ( UUID.randomUUID + seed ) )
+		),
+		tree		
+	      )
+	    )
+	  )
+	)
+      }
+      tStream[CnxnCtxtLabel[String,String,String] with Factual](
+	new CnxnCtxtLeaf[String,String,String](
+	  Left[String,String]( ( UUID.randomUUID + seed ) )
+	)
+      )( freshTree )
+    }
+
+    def queries(
+    ) : Stream[CnxnCtxtLabel[String,String,String] with Factual] = {
+      def freshTree(
+	tree : CnxnCtxtLabel[String,String,String] with Factual
+      ) : CnxnCtxtLabel[String,String,String] with Factual = {	
+	new CnxnCtxtBranch[String,String,String](
+	  ( "t" + UUID.randomUUID.toString.replace( "-", "" ) ),
+	  List(
+	    new CnxnCtxtBranch[String,String,String](
+	      ( "tLeft" + UUID.randomUUID.toString.replace( "-", "" ) ),
+	      List[CnxnCtxtLabel[String,String,String] with Factual](
+		tree,
+		new CnxnCtxtLeaf[String,String,String](
+		  Right[String,String]( ( "X" + UUID.randomUUID.toString.replace( "-", "" ) ) )
+		)
+	      )
+	    ),
+	    new CnxnCtxtBranch[String,String,String](
+	      ( "tRight" + UUID.randomUUID.toString.replace( "-", "" ) ),
+	      List[CnxnCtxtLabel[String,String,String] with Factual](
+		new CnxnCtxtLeaf[String,String,String](
+		  Right[String,String]( ( "X" + UUID.randomUUID.toString.replace( "-", "" ) ) )
+		),
+		tree		
+	      )
+	    )
+	  )
+	)
+      }
+      tStream[CnxnCtxtLabel[String,String,String] with Factual](
+	new CnxnCtxtLeaf[String,String,String](
+	  Right[String,String](
+	    ( "X" + UUID.randomUUID.toString.replace( "-", "" ) )
+	  )
+	)
+      )( freshTree )
+    }
+  }
 }
 
 
