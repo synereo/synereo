@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-store</artifactId>
-    <version>1.0.1.9</version>
+    <version>1.0.1.10</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -15,7 +15,7 @@
         <scala.test.specs2.version>1.8.2</scala.test.specs2.version>
         <!--<scala.version>2.9.2</scala.version>-->
         <!--<scala.test.specs2.version>1.12.1</scala.test.specs2.version>-->
-        <specialk.version>1.1.1.7</specialk.version>
+        <specialk.version>1.1.1.8</specialk.version>
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
