@@ -1,9 +1,9 @@
 package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import net.lag.configgy._
 import java.net.URI
 

@@ -7,9 +7,9 @@ import org.joda.time.{DateTime, Instant}
 import com.protegra_ati.agentservices.core.messages._
 import scala.collection.mutable.Map
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.util._
+import com.protegra_ati.agentservices.store.util._
 import com.protegra_ati.agentservices.core.util.Results
 
 //TODO create the store and save references to the CreateInvitationRequests

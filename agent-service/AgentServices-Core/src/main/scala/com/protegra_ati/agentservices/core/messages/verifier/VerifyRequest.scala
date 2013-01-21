@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.core.messages.verifier
 
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import reflect.BeanProperty
 import com.protegra_ati.agentservices.core.messages._

@@ -4,12 +4,12 @@ package com.protegra_ati.agentservices.core.messages.login
 */
 
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.login._
 import com.protegra_ati.agentservices.core.events._
-import com.protegra.agentservicesstore.util.Severity
+import com.protegra_ati.agentservices.store.util.Severity
 
 trait LoginResponseSetPrivate {
   self:AgentHostUIPlatformAgent =>

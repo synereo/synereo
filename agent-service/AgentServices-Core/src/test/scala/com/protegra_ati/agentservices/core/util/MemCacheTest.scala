@@ -8,7 +8,7 @@ import java.util.UUID
 import net.spy.memcached.{AddrUtil, FailureMode, ConnectionFactoryBuilder, MemcachedClient}
 import java.net.InetSocketAddress
 import com.protegra_ati.agentservices.core.schema.Profile
-import com.protegra.agentservicesstore.util.MemCache
+import com.protegra_ati.agentservices.store.util.MemCache
 import com.protegra_ati.agentservices.core.Timeouts
 import com.protegra_ati.agentservices.core.events.MessageEventAdapter
 

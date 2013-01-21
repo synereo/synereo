@@ -9,9 +9,9 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import com.protegra.agentservicesstore.util._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions._
+import com.protegra_ati.agentservices.store.util._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions._
 import java.util.UUID
 // TODO reporting ha to eventually reaktivated
 class JavaIOSerializer extends AbstractToStringSerializer //with Reporting

@@ -9,8 +9,8 @@ import java.io.FileReader
 import java.io.IOException
 import persistence.SearchableChildData
 import scala.reflect.BeanProperty
-import com.protegra.agentservicesstore.extensions._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import scala.collection.JavaConversions._
 import java.lang.{Integer}
 

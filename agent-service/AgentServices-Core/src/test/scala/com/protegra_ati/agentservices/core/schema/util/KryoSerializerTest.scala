@@ -9,7 +9,7 @@ import java.util.UUID
 import com.protegra_ati.agentservices.core._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import disclosure.{AppIdDisclosedDataFactory, TrustLevel, ProfileDisclosedDataFactory}
 import messages._
@@ -26,7 +26,7 @@ import java.nio.channels.FileChannel
 import com.esotericsoftware.kryo.io._
 import scala.None
 import org.joda.time.DateTime
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 
 class KryoSerializerTest extends SpecificationWithJUnit with Timeouts

@@ -6,7 +6,7 @@ package com.protegra_ati.agentservices.core.util.serializer
  */
 
 
-import com.protegra.agentservicesstore.util._
+import com.protegra_ati.agentservices.store.util._
 import java.io._
 
 // TODO eventually Reporting has to be activation again

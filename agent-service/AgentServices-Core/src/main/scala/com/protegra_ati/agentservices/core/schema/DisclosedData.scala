@@ -7,7 +7,7 @@ package com.protegra_ati.agentservices.core.schema
 
 import scala.reflect.BeanProperty
 import util._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import scala.annotation.unchecked.uncheckedVariance
 
 

@@ -3,7 +3,7 @@ package com.protegra_ati.agentservices.core.schema.persistence
 import com.protegra_ati.agentservices.core.schema.util.{PrologFormatter, ReflectionHelper}
 import com.protegra_ati.agentservices.core.schema.{Data}
 import com.protegra_ati.agentservices.core.schema.Constants._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.lang.reflect._
 
 
