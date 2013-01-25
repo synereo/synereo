@@ -33,7 +33,7 @@ trait SearchableData
     var searchKey = ""
     if (id.isEmpty) {
       val searchValueList = this.getSearchValueList(false)
-      searchKey = this.formattedClassName + "(data(" + getSearchHeaderContent() + "," + PrologFormatter.clean(searchValueList) + "))"
+      searchKey = "data(" + this.formattedClassName + "(" + getSearchHeaderContent() + "," + PrologFormatter.clean(searchValueList) + "))"
     } else {
       searchKey = keyByIdOnly()
     }
@@ -42,7 +42,7 @@ trait SearchableData
 
   def toSearchKeyFromClass(classType: Class[ _ <: Data ]): String =
   {
-    formattedClassName(classType) + "(data(" + SEARCH_ANY + "," + SEARCH_ANY + "))"
+    "data(" + formattedClassName(classType) + "(" + SEARCH_ANY + "," + SEARCH_ANY + "))"
   }
 
   def getSearchFormattedFieldValue(f: Field): String =

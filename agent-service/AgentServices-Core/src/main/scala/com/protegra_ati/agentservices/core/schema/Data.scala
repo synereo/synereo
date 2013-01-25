@@ -216,4 +216,8 @@ with UseKryoSerialization
 object Data
 {
   def currentVersion: String = "1.0"
+  final val SEARCH_ALL = new Data()
+  {
+    override def toSearchKey(): String = "data(_)"
+  }
 }
