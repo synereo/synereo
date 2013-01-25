@@ -24,11 +24,6 @@ class StorableDataTest extends SpecificationWithJUnit
 {
   val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
   "store key" should {
-    //    val NULL_DATA_TIME = "1980-01-01T00:00:00.000-00:00"
-    //val created = new DateTime(NULL_DATA_TIME)
-    // val connection = new Connection("business", "connectionType", "alias", null, null, "autoApprove", List(ConnectionPolicy.ReferralDisabled, ConnectionPolicy.SearchDisabled),created)
-
-
     "generate store key correctly for Data" in {
       val conn = new MockConnection
       conn.id = id
