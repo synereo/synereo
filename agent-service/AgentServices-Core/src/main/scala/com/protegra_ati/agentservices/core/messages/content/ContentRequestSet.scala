@@ -500,6 +500,8 @@ trait ContentRequestSet
     //system Data generation
     generateSystemData(selfCnxn, newConnection)
     generateCacheData(selfCnxn, newConnection)
+    generateRedistributableDataMessages(selfCnxn, newConnection)
+    //check for red
     //broker related functionality
     //    handleBrokerTaskForNewConnection(selfCnxn, newConnection)
   }
@@ -638,6 +640,36 @@ trait ContentRequestSet
     setReq.channelLevel = Some(ChannelLevel.Public)
     report("ABOUT TO CREATE NEW CONNECTION: ", Severity.Info)
     send(_publicQ, setReq.targetCnxn, setReq)
+  }
+
+  protected def generateRedistributableDataMessages(selfCnxn: AgentCnxnProxy, newConnection: Connection) =
+  {
+    //for a new connection, we want to send setSelfContentRequests for all Redistributable data for connections
+    //with a data sharing enabled policy
+    if (newConnection.policies.contains(ConnectionPolicy.DataSharingEnabled.toString))
+    {
+      //grabbing all Data objects within a connection and processing those
+      //with the Redistrubable trait
+      fetchList [ Data ](_dbQ, selfCnxn, Data.SEARCH_ALL.toSearchKey(),handleDistributedData(_: AgentCnxnProxy, _: List[ Data ], newConnection))
+
+    }
+  }
+  def handleDistributedData(selfCnxn: AgentCnxnProxy, dataList: List[ Data ], newConnection: Connection)
+  {
+    dataList.foreach(data => {
+      data match {
+        case y: Redistributable => {
+          // TODO logging
+          // TODO eventually pass the really source of the request for logging or permission check
+          // assumption that authorizedData and oldAuthorizedData has the same type or oldAuthorizedData ==null
+          sendSetSelfContentRequest(new Identification(), null, newConnection, y, null)
+        }
+        case _ =>{
+        }
+      }
+
+    })
+    report("exiting handleDistributedData", Severity.Trace)
   }
 
 }
