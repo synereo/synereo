@@ -7,13 +7,13 @@
 //import java.util.UUID
 //import java.net.URI
 //
-//import com.protegra.agentservicesstore.extensions.StringExtensions._
-//import com.protegra.agentservicesstore.extensions.URIExtensions._
+//import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+//import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 //import com.protegra_ati.agentservices.core.messages._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
 //import java.net.URI
 //import content.SetContentPersistedRequest
 //import verifier._
@@ -86,7 +86,7 @@ import com.protegra_ati.agentservices.core.schema._
 //    val claimingAgentPA = createClaimingAgent(List(cnxnRASelf, cnxnCASelf))
 //
 //    //store a CA/RA connection on the CA self connection
-//    val connCARA = ConnectionFactory.createConnection("RA", "Full", claimingAgentId, relyingAgentId)
+//    val connCARA = ConnectionFactory.createConnection("RA", "Trusted", claimingAgentId, relyingAgentId)
 //    claimingAgentPA.store(claimingAgentPA._dbQ, cnxnCASelf, connCARA.toStoreKey, Serializer.serialize[ Data ](connCARA))
 //    //Thread.sleep(TIMEOUT_LONG)
 //
@@ -94,7 +94,7 @@ import com.protegra_ati.agentservices.core.schema._
 //    claimingAgentPA.listenForHostedCnxns
 //
 //    //store an RA/CA connection on the RA self connection
-//    var connRACA = ConnectionFactory.createConnection("CA", "Full", relyingAgentId, claimingAgentId)
+//    var connRACA = ConnectionFactory.createConnection("CA", "Trusted", relyingAgentId, claimingAgentId)
 //    relyingAgentPA.store(relyingAgentPA._dbQ, cnxnRASelf, connRACA.toStoreKey, Serializer.serialize[ Data ](connRACA))
 //    //Thread.sleep(TIMEOUT_LONG)
 //
@@ -165,11 +165,11 @@ import com.protegra_ati.agentservices.core.schema._
 //    val claimingAgentPA = createClaimingAgent(List(cnxnRASelf, cnxnCASelf))
 //
 //    //store a CA/RA connection on the CA self connection
-//    val connCARA = ConnectionFactory.createConnection("RA", "Full", claimingAgentId, relyingAgentId)
+//    val connCARA = ConnectionFactory.createConnection("RA", "Trusted", claimingAgentId, relyingAgentId)
 //    claimingAgentPA.store(claimingAgentPA._dbQ, cnxnCASelf, connCARA.toStoreKey, Serializer.serialize[ Data ](connCARA))
 //
 //    //store a CA/RA connection on the CA self connection
-//    val connCAVerifier = ConnectionFactory.createConnection("Govt. of Manitoba", "Full", claimingAgentId, verifierId, false, List("verifier"))
+//    val connCAVerifier = ConnectionFactory.createConnection("Govt. of Manitoba", "Trusted", claimingAgentId, verifierId, false, List("verifier"))
 //    claimingAgentPA.store(claimingAgentPA._dbQ, cnxnCASelf, connCAVerifier.toStoreKey, Serializer.serialize[ Data ](connCAVerifier))
 //    //Thread.sleep(TIMEOUT_LONG)
 //
@@ -177,7 +177,7 @@ import com.protegra_ati.agentservices.core.schema._
 //    claimingAgentPA.listenForHostedCnxns
 //
 //    //store an RA/CA connection on the RA self connection
-//    var connRACA = ConnectionFactory.createConnection("CA", "Full", relyingAgentId, claimingAgentId)
+//    var connRACA = ConnectionFactory.createConnection("CA", "Trusted", relyingAgentId, claimingAgentId)
 //    relyingAgentPA.store(relyingAgentPA._dbQ, cnxnRASelf, connRACA.toStoreKey, Serializer.serialize[ Data ](connRACA))
 //    //Thread.sleep(TIMEOUT_LONG)
 //
@@ -217,7 +217,7 @@ import com.protegra_ati.agentservices.core.schema._
 //      val response = SelectVerifierResponse(request.ids.copyAsChild(), request.eventKey.copy(), "profile", "lastName", verifier)
 //      response.targetCnxn = cnxnRACA
 //      response.originCnxn = request.originCnxn
-//      val conn = ConnectionFactory.createConnection("CARA", "Full", claimingAgentId, relyingAgentId)
+//      val conn = ConnectionFactory.createConnection("CARA", "Trusted", claimingAgentId, relyingAgentId)
 //      val compositeData = new CompositeData[PersistedRequest](conn, persistedRequest)
 //      val msg = SetContentPersistedRequest(new EventKey(agentSessionId, "verifierSelected"), compositeData, response, true)
 //      msg.targetCnxn = cnxnCARA
@@ -264,7 +264,7 @@ import com.protegra_ati.agentservices.core.schema._
 //     //re-run listens on verifier PA - will start listening on the connections stored above on the verifier self connection
 //     verifierPA.listenForHostedCnxns
 //
-//     val connCAVerifier = ConnectionFactory.createConnection("Govt. of Manitoba", "Full", claimingAgentId, verifierId)
+//     val connCAVerifier = ConnectionFactory.createConnection("Govt. of Manitoba", "Trusted", claimingAgentId, verifierId)
 //     claimingAgentPA.store(claimingAgentPA._dbQ, cnxnCASelf, connCAVerifier.toStoreKey, Serializer.serialize[ Data ](connCAVerifier))
 //     //Thread.sleep(TIMEOUT_LONG)
 //
@@ -447,11 +447,11 @@ import com.protegra_ati.agentservices.core.schema._
 //    val verifierPA = createVerifier
 //
 //    //store a CA/RA connection on the CA self connection
-//    val connCARA = ConnectionFactory.createConnection("RA", "Full", claimingAgentId, relyingAgentId)
+//    val connCARA = ConnectionFactory.createConnection("RA", "Trusted", claimingAgentId, relyingAgentId)
 //    claimingAgentPA.store(claimingAgentPA._dbQ, cnxnCASelf, connCARA.toStoreKey, Serializer.serialize[ Data ](connCARA))
 //
 //    //store a CA/RA connection on the CA self connection
-//    val connCAVerifier = ConnectionFactory.createConnection("Govt. of Manitoba", "Full", claimingAgentId, verifierId, false, List("verifier"))
+//    val connCAVerifier = ConnectionFactory.createConnection("Govt. of Manitoba", "Trusted", claimingAgentId, verifierId, false, List("verifier"))
 //    claimingAgentPA.store(claimingAgentPA._dbQ, cnxnCASelf, connCAVerifier.toStoreKey, Serializer.serialize[ Data ](connCAVerifier))
 //    //Thread.sleep(TIMEOUT_LONG)
 //
@@ -459,7 +459,7 @@ import com.protegra_ati.agentservices.core.schema._
 //    claimingAgentPA.listenForHostedCnxns
 //
 //    //store a verifier/CA connection on the Verifier self connection
-//    var connRACA = ConnectionFactory.createConnection("CA", "Full", relyingAgentId, claimingAgentId)
+//    var connRACA = ConnectionFactory.createConnection("CA", "Trusted", relyingAgentId, claimingAgentId)
 //    relyingAgentPA.store(relyingAgentPA._dbQ, cnxnRASelf, connRACA.toStoreKey, Serializer.serialize[ Data ](connRACA))
 //    //Thread.sleep(TIMEOUT_LONG)
 //
@@ -495,7 +495,7 @@ import com.protegra_ati.agentservices.core.schema._
 //      claimingAgentPA.store(claimingAgentPA._dbQ, cnxnCAVerifier, persistedRequest.toStoreKey, Serializer.serialize[Data](persistedRequest))
 //      //Thread.sleep(TIMEOUT_LONG)
 //
-//      val conn = ConnectionFactory.createConnection("CAVerifier", "Full", claimingAgentId, verifierId)
+//      val conn = ConnectionFactory.createConnection("CAVerifier", "Trusted", claimingAgentId, verifierId)
 //      val compositeData = new CompositeData[PersistedRequest](conn, persistedRequest)
 //      val msg = SetContentPersistedRequest(new EventKey(agentSessionId, "verifierSelected"), compositeData, null, true)
 //      msg.targetCnxn = cnxnCAVerifier

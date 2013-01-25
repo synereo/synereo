@@ -6,7 +6,7 @@ package com.protegra_ati.agentservices.core.schema.disclosure
 /**
  * Constants of enum style for default disclosed data trust levels
  */
-case object TrustLevel extends Enumeration("Full", "Introduced", "Basic", "Empty")
+case object TrustLevel extends Enumeration("Trusted", "Custom", "Basic", "Empty")
 {
-  val Full, Introduced, Basic, Empty = Value
+  val Trusted, Custom, Basic, Empty = Value
 }

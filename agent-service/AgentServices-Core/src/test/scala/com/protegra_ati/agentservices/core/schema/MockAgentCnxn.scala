@@ -1,7 +1,7 @@
 package com.protegra_ati.agentservices.core.schema
 
 
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.model.agent._

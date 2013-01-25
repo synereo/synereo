@@ -5,9 +5,9 @@ package com.protegra_ati.agentservices.core.schema.util
  * and open the template in the editor.
  */
 
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID
 import java.net.URI
 import com.protegra_ati.agentservices.core.schema._
@@ -17,7 +17,7 @@ object ConnectionFactory
 {
   def createSelfConnection(alias: String, id: String): Connection =
   {
-    createConnection(alias, ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, "Full", id, id)
+    createConnection(alias, ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, "Trusted", id, id)
   }
 
   def createConnection(alias: String, categorySource: String, categoryTarget: String, connectionType: String, sourceId: String, targetId: String): Connection =

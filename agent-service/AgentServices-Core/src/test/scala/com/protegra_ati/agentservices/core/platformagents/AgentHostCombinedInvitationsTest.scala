@@ -1,13 +1,13 @@
 package com.protegra_ati.agentservices.core.platformagents
 
 import scala.collection.JavaConversions._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
-import com.protegra.agentservicesstore.extensions.ResourceExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 import org.junit._
 import Assert._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.{URI}
 import com.protegra_ati.agentservices.core.messages.content._
@@ -90,7 +90,7 @@ with ReferralUser
       val agentSessionIdJason = UUID.randomUUID()
       val requestedCategory1 = ConnectionCategory.Person.toString
       val requestedCategory2 = ConnectionCategory.Person.toString
-      val requestedConnectionType1 = "full"
+      val requestedConnectionType1 = "trusted"
       val requestedConnectionType2 = "custom"
       val requestedConnectionName1 = "New Mike"
       val requestedConnectionName2 = "New Jason"
@@ -117,9 +117,9 @@ with ReferralUser
       storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerJason)
       storeR.updateDataById(connBrokerBroker.writeCnxn, connBrokerMike)
 
-      AgentHostCombinedBase.setProfile(uiR, connJasonJason.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestFull("jason", "klassen", "Jason.Klassen@protegra.com", "CA"))
+      AgentHostCombinedBase.setProfile(uiR, connJasonJason.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestTrusted("jason", "klassen", "Jason.Klassen@protegra.com", "CA"))
       Thread.sleep(TIMEOUT_LONG)
-      AgentHostCombinedBase.setProfile(uiR, connMikeMike.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestFull("mike", "gevantmakher", "Mike.Gevantmakher@protegra.com", "US"))
+      AgentHostCombinedBase.setProfile(uiR, connMikeMike.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestTrusted("mike", "gevantmakher", "Mike.Gevantmakher@protegra.com", "US"))
       Thread.sleep(TIMEOUT_LONG * 5)
 
       // Jason asks broker to be connected to Mikhaial
@@ -161,7 +161,7 @@ with ReferralUser
     //      val agentSessionIdJason = UUID.randomUUID()
     //      val requestedCategory1 = ConnectionCategory.Person.toString
     //      val requestedCategory2 = ConnectionCategory.Person.toString
-    //      val requestedConnectionType1 = "full"
+    //      val requestedConnectionType1 = "trusted"
     //      val requestedConnectionType2 = "custom"
     //      val requestedConnectionName1 = "New Mike"
     //      val requestedConnectionName2 = "New Jason"
@@ -228,7 +228,7 @@ with ReferralUser
     //      val agentSessionIdJason = UUID.randomUUID()
     //      val requestedCategory1 = ConnectionCategory.Person.toString
     //      val requestedCategory2 = ConnectionCategory.Person.toString
-    //      val requestedConnectionType1 = "full"
+    //      val requestedConnectionType1 = "trusted"
     //      val requestedConnectionType2 = "custom"
     //      val requestedConnectionName1 = "New Mike"
     //      val requestedConnectionName2 = "New Jason"
@@ -295,7 +295,7 @@ with ReferralUser
 
   }
 
-  def createProfileForTestFull(name: String, lastName: String, email: String, country: String): Profile =
+  def createProfileForTestTrusted(name: String, lastName: String, email: String, country: String): Profile =
   {
     new Profile(name, lastName, "test Description", email, country, "someprovince", "city", "postalCode", "website")
   }

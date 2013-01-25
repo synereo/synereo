@@ -21,6 +21,7 @@ case class InvitationResponse(
 {
   if ( post != null && !post.isSent() ) post.send()
 
+  def this() = this(null, null, null, null, null, null, null, false, null)
   // Response is created the content of the post implicitly has to be viewed
   if ( conversationThread != null )
     conversationThread.foreach(post => {if ( !post.isViewed() ) post.view()})

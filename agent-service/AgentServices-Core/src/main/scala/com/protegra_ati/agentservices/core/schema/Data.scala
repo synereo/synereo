@@ -3,14 +3,14 @@ package com.protegra_ati.agentservices.core.schema
 
 import java.io.Serializable
 import java.lang.reflect._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.schema.util.ReflectionHelper._
 import scala.reflect.BeanProperty
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.extensions._
+import com.protegra_ati.agentservices.store.extensions._
 import com.protegra_ati.agentservices.core.schema.Constants._
-import com.protegra.agentservicesstore.schema.KVDBSerializable
+import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 import java.util.{Locale, UUID, HashMap}
 import validator._
 import persistence._
@@ -216,4 +216,8 @@ with UseKryoSerialization
 object Data
 {
   def currentVersion: String = "1.0"
+  final val SEARCH_ALL = new Data()
+  {
+    override def toSearchKey(): String = "data(_)"
+  }
 }

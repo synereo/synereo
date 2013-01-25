@@ -1,7 +1,7 @@
 package com.protegra_ati.agentservices.core.platformagents.behaviors
 
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import org.junit._
 
 import org.specs2.mutable._

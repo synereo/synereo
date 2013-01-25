@@ -1,0 +1,249 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.protegra-ati</groupId>
+    <artifactId>agentservices-store</artifactId>
+    <version>1.0.1.11</version>
+    <name>${project.artifactId}</name>
+    <description>Agent class library</description>
+    <inceptionYear>2010</inceptionYear>
+
+    <properties>
+        <maven.compiler.source>1.5</maven.compiler.source>
+        <maven.compiler.target>1.5</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+        <scala.version>2.9.0-1</scala.version>
+        <scala.test.specs2.version>1.8.2</scala.test.specs2.version>
+        <!--<scala.version>2.9.2</scala.version>-->
+        <!--<scala.test.specs2.version>1.12.1</scala.test.specs2.version>-->
+        <specialk.version>1.1.1.9</specialk.version>
+         <!-- Common plugin settings -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
+          <!-- vscaladoc settings -->
+        <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
+        <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
+        <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>scala-tools.org</id>
+            <name>Scala-Tools Maven2 Repository</name>
+            <url>http://scala-tools.org/repo-releases</url>
+        </repository>
+        <repository>
+            <id>biosim</id>
+            <url>http://biosimrepomirror.googlecode.com/svn/trunk</url>
+        </repository>
+        <repository>
+            <id>spy</id>
+            <name>Spy Repository</name>
+            <layout>default</layout>
+            <url>http://files.couchbase.com/maven2/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>protegraRepo</id>
+            <url>ftp://ftp.protegra.com</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>scala-tools.org</id>
+            <name>Scala-Tools Maven2 Repository</name>
+            <url>http://scala-tools.org/repo-releases</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+<!--        <dependency>
+            <groupId>JavaLibraries</groupId>
+            <artifactId>JavaLibraries</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>-->
+        <dependency>
+            <groupId>com.biosimilarity.lift</groupId>
+            <artifactId>specialK</artifactId>
+            <version>${specialk.version}</version>
+	</dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.biosimilarity.lift</groupId>-->
+            <!--<artifactId>PlatformAgent</artifactId>-->
+            <!--<version>1.1.0.14</version>-->
+        <!--</dependency>-->
+
+	<!-- for Prolog capabilities -->
+        <dependency>
+             <groupId>it.unibo.alice.tuprolog</groupId>
+             <artifactId>tuprolog</artifactId>
+             <version>2.1.1</version>
+           </dependency>
+
+           <dependency>
+             <groupId>org.prolog4j</groupId>
+             <artifactId>prolog4j-api</artifactId>
+             <version>0.2.1-SNAPSHOT</version>
+           </dependency>
+
+           <dependency>
+             <groupId>org.prolog4j</groupId>
+             <artifactId>prolog4j-tuprolog</artifactId>
+             <version>0.2.1-SNAPSHOT</version>
+           </dependency>
+        <!--<dependency>-->
+            <!--<groupId>alice.tuprolog</groupId>-->
+            <!--<artifactId>2p</artifactId>-->
+            <!--<version>local</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.prolog4j</groupId>-->
+            <!--<artifactId>prolog4j-api-0.2.0</artifactId>-->
+            <!--<version>local</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.prolog4j</groupId>-->
+            <!--<artifactId>prolog4j-tuprolog-0.2.0</artifactId>-->
+            <!--<version>local</version>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>net.lag</groupId>
+            <artifactId>configgy</artifactId>
+            <version>local</version>
+        </dependency>
+
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>1.2.16</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.ws.commons.util</groupId>
+            <artifactId>ws-commons-util</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>jline</artifactId>
+            <version>2.9.0-1</version>
+        </dependency>
+        <dependency>
+            <groupId>spy</groupId>
+            <artifactId>spymemcached</artifactId>
+            <version>2.8.4</version>
+        </dependency>
+    <!-- Test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+         <dependency>
+             <groupId>org.scala-tools.testing</groupId>
+             <!-- <artifactId>specs_2.8.1</artifactId> -->
+             <artifactId>specs_2.9.0-1</artifactId>
+             <!-- <version>1.6.7.2</version> -->
+             <version>1.6.8</version>
+             <scope>test</scope>
+         </dependency>
+        <dependency>
+          <groupId>org.specs2</groupId>
+          <artifactId>specs2_${scala.version}</artifactId>
+          <version>${scala.test.specs2.version}</version>
+          <scope>test</scope>
+        </dependency>
+
+
+    </dependencies>
+    <build>
+        <sourceDirectory>src/main/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ftp</artifactId>
+                <version>1.0-beta-7</version>
+            </extension>
+        </extensions>
+        <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-source-plugin</artifactId>
+              <version>2.2</version>
+              <executions>
+                <execution>
+                  <id>attach-sources</id>
+                  <phase>verify</phase>
+                  <goals>
+                    <goal>jar-no-fork</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.1</version>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                    <charset>${project.build.sourceEncoding}</charset>
+                    <jvmArgs>
+                        <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
+                        <jvmArg>-Xmx1024m</jvmArg>
+                        <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
+                    </jvmArgs>
+                    <args>
+                        <!--<arg>-Xelide-below</arg>-->
+                   	    <!--<arg>1</arg>-->
+		<!-- arg>manager.conf</arg -->
+		<!-- <arg>-deprecation</arg> -->
+		<!-- <arg>-unchecked</arg> -->
+                        <arg>-P:continuations:enable</arg>
+                    </args>
+                    <compilerPlugins>
+                        <compilerPlugin>
+                            <groupId>org.scala-lang.plugins</groupId>
+                            <artifactId>continuations</artifactId>
+                            <version>${scala.version}</version>
+<!--                            <version>2.10.0-SNAPSHOT</version>-->
+                        </compilerPlugin>
+                    </compilerPlugins>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.1</version>
+                <configuration>
+                    <charset>${project.build.sourceEncoding}</charset>
+                    <jvmArgs>
+                        <jvmArg>-Xmx1024m</jvmArg>
+                        <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+</project>

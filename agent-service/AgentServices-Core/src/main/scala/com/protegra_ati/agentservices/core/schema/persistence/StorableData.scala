@@ -3,7 +3,7 @@ package com.protegra_ati.agentservices.core.schema.persistence
 import com.protegra_ati.agentservices.core.schema.Data
 import com.protegra_ati.agentservices.core.schema.util.{PrologFormatter, ReflectionHelper}
 import com.protegra_ati.agentservices.core.schema.Constants._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.{Locale, UUID}
 import java.util.Properties
 import java.lang.reflect._
@@ -31,7 +31,7 @@ trait StorableData extends StorableDataDefaults
     val filteredFields = fields.filter(r => !keyFieldsForSearchAndStoreKey.contains(r.getName.trimPackage.toCamelCase))
     val fieldValues = filteredFields map ( f => handleFieldValue(f))
     val fieldValueList = fieldValues.mkString("", ",", "")
-    this.formattedClassName + "(data(" + PrologFormatter.clean(getHeaderContent()) + "," + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + ")))"
+    "data(" + this.formattedClassName + "(" + PrologFormatter.clean(getHeaderContent()) + "," + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + ")))"
   }
 
   def toDeleteKey(): String =
@@ -131,7 +131,7 @@ trait StorableData extends StorableDataDefaults
   }
   def keyByIdOnly(): String =
   {
-    this.formattedClassName + "(data(" + KEYS + "(id(\"" + id + "\"),localeCode(_),recVerNum(_))," + "_))"
+    "data(" + this.formattedClassName + "(" + KEYS + "(id(\"" + id + "\"),localeCode(_),recVerNum(_))," + "_))"
   }
 
   def getHeaderContent() : String =

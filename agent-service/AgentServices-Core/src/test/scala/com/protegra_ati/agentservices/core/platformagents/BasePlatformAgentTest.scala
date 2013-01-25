@@ -12,25 +12,25 @@ import org.specs2.time.Duration
 import org.junit.runner._
 import org.specs2.runner._
 
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.OptionExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.OptionExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import java.util.UUID
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema.util._
 import org.junit._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import scala.util.Random
 import java.net.URI
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
 import java.net.URI
 import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
-import com.protegra.agentservicesstore.util.Severity
+import com.protegra_ati.agentservices.store.util.Severity
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.protegra_ati.agentservices.core.util.Results
 import org.specs2.specification.Scope
@@ -218,7 +218,7 @@ with Serializable
   //    //store connection
   //    val jenId = "Jen" + UUID.randomUUID
   //    val mikeId = "Mike" + UUID.randomUUID
-  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Full", jenId.toString, mikeId.toString)
+  //    val conn = ConnectionFactory.createConnection("Jen", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Trusted", jenId.toString, mikeId.toString)
   //    val newCnxn = new AgentCnxnProxy(UUID.randomUUID.toString.toURI, "", UUID.randomUUID.toString.toURI)
   //    pa1.store(pa1._dbQ, newCnxn, conn.toStoreKey, Serializer.serialize[ Data ](conn))
   //    Thread.sleep(TIMEOUT_LONG)

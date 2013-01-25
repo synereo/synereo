@@ -8,20 +8,20 @@ import org.specs2.runner._
 import com.protegra_ati.agentservices.core.Timeouts
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema.Data
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.ResourceExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 
 import java.net.URI
 import java.util.UUID
 import com.protegra_ati.agentservices.core.util.Results
 
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
 
 import actors.threadpool.LinkedBlockingQueue
-import com.protegra.agentservicesstore.extensions.LinkedBlockingQueueExtensions._
+import com.protegra_ati.agentservices.store.extensions.LinkedBlockingQueueExtensions._
 import com.protegra_ati.agentservices.core.util.Results
 
 

@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.core.util
 
-import com.protegra.agentservicesstore.util.Reporting
+import com.protegra_ati.agentservices.store.util.Reporting
 
 /* User: mgevantmakher
 */

@@ -2,8 +2,8 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
@@ -12,7 +12,7 @@ import java.util.{UUID, HashMap}
 import com.protegra_ati.agentservices.core.schema.util._
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-import com.protegra.agentservicesstore.util.Severity
+import com.protegra_ati.agentservices.store.util.Severity
 
 
 trait ConnectionBroker
@@ -72,7 +72,7 @@ trait ConnectionBroker
     //the lines below needs to be replaced by a new message that can go across the publicQ to the right PA and
     //retrieve the "read" side's self connection
 //    val targetSelfCnxn = AgentCnxnProxy(connection.writeCnxn.src, "", connection.writeCnxn.src)
-    val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ]())
+    val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ]())
 
     val systemConnection = new SystemData[ Connection ](selfCnxns)
     store(_dbQ, connection.writeCnxn, systemConnection.toStoreKey, Serializer.serialize[ SystemData[ Connection ] ](systemConnection))

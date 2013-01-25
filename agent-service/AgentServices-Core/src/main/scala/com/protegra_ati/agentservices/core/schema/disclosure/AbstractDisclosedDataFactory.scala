@@ -1,8 +1,8 @@
 package com.protegra_ati.agentservices.core.schema.disclosure
 
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.util._
-import com.protegra.agentservicesstore.util.Reporting
+import com.protegra_ati.agentservices.store.util._
+import com.protegra_ati.agentservices.store.util.Reporting
 
 
 /* User: mgevantmakher

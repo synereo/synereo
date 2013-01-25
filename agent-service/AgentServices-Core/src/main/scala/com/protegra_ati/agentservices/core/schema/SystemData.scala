@@ -1,8 +1,8 @@
 package com.protegra_ati.agentservices.core.schema
 
 import java.io.Serializable
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.schema.KVDBSerializable
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 case class SystemData[T<:Data](val data:T) extends Serializable with KVDBSerializable with UseKryoSerialization{

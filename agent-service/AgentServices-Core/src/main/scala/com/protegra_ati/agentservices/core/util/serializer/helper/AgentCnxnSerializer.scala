@@ -4,7 +4,7 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
@@ -35,7 +35,7 @@ class AgentCnxnProxySerializer() extends Serializer[ AgentCnxnProxy ]
       //        label = null
       kryo.writeObjectOrNull(output, label, classOf[ String ])
 //      kryo.writeObjectOrNull(output, obj.credential, classOf[ java.util.UUID ])
-      println("KRYO MOCK_AGENT_CNXN SERIALIZE WRITE: " + obj)
+      //println("KRYO MOCK_AGENT_CNXN SERIALIZE WRITE: " + obj)
     }
   }
 
@@ -54,7 +54,7 @@ class AgentCnxnProxySerializer() extends Serializer[ AgentCnxnProxy ]
 
 //    val cnxn = AgentCnxnProxy(if ( !src.equals("NULL") ) URI.create(src) else null, label, if ( !trgt.equals("NULL") ) URI.create(trgt) else null, credential)
     val cnxn = AgentCnxnProxy(if ( !src.equals("NULL") ) URI.create(src) else null, label, if ( !trgt.equals("NULL") ) URI.create(trgt) else null)
-    println("KRYO AGENT_CNXN READ: " + cnxn)
+    //println("KRYO AGENT_CNXN READ: " + cnxn)
     return cnxn
 
   }

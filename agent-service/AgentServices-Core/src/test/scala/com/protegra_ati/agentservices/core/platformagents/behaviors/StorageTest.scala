@@ -2,14 +2,14 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 
 import org.specs2.mutable._
 
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import java.util.UUID
 import com.protegra_ati.agentservices.core.schema._
 import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import moniker._
 import com.protegra_ati.agentservices.core.messages._
@@ -46,7 +46,7 @@ with Serializable
 {
   val authorizedContentEmpty = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Empty)
   val authorizedContentBasic = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Basic)
-  val authorizedContentFull = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Full)
+  val authorizedContentTrusted = ProfileDisclosedDataFactory.getDisclosedData(TrustLevel.Trusted)
 
   val cnxnUIStore = new AgentCnxnProxy(( "UI" + UUID.randomUUID().toString ).toURI, "", ( "Store" + UUID.randomUUID().toString ).toURI)
   val pa = new AgentHostStorePlatformAgent

@@ -23,9 +23,9 @@ import org.specs2.mutable._
 import com.protegra_ati.agentservices.core._
 import persistence.MockConnection
 import scala.collection.JavaConversions._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 import org.joda.time.DateTime
 
@@ -136,7 +136,7 @@ Timeouts
       skipped("Until Kryo back in place")
       val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
 
-      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Full", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
+      val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
 
       val systemConnection = new SystemData[ Connection ](selfCnxns)
 

@@ -12,9 +12,9 @@ import org.specs2.mutable._
 import org.specs2.time.Duration
 import org.junit.runner._
 
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.ResourceExtensions._
-import com.protegra.agentservicesstore.extensions.OptionExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
+import com.protegra_ati.agentservices.store.extensions.OptionExtensions._
 import actors.threadpool.LinkedBlockingQueue
 import net.lag._
 import java.util.UUID
@@ -23,10 +23,10 @@ import org.junit._
 import Assert._
 import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.mTT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
 import com.protegra_ati.agentservices.core.messages._
 import moniker._
 import scala.util.continuations._

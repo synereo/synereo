@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.core.util
 
-import com.protegra.agentservicesstore.util.{MemCache, ResultsBase}
+import com.protegra_ati.agentservices.store.util.{MemCache, ResultsBase}
 import com.protegra_ati.agentservices.core.schema.Data
 import com.protegra_ati.agentservices.core.messages.Message
 

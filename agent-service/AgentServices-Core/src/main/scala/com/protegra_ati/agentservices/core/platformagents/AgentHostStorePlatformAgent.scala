@@ -5,13 +5,13 @@ package com.protegra_ati.agentservices.core.platformagents
  */
 
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
-import com.protegra.agentservicesstore.extensions.StringExtensions._
-import com.protegra.agentservicesstore.extensions.ResourceExtensions._
-import com.protegra.agentservicesstore.extensions.URIExtensions._
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import com.protegra_ati.agentservices.core.events._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope._
-import com.protegra.agentservicesstore.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages.login._
@@ -23,7 +23,7 @@ import introduction._
 //import search._
 
 import verifier._
-import com.protegra.agentservicesstore.util.Severity
+import com.protegra_ati.agentservices.store.util.Severity
 
 import java.net.URI
 import net.lag.configgy._
