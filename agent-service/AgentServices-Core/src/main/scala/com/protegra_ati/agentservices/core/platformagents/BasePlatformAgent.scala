@@ -426,6 +426,8 @@ abstract class BasePlatformAgent
     queue.store(agentCnxn)(lbl, Ground(value))
   }
 
+
+
   def fetch[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
     report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
@@ -463,13 +465,15 @@ abstract class BasePlatformAgent
               handler(cnxn, result)
               found = true
             }
-            else
-            {
-              Thread.sleep(delay)
-            }
           }
         }
       }
+
+      if (!found)
+      {
+        Thread.sleep(delay)
+      }
+
     }
 
     if (!found) {

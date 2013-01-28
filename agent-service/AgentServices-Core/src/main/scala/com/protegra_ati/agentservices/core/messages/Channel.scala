@@ -11,5 +11,5 @@ package com.protegra_ati.agentservices.core.messages
 object Channel extends Enumeration("global", "admin", "registration", "security", "content", "invitation", "introduction", "referral", "verify", "survey", "search")
 {
   type Channel = Value
-  val Global, Admin, Registration, Security, Content, Invitation, Introduction, Referral, Verify, Survey, Search = Value
+  val Global, Admin, Registration, Security, Content, Invitation, Introduction, Referral, Verify, Survey, Search, Notification = Value
 }

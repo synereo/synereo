@@ -238,6 +238,13 @@ trait ContentRequestSet
 
   def setContentForSelfAndAllConnectionsAndTargetSelf(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
   {
+
+    // All setContents on the self connection raise a notification to the notification engine.
+    // toStoreKey is called so that the ID is set when it reaches the UI
+
+    raiseNotification(selfCnxn, selfCnxn, parentRequestIds, newData)
+
+
     //store object on self Cnxn
     updateDataById(selfCnxn, newData)
 
@@ -249,7 +256,9 @@ trait ContentRequestSet
     //    newData:Profile => .getClassOf => Class[Profile]
     //  newData:Profile => .getClass => java.lang.Class<Profile>   != Class[Profile]
 
+
     fetch[ Data ](_dbQ, selfCnxn, contentSearch.toSearchKey, handleSetContentForAllConnectionsAndTargetSelfFetch(_: AgentCnxnProxy, _: Data, parentRequestIds, parentRequestEventKey, newData, oldData))
+
   }
 
   protected def handleSetContentForAllConnectionsAndTargetSelfFetch(cnxn: AgentCnxnProxy, disclosedData: Data, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
@@ -393,6 +402,12 @@ trait ContentRequestSet
 
     report("exiting handleSetContentByConnectionTypeFetch in StorePlatform", Severity.Trace)
   }
+
+  def raiseNotification(originCnxn: AgentCnxnProxy, targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, data: Data): Unit = {
+    //hook to implement in higher up libraries
+    report("NotificationEngine not implemented", Severity.Trace)
+  }
+
 
   def updateCache(originCnxn: AgentCnxnProxy, targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data): Unit = {
     //hook to implement in higher up libraries
