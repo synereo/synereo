@@ -133,8 +133,7 @@ with MessageStore
     loadPublicQueue()
     //the same for now, should be initialized properly to separate queues
 
-    if ( isDistributedNetworkMode )
-      loadUserCnxnList()
+    loadUserCnxnList()
   }
 
   //does not raise events but sends messages back to AgentHostUIPlatformAgent
