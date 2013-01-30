@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-core</artifactId>
-    <version>1.0.1.28</version>
+    <version>1.0.1.29</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -14,7 +14,7 @@
         <encoding>UTF-8</encoding>
         <scala.version>2.9.0-1</scala.version>
         <scala.test.specs2.version>1.8.2</scala.test.specs2.version>
-	    <agentservices-store.version>1.0.1.11</agentservices-store.version>
+	    <agentservices-store.version>1.0.1.12</agentservices-store.version>
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
