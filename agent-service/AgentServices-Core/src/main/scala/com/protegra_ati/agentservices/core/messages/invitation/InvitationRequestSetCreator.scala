@@ -177,6 +177,7 @@ trait InvitationRequestSetCreator
   {
     generateInvitationRequests(
       sourceRequest,
+      sourceRequest.isRoleBasedRequest,
       connBroker_A,
       connBroker_B,
       sourceRequest.selfAlias,
@@ -220,6 +221,7 @@ trait InvitationRequestSetCreator
    */
   def generateInvitationRequests(
     sourceRequest: Message with Request,
+    isRoleBasedRequest: Boolean,
     connBroker_A: Connection,
     connBroker_B: Connection,
     alias_A: String,
@@ -238,8 +240,8 @@ trait InvitationRequestSetCreator
     report("****Found valid target connection, sending invites to cnxn A: " + connBroker_A.readCnxn.toString + " and cnxn B: " + connBroker_B.readCnxn.toString, Severity.Debug)
 
     //invite both parties with inverse
-    val inviteA = sendInvitationRequest(sourceRequest, connBroker_A, alias_B, Some(category_B), requestedConnectionType_A, requestedConnectionName_A, requestedPosts_A)
-    val inviteB = sendInvitationRequest(sourceRequest, connBroker_B, alias_A, Some(category_A), requestedConnectionType_B, requestedConnectionName_B, requestedPosts_B)
+    val inviteA = sendInvitationRequest(sourceRequest, connBroker_A, alias_B, Some(category_B), requestedConnectionType_A, requestedConnectionName_A, requestedPosts_A, false)
+    val inviteB = sendInvitationRequest(sourceRequest, connBroker_B, alias_A, Some(category_A), requestedConnectionType_B, requestedConnectionName_B, requestedPosts_B, isRoleBasedRequest)
     waitForInvitationResponse(connBroker_A.writeCnxn, inviteA, inviteB)
     // signal successful sending
     sendResponseHandler(sourceRequest, "success")
@@ -264,10 +266,11 @@ trait InvitationRequestSetCreator
     category: Option[ String ],
     requestedConnectionType: Option[ String ],
     requestedConnectionName: Option[ String ],
-    requestedPosts: List[ Post ]
+    requestedPosts: List[ Post ],
+    isRoleBasedRequest: Boolean
     ): InvitationRequest =
   {
-    val req = new InvitationRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, alias, category, requestedConnectionType, requestedConnectionName, requestedPosts)
+    val req = new InvitationRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, alias, category, requestedConnectionType, requestedConnectionName, requestedPosts, isRoleBasedRequest)
     req.targetCnxn = conn.readCnxn
     req.originCnxn = conn.writeCnxn
     report("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
@@ -315,9 +318,15 @@ trait InvitationRequestSetCreator
                     report("****GENERATE CREATE CONNECTION REQUEST:****", Severity.Info)
                     val aId = UUID.randomUUID()
                     val bId = UUID.randomUUID()
-                    val connAB = ConnectionFactory.createConnection(msgA.connectionName, msgB.category, msgA.category, msgA.connectionType, aId.toString, bId.toString);
+                    var connABConnectionName = msgA.connectionName
+                    //override connection name on A if the original request was to connect to a business person via a role
+                    if (msgB.invitationRequest.isRoleBasedRequest && msgB.roleBasedAlias != null)
+                      connABConnectionName = msgB.roleBasedAlias
+                    val connAB = ConnectionFactory.createConnection(connABConnectionName, msgB.category, msgA.category, msgA.connectionType, aId.toString, bId.toString);
                     val connBA = ConnectionFactory.createConnection(msgB.connectionName, msgA.category, msgB.category, msgB.connectionType, bId.toString, aId.toString);
 
+                      if (msgB.invitationRequest.isRoleBasedRequest && msgB.roleBasedAlias != null)
+                        msgA.connectionName
                     sendCreateConnectionRequest(msgA, connAB)
                     sendCreateConnectionRequest(msgB, connBA)
                     //handleMutualConnectionAgreement(msgA, msgB)

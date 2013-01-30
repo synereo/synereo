@@ -14,6 +14,7 @@ case class InvitationResponse(
   @BeanProperty val post: Post,
   @BeanProperty val conversationThread: java.util.List[ Post ],
   @BeanProperty val accept: Boolean,
+  @BeanProperty val roleBasedAlias: String,
   invitationRequest: InvitationRequest
   )
   extends Message(ids, eventKey)
@@ -21,7 +22,7 @@ case class InvitationResponse(
 {
   if ( post != null && !post.isSent() ) post.send()
 
-  def this() = this(null, null, null, null, null, null, null, false, null)
+  def this() = this(null, null, null, null, null, null, null, false, null, null)
   // Response is created the content of the post implicitly has to be viewed
   if ( conversationThread != null )
     conversationThread.foreach(post => {if ( !post.isViewed() ) post.view()})

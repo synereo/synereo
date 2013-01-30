@@ -16,11 +16,12 @@ case class CreateInvitationRequest(
   @BeanProperty requestedConnectionType: String,
   @BeanProperty requestedConnectionName: String,
   @BeanProperty postToTarget: Post,
-  @BeanProperty postToBroker: Post
+  @BeanProperty postToBroker: Post,
+  @BeanProperty isRoleBasedRequest : Boolean
   ) extends Message(new Identification(), eventKey)//extends Message(eventKey) kryo workaround
    with Request with UseKryoSerialization
 {
-  def this () = this (null,null, null, null, null, null, null, null, null, null)
+  def this () = this (null,null, null, null, null, null, null, null, null, null, false)
 
   override def channel = Channel.Invitation
 

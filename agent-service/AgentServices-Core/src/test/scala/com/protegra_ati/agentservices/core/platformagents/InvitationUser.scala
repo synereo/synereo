@@ -26,7 +26,7 @@ trait InvitationUser
               datum match {
                 case persistedMessage: PersistedMessage[ InvitationRequest ] => {
                   val inviteRequest = persistedMessage.message.asInstanceOf[ InvitationRequest ]
-                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, inviteRequest)
+                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, "", inviteRequest)
 //                  response.targetCnxn = inviteRequest.targetCnxn
 //                  response.originCnxn = inviteRequest.originCnxn
                   // can throw assertion error
@@ -65,7 +65,7 @@ trait InvitationUser
                 case persistedMessage: PersistedMessage[ InvitationRequest ] => {
                   val inviteRequest = persistedMessage.message.asInstanceOf[ InvitationRequest ]
                   handler(inviteRequest.conversationThread.toList)
-                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, inviteRequest)
+                  val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, "", inviteRequest)
 //                  response.targetCnxn = inviteRequest.targetCnxn
 //                  response.originCnxn = inviteRequest.originCnxn
 
@@ -107,7 +107,7 @@ trait InvitationUser
                     category,
                     connectionType,
                     connectionName,
-                    new Post("I'm rejecting", "theBody", new java.util.HashMap(), new java.util.HashMap()), inviteRequest.conversationThread, false, inviteRequest)
+                    new Post("I'm rejecting", "theBody", new java.util.HashMap(), new java.util.HashMap()), inviteRequest.conversationThread, false, "", inviteRequest)
 //                  response.targetCnxn = inviteRequest.targetCnxn
 //                  response.originCnxn = inviteRequest.originCnxn
                   //TODO: jsk - temporary - too close in unit test, causing db concurrency issues?

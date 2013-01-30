@@ -55,7 +55,7 @@ with ReferralUser
 
       def requestInvitation(ui: AgentHostUIPlatformAgent, connInviterBroker: Connection, targetConnectionId: String, selfAlias: String, targetAlias: String, selfCategory: String, targetCategory: String, requestedConnectionType: String, requestedConnectionName: String, postToBroker: Post, postToInvitee: Post, agentSessionId: UUID, tag: String) =
       {
-        val req = new CreateInvitationRequest(new EventKey(agentSessionId, tag), targetConnectionId.toString, selfAlias, targetAlias, selfCategory, targetCategory, requestedConnectionType, requestedConnectionName, postToInvitee, postToBroker)
+        val req = new CreateInvitationRequest(new EventKey(agentSessionId, tag), targetConnectionId.toString, selfAlias, targetAlias, selfCategory, targetCategory, requestedConnectionType, requestedConnectionName, postToInvitee, postToBroker, false)
         // TODO add to the constructor to prevent errors !!!
         req.targetCnxn = connInviterBroker.readCnxn
         ui.send(req)
