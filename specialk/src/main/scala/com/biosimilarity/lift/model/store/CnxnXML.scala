@@ -855,7 +855,86 @@ trait CnxnXML[Namespace,Var,Tag] {
 	None
       }
     }
+  }  
+}
+
+trait CnxnScalesXML[Namespace,Var,Tag] {
+  self : CnxnXML[Namespace,Var,Tag] =>
+
+    import scales.xml.{
+      Doc => SXMLDoc, Namespace => SXMLNamespace, Elem => SXMLElem, Text => SXMLText, _
+    }
+    import scales.utils.{ Tree => SXMLTree, _ }
+    import ScalesUtils._
+    import ScalesXml._
+    import Functions._
+
+  def fromScalesXML( 
+    lbl2Namespace : String => Namespace,
+    text2Var : String => Var,
+    text2Tag : String => Tag
+  )(
+    doc : SXMLDoc
+  ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+    val tree : SXMLTree[XmlItem,SXMLElem,XCC] = doc.rootElem
+    fromScalesXMLTree( lbl2Namespace, text2Var, text2Tag )( tree )
   }
+  
+  def fromScalesXMLTree( 
+    lbl2Namespace : String => Namespace,
+    text2Var : String => Var,
+    text2Tag : String => Tag
+  )(
+    tree : SXMLTree[XmlItem,SXMLElem,XCC]
+  ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+    tree.section.name.qName match {
+      case "var" => {
+	Some(
+	  new CnxnCtxtLeaf[Namespace,Var,String](
+	    Right( text2Var( text( tree ) ) )
+	  )
+	)
+      }
+      case qName => {
+	val projeny =
+	  for {
+	    c <- tree.children.toList
+	    childVal <- 
+	    c.isRight match {
+	      case true => {
+		fromScalesXMLTree( lbl2Namespace, text2Var, text2Tag )( c.getRight )
+	      }
+	      case false => {
+		fromScalesXMLLeaf( lbl2Namespace, text2Var, text2Tag )( c.getLeft )
+	      }
+	    }
+	  }
+	  yield childVal
+	
+	Some( 
+	  new CnxnCtxtBranch[Namespace,Var,String](
+	    lbl2Namespace( qName ),
+	    projeny.toList
+	  )
+	)
+      }
+    }
+  }  
+
+  def fromScalesXMLLeaf( 
+    lbl2Namespace : String => Namespace,
+    text2Var : String => Var,
+    text2Tag : String => Tag
+  )(
+    elem : XmlItem
+  ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+    Some(
+      new CnxnCtxtLeaf[Namespace,Var,String](
+	Left( elem.value )
+      )
+    )
+  }
+
 }
 
 trait CnxnConversionScope[Namespace,Var,Tag] {
