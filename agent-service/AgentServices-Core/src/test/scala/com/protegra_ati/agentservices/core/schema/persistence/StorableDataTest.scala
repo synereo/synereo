@@ -128,7 +128,7 @@ class StorableDataTest extends SpecificationWithJUnit
         data.id = id
         data.threadId = id
         val given = data.toStoreKey
-        val expected = "post(data("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(subject(\"subject2Target\"),body(\"\"),toDetails(\"\"),fromDetails(\"\"),threadId(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),ignored(\"\"),archived(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\"))))"
+        val expected = "data(post("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(subject(\"subject2Target\"),body(\"\"),toDetails(\"\"),fromDetails(\"\"),threadId(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),ignored(\"\"),archived(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\"))))"
         given must be_==(expected)
       }
 
