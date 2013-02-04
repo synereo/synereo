@@ -17,6 +17,7 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
   with Serializable
   with KVDBSerializable
   with StorablePersistedMessageDataDefaults
+  with UINotifiable
 {
    def this() = this(null.asInstanceOf[T])
 

@@ -239,10 +239,7 @@ trait ContentRequestSet
   def setContentForSelfAndAllConnectionsAndTargetSelf(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data, oldData: Data)
   {
 
-    // All setContents on the self connection raise a notification to the notification engine.
-    // toStoreKey is called so that the ID is set when it reaches the UI
-
-    raiseNotification(selfCnxn, selfCnxn, parentRequestIds, newData)
+    raiseNotification(selfCnxn, parentRequestIds, newData)
 
 
     //store object on self Cnxn
@@ -403,7 +400,12 @@ trait ContentRequestSet
     report("exiting handleSetContentByConnectionTypeFetch in StorePlatform", Severity.Trace)
   }
 
-  def raiseNotification(originCnxn: AgentCnxnProxy, targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, data: Data): Unit = {
+  def raiseNotification(targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, data: Data): Unit = {
+    //hook to implement in higher up libraries
+    report("NotificationEngine not implemented", Severity.Trace)
+  }
+
+  def raiseRemoteNotification(targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, data: Data): Unit = {
     //hook to implement in higher up libraries
     report("NotificationEngine not implemented", Severity.Trace)
   }
@@ -426,6 +428,9 @@ trait ContentRequestSet
 
   def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
   {
+
+    raiseNotification(selfCnxn, parentRequestIds, newCompositeData.data)
+
     //store object on self Cnxn
     updateDataById(selfCnxn, newCompositeData.data)
 
@@ -442,10 +447,15 @@ trait ContentRequestSet
             sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
           }
           case _ => {
+            raiseRemoteNotification(newCompositeData.connection.readCnxn, parentRequestIds, newCompositeData.data)
             // TODO logging
           }
         }
 
+      }
+      else
+      {
+        raiseRemoteNotification(newCompositeData.connection.readCnxn, parentRequestIds, newCompositeData.data)
       }
     }
   }

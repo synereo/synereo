@@ -8,6 +8,7 @@ import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.store.util._
 import com.protegra_ati.agentservices.core.schema._
+import content.SetContentRequest
 import util.SystemDataFactory
 
 //import com.protegra.i18n.ResourceManager
@@ -122,10 +123,21 @@ trait InvitationRequestSetConsumer
     report("STORE INVITATIONS FOR LATER RESPONSE: inviteRequest=" + inviteRequest + ", cnxn=" + cnxn, Severity.Info)
     val selfConnection = systemConnection.data
     val persistedInvitationRequestMessage = new PersistedMessage[ InvitationRequest ](inviteRequest)
-    store(_dbQ, selfConnection.writeCnxn, persistedInvitationRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](persistedInvitationRequestMessage))
+    setContentToSelfConnection( selfConnection.writeCnxn, persistedInvitationRequestMessage)
+    //store(_dbQ, selfConnection.writeCnxn, persistedInvitationRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](persistedInvitationRequestMessage))
     invitationRequestNotificationHandler(selfConnection.writeCnxn, inviteRequest)
 
   }
+
+  def setContentToSelfConnection(cnxSelf: AgentCnxnProxy, data: Data) =
+  {
+    val msg = new SetContentRequest(new EventKey(UUID.randomUUID, ""), data, null)
+    msg.targetCnxn = cnxSelf
+    msg.originCnxn = cnxSelf
+    processSetContentRequest(msg)
+//    Thread.sleep(500)
+  }
+
 
   protected def invitationRequestNotificationHandler(cnxn: AgentCnxnProxy, inviteRequest: InvitationRequest) =
   {

@@ -23,6 +23,7 @@ case class Post(
   with Tracking
   with Archive
   with Ignore
+  with UINotifiable
 {
 
   def this() = this("", "", new java.util.HashMap(), new java.util.HashMap(), "")

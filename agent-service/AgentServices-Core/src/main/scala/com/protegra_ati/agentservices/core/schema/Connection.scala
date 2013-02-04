@@ -21,6 +21,7 @@ case class Connection(
   ) extends Data
 with ConnectionValidator
 with StorableConnectionDataDefaults
+with UINotifiable
 {
 //  // TODO it necessary to provide EmptyConnection object according to a Null-Pattern to use them for cases where Connection is not important instead of typing "null"
 //  // TODO (cont. of the first line) and also to keep the number of objects in a memory reasonable, using singleton pattern
