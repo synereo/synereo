@@ -173,16 +173,23 @@ abstract class BasePlatformAgent
   def sendRabbit(config: RabbitConfiguration, cnxn: AgentCnxnProxy, msg: Message)
   {
     spawn {
-    report("send --- key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString, Severity.Info)
-    if ( msg.eventKey != null ) {
-      report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
-    }
-    //    val host = _privateLocation.host
-    //    val port = _privateLocation.port
-    val exchange = cnxn.getExchangeKey + msg.getExchangeKey
-    val routingKey = "routeroute"
-    val publisher = new MessageAMQPPublisher(config.host, config.port, exchange, routingKey)
-    publisher.send(msg)
+      report("send --- key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString, Severity.Info)
+      if ( msg.eventKey != null ) {
+        report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
+      }
+      //    val host = _privateLocation.host
+      //    val port = _privateLocation.port
+      val exchange = cnxn.getExchangeKey + msg.getExchangeKey
+      val routingKey = "routeroute"
+      try {
+        val publisher = new MessageAMQPPublisher(config.host, config.port, exchange, routingKey)
+        publisher.send(msg)
+      }
+      catch {
+        case e => {
+          report("sendRabbit exception, key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString + "  exception: " + e, Severity.Error)
+        }
+      }
     }
 
   }

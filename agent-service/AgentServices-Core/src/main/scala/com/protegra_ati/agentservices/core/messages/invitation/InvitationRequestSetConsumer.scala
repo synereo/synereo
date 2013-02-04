@@ -100,7 +100,7 @@ trait InvitationRequestSetConsumer
       }
     }
 
-    val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, requestedCategory, requestedConnectionType, requestedConnectionName, null, inviteRequest.conversationThread, true, inviteRequest)
+    val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, requestedCategory, requestedConnectionType, requestedConnectionName, null, inviteRequest.conversationThread, true,"", inviteRequest)
 //    response.targetCnxn = inviteRequest.targetCnxn
 //    response.originCnxn = inviteRequest.originCnxn
 

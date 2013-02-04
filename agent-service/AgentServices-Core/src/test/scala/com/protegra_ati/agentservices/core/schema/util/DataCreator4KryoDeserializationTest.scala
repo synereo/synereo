@@ -195,7 +195,7 @@ Timeouts
       val brokerId = "Broker" + UUID.fromString("bbbbbbbb-d417-4d71-ad94-8c766907381b")
       val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.App.toString, ConnectionCategory.Self.toString, "connectionType", brokerId, brokerId)
       newConn.id = "conn id"
-      val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
+      val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null, false) //, postToTarget, postToBroker);
       DataCreator4KryoDeserializationTestInitializer.serialize(msg, new File("data//serializedRequest.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(msg)
 
@@ -310,7 +310,7 @@ Timeouts
       val brokerId = "Broker" + UUID.fromString("bbbbbbbb-d417-4d71-ad94-8c766907381b")
       val newConn = ConnectionFactory.createConnection("New Connection", ConnectionCategory.App.toString, ConnectionCategory.Self.toString, "connectionType", brokerId, brokerId)
       newConn.id = "conn id"
-      val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null) //, postToTarget, postToBroker);
+      val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null, false) //, postToTarget, postToBroker);
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(msg, new File("data//serializedRequest.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(msg)
 

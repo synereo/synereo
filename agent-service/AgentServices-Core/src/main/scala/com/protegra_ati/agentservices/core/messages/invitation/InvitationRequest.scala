@@ -21,13 +21,14 @@ case class InvitationRequest(
   @BeanProperty requestedCategory: Option[ String ],
   @BeanProperty val requestedConnectionType: Option[ String ],
   @BeanProperty val requestedConnectionName: Option[ String ],
-  @BeanProperty val conversationThread: java.util.List[ Post ])
+  @BeanProperty val conversationThread: java.util.List[ Post ],
+  @BeanProperty val isRoleBasedRequest: Boolean                            )
   extends Message(ids, eventKey) with Request with UseKryoSerialization
 {
   if ( conversationThread != null )
     conversationThread.foreach(post => {if ( !post.isDelivered() ) post.deliver()})
 
-  def this() = this(null, null, null, null, null, null, null)
+  def this() = this(null, null, null, null, null, null, null, false)
 
   def getIds(): Identification =
   {
