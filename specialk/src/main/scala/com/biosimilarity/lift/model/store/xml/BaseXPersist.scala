@@ -7,9 +7,65 @@ import org.basex.core.BaseXException
 import org.basex.core.cmd.{List=>_,_}
 import scala.xml.{Node, XML, Elem}
 
+trait XMLResultsParser {
+  type ParsedResult
+  def getRslts(
+    srStrm : java.io.ByteArrayOutputStream
+  ) : scala.List[ParsedResult]
+}
+trait ScalaXMLResultsParser extends XMLResultsParser {
+  type ParsedResult = Elem  
+  override def getRslts( srStrm : java.io.ByteArrayOutputStream ) : scala.List[ParsedResult] = {
+    val results = srStrm.toString("UTF-8")
+    results match {
+      case "" => {
+        Nil
+      }
+      case _ => {
+        XML.loadString(
+          "<results>" + results + "</results>"
+        ).child.toList.filter(
+          (x: Node) => x.isInstanceOf[Elem]
+        ).asInstanceOf[scala.List[Elem]]
+      }
+    }
+  }
+}
+trait ScalesXMLResultsParser extends XMLResultsParser {
+  import scales.xml.{
+      Doc => SXMLDoc, Namespace => SXMLNamespace, Elem => SXMLElem, Text => SXMLText, _
+    }
+  import scales.utils.{ Tree => SXMLTree, _ }
+  import ScalesUtils._
+  import ScalesXml._
+  import Functions._
+
+  type ParsedResult = 
+    SXMLTree[XmlItem,SXMLElem,scales.xml.XCC]
+
+  def getRsltsScalesXML(
+    srStrm : java.io.ByteArrayOutputStream
+  ) : scala.List[ParsedResult] = {
+    val results = srStrm.toString("UTF-8")
+    results match {
+      case "" => {
+        Nil
+      }
+      case _ => {
+        loadXml(
+	  new java.io.StringReader(
+	    "<results>" + results + "</results>"
+	  )
+	).rootElem.children.toList.filter( _.isRight ).map( _.getRight )
+      }
+    }
+  }
+}
+
 trait BaseXPersist extends Persist[ClientSession]
 with XMLStoreConfiguration
 with Schema
+with ScalaXMLResultsParser
 {
   override def configFileName: Option[String] = None
 
@@ -462,23 +518,7 @@ with Schema
   }
 
   def executeWithResults(  collectionName : String, query : String ) : scala.List[Elem] =
-  {
-    def getRslts( srStrm : java.io.ByteArrayOutputStream ) : scala.List[Elem] = {
-      val results = srStrm.toString("UTF-8")
-      results match {
-        case "" => {
-          Nil
-        }
-        case _ => {
-          XML.loadString(
-            "<results>" + results + "</results>"
-          ).child.toList.filter(
-            (x: Node) => x.isInstanceOf[Elem]
-          ).asInstanceOf[scala.List[Elem]]
-        }
-      }
-    }
-
+  {    
     val clientSession = open(collectionName)
     val srvrRspStrm = new java.io.ByteArrayOutputStream()
     try {
