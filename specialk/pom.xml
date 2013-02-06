@@ -106,6 +106,32 @@
       <version>2.0</version>
     </dependency>
     <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>casbah_2.9.2</artifactId>
+      <version>2.5.0</version>
+      <type>pom</type>
+    </dependency>
+    <!-- dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>casbah-commons_2.9.2</artifactId>
+      <version>2.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>casbah-core_2.9.2</artifactId>
+      <version>2.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>casbah-gridfs_2.9.2</artifactId>
+      <version>2.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>casbah-query_2.9.2</artifactId>
+      <version>2.5.0</version>
+    </dependency -->
+    <dependency>
 	<groupId>biz.source_code</groupId>
 	<artifactId>base64coder</artifactId>
 	<version>2010-09-21</version>

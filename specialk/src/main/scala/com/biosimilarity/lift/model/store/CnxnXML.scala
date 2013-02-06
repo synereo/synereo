@@ -70,8 +70,62 @@ trait Blobify {
   }      
 }
 
-trait CnxnXML[Namespace,Var,Tag] {
-  self : CnxnCtxtInjector[Namespace,Var,Tag]
+trait CnxnString[Namespace,Var,Tag] {
+  class TermParser extends JavaTokenParsers {
+    def term : Parser[Any] =
+      application | list | ground | variable
+    def list : Parser[Any] =
+      "["~repsep( term, "," )~"]"
+    def ground : Parser[Any] =
+      stringLiteral | floatingPointNumber | "true" | "false"
+    def variable : Parser[Any] = ident
+    def application : Parser[Any] =
+      ident~"("~repsep( term, "," )~")"
+
+    def termXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      applicationXform | listXform | groundXform | variableXform
+    def listXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] = 
+      "["~repsep( termXform, "," )~"]" ^^ {
+	case "["~terms~"]" => {
+	  new CnxnCtxtBranch[String,String,Any](
+	    "list",
+	    terms
+	  )
+	}
+      }
+    def groundXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      (
+	stringLiteral ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.replace( "\"", "" ) ) ) )
+	| floatingPointNumber ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.toDouble ) ) )
+	| "true" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( true ) ) )
+	| "false" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( false ) ) )
+      )
+    def variableXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      ident ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Right( x.toString ) ) )
+    def applicationXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      ident~"("~repsep( termXform, "," )~")" ^^ {
+	case ident~"("~terms~")" => new CnxnCtxtBranch[String,String,Any]( ident, terms )
+      }
+  }
+
+  def fromCaseClassInstanceString(
+    cciElem : String
+  ) : Option[CnxnCtxtLabel[String,String,Any]] = {
+    val readBack = new TermParser
+    val ptree =
+      readBack.parseAll(
+	readBack.termXform,
+	new java.io.StringReader( cciElem )
+      )
+    ptree match {
+      case readBack.Success( r, _ ) => Some( r )
+      case _ => None
+    }
+  }
+}
+
+trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
+  self : CnxnCtxtInjector[Namespace,Var,Tag]	 
 	 with Blobify with UUIDOps =>
 
   def toXML( cnxn : CnxnLabel[Namespace,Tag] ) : String = {
@@ -330,59 +384,7 @@ trait CnxnXML[Namespace,Var,Tag] {
       }
 
     tagStr + " : " + "[ " + fx + " ]"
-  }  
-
-  class TermParser extends JavaTokenParsers {
-    def term : Parser[Any] =
-      application | list | ground | variable
-    def list : Parser[Any] =
-      "["~repsep( term, "," )~"]"
-    def ground : Parser[Any] =
-      stringLiteral | floatingPointNumber | "true" | "false"
-    def variable : Parser[Any] = ident
-    def application : Parser[Any] =
-      ident~"("~repsep( term, "," )~")"
-
-    def termXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      applicationXform | listXform | groundXform | variableXform
-    def listXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] = 
-      "["~repsep( termXform, "," )~"]" ^^ {
-	case "["~terms~"]" => {
-	  new CnxnCtxtBranch[String,String,Any](
-	    "list",
-	    terms
-	  )
-	}
-      }
-    def groundXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      (
-	stringLiteral ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.replace( "\"", "" ) ) ) )
-	| floatingPointNumber ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( x.toDouble ) ) )
-	| "true" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( true ) ) )
-	| "false" ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Left[Any,String]( false ) ) )
-      )
-    def variableXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      ident ^^ ( x => new CnxnCtxtLeaf[String,String,Any]( Right( x.toString ) ) )
-    def applicationXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
-      ident~"("~repsep( termXform, "," )~")" ^^ {
-	case ident~"("~terms~")" => new CnxnCtxtBranch[String,String,Any]( ident, terms )
-      }
-  }
-
-  def fromCaseClassInstanceString(
-    cciElem : String
-  ) : Option[CnxnCtxtLabel[String,String,Any]] = {
-    val readBack = new TermParser
-    val ptree =
-      readBack.parseAll(
-	readBack.termXform,
-	new java.io.StringReader( cciElem )
-      )
-    ptree match {
-      case readBack.Success( r, _ ) => Some( r )
-      case _ => None
-    }
-  }
+  }    
 
   def fromCaseClassInstanceNode(
     cciElem : Elem
