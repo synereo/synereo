@@ -62,7 +62,7 @@ trait ScalesXMLResultsParser extends XMLResultsParser {
   }
 }
 
-trait BaseXPersist extends Persist[ClientSession]
+trait BaseXPersist extends Persist[ClientSession,Elem]
 with XMLStoreConfiguration
 with Schema
 with ScalaXMLResultsParser

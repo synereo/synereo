@@ -26,9 +26,9 @@ trait CnxnMongoQuery[Namespace,Var,Tag] {
          with CnxnString[Namespace,Var,Tag]
 	 with Blobify with UUIDOps =>
 
-  implicit def toMongoQuery(
+  def toMongoQuery(
     cnxn : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) : com.mongodb.casbah.query.dsl.QueryExpressionObject = {
+  ) : DBObject = {
     cnxn match {
       case CnxnCtxtLeaf( Left( tag ) ) => {
 	( tag + "" ) $exists true
@@ -84,7 +84,7 @@ trait CnxnMongoQuery[Namespace,Var,Tag] {
 	      acc ++ ( e $exists true )
 	    }
 	  }
-	).asInstanceOf[com.mongodb.casbah.query.dsl.QueryExpressionObject]
+	)
 
       }
     }

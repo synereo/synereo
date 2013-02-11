@@ -5,7 +5,7 @@ import scala.xml._
 /* User: jklassen
 */
 
-trait Persist[OpenReturn]
+trait Persist[OpenReturn,Rslt]
 {
   def checkIfDBExists(collectionName: String, leaveOpen: Boolean): Boolean
 
@@ -30,10 +30,10 @@ trait Persist[OpenReturn]
   // representation for return values. Should this decision be revisited?
    //commenting out those methods which do not include a collectionName from the interface (for now)
   //def executeWithResults(query: String): List[Elem]
-  def executeWithResults( collectionName : String, query : String ) : List[Elem]
+  def executeWithResults( collectionName : String, query : String ) : List[Rslt]
 
   //def executeWithResults(queries: List[String]): List[Elem]
-  def executeWithResults( collectionName : String, queries : List[String] ) : List[Elem]
+  def executeWithResults( collectionName : String, queries : List[String] ) : List[Rslt]
 
   //def count
 }
