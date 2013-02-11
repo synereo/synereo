@@ -34,7 +34,13 @@ extends CnxnXQueryParser
     }
 
     def toLabel: CnxnCtxtLabel[String,String,String] = {
-      labelFromKey(source)
+      val label = labelFromKey(source)
+      if (label == null) {
+        //there is something wrong with the data in the key....look for double quotes in the actual data fields esp as this causes
+        // toLabel to return null or the wrong data.
+        throw new NullPointerException("ERROR: toLabel method returned null")
+      }
+      label
     }
 
     val scheme  = "agent"
