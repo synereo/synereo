@@ -112,7 +112,8 @@ trait InvitationRequestSetCreator
     val persistedMessage = new PersistedMessage[ ReferralRequest ](referralRequest)
 
     report("attempting to store " + persistedMessage.toStoreKey)
-    store(_dbQ, cnxnSelf, persistedMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](persistedMessage))
+    setContentToSelfConnection(cnxnSelf, persistedMessage)
+//    store(_dbQ, cnxnSelf, persistedMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](persistedMessage))
 
     if ( cnxnSelf.src.toString.contains(BIZNETWORK_AGENT_ID) ) {
       val subject = ""
@@ -127,6 +128,10 @@ trait InvitationRequestSetCreator
     referralRequestNotificationHandler(cnxnSelf, referralRequest)
 
   }
+
+
+
+
   protected def referralRequestNotificationHandler(cnxn: AgentCnxnProxy, referralRequest: ReferralRequest) =
   {
     //email, sms, however you want to notify

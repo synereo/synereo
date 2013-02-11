@@ -405,7 +405,7 @@ trait ContentRequestSet
     report("NotificationEngine not implemented", Severity.Trace)
   }
 
-  def raiseRemoteNotification(targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, data: Data): Unit = {
+  def raiseRemoteNotification(newCompositeData: CompositeData[ Data ], parentRequestIds: Identification): Unit = {
     //hook to implement in higher up libraries
     report("NotificationEngine not implemented", Severity.Trace)
   }
@@ -428,7 +428,6 @@ trait ContentRequestSet
 
   def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
   {
-
     raiseNotification(selfCnxn, parentRequestIds, newCompositeData.data)
 
     //store object on self Cnxn
@@ -437,26 +436,26 @@ trait ContentRequestSet
     //TODO: make this search all conns
     updateDataById(newCompositeData.connection.writeCnxn, newCompositeData.data)
 
-    if ( parentRequestIds != null && newCompositeData.connection.policies != null && !newCompositeData.connection.policies.isEmpty ) {
-
-      if ( newCompositeData.connection.policies.contains(ConnectionPolicy.DataSharingEnabled.toString) ) {
-        newCompositeData.data match {
-          case y: Redistributable => {
-            // TODO logging
-            // TODO eventually pass the really source of the request for logging or permission check
-            sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
-          }
-          case _ => {
-            raiseRemoteNotification(newCompositeData.connection.readCnxn, parentRequestIds, newCompositeData.data)
-            // TODO logging
-          }
+    if ( parentRequestIds != null &&
+        newCompositeData.connection.policies != null &&
+        !newCompositeData.connection.policies.isEmpty &&
+        newCompositeData.connection.policies.contains(ConnectionPolicy.DataSharingEnabled.toString)) {
+      newCompositeData.data match {
+        case y: Redistributable => {
+          // TODO logging
+          // TODO eventually pass the really source of the request for logging or permission check
+          sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
         }
+        case _ => {
+          raiseRemoteNotification(newCompositeData, parentRequestIds)
+          // TODO logging
+        }
+      }
 
-      }
-      else
-      {
-        raiseRemoteNotification(newCompositeData.connection.readCnxn, parentRequestIds, newCompositeData.data)
-      }
+    }
+    else
+    {
+      raiseRemoteNotification(newCompositeData, parentRequestIds)
     }
   }
 

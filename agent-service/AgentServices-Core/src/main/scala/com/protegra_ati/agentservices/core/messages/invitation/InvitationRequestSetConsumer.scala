@@ -135,7 +135,6 @@ trait InvitationRequestSetConsumer
     msg.targetCnxn = cnxSelf
     msg.originCnxn = cnxSelf
     processSetContentRequest(msg)
-//    Thread.sleep(500)
   }
 
 
