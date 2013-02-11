@@ -1,11 +1,16 @@
+// -*- mode: Scala;-*- 
+// Filename:    BaseXSessionPool.scala 
+// Authors:     lgm                                                    
+// Creation:    Mon Feb 11 05:26:32 2013 
+// Copyright:   Not supplied 
+// Description: 
+// ------------------------------------------------------------------------
+
 package com.biosimilarity.lift.model.store.xml
 
 import com.biosimilarity.lift.model.store.SessionPool
 
-import org.apache.commons.pool.BasePoolableObjectFactory
-import org.apache.commons.pool.impl.GenericObjectPool
 import org.basex.server.ClientSession
-import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 
 object BaseXSessionPool extends SessionPool[ClientSession] {
   case class BaseXClientSessionFactory(
