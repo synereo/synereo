@@ -340,6 +340,7 @@ trait ContentRequestSet
         report("setContentByConnectionType: found connection: " + x.toString)
         updateDataById(x.writeCnxn, authorizedData)
 
+        raiseRemoteNotification(new CompositeData[Data](x, authorizedData), parentRequestIds)
         //        if ( x.policies != null && !x.policies.contains(ConnectionPolicy.RemoteSearchDisabled.toString) ) {
         updateCache(x.writeCnxn, x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
         //        }
@@ -440,21 +441,21 @@ trait ContentRequestSet
         newCompositeData.connection.policies != null &&
         !newCompositeData.connection.policies.isEmpty &&
         newCompositeData.connection.policies.contains(ConnectionPolicy.DataSharingEnabled.toString)) {
-      newCompositeData.data match {
-        case y: Redistributable => {
-          // TODO logging
-          // TODO eventually pass the really source of the request for logging or permission check
-          sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
-        }
-        case _ => {
+        newCompositeData.data match {
+         case y: Redistributable => {
+           // TODO logging
+           // TODO eventually pass the really source of the request for logging or permission check
+           sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
+         }
+         case _ => {
           raiseRemoteNotification(newCompositeData, parentRequestIds)
-          // TODO logging
+           // TODO logging
+         }
         }
-      }
 
-    }
-    else
-    {
+      }
+      else
+      {
       raiseRemoteNotification(newCompositeData, parentRequestIds)
     }
   }
