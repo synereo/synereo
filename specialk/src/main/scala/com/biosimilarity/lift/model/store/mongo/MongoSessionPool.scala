@@ -1,4 +1,4 @@
-package com.biosimilarity.lift.model.store.xml
+package com.biosimilarity.lift.model.store.mongo
 
 import com.biosimilarity.lift.model.store.SessionPool
 
