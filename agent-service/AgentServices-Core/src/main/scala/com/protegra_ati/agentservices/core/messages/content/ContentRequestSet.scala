@@ -429,6 +429,8 @@ trait ContentRequestSet
 
   def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
   {
+    println("setContentForSelfAndForCompositeConnections " + newCompositeData.toString)
+
     raiseNotification(selfCnxn, parentRequestIds, newCompositeData.data)
 
     //store object on self Cnxn
@@ -441,23 +443,20 @@ trait ContentRequestSet
         newCompositeData.connection.policies != null &&
         !newCompositeData.connection.policies.isEmpty &&
         newCompositeData.connection.policies.contains(ConnectionPolicy.DataSharingEnabled.toString)) {
-        newCompositeData.data match {
-         case y: Redistributable => {
-           // TODO logging
-           // TODO eventually pass the really source of the request for logging or permission check
-           sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
-         }
-         case _ => {
-          raiseRemoteNotification(newCompositeData, parentRequestIds)
-           // TODO logging
-         }
+      newCompositeData.data match {
+        case y: Redistributable => {
+          // TODO logging
+          // TODO eventually pass the really source of the request for logging or permission check
+          sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
         }
-
+        case _ => {
+          // TODO logging
+        }
       }
-      else
-      {
-      raiseRemoteNotification(newCompositeData, parentRequestIds)
+
     }
+
+    raiseRemoteNotification(newCompositeData, parentRequestIds)
   }
 
   def setContentIfConnectionChanged(msg: SetContentRequest) =
