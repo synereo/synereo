@@ -334,7 +334,7 @@ trait InvitationRequestSetCreator
                         msgA.connectionName
                     sendCreateConnectionRequest(msgA, connAB)
                     sendCreateConnectionRequest(msgB, connBA)
-                    //handleMutualConnectionAgreement(msgA, msgB)
+                    handleMutualConnectionAgreement(msgA, msgB)
 
                   }
                   else {
