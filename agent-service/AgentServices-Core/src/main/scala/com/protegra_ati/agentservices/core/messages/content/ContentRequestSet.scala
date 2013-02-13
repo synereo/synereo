@@ -340,6 +340,7 @@ trait ContentRequestSet
         report("setContentByConnectionType: found connection: " + x.toString)
         updateDataById(x.writeCnxn, authorizedData)
 
+        raiseRemoteNotification(new CompositeData[Data](x, authorizedData), parentRequestIds)
         //        if ( x.policies != null && !x.policies.contains(ConnectionPolicy.RemoteSearchDisabled.toString) ) {
         updateCache(x.writeCnxn, x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
         //        }
@@ -428,6 +429,8 @@ trait ContentRequestSet
 
   def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
   {
+    println("setContentForSelfAndForCompositeConnections " + newCompositeData.toString)
+
     raiseNotification(selfCnxn, parentRequestIds, newCompositeData.data)
 
     //store object on self Cnxn
@@ -447,16 +450,13 @@ trait ContentRequestSet
           sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
         }
         case _ => {
-          raiseRemoteNotification(newCompositeData, parentRequestIds)
           // TODO logging
         }
       }
 
     }
-    else
-    {
-      raiseRemoteNotification(newCompositeData, parentRequestIds)
-    }
+
+    raiseRemoteNotification(newCompositeData, parentRequestIds)
   }
 
   def setContentIfConnectionChanged(msg: SetContentRequest) =
