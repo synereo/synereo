@@ -14,6 +14,7 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
   with Archive
   with Ignore
   with Reject
+  with View
   with Serializable
   with KVDBSerializable
   with StorablePersistedMessageDataDefaults
@@ -35,7 +36,7 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
         if ( that canEqual this ) {
           if ( this.message == null && that.message == null ) return true
           else if ( this.message == null && that.message != null || this.message != null && that.message == null ) return false
-          return this.message.equals(that.message) && this.getArchived == that.getArchived && this.getIgnored == that.getIgnored && this.getRejected == that.getRejected
+          return this.message.equals(that.message) && this.getArchived == that.getArchived && this.getIgnored == that.getIgnored && this.getRejected == that.getRejected && this.getViewed == that.getViewed
         } else false
       }
     case _ =>
