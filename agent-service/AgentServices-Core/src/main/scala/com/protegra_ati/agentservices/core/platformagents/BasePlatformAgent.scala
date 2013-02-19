@@ -89,6 +89,7 @@ abstract class BasePlatformAgent
 
   def initFromConfig(configFilePath: String)
   {
+    Results.client
     configure(configFilePath)
     startup
   }
