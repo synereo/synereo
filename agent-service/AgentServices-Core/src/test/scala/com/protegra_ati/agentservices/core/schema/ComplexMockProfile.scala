@@ -5,6 +5,7 @@ import persistence.SearchableChildData
 import scala.reflect.BeanProperty
 import scala.collection.JavaConversions._
 import java.util.{Properties}
+import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 
 /**
  * Personal profile data object
@@ -74,7 +75,7 @@ case class ComplexMockProfile(
     ""
   }
 
-  override def getChildDataSearchKeys: java.util.List[ Data ] =
+  override def getChildDataSearchKeys: java.util.List[ CacheableData ] =
   {
     List(AppId.SEARCH_ALL)
   }

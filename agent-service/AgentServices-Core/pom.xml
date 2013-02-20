@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-core</artifactId>
-    <version>1.0.1.34</version>
+    <version>1.0.1.35-MONGO</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -12,8 +12,9 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <scala.version>2.9.0-1</scala.version>
-        <scala.test.specs2.version>1.8.2</scala.test.specs2.version>
+        <scala.version>2.9.2</scala.version>
+        <casbah.version>2.5.0</casbah.version>
+        <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
 	    <agentservices-store.version>1.0.1.13</agentservices-store.version>
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -152,6 +153,13 @@
              <version>1.6.8</version>
              <scope>test</scope>
          </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>casbah_${scala.version}</artifactId>
+            <version>${casbah.version}</version>
+            <type>pom</type>
+        </dependency>
 
     </dependencies>
     <build>

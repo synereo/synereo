@@ -13,6 +13,9 @@ import com.protegra_ati.agentservices.store.extensions._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import scala.collection.JavaConversions._
 import java.lang.{Integer}
+import com.mongodb.DBObject
+import com.mongodb.casbah.commons.MongoDBObject
+import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 
 /**
  * Personal profile data object
@@ -39,7 +42,7 @@ case class Profile(
   @BeanProperty var website: String,
   @BeanProperty var imageHashCode: String
   )
-  extends Data
+  extends CacheableData
   with SearchableChildData
 //  with ProfileValidator
 {
@@ -57,6 +60,27 @@ case class Profile(
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
   def this() = this("", "", "", "", "", "", "", "", "", "")
 
+  override def toCacheObject(appId: String): DBObject =
+  {
+    val o = MongoDBObject(
+      "dataId" -> id,
+      "appId" -> appId,
+      "firstName" -> firstName,
+      "lastName" -> lastName,
+      "description" -> description,
+      "country" -> country,
+      "region" -> region,
+      "city" -> city,
+      "postalCode" -> postalCode
+    )
+
+    o
+  }
+
+  override def fromDBObject(o: DBObject): CacheableData = 
+  {
+    new Profile()
+  }
 
   //TODO: The Displayable names should really come from a resource lookup by language related to a country
   //TODO: will be deleted next step
@@ -83,7 +107,7 @@ case class Profile(
     ""
   }
 
-  override def getChildDataSearchKeys: java.util.List[ Data ] =
+  override def getChildDataSearchKeys: java.util.List[ CacheableData ] =
   {
     List(AppId.SEARCH_ALL)
   }

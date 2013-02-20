@@ -3,11 +3,15 @@ package com.protegra_ati.agentservices.core.schema
 import scala.reflect.BeanProperty
 import java.util.{UUID}
 import scala.collection.JavaConversions._
+import com.mongodb.DBObject
+import com.mongodb.casbah.commons.MongoDBObject
+import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
+
 //id will come from data
 //concrete instance until we come up with a better way of DisclosedData, right now it's by class
 //ideally a generic AppId but not one that's seen by other apps
 case class AppId(@BeanProperty val name: String,@BeanProperty var policies: java.util.List[ String ])
-  extends Data
+  extends CacheableData 
   //TODO: with ExcludeFromAudit
 {
 
@@ -15,6 +19,23 @@ case class AppId(@BeanProperty val name: String,@BeanProperty var policies: java
     _name: String) = this(_name, Nil)
 
   def this() = this("")
+
+  override def toCacheObject(appId: String): DBObject =
+  {
+    val o = MongoDBObject(
+      "dataId" -> id,
+      "appId" -> appId,
+      "name" -> name,
+      "policies" -> policies
+    )
+
+    o
+  }
+
+  override def fromDBObject(o: DBObject): CacheableData = 
+  {
+    new AppId()
+  }
 
   def setPoliciesFromCategory(category: String): Unit =
   {
