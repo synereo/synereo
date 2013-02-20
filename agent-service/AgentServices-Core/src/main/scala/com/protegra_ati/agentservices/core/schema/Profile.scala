@@ -13,8 +13,7 @@ import com.protegra_ati.agentservices.store.extensions._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import scala.collection.JavaConversions._
 import java.lang.{Integer}
-import com.mongodb.DBObject
-import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.Imports._
 import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 
 /**
@@ -79,7 +78,20 @@ case class Profile(
 
   override def fromDBObject(o: DBObject): CacheableData = 
   {
-    new Profile()
+    val p = new Profile(
+      o.getAsOrElse("firstName", ""),
+      o.getAsOrElse("lastName", ""),
+      o.getAsOrElse("description", ""),
+      o.getAsOrElse("emailAddress", ""),
+      o.getAsOrElse("country", ""),
+      o.getAsOrElse("region", ""),
+      o.getAsOrElse("city", ""),
+      o.getAsOrElse("postalCode", ""),
+      o.getAsOrElse("website", ""),
+      o.getAsOrElse("imageHashCode", "")
+    )
+
+    p
   }
 
   //TODO: The Displayable names should really come from a resource lookup by language related to a country
