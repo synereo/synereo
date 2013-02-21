@@ -90,6 +90,7 @@ case class Profile(
       o.getAsOrElse("website", ""),
       o.getAsOrElse("imageHashCode", "")
     )
+    p.id = o.getAsOrElse("dataId", "")
 
     p
   }

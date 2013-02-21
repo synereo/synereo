@@ -3,8 +3,7 @@ package com.protegra_ati.agentservices.core.schema
 import scala.reflect.BeanProperty
 import java.util.{UUID}
 import scala.collection.JavaConversions._
-import com.mongodb.DBObject
-import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.Imports._
 import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 
 //id will come from data
@@ -26,7 +25,7 @@ case class AppId(@BeanProperty val name: String,@BeanProperty var policies: java
       "dataId" -> id,
       "appId" -> appId,
       "name" -> name,
-      "policies" -> policies
+      "policies" -> MongoDBList.concat(policies)
     )
 
     o
@@ -34,7 +33,15 @@ case class AppId(@BeanProperty val name: String,@BeanProperty var policies: java
 
   override def fromDBObject(o: DBObject): CacheableData = 
   {
-    new AppId()
+    val policies = o.getAsOrElse[MongoDBList]("policies", MongoDBList.empty).toList.collect { case s:String => s}
+
+    val appId = new AppId(
+      o.getAsOrElse("name", ""),
+      policies
+    )
+    appId.id = o.getAsOrElse("dataId", "")
+
+    appId
   }
 
   def setPoliciesFromCategory(category: String): Unit =
