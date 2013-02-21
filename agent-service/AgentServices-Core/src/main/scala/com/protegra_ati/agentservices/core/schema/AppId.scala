@@ -9,26 +9,25 @@ import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 //id will come from data
 //concrete instance until we come up with a better way of DisclosedData, right now it's by class
 //ideally a generic AppId but not one that's seen by other apps
-case class AppId(@BeanProperty val name: String,@BeanProperty var policies: java.util.List[ String ])
-  extends CacheableData 
+case class AppId(
+  @BeanProperty var name: String,
+  @BeanProperty var policies: java.util.List[ String ]
+  )
+  extends CacheableData
   //TODO: with ExcludeFromAudit
 {
+  def this(_name: String) = this(_name, Nil)
 
-  def this(
-    _name: String) = this(_name, Nil)
+  def this() = this("", Nil)
 
-  def this() = this("")
-
-  override def toCacheObject(appId: String): DBObject =
+  override def toCacheObject(): DBObject =
   {
     val o = MongoDBObject(
-      "dataId" -> id,
-      "appId" -> appId,
       "name" -> name,
       "policies" -> MongoDBList.concat(policies)
     )
 
-    o
+    super.toCacheObject ++ o
   }
 
   override def fromDBObject(o: DBObject): CacheableData = 
@@ -39,7 +38,8 @@ case class AppId(@BeanProperty val name: String,@BeanProperty var policies: java
       o.getAsOrElse("name", ""),
       policies
     )
-    appId.id = o.getAsOrElse("dataId", "")
+
+    appId.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("appId", ""), o.getAsOrElse("exchangeKey", ""))
 
     appId
   }

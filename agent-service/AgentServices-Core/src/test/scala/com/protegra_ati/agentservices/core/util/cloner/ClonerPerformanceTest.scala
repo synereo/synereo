@@ -5,6 +5,7 @@ import org.specs2.runner._
 import java.util.concurrent.{BrokenBarrierException, CyclicBarrier}
 import com.rits.cloning.Cloner
 import com.protegra_ati.agentservices.core.schema.{Image, Profile}
+import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 
 class ParallelSingletonClonerPerformanceTest(repetitions: Int)
 {

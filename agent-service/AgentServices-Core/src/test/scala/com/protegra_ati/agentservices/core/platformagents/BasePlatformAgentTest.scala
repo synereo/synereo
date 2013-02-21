@@ -92,7 +92,7 @@ with Serializable
 
     "retrieve" in new CnxnSetup
     {
-      val mockDataGet = new Profile("test", "me", "test Description", "123@test.com", "CA", "someCAprovince", "city", "postalCode", "website", null)
+      val mockDataGet = new Profile("test", "me", "test Description", "123@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
       val parentIds = new Identification()
       val mockMsg = new GetContentResponse(parentIds.copyAsChild(), null, List(mockDataGet))
 

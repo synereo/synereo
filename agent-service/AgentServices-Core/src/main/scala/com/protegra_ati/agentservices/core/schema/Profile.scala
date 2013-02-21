@@ -59,11 +59,9 @@ case class Profile(
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
   def this() = this("", "", "", "", "", "", "", "", "", "")
 
-  override def toCacheObject(appId: String): DBObject =
+  override def toCacheObject(): DBObject =
   {
     val o = MongoDBObject(
-      "dataId" -> id,
-      "appId" -> appId,
       "firstName" -> firstName,
       "lastName" -> lastName,
       "description" -> description,
@@ -73,7 +71,7 @@ case class Profile(
       "postalCode" -> postalCode
     )
 
-    o
+    super.toCacheObject ++ o
   }
 
   override def fromDBObject(o: DBObject): CacheableData = 
@@ -90,7 +88,8 @@ case class Profile(
       o.getAsOrElse("website", ""),
       o.getAsOrElse("imageHashCode", "")
     )
-    p.id = o.getAsOrElse("dataId", "")
+
+    p.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("appId", ""), o.getAsOrElse("exchangeKey", ""))
 
     p
   }
@@ -143,10 +142,10 @@ object Profile
     override def toSearchKey(): String = Profile.SEARCH_ALL_KEY
   }
 
-
   def fromProperty(src: Properties): Profile =
   {
-    new Profile(src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "firstName"),
+    new Profile(
+      src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "firstName"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "lastName"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "description"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "emailAddress"),
@@ -156,7 +155,6 @@ object Profile
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "postalCode"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "website"),
       src.getProperty(Profile.getClass.getName.trimPackage.toCamelCase + "." + "imageHashCode")
-
     )
   }
 
