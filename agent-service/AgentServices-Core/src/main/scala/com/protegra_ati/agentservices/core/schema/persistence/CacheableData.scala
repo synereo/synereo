@@ -35,9 +35,14 @@ extends Data(_id, _localeCode)
     )
   }
 
-  /*def toCacheSearchKey(): DBObject = {
-    MongoDBObject()
-  }*/
+  def toCacheSearchKey(): DBObject = {
+    // The default implementation will return an exact-match object
+    // Overriding implementations should return an object that will be used for searching
+    MongoDBObject(
+      "dataId" -> id,
+      "appId" -> appId
+    )
+  }
 
   def fromDBObject(o: DBObject): CacheableData
 }
