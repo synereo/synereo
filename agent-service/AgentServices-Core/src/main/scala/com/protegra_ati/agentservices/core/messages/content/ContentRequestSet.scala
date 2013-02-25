@@ -432,8 +432,6 @@ trait ContentRequestSet
 
   def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
   {
-    println("setContentForSelfAndForCompositeConnections " + newCompositeData.toString)
-
     raiseNotification(selfCnxn, parentRequestIds, newCompositeData.data)
 
     //store object on self Cnxn
