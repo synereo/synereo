@@ -13,7 +13,7 @@ trait Private {
 
   var _privateLocation: URI = null
   var _privateAcquaintanceAddresses = List[URI]()
-  var _privateRabbitLocation: URI = null
+  //var _privateRabbitLocation: URI = null
   var _privateQ : Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] = null //persistedJunction
   var _privateConfigFileName: Option[String] = None
 
@@ -29,7 +29,8 @@ trait Private {
     _privateAcquaintanceAddresses = loadURIs(configUtil.getConfigMap(privateAcquaintanceMapKey))  ::: this._privateAcquaintanceAddresses
 
     val privateRabbitMapKey = "private.rabbit"
-    _privateRabbitLocation = loadFirstURI(configUtil.getConfigMap(privateRabbitMapKey))
+    _privateRabbitConfig = loadFirstRabbitConfig(configUtil.getConfigMap(privateRabbitMapKey))
+
 
     val privateNetworkModeMapKey = "privateNetworkMode"
     _privateNetworkMode = configUtil.getString(privateNetworkModeMapKey).getOrElse("Rabbit")
@@ -46,7 +47,7 @@ trait Private {
 //  }
 
   def loadPrivateQueue() = {
-    _privateRabbitConfig = new RabbitConfiguration(_privateRabbitLocation.getHost, _privateRabbitLocation.getPort)
+
     if (isPrivateKVDBNetworkMode)
       _privateQ = createNode(_privateLocation, _privateAcquaintanceAddresses, _privateConfigFileName)
   }

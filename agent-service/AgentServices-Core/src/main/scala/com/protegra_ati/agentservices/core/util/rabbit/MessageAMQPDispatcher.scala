@@ -9,8 +9,8 @@ import _root_.java.util.TimerTask
 import com.biosimilarity.lift.lib.amqp.RabbitFactory
 
 
-class MessageAMQPDispatcher(factory: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String)
-    extends AMQPDispatcher[Message](RabbitFactory.getConnection(factory, host, port)) {
+class MessageAMQPDispatcher(factory: ConnectionFactory, exchange: String, routingKey: String)
+    extends AMQPDispatcher[Message](RabbitFactory.getConnection(factory, factory.getHost, factory.getPort)) {
 
   override def configure(channel: Channel) {
     // Set up the exchange and queue
@@ -24,8 +24,14 @@ class MessageAMQPDispatcher(factory: ConnectionFactory, host: String, port: Int,
   }
 }
 
-class MessageAMQPListener(host: String, port: Int, exchange: String, routingKey: String, handleMessage: (Message) => Unit) {
-  val amqp = new MessageAMQPDispatcher(RabbitFactory.guest, host, port, exchange, routingKey)
+class MessageAMQPListener(config: RabbitConfiguration, exchange: String, routingKey: String, handleMessage: (Message) => Unit) {
+  val factory = RabbitFactory.guest
+  factory.setPassword(config.password)
+  factory.setUsername(config.userId)
+  factory.setHost(config.host)
+  factory.setPort(config.port)
+
+  val amqp = new MessageAMQPDispatcher(factory, exchange, routingKey)
   amqp.start
 
   class MessageListener(handler: (Message) => Unit) extends Actor {
