@@ -376,22 +376,13 @@ trait ContentRequestSet
     connection match {
       case x: Connection => {
         report("setContentByConnectionType: found connection: " + x.toString)
-        // if DataSharingEnabled store in a self connection of the target connection the authorizedData
-        if ( parentRequestIds != null && x.policies != null && !x.policies.isEmpty ) {
-          if ( x.policies.contains(ConnectionPolicy.DataSharingEnabled.toString) ) {
-            authorizedData match {
-              case y: Redistributable => {
-                // TODO logging
-                // TODO eventually pass the really source of the request for logging or permission check
-                // assumption that authorizedData and oldAuthorizedData has the same type or oldAuthorizedData ==null
-                sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, x, authorizedData, oldAuthorizedData)
-              }
-              case _ => {
-                // TODO logging
-              }
-            }
-
-          }
+        // if data is shared, store in a self connection of the target connection the authorizedData
+        if ( parentRequestIds != null && isDataShared(x, authorizedData ) )
+        {
+          // TODO logging
+          // TODO eventually pass the really source of the request for logging or permission check
+          // assumption that authorizedData and oldAuthorizedData has the same type or oldAuthorizedData ==null
+          sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, x, authorizedData, oldAuthorizedData)
         }
       }
       case _ => {
@@ -411,6 +402,18 @@ trait ContentRequestSet
     report("NotificationEngine not implemented", Severity.Trace)
   }
 
+
+  def isDataSharingEnabled(connection: Connection): Boolean = {
+    //hook to implement in higher up libraries
+    report("DataSharing not implemented", Severity.Trace)
+    false
+  }
+
+  def isDataShared(connection: Connection, data: Data): Boolean = {
+    //hook to implement in higher up libraries
+    report("DataSharing not implemented", Severity.Trace)
+    false
+  }
 
   def updateCache(originCnxn: AgentCnxnProxy, targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data): Unit = {
     //hook to implement in higher up libraries
@@ -439,21 +442,11 @@ trait ContentRequestSet
     //TODO: make this search all conns
     updateDataById(newCompositeData.connection.writeCnxn, newCompositeData.data)
 
-    if ( parentRequestIds != null &&
-        newCompositeData.connection.policies != null &&
-        !newCompositeData.connection.policies.isEmpty &&
-        newCompositeData.connection.policies.contains(ConnectionPolicy.DataSharingEnabled.toString)) {
-      newCompositeData.data match {
-        case y: Redistributable => {
-          // TODO logging
-          // TODO eventually pass the really source of the request for logging or permission check
-          sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
-        }
-        case _ => {
-          // TODO logging
-        }
-      }
-
+    if ( parentRequestIds != null && isDataShared(newCompositeData.connection, newCompositeData.data ) )
+    {
+      // TODO logging
+      // TODO eventually pass the really source of the request for logging or permission check
+      sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
     }
 
     raiseRemoteNotification(newCompositeData, parentRequestIds)
@@ -670,7 +663,7 @@ trait ContentRequestSet
   {
     //for a new connection, we want to send setSelfContentRequests for all Redistributable data for connections
     //with a data sharing enabled policy
-    if (newConnection.policies.contains(ConnectionPolicy.DataSharingEnabled.toString))
+    if (isDataSharingEnabled(newConnection))
     {
       //grabbing all Data objects within a connection and processing those
       //with the Redistrubable trait
@@ -681,15 +674,13 @@ trait ContentRequestSet
   def handleDistributedData(selfCnxn: AgentCnxnProxy, dataList: List[ Data ], newConnection: Connection)
   {
     dataList.foreach(data => {
-      data match {
-        case y: Redistributable => {
-          // TODO logging
-          // TODO eventually pass the really source of the request for logging or permission check
-          // assumption that authorizedData and oldAuthorizedData has the same type or oldAuthorizedData ==null
-          sendSetSelfContentRequest(new Identification(), null, newConnection, y, null)
-        }
-        case _ =>{
-        }
+
+      if (isDataShared(newConnection, data))
+      {
+        // TODO logging
+        // TODO eventually pass the really source of the request for logging or permission check
+        // assumption that authorizedData and oldAuthorizedData has the same type or oldAuthorizedData ==null
+        sendSetSelfContentRequest(new Identification(), null, newConnection, data, null)
       }
 
     })
