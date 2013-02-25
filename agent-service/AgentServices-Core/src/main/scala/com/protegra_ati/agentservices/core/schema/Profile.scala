@@ -89,9 +89,58 @@ case class Profile(
       o.getAsOrElse("imageHashCode", "")
     )
 
-    p.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("appId", ""), o.getAsOrElse("exchangeKey", ""))
+    p.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("brokerCnxnAppId", ""), o.getAsOrElse("brokerCnxnExchangeKey", ""))
 
     p
+  }
+
+  override def toCacheSearchKey(brokerCnxnAppIds: List[String]): DBObject = 
+  {
+    val q = MongoDBObject.newBuilder
+
+    q += "brokerCnxnAppId" -> MongoDBObject("$in" -> MongoDBList.concat(brokerCnxnAppIds))
+
+    q += "$or" -> MongoDBList(
+      MongoDBObject("firstName" -> ("^" + Option(firstName).getOrElse("") + ".*").r),
+      MongoDBObject("lastName" -> ("^" + Option(lastName).getOrElse("") + ".*").r)
+    )
+
+    Option(country).map(x => if (!x.isEmpty) q += "country" -> x)
+    Option(region).map(x => if (!x.isEmpty) q += "region" -> x)
+    Option(city).map(x => if (!x.isEmpty) q += "city" -> x)
+
+    val group = MongoDBObject(
+      "_id" -> "$dataId",
+      "brokerCnxns" -> MongoDBObject("$addToSet" -> MongoDBObject("brokerCnxnAppId" -> "$brokerCnxnAppId", "brokerCnxnExchangeKey" -> "$brokerCnxnExchangeKey")),
+      "firstName" -> MongoDBObject("$max" -> "$firstName"),
+      "lastName" -> MongoDBObject("$max" -> "$lastName"),
+      "description" -> MongoDBObject("$max" -> "$description"),
+      "country" -> MongoDBObject("$max" -> "$country"),
+      "region" -> MongoDBObject("$max" -> "$region"),
+      "city" -> MongoDBObject("$max" -> "$city"),
+      "postalCode" -> MongoDBObject("$max" -> "$postalCode")
+    )
+
+    val project = MongoDBObject(
+      "_id" -> 0,
+      "dataId" -> "$_id",
+      "brokerCnxns" -> 1,
+      "firstName" -> 1,
+      "lastName" -> 1,
+      "description" -> 1,
+      "country" -> 1,
+      "region" -> 1,
+      "city" -> 1,
+      "postalCode" -> 1
+    )
+
+    val pipe = MongoDBList(
+      MongoDBObject("$match" -> q.result),
+      MongoDBObject("$group" -> group),
+      MongoDBObject("$project" -> project)
+    )
+
+    pipe
   }
 
   //TODO: The Displayable names should really come from a resource lookup by language related to a country

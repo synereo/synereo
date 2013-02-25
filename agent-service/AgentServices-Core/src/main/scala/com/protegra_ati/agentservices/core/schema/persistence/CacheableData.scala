@@ -5,42 +5,42 @@ import com.protegra_ati.agentservices.core.schema.Data
 import com.mongodb.DBObject
 import com.mongodb.casbah.commons.MongoDBObject
 
-abstract class CacheableData(_id: String, _localeCode: String, _appId: String, _exchangeKey: String)
+abstract class CacheableData(_id: String, _localeCode: String, _brokerCnxnAppId: String, _brokerCnxnExchangeKey: String)
 extends Data(_id, _localeCode)
 {
   def this() = this("", "", "", "")
 
-  @BeanProperty var appId: String = _appId
-  @BeanProperty var exchangeKey: String = _exchangeKey
+  @BeanProperty var brokerCnxnAppId: String = _brokerCnxnAppId
+  @BeanProperty var brokerCnxnExchangeKey: String = _brokerCnxnExchangeKey
 
-  def addIds(_id: String, _localeCode: String, _appId: String, _exchangeKey: String) = {
+  def addIds(_id: String, _localeCode: String, _brokerCnxnAppId: String, _brokerCnxnExchangeKey: String) = {
     id = _id
     localeCode = _localeCode
-    appId = _appId
-    exchangeKey = _exchangeKey
+    brokerCnxnAppId = _brokerCnxnAppId
+    brokerCnxnExchangeKey = _brokerCnxnExchangeKey
   }
 
   def toCacheObject(): DBObject = {
     MongoDBObject(
       "dataId" -> id,
-      "appId" -> appId,
-      "exchangeKey" -> exchangeKey
+      "brokerCnxnAppId" -> brokerCnxnAppId,
+      "brokerCnxnExchangeKey" -> brokerCnxnExchangeKey
     )
   }
 
   def toCacheKey(): DBObject = {
     MongoDBObject(
       "dataId" -> id,
-      "appId" -> appId
+      "brokerCnxnAppId" -> brokerCnxnAppId
     )
   }
 
-  def toCacheSearchKey(): DBObject = {
+  def toCacheSearchKey(brokerCnxnAppIds: List[String]): DBObject = {
     // The default implementation will return an exact-match object
     // Overriding implementations should return an object that will be used for searching
     MongoDBObject(
       "dataId" -> id,
-      "appId" -> appId
+      "brokerCnxnAppId" -> brokerCnxnAppId
     )
   }
 
