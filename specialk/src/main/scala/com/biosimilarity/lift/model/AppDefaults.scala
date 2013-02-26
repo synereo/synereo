@@ -27,6 +27,7 @@ object ApplicationDefaults extends Serializable {
   val managementServiceType : String =
     "CollectionManagementService"
   val managementServiceVersion : String = "1.0"  
+  val defaultDB : String = "records"
   // Storage conversion mechanism
   val valueStorageType : String = "CnxnCtxtLabel"
   val continuationStorageType : String = "Base64"
@@ -56,4 +57,24 @@ object BaseXDefaults extends Serializable {
   val managementServiceVersion : String = "1.0"  
   val valueStorageType : String = "CnxnCtxtLabel"
   val loggingLevel : String = "Tweet"
+}
+
+object MongoDefaults extends Serializable {
+  // BaseX
+  implicit val URI : String  =
+    "mongod://localhost:27017/"
+  val dbHost : String = "localhost"
+  val dbPort : String = "27017"
+  val dbUser : String = ""
+  val dbPwd  : String = ""
+  val dbRoot : String = "~/.mongo/data"
+  val createDB : Boolean = false
+  val defaultDB : String = "records"
+  // Storage conversion mechanism
+  val valueStorageType : String = "CnxnCtxtLabel"
+  val continuationStorageType : String = "Base64"
+  // Logging
+  val loggingLevel : String = "Tweet"
+  // File system configuration
+  implicit val tmpDirStr = "tmp"
 }

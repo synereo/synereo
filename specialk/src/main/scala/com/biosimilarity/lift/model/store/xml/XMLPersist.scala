@@ -93,6 +93,39 @@ extends ConfigurationTrampoline {
     configurationFromFile.get( "tmpDirStr" ).getOrElse( bail() )
 }
 
+trait XMLStoreConfigurationProxy
+extends XMLStoreConfiguration {
+  def underlyingConfiguration : XMLStoreConfiguration
+  
+  override def URI                      : String = underlyingConfiguration.URI
+  override def dbHost                   : String = underlyingConfiguration.dbHost
+  override def dbPort                   : String = underlyingConfiguration.dbPort
+  override def dbUser                   : String = underlyingConfiguration.dbUser
+  override def dbPwd                    : String = underlyingConfiguration.dbPwd
+  override def driver                   : String = underlyingConfiguration.driver
+  override def dbRoot                   : String = underlyingConfiguration.dbRoot
+  override def createDB                 : Boolean = underlyingConfiguration.createDB
+  override def indent                   : Boolean = underlyingConfiguration.indent
+  override def resourceType             : String = underlyingConfiguration.resourceType
+  override def queryServiceType         : String = underlyingConfiguration.queryServiceType
+  override def queryServiceVersion      : String = underlyingConfiguration.queryServiceVersion
+  override def managementServiceType    : String = underlyingConfiguration.managementServiceType
+  override def managementServiceVersion : String = underlyingConfiguration.managementServiceVersion
+
+  override def valueStorageType         : String = underlyingConfiguration.valueStorageType  
+  override def continuationStorageType  : String = underlyingConfiguration.continuationStorageType  
+  override def tmpDirStr                : String = underlyingConfiguration.tmpDirStr
+
+  override def configFileName  : Option[String] =
+    underlyingConfiguration.configFileName
+  override def configurationDefaults: ConfigurationDefaults =
+    underlyingConfiguration.configurationDefaults
+}
+
+trait StdXMLStoreConfiguration extends XMLStoreConfigurationProxy {
+  final override val underlyingConfiguration = BaseXConfigInfo
+}
+
 trait XMLStoreDefaults
 
 trait XMLStore

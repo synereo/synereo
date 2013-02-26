@@ -163,6 +163,11 @@
       <version>2.5-M4</version>
     </dependency>            
     <dependency>
+      <groupId>org.scalaz</groupId>
+      <artifactId>scalaz_2.9.2</artifactId>
+      <version>7.0.0-M8</version>
+    </dependency>            
+    <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <version>1.2.138</version>

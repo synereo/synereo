@@ -63,20 +63,13 @@ trait ScalesXMLResultsParser extends XMLResultsParser {
 }
 
 trait BaseXPersist extends Persist[ClientSession,Elem]
-with XMLStoreConfiguration
-with Schema
 with ScalaXMLResultsParser
-{
-  override def configFileName: Option[String] = None
-
-  override def configurationDefaults: ConfigurationDefaults =
-  {
-    ApplicationDefaults.asInstanceOf[ConfigurationDefaults]
-  }
-
+with Schema
+with StdXMLStoreConfiguration
+{  
   @transient
   private final val pool = BaseXSessionPool
-
+  
   def clientSessionFromConfig: ClientSession =
   {
     new ClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)
