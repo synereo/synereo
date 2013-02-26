@@ -78,7 +78,7 @@ class EvaluatorServiceActor extends Actor with SprayActorLogging {
 	  println( "bytes: " + bytes )
 	}
       )
-      sender ! index    
+      sender ! stockMsgResponse
     }
 
     case _: HttpRequest => sender ! HttpResponse(404, "Unknown resource!")
@@ -107,6 +107,12 @@ class EvaluatorServiceActor extends Actor with SprayActorLogging {
           </ul>
         </body>
       </html>.toString
+    )
+  )
+
+  lazy val stockMsgResponse = HttpResponse(
+    entity = HttpBody(`application/json`,
+      "{ \"msgType\" : \"evalComplete\", \"contents\" : { \"sessionURI\" : \"agent-session://myLovelySession/1234, \" \"pageOfPosts\" : [] }"
     )
   )
 
