@@ -5,6 +5,7 @@ import java.util.{UUID}
 import scala.collection.JavaConversions._
 import com.mongodb.casbah.Imports._
 import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
 //id will come from data
 //concrete instance until we come up with a better way of DisclosedData, right now it's by class
@@ -63,12 +64,14 @@ case class AppId(
     }
   }
 
-
+  override def getMongoCollectionName:String = AppId.MONGO_COLLECTION_NAME
 }
 
 object AppId
 {
   final val SEARCH_ALL_KEY = new AppId().toSearchKey
+
+  final val MONGO_COLLECTION_NAME = AppId.getClass.getName.trimPackage.toCamelCase
 
   final val SEARCH_ALL = new AppId()
   {

@@ -12,7 +12,7 @@ import scala.reflect.BeanProperty
 import com.protegra_ati.agentservices.store.extensions._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import scala.collection.JavaConversions._
-import java.lang.{Integer}
+import java.lang.Integer
 import com.mongodb.casbah.Imports._
 import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 
@@ -175,6 +175,8 @@ case class Profile(
 
   override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
   {List()}
+
+  override def getMongoCollectionName:String = Profile.MONGO_COLLECTION_NAME
 }
 
 object Profile
@@ -183,6 +185,7 @@ object Profile
 
   final val DISPLAYABLE_FIELD_SORT_ORDER = createDisplayableFieldSortOrderMap()
 
+  final val MONGO_COLLECTION_NAME = Profile.getClass.getName.trimPackage.toCamelCase
 
   final val SEARCH_ALL_KEY = new Profile().toSearchKey
 

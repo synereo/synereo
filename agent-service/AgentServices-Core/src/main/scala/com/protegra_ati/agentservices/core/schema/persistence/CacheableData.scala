@@ -62,4 +62,6 @@ extends Data(_id, _localeCode)
     }.toList
     brokerCnxns
   }
+
+  def getMongoCollectionName():String
 }
