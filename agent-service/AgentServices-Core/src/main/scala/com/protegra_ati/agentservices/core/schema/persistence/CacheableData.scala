@@ -2,8 +2,9 @@ package com.protegra_ati.agentservices.core.schema.persistence
 
 import scala.reflect.BeanProperty
 import com.protegra_ati.agentservices.core.schema.Data
-import com.mongodb.DBObject
-import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.commons.Imports._
+import scala.collection.JavaConversions._
+
 
 abstract class CacheableData(_id: String, _localeCode: String, _brokerCnxnAppId: String, _brokerCnxnExchangeKey: String)
 extends Data(_id, _localeCode)
@@ -45,4 +46,20 @@ extends Data(_id, _localeCode)
   }
 
   def fromDBObject(o: DBObject): CacheableData
+
+  // Return as SearchResult by parsing results of an aggregate command
+  def fromAggregateDBObject[T <: CacheableData](o: DBObject): SearchResult[T] = 
+  {
+    new SearchResult[T](fromDBObject(o).asInstanceOf[T], 0.0, getBrokerCnxns(o), false)
+  }
+
+  // Return map of broker appIds => broker exchange keys from an aggregate search result
+  private def getBrokerCnxns(o: DBObject) = {
+    val bcm = o.getAsOrElse[MongoDBList]("brokerCnxns", MongoDBList())
+    val brokerCnxns = bcm.collect {
+      case x:DBObject if x.contains("brokerCnxnAppId") && x.contains("brokerCnxnExchangeKey") => 
+        new BrokerCnxn(x.as[String]("brokerCnxnAppId"), x.as[String]("brokerCnxnExchangeKey"))
+    }.toList
+    brokerCnxns
+  }
 }

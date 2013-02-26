@@ -39,10 +39,13 @@ case class AppId(
       policies
     )
 
-    appId.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("appId", ""), o.getAsOrElse("exchangeKey", ""))
+    appId.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("brokerCnxnAppId", ""), o.getAsOrElse("brokerCnxnExchangeKey", ""))
 
     appId
   }
+
+  // Find all AppIds current AppId is connected to (i.e. current AppId is set as brokerCnxnAppId)
+  def connectedAppIdsQuery(): DBObject = MongoDBObject("brokerCnxnAppId" -> id)
 
   def setPoliciesFromCategory(category: String): Unit =
   {
