@@ -11,12 +11,12 @@ package com.biosimilarity.evaluator.msgs
 import java.util.UUID
 import java.net.URI
 
-object MessageSet {
-  type Alias = String
-  type Cnxn = String
-  type Filter = String
-  type Post = String
-  type GloSExpr = String
+trait AbstractEvaluatorMessageSet {
+  type Alias
+  type Cnxn
+  type Filter
+  type Post
+  type GloSExpr
 
   trait EvaluatorMessage
 
@@ -32,6 +32,11 @@ object MessageSet {
   //   sessionURI
   // )
   // sessionURI ::= agent-session://[userToken@]sessionId[/subsessionId]*[?parm=value[,parm=value]*]
+  case class initializeSessionError(
+    agentURI : AgentURI,
+    reason : String
+  ) extends EvaluatorMessage
+
   case class initializeSessionResponse(
     sessionURI : AgentSessionURI,
     listOfAliases : Seq[Alias], defaultAlias : Alias,
@@ -51,16 +56,67 @@ object MessageSet {
   ) extends EvaluatorMessage
   
   // evalRequest( expression, sessionURI )
-  case class evalRequest(
-    sessionURI : AgentSessionURI,
-    expression : GloSExpr    
-  ) extends EvaluatorMessage
+  trait EvalRequest {
+    def sessionURI : AgentSessionURI
+    def expression : GloSExpr    
+  }
+
+  object EvalRequest {
+    def unapply(
+      evalReq : EvalRequest
+    ) : Option[( AgentSessionURI, GloSExpr )] = {
+      Some( ( evalReq.sessionURI, evalReq.expression ) )
+    }
+  }
+
+  // The polling version of this request allows the client to pull
+  // responses in at a rate that it can absorb; and then simply stop
+  // evaluation when it is sated.
+  case class evalPollRequest(
+    override val sessionURI : AgentSessionURI,
+    override val expression : GloSExpr
+  ) extends EvaluatorMessage with EvalRequest
+
+  case class evalNextPageRequest(
+    val sessionURI : AgentSessionURI,
+    val nextPage : AgentSessionURI
+  ) extends EvaluatorMessage 
+
+  // The subscription version of this request allows the server to
+  // push results to the client.
+  case class evalSubscribeRequest(
+    override val sessionURI : AgentSessionURI,
+    override val expression : GloSExpr
+  ) extends EvaluatorMessage with EvalRequest
   
   // evalResponse( pageOfPosts, sessionURI )
-  case class evalResponse(    
+  trait EvalResponse {
+    def sessionURI : AgentSessionURI
+    def pageOfPosts : Seq[Post]
+  }
+
+  object EvalResponse {
+    def unapply(
+      evalRsp : EvalResponse
+    ) : Option[( AgentSessionURI, Seq[Post] )] = {
+      Some( ( evalRsp.sessionURI, evalRsp.pageOfPosts ) )
+    }
+  }
+
+  // Evaluation results are always paginated. In the polling version
+  // of the conversation the client determines the rate at which pages
+  // are delivered and dealt with. In the subscription version the
+  // server does.
+  case class evalPollResponse(    
+    sessionURI : AgentSessionURI,
+    pageOfPosts : Seq[Post],
+    nextPage : AgentSessionURI
+  ) extends EvaluatorMessage with EvalResponse
+
+  case class evalSubscribeResponse(    
     sessionURI : AgentSessionURI,
     pageOfPosts : Seq[Post]
-  ) extends EvaluatorMessage
+  ) extends EvaluatorMessage with EvalResponse
   
   // evalComplete( pageOfPosts, sessionURI )
   case class evalComplete(
@@ -84,4 +140,14 @@ object MessageSet {
     sessionURI : AgentSessionURI
   ) extends EvaluatorMessage
   
+}
+
+package usage {
+  object EvaluatorMessageSet extends AbstractEvaluatorMessageSet {
+    type Alias = String
+    type Cnxn = String
+    type Filter = String
+    type Post = String
+    type GloSExpr = String
+  }
 }

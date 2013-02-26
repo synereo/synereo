@@ -25,3 +25,5 @@ libraryDependencies ++= Seq(
 )
 
 seq(webSettings: _*)
+
+port in container.Configuration := 9876

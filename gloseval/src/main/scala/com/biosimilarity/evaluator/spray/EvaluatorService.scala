@@ -72,10 +72,12 @@ class EvaluatorServiceActor extends Actor with SprayActorLogging {
 
     case HttpRequest(POST, uri, hdrs, entity, _) => {
       println( "uri: " + uri );
-      println( "hdrs: " + hdrs );
-      // for( ( "application/json", bytes ) <- entity ) {
-// 	println( "bytes: " + bytes )
-//       }
+      println( "hdrs: " + hdrs );      
+      entity.foreach(
+	( cntntType : ContentType, bytes : Array[Byte] ) => {
+	  println( "bytes: " + bytes )
+	}
+      )
       sender ! index    
     }
 
@@ -138,14 +140,4 @@ class EvaluatorServiceActor extends Actor with SprayActorLogging {
 
 }
 
-object JSONification {
-  import org.json4s._
-  import org.json4s.native.JsonMethods._
 
-  implicit val formats = DefaultFormats 
-
-  case class Address(no: String, street: String, city: String)
-
-  val jsonAddress1 = """{ "no": "A1", "street" : "Main Street", "city" : "Colombo" }"""
-  
-}
