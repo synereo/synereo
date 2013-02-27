@@ -100,10 +100,19 @@ case class Profile(
 
     q += "brokerCnxnAppId" -> MongoDBObject("$in" -> MongoDBList.concat(brokerCnxnAppIds))
 
-    q += "$or" -> MongoDBList(
-      MongoDBObject("firstName" -> ("^" + Option(firstName).getOrElse("") + ".*").r),
-      MongoDBObject("lastName" -> ("^" + Option(lastName).getOrElse("") + ".*").r)
-    )
+   // Use an OR if both first and last name are specified
+    // otherwise use only the first or last name, depending on which is provided
+    (Option(firstName), Option(lastName)) match {
+      case (Some(fn:String), Some(ln:String)) if !fn.isEmpty && !ln.isEmpty => {
+        q += "$or" -> MongoDBList(
+          MongoDBObject("firstName" -> ("^" + fn + ".*").r),
+          MongoDBObject("lastName" -> ("^" + ln + ".*").r)
+        )
+      }
+      case (Some(fn:String), _) if !fn.isEmpty => q += "firstName" -> ("^" + fn + ".*").r
+      case (_, Some(ln:String)) if !ln.isEmpty => q += "lastName" -> ("^" + ln + ".*").r
+      case _ => 
+    }
 
     Option(country).map(x => if (!x.isEmpty) q += "country" -> x)
     Option(region).map(x => if (!x.isEmpty) q += "region" -> x)
