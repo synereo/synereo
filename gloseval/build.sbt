@@ -8,7 +8,8 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 resolvers ++= Seq(
   "spray repo" at "http://repo.spray.io/",
-  "json4s repo" at "http://repo.scala-sbt.org/scalasbt/repo/"
+  "json4s repo" at "http://repo.scala-sbt.org/scalasbt/repo/",
+  "biosim repo" at "http://biosimrepomirror.googlecode.com/svn/trunk/"
 )
 
 libraryDependencies ++= Seq(
@@ -21,7 +22,8 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty"       %   "jetty-webapp"  % "8.1.7.v20120910"     % "container",
   "org.eclipse.jetty.orbit" %   "javax.servlet" % "3.0.0.v201112011016" % "container"  artifacts Artifact("javax.servlet", "jar", "jar"),
   "com.typesafe.akka"       %%  "akka-actor"    % "2.1.0",
-  "org.specs2"              %%  "specs2"        % "1.13" % "test"
+  "org.specs2"              %%  "specs2"        % "1.13" % "test",
+  "com.biosimilarity.lift"  %  "specialK"      % "1.1.1.15"
 )
 
 seq(webSettings: _*)
