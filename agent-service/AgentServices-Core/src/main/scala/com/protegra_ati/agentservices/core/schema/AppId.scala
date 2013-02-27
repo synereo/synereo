@@ -45,9 +45,6 @@ case class AppId(
     appId
   }
 
-  // Find all AppIds current AppId is connected to (i.e. current AppId is set as brokerCnxnAppId)
-  def connectedAppIdsQuery(): DBObject = MongoDBObject("brokerCnxnAppId" -> id)
-
   def setPoliciesFromCategory(category: String): Unit =
   {
     if ( category == ConnectionCategory.Group.toString ) {
