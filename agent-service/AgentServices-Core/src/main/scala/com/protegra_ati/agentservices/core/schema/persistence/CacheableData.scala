@@ -4,6 +4,8 @@ import scala.reflect.BeanProperty
 import com.protegra_ati.agentservices.core.schema.Data
 import com.mongodb.casbah.commons.Imports._
 import scala.collection.JavaConversions._
+import scala.collection.mutable.Builder
+import scala.util.matching.Regex
 
 
 abstract class CacheableData(_id: String, _localeCode: String, _brokerCnxnAppId: String, _brokerCnxnExchangeKey: String)
@@ -62,6 +64,28 @@ extends Data(_id, _localeCode)
     }.toList
     brokerCnxns
   }
+
+  /**
+   * Add a property to query builder if the property is not null/empty
+   */
+  protected def addProp(propName: String, value: String, builder: Builder[(String, Any), DBObject]) = {
+    Option(value).filter(!_.isEmpty).map(builder += propName -> _)
+  }
+
+  /**
+   * Add a property to query builder if the property is not null/empty.  Property value will be converted
+   * to a Starts With regex (ex. ^propValue.*)
+   */
+  protected def addPropWithRegex(propName: String, value: String, builder: Builder[(String, Any), DBObject]) = {
+    Option(value).filter(!_.isEmpty).map(builder += propName -> toStartsWithRegex(_))
+  }
+
+  /**
+   * Turn string into a regex, anchored at the front, with a wildcard on the end
+   * "foo".ar results in ^foo.* (i.e. regex for strings starting with foo).  
+   * Case insensitive matching is enabled.
+   */
+  protected def toStartsWithRegex(s:String) : Regex = new Regex("^(?i)" + s + ".*")
 
   def getMongoCollectionName():String
 }

@@ -100,24 +100,26 @@ case class Profile(
 
     q += "brokerCnxnAppId" -> MongoDBObject("$in" -> MongoDBList.concat(brokerCnxnAppIds))
 
-   // Use an OR if both first and last name are specified
+    // Use an OR if both first and last name are specified
     // otherwise use only the first or last name, depending on which is provided
-    (Option(firstName), Option(lastName)) match {
-      case (Some(fn:String), Some(ln:String)) if !fn.isEmpty && !ln.isEmpty => {
+    def checkStr(s:String) = Option(s).filter(!_.isEmpty)
+    
+    (checkStr(firstName), checkStr(lastName)) match {
+      case (Some(fn), Some(ln)) => {
         q += "$or" -> MongoDBList(
-          MongoDBObject("firstName" -> ("^" + fn + ".*").r),
-          MongoDBObject("lastName" -> ("^" + ln + ".*").r)
+          MongoDBObject("firstName" -> toStartsWithRegex(fn)),
+          MongoDBObject("lastName" -> toStartsWithRegex(ln))
         )
       }
-      case (Some(fn:String), _) if !fn.isEmpty => q += "firstName" -> ("^" + fn + ".*").r
-      case (_, Some(ln:String)) if !ln.isEmpty => q += "lastName" -> ("^" + ln + ".*").r
-      case _ => 
+      case (Some(fn), None) => q += "firstName" -> toStartsWithRegex(fn)
+      case (None, Some(ln)) => q += "lastName" -> toStartsWithRegex(ln)
+      case (None, None) => 
     }
 
-    Option(country).map(x => if (!x.isEmpty) q += "country" -> x)
-    Option(region).map(x => if (!x.isEmpty) q += "region" -> x)
-    Option(city).map(x => if (!x.isEmpty) q += "city" -> x)
-
+    addProp("country", country, q)
+    addPropWithRegex("region", region, q)
+    addPropWithRegex("city", city, q)
+    
     val group = MongoDBObject(
       "_id" -> "$dataId",
       "brokerCnxns" -> MongoDBObject("$addToSet" -> MongoDBObject("brokerCnxnAppId" -> "$brokerCnxnAppId", "brokerCnxnExchangeKey" -> "$brokerCnxnExchangeKey")),
