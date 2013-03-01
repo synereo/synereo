@@ -4,5 +4,5 @@ package com.protegra_ati.agentservices.core.schema
 */
 case object ConnectionPolicy extends Enumeration("referralsDisabled", "deleteDisabled", "searchDisabled", "remoteSearchDisabled", "dataSharingEnabled")
 {
-  val ReferralsDisabled, DeleteDisabled, SearchDisabled, RemoteSearchDisabled, DataSharingEnabled = Value
+  val ReferralsDisabled, DeleteDisabled, SearchDisabled, RemoteSearchDisabled, CacheDisabled, DataSharingEnabled = Value
 }

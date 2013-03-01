@@ -73,10 +73,10 @@ object ConnectionFactory
       policies = ConnectionPolicy.DataSharingEnabled.toString :: policies
     }
     else if ( categoryTarget == ConnectionCategory.App.toString ) {
-      policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.DeleteDisabled.toString :: ConnectionPolicy.ReferralsDisabled.toString :: policies
+      policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.CacheDisabled.toString  :: ConnectionPolicy.DeleteDisabled.toString :: ConnectionPolicy.ReferralsDisabled.toString :: policies
     }
     else if ( categoryTarget == ConnectionCategory.Business.toString ) {
-      policies = ConnectionPolicy.RemoteSearchDisabled.toString :: policies
+      policies = ConnectionPolicy.RemoteSearchDisabled.toString :: ConnectionPolicy.CacheDisabled.toString :: policies
     }
     else if ( categorySource == ConnectionCategory.Business.toString && categoryTarget == ConnectionCategory.Person.toString ) {
       policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.DataSharingEnabled.toString ::policies

@@ -342,7 +342,7 @@ trait ContentRequestSet
 
         raiseRemoteNotification(new CompositeData[Data](x, authorizedData), parentRequestIds)
         //        if ( x.policies != null && !x.policies.contains(ConnectionPolicy.RemoteSearchDisabled.toString) ) {
-        updateCache(x.writeCnxn, x.readCnxn, parentRequestIds, parentRequestEventKey, authorizedData)
+        updateCache(x, parentRequestIds, parentRequestEventKey, authorizedData)
         //        }
 
         //we are now storing the authorizedContentAuditItem data on the connection junction as well
@@ -412,8 +412,9 @@ trait ContentRequestSet
   }
 
 
-  def updateCache(originCnxn: AgentCnxnProxy, targetCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data): Unit = {
+  def updateCache(connSelf_A: Connection, parentRequestIds: Identification, parentRequestEventKey: EventKey, newData: Data): Unit = {
     //hook to implement in higher up libraries
+    //x.writeCnxn, x.readCnxn
     report("Cache not implemented", Severity.Trace)
   }
 
