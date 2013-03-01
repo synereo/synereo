@@ -89,6 +89,7 @@ abstract class BasePlatformAgent
 
   def initFromConfig(configFilePath: String)
   {
+    Results.client
     configure(configFilePath)
     startup
   }
@@ -165,7 +166,7 @@ abstract class BasePlatformAgent
       val exchange = cnxn.getExchangeKey + key
       val routingKey = "routeroute"
 
-      val listener = new MessageAMQPListener(config.host, config.port, exchange, routingKey, handler(_: Message))
+      val listener = new MessageAMQPListener(config, exchange, routingKey, handler(_: Message))
     }
   }
 
@@ -182,7 +183,7 @@ abstract class BasePlatformAgent
       val exchange = cnxn.getExchangeKey + msg.getExchangeKey
       val routingKey = "routeroute"
       try {
-        val publisher = new MessageAMQPPublisher(config.host, config.port, exchange, routingKey)
+        val publisher = new MessageAMQPPublisher(config, exchange, routingKey)
         publisher.send(msg)
       }
       catch {

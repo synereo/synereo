@@ -36,7 +36,7 @@ object MockConnFactory
     //not sure if I'm happy with this spot for the logic
     var policies = List[ String ]()
     if ( category == ConnectionCategory.Group.toString ) {
-      policies = ConnectionPolicy.DataSharingEnabled.toString :: policies
+      policies = ConnectionPolicy.GroupPostSharingEnabled.toString :: policies
     }
     createConnection(alias, category, connectionType, sourceId, targetId, autoApprove, policies)
   }

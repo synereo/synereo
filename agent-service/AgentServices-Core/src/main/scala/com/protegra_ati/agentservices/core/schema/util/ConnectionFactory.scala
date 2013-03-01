@@ -70,7 +70,7 @@ object ConnectionFactory
   {
     var policies = List[ String ]()
     if ( categoryTarget == ConnectionCategory.Group.toString ) {
-      policies = ConnectionPolicy.DataSharingEnabled.toString :: policies
+      policies = ConnectionPolicy.GroupPostSharingEnabled.toString :: policies
     }
     else if ( categoryTarget == ConnectionCategory.App.toString ) {
       policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.CacheDisabled.toString  :: ConnectionPolicy.DeleteDisabled.toString :: ConnectionPolicy.ReferralsDisabled.toString :: policies
@@ -79,7 +79,7 @@ object ConnectionFactory
       policies = ConnectionPolicy.RemoteSearchDisabled.toString :: ConnectionPolicy.CacheDisabled.toString :: policies
     }
     else if ( categorySource == ConnectionCategory.Business.toString && categoryTarget == ConnectionCategory.Person.toString ) {
-      policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.DataSharingEnabled.toString ::policies
+      policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.BusinessProfileSharingEnabled.toString :: ConnectionPolicy.RoleSharingEnabled.toString ::policies
     }
     policies
   }

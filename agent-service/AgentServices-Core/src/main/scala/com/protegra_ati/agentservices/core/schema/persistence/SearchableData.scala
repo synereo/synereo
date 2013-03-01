@@ -125,6 +125,10 @@ trait SearchableData
       //skip if it's hashmap for now
       content = SEARCH_ANY
     }
+    else if ( classOf[ java.util.concurrent.ConcurrentHashMap[ Any, Any ] ].isAssignableFrom(f.getType) ) {
+      //skip if it's concurrent hashmap for now
+      content = SEARCH_ANY
+    }
     else {
       if ( !ignored )
         content = getSearchFormattedFieldValue(f)
