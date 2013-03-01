@@ -184,9 +184,6 @@ case class Profile(
     List(AppId.SEARCH_ALL)
   }
 
-  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
-  {List()}
-
   override def getMongoCollectionName:String = Profile.MONGO_COLLECTION_NAME
 }
 

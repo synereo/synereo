@@ -168,7 +168,7 @@ class SearchableDataTest extends SpecificationWithJUnit
 
       val emptyData = new Post()
       val emptySearchKey = emptyData.toSearchKey
-      val expectedEmptySearchKey = "data(post(_," + FIELDS + "(subject(_),body(_),toDetails(_),fromDetails(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_))))"
+      val expectedEmptySearchKey = "data(post(_," + FIELDS + "(subject(_),toDetails(_),fromDetails(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_))))"
       emptySearchKey must be_==(expectedEmptySearchKey)
     }
 

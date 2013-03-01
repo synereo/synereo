@@ -62,7 +62,7 @@ trait SearchableData
 
     val fields = ReflectionHelper.getAllFields(this.getClass)
     val filteredFields = fields.filter(r => !keyFieldsForSearchAndStoreKey.contains(r.getName.trimPackage.toCamelCase))
-    val searchParameters = filteredFields map ( f => handleFieldValue(f) /*f.getName().toCamelCase + "(" + getSearchFormattedFieldValue(f) + ")"*/ )
+    val searchParameters = filteredFields collect {case f:Field if !ignoredFieldsForSearchAndStoreKey.contains(f.getName.trimPackage.toCamelCase) => handleFieldValue(f)}
 
     searchParameters.isEmpty match {
       case true => {

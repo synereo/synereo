@@ -11,6 +11,8 @@ import scala.util.matching.Regex
 abstract class CacheableData(_id: String, _localeCode: String, _brokerCnxnAppId: String, _brokerCnxnExchangeKey: String)
 extends Data(_id, _localeCode)
 {
+  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] = List("brokerCnxnAppId", "brokerCnxnExchangeKey") ::: super.ignoredFieldsForSearchAndStoreKey
+
   def this() = this("", "", "", "")
 
   @BeanProperty var brokerCnxnAppId: String = _brokerCnxnAppId

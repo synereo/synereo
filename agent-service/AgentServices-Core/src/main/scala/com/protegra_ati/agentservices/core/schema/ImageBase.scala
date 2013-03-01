@@ -11,8 +11,7 @@ abstract class ImageBase(@BeanProperty val name: String, @BeanProperty val conte
 
 
 
-  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
-  {List("content")}
+  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] = List("content") ::: super.ignoredFieldsForSearchAndStoreKey
 
   override def hashCode = 41 * super.hashCode + name.hashCode + contentType.hashCode + getContentLength + metadata.hashCode
 
