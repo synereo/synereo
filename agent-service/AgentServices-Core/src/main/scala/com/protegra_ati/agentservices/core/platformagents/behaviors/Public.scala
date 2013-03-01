@@ -45,6 +45,7 @@ trait Public
   def loadPublicQueue() =
   {
     _publicQ = createNode(_publicLocation, _publicAcquaintanceAddresses, _publicConfigFileName)
+
   }
 
   def isLocalNetworkMode() =

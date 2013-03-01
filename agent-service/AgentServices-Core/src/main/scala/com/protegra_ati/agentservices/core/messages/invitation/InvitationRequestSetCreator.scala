@@ -109,6 +109,7 @@ trait InvitationRequestSetCreator
   {
     report("STORE REFERRAL FOR LATER RESPONSE: referralRequest=" + referralRequest + ", cnxn=" + cnxnSelf, Severity.Info)
     // persists ReferralRequest for the broker
+
     val persistedMessage = new PersistedMessage[ ReferralRequest ](referralRequest)
 
     report("attempting to store " + persistedMessage.toStoreKey)
