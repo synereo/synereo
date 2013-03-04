@@ -71,6 +71,10 @@ trait StorableData extends StorableDataDefaults
       //skip if it's hashmap for now
       content = "\"" + "\""
     }
+    else if ( classOf[ java.util.concurrent.ConcurrentHashMap[ Any, Any ] ].isAssignableFrom(f.getType) ) {
+      //skip if it's concurrent hashmap for now
+      content = "\"" + "\""
+    }
     //TODO: problems with hashmap, we need to fix to handle reflection better, likely similar to data
     else if ( classOf[ Message ].isAssignableFrom(f.getType) ) {
       //skip if it's message for now

@@ -8,7 +8,7 @@ import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 case class CreateInvitationRequest(
   override val eventKey: EventKey,
-  val brokerTargetCnxnKey: String,
+  @BeanProperty val brokerTargetCnxnKey: String,
   @BeanProperty selfAlias: String,
   @BeanProperty targetAlias: String,
   @BeanProperty selfCategory: String,
