@@ -12,8 +12,8 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <scala.version>2.9.0-1</scala.version>
-        <scala.test.specs2.version>1.8.2</scala.test.specs2.version>
+        <scala.version>2.9.2</scala.version>
+        <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
 	    <agentservices-store.version>1.0.1.16</agentservices-store.version>
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
