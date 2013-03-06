@@ -89,5 +89,7 @@ extends Data(_id, _localeCode)
    */
   protected def toStartsWithRegex(s:String) : Regex = ("^" + s.toLowerCase + ".*").r
 
-  def getMongoCollectionName():String
+  def getMongoCollectionName(): String
+
+  def getMongoCollectionIndexes(): List[DBObject]
 }

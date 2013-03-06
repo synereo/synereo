@@ -188,6 +188,8 @@ case class Profile(
   }
 
   override def getMongoCollectionName:String = Profile.MONGO_COLLECTION_NAME
+
+  override def getMongoCollectionIndexes(): List[DBObject] = Profile.MONGO_INDEXES
 }
 
 object Profile
@@ -197,6 +199,12 @@ object Profile
   final val DISPLAYABLE_FIELD_SORT_ORDER = createDisplayableFieldSortOrderMap()
 
   final val MONGO_COLLECTION_NAME = Profile.getClass.getName.trimPackage.toCamelCase
+
+  final val MONGO_INDEXES = List[DBObject](
+    MongoDBObject("brokerCnxnAppId" -> 1, "brokerCnxnExchangeKey" -> 1),
+    MongoDBObject("brokerCnxnAppId" -> 1, "qFirstName" -> 1, "qLastName" -> 1, "qCity" -> 1),
+    MongoDBObject("brokerCnxnAppId" -> 1, "qCity" -> 1)
+  )
 
   final val SEARCH_ALL_KEY = new Profile().toSearchKey
 
