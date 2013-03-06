@@ -12,23 +12,23 @@ import java.util
  * @param id
  * @param data search result
  * @param matchPercent relevance of the the search result in percent
- * @param brokerCnxns Broker App Id -> Broker Exchange Key mappings
+ * @param brokers Broker App Id -> Broker Exchange Key mappings
  */
 case class SearchResult[T <: CacheableData](@BeanProperty val id: String,
                         @BeanProperty val data: T,
                         @BeanProperty var matchPercent: Double,
-                        @BeanProperty var brokerCnxns: java.util.List[ BrokerCnxn ],
+                        @BeanProperty var brokers: java.util.List[ Broker ],
                         @BeanProperty var existingConnection: Boolean)
   extends Serializable
 {
-  def this(_data: T, _matchPercent: Double, _brokerCnxns: java.util.List[ BrokerCnxn ], _existingConnection: Boolean) =
-    this(java.lang.System.nanoTime().toString, _data, _matchPercent, _brokerCnxns, _existingConnection)
+  def this(_data: T, _matchPercent: Double, _brokers: java.util.List[ Broker ], _existingConnection: Boolean) =
+    this(java.lang.System.nanoTime().toString, _data, _matchPercent, _brokers, _existingConnection)
 
-  def this() = this("", null.asInstanceOf[T], 0.0, Collections.emptyList[ BrokerCnxn ], false)
+  def this() = this("", null.asInstanceOf[T], 0.0, Collections.emptyList[ Broker ], false)
 }
 
-case class BrokerCnxn(@BeanProperty val brokerCnxnAppId: String, @BeanProperty val brokerCnxnExchangeKey: String, @BeanProperty var relatedData: java.util.List[ CacheableData ]) extends Serializable
+case class Broker(@BeanProperty val brokerAppId: String, @BeanProperty val brokerExchangeKey: String, @BeanProperty var relatedData: java.util.List[ CacheableData ]) extends Serializable
 {
   def this() = this("", "", new util.ArrayList())
-  def this(_brokerCnxnAppId: String, _brokerCnxnExchangeKey: String) = this(_brokerCnxnAppId, _brokerCnxnExchangeKey, Collections.emptyList[ CacheableData ])
+  def this(_brokerAppId: String, _brokerExchangeKey: String) = this(_brokerAppId, _brokerExchangeKey, Collections.emptyList[ CacheableData ])
 }

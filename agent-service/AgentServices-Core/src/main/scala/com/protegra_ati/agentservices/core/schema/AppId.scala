@@ -40,7 +40,7 @@ case class AppId(
       policies
     )
 
-    appId.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("brokerCnxnAppId", ""), o.getAsOrElse("brokerCnxnExchangeKey", ""))
+    appId.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("brokerAppId", ""), o.getAsOrElse("brokerExchangeKey", ""))
 
     appId
   }
@@ -72,7 +72,7 @@ object AppId
 
   final val MONGO_COLLECTION_NAME = AppId.getClass.getName.trimPackage.toCamelCase
 
-  final val MONGO_INDEXES = List[DBObject](MongoDBObject("brokerCnxnAppId" -> 1, "brokerCnxnExchangeKey" -> 1))
+  final val MONGO_INDEXES = List[DBObject](MongoDBObject("brokerAppId" -> 1, "brokerExchangeKey" -> 1))
 
   final val SEARCH_ALL = new AppId()
   {

@@ -92,16 +92,16 @@ case class Profile(
       o.getAsOrElse("imageHashCode", "")
     )
 
-    p.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("brokerCnxnAppId", ""), o.getAsOrElse("brokerCnxnExchangeKey", ""))
+    p.addIds(o.getAsOrElse("dataId", ""), "", o.getAsOrElse("brokerAppId", ""), o.getAsOrElse("brokerExchangeKey", ""))
 
     p
   }
 
-  override def toCacheSearchKey(brokerCnxnAppIds: List[String]): DBObject = 
+  override def toCacheSearchKey(brokerAppIds: List[String]): DBObject = 
   {
     val q = MongoDBObject.newBuilder
 
-    q += "brokerCnxnAppId" -> MongoDBObject("$in" -> MongoDBList.concat(brokerCnxnAppIds))
+    q += "brokerAppId" -> MongoDBObject("$in" -> MongoDBList.concat(brokerAppIds))
 
     // Use an OR if both first and last name are specified
     // otherwise use only the first or last name, depending on which is provided
@@ -125,7 +125,7 @@ case class Profile(
     
     val group = MongoDBObject(
       "_id" -> "$dataId",
-      "brokerCnxns" -> MongoDBObject("$addToSet" -> MongoDBObject("brokerCnxnAppId" -> "$brokerCnxnAppId", "brokerCnxnExchangeKey" -> "$brokerCnxnExchangeKey")),
+      "brokers" -> MongoDBObject("$addToSet" -> MongoDBObject("brokerAppId" -> "$brokerAppId", "brokerExchangeKey" -> "$brokerExchangeKey")),
       "firstName" -> MongoDBObject("$max" -> "$firstName"),
       "lastName" -> MongoDBObject("$max" -> "$lastName"),
       "description" -> MongoDBObject("$max" -> "$description"),
@@ -138,7 +138,7 @@ case class Profile(
     val project = MongoDBObject(
       "_id" -> 0,
       "dataId" -> "$_id",
-      "brokerCnxns" -> 1,
+      "brokers" -> 1,
       "firstName" -> 1,
       "lastName" -> 1,
       "description" -> 1,
@@ -201,9 +201,9 @@ object Profile
   final val MONGO_COLLECTION_NAME = Profile.getClass.getName.trimPackage.toCamelCase
 
   final val MONGO_INDEXES = List[DBObject](
-    MongoDBObject("brokerCnxnAppId" -> 1, "brokerCnxnExchangeKey" -> 1),
-    MongoDBObject("brokerCnxnAppId" -> 1, "qFirstName" -> 1, "qLastName" -> 1, "qCity" -> 1),
-    MongoDBObject("brokerCnxnAppId" -> 1, "qCity" -> 1)
+    MongoDBObject("brokerAppId" -> 1, "brokerExchangeKey" -> 1),
+    MongoDBObject("brokerAppId" -> 1, "qFirstName" -> 1, "qLastName" -> 1, "qCity" -> 1),
+    MongoDBObject("brokerAppId" -> 1, "qCity" -> 1)
   )
 
   final val SEARCH_ALL_KEY = new Profile().toSearchKey
