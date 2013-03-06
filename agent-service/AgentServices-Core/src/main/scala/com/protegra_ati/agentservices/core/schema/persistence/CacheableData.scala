@@ -52,9 +52,9 @@ extends Data(_id, _localeCode)
   def fromDBObject(o: DBObject): CacheableData
 
   // Return as SearchResult by parsing results of an aggregate command
-  def fromAggregateDBObject[T <: CacheableData](o: DBObject): SearchResult[T] = 
+  def fromAggregateDBObject[T <: CacheableData](o: DBObject): SearchResult =
   {
-    new SearchResult[T](fromDBObject(o).asInstanceOf[T], 0.0, getBrokerCnxns(o), false)
+    new SearchResult(fromDBObject(o).asInstanceOf[T], 0.0, getBrokerCnxns(o), false)
   }
 
   // Return map of broker appIds => broker exchange keys from an aggregate search result

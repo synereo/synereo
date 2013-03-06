@@ -14,17 +14,17 @@ import java.util
  * @param matchPercent relevance of the the search result in percent
  * @param brokerCnxns Broker App Id -> Broker Exchange Key mappings
  */
-case class SearchResult[T <: CacheableData](@BeanProperty val id: String,
-                        @BeanProperty val data: T,
+case class SearchResult(@BeanProperty val id: String,
+                        @BeanProperty val data: CacheableData,
                         @BeanProperty var matchPercent: Double,
                         @BeanProperty var brokerCnxns: java.util.List[ BrokerCnxn ],
                         @BeanProperty var existingConnection: Boolean)
   extends Serializable
 {
-  def this(_data: T, _matchPercent: Double, _brokerCnxns: java.util.List[ BrokerCnxn ], _existingConnection: Boolean) =
+  def this(_data: CacheableData, _matchPercent: Double, _brokerCnxns: java.util.List[ BrokerCnxn ], _existingConnection: Boolean) =
     this(java.lang.System.nanoTime().toString, _data, _matchPercent, _brokerCnxns, _existingConnection)
 
-  def this() = this("", null.asInstanceOf[T], 0.0, Collections.emptyList[ BrokerCnxn ], false)
+  def this() = this("", null.asInstanceOf[CacheableData], 0.0, Collections.emptyList[ BrokerCnxn ], false)
 }
 
 case class BrokerCnxn(@BeanProperty val brokerCnxnAppId: String, @BeanProperty val brokerCnxnExchangeKey: String, @BeanProperty var relatedData: java.util.List[ CacheableData ]) extends Serializable
