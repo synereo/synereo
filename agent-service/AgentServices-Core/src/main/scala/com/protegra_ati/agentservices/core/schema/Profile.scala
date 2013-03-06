@@ -181,7 +181,7 @@ case class Profile(
 
   override def getChildDataSearchKeys: java.util.List[ CacheableData ] =
   {
-    List(AppId.SEARCH_ALL)
+    AppId.SEARCH_ALL :: Nil
   }
 
   override def getMongoCollectionName:String = Profile.MONGO_COLLECTION_NAME

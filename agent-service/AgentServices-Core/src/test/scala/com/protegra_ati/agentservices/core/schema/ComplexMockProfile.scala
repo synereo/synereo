@@ -77,7 +77,7 @@ case class ComplexMockProfile(
 
   override def getChildDataSearchKeys: java.util.List[ CacheableData ] =
   {
-    List(AppId.SEARCH_ALL)
+    AppId.SEARCH_ALL :: Nil
   }
 
 
