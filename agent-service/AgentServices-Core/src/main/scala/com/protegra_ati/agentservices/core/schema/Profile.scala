@@ -68,7 +68,10 @@ case class Profile(
       "country" -> country,
       "region" -> region,
       "city" -> city,
-      "postalCode" -> postalCode
+      "postalCode" -> postalCode,
+      "qCity" -> city.toLowerCase,
+      "qFirstName" -> firstName.toLowerCase,
+      "qLastName" -> lastName.toLowerCase
     )
 
     super.toCacheObject ++ o
@@ -107,18 +110,18 @@ case class Profile(
     (checkStr(firstName), checkStr(lastName)) match {
       case (Some(fn), Some(ln)) => {
         q += "$or" -> MongoDBList(
-          MongoDBObject("firstName" -> toStartsWithRegex(fn)),
-          MongoDBObject("lastName" -> toStartsWithRegex(ln))
+          MongoDBObject("qFirstName" -> toStartsWithRegex(fn)),
+          MongoDBObject("qLastName" -> toStartsWithRegex(ln))
         )
       }
-      case (Some(fn), None) => q += "firstName" -> toStartsWithRegex(fn)
-      case (None, Some(ln)) => q += "lastName" -> toStartsWithRegex(ln)
+      case (Some(fn), None) => q += "qFirstName" -> toStartsWithRegex(fn)
+      case (None, Some(ln)) => q += "qLastName" -> toStartsWithRegex(ln)
       case (None, None) => 
     }
 
     addProp("country", country, q)
-    addPropWithRegex("region", region, q)
-    addPropWithRegex("city", city, q)
+    addProp("region", region, q)
+    addPropWithRegex("qCity", city, q)
     
     val group = MongoDBObject(
       "_id" -> "$dataId",

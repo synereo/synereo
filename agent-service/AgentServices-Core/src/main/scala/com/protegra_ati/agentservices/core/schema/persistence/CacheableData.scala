@@ -85,9 +85,9 @@ extends Data(_id, _localeCode)
   /**
    * Turn string into a regex, anchored at the front, with a wildcard on the end
    * "foo".ar results in ^foo.* (i.e. regex for strings starting with foo).  
-   * Case insensitive matching is enabled.
+   * Note: Match is case sensitive, but string is converted to lower case!
    */
-  protected def toStartsWithRegex(s:String) : Regex = new Regex("^(?i)" + s + ".*")
+  protected def toStartsWithRegex(s:String) : Regex = ("^" + s.toLowerCase + ".*").r
 
   def getMongoCollectionName():String
 }
