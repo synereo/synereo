@@ -8,44 +8,44 @@ import scala.collection.mutable.Builder
 import scala.util.matching.Regex
 
 
-abstract class CacheableData(_id: String, _localeCode: String, _brokerCnxnAppId: String, _brokerCnxnExchangeKey: String)
+abstract class CacheableData(_id: String, _localeCode: String, _brokerAppId: String, _brokerExchangeKey: String)
 extends Data(_id, _localeCode)
 {
-  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] = List("brokerCnxnAppId", "brokerCnxnExchangeKey") ::: super.ignoredFieldsForSearchAndStoreKey
+  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] = List("brokerAppId", "brokerExchangeKey") ::: super.ignoredFieldsForSearchAndStoreKey
 
   def this() = this("", "", "", "")
 
-  @BeanProperty var brokerCnxnAppId: String = _brokerCnxnAppId
-  @BeanProperty var brokerCnxnExchangeKey: String = _brokerCnxnExchangeKey
+  @BeanProperty var brokerAppId: String = _brokerAppId
+  @BeanProperty var brokerExchangeKey: String = _brokerExchangeKey
 
-  def addIds(_id: String, _localeCode: String, _brokerCnxnAppId: String, _brokerCnxnExchangeKey: String) = {
+  def addIds(_id: String, _localeCode: String, _brokerAppId: String, _brokerExchangeKey: String) = {
     id = _id
     localeCode = _localeCode
-    brokerCnxnAppId = _brokerCnxnAppId
-    brokerCnxnExchangeKey = _brokerCnxnExchangeKey
+    brokerAppId = _brokerAppId
+    brokerExchangeKey = _brokerExchangeKey
   }
 
   def toCacheObject(): DBObject = {
     MongoDBObject(
       "dataId" -> id,
-      "brokerCnxnAppId" -> brokerCnxnAppId,
-      "brokerCnxnExchangeKey" -> brokerCnxnExchangeKey
+      "brokerAppId" -> brokerAppId,
+      "brokerExchangeKey" -> brokerExchangeKey
     )
   }
 
   def toCacheKey(): DBObject = {
     MongoDBObject(
       "dataId" -> id,
-      "brokerCnxnAppId" -> brokerCnxnAppId
+      "brokerAppId" -> brokerAppId
     )
   }
 
-  def toCacheSearchKey(brokerCnxnAppIds: List[String]): DBObject = {
+  def toCacheSearchKey(brokerAppIds: List[String]): DBObject = {
     // The default implementation will return an exact-match object
     // Overriding implementations should return an object that will be used for searching
     MongoDBObject(
       "dataId" -> id,
-      "brokerCnxnAppId" -> brokerCnxnAppId
+      "brokerAppId" -> brokerAppId
     )
   }
 
@@ -54,17 +54,17 @@ extends Data(_id, _localeCode)
   // Return as SearchResult by parsing results of an aggregate command
   def fromAggregateDBObject[T <: CacheableData](o: DBObject): SearchResult =
   {
-    new SearchResult(fromDBObject(o).asInstanceOf[T], 0.0, getBrokerCnxns(o), false)
+    new SearchResult(fromDBObject(o).asInstanceOf[T], 0.0, getBrokers(o), false)
   }
 
   // Return map of broker appIds => broker exchange keys from an aggregate search result
-  private def getBrokerCnxns(o: DBObject) = {
-    val bcm = o.getAsOrElse[MongoDBList]("brokerCnxns", MongoDBList())
-    val brokerCnxns = bcm.collect {
-      case x:DBObject if x.contains("brokerCnxnAppId") && x.contains("brokerCnxnExchangeKey") => 
-        new BrokerCnxn(x.as[String]("brokerCnxnAppId"), x.as[String]("brokerCnxnExchangeKey"))
+  private def getBrokers(o: DBObject) = {
+    val bcm = o.getAsOrElse[MongoDBList]("brokers", MongoDBList())
+    val brokers = bcm.collect {
+      case x:DBObject if x.contains("brokerAppId") && x.contains("brokerExchangeKey") => 
+        new Broker(x.as[String]("brokerAppId"), x.as[String]("brokerExchangeKey"))
     }.toList
-    brokerCnxns
+    brokers
   }
 
   /**
@@ -89,5 +89,7 @@ extends Data(_id, _localeCode)
    */
   protected def toStartsWithRegex(s:String) : Regex = ("^" + s.toLowerCase + ".*").r
 
-  def getMongoCollectionName():String
+  def getMongoCollectionName(): String
+
+  def getMongoCollectionIndexes(): List[DBObject]
 }
