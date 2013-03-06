@@ -641,7 +641,13 @@ trait ContentRequestSet
     //get self cnxn from system data
     //lookup the self connection from the systemdata in the connection silo
     val queryObject = new SystemData(Connection.SEARCH_ALL)
-    fetch[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupSelfContentRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], setSelfContentRequest))
+    fetchOrElse[ SystemData[ Connection ] ](_dbQ, cnxnA_Broker, queryObject.toSearchKey, handleSystemDataLookupSelfContentRequest(_: AgentCnxnProxy, _: SystemData[ Connection ], setSelfContentRequest))(200, 3000, handleSelfContentSystemDataFailure(cnxnA_Broker ))
+  }
+
+  def handleSelfContentSystemDataFailure(proxy: AgentCnxnProxy)(): Unit =
+  {
+    // Got in here because SystemData[Connection] didn't exist
+    report("Failed fetching SystemData[CacheConnection] when generating cache data.", Severity.Fatal)
   }
 
 
