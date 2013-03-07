@@ -44,7 +44,7 @@ trait Listeners extends Reporting
   def addListener(key: UUID, subKey: String, listener: MessageEventAdapter) =
   {
     report("in addListener - adding listener with key: " + key.toString + "for subkey" + subKey + " and eventTag: " + listener.eventTag)
-    val keyUnique = subKey + listener.eventTag
+    val keyUnique = buildKeyUnique(listener.eventTag, subKey)
     if (!_uniqueness.hasValue(key, keyUnique))
     {
       _listeners.add(key, listener)
@@ -66,14 +66,22 @@ trait Listeners extends Reporting
 
     val unique = _uniqueness.get(key)
     unique.foreach(u => {
-      _uniqueness.remove(key, u)
+      if(u.startsWith(tag + "-")) {
+        _uniqueness.remove(key, u)
+      }
     })
   }
+
+  def buildKeyUnique(eventTag: String, subKey: String): String =
+  {
+    eventTag + "-" + subKey
+  }
+
 
   def removeListener(key: UUID, subKey: String, listener: MessageEventAdapter) =
   {
     report("in removeListener - removing listener with key: " + key.toString + "for subkey" + subKey + " and eventTag: " + listener.eventTag)
-    val keyUnique = subKey + listener.eventTag
+    val keyUnique = buildKeyUnique(listener.eventTag, subKey)
     _listeners.remove(key, listener)
     _uniqueness.remove(key, keyUnique)
   }
