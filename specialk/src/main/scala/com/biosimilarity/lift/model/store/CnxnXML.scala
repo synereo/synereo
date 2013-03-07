@@ -106,6 +106,32 @@ trait CnxnString[Namespace,Var,Tag] {
       ident~"("~repsep( termXform, "," )~")" ^^ {
 	case ident~"("~terms~")" => new CnxnCtxtBranch[String,String,Any]( ident, terms )
       }
+
+    def termXStr : Parser[CnxnCtxtLabel[String,String,String] with Factual] =
+      applicationXStr | listXStr | groundXStr | variableXStr
+    def listXStr : Parser[CnxnCtxtLabel[String,String,String] with Factual] = 
+      "["~repsep( termXStr, "," )~"]" ^^ {
+	case "["~terms~"]" => {
+	  new CnxnCtxtBranch[String,String,String](
+	    "list",
+	    terms
+	  )
+	}
+      }
+    def groundXStr : Parser[CnxnCtxtLabel[String,String,String] with Factual] =
+      (
+	stringLiteral ^^ ( x => new CnxnCtxtLeaf[String,String,String]( Left[String,String]( x.replace( "\"", "" ) ) ) )
+	| wholeNumber ^^ ( x => new CnxnCtxtLeaf[String,String,String]( Left[String,String]( x + "" ) ) )
+	| floatingPointNumber ^^ ( x => new CnxnCtxtLeaf[String,String,String]( Left[String,String]( x.toDouble + "" ) ) )
+	| "true" ^^ ( x => new CnxnCtxtLeaf[String,String,String]( Left[String,String]( "true" ) ) )
+	| "false" ^^ ( x => new CnxnCtxtLeaf[String,String,String]( Left[String,String]( "false" ) ) )
+      )
+    def variableXStr : Parser[CnxnCtxtLabel[String,String,String] with Factual] =
+      ident ^^ ( x => new CnxnCtxtLeaf[String,String,String]( Right( x.toString ) ) )
+    def applicationXStr : Parser[CnxnCtxtLabel[String,String,String] with Factual] =
+      ident~"("~repsep( termXStr, "," )~")" ^^ {
+	case ident~"("~terms~")" => new CnxnCtxtBranch[String,String,String]( ident, terms )
+      }
   }
 
   def fromCaseClassInstanceString(
@@ -115,6 +141,20 @@ trait CnxnString[Namespace,Var,Tag] {
     val ptree =
       readBack.parseAll(
 	readBack.termXform,
+	new java.io.StringReader( cciElem )
+      )
+    ptree match {
+      case readBack.Success( r, _ ) => Some( r )
+      case _ => None
+    }
+  }
+  def fromTermString(
+    cciElem : String
+  ) : Option[CnxnCtxtLabel[String,String,String]] = {
+    val readBack = new TermParser
+    val ptree =
+      readBack.parseAll(
+	readBack.termXStr,
 	new java.io.StringReader( cciElem )
       )
     ptree match {

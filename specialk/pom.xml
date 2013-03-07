@@ -132,6 +132,16 @@
       <version>2.5.0</version>
     </dependency -->
     <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-native_2.9.2</artifactId>
+      <version>3.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-jackson_2.9.2</artifactId>
+      <version>3.1.0</version>
+    </dependency>
+    <dependency>
 	<groupId>biz.source_code</groupId>
 	<artifactId>base64coder</artifactId>
 	<version>2010-09-21</version>

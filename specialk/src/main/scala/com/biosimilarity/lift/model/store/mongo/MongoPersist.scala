@@ -126,23 +126,33 @@ trait StdMongoStoreConfiguration extends MongoStoreConfigurationProxy {
   override final val underlyingConfiguration = MongoConfigInfo
 }
 
-trait MongoResultsParser
-extends CnxnMongoObject[String,String,String]
-with CnxnCtxtInjector[String,String,String] 
-with CnxnString[String,String,String]
+trait MongoResultsParser[Namespace,Var,Tag]
+extends CnxnMongoObject[Namespace,Var,Tag]
+with CnxnCtxtInjector[Namespace,Var,Tag]
+with CnxnString[Namespace,Var,Tag]
 with Blobify with UUIDOps {
   implicit def fromString( s : String ) : CnxnCtxtLabel[String,String,String] = {
-    fromCaseClassInstanceString( s ) match {
+    fromTermString( s ) match {
       case Some( ccl ) => ccl.asInstanceOf[CnxnCtxtLabel[String,String,String]];
       case None => throw new Exception( "failed to parse" )
     }
   }
 }
 
-trait BaseMongoPersist extends Persist[MongoClient,DBObject]
+trait MongoStringResultsParser extends MongoResultsParser[String,String,String]
+
+trait BaseMongoPersist[Namespace,Var,Tag]
+extends Persist[MongoClient,DBObject]
+with MongoResultsParser[Namespace,Var,Tag]
 with StdMongoStoreConfiguration
-with MongoResultsParser
-{  
+{ 
+  @transient
+  object CnxnMongoStrObjectifier
+    extends CnxnMongoObject[String,String,String]
+    with CnxnCtxtInjector[String,String,String]
+         with CnxnString[String,String,String]
+	 with Blobify with UUIDOps  
+
   @transient
   lazy val sessionURIFromConfiguration : URI =
     getSessionURIFromConfiguration
@@ -250,7 +260,7 @@ with MongoResultsParser
   def asRecord( recordType : String )(
     key : String, value : String
   ) : DBObject = {
-    toMongoObject(
+    CnxnMongoStrObjectifier.toMongoObject(
       new CnxnCtxtBranch[String,String,String](
 	recordType,
 	List[CnxnCtxtLabel[String,String,String] with Factual](
@@ -278,7 +288,7 @@ with MongoResultsParser
       try {
 	val clxn = clientSession( defaultDB )( collectionName )
 	val dbo : DBObject = 
-	  toMongoObject( fromString( "record( key( \"theEmptyRecord\" ), value( \"*\" ) )" ) )
+	  CnxnMongoStrObjectifier.toMongoObject( fromString( "record( key( \"theEmptyRecord\" ), value( \"*\" ) )" ) )
 	clxn += dbo
       } 
       catch {
@@ -562,7 +572,7 @@ package usage {
       "}"
     )
   }
-  object SimpleMongoPersist extends BaseMongoPersist {    
+  object SimpleMongoPersist extends BaseMongoPersist[String,String,String] {    
     import DataSet._
     val userProfileCCL : CnxnCtxtLabel[String,String,String] = userProfileStr
   }
