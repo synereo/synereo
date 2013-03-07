@@ -54,6 +54,19 @@ trait AbstractEvaluatorMessageSet {
   case class closeSessionResponse(
     sessionURI : AgentSessionURI
   ) extends EvaluatorMessage
+
+  // sessionPing( sessionURI ) -- for long-polling timeouts
+  case class sessionPing(
+    sessionURI : AgentSessionURI
+  ) extends EvaluatorMessage
+
+  // sessionPong( sessionURI ) -- for long-polling timeouts
+  // session reconnect success
+  case class sessionPong(
+    sessionURI : AgentSessionURI
+  ) extends EvaluatorMessage
+  
+  // 404 for session reconnect failure
   
   // evalRequest( expression, sessionURI )
   trait EvalRequest {
