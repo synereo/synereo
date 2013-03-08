@@ -24,11 +24,11 @@ case class SearchResult(@BeanProperty val id: String,
   def this(_data: CacheableData, _matchPercent: Double, _brokers: java.util.List[ Broker ], _existingConnection: Boolean) =
     this(java.lang.System.nanoTime().toString, _data, _matchPercent, _brokers, _existingConnection)
 
-  def this() = this("", null.asInstanceOf[CacheableData], 0.0, Collections.emptyList[ Broker ], false)
+  def this() = this("", null.asInstanceOf[CacheableData], 0.0, new util.ArrayList[ Broker ], false)
 }
 
 case class Broker(@BeanProperty val brokerAppId: String, @BeanProperty val brokerExchangeKey: String, @BeanProperty var relatedData: java.util.List[ CacheableData ]) extends Serializable
 {
-  def this() = this("", "", new util.ArrayList())
-  def this(_brokerAppId: String, _brokerExchangeKey: String) = this(_brokerAppId, _brokerExchangeKey, Collections.emptyList[ CacheableData ])
+  def this() = this("", "", new util.ArrayList[CacheableData]())
+  def this(_brokerAppId: String, _brokerExchangeKey: String) = this(_brokerAppId, _brokerExchangeKey, new util.ArrayList[CacheableData])
 }
