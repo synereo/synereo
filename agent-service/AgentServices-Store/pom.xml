@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-store</artifactId>
-    <version>1.0.1.17</version>
+    <version>1.0.1.18</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -11,7 +11,7 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <specialk.version>1.1.1.11</specialk.version>
+        <specialk.version>1.1.1.12</specialk.version>
         <scala.version>2.9.2</scala.version>
         <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
         <specialk.version>1.1.1.12</specialk.version>
@@ -28,7 +28,7 @@
         <repository>
             <id>scala-tools.org</id>
             <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases</url>
+            <url>https://oss.sonatype.org/content/groups/scala-tools/</url>
         </repository>
         <repository>
             <id>biosim</id>
@@ -53,7 +53,7 @@
         <pluginRepository>
             <id>scala-tools.org</id>
             <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases</url>
+            <url>https://oss.sonatype.org/content/groups/scala-tools/</url>
         </pluginRepository>
     </pluginRepositories>
 
