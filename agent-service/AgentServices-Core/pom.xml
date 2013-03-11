@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-core</artifactId>
-    <version>1.0.1.53-MONGO</version>
+    <version>1.0.1.55</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -12,12 +12,11 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-	    <agentservices-store.version>1.0.1.17</agentservices-store.version>
+	    <agentservices-store.version>1.0.1.18</agentservices-store.version>
         <scala.version>2.9.2</scala.version>
         <casbah.version>2.5.0</casbah.version>
         <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
-	    <agentservices-store.version>1.0.1.15</agentservices-store.version>
-         <!-- Common plugin settings -->
+	     <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
           <!-- vscaladoc settings -->
@@ -34,7 +33,7 @@
         <repository>
             <id>scala-tools.org</id>
             <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases</url>
+            <url>https://oss.sonatype.org/content/groups/scala-tools/</url>
         </repository>
         <repository>
             <id>biosim</id>
@@ -55,7 +54,7 @@
         <pluginRepository>
             <id>scala-tools.org</id>
             <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases</url>
+            <url>https://oss.sonatype.org/content/groups/scala-tools/</url>
         </pluginRepository>
     </pluginRepositories>
 
