@@ -246,9 +246,16 @@ trait InvitationRequestSetCreator
     report("****Found valid target connection, sending invites to cnxn A: " + connBroker_A.readCnxn.toString + " and cnxn B: " + connBroker_B.readCnxn.toString, Severity.Debug)
 
     //invite both parties with inverse
-    val inviteA = sendInvitationRequest(sourceRequest, connBroker_A, alias_B, Some(category_B), requestedConnectionType_A, requestedConnectionName_A, requestedPosts_A, false)
-    val inviteB = sendInvitationRequest(sourceRequest, connBroker_B, alias_A, Some(category_A), requestedConnectionType_B, requestedConnectionName_B, requestedPosts_B, isRoleBasedRequest)
+    val inviteA = createInvitationRequest(sourceRequest, connBroker_A, alias_B, Some(category_B), requestedConnectionType_A, requestedConnectionName_A, requestedPosts_A, false)
+    val inviteB = createInvitationRequest(sourceRequest, connBroker_B, alias_A, Some(category_A), requestedConnectionType_B, requestedConnectionName_B, requestedPosts_B, isRoleBasedRequest)
     waitForInvitationResponse(connBroker_A.writeCnxn, inviteA, inviteB)
+
+    // TODO: Throttling should be removed when we are sure that waitForInvitationResponse can execute
+    // at the same time as the sends below
+    Thread.sleep(500)
+    send(_publicQ, inviteA.targetCnxn, inviteA)
+    send(_publicQ, inviteB.targetCnxn, inviteB)
+
     // signal successful sending
     sendResponseHandler(sourceRequest, "success")
     //todo:send a notification to the user
@@ -266,7 +273,7 @@ trait InvitationRequestSetCreator
   }
 
 
-  protected def sendInvitationRequest(sourceRequest: Message with Request,
+  protected def createInvitationRequest(sourceRequest: Message with Request,
     conn: Connection,
     alias: String,
     category: Option[ String ],
@@ -280,7 +287,6 @@ trait InvitationRequestSetCreator
     req.targetCnxn = conn.readCnxn
     req.originCnxn = conn.writeCnxn
     report("req=" + req + ", target=" + req.targetCnxn + ", origin=" + req.originCnxn)
-    send(_publicQ, req.targetCnxn, req)
     req
   }
 
