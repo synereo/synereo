@@ -17,7 +17,11 @@ import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib.moniker._
 import com.biosimilarity.lift.lib._
 
-import net.liftweb.json._
+//import net.liftweb.json._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.{read, write}
 
 import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}

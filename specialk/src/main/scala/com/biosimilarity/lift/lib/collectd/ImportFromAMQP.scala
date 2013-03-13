@@ -10,7 +10,11 @@ package com.biosimilarity.lift.lib.bulk
 
 import com.biosimilarity.lift.lib._
 
-import net.liftweb.json._
+//import net.liftweb.json._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.{read, write}
 
 import scala.concurrent.{Channel => Chan, _}
 import scala.util.continuations._

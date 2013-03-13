@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.2.0</version>
+  <version>1.1.2.1</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -131,11 +131,11 @@
       <artifactId>casbah-query_2.9.2</artifactId>
       <version>2.5.0</version>
     </dependency -->
-    <dependency>
-      <groupId>org.json4s</groupId>
-      <artifactId>json4s-native_2.9.2</artifactId>
-      <version>3.1.0</version>
-    </dependency>
+    <!-- <dependency> -->
+<!--       <groupId>org.json4s</groupId> -->
+<!--       <artifactId>json4s-native_2.9.2</artifactId> -->
+<!--       <version>3.1.0</version> -->
+<!--     </dependency> -->
     <dependency>
       <groupId>org.json4s</groupId>
       <artifactId>json4s-jackson_2.9.2</artifactId>
@@ -167,17 +167,17 @@
       <!-- artifactId>lift-json_2.9.2</artifactId -->
       <!-- version>2.5-M5</version -->
     <!-- /dependency --> 
-    <dependency>
-      <groupId>net.liftweb</groupId>
-      <artifactId>lift-json_2.9.2</artifactId>
-      <version>2.5-M4</version>
-      <exclusions>
-	<exclusion>
-	  <groupId>org.scala-lang</groupId>	    
-	  <artifactId>scalap</artifactId>
-	</exclusion>
-      </exclusions>
-    </dependency>            
+    <!-- <dependency> -->
+<!--       <groupId>net.liftweb</groupId> -->
+<!--       <artifactId>lift-json_2.9.2</artifactId> -->
+<!--       <version>2.5-M4</version> -->
+<!--       <exclusions> -->
+<!-- 	<exclusion> -->
+<!-- 	  <groupId>org.scala-lang</groupId>	     -->
+<!-- 	  <artifactId>scalap</artifactId> -->
+<!-- 	</exclusion> -->
+<!--       </exclusions> -->
+<!--     </dependency>             -->
     <dependency>
       <groupId>org.scalaz</groupId>
       <artifactId>scalaz_2.9.2</artifactId>
@@ -238,11 +238,11 @@
       <version>2.0.M6-SNAP3</version>
     </dependency>            
 
-    <dependency>
-      <groupId>org.scala-tools.sxr</groupId>
-      <artifactId>sxr_2.9.0</artifactId>
-      <version>0.2.7</version>
-    </dependency>
+    <!-- <dependency> -->
+<!--       <groupId>org.scala-tools.sxr</groupId> -->
+<!--       <artifactId>sxr_2.9.0</artifactId> -->
+<!--       <version>0.2.7</version> -->
+<!--     </dependency> -->
     <!-- dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty</artifactId>
@@ -721,8 +721,8 @@
 	    <!-- arg>-unchecked</arg -->
 	    <!-- <arg>-Xprint:selectivecps</arg> -->
 	    <arg>-explaintypes</arg>
-	    <arg>-Xplugin:/Users/lgm/.m2/repository/org/scala-tools/sxr/sxr_2.9.0/0.2.7/sxr_2.9.0-0.2.7.jar</arg>
-	    <arg>-P:sxr:base-directory:${basedir}/src</arg>
+	    <!-- <arg>-Xplugin:/Users/lgm/.m2/repository/org/scala-tools/sxr/sxr_2.9.0/0.2.7/sxr_2.9.0-0.2.7.jar</arg> -->
+<!-- 	    <arg>-P:sxr:base-directory:${basedir}/src</arg> -->
 	    <arg>-P:continuations:enable</arg>
           </args>
 	  <compilerPlugins>
@@ -731,11 +731,11 @@
       	      <artifactId>continuations</artifactId>
       	      <version>${scala.version}</version>
       	    </compilerPlugin>
-	    <compilerPlugin>	      
-      	      <groupId>org.scala-tools.sxr</groupId>
-      	      <artifactId>sxr_2.9.0</artifactId>
-      	      <version>0.2.7</version>
-      	    </compilerPlugin>
+	    <!-- <compilerPlugin>	       -->
+<!--       	      <groupId>org.scala-tools.sxr</groupId> -->
+<!--       	      <artifactId>sxr_2.9.0</artifactId> -->
+<!--       	      <version>0.2.7</version> -->
+<!--       	    </compilerPlugin> -->
       	  </compilerPlugins>
         </configuration>
         <executions>
