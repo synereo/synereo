@@ -59,6 +59,8 @@ case class Profile(
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
   def this() = this("", "", "", "", "", "", "", "", "", "")
 
+  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] = List("description") ::: super.ignoredFieldsForSearchAndStoreKey
+
   override def toCacheObject(): DBObject =
   {
     val o = MongoDBObject(

@@ -73,13 +73,13 @@ class StorableDataTest extends SpecificationWithJUnit
 
     "generate store key correctly for a Profile" in {
       val idN = "MY_ID"
-      val mockProfile = new Profile("FirstName", "LastName", "desc?", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+      val mockProfile = new Profile("FirstName", "LastName?", "desc", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
       mockProfile.imageHashCode = "1234"
       mockProfile.id = idN
       mockProfile.localeCode = "en"
       val storeKey = mockProfile.toStoreKey
       //      val expectedStoreKey = "profile(fields(id(\"" + idN + "\"),localeCode(\"en\"),firstName(\"FirstName\"),lastName(\"LastName\"),description(\"\"),emailAddress(\"123456789@test.com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),image(\"\")))"
-      val expectedStoreKey = "data(profile(" + KEYS + "(id(\"MY_ID\"),localeCode(\"en\"),recVerNum(\"1\")),fields(firstName(\"FirstName\"),lastName(\"LastName\"),description(\"desc \"),emailAddress(\"123456789 test com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),imageHashCode(\"1234\"))))"
+      val expectedStoreKey = "data(profile(" + KEYS + "(id(\"MY_ID\"),localeCode(\"en\"),recVerNum(\"1\")),fields(firstName(\"FirstName\"),lastName(\"LastName \"),emailAddress(\"123456789 test com\"),country(\"CA\"),region(\"someCAprovince\"),city(\"city\"),postalCode(\"postalCode\"),website(\"website\"),imageHashCode(\"1234\"))))"
       //      println("created  storeKey4Profile: " + storeKey)
       //      println("expected storeKey4Profile: " + expectedStoreKey)
       storeKey must be_==(expectedStoreKey)
@@ -128,7 +128,7 @@ class StorableDataTest extends SpecificationWithJUnit
         data.id = id
         data.threadId = id
         val given = data.toStoreKey
-        val expected = "data(post("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(subject(\"subject2Target\"),toDetails(\"\"),fromDetails(\"\"),threadId(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),ignored(\"\"),archived(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\"))))"
+        val expected = "data(post("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(subject(\"subject2Target\"),threadId(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),ignored(\"\"),archived(\"\"),sent(\"\"),delivered(\"\"),viewed(\"\"))))"
         given must be_==(expected)
       }
 

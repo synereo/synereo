@@ -15,7 +15,7 @@ class SearchableDataTest extends SpecificationWithJUnit
   "fields " should {
 
     "set firstname" in {
-      val expected = "data(profile(" +"_," + FIELDS + "(firstName(\"John\"),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
+      val expected = "data(profile(" +"_," + FIELDS + "(firstName(\"John\"),lastName(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.firstName = "John"
       println("given:" + test.toSearchKey)
@@ -25,7 +25,7 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "set lastname" in {
-      val expected = "data(profile(" +"_," + FIELDS + "(firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
+      val expected = "data(profile(" +"_," + FIELDS + "(firstName(_),lastName(\"Adams\"),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.lastName = "Adams"
       println(test.toSearchKey)
@@ -52,7 +52,7 @@ class SearchableDataTest extends SpecificationWithJUnit
 
     "generate search key correctly for an embedded Image" in {
       val data: Image = new Image("name", "", "content hasn't be visible in a toStoreKey", "")
-      val expected = "data(profile(_," + FIELDS + "(firstName(_),lastName(\"Adams\"),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
+      val expected = "data(profile(_," + FIELDS + "(firstName(_),lastName(\"Adams\"),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.imageHashCode = ""
       test.lastName = "Adams"
@@ -168,7 +168,7 @@ class SearchableDataTest extends SpecificationWithJUnit
 
       val emptyData = new Post()
       val emptySearchKey = emptyData.toSearchKey
-      val expectedEmptySearchKey = "data(post(_," + FIELDS + "(subject(_),toDetails(_),fromDetails(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_))))"
+      val expectedEmptySearchKey = "data(post(_," + FIELDS + "(subject(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_))))"
       emptySearchKey must be_==(expectedEmptySearchKey)
     }
 
