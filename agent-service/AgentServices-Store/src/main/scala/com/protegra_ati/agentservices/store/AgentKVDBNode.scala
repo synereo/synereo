@@ -33,6 +33,11 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Stack
 import scala.collection.mutable.MutableList
 
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.{read, write}
+
 import com.rabbitmq.client._
 
 import org.prolog4j._
@@ -2200,7 +2205,7 @@ case class PutVal(
 package usage {
   import com.biosimilarity.lift.lib.bulk._
 
-  import net.liftweb.json._
+  //import net.liftweb.json._
 
   import scala.xml._
   import scala.xml.XML._

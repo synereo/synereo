@@ -313,7 +313,7 @@ with AgentCnxnTypeScope {
                                             )
                                         )
 
-                                        storeKQuery(xmlCollName, pd)(path, keep, rk)
+                                        storeKQuery( xmlCollName, pd )( path, keep, rk )
 
 					// Then forward the request
 					//forward( ask, hops, path )
@@ -2207,7 +2207,7 @@ package mongo.usage {
   import DataClasses._
   import com.biosimilarity.lift.lib.bulk._
 
-  import net.liftweb.json._
+  //import net.liftweb.json._
 
   import scala.xml._
   import scala.xml.XML._
