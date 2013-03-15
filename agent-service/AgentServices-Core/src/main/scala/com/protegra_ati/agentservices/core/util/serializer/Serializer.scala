@@ -63,12 +63,13 @@ object Serializer// extends Reporting
           //            debugSerializer[ T ](obj)
 
           return javaIOSerializerReference.serialize(obj)
-
         } catch {
           case ex: NotSerializableException => {
+            ex.printStackTrace()
             //report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
           }
           case ex: InvalidClassException => {
+            ex.printStackTrace()
             //report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
           }
         }

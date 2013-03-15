@@ -110,28 +110,28 @@ trait Listeners extends Reporting
     if (tag != null) {
       val matching = _listeners.get(key)
       matching match {
-      case null => List[ MessageEventAdapter ]()
-      case _ => {
-        val filtered = matching.filter(l => l.eventTag == tag)
-        filtered
+        case null => List[ MessageEventAdapter ]()
+        case _ => {
+          val filtered = matching.filter(l => l.eventTag == tag)
+          filtered
+        }
       }
     }
-  }
-  else {
-    report("in getListenersByTag - tag not valid")
-    Nil
-  }
+    else {
+      report("in getListenersByTag - tag not valid")
+      Nil
+    }
   }
 
   def triggerEvent(event : MessageEvent[_ <: Message])
   {
-    try
-    {
+    try {
       report("in triggerEvent - triggering event for message type: " + event.msg.getClass.getName + "msg id: " + event.msg.ids.id.toString + " with agentSessionId: " + event.msg.eventKey.agentSessionId.toString + " and eventTag: " + event.msg.eventKey.eventTag)
       event.trigger(getListenersByMessage(event.msg))
-    } catch {
+    } 
+    catch {
       case e: Exception => {
-        report("problem in triggerEvent", Severity.Error)
+        report("unable to send email due to " + e.getCause.toString, Severity.Error)
         e.printStackTrace()
       }
       case _ => {}
