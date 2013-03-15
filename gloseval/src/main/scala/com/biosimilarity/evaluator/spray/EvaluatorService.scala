@@ -1,20 +1,20 @@
 package com.biosimilarity.evaluator.spray
 
-import scala.concurrent.duration._
 import akka.actor._
-import akka.actor.Actor
-import spray.util._
+import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
+import directives.CompletionMagnet
 import spray.http._
 import MediaTypes._
-import HttpMethods._
+import scala.concurrent.duration._
+import java.util.Date
+import spray.httpx.encoding._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
-
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
-class EvaluatorServiceActorOne extends Actor with EvaluatorService {
+class EvaluatorServiceActor extends Actor with EvaluatorService {
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
@@ -26,141 +26,145 @@ class EvaluatorServiceActorOne extends Actor with EvaluatorService {
   def receive = runRoute(myRoute)
 }
 
+/**
+ * CometMessage used when some data needs to be sent to a client
+ * with the given id
+ */
+case class CometMessage(id: String, data: HttpBody, counter: Long = 0)
+
+/**
+ * BroadcastMessage used when some data needs to be sent to all
+ * alive clients
+ * @param data
+ */
+case class BroadcastMessage(data: HttpBody)
+
+/**
+ * Poll used when a client wants to register/long-poll with the
+ * server
+ */
+case class SessionPing(sessionURI: String, reqCtx: RequestContext)
+
+/**
+ * PollTimeout sent when a long-poll requests times out
+ */
+case class PollTimeout(id: String)
+
+/**
+ * ClientGc sent to deregister a client when it hasnt responded
+ * in a long time
+ */
+case class ClientGc(id: String)
+
+class CometActor extends Actor {
+  var aliveTimers: Map[String, Cancellable] = Map.empty   // list of timers that keep track of alive clients
+  var toTimers: Map[String, Cancellable] = Map.empty      // list of timeout timers for clients
+  var requests: Map[String, RequestContext] = Map.empty   // list of long-poll RequestContexts
+
+  val gcTime = 1 minute               // if client doesnt respond within this time, its garbage collected
+  val clientTimeout = 7 seconds       // long-poll requests are closed after this much time, clients reconnect after this
+  val rescheduleDuration = 5 seconds  // reschedule time for alive client which hasnt polled since last message
+  val retryCount = 10                 // number of reschedule retries before dropping the message
+
+  def receive = {
+    case SessionPing(sessionURI, reqCtx) =>
+      requests += (sessionURI -> reqCtx)
+      toTimers.get(sessionURI).map(_.cancel())
+      toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
+
+      aliveTimers.get(sessionURI).map(_.cancel())
+      aliveTimers += (sessionURI -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(sessionURI)))
+
+    case PollTimeout(id) =>
+      requests.get(id).map(_.complete(HttpResponse(StatusCodes.OK)))
+      requests -= id
+      toTimers -= id
+
+    case ClientGc(id) =>
+      requests -= id
+      toTimers -= id
+      aliveTimers -= id
+
+    case CometMessage(id, data, counter) =>
+      val reqCtx = requests.get(id)
+      reqCtx.map { reqCtx =>
+        reqCtx.complete(HttpResponse(entity=data))
+        requests = requests - id
+      } getOrElse {
+        if(aliveTimers.contains(id) && counter < retryCount) {
+          context.system.scheduler.scheduleOnce(rescheduleDuration, self, CometMessage(id, data, counter+1))
+        }
+      }
+
+    case BroadcastMessage(data) =>
+      aliveTimers.keys.map { id =>
+        requests.get(id).map(_.complete(HttpResponse(entity=data))).getOrElse(self ! CometMessage(id, data))
+      }
+      toTimers.map(_._2.cancel)
+      toTimers = Map.empty
+      requests = Map.empty
+  }
+}
+
+case class MalformedRequestException() extends Exception
+case class InitializeSessionException(agentURI: String, message: String) extends Exception
+case class EvalException(sessionURI: String) extends Exception
+case class CloseSessionException(sessionURI: String, message: String) extends Exception
 
 // this trait defines our service behavior independently from the service actor
 trait EvaluatorService extends HttpService {
+  implicit val formats = DefaultFormats
+  val cometActor = actorRefFactory.actorOf(Props[CometActor])
 
   val myRoute =
-    path("") {
+    path("sessionPing") {
       get {
-        respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
-          complete {
-            <html>
-              <body>
-                <h1>Say hello to <i>spray-routing</i> on <i>Jetty</i>!</h1>
-              </body>
-            </html>
-          }
+        parameters('sessionURI) { sessionURI:String =>
+          // What parts of the sessionURI are necessary for the keepalive?
+          (cometActor ! SessionPing(sessionURI, _))
         }
       }
-    }
+    } ~
+    path("") {
+      post {
+        decodeRequest(NoEncoding) {
+          // unmarshal with in-scope unmarshaller
+          entity(as[String]) { jsonStr =>
+            try {
+              val json = parse(jsonStr)
+              val msgType = (json \ "msgType").extract[String]
+              msgType match {
+                case "initializeSessionRequest" => {
+                  val agentURI = (json \ "content" \ "agentURI").extract[String]
+                  val uri = new java.net.URI(agentURI)
 
-}
-
-class EvaluatorServiceActor extends Actor with SprayActorLogging {
-  //self : Actor with SprayActorLogging =>
-
-  def receive = {
-    case HttpRequest(GET, "/", _, _, _) =>
-      sender ! index
-
-    case HttpRequest(GET, "/ping", _, _, _) =>
-      sender ! HttpResponse(entity = "PONG!")
-
-    case HttpRequest(GET, "/stream", _, _, _) =>
-      val peer = sender // since the Props creator is executed asyncly we need to save the sender ref
-      context.actorOf(Props(new Streamer(peer, 20)))
-
-    case HttpRequest(GET, "/crash", _, _, _) =>
-      sender ! HttpResponse(entity = "About to throw an exception in the request handling actor, " +
-        "which triggers an actor restart")
-      throw new RuntimeException("BOOM!")
-
-    case HttpRequest(GET, "/timeout", _, _, _) =>
-      log.info("Dropping request, triggering a timeout")
-
-    case HttpRequest(GET, "/timeout/timeout", _, _, _) =>
-      log.info("Dropping request, triggering a timeout")
-
-    case HttpRequest(POST, uri, hdrs, HttpBody(cntntType, body), _) => {
-      // println( "uri: " + uri );
-      // println( "hdrs: " + hdrs );      
-      val bodyStr = new String(body);
-      // println( "content type: " + cntntType + "\nbody:\n" + bodyStr )
-
-      try {
-        val json = parse(bodyStr)
-
-        val msgType = json \ "msgType" match {
-          case JString(s) => s
-          case _ => throw MalformedRequestException()
-        }
-
-        // Dispatch on messageType
-        msgType match {
-          case "initializeSessionRequest" => initializeSessionRequest(json)
-          case "evalRequest" => evalRequest(json)
-          case "closeSessionRequest" => closeSessionRequest(json)
-          case _ => sender ! HttpResponse(404, "Unknown message type: " + msgType + "\n")
-        }
-      } catch {
-        case InitializeSessionException(agentURI, message) => sender ! initializeSessionError(agentURI, message)
-        case EvalException(sessionURI) => sender ! evalError(sessionURI)
-        case CloseSessionException(sessionURI, message) => sender ! closeSessionError(sessionURI, message)
-        case _ : Throwable => sender ! HttpResponse(404, "Malformed request\n")
-      }
-    }
-
-    case _: HttpRequest => sender ! HttpResponse(404, "Unknown resource!\n")
-
-    // case Timedout(HttpRequest(_, "/timeout/timeout", _, _, _)) =>
-//       log.info("Dropping Timeout message")
-
-//     case Timedout(request: HttpRequest) =>
-//       sender ! HttpResponse(500, "The " + request.method + " request to '" + request.uri + "' has timed out...")
-  }
-
-  ////////////// message handlers //////////////
-
-  def initializeSessionRequest(json: JValue) = {
-    val agentURI = json \ "content" \ "agentURI" match {
-      case JString(s) => s
-      case _ => throw MalformedRequestException()
-    }
-    val uri = new java.net.URI(agentURI)
-    if (uri.getScheme() != "agent") {
-      throw InitializeSessionException(agentURI, "Unrecognized scheme")
-    }
-    if (uri.getUserInfo() != "George.Costanza:Bosco") {
-      println(uri.getAuthority())
-      throw InitializeSessionException(agentURI, "Unrecognized user/password combination")
-    }
-    if (uri.getPath() != "/TheAgency") {
-      throw InitializeSessionException(agentURI, "Unrecognized agent ID")
-    }
-    
-    sender ! HttpResponse(
-      entity = HttpBody(`application/json`,
-"""{
-  "msgType": "initializeSessionResponse",
-  "content": {
-    "sessionURI": "agent-session://ArtVandelay@session1",
-    "listOfAliases": [ "George Costanza", "Lord of the Idiots", "Biff Loman", "Gammy" ],
-    "defaultAlias": "George Costanza",
-    "listOfLabels": [ "Locations", "Media", "Interests" ],
-    "listOfCnxns": [ "Elaine Benes", "Cosmo Kramer", "Newman", "Tom's Restaurant"],
-    "lastActiveFilter": ""
-  }
-}
+                  if (uri.getScheme() != "agent") {
+                    throw InitializeSessionException(agentURI, "Unrecognized scheme")
+                  }
+                  if (uri.getUserInfo() != "George.Costanza:Bosco") {
+                    throw InitializeSessionException(agentURI, "Unrecognized user/password combination")
+                  }
+                  if (uri.getPath() != "/TheAgency") {
+                    throw InitializeSessionException(agentURI, "Unrecognized agent ID")
+                  }
+                
+                  complete(HttpResponse(entity = HttpBody(`application/json`,
+"""{"msgType": "initializeSessionResponse", "content": {
+  "sessionURI": "agent-session://TheOnlySession",
+  "listOfAliases": [],
+  "listOfLabels": [],
+  "lastActiveFilter": ""
+}}
 """
-      )
-    )
-  }
-
-
-
-
-  def evalRequest(json: JValue) = {
-    val sessionURI = json \ "content" \ "sessionURI" match {
-      case JString(s) => s
-      case _ => throw MalformedRequestException()
-    }
-    if (sessionURI != "agent-session://ArtVandelay@session1") {
-      throw EvalException(sessionURI)
-    }
-    
-    sender ! HttpResponse(
-      entity = HttpBody(`application/json`,
+                  )))
+                }
+                case "evalRequest" => {
+                  val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+                  val expression = (json \ "content" \ "expression").extract[String]
+                  if (sessionURI != "agent-session://ArtVandelay@session1") {
+                    throw EvalException(sessionURI)
+                  }
+                  cometActor ! CometMessage(sessionURI, HttpBody(`application/json`,
 """{
   "msgType": "evalComplete",
   "content": {
@@ -168,25 +172,15 @@ class EvaluatorServiceActor extends Actor with SprayActorLogging {
     "pageOfPosts": []
   }
 }
-"""
-      )
-    )
-  }
-
-
-
-
-  def closeSessionRequest(json: JValue) = {
-    val sessionURI = json \ "content" \ "sessionURI" match {
-      case JString(s) => s
-      case _ => throw MalformedRequestException()
-    }
-    if (sessionURI != "agent-session://ArtVandelay@session1") {
-      throw CloseSessionException(sessionURI, "Unknown session")
-    }
-    
-    sender ! HttpResponse(
-      entity = HttpBody(`application/json`,
+"""               ))
+                  complete(HttpResponse(200, "OK\n"))
+                }
+                case "closeSessionRequest" => {
+                  val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+                  if (sessionURI != "agent-session://ArtVandelay@session1") {
+                    throw CloseSessionException(sessionURI, "Unknown session.")
+                  }
+                  cometActor ! CometMessage(sessionURI, HttpBody(`application/json`,
 """{
   "msgType": "closeSessionResponse",
   "content": {
@@ -194,111 +188,27 @@ class EvaluatorServiceActor extends Actor with SprayActorLogging {
   }
 }
 """
-      )
-    )
-  }
-
-
-
-
-  ////////////// helpers //////////////
-  
-  case class MalformedRequestException() extends Exception
-  case class InitializeSessionException(agentURI: String, message: String) extends Exception
-  case class EvalException(sessionURI: String) extends Exception
-  case class CloseSessionException(sessionURI: String, message: String) extends Exception
-  
-  def initializeSessionError(agentURI:String, message: String) = HttpResponse(
-    entity = HttpBody(`application/json`,
-"""{
-  "msgType": "initializeSessionError",
-  "content": {
-    "agentURI": """" + agentURI + """",
-    "reason" : """" + message + """"
-  }
-}
-"""
-    )
-  )
-
-  def evalError(sessionURI: String) = HttpResponse(
-    entity = HttpBody(`application/json`,
-"""{
-  "msgType": "evalError",
-  "content": {
-    "sessionURI": """" + sessionURI + """"
-  }
-}
-"""
-    )
-  )
-
-  def closeSessionError(sessionURI: String, message: String) = HttpResponse(
-    entity = HttpBody(`application/json`,
-"""{
-  "msgType": "closeSessionError",
-  "content": {
-    "sessionURI": """" + sessionURI + """",
-    "reason" : """" + message + """"
-  }
-}
-"""
-    )
-  )
-
-
-  lazy val index = HttpResponse(
-    entity = HttpBody(`text/html`,
-      <html>
-        <body>
-          <h1>Say hello to <i>spray-servlet</i>!</h1>
-          <p>Defined resources:</p>
-          <ul>
-            <li><a href="/ping">/ping</a></li>
-            <li><a href="/stream">/stream</a></li>
-            <li><a href="/crash">/crash</a></li>
-            <li><a href="/timeout">/timeout</a></li>
-            <li><a href="/timeout/timeout">/timeout/timeout</a></li>
-          </ul>
-        </body>
-      </html>.toString
-    )
-  )
-
-  lazy val stockMsgResponse = HttpResponse(
-    entity = HttpBody(`application/json`,
-      "{ \"msgType\" : \"evalComplete\", \"contents\" : { \"sessionURI\" : \"agent-session://myLovelySession/1234, \" \"pageOfPosts\" : [] }\n"
-    )
-  )
-
-  // simple case class whose instances we use as send confirmation message for streaming chunks
-  case class Ok(remaining: Int)
-
-  class Streamer(peer: ActorRef, count: Int) extends Actor with SprayActorLogging {
-    log.debug("Starting streaming response ...")
-
-    // we use the successful sending of a chunk as trigger for scheduling the next chunk
-    peer ! ChunkedResponseStart(HttpResponse(entity = " " * 2048)).withSentAck(Ok(count))
-
-    def receive = {
-      case Ok(0) =>
-        log.info("Finalizing response stream ...")
-        peer ! MessageChunk("\nStopped...")
-        peer ! ChunkedMessageEnd()
-        context.stop(self)
-
-      case Ok(remaining) =>
-        log.info("Sending response chunk ...")
-        context.system.scheduler.scheduleOnce(100 millis span) {
-          peer ! MessageChunk(DateTime.now.toIsoDateTimeString + ", ").withSentAck(Ok(remaining - 1))
+                  ))
+                  complete(HttpResponse(200, "OK\n"))
+                }
+                case _ => complete(HttpResponse(404, "Unknown message type: " + msgType + "\n"))
+              }
+            } catch {
+              case th: Throwable => complete(HttpResponse(404, "Malformed request"))
+            }
+          } // jsonStr
+        } // decodeRequest
+      } // post
+    } ~
+    path("sendMessage") {
+      get {
+        parameters('name, 'message) { (name:String, message:String) =>
+          cometActor ! BroadcastMessage(HttpBody("%s : %s".format(name, message)))
+          complete(StatusCodes.OK)
         }
-
-      case x: IOClosed =>
-        log.info("Canceling response stream due to {} ...", x.reason)
-        context.stop(self)
+      }
+    } ~
+    pathPrefix("static" / PathElement) { dir =>
+      getFromResourceDirectory(dir)
     }
-  }
-
 }
-
-

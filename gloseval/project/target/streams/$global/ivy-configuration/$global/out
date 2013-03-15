@@ -1,8 +1,9 @@
 [0m[[0mdebug[0m] [0mOther repositories:[0m
 [0m[[0mdebug[0m] [0mDefault repositories:[0m
 [0m[[0mdebug[0m] [0m	Raw(ProjectResolver(inter-project, mapped: ))[0m
-[0m[[0mdebug[0m] [0m	URLRepository(typesafe-ivy-releases,sbt.Patterns@49c0c8b3)[0m
-[0m[[0mdebug[0m] [0m	URLRepository(sbt-plugin-releases,sbt.Patterns@fb88599)[0m
-[0m[[0mdebug[0m] [0m	FileRepository(local,FileConfiguration(true,None),sbt.Patterns@1b4b07df)[0m
+[0m[[0mdebug[0m] [0m	URLRepository(typesafe-ivy-releases,sbt.Patterns@604c442b)[0m
+[0m[[0mdebug[0m] [0m	URLRepository(sbt-plugin-releases,sbt.Patterns@2f0f9471)[0m
+[0m[[0mdebug[0m] [0m	FileRepository(local,FileConfiguration(true,None),sbt.Patterns@27da9eda)[0m
+[0m[[0mdebug[0m] [0m	Sonatype snapshots: http://oss.sonatype.org/content/repositories/snapshots/[0m
 [0m[[0mdebug[0m] [0m	public: http://repo1.maven.org/maven2/[0m
 [0m[[0mdebug[0m] [0mUsing inline dependencies specified in Scala.[0m

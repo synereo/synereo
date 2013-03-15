@@ -1,18 +1,15 @@
 package com.biosimilarity.evaluator.spray
 
-import akka.actor.{Props, ActorSystem}
-import spray.servlet.WebBoot
+import spray.can.server.SprayCanHttpServerApp
+import akka.actor.Props
 
 
-// this class is instantiated by the servlet initializer
-// it needs to have a default constructor and implement
-// the spray.servlet.WebBoot trait
-class Boot extends WebBoot {
+object Boot extends App with SprayCanHttpServerApp {
 
-  // we need an ActorSystem to host our application in
-  val system = ActorSystem("evaluator")
+  // create and start our service actor
+  val service = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")
 
-  // the service actor replies to incoming HttpRequests
-  val serviceActor = system.actorOf(Props[EvaluatorServiceActor])
+  // create a new HttpServer using our handler tell it where to bind to
+  newHttpServer(service) ! Bind(interface = "localhost", port = 9876)
 
 }
