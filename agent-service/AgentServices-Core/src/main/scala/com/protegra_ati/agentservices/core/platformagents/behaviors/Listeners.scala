@@ -125,8 +125,17 @@ trait Listeners extends Reporting
 
   def triggerEvent(event : MessageEvent[_ <: Message])
   {
-    report("in triggerEvent - triggering event for message type: " + event.msg.getClass.getName + "msg id: " + event.msg.ids.id.toString + " with agentSessionId: " + event.msg.eventKey.agentSessionId.toString + " and eventTag: " + event.msg.eventKey.eventTag)
-    event.trigger(getListenersByMessage(event.msg))
+    try
+    {
+      report("in triggerEvent - triggering event for message type: " + event.msg.getClass.getName + "msg id: " + event.msg.ids.id.toString + " with agentSessionId: " + event.msg.eventKey.agentSessionId.toString + " and eventTag: " + event.msg.eventKey.eventTag)
+      event.trigger(getListenersByMessage(event.msg))
+    } catch {
+      case e: Exception => {
+        report("problem in triggerEvent", Severity.Error)
+        e.printStackTrace()
+      }
+      case _ => {}
+    }
   }
 
 }
