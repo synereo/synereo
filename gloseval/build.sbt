@@ -8,6 +8,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 resolvers ++= Seq(
   "spray repo" at "http://repo.spray.io/",
+  "biosim repo" at "http://biosimrepomirror.googlecode.com/svn/trunk/",
   "json4s repo" at "http://repo.scala-sbt.org/scalasbt/repo/"
 )
 
