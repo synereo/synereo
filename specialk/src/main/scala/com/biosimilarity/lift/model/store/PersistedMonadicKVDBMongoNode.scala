@@ -317,7 +317,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	       with CnxnXQuery[Namespace,Var,Tag]
 	       with CnxnXML[Namespace,Var,Tag]
 	       with CnxnCtxtInjector[Namespace,Var,Tag]
-               with CnxnStringDefaults[Namespace,Var,Tag]
+               with CnxnNSVarSTagStringDefaults[Namespace,Var,Tag]
                with JSONIfy[Namespace,Var,Tag]
 	       with XMLIfy[Namespace,Var]
 	       with Blobify
@@ -413,13 +413,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      val unBlob =
 		continuationStorageType match {
 		  case "CnxnCtxtLabel" => {
-		    fromXQSafeJSONBlob( rv )
+		    fromXQSafeJSONBlob( tagToString( rv ) )
 		  }
 		  case "XStream" => {
-		    fromXQSafeJSONBlob( rv )
+		    fromXQSafeJSONBlob( tagToString( rv ) )
 		  }
 		  case "Base64" => {
-		    val data : Array[Byte] = Base64Coder.decode( rv )
+		    val data : Array[Byte] = Base64Coder.decode( tagToString( rv ) )
 		    val ois : ObjectInputStream =
 		      new ObjectInputStream( new ByteArrayInputStream(  data ) )
 		    val o : java.lang.Object = ois.readObject();
@@ -483,7 +483,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )
 		)
 	      )
-	    CnxnMongoQuerifier.toMongoQuery( qryCCL ).toString
+	    CnxnMongoQuerifier.toMongoQuery( qryCCL )(
+	      nameSpaceToString, varToString, tagToString
+	    ).toString
 	  }
 	}
 	
@@ -507,7 +509,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )
 		)
 	      )
-	    CnxnMongoQuerifier.toMongoQuery( ccb ).toString
+	    CnxnMongoQuerifier.toMongoQuery( ccb )(
+	      nameSpaceToString, varToString, tagToString
+	    ).toString
 	  }
 	}
 	
@@ -572,7 +576,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
       ) with PersistenceManifestTrampoline
 	       with MongoDBStore[Namespace,Var,Tag]
 	       with MongoCnxnStorage[Namespace,Var,Tag]
-               with CnxnStringDefaults[Namespace,Var,Tag]
+               with CnxnNSVarSTagStringDefaults[Namespace,Var,Tag]
 	       with Serializable 
       {	 		
 	import LogConfiguration._ 
@@ -664,7 +668,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      Some(
 			new XStream(
 			  new JettisonMappedXmlDriver
-			).fromXML( t ).asInstanceOf[Value]
+			).fromXML( tagToString( t ) ).asInstanceOf[Value]
 		      )
 		    }
 		    case _ => None
@@ -710,7 +714,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			+ " in coll : " + sus
 		      )
 		    )
-		    store( sus )( rcrd )
+		    store( sus )( rcrd )(
+		      nameSpaceToString, varToString, tagToString
+		    )
 		  }
 		}
 
@@ -758,7 +764,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			+ " in coll : " + sus
 		      )
 		    )
-		    store( sus )( rcrd )
+		    store( sus )( rcrd )(
+		      nameSpaceToString, varToString, tagToString
+		    )
 		    for( ( sky, stbl ) <- syncTable ) {
 		      stbl( sky ) = stbl( sky ) - 1
 		    }
@@ -1012,7 +1020,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ) {
 	    val cclKey : CnxnCtxtLabel[Namespace,Var,Tag] = 
 	      CnxnMongoObjectifier.fromJSON( keyJSON )( ltns, ttv, ttt )
-	    delete( clNm, cclKey )
+	    delete( clNm, cclKey )(
+	      nameSpaceToString, varToString, tagToString
+	    )
 	  }
 	}
 
@@ -2497,7 +2507,7 @@ package usage {
   }
   
   object PersistedMongoMolecularUseCase extends Serializable {
-    import PersistedMonadicKVDBNet._   
+    import PersistedMonadicKVDBMongoNet._   
     import Being._
     import PersistedKVDBNodeFactory._
 
@@ -2598,7 +2608,7 @@ package usage {
 
       def mkMolPtn( molType : String ) : CnxnCtxtLabel[String,String,String] = {
 	new CnxnCtxtBranch[String,String,String](
-	  "comBiosimilarityLiftModelStoreUsagePersistedMolecularUseCase_KinaseSpecifications_" + molType,
+	  "comBiosimilarityLiftModelStoreUsagePersistedMongoMolecularUseCase_KinaseSpecifications_" + molType,
 	  List( 
 	    new CnxnCtxtLeaf[String,String,String](
 	      Right[String,String]( "B" )

@@ -49,6 +49,13 @@ extends CnxnNSStringDefaults[Namespace,Var,Tag]
 with CnxnVarStringDefaults[Namespace,Var,Tag] 
 with CnxnTagStringDefaults[Namespace,Var,Tag]
 
+trait CnxnNSVarSTagStringDefaults[Namespace,Var,Tag] 
+extends CnxnNSStringDefaults[Namespace,Var,Tag]
+with CnxnVarStringDefaults[Namespace,Var,Tag] {
+  val tagToString : Tag => String =
+    ( t : Tag ) => { t + "" }  
+}
+
 trait CnxnMongoQuery[Namespace,Var,Tag]
 extends CnxnMongoSelectors {
   self : CnxnCtxtInjector[Namespace,Var,Tag]
