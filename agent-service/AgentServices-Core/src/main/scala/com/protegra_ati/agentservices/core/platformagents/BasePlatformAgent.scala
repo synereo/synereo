@@ -183,8 +183,7 @@ abstract class BasePlatformAgent
       val exchange = cnxn.getExchangeKey + msg.getExchangeKey
       val routingKey = "routeroute"
       try {
-        val publisher = new MessageAMQPPublisher(config, exchange, routingKey)
-        publisher.send(msg)
+        val publisher = MessageAMQPPublisher.sendToRabbit(config, exchange, routingKey, msg)
       }
       catch {
         case e => {
