@@ -353,7 +353,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	): CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
 	  new CnxnCtxtBranch[Namespace,Var,Tag](
 	    nameSpace,
-	    List( asStoreKey( key ), asStoreValue( value ) )
+	    List(
+	      new CnxnCtxtBranch[Namespace,Var,Tag](
+		labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )( "key" ),
+		List( asStoreKey( key ) )
+	      ),
+	      new CnxnCtxtBranch[Namespace,Var,Tag](
+		labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )( "value" ),
+		List( asStoreValue( value ) )
+	      )
+	    )
 	  )
 	}
 

@@ -110,6 +110,8 @@ trait MongoCnxnStorage[Namespace,Var,Tag]
 	nameSpaceToString, varToString, tagToString
       ).toString
     val cjsonAST = parse( cjsonStr )
+    println( "cjsonStr: " + cjsonStr )
+    println( "cjsonStrAST: " + cjsonAST )
     val kvTpl =
       for {
 	JObject( child ) <- cjsonAST;
