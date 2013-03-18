@@ -97,7 +97,7 @@ trait InvitationResponseSet
   def archivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, messages: List[ PersistedMessage[ _ <: Message ] ], parentId: String, isAccepted: Boolean) =
   {
     //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
-    for ( msg <- messages ) {
+    for (msg <- messages.filterNot(_ == null)) {
       if ( msg.message.ids.id == parentId ) {
         val newData = ClonerFactory.getInstance().createDeepClone(msg)
         newData.archive()
