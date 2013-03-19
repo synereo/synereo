@@ -40,6 +40,13 @@ class MessageAMQPPublisher(config: RabbitConfiguration, exchange: String, routin
 
 object MessageAMQPPublisher
 {
+  /**
+   * Sends a message synchronously to Rabbit, creating a new Channel and closing it once finished.
+   * @param config
+   * @param exchange
+   * @param routingKey
+   * @param message
+   */
   def sendToRabbit(config: RabbitConfiguration, exchange: String, routingKey: String, message: Message): Unit =
   {
     val factory = RabbitFactory.guest
