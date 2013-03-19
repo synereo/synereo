@@ -11,6 +11,7 @@ import java.util.Date
 import spray.httpx.encoding._
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import com.biosimilarity.evaluator.msgs._
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -150,7 +151,7 @@ trait EvaluatorService extends HttpService {
                 
                   complete(HttpResponse(entity = HttpBody(`application/json`,
 """{"msgType": "initializeSessionResponse", "content": {
-  "sessionURI": "agent-session://TheOnlySession",
+  "sessionURI": "agent-session://ArtVandelay@session1",
   "listOfAliases": [],
   "listOfLabels": [],
   "lastActiveFilter": ""
