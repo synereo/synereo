@@ -16,10 +16,10 @@ import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 
 import scala.util.continuations._
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
-import Being.AgentKVDBNodeFactory
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
+
 
 import com.protegra_ati.agentservices.store._
 import com.biosimilarity.lift.lib.moniker._

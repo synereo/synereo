@@ -17,11 +17,11 @@ import scala.util.continuations._
 import java.net.URI
 import java.util.{concurrent, UUID}
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
-import com.protegra_ati.agentservices.store.usage.AgentUseCase._
-import Being.AgentKVDBNodeFactory
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
+import com.protegra_ati.agentservices.store.mongo.usage._
+
 
 import scala.concurrent.ops._
 import com.biosimilarity.lift.lib.moniker._

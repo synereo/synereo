@@ -15,15 +15,7 @@ import scala.collection.mutable.HashMap
 import com.protegra_ati.agentservices.store._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.store.usage._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.Being._
-//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory._
-//import com.protegra_ati.agentservices.store.usage.AgentUseCase._
-
-import org.basex.core._
-import org.basex.core.cmd.Open
-import org.basex.core.cmd.Add
-import org.basex.core.cmd.CreateDB
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
 
 object Instrument extends Serializable {
   import java.util.UUID

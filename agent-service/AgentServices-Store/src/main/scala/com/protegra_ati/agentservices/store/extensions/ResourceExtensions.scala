@@ -4,8 +4,9 @@
  */
 
 package com.protegra_ati.agentservices.store.extensions
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 import scala.util.continuations._
 
 //don't import DirectedLinks.SpecialKURIDefaults, or AgentLinks.AgentURIDefaults when using this
