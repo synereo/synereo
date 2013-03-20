@@ -2570,7 +2570,7 @@ package mongo.usage {
 		  + "\n method : persistenceManifest "
 		)
 	      )
-	      val sid = Some( ( s : String ) => s )
+	      val sid = Some( ( s : String ) => recoverFieldName( s ) )
 	      val kvdb = this;
 	      Some(
 		new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
