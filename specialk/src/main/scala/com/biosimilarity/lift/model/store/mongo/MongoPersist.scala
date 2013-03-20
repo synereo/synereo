@@ -123,6 +123,7 @@ extends MongoStoreConfiguration {
 }
 
 trait StdMongoStoreConfiguration extends MongoStoreConfigurationProxy {
+  @transient
   override final val underlyingConfiguration = MongoConfigInfo
 }
 
@@ -147,8 +148,7 @@ with MongoResultsParser[Namespace,Var,Tag]
 with StdMongoStoreConfiguration
 { 
   @transient
-  object CnxnMongoStrObjectifier
-    extends CnxnMongoObject[String,String,String]
+  val CnxnMongoStrObjectifier = new CnxnMongoObject[String,String,String]
     with CnxnCtxtInjector[String,String,String]
          with CnxnString[String,String,String]
 	 with Blobify with UUIDOps  

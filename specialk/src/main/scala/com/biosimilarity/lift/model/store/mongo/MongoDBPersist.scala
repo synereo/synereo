@@ -79,7 +79,7 @@ trait MongoCnxnStorage[Namespace,Var,Tag]
        extends BaseMongoPersist[Namespace,Var,Tag]
        with JSONIfy[Namespace,Var,Tag] {
   self : MongoDBStore[Namespace,Var,Tag] with UUIDOps =>          
-
+  @transient
   implicit val formats = Serialization.formats(NoTypeHints)
   def store( xmlCollStr : String )(
     cnxn: CnxnCtxtLabel[Namespace, Var, Tag]

@@ -382,14 +382,12 @@ extends CnxnMongoSelectors {
 
 trait JSONIfy[Namespace,Var,Tag] {  
   @transient
-  object CnxnMongoQuerifier
-    extends CnxnMongoQuery[Namespace,Var,Tag]
+  val CnxnMongoQuerifier = new CnxnMongoQuery[Namespace,Var,Tag]
     with CnxnCtxtInjector[Namespace,Var,Tag]
          with CnxnString[Namespace,Var,Tag]
 	 with Blobify with UUIDOps
   @transient
-  object CnxnMongoObjectifier
-    extends CnxnMongoObject[Namespace,Var,Tag]
+  val CnxnMongoObjectifier = new CnxnMongoObject[Namespace,Var,Tag]
     with CnxnCtxtInjector[Namespace,Var,Tag]
          with CnxnString[Namespace,Var,Tag]
 	 with Blobify with UUIDOps  

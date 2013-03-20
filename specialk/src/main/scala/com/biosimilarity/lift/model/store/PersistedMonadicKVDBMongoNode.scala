@@ -35,9 +35,9 @@ import org.prolog4j._
 
 import com.mongodb.casbah.Imports._
 
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization
+//import org.json4s._
+//import org.json4s.jackson.JsonMethods._
+//import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
 
 import com.thoughtworks.xstream.XStream
