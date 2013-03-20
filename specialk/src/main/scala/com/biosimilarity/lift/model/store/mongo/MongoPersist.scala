@@ -303,6 +303,24 @@ with StdMongoStoreConfiguration
   def insertUpdate( recordType : String )(
     collectionName : String, key : String, value : String
   ) : Unit = {
+    wrapAction(
+      ( clientSession : MongoClient, recordType : String ) => {
+	_insertUpdate( recordType, clientSession )(
+	  collectionName, key, value
+	)
+      }
+    )( recordType )
+  }
+
+  def _insertUpdate( recordType : String, clientSession : MongoClient )(
+    collectionName : String, key : String, value : String
+  ) : Unit = {
+    if ( _exists( recordType, clientSession )( collectionName, key ) ) {
+      _update( recordType, clientSession )( collectionName, key, value )
+    }
+    else {
+      _insert( recordType, clientSession )( collectionName, key, value )
+    }
   }
 
   def exists( recordType : String )(

@@ -50,12 +50,24 @@ with CnxnVarStringDefaults[Namespace,Var,Tag]
 with CnxnTagStringDefaults[Namespace,Var,Tag]
 
 trait CnxnNSVarSTagStringDefaults[Namespace,Var,Tag] {
+  def ensureSafeField( s : String ) : String = {
+    s.replace( ".", "&dot;" )
+  }
+  def recoverFieldName( s : String ) : String = {
+    s.replace( "&dot;", "." )
+  }
   val nameSpaceToString : Namespace => String =
-    ( ns : Namespace ) => { ns + "" }
+    ( ns : Namespace ) => {
+      ensureSafeField( ns + "" )
+    }
   val varToString : Var => String =
-    ( v : Var ) => { v + "" }
+    ( v : Var ) => {
+      ensureSafeField( v + "" )
+    }
   val tagToString : Tag => String =
-    ( t : Tag ) => { t + "" }  
+    ( t : Tag ) => {
+      ensureSafeField( t + "" )
+    }  
 }
 
 trait CnxnMongoQuery[Namespace,Var,Tag]

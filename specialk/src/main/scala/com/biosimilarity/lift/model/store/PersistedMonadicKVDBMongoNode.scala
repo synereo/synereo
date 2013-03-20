@@ -2446,7 +2446,7 @@ package usage {
 	      throw new Exception( "shouldn't be calling this version of asCacheK" )
 	    }
 	    override def persistenceManifest : Option[PersistenceManifest] = {
-	      val sid = Some( ( s : String ) => s )
+	      val sid = Some( ( s : String ) => recoverFieldName( s ) )
 	      val kvdb = this;
 	      Some(
 		new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
