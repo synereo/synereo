@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-store</artifactId>
-    <version>1.0.1.18</version>
+    <version>1.0.2.0</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -11,7 +11,7 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <specialk.version>1.1.2.5-MONGO</specialk.version>
+        <specialk.version>1.1.2.8-MONGO</specialk.version>
         <scala.version>2.9.2</scala.version>
         <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
          <!-- Common plugin settings -->

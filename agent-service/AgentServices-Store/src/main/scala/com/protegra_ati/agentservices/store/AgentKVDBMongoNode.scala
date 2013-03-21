@@ -827,7 +827,7 @@ with AgentCnxnTypeScope {
       cache, acquaintances
     ) with BaseAgentKVDBNodeFactoryT
     with PersistenceManifestTrampoline
-    with CnxnStringDefaults[Namespace,Var,Tag]
+    with CnxnNSVarSTagStringDefaults[Namespace,Var,Tag]
     with JSONIfy[Namespace,Var,Tag]
     with XMLIfy[Namespace,Var] {
       import identityConversions._
@@ -1782,7 +1782,7 @@ with AgentCnxnTypeScope {
 	tweet(
 	  "In cnxn-based store with partition " + pmgj
           
-	)
+	)	
 	
 	for( pd <- pmgj.cache.persistenceManifest ) {
 	  spawn {
@@ -1794,7 +1794,11 @@ with AgentCnxnTypeScope {
 		+ " in coll : " + pd.storeUnitStr( cnxn )
 	      )
 	    )
-	    pmgj.cache.store( pd.storeUnitStr( cnxn ) )( rcrd )
+	    pmgj.cache.store( pd.storeUnitStr( cnxn ) )( rcrd )(
+	      nameSpaceToString, 
+	      varToString,
+	      tagToString
+	    )
 	  }
 	}
       }    
@@ -1830,7 +1834,11 @@ with AgentCnxnTypeScope {
 
 	    path match {
 	      case cclStr : CnxnCtxtLabel[Namespace,Var,String] => {
-		pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)
+		pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)(
+		  nameSpaceToString,
+		  varToString,
+		  tagToString
+		)
 	      }
 	      case _ => {
 		tweet( "warning: unable to delete key from db" )
@@ -2450,14 +2458,21 @@ package mongo.usage {
 		//println( "ptn : " + ptn )		
 		
 		CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-		  case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+		  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
 		    matchMap( key, k ) match {
 		      case Some( soln ) => {
 			if ( compareNameSpace( ns, kvNameSpace ) ) {
 			  emT.PlaceInstance(
 			    k,
 			    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-			      mTT.Ground( asCacheValue( v ) )
+			      mTT.Ground(
+				asCacheValue(
+				  new CnxnCtxtBranch[String,String,String](
+				    "string",
+				    v :: Nil
+				  )
+				)
+			      )
 			    ),
 			    // BUGBUG -- lgm : why can't the compiler determine
 			    // that this cast is not necessary?
@@ -2749,14 +2764,21 @@ package mongo.usage {
 		      //println( "ptn : " + ptn )		
 		      
 		      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-			case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+			case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
 			  matchMap( key, k ) match {
 			    case Some( soln ) => {
 			      if ( compareNameSpace( ns, kvNameSpace ) ) {
 				emT.PlaceInstance(
 				  k,
 				  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-				    mTT.Ground( asCacheValue( v ) )
+				    mTT.Ground(
+				      asCacheValue(
+					new CnxnCtxtBranch[String,String,String](
+					  "string",
+					  v :: Nil
+					)
+				      )
+				    )
 				  ),
 				  // BUGBUG -- lgm : why can't the compiler determine
 				  // that this cast is not necessary?
@@ -2870,7 +2892,7 @@ package mongo.usage {
 			+ "\n method : persistenceManifest "
 		      )
 		    )
-		    val sid = Some( ( s : String ) => s )
+		    val sid = Some( ( s : String ) => recoverFieldName( s ) )
 		    val kvdb = this;
 		    Some(
 		      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
@@ -3055,14 +3077,21 @@ package mongo.usage {
 		      //println( "ptn : " + ptn )		
 		      
 		      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-			case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+			case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
 			  matchMap( key, k ) match {
 			    case Some( soln ) => {
 			      if ( compareNameSpace( ns, kvNameSpace ) ) {
 				emT.PlaceInstance(
 				  k,
 				  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-				    mTT.Ground( asCacheValue( v ) )
+				    mTT.Ground(
+				      asCacheValue(
+					new CnxnCtxtBranch[String,String,String](
+					  "string",
+					  v :: Nil
+					)
+				      )
+				    )
 				  ),
 				  // BUGBUG -- lgm : why can't the compiler determine
 				  // that this cast is not necessary?
@@ -3175,7 +3204,7 @@ package mongo.usage {
 			+ "\n method : persistenceManifest "
 		      )
 		    )
-		    val sid = Some( ( s : String ) => s )
+		    val sid = Some( ( s : String ) => recoverFieldName( s ) )
 		    val kvdb = this;
 		    Some(
 		      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
@@ -3383,14 +3412,21 @@ package mongo.usage {
 		      //println( "ptn : " + ptn )		
 		      
 		      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-			case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+			case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
 			  matchMap( key, k ) match {
 			    case Some( soln ) => {
 			      if ( compareNameSpace( ns, kvNameSpace ) ) {
 				emT.PlaceInstance(
 				  k,
 				  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-				    mTT.Ground( asCacheValue( v ) )
+				    mTT.Ground(
+				      asCacheValue(
+					new CnxnCtxtBranch[String,String,String](
+					  "string",
+					  v :: Nil
+					)
+				      )
+				    )
 				  ),
 				  // BUGBUG -- lgm : why can't the compiler determine
 				  // that this cast is not necessary?
@@ -3503,7 +3539,7 @@ package mongo.usage {
 			+ "\n method : persistenceManifest "
 		      )
 		    )
-		    val sid = Some( ( s : String ) => s )
+		    val sid = Some( ( s : String ) => recoverFieldName( s ) )
 		    val kvdb = this;
 		    Some(
 		      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
