@@ -1,25 +1,44 @@
 
-
 import scala.util.continuations._
 import java.net.URI
 import java.util.UUID
 import com.protegra_ati.agentservices.store._
-import com.protegra_ati.agentservices.store.AgentTS._
-import com.protegra_ati.agentservices.store.AgentTS.acT._
-import com.protegra_ati.agentservices.store.AgentTS.mTT._
+
+import com.biosimilarity.lift.model.store._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
+import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 
-val sourceAddress = "172.23.32.158"
-val acquaintanceAddresses =  "172.23.32.62"
-val pimgJunq =  ptToPt(sourceAddress, acquaintanceAddresses)
-pimgJunq.database
-pimgJunq.agentTwistedPairs
-val lbl = "contentChannel(\"email\")".toLabel
-val cnxn = new AgentCnxn("Mike".toURI, "", "Jason".toURI)
-reset { for( e <- pimgJunq.get(cnxn)( lbl ) ) { println( "received: " + e.dispatch ) } }
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 
 
-val sourceAddress = "172.23.32.253".toURI
-val acquaintanceAddresses =  List[URI]("172.23.32.62".toURI)
-val pimgJunq =  new AgentStringPersistence.PartitionedStringMGJ(sourceAddress, acquaintanceAddresses, None)
+import com.protegra_ati.agentservices.store.mongo.usage._
+
+val sourceAddress = "127.0.0.1".toURI
+val acquaintanceAddresses = List[ URI ]()
+val configFileName = Some("db_store.conf")
+//val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
+val space = AgentUseCase(configFileName)
+val node = space.createNode(sourceAddress, acquaintanceAddresses, configFileName)
+
+val cnxn = new AgentCnxn("PutTest".toURI, "", "Jason".toURI)
+
+val lbl = ( "contentChannel(\"123\")" ).toLabel
+val value = "testtest"
+reset { node.put(cnxn)(lbl, Ground(value)) }
+
+//node.store(cnxn)(lbl, Ground(value))
+
+val lblSearch = "contentChannel(_)".toLabel
+
+//reset { for( e <- node.subscribe(cnxn)( lblSearch ) ) { println( "received: " + e) } }
+reset { for( e <- node.read(cnxn)( lblSearch ) ) { println( "received: " + e) } }
+
+
+
+reset { for( e <- node.fetch(cnxn)( lblSearch ) ) { println( "received: " + e.dispatch ) } }
+
+
+

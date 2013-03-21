@@ -16,10 +16,11 @@ import scala.util.continuations._
 import java.net.URI
 import java.util.UUID
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
-import Being.AgentKVDBNodeFactory
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
+import com.protegra_ati.agentservices.store.mongo.usage._
+
 
 import actors.threadpool.LinkedBlockingQueue
 
@@ -81,8 +82,9 @@ trait KVDBHelpers extends Timeouts with RabbitTestSetup with Reporting
     System.err.println("===================================================" )
     System.err.println("CCCCCCCCCCCCCCC Creating a node CCCCCCCCCCCCCCCCCCC" + configFileName)
     System.err.println("===================================================")
-
-    AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
+    val space = AgentUseCase(configFileName)
+    val node = space.createNode(sourceAddress, acquaintanceAddresses, configFileName)
+    node
   }
 }
 

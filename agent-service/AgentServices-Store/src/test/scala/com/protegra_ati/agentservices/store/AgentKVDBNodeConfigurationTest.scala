@@ -8,11 +8,11 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 import scala.util.continuations._
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
-import com.protegra_ati.agentservices.store.usage.AgentUseCase._
-import Being.AgentKVDBNodeFactory
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
+import com.protegra_ati.agentservices.store.mongo.usage._
+
 
 import com.protegra_ati.agentservices.store._
 import com.biosimilarity.lift.lib.moniker._
@@ -34,11 +34,12 @@ with RabbitTestSetup
 
     "work if None on default port" in {
       val configFileName = None
-      val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(configFileName)
+      val space = AgentUseCase(configFileName)
+      val node = space.createNode(sourceAddress, List(), configFileName)
 
       node.configFileName must be_==(configFileName)
-      node.configurationFromFile.get( "dbPort" ).getOrElse("") must be_==("1984")
-      node.cache.dbPort must be_==("1984")
+      node.configurationFromFile.get( "dbPort" ).getOrElse("") must be_==("27017")
+      node.cache.dbPort must be_==("27017")
      //to debug code path
 //      val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
 //      val lbl = "content(\"email\")".toLabel
@@ -46,18 +47,20 @@ with RabbitTestSetup
     }
 
     "work if found on configured port" in {
-      val configFileName = Some("db_test_1985.conf")
-      val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(configFileName)
+      val configFileName = Some("db_test_27018.conf")
+      val space = AgentUseCase(configFileName)
+      val node = space.createNode(sourceAddress, List(), configFileName)
 
       node.configFileName must be_==(configFileName)
-      node.configurationFromFile.get( "dbPort" ).getOrElse("") must be_==("1985")
-      node.cache.dbPort must be_==("1985")
+      node.configurationFromFile.get( "dbPort" ).getOrElse("") must be_==("27018")
+      node.cache.dbPort must be_==("27018")
     }
 
     "save in 1985" in {
       skipped("to debug code path")
       val configFileName = Some("db_test_1985.conf")
-      val node = AgentKVDBNodeFactory.ptToMany(sourceAddress, List())(configFileName)
+      val space = AgentUseCase(configFileName)
+      val node = space.createNode(sourceAddress, List(), configFileName)
 
       val cnxn = new AgentCnxn(( "self" + UUID.randomUUID.toString ).toURI, "", ( "self" + UUID.randomUUID.toString ).toURI);
       val lbl = "content(\"email\")".toLabel
