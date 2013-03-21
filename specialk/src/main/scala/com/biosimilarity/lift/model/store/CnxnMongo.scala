@@ -360,7 +360,9 @@ extends CnxnMongoSelectors {
 		  }
 		  case CnxnCtxtLeaf( Right( v ) ) => {
 		    // BUGBUG : lgm -- incorrect semantics
-		    acc ++ List( varToString( v ) -> 1, varSelector -> 1 )
+		    val vStr = varToString( v )
+		    val vRcrd = MongoDBObject( List( vStr -> 1, varSelector -> 1 ) )
+		    acc ++ List( vStr -> vRcrd )
 		  }
 		}
 	      }
