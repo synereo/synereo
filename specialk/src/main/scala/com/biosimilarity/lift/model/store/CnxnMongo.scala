@@ -213,7 +213,10 @@ extends CnxnMongoSelectors {
     toVar : String => Var,
     toTag : String => Tag
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-    json match {
+    json match {      
+      case JObject( ( "_id", JObject( _ ) ) :: ( ns, JObject( contents ) ) :: Nil ) => {
+	fromJSONInner( ns, contents )( toNameSpace, toVar, toTag )
+      }
       case JObject( ( ns, JObject( contents ) ) :: Nil ) => {
 	fromJSONInner( ns, contents )( toNameSpace, toVar, toTag )
       }

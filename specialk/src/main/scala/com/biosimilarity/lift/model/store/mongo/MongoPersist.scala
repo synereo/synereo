@@ -312,6 +312,16 @@ with StdMongoStoreConfiguration
     )( recordType )
   }
 
+  def insertUpdateRecord(
+    record : DBObject, collectionName : String
+  ) : Unit = {
+    wrapAction[DBObject,Unit](
+      ( clientSession : MongoClient, record : DBObject ) => {
+	_insertUpdateRecord( record, clientSession )( collectionName )
+      }
+    )( record )
+  }
+
   def _insertUpdate( recordType : String, clientSession : MongoClient )(
     collectionName : String, key : String, value : String
   ) : Unit = {
@@ -321,6 +331,14 @@ with StdMongoStoreConfiguration
     else {
       _insert( recordType, clientSession )( collectionName, key, value )
     }
+  }
+
+  def _insertUpdateRecord( record : DBObject, clientSession : MongoClient )(
+    collectionName : String
+  ) : Unit = {
+    //_updateRecord( record, clientSession )( collectionName )
+    val mc = clientSession.getDB( defaultDB )( collectionName )
+    mc += record
   }
 
   def exists( recordType : String )(
@@ -361,6 +379,13 @@ with StdMongoStoreConfiguration
     mc += asRecord( recordType )( key, value )
   }
 
+  def _updateRecord( record : DBObject, clientSession : MongoClient )(
+    collectionName : String
+  ) : Unit = {
+    // BUGBUG -- lgm : put in upsert flag
+    val mc = clientSession.getDB( defaultDB )( collectionName )
+    mc += record
+  }
 
   def insert( recordType : String )(
     collectionName : String, key : String, value : String

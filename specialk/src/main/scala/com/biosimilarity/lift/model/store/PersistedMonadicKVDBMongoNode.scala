@@ -484,10 +484,18 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      new CnxnCtxtBranch[Namespace,Var,Tag](
 		kvNameSpace,
 		List(
-		  asCCL( ptn ),
-		  new CnxnCtxtLeaf[Namespace,Var,Tag](
-		    Right(
-		      ttv( "VisForValueVariableUniqueness" )
+		  new CnxnCtxtBranch[Namespace,Var,Tag](
+		    labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )( "key" ),
+		    List( asCCL( ptn ) )
+		  ),
+		  new CnxnCtxtBranch[Namespace,Var,Tag](
+		    labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )( "value" ),
+		    List(
+		      new CnxnCtxtLeaf[Namespace,Var,Tag](
+			Right(
+			  ttv( "VisForValueVariableUniqueness" )
+			)
+		      )
 		    )
 		  )
 		)
@@ -508,12 +516,20 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  yield {
 	    val ccb =
 	      new CnxnCtxtBranch[Namespace,Var,Tag](
-		nameSpace,
+		kvNameSpace,
 		List(
-		  asCCL( ptn ),
-		  new CnxnCtxtLeaf[Namespace,Var,Tag](
-		    Right(
-		      ttv( "VisForValueVariableUniqueness" )
+		  new CnxnCtxtBranch[Namespace,Var,Tag](
+		    labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )( "key" ),
+		    List( asCCL( ptn ) )
+		  ),
+		  new CnxnCtxtBranch[Namespace,Var,Tag](
+		    labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )( "value" ),
+		    List(
+		      new CnxnCtxtLeaf[Namespace,Var,Tag](
+			Right(
+			  ttv( "VisForValueVariableUniqueness" )
+			)
+		      )
 		    )
 		  )
 		)
@@ -2334,14 +2350,25 @@ package usage {
 		    throw new Exception( "must have textToTag to convert mongo object" )
 		  )
 		CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-		  case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+		  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
+		    tweet( " ****************************** " )
+		    tweet( "vNs: " + vNs )
+		    tweet( "v: " + v )
+		    tweet( " ****************************** " )
 		    matchMap( key, k ) match {
 		      case Some( soln ) => {
 			if ( compareNameSpace( ns, kvNameSpace ) ) {
 			  emT.PlaceInstance(
 			    k,
 			    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-			      mTT.Ground( asCacheValue( v ) )
+			      mTT.Ground(
+				asCacheValue(
+				  new CnxnCtxtBranch[String,String,String](
+				    "string",
+				    v :: Nil
+				  )
+				)
+			      )
 			    ),
 			    // BUGBUG -- lgm : why can't the compiler determine
 			    // that this cast is not necessary?
