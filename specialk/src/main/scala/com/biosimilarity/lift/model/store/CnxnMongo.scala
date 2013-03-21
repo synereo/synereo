@@ -213,7 +213,10 @@ extends CnxnMongoSelectors {
     toVar : String => Var,
     toTag : String => Tag
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-    json match {
+    json match {      
+      case JObject( ( "_id", JObject( _ ) ) :: ( ns, JObject( contents ) ) :: Nil ) => {
+	fromJSONInner( ns, contents )( toNameSpace, toVar, toTag )
+      }
       case JObject( ( ns, JObject( contents ) ) :: Nil ) => {
 	fromJSONInner( ns, contents )( toNameSpace, toVar, toTag )
       }
@@ -382,15 +385,17 @@ extends CnxnMongoSelectors {
 
 trait JSONIfy[Namespace,Var,Tag] {  
   @transient
-  val CnxnMongoQuerifier = new CnxnMongoQuery[Namespace,Var,Tag]
+  val CnxnMongoQuerifier =
+    new CnxnMongoQuery[Namespace,Var,Tag]
     with CnxnCtxtInjector[Namespace,Var,Tag]
          with CnxnString[Namespace,Var,Tag]
-	 with Blobify with UUIDOps
+	 with Blobify with UUIDOps { }
   @transient
-  val CnxnMongoObjectifier = new CnxnMongoObject[Namespace,Var,Tag]
+  val CnxnMongoObjectifier =
+    new CnxnMongoObject[Namespace,Var,Tag]
     with CnxnCtxtInjector[Namespace,Var,Tag]
          with CnxnString[Namespace,Var,Tag]
-	 with Blobify with UUIDOps  
+	 with Blobify with UUIDOps { }
 
   case class CCLStringConversionsWrapper(
     s : String

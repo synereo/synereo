@@ -81,7 +81,7 @@ trait MongoCnxnStorage[Namespace,Var,Tag]
   self : MongoDBStore[Namespace,Var,Tag] with UUIDOps =>          
   @transient
   implicit val formats = Serialization.formats(NoTypeHints)
-  def store( xmlCollStr : String )(
+  def storeX( xmlCollStr : String )(
     cnxn: CnxnCtxtLabel[Namespace, Var, Tag]
   )(
     implicit nameSpaceToString : Namespace => String,
@@ -96,6 +96,21 @@ trait MongoCnxnStorage[Namespace,Var,Tag]
 	tagToString
       )
     insertUpdate( rcrdT )( xmlCollStr, k.toString, v.toString )
+  }
+  def store( xmlCollStr : String )(
+    cnxn: CnxnCtxtLabel[Namespace, Var, Tag]
+  )(
+    implicit nameSpaceToString : Namespace => String,
+    varToString : Var => String,
+    tagToString : Tag => String
+  ) : Unit =
+  {    
+    insertUpdateRecord(
+      CnxnMongoObjectifier.toMongoObject( cnxn )(
+	nameSpaceToString, varToString, tagToString
+      ),
+      xmlCollStr
+    )
   }
 
   def keyValue(
