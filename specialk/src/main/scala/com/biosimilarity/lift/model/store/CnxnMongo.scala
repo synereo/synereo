@@ -251,19 +251,21 @@ extends CnxnMongoSelectors {
 	  ( f ) => {
 	    f match {
 	      case ( ns, JObject( ( leaf, JInt( _ ) ) :: ( selector, JInt( _ ) ) :: Nil ) ) => {
-		new CnxnCtxtBranch[Namespace,Var,Tag](
-		  toNameSpace( ns ),
-		  List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
-		    new CnxnCtxtLeaf[Namespace,Var,Tag](
-		      if ( selector.equals( tagSelector ) ) {
+		if ( selector.equals( tagSelector ) ) {
+		  new CnxnCtxtBranch[Namespace,Var,Tag](
+		    toNameSpace( ns ),
+		    List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
+		      new CnxnCtxtLeaf[Namespace,Var,Tag](
 			Left[Tag,Var]( toTag( leaf ) )
-		      }
-		      else {
-			Right[Tag,Var]( toVar( leaf ) )
-		      }	  
+		      )
 		    )
 		  )
-		)
+		}
+		else {
+		  new CnxnCtxtLeaf[Namespace,Var,Tag](
+		    Right[Tag,Var]( toVar( leaf ) )
+		  )
+		}		
 	      }
 	      case ( ns, JObject( ctnts ) ) => {
 		fromJSONInner( ns, ctnts )( toNameSpace, toVar, toTag )
@@ -360,7 +362,9 @@ extends CnxnMongoSelectors {
 		  }
 		  case CnxnCtxtLeaf( Right( v ) ) => {
 		    // BUGBUG : lgm -- incorrect semantics
-		    acc ++ List( varToString( v ) -> 1, varSelector -> 1 )
+		    val vStr = varToString( v )
+		    val vRcrd = MongoDBObject( List( vStr -> 1, varSelector -> 1 ) )
+		    acc ++ List( vStr -> vRcrd )
 		  }
 		}
 	      }

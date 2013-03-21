@@ -174,6 +174,8 @@ with StdMongoStoreConfiguration
   private def clientSessionFromPool : MongoClient =
     pool.borrowClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)  
 
+  def acquireSession( uri : URI ) : MongoClient = pool( uri ).borrowObject()
+
   def wrapAction[S,T]( action : ( MongoClient, S ) => T ) : S => T = {
     ( s : S ) => {
       try {
