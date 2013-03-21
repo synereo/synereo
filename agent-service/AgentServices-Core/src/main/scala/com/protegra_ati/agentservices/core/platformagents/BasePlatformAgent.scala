@@ -8,12 +8,12 @@ import com.protegra_ati.agentservices.core.platformagents.behaviors._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.Being.AgentKVDBNodeFactory
+import com.protegra_ati.agentservices.store.mongo.usage._
 import com.protegra_ati.agentservices.core.util.Results
 import com.protegra_ati.agentservices.core.util.rabbit.{RabbitConfiguration, MessageAMQPPublisher, MessageAMQPListener}
 
@@ -84,7 +84,9 @@ abstract class BasePlatformAgent
 
   def createNode(sourceAddress: URI, acquaintanceAddresses: List[ URI ], configFileName: Option[ String ]): Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ] =
   {
-    AgentKVDBNodeFactory.ptToMany(sourceAddress, acquaintanceAddresses)(configFileName)
+    val space = AgentUseCase(configFileName)
+    val node = space.createNode(sourceAddress, acquaintanceAddresses, configFileName)
+    node
   }
 
   def initFromConfig(configFilePath: String)

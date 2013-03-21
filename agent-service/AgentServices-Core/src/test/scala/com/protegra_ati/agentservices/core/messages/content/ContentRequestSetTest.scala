@@ -16,10 +16,10 @@ import disclosure._
 import org.junit._
 import com.biosimilarity.lift.lib._
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 import moniker._
 import scala.util.continuations._
 import com.protegra_ati.agentservices.core.messages._

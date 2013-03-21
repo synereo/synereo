@@ -10,8 +10,8 @@ import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import com.protegra_ati.agentservices.core.events._
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages.login._
@@ -37,7 +37,6 @@ import scala.collection.mutable._
 import java.net.URI
 import java.lang.reflect._
 import scala.concurrent.ops._
-import Being.AgentKVDBNodeFactory
 
 
 class AgentHostStorePlatformAgent extends BasePlatformAgent

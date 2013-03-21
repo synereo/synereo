@@ -10,10 +10,10 @@
 //import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 //import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 //import com.protegra_ati.agentservices.core.messages._
-//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+//import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+//import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
+//import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 //import java.net.URI
 //import content.SetContentPersistedRequest
 //import verifier._

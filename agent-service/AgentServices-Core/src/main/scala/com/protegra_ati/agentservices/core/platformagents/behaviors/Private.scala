@@ -3,7 +3,7 @@ package com.protegra_ati.agentservices.core.platformagents.behaviors
 /* User: jklassen
 */
 import com.protegra_ati.agentservices.core.platformagents._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
 import java.net.URI
 import net.lag.configgy._
 import com.protegra_ati.agentservices.core.util.rabbit.RabbitConfiguration

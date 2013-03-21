@@ -6,7 +6,7 @@ import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.messages.{Identification, MockMessage}
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI

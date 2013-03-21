@@ -15,10 +15,10 @@ import java.net.URI
 import java.util.UUID
 import com.protegra_ati.agentservices.core.util.Results
 
-//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+//import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-//import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
+//import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 
 import actors.threadpool.LinkedBlockingQueue
 import com.protegra_ati.agentservices.store.extensions.LinkedBlockingQueueExtensions._

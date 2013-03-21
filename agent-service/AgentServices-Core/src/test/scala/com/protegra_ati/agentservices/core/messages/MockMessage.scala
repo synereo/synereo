@@ -2,8 +2,8 @@ package com.protegra_ati.agentservices.core.messages
 
 import java.io.Serializable
 import java.util.UUID
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import reflect.BeanProperty
 import java.lang.reflect._

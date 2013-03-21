@@ -8,7 +8,7 @@ import com.protegra_ati.agentservices.core.extensions.ClassExtensions._
 import com.protegra_ati.agentservices.core.platformagents._
 import com.protegra_ati.agentservices.core.schema.behaviors.Tracking
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.store.util._

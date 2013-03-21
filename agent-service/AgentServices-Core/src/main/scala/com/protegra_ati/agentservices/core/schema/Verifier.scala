@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.core.schema
 
 import java.util.UUID
 import reflect.BeanProperty
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 
 /* User: jviolago

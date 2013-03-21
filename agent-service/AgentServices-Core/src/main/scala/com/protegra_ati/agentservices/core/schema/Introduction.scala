@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.core.schema
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 
 import java.util.UUID

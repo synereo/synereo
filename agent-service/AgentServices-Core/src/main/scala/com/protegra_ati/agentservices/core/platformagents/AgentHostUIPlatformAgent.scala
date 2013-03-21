@@ -10,8 +10,8 @@ import com.protegra_ati.agentservices.core.messages.invitation._
 import com.protegra_ati.agentservices.core.messages.introduction._
 import com.protegra_ati.agentservices.core.messages.admin._
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import net.lag.configgy.Config
 import java.net.URI

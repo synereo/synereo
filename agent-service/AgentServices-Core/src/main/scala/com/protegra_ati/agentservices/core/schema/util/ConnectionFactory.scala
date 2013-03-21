@@ -5,7 +5,7 @@ package com.protegra_ati.agentservices.core.schema.util
  * and open the template in the editor.
  */
 
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID

@@ -6,8 +6,8 @@ import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import com.protegra_ati.agentservices.store.extensions.URIExtensions._
 import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
 import org.junit._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
-import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
+import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import java.net.URI
 import com.protegra_ati.agentservices.core.messages.content._
