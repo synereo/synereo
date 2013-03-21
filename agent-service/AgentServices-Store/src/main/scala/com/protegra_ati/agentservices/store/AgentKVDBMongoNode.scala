@@ -2450,14 +2450,21 @@ package mongo.usage {
 		//println( "ptn : " + ptn )		
 		
 		CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-		  case CnxnCtxtBranch( ns, k :: v :: Nil ) => {
+		  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
 		    matchMap( key, k ) match {
 		      case Some( soln ) => {
 			if ( compareNameSpace( ns, kvNameSpace ) ) {
 			  emT.PlaceInstance(
 			    k,
 			    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-			      mTT.Ground( asCacheValue( v ) )
+			      mTT.Ground(
+				asCacheValue(
+				  new CnxnCtxtBranch[String,String,String](
+				    "string",
+				    v :: Nil
+				  )
+				)
+			      )
 			    ),
 			    // BUGBUG -- lgm : why can't the compiler determine
 			    // that this cast is not necessary?
