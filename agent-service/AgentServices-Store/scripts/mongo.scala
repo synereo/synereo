@@ -74,6 +74,15 @@ object ExerciseMongo {
       agentNode1.cache.tagToString
     )
   }
+  def doDelete = {
+    val ( pmgj1, pd1, Some( mongoCollName1 ) ) = agentNode1.getLocalPartitionActuals( cnxnGlobal )
+    pmgj1.cache.delete( mongoCollName1, mL1 )(
+      agentNode1.cache.nameSpaceToString,
+      agentNode1.cache.varToString,
+      agentNode1.cache.tagToString,
+      agentNode1.cache.labelToNS.getOrElse( ( s : String ) => s )
+    )
+  }
 }
 
 object MongoDetails {
