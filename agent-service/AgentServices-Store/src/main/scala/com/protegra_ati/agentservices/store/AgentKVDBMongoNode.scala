@@ -1835,12 +1835,12 @@ with AgentCnxnTypeScope {
 	    path match {
 	      case cclStr : CnxnCtxtLabel[Namespace,Var,String] => {
 		pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)(
-		  nameSpaceToString,
-		  varToString,
-		  tagToString,
+		  cache.nameSpaceToString,
+		  cache.varToString,
+		  cache.tagToString,
 		  cache.labelToNS.getOrElse(
 		    {
-		      tweet( "unable to delete key from db: missing labelToNS" )
+		      tweet( "unable to delete key from db : missing labelToNS" )
 		      throw new Exception( "missing labelToNS" )
 		    }
 		  )

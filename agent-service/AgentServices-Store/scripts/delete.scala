@@ -16,7 +16,7 @@ val configFileName = Some("db_store.conf")
 val space = AgentUseCase(configFileName)
 val node = space.createNode(sourceAddress, acquaintanceAddresses, configFileName)
 
-val cnxn = new AgentCnxn("Del2Test".toURI, "", "Jason".toURI)
+val cnxn = new AgentCnxn("Delete2Test".toURI, "", "Jason".toURI)
 
 val lbl = ( "contentChannel(\"123\")" ).toLabel
 val value = "testtest"
@@ -29,7 +29,7 @@ reset { for( e <- node.read(cnxn)( lblSearch ) ) { println( "received: " + e) } 
 
 node.delete(cnxn)(lbl)
 
-node.delete(cnxn)(lblSearch)
-
 reset { for( e <- node.read(cnxn)( lblSearch ) ) { println( "received: " + e) } }
 
+
+node.delete(cnxn)(lblSearch)
