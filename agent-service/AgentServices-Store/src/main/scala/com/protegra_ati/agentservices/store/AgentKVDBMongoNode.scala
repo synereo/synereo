@@ -1835,10 +1835,10 @@ with AgentCnxnTypeScope {
 	    path match {
 	      case cclStr : CnxnCtxtLabel[Namespace,Var,String] => {
 		pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)(
-		  nameSpaceToString,
-		  varToString,
-		  tagToString,
-		  labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )
+		  cache.nameSpaceToString,
+		  cache.varToString,
+		  cache.tagToString,
+		  cache.labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )
 		)
 	      }
 	      case _ => {
