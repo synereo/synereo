@@ -516,7 +516,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  yield {
 	    val ccb =
 	      new CnxnCtxtBranch[Namespace,Var,Tag](
-		kvNameSpace,
+		nameSpace,
 		List(
 		  new CnxnCtxtBranch[Namespace,Var,Tag](
 		    labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )( "key" ),
@@ -534,9 +534,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )
 		)
 	      )
-	    CnxnMongoQuerifier.toMongoQuery( ccb )(
+	    val debugString = CnxnMongoQuerifier.toMongoQuery( ccb )(
 	      nameSpaceToString, varToString, tagToString
 	    ).toString
+      debugString
 	  }
 	}
 	
