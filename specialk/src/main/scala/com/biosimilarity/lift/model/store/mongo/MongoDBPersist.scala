@@ -206,11 +206,12 @@ trait MongoCnxnStorage[Namespace,Var,Tag]
  )(
    implicit nameSpaceToString : Namespace => String,
    varToString : Var => String,
-   tagToString : Tag => String
+   tagToString : Tag => String,
+   ltns : String => Namespace
   ) : Unit =
   {
-    deleteData( xmlCollStr, path )( nameSpaceToString, varToString, tagToString )
-    deleteContinuation( xmlCollStr, path )( nameSpaceToString, varToString, tagToString )
+    deleteData( xmlCollStr, path )( nameSpaceToString, varToString, tagToString, ltns )
+    deleteContinuation( xmlCollStr, path )( nameSpaceToString, varToString, tagToString, ltns )
   }
 
  def deleteData(
@@ -218,31 +219,58 @@ trait MongoCnxnStorage[Namespace,Var,Tag]
  )(
    implicit nameSpaceToString : Namespace => String,
    varToString : Var => String,
-   tagToString : Tag => String
+   tagToString : Tag => String,
+   ltns : String => Namespace
   ) : Unit =
   {
-    val key =
-      CnxnMongoObjectifier.toMongoObject( path )(
+    val keyQry =
+      CnxnMongoQuerifier.toMongoQuery(
+	new CnxnCtxtBranch[Namespace,Var,Tag](
+	  ltns( "record" ),
+	  List(
+	    new CnxnCtxtBranch[Namespace,Var,Tag](
+	      ltns( "key" ),
+	      List(
+		path.asInstanceOf[CnxnCtxtLabel[Namespace, Var, Tag] with Factual]
+	      )
+	    )
+	  )
+	)
+      )(
 	nameSpaceToString, varToString, tagToString
-      ).toString
+      )
 
     // BUGBUG -- lgm : should get record types from persistence manifest
-    delete( "record" )( xmlCollStr, key )
+    deleteRecordsMatchingKey( keyQry )( xmlCollStr )
   }
  def deleteContinuation(
    xmlCollStr : String, path : CnxnCtxtLabel[Namespace, Var, Tag]
  )(
    implicit nameSpaceToString : Namespace => String,
    varToString : Var => String,
-   tagToString : Tag => String
+   tagToString : Tag => String,
+   ltns : String => Namespace
   ) : Unit =
   {
-    val key =
-      CnxnMongoObjectifier.toMongoObject( path )(
+    val keyQry =
+      CnxnMongoQuerifier.toMongoQuery(
+	new CnxnCtxtBranch[Namespace,Var,Tag](
+	  ltns( "kRecord" ),
+	  List(
+	    new CnxnCtxtBranch[Namespace,Var,Tag](
+	      ltns( "key" ),
+	      List(
+		path.asInstanceOf[CnxnCtxtLabel[Namespace, Var, Tag] with Factual]
+	      )
+	    )
+	  )
+	)
+      )(
 	nameSpaceToString, varToString, tagToString
-      ).toString
+      )
+
     // BUGBUG -- lgm : should get record types from persistence manifest
-    delete( "kRecord" )( xmlCollStr, key )
+    deleteRecordsMatchingKey( keyQry )( xmlCollStr )
   }
 }
 

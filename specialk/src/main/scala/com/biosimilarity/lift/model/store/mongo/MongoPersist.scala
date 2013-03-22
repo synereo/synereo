@@ -418,6 +418,26 @@ with StdMongoStoreConfiguration
     )( recordType )
   }
 
+  def deleteRecord( record : DBObject )(
+    collectionName : String
+  ) : Unit = {
+    wrapAction(
+      ( clientSession : MongoClient, record : DBObject ) => {
+	_deleteRecord( record, clientSession )( collectionName )
+      }
+    )( record )
+  }
+
+  def deleteRecordsMatchingKey( deleteKey : DBObject )(
+    collectionName : String
+  ) : Unit = {
+    wrapAction(
+      ( clientSession : MongoClient, deleteKey : DBObject ) => {
+	_deleteRecordsMatchingKey( deleteKey, clientSession )( collectionName )
+      }
+    )( deleteKey )
+  }
+
   def _delete( recordType : String, clientSession : MongoClient )(
     collectionName : String, key : String
   ) : Unit = {
@@ -428,6 +448,21 @@ with StdMongoStoreConfiguration
     }
   }
 
+  def _deleteRecord( record : DBObject, clientSession : MongoClient )(
+    collectionName : String
+  ) : Unit = {
+    val mc = clientSession.getDB( defaultDB )( collectionName )
+    mc.remove( record )
+  }
+
+  def _deleteRecordsMatchingKey( deleteKey : DBObject, clientSession : MongoClient )(
+    collectionName : String
+  ) : Unit = {
+    val mc = clientSession.getDB( defaultDB )( collectionName )
+    for ( entry <- mc.find( deleteKey ) ) {
+      mc.remove( entry )
+    }
+  }
 
   def count( collectionName : String ) : Int = {
     throw new Exception( "TBD" )

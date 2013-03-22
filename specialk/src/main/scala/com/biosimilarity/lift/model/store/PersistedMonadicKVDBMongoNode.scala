@@ -1035,19 +1035,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  record : DBObject,
 	  collName : Option[String]
 	) : Unit = {
-	  for(
-	    pd <- persist;
-	    clNm <- collName;
-	    ltns <- labelToNS;
-	    ttv <- textToVar;
-	    ttt <- textToTag;
-	    ( rcrdTypeStr, keyJSON, valueJSON ) <- keyValueJSON( record )	    
-	  ) {
-	    val cclKey : CnxnCtxtLabel[Namespace,Var,Tag] = 
-	      CnxnMongoObjectifier.fromJSON( keyJSON )( ltns, ttv, ttt )
-	    delete( clNm, cclKey )(
-	      nameSpaceToString, varToString, tagToString
-	    )
+	  for( clNm <- collName ) {
+	    deleteRecord( record )( clNm )
 	  }
 	}
 
