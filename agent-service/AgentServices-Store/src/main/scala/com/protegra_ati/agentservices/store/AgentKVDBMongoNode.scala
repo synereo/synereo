@@ -1838,7 +1838,12 @@ with AgentCnxnTypeScope {
 		  nameSpaceToString,
 		  varToString,
 		  tagToString,
-		  labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )
+		  cache.labelToNS.getOrElse(
+		    {
+		      tweet( "unable to delete key from db: missing labelToNS" )
+		      throw new Exception( "missing labelToNS" )
+		    }
+		  )
 		)
 	      }
 	      case _ => {
