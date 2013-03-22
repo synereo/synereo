@@ -16,7 +16,7 @@ val configFileName = Some("db_store.conf")
 val space = AgentUseCase(configFileName)
 val node = space.createNode(sourceAddress, acquaintanceAddresses, configFileName)
 
-val cnxn = new AgentCnxn("DeleteTest".toURI, "", "Jason".toURI)
+val cnxn = new AgentCnxn("Delete3Test".toURI, "", "Jason".toURI)
 
 val lbl = ( "contentChannel(\"123\")" ).toLabel
 val value = "testtest"
