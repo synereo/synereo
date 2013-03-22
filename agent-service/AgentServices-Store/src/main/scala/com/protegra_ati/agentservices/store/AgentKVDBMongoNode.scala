@@ -1837,7 +1837,8 @@ with AgentCnxnTypeScope {
 		pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)(
 		  nameSpaceToString,
 		  varToString,
-		  tagToString
+		  tagToString,
+		  labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )
 		)
 	      }
 	      case _ => {
