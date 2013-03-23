@@ -27,9 +27,13 @@ val lblSearch = "contentChannel(_)".toLabel
 
 reset { for( e <- node.read(cnxn)( lblSearch ) ) { println( "received: " + e) } }
 
-node.delete(cnxn)(lbl)
+reset { for( e <- node.read(true)(cnxn)( lblSearch ) ) { println( "received: " + e) } }
 
-node.delete(cnxn)(lblSearch)
 
-reset { for( e <- node.read(cnxn)( lblSearch ) ) { println( "received: " + e) } }
+val lblTest = "data(connection(keys(id(), localeCode(_), recVerNum(_)), _))".toLabel
+val cnxnRead = new AgentCnxn("f1a48b74-6a4a-455a-858d-a6b7798cb71c".toURI, "", "f1a48b74-6a4a-455a-858d-a6b7798cb71c".toURI)
 
+reset { for( e <- node.read(cnxnRead)( lblTest ) ) { println( "received: " + e) } }
+
+val lblWorkTest = "data(connection(keys(id(_), localeCode(_), recVerNum(_)), _))".toLabel
+reset { for( e <- node.read(cnxnRead)( lblWorkTest ) ) { println( "received: " + e) } }
