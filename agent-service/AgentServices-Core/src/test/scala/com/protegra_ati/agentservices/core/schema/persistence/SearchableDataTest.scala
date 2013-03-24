@@ -141,6 +141,15 @@ class SearchableDataTest extends SpecificationWithJUnit
       searchKey must be_==(expectedSearchKey)
     }
 
+    "generate search key correctly for a Connection.SEARCH_ALL" in {
+         val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
+         //val expectedSearchKey = "connection(data(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_))," + "fields(category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralsDisabled, searchDisabled]\"),created(_))))"
+         //because there is an id expected result is
+         val expectedSearchKey = "data(connection(" + KEYS + "(_,_))"
+         val searchKey = Connection.SEARCH_ALL.toSearchKey
+         searchKey must be_==(expectedSearchKey)
+       }
+
     "generate search key correctly for an Image" in {
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
       //val expectedSearchKey = "image(data(" +  KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_))," + "fields(name(_),contentType(_),content(_),metadata(_))))"
