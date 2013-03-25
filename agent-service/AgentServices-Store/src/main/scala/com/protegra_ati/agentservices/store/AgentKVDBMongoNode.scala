@@ -1838,7 +1838,12 @@ with AgentCnxnTypeScope {
 		  cache.nameSpaceToString,
 		  cache.varToString,
 		  cache.tagToString,
-		  cache.labelToNS.getOrElse( throw new Exception( "missing labelToNS" ) )
+		  cache.labelToNS.getOrElse(
+		    {
+		      tweet( "unable to delete key from db : missing labelToNS" )
+		      throw new Exception( "missing labelToNS" )
+		    }
+		  )
 		)
 	      }
 	      case _ => {
@@ -2482,7 +2487,13 @@ package mongo.usage {
 			}
 			else {
 			  if ( compareNameSpace( ns, kvKNameSpace ) ) {
-			    val mTT.Continuation( ks ) = asCacheK( v )
+			    val mTT.Continuation( ks ) =
+			      asCacheK(
+				new CnxnCtxtBranch[String,String,String](
+				  "string",
+				  v :: Nil
+				)
+			      )
 			    emT.PlaceInstance(
 			      k,
 			      Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
@@ -2788,7 +2799,13 @@ package mongo.usage {
 			      }
 			      else {
 				if ( compareNameSpace( ns, kvKNameSpace ) ) {
-				  val mTT.Continuation( ks ) = asCacheK( v )
+				  val mTT.Continuation( ks ) =
+				    asCacheK(
+				      new CnxnCtxtBranch[String,String,String](
+					"string",
+					v :: Nil
+				      )
+				    )
 				  emT.PlaceInstance(
 				    k,
 				    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
@@ -3101,7 +3118,13 @@ package mongo.usage {
 			      }
 			      else {
 				if ( compareNameSpace( ns, kvKNameSpace ) ) {
-				  val mTT.Continuation( ks ) = asCacheK( v )
+				  val mTT.Continuation( ks ) =
+				    asCacheK(
+				      new CnxnCtxtBranch[String,String,String](
+					"string",
+					v :: Nil
+				      )
+				    )
 				  emT.PlaceInstance(
 				    k,
 				    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
@@ -3436,7 +3459,13 @@ package mongo.usage {
 			      }
 			      else {
 				if ( compareNameSpace( ns, kvKNameSpace ) ) {
-				  val mTT.Continuation( ks ) = asCacheK( v )
+				  val mTT.Continuation( ks ) =
+				    asCacheK(
+				      new CnxnCtxtBranch[String,String,String](
+					"string",
+					v :: Nil
+				      )
+				    )
 				  emT.PlaceInstance(
 				    k,
 				    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
