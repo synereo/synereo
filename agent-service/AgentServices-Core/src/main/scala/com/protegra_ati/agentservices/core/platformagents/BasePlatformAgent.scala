@@ -425,7 +425,7 @@ abstract class BasePlatformAgent
 
   def store(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, value: String) =
   {
-    report("store --- key: " + key + ", cnxn: " + cnxn.toString + ", value: " + value.short, Severity.Info)
+    report("store --- key: " + key + ", cnxn: " + cnxn.toString + ", value: " + value.short, Severity.Trace)
     val lbl = key.toLabel
     val agentCnxn = cnxn.toAgentCnxn()
     //this should really be store
@@ -437,7 +437,7 @@ abstract class BasePlatformAgent
 
   def fetch[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
-    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -456,7 +456,7 @@ abstract class BasePlatformAgent
   def fetchOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit)
     (retries: Int, delay: Int, handlerElse: () => Unit) =
   {
-    report("fetchOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetchOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -492,7 +492,7 @@ abstract class BasePlatformAgent
 
   def fetchList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
-    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -510,7 +510,7 @@ abstract class BasePlatformAgent
   def fetchListOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit)
                           (retries: Int, delay: Int, handlerElse: () => Unit) =
   {
-    report("fetchListOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetchListOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -581,7 +581,7 @@ abstract class BasePlatformAgent
   def delete(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String) =
   {
     val agentCnxn = cnxn.toAgentCnxn()
-    report("delete --- key: " + key.toLabel + " cnxn: " + cnxn.toString, Severity.Info)
+    report("delete --- key: " + key.toLabel + " cnxn: " + cnxn.toString, Severity.Trace)
     queue.delete(agentCnxn)(key.toLabel)
   }
 
