@@ -3,6 +3,7 @@ package com.protegra_ati.agentservices.core.util.serializer;
 import com.protegra_ati.agentservices.core.util.serializer.helper.UUIDSerializer;
 import com.protegra_ati.agentservices.core.util.ReportingImpl4Java;
 import com.protegra_ati.agentservices.core.util.serializer.helper.*;
+import com.protegra_ati.agentservices.store.util.Reporting;
 import com.protegra_ati.agentservices.store.util.Severity;
 import com.protegra_ati.agentservices.core.schema.*;
 

@@ -20,7 +20,7 @@ import java.util.UUID
 import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.acT._
 import com.protegra_ati.agentservices.store.usage.AgentKVDBScope.mTT._
 
-import util.Results
+import util.{Severity, Results}
 
 class PlaceInstanceTest extends KvdbPlatformAgentBase
 {
@@ -52,9 +52,7 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
           prover.solve(query + " = " + label + ".")
         }
         catch {
-          case e: Exception => {
-            e.printStackTrace()
-          }
+          case e: Exception => report("Uncaught Exception", e, Severity.Error)
         }
         success
       }
@@ -71,9 +69,7 @@ class PlaceInstanceTest extends KvdbPlatformAgentBase
         prover.solve(query + " = " + label + ".")
       }
       catch {
-        case e: Exception => {
-          e.printStackTrace()
-        }
+        case e: Exception => report("Uncaught Exception", e, Severity.Error)
       }
       success
     }

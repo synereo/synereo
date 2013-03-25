@@ -23,6 +23,7 @@ import org.joda.time.DateTime
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 import org.apache.commons.io.FileUtils
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 {
@@ -690,7 +691,7 @@ class KryoDeserializerTest extends SpecificationWithJUnit with Timeouts
 
 }
 
-object KryoDeserializerTestDataInitializer
+object KryoDeserializerTestDataInitializer extends Reporting
 {
 
   def serialize(data: Object, toFile: File): Unit =
@@ -698,13 +699,7 @@ object KryoDeserializerTestDataInitializer
     try {
       if ( toFile.exists() ) {toFile.delete()}
     } catch {
-      case ex: Exception => {
-        /* TODO into log file*/
-        println("something different:" + ex.toString)
-        ex.printStackTrace()
-//        failure("previously serialized class can't be deleted")
-        println("previously serialized class can't be deleted")
-      }
+      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
     }
     serialize(data, new FileOutputStream(toFile))
   }
@@ -724,8 +719,7 @@ object KryoDeserializerTestDataInitializer
           out.close();
         }
       } catch {
-        case ex: IOException => {/* TODO into log file*/}
-        case _ => {/* TODO into log file*/}
+        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
       }
 
     }
@@ -748,22 +742,9 @@ object KryoDeserializerTestDataInitializer
       val base64 = FileUtils.readFileToString(from, "UTF-8")
       return Serializer.deserialize[ T ](base64)
     } catch {
-      case ex: IOException => {
-        /* TODO into log file*/
-        println("ERROR BY DESERIALIZATION")
-        ex.printStackTrace()
-        return null.asInstanceOf[ T ]
-      }
-      case ex: Exception => {
-        /* TODO into log file*/
-        println("ERROR BY DESERIALIZATION")
-        ex.printStackTrace()
-        return null.asInstanceOf[ T ]
-      }
-      case _ => {
-        println("ERROR BY DESERIALIZATION")
-        /* TODO into log file*/
-        return null.asInstanceOf[ T ]
+      case e: Throwable => {
+        report("Exception occured in serialize method", e, Severity.Error)
+        null.asInstanceOf[T]
       }
     }
   }

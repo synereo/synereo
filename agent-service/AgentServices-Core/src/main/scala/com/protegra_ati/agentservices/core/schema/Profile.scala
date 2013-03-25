@@ -15,6 +15,7 @@ import scala.collection.JavaConversions._
 import java.lang.Integer
 import com.mongodb.casbah.Imports._
 import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
+import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 
 /**
  * Personal profile data object
@@ -194,7 +195,7 @@ case class Profile(
   override def getMongoCollectionIndexes(): List[DBObject] = Profile.MONGO_INDEXES
 }
 
-object Profile
+object Profile extends Reporting
 {
   final val DISPLAYABLE_FIELD_NAMES = createDisplayableFieldNamesMap()
 
@@ -242,7 +243,7 @@ object Profile
       profile = fromProperty(toBeLoaded)
     } catch {
       case ex: IOException => {
-        ex.printStackTrace();
+        report("IOException parsing property file", ex, Severity.Error)
       }
     } finally {
       try {reader.close();} catch {

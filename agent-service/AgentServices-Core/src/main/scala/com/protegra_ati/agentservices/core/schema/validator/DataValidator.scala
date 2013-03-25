@@ -1,11 +1,12 @@
 package com.protegra_ati.agentservices.core.schema.validator
 
 import com.protegra_ati.agentservices.core.schema.{Data}
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 /* User: mgevantmakher
 */
 
-trait DataValidator extends Validable
+trait DataValidator extends Validable with Reporting
 {
   self: Data =>
 
@@ -15,7 +16,8 @@ trait DataValidator extends Validable
   }
 
   override def selfValidate: List[ String ] =
-  {   println("DataValidator executed")
+  {
+    report("DataValidator executed", Severity.Trace)
     if ( this.id == "1" )
       return Nil
     return Nil

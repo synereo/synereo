@@ -1,9 +1,11 @@
 package com.protegra_ati.agentservices.core.util.serializer;
 
+import com.biosimilarity.lift.lib.Severity;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.protegra_ati.agentservices.core.util.ReportingImpl4Java;
+import com.protegra_ati.agentservices.store.util.Reporting;
 import org.apache.commons.pool.impl.StackObjectPool;
 
 import java.io.*;
@@ -21,6 +23,8 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
 
     protected static final String HEADER_4_STRING_SERIALIZATION = "KryoSerializer_";
     protected abstract StackObjectPool getPoolImpl();
+
+    protected final ReportingImpl4Java logger = new ReportingImpl4Java();
 
     public static KryoSerializerBase getInstance()
     {
@@ -44,17 +48,13 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
                 serializer = (Kryo) getPoolImpl().borrowObject();
 
             } catch ( Exception e ) {
-                //   logger.report( "can't borrow serializer from a pool" + e.getMessage(), Severity.Error() );
+                logger.report("Can't borrow serializer from a pool", e, Severity.Error());
             }
             serializer.writeClassAndObject( buffer, toBeSerialized );
 
 
         } catch ( Exception e ) {
-            e.printStackTrace();
-            // logger.report( "object " + toBeSerialized + "  can't be serialized:" + e.getMessage(), Severity.Error() );
-        } catch ( Error er ) {
-            er.printStackTrace();
-            //  logger.report( "object " + toBeSerialized + "  can't be serialized:" + er.getMessage(), Severity.Error() );
+            logger.report( "object " + toBeSerialized + "  can't be serialized", e, Severity.Error() );
         } finally {
 
             if ( buffer != null ) {
@@ -63,7 +63,7 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
                     buffer.clear();
                     buffer.close();
                 } catch ( Exception e ) {
-                    //   logger.report( "buffer can't be closed:" + e.getMessage(), Severity.Warning() );
+                    logger.report("Buffer can't be closed", e, Severity.Error());
                 }
             }
 
@@ -71,7 +71,7 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
                 try {
                     getPoolImpl().returnObject( serializer );
                 } catch ( Exception e ) {
-                    //  logger.report( "can't return serializer back to the pool:" + e.getMessage(), Severity.Warning() );
+                    logger.report("Can't return serializer back to the pool", e, Severity.Error());
                 }
             }
         }
@@ -86,8 +86,7 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
     protected String serializeRaw( Object objToBeSerialized )
     {
         String uid5CharLong = UUID.randomUUID().toString().substring( 0, 5 );
-//        System.err.println( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized );
-        // logger.report( "#####-serialize KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized, Severity.Warning() );
+        logger.report("serializeRaw - KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized, Severity.Trace());
         BufferedOutputStream oos = null;
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         //try {
@@ -126,7 +125,7 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
             try {
                 serializer = (Kryo) getPoolImpl().borrowObject();
             } catch ( Exception e ) {
-                //     logger.report( "ERROR: can't borrow serializer from a pool" + e.getMessage(), Severity.Error() );
+                logger.report("Can't borrow serializer from a pool", e, Severity.Error());
             }
             final Input buffer = new Input( fromInputStream, bufferSize );
             data = serializer.readClassAndObject( buffer );
@@ -134,17 +133,13 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
             buffer.close();
             return (T) data;
         } catch ( Exception e ) {
-            e.printStackTrace();
-            //    logger.report( "ERROR: object " + data + " can't be deserialized:" + e.getMessage(), Severity.Error() );
-        } catch ( Error er ) {
-            er.printStackTrace();
-            //   logger.report( "ERROR: object " + data + " can't be deserialized:" + er.getMessage(), Severity.Error() );
+            logger.report("ERROR: object " + data + " can't be deserialized", e, Severity.Error());
         } finally {
             if ( fromInputStream != null ) {
                 try {
                     fromInputStream.close();
                 } catch ( IOException e ) {
-                    //  logger.report( "buffer can't be closed:" + e.getMessage(), Severity.Warning() );
+                    logger.report("Buffer can't be closed", e, Severity.Warning());
                 }
             }
 
@@ -152,7 +147,7 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
                 try {
                     getPoolImpl().returnObject( serializer );
                 } catch ( Exception e ) {
-                    //   logger.report( "can't return serializer back to the pool:" + e.getMessage(), Severity.Warning() );
+                    logger.report( "Can't return serializer back to the pool", e, Severity.Warning());
                 }
             }
         }
@@ -174,9 +169,9 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
             // logger.report( "#####-deserialize KRYO--ID:" + uid + " ----: " + obj, Severity.Warning() );
             return obj;
         } catch ( Exception e ) {
-            //   logger.report( "ERROR: object can't be deserialized due to base64 decoding problem:" + e.getMessage(), Severity.Error() );
+            logger.report("ERROR: object can't be deserialized due to base64 decoding problem", e, Severity.Error());
         }
-        return (T) null;
+        return null;
     }
 
     private final void sizeWarning( String encodedMsg, Object obj )
@@ -185,7 +180,7 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
         long maxBytes = 100 * bytesInAKilobyte;
         //each char roughly 1 byte
         if ( encodedMsg.length() > maxBytes ) {
-            //   logger.report( "serialized message is more than " + maxBytes / bytesInAKilobyte + " KB for obj " + obj.toString(), Severity.Warning() );
+            logger.report("serialized message is more than " + maxBytes / bytesInAKilobyte + " KB for obj " + obj.toString(), Severity.Warning());
         }
     }
 

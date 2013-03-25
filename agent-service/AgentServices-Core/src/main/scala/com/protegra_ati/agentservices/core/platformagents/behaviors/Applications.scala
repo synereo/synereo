@@ -8,6 +8,7 @@ import com.protegra_ati.agentservices.store.usage.AgentKVDBScope._
 import java.net.URI
 import net.lag.configgy._
 import java.util.UUID
+import com.protegra_ati.agentservices.store.util.Severity
 
 //later support many apps on a single PA
 trait Applications
@@ -23,7 +24,7 @@ trait Applications
       this._appBizNetworkId = UUID.fromString(configUtil.getString(privateAppBizNetworkMapKey).getOrElse(""))
     }
     catch {
-      case e: Exception => report("failed to load appBizNetworkId from config")
+      case e: Exception => report("failed to load appBizNetworkId from config", e, Severity.Fatal)
     }
   }
 }

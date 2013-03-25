@@ -5,9 +5,11 @@ import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import scala.Option
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 
 class OptionSerializer() extends Serializer[ Option[ AnyRef ] ]
+  with Reporting
 {
 
   locally {
@@ -42,8 +44,7 @@ class OptionSerializer() extends Serializer[ Option[ AnyRef ] ]
         }
       } catch {
         case ex: Exception => {
-          ex.printStackTrace()
-
+          report("Can't borrow serializer from a pool", ex, Severity.Error);
         }
       }
     }

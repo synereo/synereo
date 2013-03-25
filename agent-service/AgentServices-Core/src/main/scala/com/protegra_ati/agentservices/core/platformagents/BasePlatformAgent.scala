@@ -121,7 +121,7 @@ abstract class BasePlatformAgent
       this._id = UUID.fromString(configUtil.getString(idKey).getOrElse(""))
     }
     catch {
-      case e: Exception => report("failed to load id from config")
+      case e: Exception => report("failed to load id from config", e, Severity.Fatal)
     }
   }
 
@@ -187,7 +187,7 @@ abstract class BasePlatformAgent
       }
       catch {
         case e => {
-          report("sendRabbit exception, key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString + "  exception: " + e, Severity.Error)
+          report("sendRabbit exception, key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString + "  exception: ", e, Severity.Error)
         }
       }
     }

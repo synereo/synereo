@@ -353,7 +353,7 @@ trait InvitationRequestSetCreator
                     processInvitationResponseToArchive(msgB)
                   }
                   catch {
-                    case e: Exception => e.printStackTrace()
+                    case e: Exception => report("Exception while archiving invitation repsonses", e, Severity.Error)
                   }
                   //enhance later but for now just delete both invitations as both have replied and we have started the processing chain or one (or both) has declined...
                   //move this to a passed in post processing handler

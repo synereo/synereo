@@ -2,11 +2,12 @@ package com.protegra_ati.agentservices.core.util
 
 import java.io._
 import org.apache.commons.io.FileUtils
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 /* User: mgevantmakher
 */
 
-object Base64APIsComparison
+object Base64APIsComparison extends Reporting
 {
 
 
@@ -39,11 +40,7 @@ object Base64APIsComparison
       val end = System.currentTimeMillis()
       println("sun.misc.BASE64 approach: " + ( end - start ))
     } catch {
-      case ex: Exception => {
-        println("sun.misc.BASE64 approach failed")
-        ex.printStackTrace()
-      }
-
+      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
     }
 
   }
@@ -62,10 +59,7 @@ object Base64APIsComparison
       val end = System.currentTimeMillis()
       println("org.apache.commons.codec.binary.Base64 approach: " + ( end - start ))
     } catch {
-      case ex: Exception => {
-        ex.printStackTrace()
-      }
-
+      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
     }
 
   }
@@ -86,10 +80,7 @@ object Base64APIsComparison
       val end = System.currentTimeMillis()
       println("biz.source_code.base64Coder.Base64Coder approach: " + ( end - start ))
     } catch {
-      case ex: Exception => {
-        ex.printStackTrace()
-      }
-
+      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
     }
 
   }

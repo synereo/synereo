@@ -60,32 +60,16 @@ object RabbitConnectionPool
 
   def getConnection(host: String, port: Int): Connection =
   {
-    try {
-      val pool = getPool(host, port)
-      val connection = pool.borrowObject()
+    val pool = getPool(host, port)
+    val connection = pool.borrowObject()
 //      println("getting conn pool active size is : " + pool.getNumActive + " idle : " + pool.getNumIdle)
-      connection
-    }
-    catch {
-      case e: java.lang.IllegalStateException => {
-//        println("Exception: " + e)
-        throw e
-      }
-    }
+    connection
   }
 
   def dropConnection(connection: Connection) =
   {
-    try {
-      val pool = getPool(connection.getAddress.getHostName, connection.getPort)
+    val pool = getPool(connection.getAddress.getHostName, connection.getPort)
 //      println("returning conn pool active size is : " + pool.getNumActive + " idle : " + pool.getNumIdle)
-      pool.returnObject(connection)
-    }
-    catch {
-      case e: java.lang.IllegalStateException => {
-//        println("Exception: " + e)
-        throw e
-      }
-    }
+    pool.returnObject(connection)
   }
 }
