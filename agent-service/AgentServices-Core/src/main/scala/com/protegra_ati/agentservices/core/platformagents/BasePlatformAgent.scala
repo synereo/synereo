@@ -174,9 +174,9 @@ abstract class BasePlatformAgent
   def sendRabbit(config: RabbitConfiguration, cnxn: AgentCnxnProxy, msg: Message)
   {
     spawn {
-      report("send --- key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString, Severity.Info)
+      report("send --- key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString, Severity.Trace)
       if ( msg.eventKey != null ) {
-        report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
+        report("send --- eventKey: " + msg.eventKey.toString, Severity.Trace)
       }
       //    val host = _privateLocation.host
       //    val port = _privateLocation.port
@@ -337,9 +337,9 @@ abstract class BasePlatformAgent
   def send(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
   {
 //    println("SSSSSSSSSSSSSSSSSSSSSS sending a response with id " + msg.ids.id)
-    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Info)
+    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Trace)
     if ( msg.eventKey != null ) {
-      report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
+      report("send --- eventKey: " + msg.eventKey.toString, Severity.Trace)
     }
     publish(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
@@ -348,9 +348,9 @@ abstract class BasePlatformAgent
   {
     msg.channelLevel = Some(ChannelLevel.Single)
 //    println("SSSSSSSSSSSSSSSSSSSSSS single sending a response with id " + msg.ids.id)
-    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Info)
+    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Trace)
     if ( msg.eventKey != null ) {
-      report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
+      report("send --- eventKey: " + msg.eventKey.toString, Severity.Trace)
     }
     publish(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
