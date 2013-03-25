@@ -28,6 +28,7 @@ import org.joda.time.DateTime
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
 import org.apache.commons.io.FileUtils
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 class DataCreator4KryoDeserializationTest extends SpecificationWithJUnit with
 Timeouts
@@ -323,7 +324,7 @@ Timeouts
 
 }
 
-object DataCreator4KryoDeserializationTestInitializer extends Specification
+object DataCreator4KryoDeserializationTestInitializer extends Specification with Reporting
 {
 
   val profile1: SimpleMockProfile1 = SimpleMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode")
@@ -346,9 +347,7 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification
       if ( toFile.exists() ) {toFile.delete()}
     } catch {
       case ex: Exception => {
-        /* TODO into log file*/
-        println("something different:" + ex.toString)
-        ex.printStackTrace();
+        report("Exception encouteredin serialize method", ex, Severity.Error)
         failure("previously serialized class can't be deleted")
       }
     }
@@ -370,10 +369,8 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification
           out.close();
         }
       } catch {
-        case ex: IOException => {/* TODO into log file*/}
-        case _ => {/* TODO into log file*/}
+        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
       }
-
     }
   }
 
@@ -393,7 +390,6 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification
   def deserializeLikeProductive[ T ](fromInputStream: InputStream): T =
   {
     KryoSerializer.getInstance().deserialize[ T ](fromInputStream)
-
   }
 
   def checkIfKryoSerializable(data: Object): Unit =
@@ -408,8 +404,7 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification
     try {
       FileUtils.writeStringToFile(f, Serializer.serialize(data), "UTF-8")
     } catch {
-      case ex: IOException => {/* TODO into log file*/}
-      case _ => {/* TODO into log file*/}
+      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
     }
   }
 
@@ -420,22 +415,9 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification
       val base64 = FileUtils.readFileToString(from, "UTF-8")
       return Serializer.deserialize[ T ](base64)
     } catch {
-      case ex: IOException => {
-        /* TODO into log file*/
-        println("ERROR BY DESERIALIZATION")
-        ex.printStackTrace()
-        return null.asInstanceOf[ T ]
-      }
-      case ex: Exception => {
-        /* TODO into log file*/
-        println("ERROR BY DESERIALIZATION")
-        ex.printStackTrace()
-        return null.asInstanceOf[ T ]
-      }
-      case _ => {
-        println("ERROR BY DESERIALIZATION")
-        /* TODO into log file*/
-        return null.asInstanceOf[ T ]
+      case e: Throwable => {
+        report("Exception occured in deserializeFromString method", e, Severity.Error)
+        return null.asInstanceOf[T]
       }
     }
   }

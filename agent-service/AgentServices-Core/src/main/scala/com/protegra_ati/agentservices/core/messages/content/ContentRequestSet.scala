@@ -77,7 +77,9 @@ trait ContentRequestSet
         //simple search
         fetchList[ Data ](_dbQ, msg.targetCnxn, msg.queryObject.toSearchKey, handleGetContentRequestFetch(_: AgentCnxnProxy, _: List[ Data ], msg.originCnxn, msg))
       }
-      case _ => report("***********************unknown msg.queryObject encountered in processGetContentRquest", Severity.Error)
+      case _ => {
+        report("***********************unknown msg.queryObject encountered in processGetContentRquest", Severity.Error)
+      }
 
     }
     //get from db and put Response for AgentHostUIPlatformAgent on queue
@@ -206,15 +208,16 @@ trait ContentRequestSet
         setContentForSelfAndAllConnectionsAndTargetSelf(msg.targetCnxn, msg.ids, msg.eventKey, msg.newData, msg.oldData)
         setContentIfConnectionChanged(msg)
       }
-
-      val response = new SetContentResponse(msg.ids.copyAsChild(), msg.eventKey.copy(), newData)
-      response.originCnxn = msg.originCnxn
-      response.targetCnxn = msg.targetCnxn
-      report("Store sending msg on private queue cnxn:" + msg.originCnxn.toString)
-      send(_publicQ, msg.originCnxn, response)
-
-      case _ => report("***********************unknown msg.queryObject encountered in processGetContentRquest:" + msg.newData, Severity.Error)
+      case _ => {
+        report("***********************unknown msg.newData object encountered in processSetContentRequest. msg.newData: " + msg.newData, Severity.Error)
+      }
     }
+
+    val response = new SetContentResponse(msg.ids.copyAsChild(), msg.eventKey.copy(), newData)
+    response.originCnxn = msg.originCnxn
+    response.targetCnxn = msg.targetCnxn
+    report("Store sending msg on private queue cnxn:" + msg.originCnxn.toString)
+    send(_publicQ, msg.originCnxn, response)
 
     report("exiting processSetContentRequest in StorePlatform", Severity.Trace)
 

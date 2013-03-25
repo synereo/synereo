@@ -1,11 +1,12 @@
 package com.protegra_ati.agentservices.core.schema.validator
 
 import com.protegra_ati.agentservices.core.schema.{Connection}
+import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 
 /* User: mgevantmakher
 */
 
-trait ConnectionValidator extends DataValidator
+trait ConnectionValidator extends DataValidator with Reporting
 {
   self: Connection =>
 
@@ -16,7 +17,7 @@ trait ConnectionValidator extends DataValidator
 
   override def selfValidate: List[ String ] =
   {
-    println("ConnectionValidator executed")
+    report("ConnectionValidator executed", Severity.Trace)
     if ( this.connectionType == "friend" )
       return Nil
     return Nil

@@ -353,7 +353,7 @@ trait InvitationRequestSetCreator
                     processInvitationResponseToArchive(msgB)
                   }
                   catch {
-                    case e: Exception => e.printStackTrace()
+                    case e: Exception => report("Exception while archiving invitation repsonses", e, Severity.Error)
                   }
                   //enhance later but for now just delete both invitations as both have replied and we have started the processing chain or one (or both) has declined...
                   //move this to a passed in post processing handler
@@ -418,8 +418,14 @@ trait InvitationRequestSetCreator
   //CIR's can only be matched with IRs via ConversationId
   def myArchivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, messages: List[ PersistedMessage[ _ <: Message ] ], conversationId: String, isAccepted: Boolean) =
   {
+    // TODO: Remove once issue 841 is resolved.  There should never be a null PersistedMessage message
+    messages.filter(_ == null) match {
+      case x :: xs => report("NULL PersistedMessage encountered in InvitationRequestSetCreator", Severity.Error)
+      case Nil => 
+    }
+    
     //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
-    for ( msg <- messages ) {
+    for (msg <- messages.filterNot(_ == null)) {
       if ( msg.message.ids.conversationId == conversationId ) {
         val newData = ClonerFactory.getInstance().createDeepClone(msg)
         newData.archive()

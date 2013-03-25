@@ -9,8 +9,7 @@ package com.protegra_ati.agentservices.core.util.serializer
 import com.protegra_ati.agentservices.store.util._
 import java.io._
 
-// TODO eventually Reporting has to be activation again
-object Serializer// extends Reporting
+object Serializer extends Reporting
 {
   private var kryoSerializerReference = KryoSerializer.getInstance()
   private var javaIOSerializerReference = JavaIOSerializer.getInstance()
@@ -38,7 +37,7 @@ object Serializer// extends Reporting
   private def serialize[ T ](obj: T, debug: Boolean): String =
   {
     if ( obj == null ) {
-     // report("NULL -object can't be serialized", Severity.Error)
+      report("NULL -object can't be serialized", Severity.Info)
       return null
     } else {
 
@@ -55,7 +54,7 @@ object Serializer// extends Reporting
       }
       // rest should be java io serialized
       else {
-                //report("object " + obj + " does extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
+        report("object " + obj + " does extend neither UseJavaIOSerialization nor UseKryoSerialization trait", Severity.Warning)
 
         try {
 
@@ -63,18 +62,17 @@ object Serializer// extends Reporting
           //            debugSerializer[ T ](obj)
 
           return javaIOSerializerReference.serialize(obj)
-
         } catch {
           case ex: NotSerializableException => {
-            //report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
+            report("object " + obj + " can't be serialized", ex, Severity.Error)
           }
           case ex: InvalidClassException => {
-            //report("object " + obj + " can't be serialized " + ex.getStackTraceString, Severity.Error)
+            report("object " + obj + " can't be serialized ", ex, Severity.Error)
           }
         }
       }
     }
-    return null // not reachable
+    return null
   }
 
 
@@ -99,14 +97,14 @@ object Serializer// extends Reporting
 
   def debugSerializer[ T ](obj: T)
   {
-    println("DEBUG_SERIALIZATION")
+    report("DEBUG_SERIALIZATION", Severity.Trace)
     val serialized = serialize[ T ](obj, false)
     val deserialized = deserialize[ T ](serialized)
     if ( serialized == null || deserialized == null ) {
-      println("ERROR: serialized=" + serialized + ", desedialized=" + deserialized)
+      report("ERROR: serialized=" + serialized + ", desedialized=" + deserialized, Severity.Error)
 
       if ( !serialized.equals(deserialized) ) {
-        println("ERROR: serialized=" + serialized + ", desedialized=" + deserialized)
+        report("ERROR: serialized=" + serialized + ", desedialized=" + deserialized, Severity.Error)
       }
 
     }
@@ -119,12 +117,10 @@ object Serializer// extends Reporting
    */
   def evaluateSerializerClass(obj: Any): String =
   {
-
     if ( obj == null ) {
-     // report("NULL -object can't be serialized", Severity.Error)
+      report("NULL -object can't be serialized", Severity.Error)
       return null
     } else {
-
       //TODO:re-enable when possible
       if ( obj.isInstanceOf[ UseJavaIOSerialization ] && !obj.asInstanceOf[ UseJavaIOSerialization ].isJavaIOSerializationDeprecated ) {
         return javaIOSerializerReference.getClass().getName

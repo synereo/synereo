@@ -6,6 +6,7 @@ import java.util.concurrent.{BrokenBarrierException, CyclicBarrier}
 import com.rits.cloning.Cloner
 import com.protegra_ati.agentservices.core.schema.{Image, Profile}
 import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 class ParallelSingletonClonerPerformanceTest(repetitions: Int)
 {
@@ -29,7 +30,7 @@ class ParallelSingletonClonerPerformanceTest(repetitions: Int)
     }
   }
 
-  private class CloneWorker extends Runnable
+  private class CloneWorker extends Runnable with Reporting
   {
     override def run()
     {
@@ -42,9 +43,7 @@ class ParallelSingletonClonerPerformanceTest(repetitions: Int)
       try {
         barrier.await();
       } catch {
-        case e: InterruptedException => e.printStackTrace()
-        case e: BrokenBarrierException => e.printStackTrace()
-        case _ => {}
+        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
       }
     }
   }
@@ -85,7 +84,7 @@ class ParallelMultiInstancesClonerPerformanceTest(repetitions: Int)
     }
   }
 
-  private class CloneWorker extends Runnable
+  private class CloneWorker extends Runnable with Reporting
   {
     override def run()
     {
@@ -98,9 +97,7 @@ class ParallelMultiInstancesClonerPerformanceTest(repetitions: Int)
       try {
         barrier.await();
       } catch {
-        case e: InterruptedException => e.printStackTrace()
-        case e: BrokenBarrierException => e.printStackTrace()
-        case _ => {}
+        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
       }
     }
   }

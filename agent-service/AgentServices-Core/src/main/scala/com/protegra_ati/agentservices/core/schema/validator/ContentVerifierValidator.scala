@@ -1,11 +1,12 @@
 package com.protegra_ati.agentservices.core.schema.validator
 
 import com.protegra_ati.agentservices.core.schema.ContentVerifier
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 /* User: mgevantmakher
 */
 
-trait ContentVerifierValidator extends DataValidator
+trait ContentVerifierValidator extends DataValidator with Reporting
 {
   self: ContentVerifier =>
 
@@ -15,8 +16,9 @@ trait ContentVerifierValidator extends DataValidator
   }
 
   override def selfValidate: List[ String ] =
-  { var result: List[ String] = Nil;
-    println("ContentVerifierValidator executed")
+  {
+    var result: List[ String] = Nil
+    report("ContentVerifierValidator executed", Severity.Trace)
     if ( this.claimKey == "somekey" )
       return result
     return result

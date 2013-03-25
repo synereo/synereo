@@ -28,6 +28,7 @@ import scala.None
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.util.serializer.{Serializer, KryoSerializer}
+import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 
 class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 {
@@ -805,7 +806,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
 
 }
 
-object KryoSerializerTestDataInitializer
+object KryoSerializerTestDataInitializer extends Reporting
 {
   val profile1: SimpleMockProfile1 = SimpleMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode")
   val compositeProfile: CompositeMockProfile1 = CompositeMockProfile1("firstName", "lastName", "description", "emailAddress", "country", "region", "city", "postalCode", MockImage.simpleDemoMockImage)
@@ -816,13 +817,7 @@ object KryoSerializerTestDataInitializer
     try {
       if ( toFile.exists() ) {toFile.delete()}
     } catch {
-      case ex: Exception => {
-        /* TODO into log file*/
-        println("something different:" + ex.toString)
-        ex.printStackTrace();
-//        failure("previously serialized class can't be deleted")
-        println("previously serialized class can't be deleted")
-      }
+      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
     }
     serialize(data, new FileOutputStream(toFile))
   }
@@ -842,8 +837,7 @@ object KryoSerializerTestDataInitializer
           out.close();
         }
       } catch {
-        case ex: IOException => {/* TODO into log file*/}
-        case _ => {/* TODO into log file*/}
+        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
       }
 
     }

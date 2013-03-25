@@ -5,89 +5,91 @@
 
 package com.protegra_ati.agentservices.core.events
 
-trait MessageEventListener
+import com.protegra_ati.agentservices.store.util.Reporting
+
+trait MessageEventListener extends Reporting
 {
   def registrationResponseReceived(e: RegistrationResponseReceivedEvent) =
   {
-    println("registrationResponseReceived, not implemented")
+    report("registrationResponseReceived, not implemented")
   }
 //  def approveRegistrationResponseReceived(e: ApproveRegistrationResponseReceivedEvent) =
 //  {
-//    println("approveRegistrationResponseReceived, not implemented")
+//    report("approveRegistrationResponseReceived, not implemented")
 //  }
 //  def affiliateResponseReceived(e: AffiliateResponseReceivedEvent) =
 //  {
-//    println("affiliateResponseReceived, not implemented")
+//    report("affiliateResponseReceived, not implemented")
 //  }
 
 
   def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
   {
-    println("in base GetContentResponseReceived, not implemented")
+    report("in base GetContentResponseReceived, not implemented")
   }
 
 //  def searchResponseReceived(e: SearchResponseReceivedEvent) =
 //  {
-//    println("in base searchResponseReceived, not implemented")
+//    report("in base searchResponseReceived, not implemented")
 //  }
 
   def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
   {
-    println("in base setContentResponseReceived, not implemented")
+    report("in base setContentResponseReceived, not implemented")
   }
 
   def setContentAdminResponseReceived(e: SetContentAdminResponseReceivedEvent) =
    {
-     println("in base setContentAdminResponseReceived, not implemented")
+     report("in base setContentAdminResponseReceived, not implemented")
    }
   def setContentPersistedResponseReceived(e: SetContentPersistedResponseReceivedEvent) =
   {
-    println("in base setContentPersistedResponseReceived, not implemented")
+    report("in base setContentPersistedResponseReceived, not implemented")
   }
 
   def setContentAuthorizationResponseReceived(e: SetContentAuthorizationResponseReceivedEvent) =
   {
-    println("in base setContentAuthorizationResponseReceived, not implemented")
+    report("in base setContentAuthorizationResponseReceived, not implemented")
   }
 
   def deleteContentResponseReceived(e: DeleteContentResponseReceivedEvent) =
   {
-    println("in base deleteContentResponseReceived, not implemented")
+    report("in base deleteContentResponseReceived, not implemented")
   }
 
   def verifyResponseReceived(e: VerifyResponseReceivedEvent) =
   {
-    println("in base verifyResponseReceived, not implemented")
+    report("in base verifyResponseReceived, not implemented")
   }
 
   def setLoginResponseReceived(e: SetLoginResponseReceivedEvent) =
-  {println("setLoginResponseReceived, not implemented")}
+  {report("setLoginResponseReceived, not implemented")}
 
   def getContentAuthorizationRequiredNotificationReceived(e: GetContentAuthorizationRequiredNotificationReceivedEvent) =
-  {println("getContentAuthorizationRequiredNotificationReceived, not implemented")}
+  {report("getContentAuthorizationRequiredNotificationReceived, not implemented")}
 
   def verifyPermissionRequiredNotificationReceived(e: VerifyPermissionRequiredNotificationReceivedEvent) =
-  {println("verifyPermissionRequiredNotificationReceived, not implemented")}
+  {report("verifyPermissionRequiredNotificationReceived, not implemented")}
 
   def selectVerifierRequestNotificationReceivedEvent(e: SelectVerifierRequestNotificationReceivedEvent) =
-  {println("selectVerifierRequestNotificationReceivedEvent, not implemented")}
+  {report("selectVerifierRequestNotificationReceivedEvent, not implemented")}
 
   def getClaimResponseReceived(e: GetClaimResponseReceivedEvent) =
-  {println("getClaimResponseReceived, not implemented")}
+  {report("getClaimResponseReceived, not implemented")}
 
   def verifyContentRequestNotificationReceived(e: VerifyContentRequestNotificationReceivedEvent) =
-  {println("verifyContentRequestNotificationReceived, not implemented")}
+  {report("verifyContentRequestNotificationReceived, not implemented")}
 
   def verifyContentResponseReceived(e: VerifyContentResponseReceivedEvent) =
-  {println("verifyContentResponseReceived, not implemented")}
+  {report("verifyContentResponseReceived, not implemented")}
 
   def createInvitationResponseReceived(e: CreateInvitationResponseReceivedEvent) =
-  {println("createInvitationResponseReceived, not implemented")}
+  {report("createInvitationResponseReceived, not implemented")}
 
   def createIntroductionResponseReceived(e: CreateIntroductionResponseReceivedEvent) =
-  {println("createIntroductionResponseReceived, not implemented")}
+  {report("createIntroductionResponseReceived, not implemented")}
 
 //  def createReferralResponseReceived(e: CreateReferralResponseReceivedEvent) =
-//  {println("createReferralResponseReceived, not implemented")}
+//  {report("createReferralResponseReceived, not implemented")}
 
 }

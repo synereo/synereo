@@ -130,61 +130,89 @@ trait Reporting
 
   def report[ A ](fact: A): Unit =
   {
-    report(fact, Severity.Debug)
+    report(fact, None, Severity.Debug)
   }
 
-  def report[ A ](fact: A, level: Severity.Value) =
+  def report[ A ](fact: A, level: Severity.Value): Unit =
   {
-    trace(fact, level)
-    log(fact, level)
+    report(fact, None, level)
+  }
+
+  def report[ A ](fact: A, exception: Throwable, level: Severity.Value): Unit =
+  {
+    report(fact, Option[Throwable](exception), level)
+  }
+
+  def report[ A ](fact: A, exception: Option[Throwable], level: Severity.Value): Unit =
+  {
+    trace(fact, exception, level)
+    log(fact, exception, level)
   }
 
   def trace[ A ](fact: A): Unit =
   {
-    trace(fact, Severity.Debug)
+    trace(fact, None, Severity.Debug)
   }
 
-  def trace[ A ](fact: A, level: Severity.Value) =
+  def trace[ A ](fact: A, level: Severity.Value): Unit =
+  {
+    trace(fact, None, level)
+  }
+
+  def trace[ A ](fact: A, exception: Throwable, level: Severity.Value): Unit =
+  {
+    trace(fact, Option[Throwable](exception), level)
+  }
+
+  def trace[ A ](fact: A, exception: Option[Throwable], level: Severity.Value): Unit =
   {
     if ( enabled(level, traceLevel) ) {
       //todo: worth adding severity to output <report> tag?
-      level match {
-        case _ => {
-          println(header(level) + "\n" + wrap(fact).toString() + "\n")
-        }
-      }
+      println(header(level) + "\n" + wrap(fact).toString() + "\n")
+      exception.map(_.printStackTrace)
     }
   }
 
   def log[ A ](fact: A): Unit =
   {
-    log(fact, Severity.Debug)
+    log(fact, None, Severity.Debug)
   }
 
-  def log[ A ](fact: A, level: Severity.Value) =
+  def log[ A ](fact: A, level: Severity.Value): Unit =
+  {
+    log(fact, None, level)
+  }
+
+  def log[ A ](fact: A, exception: Throwable, level: Severity.Value): Unit =
+  {
+    log(fact, None, level)
+  }
+
+  def log[ A ](fact: A, exception: Option[Throwable], level: Severity.Value): Unit =
   {
     if ( enabled(level, logLevel) ) {
+      val t:Throwable = exception.getOrElse(null)
       level match {
         case Severity.Fatal => {
-          logger.log(Level.FATAL, fact toString)
+          logger.log(Level.FATAL, fact.toString, t)
         }
         case Severity.Error => {
-	  logger.log(Level.ERROR, fact toString)
+	        logger.log(Level.ERROR, fact toString, t)
         }
         case Severity.Warning => {
-          logger.log(Level.WARN, fact toString)
+          logger.log(Level.WARN, fact toString, t)
         }
         case Severity.Info => {
-	  logger.log(Level.INFO, fact toString)
+	        logger.log(Level.INFO, fact toString, t)
         }
         case Severity.Debug => {
-          logger.log(Level.DEBUG, fact toString)
+          logger.log(Level.DEBUG, fact toString, t)
         }
         case Severity.Trace => {
-	  logger.log(Level.TRACE, fact toString)
+	        logger.log(Level.TRACE, fact toString, t)
         }
         case _ => {
-          logger.log(Level.DEBUG, fact toString)
+          logger.log(Level.DEBUG, fact toString, t)
         }
       }
     }

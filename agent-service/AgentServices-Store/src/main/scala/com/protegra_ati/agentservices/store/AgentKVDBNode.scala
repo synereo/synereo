@@ -3818,7 +3818,7 @@ package usage {
 	  queue
 	)
       // get an empty queue
-      val collectDQ = collectDQM.zero[String]    
+      val collectDQ = collectDQM.zero[String]
       println( "---------------------------******>>>>>>******---------------------------" )
       println( "creating entries" )
       println( "---------------------------******>>>>>>******---------------------------" )
@@ -3852,7 +3852,7 @@ package usage {
       val acc = new ListBuffer[Elem]()      
       val fileNames = new ListBuffer[String]()      
       val lock = new Lock()
-      
+
       println( "reading entries" )
       for ( entry <- collectDQM( collectDQ ) ) {
 	print( "." )
@@ -3880,7 +3880,7 @@ package usage {
 	    println( "waiting @ " + ( lthrd + rcrdsFileNameSfx ) )
 	    println( "to be able to continue processing json entries" )
 	    println( "---------------------------******>>>>>>******---------------------------" )
-	    
+
 	    for( rsrc <- entryExchange.getS( lthrd + rcrdsFileNameSfx ) ) {
 
 	      println( "---------------------------******>>>>>>******---------------------------" )
@@ -3901,8 +3901,8 @@ package usage {
 	  acc.clear
 	}
 	lock.release	
-      }      
-      println( "\nentries read" )      
+      }
+      println( "\nentries read" )
       fileNames
     }
 

@@ -123,7 +123,7 @@ abstract class BasePlatformAgent
       this._id = UUID.fromString(configUtil.getString(idKey).getOrElse(""))
     }
     catch {
-      case e: Exception => report("failed to load id from config")
+      case e: Exception => report("failed to load id from config", e, Severity.Fatal)
     }
   }
 
@@ -176,21 +176,20 @@ abstract class BasePlatformAgent
   def sendRabbit(config: RabbitConfiguration, cnxn: AgentCnxnProxy, msg: Message)
   {
     spawn {
-      report("send --- key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString, Severity.Info)
+      report("send --- key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString, Severity.Trace)
       if ( msg.eventKey != null ) {
-        report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
+        report("send --- eventKey: " + msg.eventKey.toString, Severity.Trace)
       }
       //    val host = _privateLocation.host
       //    val port = _privateLocation.port
       val exchange = cnxn.getExchangeKey + msg.getExchangeKey
       val routingKey = "routeroute"
       try {
-        val publisher = new MessageAMQPPublisher(config, exchange, routingKey)
-        publisher.send(msg)
+        val publisher = MessageAMQPPublisher.sendToRabbit(config, exchange, routingKey, msg)
       }
       catch {
         case e => {
-          report("sendRabbit exception, key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString + "  exception: " + e, Severity.Error)
+          report("sendRabbit exception, key: " + msg.getExchangeKey + " cnxn: " + cnxn.toString + "  exception: ", e, Severity.Error)
         }
       }
     }
@@ -215,7 +214,7 @@ abstract class BasePlatformAgent
     val lblChannel = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
-    report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + cnxn.toString + " key: " + key, Severity.Info)
+    report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + cnxn.toString + " key: " + key, Severity.Debug)
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
@@ -234,7 +233,7 @@ abstract class BasePlatformAgent
             //            rename {
             val msg = Serializer.deserialize[ Message ](e.dispatch)
 //            println("IIIIIIIIIIIIIIIIIIIIIIII msg id : " + msg.ids.id + " on cnxn " + cnxn)
-            report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " msg id: " + msg.ids.id + " cnxn: " + agentCnxn.toString, Severity.Info)
+            report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " msg id: " + msg.ids.id + " cnxn: " + agentCnxn.toString, Severity.Debug)
             //race condition on get get get with consume bringing back the same item, cursor would get around this problem
             //BUG 54 - can't use a cursor get before a put because no results are returned, problem with cursors and waiters
             //temporary solution is to ignore duplicate processing of the same request msg by id
@@ -246,13 +245,13 @@ abstract class BasePlatformAgent
               handler(cnxn, msg)
             }
             else
-              report("already processed id : " + msg.ids.id, Severity.Info)
+              report("already processed id : " + msg.ids.id, Severity.Debug)
             //            ("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
           }
 //          listen(queue, cnxn, key, handler, expiry)
         }
         else {
-          report("listen received - none", Severity.Info)
+          report("listen received - none", Severity.Debug)
         }
       }
     }
@@ -278,7 +277,7 @@ abstract class BasePlatformAgent
   //  {
   //    val lblChannel = key.toLabel
   //
-  //    report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + cnxn.toString + " key: " + key, Severity.Info)
+  //    report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + cnxn.toString + " key: " + key, Severity.Debug)
   //
   //    //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
   //    reset {
@@ -287,14 +286,14 @@ abstract class BasePlatformAgent
   //        if ( e != None ) {
   //          spawn {
   //            val results: List[ Message ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ Message ](x.dispatch))
-  //            results.map(x => report("!!! Listen Received !!!: " + x.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + cnxn.toString, Severity.Info))
+  //            results.map(x => report("!!! Listen Received !!!: " + x.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + cnxn.toString, Severity.Debug))
   //            handler(cnxn, results)
   //          }
   //          //keep the main thread listening, see if this causes debug headache
   //          listenList(queue, cnxn, key, handler)
   //        }
   //        else {
-  //          report("listen received - none", Severity.Info)
+  //          report("listen received - none", Severity.Debug)
   //        }
   //      }
   //    }
@@ -305,7 +304,7 @@ abstract class BasePlatformAgent
     val lblChannel = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
-    report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + agentCnxn.toString + " key: " + key, Severity.Info)
+    report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + agentCnxn.toString + " key: " + key, Severity.Debug)
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
@@ -315,13 +314,13 @@ abstract class BasePlatformAgent
           spawn {
             rename {
               val msg = Serializer.deserialize[ T ](e.dispatch)
-              report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Info)
+              report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Debug)
               handler(cnxn, msg)
             }("inBasePlatformAgent single listen on channel: " + lblChannel)
           }
         }
         else {
-          report("listen received - none", Severity.Info)
+          report("listen received - none", Severity.Debug)
         }
       }
     }
@@ -340,9 +339,9 @@ abstract class BasePlatformAgent
   def send(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
   {
 //    println("SSSSSSSSSSSSSSSSSSSSSS sending a response with id " + msg.ids.id)
-    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Info)
+    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Trace)
     if ( msg.eventKey != null ) {
-      report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
+      report("send --- eventKey: " + msg.eventKey.toString, Severity.Trace)
     }
     publish(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
@@ -351,9 +350,9 @@ abstract class BasePlatformAgent
   {
     msg.channelLevel = Some(ChannelLevel.Single)
 //    println("SSSSSSSSSSSSSSSSSSSSSS single sending a response with id " + msg.ids.id)
-    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Info)
+    report("send --- key: " + msg.getChannelKey + " cnxn: " + cnxn.toString, Severity.Trace)
     if ( msg.eventKey != null ) {
-      report("send --- eventKey: " + msg.eventKey.toString, Severity.Info)
+      report("send --- eventKey: " + msg.eventKey.toString, Severity.Trace)
     }
     publish(queue, cnxn, msg.getChannelKey, Serializer.serialize[ Message ](msg))
   }
@@ -395,7 +394,7 @@ abstract class BasePlatformAgent
 
 //  def getList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
 //  {
-//    report("get --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+//    report("get --- key: " + key + " cnxn: " + cnxn.toString, Severity.Debug)
 //    val lbl = key.toLabel
 //
 //    val agentCnxn = cnxn.toAgentCnxn()
@@ -428,7 +427,7 @@ abstract class BasePlatformAgent
 
   def store(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, value: String) =
   {
-    report("store --- key: " + key + ", cnxn: " + cnxn.toString + ", value: " + value.short, Severity.Info)
+    report("store --- key: " + key + ", cnxn: " + cnxn.toString + ", value: " + value.short, Severity.Trace)
     val lbl = key.toLabel
     val agentCnxn = cnxn.toAgentCnxn()
     //this should really be store
@@ -440,7 +439,7 @@ abstract class BasePlatformAgent
 
   def fetch[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
-    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -459,7 +458,7 @@ abstract class BasePlatformAgent
   def fetchOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit)
     (retries: Int, delay: Int, handlerElse: () => Unit) =
   {
-    report("fetchOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetchOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -495,7 +494,7 @@ abstract class BasePlatformAgent
 
   def fetchList[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit) =
   {
-    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -513,7 +512,7 @@ abstract class BasePlatformAgent
   def fetchListOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit)
                           (retries: Int, delay: Int, handlerElse: () => Unit) =
   {
-    report("fetchListOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Info)
+    report("fetchListOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
@@ -584,7 +583,7 @@ abstract class BasePlatformAgent
   def delete(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String) =
   {
     val agentCnxn = cnxn.toAgentCnxn()
-    report("delete --- key: " + key.toLabel + " cnxn: " + cnxn.toString, Severity.Info)
+    report("delete --- key: " + key.toLabel + " cnxn: " + cnxn.toString, Severity.Trace)
     queue.delete(agentCnxn)(key.toLabel)
   }
 
@@ -616,20 +615,20 @@ abstract class BasePlatformAgent
   //    {
   //      val lblChannel = key.toLabel
   //
-  //      report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + cnxn.toString + " key: " + key, Severity.Info)
+  //      report("listen: channel: " + lblChannel.toString + " id: " + _id + " cnxn: " + cnxn.toString + " key: " + key, Severity.Debug)
   //
   //      //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
   //      reset {
   //        for( c <- queue.get( true )( cnxn )(lblChannel))
   //        {
-  //          report("LISTENED TO CURSOR -------------- " + c.toString, Severity.Info)
+  //          report("LISTENED TO CURSOR -------------- " + c.toString, Severity.Debug)
   //          if (c != None)
   //          {
   //  //          spawn {
   //            val iter = c.dispatchCursor
   //            for ( e <- iter ) {
   //              val msg = Serializer.deserialize[ Message ](e.dispatch)
-  //              report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + cnxn.toString, Severity.Info)
+  //              report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + cnxn.toString, Severity.Debug)
   //              handler(cnxn, msg)
   //            }
   //  //            val messages: List[ Message ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ Message ](x.dispatch))
@@ -642,7 +641,7 @@ abstract class BasePlatformAgent
   //            listenCursor(queue, cnxn, key, handler)
   //          }
   //        else {
-  //            report("listen received - none", Severity.Info)
+  //            report("listen received - none", Severity.Debug)
   //          }
   //        }
   //      }
