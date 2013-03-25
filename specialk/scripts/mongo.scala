@@ -46,6 +46,24 @@ object ExerciseMongo {
       node1.cache.varToString,
       node1.cache.tagToString
     )
+  def doStore() = {
+    node1.cache.store(
+      pd1.storeUnitStr
+    )( rcrd1 )(
+      node1.cache.nameSpaceToString,
+      node1.cache.varToString,
+      node1.cache.tagToString
+    )
+  }
+  def doGet() = {
+    reset { for( e <- node1.get( RAFQry1 ) ) { println( e ) } }
+  }
+  def doSubscribe() = {
+    reset { for( e <- node1.subscribe( RAFQry1 ) ) { println( e ) } }
+  }
+  def doPublish() = {
+    reset { node1.publish( RAFQry1, 10.0 ) }
+  }
 }
 
 object MongoDetails {
