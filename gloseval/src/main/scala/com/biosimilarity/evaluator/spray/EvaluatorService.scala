@@ -118,14 +118,6 @@ trait EvaluatorService extends HttpService {
   val cometActor = actorRefFactory.actorOf(Props[CometActor])
 
   val myRoute =
-    path("sessionPing") {
-      get {
-        parameters('sessionURI) { sessionURI:String =>
-          // What parts of the sessionURI are necessary for the keepalive?
-          (cometActor ! SessionPing(sessionURI, _))
-        }
-      }
-    } ~
     path("") {
       post {
         decodeRequest(NoEncoding) {
@@ -158,6 +150,11 @@ trait EvaluatorService extends HttpService {
 }}
 """
                   )))
+                }
+                case "sessionPing" => {
+                  val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+                  // TODO: check sessionURI validity
+                  (cometActor ! SessionPing(sessionURI, _))
                 }
                 case "evalRequest" => {
                   val sessionURI = (json \ "content" \ "sessionURI").extract[String]
