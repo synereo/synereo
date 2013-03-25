@@ -234,12 +234,12 @@ with MessageStore
   {
     if ( isPrivateKVDBNetworkMode() ) {
 
-      report("!!! Received on Public channel...Sending on privateQ!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
+      report("!!! Received on Public channel...Sending on privateQ!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Debug)
       msg.channelLevel = Some(ChannelLevel.Private)
       super.send(_privateQ, _cnxnUIStore, msg)
     }
     else {
-      report("!!! Received on Public channel...Sending on private rabbit!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Info)
+      report("!!! Received on Public channel...Sending on private rabbit!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Debug)
       msg.channelLevel = Some(ChannelLevel.Private)
       sendRabbit(_privateRabbitConfig, _cnxnUIStore, msg)
     }
