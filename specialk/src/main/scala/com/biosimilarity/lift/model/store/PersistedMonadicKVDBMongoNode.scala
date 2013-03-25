@@ -2367,7 +2367,13 @@ package usage {
 			}
 			else {
 			  if ( compareNameSpace( ns, kvKNameSpace ) ) {
-			    val mTT.Continuation( ks ) = asCacheK( v )
+			    val mTT.Continuation( ks ) =
+			      asCacheK(
+				new CnxnCtxtBranch[String,String,String](
+				  "string",
+				  v :: Nil
+				)
+			      )
 			    emT.PlaceInstance(
 			      k,
 			      Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
