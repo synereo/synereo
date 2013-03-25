@@ -118,7 +118,7 @@ trait EvaluatorService extends HttpService {
   val cometActor = actorRefFactory.actorOf(Props[CometActor])
 
   val myRoute =
-    path("") {
+    path("api") {
       post {
         decodeRequest(NoEncoding) {
           // unmarshal with in-scope unmarshaller
