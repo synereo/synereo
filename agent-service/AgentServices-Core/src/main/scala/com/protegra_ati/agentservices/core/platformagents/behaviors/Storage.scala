@@ -88,7 +88,10 @@ trait Storage
     // Fetch data to delete, or if no data to delete, store newData
     // must call key before toDeleteKey to get the proper id
     val dataKey = newData.toStoreKey
-    def handlerElse = store(_dbQ, cnxn, dataKey, Serializer.serialize[ Data ](newData))
+    def handlerElse = 
+    {
+      store(_dbQ, cnxn, dataKey, Serializer.serialize[ Data ](newData))
+    }
     fetchListOrElse[ Data ](_dbQ, cnxn, newData.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))(1, 0, () => handlerElse)
   }
 
