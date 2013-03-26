@@ -534,10 +534,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )
 		)
 	      )
-	    val debugString = CnxnMongoQuerifier.toMongoQuery( ccb )(
+	    CnxnMongoQuerifier.toMongoQuery( ccb )(
 	      nameSpaceToString, varToString, tagToString
 	    ).toString
-      debugString
 	  }
 	}
 	
@@ -2043,7 +2042,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  cache.mput( perD )( cache.theMeetingPlace, cache.theWaiters, false, xmlCollName )( ptn, rsrc )
+	  cache.mput( perD )( cache.theMeetingPlace, cache.theWaiters, true, xmlCollName )( ptn, rsrc )
 	}
 	override def publish( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
 	  val perD = cache.persistenceManifest
@@ -2052,7 +2051,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  cache.mput( perD )( cache.theChannels, cache.theSubscriptions, true, xmlCollName )( ptn, rsrc )
+	  cache.mput( perD )( cache.theChannels, cache.theSubscriptions, false, xmlCollName )( ptn, rsrc )
 	}
 
 	def unbindAndResubmit( hops : List[Moniker] )(
@@ -3083,37 +3082,58 @@ package usage {
       def doGet() = {
 	reset { for( e <- node1.get( RAFQry1 ) ) { println( e ) } }
       }
+      def doPut() = {
+	reset { node1.put( RAFQry1, 5.0 ) }
+      }
       def doSubscribe() = {
 	reset { for( e <- node1.subscribe( RAFQry1 ) ) { println( e ) } }
       }
       def doPublish() = {
 	reset { node1.publish( RAFQry1, 10.0 ) }
-      }
-      def doDoThatVoodoo() {
-	println( "/* Storing */" )
-	doStore()
-	println( "/* Getting */" )
-	doGet()
-	println( "/* Subscribing */" )
-	doSubscribe()
-	println( "/* Publishing */" )
-	doPublish()
-	println( "/* Publishing */" )
-	doPublish()
-      }
+      }      
     }
     
-//    object MongoDetails {
-//      import ExerciseMongo._
-//      import com.biosimilarity.lift.model.store.mongo._
-//      val spool1 =
-//	MongoSessionPool(
-//	  node1.cache.sessionURIFromConfiguration
-//	)
-//      val clntSess1 = spool1.borrowObject()
-//      val mc1 =
-//	clntSess1.getDB( node1.cache.defaultDB )( pd1.storeUnitStr )
-//    }
+   object MongoDetails {
+     import ExerciseMongo._
+     import com.biosimilarity.lift.model.store.mongo._
+     val clntSess1 = node1.cache.client
+     val mc1 =
+       clntSess1.getDB( node1.cache.defaultDB )( pd1.storeUnitStr )
+     def doDoThatVoodoo() {
+       println( "/* Dropping */" )
+       mc1.drop
+       println( "/* Storing */" )
+       println( "/* Collection */" )
+       println( mc1 )
+       doStore()
+       println( "/* Collection */" )
+       println( mc1 )
+       println( "/* Getting */" )
+       doGet()
+       println( "/* Collection */" )
+       println( mc1 )
+       println( "/* Putting */" )
+       doPut()
+       println( "/* Collection */" )
+       println( mc1 )
+       println( "/* Getting */" )
+       doGet()
+       println( "/* Collection */" )
+       println( mc1 )
+       println( "/* Subscribing */" )
+       doSubscribe()
+       println( "/* Collection */" )
+       println( mc1 )
+       println( "/* Publishing */" )
+       doPublish()
+       println( "/* Collection */" )
+       println( mc1 )
+       println( "/* Publishing */" )
+       doPublish()
+       println( "/* Collection */" )
+       println( mc1 )
+     }
+   }
     
   }
 }
