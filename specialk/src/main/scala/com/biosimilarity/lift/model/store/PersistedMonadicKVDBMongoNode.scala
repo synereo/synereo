@@ -3103,17 +3103,17 @@ package usage {
       }
     }
     
-    object MongoDetails {
-      import ExerciseMongo._
-      import com.biosimilarity.lift.model.store.mongo._
-      val spool1 =
-	MongoSessionPool(
-	  node1.cache.sessionURIFromConfiguration
-	)
-      val clntSess1 = spool1.borrowObject()
-      val mc1 =
-	clntSess1.getDB( node1.cache.defaultDB )( pd1.storeUnitStr )
-    }
+//    object MongoDetails {
+//      import ExerciseMongo._
+//      import com.biosimilarity.lift.model.store.mongo._
+//      val spool1 =
+//	MongoSessionPool(
+//	  node1.cache.sessionURIFromConfiguration
+//	)
+//      val clntSess1 = spool1.borrowObject()
+//      val mc1 =
+//	clntSess1.getDB( node1.cache.defaultDB )( pd1.storeUnitStr )
+//    }
     
   }
 }
