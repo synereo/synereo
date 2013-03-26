@@ -10,7 +10,7 @@ object LocalProverFactoryPool {
   lazy val _prover = ProverFactory.getProver()
 
   case class LocalProverFactory() extends BasePoolableObjectFactory[Prover] {
-    override def makeObject() : Prover = {
+    override def makeObject() : Prover = synchronized {
       ProverFactory.getProver()
     }
   }

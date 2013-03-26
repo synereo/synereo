@@ -1,7 +1,6 @@
 package com.biosimilarity.lift.model.store.mongo
 
 import com.biosimilarity.lift.model.store.CnxnMongoObject
-import com.biosimilarity.lift.model.store.CnxnMongoQuery
 import com.biosimilarity.lift.model.store.CnxnCtxtInjector
 import com.biosimilarity.lift.model.store.CnxnString
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
@@ -9,21 +8,18 @@ import com.biosimilarity.lift.model.store.CnxnCtxtLeaf
 import com.biosimilarity.lift.model.store.CnxnCtxtBranch
 import com.biosimilarity.lift.model.store.Factual
 import com.biosimilarity.lift.model.store.Persist
-import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store.Blobify
 import com.biosimilarity.lift.model.store.SessionURIConversionsT
 
 import com.biosimilarity.lift.lib.UUIDOps
 import com.biosimilarity.lift.lib.ConfigurationTrampoline
-import com.biosimilarity.lift.lib.zipper._
 
 import com.mongodb.casbah.Imports._
 import com.mongodb.util.JSON
-import com.mongodb.util.JSON._
 
-import org.apache.commons.pool.impl.GenericObjectPool
 
 import java.net.URI
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 object MongoUtils extends SessionURIConversionsT {
   def getSessionURIFromTuple(
@@ -142,6 +138,35 @@ with Blobify with UUIDOps {
 
 trait MongoStringResultsParser extends MongoResultsParser[String,String,String]
 
+object MongoClientPool {
+  import java.util.concurrent.ConcurrentHashMap
+
+  private val clientMap = new ConcurrentHashMap[String, MongoClient]()
+
+  private val MAX_CLIENT_CONNECTIONS = 150
+
+  /**
+   * Returns a MongoClient instance tied to the specified URI, creating a new
+   * instance if necessary
+   * @param uri
+   * @return
+   */
+  def client(uri: URI):MongoClient = {
+    val key = uri.toString
+    if (clientMap.containsKey(key)) {
+      clientMap.get(key)
+    } else {
+      val newClient = MongoClient(uri.getAuthority, MongoClientOptions(true, MAX_CLIENT_CONNECTIONS))
+      val tmpClient = clientMap.putIfAbsent(key, newClient)
+      if (tmpClient == null) {
+        newClient // New client used
+      } else {
+        tmpClient // Client already present in mapping, return old client
+      }
+    }
+  }
+}
+
 trait BaseMongoPersist[Namespace,Var,Tag]
 extends Persist[MongoClient,DBObject]
 with MongoResultsParser[Namespace,Var,Tag]
@@ -155,42 +180,22 @@ with StdMongoStoreConfiguration
 	 with Blobify with UUIDOps {}  
 
   @transient
-  lazy val sessionURIFromConfiguration : URI =
-    getSessionURIFromConfiguration
+  lazy val sessionURIFromConfiguration : URI = getSessionURIFromConfiguration
 
   @transient
-  private final val pool = MongoSessionPool
-
-  def getMongoClientURIFromConfiguration = 
-    new MongoClientURI( sessionURIFromConfiguration.toString )
-
-  @transient
-  lazy val mongoClientURIFromConfiguration =
-    getMongoClientURIFromConfiguration
-
-  def clientSessionFromConfig : MongoClient =
-    MongoClient( mongoClientURIFromConfiguration )
-
-  private def clientSessionFromPool : MongoClient =
-    pool.borrowClientSession(dbHost, dbPort.toInt, dbUser, dbPwd)  
-
-  def acquireSession( uri : URI ) : MongoClient = pool( uri ).borrowObject()
+  lazy val client = MongoClientPool.client(sessionURIFromConfiguration)
 
   def wrapAction[S,T]( action : ( MongoClient, S ) => T ) : S => T = {
     ( s : S ) => {
       try {
-	val spool = pool( sessionURIFromConfiguration )
-	val clientSessionFromPool = spool.borrowObject()
-	val ans : T = action( clientSessionFromPool, s )
-	spool.returnObject( clientSessionFromPool )
-	ans
+        val ans : T = action( client, s )
+        ans
       } 
       catch {
-	case mxe : Exception => {
-	  //spool.returnObject( clientSessionFromPool )
-	  mxe.printStackTrace
+        case mxe : Exception => {
+          mxe.printStackTrace
           throw mxe
-	}
+        }
       }
     }
   }
@@ -202,54 +207,39 @@ with StdMongoStoreConfiguration
    */
   
   def open( collectionName : String ) : MongoClient = {
-    val spool = pool( sessionURIFromConfiguration )
-    val clientSessionFromPool = spool.borrowObject()
-    _checkIfDBExistsAndCreateIfNot( clientSessionFromPool, collectionName )
-    clientSessionFromPool
+    throw new NotImplementedException()
   }
 
   def openSafely( collectionName : String ) : Boolean = {
-    wrapAction( _checkIfDBExistsAndCreateIfNot )( collectionName )
+    throw new NotImplementedException()
   }
 
   // Note: leaveOpen is being ignored
   def checkIfDBExists( collectionName : String, leaveOpen : Boolean ) : Boolean = {
-    wrapAction( _checkIfDBExists )( collectionName )
-  }  
+    // Note: Mongo queries will work whether a DB exists or not, so we skip the check
+    true
+  }
 
   def _checkIfDBExists(
     clientSession : MongoClient, collectionName : String
   ): Boolean = {
-    val db = defaultDB
-    if ( clientSession.databaseNames.contains( db ) ) {
-      val mdb : MongoDB = clientSession.getDB( db )
-      mdb.collectionExists( collectionName )
-    }
-    else false
+    // Note: Mongo queries will work whether a DB exists or not, so we skip the check
+    true
   }
 
   // Note: leaveOpen is being ignored
   def checkIfDBExistsAndCreateIfNot(
     collectionName : String, leaveOpen : Boolean
   ) : Boolean = {
-    wrapAction( _checkIfDBExistsAndCreateIfNot )( collectionName )
+    // Note: Mongo queries will work whether a DB exists or not, so we skip the check/creation
+    true
   }
 
   def _checkIfDBExistsAndCreateIfNot(
     clientSession : MongoClient, collectionName : String
   ): Boolean = {
-    try {
-      if ( !_checkIfDBExists( clientSession, collectionName ) ) {
-	createDb( clientSession, collectionName )
-      }
-      true
-    } 
-    catch {
-      case e => {
-        e.printStackTrace
-        throw e
-      }
-    }
+    // Note: Mongo queries will work whether a DB exists or not, so we skip the check
+    true
   }
 
   /* ---------------------------------------------------------------------
@@ -287,20 +277,7 @@ with StdMongoStoreConfiguration
   def createDb(
     clientSession : MongoClient, collectionName : String
   ) : Unit = {
-    synchronized {
-      try {
-	val clxn = clientSession( defaultDB )( collectionName )
-	val dbo : DBObject = 
-	  CnxnMongoStrObjectifier.toMongoObject( fromString( "record( key( \"theEmptyRecord\" ), value( \"*\" ) )" ) )
-	clxn += dbo
-      } 
-      catch {
-	case e => {
-          e.printStackTrace
-          throw e
-	}
-      }
-    }
+    // Note: Mongo queries will work whether a DB exists or not, so we skip the creation
   }
 
   def insertUpdate( recordType : String )(
@@ -308,9 +285,7 @@ with StdMongoStoreConfiguration
   ) : Unit = {
     wrapAction(
       ( clientSession : MongoClient, recordType : String ) => {
-	_insertUpdate( recordType, clientSession )(
-	  collectionName, key, value
-	)
+        _upsert( recordType, clientSession )( collectionName, key, value )
       }
     )( recordType )
   }
@@ -320,26 +295,20 @@ with StdMongoStoreConfiguration
   ) : Unit = {
     wrapAction[DBObject,Unit](
       ( clientSession : MongoClient, record : DBObject ) => {
-	_insertUpdateRecord( record, clientSession )( collectionName )
+        _upsertRecord( record, clientSession )( collectionName )
       }
     )( record )
   }
 
-  def _insertUpdate( recordType : String, clientSession : MongoClient )(
-    collectionName : String, key : String, value : String
-  ) : Unit = {
-    if ( _exists( recordType, clientSession )( collectionName, key ) ) {
-      _update( recordType, clientSession )( collectionName, key, value )
-    }
-    else {
-      _insert( recordType, clientSession )( collectionName, key, value )
-    }
-  }
-
-  def _insertUpdateRecord( record : DBObject, clientSession : MongoClient )(
+  def _upsertRecord( record : DBObject, clientSession : MongoClient )(
     collectionName : String
-  ) : Unit = {
-    //_updateRecord( record, clientSession )( collectionName )
+    ) : Unit = {
+    // BUGBUG: updateRecord will always insert a new record; never update an existing one
+    // To update a record using upsert in MongoDB, we need to satisfy 1 of 2 conditions:
+    // 1. Set record ObjectId (_id) if using += (which we NEVER do)
+    // 2. Supply a query with which MongoDB will update a record (which we do for _upsert),
+    // and use the update() method with upsert=true
+    // We should supply a query here as well instead of using +=
     val mc = clientSession.getDB( defaultDB )( collectionName )
     mc += record
   }
@@ -349,7 +318,7 @@ with StdMongoStoreConfiguration
   ): Boolean = {
     wrapAction(
       ( clientSession : MongoClient, recordType : String ) => {
-	_exists( recordType, clientSession )( collectionName, key )
+	      _exists( recordType, clientSession )( collectionName, key )
       }
     )( recordType )
   }
@@ -360,9 +329,7 @@ with StdMongoStoreConfiguration
     collectionName : String, key : String
   ) : Boolean = {
     val existsQry = ( "record.key." + key ) $exists true
-    ((for(
-      rcrd <- clientSession.getDB( defaultDB )( collectionName ).findOne( existsQry ) 
-    ) yield rcrd).size > 0)
+    clientSession.getDB(defaultDB)(collectionName).findOne(existsQry).size > 0
   }
 
   def update( recordType : String )(
@@ -370,24 +337,9 @@ with StdMongoStoreConfiguration
   ) : Unit = {
     wrapAction(
       ( clientSession : MongoClient, recordType : String ) => {
-	_update( recordType, clientSession )( collectionName, key, value )
+        _upsert( recordType, clientSession )( collectionName, key, value )
       }
     )( recordType )
-  }
-
-  def _update( recordType : String, clientSession : MongoClient )(
-    collectionName : String, key : String, value : String
-  ) : Unit = {
-    val mc = clientSession.getDB( defaultDB )( collectionName )
-    mc += asRecord( recordType )( key, value )
-  }
-
-  def _updateRecord( record : DBObject, clientSession : MongoClient )(
-    collectionName : String
-  ) : Unit = {
-    // BUGBUG -- lgm : put in upsert flag
-    val mc = clientSession.getDB( defaultDB )( collectionName )
-    mc += record
   }
 
   def insert( recordType : String )(
@@ -395,16 +347,17 @@ with StdMongoStoreConfiguration
   ) = {
     wrapAction(
       ( clientSession : MongoClient, recordType : String ) => {
-	_insert( recordType, clientSession )( collectionName, key, value )
+        _upsert( recordType, clientSession )( collectionName, key, value )
       }
     )( recordType )
   }
 
-  def _insert( recordType : String, clientSession: MongoClient )(
+  def _upsert( recordType : String, clientSession: MongoClient )(
     collectionName : String, key : String, value : String
   ) = {
+    val keyQry = ( "record.key." + key ) $exists true
     val mc = clientSession.getDB( defaultDB )( collectionName )
-    mc += asRecord( recordType )( key, value )
+    mc.update(keyQry, asRecord( recordType )( key, value ), true)
   }
 
 
@@ -413,7 +366,7 @@ with StdMongoStoreConfiguration
   ) : Unit = {
     wrapAction(
       ( clientSession : MongoClient, recordType : String ) => {
-	_delete( recordType, clientSession )( collectionName, key )
+	      _delete( recordType, clientSession )( collectionName, key )
       }
     )( recordType )
   }
@@ -423,7 +376,7 @@ with StdMongoStoreConfiguration
   ) : Unit = {
     wrapAction(
       ( clientSession : MongoClient, record : DBObject ) => {
-	_deleteRecord( record, clientSession )( collectionName )
+	      _deleteRecord( record, clientSession )( collectionName )
       }
     )( record )
   }
@@ -433,7 +386,7 @@ with StdMongoStoreConfiguration
   ) : Unit = {
     wrapAction(
       ( clientSession : MongoClient, deleteKey : DBObject ) => {
-	_deleteRecordsMatchingKey( deleteKey, clientSession )( collectionName )
+	      _deleteRecordsMatchingKey( deleteKey, clientSession )( collectionName )
       }
     )( deleteKey )
   }
@@ -441,31 +394,24 @@ with StdMongoStoreConfiguration
   def _delete( recordType : String, clientSession : MongoClient )(
     collectionName : String, key : String
   ) : Unit = {
-    val deleteKey = ( "record" + "." + "key" + "." + key ) $exists true
-    val mc = clientSession.getDB( defaultDB )( collectionName )
-    for ( entry <- mc.find( deleteKey ) ) {
-      mc.remove( entry )
-    }
+    val deleteKey = ( "record.key." + key ) $exists true
+    _deleteRecordsMatchingKey( deleteKey, clientSession )( collectionName )
   }
 
   def _deleteRecord( record : DBObject, clientSession : MongoClient )(
     collectionName : String
   ) : Unit = {
-    val mc = clientSession.getDB( defaultDB )( collectionName )
-    mc.remove( record )
+    clientSession.getDB( defaultDB )( collectionName ).remove( record )
   }
 
   def _deleteRecordsMatchingKey( deleteKey : DBObject, clientSession : MongoClient )(
     collectionName : String
   ) : Unit = {
-    val mc = clientSession.getDB( defaultDB )( collectionName )
-    for ( entry <- mc.find( deleteKey ) ) {
-      mc.remove( entry )
-    }
+    clientSession.getDB( defaultDB )( collectionName ).remove( deleteKey )
   }
 
   def count( collectionName : String ) : Int = {
-    throw new Exception( "TBD" )
+    throw new NotImplementedException
   }
 
 
@@ -481,7 +427,7 @@ with StdMongoStoreConfiguration
   def execute( collectionName : String, query : String ) : Unit = {
     wrapAction(
       ( clientSession : MongoClient, collectionName : String ) => {
-	_execute( clientSession, collectionName, query )
+	      _execute( clientSession, collectionName, query )
       }
     )( collectionName )
   }
@@ -496,29 +442,31 @@ with StdMongoStoreConfiguration
   }
 
 
-  def execute( collectionName : String, queries : List[String] ): Unit =
+  def execute( collectionName : String, queries : List[String] ): Unit = {
     wrapAction(
       ( clientSession : MongoClient, collectionName : String ) => {
-	_execute( clientSession, collectionName, queries )
+	      _execute( clientSession, collectionName, queries )
       }
     )( collectionName )
+  }
 
   def _execute(
     clientSession : MongoClient, collectionName : String, queries : List[String]
   ) : Unit = {    
-    val mc = clientSession.getDB( defaultDB )( collectionName )    
+    val mc = clientSession.getDB( defaultDB )( collectionName )
     for(
       qryStr <- queries;
       entry <- mc.find( JSON.parse( qryStr ).asInstanceOf[DBObject] )
     ) {}
   }
 
-  def executeScalar( collectionName : String, query : String ): String =
+  def executeScalar( collectionName : String, query : String ): String = {
     wrapAction(
       ( clientSession : MongoClient, collectionName : String ) => {
-	_executeScalar( clientSession, collectionName, query )
+	      _executeScalar( clientSession, collectionName, query )
       }
     )( collectionName )
+  }
 
   def _executeScalar(
     clientSession : MongoClient, collectionName : String, query : String
@@ -531,12 +479,13 @@ with StdMongoStoreConfiguration
 
   def executeWithResults(
     collectionName : String, queries : scala.List[String]
-  ) : scala.List[DBObject] =
+  ) : scala.List[DBObject] = {
     wrapAction(
       ( clientSession : MongoClient, collectionName : String ) => {
-	_executeWithResults( clientSession, collectionName, queries )
+        _executeWithResults( clientSession, collectionName, queries )
       }
     )( collectionName )
+  }
 
   def _executeWithResults(
     clientSession : MongoClient, collectionName : String, queries : scala.List[String]
@@ -544,10 +493,10 @@ with StdMongoStoreConfiguration
     val mc = clientSession.getDB( defaultDB )( collectionName )
     queries.flatMap(
       {
-	( qryStr : String ) => {
-	  val qry = JSON.parse( qryStr ).asInstanceOf[DBObject]
-	  mc.find( qry ).toList
-	}
+        ( qryStr : String ) => {
+          val qry = JSON.parse( qryStr ).asInstanceOf[DBObject]
+          mc.find( qry ).toList
+        }
       }
     )
   }
@@ -557,7 +506,7 @@ with StdMongoStoreConfiguration
   ) : scala.List[DBObject] = {
     wrapAction(
       ( clientSession : MongoClient, collectionName : String ) => {
-	_executeWithResults( clientSession, collectionName, query )
+	      _executeWithResults( clientSession, collectionName, query )
       }
     )( collectionName )
   }
@@ -572,23 +521,23 @@ with StdMongoStoreConfiguration
 
 
   def createTemplate( collectionName: String ) : String = {
-    throw new Exception( "TBD" )
+    throw new NotImplementedException
   }
 
   def replaceTemplate( recordType : String ) : String = {
-    throw new Exception( "TBD" )
+    throw new NotImplementedException
   }
 
   def existsTemplate( recordType : String ) : String = {
-    throw new Exception( "TBD" )
+    throw new NotImplementedException
   }
 
   def insertTemplate() : String = {
-    throw new Exception( "TBD" )
+    throw new NotImplementedException
   }
 
   def recordDeletionQueryTemplate( recordType : String ) : String = {
-    throw new Exception( "TBD" )
+    throw new NotImplementedException
   }
 }
 
