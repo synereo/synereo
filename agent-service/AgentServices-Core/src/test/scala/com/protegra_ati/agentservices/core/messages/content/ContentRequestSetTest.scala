@@ -162,6 +162,7 @@ with Serializable
 
     "store content for all connections of the connection type" in new ContentSetup(pa)
     {
+      skipped("Not tracking audit data")
       val cnxn = new AgentCnxnProxy(jenId.toURI, "", jenId.toURI)
       val profileId1 = UUID.randomUUID
       val profile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")

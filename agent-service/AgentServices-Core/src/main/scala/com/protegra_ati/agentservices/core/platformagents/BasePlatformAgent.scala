@@ -7,15 +7,13 @@ package com.protegra_ati.agentservices.core.platformagents
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
-import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
-import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.store.mongo.usage._
-import com.protegra_ati.agentservices.core.util.Results
 import com.protegra_ati.agentservices.core.util.rabbit.{RabbitConfiguration, MessageAMQPPublisher, MessageAMQPListener}
+import java.util.concurrent.{TimeUnit, Executors}
 
 //import com.protegra.config.ConfigurationManager
 
@@ -25,13 +23,10 @@ import net.lag.configgy._
 
 import scala.util.continuations._
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.ops._
 
-import java.net.{URI}
+import java.net.URI
 import java.util.UUID
-import java.util.ArrayList
 import com.protegra_ati.agentservices.store.util._
-import actors.threadpool.LinkedBlockingQueue
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.protegra_ati.agentservices.core.util.ThreadRenamer._
@@ -65,6 +60,8 @@ abstract class BasePlatformAgent
   with ThreadPoolRunnersX
   //  with Scheduler
 {
+  // Used for fetchOrElse/fetchListOrElse
+  private lazy val scheduler = Executors.newScheduledThreadPool(25)
 
   /**
    * FJTaskRunners setting, defines thread pool size
@@ -436,7 +433,6 @@ abstract class BasePlatformAgent
   }
 
 
-
   def fetch[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit) =
   {
     report("fetch --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
@@ -456,39 +452,39 @@ abstract class BasePlatformAgent
   }
 
   def fetchOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, T) => Unit)
-    (retries: Int, delay: Int, handlerElse: () => Unit) =
+    (retries: Int, delay: Int, handlerElse: () => Unit): Unit =
   {
     report("fetchOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
     var found = false
-    for ( i <- 1 to retries; if (!found) ) {
-      reset {
-        for ( e <- queue.read(agentCnxn)(lbl) ) {
-          if ( e != None ) {
-            //multiple results will call handler multiple times
-            val result = Serializer.deserialize[ T ](e.dispatch)
-            if ( result != null )
-            {
-              handler(cnxn, result)
-              found = true
-            }
+    reset {
+      for ( e <- queue.read(agentCnxn)(lbl) ) {
+        if ( e != None ) {
+          //multiple results will call handler multiple times
+          val result = Serializer.deserialize[ T ](e.dispatch)
+          if ( result != null )
+          {
+            handler(cnxn, result)
+            found = true
           }
         }
       }
+    }
 
-      if (!found)
-      {
-        Thread.sleep(delay)
+    if (!found)
+    {
+      if (retries > 0) {
+        scheduler.schedule(new Runnable() {
+          def run(): Unit = {
+            fetchOrElse[T](queue, cnxn, key, handler)(retries-1, delay, handlerElse)
+          }
+        }, delay, TimeUnit.MILLISECONDS)
+      } else {
+        handlerElse()
       }
-
     }
-
-    if (!found) {
-      handlerElse()
-    }
-
   }
 
 
@@ -510,34 +506,41 @@ abstract class BasePlatformAgent
   }
 
   def fetchListOrElse[ T ](queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, key: String, handler: (AgentCnxnProxy, List[ T ]) => Unit)
-                          (retries: Int, delay: Int, handlerElse: () => Unit) =
+                          (retries: Int, delay: Int, handlerElse: () => Unit): Unit =
   {
     report("fetchListOrElse --- key: " + key + " cnxn: " + cnxn.toString, Severity.Trace)
     val lbl = key.toLabel
 
     val agentCnxn = cnxn.toAgentCnxn()
     var found = false
-    for ( i <- 1 to retries; if (!found) ) {
-      reset {
-        for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
-          if ( e != None ) {
-            val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
-            val cleanResults = results.filter(x => x != null)
+    reset {
+      for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
+        if ( e != None ) {
+          val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
+          val cleanResults = results.filter(x => x != null)
 
-            cleanResults match {
-              case Nil => Thread.sleep(delay)
-              case _ => {
-                handler(cnxn, cleanResults)
-                found = true
-              }
+          cleanResults match {
+            case x::xs => {
+              handler(cnxn, cleanResults)
+              found = true
             }
+            case Nil => {}
           }
         }
       }
     }
 
-    if (!found) {
-      handlerElse()
+    if (!found)
+    {
+      if (retries > 0) {
+        scheduler.schedule(new Runnable() {
+          def run(): Unit = {
+            fetchListOrElse[T](queue, cnxn, key, handler)(retries-1, delay, handlerElse)
+          }
+        }, delay, TimeUnit.MILLISECONDS)
+      } else {
+        handlerElse()
+      }
     }
   }
 
