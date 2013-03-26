@@ -44,7 +44,7 @@ abstract class AMQPDispatcher[T](conn: Connection) extends Actor {
 
   def act = loop(Nil)
 
-  private val reconnectTimer = new Timer("AMQPReconnectTimer")
+  private lazy val reconnectTimer = new Timer("AMQPReconnectTimer")
 
   def loop(as: List[Actor]) {
     react {

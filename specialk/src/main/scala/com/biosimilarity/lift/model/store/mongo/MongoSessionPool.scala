@@ -1,3 +1,4 @@
+/*
 package com.biosimilarity.lift.model.store.mongo
 
 import com.biosimilarity.lift.model.store.SessionPool
@@ -35,3 +36,4 @@ class MongoSessionPoolC(
 }
 
 object MongoSessionPool extends MongoSessionPoolC( 2000, 65, MongoConfigInfo )
+*/
