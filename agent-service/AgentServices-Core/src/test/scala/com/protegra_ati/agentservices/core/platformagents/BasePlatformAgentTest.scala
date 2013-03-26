@@ -168,24 +168,112 @@ with Serializable
     }
   }
 
-    "createDrop" should {
+  "createDrop" should {
 
-      "create and drop collection" in {
-        val newId = "Collection" + UUID.randomUUID
-        val newCnxn = new AgentCnxnProxy(newId.toURI, "", newId.toURI)
+    "create and drop collection" in {
+      val newId = "Collection" + UUID.randomUUID
+      val newCnxn = new AgentCnxnProxy(newId.toURI, "", newId.toURI)
 
-        val newProfile = new Profile("firstName", "lastName", "test Description", "111111111@test.com","CA", "someCAprovince", "city", "postalCode", "website" )
+      val newProfile = new Profile("firstName", "lastName", "test Description", "111111111@test.com","CA", "someCAprovince", "city", "postalCode", "website" )
 
-        pa.store(pa._dbQ, newCnxn, newProfile.toStoreKey, Serializer.serialize[ Data ](newProfile))
-        Thread.sleep(TIMEOUT_LONG)
+      pa.store(pa._dbQ, newCnxn, newProfile.toStoreKey, Serializer.serialize[ Data ](newProfile))
+      Thread.sleep(TIMEOUT_LONG)
 
-        pa.drop(pa._dbQ, newCnxn)
-        Thread.sleep(TIMEOUT_LONG)
+      pa.drop(pa._dbQ, newCnxn)
+      Thread.sleep(TIMEOUT_LONG)
 
-        fetchData(pa._dbQ, newCnxn, newProfile.toStoreKey) must beNull.eventually(5, TIMEOUT_EVENTUALLY)
+      fetchData(pa._dbQ, newCnxn, newProfile.toStoreKey) must beNull.eventually(5, TIMEOUT_EVENTUALLY)
+    }
+
+  }
+
+  "fetchOrElse and fetchListOrElse" should {
+    "fetchOrElse should succeed after a retry" in {
+      val newId = "Collection" + UUID.randomUUID
+      val newCnxn = new AgentCnxnProxy(newId.toURI, "", newId.toURI)
+      val appId = new AppId()
+
+      var found = false
+
+      def handleAppIdFound(cnxn: AgentCnxnProxy, appId: AppId): Unit = {
+        found = true
       }
 
+      def handleAppIdNotFound(cnxn: AgentCnxnProxy)(): Unit = {
+        found = false
+      }
+
+      pa.fetchOrElse[AppId](pa._dbQ, newCnxn, AppId.SEARCH_ALL_KEY, handleAppIdFound(_: AgentCnxnProxy, _: AppId))(10, 500, handleAppIdNotFound(newCnxn))
+
+      Thread.sleep(1250)
+
+      pa.store(pa._dbQ, newCnxn, appId.toStoreKey, Serializer.serialize[Data](appId))
+
+      found must be_==(true).eventually(10, new Duration(1000))
     }
+
+    "fetchListOrElse should succeed after a retry" in {
+      val newId = "Collection" + UUID.randomUUID
+      val newCnxn = new AgentCnxnProxy(newId.toURI, "", newId.toURI)
+      val appId = new AppId()
+
+      var found = false
+
+      def handleAppIdFound(cnxn: AgentCnxnProxy, appId: List[AppId]): Unit = {
+        found = true
+      }
+
+      def handleAppIdNotFound(cnxn: AgentCnxnProxy)(): Unit = {
+        found = false
+      }
+
+      pa.fetchListOrElse[AppId](pa._dbQ, newCnxn, AppId.SEARCH_ALL_KEY, handleAppIdFound(_: AgentCnxnProxy, _: List[AppId]))(10, 500, handleAppIdNotFound(newCnxn))
+
+      Thread.sleep(1250)
+
+      pa.store(pa._dbQ, newCnxn, appId.toStoreKey, Serializer.serialize[Data](appId))
+
+      found must be_==(true).eventually(10, new Duration(1000))
+    }
+
+    "fetchOrElse should fail after exceeding retries" in {
+      val newId = "Collection" + UUID.randomUUID
+      val newCnxn = new AgentCnxnProxy(newId.toURI, "", newId.toURI)
+
+      var handleNotFound = false
+
+      def handleAppIdFound(cnxn: AgentCnxnProxy, appId: AppId): Unit = {
+        handleNotFound = false
+      }
+
+      def handleAppIdNotFound(cnxn: AgentCnxnProxy)(): Unit = {
+        handleNotFound = true
+      }
+
+      pa.fetchOrElse[AppId](pa._dbQ, newCnxn, AppId.SEARCH_ALL_KEY, handleAppIdFound(_: AgentCnxnProxy, _: AppId))(5, 500, handleAppIdNotFound(newCnxn))
+
+      handleNotFound must be_==(true).eventually(10, new Duration(1000))
+    }
+
+    "fetchListOrElse should fail after exceeding retries" in {
+      val newId = "Collection" + UUID.randomUUID
+      val newCnxn = new AgentCnxnProxy(newId.toURI, "", newId.toURI)
+
+      var handleNotFound = false
+
+      def handleAppIdFound(cnxn: AgentCnxnProxy, appId: List[AppId]): Unit = {
+        handleNotFound = false
+      }
+
+      def handleAppIdNotFound(cnxn: AgentCnxnProxy)(): Unit = {
+        handleNotFound = true
+      }
+
+      pa.fetchListOrElse[AppId](pa._dbQ, newCnxn, AppId.SEARCH_ALL_KEY, handleAppIdFound(_: AgentCnxnProxy, _: List[AppId]))(5, 500, handleAppIdNotFound(newCnxn))
+
+      handleNotFound must be_==(true).eventually(10, new Duration(1000))
+    }
+  }
 
 //      //can't conflict on DB port
 //  def createPA1: MockPlatformAgent =
