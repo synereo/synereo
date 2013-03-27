@@ -351,12 +351,12 @@ trait ContentRequestSet
         //we are now storing the authorizedContentAuditItem data on the connection junction as well
         //for audit logging purposes...
 
-        val auditItem = authorizedContent.forAudit(x)
+        //val auditItem = authorizedContent.forAudit(x)
         //uncomment after we implement the approval process
         //auditItem.autoApproved = true
         //this is going to be a problem if the disclosure level changes
         //need update by search here
-        updateDataById(x.writeCnxn, auditItem)
+        //updateDataById(x.writeCnxn, auditItem)
       }
       case _ => {
       }
