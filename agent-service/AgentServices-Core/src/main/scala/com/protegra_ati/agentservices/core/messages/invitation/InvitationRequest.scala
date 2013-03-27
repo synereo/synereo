@@ -81,3 +81,16 @@ case class InvitationRequest(
     other.isInstanceOf[ InvitationRequest ]
 
 }
+
+
+object InvitationRequest
+{
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE_KEY = new PersistedMessage(new InvitationRequest).toSearchKey
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE = new PersistedMessage(new InvitationRequest)
+  {
+    override def toSearchKey(): String = InvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE_KEY
+  }
+
+}

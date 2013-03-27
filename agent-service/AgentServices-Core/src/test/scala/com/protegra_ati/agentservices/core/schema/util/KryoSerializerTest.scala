@@ -739,7 +739,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
       }
 
 
-      val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
+      val persistedMessage = new PersistedMessage(msg)
 
       KryoSerializerTestDataInitializer.serialize(persistedMessage, new File("serializedPersistedMessageCreateInvitationRequest.kryobin"))
       val deserializedMessage = KryoSerializerTestDataInitializer.deserialize[ PersistedMessage[ CreateInvitationRequest ] ](new File("serializedPersistedMessageCreateInvitationRequest.kryobin"))

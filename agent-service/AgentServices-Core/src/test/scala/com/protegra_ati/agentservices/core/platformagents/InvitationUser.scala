@@ -45,8 +45,7 @@ trait InvitationUser
       }
     });
 
-    val query: PersistedMessage[ InvitationRequest ] = new PersistedMessage[ InvitationRequest ]()
-    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), query)
+    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), InvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE)
     getReq.targetCnxn = connInviteeSelf.writeCnxn
     ui.send(getReq)
   }
@@ -83,8 +82,7 @@ trait InvitationUser
       }
     });
 
-    val query: PersistedMessage[ InvitationRequest ] = new PersistedMessage[ InvitationRequest ]()
-    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), query)
+    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), InvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE)
     getReq.targetCnxn = connInviteeSelf.writeCnxn
     ui.send(getReq)
   }
@@ -124,8 +122,7 @@ trait InvitationUser
       }
     });
 
-    val query: PersistedMessage[ InvitationRequest ] = new PersistedMessage[ InvitationRequest ]()
-    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), query)
+    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), InvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE)
     getReq.targetCnxn = connInviteeSelf.writeCnxn
     ui.send(getReq)
   }

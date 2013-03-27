@@ -200,7 +200,7 @@ Timeouts
       DataCreator4KryoDeserializationTestInitializer.serialize(msg, new File("data//serializedRequest.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(msg)
 
-      val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
+      val persistedMessage = new PersistedMessage(msg)
       DataCreator4KryoDeserializationTestInitializer.serialize(persistedMessage, new File("data//serializedPersistedMessageCreateInvitationRequest.kryobin"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(persistedMessage)
       success
@@ -315,7 +315,7 @@ Timeouts
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(msg, new File("data//serializedRequest.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(msg)
 
-      val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
+      val persistedMessage = new PersistedMessage(msg)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(persistedMessage, new File("data//serializedPersistedMessageCreateInvitationRequest.kryostring"))
       DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(persistedMessage)
       success

@@ -254,7 +254,7 @@ Timeouts
 
   def countPersistedInvitationRequests(ui: AgentHostUIPlatformAgent, cnxn: AgentCnxnProxy, agentSessionId: UUID, tag: String, localeCode: Option[ String ]): Int =
   {
-    val query: PersistedMessage[ InvitationRequest ] = new PersistedMessage[ InvitationRequest ]()
+    val query = InvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE
     localeCode match {
       case Some(x) => query.localeCode = x
       case _ => {}

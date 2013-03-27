@@ -110,7 +110,7 @@ trait InvitationRequestSetCreator
     report("STORE REFERRAL FOR LATER RESPONSE: referralRequest=" + referralRequest + ", cnxn=" + cnxnSelf, Severity.Info)
     // persists ReferralRequest for the broker
 
-    val persistedMessage = new PersistedMessage[ ReferralRequest ](referralRequest)
+    val persistedMessage = new PersistedMessage(referralRequest)
 
     report("attempting to store " + persistedMessage.toStoreKey)
     setContentToSelfConnection(cnxnSelf, persistedMessage)
@@ -385,7 +385,7 @@ trait InvitationRequestSetCreator
   {
     report("STORE INVITATIONS RESPONSE: inviteRespone=" + inviteResponse + ", cnxn=" + cnxn, Severity.Info)
     val selfConnection = systemConnection.data
-    val persistedInvitationResponseMessage = new PersistedMessage[ InvitationResponse ](inviteResponse)
+    val persistedInvitationResponseMessage = new PersistedMessage(inviteResponse)
     store(_dbQ, selfConnection.writeCnxn, persistedInvitationResponseMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationResponse ] ](persistedInvitationResponseMessage))
   }
 
@@ -403,13 +403,13 @@ trait InvitationRequestSetCreator
 
   protected def findInvitationResponseToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
   {
-    val query = new PersistedMessage[ InvitationResponse ]()
+    val query = InvitationResponse.SEARCH_ALL_PERSISTED_MESSAGE
     fetchList[ PersistedMessage[ InvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ InvitationRequest ] ], invitationResponse.ids.parentId, invitationResponse.accept))
   }
 
   protected def findCreateInvitationRequestToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
   {
-    val query = new PersistedMessage[ CreateInvitationRequest ]()
+    val query = CreateInvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE
     fetchList[ PersistedMessage[ CreateInvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, myArchivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ CreateInvitationRequest ] ], invitationResponse.ids.conversationId, invitationResponse.accept))
   }
 

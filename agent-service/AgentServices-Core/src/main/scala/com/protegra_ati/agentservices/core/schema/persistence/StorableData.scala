@@ -67,6 +67,7 @@ trait StorableData extends StorableDataDefaults
         content = fieldValue.asInstanceOf[ Data ].toStoreKey(true)
       }
     }
+    //TODO: problems with hashmap, we need to fix to handle reflection better, likely similar to data
     else if ( classOf[ java.util.HashMap[ String, Data ] ].isAssignableFrom(f.getType) ) {
       //skip if it's hashmap for now
       content = "\"" + "\""
@@ -75,7 +76,6 @@ trait StorableData extends StorableDataDefaults
       //skip if it's concurrent hashmap for now
       content = "\"" + "\""
     }
-    //TODO: problems with hashmap, we need to fix to handle reflection better, likely similar to data
     else if ( classOf[ Message ].isAssignableFrom(f.getType) ) {
       //skip if it's message for now
       content = "\"" + "\""
@@ -118,11 +118,11 @@ trait StorableData extends StorableDataDefaults
         fieldValue.asInstanceOf[ Data ].toProperty(prop, parentElementName + "." + f.getName.trimPackage.toCamelCase)
       }
     }
+      //TODO: problems with hashmap, we need to fix to handle reflection better, likely similar to data
     else if ( classOf[ java.util.HashMap[ String, Data ] ].isAssignableFrom(f.getType) ) {
       //skip if it's hashmap for now
       content = ""
     }
-    //TODO: problems with hashmap, we need to fix to handle reflection better, likely similar to data
     else if ( classOf[ Message ].isAssignableFrom(f.getType) ) {
       //skip if it's message for now
       content = ""

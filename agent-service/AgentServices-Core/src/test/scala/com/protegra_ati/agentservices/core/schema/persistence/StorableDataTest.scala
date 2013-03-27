@@ -99,16 +99,16 @@ class StorableDataTest extends SpecificationWithJUnit
     }
 
     "generate store key correctly for Data with a Message and a Hashmap" in {
-      val fromDetails = new java.util.HashMap[ String, Data ]();
-      val tempProfile = new Profile();
-      tempProfile.setFirstName("first");
-      tempProfile.setLastName("last");
-      fromDetails.put(tempProfile.formattedClassName, tempProfile);
+      val fromDetails = new java.util.HashMap[ String, Data ]()
+      val tempProfile = new Profile()
+      tempProfile.setFirstName("first")
+      tempProfile.setLastName("last")
+      fromDetails.put(tempProfile.formattedClassName, tempProfile)
 
-      val postToTarget = new Post("subject2Target", "body", fromDetails);
-      val postToBroker = new Post("subject2Broker", "body", fromDetails);
-      val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", "", postToTarget, postToBroker, false);
-      val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
+      val postToTarget = new Post("subject2Target", "body", fromDetails)
+      val postToBroker = new Post("subject2Broker", "body", fromDetails)
+      val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", "", postToTarget, postToBroker, false)
+      val persistedMessage = new PersistedMessage(msg)
       persistedMessage.id = id
 
       val storeKey = persistedMessage.toStoreKey
@@ -116,14 +116,14 @@ class StorableDataTest extends SpecificationWithJUnit
       //      persistedMessage(fields(id("ec149c51-88f8-476c-bda7-8dd721d14a3f"),localeCode("en"),message(""),persisted("2012-05-02T22:01:02.903-05:00")))
       val persistedRaw = "" + persistedMessage.persisted
       val persisted = persistedRaw.replace(".", " ").replace(":"," ")
-      val expected = "data(persistedMessage("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(message(\"\"),persisted(\"" + persisted + "\"),viewed(\"\"),rejected(\"\"),ignored(\"\"),archived(\"\"))))"
+      val expected = "data(persistedMessage("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(message(\"\"),messageType(\"CreateInvitationRequest\"),persisted(\"" + persisted + "\"),viewed(\"\"),rejected(\"\"),ignored(\"\"),archived(\"\"))))"
       println("EXPECTED: " + expected)
       storeKey must be_==(expected)
     }
 
     "generate store key correctly for a Post" in {
-        val fromDetails = new java.util.HashMap[ String, Data ]();
-        val data: Post =  new Post("subject2Target", "body", fromDetails);
+        val fromDetails = new java.util.HashMap[ String, Data ]()
+        val data: Post =  new Post("subject2Target", "body", fromDetails)
         val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
         data.id = id
         data.threadId = id

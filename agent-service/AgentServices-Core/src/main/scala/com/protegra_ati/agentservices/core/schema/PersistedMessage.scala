@@ -7,6 +7,7 @@ import com.protegra_ati.agentservices.core.messages.Message
 import com.protegra_ati.agentservices.core.schema.persistence._
 import org.joda.time.{DateTime, Instant}
 import scala.reflect.BeanProperty
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
 
 case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
@@ -22,8 +23,18 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
 {
    def this() = this(null.asInstanceOf[T])
 
+  var messageType = formattedMessageName
+
   @BeanProperty
   var persisted: DateTime = null
+
+  def formattedMessageName: String =
+  {
+    if (message == null)
+      return ""
+
+    message.getClass.getName.trimPackage
+  }
 
   override def hashCode = 41 * super.hashCode + ( if ( getArchived != null ) getArchived.hashCode else 0 ) + ( if ( getIgnored != null ) getIgnored.hashCode else 0 ) + ( if ( getRejected != null ) getRejected.hashCode else 0 )
 
@@ -49,28 +60,5 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
   override def canEqual(other: Any) =
     other.isInstanceOf[ PersistedMessage[Message] ]
 
-//
-// override  def toStoreKey: String =
-//  {
-//    "persistedMessage(" + message + ")"
-//  }
-//
-//  override  def toSearchKey: String =
-//  {
-//    "persistedMessage(" + message + ")"
-//  }
-
-}
-
-
-object PersistedMessage
-{
-
-  final val SEARCH_ALL_KEY = new PersistedMessage().toSearchKey
-
-  final val SEARCH_ALL = new PersistedMessage()
-  {
-    override def toSearchKey(): String = PersistedMessage.SEARCH_ALL_KEY
-  }
 
 }

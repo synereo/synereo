@@ -37,3 +37,16 @@ case class CreateInvitationRequest(
   override def isJavaIOSerializationDeprecated: Boolean = true
 
 }
+
+
+object CreateInvitationRequest
+{
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE_KEY = new PersistedMessage(new CreateInvitationRequest).toSearchKey
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE = new PersistedMessage(new CreateInvitationRequest)
+  {
+    override def toSearchKey(): String = CreateInvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE_KEY
+  }
+
+}
