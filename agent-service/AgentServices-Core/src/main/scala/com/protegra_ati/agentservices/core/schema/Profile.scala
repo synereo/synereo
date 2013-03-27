@@ -16,6 +16,8 @@ import java.lang.Integer
 import com.mongodb.casbah.Imports._
 import com.protegra_ati.agentservices.core.schema.persistence.CacheableData
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
+import scala.util.matching.Regex
+import org.apache.commons.lang3.StringUtils
 
 /**
  * Personal profile data object
@@ -28,7 +30,7 @@ import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
  * @param city city
  * @param postalCode zip
  * @param website web site
- * @param image personal avatar picture, usually very small
+ * @param imageHashCode personal avatar picture, usually very small
  */
 case class Profile(
   @BeanProperty var firstName: String,
@@ -106,20 +108,24 @@ case class Profile(
 
     q += "brokerAppId" -> MongoDBObject("$in" -> MongoDBList.concat(brokerAppIds))
 
+    val (fns, lns) = (toInStartsWithRegex(firstName), toInStartsWithRegex(lastName))
+
     // Use an OR if both first and last name are specified
     // otherwise use only the first or last name, depending on which is provided
-    def checkStr(s:String) = Option(s).filter(!_.isEmpty)
-    
-    (checkStr(firstName), checkStr(lastName)) match {
-      case (Some(fn), Some(ln)) => {
+    (fns, lns) match {
+      case (h1::t1, h2::t2) => {
         q += "$or" -> MongoDBList(
-          MongoDBObject("qFirstName" -> toStartsWithRegex(fn)),
-          MongoDBObject("qLastName" -> toStartsWithRegex(ln))
+          toKeywordQuery("qFirstName", fns),
+          toKeywordQuery("qLastName", lns)
         )
       }
-      case (Some(fn), None) => q += "qFirstName" -> toStartsWithRegex(fn)
-      case (None, Some(ln)) => q += "qLastName" -> toStartsWithRegex(ln)
-      case (None, None) => 
+      case (h::t, Nil) => {
+        q += toKeywordQuery("qFirstName", fns)
+      }
+      case (Nil, h::t) => {
+        q += toKeywordQuery("qLastName", lns)
+      }
+      case (Nil, Nil) => {}
     }
 
     addProp("country", country, q)
