@@ -96,7 +96,7 @@ class SearchableDataTest extends SpecificationWithJUnit
       val postToTarget = new Post("subject: to Target ", "body", fromDetails);
       val postToBroker = new Post("subject: to Broker", "body", fromDetails);
       val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", "", postToTarget, postToBroker, false);
-      val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
+      val persistedMessage = new PersistedMessage(msg)
 
       val searchKey = persistedMessage.toSearchKey
       println("searchKey: " + searchKey)

@@ -245,7 +245,7 @@ Timeouts
     "deserialize some persisted mock message" in {
       skipped("")
       val message = new MockDirectMessage(new Identification(), new EventKey(UUID.randomUUID(), "tydegfrtew"), "works", Some("Hi"), None, Some("Basic"), new Post() :: Nil)
-      val data = new PersistedMessage[ MockDirectMessage ](message)
+      val data = new PersistedMessage(message)
 
       Serializer.evaluateSerializerClass(data) mustEqual ( KryoSerializer.getInstance().getClass.getName )
       val serialized = Serializer.serialize[ PersistedMessage[ MockDirectMessage ] ](data)
@@ -277,7 +277,7 @@ Timeouts
 
       val inviteRequest = new InvitationRequest(new Identification(), new EventKey(UUID.randomUUID(), "tydegfrtew"),
         "IntroID", None, Some("Basic"), Some("Test Connection"), new Post() :: Nil, false)
-      val data = new PersistedMessage[ InvitationRequest ](inviteRequest)
+      val data = new PersistedMessage(inviteRequest)
 //      Serializer.evaluateSerializerClass(data) mustEqual ( KryoSerializer.getInstance().getClass ).getName
 
       val serialized = Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](data)
@@ -305,7 +305,7 @@ Timeouts
 
       val sourceRequest = new CreateInvitationRequest(new EventKey(UUID.randomUUID(), "tydegfrtew"), "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "targetCategory", "requestedConnectionType", "requestedConnectionName", null, null, false) //, postToTarget, postToBroker);
       val req = new ReferralRequest(sourceRequest.ids.copyAsChild(), sourceRequest.eventKey, sourceRequest)
-      val data = new PersistedMessage[ ReferralRequest ](req)
+      val data = new PersistedMessage(req)
 //      Serializer.evaluateSerializerClass(data) mustEqual ( KryoSerializer.getInstance().getClass.getName )
       val serialized = Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](data)
       val deserializedData = Serializer.deserialize[ PersistedMessage[ ReferralRequest ] ](serialized)
@@ -350,7 +350,7 @@ Timeouts
       }
 
 
-      val data = new PersistedMessage[ CreateInvitationRequest ](sourceRequest)
+      val data = new PersistedMessage(sourceRequest)
 //      Serializer.evaluateSerializerClass(data) mustEqual ( KryoSerializer.getInstance().getClass.getName )
       val serialized = Serializer.serialize[ PersistedMessage[ CreateInvitationRequest ] ](data)
       val deserializedData = Serializer.deserialize[ PersistedMessage[ CreateInvitationRequest ] ](serialized)
@@ -377,7 +377,6 @@ Timeouts
       // skipped("")
 
       val query: PersistedMessage[ ReferralRequest ] = new PersistedMessage[ ReferralRequest ]()
-
 //      Serializer.evaluateSerializerClass(query) mustEqual ( KryoSerializer.getInstance().getClass.getName )
       val serialized = Serializer.serialize[ PersistedMessage[ ReferralRequest ] ](query)
       val deserializedData = Serializer.deserialize[ PersistedMessage[ ReferralRequest ] ](serialized)
@@ -418,7 +417,7 @@ Timeouts
 
     "not exceed 25KB for PersistedMessage" in {
       val inviteRequest = new InvitationRequest(new Identification(), new EventKey(UUID.randomUUID(), "tydegfrtew"), "IntroID", None, Some("Basic"), Some("Test Connection"), new Post() :: Nil, false)
-      val data = new PersistedMessage[ InvitationRequest ](inviteRequest)
+      val data = new PersistedMessage(inviteRequest)
       val serialized = Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](data)
       serialized.length() must be < ( maxKB )
 

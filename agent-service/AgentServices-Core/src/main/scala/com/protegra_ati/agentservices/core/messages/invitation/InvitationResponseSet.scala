@@ -89,7 +89,7 @@ trait InvitationResponseSet
   protected def findReferralRequestToArchive(cnxnBroker_Broker: AgentCnxnProxy, referralResponse: ReferralResponse) =
   {
     //TODO: fix toSearchKey to work with the nested id, for now pull back everything
-    val query = new PersistedMessage[ ReferralRequest ]()
+    val query = ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE
     fetchList[ PersistedMessage[ ReferralRequest ] ](_dbQ, cnxnBroker_Broker, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ ReferralRequest ] ], referralResponse.ids.parentId, referralResponse.accept))
   }
 

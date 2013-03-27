@@ -122,7 +122,7 @@ trait InvitationRequestSetConsumer
   {
     report("STORE INVITATIONS FOR LATER RESPONSE: inviteRequest=" + inviteRequest + ", cnxn=" + cnxn, Severity.Info)
     val selfConnection = systemConnection.data
-    val persistedInvitationRequestMessage = new PersistedMessage[ InvitationRequest ](inviteRequest)
+    val persistedInvitationRequestMessage = new PersistedMessage(inviteRequest)
     setContentToSelfConnection( selfConnection.writeCnxn, persistedInvitationRequestMessage)
     //store(_dbQ, selfConnection.writeCnxn, persistedInvitationRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationRequest ] ](persistedInvitationRequestMessage))
     invitationRequestNotificationHandler(selfConnection.writeCnxn, inviteRequest)

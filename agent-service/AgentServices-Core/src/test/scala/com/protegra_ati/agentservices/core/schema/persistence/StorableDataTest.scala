@@ -108,7 +108,7 @@ class StorableDataTest extends SpecificationWithJUnit
       val postToTarget = new Post("subject2Target", "body", fromDetails)
       val postToBroker = new Post("subject2Broker", "body", fromDetails)
       val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", "", postToTarget, postToBroker, false)
-      val persistedMessage = new PersistedMessage[ CreateInvitationRequest ](msg)
+      val persistedMessage = new PersistedMessage(msg)
       persistedMessage.id = id
 
       val storeKey = persistedMessage.toStoreKey

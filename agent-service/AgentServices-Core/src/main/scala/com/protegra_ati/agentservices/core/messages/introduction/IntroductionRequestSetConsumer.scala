@@ -52,7 +52,7 @@ trait IntroductionRequestSetConsumer
   {
     report("$$$$$$$$$$$ STORE INTRODUCTIONS FOR LATER RESPONSE, cnxn=" + cnxn + ", systemConnection=" + systemConnection + ", introRequest=" + introRequest)
     val selfConnection = systemConnection.data
-    val persistedIntroductionRequestMessage = new PersistedMessage[ IntroductionRequest ](introRequest)
+    val persistedIntroductionRequestMessage = new PersistedMessage(introRequest)
     store(_dbQ, selfConnection.writeCnxn, persistedIntroductionRequestMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ IntroductionRequest ] ](persistedIntroductionRequestMessage))
   }
 

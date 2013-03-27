@@ -1,7 +1,7 @@
 package com.protegra_ati.agentservices.core.messages.invitation
 
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra_ati.agentservices.core.schema.Post
+import com.protegra_ati.agentservices.core.schema.{PersistedMessage, Post}
 import reflect.BeanProperty
 import scala.collection.JavaConversions._
 
@@ -38,3 +38,16 @@ case class InvitationResponse(
   }
 }
 
+
+
+object InvitationResponse
+{
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE_KEY = new PersistedMessage(new InvitationResponse).toSearchKey
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE = new PersistedMessage(new InvitationResponse)
+  {
+    override def toSearchKey(): String = InvitationResponse.SEARCH_ALL_PERSISTED_MESSAGE_KEY
+  }
+
+}

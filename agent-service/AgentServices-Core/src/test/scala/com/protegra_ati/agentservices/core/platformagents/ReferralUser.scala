@@ -59,8 +59,7 @@ trait ReferralUser
       }
     });
 
-    val query: PersistedMessage[ ReferralRequest ] = new PersistedMessage[ ReferralRequest ]()
-    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), query)
+    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE)
     getReq.targetCnxn = connBrokerSelf.writeCnxn
     ui.send(getReq)
   }
@@ -112,8 +111,7 @@ trait ReferralUser
       }
     });
 
-    val query: PersistedMessage[ ReferralRequest ] = new PersistedMessage[ ReferralRequest ]()
-    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), query)
+    val getReq = new GetContentRequest(new EventKey(agentSessionId, tag), ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE)
     getReq.targetCnxn = connBrokerSelf.writeCnxn
     ui.send(getReq)
   }
