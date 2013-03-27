@@ -54,3 +54,17 @@ case class ReferralRequest(
 //    channelKey
 //  }
 }
+
+
+
+object ReferralRequest
+{
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE_KEY = new PersistedMessage(new ReferralRequest).toSearchKey
+
+  final val SEARCH_ALL_PERSISTED_MESSAGE = new PersistedMessage(new ReferralRequest)
+  {
+    override def toSearchKey(): String = ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE_KEY
+  }
+
+}

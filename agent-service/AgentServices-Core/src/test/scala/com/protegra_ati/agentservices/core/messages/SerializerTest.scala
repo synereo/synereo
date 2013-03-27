@@ -373,7 +373,7 @@ Timeouts
 
 
 
-    "deserialize persisted GetContentRequest with PersistedMessage[ ReferralRequest ]" in {
+    "deserialize persisted ReferralRequest with PersistedMessage[ ReferralRequest ]" in {
       // skipped("")
 
       val query: PersistedMessage[ ReferralRequest ] = new PersistedMessage[ ReferralRequest ]()

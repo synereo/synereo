@@ -7,7 +7,7 @@ import java.util.UUID
 import com.protegra_ati.agentservices.core.schema._
 import Constants._
 import scala.collection.JavaConversions._
-import com.protegra_ati.agentservices.core.messages.invitation.CreateInvitationRequest
+import com.protegra_ati.agentservices.core.messages.invitation.{ReferralRequest, CreateInvitationRequest}
 
 class SearchableDataTest extends SpecificationWithJUnit
 {
@@ -100,10 +100,8 @@ class SearchableDataTest extends SpecificationWithJUnit
 
       val searchKey = persistedMessage.toSearchKey
       println("searchKey: " + searchKey)
-      //to aggressive, should be like
-      //      val expected = "persistedMessage(" + FIELDS + "(id(_),localeCode(_),message(_),persisted(_)))"
-      val expected = "data(persistedMessage(_,_))"
-      searchKey must be_==(expected)
+      val expectedSearchKey = "data(persistedMessage(_," + FIELDS + "(message(_),messageType(\"CreateInvitationRequest\"),persisted(_),viewed(_),rejected(_),ignored(_),archived(_))))"
+      searchKey must be_==(expectedSearchKey)
     }
 
     //    "work with empty hashmap" in {
@@ -142,13 +140,9 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "generate search key correctly for a Connection.SEARCH_ALL" in {
-      val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
-      //val expectedSearchKey = "connection(data(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_))," + "fields(category(\"Person\"),connectionType(\"connectionType\"),alias(\"alias\"),readCnxn(_),writeCnxn(_),autoApprove(\"autoApprove\"),policies(\"[referralsDisabled, searchDisabled]\"),created(_))))"
-      //because there is an id expected result is
       // TODO: Test fails, expected should be data(connection(_,_)) for most optimal search
-      // Actual generated is data(connection(_,fields(category(_),connectionType(_),alias(_),readCnxn(_),writeCnxn(_),autoApprove(_),policies(_),created(_))))
-      // Which should still work, though less optimally
-      val expectedSearchKey = "data(connection(" + KEYS + "(_,_))"
+    //      val expectedSearchKey = "data(connection(" + KEYS + "(_,_))"
+      val expectedSearchKey = "data(connection(_," + FIELDS + "(category(_),connectionType(_),alias(_),readCnxn(_),writeCnxn(_),autoApprove(_),policies(_),created(_))))"
       val searchKey = Connection.SEARCH_ALL.toSearchKey
       searchKey must be_==(expectedSearchKey)
        }
@@ -183,6 +177,14 @@ class SearchableDataTest extends SpecificationWithJUnit
       val expectedEmptySearchKey = "data(post(_," + FIELDS + "(subject(_),threadId(_),ignored(_),archived(_),sent(_),delivered(_),viewed(_))))"
       emptySearchKey must be_==(expectedEmptySearchKey)
     }
+
+
+    "generate search key correctly for a ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE" in {
+
+      val expectedSearchKey = "data(persistedMessage(_," + FIELDS + "(message(_),messageType(\"ReferralRequest\"),persisted(_),viewed(_),rejected(_),ignored(_),archived(_))))"
+      val searchKey = ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE.toSearchKey
+      searchKey must be_==(expectedSearchKey)
+       }
 
   }
 
