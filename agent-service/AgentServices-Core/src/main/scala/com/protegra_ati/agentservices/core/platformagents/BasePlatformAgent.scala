@@ -215,41 +215,45 @@ abstract class BasePlatformAgent
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
-      for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
-        //        for ( e <- queue.get(agentCnxn)(lblChannel) ) {
-        val expired = isExpired(expiry)
-        if ( e != None && !expired ) {
+      try {
+        for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
+          //        for ( e <- queue.get(agentCnxn)(lblChannel) ) {
+          val expired = isExpired(expiry)
+          if ( e != None && !expired ) {
 
-          //keep the main thread listening, see if this causes debug headache
-          // STRESS TODO separation between different ways how to create/mange threads for different type of requests:
-          //        - for long term running jobs (like referral request with continuations, classical scala default 'spawn' which runs a new Thread per spawn is atractiv)
-          //        - for short lived requests thread pool is nost attractive to keep number of threads under control
-          //        - on KBDB level timeout for continuations is necessary so thread from thread pool for short lived requests can be released after given time
-          //        - HOW continuations are working with running threads !!!!
-          spawn {
-            //            rename {
-            val msg = Serializer.deserialize[ Message ](e.dispatch)
-//            println("IIIIIIIIIIIIIIIIIIIIIIII msg id : " + msg.ids.id + " on cnxn " + cnxn)
-            report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " msg id: " + msg.ids.id + " cnxn: " + agentCnxn.toString, Severity.Debug)
-            //race condition on get get get with consume bringing back the same item, cursor would get around this problem
-            //BUG 54 - can't use a cursor get before a put because no results are returned, problem with cursors and waiters
-            //temporary solution is to ignore duplicate processing of the same request msg by id
-            val msgKey = key + msg.ids.id
-            if ( !MemCache.hasValue(msgKey)(Results.client) ) {
-              //              if ( !_processedMessages.contains(key + msg.ids.id) ) {
-              //                _processedMessages.add(key + msg.ids.id)
-              MemCache.set(msgKey, "1", 180)(Results.client)
-              handler(cnxn, msg)
+            //keep the main thread listening, see if this causes debug headache
+            // STRESS TODO separation between different ways how to create/mange threads for different type of requests:
+            //        - for long term running jobs (like referral request with continuations, classical scala default 'spawn' which runs a new Thread per spawn is atractiv)
+            //        - for short lived requests thread pool is nost attractive to keep number of threads under control
+            //        - on KBDB level timeout for continuations is necessary so thread from thread pool for short lived requests can be released after given time
+            //        - HOW continuations are working with running threads !!!!
+            spawn {
+              //rename {
+              val msg = Serializer.deserialize[ Message ](e.dispatch)
+              //println("IIIIIIIIIIIIIIIIIIIIIIII msg id : " + msg.ids.id + " on cnxn " + cnxn)
+              report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " msg id: " + msg.ids.id + " cnxn: " + agentCnxn.toString, Severity.Debug)
+              //race condition on get get get with consume bringing back the same item, cursor would get around this problem
+              //BUG 54 - can't use a cursor get before a put because no results are returned, problem with cursors and waiters
+              //temporary solution is to ignore duplicate processing of the same request msg by id
+              val msgKey = key + msg.ids.id
+              if ( !MemCache.hasValue(msgKey)(Results.client) ) {
+                //              if ( !_processedMessages.contains(key + msg.ids.id) ) {
+                //                _processedMessages.add(key + msg.ids.id)
+                MemCache.set(msgKey, "1", 180)(Results.client)
+                handler(cnxn, msg)
+              }
+              else
+                report("already processed id : " + msg.ids.id, Severity.Debug)
+              //            ("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
             }
-            else
-              report("already processed id : " + msg.ids.id, Severity.Debug)
-            //            ("inBasePlatformAgent listen on channel in a loop: " + lblChannel)
+            //listen(queue, cnxn, key, handler, expiry)
           }
-//          listen(queue, cnxn, key, handler, expiry)
+          else {
+            report("listen received - none", Severity.Debug)
+          }
         }
-        else {
-          report("listen received - none", Severity.Debug)
-        }
+      } catch {
+        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -305,20 +309,24 @@ abstract class BasePlatformAgent
 
     //really should be a subscribe but can only be changed when put/subscribe works. get is a one listen deal.
     reset {
-      for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
-        if ( e != None ) {
-          //keep the main thread listening, see if this causes debug headache
-          spawn {
-            rename {
-              val msg = Serializer.deserialize[ T ](e.dispatch)
-              report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Debug)
-              handler(cnxn, msg)
-            }("inBasePlatformAgent single listen on channel: " + lblChannel)
+      try {
+        for ( e <- queue.subscribe(agentCnxn)(lblChannel) ) {
+          if ( e != None ) {
+            //keep the main thread listening, see if this causes debug headache
+            spawn {
+              rename {
+                val msg = Serializer.deserialize[ T ](e.dispatch)
+                report("!!! Listen Received !!!: " + msg.toString.short + " channel: " + lblChannel + " id: " + _id + " cnxn: " + agentCnxn.toString, Severity.Debug)
+                handler(cnxn, msg)
+              }("inBasePlatformAgent single listen on channel: " + lblChannel)
+            }
+          }
+          else {
+            report("listen received - none", Severity.Debug)
           }
         }
-        else {
-          report("listen received - none", Severity.Debug)
-        }
+      } catch {
+        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -380,11 +388,15 @@ abstract class BasePlatformAgent
     val agentCnxn = cnxn.toAgentCnxn()
     var result = ""
     reset {
-      for ( e <- queue.subscribe(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          //multiple results will call handler multiple times
-          handler(cnxn, Serializer.deserialize[ T ](e.dispatch))
+      try {
+        for ( e <- queue.subscribe(agentCnxn)(lbl) ) {
+          if ( e != None ) {
+            //multiple results will call handler multiple times
+            handler(cnxn, Serializer.deserialize[ T ](e.dispatch))
+          }
         }
+      } catch {
+        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -413,11 +425,15 @@ abstract class BasePlatformAgent
     val agentCnxn = cnxn.toAgentCnxn()
     var result = ""
     reset {
-      for ( e <- queue.subscribe(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          //multiple results will call handler multiple times
-          handler(cnxn, Serializer.deserialize[ Data ](e.dispatch))
+      try {
+        for ( e <- queue.subscribe(agentCnxn)(lbl) ) {
+          if ( e != None ) {
+            //multiple results will call handler multiple times
+            handler(cnxn, Serializer.deserialize[ Data ](e.dispatch))
+          }
         }
+      } catch {
+        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -440,13 +456,18 @@ abstract class BasePlatformAgent
 
     val agentCnxn = cnxn.toAgentCnxn()
     reset {
-      for ( e <- queue.read(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          //multiple results will call handler multiple times
-          val result = Serializer.deserialize[ T ](e.dispatch)
-          if ( result != null )
-            handler(cnxn, result)
+      try {
+        for ( e <- queue.read(agentCnxn)(lbl) ) {
+
+          if ( e != None ) {
+            //multiple results will call handler multiple times
+            val result = Serializer.deserialize[ T ](e.dispatch)
+            if ( result != null )
+              handler(cnxn, result)
+          }
         }
+      } catch {
+        case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
       }
     }
   }
@@ -460,17 +481,21 @@ abstract class BasePlatformAgent
     val agentCnxn = cnxn.toAgentCnxn()
     var found = false
     reset {
-      for ( e <- queue.read(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          //multiple results will call handler multiple times
-          val result = Serializer.deserialize[ T ](e.dispatch)
-          if ( result != null )
-          {
-            handler(cnxn, result)
-            found = true
+        try {
+          for ( e <- queue.read(agentCnxn)(lbl) ) {
+            if ( e != None ) {
+              //multiple results will call handler multiple times
+              val result = Serializer.deserialize[ T ](e.dispatch)
+              if ( result != null )
+              {
+                handler(cnxn, result)
+                found = true
+              }
+            }
           }
+        } catch {
+          case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
         }
-      }
     }
 
     if (!found)
@@ -495,12 +520,16 @@ abstract class BasePlatformAgent
 
     val agentCnxn = cnxn.toAgentCnxn()
     reset {
-      for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
-          val cleanResults = results.filter(x => x != null)
-          handler(cnxn, cleanResults)
+      try {
+        for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
+          if ( e != None ) {
+            val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
+            val cleanResults = results.filter(x => x != null)
+            handler(cnxn, cleanResults)
+          }
         }
+      } catch {
+        case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
       }
     }
   }
@@ -514,21 +543,25 @@ abstract class BasePlatformAgent
     val agentCnxn = cnxn.toAgentCnxn()
     var found = false
     reset {
-      for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
-          val cleanResults = results.filter(x => x != null)
+        try {
+          for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
+            if ( e != None ) {
+              val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
+              val cleanResults = results.filter(x => x != null)
 
-          cleanResults match {
-            case x::xs => {
-              handler(cnxn, cleanResults)
-              found = true
+              cleanResults match {
+                case Nil => Thread.sleep(delay)
+                case _ => {
+                  handler(cnxn, cleanResults)
+                  found = true
+                }
+              }
             }
-            case Nil => {}
           }
+        } catch {
+          case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
         }
       }
-    }
 
     if (!found)
     {
@@ -567,16 +600,20 @@ abstract class BasePlatformAgent
 
     val agentCnxn = cnxn.toAgentCnxn()
     reset {
-      for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
-        if ( e != None ) {
-          val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
-          val newRemainKeyList = remainKeyList.tail
-          val newIntermediateResults = intermediateResults ::: results
-          // last search is performed execute final handler
-          if ( newRemainKeyList.isEmpty ) finalHandler(cnxn, newIntermediateResults)
-          // next step of the fetch
-          else recursiveFetch(queue, cnxn, newRemainKeyList, newIntermediateResults, finalHandler)
+      try {
+        for ( e <- queue.read(true)(agentCnxn)(lbl) ) {
+          if ( e != None ) {
+            val results: List[ T ] = e.dispatchCursor.toList.map(x => Serializer.deserialize[ T ](x.dispatch))
+            val newRemainKeyList = remainKeyList.tail
+            val newIntermediateResults = intermediateResults ::: results
+            // last search is performed execute final handler
+            if ( newRemainKeyList.isEmpty ) finalHandler(cnxn, newIntermediateResults)
+            // next step of the fetch
+            else recursiveFetch(queue, cnxn, newRemainKeyList, newIntermediateResults, finalHandler)
+          }
         }
+      } catch {
+        case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
       }
     }
   }

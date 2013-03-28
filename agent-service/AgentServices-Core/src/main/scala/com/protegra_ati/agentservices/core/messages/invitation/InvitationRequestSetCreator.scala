@@ -298,74 +298,78 @@ trait InvitationRequestSetCreator
     val agentCnxnA = inviteA.originCnxn.toAgentCnxn()
 
     reset {
-      for ( e <- _publicQ.subscribe(agentCnxnA)(inviteA.getResponseChannelKey.toLabel) ) {
-        //TODO: temporary hack until multiple get can be used. right now we get e & none or none & f
-        if ( e != None ) {
+      try {
+        for ( e <- _publicQ.subscribe(agentCnxnA)(inviteA.getResponseChannelKey.toLabel) ) {
+          //TODO: temporary hack until multiple get can be used. right now we get e & none or none & f
+          if ( e != None ) {
 
-          //need to provide checkpoint in case of failure, or code updates, so persist this response
-          val msgA = Serializer.deserialize[ InvitationResponse ](e.dispatch)
-          persistInvitationResponse(msgA)
+            //need to provide checkpoint in case of failure, or code updates, so persist this response
+            val msgA = Serializer.deserialize[ InvitationResponse ](e.dispatch)
+            persistInvitationResponse(msgA)
 
-          report("!!! Listen Received FOR FIRST InvitationResponse !!!: ", Severity.Debug)
-          //TODO: see if this is really necessary or only a unit test issue, may go away once "multiple get for" is in place
-          val agentCnxnB = inviteB.originCnxn.toAgentCnxn()
+            report("!!! Listen Received FOR FIRST InvitationResponse !!!: ", Severity.Debug)
+            //TODO: see if this is really necessary or only a unit test issue, may go away once "multiple get for" is in place
+            val agentCnxnB = inviteB.originCnxn.toAgentCnxn()
 
-          reset {
-            for ( f <- _publicQ.subscribe(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
-              if ( e != None && f != None ) {
-                report("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!: ", Severity.Debug)
+            reset {
+              for ( f <- _publicQ.subscribe(agentCnxnB)(inviteB.getResponseChannelKey.toLabel) ) {
+                if ( e != None && f != None ) {
+                  report("!!! Listen Received FOR BOTH InvitationResponse MESSAGES !!!: ", Severity.Debug)
 
-                spawn {
-                  rename {
-                  //val msgA = Serializer.deserialize[ InvitationResponse ](e.dispatch)
-                  val msgB = Serializer.deserialize[ InvitationResponse ](f.dispatch)
-                    if ( !msgB.accept ) {
-                    // target to broker con
-                    //find Invite self using system data
-                      //val inviteB2Broker = ConnectionFactory.createTempConnection(msgB.connectionName, msgB.connectionType, inviteB.originCnxn, inviteB.targetCnxn);
-                      val inviteB2Broker = ConnectionFactory.createTempConnection(msgB.connectionName, msgB.connectionType, inviteB.targetCnxn, inviteB.targetCnxn);
-                      generateRejectToInvitationRequest(inviteB.eventKey, inviteB2Broker, msgB.getPost())
-                  }
-                  else if ( msgA.accept && msgB.accept ) {
-                    report("****GENERATE CREATE CONNECTION REQUEST:****", Severity.Info)
-                    val aId = UUID.randomUUID()
-                    val bId = UUID.randomUUID()
-                    var connABConnectionName = msgA.connectionName
-                    //override connection name on A if the original request was to connect to a business person via a role
-                    if (msgB.invitationRequest.isRoleBasedRequest && msgB.roleBasedAlias != null)
-                      connABConnectionName = msgB.roleBasedAlias
-                    val connAB = ConnectionFactory.createConnection(connABConnectionName, msgB.category, msgA.category, msgA.connectionType, aId.toString, bId.toString);
-                    val connBA = ConnectionFactory.createConnection(msgB.connectionName, msgA.category, msgB.category, msgB.connectionType, bId.toString, aId.toString);
-
+                  spawn {
+                    rename {
+                    //val msgA = Serializer.deserialize[ InvitationResponse ](e.dispatch)
+                    val msgB = Serializer.deserialize[ InvitationResponse ](f.dispatch)
+                      if ( !msgB.accept ) {
+                      // target to broker con
+                      //find Invite self using system data
+                        //val inviteB2Broker = ConnectionFactory.createTempConnection(msgB.connectionName, msgB.connectionType, inviteB.originCnxn, inviteB.targetCnxn);
+                        val inviteB2Broker = ConnectionFactory.createTempConnection(msgB.connectionName, msgB.connectionType, inviteB.targetCnxn, inviteB.targetCnxn);
+                        generateRejectToInvitationRequest(inviteB.eventKey, inviteB2Broker, msgB.getPost())
+                    }
+                    else if ( msgA.accept && msgB.accept ) {
+                      report("****GENERATE CREATE CONNECTION REQUEST:****", Severity.Info)
+                      val aId = UUID.randomUUID()
+                      val bId = UUID.randomUUID()
+                      var connABConnectionName = msgA.connectionName
+                      //override connection name on A if the original request was to connect to a business person via a role
                       if (msgB.invitationRequest.isRoleBasedRequest && msgB.roleBasedAlias != null)
-                        msgA.connectionName
-                    sendCreateConnectionRequest(msgA, connAB)
-                    sendCreateConnectionRequest(msgB, connBA)
-                    handleMutualConnectionAgreement(msgA, msgB)
+                        connABConnectionName = msgB.roleBasedAlias
+                      val connAB = ConnectionFactory.createConnection(connABConnectionName, msgB.category, msgA.category, msgA.connectionType, aId.toString, bId.toString);
+                      val connBA = ConnectionFactory.createConnection(msgB.connectionName, msgA.category, msgB.category, msgB.connectionType, bId.toString, aId.toString);
 
-                  }
-                  else {
-                    report("At least one invite declined -- A: " + msgA.accept + " B: " + msgB.accept, Severity.Error)
-                  }
+                        if (msgB.invitationRequest.isRoleBasedRequest && msgB.roleBasedAlias != null)
+                          msgA.connectionName
+                      sendCreateConnectionRequest(msgA, connAB)
+                      sendCreateConnectionRequest(msgB, connBA)
+                      handleMutualConnectionAgreement(msgA, msgB)
 
-                  try {
-                    processInvitationResponseToArchive(msgA)
-                    processInvitationResponseToArchive(msgB)
+                    }
+                    else {
+                      report("At least one invite declined -- A: " + msgA.accept + " B: " + msgB.accept, Severity.Error)
+                    }
+
+                    try {
+                      processInvitationResponseToArchive(msgA)
+                      processInvitationResponseToArchive(msgB)
+                    }
+                    catch {
+                      case e: Exception => report("Exception while archiving invitation repsonses", e, Severity.Error)
+                    }
+                    //enhance later but for now just delete both invitations as both have replied and we have started the processing chain or one (or both) has declined...
+                    //move this to a passed in post processing handler
+                    //                  deleteIntroduction(cnxnBroker_A, introductionId)
+                    //                  deleteIntroduction(cnxnBroker_A, introductionId)
+                    //                deleteIntroductionState(cnxnBroker_A, introductionState.introductionId)
+                    }("waits for invitation responses and create connections")
                   }
-                  catch {
-                    case e: Exception => report("Exception while archiving invitation repsonses", e, Severity.Error)
-                  }
-                  //enhance later but for now just delete both invitations as both have replied and we have started the processing chain or one (or both) has declined...
-                  //move this to a passed in post processing handler
-                  //                  deleteIntroduction(cnxnBroker_A, introductionId)
-                  //                  deleteIntroduction(cnxnBroker_A, introductionId)
-                  //                deleteIntroductionState(cnxnBroker_A, introductionState.introductionId)
-                  }("waits for invitation responses and create connections")
                 }
               }
             }
           }
         }
+      } catch {
+        case e: Throwable => report("failed waiting for invitation responses", e, Severity.Error)
       }
     }
   }
