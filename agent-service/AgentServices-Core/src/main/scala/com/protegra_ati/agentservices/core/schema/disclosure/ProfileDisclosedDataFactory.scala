@@ -11,8 +11,8 @@ class ProfileDisclosedDataFactory private() extends AbstractDisclosedDataFactory
   private val defaultDisclosedDataCollection: scala.collection.immutable.HashMap[ TrustLevel.Value, DisclosedData[ Profile ] ] =
     HashMap[ TrustLevel.Value, DisclosedData[ Profile ] ](
       TrustLevel.Trusted -> DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Trusted.toString, "id,localeCode,firstName,lastName,description,emailAddress,country,region,city,postalCode,website,imageHashCode"),
-      TrustLevel.Basic -> DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Basic.toString, "id,localeCode,firstName,lastName,description,country,imageHashCode"),
-      TrustLevel.Custom -> DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Custom.toString, "id,localeCode,lastName,country"),
+	  TrustLevel.Basic -> DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Basic.toString, "id,localeCode,firstName,lastName,description,country,region,city,postalCode,imageHashCode"),
+      TrustLevel.Custom -> DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Custom.toString, "id,localeCode,firstName,lastName,description,country,region,city,postalCode,imageHashCode"),
       TrustLevel.Empty -> DisclosedData[ Profile ](classOf[ Profile ], TrustLevel.Empty.toString, ""))
 
   override protected def getDefaultDisclosedDataCollection(): scala.collection.immutable.Map[ TrustLevel.Value, DisclosedData[ _ <: Data ] ] =
