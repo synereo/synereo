@@ -8,6 +8,7 @@ import com.protegra_ati.agentservices.core.schema._
 import Constants._
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.messages.invitation.{ReferralRequest, CreateInvitationRequest}
+import com.protegra_ati.agentservices.core.messages.Identification
 
 class SearchableDataTest extends SpecificationWithJUnit
 {
@@ -15,7 +16,7 @@ class SearchableDataTest extends SpecificationWithJUnit
   "fields " should {
 
     "set firstname" in {
-      val expected = "data(profile(" +"_," + FIELDS + "(firstName(\"John\"),lastName(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
+      val expected = "data(profile(" + "_," + FIELDS + "(firstName(\"John\"),lastName(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.firstName = "John"
       println("given:" + test.toSearchKey)
@@ -25,7 +26,7 @@ class SearchableDataTest extends SpecificationWithJUnit
     }
 
     "set lastname" in {
-      val expected = "data(profile(" +"_," + FIELDS + "(firstName(_),lastName(\"Adams\"),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
+      val expected = "data(profile(" + "_," + FIELDS + "(firstName(_),lastName(\"Adams\"),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
       val test: Profile = new Profile()
       test.lastName = "Adams"
       println(test.toSearchKey)
@@ -43,7 +44,7 @@ class SearchableDataTest extends SpecificationWithJUnit
 
     "set locale" in {
       //val expected = "profile(data("  + KEYS + "(id(_),localeCode(\"en\"),recVerNum(_))," + "fields(firstName(_),lastName(_),description(_),emailAddress(_),country(_),region(_),city(_),postalCode(_),website(_),imageHashCode(_))))"
-      val expected = "data(profile("  + KEYS + "(id(_),localeCode(\"en\"),recVerNum(_)),_))"
+      val expected = "data(profile(" + KEYS + "(id(_),localeCode(\"en\"),recVerNum(_)),_))"
       val test: Profile = new Profile()
       test.localeCode = "en"
       println(test.toSearchKey)
@@ -87,20 +88,20 @@ class SearchableDataTest extends SpecificationWithJUnit
       test.toSearchKey must be_==(expected)
     }
     "work with a nested Message and a Hashmap" in {
-      val fromDetails = new java.util.HashMap[ String, Data ]();
-      val tempProfile = new Profile();
-      tempProfile.setFirstName("first");
-      tempProfile.setLastName("last");
-      fromDetails.put(tempProfile.formattedClassName, tempProfile);
+      val fromDetails = new java.util.HashMap[ String, Data ]()
+      val tempProfile = new Profile()
+      tempProfile.setFirstName("first")
+      tempProfile.setLastName("last")
+      fromDetails.put(tempProfile.formattedClassName, tempProfile)
 
-      val postToTarget = new Post("subject: to Target ", "body", fromDetails);
-      val postToBroker = new Post("subject: to Broker", "body", fromDetails);
-      val msg = new CreateInvitationRequest(null, "", "", "", "", "", "", "", postToTarget, postToBroker, false);
+      val postToTarget = new Post("subject: to Target ", "body", fromDetails)
+      val postToBroker = new Post("subject: to Broker", "body", fromDetails)
+      val msg = new CreateInvitationRequest(null, null, "", "", "", "", "", "", "", postToTarget, postToBroker, false)
       val persistedMessage = new PersistedMessage(msg)
 
       val searchKey = persistedMessage.toSearchKey
       println("searchKey: " + searchKey)
-      val expectedSearchKey = "data(persistedMessage(_," + FIELDS + "(message(_),messageType(\"CreateInvitationRequest\"),persisted(_),viewed(_),rejected(_),ignored(_),archived(_))))"
+      val expectedSearchKey = "data(persistedMessage(_," + FIELDS + "(message(_),messageType(\"CreateInvitationRequest\"),messageId(_),messageParentId(_),messageConversationId(_),persisted(_),viewed(_),rejected(_),ignored(_),archived(_))))"
       searchKey must be_==(expectedSearchKey)
     }
 
@@ -141,16 +142,16 @@ class SearchableDataTest extends SpecificationWithJUnit
 
     "generate search key correctly for a Connection.SEARCH_ALL" in {
       // TODO: Test fails, expected should be data(connection(_,_)) for most optimal search
-    //      val expectedSearchKey = "data(connection(" + KEYS + "(_,_))"
+      //      val expectedSearchKey = "data(connection(" + KEYS + "(_,_))"
       val expectedSearchKey = "data(connection(_," + FIELDS + "(category(_),connectionType(_),alias(_),readCnxn(_),writeCnxn(_),autoApprove(_),policies(_),created(_))))"
       val searchKey = Connection.SEARCH_ALL.toSearchKey
       searchKey must be_==(expectedSearchKey)
-       }
+    }
 
     "generate search key correctly for an Image" in {
       val id = UUID.fromString("99595a09-8f3b-48a9-ad6d-ccd5d2782e71").toString
       //val expectedSearchKey = "image(data(" +  KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_))," + "fields(name(_),contentType(_),content(_),metadata(_))))"
-      val expectedSearchKey = "data(image(" +  KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_)),_))"
+      val expectedSearchKey = "data(image(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_)),_))"
       val data: Image = new Image()
       data.id = id
       val searchKey = data.toSearchKey
@@ -164,11 +165,11 @@ class SearchableDataTest extends SpecificationWithJUnit
 
 
     "generate search key correctly for a Post" in {
-      val fromDetails = new java.util.HashMap[ String, Data ]();
-      val data: Post =  new Post("subject2Target", "body", fromDetails);
+      val fromDetails = new java.util.HashMap[ String, Data ]()
+      val data: Post = new Post("subject2Target", "body", fromDetails)
       data.id = id
       data.threadId = id
-      val expectedSearchKey = "data(post(" +  KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_)),_))"
+      val expectedSearchKey = "data(post(" + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(_),recVerNum(_)),_))"
       val searchKey = data.toSearchKey
       searchKey must be_==(expectedSearchKey)
 
@@ -181,10 +182,20 @@ class SearchableDataTest extends SpecificationWithJUnit
 
     "generate search key correctly for a ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE" in {
 
-      val expectedSearchKey = "data(persistedMessage(_," + FIELDS + "(message(_),messageType(\"ReferralRequest\"),persisted(_),viewed(_),rejected(_),ignored(_),archived(_))))"
+      val expectedSearchKey = "data(persistedMessage(_," + FIELDS + "(message(_),messageType(\"ReferralRequest\"),messageId(_),messageParentId(_),messageConversationId(_),persisted(_),viewed(_),rejected(_),ignored(_),archived(_))))"
       val searchKey = ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE.toSearchKey
       searchKey must be_==(expectedSearchKey)
-       }
+    }
+
+    "generate search key correctly for a specific ReferralRequest by id" in {
+
+      val parentId = UUID.randomUUID().toString
+      val expectedSearchKey = "data(persistedMessage(_," + FIELDS + "(message(_),messageType(\"ReferralRequest\"),messageId(_),messageParentId(\"" + parentId + "\"),messageConversationId(_),persisted(_),viewed(_),rejected(_),ignored(_),archived(_))))"
+      val ids = Identification.searchForParentId(parentId)
+      val query = new PersistedMessage(new ReferralRequest(ids, null, null))
+      val searchKey = query.toSearchKey
+      searchKey must be_==(expectedSearchKey)
+    }
 
   }
 

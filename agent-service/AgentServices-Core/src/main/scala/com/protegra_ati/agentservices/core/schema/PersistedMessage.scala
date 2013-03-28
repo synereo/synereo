@@ -3,7 +3,7 @@ package com.protegra_ati.agentservices.core.schema
 import behaviors._
 import java.io.Serializable
 import com.protegra_ati.agentservices.store.schema.KVDBSerializable
-import com.protegra_ati.agentservices.core.messages.Message
+import com.protegra_ati.agentservices.core.messages.{Identification, Message}
 import com.protegra_ati.agentservices.core.schema.persistence._
 import org.joda.time.{DateTime, Instant}
 import scala.reflect.BeanProperty
@@ -24,6 +24,9 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
    def this() = this(null.asInstanceOf[T])
 
   var messageType = formattedMessageName
+  var messageId = formattedMessageId
+  var messageParentId = formattedMessageParentId
+  var messageConversationId = formattedMessageConversationId
 
   @BeanProperty
   var persisted: DateTime = null
@@ -35,6 +38,33 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
 
     message.getClass.getName.trimPackage
   }
+
+  def formattedMessageId(): String =
+  {
+    if (message == null || message.ids == null)
+      return null
+
+    message.ids.id
+  }
+
+
+  def formattedMessageParentId(): String =
+  {
+    if (message == null || message.ids == null)
+      return null
+
+    message.ids.parentId
+  }
+
+
+  def formattedMessageConversationId(): String =
+  {
+    if (message == null || message.ids == null)
+      return null
+
+    message.ids.conversationId
+  }
+
 
   override def hashCode = 41 * super.hashCode + ( if ( getArchived != null ) getArchived.hashCode else 0 ) + ( if ( getIgnored != null ) getIgnored.hashCode else 0 ) + ( if ( getRejected != null ) getRejected.hashCode else 0 )
 

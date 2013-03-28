@@ -195,16 +195,16 @@ with Serializable
 
       //check that the appropriate DisclosedData object was persisted to the connMike.writeCnxn
       //  val authorizedContentAuditItemSearch: AuthorizedContentAuditItem = new AuthorizedContentAuditItem(basicAuditItem.objectType, basicAuditItem.connectionType, "", "")
-      val basicAuditItem = authorizedProfileContentBasic.forAudit(connMike)
-      val authorizedContentAuditItemSearch: AuthorizedContentAuditItem = new AuthorizedContentAuditItem()
-      authorizedContentAuditItemSearch.objectType = basicAuditItem.objectType
-      authorizedContentAuditItemSearch.connectionType = basicAuditItem.connectionType
+      //val basicAuditItem = authorizedProfileContentBasic.forAudit(connMike)
+      //val authorizedContentAuditItemSearch: AuthorizedContentAuditItem = new AuthorizedContentAuditItem()
+      //authorizedContentAuditItemSearch.objectType = basicAuditItem.objectType
+      //authorizedContentAuditItemSearch.connectionType = basicAuditItem.connectionType
 
       //authorizedContentAuditItemSearch.setSearchFieldValue("objectType", basicAuditItem.objectType)
       //authorizedContentAuditItemSearch.setSearchFieldValue("connectionType", basicAuditItem.connectionType)
 
-      val comparable = authorizedProfileContentBasic.forAudit(connMike)
-      fetchMustBe(comparable)(pa, connMike.writeCnxn, authorizedContentAuditItemSearch.toSearchKey)
+      //val comparable = authorizedProfileContentBasic.forAudit(connMike)
+      //fetchMustBe(comparable)(pa, connMike.writeCnxn, authorizedContentAuditItemSearch.toSearchKey)
     }
 
   }
