@@ -52,7 +52,7 @@ trait Listeners extends Reporting
     }
     else
     {
-      report("key + subkey must be unique, this pair already exists. No listener added", Severity.Warning)
+      report("key + subkey must be unique, this pair already exists. No listener added.  Key: " + key + "  keyUnique: " + keyUnique, Severity.Info)
     }
   }
 
