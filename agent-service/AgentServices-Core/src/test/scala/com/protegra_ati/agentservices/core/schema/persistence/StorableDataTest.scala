@@ -115,8 +115,11 @@ class StorableDataTest extends SpecificationWithJUnit
       println("storeKey: " + storeKey)
       //      persistedMessage(fields(id("ec149c51-88f8-476c-bda7-8dd721d14a3f"),localeCode("en"),message(""),persisted("2012-05-02T22:01:02.903-05:00")))
       val persistedRaw = "" + persistedMessage.persisted
+      val messageid = msg.ids.id
+      val parentId = msg.ids.parentId
+      val conversationId = msg.ids.conversationId
       val persisted = persistedRaw.replace(".", " ").replace(":"," ")
-      val expected = "data(persistedMessage("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(message(\"\"),messageType(\"CreateInvitationRequest\"),persisted(\"" + persisted + "\"),viewed(\"\"),rejected(\"\"),ignored(\"\"),archived(\"\"))))"
+      val expected = "data(persistedMessage("  + KEYS + "(id(\"99595a09-8f3b-48a9-ad6d-ccd5d2782e71\"),localeCode(\"en\"),recVerNum(\"1\"))," + FIELDS + "(message(\"\"),messageType(\"CreateInvitationRequest\"),messageId(\"" + messageid + "\"),messageParentId(\"" + parentId + "\"),messageConversationId(\"" + conversationId + "\"),persisted(\"" + persisted + "\"),viewed(\"\"),rejected(\"\"),ignored(\"\"),archived(\"\"))))"
       println("EXPECTED: " + expected)
       storeKey must be_==(expected)
     }

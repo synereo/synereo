@@ -7,6 +7,7 @@ import reflect.BeanProperty
 import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 case class CreateInvitationRequest(
+  override val ids: Identification,
   override val eventKey: EventKey,
   @BeanProperty val brokerTargetCnxnKey: String,
   @BeanProperty selfAlias: String,
@@ -18,11 +19,22 @@ case class CreateInvitationRequest(
   @BeanProperty postToTarget: Post,
   @BeanProperty postToBroker: Post,
   @BeanProperty isRoleBasedRequest : Boolean
-  ) extends Message(new Identification(), eventKey)//extends Message(eventKey) kryo workaround
+  ) extends Message(ids, eventKey)//extends Message(eventKey) kryo workaround
    with Request with UseKryoSerialization
 {
-  def this () = this (null,null, null, null, null, null, null, null, null, null, false)
-
+  def this () = this (null,null,null, null, null, null, null, null, null, null, null, false)
+  def this ( _eventKey: EventKey,
+    _brokerTargetCnxnKey: String,
+    _selfAlias: String,
+    _targetAlias: String,
+    _selfCategory: String,
+    _targetCategory: String,
+    _requestedConnectionType: String,
+    _requestedConnectionName: String,
+    _postToTarget: Post,
+    _postToBroker: Post,
+    _isRoleBasedRequest : Boolean) = this (new Identification(),_eventKey,_brokerTargetCnxnKey,_selfAlias,_targetAlias,_selfCategory,_targetCategory,_requestedConnectionType,_requestedConnectionName,_postToTarget,_postToBroker,_isRoleBasedRequest)
+             
   override def channel = Channel.Invitation
 
   channelRole = Some(ChannelRole.Creator)
