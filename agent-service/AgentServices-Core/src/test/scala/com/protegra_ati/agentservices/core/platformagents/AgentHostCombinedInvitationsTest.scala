@@ -38,7 +38,7 @@ with ReferralUser
 
   "Invitations" should {
     "create connections from an accepted CreateInvitationRequest" in {
-      skipped("issue 242 or specs")
+      skipped("issue 242 or find out why InvitationResponse set between line 65 findConnBroker_A and  line 75 generateInvitationRequests is not reached")
 
       def compareBrokerPostHandler(receivedPostToBroker: Post, expectedPostToBroker: Post): Unit =
       {
@@ -119,7 +119,7 @@ with ReferralUser
 
       AgentHostCombinedBase.setProfile(uiR, connJasonJason.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestTrusted("jason", "klassen", "Jason.Klassen@protegra.com", "CA"))
       Thread.sleep(TIMEOUT_LONG)
-      AgentHostCombinedBase.setProfile(uiR, connMikeMike.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestTrusted("mike", "gevantmakher", "Mike.Gevantmakher@protegra.com", "US"))
+      AgentHostCombinedBase.setProfile(uiR, connMikeMike.writeCnxn, UUID.randomUUID(), eventKey, Locale.ENGLISH.toString(), createProfileForTestTrusted("mike", "todd", "Mike.Todd@protegra.com", "US"))
       Thread.sleep(TIMEOUT_LONG * 5)
 
       // Jason asks broker to be connected to Mikhaial

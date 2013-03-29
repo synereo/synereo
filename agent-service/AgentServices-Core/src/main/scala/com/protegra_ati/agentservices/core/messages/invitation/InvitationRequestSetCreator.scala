@@ -390,7 +390,8 @@ trait InvitationRequestSetCreator
     report("STORE INVITATIONS RESPONSE: inviteRespone=" + inviteResponse + ", cnxn=" + cnxn, Severity.Info)
     val selfConnection = systemConnection.data
     val persistedInvitationResponseMessage = new PersistedMessage(inviteResponse)
-    store(_dbQ, selfConnection.writeCnxn, persistedInvitationResponseMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationResponse ] ](persistedInvitationResponseMessage))
+    setContentToSelfConnection(selfConnection.writeCnxn, persistedInvitationResponseMessage)
+//    store(_dbQ, selfConnection.writeCnxn, persistedInvitationResponseMessage.toStoreKey, Serializer.serialize[ PersistedMessage[ InvitationResponse ] ](persistedInvitationResponseMessage))
   }
 
 
@@ -407,38 +408,16 @@ trait InvitationRequestSetCreator
 
   protected def findInvitationResponseToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
   {
-    val query = InvitationResponse.SEARCH_ALL_PERSISTED_MESSAGE
-    fetchList[ PersistedMessage[ InvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ InvitationRequest ] ], invitationResponse.ids.parentId, invitationResponse.accept))
+    val idToFind = new Identification(invitationResponse.ids.parentId,"","")
+    val query = new PersistedMessage(new InvitationRequest(idToFind, null, null, null, null, null, null, false ))
+    fetch[ PersistedMessage[ InvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: PersistedMessage[ InvitationRequest ], invitationResponse.accept))
   }
 
   protected def findCreateInvitationRequestToArchive(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], invitationResponse: InvitationResponse): Unit =
   {
-    val query = CreateInvitationRequest.SEARCH_ALL_PERSISTED_MESSAGE
-    fetchList[ PersistedMessage[ CreateInvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, myArchivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ CreateInvitationRequest ] ], invitationResponse.ids.conversationId, invitationResponse.accept))
-  }
-
-  //copied from existing archivePersistedMessage
-  //as it compares message sbased on parentId and Id
-  //CIR's can only be matched with IRs via ConversationId
-  def myArchivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, messages: List[ PersistedMessage[ _ <: Message ] ], conversationId: String, isAccepted: Boolean) =
-  {
-    // TODO: Remove once issue 841 is resolved.  There should never be a null PersistedMessage message
-    messages.filter(_ == null) match {
-      case x :: xs => report("NULL PersistedMessage encountered in InvitationRequestSetCreator", Severity.Error)
-      case Nil => 
-    }
-    
-    //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
-    for (msg <- messages.filterNot(_ == null)) {
-      if ( msg.message.ids.conversationId == conversationId ) {
-        val newData = ClonerFactory.getInstance().createDeepClone(msg)
-        newData.archive()
-        if ( !isAccepted )
-          newData.reject()
-        //TODO: something is not right, its not safedeleting the old, getting 2 copies!
-        updateDataById(cnxnBroker_Broker, newData)
-      }
-    }
+    val idToFind = new Identification("","",invitationResponse.ids.conversationId)
+    val query = new PersistedMessage(new CreateInvitationRequest(idToFind, null, null, null, null, null, null, null, null, null, null, false ))
+    fetch[ PersistedMessage[ CreateInvitationRequest ] ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: PersistedMessage[ CreateInvitationRequest ], invitationResponse.accept))
   }
 
   protected def sendCreateConnectionRequest(inviteResponse: InvitationResponse, conn: Connection) =

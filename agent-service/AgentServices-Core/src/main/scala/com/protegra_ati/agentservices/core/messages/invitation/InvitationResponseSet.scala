@@ -88,31 +88,27 @@ trait InvitationResponseSet
   // search for ALL persisted Requests instead of just specified one ????
   protected def findReferralRequestToArchive(cnxnBroker_Broker: AgentCnxnProxy, referralResponse: ReferralResponse) =
   {
-    //TODO: fix toSearchKey to work with the nested id, for now pull back everything
-    val query = ReferralRequest.SEARCH_ALL_PERSISTED_MESSAGE
-    fetchList[ PersistedMessage[ ReferralRequest ] ](_dbQ, cnxnBroker_Broker, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: List[ PersistedMessage[ ReferralRequest ] ], referralResponse.ids.parentId, referralResponse.accept))
+    val idToFind = new Identification(referralResponse.ids.parentId,"","")
+    val query = new PersistedMessage(new ReferralRequest(idToFind, null, null ))
+    fetch[ PersistedMessage[ ReferralRequest ] ](_dbQ, cnxnBroker_Broker, query.toSearchKey, archivePersistedMessage(_: AgentCnxnProxy, _: PersistedMessage[ ReferralRequest ], referralResponse.accept))
   }
 
   //TODO:refactor to common spot
-  def archivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, messages: List[ PersistedMessage[ _ <: Message ] ], parentId: String, isAccepted: Boolean) =
+  def archivePersistedMessage(cnxnBroker_Broker: AgentCnxnProxy, persistedMessage: PersistedMessage[ _ <: Message ], isAccepted: Boolean): Unit =
   {
     // TODO: Remove once issue 841 is resolved.  There should never be a null PersistedMessage message
-    messages.filter(_ == null) match {
-      case x :: xs => report("NULL PersistedMessage encountered in InvitationRequestSetCreator", Severity.Error)
-      case Nil => 
+    if (persistedMessage.message == null) {
+      report("NULL PersistedMessage encountered in archivePersistedMessage for: " + persistedMessage, Severity.Error)
+      return
     }
-    
-    //TODO: fix toSearchKey to work with the nested id, once fixed just send a SetContentRequest to self
-    for (msg <- messages.filterNot(_ == null)) {
-      if ( msg.message.ids.id == parentId ) {
-        val newData = ClonerFactory.getInstance().createDeepClone(msg)
-        newData.archive()
-        if ( !isAccepted )
-          newData.reject()
-        //TODO: something is not right, its not safedeleting the old, getting 2 copies!
-        updateDataById(cnxnBroker_Broker, newData)
-      }
+
+    persistedMessage.archive()
+    if ( !isAccepted ) {
+      persistedMessage.reject()
     }
+
+    //TODO: something is not right, its not safedeleting the old, getting 2 copies!
+    updateDataById(cnxnBroker_Broker, persistedMessage)
   }
 
 
