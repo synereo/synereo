@@ -53,6 +53,7 @@ with RabbitTestSetup
 
       node.configFileName must be_==(configFileName)
       node.configurationFromFile.get( "dbPort" ).getOrElse("") must be_==("27018")
+      node.cache.dbHost must be_==("127.0.0.1")
       node.cache.dbPort must be_==("27018")
     }
 
