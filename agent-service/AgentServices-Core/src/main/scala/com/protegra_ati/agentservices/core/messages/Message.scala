@@ -32,8 +32,16 @@ with Reporting
 
   var channelLevel: Option[ ChannelLevel.Value ] = None
   //java shouldn't be setting this
-    var originCnxn: AgentCnxnProxy = null
+  var originCnxn: AgentCnxnProxy = null
 
+  def channelLevelAsString:String = {
+    val cl = channelLevel.getOrElse(ChannelLevel.Private) match {
+      case x:ChannelLevel.Value => x
+      case null => ChannelLevel.Private
+      case _ => ChannelLevel.Private
+    }
+    cl.toString
+  }
   def getChannelKey: String =
   {
     //showing conversationId here now to provide the ability
@@ -47,7 +55,7 @@ with Reporting
     //    }
 
     try {
-      var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.getOrElse(ChannelLevel.Private).toString
+      var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevelAsString
       channelKey += "(\"" + ids.conversationId.toString + "\")"
       channelKey
     }
@@ -61,7 +69,7 @@ with Reporting
 
   def getExchangeKey: String =
   {
-    var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.getOrElse(ChannelLevel.Private).toString
+    var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevelAsString
     channelKey += "(_)"
     channelKey
   }

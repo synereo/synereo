@@ -13,6 +13,8 @@ import net.lag.configgy._
 import scala.collection.mutable.HashMap
 
 import org.apache.log4j.{PropertyConfigurator, Level, Logger}
+import java.text.SimpleDateFormat
+import java.util.Calendar
 
 object Severity extends Enumeration()
 {
@@ -74,7 +76,10 @@ object LogConfiguration {
 
 trait Reporting
 {
-  import LogConfiguration._    
+  import LogConfiguration._
+
+  @transient
+  lazy val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS")
 
   def prettyPrintElisions() : HashMap[String,String] =
     {
@@ -111,7 +116,7 @@ trait Reporting
 
   def header(level: Severity.Value): String =
   {
-    "=" + level.toString.toUpperCase + " REPORT==== Thread " + Thread.currentThread.getName + " ==="
+    "[" + dateFormat.format(Calendar.getInstance().getTime()) + "] =" + level.toString.toUpperCase + " REPORT==== Thread " + Thread.currentThread.getName + " ==="
   }
 
   def wrap[ A ](fact: A): String =
