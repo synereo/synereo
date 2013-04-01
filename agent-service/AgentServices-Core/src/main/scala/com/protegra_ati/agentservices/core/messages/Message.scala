@@ -10,10 +10,14 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 import com.protegra_ati.agentservices.core.util.serializer.{UseJavaIOSerialization}
+import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 
 
-abstract class Message(val ids: Identification, val eventKey: EventKey) extends Serializable with
-KVDBSerializable with UseJavaIOSerialization
+abstract class Message(val ids: Identification, val eventKey: EventKey)
+  extends Serializable
+  with KVDBSerializable
+  with UseJavaIOSerialization
+with Reporting
 {
   //using null instead of none for java interop
   //  def this(ids: Identification) = this (ids, null)
@@ -42,9 +46,17 @@ KVDBSerializable with UseJavaIOSerialization
     //      channelLevel = Some(ChannelLevel.Private)
     //    }
 
-    var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.getOrElse(ChannelLevel.Private).toString
-    channelKey += "(\"" + ids.conversationId.toString + "\")"
-    channelKey
+    try {
+      var channelKey = channel.toString + channelRole.getOrElse("") + channelType.toString + channelLevel.getOrElse(ChannelLevel.Private).toString
+      channelKey += "(\"" + ids.conversationId.toString + "\")"
+      channelKey
+    }
+    catch {
+      case e:Exception => {
+        report("Error building channel key.  Channel: " + channel + "  channelRole: " + channelRole + "  channelLevel: " + channelLevel, e, Severity.Error)
+        throw e
+      }
+    }
   }
 
   def getExchangeKey: String =
