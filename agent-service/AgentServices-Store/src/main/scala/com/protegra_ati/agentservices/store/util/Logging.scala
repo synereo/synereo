@@ -74,12 +74,15 @@ object LogConfiguration {
   }
 }
 
+object Reporting
+{
+  @transient
+  lazy val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS")
+}
+
 trait Reporting
 {
   import LogConfiguration._
-
-  @transient
-  lazy val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS")
 
   def prettyPrintElisions() : HashMap[String,String] =
     {
@@ -116,7 +119,7 @@ trait Reporting
 
   def header(level: Severity.Value): String =
   {
-    "[" + dateFormat.format(Calendar.getInstance().getTime()) + "] =" + level.toString.toUpperCase + " REPORT==== Thread " + Thread.currentThread.getName + " ==="
+    "[" + Reporting.dateFormat.format(Calendar.getInstance().getTime()) + "] =" + level.toString.toUpperCase + " REPORT==== Thread " + Thread.currentThread.getName + " ==="
   }
 
   def wrap[ A ](fact: A): String =
