@@ -57,7 +57,7 @@ with Serializable
   val mockProfile = new Profile("JenFirst", "JenLast", "test Description", "firstLast@test.com", "CA", "someprovince", "city", "postalCode", "website")
   mockProfile.id = profileId
   val emptyProfile = new Profile()
-  val customProfile = new Profile("", "JenLast", "", "", "CA", "", "", "", "")
+  val customProfile = new Profile("JenFirst", "JenLast", "test Description", "", "CA", "someprovince", "city", "postalCode", "")
   customProfile.id = profileId
   val trustedProfile = mockProfile.copy()
   trustedProfile.id = profileId
