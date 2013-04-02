@@ -23,7 +23,7 @@ public class Test
     p = new parser(l);
     /* The default parser is the first-defined entry point. */
     /* You may want to change this. Other options are: */
-    /* pTerm, pAtom, pVar, pLyst, pListPredicate, pListTerm */
+    /* pTerm, pAtom, pBoole, pVar, pLyst, pListPredicate, pListTerm */
     try
     {
       com.biosimilarity.lift.lib.term.Prolog.Absyn.Predicate parse_tree = p.pPredicate();

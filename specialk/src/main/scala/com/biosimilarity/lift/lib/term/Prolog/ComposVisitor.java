@@ -7,6 +7,7 @@ public class ComposVisitor<A> implements
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Predicate.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Predicate,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Term.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Term,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Atom.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Atom,A>,
+  com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Var.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Var,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Lyst.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Lyst,A>
 {
@@ -71,6 +72,12 @@ public class ComposVisitor<A> implements
 
       return new com.biosimilarity.lift.lib.term.Prolog.Absyn.EAtm(ident_);
     }
+    public Atom visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm p, A arg)
+    {
+      Boole boole_ = p.boole_.accept(this, arg);
+
+      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm(boole_);
+    }
     public Atom visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm p, A arg)
     {
       String string_ = p.string_;
@@ -88,6 +95,18 @@ public class ComposVisitor<A> implements
       Double double_ = p.double_;
 
       return new com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm(double_);
+    }
+
+/* Boole */
+    public Boole visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity p, A arg)
+    {
+
+      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity();
+    }
+    public Boole visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity p, A arg)
+    {
+
+      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity();
     }
 
 /* Var */

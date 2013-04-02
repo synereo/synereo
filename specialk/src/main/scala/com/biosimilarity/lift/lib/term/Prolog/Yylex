@@ -31,6 +31,8 @@ IDENT = ({LETTER}|{DIGIT}|['_])
 <YYINITIAL>\] { return new Symbol(sym._SYMB_4); }
 <YYINITIAL>\| { return new Symbol(sym._SYMB_5); }
 <YYINITIAL>, { return new Symbol(sym._SYMB_6); }
+<YYINITIAL>false { return new Symbol(sym._SYMB_7); }
+<YYINITIAL>true { return new Symbol(sym._SYMB_8); }
 
 <YYINITIAL>{CAPITAL}({LETTER}|{DIGIT}|_)* { return new Symbol(sym.UIdent, yytext().intern()); }
 <YYINITIAL>{SMALL}({LETTER}|{DIGIT}|_)* { return new Symbol(sym.LIdent, yytext().intern()); }

@@ -105,6 +105,21 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
+  public static String print(com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole foo)
+  {
+    pp(foo, 0);
+    trim();
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String show(com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole foo)
+  {
+    sh(foo);
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
   public static String print(com.biosimilarity.lift.lib.term.Prolog.Absyn.Var foo)
   {
     pp(foo, 0);
@@ -241,6 +256,13 @@ public class PrettyPrinter
        render("'");
        if (_i_ > 0) render(_R_PAREN);
     }
+    else     if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm _batm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_batm.boole_, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
     else     if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm)
     {
        com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm _stratm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm) foo;
@@ -260,6 +282,24 @@ public class PrettyPrinter
        com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm _fltatm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm) foo;
        if (_i_ > 0) render(_L_PAREN);
        pp(_fltatm.double_, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+  }
+
+  private static void pp(com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole foo, int _i_)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity _verity = (com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       render("true");
+       if (_i_ > 0) render(_R_PAREN);
+    }
+    else     if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity _absurdity = (com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       render("false");
        if (_i_ > 0) render(_R_PAREN);
     }
   }
@@ -432,6 +472,14 @@ public class PrettyPrinter
        sh(_eatm.ident_);
        render(")");
     }
+    if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm _batm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm) foo;
+       render("(");
+       render("BAtm");
+       sh(_batm.boole_);
+       render(")");
+    }
     if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm)
     {
        com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm _stratm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm) foo;
@@ -455,6 +503,20 @@ public class PrettyPrinter
        render("FltAtm");
        sh(_fltatm.double_);
        render(")");
+    }
+  }
+
+  private static void sh(com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole foo)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity _verity = (com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity) foo;
+       render("Verity");
+    }
+    if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity _absurdity = (com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity) foo;
+       render("Absurdity");
     }
   }
 

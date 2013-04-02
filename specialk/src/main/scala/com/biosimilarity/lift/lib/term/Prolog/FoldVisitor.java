@@ -59,6 +59,11 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
       R r = leaf(arg);
       return r;
     }
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm p, A arg) {
+      R r = leaf(arg);
+      r = combine(p.boole_.accept(this, arg), r, arg);
+      return r;
+    }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm p, A arg) {
       R r = leaf(arg);
       return r;
@@ -68,6 +73,16 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
       return r;
     }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm p, A arg) {
+      R r = leaf(arg);
+      return r;
+    }
+
+/* Boole */
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity p, A arg) {
+      R r = leaf(arg);
+      return r;
+    }
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity p, A arg) {
       R r = leaf(arg);
       return r;
     }

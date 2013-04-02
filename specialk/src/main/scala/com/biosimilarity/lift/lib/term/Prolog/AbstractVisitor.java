@@ -19,10 +19,17 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
 /* Atom */
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Atm p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.EAtm p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.IntAtm p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm p, A arg) { return visitDefault(p, arg); }
     public R visitDefault(com.biosimilarity.lift.lib.term.Prolog.Absyn.Atom p, A arg) {
+      throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
+    }
+/* Boole */
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity p, A arg) { return visitDefault(p, arg); }
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity p, A arg) { return visitDefault(p, arg); }
+    public R visitDefault(com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
 /* Var */

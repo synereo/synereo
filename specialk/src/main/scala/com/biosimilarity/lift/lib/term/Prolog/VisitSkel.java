@@ -87,6 +87,14 @@ public class VisitSkel
 
       return null;
     }
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm p, A arg)
+    {
+      /* Code For BAtm Goes Here */
+
+      p.boole_.accept(new BooleVisitor<R,A>(), arg);
+
+      return null;
+    }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm p, A arg)
     {
       /* Code For StrAtm Goes Here */
@@ -108,6 +116,24 @@ public class VisitSkel
       /* Code For FltAtm Goes Here */
 
       //p.double_;
+
+      return null;
+    }
+
+  }
+  public class BooleVisitor<R,A> implements Boole.Visitor<R,A>
+  {
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity p, A arg)
+    {
+      /* Code For Verity Goes Here */
+
+
+      return null;
+    }
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity p, A arg)
+    {
+      /* Code For Absurdity Goes Here */
+
 
       return null;
     }

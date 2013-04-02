@@ -64,12 +64,12 @@ public class Yylex implements java_cup.runtime.Scanner {
 	private final int CHAR = 2;
 	private final int yy_state_dtrans[] = {
 		0,
-		29,
-		29,
-		29,
-		29,
-		30,
-		31
+		33,
+		33,
+		33,
+		33,
+		34,
+		35
 	};
 	private void yybegin (int state) {
 		yy_lexical_state = state;
@@ -245,27 +245,42 @@ public class Yylex implements java_cup.runtime.Scanner {
 		/* 22 */ YY_NO_ANCHOR,
 		/* 23 */ YY_NO_ANCHOR,
 		/* 24 */ YY_NO_ANCHOR,
-		/* 25 */ YY_NOT_ACCEPT,
+		/* 25 */ YY_NO_ANCHOR,
 		/* 26 */ YY_NO_ANCHOR,
 		/* 27 */ YY_NOT_ACCEPT,
-		/* 28 */ YY_NOT_ACCEPT,
-		/* 29 */ YY_NOT_ACCEPT,
+		/* 28 */ YY_NO_ANCHOR,
+		/* 29 */ YY_NO_ANCHOR,
 		/* 30 */ YY_NOT_ACCEPT,
-		/* 31 */ YY_NOT_ACCEPT
+		/* 31 */ YY_NO_ANCHOR,
+		/* 32 */ YY_NOT_ACCEPT,
+		/* 33 */ YY_NOT_ACCEPT,
+		/* 34 */ YY_NOT_ACCEPT,
+		/* 35 */ YY_NOT_ACCEPT,
+		/* 36 */ YY_NO_ANCHOR,
+		/* 37 */ YY_NO_ANCHOR,
+		/* 38 */ YY_NO_ANCHOR,
+		/* 39 */ YY_NO_ANCHOR,
+		/* 40 */ YY_NO_ANCHOR,
+		/* 41 */ YY_NO_ANCHOR
 	};
 	private int yy_cmap[] = unpackFromString(1,65538,
-"12:9,20,21,12,20,21,12:18,20,12,13,12:4,3,1,2,12:2,7,19,17,12,10:10,12:7,8:" +
-"26,4,14,5,12,11,12,9:4,18,9:8,15,9:5,16,9:6,12,6,12:67,8:23,12,8:7,9:24,12," +
-"9:8,12:65280,0:2")[0];
+"20:9,26,27,20,26,27,20:18,26,20,21,20:4,3,1,2,20:2,7,25,24,20,18:10,20:7,16" +
+":26,4,22,5,20,19,20,9,17:3,12,8,17:5,10,17,23,17:3,14,11,13,15,17:5,20,6,20" +
+":67,16:23,20,16:7,17:24,20,17:8,20:65280,0:2")[0];
 
-	private int yy_rmap[] = unpackFromString(1,32,
-"0,1:8,2,3,4,5,1:2,6,7,1:8,8,9,10,9,11,12,13")[0];
+	private int yy_rmap[] = unpackFromString(1,42,
+"0,1:8,2,3,4,5,1:2,6,7,8:2,1:8,9,10,11,12,13,11,14,15,16,17,18,19,20,8:2")[0];
 
-	private int yy_nxt[][] = unpackFromString(14,22,
-"1,2,3,4,5,6,7,8,9,10,11,12,-1,13,-1,10:2,-1,10,-1,14:2,-1:25,15,-1:4,9:4,-1" +
-":3,9:2,-1,9,-1:6,15,-1:4,10:4,-1:3,10:2,-1,10,-1:13,11,-1:6,25,-1:5,12:20,-" +
-"1:4,15,-1:4,15:4,-1:3,15:2,-1,15,-1:13,16,-1:7,27,-1:13,16,-1:21,26,-1:21,2" +
-"6,-1:8,28,-1:2,1,-1:21,1,17:12,18,19,17:6,-1,1,20:12,21,22,23,24,20:4,-1");
+	private int yy_nxt[][] = unpackFromString(21,28,
+"1,2,3,4,5,6,7,8,9,41:4,38,41:2,10,41,11,12,-1,13,-1,41,-1:2,14:2,-1:31,15,-" +
+"1:4,41,39,41:6,40,41,40:2,-1:3,41,-1:7,15,-1:4,10:12,-1:3,10,-1:22,11,-1:5," +
+"27,-1:4,12:26,-1:4,15,-1:4,15:12,-1:3,15,-1:16,30,-1:5,16,-1:12,15,-1:4,41:" +
+"8,40,41,40:2,-1:3,41,-1:22,16,-1:12,15,-1:4,41:4,17,41:3,40,41,40:2,-1:3,41" +
+",-1:22,29,-1:27,29,-1:6,32,-1:5,15,-1:4,41:4,18,41:3,40,41,40:2,-1:3,41,-1:" +
+"4,1,-1:27,1,19:20,20,21,19:4,-1,1,22:12,23,22:7,24,25,26,22:3,-1:4,15,-1:4," +
+"41:7,28,40,41,40:2,-1:3,41,-1:7,15,-1:4,41:3,31,41:4,40,41,40:2,-1:3,41,-1:" +
+"7,15,-1:4,41:6,36,41,40,41,40:2,-1:3,41,-1:7,15,-1:4,41:2,37,41:5,40,41,40:" +
+"2,-1:3,41,-1:4");
 
 	public java_cup.runtime.Symbol next_token ()
 		throws java.io.IOException {
@@ -344,11 +359,11 @@ public class Yylex implements java_cup.runtime.Scanner {
 					case -9:
 						break;
 					case 9:
-						{ return new Symbol(sym.UIdent, yytext().intern()); }
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
 					case -10:
 						break;
 					case 10:
-						{ return new Symbol(sym.LIdent, yytext().intern()); }
+						{ return new Symbol(sym.UIdent, yytext().intern()); }
 					case -11:
 						break;
 					case 11:
@@ -376,40 +391,80 @@ public class Yylex implements java_cup.runtime.Scanner {
 					case -17:
 						break;
 					case 17:
-						{ pstring += yytext(); }
+						{ return new Symbol(sym._SYMB_8); }
 					case -18:
 						break;
 					case 18:
-						{ String foo = pstring; pstring = new String(); yybegin(YYINITIAL); return new Symbol(sym._STRING_, foo.intern()); }
+						{ return new Symbol(sym._SYMB_7); }
 					case -19:
 						break;
 					case 19:
-						{ yybegin(ESCAPED); }
+						{ pstring += yytext(); }
 					case -20:
 						break;
 					case 20:
-						{ pstring += yytext(); yybegin(STRING); }
+						{ String foo = pstring; pstring = new String(); yybegin(YYINITIAL); return new Symbol(sym._STRING_, foo.intern()); }
 					case -21:
 						break;
 					case 21:
-						{ pstring += "\""; yybegin(STRING); }
+						{ yybegin(ESCAPED); }
 					case -22:
 						break;
 					case 22:
-						{ pstring += "\\"; yybegin(STRING); }
+						{ pstring += yytext(); yybegin(STRING); }
 					case -23:
 						break;
 					case 23:
-						{ pstring +=  "\n"; yybegin(STRING); }
+						{ pstring += "\t"; yybegin(STRING); }
 					case -24:
 						break;
 					case 24:
-						{ pstring += "\t"; yybegin(STRING); }
+						{ pstring += "\""; yybegin(STRING); }
 					case -25:
 						break;
-					case 26:
-						{ return new Symbol(sym._DOUBLE_, new Double(yytext())); }
+					case 25:
+						{ pstring += "\\"; yybegin(STRING); }
 					case -26:
+						break;
+					case 26:
+						{ pstring +=  "\n"; yybegin(STRING); }
+					case -27:
+						break;
+					case 28:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -28:
+						break;
+					case 29:
+						{ return new Symbol(sym._DOUBLE_, new Double(yytext())); }
+					case -29:
+						break;
+					case 31:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -30:
+						break;
+					case 36:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -31:
+						break;
+					case 37:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -32:
+						break;
+					case 38:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -33:
+						break;
+					case 39:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -34:
+						break;
+					case 40:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -35:
+						break;
+					case 41:
+						{ return new Symbol(sym.LIdent, yytext().intern()); }
+					case -36:
 						break;
 					default:
 						yy_error(YY_E_INTERNAL,false);

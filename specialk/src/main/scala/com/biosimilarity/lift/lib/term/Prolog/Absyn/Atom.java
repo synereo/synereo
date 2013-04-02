@@ -5,6 +5,7 @@ public abstract class Atom implements java.io.Serializable {
   public interface Visitor <R,A> {
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Atm p, A arg);
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.EAtm p, A arg);
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm p, A arg);
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm p, A arg);
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.IntAtm p, A arg);
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm p, A arg);

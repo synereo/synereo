@@ -25,6 +25,7 @@ public void unrecovered_syntax_error(java_cup.runtime.Symbol cur_token) throws j
 nonterminal com.biosimilarity.lift.lib.term.Prolog.Absyn.Predicate Predicate;
 nonterminal com.biosimilarity.lift.lib.term.Prolog.Absyn.Term Term;
 nonterminal com.biosimilarity.lift.lib.term.Prolog.Absyn.Atom Atom;
+nonterminal com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole Boole;
 nonterminal com.biosimilarity.lift.lib.term.Prolog.Absyn.Var Var;
 nonterminal com.biosimilarity.lift.lib.term.Prolog.Absyn.Lyst Lyst;
 nonterminal com.biosimilarity.lift.lib.term.Prolog.Absyn.ListPredicate ListPredicate;
@@ -37,6 +38,8 @@ terminal _SYMB_3;    //   [
 terminal _SYMB_4;    //   ]
 terminal _SYMB_5;    //   |
 terminal _SYMB_6;    //   ,
+terminal _SYMB_7;    //   false
+terminal _SYMB_8;    //   true
 
 terminal String _STRING_;
 
@@ -62,9 +65,13 @@ Term ::= Atom:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.
 ;
 Atom ::= LIdent:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.Atm(p_1); :} 
   | _SYMB_2 _IDENT_:p_2 _SYMB_2  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.EAtm(p_2); :}
+  | Boole:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm(p_1); :}
   | _STRING_:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm(p_1); :}
   | _INTEGER_:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.IntAtm(p_1); :}
   | _DOUBLE_:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm(p_1); :}
+;
+Boole ::= _SYMB_8  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity(); :} 
+  | _SYMB_7  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity(); :}
 ;
 Var ::= UIdent:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.V(p_1); :} 
   | Wild:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.A(p_1); :}
