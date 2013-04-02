@@ -27,9 +27,9 @@ with Serializable
 {
 
   val ProfileId = UUID.randomUUID.toString
-  val mockProfile = new Profile("FirstName", "LastName", "", "123456789@test.com", "CA", "someCAprovince", "city", "postalCode", "website")
+  val mockProfile = new Profile("FirstName", "LastName", "test description", "123456789@test.com", "CA", "Manitoba", "Winnipeg", "R3R3R3", "website")
   mockProfile.setId(ProfileId)
-  val basicProfile = new Profile("FirstName", "LastName", "", "", "CA", "", "", "", "")
+  val basicProfile = new Profile("FirstName", "LastName", "test description", "", "CA", "Manitoba", "Winnipeg", "R3R3R3", "")
 
   val JenId = ( "Jen" + UUID.randomUUID )
   val SteveId = ( "Steve" + UUID.randomUUID )
@@ -53,7 +53,6 @@ with Serializable
   AgentHostCombinedBase.setupStore(pa, cnxnUIStore)
 
   "updateData" should {
-
     "insert new data" in new StorageScope{
       var oldData: Profile = null
       pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
