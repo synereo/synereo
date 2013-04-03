@@ -24,8 +24,8 @@ object RabbitMQFactory
   def createIfMissing(key: String, factory: ConnectionFactory, host: String, port: Int): Connection =
   {
     synchronized {
-      println("No cached conneciton present, creating a new connection.")
       if ( !_conns.contains(key) ) {
+        println("No cached connection present, creating a new connection.")
         val conn = factory.newConnection(Array {new Address(host, port)})
         conn.addShutdownListener(new ShutdownListener {
           def shutdownCompleted(cause: ShutdownSignalException) {
