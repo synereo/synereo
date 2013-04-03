@@ -1,13 +1,15 @@
 package com.protegra_ati.agentservices.core.util.rabbit
 
 import com.protegra_ati.agentservices.core.messages.{EventKey, Message}
-import com.protegra_ati.agentservices.core.messages.content.{GetContentRequest, DeleteContentRequest}
 import org.specs2.mutable._
-import org.specs2.time.Duration
 import java.util.UUID
-import com.protegra_ati.agentservices.core.schema.Profile
-import java.util.concurrent.atomic.AtomicInteger
 import concurrent.ThreadPoolRunnersX
+import org.specs2.time.Duration
+import com.protegra_ati.agentservices.core.messages.content.{GetContentRequest, DeleteContentRequest}
+import com.protegra_ati.agentservices.core.schema.Profile
+
+//import net.liftweb.amqp.{AMQPReconnect, AMQPAddListener, SerializedConsumer, AMQPMessage}
+import java.util.concurrent.atomic.AtomicInteger
 
 class RabbitTest
   extends SpecificationWithJUnit
@@ -18,22 +20,28 @@ class RabbitTest
   "basicPublish" should {
     "be found by basicConsume" in {
       val messageCount = new AtomicInteger(0)
+      val numMessages = 10000
+
       def handleMessage(msg: Message) =
       {
         messageCount.incrementAndGet()
       }
 
-      val exchangeSearch = "search"
-      val routingKey = "routeroute"
-      val config = new RabbitConfiguration("localhost", 5672, "kvdb", "anywhere")
-      val search = new MessageAMQPListener(config, exchangeSearch, routingKey, handleMessage(_: Message))
+      try {
+        val exchangeSearch = "SASA_EXCHANGE"
+        val routingKey = "SASA_ROUTE"
+        val config = new RabbitConfiguration("localhost", 5672, "kvdb", "anywhere")
+        val search = new MessageAMQPListener(config, exchangeSearch, routingKey, handleMessage(_: Message))
 
-      val numMessages = 10000
-      for ( i <- 1 to numMessages ) {
-        spawn {
-          MessageAMQPPublisher.sendToRabbit(config, exchangeSearch, routingKey, new DeleteContentRequest())
+        //Thread.sleep(60000)
+        for ( i <- 1 to numMessages ) {
+          spawn {
+            MessageAMQPPublisher.sendToRabbit(config, exchangeSearch, routingKey, new DeleteContentRequest())
+          }
         }
       }
+      catch { case e => e.printStackTrace }
+
       messageCount.get() must be_==(numMessages).eventually(60, new Duration(1000))
       success
     }
