@@ -210,6 +210,8 @@ trait ContentRequestSet
       }
       case _ => {
         report("***********************unknown msg.newData object encountered in processSetContentRequest. msg.newData: " + msg.newData, Severity.Error)
+        report("***********************unknown msg.newData object encountered in processSetContentRequest. msg.oldData" + msg.oldData, Severity.Error)
+        report("***********************unknown msg.newData object encountered in processSetContentRequest. msg" + msg, Severity.Error)
       }
     }
 
