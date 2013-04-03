@@ -7,9 +7,13 @@ import com.protegra_ati.agentservices.core.messages.{EventKey, Message}
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 import com.biosimilarity.lift.lib.amqp.RabbitFactory
+import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 
 
-class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routingKey: String) extends Actor {
+class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routingKey: String)
+  extends Actor
+  with Reporting
+{
   var connection = createConnection()
   var channel = createChannel()
 
@@ -33,7 +37,7 @@ class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routi
     val amqp = this
     connection.addShutdownListener(new ShutdownListener {
       def shutdownCompleted(cause: ShutdownSignalException) {
-        println("CONNECTION Shutdown Detected, will try to reconnect...")
+        report("RabbitMQ Connection Shutdown Detected, using AMQPReconnect to reconnect.", Severity.Info)
         amqp ! AMQPReconnect(1000)
       }
     })
@@ -65,12 +69,12 @@ class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routi
         try {
           connection = createConnection()
           channel = createChannel()
-          println("AMQPDispatcher: Successfully reconnected to AMQP Server")
+          report("AMQPDispatcher: Successfully reconnected to AMQP Server", Severity.Info)
         } catch {
           // Attempts to reconnect again using geometric back-off.
           case e: Exception => {
             val amqp = this
-            println("AMQPDispatcher: Will attempt reconnect again in " + (delay * 2) + "ms.")
+            report("AMQPDispatcher: Reconnect failed, will attempt again in " + (delay * 2) + "ms.", Severity.Info)
             reconnectTimer.schedule(new TimerTask() {
               override def run = {
                 amqp ! AMQPReconnect(delay * 2)
@@ -91,7 +95,6 @@ class MessageAMQPListener(config: RabbitConfiguration, exchange: String, routing
   class MessageListener(handler: (Message) => Unit) extends Actor {
     def act = {
       react {
-//	case msg@AMQPMessage(contents: Message) => println("exchange: " + exchange + " for message id: " + contents.ids.id); handler(contents); act
         case msg@AMQPMessage(contents: Message) => handler(contents); act
       }
     }

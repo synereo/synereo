@@ -182,7 +182,7 @@ abstract class BasePlatformAgent
       val exchange = cnxn.getExchangeKey + msg.getExchangeKey
       val routingKey = "routeroute"
       try {
-        val publisher = MessageAMQPPublisher.sendToRabbit(config, exchange, routingKey, msg)
+        MessageAMQPPublisher.sendToRabbit(config, exchange, routingKey, msg)
       }
       catch {
         case e => {
@@ -190,7 +190,6 @@ abstract class BasePlatformAgent
         }
       }
     }
-
   }
 
   def listen(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, channel: Channel.Value, channelType: ChannelType.Value, channelLevel: ChannelLevel.Value, handler: (AgentCnxnProxy, Message) => Unit): Unit =

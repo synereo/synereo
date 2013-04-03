@@ -1,42 +1,9 @@
 package com.protegra_ati.agentservices.core.util.rabbit
 
-import net.liftweb.amqp._
-import com.rabbitmq.client._
 import com.protegra_ati.agentservices.core.messages.Message
 import java.io.{IOException, ByteArrayOutputStream, ObjectOutputStream}
-import com.biosimilarity.lift.lib.amqp.RabbitFactory
 import java.util.concurrent.{TimeUnit, Executors}
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
-
-class MessageAMQPSender(factory: ConnectionFactory, exchange: String, routingKey: String)
-  extends AMQPSender[ Message ](RabbitFactory.getConnection(factory, factory.getHost, factory.getPort), exchange, routingKey)
-{
-}
-
-/**
- * Note: Each time a new MessageAMQPPublisher is created, a new Rabbit channel is created
- * The channel is NEVER destroyed, unless channel.close is manually called from calling code.
- * If auto-close is intended, use the MessageAMQPPublisher.sendToRabbit companion code to
- * send a message to rabbit, creating a new channel and closing it when the message is sent.
- */
-class MessageAMQPPublisher(config: RabbitConfiguration, exchange: String, routingKey: String)
-{
-  //under the covers
-  //  val queueName = exchangeName + "_queue"
-  val factory = RabbitFactory.guest
-  factory.setPassword(config.password)
-  factory.setUsername(config.userId)
-  factory.setHost(config.host)
-  factory.setPort(config.port)
-
-  val amqp = new MessageAMQPSender(factory, exchange, routingKey)
-  amqp.start
-
-  def send(value: Message) =
-  {
-    amqp ! AMQPMessage(value)
-  }
-}
 
 object MessageAMQPPublisher extends Reporting
 {
@@ -59,11 +26,12 @@ object MessageAMQPPublisher extends Reporting
     sendToRabbit(config, exchange, routingKey, message, 0)
   }
 
-  def sendToRabbit(config: RabbitConfiguration, exchange: String, routingKey: String, message: Message, delay: Int): Unit =
+  def sendToRabbit(config: RabbitConfiguration, exchange: String, routingKey: String, message: Message, delay: Long): Unit =
   {
     val success = _sendToRabbit(config, exchange, routingKey, message)
 
     if (!success) {
+      report("Message not sent to rabbit, rescheduling, delay: " + delay, Severity.Info)
       scheduler.schedule(new Runnable() {
         def run(): Unit = {
           val newDelay = (delay*2).max(MIN_RETRY).min(MAX_RETRY) // Retry 1s to 10min
@@ -74,7 +42,7 @@ object MessageAMQPPublisher extends Reporting
   }
 
   private def _sendToRabbit(config: RabbitConfiguration, exchange: String, routingKey: String, message: Message): Boolean = {
-    val factory = RabbitFactory.guest
+    val factory = RabbitMQFactory.guest
     factory.setPassword(config.password)
     factory.setUsername(config.userId)
     factory.setHost(config.host)
@@ -83,9 +51,9 @@ object MessageAMQPPublisher extends Reporting
     var success:Boolean = false
 
     try {
-      val conn = factory.newConnection(Array {new Address(config.host, config.port)})
+      val conn = RabbitMQFactory.getConnection(factory, config.host, config.port)
+      val channel = conn.createChannel()
       try {
-        val channel = conn.createChannel()
         // Now write an object to a byte array and shove it across the wire.
         val bytes = new ByteArrayOutputStream
         val store = new ObjectOutputStream(bytes)
@@ -101,8 +69,8 @@ object MessageAMQPPublisher extends Reporting
         success = true
       }
       finally {
-        // Close connection (auto-closes channel) when done
-        try { conn.close() } catch { case e => {} }
+        // Close channel when done, ignoring exceptions
+        try { channel.close() } catch { case e => }
       }
     } catch {
       case e: IOException => {

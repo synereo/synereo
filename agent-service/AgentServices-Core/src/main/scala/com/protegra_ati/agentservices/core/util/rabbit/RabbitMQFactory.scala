@@ -2,14 +2,15 @@ package com.protegra_ati.agentservices.core.util.rabbit
 
 import com.rabbitmq.client._
 import collection.mutable
+import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 
-object RabbitMQFactory
+object RabbitMQFactory extends Reporting
 {
   final val guest = new ConnectionFactory()
   guest.setUsername("guest")
   guest.setPassword("guest")
   guest.setVirtualHost("/")
-  guest.setRequestedHeartbeat(0)
+  guest.setRequestedHeartbeat(5)
 
   final val _conns = new mutable.HashMap[ String, Connection ]
 
@@ -25,11 +26,10 @@ object RabbitMQFactory
   {
     synchronized {
       if ( !_conns.contains(key) ) {
-        println("No cached connection present, creating a new connection.")
         val conn = factory.newConnection(Array {new Address(host, port)})
         conn.addShutdownListener(new ShutdownListener {
           def shutdownCompleted(cause: ShutdownSignalException) {
-            println("CONNECTION Shutdown Detected, removing connection from pool...")
+            report("RabbitMQ Connection Shutdown Detected, removing connection from pool...", Severity.Info)
             removeConnection(factory, factory.getHost, factory.getPort)
           }
         })
@@ -46,7 +46,7 @@ object RabbitMQFactory
     synchronized {
       val key = getKey(host, port)
       val removed = _conns.remove(key)
-      println("Removed connection: " + removed)
+      report("RabbitMQ Connection removed from local connection map: " + removed, Severity.Info)
     }
   }
 }
