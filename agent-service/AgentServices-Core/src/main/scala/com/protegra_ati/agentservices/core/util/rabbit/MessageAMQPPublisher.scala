@@ -2,14 +2,28 @@ package com.protegra_ati.agentservices.core.util.rabbit
 
 import com.protegra_ati.agentservices.core.messages.Message
 import java.io.{IOException, ByteArrayOutputStream, ObjectOutputStream}
-import java.util.concurrent.{TimeUnit, Executors}
+import java.util.concurrent.{ThreadFactory, TimeUnit, Executors}
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
+import java.util.concurrent.atomic.AtomicInteger
+import org.joda.time.DateTime
+
+object AMQPPublisherThreadFactory extends ThreadFactory
+{
+  final val threadNumber = new AtomicInteger(0)
+  final val poolName = DateTime.now.toString("HHmmss")
+
+  def newThread(r: Runnable) = {
+    val t = Executors.defaultThreadFactory().newThread(r)
+    t.setName("AMQPPublisher-" + poolName + "-thread-" + threadNumber.incrementAndGet() )
+    t
+  }
+}
 
 object MessageAMQPPublisher extends Reporting
 {
   // Used for sendToRabbit retries
   @transient
-  private lazy val scheduler = Executors.newScheduledThreadPool(5)
+  private lazy val scheduler = Executors.newScheduledThreadPool(5, AMQPPublisherThreadFactory)
 
   private val MIN_RETRY = 1000
   private val MAX_RETRY = 300000

@@ -13,7 +13,8 @@ import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT.
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.store.mongo.usage._
 import com.protegra_ati.agentservices.core.util.rabbit.{RabbitConfiguration, MessageAMQPPublisher, MessageAMQPListener}
-import java.util.concurrent.{TimeUnit, Executors}
+import java.util.concurrent.{ThreadFactory, TimeUnit, Executors}
+import java.util.concurrent.atomic.AtomicInteger
 
 //import com.protegra.config.ConfigurationManager
 
@@ -51,6 +52,24 @@ object BasePABaseXDefaults
   //why not   val valueStorageType : String = "CnxnCtxtLabel"
 }
 
+object FetchOrElseThreadFactory extends ThreadFactory
+{
+  final val threadNumber = new AtomicInteger(0)
+  final val poolName = DateTime.now.toString("HHmmss")
+
+  def newThread(r: Runnable) = {
+    val t = Executors.defaultThreadFactory().newThread(r)
+    t.setName("FetchOrElse-" + poolName + "-thread-" + threadNumber.incrementAndGet() )
+    t
+  }
+}
+
+object FetchOrElseScheduler {
+  lazy val scheduler = Executors.newScheduledThreadPool(25, FetchOrElseThreadFactory)
+}
+
+object FetchOrElse
+
 /**
  * Be careful, since this class extends FJTaskRunners, each instance of it creates it's own thread pool with defined in a method 'def numWorkers' size.
  */
@@ -60,9 +79,6 @@ abstract class BasePlatformAgent
   with ThreadPoolRunnersX
   //  with Scheduler
 {
-  // Used for fetchOrElse/fetchListOrElse
-  private lazy val scheduler = Executors.newScheduledThreadPool(25)
-
   /**
    * FJTaskRunners setting, defines thread pool size
    * @return threadpool size
@@ -500,7 +516,7 @@ abstract class BasePlatformAgent
     if (!found)
     {
       if (retries > 0) {
-        scheduler.schedule(new Runnable() {
+        FetchOrElseScheduler.scheduler.schedule(new Runnable() {
           def run(): Unit = {
             fetchOrElse[T](queue, cnxn, key, handler)(retries-1, delay, handlerElse)
           }
@@ -565,7 +581,7 @@ abstract class BasePlatformAgent
     if (!found)
     {
       if (retries > 0) {
-        scheduler.schedule(new Runnable() {
+        FetchOrElseScheduler.scheduler.schedule(new Runnable() {
           def run(): Unit = {
             fetchListOrElse[T](queue, cnxn, key, handler)(retries-1, delay, handlerElse)
           }
