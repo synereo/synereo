@@ -7,6 +7,7 @@ public class ComposVisitor<A> implements
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Predicate.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Predicate,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Term.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Term,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Atom.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Atom,A>,
+  com.biosimilarity.lift.lib.term.Prolog.Absyn.Functor.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Functor,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Var.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Var,A>,
   com.biosimilarity.lift.lib.term.Prolog.Absyn.Lyst.Visitor<com.biosimilarity.lift.lib.term.Prolog.Absyn.Lyst,A>
@@ -20,13 +21,13 @@ public class ComposVisitor<A> implements
     }
     public Predicate visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred p, A arg)
     {
-      Atom atom_ = p.atom_.accept(this, arg);
+      Functor functor_ = p.functor_.accept(this, arg);
       ListTerm listterm_ = new ListTerm();
       for (Term x : p.listterm_) {
         listterm_.add(x.accept(this,arg));
       }
 
-      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred(atom_, listterm_);
+      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred(functor_, listterm_);
     }
 
 /* Term */
@@ -95,6 +96,14 @@ public class ComposVisitor<A> implements
       Double double_ = p.double_;
 
       return new com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm(double_);
+    }
+
+/* Functor */
+    public Functor visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm p, A arg)
+    {
+      String lident_ = p.lident_;
+
+      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm(lident_);
     }
 
 /* Boole */

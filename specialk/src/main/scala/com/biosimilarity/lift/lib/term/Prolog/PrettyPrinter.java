@@ -105,6 +105,21 @@ public class PrettyPrinter
     buf_.delete(0,buf_.length());
     return temp;
   }
+  public static String print(com.biosimilarity.lift.lib.term.Prolog.Absyn.Functor foo)
+  {
+    pp(foo, 0);
+    trim();
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
+  public static String show(com.biosimilarity.lift.lib.term.Prolog.Absyn.Functor foo)
+  {
+    sh(foo);
+    String temp = buf_.toString();
+    buf_.delete(0,buf_.length());
+    return temp;
+  }
   public static String print(com.biosimilarity.lift.lib.term.Prolog.Absyn.Boole foo)
   {
     pp(foo, 0);
@@ -195,7 +210,7 @@ public class PrettyPrinter
     {
        com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred _cpred = (com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred) foo;
        if (_i_ > 0) render(_L_PAREN);
-       pp(_cpred.atom_, 0);
+       pp(_cpred.functor_, 0);
        render("(");
        pp(_cpred.listterm_, 0);
        render(")");
@@ -282,6 +297,17 @@ public class PrettyPrinter
        com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm _fltatm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm) foo;
        if (_i_ > 0) render(_L_PAREN);
        pp(_fltatm.double_, 0);
+       if (_i_ > 0) render(_R_PAREN);
+    }
+  }
+
+  private static void pp(com.biosimilarity.lift.lib.term.Prolog.Absyn.Functor foo, int _i_)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm _fatm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm) foo;
+       if (_i_ > 0) render(_L_PAREN);
+       pp(_fatm.lident_, 0);
        if (_i_ > 0) render(_R_PAREN);
     }
   }
@@ -407,7 +433,7 @@ public class PrettyPrinter
        com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred _cpred = (com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred) foo;
        render("(");
        render("CPred");
-       sh(_cpred.atom_);
+       sh(_cpred.functor_);
        render("[");
        sh(_cpred.listterm_);
        render("]");
@@ -502,6 +528,18 @@ public class PrettyPrinter
        render("(");
        render("FltAtm");
        sh(_fltatm.double_);
+       render(")");
+    }
+  }
+
+  private static void sh(com.biosimilarity.lift.lib.term.Prolog.Absyn.Functor foo)
+  {
+    if (foo instanceof com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm)
+    {
+       com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm _fatm = (com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm) foo;
+       render("(");
+       render("FAtm");
+       sh(_fatm.lident_);
        render(")");
     }
   }

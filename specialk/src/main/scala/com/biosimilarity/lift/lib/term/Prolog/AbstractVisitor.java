@@ -26,6 +26,11 @@ public class AbstractVisitor<R,A> implements AllVisitor<R,A> {
     public R visitDefault(com.biosimilarity.lift.lib.term.Prolog.Absyn.Atom p, A arg) {
       throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
     }
+/* Functor */
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm p, A arg) { return visitDefault(p, arg); }
+    public R visitDefault(com.biosimilarity.lift.lib.term.Prolog.Absyn.Functor p, A arg) {
+      throw new IllegalArgumentException(this.getClass().getName() + ": " + p);
+    }
 /* Boole */
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity p, A arg) { return visitDefault(p, arg); }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity p, A arg) { return visitDefault(p, arg); }

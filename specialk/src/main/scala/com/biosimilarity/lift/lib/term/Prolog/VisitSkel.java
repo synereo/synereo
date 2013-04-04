@@ -23,7 +23,7 @@ public class VisitSkel
     {
       /* Code For CPred Goes Here */
 
-      p.atom_.accept(new AtomVisitor<R,A>(), arg);
+      p.functor_.accept(new FunctorVisitor<R,A>(), arg);
       for (Term x : p.listterm_) {
       }
 
@@ -116,6 +116,18 @@ public class VisitSkel
       /* Code For FltAtm Goes Here */
 
       //p.double_;
+
+      return null;
+    }
+
+  }
+  public class FunctorVisitor<R,A> implements Functor.Visitor<R,A>
+  {
+    public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm p, A arg)
+    {
+      /* Code For FAtm Goes Here */
+
+      //p.lident_;
 
       return null;
     }
