@@ -67,8 +67,8 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( TreeSection( Nil ), ctxt ) => {
         throw new Exception( "down of empty" )
       }
-      case Location( TreeSection( u :: trees ), ctxt ) => {
-        Location( u, TreeContext( Nil, ctxt, trees ) )
+      case Location( CnxnCtxtBranch( lbl, u :: trees ), ctxt ) => {
+        Location( u, LabeledTreeContext( lbl, Nil, ctxt, trees ) )
       }
     }
   }
@@ -183,7 +183,7 @@ object CnxnCtxtLabelConversionScope {
   abstract class TermToCnxnCtxtLabel[N,X,T](
     val text2ns : String => N, val text2v : String => X, val text2t : String => T,
     val ns2str : N => String, val v2str : X => String, val t2str : T => String,
-    val zipr : ZipperNavigation[Either[T,X]] with ZipperMutation[Either[T,X]]
+    val zipr : CnxnNavigation[N,X,T] with CnxnMutation[N,X,T]
   ) extends FoldVisitor[Option[Location[Either[T,X]]], Option[Location[Either[T,X]]]] {
     def wrap(
       context : Option[Location[Either[T,X]]]
