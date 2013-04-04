@@ -174,6 +174,23 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
   }
 }
 
+trait CnxnZipperComposition[L,V,T] {
+  def compose(
+    ctxt : Context[Either[T,V]],
+    tree : CnxnCtxtLabel[L,V,T] with Factual
+  ) : CnxnCtxtLabel[L,V,T] with Factual = {
+    ctxt match {
+      case Top() => tree
+      case LabeledTreeContext( lbl : L, left : List[CnxnCtxtLabel[L,V,T] with Factual], ctxt : LabeledTreeContext[L, Either[T,V]], right : List[CnxnCtxtLabel[L,V,T] with Factual] ) => {
+	new CnxnCtxtBranch[L,V,T](
+	  lbl, 
+	  left ++ ( compose( ctxt, tree ) :: right )
+	)
+      }
+    }
+  }
+}
+
 object CnxnCtxtLabelConversionScope {
   import scala.collection.JavaConversions._
   import scala.collection.JavaConverters._
@@ -197,11 +214,10 @@ object CnxnCtxtLabelConversionScope {
       context : Option[Location[Either[T,X]]]
     ) : Option[Location[Either[T,X]]] = {
       for( 
-	xCCL <- x;
+	Location( xTerm, Top() ) <- x;
 	yCCL <- y
       ) yield {
-	val Location( xTerm, Top() ) = xCCL
-	zipr.update( zipr.right( zipr.down( yCCL ) ), xTerm )
+	zipr.insertDown( yCCL, xTerm )
       }
     }
 

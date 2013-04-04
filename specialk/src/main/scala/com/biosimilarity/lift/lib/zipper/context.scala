@@ -8,7 +8,8 @@
 
 package com.biosimilarity.lift.lib.zipper
 
-trait Context[+A]
+trait Context[+A] {
+}
 case class Top[+A]( ) extends Context[A] {
   override def toString() : String = {
     "[]"
