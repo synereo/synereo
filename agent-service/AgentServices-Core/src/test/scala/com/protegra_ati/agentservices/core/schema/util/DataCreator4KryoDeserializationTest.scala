@@ -369,7 +369,7 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification with
           out.close();
         }
       } catch {
-        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+        case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
       }
     }
   }
@@ -404,7 +404,7 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification with
     try {
       FileUtils.writeStringToFile(f, Serializer.serialize(data), "UTF-8")
     } catch {
-      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+      case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
     }
   }
 
@@ -415,7 +415,7 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification with
       val base64 = FileUtils.readFileToString(from, "UTF-8")
       return Serializer.deserialize[ T ](base64)
     } catch {
-      case e: Throwable => {
+      case e: Exception => {
         report("Exception occured in deserializeFromString method", e, Severity.Error)
         return null.asInstanceOf[T]
       }

@@ -63,7 +63,7 @@ class JavaIOSerializer extends AbstractToStringSerializer with Reporting
       }
     }
     catch {
-      case e:Throwable => {
+      case e: Exception => {
         report("Failed to deserialize the class, have you recently upgraded the scala version without recreating test data?", e, Severity.Error)
         null.asInstanceOf[ T ]
       }

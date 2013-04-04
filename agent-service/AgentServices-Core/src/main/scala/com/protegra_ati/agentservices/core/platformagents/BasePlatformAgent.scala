@@ -268,7 +268,7 @@ abstract class BasePlatformAgent
           }
         }
       } catch {
-        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
+        case e: Exception => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -341,7 +341,7 @@ abstract class BasePlatformAgent
           }
         }
       } catch {
-        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
+        case e: Exception => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -411,7 +411,7 @@ abstract class BasePlatformAgent
           }
         }
       } catch {
-        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
+        case e: Exception => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -448,7 +448,7 @@ abstract class BasePlatformAgent
           }
         }
       } catch {
-        case e: Throwable => report("KVDB subscribe operation failed", e, Severity.Error)
+        case e: Exception => report("KVDB subscribe operation failed", e, Severity.Error)
       }
     }
   }
@@ -482,7 +482,7 @@ abstract class BasePlatformAgent
           }
         }
       } catch {
-        case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
+        case e: Exception => report("KVDB read operation failed", e, Severity.Error)
       }
     }
   }
@@ -509,7 +509,7 @@ abstract class BasePlatformAgent
             }
           }
         } catch {
-          case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
+          case e: Exception => report("KVDB read operation failed", e, Severity.Error)
         }
     }
 
@@ -544,7 +544,7 @@ abstract class BasePlatformAgent
           }
         }
       } catch {
-        case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
+        case e: Exception => report("KVDB read operation failed", e, Severity.Error)
       }
     }
   }
@@ -574,7 +574,7 @@ abstract class BasePlatformAgent
             }
           }
         } catch {
-          case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
+          case e: Exception => report("KVDB read operation failed", e, Severity.Error)
         }
       }
 
@@ -628,7 +628,7 @@ abstract class BasePlatformAgent
           }
         }
       } catch {
-        case e: Throwable => report("KVDB read operation failed", e, Severity.Error)
+        case e: Exception => report("KVDB read operation failed", e, Severity.Error)
       }
     }
   }

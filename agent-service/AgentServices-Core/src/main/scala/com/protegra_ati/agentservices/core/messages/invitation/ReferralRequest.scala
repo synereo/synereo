@@ -17,6 +17,7 @@ case class ReferralRequest(
 {
   def this () = this (null, null, null)
 
+
   def getIds(): Identification =
   {
     ids
@@ -43,7 +44,7 @@ case class ReferralRequest(
   }
 
   override def toString: String ={
-           "ReferralRequest[ ids="+ids+", eventKey="+eventKey+", source="+source+", source.origin=" + source.originCnxn + "]"
+    "ReferralRequest[ ids="+ids+", eventKey="+eventKey+", source="+source+", source.origin=" + (if (source == null) "null" else source.originCnxn) + "]"
   }
 
 //

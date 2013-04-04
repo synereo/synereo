@@ -699,7 +699,7 @@ object KryoDeserializerTestDataInitializer extends Reporting
     try {
       if ( toFile.exists() ) {toFile.delete()}
     } catch {
-      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+      case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
     }
     serialize(data, new FileOutputStream(toFile))
   }
@@ -719,7 +719,7 @@ object KryoDeserializerTestDataInitializer extends Reporting
           out.close();
         }
       } catch {
-        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+        case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
       }
 
     }
@@ -742,7 +742,7 @@ object KryoDeserializerTestDataInitializer extends Reporting
       val base64 = FileUtils.readFileToString(from, "UTF-8")
       return Serializer.deserialize[ T ](base64)
     } catch {
-      case e: Throwable => {
+      case e: Exception => {
         report("Exception occured in serialize method", e, Severity.Error)
         null.asInstanceOf[T]
       }
