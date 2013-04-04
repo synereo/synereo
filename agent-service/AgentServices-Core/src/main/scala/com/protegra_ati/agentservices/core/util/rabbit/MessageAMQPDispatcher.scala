@@ -8,12 +8,13 @@ import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 import com.biosimilarity.lift.lib.amqp.RabbitFactory
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
-
+import java.security.MessageDigest
 
 class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routingKey: String)
   extends Actor
   with Reporting
 {
+
   var connection = createConnection()
   var channel = createChannel()
 

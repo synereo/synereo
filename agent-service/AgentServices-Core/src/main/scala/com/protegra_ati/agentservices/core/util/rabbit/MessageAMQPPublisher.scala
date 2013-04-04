@@ -6,6 +6,7 @@ import java.util.concurrent.{ThreadFactory, TimeUnit, Executors}
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 import java.util.concurrent.atomic.AtomicInteger
 import org.joda.time.DateTime
+import java.security.MessageDigest
 
 object AMQPPublisherThreadFactory extends ThreadFactory
 {
@@ -21,6 +22,11 @@ object AMQPPublisherThreadFactory extends ThreadFactory
 
 object MessageAMQPPublisher extends Reporting
 {
+
+  def md5(bytes: Array[Byte]) = {
+      MessageDigest.getInstance("MD5").digest(bytes)
+  }
+
   // Used for sendToRabbit retries
   @transient
   private lazy val scheduler = Executors.newScheduledThreadPool(5, AMQPPublisherThreadFactory)
@@ -71,12 +77,14 @@ object MessageAMQPPublisher extends Reporting
         // Now write an object to a byte array and shove it across the wire.
         val bytes = new ByteArrayOutputStream
         val store = new ObjectOutputStream(bytes)
+        println("RRRRRRRRRRRR sending message by rabbit: " + message)
         store.writeObject(message)
         store.close
+        println("BBBBBBBBBBBB bytes for message on rabbit: " + md5(bytes.toByteArray))
 
         val qname = ( exchange + "_queue" )
         channel.exchangeDeclare(exchange, "direct")
-        channel.queueDeclare(qname, true, false, false, null);
+        channel.queueDeclare(qname, true, false, false, null)
         channel.queueBind(qname, exchange, routingKey)
         channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
 
@@ -87,7 +95,7 @@ object MessageAMQPPublisher extends Reporting
         try { channel.close() } catch { case e => }
       }
     } catch {
-      case e: IOException => {
+      case e: Exception => {
         val m = "There was a problem sending message to Rabbit.  Exchange: %s  routingKey: %s  message: %s"
         val fm = m.format(exchange, routingKey, message)
         report(fm, e, Severity.Error)
