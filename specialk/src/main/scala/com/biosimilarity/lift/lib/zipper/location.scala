@@ -11,7 +11,11 @@ package com.biosimilarity.lift.lib.zipper
 class Location[+A](
   val tree : Tree[A],
   val ctxt : Context[A]
-)
+) {
+  override def toString() : String = {
+    ctxt + "." + tree
+  }
+}
 object Location {
   def apply[A]( tree : Tree[A], ctxt : Context[A] ) = {
     new Location( tree, ctxt )
