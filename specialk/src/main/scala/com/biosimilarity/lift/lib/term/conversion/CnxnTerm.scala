@@ -215,6 +215,19 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
 
 trait CnxnZipperComposition[L,V,T] {
   def compose(
+    ctxtL : Context[Either[T,V]],
+    ctxtR : Context[Either[T,V]]
+  ) : Context[Either[T,V]] = {
+    ctxtL match {
+      case Top() => ctxtR
+      case LabeledTreeContext( lbl : L, left : List[CnxnCtxtLabel[L,V,T] with Factual], ctxt : LabeledTreeContext[L, Either[T,V]], right : List[CnxnCtxtLabel[L,V,T] with Factual] ) => {
+	LabeledTreeContext[L,Either[T,V]](
+	  lbl, left, compose( ctxt, ctxtR ), right 
+	)
+      }
+    }
+  }
+  def compose(
     ctxt : Context[Either[T,V]],
     tree : CnxnCtxtLabel[L,V,T] with Factual
   ) : CnxnCtxtLabel[L,V,T] with Factual = {
@@ -276,7 +289,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     
     val rslt =
       for( 
-	Location( xTerm : CnxnCtxtLabel[N,X,T], Top() ) <- x;
+	Location( xTerm : CnxnCtxtLabel[N,X,T], xCtxt ) <- x;
 	yCCL <- y
       ) yield {
 	println(
@@ -288,19 +301,46 @@ class TermToCnxnCtxtLabel[N,X,T](
 	    + "/* ------------------------------------------------------- */\n"
 	  )
 	)
-	val loc = zipr.insertDown( yCCL, xTerm )
-	val nloc = zipr.up( loc )
-	println(
-	  (
-	    "/* ------------------------------------------------------- */\n"
-	    + "/* method: " + "combine" + " continued" + " */\n"
-	    + "/* loc: " + loc + " */\n"
-	    + "/* nloc: " + nloc + " */\n"
-	    + "/* ------------------------------------------------------- */\n"
-	  )
-	)
-	
-	nloc
+	yCCL match {
+	  case Location( CnxnCtxtLeaf( Right( v ) ), Top( ) ) => {
+	    xTerm match {
+	      case CnxnCtxtLeaf( Left( c ) ) => {
+		Location( xTerm, xCtxt )
+	      }
+	      case _ => {
+		zipr.up( Location( xTerm, xCtxt ) )
+	      }
+	    }	    
+	  }
+	  case Location( yTerm, yCtxt ) => {
+	    xCtxt match {
+	      case Top() => {	    
+		val loc = zipr.insertDown( yCCL, xTerm )
+		val nloc = zipr.up( loc )
+		println(
+		  (
+		    "/* ------------------------------------------------------- */\n"
+		    + "/* method: " + "combine" + " continued" + " */\n"
+		    + "/* loc: " + loc + " */\n"
+		    + "/* nloc: " + nloc + " */\n"
+		    + "/* ------------------------------------------------------- */\n"
+		  )
+		)
+		
+		nloc
+	      }
+	      case LabeledTreeContext( lbl : N, left, nrCtxt, right ) => {
+		zipr.up(
+		  Location[Either[T,X]](
+		    xTerm,
+		    zipr.compose( yCtxt, xCtxt )
+		  )
+		)
+	      }
+	    }
+	  }
+	}
+			
       }
 
     println(
@@ -368,7 +408,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
-    val terms : List[Term] = termListTrampoline2.toList
+    val terms : List[Term] = termListTrampoline2.toList.reverse
     
     val rslt =
       ( loc /: terms )(
@@ -466,11 +506,11 @@ class TermToCnxnCtxtLabel[N,X,T](
     )
 
     val loc =
-      combine( p.atom_.accept( this, context ), wrap( context ), context )
+      combine( p.functor_.accept( this, context ), wrap( context ), context )
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
-    val terms : List[Term] = termListTrampoline2.toList
+    val terms : List[Term] = termListTrampoline2.toList.reverse
     
     val rslt =
       ( loc /: terms )(
@@ -752,11 +792,15 @@ class TermToCnxnCtxtLabel[N,X,T](
     val rslt =
       Some(
 	Location[Either[T,X]](
-	  new CnxnCtxtBranch[N,X,T](
-	    text2ns( p.lident_ ),
-	    List[CnxnCtxtLabel[N,X,T] with Factual]()
+	  new CnxnCtxtLeaf[N,X,T](
+	    Right[T,X]( text2v( "_" ) )
 	  ),
-	  Top()
+	  LabeledTreeContext[N,Either[T,X]](
+	    text2ns( p.lident_ ),
+	    List[CnxnCtxtLabel[N,X,T] with Factual](),
+	    Top(),
+	    List[CnxnCtxtLabel[N,X,T] with Factual]()
+	  )
 	)
       )
 
@@ -967,7 +1011,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
-    val terms : List[Term] = termListTrampoline2.toList
+    val terms : List[Term] = termListTrampoline2.toList.reverse
     
     val rslt =
       ( wrap( context ) /: terms )(
@@ -1006,7 +1050,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
-    val terms : List[Term] = termListTrampoline2.toList
+    val terms : List[Term] = termListTrampoline2.toList.reverse
 
     val rslt =
       combine(
@@ -1049,7 +1093,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
-    val terms : List[Term] = termListTrampoline2.toList
+    val terms : List[Term] = termListTrampoline2.toList.reverse
 
     val rslt =
       combine(
@@ -1125,7 +1169,7 @@ package usage {
 	new parser( new Yylex( new java.io.StringReader( s ) ) ).pPredicate()
       val loc : Location[Either[String,String]] =
 	Location[Either[String,String]]( 
-	  new CnxnCtxtBranch[String,String,String]( "root", Nil ),
+	  new CnxnCtxtLeaf[String,String,String]( Right[String,String]( text2v( "_" ) ) ),
 	  Top()
 	)
       val ctxt : Option[Location[Either[String,String]]] = Some( loc )

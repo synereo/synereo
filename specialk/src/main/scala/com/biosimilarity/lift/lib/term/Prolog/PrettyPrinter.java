@@ -238,7 +238,7 @@ public class PrettyPrinter
     {
        com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex _complex = (com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex) foo;
        if (_i_ > 0) render(_L_PAREN);
-       pp(_complex.atom_, 0);
+       pp(_complex.functor_, 0);
        render("(");
        pp(_complex.listterm_, 0);
        render(")");
@@ -464,7 +464,7 @@ public class PrettyPrinter
        com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex _complex = (com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex) foo;
        render("(");
        render("Complex");
-       sh(_complex.atom_);
+       sh(_complex.functor_);
        render("[");
        sh(_complex.listterm_);
        render("]");

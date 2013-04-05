@@ -53,7 +53,7 @@ public class VisitSkel
     {
       /* Code For Complex Goes Here */
 
-      p.atom_.accept(new AtomVisitor<R,A>(), arg);
+      p.functor_.accept(new FunctorVisitor<R,A>(), arg);
       for (Term x : p.listterm_) {
       }
 

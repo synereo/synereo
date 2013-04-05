@@ -38,7 +38,7 @@ public abstract class FoldVisitor<R,A> implements AllVisitor<R,A> {
     }
     public R visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex p, A arg) {
       R r = leaf(arg);
-      r = combine(p.atom_.accept(this, arg), r, arg);
+      r = combine(p.functor_.accept(this, arg), r, arg);
       for (Term x : p.listterm_) {
         r = combine(x.accept(this,arg), r, arg);
       }

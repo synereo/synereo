@@ -61,7 +61,7 @@ Predicate ::= Atom:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.A
 ;
 Term ::= Atom:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.TAtom(p_1); :} 
   | Var:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.VarT(p_1); :}
-  | Atom:p_1 _SYMB_0 ListTerm:p_3 _SYMB_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex(p_1,p_3); :}
+  | Functor:p_1 _SYMB_0 ListTerm:p_3 _SYMB_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex(p_1,p_3); :}
   | Lyst:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.TList(p_1); :}
 ;
 Atom ::= LIdent:p_1  {: RESULT = new com.biosimilarity.lift.lib.term.Prolog.Absyn.Atm(p_1); :} 

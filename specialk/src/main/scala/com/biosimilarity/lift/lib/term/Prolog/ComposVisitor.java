@@ -45,13 +45,13 @@ public class ComposVisitor<A> implements
     }
     public Term visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex p, A arg)
     {
-      Atom atom_ = p.atom_.accept(this, arg);
+      Functor functor_ = p.functor_.accept(this, arg);
       ListTerm listterm_ = new ListTerm();
       for (Term x : p.listterm_) {
         listterm_.add(x.accept(this,arg));
       }
 
-      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex(atom_, listterm_);
+      return new com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex(functor_, listterm_);
     }
     public Term visit(com.biosimilarity.lift.lib.term.Prolog.Absyn.TList p, A arg)
     {
