@@ -289,52 +289,82 @@ class TermToCnxnCtxtLabel[N,X,T](
     
     val rslt =
       for( 
-	Location( xTerm : CnxnCtxtLabel[N,X,T], xCtxt ) <- x;
-	yCCL <- y
+	xLoc@Location( xTerm : CnxnCtxtLabel[N,X,T], xCtxt ) <- x;
+	yLoc@Location( yTerm : CnxnCtxtLabel[N,X,T], yCtxt ) <- y
       ) yield {
 	println(
 	  (
 	    "/* ------------------------------------------------------- */\n"
 	    + "/* method: " + "combine" + " continued" + " */\n"
-	    + "/* xTerm: " + xTerm + " */\n"
-	    + "/* yCCL: " + yCCL + " */\n"
+	    + "/* xLoc: " + xLoc + " */\n"
+	    + "/* yLoc: " + yLoc + " */\n"
 	    + "/* ------------------------------------------------------- */\n"
 	  )
 	)
-	yCCL match {
-	  case Location( CnxnCtxtLeaf( Right( v ) ), Top( ) ) => {
-	    xTerm match {
-	      case CnxnCtxtLeaf( Left( c ) ) => {
-		Location( xTerm, xCtxt )
-	      }
-	      case _ => {
-		zipr.up( Location( xTerm, xCtxt ) )
-	      }
-	    }	    
-	  }
-	  case Location( yTerm, yCtxt ) => {
+	yLoc match {
+	  case Location( CnxnCtxtLeaf( Right( v ) ), Top( ) ) => xLoc
+	  case Location( _, Top( ) ) => {
 	    xCtxt match {
-	      case Top() => {	    
-		val loc = zipr.insertDown( yCCL, xTerm )
-		val nloc = zipr.up( loc )
+	      case Top() => {
+		val loc = zipr.up( zipr.insertDown( yLoc, xTerm ) )
 		println(
 		  (
 		    "/* ------------------------------------------------------- */\n"
 		    + "/* method: " + "combine" + " continued" + " */\n"
 		    + "/* loc: " + loc + " */\n"
-		    + "/* nloc: " + nloc + " */\n"
+		    + "/* ------------------------------------------------------- */\n"
+		  )
+		)
+		    
+		loc
+	      }
+	      case _ => {
+		val loc = zipr.update( yLoc, xTerm )
+		println(
+		  (
+		    "/* ------------------------------------------------------- */\n"
+		    + "/* method: " + "combine" + " continued" + " */\n"
+		    + "/* loc: " + loc + " */\n"
 		    + "/* ------------------------------------------------------- */\n"
 		  )
 		)
 		
-		nloc
+		loc
 	      }
-	      case LabeledTreeContext( lbl : N, left, nrCtxt, right ) => {
-		zipr.up(
-		  Location[Either[T,X]](
-		    xTerm,
-		    zipr.compose( yCtxt, xCtxt )
+	    }	    
+	  }
+	  case _ => {
+	    xLoc match {	      
+	      case Location( CnxnCtxtLeaf( Right( v ) ), Top() ) => {
+		val loc = zipr.update( yLoc, xTerm )
+		println(
+		  (
+		    "/* ------------------------------------------------------- */\n"
+		    + "/* method: " + "combine" + " continued" + " */\n"
+		    + "/* loc: " + loc + " */\n"
+		    + "/* ------------------------------------------------------- */\n"
 		  )
+		)
+		
+		loc
+	      }
+	      case Location( _, Top() ) => {
+		val loc = zipr.up( zipr.update( yLoc, xTerm ) )
+		println(
+		  (
+		    "/* ------------------------------------------------------- */\n"
+		    + "/* method: " + "combine" + " continued" + " */\n"
+		    + "/* loc: " + loc + " */\n"
+		    + "/* ------------------------------------------------------- */\n"
+		  )
+		)
+		
+		loc
+	      }
+	      case Location( _, LabeledTreeContext( lbl : N, left, nrCtxt, right ) ) => {
+		Location[Either[T,X]](
+		  xTerm,
+		  zipr.compose( yCtxt, xCtxt )
 		)
 	      }
 	    }
@@ -683,7 +713,7 @@ class TermToCnxnCtxtLabel[N,X,T](
       Some(
 	Location[Either[T,X]](
 	  new CnxnCtxtLeaf[N,X,T](
-	    Left[T,X]( text2t( p.string_ ) )
+	    Left[T,X]( text2t( "\"" + p.string_ + "\"" ) )
 	  ),
 	  Top()
 	)
