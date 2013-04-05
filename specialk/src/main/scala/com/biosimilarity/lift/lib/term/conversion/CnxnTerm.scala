@@ -143,12 +143,38 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	CnxnCtxtBranch( lbl : L, progeny ),
-	ctxt
+	ctxt@Top()
       ) => {
 	Location(
 	  tree,
 	  LabeledTreeContext[L,Either[T,V]]( lbl, List[CnxnCtxtLabel[L,V,T] with Factual](), ctxt, progeny )
 	)
+      }
+      case Location(
+	CnxnCtxtBranch( lbl : L, progeny ),
+	ctxt : LabeledTreeContext[L,Either[T,V]]
+      ) => {
+	Location(
+	  tree,
+	  LabeledTreeContext[L,Either[T,V]]( lbl, List[CnxnCtxtLabel[L,V,T] with Factual](), ctxt, progeny )
+	)
+      }
+      case Location(
+	t,
+	ctxt
+      ) => {
+	println(
+	  (
+	    "/* ------------------------------------------------------- */\n"
+	    + "/* method: " + "insertDown" + " */\n"
+	    + "/* location: " + location + " */\n"
+	    + "/* location.tree: " + location.tree + "; class: " + location.tree.getClass + " */\n"
+	    + "/* location.ctxt: " + location.ctxt + "; class: " + location.ctxt.getClass +" */\n"
+	    + "/* tree: " + tree + "; class: " + location.ctxt.getClass + " */\n"
+	    + "/* ------------------------------------------------------- */\n"
+	  )
+	)
+	throw new Exception( "unmatched location shape: " + location )
       }
     }
   }
@@ -250,7 +276,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     
     val rslt =
       for( 
-	Location( xTerm, Top() ) <- x;
+	Location( xTerm : CnxnCtxtLabel[N,X,T], Top() ) <- x;
 	yCCL <- y
       ) yield {
 	println(

@@ -31,7 +31,7 @@ object CnxnZipr {
   val locR1 =
     Location[Either[String,String]]( ccbR, Top() )
   val cclA1 =
-    new CnxnCtxtBranch[String,String,String]( "a", List[CnxnCtxtLabel[String,String,String] with Factual]() )
+    new CnxnCtxtBranch[String,String,String]( "a", Nil )
 
   def doParseOne() = {
     ttccl.strToTerm( "a( 1 )" )
