@@ -16,6 +16,7 @@ import com.protegra_ati.agentservices.core.schema._
 import org.joda.time.{DateTime, Instant}
 import scala.collection.JavaConversions._
 import util.ConnectionFactory
+import java.util
 
 trait ContentRequestSet
 {
@@ -96,7 +97,9 @@ trait ContentRequestSet
     //we need a list of connections from the targetcnxn and for each of those cnxns, we preform a query for the requested data
     //one response will be generated per connection but containing a list of all the found data
     //if a single conn id is set in the query could optimize if we really want not to pull back list of conn
-    fetch[ Connection ](_dbQ, msg.targetCnxn, search.connection.toSearchKey, handleGetContentRequestCompositeByConnectionFetch(_: AgentCnxnProxy, _: Connection, search, msg))
+    for (connection <-search.connections) {
+      fetch[ Connection ](_dbQ, msg.targetCnxn, connection.toSearchKey, handleGetContentRequestCompositeByConnectionFetch(_: AgentCnxnProxy, _: Connection, search, msg))
+    }
   }
 
   def handleGetContentRequestCompositeByConnectionFetch(cnxn: AgentCnxnProxy, connection: Connection, search: CompositeData[ _ <: Data ], msg: GetContentRequest)
@@ -110,7 +113,7 @@ trait ContentRequestSet
   def handleGetContentRequestCompositeFetch(cnxn: AgentCnxnProxy, data: List[ Data ], originCnxn: AgentCnxnProxy, parent: Message, connection: Connection)
   {
     //no audit log generation for these types of requests for now
-    val compositeData = data.map(datum => new CompositeData[ datum.type ](connection, datum))
+    val compositeData = data.map(datum => new CompositeData(connection, datum))
     val response = new GetContentResponse(parent.ids.copyAsChild(), parent.eventKey.copy(), compositeData)
     response.originCnxn = originCnxn
     response.targetCnxn = parent.targetCnxn
@@ -444,13 +447,15 @@ trait ContentRequestSet
     updateDataById(selfCnxn, newCompositeData.data)
 
     //TODO: make this search all conns
-    updateDataById(newCompositeData.connection.writeCnxn, newCompositeData.data)
+    for (connection <- newCompositeData.connections) {
+      updateDataById(connection.writeCnxn, newCompositeData.data)
 
-    if ( parentRequestIds != null && isDataShared(newCompositeData.connection, newCompositeData.data ) )
-    {
-      // TODO logging
-      // TODO eventually pass the really source of the request for logging or permission check
-      sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, newCompositeData.connection, newCompositeData.data, oldData)
+      if ( parentRequestIds != null && isDataShared(connection, newCompositeData.data ) )
+      {
+        // TODO logging
+        // TODO eventually pass the really source of the request for logging or permission check
+        sendSetSelfContentRequest(parentRequestIds, parentRequestEventKey, connection, newCompositeData.data, oldData)
+      }
     }
 
     raiseRemoteNotification(newCompositeData, parentRequestIds)
