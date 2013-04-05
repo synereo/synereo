@@ -22,10 +22,10 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( _, Top( ) ) => {
         throw new Exception( "left of top" )
       }
-      case Location( t, LabeledTreeContext( lbl, l :: left, up, right ) ) => {
-        Location( l, LabeledTreeContext( lbl, left, up, t :: right ) )
+      case Location( t, LabeledTreeContext( lbl : L, l :: left, up, right ) ) => {
+        Location( l, LabeledTreeContext[L,A1]( lbl, left, up, t :: right ) )
       }
-      case Location( t, LabeledTreeContext( lbl, Nil, up, right ) ) => {
+      case Location( t, LabeledTreeContext( lbl : L, Nil, up, right ) ) => {
         throw new Exception( "left of first" )
       }
     }
@@ -35,8 +35,8 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( _, Top( ) ) => {
         throw new Exception( "right of top" )
       }
-      case Location( t, LabeledTreeContext( lbl, left, up, r :: right ) ) => {
-        Location( r, LabeledTreeContext( lbl, t :: left, up, right ) )
+      case Location( t, LabeledTreeContext( lbl : L, left, up, r :: right ) ) => {
+        Location( r, LabeledTreeContext[L, A1]( lbl, t :: left, up, right ) )
       }
       case Location( t, _ ) => {
         throw new Exception( "right of last" )
@@ -57,6 +57,19 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
 	  case _ => throw new Exception( "unexpected location shape: " + location )
 	}
       }
+      case Location( t, ctxt ) => {
+	println(
+	  (
+	    "/* ------------------------------------------------------- */\n"
+	    + "/* method: " + "up" + " */\n"
+	    + "/* location: " + location + " */\n"
+	    + "/* location.tree: " + location.tree + "; class: " + location.tree.getClass + " */\n"
+	    + "/* location.ctxt: " + location.ctxt + "; class: " + location.ctxt.getClass +" */\n"
+	    + "/* ------------------------------------------------------- */\n"
+	  )
+	)
+	throw new Exception( "unmatched location shape: " + location )
+      }
     }
   }
   override def down [A1 >: Either[T,V]]( location : Location[A1] ) : Location[A1] = {
@@ -67,8 +80,8 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( TreeSection( Nil ), ctxt ) => {
         throw new Exception( "down of empty" )
       }
-      case Location( CnxnCtxtBranch( lbl, u :: trees ), ctxt ) => {
-        Location( u, LabeledTreeContext( lbl, Nil, ctxt, trees ) )
+      case Location( CnxnCtxtBranch( lbl : L, u :: trees ), ctxt ) => {
+        Location( u, LabeledTreeContext[L, A1]( lbl, List[CnxnCtxtLabel[L,V,T] with Factual](), ctxt, trees ) )
       }
     }
   }
@@ -94,11 +107,11 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	curr,
-	LabeledTreeContext( lbl, left, up, right )
+	LabeledTreeContext( lbl : L, left, up, right )
       ) => {
 	Location(
 	  curr,
-	  LabeledTreeContext( lbl, left, up, tree :: right )
+	  LabeledTreeContext[L,Either[T,V]]( lbl, left, up, tree :: right )
 	)	
       }
     }    
@@ -112,11 +125,11 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	curr,
-	LabeledTreeContext( lbl, left, up, right )
+	LabeledTreeContext( lbl : L, left, up, right )
       ) => {
 	Location(
 	  curr,
-	  LabeledTreeContext( lbl, tree :: left, up, right )
+	  LabeledTreeContext[L,Either[T,V]]( lbl, tree :: left, up, right )
 	)	
       }
     }    
@@ -129,12 +142,12 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
 	throw new Exception( "down of item" )
       }
       case Location(
-	CnxnCtxtBranch( lbl, progeny ),
+	CnxnCtxtBranch( lbl : L, progeny ),
 	ctxt
       ) => {
 	Location(
 	  tree,
-	  LabeledTreeContext( lbl, Nil, ctxt, progeny )
+	  LabeledTreeContext[L,Either[T,V]]( lbl, List[CnxnCtxtLabel[L,V,T] with Factual](), ctxt, progeny )
 	)
       }
     }
@@ -148,27 +161,27 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	_,
-	LabeledTreeContext( lbl, left, up, r :: right )
+	LabeledTreeContext( lbl : L, left, up, r :: right )
       ) => {
 	Location(
 	  r,
-	  LabeledTreeContext( lbl, left, up, right )
+	  LabeledTreeContext[L, Either[T,V]]( lbl, left, up, right )
 	)
       }
       case Location(
 	_,
-	LabeledTreeContext( lbl, l :: left, up, Nil )
+	LabeledTreeContext( lbl : L, l :: left, up, Nil )
       ) => {
 	Location(
 	  l,
-	  LabeledTreeContext( lbl, left, up, Nil )
+	  LabeledTreeContext[L, Either[T,V]]( lbl, left, up, Nil )
 	)
       }
       case Location(
 	_,
 	LabeledTreeContext( lbl : L, Nil, up, Nil )
       ) => {
-	Location( new CnxnCtxtBranch[L,V,T]( lbl, Nil ), up )
+	Location( new CnxnCtxtBranch[L,V,T]( lbl, List[CnxnCtxtLabel[L,V,T] with Factual]() ), up )
       }
     }
   }
@@ -216,7 +229,7 @@ class TermToCnxnCtxtLabel[N,X,T](
   def leaf(
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    context
+    wrap( context )
   }
   
   override def combine(
@@ -224,12 +237,56 @@ class TermToCnxnCtxtLabel[N,X,T](
     y : Option[Location[Either[T,X]]], 
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    for( 
-      Location( xTerm, Top() ) <- x;
-      yCCL <- y
-    ) yield {
-      zipr.insertDown( yCCL, xTerm )
-    }
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "combine" + " */\n"
+	+ "/* x: " + x + " */\n"
+	+ "/* y: " + y + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+    
+    val rslt =
+      for( 
+	Location( xTerm, Top() ) <- x;
+	yCCL <- y
+      ) yield {
+	println(
+	  (
+	    "/* ------------------------------------------------------- */\n"
+	    + "/* method: " + "combine" + " continued" + " */\n"
+	    + "/* xTerm: " + xTerm + " */\n"
+	    + "/* yCCL: " + yCCL + " */\n"
+	    + "/* ------------------------------------------------------- */\n"
+	  )
+	)
+	val loc = zipr.insertDown( yCCL, xTerm )
+	val nloc = zipr.up( loc )
+	println(
+	  (
+	    "/* ------------------------------------------------------- */\n"
+	    + "/* method: " + "combine" + " continued" + " */\n"
+	    + "/* loc: " + loc + " */\n"
+	    + "/* nloc: " + nloc + " */\n"
+	    + "/* ------------------------------------------------------- */\n"
+	  )
+	)
+	
+	nloc
+      }
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "combine" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   
   /* Predicate */
@@ -237,16 +294,49 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.APred,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    combine(
-      p.atom_.accept( this, context ),
-      wrap( context ),
-      context
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
     )
+    
+    val rslt =
+      combine(
+	p.atom_.accept( this, context ),
+	wrap( context ),
+	context
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt 
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.CPred,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {      
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
     val loc =
       combine( p.functor_.accept( this, context ), wrap( context ), context )
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
@@ -254,13 +344,25 @@ class TermToCnxnCtxtLabel[N,X,T](
       termListTrampoline1
     val terms : List[Term] = termListTrampoline2.toList
     
-    ( loc /: terms )(
-      { 
-	( acc, e ) => {
-	  combine( e.accept( this, context ), acc, context )
+    val rslt =
+      ( loc /: terms )(
+	{ 
+	  ( acc, e ) => {
+	    combine( e.accept( this, context ), acc, context )
+	  }
 	}
-      }
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
     )
+
+    rslt
   }
   
   /* Term */
@@ -268,18 +370,75 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.TAtom,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    combine( p.atom_.accept( this, context ), wrap( context ), context)
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    val rslt =
+      combine( p.atom_.accept( this, context ), wrap( context ), context)
+    
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+    
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.VarT,
     context : Option[Location[Either[T,X]]] 
   ) : Option[Location[Either[T,X]]] = {
-    combine( p.var_.accept( this, context ), wrap( context ), context)
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    val rslt =
+      combine( p.var_.accept( this, context ), wrap( context ), context)
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.Complex,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
     val loc =
       combine( p.atom_.accept( this, context ), wrap( context ), context )
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
@@ -287,19 +446,54 @@ class TermToCnxnCtxtLabel[N,X,T](
       termListTrampoline1
     val terms : List[Term] = termListTrampoline2.toList
     
-    ( loc /: terms )(
-      { 
-	( acc, e ) => {
-	  combine( e.accept( this, context ), acc, context )
+    val rslt =
+      ( loc /: terms )(
+	{ 
+	  ( acc, e ) => {
+	    combine( e.accept( this, context ), acc, context )
+	  }
 	}
-      }
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
     )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.TList,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    combine( p.lyst_.accept( this, context ), wrap( context ), context )
+    
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    val rslt =
+      combine( p.lyst_.accept( this, context ), wrap( context ), context )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt 
   }
   
   /* Atom */
@@ -307,77 +501,210 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.Atm,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtLeaf[N,X,T](
-	  Left[T,X]( text2t( p.lident_ ) )
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt = 
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Left[T,X]( text2t( p.lident_ ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.EAtm,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtLeaf[N,X,T](
-	  Left[T,X]( text2t( p.ident_ ) )
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt =
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Left[T,X]( text2t( p.ident_ ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.BAtm,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    combine( p.boole_.accept( this, context ), wrap( context ), context)
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    val rslt =
+      combine( p.boole_.accept( this, context ), wrap( context ), context)
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.StrAtm,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtLeaf[N,X,T](
-	  Left[T,X]( text2t( p.string_ ) )
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt =
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Left[T,X]( text2t( p.string_ ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.IntAtm,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtLeaf[N,X,T](
-	  Left[T,X]( text2t( p.integer_.toString ) )
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt =
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Left[T,X]( text2t( p.integer_.toString ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.FltAtm,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtLeaf[N,X,T](
-	  Left[T,X]( text2t( p.double_.toString ) )
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt =
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Left[T,X]( text2t( p.double_.toString ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   
   /* Functor */
@@ -385,16 +712,38 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.FAtm,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtBranch[N,X,T](
-	  text2ns( p.lident_ ),
-	  List[CnxnCtxtLabel[N,X,T] with Factual]()
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt =
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtBranch[N,X,T](
+	    text2ns( p.lident_ ),
+	    List[CnxnCtxtLabel[N,X,T] with Factual]()
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   
   /* Boole */
@@ -402,29 +751,73 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.Verity,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtLeaf[N,X,T](
-	  Left[T,X]( text2t( "true" ) )
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt = 
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Left[T,X]( text2t( "true" ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.Absurdity,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    /* TBD */
-    Some(
-      Location[Either[T,X]](
-	new CnxnCtxtLeaf[N,X,T](
-	  Left[T,X]( text2t( "false" ) )
-	),
-	Top()
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
       )
     )
+
+    val rslt = 
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Left[T,X]( text2t( "false" ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   
   /* Var */
@@ -432,13 +825,73 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.V,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    wrap( context )      
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    val rslt =
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Right[T,X]( text2v( p.uident_ ) )
+	  ),
+	  Top()
+	)
+      )      
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.A,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    wrap( context )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    val rslt =
+      Some(
+	Location[Either[T,X]](
+	  new CnxnCtxtLeaf[N,X,T](
+	    Right[T,X]( text2v( p.wild_ ) )
+	  ),
+	  Top()
+	)
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   
   /* Lyst */
@@ -446,66 +899,155 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.Empty,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    wrap( context )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+    
+    val rslt = None
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.Enum,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
+
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
     val terms : List[Term] = termListTrampoline2.toList
     
-    ( wrap( context ) /: terms )(
-      { 
-	( acc, e ) => {
-	  combine( e.accept( this, context ), acc, context )
+    val rslt =
+      ( wrap( context ) /: terms )(
+	{ 
+	  ( acc, e ) => {
+	    combine( e.accept( this, context ), acc, context )
+	  }
 	}
-      }
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
     )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.Cons,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
     val terms : List[Term] = termListTrampoline2.toList
-    
-    combine(
-      p.lyst_.accept( this, context ),
-      ( wrap( context ) /: terms )(
-	{ 
-	  ( acc, e ) => {
-	    combine( e.accept( this, context ), acc, context )
+
+    val rslt =
+      combine(
+	p.lyst_.accept( this, context ),
+	( wrap( context ) /: terms )(
+	  { 
+	    ( acc, e ) => {
+	      combine( e.accept( this, context ), acc, context )
+	    }
 	  }
-	}
-      ),
-      context 
+	),
+	context 
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
     )
+
+    rslt
   }
   override def visit(
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.ConsV,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " */\n"
+	+ "/* p: " + p + " */\n"
+	+ "/* context: " + context + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
+    )
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
     val terms : List[Term] = termListTrampoline2.toList
-    
-    combine(
-      p.var_.accept( this, context ),
-      ( wrap( context ) /: terms )(
-	{ 
-	  ( acc, e ) => {
-	    combine( e.accept( this, context ), acc, context )
+
+    val rslt =
+      combine(
+	p.var_.accept( this, context ),
+	( wrap( context ) /: terms )(
+	  { 
+	    ( acc, e ) => {
+	      combine( e.accept( this, context ), acc, context )
+	    }
 	  }
-	}
-      ),
-      context
+	),
+	context
+      )
+
+    println(
+      (
+	"/* ------------------------------------------------------- */\n"
+	+ "/* method: " + "visit" + " continued" + " */\n"
+	+ "/* rslt: " + rslt + " */\n"
+	+ "/* ------------------------------------------------------- */\n"
+      )
     )
+
+    rslt
   }
 }
 
