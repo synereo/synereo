@@ -8,6 +8,7 @@ import com.protegra_ati.agentservices.core.messages.EventKey
 import com.protegra_ati.agentservices.core.events.{RegistrationResponseReceivedEvent, MessageEventAdapter}
 import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.ati.iaservices.schema.Label
 
 //run me with "mvn scala:run"
 object App
@@ -81,11 +82,11 @@ object App
           println("*************** New AgentId = " + newAgentId + "***************")
           println("*************** Finish RegisterAgent ***************")
         }
-      });
+      })
     }
 
+    listenRegistrationResponse(ui, agentSessionId, eventKey)
     requestRegistration(ui, selfAlias, agentSessionId, eventKey)
-    listenRegistrationResponse(ui, agentSessionId, eventKey);
   }
 
   //refactor this into core

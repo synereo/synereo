@@ -63,21 +63,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-            <version>1.7.1</version>
-        </dependency>
-        <dependency>
-        	<groupId>commons-pool</groupId>
-        	<artifactId>commons-pool</artifactId>
-        	<version>1.6</version>
-        </dependency>
-        <dependency>
-        	<groupId>com.esotericsoftware.kryo</groupId>
-        	<artifactId>kryo</artifactId>
-        	<version>2.20</version>
-        </dependency>
-        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
@@ -131,12 +116,6 @@
             <version>1.7.9</version>
         </dependency>
 
-		<dependency>
-			<groupId>javax.mail_oracle</groupId>
-			<artifactId>mail</artifactId>
-			<version>1.4.5</version>
-		</dependency>
-
     <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
@@ -160,12 +139,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>casbah_${scala.version}</artifactId>
-            <version>${casbah.version}</version>
-            <type>pom</type>
-        </dependency>
     </dependencies>
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>

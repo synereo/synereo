@@ -15,6 +15,7 @@
         <scala.version>2.9.2</scala.version>
         <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
         <agentservices-core.version>1.1.0.8-IA</agentservices-core.version>
+        <iaservices.version>1.0.0.0</iaservices.version>
 
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -58,6 +59,11 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ati</groupId>
+            <artifactId>iaservices</artifactId>
+            <version>${iaservices.version}</version>
         </dependency>
       <dependency>
             <groupId>com.protegra-ati</groupId>
