@@ -255,7 +255,8 @@ trait CnxnZipperComposition[L,V,T] {
 class TermToCnxnCtxtLabel[N,X,T](
   val text2ns : String => N, val text2v : String => X, val text2t : String => T,
   val ns2str : N => String, val v2str : X => String, val t2str : T => String,
-  val zipr : CnxnNavigation[N,X,T] with CnxnMutation[N,X,T] with CnxnZipperComposition[N,X,T]
+  val zipr : CnxnNavigation[N,X,T] with CnxnMutation[N,X,T] with CnxnZipperComposition[N,X,T],
+  val theContextVar : String
 ) extends FoldVisitor[Option[Location[Either[T,X]]], Option[Location[Either[T,X]]]] {
   import scala.collection.JavaConversions._
   import scala.collection.JavaConverters._
@@ -345,8 +346,13 @@ class TermToCnxnCtxtLabel[N,X,T](
 		    + "/* ------------------------------------------------------- */\n"
 		  )
 		)
-		
-		loc
+		  		
+		if ( v2str( v ).equals( theContextVar ) ) {		
+		  loc
+		}
+		else {
+		  zipr.up( loc )
+		}		
 	      }
 	      case Location( _, Top() ) => {
 		val loc = zipr.up( zipr.update( yLoc, xTerm ) )
@@ -1155,12 +1161,13 @@ object TermToCnxnCtxtLabel {
   def apply [N,X,T] (
     text2ns : String => N, text2v : String => X, text2t : String => T,
     ns2str : N => String, v2str : X => String, t2str : T => String,
-    zipr : CnxnNavigation[N,X,T] with CnxnMutation[N,X,T] with CnxnZipperComposition[N,X,T]
+    zipr : CnxnNavigation[N,X,T] with CnxnMutation[N,X,T] with CnxnZipperComposition[N,X,T],
+    aContextVar : String 
   ) : TermToCnxnCtxtLabel[N,X,T] = {
     new TermToCnxnCtxtLabel[N,X,T](
       text2ns, text2v, text2t,
       ns2str, v2str, t2str,
-      zipr
+      zipr, aContextVar
     )
   }
   
@@ -1169,13 +1176,14 @@ object TermToCnxnCtxtLabel {
   ) : Option[(
     String => N, String => X, String => T, N => String,
     X => String, T => String,
-    CnxnNavigation[N,X,T] with CnxnMutation[N,X,T] with CnxnZipperComposition[N,X,T]
+    CnxnNavigation[N,X,T] with CnxnMutation[N,X,T] with CnxnZipperComposition[N,X,T],
+    String
   )] = {
     Some(
       (
 	xform.text2ns, xform.text2v, xform.text2t,
 	xform.ns2str, xform.v2str, xform.t2str,
-	xform.zipr
+	xform.zipr, xform.theContextVar
       )
     )
   }
@@ -1191,8 +1199,14 @@ package usage {
   with CnxnMutation[String,String,String]
   with CnxnZipperComposition[String,String,String]
 
+  object ContextVar {
+    import java.util.UUID
+    val thisContextVar : String =
+      "X" + UUID.randomUUID.toString.replace( "-", "" ) + "X"
+  }
+
   case class TermToCCLStr( ) extends TermToCnxnCtxtLabel(
-    idS, idS, idS, idS, idS, idS, CnxnStrZipr    
+    idS, idS, idS, idS, idS, idS, CnxnStrZipr, ContextVar.thisContextVar
   ) {
     def strToTerm( s : String ) : CnxnCtxtLabel[String,String,String] = {
       val ast = 
