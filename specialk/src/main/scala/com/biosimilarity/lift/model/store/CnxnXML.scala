@@ -70,7 +70,17 @@ trait Blobify {
   }      
 }
 
-trait CnxnString[Namespace,Var,Tag] {
+trait CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
+  def fromCaseClassInstanceString(
+    cciElem : String
+  ) : Option[CnxnCtxtLabel[String,String,Any]]
+  def fromTermString(
+    cciElem : String
+  ) : Option[CnxnCtxtLabel[String,String,String]]
+}
+
+trait CnxnStringX[Namespace,Var,Tag]
+extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
   class TermParser extends JavaTokenParsers {
     def term : Parser[Any] =
       application | list | ground | variable
@@ -134,7 +144,7 @@ trait CnxnString[Namespace,Var,Tag] {
       }
   }
 
-  def fromCaseClassInstanceString(
+  override def fromCaseClassInstanceString(
     cciElem : String
   ) : Option[CnxnCtxtLabel[String,String,Any]] = {
     val readBack = new TermParser
@@ -148,7 +158,7 @@ trait CnxnString[Namespace,Var,Tag] {
       case _ => None
     }
   }
-  def fromTermString(
+  override def fromTermString(
     cciElem : String
   ) : Option[CnxnCtxtLabel[String,String,String]] = {
     val readBack = new TermParser
@@ -161,6 +171,71 @@ trait CnxnString[Namespace,Var,Tag] {
       case readBack.Success( r, _ ) => Some( r )
       case _ => None
     }
+  }
+}
+
+trait CnxnString[Namespace,Var,Tag]
+extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
+  import com.biosimilarity.lift.lib.term.conversion._
+  import com.biosimilarity.lift.lib.term.Prolog._
+  import com.biosimilarity.lift.lib.term.Prolog.Absyn.{Predicate => PrologPredicate,_}
+
+  case class Identity[T]( ) extends Function1[T,T] {
+    override def apply( t : T ) = t
+  }
+  object idS extends Identity[String]
+  object CnxnStrZipr
+  extends CnxnNavigation[String,String,String]
+  with CnxnMutation[String,String,String]
+  with CnxnZipperComposition[String,String,String]
+
+  object ContextVar {
+    import java.util.UUID
+    val thisContextVar : String =
+      "X" + UUID.randomUUID.toString.replace( "-", "" ) + "X"
+  }
+
+  case class TermToCCLStr( ) extends TermToCnxnCtxtLabel(
+    idS, idS, idS, idS, idS, idS, CnxnStrZipr, ContextVar.thisContextVar
+  ) {
+    def strToTerm( s : String ) : CnxnCtxtLabel[String,String,String] = {
+      val ast = 
+	new parser( new Yylex( new java.io.StringReader( s ) ) ).pPredicate()
+      val loc : Location[Either[String,String]] =
+	Location[Either[String,String]]( 
+	  new CnxnCtxtLeaf[String,String,String]( Right[String,String]( text2v( "_" ) ) ),
+	  Top()
+	)
+      val ctxt : Option[Location[Either[String,String]]] = Some( loc )
+
+      val xformedTerm =
+	ast match {
+	  case apred : APred => visit( apred, ctxt )
+	  case cpred : CPred => visit( cpred, ctxt )
+	}
+
+      xformedTerm match {
+	case Some( loc ) => zipr.decontextualize( loc )
+	case None => throw new Exception( "xform failed: " + ast )
+      }
+    }
+  }
+
+  override def fromCaseClassInstanceString(
+    cciElem : String
+  ) : Option[CnxnCtxtLabel[String,String,Any]] = {
+    Some(
+      (
+	new TermToCCLStr().strToTerm(
+	  cciElem
+	)
+      ).asInstanceOf[CnxnCtxtLabel[String,String,Any]]
+    )
+  }
+  override def fromTermString(
+    cciElem : String
+  ) : Option[CnxnCtxtLabel[String,String,String]] = {
+    Some( new TermToCCLStr().strToTerm( cciElem ) )
   }
 }
 

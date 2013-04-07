@@ -58,7 +58,8 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
 	}
       }
       case Location( t, ctxt ) => {
-	println(
+	/*
+	 println(
 	  (
 	    "/* ------------------------------------------------------- */\n"
 	    + "/* method: " + "up" + " */\n"
@@ -68,6 +69,7 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
 	    + "/* ------------------------------------------------------- */\n"
 	  )
 	)
+	*/
 	throw new Exception( "unmatched location shape: " + location )
       }
     }
@@ -163,7 +165,8 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
 	t,
 	ctxt
       ) => {
-	println(
+	/*
+	 println(
 	  (
 	    "/* ------------------------------------------------------- */\n"
 	    + "/* method: " + "insertDown" + " */\n"
@@ -174,6 +177,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
 	    + "/* ------------------------------------------------------- */\n"
 	  )
 	)
+	*/
 	throw new Exception( "unmatched location shape: " + location )
       }
     }
@@ -277,7 +281,8 @@ class TermToCnxnCtxtLabel[N,X,T](
     y : Option[Location[Either[T,X]]], 
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    println(
+    /*
+     println(
       (
 	"/* ------------------------------------------------------- */\n"
 	+ "/* method: " + "combine" + " */\n"
@@ -287,13 +292,15 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
     
     val rslt =
       for( 
 	xLoc@Location( xTerm : CnxnCtxtLabel[N,X,T], xCtxt ) <- x;
 	yLoc@Location( yTerm : CnxnCtxtLabel[N,X,T], yCtxt ) <- y
       ) yield {
-	println(
+	/*
+	 println(
 	  (
 	    "/* ------------------------------------------------------- */\n"
 	    + "/* method: " + "combine" + " continued" + " */\n"
@@ -302,13 +309,15 @@ class TermToCnxnCtxtLabel[N,X,T](
 	    + "/* ------------------------------------------------------- */\n"
 	  )
 	)
+	*/
 	yLoc match {
 	  case Location( CnxnCtxtLeaf( Right( v ) ), Top( ) ) => xLoc
 	  case Location( _, Top( ) ) => {
 	    xCtxt match {
 	      case Top() => {
 		val loc = zipr.up( zipr.insertDown( yLoc, xTerm ) )
-		println(
+		/*
+		 * println(
 		  (
 		    "/* ------------------------------------------------------- */\n"
 		    + "/* method: " + "combine" + " continued" + " */\n"
@@ -316,12 +325,14 @@ class TermToCnxnCtxtLabel[N,X,T](
 		    + "/* ------------------------------------------------------- */\n"
 		  )
 		)
+		*/
 		    
 		loc
 	      }
 	      case _ => {
 		val loc = zipr.update( yLoc, xTerm )
-		println(
+		/*
+		 println(
 		  (
 		    "/* ------------------------------------------------------- */\n"
 		    + "/* method: " + "combine" + " continued" + " */\n"
@@ -329,6 +340,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 		    + "/* ------------------------------------------------------- */\n"
 		  )
 		)
+		*/
 		
 		loc
 	      }
@@ -338,7 +350,8 @@ class TermToCnxnCtxtLabel[N,X,T](
 	    xLoc match {	      
 	      case Location( CnxnCtxtLeaf( Right( v ) ), Top() ) => {
 		val loc = zipr.update( yLoc, xTerm )
-		println(
+		/*
+		 println(
 		  (
 		    "/* ------------------------------------------------------- */\n"
 		    + "/* method: " + "combine" + " continued" + " */\n"
@@ -346,6 +359,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 		    + "/* ------------------------------------------------------- */\n"
 		  )
 		)
+		*/
 		  		
 		if ( v2str( v ).equals( theContextVar ) ) {		
 		  loc
@@ -356,7 +370,8 @@ class TermToCnxnCtxtLabel[N,X,T](
 	      }
 	      case Location( _, Top() ) => {
 		val loc = zipr.up( zipr.update( yLoc, xTerm ) )
-		println(
+		/*
+		 println(
 		  (
 		    "/* ------------------------------------------------------- */\n"
 		    + "/* method: " + "combine" + " continued" + " */\n"
@@ -364,6 +379,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 		    + "/* ------------------------------------------------------- */\n"
 		  )
 		)
+		*/
 		
 		loc
 	      }
@@ -379,7 +395,8 @@ class TermToCnxnCtxtLabel[N,X,T](
 			
       }
 
-    println(
+    /*
+     println(
       (
 	"/* ------------------------------------------------------- */\n"
 	+ "/* method: " + "combine" + " continued" + " */\n"
@@ -387,6 +404,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -396,7 +414,8 @@ class TermToCnxnCtxtLabel[N,X,T](
     p : com.biosimilarity.lift.lib.term.Prolog.Absyn.APred,
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
-    println(
+    /*
+     println(
       (
 	"/* ------------------------------------------------------- */\n"
 	+ "/* method: " + "visit" + " */\n"
@@ -405,6 +424,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
     
     val rslt =
       combine(
@@ -413,7 +433,8 @@ class TermToCnxnCtxtLabel[N,X,T](
 	context
       )
 
-    println(
+    /*
+     println(
       (
 	"/* ------------------------------------------------------- */\n"
 	+ "/* method: " + "visit" + " continued" + " */\n"
@@ -421,6 +442,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt 
   }
@@ -429,7 +451,8 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {      
 
-    println(
+    /*
+     println(
       (
 	"/* ------------------------------------------------------- */\n"
 	+ "/* method: " + "visit" + " */\n"
@@ -438,6 +461,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val loc =
       combine( p.functor_.accept( this, context ), wrap( context ), context )
@@ -455,7 +479,8 @@ class TermToCnxnCtxtLabel[N,X,T](
 	}
       )
 
-    println(
+    /*
+     println(
       (
 	"/* ------------------------------------------------------- */\n"
 	+ "/* method: " + "visit" + " continued" + " */\n"
@@ -463,6 +488,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -473,7 +499,8 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
-    println(
+    /*
+     println(
       (
 	"/* ------------------------------------------------------- */\n"
 	+ "/* method: " + "visit" + " */\n"
@@ -482,10 +509,12 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       combine( p.atom_.accept( this, context ), wrap( context ), context)
     
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -494,6 +523,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
     
     rslt
   }
@@ -502,6 +532,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]] 
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -511,10 +542,12 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       combine( p.var_.accept( this, context ), wrap( context ), context)
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -523,6 +556,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -531,6 +565,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -540,6 +575,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val loc =
       combine( p.functor_.accept( this, context ), wrap( context ), context )
@@ -557,6 +593,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	}
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -565,6 +602,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -573,6 +611,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
     
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -582,10 +621,12 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       combine( p.lyst_.accept( this, context ), wrap( context ), context )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -594,6 +635,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt 
   }
@@ -604,6 +646,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -613,6 +656,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt = 
       Some(
@@ -624,6 +668,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -632,6 +677,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -640,6 +686,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -649,6 +696,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       Some(
@@ -660,6 +708,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -668,6 +717,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -676,6 +726,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -685,10 +736,12 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       combine( p.boole_.accept( this, context ), wrap( context ), context)
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -697,6 +750,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -705,6 +759,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -714,6 +769,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       Some(
@@ -725,6 +781,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -733,6 +790,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -741,6 +799,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -750,6 +809,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       Some(
@@ -761,6 +821,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -769,6 +830,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -777,6 +839,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -786,6 +849,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       Some(
@@ -797,6 +861,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -805,6 +870,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -815,6 +881,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -824,6 +891,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       Some(
@@ -840,6 +908,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -848,6 +917,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -858,6 +928,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -867,6 +938,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt = 
       Some(
@@ -878,6 +950,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -886,6 +959,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -894,6 +968,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -903,6 +978,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt = 
       Some(
@@ -914,6 +990,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -922,6 +999,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -932,6 +1010,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -941,6 +1020,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       Some(
@@ -952,6 +1032,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )      
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -960,6 +1041,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -968,6 +1050,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -977,6 +1060,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val rslt =
       Some(
@@ -988,6 +1072,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	)
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -996,6 +1081,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -1006,6 +1092,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1015,9 +1102,11 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
     
     val rslt = None
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1026,6 +1115,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -1034,6 +1124,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1043,6 +1134,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
@@ -1058,6 +1150,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	}
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1066,6 +1159,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -1074,6 +1168,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1083,6 +1178,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
@@ -1101,6 +1197,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	context 
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1109,6 +1206,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
@@ -1117,6 +1215,7 @@ class TermToCnxnCtxtLabel[N,X,T](
     context : Option[Location[Either[T,X]]]
   ) : Option[Location[Either[T,X]]] = {
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1126,6 +1225,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
     val termListTrampoline1 : java.util.List[Term] = p.listterm_
     val termListTrampoline2 : scala.collection.mutable.Buffer[Term] =
       termListTrampoline1
@@ -1144,6 +1244,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	context
       )
 
+    /*
     println(
       (
 	"/* ------------------------------------------------------- */\n"
@@ -1152,6 +1253,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 	+ "/* ------------------------------------------------------- */\n"
       )
     )
+    */
 
     rslt
   }
