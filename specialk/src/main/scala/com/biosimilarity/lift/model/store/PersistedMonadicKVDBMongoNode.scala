@@ -3092,48 +3092,82 @@ package usage {
 	reset { node1.publish( RAFQry1, 10.0 ) }
       }      
     }
+
+    object TermTest
+    extends CnxnString[String,String,String] {
+      import PersistedMonadicKVDBMongoNet._   
+      import Being._
+      import ExerciseMongo._
+
+      val term1Str = "terminatorSeries( chronicles( characters( name( first( \"Sarah\" ), last( \"Conner\" ) ) ) ) )"
+      val term2Str = "terminatorSeries( chronicles( characters( name( first( \"John\" ), last( \"Conner\" ) ) ) ) )"
+      val term1 = fromTermString( term1Str )
+      val term2 = fromTermString( term2Str )
+
+      def doGet( termStr : String ) = {
+	for( term <- fromTermString( termStr ) ) {
+	  reset { for( e <- node1.get( term ) ) { println( e ) } }
+	}
+      }
+      def doPut( termStr : String, amount : Double ) = {
+	for( term <- fromTermString( termStr ) ) {
+	  reset { node1.put( term, amount ) }
+	}
+      }
+      def doSubscribe( termStr : String ) = {
+	for( term <- fromTermString( termStr ) ) {
+	  reset {
+	    for( e <- node1.subscribe( term ) ) { println( e ) }
+	  }
+	}
+      }
+      def doPublish( termStr : String, amount : Double ) = {
+	for( term <- fromTermString( termStr ) ) {
+	  reset { node1.publish( term, amount ) }
+	}
+      }      
+    }
     
-   object MongoDetails {
-     import ExerciseMongo._
-     import com.biosimilarity.lift.model.store.mongo._
-     val clntSess1 = node1.cache.client
-     val mc1 =
-       clntSess1.getDB( node1.cache.defaultDB )( pd1.storeUnitStr )
-     def doDoThatVoodoo() {
-       println( "/* Dropping */" )
-       mc1.drop
-       println( "/* Storing */" )
-       println( "/* Collection */" )
-       println( mc1 )
-       doStore()
-       println( "/* Collection */" )
-       println( mc1 )
-       println( "/* Getting */" )
-       doGet()
-       println( "/* Collection */" )
-       println( mc1 )
-       println( "/* Putting */" )
-       doPut()
-       println( "/* Collection */" )
-       println( mc1 )
-       println( "/* Getting */" )
-       doGet()
-       println( "/* Collection */" )
-       println( mc1 )
-       println( "/* Subscribing */" )
-       doSubscribe()
-       println( "/* Collection */" )
-       println( mc1 )
-       println( "/* Publishing */" )
-       doPublish()
-       println( "/* Collection */" )
-       println( mc1 )
-       println( "/* Publishing */" )
-       doPublish()
-       println( "/* Collection */" )
-       println( mc1 )
-     }
-   }
-    
+    object MongoDetails {
+      import ExerciseMongo._
+      import com.biosimilarity.lift.model.store.mongo._
+      val clntSess1 = node1.cache.client
+      val mc1 =
+	clntSess1.getDB( node1.cache.defaultDB )( pd1.storeUnitStr )
+      def doDoThatVoodoo() {
+	println( "/* Dropping */" )
+	mc1.drop
+	println( "/* Storing */" )
+	println( "/* Collection */" )
+	println( mc1 )
+	doStore()
+	println( "/* Collection */" )
+	println( mc1 )
+	println( "/* Getting */" )
+	doGet()
+	println( "/* Collection */" )
+	println( mc1 )
+	println( "/* Putting */" )
+	doPut()
+	println( "/* Collection */" )
+	println( mc1 )
+	println( "/* Getting */" )
+	doGet()
+	println( "/* Collection */" )
+	println( mc1 )
+	println( "/* Subscribing */" )
+	doSubscribe()
+	println( "/* Collection */" )
+	println( mc1 )
+	println( "/* Publishing */" )
+	doPublish()
+	println( "/* Collection */" )
+	println( mc1 )
+	println( "/* Publishing */" )
+	doPublish()
+	println( "/* Collection */" )
+	println( mc1 )
+      }
+    }    
   }
 }

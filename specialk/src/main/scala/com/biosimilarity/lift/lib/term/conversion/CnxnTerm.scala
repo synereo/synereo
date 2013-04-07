@@ -771,12 +771,16 @@ class TermToCnxnCtxtLabel[N,X,T](
     )
     */
 
+    // val str =
+//       ( p.string_( 0 ), p.string_( p.string_.length - 1 ) ) match {
+// 	case ( '"', '"' ) => p.string_
+// 	case _ => "\"" + p.string_ + "\""
+//       }
+
     val rslt =
       Some(
 	Location[Either[T,X]](
-	  new CnxnCtxtLeaf[N,X,T](
-	    Left[T,X]( text2t( "\"" + p.string_ + "\"" ) )
-	  ),
+	  new CnxnCtxtLeaf[N,X,T]( Left[T,X]( text2t( p.string_ ) ) ),
 	  Top()
 	)
       )
