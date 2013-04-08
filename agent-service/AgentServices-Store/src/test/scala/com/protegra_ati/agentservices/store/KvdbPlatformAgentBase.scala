@@ -596,7 +596,7 @@ with RabbitTestSetup
       "find many values by Get" in new WildcardSetup(setupData(writer, _: AgentCnxn, _: String))
       {
         val expectedCollection = setupExpectedResults(value)
-        val lblSearch = "contentChannel(X)".toLabel
+        val lblSearch = "contentChannel(_)".toLabel
         getMustContain(expectedCollection)(reader, cnxnRandom, lblSearch)
       }
 
