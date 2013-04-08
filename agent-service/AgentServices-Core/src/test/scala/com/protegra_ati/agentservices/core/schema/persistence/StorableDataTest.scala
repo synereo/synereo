@@ -1,24 +1,14 @@
 package com.protegra_ati.agentservices.core.schema.persistence
 
 import org.junit._
-import Assert._
 import org.specs2.mutable._
-import org.junit.runner._
-import org.specs2.runner._
 import java.util.UUID
-import java.util.Date
 import java.util.Locale
-import java.util.Properties
-import java.io.Writer
-import java.io.FileWriter
-import java.io.IOException
 import com.protegra_ati.agentservices.core.schema._
-import com.protegra_ati.agentservices.core.schema.behaviors.Tracking
 import com.protegra_ati.agentservices.core.schema.Constants._
 import com.protegra_ati.agentservices.core.schema.util._
-import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.messages.invitation.CreateInvitationRequest
-import org.joda.time.DateTime
+import java.util
 
 class StorableDataTest extends SpecificationWithJUnit
 {
@@ -171,9 +161,29 @@ class StorableDataTest extends SpecificationWithJUnit
 
         val storeKey = compositeData.toStoreKey
         println("storeKey: " + storeKey)
-        val expected = "compositeData(" + FIELDS + "(" + connection.toStoreKey + "," + profile.toStoreKey + "))"
+        val expected = "compositeData(" + FIELDS + "(" + profile.toStoreKey + "))"
         println("expected: " + expected)
         storeKey must be_==(expected)
       }
+
+    "generate store key correctly for CompositeData with multiple Connections" in {
+      val connections = new util.ArrayList[Connection]()
+
+      connections.add(new Connection())
+      connections.add(new Connection())
+      connections.get(0).id = id
+      connections.get(1).id = id // not terribly realistic, but also not used in the test
+
+      val profile = new Profile()
+      profile.firstName = "test"
+
+      val compositeData = new CompositeData(connections, profile)
+
+      val storeKey = compositeData.toStoreKey
+      println("storeKey: " + storeKey)
+      val expected = "compositeData(" + FIELDS + "(" + profile.toStoreKey + "))"
+      println("expected: " + expected)
+      storeKey must be_==(expected)
+    }
   }
 }

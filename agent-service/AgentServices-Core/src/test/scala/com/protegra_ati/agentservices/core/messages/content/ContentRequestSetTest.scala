@@ -172,12 +172,12 @@ with Serializable
       val connMike = ConnectionFactory.createConnection("Mike", ConnectionCategory.Person.toString, ConnectionCategory.Person.toString, "Basic", jenId, mikeId)
 
 
-      pa.store(pa._dbQ, pa._storeCnxn, jensCnxn.toStoreKey, Serializer.serialize[ Connection ](jensCnxn))
+      pa.store(pa._dbQ, pa._storeCnxn, jensCnxn.toStoreKey, Serializer.serialize(jensCnxn))
       Thread.sleep(TIMEOUT_SHORT)
       // set app id to self
       val appId = setAppId(cnxn)
 
-      pa.store(pa._dbQ, cnxn, connMike.toStoreKey, Serializer.serialize[ Connection ](connMike))
+      pa.store(pa._dbQ, cnxn, connMike.toStoreKey, Serializer.serialize(connMike))
       Thread.sleep(TIMEOUT_MED)
 
       // store Profile

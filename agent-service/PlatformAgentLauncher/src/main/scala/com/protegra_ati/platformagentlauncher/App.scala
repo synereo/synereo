@@ -8,6 +8,7 @@ import com.protegra_ati.agentservices.core.messages.EventKey
 import com.protegra_ati.agentservices.core.events.{SetContentResponseReceivedEvent, RegistrationResponseReceivedEvent, MessageEventAdapter}
 import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
 import com.protegra_ati.agentservices.core.messages.content.{SetContentResponse, SetContentRequest}
+import com.ati.iaservices.schema.Label
 
 //run me with "mvn scala:run"
 object App
@@ -84,7 +85,7 @@ object App
           profile.setEmailAddress("john.smith@gmail.com")
           saveProfile(ui, agentSessionId, response.connSelf.writeCnxn, profile)
         }
-      });
+      })
     }
 
     def requestRegistration(ui: AgentHostUIPlatformAgent, selfAlias: String, agentSessionId: UUID, tag: String) = {
@@ -92,7 +93,7 @@ object App
       ui.send(req)
     }
 
-    listenRegistrationResponse(ui, agentSessionId, eventKey);
+    listenRegistrationResponse(ui, agentSessionId, eventKey)
     requestRegistration(ui, selfAlias, agentSessionId, eventKey)
   }
 

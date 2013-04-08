@@ -1,21 +1,21 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.protegra-ati</groupId>
-    <artifactId>platformagentlauncher</artifactId>
+    <groupId>com.ati</groupId>
+    <artifactId>iaservices</artifactId>
     <version>1.0.0.0</version>
     <name>${project.artifactId}</name>
-    <description>Protunity launcher library</description>
-    <inceptionYear>2012</inceptionYear>
+    <description>Individual Agent class library</description>
+    <inceptionYear>2013</inceptionYear>
 
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <scala.version>2.9.2</scala.version>
+        <casbah.version>2.5.0</casbah.version>
         <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
-        <agentservices-core.version>1.1.0.8-IA</agentservices-core.version>
-        <iaservices.version>1.0.0.0</iaservices.version>
+        <agentservices-core.version>1.3.0.0</agentservices-core.version>
 
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,6 +25,13 @@
         <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
     </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>protegraRepo</id>
+            <url>ftp://ftp.protegra.com</url>
+        </repository>
+    </distributionManagement>
 
     <repositories>
         <repository>
@@ -61,11 +68,6 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.ati</groupId>
-            <artifactId>iaservices</artifactId>
-            <version>${iaservices.version}</version>
-        </dependency>
-      <dependency>
             <groupId>com.protegra-ati</groupId>
             <artifactId>agentservices-core</artifactId>
             <version>${agentservices-core.version}</version>
@@ -75,9 +77,72 @@
             <artifactId>configgy</artifactId>
             <version>local</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.dumbster.smtp</groupId>
+            <artifactId>SMTPMockServer</artifactId>
+            <version>1.6</version>
+        </dependency>
+
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>1.2.16</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>0.10.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.ws.commons.util</groupId>
+            <artifactId>ws-commons-util</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+        <dependency>
+        <groupId>org.apache.commons</groupId>
+          <artifactId>commons-lang3</artifactId>
+          <version>3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>jline</artifactId>
+            <version>2.9.0-1</version>
+        </dependency>
+        <dependency>
+            <groupId>uk.com.robust-it</groupId>
+            <artifactId>cloning</artifactId>
+            <version>1.7.9</version>
+        </dependency>
+
+    <!-- Test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!--removing specs1 causes issue with maven-surefire-plugin, fix this reference-->
+        <dependency>
+            <groupId>org.specs2</groupId>
+            <artifactId>specs2_${scala.version}</artifactId>
+            <version>${scala.test.specs2.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-tools.testing</groupId>
+            <!-- <artifactId>specs_2.8.1</artifactId> -->
+            <artifactId>specs_2.9.0-1</artifactId>
+            <!-- <version>1.6.7.2</version> -->
+            <version>1.6.8</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
         <extensions>
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
@@ -93,27 +158,18 @@
           </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                  <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                  </descriptorRefs>
-                  <archive>
-                    <manifest>
-                      <mainClass>com.protegra_ati.platformagentlauncher.App</mainClass>
-                    </manifest>
-                  </archive>
-                </configuration>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2</version>
                 <executions>
-                  <execution>
-                    <phase>package</phase>
-                    <goals>
-                      <goal>single</goal>
-                    </goals>
-                  </execution>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
                 </executions>
-              </plugin>
+            </plugin>
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
@@ -127,6 +183,9 @@
                         <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
                     </jvmArgs>
                     <args>
+		<!-- arg>manager.conf</arg -->
+		<!-- <arg>-deprecation</arg> -->
+		<!-- <arg>-unchecked</arg> -->
                         <arg>-P:continuations:enable</arg>
                     </args>
                     <compilerPlugins>
@@ -134,8 +193,27 @@
                             <groupId>org.scala-lang.plugins</groupId>
                             <artifactId>continuations</artifactId>
                             <version>${scala.version}</version>
+<!--                            <version>2.10.0-SNAPSHOT</version>-->
                         </compilerPlugin>
                     </compilerPlugins>
+                    <launchers>
+                        <launcher>
+                            <id>mgr</id>
+                            <mainClass>com.protegra.protunityservices.PlatformAgentAndUserAgentManager</mainClass>
+		  <!-- args are optional -->
+                            <args>
+                                <arg>manager.conf</arg>
+                                <arg>-deprecation</arg>
+                                <arg>-unchecked</arg>
+                                <arg>-P:continuations:enable</arg>
+                            </args>
+		  <!-- jvmArgs are optional -->
+                            <jvmArgs>
+                                <jvmArg>-Xmx1024m</jvmArg>
+                            </jvmArgs>
+                        </launcher>
+		<!-- you could define other launcher -->
+                    </launchers>
                 </configuration>
                 <executions>
                     <execution>
@@ -161,6 +239,24 @@
                 </executions>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/scala</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.html</include>
+                    <include>**/*.avpr</include>
+                </includes>
+            </resource>
+            <!--<resource>
+              <directory>src/test/scala</directory>
+              <includes>
+               <include>**/*.properties</include>
+               <include>**/*.html</include>
+               <include>**/*.avpr</include>
+              </includes>
+            </resource>-->
+        </resources>
     </build>
     <reporting>
         <plugins>
