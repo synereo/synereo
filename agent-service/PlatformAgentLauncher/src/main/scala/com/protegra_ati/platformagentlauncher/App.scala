@@ -8,7 +8,9 @@ import com.protegra_ati.agentservices.core.messages.EventKey
 import com.protegra_ati.agentservices.core.events.{SetContentResponseReceivedEvent, RegistrationResponseReceivedEvent, MessageEventAdapter}
 import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
 import com.protegra_ati.agentservices.core.messages.content.{SetContentResponse, SetContentRequest}
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.ati.iaservices.schema.Label
+import scala.util.Random
 
 //run me with "mvn scala:run"
 object App
@@ -49,19 +51,17 @@ object App
       // ACTIONS
       if (args.contains("registerAgent")) {
         if (ui != null) {
-          registerAgent(ui)
+          val selfAlias = "John Smith"
+          val agentSessionId = UUID.randomUUID
+          registerAgent(ui, agentSessionId, selfAlias)
         }
       }
     }
   }
 
-  def registerAgent(ui : AgentHostUIPlatformAgent) = {
+  def registerAgent(ui : AgentHostUIPlatformAgent, agentSessionId : UUID, selfAlias : String) = {
     println("*************** Start RegisterAgent ***************")
-
-    val selfAlias = "John Smith"
-    val agentSessionId = UUID.randomUUID
     val eventKey = "registration"
-    val userAgentId = UUID.randomUUID
 
     def listenRegistrationResponse(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) = {
       ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
@@ -76,28 +76,22 @@ object App
           println("*************** New AgentId = " + newAgentId + "***************")
           println("*************** Finish RegisterAgent ***************")
 
-          val profile = new Profile()
-          profile.setFirstName("John")
-          profile.setLastName("Smith")
-          profile.setCity("Winnipeg")
-          profile.setRegion("MB")
-          profile.setCountry("Canada")
-          profile.setEmailAddress("john.smith@gmail.com")
-          saveProfile(ui, agentSessionId, response.connSelf.writeCnxn, profile)
+          val profile = createRandomProfile()
+          saveProfile(ui, agentSessionId, newAgentId, profile)
         }
       })
     }
 
-    def requestRegistration(ui: AgentHostUIPlatformAgent, selfAlias: String, agentSessionId: UUID, tag: String) = {
+    def requestRegistration(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String, selfAlias: String) = {
       val req = new RegistrationRequest(new EventKey(agentSessionId, tag), BIZNETWORK_AGENT_ID, selfAlias)
       ui.send(req)
     }
 
     listenRegistrationResponse(ui, agentSessionId, eventKey)
-    requestRegistration(ui, selfAlias, agentSessionId, eventKey)
+    requestRegistration(ui, agentSessionId, eventKey, selfAlias)
   }
 
-  def saveProfile(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, targetCnxn : AgentCnxnProxy, profile : Profile) = {
+  def saveProfile(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, agentId : UUID, profile : Profile) = {
     println("*************** Start SaveProfile ***************")
     val eventKey = "profile"
 
@@ -115,16 +109,36 @@ object App
       })
     }
 
-    def requestSaveProfile(ui: AgentHostUIPlatformAgent, profile: Profile, agentSessionId: UUID, tag: String) = {
+    def requestSaveProfile(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, agentId: UUID, tag: String, profile: Profile) = {
       val req = new SetContentRequest(new EventKey(agentSessionId, tag), profile, null)
-      req.setTargetCnxn(targetCnxn)
+      req.setTargetCnxn(new AgentCnxnProxy(agentId.toString.toURI, "", agentId.toString.toURI))
       ui.send(req)
     }
 
     listenSaveProfileResponse(ui, agentSessionId, eventKey)
-    requestSaveProfile(ui, profile, agentSessionId, eventKey)
+    requestSaveProfile(ui, agentSessionId, agentId, eventKey, profile)
   }
 
+
+  def createRandomProfile() = {
+    val profile = new Profile()
+    profile.setFirstName(createRandomWord(5))
+    profile.setLastName(createRandomWord(8))
+    profile.setCity("Winnipeg")
+    profile.setRegion("MB")
+    profile.setCountry("Canada")
+    profile.setEmailAddress(createRandomWord(6) + "@" + createRandomWord(6) + ".com")
+    profile
+  }
+
+  def createRandomWord(length: Int):String = {
+    def safeChar() = {
+      val res = (Random.nextInt('z' - 'a') + 'a').toChar
+      res.toChar
+    }
+
+    List.fill(length)(safeChar()).mkString
+  }
 
   //refactor this into core
   def checkAllStoreConfigFiles() = {
