@@ -112,7 +112,7 @@ object App
           println("--------------- SetContentResponse ***************")
           println("*************** Finish SaveProfile ***************")
         }
-      });
+      })
     }
 
     def requestSaveProfile(ui: AgentHostUIPlatformAgent, profile: Profile, agentSessionId: UUID, tag: String) = {
@@ -121,7 +121,7 @@ object App
       ui.send(req)
     }
 
-    listenSaveProfileResponse(ui, agentSessionId, eventKey);
+    listenSaveProfileResponse(ui, agentSessionId, eventKey)
     requestSaveProfile(ui, profile, agentSessionId, eventKey)
   }
 
