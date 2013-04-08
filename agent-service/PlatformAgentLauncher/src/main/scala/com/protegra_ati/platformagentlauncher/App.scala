@@ -2,12 +2,12 @@ package com.protegra_ati.platformagentlauncher
 
 import java.io.File
 import java.util.UUID
-import com.protegra_ati.agentservices.core.schema.AgentCnxnProxy
+import com.protegra_ati.agentservices.core.schema.{Profile, AgentCnxnProxy}
 import com.protegra_ati.agentservices.core.messages.admin.{RegistrationResponse, RegistrationRequest}
 import com.protegra_ati.agentservices.core.messages.EventKey
-import com.protegra_ati.agentservices.core.events.{RegistrationResponseReceivedEvent, MessageEventAdapter}
+import com.protegra_ati.agentservices.core.events.{SetContentResponseReceivedEvent, RegistrationResponseReceivedEvent, MessageEventAdapter}
 import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
-import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.protegra_ati.agentservices.core.messages.content.{SetContentResponse, SetContentRequest}
 
 //run me with "mvn scala:run"
 object App
@@ -21,6 +21,9 @@ object App
   final val LOG_KVDB_PROPERTIES = "log.properties"
   final val LOG_AGENTSERVICES_CONFIG = "log_agentservices.conf"
   final val LOG_AGENTSERVICES_PROPERTIES = "log_agentservices.properties"
+
+  final val BIZNETWORK_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
+
 
   def main(args: Array[ String ]): Unit =
   {
@@ -56,17 +59,8 @@ object App
 
     val selfAlias = "John Smith"
     val agentSessionId = UUID.randomUUID
-    val BIZNETWORK_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
     val eventKey = "registration"
-
     val userAgentId = UUID.randomUUID
-    val selfCnxn = new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
-
-    def requestRegistration(ui: AgentHostUIPlatformAgent, selfAlias: String, agentSessionId: UUID, tag: String) = {
-      val req = new RegistrationRequest(new EventKey(agentSessionId, tag), BIZNETWORK_AGENT_ID, selfAlias)
-      req.targetCnxn = selfCnxn
-      ui.send(req)
-    }
 
     def listenRegistrationResponse(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) = {
       ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
@@ -80,13 +74,56 @@ object App
           println("--------------- RegistrationResponse ***************")
           println("*************** New AgentId = " + newAgentId + "***************")
           println("*************** Finish RegisterAgent ***************")
+
+          val profile = new Profile()
+          profile.setFirstName("John")
+          profile.setLastName("Smith")
+          profile.setCity("Winnipeg")
+          profile.setRegion("MB")
+          profile.setCountry("Canada")
+          profile.setEmailAddress("john.smith@gmail.com")
+          saveProfile(ui, agentSessionId, response.connSelf.writeCnxn, profile)
         }
       });
     }
 
-    requestRegistration(ui, selfAlias, agentSessionId, eventKey)
+    def requestRegistration(ui: AgentHostUIPlatformAgent, selfAlias: String, agentSessionId: UUID, tag: String) = {
+      val req = new RegistrationRequest(new EventKey(agentSessionId, tag), BIZNETWORK_AGENT_ID, selfAlias)
+      ui.send(req)
+    }
+
     listenRegistrationResponse(ui, agentSessionId, eventKey);
+    requestRegistration(ui, selfAlias, agentSessionId, eventKey)
   }
+
+  def saveProfile(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, targetCnxn : AgentCnxnProxy, profile : Profile) = {
+    println("*************** Start SaveProfile ***************")
+    val eventKey = "profile"
+
+    def listenSaveProfileResponse(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) = {
+      ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
+      {
+        override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
+        {
+          val response : SetContentResponse = e.msg.asInstanceOf[SetContentResponse]
+          println("*************** SetContentResponse ---------------")
+          println(e.toString)
+          println("--------------- SetContentResponse ***************")
+          println("*************** Finish SaveProfile ***************")
+        }
+      });
+    }
+
+    def requestSaveProfile(ui: AgentHostUIPlatformAgent, profile: Profile, agentSessionId: UUID, tag: String) = {
+      val req = new SetContentRequest(new EventKey(agentSessionId, tag), profile, null)
+      req.setTargetCnxn(targetCnxn)
+      ui.send(req)
+    }
+
+    listenSaveProfileResponse(ui, agentSessionId, eventKey);
+    requestSaveProfile(ui, profile, agentSessionId, eventKey)
+  }
+
 
   //refactor this into core
   def checkAllStoreConfigFiles() = {
