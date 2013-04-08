@@ -15,9 +15,6 @@ object App
 {
   final val STORE_CONFIG = "init_store.conf"
   final val UI_CONFIG = "init_ui.conf"
-  final val DB_STORE_CONFIG = "db_store.conf"
-  final val DB_STORE_DB_CONFIG = "db_store_db.conf"
-  final val DB_STORE_PUBLIC_CONFIG = "db_store_public.conf"
   final val LOG_KVDB_CONFIG = "log.conf"
   final val LOG_KVDB_PROPERTIES = "log.properties"
   final val LOG_AGENTSERVICES_CONFIG = "log_agentservices.conf"
@@ -129,9 +126,6 @@ object App
   //refactor this into core
   def checkAllStoreConfigFiles() = {
     configFileExists(STORE_CONFIG)
-    configFileExists(DB_STORE_CONFIG)
-    configFileExists(DB_STORE_DB_CONFIG)
-    configFileExists(DB_STORE_PUBLIC_CONFIG)
     configFileExists(LOG_KVDB_CONFIG)
     configFileExists(LOG_KVDB_PROPERTIES)
     configFileExists(LOG_AGENTSERVICES_CONFIG)
