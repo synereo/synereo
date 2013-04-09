@@ -1,18 +1,33 @@
-import com.protegra_ati.platformagentlauncher.App
+import com.ati.iaservices.recipes.LauncherPluginSession._
+import com.ati.iaservices.recipes._
+import com.protegra_ati.agentservices.core.schema.Profile
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-App.initStore()
-App.initUI()
+new CreateStorePlugin().run()
+new CreateUIPlugin().run()
 
 // CREATE AN AGENTSESSION
-val agentSessionId = UUID.randomUUID()
+session.agentSessionId = UUID.randomUUID
 
 // REGISTER A NEW AGENT
-App.registerAgent(App.ui, agentSessionId, "John Smith")
+new RegisterAgentPlugin().run()
 
 // WAIT until registerAgent completes
 
-// GET THE PROFILE FOR THE AGENT JUST REGISTERED
-App.getProfile(App.ui, agentSessionId, App.lastCreatedAgentId)
+// SET THE PROFILE FOR THE AGENT JUST REGISTERED
+session.profile = new Profile()
+session.oldProfile = new Profile()
+session.profile.setFirstName("Jane")
+session.profile.setLastName("Doe")
+session.profile.setCountry("Canada")
 
+val setContentPlugin = new SetContentPlugin[Profile]
+setContentPlugin.data = session.profile
+setContentPlugin.oldData = session.oldProfile
+setContentPlugin.run()
+
+// GET THE PROFILE FOR THE AGENT JUST REGISTERED
+val getContentPlugin = new GetContentPlugin[Profile]()
+getContentPlugin.queryObject = Profile.SEARCH_ALL
+getContentPlugin.run()

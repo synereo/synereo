@@ -11,6 +11,10 @@ abstract class LauncherPluginBase {
   val pluginName: String
   val exitOnFail: Boolean
 
+  def run() : Unit = {
+    run(Array(""))
+  }
+
   def run(args: Array[ String ]): Unit = {
 
     try {
