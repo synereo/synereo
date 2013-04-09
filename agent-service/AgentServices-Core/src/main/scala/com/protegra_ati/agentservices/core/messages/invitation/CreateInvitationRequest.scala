@@ -38,7 +38,7 @@ case class CreateInvitationRequest(
              
   override def channel = Channel.Invitation
 
-  channelRole = Some(ChannelRole.Creator)
+  channelRole = Option(ChannelRole.Creator)
 
   if ( postToTarget != null && !postToTarget.isSent() ) postToTarget.send()
   if ( postToBroker != null && !postToBroker.isSent() ) postToBroker.send()

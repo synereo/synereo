@@ -27,8 +27,8 @@ case class ReferralRequest(
 
   override def channel = Channel.Invitation
 
-  channelRole = Some(ChannelRole.Creator)
-  channelLevel = Some(ChannelLevel.Public)
+  channelRole = Option(ChannelRole.Creator)
+  channelLevel = Option(ChannelLevel.Public)
 
   def deliver() = {
     if (source != null)
