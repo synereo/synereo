@@ -15,6 +15,19 @@ class CreateUIPlugin extends LauncherPluginBase {
   val exitOnFail = true
 
   final val UI_CONFIG = "init_ui.conf"
+  final val LOG_KVDB_CONFIG = "log.conf"
+  final val LOG_KVDB_PROPERTIES = "log.properties"
+  final val LOG_AGENTSERVICES_CONFIG = "log_agentservices.conf"
+  final val LOG_AGENTSERVICES_PROPERTIES = "log_agentservices.properties"
+
+  //refactor this into core
+  def checkAllStoreConfigFiles() = {
+    LauncherPluginUtil.configFileExists(UI_CONFIG)
+    LauncherPluginUtil.configFileExists(LOG_KVDB_CONFIG)
+    LauncherPluginUtil.configFileExists(LOG_KVDB_PROPERTIES)
+    LauncherPluginUtil.configFileExists(LOG_AGENTSERVICES_CONFIG)
+    LauncherPluginUtil.configFileExists(LOG_AGENTSERVICES_PROPERTIES)
+  }
 
   override def validateSession() = {
   }
@@ -26,7 +39,7 @@ class CreateUIPlugin extends LauncherPluginBase {
 
   def createUI(): Unit = {
     LauncherPluginSession.session.ui = new AgentHostUIPlatformAgent()
-    LauncherPluginUtil.configFileExists(UI_CONFIG)
+    checkAllStoreConfigFiles
     LauncherPluginSession.session.ui.initFromConfig(UI_CONFIG)
     println("*************** UIPlatformAgent launcher started ***************")
   }
