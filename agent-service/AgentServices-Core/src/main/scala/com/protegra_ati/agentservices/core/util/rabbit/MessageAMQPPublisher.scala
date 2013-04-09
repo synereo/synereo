@@ -7,6 +7,7 @@ import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 import java.util.concurrent.atomic.AtomicInteger
 import org.joda.time.DateTime
 import java.security.MessageDigest
+import com.protegra_ati.agentservices.core.util.serializer.Serializer
 
 object AMQPPublisherThreadFactory extends ThreadFactory
 {
@@ -70,16 +71,13 @@ object MessageAMQPPublisher extends Reporting
       val channel = conn.createChannel()
       try {
         // Now write an object to a byte array and shove it across the wire.
-        val bytes = new ByteArrayOutputStream
-        val store = new ObjectOutputStream(bytes)
-        store.writeObject(message)
-        store.close
+        val bytes = Serializer.serializeToBytes(message)
 
         val qname = ( exchange + "_queue" )
         channel.exchangeDeclare(exchange, "direct")
         channel.queueDeclare(qname, true, false, false, null)
         channel.queueBind(qname, exchange, routingKey)
-        channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
+        channel.basicPublish(exchange, routingKey, null, bytes)
 
         success = true
       }

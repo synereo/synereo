@@ -32,7 +32,7 @@ object Serializer extends Reporting
   private def serialize[ T ](obj: T, debug: Boolean): String =
   {
     if ( obj == null ) {
-      report("NULL -object can't be serialized", Severity.Info)
+      report("Serializer - NULL object can't be serialized, returning null", Severity.Warning)
       return null
     } else {
       return kryoSerializerReference.serialize(obj)
@@ -42,10 +42,30 @@ object Serializer extends Reporting
   def deserialize[ T ](source: String): T =
   {
     if ( source == null ) {
-     // report("NULL string can't be deserialized to an object", Severity.Error)
+      report("Serializer - NULL string can't be deserialized to an object", Severity.Warning)
       return null.asInstanceOf[ T ]
     } else {
       return kryoSerializerReference.deserialize(source)
+    }
+  }
+
+  def serializeToBytes[T](obj: T): Array[Byte] =
+  {
+    if ( obj == null ) {
+      report("Serializer - NULL object can't be serialized, returning null", Severity.Warning)
+      return null
+    } else {
+      return kryoSerializerReference.serializeToBytes(obj)
+    }
+  }
+
+  def deserializeFromBytes[T](source: Array[Byte]): T =
+  {
+    if ( source == null || source.length == 0) {
+      report("Serializer - NULL or empty byte array can't be deserialized to an object", Severity.Warning)
+      return null.asInstanceOf[ T ]
+    } else {
+      return kryoSerializerReference.deserializeFromBytes(source)
     }
   }
 

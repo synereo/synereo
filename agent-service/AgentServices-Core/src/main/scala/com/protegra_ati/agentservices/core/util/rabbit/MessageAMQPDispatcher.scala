@@ -11,6 +11,7 @@ import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 import java.security.MessageDigest
 import java.math.BigInteger
 import java.io.{ObjectInputStream, ByteArrayInputStream}
+import com.protegra_ati.agentservices.core.util.serializer.Serializer
 
 class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routingKey: String)
   extends Actor
@@ -112,11 +113,10 @@ class MessageAMQPSerializedConsumer[T](channel: Channel, a: Actor)
   extends DefaultConsumer(channel)
   with Reporting
 {
-  override def handleDelivery(tag: String, env: Envelope, props: AMQP.BasicProperties, body: Array[Byte]) {
+  override def handleDelivery(tag: String, env: Envelope, props: AMQP.BasicProperties, bytes: Array[Byte]) {
     val deliveryTag = env.getDeliveryTag
     try {
-      val in = new ObjectInputStream(new ByteArrayInputStream(body))
-      val t = in.readObject.asInstanceOf[T];
+      val t = Serializer.deserializeFromBytes[T](bytes)
 
       // Send t to all registered listeners.
       a ! AMQPMessage(t)
@@ -125,8 +125,8 @@ class MessageAMQPSerializedConsumer[T](channel: Channel, a: Actor)
     } catch {
       case e:Exception => {
         e.printStackTrace
-        println("*** RABBIT RECEIVE error deserializing AMQPMessage, message: " + body)
-        println("Array[Byte](" + body.deep.mkString(", ") + ")")
+        println("*** RABBIT RECEIVE error deserializing AMQPMessage.")
+        println("Array[Byte](" + bytes.deep.mkString(", ") + ")")
       }
     }
   }
