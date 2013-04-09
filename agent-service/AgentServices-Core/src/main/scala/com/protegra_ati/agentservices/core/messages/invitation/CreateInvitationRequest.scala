@@ -4,7 +4,6 @@ import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
 import java.util._
 import reflect.BeanProperty
-import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 case class CreateInvitationRequest(
   override val ids: Identification,
@@ -19,8 +18,10 @@ case class CreateInvitationRequest(
   @BeanProperty postToTarget: Post,
   @BeanProperty postToBroker: Post,
   @BeanProperty isRoleBasedRequest : Boolean
-  ) extends Message(ids, eventKey)//extends Message(eventKey) kryo workaround
-   with Request with UseKryoSerialization
+  )
+
+  extends Message(ids, eventKey)
+  with Request
 {
   def this () = this (null,null,null, null, null, null, null, null, null, null, null, false)
   def this ( _eventKey: EventKey,
@@ -46,8 +47,6 @@ case class CreateInvitationRequest(
     if ( postToTarget != null && !postToTarget.isDelivered() ) postToTarget.deliver()
     if ( postToBroker != null && !postToBroker.isDelivered() ) postToBroker.deliver()
   }
-  override def isJavaIOSerializationDeprecated: Boolean = true
-
 }
 
 

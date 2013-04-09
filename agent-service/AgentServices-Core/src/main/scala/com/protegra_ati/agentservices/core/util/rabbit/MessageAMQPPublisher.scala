@@ -22,11 +22,6 @@ object AMQPPublisherThreadFactory extends ThreadFactory
 
 object MessageAMQPPublisher extends Reporting
 {
-
-  def md5(bytes: Array[Byte]) = {
-      MessageDigest.getInstance("MD5").digest(bytes)
-  }
-
   // Used for sendToRabbit retries
   @transient
   private lazy val scheduler = Executors.newScheduledThreadPool(5, AMQPPublisherThreadFactory)
@@ -77,10 +72,8 @@ object MessageAMQPPublisher extends Reporting
         // Now write an object to a byte array and shove it across the wire.
         val bytes = new ByteArrayOutputStream
         val store = new ObjectOutputStream(bytes)
-//        println("RRRRRRRRRRRR sending message by rabbit: " + message)
         store.writeObject(message)
         store.close
-//        println("BBBBBBBBBBBB bytes for message on rabbit: " + md5(bytes.toByteArray))
 
         val qname = ( exchange + "_queue" )
         channel.exchangeDeclare(exchange, "direct")

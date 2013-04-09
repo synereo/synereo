@@ -2,10 +2,7 @@ package com.protegra_ati.agentservices.core.messages.invitation
 
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
-import behaviors.Tracking
 import reflect.BeanProperty
-import scala.collection.JavaConversions._
-import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 case class ReferralRequest(
   override val ids: Identification,
@@ -13,7 +10,7 @@ case class ReferralRequest(
   @BeanProperty val source: CreateInvitationRequest
   )
   extends Message(ids, eventKey)
-  with Request with UseKryoSerialization
+  with Request
 {
   def this () = this (null, null, null)
 
@@ -27,8 +24,6 @@ case class ReferralRequest(
   {
     eventKey
   }
-
-  override def isJavaIOSerializationDeprecated = true
 
   override def channel = Channel.Invitation
 

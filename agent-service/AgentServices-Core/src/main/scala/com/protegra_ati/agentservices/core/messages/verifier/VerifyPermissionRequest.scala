@@ -11,6 +11,8 @@ case class VerifyPermissionRequest(override val ids: Identification, override va
 with Request
 with NotificationProducer
 {
+  def this() = this(null, null, null, null, null, null)
+
   override def channel = Channel.Verify
   channelLevel = Some(ChannelLevel.Public)
 

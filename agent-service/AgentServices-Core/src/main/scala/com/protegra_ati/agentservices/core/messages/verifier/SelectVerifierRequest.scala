@@ -11,6 +11,8 @@ case class SelectVerifierRequest(override val ids: Identification, override val 
 with Request
 with NotificationProducer
 {
+  def this() = this(null, null, null, null, null, null)
+
   override def channel = Channel.Verify
 
   override def generateNotification(key:EventKey): Message with Notification = {

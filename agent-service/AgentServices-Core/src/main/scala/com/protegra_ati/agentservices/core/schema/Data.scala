@@ -14,7 +14,6 @@ import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 import java.util.{Locale, UUID, HashMap}
 import validator._
 import persistence._
-import com.protegra_ati.agentservices.core.util.serializer.{UseKryoSerialization}
 import java.lang.{Integer}
 
 //TODO: see if Data object on DataValidator constructor needs to be made more efficient
@@ -25,7 +24,6 @@ with StorableData
 with SearchableData
 with Validable
 with DataValidator
-with UseKryoSerialization
 {
   //def this(_id: String, _localeCode: String) = this(_id, _localeCode, 1)
 

@@ -1,21 +1,10 @@
 package com.protegra_ati.agentservices.core.schema
 
 
-import com.protegra_ati.agentservices.store.extensions.StringExtensions._
-import com.biosimilarity.lift.model.store.xml._
-import com.biosimilarity.lift.model.store._
-import com.biosimilarity.lift.model.agent._
-import com.biosimilarity.lift.model.msg._
-import com.biosimilarity.lift.lib._
-
-import scala.collection.mutable.HashMap
-
 import java.io.Serializable
 import java.net.URI
-import java.util.UUID
 import com.biosimilarity.lift.lib.UUIDOps
 import com.biosimilarity.lift.model.store.Cnxn
-import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 
 object credentialVendor extends UUIDOps with Serializable
@@ -25,7 +14,7 @@ case class MockAgentCnxnProxy(
   override val label: String,
   override val trgt: URI //,
   //val credential: UUID
-  ) extends Cnxn[ URI, String, URI ] with UseKryoSerialization
+  ) extends Cnxn[ URI, String, URI ]
 {
   def this() = this(null, null, null) //, credentialVendor.getUUID)
 

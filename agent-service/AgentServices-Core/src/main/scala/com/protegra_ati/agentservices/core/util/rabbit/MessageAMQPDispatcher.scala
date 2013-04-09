@@ -9,6 +9,8 @@ import _root_.java.util.TimerTask
 import com.biosimilarity.lift.lib.amqp.RabbitFactory
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 import java.security.MessageDigest
+import java.math.BigInteger
+import java.io.{ObjectInputStream, ByteArrayInputStream}
 
 class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routingKey: String)
   extends Actor
@@ -55,7 +57,7 @@ class MessageAMQPDispatcher(config: RabbitConfiguration, exchange: String, routi
     channel.exchangeDeclare(exchange, "direct")
     channel.queueDeclare(queueName, true, false, false, null);
     channel.queueBind(queueName, exchange, routingKey)
-    channel.basicConsume(queueName, false, new SerializedConsumer(channel, this))
+    channel.basicConsume(queueName, false, new MessageAMQPSerializedConsumer(channel, this))
   }
 
   def act = loop(Nil)
@@ -106,4 +108,26 @@ class MessageAMQPListener(config: RabbitConfiguration, exchange: String, routing
   amqp ! AMQPAddListener(messageListener)
 }
 
+class MessageAMQPSerializedConsumer[T](channel: Channel, a: Actor)
+  extends DefaultConsumer(channel)
+  with Reporting
+{
+  override def handleDelivery(tag: String, env: Envelope, props: AMQP.BasicProperties, body: Array[Byte]) {
+    val deliveryTag = env.getDeliveryTag
+    try {
+      val in = new ObjectInputStream(new ByteArrayInputStream(body))
+      val t = in.readObject.asInstanceOf[T];
 
+      // Send t to all registered listeners.
+      a ! AMQPMessage(t)
+
+      channel.basicAck(deliveryTag, false);
+    } catch {
+      case e:Exception => {
+        e.printStackTrace
+        println("*** RABBIT RECEIVE error deserializing AMQPMessage, message: " + body)
+        println("Array[Byte](" + body.deep.mkString(", ") + ")")
+      }
+    }
+  }
+}
