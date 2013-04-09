@@ -22,7 +22,13 @@ class RegisterAgentPlugin extends LauncherPluginBase {
   override def validateSession(): Unit = {
     // no additional initialization required
     if (LauncherPluginSession.session.ui == null)
-      throw new Exception("session.ui has not been initialized.")
+      throw new SessionInvalidException("session.ui has not been initialized.")
+    if (LauncherPluginSession.session.selfAlias.isEmpty())
+      throw new Exception("session.selfAlias has not been initialized.")
+    if (LauncherPluginSession.session.agentSessionId == null)
+      throw new Exception("session.agentSessionId has not been initialized.")
+    if (LauncherPluginSession.session.userAgentId == null)
+      throw new Exception("session.userAgentId has not been initialized.")
   }
 
   override def execute(args: Array[ String ]): Unit = {
