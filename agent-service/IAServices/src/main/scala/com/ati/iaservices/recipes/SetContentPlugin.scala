@@ -4,7 +4,11 @@ import com.ati.iaservices.recipes.LauncherPluginSession.session
 import com.protegra_ati.agentservices.core.messages.EventKey
 import com.protegra_ati.agentservices.core.events.{SetContentResponseReceivedEvent, MessageEventAdapter}
 import com.protegra_ati.agentservices.core.messages.content.{SetContentResponse, SetContentRequest}
-import com.protegra_ati.agentservices.core.schema.Data
+import com.protegra_ati.agentservices.core.schema.{Profile, Data}
+import java.util.List
+import scala.collection.JavaConversions._
+import com.rits.cloning.Cloner
+import com.ati.iaservices.schema.Label
 
 class SetContentPlugin[T <: Data] extends LauncherPluginBase {
   val pluginName = "SetContent"
@@ -49,6 +53,9 @@ class SetContentPlugin[T <: Data] extends LauncherPluginBase {
           println("*************** SetContentResponse ---------------")
           println(e.toString)
           println("--------------- SetContentResponse ***************")
+
+          processData(response.data)
+
           println("*************** Finish SetContent ***************")
         }
       })
@@ -56,5 +63,25 @@ class SetContentPlugin[T <: Data] extends LauncherPluginBase {
 
     listenSetContentResponse(eventKey)
     requestSetContent(eventKey)
+  }
+
+  def processData(data : Data) = {
+    if (data.isInstanceOf[Profile]) {
+      println("*************** Found Profile Data ***************")
+      session.profile = data.asInstanceOf[Profile]
+      session.oldProfile = new Cloner().deepClone(session.profile)
+      println(session.profile)
+    }
+    else if (data.isInstanceOf[Label]) {
+      println("*************** Found Label Data ***************")
+      session.label = data.asInstanceOf[Label]
+      session.oldLabel = new Cloner().deepClone(session.label)
+      println(session.label + ", id = " + session.label.id)
+    }
+    else {
+      throw new Exception("Unsupported Data type in GetContentPlugin:processData")
+    }
+
+    // TODO: SUPPORT OTHER TYPES OF DATA
   }
 }

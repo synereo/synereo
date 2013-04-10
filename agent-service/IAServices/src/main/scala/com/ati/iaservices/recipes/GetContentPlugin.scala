@@ -1,5 +1,6 @@
 package com.ati.iaservices.recipes
 
+import com.ati.iaservices.schema._
 import com.ati.iaservices.recipes.LauncherPluginSession.session
 import com.protegra_ati.agentservices.core.messages.EventKey
 import com.protegra_ati.agentservices.core.events.{GetContentResponseReceivedEvent, MessageEventAdapter}
@@ -67,6 +68,13 @@ class GetContentPlugin[T <: Data] extends LauncherPluginBase {
         println("*************** Found Profile Data ***************")
         session.profile = datum.asInstanceOf[Profile]
         session.oldProfile = new Cloner().deepClone(session.profile)
+        println(session.profile)
+      }
+      else if (datum.isInstanceOf[Label]) {
+        println("*************** Found Label Data ***************")
+        session.label = datum.asInstanceOf[Label]
+        session.oldLabel = new Cloner().deepClone(session.label)
+        println(session.label + ", id=" + session.label.id)
       }
       else {
         throw new Exception("Unsupported Data type in GetContentPlugin:processData")

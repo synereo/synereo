@@ -4,12 +4,12 @@ import scala.reflect.BeanProperty
 import com.protegra_ati.agentservices.core.schema.Data
 
 case class Label (
-  @BeanProperty val name: String,
-  @BeanProperty val parentLabelId: Option[String]
+  @BeanProperty var name: String,
+  @BeanProperty var parentLabelId: String
   ) extends Data {
 
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
-  def this() = this("", None)
+  def this() = this("", "")
 
 }
 

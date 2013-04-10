@@ -4,6 +4,7 @@ import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatfor
 import java.util.UUID
 import com.protegra_ati.agentservices.core.schema.{Profile, AgentCnxnProxy}
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import com.ati.iaservices.schema.Label
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +22,8 @@ class LauncherPluginSession {
   var store: AgentHostStorePlatformAgent = null
   var profile : Profile = null
   var oldProfile : Profile = null
+  var label : Label = null
+  var oldLabel : Label = null
   def selfCnxn: AgentCnxnProxy = {
     new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
   }
