@@ -5,6 +5,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
 import directives.CompletionMagnet
 import spray.http._
+import spray.http.StatusCodes._
 import MediaTypes._
 import scala.concurrent.duration._
 import java.util.Date
@@ -121,8 +122,7 @@ trait EvaluatorService extends HttpService {
   val myRoute =
     path("signup") {
       get {
-        complete(HttpResponse(302, 
-          "Found\nLocation: http://64.27.3.17:6080/agentui.html?uuid=" + UUID.randomUUID()))
+        _.redirect("http://64.27.3.17:6080/agentui.html?uuid=" + UUID.randomUUID(), MovedPermanently)
       }
     } ~
     path("api") {
