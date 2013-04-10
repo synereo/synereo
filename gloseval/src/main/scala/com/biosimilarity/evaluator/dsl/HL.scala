@@ -27,6 +27,8 @@ trait AbstractHL {
   trait Modification[Value] extends ValueExpr[Value]
   trait Result[Value] extends ValueExpr[Value]
 
+  case object Bottom extends HLExpr
+
   case class FeedExpr(
     override val filter : Label,
     override val cnxns : Seq[Cnxn]
@@ -48,7 +50,7 @@ trait AbstractHL {
     substitution : Substitution,
     matchedLabel : Label,
     override val value : Value
-  ) extends Result[Value]
+  ) extends HLExpr with Result[Value]
 }
 
 package usage {
