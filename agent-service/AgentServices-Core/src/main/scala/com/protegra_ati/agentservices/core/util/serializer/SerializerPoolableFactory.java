@@ -8,6 +8,7 @@ import com.protegra_ati.agentservices.core.schema.Post;
 import com.protegra_ati.agentservices.core.util.serializer.helper.*;
 import com.protegra_ati.agentservices.core.util.serializer.helper.NoneSerializer;
 import org.apache.commons.pool.BasePoolableObjectFactory;
+import scala.Enumeration;
 
 import java.util.HashMap;
 
@@ -29,8 +30,9 @@ public class SerializerPoolableFactory extends BasePoolableObjectFactory
         _kryo.register( EventKeySerializer.FITS_TO(), new EventKeySerializer());
         _kryo.register( JodaDateTimeSerializer.FITS_TO(), new JodaDateTimeSerializer());
         _kryo.register( HashMap.class, new MapSerializer());
-        _kryo.register( EnumerationSerializer.FITS_TO(), new EnumerationSerializer());
-        _kryo.register( EnumerationSerializer.FITS_TO1(), new EnumerationSerializer());
+        _kryo.addDefaultSerializer(EnumerationSerializer.FITS_TO(), EnumerationSerializer.ENUM_SER_CLASS_OF());
+        //_kryo.register( EnumerationSerializer.FITS_TO(), new EnumerationSerializer());
+        //_kryo.register( EnumerationSerializer.FITS_TO1(), new EnumerationSerializer());
         _kryo.register( IdentificationSerializer.FITS_TO(), new IdentificationSerializer());
         _kryo.register( UUIDSerializer.FITS_TO(), new UUIDSerializer());
         _kryo.register( AgentCnxnProxySerializer.FITS_TO(), new AgentCnxnProxySerializer());
