@@ -26,3 +26,10 @@ label = new Label("Level 2 Child", session.label.id) // session.label is the lab
 setContentPlugin.data = label
 setContentPlugin.oldData = new Label()
 setContentPlugin.run()
+
+// UPDATE LAST LABEL
+session.label.name = "Level 2 Child - New Name"
+setContentPlugin.data = session.label
+setContentPlugin.oldData = session.oldLabel
+setContentPlugin.run()
+
