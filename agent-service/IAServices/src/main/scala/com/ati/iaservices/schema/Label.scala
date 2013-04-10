@@ -11,6 +11,12 @@ case class Label (
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
   def this() = this("", "")
 
+  override def toString(): String =
+  {
+    {
+      "Label[id=" + id + ", locale=" + localeCode + ", name=" + name + ", parentLabelId=" + parentLabelId+ "]"
+    }
+  }
 }
 
 object Label

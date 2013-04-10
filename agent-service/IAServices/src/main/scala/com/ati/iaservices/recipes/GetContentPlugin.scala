@@ -74,7 +74,7 @@ class GetContentPlugin[T <: Data] extends LauncherPluginBase {
         println("*************** Found Label Data ***************")
         session.label = datum.asInstanceOf[Label]
         session.oldLabel = new Cloner().deepClone(session.label)
-        println(session.label + ", id=" + session.label.id)
+        println(session.label)
       }
       else {
         throw new Exception("Unsupported Data type in GetContentPlugin:processData")
