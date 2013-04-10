@@ -12,6 +12,7 @@ import spray.httpx.encoding._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import com.biosimilarity.evaluator.msgs._
+import java.util.UUID
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -118,6 +119,12 @@ trait EvaluatorService extends HttpService {
   val cometActor = actorRefFactory.actorOf(Props[CometActor])
 
   val myRoute =
+    path("signup") {
+      get {
+        complete(HttpResponse(302, 
+          "Found\nLocation: http://64.27.3.17:6080/agentui.html?uuid=" + UUID.randomUUID()))
+      }
+    } ~
     path("api") {
       post {
         decodeRequest(NoEncoding) {

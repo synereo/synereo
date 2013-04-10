@@ -24,6 +24,7 @@ libraryDependencies ++= Seq(
   "org.specs2"             %%  "specs2"             % "1.13" % "test",
   "org.json4s"             %   "json4s-native_2.10" % "3.1.0",
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
+  "com.biosimilarity.lift" %   "specialK"           % "1.1.3.2",
   compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
 )    
     
