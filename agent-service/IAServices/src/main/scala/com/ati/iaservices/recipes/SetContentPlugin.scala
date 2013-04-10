@@ -79,7 +79,7 @@ class SetContentPlugin[T <: Data] extends LauncherPluginBase {
       println(session.label)
     }
     else {
-      throw new Exception("Unsupported Data type in GetContentPlugin:processData")
+      throw new Exception("Unsupported Data type in SetContentPlugin:processData")
     }
 
     // TODO: SUPPORT OTHER TYPES OF DATA
