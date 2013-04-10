@@ -3,13 +3,12 @@ package com.protegra_ati.agentservices.core.util.serializer
 import org.specs2.mutable.SpecificationWithJUnit
 import scala.concurrent.ThreadPoolRunnersX
 import com.protegra_ati.agentservices.core.messages._
-import com.protegra_ati.agentservices.core.messages.content.GetContentRequest
 import com.protegra_ati.agentservices.core.messages.invitation.{CreateInvitationRequest, ReferralRequest}
 import java.util.UUID
-import com.protegra_ati.agentservices.core.schema.Post
+import com.protegra_ati.agentservices.core.schema.{Data, Profile, DisclosedData, Post}
 import com.protegra_ati.agentservices.core.messages.EventKey
 import scala.Some
-import java.io.{ObjectInputStream, ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
+import com.protegra_ati.agentservices.core.extensions.ClassExtensions._
 
 class SerializationTest
   extends SpecificationWithJUnit
@@ -159,6 +158,22 @@ class SerializationTest
       out.channelLevel.getOrElse(None) mustEqual referral.channelLevel.getOrElse(None)
 
       out mustEqual referral
+    }
+
+    "Serialize DisclosedData.SEARCH_ALL object" in {
+      val dd1:DisclosedData[Data] = DisclosedData.SEARCH_ALL
+      val dd2:DisclosedData[Data] = new DisclosedData(classOf[Profile], "", "")
+
+      val outDD1 = sd[DisclosedData[Data]](dd1)
+      val outDD2 = sd[DisclosedData[Data]](dd2)
+
+      dd1 mustEqual outDD1
+      dd2 mustEqual outDD2
+
+      dd1.toSearchKey mustEqual outDD1.toSearchKey
+      dd2.toSearchKey mustEqual outDD2.toSearchKey
+
+      success
     }
   }
 }
