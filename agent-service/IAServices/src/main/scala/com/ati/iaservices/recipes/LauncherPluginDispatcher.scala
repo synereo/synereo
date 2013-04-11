@@ -1,6 +1,6 @@
 package com.ati.iaservices.recipes
 
-import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
+import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,6 +20,10 @@ class LauncherPluginDispatcher {
   def getPlugin(arg:String): LauncherPluginBase = arg match {
     case "store" => new CreateStorePlugin()
     case "ui" => new CreateUIPlugin()
-    case "registerAgent" => new RegisterAgentPlugin()
+    case "registerAgent" => new RegisterAgentPlugin() {
+      def handleListen(response: RegistrationResponse) = {
+
+      }
+    }
   }
 }

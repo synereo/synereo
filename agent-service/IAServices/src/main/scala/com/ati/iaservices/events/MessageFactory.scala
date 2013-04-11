@@ -3,6 +3,7 @@ package com.ati.iaservices.events
 import com.protegra_ati.agentservices.core.messages.content.{SetContentRequest, GetContentRequest}
 import com.protegra_ati.agentservices.core.messages.EventKey
 import com.protegra_ati.agentservices.core.schema.{Data, AgentCnxnProxy}
+import com.protegra_ati.agentservices.core.messages.admin.RegistrationRequest
 import java.util.UUID
 
 object MessageFactory {
@@ -19,4 +20,11 @@ object MessageFactory {
     msg.setTargetCnxn(target)
     return msg
   }
+
+  def createRegistrationRequest(agentSessionId: UUID, tag: String, appId: UUID, alias: String) : RegistrationRequest = {
+    val eventKey: EventKey = new EventKey(agentSessionId, tag)
+    val msg = new RegistrationRequest(eventKey, appId, alias)
+    return msg
+  }
+
 }

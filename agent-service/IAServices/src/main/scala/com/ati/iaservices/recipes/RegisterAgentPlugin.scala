@@ -1,9 +1,10 @@
 package com.ati.iaservices.recipes
 
+import com.ati.iaservices.events.MessageFactory
 import com.ati.iaservices.recipes.LauncherPluginSession.session
-import com.protegra_ati.agentservices.core.messages.admin.{RegistrationResponse, RegistrationRequest}
-import com.protegra_ati.agentservices.core.messages.EventKey
+import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 import com.protegra_ati.agentservices.core.events.{RegistrationResponseReceivedEvent, MessageEventAdapter}
+import java.util.UUID
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,9 +13,11 @@ import com.protegra_ati.agentservices.core.events.{RegistrationResponseReceivedE
  * Time: 10:02 AM
  * To change this template use File | Settings | File Templates.
  */
-class RegisterAgentPlugin extends LauncherPluginBase {
+abstract class RegisterAgentPlugin extends LauncherPluginBase {
   val pluginName = "RegisterAgent"
   val exitOnFail = true
+
+  def handleListen(response: RegistrationResponse)
 
   override def validateSession(): Unit = {
     // no additional initialization required
@@ -32,34 +35,27 @@ class RegisterAgentPlugin extends LauncherPluginBase {
      registerAgent
   }
 
+  def request(agentSessionId: UUID, tag: String, appId: UUID, alias: String) = {
+    val req = MessageFactory.createRegistrationRequest(agentSessionId, tag, appId, alias)
+    session.ui.send(req)
+  }
+
+  def listen(agentSessionId: UUID, tag: String) = {
+    session.ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
+    {
+      override def registrationResponseReceived(e: RegistrationResponseReceivedEvent) =
+      {
+        handleListen(e.msg)
+      }
+    })
+  }
+
   def registerAgent(): Unit = {
     println("*************** Start RegisterAgent ***************")
 
-    val eventKey = "registration"
+    val eventKey = "register"
 
-    def requestRegistration(tag: String) = {
-      val req = new RegistrationRequest(new EventKey(session.agentSessionId, tag),session.BIZNETWORK_AGENT_ID, session.selfAlias)
-      session.ui.send(req)
-    }
-
-    def listenRegistrationResponse(tag: String) = {
-      session.ui.addListener(session.agentSessionId, "", new MessageEventAdapter(tag)
-      {
-        override def registrationResponseReceived(e: RegistrationResponseReceivedEvent) =
-        {
-          val response : RegistrationResponse = e.msg.asInstanceOf[RegistrationResponse]
-          val newAgentId = response.agentId
-          session.userAgentId = response.agentId
-          println("*************** RegistrationResponse ---------------")
-          println(e.toString)
-          println("--------------- RegistrationResponse ***************")
-          println("*************** New AgentId = " + newAgentId + " ***************")
-          println("*************** Finish RegisterAgent ***************")
-        }
-      })
-    }
-
-    listenRegistrationResponse(eventKey)
-    requestRegistration(eventKey)
+    listen(session.agentSessionId, eventKey)
+    request(session.agentSessionId, eventKey, session.BIZNETWORK_AGENT_ID, session.selfAlias)
   }
 }
