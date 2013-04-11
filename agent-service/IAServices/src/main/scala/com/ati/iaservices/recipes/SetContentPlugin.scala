@@ -8,7 +8,7 @@ import com.protegra_ati.agentservices.core.schema.{Profile, Data}
 import java.util.List
 import scala.collection.JavaConversions._
 import com.rits.cloning.Cloner
-import com.ati.iaservices.schema.Label
+import com.ati.iaservices.schema.{Content, Label}
 
 class SetContentPlugin[T <: Data] extends LauncherPluginBase {
   val pluginName = "SetContent"
@@ -24,9 +24,6 @@ class SetContentPlugin[T <: Data] extends LauncherPluginBase {
 
     if (data == null)
       throw new Exception("data has not been initialized.")
-
-    if (oldData == null)
-      throw new Exception("oldData has not been initialized.")
   }
 
   override def execute(args: Array[ String ]): Unit = {
@@ -72,11 +69,9 @@ class SetContentPlugin[T <: Data] extends LauncherPluginBase {
       session.oldProfile = new Cloner().deepClone(session.profile)
       println(session.profile)
     }
-    else if (data.isInstanceOf[Label]) {
+    else if (data.isInstanceOf[Label[_]]) {
       println("*************** Found Label Data ***************")
-      session.label = data.asInstanceOf[Label]
-      session.oldLabel = new Cloner().deepClone(session.label)
-      println(session.label)
+      println(data.asInstanceOf[Label[_]])
     }
     else {
       throw new Exception("Unsupported Data type in SetContentPlugin:processData")

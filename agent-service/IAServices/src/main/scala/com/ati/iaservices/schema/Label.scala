@@ -2,19 +2,31 @@ package com.ati.iaservices.schema
 
 import scala.reflect.BeanProperty
 import com.protegra_ati.agentservices.core.schema.Data
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
-case class Label (
-  @BeanProperty var name: String,
-  @BeanProperty var parentLabelId: String
-  ) extends Data {
+case class Label[ T <: ContentValue ] (
+  @BeanProperty var key: String,
+  @BeanProperty var content: Content[T]
+) extends Data {
 
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
-  def this() = this("", "")
+  def this() = this("", null.asInstanceOf[Content[T]])
+
+  var contentType = formattedContentValueName
+
+  def formattedContentValueName: String =
+  {
+    if (content == null || content.value == null)
+      return ""
+
+    content.value.getClass.getName.trimPackage
+  }
+  override protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] = List("content") ::: super.ignoredFieldsForSearchAndStoreKey
 
   override def toString(): String =
   {
     {
-      "Label[id=" + id + ", locale=" + localeCode + ", name=" + name + ", parentLabelId=" + parentLabelId+ "]"
+      "Label[id=" + id + ", locale=" + localeCode + ", key=" + key + ", content=" + content + "]"
     }
   }
 }

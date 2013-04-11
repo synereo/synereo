@@ -11,6 +11,6 @@ new CreateUIPlugin().run()
 session.agentSessionId = UUID.randomUUID
 session.userAgentId = UUID.fromString("2971707f-2d80-4055-8597-d24b21062568")
 
-val getContentPlugin = new GetContentPlugin[Label]()
+val getContentPlugin = new GetContentPlugin[Label[_]]()
 getContentPlugin.queryObject = Label.SEARCH_ALL
 getContentPlugin.run()

@@ -53,7 +53,7 @@ class RegisterAgentPlugin extends LauncherPluginBase {
           println("*************** RegistrationResponse ---------------")
           println(e.toString)
           println("--------------- RegistrationResponse ***************")
-          println("*************** New AgentId = " + newAgentId + "***************")
+          println("*************** New AgentId = " + newAgentId + " ***************")
           println("*************** Finish RegisterAgent ***************")
         }
       })

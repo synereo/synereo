@@ -17,7 +17,7 @@ new RegisterAgentPlugin().run()
 
 // SET THE PROFILE FOR THE AGENT JUST REGISTERED
 session.profile = new Profile()
-session.oldProfile = new Profile()
+session.oldProfile = null
 session.profile.setFirstName("Jane")
 session.profile.setLastName("Doe")
 session.profile.setCountry("Canada")

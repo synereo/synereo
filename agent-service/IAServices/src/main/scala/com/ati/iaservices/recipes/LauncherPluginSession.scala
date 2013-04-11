@@ -22,8 +22,6 @@ class LauncherPluginSession {
   var store: AgentHostStorePlatformAgent = null
   var profile : Profile = null
   var oldProfile : Profile = null
-  var label : Label = null
-  var oldLabel : Label = null
   def selfCnxn: AgentCnxnProxy = {
     new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
   }
