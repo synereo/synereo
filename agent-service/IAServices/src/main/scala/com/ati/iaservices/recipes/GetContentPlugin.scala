@@ -38,7 +38,6 @@ abstract class GetContentPlugin[T <: Data] extends LauncherPluginBase {
     {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
       {
-        println("getContentResponseReceived")
         for (datum <- e.getMsg.data) {
           handleListen(datum.asInstanceOf[T])
         }
