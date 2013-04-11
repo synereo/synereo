@@ -13,7 +13,7 @@ import com.biosimilarity.evaluator.dsl._
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.model.store.xml._
-import com.biosimilarity.lift.model.store.mongo._
+//import com.biosimilarity.lift.model.store.mongo._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
@@ -32,7 +32,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Stack
 import scala.collection.mutable.MutableList
 
-import com.rabbitmq.client._
+//import com.rabbitmq.client._
 
 import org.prolog4j._
 
