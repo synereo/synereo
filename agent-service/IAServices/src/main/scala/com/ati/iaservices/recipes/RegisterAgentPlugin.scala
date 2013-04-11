@@ -1,10 +1,8 @@
 package com.ati.iaservices.recipes
 
-import com.ati.iaservices.events.MessageFactory
 import com.ati.iaservices.recipes.LauncherPluginSession.session
 import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
-import com.protegra_ati.agentservices.core.events.{RegistrationResponseReceivedEvent, MessageEventAdapter}
-import java.util.UUID
+import com.ati.iaservices.helpers.RegisterAgentHelper
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,27 +33,19 @@ abstract class RegisterAgentPlugin extends LauncherPluginBase {
      registerAgent
   }
 
-  def request(agentSessionId: UUID, tag: String, appId: UUID, alias: String) = {
-    val req = MessageFactory.createRegistrationRequest(agentSessionId, tag, appId, alias)
-    session.ui.send(req)
-  }
-
-  def listen(agentSessionId: UUID, tag: String) = {
-    session.ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
-    {
-      override def registrationResponseReceived(e: RegistrationResponseReceivedEvent) =
-      {
-        handleListen(e.msg)
-      }
-    })
-  }
-
   def registerAgent(): Unit = {
     println("*************** Start RegisterAgent ***************")
 
     val eventKey = "register"
 
-    listen(session.agentSessionId, eventKey)
-    request(session.agentSessionId, eventKey, session.BIZNETWORK_AGENT_ID, session.selfAlias)
+    val registerAgentHelper = new RegisterAgentHelper() {
+      def handleListen(response: RegistrationResponse) = {
+        println("*************** RegisterAgent Successful ***************")
+        println("*************** New AgentId = " + response.agentId + " ***************")
+        println("*************** Finish RegisterAgent ***************")
+      }
+    }
+    registerAgentHelper.listen(session.ui, session.agentSessionId, eventKey)
+    registerAgentHelper.request(session.ui, session.agentSessionId, eventKey, session.BIZNETWORK_AGENT_ID, session.selfAlias)
   }
 }

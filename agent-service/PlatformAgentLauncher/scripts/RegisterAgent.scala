@@ -1,12 +1,12 @@
-import com.ati.iaservices.recipes._
+import com.ati.iaservices.helpers.{RegisterAgentHelper, CreateUIHelper, CreateStoreHelper, SetContentHelper}
 import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 import com.protegra_ati.agentservices.core.schema.{AgentCnxnProxy, Profile}
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-new CreateStorePlugin().run()
-new CreateUIPlugin().run()
+val store = new CreateStoreHelper().createStore
+val ui = new CreateUIHelper().createUI
 
 // CREATE AN AGENTSESSION
 val agentSessionId = UUID.randomUUID
@@ -18,24 +18,23 @@ def createProfile(agentId: UUID) = {
   }
 
   val profile = new Profile()
-  val oldProfile = null
   profile.setFirstName("John")
   profile.setLastName("Smith")
   profile.setCity("Winnipeg")
   profile.setCountry("Canada")
 
-  val setContentPlugin = new SetContentPlugin[Profile]() {
+  val setContentHelper = new SetContentHelper[Profile]() {
     def handleListen(profile: Profile) = {
       println("*************** Found Profile Data ***************")
       println(profile)
     }
   }
-  setContentPlugin.listen(agentSessionId, "Set_Profile")
-  setContentPlugin.request(agentSessionId, "Set_Profile", profile, target)
+  setContentHelper.listen(ui, agentSessionId, "Set_Profile")
+  setContentHelper.request(ui, agentSessionId, "Set_Profile", profile, target)
 }
 
 // REGISTER A NEW AGENT
-val registerAgentPlugin = new RegisterAgentPlugin() {
+val registerAgentHelper = new RegisterAgentHelper() {
   def handleListen(response: RegistrationResponse) = {
     println("*************** Found RegistrationResponse Data ***************")
     println(response)
@@ -43,6 +42,6 @@ val registerAgentPlugin = new RegisterAgentPlugin() {
     createProfile(response.agentId)
   }
 }
-registerAgentPlugin.listen(agentSessionId, "Register")
-registerAgentPlugin.request(agentSessionId, "Register", BIZNETWORK_AGENT_ID, "John Smith")
+registerAgentHelper.listen(ui, agentSessionId, "Register")
+registerAgentHelper.request(ui, agentSessionId, "Register", BIZNETWORK_AGENT_ID, "John Smith")
 

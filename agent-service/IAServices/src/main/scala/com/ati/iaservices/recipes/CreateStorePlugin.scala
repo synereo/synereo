@@ -1,7 +1,7 @@
 package com.ati.iaservices.recipes
 
-import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
-import java.io.File
+import com.ati.iaservices.helpers.CreateStoreHelper
+import com.ati.iaservices.recipes.LauncherPluginSession.session
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,21 +14,6 @@ class CreateStorePlugin extends LauncherPluginBase {
   val pluginName = "CreateStore"
   val exitOnFail = true
 
-  final val STORE_CONFIG = "init_store.conf"
-  final val LOG_KVDB_CONFIG = "log.conf"
-  final val LOG_KVDB_PROPERTIES = "log.properties"
-  final val LOG_AGENTSERVICES_CONFIG = "log_agentservices.conf"
-  final val LOG_AGENTSERVICES_PROPERTIES = "log_agentservices.properties"
-
-  //refactor this into core
-  def checkAllStoreConfigFiles() = {
-    LauncherPluginUtil.configFileExists(STORE_CONFIG)
-    LauncherPluginUtil.configFileExists(LOG_KVDB_CONFIG)
-    LauncherPluginUtil.configFileExists(LOG_KVDB_PROPERTIES)
-    LauncherPluginUtil.configFileExists(LOG_AGENTSERVICES_CONFIG)
-    LauncherPluginUtil.configFileExists(LOG_AGENTSERVICES_PROPERTIES)
-  }
-
   override def validateSession() = {
   }
 
@@ -37,10 +22,6 @@ class CreateStorePlugin extends LauncherPluginBase {
   }
 
   def createStore(): Unit = {
-    LauncherPluginSession.session.store = new AgentHostStorePlatformAgent()
-    checkAllStoreConfigFiles
-    LauncherPluginSession.session.store.initFromConfig(STORE_CONFIG)
-    println("*************** StorePlatformAgent launcher started ***************")
+    session.store = new CreateStoreHelper().createStore()
   }
-
 }

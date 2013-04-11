@@ -1,12 +1,12 @@
-import com.ati.iaservices.recipes._
+import com.ati.iaservices.helpers.{CreateUIHelper, CreateStoreHelper, GetContentHelper}
 import com.ati.iaservices.schema._
 import com.protegra_ati.agentservices.core.schema.AgentCnxnProxy
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-new CreateStorePlugin().run()
-new CreateUIPlugin().run()
+val store = new CreateStoreHelper().createStore
+val ui = new CreateUIHelper().createUI
 
 // GET LABELS FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
@@ -15,11 +15,11 @@ def target: AgentCnxnProxy = {
   new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
 }
 
-val getContentPlugin = new GetContentPlugin[Label[_]]() {
+val getContentHelper = new GetContentHelper[Label[_]]() {
   def handleListen(label: Label[_]) = {
     println("*************** Found Label Data ***************")
     println(label)
   }
 }
-getContentPlugin.listen(agentSessionId, "Get_Label")
-getContentPlugin.request(agentSessionId, "Get_Label", Label.SEARCH_ALL, target)
+getContentHelper.listen(ui, agentSessionId, "Get_Label")
+getContentHelper.request(ui, agentSessionId, "Get_Label", Label.SEARCH_ALL, target)

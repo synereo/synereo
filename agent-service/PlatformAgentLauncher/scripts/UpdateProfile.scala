@@ -1,11 +1,11 @@
-import com.ati.iaservices.recipes._
+import com.ati.iaservices.helpers.{CreateUIHelper, CreateStoreHelper, SetContentHelper, GetContentHelper}
 import com.protegra_ati.agentservices.core.schema.{AgentCnxnProxy, Profile}
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID
 
 // START STORE and UI PlatformAgents
-new CreateStorePlugin().run()
-new CreateUIPlugin().run()
+val store = new CreateStoreHelper().createStore
+val ui = new CreateUIHelper().createUI
 
 // UPDATE PROFILE FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
@@ -14,29 +14,28 @@ def target: AgentCnxnProxy = {
   new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
 }
 
-val getContentPlugin = new GetContentPlugin[Profile]() {
+val getContentHelper = new GetContentHelper[Profile]() {
   def handleListen(profile: Profile) = {
     println("*************** Found Profile Data ***************")
     println(profile)
     updateProfile(profile)
   }
 }
-getContentPlugin.listen(agentSessionId, "Get_Profile")
-getContentPlugin.request(agentSessionId, "Get_Profile", Profile.SEARCH_ALL, target)
-getContentPlugin.run()
+getContentHelper.listen(ui, agentSessionId, "Get_Profile")
+getContentHelper.request(ui, agentSessionId, "Get_Profile", Profile.SEARCH_ALL, target)
 
 def updateProfile(profile : Profile) = {
   profile.setFirstName("Jane")
   profile.setLastName("Doe")
   profile.setCountry("Canada")
 
-  val setContentPlugin = new SetContentPlugin[Profile]() {
+  val setContentHelper = new SetContentHelper[Profile]() {
     def handleListen(profile: Profile) = {
       println("*************** Found Profile Data ***************")
       println(profile)
     }
   }
-  setContentPlugin.listen(agentSessionId, "Set_Profile")
-  setContentPlugin.request(agentSessionId, "Set_Profile", profile, target)
+  setContentHelper.listen(ui, agentSessionId, "Set_Profile")
+  setContentHelper.request(ui, agentSessionId, "Set_Profile", profile, target)
 
 }
