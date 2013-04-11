@@ -141,12 +141,6 @@ trait EvaluatorService extends HttpService {
                   if (uri.getScheme() != "agent") {
                     throw InitializeSessionException(agentURI, "Unrecognized scheme")
                   }
-                  if (uri.getUserInfo() != "George.Costanza:Bosco") {
-                    throw InitializeSessionException(agentURI, "Unrecognized user/password combination")
-                  }
-                  if (uri.getPath() != "/TheAgency") {
-                    throw InitializeSessionException(agentURI, "Unrecognized agent ID")
-                  }
                 
                   complete(HttpResponse(entity = HttpBody(`application/json`,
 """{"msgType": "initializeSessionResponse", "content": {
