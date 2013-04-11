@@ -12,10 +12,10 @@ session.agentSessionId = UUID.randomUUID
 session.userAgentId = UUID.fromString("3c0f966f-9b16-47e7-922f-6b3183fffb9f")
 
 val getContentPlugin = new GetContentPlugin[Label[_]]() {
-  def handleListen(label: Label[_]) {
+  override def handleListen(label: Label[_]) {
     println("*************** Found Label Data ***************")
     println(label)
   }
 }
-getContentPlugin.queryObject = Label.SEARCH_ALL
-getContentPlugin.run()
+getContentPlugin.listen(session.agentSessionId, "Get_Label")
+getContentPlugin.request(session.agentSessionId, "Get_Label", Label.SEARCH_ALL, session.selfCnxn)

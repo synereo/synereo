@@ -8,7 +8,7 @@ new CreateStorePlugin().run()
 new CreateUIPlugin().run()
 
 // GET CONNECTIONS FOR ALREADY EXISTING AGENT
-session.agentSessionId = UUID.randomUUID
+val agentSessionId = UUID.randomUUID
 session.userAgentId = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
 
 val getContentPlugin = new GetContentPlugin[Connection]() {
@@ -17,5 +17,5 @@ val getContentPlugin = new GetContentPlugin[Connection]() {
     println(connection)
   }
 }
-getContentPlugin.queryObject = Connection.SEARCH_ALL
-getContentPlugin.run()
+getContentPlugin.listen(agentSessionId, "Get_Connection")
+getContentPlugin.request(agentSessionId, "Get_Connection", Connection.SEARCH_ALL, session.selfCnxn)

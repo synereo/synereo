@@ -8,7 +8,7 @@ new CreateStorePlugin().run()
 new CreateUIPlugin().run()
 
 // ADD LABEL FOR ALREADY EXISTING AGENT
-session.agentSessionId = UUID.randomUUID
+val agentSessionId = UUID.randomUUID
 session.userAgentId = UUID.fromString("3c0f966f-9b16-47e7-922f-6b3183fffb9f")
 
 val setContentPlugin = new SetContentPlugin[Label[PostContent]]() {
@@ -18,9 +18,8 @@ val setContentPlugin = new SetContentPlugin[Label[PostContent]]() {
   }
 }
 var label = new Label("Profile(Name)", new Content(new PostContent("This is a post")))
-setContentPlugin.data = label
-setContentPlugin.oldData = null
-setContentPlugin.run()
+setContentPlugin.listen(agentSessionId, "Set_Profile")
+setContentPlugin.request(agentSessionId, "Set_Profile", label, session.selfCnxn)
 
 val setContentPlugin2 = new SetContentPlugin[Label[LinkContent]]() {
   def handleListen(label: Label[LinkContent]) {
@@ -29,9 +28,8 @@ val setContentPlugin2 = new SetContentPlugin[Label[LinkContent]]() {
   }
 }
 var label2 = new Label("Profile(Name)",  new Content(new LinkContent("http://www.google.com")))
-setContentPlugin2.data = label2
-setContentPlugin2.oldData = null
-setContentPlugin2.run()
+setContentPlugin2.listen(agentSessionId, "Set_Profile")
+setContentPlugin2.request(agentSessionId, "Set_Profile", label2, session.selfCnxn)
 
 val getContentPlugin = new GetContentPlugin[Label[_]]() {
   def handleListen(label: Label[_]) {
@@ -39,6 +37,6 @@ val getContentPlugin = new GetContentPlugin[Label[_]]() {
     println(label)
   }
 }
-getContentPlugin.queryObject = Label.SEARCH_ALL
-getContentPlugin.run()
+getContentPlugin.listen(agentSessionId, "Get_Label")
+getContentPlugin.request(agentSessionId, "Get_Label", Label.SEARCH_ALL, session.selfCnxn)
 
