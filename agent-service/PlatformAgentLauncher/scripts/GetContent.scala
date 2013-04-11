@@ -9,8 +9,13 @@ new CreateUIPlugin().run()
 
 // GET LABELS FOR ALREADY EXISTING AGENT
 session.agentSessionId = UUID.randomUUID
-session.userAgentId = UUID.fromString("2971707f-2d80-4055-8597-d24b21062568")
+session.userAgentId = UUID.fromString("3c0f966f-9b16-47e7-922f-6b3183fffb9f")
 
-val getContentPlugin = new GetContentPlugin[Label[_]]()
+val getContentPlugin = new GetContentPlugin[Label[_]]() {
+  def handleListen(label: Label[_]) {
+    println("*************** Found Label Data ***************")
+    println(label)
+  }
+}
 getContentPlugin.queryObject = Label.SEARCH_ALL
 getContentPlugin.run()

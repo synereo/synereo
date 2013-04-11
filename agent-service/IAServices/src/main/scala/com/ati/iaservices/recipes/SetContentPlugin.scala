@@ -10,12 +10,14 @@ import scala.collection.JavaConversions._
 import com.rits.cloning.Cloner
 import com.ati.iaservices.schema.{Content, Label}
 
-class SetContentPlugin[T <: Data] extends LauncherPluginBase {
+abstract class SetContentPlugin[T <: Data] extends LauncherPluginBase {
   val pluginName = "SetContent"
   val exitOnFail = true
 
   var data : T = _
   var oldData : T = _
+
+  def handleListen(data: T)
 
   override def validateSession(): Unit = {
     // no additional initialization required
@@ -51,7 +53,7 @@ class SetContentPlugin[T <: Data] extends LauncherPluginBase {
           println(e.toString)
           println("--------------- SetContentResponse ***************")
 
-          processData(response.data)
+          handleListen(e.getMsg.data.asInstanceOf[T])
 
           println("*************** Finish SetContent ***************")
         }
@@ -60,23 +62,5 @@ class SetContentPlugin[T <: Data] extends LauncherPluginBase {
 
     listenSetContentResponse(eventKey)
     requestSetContent(eventKey)
-  }
-
-  def processData(data : Data) = {
-    if (data.isInstanceOf[Profile]) {
-      println("*************** Found Profile Data ***************")
-      session.profile = data.asInstanceOf[Profile]
-      session.oldProfile = new Cloner().deepClone(session.profile)
-      println(session.profile)
-    }
-    else if (data.isInstanceOf[Label[_]]) {
-      println("*************** Found Label Data ***************")
-      println(data.asInstanceOf[Label[_]])
-    }
-    else {
-      throw new Exception("Unsupported Data type in SetContentPlugin:processData")
-    }
-
-    // TODO: SUPPORT OTHER TYPES OF DATA
   }
 }

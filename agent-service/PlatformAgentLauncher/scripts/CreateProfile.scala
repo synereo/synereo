@@ -17,12 +17,22 @@ profile.setLastName("Smith")
 profile.setCity("Winnipeg")
 profile.setCountry("Canada")
 
-val setContentPlugin = new SetContentPlugin[Profile]
+val setContentPlugin = new SetContentPlugin[Profile]()  {
+  def handleListen(profile: Profile) {
+    println("*************** Found Label Data ***************")
+    println(profile)
+  }
+}
 setContentPlugin.data = profile
 setContentPlugin.oldData = null
 setContentPlugin.run()
 
-val getContentPlugin = new GetContentPlugin[Profile]()
+val getContentPlugin = new GetContentPlugin[Profile]() {
+  def handleListen(profile: Profile) {
+    println("*************** Found Profile Data ***************")
+    println(profile)
+  }
+}
 getContentPlugin.queryObject = Profile.SEARCH_ALL
 getContentPlugin.run()
 

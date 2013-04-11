@@ -11,11 +11,13 @@ import java.util.List
 import scala.collection.JavaConversions._
 import com.rits.cloning.Cloner
 
-class GetContentPlugin[T <: Data] extends LauncherPluginBase {
+abstract class GetContentPlugin[T <: Data] extends LauncherPluginBase {
   val pluginName = "GetContent"
   val exitOnFail = true
 
   var queryObject : T = _
+
+  def handleListen(data: T)
 
   override def validateSession(): Unit = {
     // no additional initialization required
@@ -51,7 +53,7 @@ class GetContentPlugin[T <: Data] extends LauncherPluginBase {
           println(e.toString)
           println("--------------- GetContentResponse ***************")
 
-          processData(response.data)
+          handleListen(e.getMsg.data.asInstanceOf[T])
 
           println("*************** Finish GetContent ***************")
         }
@@ -60,26 +62,5 @@ class GetContentPlugin[T <: Data] extends LauncherPluginBase {
 
     listenGetContentResponse(eventKey)
     requestGetContent(eventKey)
-  }
-
-  def processData(data : List[Data]) = {
-    data.foreach(datum => {
-      if (datum.isInstanceOf[Profile]) {
-        println("*************** Found Profile Data ***************")
-        session.profile = datum.asInstanceOf[Profile]
-        session.oldProfile = new Cloner().deepClone(session.profile)
-        println(session.profile)
-      }
-      else if (datum.isInstanceOf[Label[_]]) {
-        println("*************** Found Label Data ***************")
-        println(datum.asInstanceOf[Label[_]])
-      }
-      else {
-        throw new Exception("Unsupported Data type in GetContentPlugin:processData")
-      }
-
-      // TODO: SUPPORT OTHER TYPES OF DATA
-    })
-
   }
 }
