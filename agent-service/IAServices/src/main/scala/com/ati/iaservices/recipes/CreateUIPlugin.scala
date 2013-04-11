@@ -24,5 +24,6 @@ class CreateUIPlugin extends LauncherPluginBase {
 
   def createUI(): Unit = {
     session.ui = new CreateUIHelper().createUI()
+    println("*************** UIPlatformAgent launcher started ***************")
   }
 }

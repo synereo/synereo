@@ -23,7 +23,6 @@ class CreateStoreHelper {
     val store = new AgentHostStorePlatformAgent()
     checkAllStoreConfigFiles
     store.initFromConfig(STORE_CONFIG)
-    println("*************** StorePlatformAgent launcher started ***************")
     return store
   }
 

@@ -23,5 +23,6 @@ class CreateStorePlugin extends LauncherPluginBase {
 
   def createStore(): Unit = {
     session.store = new CreateStoreHelper().createStore()
+    println("*************** StorePlatformAgent launcher started ***************")
   }
 }

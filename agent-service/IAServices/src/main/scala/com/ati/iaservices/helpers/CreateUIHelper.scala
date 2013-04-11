@@ -23,7 +23,6 @@ class CreateUIHelper {
     val ui = new AgentHostUIPlatformAgent()
     checkAllStoreConfigFiles
     ui.initFromConfig(UI_CONFIG)
-    println("*************** UIPlatformAgent launcher started ***************")
     return ui
   }
 }
