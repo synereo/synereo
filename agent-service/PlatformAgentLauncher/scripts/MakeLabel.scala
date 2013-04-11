@@ -1,5 +1,5 @@
 // **************************************
-// SEE CONTENT.SCALA FOR UPDATED APPROACH
+// SEE MAKECONTENT.SCALA FOR UPDATED APPROACH
 // **************************************
 
 //import com.ati.iaservices.recipes.LauncherPluginSession._
