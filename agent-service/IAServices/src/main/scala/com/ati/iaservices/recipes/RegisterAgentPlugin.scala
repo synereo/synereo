@@ -30,7 +30,7 @@ abstract class RegisterAgentPlugin extends LauncherPluginBase {
   }
 
   override def execute(args: Array[ String ]): Unit = {
-     registerAgent
+    registerAgent
   }
 
   def registerAgent(): Unit = {
@@ -43,6 +43,9 @@ abstract class RegisterAgentPlugin extends LauncherPluginBase {
         println("*************** RegisterAgent Successful ***************")
         println("*************** New AgentId = " + response.agentId + " ***************")
         println("*************** Finish RegisterAgent ***************")
+        session.selfCnxn = response.connSelf.writeCnxn
+        session.selfAlias = response.connSelf.alias
+        session.userAgentId = response.agentId
       }
     }
     registerAgentHelper.listen(session.ui, session.agentSessionId, eventKey)
