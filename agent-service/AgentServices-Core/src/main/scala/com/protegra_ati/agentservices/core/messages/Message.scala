@@ -4,14 +4,12 @@ import java.io.Serializable
 import reflect.BeanProperty
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.store.schema.KVDBSerializable
-import com.protegra_ati.agentservices.core.util.serializer.UseJavaIOSerialization
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 
 
 abstract class Message(val ids: Identification, val eventKey: EventKey)
   extends Serializable
   with KVDBSerializable
-  with UseJavaIOSerialization
 with Reporting
 {
   //using null instead of none for java interop

@@ -130,7 +130,7 @@ trait Listeners extends Reporting
       event.trigger(getListenersByMessage(event.msg))
     } 
     catch {
-      case e: Throwable => {
+      case e: Exception => {
         report("unable to send email due to " + e.getCause.toString, e, Severity.Error)
       }
     }

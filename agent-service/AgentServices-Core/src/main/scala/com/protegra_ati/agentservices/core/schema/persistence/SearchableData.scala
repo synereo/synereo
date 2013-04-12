@@ -33,7 +33,7 @@ trait SearchableData
     var searchKey = ""
     if (id.isEmpty) {
       val searchValueList = this.getSearchValueList(false)
-      searchKey = "data(" + this.formattedClassName + "(" + getSearchHeaderContent() + "," + PrologFormatter.clean(searchValueList) + "))"
+      searchKey = "data(" + this.formattedClassName + "(" + getSearchHeaderContent() + "," + searchValueList + "))"
     } else {
       searchKey = keyByIdOnly()
     }

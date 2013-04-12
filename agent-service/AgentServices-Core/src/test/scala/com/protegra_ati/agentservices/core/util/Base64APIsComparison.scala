@@ -40,7 +40,7 @@ object Base64APIsComparison extends Reporting
       val end = System.currentTimeMillis()
       println("sun.misc.BASE64 approach: " + ( end - start ))
     } catch {
-      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+      case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
     }
 
   }
@@ -59,7 +59,7 @@ object Base64APIsComparison extends Reporting
       val end = System.currentTimeMillis()
       println("org.apache.commons.codec.binary.Base64 approach: " + ( end - start ))
     } catch {
-      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+      case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
     }
 
   }
@@ -80,7 +80,7 @@ object Base64APIsComparison extends Reporting
       val end = System.currentTimeMillis()
       println("biz.source_code.base64Coder.Base64Coder approach: " + ( end - start ))
     } catch {
-      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+      case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
     }
 
   }

@@ -16,6 +16,8 @@ case class ReferralResponse(
   extends Message(ids, eventKey)
   with Response
 {
+  def this() = this(null, null, null, null, null, false)
+
   override def channel = Channel.Invitation
 
   channelRole = Some(ChannelRole.Creator)

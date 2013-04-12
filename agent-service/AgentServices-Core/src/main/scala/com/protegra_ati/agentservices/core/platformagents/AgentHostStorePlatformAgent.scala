@@ -283,38 +283,51 @@ with MessageStore
    */
   protected def processPublicSendLocally(cnxn: AgentCnxnProxy, msg: Message)
   {
-    //    report("In processSendLocally", Severity.Trace)
-//    println("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL In processSendLocally")
+    report("In processPublicSendLocally, cnxn: '%s'  msg: '%s'  channel: '%s'  channelType '%s' channelRole: '%s'"
+      .format(cnxn, msg, msg.channel, msg.channelType, msg.channelRole), Severity.Trace)
 
-    if ( msg.channelType == ChannelType.Response ) {
-      if ( msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) )
-        handlePublicInvitationCreatorResponseChannel(cnxn, msg)
-      else
-      if ( msg.channel == Channel.Verify )
-        handleVerifyResponseChannel(cnxn, msg)
-      else {
-        sendPrivate(cnxn, msg)
+    msg.channelType match {
+      case ChannelType.Response => {
+        (msg.channel, msg.channelRole) match {
+          case (Channel.Invitation, Some(ChannelRole.Creator)) => {
+            handlePublicInvitationCreatorResponseChannel(cnxn, msg)
+          }
+          case (Channel.Verify, _) => {
+            handleVerifyResponseChannel(cnxn, msg)
+          }
+          case (_, _) => {
+            sendPrivate(cnxn, msg)
+          }
+        }
       }
-    }
-
-    if ( msg.channelType == ChannelType.Request ) {
-      if ( msg.channel == Channel.Content )
-        handlePublicContentRequestChannel(cnxn, msg)
-      else
-      if ( msg.channel == Channel.Security )
-        handlePublicSecurityRequestChannel(cnxn, msg)
-      else
-      if ( msg.channel == Channel.Verify )
-        handleVerifyRequestChannel(cnxn, msg)
-      else
-      if ( msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Creator) )
-        handlePublicInvitationCreatorRequestChannel(cnxn, msg)
-      else
-      if ( msg.channel == Channel.Invitation && msg.channelRole == Some(ChannelRole.Consumer) )
-        handlePublicInvitationConsumerRequestChannel(cnxn, msg)
-      else {
-        //        println("In processSendLocally, received request for which there is no handler, type = " + msg.getClass.getName);
-        report("Received request for which there is no handler, message type = " + msg.getClass.getName, Severity.Error)
+      case ChannelType.Request => {
+        (msg.channel, msg.channelRole) match {
+          case (Channel.Content, _) => {
+            handlePublicContentRequestChannel(cnxn, msg)
+          }
+          case (Channel.Security, _) => {
+            handlePublicSecurityRequestChannel(cnxn, msg)
+          }
+          case (Channel.Verify, _) => {
+            handleVerifyRequestChannel(cnxn, msg)
+          }
+          case (Channel.Invitation, Some(ChannelRole.Creator)) => {
+            handlePublicInvitationCreatorRequestChannel(cnxn, msg)
+          }
+          case (Channel.Invitation, Some(ChannelRole.Consumer)) => {
+            handlePublicInvitationConsumerRequestChannel(cnxn, msg)
+          }
+          case (_, _) => {
+            val err = "Received request for which there is no handler, message type: '%s', message: '%s' channel: '%s', channelType: '%s', channelRole: '%s'"
+              .format(msg.getClass.getName, msg, msg.channel, msg.channelType, msg.channelRole)
+            report(err, Severity.Error)
+          }
+        }
+      }
+      case ChannelType.Notification => {
+        // TODO: Does something need to happen here?
+        report("In processPublicSendLocally, received message with ChannelType Notification, no handler for Notification currently. Message: '%s'"
+          .format(msg), Severity.Warning)
       }
     }
   }

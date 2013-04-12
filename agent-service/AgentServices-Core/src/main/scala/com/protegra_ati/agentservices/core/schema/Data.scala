@@ -14,7 +14,6 @@ import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 import java.util.{Locale, UUID, HashMap}
 import validator._
 import persistence._
-import com.protegra_ati.agentservices.core.util.serializer.{UseKryoSerialization}
 import java.lang.{Integer}
 
 //TODO: see if Data object on DataValidator constructor needs to be made more efficient
@@ -25,7 +24,6 @@ with StorableData
 with SearchableData
 with Validable
 with DataValidator
-with UseKryoSerialization
 {
   //def this(_id: String, _localeCode: String) = this(_id, _localeCode, 1)
 
@@ -143,12 +141,6 @@ with UseKryoSerialization
     else ( "\"" + getFieldValue(field) + "\"" )
   }
 
-  protected def getFormattedFieldValue(field: Field, quotationIncluded: Boolean): String =
-  {
-    if ( quotationIncluded == true ) getFormattedFieldValue(field)
-    else ( getFieldValue(field) )
-  }
-
   def getFieldValue(field: Field): String =
   {
     field.setAccessible(true)
@@ -157,16 +149,14 @@ with UseKryoSerialization
     val fieldType = field.getType.toString.replace("class ", "")
     val fieldValue: Object = field.get(this)
 
-    if ( fieldValue == null )
+    if ( fieldValue == null ) {
       ""
-    else {
-      if ( fieldType == DATE_TYPE )
+    } else {
+      if ( fieldType == DATE_TYPE ) {
         formatDateValue(fieldValue)
-      /*else if (isInstanceOfData(fieldValue)){
-        fieldValue.asInstanceOf[Data].getDataValue()
-      } */
-      else
-        fieldValue.toString
+      } else {
+        PrologFormatter.clean(fieldValue.toString)
+      }
     }
   }
 

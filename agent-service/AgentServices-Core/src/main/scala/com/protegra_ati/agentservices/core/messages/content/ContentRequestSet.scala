@@ -488,24 +488,35 @@ trait ContentRequestSet
 
   def setContentIfDisclosedDataChanged(msg: SetContentRequest) =
   {
-    (msg.newData, msg.oldData) match {
-      case (x: DisclosedData[ _ ], y: DisclosedData[ _ ]) => {
-        if (x != y) {
-          //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + x.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
+    findOldDisclosedData(msg)
+  }
 
-          val query = ConnectionFactory.createTypedConnection(x.getConnectionType())
-          //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
-        fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, msg.ids, msg.eventKey, x, y))
-        }
-      }
-      case (x: DisclosedData[ _ ], _) => {
-        // ignore this case
+  protected def findOldDisclosedData(msg: SetContentRequest) =
+  {
+    msg.newData match {
+      case ( newDisclosedData: DisclosedData[ _ ] ) => {
+        val query = new DisclosedData()
+        query.id = newDisclosedData.id
+
+        fetch[ DisclosedData[ Data ] ](_dbQ, msg.targetCnxn, query.toSearchKey, findAllConnectionsByTrustLevelThenProcessDisclosedData(_: AgentCnxnProxy, _: DisclosedData[ Data ], msg, newDisclosedData))
+
       }
       case _ => {
         // ignore this case
       }
     }
   }
+
+  protected def findAllConnectionsByTrustLevelThenProcessDisclosedData(selfCnxn: AgentCnxnProxy, oldDisclosedData: DisclosedData[ Data ], msg: SetContentRequest, newDisclosedData: DisclosedData[ Data ]) = {
+    if (newDisclosedData != oldDisclosedData) {
+      //println("OLD AND NEW DATA OF TYPE DISCLOSED DATA: " + newDisclosedData.getConnectionType() + "; on selfCnxn=" + msg.targetCnxn)
+
+      val query = ConnectionFactory.createTypedConnection(newDisclosedData.getConnectionType())
+      //  fetchList[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: List[ Connection ]))
+      fetch[ Connection ](_dbQ, msg.targetCnxn, query.toSearchKey, processConnectionsLookupForDiscloseDataUpdate(_: AgentCnxnProxy, _: Connection, msg.ids, msg.eventKey, newDisclosedData, oldDisclosedData))
+    }
+  }
+
 
 
   protected def processConnectionsLookupForDiscloseDataUpdate(selfCnxn: AgentCnxnProxy, connection: Connection, parentRequestIds: Identification, parentRequestEventKey: EventKey, newDisclosedData: DisclosedData[ Data ], oldDisclosedData: DisclosedData[ Data ]): Unit =
