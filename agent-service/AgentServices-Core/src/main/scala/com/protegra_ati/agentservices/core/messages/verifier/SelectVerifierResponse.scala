@@ -9,7 +9,8 @@ import com.protegra_ati.agentservices.core.schema._
 case class SelectVerifierResponse(override val ids: Identification, override val eventKey:EventKey, claimObject:String, claimField:String, verifier:Verifier) extends Message(ids, null)
 with Response
 {
-  override def channel = Channel.Verify
+  def this() = this(null, null, null, null, null)
 
+  override def channel = Channel.Verify
 }
 

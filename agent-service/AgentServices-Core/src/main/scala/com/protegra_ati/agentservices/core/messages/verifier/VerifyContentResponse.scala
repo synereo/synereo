@@ -11,6 +11,8 @@ case class VerifyContentResponse(override val ids: Identification, override val 
 with Response
 with EventProducer[Response]
 {
+  def this() = this(null, null, null, null, null, false)
+
   override def channel = Channel.Verify
 
   def generateEvent(): MessageEvent[ _ <: Message with Response ] =

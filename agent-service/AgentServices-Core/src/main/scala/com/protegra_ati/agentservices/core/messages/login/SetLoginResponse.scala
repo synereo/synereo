@@ -10,6 +10,8 @@ case class SetLoginResponse(override val ids: Identification, override val event
 with Response
 with EventProducer[Response]
 {
+  def this() = this(null, null)
+
   channelLevel = Some(ChannelLevel.Public)
   override def channel = Channel.Security
 

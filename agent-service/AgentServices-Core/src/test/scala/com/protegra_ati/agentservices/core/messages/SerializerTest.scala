@@ -247,7 +247,6 @@ Timeouts
       val message = new MockDirectMessage(new Identification(), new EventKey(UUID.randomUUID(), "tydegfrtew"), "works", Some("Hi"), None, Some("Basic"), new Post() :: Nil)
       val data = new PersistedMessage(message)
 
-      Serializer.evaluateSerializerClass(data) mustEqual ( KryoSerializer.getInstance().getClass.getName )
       val serialized = Serializer.serialize[ PersistedMessage[ MockDirectMessage ] ](data)
       val deserializedData = Serializer.deserialize[ PersistedMessage[ MockDirectMessage ] ](serialized)
 

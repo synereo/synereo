@@ -184,4 +184,19 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
         }
     }
 
+    public byte[] serializeToBytes(Object obj)
+    {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BufferedOutputStream oos = new BufferedOutputStream( baos );
+        serialize(obj, oos);  // closes the stream
+
+        return baos.toByteArray();
+    }
+
+    public <T> T deserializeFromBytes(byte[] bytes)
+    {
+        final InputStream ois = new BufferedInputStream( new ByteArrayInputStream( bytes ) );
+        return deserialize( ois, bytes.length ); // closes the stream
+    }
+
 }

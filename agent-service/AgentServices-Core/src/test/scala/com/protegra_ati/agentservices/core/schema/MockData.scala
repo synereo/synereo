@@ -1,19 +1,12 @@
 package com.protegra_ati.agentservices.core.schema
 
 import java.io.Serializable
-import java.lang.reflect._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
-import com.protegra_ati.agentservices.core.schema.util.ReflectionHelper._
 import scala.reflect.BeanProperty
-import com.protegra_ati.agentservices.core.schema.util._
-import com.protegra_ati.agentservices.core.messages._
-import com.protegra_ati.agentservices.store.extensions._
-import com.protegra_ati.agentservices.core.schema.Constants._
-import java.util.HashMap
-import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 
-class MockData(_id: String, _localeCode: String, _classVersionNumber: String) extends Serializable  with UseKryoSerialization
+class MockData(_id: String, _localeCode: String, _classVersionNumber: String)
+  extends Serializable
 {
   def this(_id: String, _localeCode: String) = this(_id, _localeCode, MockData.currentVersion)
 

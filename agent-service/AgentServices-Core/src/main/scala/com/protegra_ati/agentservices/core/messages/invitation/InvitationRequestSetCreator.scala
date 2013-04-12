@@ -369,7 +369,7 @@ trait InvitationRequestSetCreator
           }
         }
       } catch {
-        case e: Throwable => report("failed waiting for invitation responses", e, Severity.Error)
+        case e: Exception => report("failed waiting for invitation responses", e, Severity.Error)
       }
     }
   }

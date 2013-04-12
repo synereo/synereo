@@ -43,7 +43,7 @@ class ParallelSingletonClonerPerformanceTest(repetitions: Int)
       try {
         barrier.await();
       } catch {
-        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+        case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
       }
     }
   }
@@ -97,7 +97,7 @@ class ParallelMultiInstancesClonerPerformanceTest(repetitions: Int)
       try {
         barrier.await();
       } catch {
-        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+        case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
       }
     }
   }

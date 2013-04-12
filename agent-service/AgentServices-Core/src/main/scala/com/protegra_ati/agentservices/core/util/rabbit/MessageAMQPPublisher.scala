@@ -2,14 +2,30 @@ package com.protegra_ati.agentservices.core.util.rabbit
 
 import com.protegra_ati.agentservices.core.messages.Message
 import java.io.{IOException, ByteArrayOutputStream, ObjectOutputStream}
-import java.util.concurrent.{TimeUnit, Executors}
+import java.util.concurrent.{ThreadFactory, TimeUnit, Executors}
 import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
+import java.util.concurrent.atomic.AtomicInteger
+import org.joda.time.DateTime
+import java.security.MessageDigest
+import com.protegra_ati.agentservices.core.util.serializer.Serializer
+
+object AMQPPublisherThreadFactory extends ThreadFactory
+{
+  final val threadNumber = new AtomicInteger(0)
+  final val poolName = DateTime.now.toString("HHmmss")
+
+  def newThread(r: Runnable) = {
+    val t = Executors.defaultThreadFactory().newThread(r)
+    t.setName("AMQPPublisher-" + poolName + "-thread-" + threadNumber.incrementAndGet() )
+    t
+  }
+}
 
 object MessageAMQPPublisher extends Reporting
 {
   // Used for sendToRabbit retries
   @transient
-  private lazy val scheduler = Executors.newScheduledThreadPool(5)
+  private lazy val scheduler = Executors.newScheduledThreadPool(5, AMQPPublisherThreadFactory)
 
   private val MIN_RETRY = 1000
   private val MAX_RETRY = 300000
@@ -55,16 +71,13 @@ object MessageAMQPPublisher extends Reporting
       val channel = conn.createChannel()
       try {
         // Now write an object to a byte array and shove it across the wire.
-        val bytes = new ByteArrayOutputStream
-        val store = new ObjectOutputStream(bytes)
-        store.writeObject(message)
-        store.close
+        val bytes = Serializer.serializeToBytes(message)
 
         val qname = ( exchange + "_queue" )
         channel.exchangeDeclare(exchange, "direct")
-        channel.queueDeclare(qname, true, false, false, null);
+        channel.queueDeclare(qname, true, false, false, null)
         channel.queueBind(qname, exchange, routingKey)
-        channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
+        channel.basicPublish(exchange, routingKey, null, bytes)
 
         success = true
       }
@@ -73,7 +86,7 @@ object MessageAMQPPublisher extends Reporting
         try { channel.close() } catch { case e => }
       }
     } catch {
-      case e: IOException => {
+      case e: Exception => {
         val m = "There was a problem sending message to Rabbit.  Exchange: %s  routingKey: %s  message: %s"
         val fm = m.format(exchange, routingKey, message)
         report(fm, e, Severity.Error)

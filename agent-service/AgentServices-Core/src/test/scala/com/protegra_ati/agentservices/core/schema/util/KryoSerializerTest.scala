@@ -817,7 +817,7 @@ object KryoSerializerTestDataInitializer extends Reporting
     try {
       if ( toFile.exists() ) {toFile.delete()}
     } catch {
-      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+      case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
     }
     serialize(data, new FileOutputStream(toFile))
   }
@@ -837,7 +837,7 @@ object KryoSerializerTestDataInitializer extends Reporting
           out.close();
         }
       } catch {
-        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+        case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
       }
 
     }

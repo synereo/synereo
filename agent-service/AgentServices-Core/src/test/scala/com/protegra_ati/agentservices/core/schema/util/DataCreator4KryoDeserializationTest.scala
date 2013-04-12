@@ -33,7 +33,7 @@ import com.protegra_ati.agentservices.store.util.{Reporting, Severity}
 class DataCreator4KryoDeserializationTest extends SpecificationWithJUnit with
 Timeouts
 {
-// TODO: until kryo is back in place
+  // TODO: until kryo is back in place
   DataCreator4KryoDeserializationTestInitializer.setup()
 
   //LIST OF IN KRYO NOT SUPPORTED SCALA FEATURES
@@ -50,16 +50,11 @@ Timeouts
 
       DataCreator4KryoDeserializationTestInitializer.serialize(MockWithJavaMap.simpleMockHashMapStringString, new File("data//serializedMockWithCollection_StringStringMap.kryobin"))
 
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(MockWithJavaMap.simpleMockHashMapStringString)
-
       DataCreator4KryoDeserializationTestInitializer.serialize(MockWithJavaMap.simpleMockHashMapStringData, new File("data//serializedMockWithCollection_StringDataMap.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(MockWithJavaMap.simpleMockHashMapStringData)
 
       DataCreator4KryoDeserializationTestInitializer.serialize(MockWithJavaMap.simpleMockHashMapStringMockProfile, new File("data//serializedMockWithCollection_StringMockProfileMap.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(MockWithJavaMap.simpleMockHashMapStringMockProfile)
 
       DataCreator4KryoDeserializationTestInitializer.serialize(MockWithJavaMap.simpleMockHashMapStringProfile, new File("data//serializedMockWithCollection_StringProfileMap.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(MockWithJavaMap.simpleMockHashMapStringProfile)
       success
     }
 
@@ -70,7 +65,6 @@ Timeouts
       mockSimpleProfile.id = "UID"
       mockSimpleProfile.localeCode = "br"
       DataCreator4KryoDeserializationTestInitializer.serialize(mockSimpleProfile, new File("data//serializedMocProfile1.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(mockSimpleProfile)
       success
     }
 
@@ -84,7 +78,6 @@ Timeouts
       compositeMockProfile.image.id = "nestedUID"
       compositeMockProfile.image.localeCode = "us"
       DataCreator4KryoDeserializationTestInitializer.serialize(compositeMockProfile, new File("data//serializedCompositeMocProfile1.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(compositeMockProfile)
       success
     }
 
@@ -102,7 +95,6 @@ Timeouts
       val eventKey1 = new EventKey(agentSessionId1, "eventTag")
       val moc = new RealCompositeMockObject1(eventKey, eventKey1, "hi", "bai", new DateTime(5000000))
       DataCreator4KryoDeserializationTestInitializer.serialize(moc, new File("data//serializedCompositeWithEventKey.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(moc)
       success
     }
 
@@ -120,14 +112,11 @@ Timeouts
       val postToSerialized = new Post("subject: to Broker", "body", null, toDetails, "AE3C8348-94C2-4BF1-966A-EE57C14BA073");
 
       DataCreator4KryoDeserializationTestInitializer.serialize(postToBroker, new File("data//serializedMockPost.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(postToBroker)
 
       DataCreator4KryoDeserializationTestInitializer.serialize(postToSerialized, new File("data//serializedPost.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(postToSerialized)
 
       val id: Identification = new Identification("ID", "parent", "convers")
       DataCreator4KryoDeserializationTestInitializer.serialize(id, new File("data//serializedIdentification.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(id)
 
       val agentSessionId: UUID = UUID.fromString("DE3C8348-94C2-4BF1-966A-EE57C14BA073")
       val agentSessionId1: UUID = UUID.fromString("AE3C8348-94C2-4BF1-966A-EE57C14BA070")
@@ -140,24 +129,19 @@ Timeouts
       val eventKeyHope = new MockEventKey(agentSessionId1, "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
       val mockRequest = new MockCreateInvitationRequest(eventKey, eventKeyHope, "invitationConnectionId1", "selfAlias", Some("hallo world"), None, post :: Nil)
       DataCreator4KryoDeserializationTestInitializer.serialize(mockRequest, new File("data//serializedMockRequest.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(mockRequest)
 
       val mockOption = new MockOptionObject()
       DataCreator4KryoDeserializationTestInitializer.serialize(mockOption, new File("data//serializedMockOption.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(mockOption)
 
 
       val agentCnxn = new MockAgentCnxnProxy("targetId".toURI, "I'm also here", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serialize(agentCnxn, new File("data//agentCnxn1.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn)
 
       val agentCnxn1 = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serialize(agentCnxn1, new File("data//agentCnxn2.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn1)
 
       val agentCnxn2 = new MockAgentCnxnProxy("targetId".toURI, "Hi", null)
       DataCreator4KryoDeserializationTestInitializer.serialize(agentCnxn2, new File("data//agentCnxn3.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn2)
       success
 
     }
@@ -166,7 +150,6 @@ Timeouts
       val reference = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val duplicateHolder = new DuplicateMockObject(reference, reference, "test")
       DataCreator4KryoDeserializationTestInitializer.serialize(duplicateHolder, new File("data//test.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(duplicateHolder)
       success
 
     }
@@ -176,14 +159,12 @@ Timeouts
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       val systemConnection = new SystemData[ Connection ](selfCnxns)
       DataCreator4KryoDeserializationTestInitializer.serialize(systemConnection, new File("data//serializedSystemConnection.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(systemConnection)
       success
     }
     "serialize connection using serializer class" in {
       val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       DataCreator4KryoDeserializationTestInitializer.serialize(selfCnxns, new File("data//serializedConnection.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(selfCnxns)
       success
     }
 
@@ -198,11 +179,9 @@ Timeouts
       newConn.id = "conn id"
       val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null, false) //, postToTarget, postToBroker);
       DataCreator4KryoDeserializationTestInitializer.serialize(msg, new File("data//serializedRequest.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(msg)
 
       val persistedMessage = new PersistedMessage(msg)
       DataCreator4KryoDeserializationTestInitializer.serialize(persistedMessage, new File("data//serializedPersistedMessageCreateInvitationRequest.kryobin"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(persistedMessage)
       success
     }
   }
@@ -236,14 +215,11 @@ Timeouts
       val postToSerialized = new Post("subject: to Broker", "body", null, toDetails, "AE3C8348-94C2-4BF1-966A-EE57C14BA073");
 
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(postToBroker, new File("data//serializedMockPost.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(postToBroker)
 
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(postToSerialized, new File("data//serializedPost.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(postToSerialized)
 
       val id: Identification = new Identification("ID", "parent", "convers")
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(id, new File("data//serializedIdentification.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(id)
 
       val agentSessionId: UUID = UUID.fromString("DE3C8348-94C2-4BF1-966A-EE57C14BA073")
       val agentSessionId1: UUID = UUID.fromString("AE3C8348-94C2-4BF1-966A-EE57C14BA070")
@@ -256,24 +232,19 @@ Timeouts
       val eventKeyHope = new MockEventKey(agentSessionId1, "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
       val mockRequest = new MockCreateInvitationRequest(eventKey, eventKeyHope, "invitationConnectionId1", "selfAlias", Some("hallo world"), None, post :: Nil)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(mockRequest, new File("data//serializedMockRequest.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(mockRequest)
 
       val mockOption = new MockOptionObject()
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(mockOption, new File("data//serializedMockOption.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(mockOption)
 
 
       val agentCnxn = new MockAgentCnxnProxy("targetId".toURI, "I'm also here", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(agentCnxn, new File("data//agentCnxn1.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn)
 
       val agentCnxn1 = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(agentCnxn1, new File("data//agentCnxn2.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn1)
 
       val agentCnxn2 = new MockAgentCnxnProxy("targetId".toURI, "Hi", null)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(agentCnxn2, new File("data//agentCnxn3.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(agentCnxn2)
       success
     }
 
@@ -281,7 +252,6 @@ Timeouts
       val reference = new MockAgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val duplicateHolder = new DuplicateMockObject(reference, reference, "test")
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(duplicateHolder, new File("data//test.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(duplicateHolder)
       success
 
     }
@@ -291,14 +261,12 @@ Timeouts
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       val systemConnection = new SystemData[ Connection ](selfCnxns)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(systemConnection, new File("data//serializedSystemConnection.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(systemConnection)
       success
     }
     "serialize connection using serializer class" in {
       val selfCnxn = new AgentCnxnProxy("targetId".toURI, "", "sourceId".toURI)
       val selfCnxns = new Connection(ConnectionCategory.Self.toString, "Trusted", "System", selfCnxn, selfCnxn, "false", List[ String ](ConnectionPolicy.DeleteDisabled.toString, ConnectionPolicy.SearchDisabled.toString)) //List[ String ]()) //List[ String ]("DeleteDisabled", "SearchDisabled"))
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(selfCnxns, new File("data//serializedConnection.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(selfCnxns)
       success
     }
 
@@ -313,11 +281,9 @@ Timeouts
       newConn.id = "conn id"
       val msg = new CreateInvitationRequest(eventKey, "targetConnectionId", "selfAlias", "targetAlias", "selfCategory", "requestedCategory", "requestedConnectionType", "requestedConnectionName", null, null, false) //, postToTarget, postToBroker);
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(msg, new File("data//serializedRequest.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(msg)
 
       val persistedMessage = new PersistedMessage(msg)
       DataCreator4KryoDeserializationTestInitializer.serializeAsString(persistedMessage, new File("data//serializedPersistedMessageCreateInvitationRequest.kryostring"))
-      DataCreator4KryoDeserializationTestInitializer.checkIfKryoSerializable(persistedMessage)
       success
     }
   }
@@ -369,7 +335,7 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification with
           out.close();
         }
       } catch {
-        case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+        case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
       }
     }
   }
@@ -392,19 +358,12 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification with
     KryoSerializer.getInstance().deserialize[ T ](fromInputStream)
   }
 
-  def checkIfKryoSerializable(data: Object): Unit =
-  {
-    if ( !Serializer.evaluateSerializerClass(data).equals(KryoSerializer.getInstance().getClass.getName) )
-      failure("not using KryoSerializer")
-  }
-
-
   def serializeAsString(data: Object, f: File) =
   {
     try {
       FileUtils.writeStringToFile(f, Serializer.serialize(data), "UTF-8")
     } catch {
-      case e: Throwable => report("Exception occured in serialize method", e, Severity.Error)
+      case e: Exception => report("Exception occured in serialize method", e, Severity.Error)
     }
   }
 
@@ -415,7 +374,7 @@ object DataCreator4KryoDeserializationTestInitializer extends Specification with
       val base64 = FileUtils.readFileToString(from, "UTF-8")
       return Serializer.deserialize[ T ](base64)
     } catch {
-      case e: Throwable => {
+      case e: Exception => {
         report("Exception occured in deserializeFromString method", e, Severity.Error)
         return null.asInstanceOf[T]
       }

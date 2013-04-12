@@ -11,6 +11,8 @@ case class GetClaimResponse(override val ids: Identification, override val event
 with Response
 with EventProducer[Response]
 {
+  def this() = this(null, null, null, null, null)
+
   override def channel = Channel.Verify
 
   var claimValue:String = ""

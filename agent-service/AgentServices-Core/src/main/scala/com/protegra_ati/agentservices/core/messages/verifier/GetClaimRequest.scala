@@ -10,6 +10,8 @@ import reflect.BeanProperty
 */
 
 case class GetClaimRequest(override val ids: Identification, override val eventKey: EventKey, claimObject:String, claimField:String, verifierList:List[Verifier], relyingAgentDescription:String) extends Message() with Request {
+  def this() = this(null, null, null, null, null, null)
+
   override def channel = Channel.Verify
   @BeanProperty var notifyCnxn:AgentCnxnProxy = null
 }
