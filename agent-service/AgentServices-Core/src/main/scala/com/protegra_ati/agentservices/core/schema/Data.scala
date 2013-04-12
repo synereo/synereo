@@ -133,7 +133,7 @@ with DataValidator
       "\"" + "\""
     }
     else if (rawFieldsForSearchAndStoreKey().contains(field.getName.trimPackage.toCamelCase))  {
-      getFormattedFieldValue(field, false)
+      getFieldValue(field)
     }
     else if ( classOf[ Data ].isAssignableFrom(field.getType) )
       ( getFieldValue(field) )
