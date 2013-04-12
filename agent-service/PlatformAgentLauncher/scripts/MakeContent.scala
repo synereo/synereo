@@ -21,7 +21,7 @@ val setContentHelper = new SetContentHelper[Label[PostContent]]() {
     println(label)
   }
 }
-var label = new Label("Profile(Name)", new Content(new PostContent("This is a post")))
+var label = new Label("profile(name)", new Content(new PostContent("This is a post")))
 setContentHelper.listen(ui, agentSessionId, "Set_Profile")
 setContentHelper.request(ui, agentSessionId, "Set_Profile", label, target)
 
@@ -31,9 +31,9 @@ val setContentHelper2 = new SetContentHelper[Label[LinkContent]]() {
     println(label)
   }
 }
-var label2 = new Label("Profile(Name)",  new Content(new LinkContent("http://www.google.com")))
-setContentHelper2.listen(agentSessionId, "Set_Profile")
-setContentHelper2.request(agentSessionId, "Set_Profile", label2, target)
+var label2 = new Label("profile(name)",  new Content(new LinkContent("http://www.google.com")))
+setContentHelper2.listen(ui, agentSessionId, "Set_Profile")
+setContentHelper2.request(ui, agentSessionId, "Set_Profile", label2, target)
 
 val getContentHelper = new GetContentHelper[Label[_]]() {
   def handleListen(label: Label[_]) = {
@@ -41,6 +41,6 @@ val getContentHelper = new GetContentHelper[Label[_]]() {
     println(label)
   }
 }
-getContentHelper.listen(agentSessionId, "Get_Label")
-getContentHelper.request(agentSessionId, "Get_Label", Label.SEARCH_ALL, target)
+getContentHelper.listen(ui, agentSessionId, "Get_Label")
+getContentHelper.request(ui, agentSessionId, "Get_Label", Label.SEARCH_ALL, target)
 
