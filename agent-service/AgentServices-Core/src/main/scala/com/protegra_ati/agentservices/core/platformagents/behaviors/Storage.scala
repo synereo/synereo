@@ -101,19 +101,16 @@ trait Storage
     // Call store if data is empty; otherwise attempt to delete
     dataToDelete match {
       case Nil => store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
-      case _ => dataToDelete.map(x => safeDelete(cnxn, x, newData))
-    }
-  }
+      case _ => {
+        // Delete all data
+        dataToDelete.map(x => {
+          if ( x != null && x != newData ) {
+            delete(_dbQ, cnxn, x.toStoreKey)
+          }
+        })
 
-  //exception to the convention of newData, oldData
-  protected def safeDelete(cnxn: AgentCnxnProxy, dataToDelete: Data, dataToPreserve: Data) =
-  {
-    //this check prevents the race condition occurring where the new data is saved before the fetch is finished
-    // We only want to store the data if we've deleted old data.  We do not want to
-    // call store in case we're not deleting old data, otherwise we'll end up with dupes
-    if ( dataToDelete != null && dataToDelete != dataToPreserve ) {
-      delete(_dbQ, cnxn, dataToDelete.toStoreKey)
-      store(_dbQ, cnxn, dataToPreserve.toStoreKey, Serializer.serialize[ Data ](dataToPreserve))
+        store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+      }
     }
   }
 

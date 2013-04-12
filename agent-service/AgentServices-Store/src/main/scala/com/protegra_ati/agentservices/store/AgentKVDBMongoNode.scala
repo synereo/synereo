@@ -1820,7 +1820,8 @@ with AgentCnxnTypeScope {
 	)
 	
 	for( pd <- pmgj.cache.persistenceManifest ) {
-	  spawn {
+//	  spawn
+    {
 	    reset{
 	      for( pI <- pmgj.delete( path ) ) {
 		tweet( "place deleted from cache: " + pI )
