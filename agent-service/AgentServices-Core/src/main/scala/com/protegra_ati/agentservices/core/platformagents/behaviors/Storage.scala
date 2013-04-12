@@ -103,13 +103,17 @@ trait Storage
       case Nil => store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
       case _ => {
         // Delete all data
+        var dataDeleted = false
         dataToDelete.map(x => {
           if ( x != null && x != newData ) {
             delete(_dbQ, cnxn, x.toStoreKey)
+            dataDeleted = true
           }
         })
 
-        store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+        if (dataDeleted) {
+          store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[ Data ](newData))
+        }
       }
     }
   }
