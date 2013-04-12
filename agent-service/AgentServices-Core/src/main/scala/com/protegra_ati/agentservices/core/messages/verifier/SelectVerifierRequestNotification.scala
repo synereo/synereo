@@ -4,9 +4,11 @@ import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.events._
 
 case class SelectVerifierRequestNotification(override val eventKey: EventKey) extends Message(eventKey) with Notification {
-     override def channel = Channel.Verify
+  def this() = this(null)
 
-     def generateEvent(): MessageEvent[ _ <: Message with Notification ] = {
-       new SelectVerifierRequestNotificationReceivedEvent(this)
-     }
+  override def channel = Channel.Verify
+
+  def generateEvent(): MessageEvent[ _ <: Message with Notification ] = {
+    new SelectVerifierRequestNotificationReceivedEvent(this)
+  }
 }

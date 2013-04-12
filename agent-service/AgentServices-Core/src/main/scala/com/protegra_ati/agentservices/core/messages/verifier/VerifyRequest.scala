@@ -9,6 +9,8 @@ import com.protegra_ati.agentservices.core.messages._
 */
 
 case class VerifyRequest(override val ids: Identification, override val eventKey: EventKey, alias:String, claimKey:String, claimData:String, reason:String, relyingAgentDescription:String) extends Message with Request {
+  def this() = this(null, null, null, null, null, null, null)
+
   @BeanProperty var relyingAgentCnxnProxy:AgentCnxnProxy = null
   override def channel = Channel.Verify
 }

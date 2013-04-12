@@ -2,10 +2,8 @@ package com.protegra_ati.agentservices.core.messages.invitation
 
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.schema._
-import java.util.UUID
 import reflect.BeanProperty
 import scala.collection.JavaConversions._
-import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 /**
  * Represents an invitation to a connection
@@ -23,7 +21,8 @@ case class InvitationRequest(
   @BeanProperty val requestedConnectionName: Option[ String ],
   @BeanProperty val conversationThread: java.util.List[ Post ],
   @BeanProperty val isRoleBasedRequest: Boolean                            )
-  extends Message(ids, eventKey) with Request with UseKryoSerialization
+  extends Message(ids, eventKey)
+  with Request
 {
   if ( conversationThread != null )
     conversationThread.foreach(post => {if ( !post.isDelivered() ) post.deliver()})
@@ -51,8 +50,6 @@ case class InvitationRequest(
     channelKey += "(\"" + ids.conversationId.toString + "\")"
     channelKey
   }
-
-  override def isJavaIOSerializationDeprecated: Boolean = true
 
   override def hashCode =
   {41 + ( this.toString.hashCode() + ( this.channelRole + "" + this.channelLevel ).hashCode() )}

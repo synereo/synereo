@@ -1,111 +1,44 @@
 package com.protegra_ati.agentservices.core.util.serializer.helper
 
-import collection.mutable.ArrayBuffer
-import com.esotericsoftware.kryo.{Kryo, Serializer}
-import com.esotericsoftware.kryo.io.{Output, Input}
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.Serializer
+import com.esotericsoftware.kryo.io.Input
+import com.esotericsoftware.kryo.io.Output
 import scala.collection.immutable
+import scala.collection.mutable.ArrayBuffer
+import scala.Enumeration
+import com.protegra_ati.agentservices.store.util.{Severity, Reporting}
 
-
-/* User: mgevantmakher
-*/
-
-class EnumerationSerializer extends Serializer[ Enumeration#Value ]
+class EnumerationSerializer
+  extends Serializer[Enumeration#Value]
+  with Reporting
 {
-  locally {
-    setImmutable(true)
-    setAcceptsNull(true)
+  import EnumerationSerializer._
+
+  override def write (kryo: Kryo, output: Output, obj: Enumeration#Value) = {
+    val enumClass = cacheEnumValue(obj)
+    // Output a specific class of the enumeration
+    kryo.writeClass(output, enumClass)
+    output.writeInt(obj.id)
   }
 
-
-  private def catchEnumClass(obj: Enumeration#Value): Class[ _ ] =
-  {
-    val enumClass: Class[ _ ] = {
-      val parentEnum = obj.asInstanceOf[ AnyRef ].getClass.getSuperclass.getDeclaredFields.find(f => f.getName == "$outer").get
-      val parentEnumObj = parentEnum.get(obj)
-      val enumClass = parentEnumObj.getClass
-      enumClass
-    }
-    enumClass
-  }
-
-  private def getEnumValue(kryo: Kryo, enumClass: Class[ _ ], id: Int): Enumeration#Value =
-  {
-    //val size = enumClass.asInstanceOf[ Enumeration ].maxId + 1
-    //  println("read enum " + enumClass.asInstanceOf[ Enumeration ].values.toSeq(id) + " by Id=" + id)
-    val enumValue = kryo.newInstance(enumClass).asInstanceOf[ Enumeration ](id)
-    //println("read enum " + enumValue + " by Id=" + id)
-    //    val values = new ArrayBuffer[ Enumeration#Value ](size)
-    //    0 until size foreach {e => values += null}
-    //
-    //    enumClass2enumValues += enumClass -> values
-    //val enumValue = enumClass.asInstanceOf[ Enumeration ].values.toSeq(id)
-    enumValue
-  }
-
-  //  // Caching of parent enum types for value types
-  //  var valueClass2enumClass = immutable.Map[ Class[ _ ], Class[ _ ] ]()
-  //  // Cache enumeration values for a given enumeration class
-  //  var enumClass2enumValues = immutable.Map[ Class[ _ ], ArrayBuffer[ Enumeration#Value ] ]()
-  //
-  //  private def cacheEnumValue(obj: Enumeration#Value) =
-  //  {
-  //
-  //    val enumClass = valueClass2enumClass.get(obj.getClass) getOrElse {
-  //      val parentEnum = obj.asInstanceOf[ AnyRef ].getClass.getSuperclass.getDeclaredFields.find(f => f.getName == "$outer").get
-  //      val parentEnumObj = parentEnum.get(obj)
-  //      val enumClass = parentEnumObj.getClass
-  //      valueClass2enumClass += obj.getClass -> enumClass
-  //      val enumValues = enumClass2enumValues.get(enumClass) getOrElse {
-  //        val size = parentEnumObj.asInstanceOf[ Enumeration ].maxId + 1
-  //        val values = new ArrayBuffer[ Enumeration#Value ](size)
-  //        0 until size foreach {e => values += null}
-  //        enumClass2enumValues += enumClass -> values
-  //        values
-  //      }
-  //      enumClass
-  //    }
-  //
-  //    val enumValues = enumClass2enumValues.get(enumClass).get
-  //
-  //    if ( enumValues(obj.id) == null ) {
-  //      enumValues.update(obj.id, obj)
-  //    }
-  //
-  //    enumClass
-  //  }
-
-  override def write(kryo: Kryo, output: Output, obj: Enumeration#Value) =
-  {
-    //println("KRYO EnumSerializer in USE! WRITE")
-    if ( obj == null )
-      kryo.writeObject(output, EnumerationSerializer.NULL)
-    else {
-      kryo.writeObject(output, EnumerationSerializer.NOT_NULL)
-      val enumClass = catchEnumClass(obj)
-      //println("KRYO ENUM WRITER:" + obj + " class =" + enumClass + "; id=" + obj.id)
-      kryo.writeClass(output, enumClass)
-      output.writeInt(obj.id)
-    }
-  }
-
-  override def read(kryo: Kryo, input: Input, typ: Class[ Enumeration#Value ]): Enumeration#Value =
-  {
-    //println("KRYO EnumSerializer in USE! READ")
-    val label: Byte = kryo.readObject(input, classOf[ Byte ])
-    if ( label == EnumerationSerializer.NULL ) return null
-
+  override def read (kryo: Kryo, input: Input, typ: Class[Enumeration#Value]): Enumeration#Value = {
+    // Read a specific class of the enumeration
     val clazz = kryo.readClass(input).getType
     val id = input.readInt()
-    val enumInstance = getEnumValue(kryo, clazz, id)
-    //        val enumValues = enumClass2enumValues.get(clazz).getOrElse {
-    //          cacheEnumValue(kryo.newInstance(clazz).asInstanceOf[ Enumeration ](id))
-    //          enumClass2enumValues.get(clazz).get
-    //        }
-    //
-    // val enumInstance = enumValues(id)
-    //println("KRYO ENUM READER:" + enumInstance + " class =" + clazz + "; id=" + id)
-    enumInstance
 
+    val enumValues =  this.synchronized {
+      enumClass2enumValues.get(clazz).getOrElse {
+        cacheEnumValue(kryo.newInstance(clazz).asInstanceOf[Enumeration](id))
+        enumClass2enumValues.get(clazz).get
+      }
+    }
+
+    val enumInstance = enumValues(id)
+    if (enumInstance == null) {
+      report("Error while deserializing Enum.  Enum value was null: %s[%s]".format(clazz, id), Severity.Error)
+    }
+    enumInstance
   }
 }
 
@@ -115,6 +48,39 @@ object EnumerationSerializer
   val NOT_NULL: Byte = 1;
 
   def FITS_TO: Class[ scala.Enumeration#Value ] = classOf[ scala.Enumeration#Value ]
+  def ENUM_SER_CLASS_OF: Class[ EnumerationSerializer ] = classOf[ EnumerationSerializer ]
 
-  def FITS_TO1: Class[ scala.Enumeration$Val ] = classOf[ scala.Enumeration$Val ]
+  // Cache the mapping from enumeration members to specific enumeration classes
+  var value2enumClass = immutable.Map[Enumeration#Value, Class[_]]()
+  // Cache enumeration values for a given enumeration class
+  var enumClass2enumValues = immutable.Map[Class[_], ArrayBuffer[Enumeration#Value]]()
+
+  private def cacheEnumValue(obj: Enumeration#Value) = {
+    this.synchronized {
+      val outEnumClass =  value2enumClass.get(obj) getOrElse {
+        val parentEnum = obj.asInstanceOf[AnyRef].getClass.getSuperclass.getDeclaredFields.find( f => f.getName == "$outer" ).get
+        val parentEnumObj = parentEnum.get(obj)
+        val inEnumClass = parentEnumObj.getClass
+        value2enumClass += obj->inEnumClass
+        val enumValues =  enumClass2enumValues.get(inEnumClass) getOrElse {
+          val enumInstance = parentEnumObj.asInstanceOf[Enumeration]
+          val size = enumInstance.maxId
+          val values = new ArrayBuffer[Enumeration#Value](size)
+          //0 until size foreach { e => values += null }
+          0 until size foreach { e => values += enumInstance(e)}
+          enumClass2enumValues += inEnumClass->values
+          values
+        }
+        inEnumClass
+      }
+
+      val enumValues =  enumClass2enumValues.get(outEnumClass).get
+
+      if(enumValues(obj.id) == null) {
+        enumValues.update(obj.id, obj)
+      }
+
+      outEnumClass
+    }
+  }
 }

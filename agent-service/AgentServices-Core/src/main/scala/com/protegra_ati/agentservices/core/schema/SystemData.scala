@@ -3,9 +3,11 @@ package com.protegra_ati.agentservices.core.schema
 import java.io.Serializable
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.store.schema.KVDBSerializable
-import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
-case class SystemData[T<:Data](val data:T) extends Serializable with KVDBSerializable with UseKryoSerialization{
+case class SystemData[T<:Data](val data:T)
+  extends Serializable
+  with KVDBSerializable
+{
 
    def this() = this (null.asInstanceOf[T])
 

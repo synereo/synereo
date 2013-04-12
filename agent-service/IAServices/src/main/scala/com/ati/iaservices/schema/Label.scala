@@ -4,13 +4,36 @@ import scala.reflect.BeanProperty
 import com.protegra_ati.agentservices.core.schema.Data
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
+class LabelKey (@BeanProperty var searchKey : String) extends Data {
+  def this() = this("_")
+
+  override protected def rawFieldsForSearchAndStoreKey(): List[ String ] = List("searchKey") ::: super.rawFieldsForSearchAndStoreKey
+
+  override def toString(): String =
+  {
+    {
+      "LabelKey[id=" + id + ", locale=" + localeCode + ", searchKey=" + searchKey + "]"
+    }
+  }
+}
+
+object LabelKey
+{
+  final val SEARCH_ALL_KEY = new LabelKey().toSearchKey
+
+  final val SEARCH_ALL = new LabelKey()
+  {
+    override def toSearchKey(): String = LabelKey.SEARCH_ALL_KEY
+  }
+}
+
 case class Label[ T <: ContentValue ] (
-  @BeanProperty var key: String,
+  @BeanProperty var key: LabelKey,
   @BeanProperty var content: Content[T]
 ) extends Data {
 
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
-  def this() = this("", null.asInstanceOf[Content[T]])
+  def this() = this(new LabelKey(), null.asInstanceOf[Content[T]])
 
   var contentType = formattedContentValueName
 
@@ -33,7 +56,6 @@ case class Label[ T <: ContentValue ] (
 
 object Label
 {
-
   final val SEARCH_ALL_KEY = new Label().toSearchKey
 
   final val SEARCH_ALL = new Label()

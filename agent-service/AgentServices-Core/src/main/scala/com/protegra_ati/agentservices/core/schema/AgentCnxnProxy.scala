@@ -1,10 +1,7 @@
 package com.protegra_ati.agentservices.core.schema
 
 import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
-import com.protegra_ati.agentservices.core.schema._
-
 import java.net.URI
-import com.protegra_ati.agentservices.core.util.serializer.UseKryoSerialization
 
 case class AgentCnxnProxy(
                            val src: URI,

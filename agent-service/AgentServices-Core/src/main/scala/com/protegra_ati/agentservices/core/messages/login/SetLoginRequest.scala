@@ -9,5 +9,7 @@ import java.util._
 
 case class SetLoginRequest( override val eventKey: EventKey, loginToken:LoginToken) extends Message(new Identification(), eventKey)//extends Message(eventKey)
 with Request {
-   override def channel = Channel.Security
+  def this() = this(null, null)
+
+  override def channel = Channel.Security
 }

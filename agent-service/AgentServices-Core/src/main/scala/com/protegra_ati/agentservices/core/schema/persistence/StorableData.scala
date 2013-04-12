@@ -31,7 +31,7 @@ trait StorableData extends StorableDataDefaults
     val filteredFields = fields.filter(r => !keyFieldsForSearchAndStoreKey.contains(r.getName.trimPackage.toCamelCase))
     val fieldValues = filteredFields collect {case f:Field if !ignoredFieldsForSearchAndStoreKey.contains(f.getName.trimPackage.toCamelCase) => handleFieldValue(f)}
     val fieldValueList = fieldValues.mkString("", ",", "")
-    "data(" + this.formattedClassName + "(" + PrologFormatter.clean(getHeaderContent()) + "," + FIELDS + "(" + PrologFormatter.clean(fieldValueList) + ")))"
+    "data(" + this.formattedClassName + "(" + getHeaderContent() + "," + FIELDS + "(" + fieldValueList + ")))"
   }
 
   def toDeleteKey(): String =

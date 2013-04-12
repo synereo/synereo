@@ -15,7 +15,11 @@
         <scala.version>2.9.2</scala.version>
         <casbah.version>2.5.0</casbah.version>
         <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
+<<<<<<< HEAD
         <agentservices-core.version>1.1.0.8-IA</agentservices-core.version>
+=======
+        <agentservices-core.version>1.2.0.7-IA</agentservices-core.version>
+>>>>>>> d1fdc0e5a96b434b0176a7372d15cf0de49bee54
 
          <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
