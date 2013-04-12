@@ -133,7 +133,11 @@ with UseKryoSerialization
     //ie image
     if (ignoredFieldsForSearchAndStoreKey().contains(field.getType.toString.trimPackage.toCamelCase))  {
       "\"" + "\""
-    } else if ( classOf[ Data ].isAssignableFrom(field.getType) )
+    }
+    else if (rawFieldsForSearchAndStoreKey().contains(field.getName.trimPackage.toCamelCase))  {
+      getFormattedFieldValue(field, false)
+    }
+    else if ( classOf[ Data ].isAssignableFrom(field.getType) )
       ( getFieldValue(field) )
     //TODO: this is too aggressive problems with hashmap, we need to fix to handle reflection better, likely similar to data
     else if ( classOf[ Message ].isAssignableFrom(field.getType) ) {
@@ -194,6 +198,10 @@ with UseKryoSerialization
   }
 
   protected def ignoredFieldsForSearchAndStoreKey(): List[ String ] =
+  {
+    Nil
+  }
+  protected def rawFieldsForSearchAndStoreKey(): List[ String ] =
   {
     Nil
   }
