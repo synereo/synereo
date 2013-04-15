@@ -29,8 +29,9 @@ def createProfile(agentId: UUID) = {
       println(profile)
     }
   }
-  setContentHelper.listen(ui, agentSessionId, "Set_Profile")
-  setContentHelper.request(ui, agentSessionId, "Set_Profile", profile, target)
+  val tag = "SetProfile" + UUID.randomUUID()
+  setContentHelper.listen(ui, agentSessionId, tag)
+  setContentHelper.request(ui, agentSessionId, tag, profile, target)
 }
 
 // REGISTER A NEW AGENT
@@ -42,6 +43,7 @@ val registerAgentHelper = new RegisterAgentHelper() {
     createProfile(response.agentId)
   }
 }
-registerAgentHelper.listen(ui, agentSessionId, "Register")
-registerAgentHelper.request(ui, agentSessionId, "Register", BIZNETWORK_AGENT_ID, "John Smith")
+val tag = "Register" + UUID.randomUUID()
+registerAgentHelper.listen(ui, agentSessionId, tag)
+registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")
 

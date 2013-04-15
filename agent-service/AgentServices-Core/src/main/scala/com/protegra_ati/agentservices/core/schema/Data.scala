@@ -133,7 +133,7 @@ with DataValidator
       "\"" + "\""
     }
     else if (rawFieldsForSearchAndStoreKey().contains(field.getName.trimPackage.toCamelCase))  {
-      getFieldValue(field)
+      getFieldValue(field, false)
     }
     else if ( classOf[ Data ].isAssignableFrom(field.getType) )
       ( getFieldValue(field) )
@@ -145,7 +145,11 @@ with DataValidator
     else ( "\"" + getFieldValue(field) + "\"" )
   }
 
-  def getFieldValue(field: Field): String =
+  def getFieldValue(field: Field): String = {
+    getFieldValue(field, true)
+  }
+
+  def getFieldValue(field: Field, clean: Boolean): String =
   {
     field.setAccessible(true)
     // TODO such way of type name extraction has to be changed it is just declared type
@@ -159,7 +163,12 @@ with DataValidator
       if ( fieldType == DATE_TYPE ) {
         formatDateValue(fieldValue)
       } else {
-        PrologFormatter.clean(fieldValue.toString)
+        if (clean) {
+          PrologFormatter.clean(fieldValue.toString)
+        }
+        else {
+          fieldValue.toString
+        }
       }
     }
   }

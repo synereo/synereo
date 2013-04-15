@@ -9,20 +9,10 @@ val ui = new CreateUIHelper().createUI
 
 // UPDATE PROFILE FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val userAgentId = UUID.fromString("5a0660bf-eab6-4c40-9c9f-62e0c6365103")
+val userAgentId = UUID.fromString("800009c0-e3ba-46f2-87ad-b316668a9f0d")
 def target: AgentCnxnProxy = {
   new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
 }
-
-val getContentHelper = new GetContentHelper[Profile]() {
-  def handleListen(profile: Profile) = {
-    println("*************** Found Profile Data ***************")
-    println(profile)
-    updateProfile(profile)
-  }
-}
-getContentHelper.listen(ui, agentSessionId, "Get_Profile")
-getContentHelper.request(ui, agentSessionId, "Get_Profile", Profile.SEARCH_ALL, target)
 
 def updateProfile(profile : Profile) = {
   profile.setFirstName("Jane")
@@ -35,7 +25,21 @@ def updateProfile(profile : Profile) = {
       println(profile)
     }
   }
-  setContentHelper.listen(ui, agentSessionId, "Set_Profile")
-  setContentHelper.request(ui, agentSessionId, "Set_Profile", profile, target)
+  val tag = "SetProfile" + UUID.randomUUID()
+  setContentHelper.listen(ui, agentSessionId, tag)
+  setContentHelper.request(ui, agentSessionId, tag, profile, target)
 
 }
+
+val getContentHelper = new GetContentHelper[Profile]() {
+  def handleListen(profile: Profile) = {
+    println("*************** Found Profile Data ***************")
+    println(profile)
+    updateProfile(profile)
+  }
+}
+val tag = "GetProfile" + UUID.randomUUID()
+getContentHelper.listen(ui, agentSessionId, tag)
+getContentHelper.request(ui, agentSessionId, tag, Profile.SEARCH_ALL, target)
+
+
