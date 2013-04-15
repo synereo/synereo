@@ -10,7 +10,7 @@ val ui = new CreateUIHelper().createUI
 
 // ADD LABEL FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val userAgentId = UUID.fromString("4ac28ed3-fe3c-4afa-b75a-63a56cc6a223")
+val userAgentId = UUID.fromString("b56e8085-07d5-413b-9ae5-5f09cb5ae8b0")
 def target: AgentCnxnProxy = {
   new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
 }
