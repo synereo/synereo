@@ -53,38 +53,65 @@ with Serializable
   AgentHostCombinedBase.setupStore(pa, cnxnUIStore)
 
   "updateData" should {
-    "insert new data" in new StorageScope{
-      var oldData: Profile = null
-      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
-      val profileSearch: Profile = new Profile()
-      Thread.sleep(TIMEOUT_MED)
-      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-    }
 
-    "delete and insert existing data" in new StorageScope{
-      val data = mockProfile.authorizedData(authorizedContentBasic.fields)
-      pa.store(pa._dbQ, connSteve.writeCnxn, data.toStoreKey, Serializer.serialize[ Data ](data))
-      Thread.sleep(TIMEOUT_MED)
-      pa.updateDataById(connSteve.writeCnxn, data)
-      val profileSearch: Profile = new Profile()
+    "delete and insert existing data many times" in new StorageScope{
+       pa.store(pa._dbQ, connSteve.writeCnxn, mockProfile.toStoreKey, Serializer.serialize[ Profile ](mockProfile))
+       Thread.sleep(TIMEOUT_MED)
 
-      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-    }
+       for (i <- 1 to 100) {
+         mockProfile.description = "desc" + i
+         pa.updateDataById(connSteve.writeCnxn, mockProfile)
+//         Thread.sleep(20)
+       }
+     val profileSearch: Profile = new Profile()
+     countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
 
-    "update unmodified data without creating duplicates" in new StorageScope {
-      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
-      val profileSearch: Profile = new Profile()
-      Thread.sleep(TIMEOUT_MED)
-      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-
-      // Update the data using the same profile
-      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
-      Thread.sleep(TIMEOUT_MED)
-      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
-    }
+     }
+//    "delete and insert existing data many times" in new StorageScope{
+//           pa.store(pa._dbQ, connSteve.writeCnxn, mockProfile.toStoreKey, Serializer.serialize[ Profile ](mockProfile))
+//           Thread.sleep(TIMEOUT_MED)
+//
+//           for (i <- 1 to 100) {
+//             mockProfile.firstName = "first" + i
+//             pa.updateDataById(connSteve.writeCnxn, mockProfile)
+//             Thread.sleep(20)
+//           }
+//         val profileSearch: Profile = new Profile()
+//         countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//
+//         }
+//    "insert new data" in new StorageScope{
+//      var oldData: Profile = null
+//      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
+//      val profileSearch: Profile = new Profile()
+//      Thread.sleep(TIMEOUT_MED)
+//      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//    }
+//
+//    "delete and insert existing data" in new StorageScope{
+//      val data = mockProfile.authorizedData(authorizedContentBasic.fields)
+//      pa.store(pa._dbQ, connSteve.writeCnxn, data.toStoreKey, Serializer.serialize[ Data ](data))
+//      Thread.sleep(TIMEOUT_MED)
+//      pa.updateDataById(connSteve.writeCnxn, data)
+//      val profileSearch: Profile = new Profile()
+//
+//      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//    }
+//
+//    "update unmodified data without creating duplicates" in new StorageScope {
+//      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
+//      val profileSearch: Profile = new Profile()
+//      Thread.sleep(TIMEOUT_MED)
+//      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//
+//      // Update the data using the same profile
+//      pa.updateDataById(connSteve.writeCnxn, mockProfile.authorizedData(authorizedContentBasic.fields))
+//      Thread.sleep(TIMEOUT_MED)
+//      fetchMustBe(basicProfile)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
+//    }
   }
 }
