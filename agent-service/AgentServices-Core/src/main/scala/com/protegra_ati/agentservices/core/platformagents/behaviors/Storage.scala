@@ -92,7 +92,7 @@ trait Storage
     {
       store(_dbQ, cnxn, dataKey, Serializer.serialize[ Data ](newData))
     }
-    fetchListOrElse[ Data ](_dbQ, cnxn, newData.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))(1, 0, () => handlerElse)
+    fetchListOrElse[ Data ](_dbQ, cnxn, newData.toDeleteKey, handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[ Data ], newData))(0, 0, () => handlerElse)
   }
 
   //could use a notion of retries if it isn't safe to delete
