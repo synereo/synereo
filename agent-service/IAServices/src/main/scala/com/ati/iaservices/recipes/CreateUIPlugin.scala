@@ -2,6 +2,7 @@ package com.ati.iaservices.recipes
 
 import com.ati.iaservices.helpers.CreateUIHelper
 import com.ati.iaservices.recipes.LauncherPluginSession.session
+import com.protegra_ati.agentservices.store.util.LogConfiguration._
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,6 +25,6 @@ class CreateUIPlugin extends LauncherPluginBase {
 
   def createUI(): Unit = {
     session.ui = new CreateUIHelper().createUI()
-    println("*************** UIPlatformAgent launcher started ***************")
+    logger.info("UIPlatformAgent launcher started")
   }
 }

@@ -1,5 +1,7 @@
 package com.ati.iaservices.recipes
 
+import com.protegra_ati.agentservices.store.util.LogConfiguration._
+
 /**
  * Created with IntelliJ IDEA.
  * User: pspratt
@@ -18,16 +20,12 @@ abstract class LauncherPluginBase {
   def run(args: Array[ String ]): Unit = {
 
     try {
-      println("Running Plugin: " + pluginName)
-
       validateSession
       execute(args)
-
-      println("Plugin Completed: " + pluginName)
     }
     catch {
       case e:Exception => {
-        println("Exception returned from Plugin " + pluginName + ": " + e.getMessage)
+        logger.error("Exception returned from Plugin " + pluginName, e)
         if (exitOnFail) throw e
       }
     }

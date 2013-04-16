@@ -3,6 +3,7 @@ package com.ati.iaservices.recipes
 import com.ati.iaservices.recipes.LauncherPluginSession.session
 import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 import com.ati.iaservices.helpers.RegisterAgentHelper
+import com.protegra_ati.agentservices.store.util.LogConfiguration._
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,15 +35,15 @@ abstract class RegisterAgentPlugin extends LauncherPluginBase {
   }
 
   def registerAgent(): Unit = {
-    println("*************** Start RegisterAgent ***************")
+    logger.info("Start RegisterAgent")
 
     val eventKey = "register"
 
     val registerAgentHelper = new RegisterAgentHelper() {
       def handleListen(response: RegistrationResponse) = {
-        println("*************** RegisterAgent Successful ***************")
-        println("*************** New AgentId = " + response.agentId + " ***************")
-        println("*************** Finish RegisterAgent ***************")
+        logger.info("RegisterAgent Successful")
+        logger.info("New AgentId = " + response.agentId + "")
+        logger.info("Finish RegisterAgent")
       }
     }
     registerAgentHelper.listen(session.ui, session.agentSessionId, eventKey)
