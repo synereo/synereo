@@ -41,7 +41,7 @@ object LauncherPluginUtil {
   def createRandomWord(length: Int):String = {
     def safeChar() = {
       val res = (Random.nextInt('z' - 'a') + 'a').toChar
-      res.toChar
+      res
     }
 
     List.fill(length)(safeChar()).mkString
