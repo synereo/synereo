@@ -253,35 +253,35 @@ with UUIDOps {
   type KRsrc =
     Option[Resource] @scala.util.continuations.cpsParam[Option[Resource],Unit]
 
-  def assayK(
-    place : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) : Option[Resource] @scala.util.continuations.cpsParam[Option[Resource],Unit]
-  = {
-    val contents = _labelMap.get( place )
-    contents match {
-      case sv @ Some( value ) => {
-	shift { ( k : GetContinuation ) => { sv } }
-      }
-      case None => {
-	val rslt = 
-	  shift {
-	    ( k : GetContinuation ) => {	      
-	      _waiters( place ) =
-		_waiters.get( place ).getOrElse( Nil ) ++ List( k )
-	    }	    	      
-	  }
-	reportage(
-	  ( 
-	    this
-	    + "resuming with value : "
-	    + rslt
-	  )
-	)
-	_labelMap -= place
-	rslt
-      }	
-    }
-  }
+  // def assayK(
+//     place : CnxnCtxtLabel[Namespace,Var,Tag]
+//   ) : Option[Resource] @scala.util.continuations.cpsParam[Option[Resource],Unit]
+//   = {
+//     val contents = _labelMap.get( place )
+//     contents match {
+//       case sv @ Some( value ) => {
+// 	shift { ( k : GetContinuation ) => { sv } }
+//       }
+//       case None => {
+// 	val rslt = 
+// 	  shift {
+// 	    ( k : GetContinuation ) => {	      
+// 	      _waiters( place ) =
+// 		_waiters.get( place ).getOrElse( Nil ) ++ List( k )
+// 	    }	    	      
+// 	  }
+// 	reportage(
+// 	  ( 
+// 	    this
+// 	    + "resuming with value : "
+// 	    + rslt
+// 	  )
+// 	)
+// 	_labelMap -= place
+// 	rslt
+//       }	
+//     }
+//   }
 
   // def fetch(
 //     path : CnxnCtxtLabel[Namespace,Var,Tag]

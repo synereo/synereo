@@ -8,7 +8,7 @@
 
 package com.biosimilarity.lift.model.agent
 
-import scala.collection.mutable._
+import scala.collection.mutable.{Node => CNode,_}
 import scala.xml._
 import scala.actors._
 import Actor._

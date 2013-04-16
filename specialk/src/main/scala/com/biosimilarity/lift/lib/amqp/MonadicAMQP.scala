@@ -304,7 +304,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
   def jsonDispatcher( handle : T => Unit )(
     implicit dispatchOnCreate : Boolean, port : Int
   ) : StdMonadicJSONAMQPDispatcher[T] = {
-    jsonDispatcher( "mult", handle )
+    jsonDispatcher( "mult", handle )( dispatchOnCreate, port )
   }
 
   def jsonDispatcher( exQNameStr : String, handle : T => Unit )(

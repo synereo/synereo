@@ -173,10 +173,10 @@ case class Fingerer(
 ) extends IdSupplier {
   override def recurse() = rcrs
   override def failOnUnknownType() = fOUT
-  override def inAction() = {
-    case x : Classic => {
-    }
-  }
+  // override def inAction() = {
+//     case x : Classic => {
+//     }
+//   }
   override def getNextId() = {
     new UUID() + ""
   }

@@ -1,7 +1,7 @@
 package scala.concurrent
 
 import java.util.concurrent.{Executors, ExecutorService, TimeUnit}
-import util.continuations._
+import scala.util.continuations._
 
 trait ThreadPoolRunners extends TaskRunnersBase
 {

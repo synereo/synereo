@@ -14,7 +14,8 @@
   <properties>
     <!-- scala.version>2.8.1</scala.version -->
     <!-- scala.version>2.9.0-1</scala.version -->
-    <scala.version>2.9.2</scala.version>
+    <!-- scala.version>2.9.2</scala.version -->
+    <scala.version>2.10.0</scala.version>
     <!-- Common plugin settings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
@@ -107,8 +108,8 @@
     </dependency>
     <dependency>
       <groupId>org.mongodb</groupId>
-      <artifactId>casbah_2.9.2</artifactId>
-      <version>2.5.0</version>
+      <artifactId>casbah_2.10</artifactId>
+      <version>2.5.1</version>
       <type>pom</type>
     </dependency>
     <!-- dependency>
@@ -138,8 +139,8 @@
 <!--     </dependency> -->
     <dependency>
       <groupId>org.json4s</groupId>
-      <artifactId>json4s-jackson_2.9.2</artifactId>
-      <version>3.1.0</version>
+      <artifactId>json4s-jackson_2.10</artifactId>
+      <version>3.2.4</version>
     </dependency>
     <dependency>
 	<groupId>biz.source_code</groupId>
@@ -178,11 +179,16 @@
 <!-- 	</exclusion> -->
 <!--       </exclusions> -->
 <!--     </dependency>             -->
-    <dependency>
+    <!-- dependency>
       <groupId>org.scalaz</groupId>
       <artifactId>scalaz_2.9.2</artifactId>
       <version>7.0.0-M8</version>
-    </dependency>            
+    </dependency -->
+    <!-- <dependency> -->
+<!--       <groupId>org.scalaz</groupId> -->
+<!--       <artifactId>scalaz-core_2.10</artifactId> -->
+<!--       <version>7.0.0-RC1</version> -->
+<!--     </dependency>             -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
@@ -204,11 +210,16 @@
       <!-- version>1.6.8</version -->
       <!-- scope>test</scope -->
     <!-- /dependency -->
-    <dependency>
+    <!-- dependency>
       <groupId>org.specs2</groupId>
       <artifactId>specs2_2.9.2</artifactId>
       <version>1.12.3</version>
-    </dependency>   
+    </dependency -->  
+    <dependency>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2_2.10</artifactId>
+      <version>1.14</version>
+    </dependency>
 
     <!-- dependency -->
       <!-- groupId>org.scala-tools.testing</groupId -->
@@ -218,11 +229,16 @@
       <!-- version>1.9</version -->
     <!-- /dependency -->
     
-    <dependency>
+    <!-- dependency>
       <groupId>org.scalacheck</groupId>
       <artifactId>scalacheck_2.9.2</artifactId>
       <version>1.10.0</version>
-    </dependency>            
+    </dependency --> 
+    <!-- dependency>
+      <groupId>org.scalacheck</groupId>
+      <artifactId>scalacheck_2.10</artifactId>
+      <version>1.10.0</version>
+    </dependency --> 
 
     <!-- dependency -->
       <!-- groupId>org.scalatest</groupId -->
@@ -232,10 +248,15 @@
       <!-- version>1.7.1</version -->
     <!-- /dependency -->
 
-    <dependency>
+    <!-- dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_2.9.2</artifactId>
       <version>2.0.M6-SNAP3</version>
+    </dependency -->  
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.10</artifactId>
+      <version>2.0.M5b</version>
     </dependency>            
 
     <!-- <dependency> -->
@@ -327,6 +348,16 @@
     <!-- for LiftConsole -->
     <dependency>
       <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+    <dependency>
+	<groupId>org.scala-lang</groupId>
+	<artifactId>scala-actors</artifactId>
+	<version>${scala.version}</version>
+    </dependency>            
+    <dependency>
+      <groupId>org.scala-lang</groupId>
       <artifactId>scala-compiler</artifactId>
       <version>${scala.version}</version>
       <scope>test</scope>
@@ -334,8 +365,8 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>jline</artifactId>
-      <version>${scala.version}</version>
-    </dependency>
+      <version>2.9.0-1</version>
+    </dependency>    
 
     <!-- for Prolog capabilities -->
     <!-- dependency -->
@@ -644,18 +675,27 @@
       <version>9.1-901.jdbc4</version>
     </dependency>     
     
-    <dependency>
+    <!-- dependency>
       <groupId>org.scalesxml</groupId>
       <artifactId>scales-xml_2.9.2</artifactId>
       <version>0.4.4</version>
-    </dependency>
-    
+    </dependency -->
     <dependency>
+      <groupId>org.scalesxml</groupId>
+      <artifactId>scales-xml_2.10</artifactId>
+      <version>0.4.5</version>
+    </dependency>            
+    
+    <!-- dependency>
 	<groupId>org.scalesxml</groupId>
 	<artifactId>scales-jaxen_2.9.2</artifactId>
 	<version>0.4.4</version>
-    </dependency>
-            
+    </dependency -->
+    <dependency>
+      <groupId>org.scalesxml</groupId>
+      <artifactId>scales-jaxen_2.10</artifactId>
+      <version>0.4.5</version>
+    </dependency>                        
 
     <dependency>
       <groupId>org.ow2.sirocco.vmm</groupId>

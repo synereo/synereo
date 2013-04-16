@@ -547,7 +547,7 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
       labelToNS( blobLabel ),
       List( 
 	new CnxnCtxtLeaf [Namespace,Var,Tag] (
-	  Left( valToTag( toBlob( cc ) ) )
+	  Left( valToTag( toBlob( cc.asInstanceOf[AnyRef] ) ) )
 	)
       )
     )
