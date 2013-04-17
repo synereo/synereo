@@ -51,7 +51,9 @@ abstract class ConnectToAllHelper {
             // note that the ids will only match in the case of registration, where the agentId is used
             // as the id for the self cnxn.
             if (connection.alias != selfAlias) {
-              createConnection(selfAlias, selfCnxn, connection.getAlias(), connection.writeCnxn)
+              val agentId = UUID.fromString(connection.writeCnxn.trgt.getHost())
+              val agentCnxn = getAgentCnxnProxy(agentId)
+              createConnection(selfAlias, selfCnxn, connection.getAlias(), agentCnxn)
             }
           }
 
