@@ -9,7 +9,7 @@ val ui = new CreateUIHelper().createUI
 
 // GET CONNECTIONS FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val userAgentId = UUID.fromString("800009c0-e3ba-46f2-87ad-b316668a9f0d")
+val userAgentId = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
 def target: AgentCnxnProxy = {
   new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
 }

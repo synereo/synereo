@@ -5,8 +5,10 @@ import java.util.UUID
 import com.protegra_ati.agentservices.core.util.Results
 import org.specs2.time.Duration
 import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
-import com.protegra_ati.agentservices.core.schema.{AgentCnxnProxy, Profile}
+import com.protegra_ati.agentservices.core.schema.{CompositeData, Connection, AgentCnxnProxy, Profile}
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import java.util
+import com.ati.iaservices.schema.{Content, LabelKey, PostContent, Label}
 
 class HelperTest extends SpecificationWithJUnit
 with Serializable
@@ -69,5 +71,47 @@ with Serializable
       Results.triggered(resultKey) must be_==(true).eventually(5, new Duration(2000))
     }
   }
+
+  "Test" should {
+    "Do Stuff" in {
+      val resultKey = Results.getKey()
+      val agentSessionId = UUID.randomUUID
+
+      // ADD LABEL FOR ALREADY EXISTING AGENT
+      val userAgentId = UUID.fromString("1432aa75-b8f6-411c-8ede-7ff4d67ea189")
+      def target: AgentCnxnProxy = {
+        new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
+      }
+
+      var connections = new util.ArrayList[Connection]()
+      var getContentHelper = new GetContentHelper[Connection]() {
+        def handleListen(connection: Connection) = {
+          connections.add(connection)
+        }
+      }
+      val connectionTag = "Connection" + UUID.randomUUID()
+      getContentHelper.listen(ui, agentSessionId, connectionTag)
+      getContentHelper.request(ui, agentSessionId, connectionTag, Connection.SEARCH_ALL, target)
+
+      // WAIT FOR CONNECTION TO LOAD
+      Thread.sleep(5000)
+
+      val setContentHelper = new SetContentHelper[Label[PostContent]]() {
+        def handleListen(data: Label[PostContent]) = {
+          println("*************** Found CompositeData Data ***************")
+          println(data)
+        }
+      }
+      val label = new Label(new LabelKey("profile(name(\"John\"))"), new Content(new PostContent("This is a post")))
+      val compositeData = new CompositeData[Label[PostContent]](connections, label)
+      val tag = "SetLabel" + UUID.randomUUID()
+      setContentHelper.listen(ui, agentSessionId, tag)
+      setContentHelper.request(ui, agentSessionId, tag, compositeData, target)
+
+      //Results.triggered(resultKey) must be_==(true).eventually(5, new Duration(2000))
+    }
+  }
+
+
 
 }
