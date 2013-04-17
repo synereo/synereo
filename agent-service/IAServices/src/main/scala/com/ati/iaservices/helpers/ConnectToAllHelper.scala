@@ -27,6 +27,7 @@ abstract class ConnectToAllHelper {
   def connectToAll(ui: AgentHostUIPlatformAgent, selfCnxn: AgentCnxnProxy, agentSessionId: UUID, selfAlias: String, userAgentId: UUID): Unit = {
 
     val APP_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
+    val selfAgentId =   UUID.fromString(selfCnxn.trgt.getHost())
     val eventKey = "request_all_connections"
 
     def getAgentCnxnProxy(agentId:UUID): AgentCnxnProxy = {
@@ -51,9 +52,9 @@ abstract class ConnectToAllHelper {
             // note that the ids will only match in the case of registration, where the agentId is used
             // as the id for the self cnxn.
             if (connection.alias != selfAlias) {
-              val agentId = UUID.fromString(connection.writeCnxn.trgt.getHost())
-              val agentCnxn = getAgentCnxnProxy(agentId)
-              createConnection(selfAlias, selfCnxn, connection.getAlias(), agentCnxn)
+              val connectionAgentId = UUID.fromString(connection.writeCnxn.trgt.getHost())
+              val connectionAgentCnxn = getAgentCnxnProxy(connectionAgentId)
+              createConnection(selfAlias, selfCnxn, selfAgentId, connection.getAlias(), connectionAgentCnxn, connectionAgentId)
             }
           }
 
@@ -75,11 +76,13 @@ abstract class ConnectToAllHelper {
     def createConnection (
           aAlias: String,
           aTargetCnxn: AgentCnxnProxy,
+          aAgentId: UUID,
           bAlias: String,
-          bTargetCnxn: AgentCnxnProxy): Unit = {
+          bTargetCnxn: AgentCnxnProxy,
+          bAgentId:UUID): Unit = {
 
-      val aId = UUID.randomUUID().toString
-      val bId = UUID.randomUUID().toString
+      val aId = aAgentId.toString
+      val bId = bAgentId.toString
 
       val connAB = ConnectionFactory.createConnection(bAlias, ConnectionCategory.Person.toString(), ConnectionCategory.Person.toString(), TrustLevel.Trusted.toString(), aId, bId)
       val connBA = ConnectionFactory.createConnection(aAlias, ConnectionCategory.Person.toString(), ConnectionCategory.Person.toString(), TrustLevel.Trusted.toString(), bId, aId)
