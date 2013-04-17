@@ -47,7 +47,12 @@ abstract class ConnectToAllHelper {
           val connections = response.data.toList.map(_.asInstanceOf[Connection]).toList
 
           for (connection <- connections) {
-            createConnection(selfAlias, selfCnxn, connection.getAlias(), connection.writeCnxn)
+            // if the connection does not already involve the agent we are connecting, then create it
+            // note that the ids will only match in the case of registration, where the agentId is used
+            // as the id for the self cnxn.
+            if (connection.alias != selfAlias) {
+              createConnection(selfAlias, selfCnxn, connection.getAlias(), connection.writeCnxn)
+            }
           }
 
           handleConnectionsCompleted()

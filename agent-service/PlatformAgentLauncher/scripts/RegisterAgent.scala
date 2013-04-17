@@ -4,12 +4,14 @@ import com.protegra_ati.agentservices.core.schema.{AgentCnxnProxy, Profile}
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID
 
+var count: Int = 0
+
 // START STORE AND UI PlatformAgents
-val store = new CreateStoreHelper().createStore
+//val store = new CreateStoreHelper().createStore
 val ui = new CreateUIHelper().createUI
 
 // CREATE AN AGENTSESSION
-val agentSessionId = UUID.randomUUID
+var agentSessionId:UUID = UUID.randomUUID
 val BIZNETWORK_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
 
 def createProfile(agentId: UUID) = {
@@ -19,7 +21,7 @@ def createProfile(agentId: UUID) = {
 
   val profile = new Profile()
   profile.setFirstName("John")
-  profile.setLastName("Smith")
+  profile.setLastName("Smith" + count.toString())
   profile.setCity("Winnipeg")
   profile.setCountry("Canada")
 
@@ -43,7 +45,10 @@ val registerAgentHelper = new RegisterAgentHelper() {
     createProfile(response.agentId)
   }
 }
-val tag = "Register" + UUID.randomUUID()
-registerAgentHelper.listen(ui, agentSessionId, tag)
-registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")
+var tag:String = ""
 
+count = count + 1
+agentSessionId = UUID.randomUUID
+tag = "Register" + agentSessionId.toString
+registerAgentHelper.listen(ui, agentSessionId, tag)
+registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith" + count.toString())
