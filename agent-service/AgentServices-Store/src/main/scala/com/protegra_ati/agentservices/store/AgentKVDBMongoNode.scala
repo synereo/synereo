@@ -2219,7 +2219,7 @@ object DataClasses {
 
 package mongo.usage {
   import DataClasses._
-  import com.biosimilarity.lift.lib.bulk._
+  //import com.biosimilarity.lift.lib.bulk._
 
   //import net.liftweb.json._
 
@@ -2231,7 +2231,7 @@ package mongo.usage {
   object AgentKVDBMongoScope
 	 extends AgentKVDBMongoNodeScope[String,String,String,String]
 	 with UUIDOps
-	 with BulkCollectDImport
+	 //with BulkCollectDImport
 	 with Serializable
   {
     import SpecialKURIDefaults._
@@ -3643,7 +3643,7 @@ package mongo.usage {
 		  }      
     }
 
-    override def handleEntry( grndTypeStr : String, imprtTypeStr : String, mTTTypeStr : String )( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+    def handleEntry( grndTypeStr : String, imprtTypeStr : String, mTTTypeStr : String )( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
       for(
 	JObject( fvs ) <- json \\ "putval" ;
 	JArray( valueArray ) <- json \\ "values" ;
@@ -3691,7 +3691,7 @@ package mongo.usage {
       acc
     }
 
-    override def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
+    def handleEntry( json : JValue, acc : Buffer[Elem] ) : Buffer[Elem] = {
       handleEntry(
 	"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground",
 	"com.protegra.agentservicestore.usage.BulkCollectDImporter",
@@ -3763,7 +3763,7 @@ package mongo.usage {
       println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
       println( "---------------------------******>>>>>>******---------------------------" )
 
-      scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
+      //scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
 
       recordsFileName
     }
@@ -3783,7 +3783,7 @@ package mongo.usage {
     @transient
     val dataChunkExchange : MonadicTupleSpace[String,String,ListBuffer[Elem]] = createExchange[ListBuffer[Elem]]()
 
-    override def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
+    def supplyEntries( host : String, queue : String, numOfEntries : Int ) : Unit = {
       // create an AMQP scope
       val collectDAMQPScope = new AMQPStdScope[String]()
       // create an AMQP Queue monad
@@ -3840,7 +3840,7 @@ package mongo.usage {
 	  val db = <records>{acc.toList}</records>
 	  
 	  println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
-	  scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
+	  //scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
 	  fileNames += recordsFileName
 
 	  println( "---------------------------******>>>>>>******---------------------------" )
@@ -3884,56 +3884,56 @@ package mongo.usage {
     def loadDataToRabbitMQ( numOfEntries : Int ) : Unit = {
       supplyEntries( "localhost", "collectDSample", numOfEntries )
     }
-    def importDataFromRabbitMQ( lthrd : String, chunkSize : Int ) : List[String] = {            
-      val fileNameRoot = "collectDImport"
-      val filePtn = ( fileNameRoot + ".*" )
-      val lb = readEntriesFromRabbitMQ( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )
-      val s = new scala.collection.mutable.HashSet[String]( )
+    // def importDataFromRabbitMQ( lthrd : String, chunkSize : Int ) : List[String] = {            
+//       val fileNameRoot = "collectDImport"
+//       val filePtn = ( fileNameRoot + ".*" )
+//       val lb = readEntriesFromRabbitMQ( "localhost", "collectDSample", "collectDImport", lthrd, chunkSize )
+//       val s = new scala.collection.mutable.HashSet[String]( )
 
-      def loop( s : scala.collection.mutable.HashSet[String], n : Int ) : Unit = {
-	println( "---------------------------******>>>>>>******---------------------------" )
-	println( "waiting @ " + ( lthrd + "_" + filePtn ) )
-	println( "to add a filename to the queue for adding to kvdb node db" )
-	println( "---------------------------******>>>>>>******---------------------------" )
+//       def loop( s : scala.collection.mutable.HashSet[String], n : Int ) : Unit = {
+// 	println( "---------------------------******>>>>>>******---------------------------" )
+// 	println( "waiting @ " + ( lthrd + "_" + filePtn ) )
+// 	println( "to add a filename to the queue for adding to kvdb node db" )
+// 	println( "---------------------------******>>>>>>******---------------------------" )
 
-	reset {
-	  for( rsrc <- entryExchange.getS( lthrd + "_" + filePtn ) ) {
-	    println( "---------------------------******>>>>>>******---------------------------" )
-	    println( "got " + rsrc + " @ " + lthrd + "_" + filePtn )
-	    println( "---------------------------******>>>>>>******---------------------------" )
-	    rsrc match {
-	      case Some( fileNameSfx ) => {
-		val fileName = fileNameRoot + fileNameSfx + ".xml"
+// 	reset {
+// 	  for( rsrc <- entryExchange.getS( lthrd + "_" + filePtn ) ) {
+// 	    println( "---------------------------******>>>>>>******---------------------------" )
+// 	    println( "got " + rsrc + " @ " + lthrd + "_" + filePtn )
+// 	    println( "---------------------------******>>>>>>******---------------------------" )
+// 	    rsrc match {
+// 	      case Some( fileNameSfx ) => {
+// 		val fileName = fileNameRoot + fileNameSfx + ".xml"
 		
-		println( "---------------------------******>>>>>>******---------------------------" )
-		println( "alerted that " + fileName + ".xml" + " has been written." )
-		println( "---------------------------******>>>>>>******---------------------------" )
+// 		println( "---------------------------******>>>>>>******---------------------------" )
+// 		println( "alerted that " + fileName + ".xml" + " has been written." )
+// 		println( "---------------------------******>>>>>>******---------------------------" )
 		
-		s += fileName	      
+// 		s += fileName	      
 		
-		println( "---------------------------******>>>>>>******---------------------------" )
-		println( "putting @ " + ( lthrd + fileNameSfx ) )
-		println( "---------------------------******>>>>>>******---------------------------" )
+// 		println( "---------------------------******>>>>>>******---------------------------" )
+// 		println( "putting @ " + ( lthrd + fileNameSfx ) )
+// 		println( "---------------------------******>>>>>>******---------------------------" )
 		
-		entryExchange.putS( lthrd + fileNameSfx, "move along." );
+// 		entryExchange.putS( lthrd + fileNameSfx, "move along." );
 		
-		if ( s.size < n ) { loop( s, n ) }
+// 		if ( s.size < n ) { loop( s, n ) }
 		
-		() // to keep the type checker happy
-	      }
-	      case _ => {
-		throw new Exception( "shouldn't be in this case" )
-	      }
-	    };
-	    ()
-	  }
-	}
-      }
+// 		() // to keep the type checker happy
+// 	      }
+// 	      case _ => {
+// 		throw new Exception( "shouldn't be in this case" )
+// 	      }
+// 	    };
+// 	    ()
+// 	  }
+// 	}
+//       }
 
-      loop( s, 1 )
+//       loop( s, 1 )
 
-      s.toList
-    }
+//       s.toList
+//     }
 
   }
 
@@ -4316,55 +4316,55 @@ package mongo.usage {
 	
     }
       
-    def sporeGet[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-      testConfig : TestConfiguration[ReqBody,RspBody]
-    )( k : Option[mTT.Resource] => Unit ) : Unit = {
-      import scala.math._      
+    // def sporeGet[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+//       testConfig : TestConfiguration[ReqBody,RspBody]
+//     )( k : Option[mTT.Resource] => Unit ) : Unit = {
+//       import scala.math._      
 
-      for(
-	( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) )	
-      ) {
-	val ptn =
-	  testConfig.vars match {
-	    case Some( vars ) => {
-	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv, vars )
-	    }
-	    case None => {
-	      asCnxnCtxtLabel( testConfig.pv )
-	    }
-	  }
-	for( cnxn <- cnxnStrm ) {
-	  reset {
-	    for( rsrc <- kvdbNode.get( cnxn )( ptn ) ) {
-	      k( rsrc )
-	    }
-	  }
-	}
-      }
-    }
+//       for(
+// 	( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) )	
+//       ) {
+// 	val ptn =
+// 	  testConfig.vars match {
+// 	    case Some( vars ) => {
+// 	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable], vars )
+// 	    }
+// 	    case None => {
+// 	      asCnxnCtxtLabel( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable] )
+// 	    }
+// 	  }
+// 	for( cnxn <- cnxnStrm ) {
+// 	  reset {
+// 	    for( rsrc <- kvdbNode.get( cnxn )( ptn ) ) {
+// 	      k( rsrc )
+// 	    }
+// 	  }
+// 	}
+//       }
+//     }
 
-    def sporePut[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-      testConfig : TestConfiguration[ReqBody,RspBody]
-    )( vStream : Stream[String] ) : Unit = {
-      import scala.math._      
+//     def sporePut[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+//       testConfig : TestConfiguration[ReqBody,RspBody]
+//     )( vStream : Stream[String] ) : Unit = {
+//       import scala.math._      
 
-      for( ( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) ) ) {
-	val ptn =
-	  testConfig.vars match {
-	    case Some( vars ) => {
-	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv, vars )
-	    }
-	    case None => {
-	      asCnxnCtxtLabel( testConfig.pv )
-	    }
-	  }
-	for( cnxn <- cnxnStrm; v <- vStream ) {
-	  reset {
-	    kvdbNode.put( cnxn )( ptn, v )
-	  }
-	}
-      }
-    }
+//       for( ( kvdbNode, cnxnStrm ) <- testConfig.testData.getOrElse( configureTest( testConfig.generator ) ) ) {
+// 	val ptn =
+// 	  testConfig.vars match {
+// 	    case Some( vars ) => {
+// 	      CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable], vars )
+// 	    }
+// 	    case None => {
+// 	      asCnxnCtxtLabel( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable] )
+// 	    }
+// 	  }
+// 	for( cnxn <- cnxnStrm; v <- vStream ) {
+// 	  reset {
+// 	    kvdbNode.put( cnxn )( ptn, v )
+// 	  }
+// 	}
+//       }
+//     }
 
     def runClient[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       kvdbNode : Being.AgentKVDBNode[ReqBody,RspBody]
