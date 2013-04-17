@@ -21,6 +21,7 @@ import platformagents._
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import org.specs2.specification.Scope
+import com.protegra_ati.agentservices.core.util.cloner.ClonerFactory
 
 trait StorageScope extends Scope
 with Serializable
@@ -58,11 +59,13 @@ with Serializable
        pa.store(pa._dbQ, connSteve.writeCnxn, mockProfile.toStoreKey, Serializer.serialize[ Profile ](mockProfile))
        Thread.sleep(TIMEOUT_MED)
 
-       for (i <- 1 to 100) {
-         mockProfile.description = "desc" + i
-         pa.updateDataById(connSteve.writeCnxn, mockProfile)
-//         Thread.sleep(20)
-       }
+      val profs = (1 to 100).map(x => {
+        val p = ClonerFactory.getInstance().createDeepClone(mockProfile)
+        p.description = "desc " + x
+        p
+      })
+      profs.foreach(x => pa.updateDataById(connSteve.writeCnxn, x))
+
      val profileSearch: Profile = new Profile()
      countMustBe(1)(pa, connSteve.writeCnxn, profileSearch.toSearchKey)
 
