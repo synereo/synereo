@@ -9,7 +9,7 @@ import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import java.net.URI
 import net.lag.configgy._
-import com.protegra_ati.agentservices.core.schema.util._
+import com.protegra_ati.agentservices.store.util.Severity
 
 trait Storage
 {
@@ -85,6 +85,9 @@ trait Storage
 
   def deleteDataById [T<:Data](cnxn: AgentCnxnProxy, newData: T) : Unit =
   {
+    report("[Thread %s] deleteDataById called for cnxn %s  (storeKey: %s)"
+      .format(Thread.currentThread.getName, cnxn, newData.toStoreKey), Severity.Debug)
+
     // Fetch data to delete, or if no data to delete, store newData
     // must call key before toDeleteKey to get the proper id
     val dataKey = newData.toStoreKey
