@@ -2,6 +2,7 @@ package com.ati.iaservices.recipes
 
 import com.ati.iaservices.helpers.CreateStoreHelper
 import com.ati.iaservices.recipes.LauncherPluginSession.session
+import com.protegra_ati.agentservices.store.util.LogConfiguration._
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,7 +11,8 @@ import com.ati.iaservices.recipes.LauncherPluginSession.session
  * Time: 1:19 PM
  * To change this template use File | Settings | File Templates.
  */
-class CreateStorePlugin extends LauncherPluginBase {
+
+class CreateStorePlugin extends LauncherPluginBase{
   val pluginName = "CreateStore"
   val exitOnFail = true
 
@@ -23,6 +25,6 @@ class CreateStorePlugin extends LauncherPluginBase {
 
   def createStore(): Unit = {
     session.store = new CreateStoreHelper().createStore()
-    println("*************** StorePlatformAgent launcher started ***************")
+    logger.info("StorePlatformAgent launcher started")
   }
 }
