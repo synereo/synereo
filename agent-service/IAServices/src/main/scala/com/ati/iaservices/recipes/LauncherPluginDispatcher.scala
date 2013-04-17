@@ -25,5 +25,6 @@ class LauncherPluginDispatcher {
 
       }
     }
+    case "connectToAll" => new ConnectToAllPlugin()
   }
 }

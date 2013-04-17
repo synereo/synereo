@@ -19,9 +19,7 @@ class LauncherPluginSession {
   var userAgentId: UUID = UUID.randomUUID() // TBD - needs to come from elsewhere
   var ui: AgentHostUIPlatformAgent = null
   var store: AgentHostStorePlatformAgent = null
-  def selfCnxn: AgentCnxnProxy = {
-    new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
-  }
+  var selfCnxn: AgentCnxnProxy = null
 }
 
 object LauncherPluginSession {

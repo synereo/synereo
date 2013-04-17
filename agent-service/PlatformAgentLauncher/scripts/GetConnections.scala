@@ -4,7 +4,7 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-val store = new CreateStoreHelper().createStore
+//val store = new CreateStoreHelper().createStore
 val ui = new CreateUIHelper().createUI
 
 // GET CONNECTIONS FOR ALREADY EXISTING AGENT
@@ -20,6 +20,7 @@ val getContentHelper = new GetContentHelper[Connection]() {
     println(connection)
   }
 }
-val tag = "GetConnection" + UUID.randomUUID()
+
+val tag = "GetConnections" + UUID.randomUUID.toString
 getContentHelper.listen(ui, agentSessionId, tag)
 getContentHelper.request(ui, agentSessionId, tag, Connection.SEARCH_ALL, target)
