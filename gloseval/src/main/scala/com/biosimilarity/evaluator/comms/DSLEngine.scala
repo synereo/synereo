@@ -70,7 +70,7 @@ object ConcreteHL extends AbstractHL {
   type Substitution = Option[List[(String,Label)]]
 }
 
-object PersistedMonadicKVDBMongoNet
+object DSLEngine
        extends PersistedMonadicKVDBMongoNodeScope[String,String,String,ConcreteHL.HLExpr]
        with UUIDOps
   with Serializable
@@ -487,8 +487,8 @@ object PersistedMonadicKVDBMongoNet
   }
 }
 
-object PersistedMongoMolecularUseCase extends Serializable {
-  import PersistedMonadicKVDBMongoNet._   
+object DSLEngineUsage extends Serializable {
+  import DSLEngine._   
   import Being._
   import PersistedKVDBNodeFactory._
   

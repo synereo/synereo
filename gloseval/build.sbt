@@ -1,5 +1,7 @@
 organization  := "com.biosimilarity"
 
+name := "GLoSEval"
+
 version       := "0.1"
 
 scalaVersion  := "2.10.0"
@@ -19,6 +21,9 @@ resolvers ++= Seq(
   "basex-xqj repo" at "http://xqj.net/maven/"
 )
 
+// Change for remote install
+publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
+
 libraryDependencies ++= Seq(
   "io.spray"               %   "spray-can"          % "1.1-M7",
   "io.spray"               %   "spray-routing"      % "1.1-M7",
@@ -33,7 +38,7 @@ libraryDependencies ++= Seq(
 //  "org.json4s"             %   "json4s-jackson_2.9.2" % "3.1.0",
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
   "org.scala-lang"         %   "scala-actors"       % "2.10.0",
-  "com.biosimilarity.lift" %   "specialK"           % "1.1.4.0",
+  "com.biosimilarity.lift" %   "specialK"           % "1.1.4.1",
   "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",
