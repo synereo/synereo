@@ -6,9 +6,8 @@ import java.util.UUID
 val store = new CreateStoreHelper().createStore
 val ui = new CreateUIHelper().createUI
 
-// GET CONNECTIONS FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val selfCnxn = ConnectionFactory.createSelfConnection("", "58b1d9c0-86bd-4d95-8171-e3696e657754")
+val selfCnxn = ConnectionFactory.createSelfConnection("", "29486766-1d82-4c47-93cd-21624b052cdd")
 
 val connectToAllHelper = new ConnectToAllHelper() {
   def handleConnectionsCompleted() = {
@@ -16,4 +15,4 @@ val connectToAllHelper = new ConnectToAllHelper() {
   }
 }
 
-connectToAllHelper.connectToAll(ui, selfCnxn.writeCnxn, agentSessionId, "John Smith1")
+connectToAllHelper.connectToAll(ui, selfCnxn.writeCnxn, agentSessionId, "John Smith")

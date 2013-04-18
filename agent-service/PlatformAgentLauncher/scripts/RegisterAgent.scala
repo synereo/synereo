@@ -19,7 +19,7 @@ def createProfile(agentId: UUID) = {
 
   val profile = new Profile()
   profile.setFirstName("John")
-  profile.setLastName("Smith" + count.toString())
+  profile.setLastName("Smith")
   profile.setCity("Winnipeg")
   profile.setCountry("Canada")
 
@@ -49,4 +49,4 @@ count = count + 1
 agentSessionId = UUID.randomUUID
 tag = "Register" + agentSessionId.toString
 registerAgentHelper.listen(ui, agentSessionId, tag)
-registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith" + count.toString())
+registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")

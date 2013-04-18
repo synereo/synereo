@@ -30,31 +30,24 @@ abstract class ConnectToAllHelper {
     val selfAgentId =   UUID.fromString(selfCnxn.trgt.getHost())
     val eventKey = "request_all_connections"
 
-    def getAgentCnxnProxy(agentId:UUID): AgentCnxnProxy = {
-      new AgentCnxnProxy(agentId.toString.toURI, "", agentId.toString.toURI )
-    }
-
     def requestAllConnections(tag: String): Unit = {
       val req = new GetContentRequest(new EventKey(agentSessionId, tag), Connection.SEARCH_ALL)
-      req.targetCnxn = getAgentCnxnProxy(APP_AGENT_ID)
+      req.targetCnxn = ConnectionFactory.createSelfConnection("", APP_AGENT_ID.toString).writeCnxn
       ui.send(req)
     }
 
     def listenRequestAllConnections(tag: String): Unit = {
       ui.addListener(agentSessionId, "", new MessageEventAdapter(tag) {
         override def getContentResponseReceived(e: GetContentResponseReceivedEvent): Unit = {
-          val response : GetContentResponse = e.msg.asInstanceOf[GetContentResponse]
+          val response : GetContentResponse = e.msg
 
           val connections = response.data.toList.map(_.asInstanceOf[Connection]).toList
 
           for (connection <- connections) {
             // if the connection does not already involve the agent we are connecting, then create it
-            // note that the ids will only match in the case of registration, where the agentId is used
-            // as the id for the self cnxn.
-            if (connection.alias != selfAlias) {
-              val connectionAgentId = UUID.fromString(connection.writeCnxn.trgt.getHost())
-              val connectionAgentCnxn = getAgentCnxnProxy(connectionAgentId)
-              createConnection(selfAlias, selfCnxn, connection.getAlias(), connectionAgentCnxn)
+            val connectionAgentId = UUID.fromString(connection.writeCnxn.trgt.getHost())
+            if (connectionAgentId != selfAgentId) {
+              createConnection(selfAlias, selfCnxn, connection.getAlias(), ConnectionFactory.createSelfConnection("", connectionAgentId.toString).writeCnxn)
             }
           }
 
@@ -73,11 +66,7 @@ abstract class ConnectToAllHelper {
       ui.send(req)
     }
 
-    def createConnection (
-          aAlias: String,
-          aTargetCnxn: AgentCnxnProxy,
-          bAlias: String,
-          bTargetCnxn: AgentCnxnProxy): Unit = {
+    def createConnection (aAlias: String, aTargetCnxn: AgentCnxnProxy, bAlias: String, bTargetCnxn: AgentCnxnProxy): Unit = {
 
       val aId = UUID.randomUUID().toString
       val bId = UUID.randomUUID().toString
@@ -87,7 +76,6 @@ abstract class ConnectToAllHelper {
 
       sendCreateConnectionRequest(aTargetCnxn, connAB )
       sendCreateConnectionRequest(bTargetCnxn, connBA )
-
     }
 
     listenRequestAllConnections(eventKey)
