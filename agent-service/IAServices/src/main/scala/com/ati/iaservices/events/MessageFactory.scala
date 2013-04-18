@@ -26,5 +26,4 @@ object MessageFactory {
     val msg = new RegistrationRequest(eventKey, appId, alias)
     return msg
   }
-
 }

@@ -24,7 +24,7 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 abstract class ConnectToAllHelper {
   def handleConnectionsCompleted()
 
-  def connectToAll(ui: AgentHostUIPlatformAgent, selfCnxn: AgentCnxnProxy, agentSessionId: UUID, selfAlias: String, userAgentId: UUID): Unit = {
+  def connectToAll(ui: AgentHostUIPlatformAgent, selfCnxn: AgentCnxnProxy, agentSessionId: UUID, selfAlias: String): Unit = {
 
     val APP_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
     val selfAgentId =   UUID.fromString(selfCnxn.trgt.getHost())
@@ -54,7 +54,7 @@ abstract class ConnectToAllHelper {
             if (connection.alias != selfAlias) {
               val connectionAgentId = UUID.fromString(connection.writeCnxn.trgt.getHost())
               val connectionAgentCnxn = getAgentCnxnProxy(connectionAgentId)
-              createConnection(selfAlias, selfCnxn, selfAgentId, connection.getAlias(), connectionAgentCnxn, connectionAgentId)
+              createConnection(selfAlias, selfCnxn, connection.getAlias(), connectionAgentCnxn)
             }
           }
 
@@ -76,13 +76,11 @@ abstract class ConnectToAllHelper {
     def createConnection (
           aAlias: String,
           aTargetCnxn: AgentCnxnProxy,
-          aAgentId: UUID,
           bAlias: String,
-          bTargetCnxn: AgentCnxnProxy,
-          bAgentId:UUID): Unit = {
+          bTargetCnxn: AgentCnxnProxy): Unit = {
 
-      val aId = aAgentId.toString
-      val bId = bAgentId.toString
+      val aId = UUID.randomUUID().toString
+      val bId = UUID.randomUUID().toString
 
       val connAB = ConnectionFactory.createConnection(bAlias, ConnectionCategory.Person.toString(), ConnectionCategory.Person.toString(), TrustLevel.Trusted.toString(), aId, bId)
       val connBA = ConnectionFactory.createConnection(aAlias, ConnectionCategory.Person.toString(), ConnectionCategory.Person.toString(), TrustLevel.Trusted.toString(), bId, aId)

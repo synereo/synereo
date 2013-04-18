@@ -39,6 +39,6 @@ class ConnectToAllPlugin  extends LauncherPluginBase {
         println("*************** Finish ConnectToAll ***************")
       }
     }
-    helper.connectToAll(session.ui, session.selfCnxn, session.agentSessionId, session.selfAlias, session.userAgentId)
+    helper.connectToAll(session.ui, session.selfCnxn, session.agentSessionId, session.selfAlias)
   }
 }
