@@ -17,10 +17,10 @@ class TreeItem[+A]( val item : A ) extends Tree[A] {
   override def equals( o : Any ) : Boolean = {
     o match {
       case that : TreeItem[A] => {
-	item.equals( that.item )
+        item.equals( that.item )
       }
       case _ => {
-	false
+        false
       }
     }
   }
@@ -42,10 +42,10 @@ class TreeSection[+A](
   override def equals( o : Any ) : Boolean = {
     o match {
       case that : TreeSection[A] => {
-	section.equals( that.section )
+        section.equals( that.section )
       }
       case _ => {
-	false
+        false
       }
     }
   }

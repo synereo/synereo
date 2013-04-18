@@ -15,7 +15,7 @@ trait ZipperMutation[A] {
   ) : Location[A] = {
     location match {
       case Location( _, ctxt ) =>
-	Location( tree, ctxt )
+        Location( tree, ctxt )
     }
   }
   def insertRight(
@@ -24,16 +24,16 @@ trait ZipperMutation[A] {
   ) : Location[A] = {
     location match {
       case Location( _, Top( ) ) => {
-	throw new Exception( "insert of top" )
+        throw new Exception( "insert of top" )
       }
       case Location(
-	curr,
-	TreeContext( left, up, right )
+        curr,
+        TreeContext( left, up, right )
       ) => {
-	Location(
-	  curr,
-	  TreeContext( left, up, tree :: right )
-	)	
+        Location(
+          curr,
+          TreeContext( left, up, tree :: right )
+        )       
       }
     }    
   }
@@ -42,16 +42,16 @@ trait ZipperMutation[A] {
   ) : Location[A] = {
     location match {
       case Location( _, Top( ) ) => {
-	throw new Exception( "insert of top" )
+        throw new Exception( "insert of top" )
       }
       case Location(
-	curr,
-	TreeContext( left, up, right )
+        curr,
+        TreeContext( left, up, right )
       ) => {
-	Location(
-	  curr,
-	  TreeContext( tree :: left, up, right )
-	)	
+        Location(
+          curr,
+          TreeContext( tree :: left, up, right )
+        )       
       }
     }    
   }
@@ -60,16 +60,16 @@ trait ZipperMutation[A] {
   ) : Location[A] = {
     location match {
       case Location( TreeItem( _ ), _ ) => {
-	throw new Exception( "down of item" )
+        throw new Exception( "down of item" )
       }
       case Location(
-	TreeSection( progeny ),
-	ctxt
+        TreeSection( progeny ),
+        ctxt
       ) => {
-	Location(
-	  tree,
-	  TreeContext( Nil, ctxt, progeny )
-	)
+        Location(
+          tree,
+          TreeContext( Nil, ctxt, progeny )
+        )
       }
     }
   }
@@ -78,31 +78,31 @@ trait ZipperMutation[A] {
   ) : Location[A] = {
     location match {
       case Location( _, Top( ) ) => {
-	throw new Exception( "delete of top" )
+        throw new Exception( "delete of top" )
       }
       case Location(
-	_,
-	TreeContext( left, up, r :: right )
+        _,
+        TreeContext( left, up, r :: right )
       ) => {
-	Location(
-	  r,
-	  TreeContext( left, up, right )
-	)
+        Location(
+          r,
+          TreeContext( left, up, right )
+        )
       }
       case Location(
-	_,
-	TreeContext( l :: left, up, Nil )
+        _,
+        TreeContext( l :: left, up, Nil )
       ) => {
-	Location(
-	  l,
-	  TreeContext( left, up, Nil )
-	)
+        Location(
+          l,
+          TreeContext( left, up, Nil )
+        )
       }
       case Location(
-	_,
-	TreeContext( Nil, up, Nil )
+        _,
+        TreeContext( Nil, up, Nil )
       ) => {
-	Location( TreeSection( Nil ), up )
+        Location( TreeSection( Nil ), up )
       }
     }
   }

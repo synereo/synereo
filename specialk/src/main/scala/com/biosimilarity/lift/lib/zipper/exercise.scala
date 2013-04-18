@@ -14,21 +14,21 @@ with ZipperMutation[String]{
   val arithmeticExpr1 =
     AST[String](
       List(
-	AST[String](
+        AST[String](
           List(
             Token[String]( "a" ),
             Token[String]( "*" ),
             Token[String]( "b" )
           )
-	),
-	Token[String]( "+" ),
-	AST[String](
+        ),
+        Token[String]( "+" ),
+        AST[String](
           List(
             Token[String]( "c" ),
             Token[String]( "*" ),
             Token[String]( "d" )
           )
-	)
+        )
       )
     )
   val arithmeticExpr2 =
@@ -43,33 +43,33 @@ with ZipperMutation[String]{
     Location[String](
       Token[String]( "*" ),
       TreeContext[String](
-	List( Token[String]( "c" ) ),
-	TreeContext[String](
+        List( Token[String]( "c" ) ),
+        TreeContext[String](
           List(
             Token[String]( "+" ),
             AST[String](
               List(
-		Token[String]( "a" ),
-		Token[String]( "*" ),
-		Token[String]( "b" )
+                Token[String]( "a" ),
+                Token[String]( "*" ),
+                Token[String]( "b" )
               )
             )
           ),
           Top( ),
           List( )
         ),
-	List( Token[String]( "d" ) )
+        List( Token[String]( "d" ) )
       )
     )
   def show( depth : Int )( tree : Tree[String] ) : Unit = {
     tree match {
       case TreeItem( item : String ) => {
-	val indent =
-	  ( "" /: (1 to depth) )( { ( acc, d ) => acc + " " } )
-	println( indent + "Leaf : " + item )
+        val indent =
+          ( "" /: (1 to depth) )( { ( acc, d ) => acc + " " } )
+        println( indent + "Leaf : " + item )
       }
       case TreeSection( section : List[Tree[String]] ) => {
-	for( t <- section ){ show( depth + 2 )( t ) }
+        for( t <- section ){ show( depth + 2 )( t ) }
       }
     }
   }
@@ -81,12 +81,12 @@ with ZipperMutation[String]{
   def pushUps( f : Tree[String] => Unit )( location : Location[String] ) : Unit = {
     location match {
       case Location( tree, Top( ) ) => {
-	f( tree )
-	//println( "at the top" )
+        f( tree )
+        //println( "at the top" )
       }
       case Location( tree, ctxt ) => {
-	f( tree )
-	pushUps( f )( up( location ) )
+        f( tree )
+        pushUps( f )( up( location ) )
       }
     }
   }
