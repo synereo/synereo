@@ -6,14 +6,12 @@ import org.specs2.mutable._
 import java.util.UUID
 import com.protegra_ati.agentservices.core.util.Results
 import org.specs2.time.Duration
-import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
 import com.protegra_ati.agentservices.core.events.{GetContentResponseReceivedEvent, MessageEventAdapter}
-import com.protegra_ati.agentservices.core.messages.content.{GetContentRequest, GetContentResponse}
+import com.protegra_ati.agentservices.core.messages.content.GetContentRequest
 import com.protegra_ati.agentservices.core.messages.EventKey
 
 class GetContentPluginTest extends SpecificationWithJUnit
-with Serializable
-{
+with Serializable {
   "GetContentPlugin with Profile" should {
     "return a Profile" in {
 
@@ -29,10 +27,8 @@ with Serializable
       new CreateUIPlugin().run()
 
       // SETUP LISTENER
-      session.ui.addListener(session.agentSessionId, "", new MessageEventAdapter(tag)
-      {
-        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) =
-        {
+      session.ui.addListener(session.agentSessionId, "", new MessageEventAdapter(tag) {
+        override def getContentResponseReceived(e: GetContentResponseReceivedEvent) {
           Results.trigger(resultKey)
         }
       })

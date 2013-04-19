@@ -2,21 +2,21 @@ import com.ati.iaservices.helpers.{CreateUIHelper, CreateStoreHelper, GetContent
 import com.ati.iaservices.schema._
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema.{Connection, CompositeData}
-import java.util.ArrayList
+import java.util
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-val store = new CreateStoreHelper().createStore
-val ui = new CreateUIHelper().createUI
+val store = new CreateStoreHelper().createStore()
+val ui = new CreateUIHelper().createUI()
 
 // ADD LABEL FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val selfCnxn = ConnectionFactory.createSelfConnection("", "29486766-1d82-4c47-93cd-21624b052cdd")
+val selfCnxn = ConnectionFactory.createSelfConnection("", "05f4482a-c4cc-4ddd-a07a-fcfb2e50700f")
 
 // GET ALL CONNECTIONS FOR THE AGENT
-var connections = new ArrayList[Connection]()
+var connections = new util.ArrayList[Connection]()
 var getContentHelper = new GetContentHelper[Connection]() {
-  def handleListen(connection: Connection) = {
+  def handleListen(connection: Connection) {
     println("Adding connection: " + connection)
     connections.add(connection)
   }
@@ -28,36 +28,36 @@ getContentHelper.request(ui, agentSessionId, connectionTag, Connection.SEARCH_AL
 // WAIT FOR CONNECTIONS TO LOAD
 Thread.sleep(5000)
 
-val setContentHelper = new SetContentHelper[Label[_ <: ContentValue]]() {
-  def handleListen(label: Label[_ <: ContentValue]) = {
+val setContentHelper = new SetContentHelper[Label]() {
+  def handleListen(label: Label) {
     println("*************** Found Label Data ***************")
     println(label)
   }
 }
 
 val tag = "SetLabel" + UUID.randomUUID()
-var label : Label[_ <: ContentValue] = new Label(new LabelKey("profile(name(\"Steve\"))"), new Content(new PostContent("This is a post")))
-var compositeData = new CompositeData[Label[_ <: ContentValue]](connections, label)
+var label = new Label(new LabelKey("profile(name(\"Steve\"))"), new MessageContent("This is a post"))
+var compositeData = new CompositeData[Label](connections, label)
 setContentHelper.listen(ui, agentSessionId, tag)
 setContentHelper.request(ui, agentSessionId, tag, compositeData, selfCnxn.writeCnxn)
 
-label = new Label(new LabelKey("profile(name(\"Jane\"))"),  new Content(new LinkContent("http://www.google.com")))
-compositeData = new CompositeData[Label[_ <: ContentValue]](connections, label)
+label = new Label(new LabelKey("profile(name(\"Jane\"))"), new ImageContent("http://www.google.com", "Title"))
+compositeData = new CompositeData[Label](connections, label)
 setContentHelper.listen(ui, agentSessionId, tag)
 setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
 
-label = new Label(new LabelKey("profile(address(\"Jane\"))"),  new Content(new PostContent("Winnipeg")))
-compositeData = new CompositeData[Label[_ <: ContentValue]](connections, label)
+label = new Label(new LabelKey("profile(address(\"Jane\"))"), new MessageContent("Winnipeg"))
+compositeData = new CompositeData[Label](connections, label)
 setContentHelper.listen(ui, agentSessionId, tag)
 setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
 
-label = new Label(new LabelKey("profile(address(\"John\"))"),  new Content(new EmptyContent()))
-compositeData = new CompositeData[Label[_ <: ContentValue]](connections, label)
+label = new Label(new LabelKey("profile(address(\"John\"))"), null)
+compositeData = new CompositeData[Label](connections, label)
 setContentHelper.listen(ui, agentSessionId, tag)
 setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
 
-val getContentHelper2 = new GetContentHelper[Label[_]]() {
-  def handleListen(label: Label[_]) = {
+val getContentHelper2 = new GetContentHelper[Label]() {
+  def handleListen(label: Label) {
     println("*************** Found Label Data ***************")
     println(label)
   }

@@ -4,8 +4,8 @@ import com.protegra_ati.agentservices.core.schema.Profile
 import java.util.UUID
 
 // START STORE and UI PlatformAgents
-val store = new CreateStoreHelper().createStore
-val ui = new CreateUIHelper().createUI
+val store = new CreateStoreHelper().createStore()
+val ui = new CreateUIHelper().createUI()
 
 // CREATE NEW PROFILE FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
@@ -17,8 +17,8 @@ profile.setLastName("Smith")
 profile.setCity("Winnipeg")
 profile.setCountry("Canada")
 
-val setContentHelper = new SetContentHelper[Profile]()  {
-  def handleListen(profile: Profile) = {
+val setContentHelper = new SetContentHelper[Profile]() {
+  def handleListen(profile: Profile) {
     println("*************** Found Profile Data ***************")
     println(profile)
   }
@@ -29,7 +29,7 @@ setContentHelper.request(ui, agentSessionId, tag, profile, selfCnxn.writeCnxn)
 
 // GET THE PROFILE(S) FOR THE AGENT
 val getContentHelper = new GetContentHelper[Profile]() {
-  def handleListen(profile: Profile) = {
+  def handleListen(profile: Profile) {
     println("*************** Found Profile Data ***************")
     println(profile)
   }

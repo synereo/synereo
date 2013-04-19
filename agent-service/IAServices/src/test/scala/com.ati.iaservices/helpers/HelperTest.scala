@@ -8,14 +8,13 @@ import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 import com.protegra_ati.agentservices.core.schema.{CompositeData, Connection, AgentCnxnProxy, Profile}
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util
-import com.ati.iaservices.schema.{Content, LabelKey, PostContent, Label}
+import com.ati.iaservices.schema.{LabelKey, MessageContent, Label}
 
 class HelperTest extends SpecificationWithJUnit
-with Serializable
-{
+with Serializable {
   val BIZNETWORK_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
-  val store = new CreateStoreHelper().createStore
-  val ui = new CreateUIHelper().createUI
+  val store = new CreateStoreHelper().createStore()
+  val ui = new CreateUIHelper().createUI()
 
   "RegisterAgentHelper" should {
     "Create a new agent" in {
@@ -25,8 +24,8 @@ with Serializable
       val registerAgentHelper = new RegisterAgentHelper() {
         def handleListen(response: RegistrationResponse) {
           if (response.agentId != null) {
-            println("*************** NewAgentId = " + response.agentId + " ***************" )
-            println
+            println("*************** NewAgentId = " + response.agentId + " ***************")
+            println()
             Results.trigger(resultKey)
           }
         }
@@ -47,10 +46,10 @@ with Serializable
       val registerAgentHelper = new RegisterAgentHelper() {
         def handleListen(response: RegistrationResponse) {
           if (response.agentId != null) {
-            println("*************** NewAgentId = " + response.agentId + " ***************" )
-            println
+            println("*************** NewAgentId = " + response.agentId + " ***************")
+            println()
             val setContentHelper = new SetContentHelper[Profile] {
-              def handleListen(profile: Profile) = {
+              def handleListen(profile: Profile) {
                 if (profile != null && profile.firstName.equals("John")) {
                   Results.trigger(resultKey)
                 }
@@ -58,7 +57,7 @@ with Serializable
             }
             val eventKey = "Set_Profile"
             val target = new AgentCnxnProxy(response.agentId.toString.toURI, "", response.agentId.toString.toURI)
-            val profile = new Profile("John","Smith", "", "", "Canada", "", "", "", "")
+            val profile = new Profile("John", "Smith", "", "", "Canada", "", "", "", "")
             setContentHelper.listen(ui, agentSessionId, eventKey)
             setContentHelper.request(ui, agentSessionId, eventKey, profile, target)
           }
@@ -80,12 +79,12 @@ with Serializable
       // ADD LABEL FOR ALREADY EXISTING AGENT
       val userAgentId = UUID.fromString("1432aa75-b8f6-411c-8ede-7ff4d67ea189")
       def target: AgentCnxnProxy = {
-        new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI )
+        new AgentCnxnProxy(userAgentId.toString.toURI, "", userAgentId.toString.toURI)
       }
 
       var connections = new util.ArrayList[Connection]()
-      var getContentHelper = new GetContentHelper[Connection]() {
-        def handleListen(connection: Connection) = {
+      val getContentHelper = new GetContentHelper[Connection]() {
+        def handleListen(connection: Connection) {
           connections.add(connection)
         }
       }
@@ -96,14 +95,14 @@ with Serializable
       // WAIT FOR CONNECTION TO LOAD
       Thread.sleep(5000)
 
-      val setContentHelper = new SetContentHelper[Label[PostContent]]() {
-        def handleListen(data: Label[PostContent]) = {
+      val setContentHelper = new SetContentHelper[Label]() {
+        def handleListen(data: Label) {
           println("*************** Found CompositeData Data ***************")
           println(data)
         }
       }
-      val label = new Label(new LabelKey("profile(name(\"John\"))"), new Content(new PostContent("This is a post")))
-      val compositeData = new CompositeData[Label[PostContent]](connections, label)
+      val label = new Label(new LabelKey("profile(name(\"John\"))"), new MessageContent("This is a post"))
+      val compositeData = new CompositeData[Label](connections, label)
       val tag = "SetLabel" + UUID.randomUUID()
       setContentHelper.listen(ui, agentSessionId, tag)
       setContentHelper.request(ui, agentSessionId, tag, compositeData, target)
@@ -111,7 +110,6 @@ with Serializable
       //Results.triggered(resultKey) must be_==(true).eventually(5, new Duration(2000))
     }
   }
-
 
 
 }

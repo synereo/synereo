@@ -2,20 +2,21 @@ import com.ati.iaservices.helpers.{CreateUIHelper, CreateStoreHelper, GetContent
 import com.ati.iaservices.schema._
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema.Connection
-import java.util.{ArrayList, UUID}
+import java.util
+import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-val store = new CreateStoreHelper().createStore
-val ui = new CreateUIHelper().createUI
+val store = new CreateStoreHelper().createStore()
+val ui = new CreateUIHelper().createUI()
 
 // GET LABELS FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
 val selfCnxn = ConnectionFactory.createSelfConnection("", "29486766-1d82-4c47-93cd-21624b052cdd")
 
 // GET ALL CONNECTIONS FOR THE AGENT
-var connections = new ArrayList[Connection]()
+var connections = new util.ArrayList[Connection]()
 var getContentHelper = new GetContentHelper[Connection]() {
-  def handleListen(connection: Connection) = {
+  def handleListen(connection: Connection) {
     println("Adding connection: " + connection)
     connections.add(connection)
   }
@@ -27,8 +28,8 @@ getContentHelper.request(ui, agentSessionId, connectionTag, Connection.SEARCH_AL
 // WAIT FOR CONNECTIONS TO LOAD
 Thread.sleep(5000)
 
-val getContentHelper2 = new GetContentHelper[Label[_]]() {
-  def handleListen(label: Label[_]) = {
+val getContentHelper2 = new GetContentHelper[Label]() {
+  def handleListen(label: Label) {
     println("*************** Found Label Data ***************")
     println(label)
   }

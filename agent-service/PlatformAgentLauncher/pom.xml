@@ -1,5 +1,5 @@
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>platformagentlauncher</artifactId>
@@ -16,10 +16,10 @@
         <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
         <iaservices.version>1.0.0.0</iaservices.version>
 
-         <!-- Common plugin settings -->
+        <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
-          <!-- vscaladoc settings -->
+        <!-- vscaladoc settings -->
         <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
         <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
@@ -81,33 +81,33 @@
         </extensions>
         <plugins>
             <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-resources-plugin</artifactId>
-              <version>2.3</version>
-          </plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.3</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-                  <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                  </descriptorRefs>
-                  <archive>
-                    <manifest>
-                      <mainClass>com.protegra_ati.platformagentlauncher.App</mainClass>
-                    </manifest>
-                  </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.protegra_ati.platformagentlauncher.App</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
                 <executions>
-                  <execution>
-                    <phase>package</phase>
-                    <goals>
-                      <goal>single</goal>
-                    </goals>
-                  </execution>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
                 </executions>
-              </plugin>
+            </plugin>
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
@@ -147,10 +147,10 @@
                         <phase>test-compile</phase>
                     </execution>
                     <execution>
-                       <phase>process-resources</phase>
-                       <goals>
-                         <goal>compile</goal>
-                       </goals>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

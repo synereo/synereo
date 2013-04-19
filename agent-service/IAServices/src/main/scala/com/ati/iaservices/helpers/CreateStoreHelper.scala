@@ -14,7 +14,7 @@ class CreateStoreHelper {
   final val LOG_AGENTSERVICES_PROPERTIES = "log_agentservices.properties"
 
   //refactor this into core
-  def checkAllStoreConfigFiles() = {
+  def checkAllStoreConfigFiles() {
     LauncherPluginUtil.configFileExists(STORE_CONFIG)
     LauncherPluginUtil.configFileExists(DB_STORE_CONFIG)
     LauncherPluginUtil.configFileExists(DB_STORE_DB_CONFIG)
@@ -27,9 +27,9 @@ class CreateStoreHelper {
 
   def createStore(): AgentHostStorePlatformAgent = {
     val store = new AgentHostStorePlatformAgent()
-    checkAllStoreConfigFiles
+    checkAllStoreConfigFiles()
     store.initFromConfig(STORE_CONFIG)
-    return store
+    store
   }
 
 }

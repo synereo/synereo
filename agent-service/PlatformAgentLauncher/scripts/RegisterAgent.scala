@@ -4,17 +4,15 @@ import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema.Profile
 import java.util.UUID
 
-var count: Int = 0
-
 // START STORE AND UI PlatformAgents
-val store = new CreateStoreHelper().createStore
-val ui = new CreateUIHelper().createUI
+val store = new CreateStoreHelper().createStore()
+val ui = new CreateUIHelper().createUI()
 
 // CREATE AN AGENTSESSION
-var agentSessionId:UUID = UUID.randomUUID
+var agentSessionId: UUID = UUID.randomUUID
 val BIZNETWORK_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
 
-def createProfile(agentId: UUID) = {
+def createProfile(agentId: UUID) {
   val selfCnxn = ConnectionFactory.createSelfConnection("", agentId.toString)
 
   val profile = new Profile()
@@ -24,7 +22,7 @@ def createProfile(agentId: UUID) = {
   profile.setCountry("Canada")
 
   val setContentHelper = new SetContentHelper[Profile]() {
-    def handleListen(profile: Profile) = {
+    def handleListen(profile: Profile) {
       println("*************** Found Profile Data ***************")
       println(profile)
     }
@@ -36,17 +34,14 @@ def createProfile(agentId: UUID) = {
 
 // REGISTER A NEW AGENT
 val registerAgentHelper = new RegisterAgentHelper() {
-  def handleListen(response: RegistrationResponse) = {
+  def handleListen(response: RegistrationResponse) {
     println("*************** Found RegistrationResponse Data ***************")
     println(response)
     println("*************** New AgentId = " + response.agentId + " ***************")
     createProfile(response.agentId)
   }
 }
-var tag:String = ""
 
-count = count + 1
-agentSessionId = UUID.randomUUID
-tag = "Register" + agentSessionId.toString
+val tag = "Register" + agentSessionId.toString
 registerAgentHelper.listen(ui, agentSessionId, tag)
 registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")

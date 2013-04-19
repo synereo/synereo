@@ -9,16 +9,14 @@ import java.util.UUID
 abstract class SetContentHelper[T <: Data] {
   def handleListen(data: T)
 
-  def request(ui: AgentHostUIPlatformAgent, agentSessionId : UUID, tag: String, data : Data, target : AgentCnxnProxy) = {
+  def request(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String, data: Data, target: AgentCnxnProxy) {
     val req = MessageFactory.createSetContentRequest(agentSessionId, tag, data, target)
     ui.send(req)
   }
 
-  def listen(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) = {
-    ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
-    {
-      override def setContentResponseReceived(e: SetContentResponseReceivedEvent) =
-      {
+  def listen(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) {
+    ui.addListener(agentSessionId, "", new MessageEventAdapter(tag) {
+      override def setContentResponseReceived(e: SetContentResponseReceivedEvent) {
         handleListen(e.getMsg.data.asInstanceOf[T])
       }
     })
