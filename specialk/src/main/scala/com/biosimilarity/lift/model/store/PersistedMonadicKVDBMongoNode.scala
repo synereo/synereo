@@ -606,7 +606,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
       {	 		
 	import LogConfiguration._ 
 	override def tmpDirStr : String = {
-	  val tds = config.getString( "storageDir", "tmp" )       
+	  val tds = 
+	    try {
+	      config.getString( "storageDir" )
+	    }
+	    catch {
+	      case e => "tmp"
+	    }
 	  val tmpDir = new java.io.File( tds )
 	  if ( ! tmpDir.exists ) {
 	    tmpDir.mkdir

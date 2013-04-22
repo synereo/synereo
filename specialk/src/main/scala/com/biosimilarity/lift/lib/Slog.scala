@@ -8,8 +8,9 @@
 
 package com.biosimilarity.lift.lib
 
-import net.lag.configgy._
-import net.lag.logging._
+//import net.lag.configgy._
+//import net.lag.logging._
+import com.typesafe.config._
 
 import scala.annotation.elidable
 import scala.annotation.elidable._
@@ -17,7 +18,7 @@ import scala.xml._
 import scala.collection.mutable.HashMap
 import java.util.UUID
 
-import net.lag.configgy._
+//import net.lag.configgy._
 
 import org.apache.log4j.{PropertyConfigurator, Level, Logger}
 
@@ -128,17 +129,32 @@ trait SeverityConversions {
 
 object LogConfiguration extends SeverityConversions
 with Serializable {
-  Configgy.configure("log.conf")
+  //Configgy.configure("log.conf")
 
-  @transient lazy val config = Configgy.config
-  var tweetLevel = SeverityFromOption(config.getString("tweetLevel"))
-  var blogLevel = SeverityFromOption(config.getString("blogLevel"))
+  //@transient lazy val config = Configgy.config
+  @transient lazy val config = 
+    ConfigFactory.load( "log.conf" )
+
+  var tweetLevel =
+    try {
+      SeverityFromString( config.getString( "tweetLevel" ) )
+    }
+    catch {
+      case e => Severity.Trace
+    }
+  var blogLevel =
+    try {
+      SeverityFromString( config.getString( "blogLevel" ) )
+    }
+    catch {
+      case e => Severity.Trace
+    }
 
   @transient lazy val logger = lazyLoadLogger()
 
   def lazyLoadLogger() = {
-    PropertyConfigurator.configure("log.properties")
-    Logger.getLogger(this.getClass.getName)
+    PropertyConfigurator.configure( "log.properties" )
+    Logger.getLogger( this.getClass.getName )
   }
 }
 

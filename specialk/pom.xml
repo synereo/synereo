@@ -192,6 +192,11 @@
       <!-- version>8.0.4.v20111024</version -->
       <version>8.0.1.v20110908</version>
     </dependency>
+    <dependency>
+      <groupId>com.typesafe</groupId>
+      <artifactId>config</artifactId>
+      <version>1.0.0</version>
+    </dependency>
     <!-- for LiftConsole -->
     <dependency>
       <groupId>org.scala-lang</groupId>

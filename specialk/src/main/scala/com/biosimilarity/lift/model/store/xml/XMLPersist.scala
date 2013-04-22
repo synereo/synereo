@@ -41,7 +41,8 @@ import org.xmldb.api.base._
 import org.xmldb.api.modules._
 import org.xmldb.api._
 
-import net.lag.configgy._
+//import net.lag.configgy._
+import com.typesafe.config._
 
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map

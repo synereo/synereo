@@ -8,7 +8,8 @@
 
 package com.biosimilarity.lift.lib
 
-import net.lag.configgy._
+//import net.lag.configgy._
+import com.typesafe.config._
 
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
@@ -41,23 +42,30 @@ extends ConfigurationTrampolineDefaults {
     (new java.lang.Object()).getClass.getMethods.toList.map( _.getName )
 
   // Another way?
-  lazy val configurationFromFile : Map[String,String] = processConfigurationFile
+  lazy val configurationFromFile : Map[String,String] =
+    processConfigurationFile
 
   def processConfigurationFile(
     confFileName : String,
     env : Map[String,String]
   ) : Map[String,String] = {
-    Configgy.configure( confFileName )
-    val config = Configgy.config    
+    //Configgy.configure( confFileName )
+    //val config = Configgy.config    
+
+    val config =
+      ConfigFactory.load( confFileName )    
 
     for(
       m <- configurationDefaults.getClass.getMethods;      
       if (! builtins.contains( m.getName ) )
     ) {
       val confVal =
-	config.getString( m.getName ).getOrElse(
-	  m.invoke( configurationDefaults )
-	)
+	try {
+	  config.getString( m.getName )	  
+	}
+	catch {
+	  case e => m.invoke( configurationDefaults )
+	}
       env += (( m.getName, confVal.toString ) )
     }
 
