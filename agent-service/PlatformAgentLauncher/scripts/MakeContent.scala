@@ -51,7 +51,7 @@ compositeData = new CompositeData[Label](connections, label)
 setContentHelper.listen(ui, agentSessionId, tag)
 setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
 
-label = new Label(new LabelKey("profile(address(\"John\"))"), null)
+label = new Label(new LabelKey("profile(address(\"John\"))"), new EmptyContent())
 compositeData = new CompositeData[Label](connections, label)
 setContentHelper.listen(ui, agentSessionId, tag)
 setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
