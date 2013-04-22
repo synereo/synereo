@@ -8,7 +8,8 @@
 
 package com.protegra_ati.agentservices.store.util
 
-import net.lag.configgy._
+//import net.lag.configgy._
+import com.typesafe.config._
 
 import scala.collection.mutable.HashMap
 
@@ -62,15 +63,28 @@ object LogConfiguration {
   }
 
   lazy val config = {
-    Configgy.configure("log_agentservices.conf")
-    Configgy.config
+    // Configgy.configure("log_agentservices.conf")
+//     Configgy.config
+    ConfigFactory.load( "log_agentservices.conf" )    
   }
-  var traceLevel = SeverityFromOption(config.getString("traceLevel"))
-  var logLevel = SeverityFromOption(config.getString("logLevel"))
+  var traceLevel =
+    try {
+      SeverityFromString( config.getString( "traceLevel" ) )
+    }
+    catch {
+      case e => Severity.Trace
+    }
+  var logLevel =
+    try {
+      SeverityFromString( config.getString( "logLevel" ) )
+    }
+    catch {
+      case e => Severity.Trace
+    }
 
   lazy val logger = {
-    PropertyConfigurator.configure("log_agentservices.properties")
-    Logger.getLogger(this.getClass.getName)
+    PropertyConfigurator.configure( "log_agentservices.properties" )
+    Logger.getLogger( this.getClass.getName )
   }
 }
 
