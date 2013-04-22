@@ -10,6 +10,8 @@ import java.util.UUID
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.time.Duration
 
+// scalastyle:off regex
+
 class HelperTest extends SpecificationWithJUnit
 with Serializable {
   val retries = 5
