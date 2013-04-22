@@ -1,17 +1,20 @@
 package com.ati.iaservices.recipes
 
 import com.ati.iaservices.recipes.LauncherPluginSession.session
-import com.protegra_ati.agentservices.core.schema._
-import org.specs2.mutable._
-import java.util.UUID
-import com.protegra_ati.agentservices.core.util.Results
-import org.specs2.time.Duration
 import com.protegra_ati.agentservices.core.events.{GetContentResponseReceivedEvent, MessageEventAdapter}
 import com.protegra_ati.agentservices.core.messages.content.GetContentRequest
 import com.protegra_ati.agentservices.core.messages.EventKey
+import com.protegra_ati.agentservices.core.schema.Profile
+import com.protegra_ati.agentservices.core.util.Results
+import java.util.UUID
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.time.Duration
 
 class GetContentPluginTest extends SpecificationWithJUnit
 with Serializable {
+  val retries = 10
+  val duration = 2000
+
   "GetContentPlugin with Profile" should {
     "return a Profile" in {
 
@@ -40,7 +43,7 @@ with Serializable {
       session.ui.send(req)
 
       // CONFIRM THAT LISTENER WAS CALLED
-      Results.triggered(resultKey) must be_==(true).eventually(10, new Duration(2000))
+      Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(duration))
     }
   }
 }

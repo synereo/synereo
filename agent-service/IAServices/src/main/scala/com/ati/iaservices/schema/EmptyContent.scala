@@ -5,9 +5,7 @@ import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 
 case class EmptyContent() extends Content
 with Serializable
-with KVDBSerializable {
-
-}
+with KVDBSerializable
 
 object EmptyContent {
   final val SEARCH_ALL_KEY = new EmptyContent().toSearchKey

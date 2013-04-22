@@ -10,7 +10,7 @@ class LabelKey(var searchKey: String) extends Data {
 
   override def toString: String = {
     {
-      "LabelKey[id=" + id + ", locale=" + localeCode + ", searchKey=" + searchKey + "]"
+      String.format("LabelKey[id=%s, locale=%s, searchKey=%s]", id, localeCode, searchKey)
     }
   }
 }
@@ -30,10 +30,12 @@ case class Label(var key: LabelKey, var content: Content) extends Data {
   var contentType = formattedContentValueName
 
   def formattedContentValueName: String = {
-    if (content == null)
-      return ""
-
-    content.getClass.getName.trimPackage
+    if (content == null) {
+      ""
+    }
+    else {
+      content.getClass.getName.trimPackage
+    }
   }
 
   override protected def ignoredFieldsForSearchAndStoreKey(): List[String] = List("content") ::: super.ignoredFieldsForSearchAndStoreKey
@@ -41,6 +43,7 @@ case class Label(var key: LabelKey, var content: Content) extends Data {
   override def toString: String = {
     {
       "Label[id=" + id + ", locale=" + localeCode + ", key=" + key + ", content=" + content + "]"
+      String.format("Label[id=%s, locale=%s, key=%s, content=%s]", id, localeCode, key, content)
     }
   }
 }
