@@ -3,6 +3,7 @@ package com.ati.iaservices.helpers
 import com.protegra_ati.agentservices.core.util.Results
 import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 import com.protegra_ati.agentservices.core.schema.{CompositeData, Connection, AgentCnxnProxy, Profile}
+import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.ati.iaservices.schema.{LabelKey, MessageContent, Label}
 import java.util
@@ -68,6 +69,35 @@ with Serializable {
             val profile = new Profile(firstName, lastName, "", "", "", "", "", "", "")
             setContentHelper.listen(ui, agentSessionId, eventKey)
             setContentHelper.request(ui, agentSessionId, eventKey, profile, target)
+          }
+        }
+      }
+      val eventKey = tag + UUID.randomUUID().toString
+      registerAgentHelper.listen(ui, agentSessionId, eventKey)
+      registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
+
+      Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
+    }
+  }
+
+  "ConnectToAllHelper" should {
+    "Create connection to everyone connected to BIZNETWORK_AGENT_ID" in {
+      val resultKey = Results.getKey()
+      val agentSessionId = UUID.randomUUID
+
+      val registerAgentHelper = new RegisterAgentHelper() {
+        def handleListen(response: RegistrationResponse) {
+          if (response.agentId != null) {
+            println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+            println()
+
+            var connectToAllHelper = new ConnectToAllHelper {
+              def handleConnectionsCompleted() {
+                // Should check count of connections to BIZNETWORK_AGENT_ID and count of connection to new Agent
+                Results.trigger(resultKey)
+              }
+            }
+            connectToAllHelper.connectToAll(ui, ConnectionFactory.createSelfConnection(alias, response.agentId.toString).writeCnxn, agentSessionId, alias )
           }
         }
       }

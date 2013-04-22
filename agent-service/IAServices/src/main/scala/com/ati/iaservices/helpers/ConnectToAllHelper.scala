@@ -31,16 +31,18 @@ abstract class ConnectToAllHelper {
       ui.addListener(agentSessionId, "", new MessageEventAdapter(tag) {
         override def getContentResponseReceived(e: GetContentResponseReceivedEvent) {
           val response: GetContentResponse = e.msg
-
-          val connections = response.data.toList.map(_.asInstanceOf[Connection]).toList
-
-          for (connection <- connections) {
-            // if the connection does not already involve the agent we are connecting, then create it
-            val connectionAgentId = UUID.fromString(connection.writeCnxn.trgt.getHost)
-            if (connectionAgentId != selfAgentId) {
-              createConnection(selfAlias, selfCnxn, connection.getAlias, ConnectionFactory.createSelfConnection("", connectionAgentId.toString).writeCnxn)
+          response.data.foreach(datum => {
+            datum match {
+              case connection: Connection => {
+                // if the connection does not already involve the agent we are connecting, then create it
+                val connectionAgentId = UUID.fromString(connection.writeCnxn.trgt.getHost)
+                if (connectionAgentId != selfAgentId) {
+                  createConnection(selfAlias, selfCnxn, connection.getAlias, ConnectionFactory.createSelfConnection("", connectionAgentId.toString).writeCnxn)
+                }
+              }
+              case _ => {}
             }
-          }
+          })
 
           handleConnectionsCompleted()
         }

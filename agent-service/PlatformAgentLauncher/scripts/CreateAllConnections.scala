@@ -7,7 +7,7 @@ val store = new CreateStoreHelper().createStore()
 val ui = new CreateUIHelper().createUI()
 
 val agentSessionId = UUID.randomUUID
-val selfCnxn = ConnectionFactory.createSelfConnection("", "29486766-1d82-4c47-93cd-21624b052cdd")
+val selfCnxn = ConnectionFactory.createSelfConnection("", "373cbb00-8d04-4723-88f2-550b52ea46b7")
 
 val connectToAllHelper = new ConnectToAllHelper() {
   def handleConnectionsCompleted() {
