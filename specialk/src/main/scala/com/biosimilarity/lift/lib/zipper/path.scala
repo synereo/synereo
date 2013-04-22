@@ -46,9 +46,9 @@ extends ZipperNavigation[A] {
   ) : Location[A1] = {
     ( location /: rpath )(
       {
-	( acc, e ) => {
-	  move[A1]( acc, e )
-	}
+        ( acc, e ) => {
+          move[A1]( acc, e )
+        }
       }
     )
   }
@@ -77,9 +77,9 @@ with ZipperPathNavigation[A] {
   ) : EndPoint[A1] = {
     ( location /: rpath )(
       {
-	( acc, e ) => {
-	  move[A1]( acc, e )
-	}
+        ( acc, e ) => {
+          move[A1]( acc, e )
+        }
       }
     )
   }
