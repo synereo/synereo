@@ -35,7 +35,7 @@ trait ContentRequestSet
     report("entering handlePrivateContentRequestChannel in StorePlatform", Severity.Trace)
     msg match {
       case x: GetContentRequest => {
-        if ( isLocalNetworkMode() || _cnxnUserSelfConnectionsList.contains(x.targetCnxn) || authorizationNotRequired(x) ) {
+        if ( isLocalNetworkMode || _cnxnUserSelfConnectionsList.contains(x.targetCnxn) || authorizationNotRequired(x) ) {
           processGetContentRequest(x)
         }
         else{
@@ -157,7 +157,7 @@ trait ContentRequestSet
           //register self connection in a self connection list
           addToHostedCnxn(selfCnxn)
           //appBizNetwork Conn just needs to listen to it's 1 new conn
-          if (isDistributedNetworkMode())
+          if (isDistributedNetworkMode)
             listenForHostedCnxn(selfCnxn)
         }
       }
@@ -529,7 +529,7 @@ trait ContentRequestSet
   def processNewConnection(newConnection: Connection, selfCnxn: AgentCnxnProxy) =
   {
     //start listening
-    if (isDistributedNetworkMode()) {
+    if (isDistributedNetworkMode) {
       listenPublicRequests(newConnection.writeCnxn)
       listenPublicResponses(newConnection.readCnxn)
     }

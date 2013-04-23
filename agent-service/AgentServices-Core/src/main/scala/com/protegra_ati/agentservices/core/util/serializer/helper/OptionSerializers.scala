@@ -6,11 +6,11 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 class NoneSerializer extends Serializer[ None.type ] {
   def write(kryo: Kryo, output: Output, obj: None.type) {}
 
-  def read(kryo: Kryo, input: Input, typ: Class[None.type]) = None
+  def read(kryo: Kryo, input: Input, typ: Class[None.type]): None.type = None
 }
 
 object NoneSerializer {
-  def FITS_TO: Class[None$] = classOf[ None$ ]
+  def FITS_TO: Class[_] = None.getClass
 }
 
 class SomeSerializer extends Serializer[ Option[_] ] {

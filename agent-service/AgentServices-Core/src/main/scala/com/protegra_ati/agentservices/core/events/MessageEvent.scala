@@ -21,7 +21,7 @@ abstract class MessageEvent[T <: Message](source:T, _msg:T) extends EventObject(
   //End BeanProperty
 
   def trigger(listeners:List[ _ <: MessageEventAdapter ]) = {
-     listeners.map {x => synchronized { triggerEvent(x) } }
+     listeners.map {x: MessageEventAdapter => synchronized { triggerEvent(x) } }
   }
 
   def triggerEvent(adapter: MessageEventAdapter)

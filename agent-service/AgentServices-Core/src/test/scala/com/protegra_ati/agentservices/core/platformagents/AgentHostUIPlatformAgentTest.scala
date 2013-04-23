@@ -34,7 +34,7 @@ import scala.util.Random
 import java.net.{URI}
 import verifier._
 import com.protegra_ati.agentservices.core._
-import com.protegra_ati.agentservices.core.util.Results
+import com.protegra_ati.agentservices.core.util.{ConfigurationManager, Results}
 
 
 class AgentHostUIPlatformAgentTest extends SpecificationWithJUnit
@@ -56,7 +56,8 @@ with Serializable
   {
     val pa = new AgentHostUIPlatformAgent()
     pa._cnxnUIStore = cnxnUIStore
-    pa.initFromConfig(CONFIG_UI, UUID.randomUUID)
+    val config = new ConfigurationManager(CONFIG_UI)
+    pa.initFromConfig(config, UUID.randomUUID)
     pa
   }
 

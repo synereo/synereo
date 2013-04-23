@@ -32,7 +32,7 @@ import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import com.protegra_ati.agentservices.store.util.Severity
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
-import com.protegra_ati.agentservices.core.util.Results
+import com.protegra_ati.agentservices.core.util.{ConfigurationManager, Results}
 import org.specs2.specification.Scope
 
 trait CnxnSetup extends Scope
@@ -61,7 +61,8 @@ with Serializable
 //    val privateAcquaintanceAddresses = List[ URI ]()
     val pa = new AgentHostStorePlatformAgent()
     // pa._cnxnUIStore = cnxn
-    pa.initFromConfig(CONFIG_STORE, UUID.randomUUID)
+    val config = new ConfigurationManager(CONFIG_STORE)
+    pa.initFromConfig(config, UUID.randomUUID)
     pa
   }
 

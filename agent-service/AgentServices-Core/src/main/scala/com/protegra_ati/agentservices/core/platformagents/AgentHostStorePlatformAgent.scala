@@ -6,38 +6,19 @@ package com.protegra_ati.agentservices.core.platformagents
 
 import com.protegra_ati.agentservices.core.platformagents.behaviors._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
-import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
-import com.protegra_ati.agentservices.store.extensions.URIExtensions._
-import com.protegra_ati.agentservices.core.events._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
-import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
-import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages.content._
 import com.protegra_ati.agentservices.core.messages.login._
 import invitation._
 import introduction._
 
-//import referral._
-//import registration._
-//import search._
-
 import verifier._
 import com.protegra_ati.agentservices.store.util.Severity
 
-import java.net.URI
-import net.lag.configgy._
-
-import scala.util.continuations._
-import java.lang.Boolean
 import com.protegra_ati.agentservices.core.schema._
-import org.joda.time.{DateTime, Instant}
-import java.util.{UUID, HashMap}
-import scala.collection.mutable._
-import java.net.URI
-import java.lang.reflect._
-import scala.concurrent.ops._
-
+import java.util.HashMap
+import com.protegra_ati.agentservices.core.util.ConfigurationManager
 
 class AgentHostStorePlatformAgent extends BasePlatformAgent
 with Serializable
@@ -102,23 +83,17 @@ with MessageStore
 
   var _verifyRequests = new HashMap[ String, VerifyRequest ]
 
-  override def init(@transient configUtil: Config)
+  override def init(config: ConfigurationManager)
   {
-    initPublic(configUtil, Some("db_store_public.conf"))
-    initPrivate(configUtil, Some("db_store.conf"))
-    initDb(configUtil, Some("db_store_db.conf"))
-    //    initResultDb(configUtil)
-
+    initPublic(config)
+    initPrivate(config)
+    initDb(config)
+    
     _storeCnxn = new AgentCnxnProxy(this._id.toString.toURI, "", this._id.toString.toURI)
   }
 
 //  def initForTest(publicAddress: URI, publicAcquaintanceAddresses: List[ URI ], privateAddress: URI, privateAcquaintanceAddresses: List[ URI ], privateRabbitAddress: URI, dbAddress: URI, resultAddress: URI, id: UUID)
 //  {
-//    initPublic(publicAddress, publicAcquaintanceAddresses, Some("db_store_public.conf"))
-//    initPrivate(privateAddress, privateAcquaintanceAddresses, privateRabbitAddress, Some("db_store.conf"))
-//    initDb(dbAddress, Some("db_store_db.conf"))
-//    //    initResultDb(resultAddress, Some("db_store.conf"))
-//
 //    _storeCnxn = new AgentCnxnProxy(id.toString.toURI, "", id.toString.toURI)
 //    super.initForTest(id)
 //  }
@@ -231,7 +206,7 @@ with MessageStore
 
   def sendPrivate(cnxn: AgentCnxnProxy, msg: Message)
   {
-    if ( isPrivateKVDBNetworkMode() ) {
+    if ( isPrivateKVDBNetworkMode ) {
 
       report("!!! Received on Public channel...Sending on privateQ!!!: " + " channel: " + msg.getChannelKey + " cnxn: " + msg.originCnxn, Severity.Debug)
       msg.channelLevel = Some(ChannelLevel.Private)
@@ -266,7 +241,7 @@ with MessageStore
 
 
 
-    if ( ( msg.channelLevel == Some(ChannelLevel.Public) || msg.channelLevel == Some(ChannelLevel.Single) ) && isLocalNetworkMode() )
+    if ( ( msg.channelLevel == Some(ChannelLevel.Public) || msg.channelLevel == Some(ChannelLevel.Single) ) && isLocalNetworkMode )
       spawn {
         processPublicSendLocally(cnxn, msg)
       }
