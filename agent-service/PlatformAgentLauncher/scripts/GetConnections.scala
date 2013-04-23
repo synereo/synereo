@@ -9,11 +9,13 @@ val ui = new CreateUIHelper().createUI()
 
 // GET CONNECTIONS FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val selfCnxn = ConnectionFactory.createSelfConnection("", "d8da6610-4515-439b-9ebd-bd91badcb6b1")
+val selfCnxn = ConnectionFactory.createSelfConnection("", "84114eba-9214-4623-b3ae-f247ee779572")
+var count = 0
 
 val getContentHelper = new GetContentHelper[Connection]() {
   def handleListen(connection: Connection) {
-    println("*************** Found Connection Data ***************")
+    count = count + 1
+    println("*************** Found Connection " + count + " ***************")
     println(connection)
   }
 }
