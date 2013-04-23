@@ -12,8 +12,8 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <scala.version>2.9.2</scala.version>
-        <scala.test.specs2.version>1.12.3</scala.test.specs2.version>
+        <scala.version>2.10.0</scala.version>
+        <scala.test.specs2.version>1.14</scala.test.specs2.version>
         <iaservices.version>1.0.0.0</iaservices.version>
 
         <!-- Common plugin settings -->
@@ -65,9 +65,9 @@
             <version>${iaservices.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.lag</groupId>
-            <artifactId>configgy</artifactId>
-            <version>local</version>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
     <build>

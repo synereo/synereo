@@ -1,7 +1,8 @@
 package com.ati.iaservices.helpers
 
-import com.protegra_ati.agentservices.core.platformagents.AgentHostStorePlatformAgent
 import com.ati.iaservices.recipes.LauncherPluginUtil
+import com.protegra_ati.agentservices.core.platformagents.AgentHostStorePlatformAgent
+import com.protegra_ati.agentservices.core.util.ConfigurationManager
 
 class CreateStoreHelper {
   final val STORE_CONFIG = "init_store.conf"
@@ -13,7 +14,6 @@ class CreateStoreHelper {
   final val LOG_AGENTSERVICES_CONFIG = "log_agentservices.conf"
   final val LOG_AGENTSERVICES_PROPERTIES = "log_agentservices.properties"
 
-  //refactor this into core
   def checkAllStoreConfigFiles() {
     LauncherPluginUtil.configFileExists(STORE_CONFIG)
     LauncherPluginUtil.configFileExists(DB_STORE_CONFIG)
@@ -28,8 +28,8 @@ class CreateStoreHelper {
   def createStore(): AgentHostStorePlatformAgent = {
     val store = new AgentHostStorePlatformAgent()
     checkAllStoreConfigFiles()
-    store.initFromConfig(STORE_CONFIG)
+    val config = new ConfigurationManager(STORE_CONFIG)
+    store.initFromConfig(config)
     store
   }
-
 }
