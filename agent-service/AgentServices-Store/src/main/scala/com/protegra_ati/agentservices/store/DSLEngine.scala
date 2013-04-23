@@ -491,6 +491,31 @@ object DSLEngineUsage extends Serializable {
   import DSLEngine._   
   import Being._
   import PersistedKVDBNodeFactory._
+
+  object ExchangeLabels extends CnxnString[String,String,String] {
+    def evalRequestLabel( majorVersion : String, minorVersion : String, sessionId : String ) = {
+      fromTermString(
+	"evalRequestLabel( majorVersion( \""
+	+ majorVersion
+	+ "\" ), minorVersion( \""
+	+ minorVersion
+	+ "\"), sessionId( \""
+	+ sessionId
+	+ "\" ) )"
+      )
+    }
+    def evalResponseLabel( majorVersion : String, minorVersion : String, sessionId : String ) = {
+      fromTermString(
+	"evalResponseLabel( majorVersion( \""
+	+ majorVersion
+	+ "\" ), minorVersion( \""
+	+ minorVersion
+	+ "\"), sessionId( \""
+	+ sessionId
+	+ "\" ) )"
+      )
+    }
+  }
   
   implicit val retTwist : Boolean = false
   def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
@@ -501,10 +526,10 @@ object DSLEngineUsage extends Serializable {
   ) : Either[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])] = {
     val ( localExchange, remoteExchange ) = 
       if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-	( "DSLExecProtocolLocal", "DSLExecProtocolRemote" )	  
+	( "/DSLExecProtocolLocal", "/DSLExecProtocolRemote" )	  
       }
       else {
-	( "DSLExecProtocol", "DSLExecProtocol" )	  
+	( "/DSLExecProtocol", "/DSLExecProtocol" )	  
       }
     
     if ( returnTwist ) {
