@@ -11,7 +11,7 @@ class CreateUIHelper {
   final val LOG_AGENTSERVICES_PROPERTIES = "log_agentservices.properties"
 
   //refactor this into core
-  def checkAllStoreConfigFiles() = {
+  def checkAllStoreConfigFiles() {
     LauncherPluginUtil.configFileExists(UI_CONFIG)
     LauncherPluginUtil.configFileExists(LOG_KVDB_CONFIG)
     LauncherPluginUtil.configFileExists(LOG_KVDB_PROPERTIES)
@@ -21,8 +21,8 @@ class CreateUIHelper {
 
   def createUI(): AgentHostUIPlatformAgent = {
     val ui = new AgentHostUIPlatformAgent()
-    checkAllStoreConfigFiles
+    checkAllStoreConfigFiles()
     ui.initFromConfig(UI_CONFIG)
-    return ui
+    ui
   }
 }

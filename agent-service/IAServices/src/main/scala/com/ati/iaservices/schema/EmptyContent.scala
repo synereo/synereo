@@ -1,16 +1,16 @@
 package com.ati.iaservices.schema
 
-case class EmptyContent()
-  extends ContentValue()
-{
-}
+import java.io.Serializable
+import com.protegra_ati.agentservices.store.schema.KVDBSerializable
 
-object EmptyContent
-{
-  final val SEARCH_ALL_KEY = new Content(new EmptyContent).toSearchKey
+case class EmptyContent() extends Content
+with Serializable
+with KVDBSerializable
 
-  final val SEARCH_ALL = new Content(new EmptyContent)
-  {
-    override def toSearchKey(): String = EmptyContent.SEARCH_ALL_KEY
+object EmptyContent {
+  final val SEARCH_ALL_KEY = new EmptyContent().toSearchKey
+
+  final val SEARCH_ALL = new EmptyContent {
+    override def toSearchKey: String = EmptyContent.SEARCH_ALL_KEY
   }
 }
