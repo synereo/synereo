@@ -2,29 +2,22 @@ package com.ati.iaservices.recipes
 
 import com.protegra_ati.agentservices.store.util.LogConfiguration._
 
-/**
- * Created with IntelliJ IDEA.
- * User: pspratt
- * Date: 08/04/13
- * Time: 9:53 AM
- * To change this template use File | Settings | File Templates.
- */
 abstract class LauncherPluginBase {
   val pluginName: String
   val exitOnFail: Boolean
 
-  def run() : Unit = {
+  def run() {
     run(Array(""))
   }
 
-  def run(args: Array[ String ]): Unit = {
+  def run(args: Array[String]) {
 
     try {
-      validateSession
+      validateSession()
       execute(args)
     }
     catch {
-      case e:Exception => {
+      case e: Exception => {
         logger.error("Exception returned from Plugin " + pluginName, e)
         if (exitOnFail) throw e
       }
@@ -32,5 +25,6 @@ abstract class LauncherPluginBase {
   }
 
   def validateSession()
-  def execute(args: Array[ String ])
+
+  def execute(args: Array[String])
 }

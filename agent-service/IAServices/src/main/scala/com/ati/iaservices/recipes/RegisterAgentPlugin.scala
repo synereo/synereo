@@ -5,42 +5,39 @@ import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 import com.ati.iaservices.helpers.RegisterAgentHelper
 import com.protegra_ati.agentservices.store.util.LogConfiguration._
 
-/**
- * Created with IntelliJ IDEA.
- * User: pspratt
- * Date: 08/04/13
- * Time: 10:02 AM
- * To change this template use File | Settings | File Templates.
- */
 abstract class RegisterAgentPlugin extends LauncherPluginBase {
   val pluginName = "RegisterAgent"
   val exitOnFail = true
 
   def handleListen(response: RegistrationResponse)
 
-  override def validateSession(): Unit = {
+  override def validateSession() {
     // no additional initialization required
-    if (session.ui == null)
+    if (session.ui == null) {
       throw new SessionInvalidException("session.ui has not been initialized.")
-    if (LauncherPluginSession.session.selfAlias.isEmpty())
+    }
+    if (LauncherPluginSession.session.selfAlias.isEmpty) {
       throw new Exception("session.selfAlias has not been initialized.")
-    if (LauncherPluginSession.session.agentSessionId == null)
+    }
+    if (LauncherPluginSession.session.agentSessionId == null){
       throw new Exception("session.agentSessionId has not been initialized.")
-    if (LauncherPluginSession.session.userAgentId == null)
+    }
+    if (LauncherPluginSession.session.userAgentId == null) {
       throw new Exception("session.userAgentId has not been initialized.")
+    }
   }
 
-  override def execute(args: Array[ String ]): Unit = {
-     registerAgent
+  override def execute(args: Array[String]) {
+    registerAgent()
   }
 
-  def registerAgent(): Unit = {
+  def registerAgent() {
     logger.info("Start RegisterAgent")
 
     val eventKey = "register"
 
     val registerAgentHelper = new RegisterAgentHelper() {
-      def handleListen(response: RegistrationResponse) = {
+      def handleListen(response: RegistrationResponse) {
         logger.info("RegisterAgent Successful")
         logger.info("New AgentId = " + response.agentId + "")
         logger.info("Finish RegisterAgent")

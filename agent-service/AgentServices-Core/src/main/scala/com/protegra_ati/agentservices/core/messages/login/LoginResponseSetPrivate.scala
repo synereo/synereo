@@ -15,7 +15,7 @@ trait LoginResponseSetPrivate {
   self:AgentHostUIPlatformAgent =>
 
   def listenPrivateLoginResponse(cnxn: AgentCnxnProxy) = {
-    if ( isPrivateKVDBNetworkMode() )
+    if ( isPrivateKVDBNetworkMode )
       listen(_privateQ, cnxn, Channel.Security, ChannelType.Response, ChannelLevel.Private, handleSecurityResponseChannel(_: AgentCnxnProxy, _: Message))
      else
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Security, ChannelType.Response, ChannelLevel.Private, handleSecurityResponseChannel(cnxn, _: Message))

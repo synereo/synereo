@@ -8,12 +8,12 @@
 
 package com.protegra_ati.agentservices.store.util
 
-//import net.lag.configgy._
 import com.typesafe.config._
 
 import scala.collection.mutable.HashMap
 
 import org.apache.log4j.{PropertyConfigurator, Level, Logger}
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -50,22 +50,9 @@ object LogConfiguration {
       }
     }
   }
-  def SeverityFromOption(level: Option[ String ]): Severity.Value =
-  {
-    level match {
-      case Some(x) => {
-        SeverityFromString(x)
-      }
-      case None => {
-        Severity.Fatal
-      }
-    }
-  }
 
   lazy val config = {
-    // Configgy.configure("log_agentservices.conf")
-//     Configgy.config
-    ConfigFactory.load( "log_agentservices.conf" )    
+    ConfigFactory.load(ConfigFactory.parseFile(new File("log_agentservices.conf")))
   }
   var traceLevel =
     try {

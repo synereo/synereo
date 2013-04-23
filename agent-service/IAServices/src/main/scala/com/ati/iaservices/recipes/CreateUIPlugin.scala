@@ -4,26 +4,18 @@ import com.ati.iaservices.helpers.CreateUIHelper
 import com.ati.iaservices.recipes.LauncherPluginSession.session
 import com.protegra_ati.agentservices.store.util.LogConfiguration._
 
-/**
- * Created with IntelliJ IDEA.
- * User: pspratt
- * Date: 08/04/13
- * Time: 1:30 PM
- * To change this template use File | Settings | File Templates.
- */
-
 class CreateUIPlugin extends LauncherPluginBase {
   val pluginName = "CreateUI"
   val exitOnFail = true
 
-  override def validateSession() = {
+  override def validateSession() {
   }
 
-  override def execute(args: Array[ String ]): Unit = {
-    createUI
+  override def execute(args: Array[String]) {
+    createUI()
   }
 
-  def createUI(): Unit = {
+  def createUI() {
     session.ui = new CreateUIHelper().createUI()
     logger.info("UIPlatformAgent launcher started")
   }

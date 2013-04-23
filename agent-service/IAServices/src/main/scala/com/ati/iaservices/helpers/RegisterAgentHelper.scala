@@ -9,16 +9,14 @@ import java.util.UUID
 abstract class RegisterAgentHelper {
   def handleListen(response: RegistrationResponse)
 
-  def request(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String, appId: UUID, alias: String) = {
+  def request(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String, appId: UUID, alias: String) {
     val req = MessageFactory.createRegistrationRequest(agentSessionId, tag, appId, alias)
     ui.send(req)
   }
 
-  def listen(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) = {
-    ui.addListener(agentSessionId, "", new MessageEventAdapter(tag)
-    {
-      override def registrationResponseReceived(e: RegistrationResponseReceivedEvent) =
-      {
+  def listen(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) {
+    ui.addListener(agentSessionId, "", new MessageEventAdapter(tag) {
+      override def registrationResponseReceived(e: RegistrationResponseReceivedEvent) {
         handleListen(e.msg)
       }
     })

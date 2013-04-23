@@ -17,7 +17,7 @@ import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT.
 import com.protegra_ati.agentservices.core.schema._
 import java.net.{URI}
 import com.protegra_ati.agentservices.core.messages.content._
-import com.protegra_ati.agentservices.core.util.Results
+import com.protegra_ati.agentservices.core.util.{ConfigurationManager, Results}
 
 //import com.protegra_ati.agentservices.core.messages.search._
 import com.protegra_ati.agentservices.core.messages._
@@ -37,7 +37,6 @@ import com.protegra_ati.agentservices.core.schema.util._
 import com.protegra_ati.agentservices.core._
 import java.util.{Locale, UUID}
 //import search.SearchResponse
-//import com.protegra.config.ConfigurationManager
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 
 
@@ -57,18 +56,17 @@ Timeouts
   def setupUI(ui: AgentHostUIPlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
     ui._cnxnUIStore = cnxnUIStore
     val id = UUID.randomUUID
-//    ui.setPrivateNetworkMode("KVDB")
-    ui.initFromConfig(CONFIG_UI, id)
+    val config = new ConfigurationManager(CONFIG_UI)
+    ui.initFromConfig(config, id)
   }
 
   def setupStore(store: AgentHostStorePlatformAgent, cnxnUIStore: AgentCnxnProxy) :Unit  ={
 
     store._cnxnUIStore = cnxnUIStore
     val id = UUID.randomUUID
-    //store._cnxnUserSelfConnectionsList = List(cnxnJenSelf, cnxnMikeSelf)
-    store.setNetworkMode("Local")
-//    store.setPrivateNetworkMode("KVDB")
-    store.initFromConfig(CONFIG_STORE, id)
+    store._networkMode = "Local"
+    val config = new ConfigurationManager(CONFIG_STORE)
+    store.initFromConfig(config, id)
   }
  
 

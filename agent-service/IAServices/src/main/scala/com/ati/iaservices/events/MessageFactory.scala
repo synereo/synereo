@@ -11,20 +11,19 @@ object MessageFactory {
     val eventKey: EventKey = new EventKey(agentSessionId, tag)
     val msg: GetContentRequest = new GetContentRequest(eventKey, queryObject)
     msg.setTargetCnxn(target)
-    return msg
+    msg
   }
 
   def createSetContentRequest(agentSessionId: UUID, tag: String, newData: Data, target: AgentCnxnProxy): SetContentRequest = {
     val eventKey: EventKey = new EventKey(agentSessionId, tag)
     val msg: SetContentRequest = new SetContentRequest(eventKey, newData, null)
     msg.setTargetCnxn(target)
-    return msg
+    msg
   }
 
-  def createRegistrationRequest(agentSessionId: UUID, tag: String, appId: UUID, alias: String) : RegistrationRequest = {
+  def createRegistrationRequest(agentSessionId: UUID, tag: String, appId: UUID, alias: String): RegistrationRequest = {
     val eventKey: EventKey = new EventKey(agentSessionId, tag)
     val msg = new RegistrationRequest(eventKey, appId, alias)
-    return msg
+    msg
   }
-
 }
