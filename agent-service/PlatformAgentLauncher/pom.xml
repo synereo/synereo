@@ -14,7 +14,7 @@
         <encoding>UTF-8</encoding>
         <scala.version>2.10.0</scala.version>
         <scala.test.specs2.version>1.14</scala.test.specs2.version>
-        <iaservices.version>1.0.0.0</iaservices.version>
+        <iaservices.version>1.0.0.1</iaservices.version>
 
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
