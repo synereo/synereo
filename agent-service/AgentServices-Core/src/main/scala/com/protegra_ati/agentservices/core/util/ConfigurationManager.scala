@@ -8,7 +8,7 @@ import java.util.UUID
 
 class ConfigurationManager (fileName: String) {
   private val _config = ConfigFactory.load(ConfigFactory.parseFile(new File(fileName)))
-  private val _prefix = "agentservices.core"
+  private val _prefix = "agentservices.core."
 
   def id: UUID = getUUID("id")
   def appBizNetworkId = getUUID("appBizNetworkId")

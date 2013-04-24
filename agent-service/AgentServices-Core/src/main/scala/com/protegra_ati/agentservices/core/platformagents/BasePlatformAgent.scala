@@ -110,10 +110,10 @@ abstract class BasePlatformAgent
 
   def initFromConfig(config: ConfigurationManager, id: UUID)
   {
-    init(config)
-
     _id = id
     Results.client // starts memcached
+
+    init(config)
     startup()
   }
 
