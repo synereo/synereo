@@ -4,23 +4,22 @@ import java.util.UUID
 import scala.collection.JavaConversions._
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema.{AgentCnxnProxy, Connection}
-import com.protegra_ati.agentservices.core.messages.content.{GetContentResponse, GetContentRequest}
-import com.protegra_ati.agentservices.core.messages.EventKey
+import com.protegra_ati.agentservices.core.messages.content.GetContentResponse
 import com.protegra_ati.agentservices.core.events.{GetContentResponseReceivedEvent, MessageEventAdapter}
 import com.protegra_ati.agentservices.core.platformagents.AgentHostUIPlatformAgent
+import com.ati.iaservices.events.MessageFactory
 
 abstract class ConnectToAllHelper {
   def handleConnectionsCompleted()
 
   def connectToAll(ui: AgentHostUIPlatformAgent, selfCnxn: AgentCnxnProxy, agentSessionId: UUID, selfAlias: String, sourceAgentId: UUID) {
-    val eventKey = "request_all_connections"
+    val eventKey = "request_all_connections" + UUID.randomUUID()
     listenRequestAllConnections(ui, agentSessionId, eventKey, selfCnxn, selfAlias, sourceAgentId)
     requestAllConnections(ui, agentSessionId, eventKey, sourceAgentId)
   }
 
   def requestAllConnections(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String, sourceAgentId: UUID) {
-    val req = new GetContentRequest(new EventKey(agentSessionId, tag), Connection.SEARCH_ALL)
-    req.targetCnxn = ConnectionFactory.createSelfConnection("", sourceAgentId.toString).writeCnxn
+    val req = MessageFactory.createGetContentRequest(agentSessionId, tag, Connection.SEARCH_ALL, ConnectionFactory.createSelfConnection("", sourceAgentId.toString).writeCnxn)
     ui.send(req)
   }
 

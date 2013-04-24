@@ -15,7 +15,7 @@ val selfCnxn = ConnectionFactory.createSelfConnection("", "05f4482a-c4cc-4ddd-a0
 var allLabels = new mutable.MutableList[String]
 
 val getContentHelper = new GetContentHelper[Label]() {
-  def handleListen(label: Label) {
+  override def handleListen(label: Label) {
     allLabels += label.key.searchKey
   }
 }

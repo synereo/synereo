@@ -97,7 +97,7 @@ with Serializable {
                 def countConnections(agentId: UUID, resultKey: String) {
                   var count = 0
                   val getContentHelper = new GetContentHelper[Connection]() {
-                    def handleListen(connection: Connection) {
+                    override def handleListen(connection: Connection) {
                       count = count + 1
                       Results.count(resultKey, count)
                     }
@@ -141,7 +141,7 @@ with Serializable {
 
       var connections = new util.ArrayList[Connection]()
       val getContentHelper = new GetContentHelper[Connection]() {
-        def handleListen(connection: Connection) {
+        override def handleListen(connection: Connection) {
           connections.add(connection)
         }
       }

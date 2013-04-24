@@ -16,7 +16,7 @@ val selfCnxn = ConnectionFactory.createSelfConnection("", "05f4482a-c4cc-4ddd-a0
 // GET ALL CONNECTIONS FOR THE AGENT
 var connections = new util.ArrayList[Connection]()
 var getContentHelper = new GetContentHelper[Connection]() {
-  def handleListen(connection: Connection) {
+  override def handleListen(connection: Connection) {
     println("Adding connection: " + connection)
     connections.add(connection)
   }
@@ -57,7 +57,7 @@ setContentHelper.listen(ui, agentSessionId, tag)
 setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
 
 val getContentHelper2 = new GetContentHelper[Label]() {
-  def handleListen(label: Label) {
+  override def handleListen(label: Label) {
     println("*************** Found Label Data ***************")
     println(label)
   }
