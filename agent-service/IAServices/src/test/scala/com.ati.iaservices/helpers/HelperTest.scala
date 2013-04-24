@@ -25,65 +25,65 @@ with Serializable {
   val store = new CreateStoreHelper().createStore()
   val ui = new CreateUIHelper().createUI()
 
-  "RegisterAgentHelper" should {
-    "Create a new agent" in {
-      val resultKey = Results.getKey()
-      val agentSessionId = UUID.randomUUID
+    "RegisterAgentHelper" should {
+      "Create a new agent" in {
+        val resultKey = Results.getKey()
+        val agentSessionId = UUID.randomUUID
 
-      val registerAgentHelper = new RegisterAgentHelper() {
-        def handleListen(response: RegistrationResponse) {
-          if (response.agentId != null) {
-            println(String.format("*************** NewAgentId = %s ***************", response.agentId))
-            println()
-            Results.trigger(resultKey)
+        val registerAgentHelper = new RegisterAgentHelper() {
+          def handleListen(response: RegistrationResponse) {
+            if (response.agentId != null) {
+              println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+              println()
+              Results.trigger(resultKey)
+            }
           }
         }
+        val eventKey = tag + UUID.randomUUID().toString
+        registerAgentHelper.listen(ui, agentSessionId, eventKey)
+        registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
+
+        Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
       }
-      val eventKey = tag + UUID.randomUUID().toString
-      registerAgentHelper.listen(ui, agentSessionId, eventKey)
-      registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
-
-      Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
     }
-  }
 
-  "SetContentHelper with Profile" should {
-    "Create a profile" in {
-      val resultKey = Results.getKey()
-      val agentSessionId = UUID.randomUUID
+    "SetContentHelper with Profile" should {
+      "Create a profile" in {
+        val resultKey = Results.getKey()
+        val agentSessionId = UUID.randomUUID
 
-      val registerAgentHelper = new RegisterAgentHelper() {
-        def handleListen(response: RegistrationResponse) {
-          if (response.agentId != null) {
-            println(String.format("*************** NewAgentId = %s ***************", response.agentId))
-            println()
-            val setContentHelper = new SetContentHelper[Profile] {
-              def handleListen(profile: Profile) {
-                if (profile != null && profile.firstName.equals(firstName)) {
-                  Results.trigger(resultKey)
+        val registerAgentHelper = new RegisterAgentHelper() {
+          def handleListen(response: RegistrationResponse) {
+            if (response.agentId != null) {
+              println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+              println()
+              val setContentHelper = new SetContentHelper[Profile] {
+                def handleListen(profile: Profile) {
+                  if (profile != null && profile.firstName.equals(firstName)) {
+                    Results.trigger(resultKey)
+                  }
                 }
               }
+              val eventKey = "Set_Profile"
+              val target = new AgentCnxnProxy(response.agentId.toString.toURI, "", response.agentId.toString.toURI)
+              val profile = new Profile(firstName, lastName, "", "", "", "", "", "", "")
+              setContentHelper.listen(ui, agentSessionId, eventKey)
+              setContentHelper.request(ui, agentSessionId, eventKey, profile, target)
             }
-            val eventKey = "Set_Profile"
-            val target = new AgentCnxnProxy(response.agentId.toString.toURI, "", response.agentId.toString.toURI)
-            val profile = new Profile(firstName, lastName, "", "", "", "", "", "", "")
-            setContentHelper.listen(ui, agentSessionId, eventKey)
-            setContentHelper.request(ui, agentSessionId, eventKey, profile, target)
           }
         }
-      }
-      val eventKey = tag + UUID.randomUUID().toString
-      registerAgentHelper.listen(ui, agentSessionId, eventKey)
-      registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
+        val eventKey = tag + UUID.randomUUID().toString
+        registerAgentHelper.listen(ui, agentSessionId, eventKey)
+        registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
 
-      Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
+        Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
+      }
     }
-  }
 
   "ConnectToAllHelper" should {
-    "Create connection to everyone connected to BIZNETWORK_AGENT_ID" in {
-      val resultKey = Results.getKey()
-      val agentSessionId = UUID.randomUUID
+    "Create connection to everyone connected to source agent (BIZNETWORK_AGENT_ID)" in {
+      val resultKey1 = Results.getKey()
+      val resultKey2 = Results.getKey()
 
       val registerAgentHelper = new RegisterAgentHelper() {
         def handleListen(response: RegistrationResponse) {
@@ -91,21 +91,40 @@ with Serializable {
             println(String.format("*************** NewAgentId = %s ***************", response.agentId))
             println()
 
-            var connectToAllHelper = new ConnectToAllHelper {
+            val connectToAllHelper = new ConnectToAllHelper {
               def handleConnectionsCompleted() {
-                // Should check count of connections to BIZNETWORK_AGENT_ID and count of connection to new Agent
-                Results.trigger(resultKey)
+
+                def countConnections(agentId: UUID, resultKey: String) {
+                  var count = 0
+                  val getContentHelper = new GetContentHelper[Connection]() {
+                    override def handleListen(connection: Connection) {
+                      count = count + 1
+                      Results.count(resultKey, count)
+                    }
+                  }
+
+                  val tag = "GetConnections" + UUID.randomUUID.toString
+                  val agentSessionId = UUID.randomUUID
+                  getContentHelper.listen(ui, agentSessionId, tag)
+                  getContentHelper.request(ui, agentSessionId, tag, Connection.SEARCH_ALL, ConnectionFactory.createSelfConnection("", agentId.toString).writeCnxn)
+                }
+
+                countConnections(response.agentId, resultKey1)
+                countConnections(BIZNETWORK_AGENT_ID, resultKey2)
               }
             }
-            connectToAllHelper.connectToAll(ui, ConnectionFactory.createSelfConnection(alias, response.agentId.toString).writeCnxn, agentSessionId, alias )
+            val agentSessionId = UUID.randomUUID
+            connectToAllHelper.connectToAll(ui, ConnectionFactory.createSelfConnection(alias, response.agentId.toString).writeCnxn, agentSessionId, alias, BIZNETWORK_AGENT_ID)
           }
         }
       }
       val eventKey = tag + UUID.randomUUID().toString
+      val agentSessionId = UUID.randomUUID
       registerAgentHelper.listen(ui, agentSessionId, eventKey)
       registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
 
-      Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
+      // Confirm that number of BIZ connections equals number of new agent connections
+      Results.counted(resultKey1) must be_==(Results.counted(resultKey2)).eventually(retries, new Duration(timeoutDuration))
     }
   }
 
@@ -122,7 +141,7 @@ with Serializable {
 
       var connections = new util.ArrayList[Connection]()
       val getContentHelper = new GetContentHelper[Connection]() {
-        def handleListen(connection: Connection) {
+        override def handleListen(connection: Connection) {
           connections.add(connection)
         }
       }

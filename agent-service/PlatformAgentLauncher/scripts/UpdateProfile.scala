@@ -28,7 +28,7 @@ def updateProfile(profile: Profile) {
 }
 
 val getContentHelper = new GetContentHelper[Profile]() {
-  def handleListen(profile: Profile) {
+  override def handleListen(profile: Profile) {
     println("*************** Found Profile Data ***************")
     println(profile)
     updateProfile(profile)

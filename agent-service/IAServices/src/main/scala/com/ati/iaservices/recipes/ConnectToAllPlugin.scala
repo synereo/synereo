@@ -33,6 +33,7 @@ class ConnectToAllPlugin extends LauncherPluginBase {
         logger.info("*************** Finish ConnectToAll ***************")
       }
     }
-    helper.connectToAll(session.ui, session.selfCnxn, session.agentSessionId, session.selfAlias)
+
+    helper.connectToAll(session.ui, session.selfCnxn, session.agentSessionId, session.selfAlias, session.BIZNETWORK_AGENT_ID)
   }
 }

@@ -29,7 +29,7 @@ setContentHelper.request(ui, agentSessionId, tag, profile, selfCnxn.writeCnxn)
 
 // GET THE PROFILE(S) FOR THE AGENT
 val getContentHelper = new GetContentHelper[Profile]() {
-  def handleListen(profile: Profile) {
+  override def handleListen(profile: Profile) {
     println("*************** Found Profile Data ***************")
     println(profile)
   }
