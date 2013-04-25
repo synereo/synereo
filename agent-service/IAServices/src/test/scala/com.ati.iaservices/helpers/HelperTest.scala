@@ -20,6 +20,7 @@ with Serializable {
   val firstName = "John"
   val lastName = "Smith"
   val alias = firstName + " " + lastName
+  val newAgentIdFormatString = "*************** NewAgentId = %s ***************"
   val tag = "Register"
   val BIZNETWORK_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
   val store = new CreateStoreHelper().createStore()
@@ -33,7 +34,7 @@ with Serializable {
         val registerAgentHelper = new RegisterAgentHelper() {
           def handleListen(response: RegistrationResponse) {
             if (response.agentId != null) {
-              println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+              println(String.format(newAgentIdFormatString, response.agentId))
               println()
               Results.trigger(resultKey)
             }
@@ -55,7 +56,7 @@ with Serializable {
         val registerAgentHelper = new RegisterAgentHelper() {
           def handleListen(response: RegistrationResponse) {
             if (response.agentId != null) {
-              println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+              println(String.format(newAgentIdFormatString, response.agentId))
               println()
               val setContentHelper = new SetContentHelper[Profile] {
                 def handleListen(profile: Profile) {
@@ -88,7 +89,7 @@ with Serializable {
       val registerAgentHelper = new RegisterAgentHelper() {
         def handleListen(response: RegistrationResponse) {
           if (response.agentId != null) {
-            println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+            println(String.format(newAgentIdFormatString, response.agentId))
             println()
 
             val connectToAllHelper = new ConnectToAllHelper {
