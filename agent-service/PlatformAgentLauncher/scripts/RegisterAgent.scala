@@ -42,6 +42,7 @@ val registerAgentHelper = new RegisterAgentHelper() {
   }
 }
 
+agentSessionId = UUID.randomUUID
 val tag = "Register" + agentSessionId.toString
 registerAgentHelper.listen(ui, agentSessionId, tag)
 registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")
