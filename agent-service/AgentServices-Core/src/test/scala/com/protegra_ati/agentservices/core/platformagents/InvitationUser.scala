@@ -24,7 +24,7 @@ trait InvitationUser
           case x: GetContentResponse => {
             x.data.foreach(datum => {
               datum match {
-                case persistedMessage: PersistedMessage[ InvitationRequest ] => {
+                case persistedMessage: PersistedMessage[ _ ] => {
                   val inviteRequest = persistedMessage.message.asInstanceOf[ InvitationRequest ]
                   val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, "", inviteRequest)
 //                  response.targetCnxn = inviteRequest.targetCnxn
@@ -61,7 +61,7 @@ trait InvitationUser
           case x: GetContentResponse => {
             x.data.foreach(datum => {
               datum match {
-                case persistedMessage: PersistedMessage[ InvitationRequest ] => {
+                case persistedMessage: PersistedMessage[ _ ] => {
                   val inviteRequest = persistedMessage.message.asInstanceOf[ InvitationRequest ]
                   handler(inviteRequest.conversationThread.toList)
                   val response = new InvitationResponse(inviteRequest.ids.copyAsChild(), inviteRequest.eventKey, category, connectionType, connectionName, null, inviteRequest.conversationThread, true, "", inviteRequest)
@@ -97,7 +97,7 @@ trait InvitationUser
           case x: GetContentResponse => {
             x.data.foreach(datum => {
               datum match {
-                case persistedMessage: PersistedMessage[ InvitationRequest ] => {
+                case persistedMessage: PersistedMessage[ _ ] => {
                   val inviteRequest = persistedMessage.message.asInstanceOf[ InvitationRequest ]
                   handler(inviteRequest.conversationThread.toList)
                   val response = new InvitationResponse(inviteRequest.ids.copyAsChild(),

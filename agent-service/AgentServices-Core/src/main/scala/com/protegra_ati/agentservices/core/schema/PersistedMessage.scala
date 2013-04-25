@@ -73,7 +73,7 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
 //    println("CALL EQUALS ON PERSISTED MESSAGE")
      other match {
 
-      case that: PersistedMessage[ Message ] => {
+      case that: PersistedMessage[ _ ] => {
         if ( that canEqual this ) {
           if ( this.message == null && that.message == null ) return true
           else if ( this.message == null && that.message != null || this.message != null && that.message == null ) return false
@@ -88,7 +88,7 @@ case class PersistedMessage[ T <: Message ](@BeanProperty val message: T)
 
 
   override def canEqual(other: Any) =
-    other.isInstanceOf[ PersistedMessage[Message] ]
+    other.isInstanceOf[ PersistedMessage[_] ]
 
 
 }

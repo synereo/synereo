@@ -83,7 +83,7 @@ object MessageAMQPPublisher extends Reporting
       }
       finally {
         // Close channel when done, ignoring exceptions
-        try { channel.close() } catch { case e => }
+        try { channel.close() } catch { case e: Exception => }
       }
     } catch {
       case e: Exception => {

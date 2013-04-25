@@ -187,7 +187,7 @@ trait ContentRequestSet
     //refactor newData better
     var newData: Data = null;
     msg.newData match {
-      case x: CompositeData[ Data ] => {
+      case x: CompositeData[ _ ] => {
         newData = x.data;
         newData match {
           case tracked: Data with Tracking => {
@@ -271,7 +271,7 @@ trait ContentRequestSet
     report("entering handleSetContentForAllConnectionsFetch in StorePlatform", Severity.Trace)
 
     disclosedData match {
-      case x: DisclosedData[ Data ] => {
+      case x: DisclosedData[ _ ] => {
         report("processSetContentRequest: found authorizedContent - connection type: " + x.connectionType)
         setContentByConnectionTypeAndToTargetSelf(cnxn, parentRequestIds, parentRequestEventKey, newData, oldData, x)
       }
@@ -288,7 +288,7 @@ trait ContentRequestSet
     report("entering handleSetContentForAllConnectionsFetch in StorePlatform", Severity.Trace)
 
     disclosedData match {
-      case x: DisclosedData[ Data ] => {
+      case x: DisclosedData[ _ ] => {
         report("processSetContentRequest: found authorizedContent - connection type: " + x.connectionType)
         setContentByConnectionType(cnxn, parentRequestIds, parentRequestEventKey, newData, oldData, x)
       }
@@ -405,7 +405,7 @@ trait ContentRequestSet
     report("NotificationEngine not implemented", Severity.Trace)
   }
 
-  def raiseRemoteNotification(newCompositeData: CompositeData[ Data ], parentRequestIds: Identification): Unit = {
+  def raiseRemoteNotification(newCompositeData: CompositeData[ _ <: Data ], parentRequestIds: Identification): Unit = {
     //hook to implement in higher up libraries
     report("NotificationEngine not implemented", Severity.Trace)
   }
@@ -439,7 +439,7 @@ trait ContentRequestSet
     send(_publicQ, connectionToTarget.readCnxn, req)
   }
 
-  def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ Data ], oldData: Data)
+  def setContentForSelfAndForCompositeConnections(selfCnxn: AgentCnxnProxy, parentRequestIds: Identification, parentRequestEventKey: EventKey, newCompositeData: CompositeData[ _ <: Data ], oldData: Data)
   {
     raiseNotification(selfCnxn, parentRequestIds, newCompositeData.data)
 

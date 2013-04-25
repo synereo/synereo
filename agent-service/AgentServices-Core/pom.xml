@@ -210,8 +210,9 @@
                     </jvmArgs>
                     <args>
                         <!-- arg>manager.conf</arg -->
-                        <!-- <arg>-deprecation</arg> -->
-                        <!-- <arg>-unchecked</arg> -->
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                        <arg>-unchecked</arg>
                         <arg>-P:continuations:enable</arg>
                     </args>
                     <compilerPlugins>

@@ -121,6 +121,9 @@
                         <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
                     </jvmArgs>
                     <args>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                        <arg>-unchecked</arg>
                         <arg>-P:continuations:enable</arg>
                     </args>
                     <compilerPlugins>
