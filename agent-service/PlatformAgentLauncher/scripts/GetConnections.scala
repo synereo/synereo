@@ -1,6 +1,6 @@
 import com.ati.iaservices.helpers.{CreateUIHelper, CreateStoreHelper, GetContentHelper}
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
-import com.protegra_ati.agentservices.core.schema.Connection
+import com.protegra_ati.agentservices.core.schema.{Data, Connection}
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
@@ -9,12 +9,18 @@ val ui = new CreateUIHelper().createUI()
 
 // GET CONNECTIONS FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val selfCnxn = ConnectionFactory.createSelfConnection("", "d8da6610-4515-439b-9ebd-bd91badcb6b1")
+val selfCnxn = ConnectionFactory.createSelfConnection("", "f5bc533a-d417-4d71-ad94-8c766907381b")
+var count = 0
 
 val getContentHelper = new GetContentHelper[Connection]() {
-  def handleListen(connection: Connection) {
-    println("*************** Found Connection Data ***************")
+  override def handleListen(connection: Connection) {
+    count = count + 1
+    println("*************** Found Connection " + count + " ***************")
     println(connection)
+  }
+  override def handleListen(connections: List[Data]) {
+    println("*************** Found Connections ***************")
+    println(connections)
   }
 }
 

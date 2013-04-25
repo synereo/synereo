@@ -10,14 +10,11 @@ import com.protegra_ati.agentservices.core.messages.invitation._
 import com.protegra_ati.agentservices.core.messages.introduction._
 import com.protegra_ati.agentservices.core.messages.admin._
 
-import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
-import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
 import com.protegra_ati.agentservices.core.schema._
-import net.lag.configgy.Config
-import java.net.URI
 import java.util.UUID
 import com.protegra_ati.agentservices.store.util.Severity
 import com.protegra_ati.agentservices.core.messages._
+import com.protegra_ati.agentservices.core.util.ConfigurationManager
 
 class AgentHostUIPlatformAgent extends BasePlatformAgent
 with Serializable
@@ -37,55 +34,49 @@ with LoginResponseSetPrivate
 with VerifierResponseSetPrivate
 with VerifierNotificationSetPrivate
 with InvitationResponseSetConsumerPrivate
-with IntroductionResponseSetConsumerPrivate
-{
-  var _cnxnUIStore = new AgentCnxnProxy(( "UI" ).toURI, "", ( "Store" ).toURI);
+with IntroductionResponseSetConsumerPrivate {
+  var _cnxnUIStore = new AgentCnxnProxy(("UI").toURI, "", ("Store").toURI);
   var _agentSessionId: UUID = null
 
-  override def init(configUtil: Config)
-  {
-    initPrivate(configUtil, Some("db_ui.conf"))
-    initApps(configUtil)
+  override def init(config: ConfigurationManager) {
+    initPrivate(config)
+    initApps(config)
   }
 
-//  def initForTest(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], privateRabbitAddress: URI, id: UUID)
-//  {
-//    initPrivate(privateLocation, privateAcquaintanceAddresses, privateRabbitAddress, Some("db_ui.conf"))
-//    super.initForTest(id)
-//  }
+  //  def initForTest(privateLocation: URI, privateAcquaintanceAddresses: List[ URI ], privateRabbitAddress: URI, id: UUID)
+  //  {
+  //    initPrivate(privateLocation, privateAcquaintanceAddresses, privateRabbitAddress, Some("db_ui.conf"))
+  //    super.initForTest(id)
+  //  }
 
-  override def loadQueues()
-  {
+  override def loadQueues() {
     loadPrivateQueue()
   }
 
-  def startListening()
-  {
+  def startListening() {
     report("IN THE UI LISTEN", Severity.Trace)
     listenPrivate(_cnxnUIStore)
   }
 
-  def listenPrivate(cnxn: AgentCnxnProxy) =
-  {
-      listenPrivateContentResponse(cnxn)
-      //    listenPrivateContentNotification(cnxn)
-      //    listenPrivateSearchResponse(cnxn)
-      //    listenPrivateVerifierResponse(cnxn)
-      //    listenPrivateVerifierNotification(cnxn)
-      //    listenPrivateLoginResponse(cnxn)
-      //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
-      listenPrivateInvitationConsumerResponses(cnxn)
-      //    listenPrivateIntroductionConsumerResponses(cnxn)
-      //    listenPrivateReferralResponses(cnxn)
-      //    listenPrivateRegistrationConsumerResponses(cnxn)
+  def listenPrivate(cnxn: AgentCnxnProxy) = {
+    listenPrivateContentResponse(cnxn)
+    //    listenPrivateContentNotification(cnxn)
+    //    listenPrivateSearchResponse(cnxn)
+    //    listenPrivateVerifierResponse(cnxn)
+    //    listenPrivateVerifierNotification(cnxn)
+    //    listenPrivateLoginResponse(cnxn)
+    //    listen(_privateQ, cnxn, Channel.Permission, ChannelType.Notification, handleNotificationsChannel(_: AgentCnxnProxy, _: Message))
+    listenPrivateInvitationConsumerResponses(cnxn)
+    //    listenPrivateIntroductionConsumerResponses(cnxn)
+    //    listenPrivateReferralResponses(cnxn)
+    //    listenPrivateRegistrationConsumerResponses(cnxn)
 
-      //uncomment these lines if you need to create the test data from scratch...don't forget to recomment them :)
-      //createMikesTestConnections();
-      //createBrokerTestData();
+    //uncomment these lines if you need to create the test data from scratch...don't forget to recomment them :)
+    //createMikesTestConnections();
+    //createBrokerTestData();
   }
 
-  def send(msg: Message)
-  {
+  def send(msg: Message) {
     report("AgentUI sending msg on private queue with msg id: " + msg.ids.id.toString + " and parent id: " + msg.ids.parentId.toString)
 
     msg match {
@@ -95,10 +86,10 @@ with IntroductionResponseSetConsumerPrivate
       case _ => {
         msg.channelLevel = Some(ChannelLevel.Private)
         //    msg.originCnxn = _cnxnUIStore
-        if (!msg.isInstanceOf[InvitationResponse]){
+        if (!msg.isInstanceOf[InvitationResponse]) {
           msg.originCnxn = msg.targetCnxn
         }
-        if ( isPrivateKVDBNetworkMode() )
+        if (isPrivateKVDBNetworkMode)
           send(_privateQ, _cnxnUIStore, msg)
         else
           sendRabbit(_privateRabbitConfig, _cnxnUIStore, msg)

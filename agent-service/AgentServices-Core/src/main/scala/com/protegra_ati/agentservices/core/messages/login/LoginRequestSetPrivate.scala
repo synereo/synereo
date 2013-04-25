@@ -13,7 +13,7 @@ trait LoginRequestSetPrivate {
   self:AgentHostStorePlatformAgent =>
 
   def listenPrivateLoginRequest(cnxn: AgentCnxnProxy) = {
-    if ( isPrivateKVDBNetworkMode() )
+    if ( isPrivateKVDBNetworkMode )
       listen(_privateQ, cnxn, Channel.Security, ChannelType.Request, ChannelLevel.Private, handlePrivateSecurityRequestChannel(_: AgentCnxnProxy, _: Message))
     else
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Security, ChannelType.Request, ChannelLevel.Private, handlePrivateSecurityRequestChannel(cnxn, _: Message))

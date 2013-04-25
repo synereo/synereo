@@ -16,14 +16,8 @@ import com.protegra_ati.agentservices.core.util.rabbit.{RabbitConfiguration, Mes
 import java.util.concurrent.{ThreadFactory, TimeUnit, Executors}
 import java.util.concurrent.atomic.AtomicInteger
 
-//import com.protegra.config.ConfigurationManager
-
-// TODO configgy has to be removed from the project
-
-import net.lag.configgy._
-
 import scala.util.continuations._
-import scala.concurrent.{Channel => Chan, _}
+import scala.concurrent._
 
 import java.net.URI
 import java.util.UUID
@@ -31,7 +25,7 @@ import com.protegra_ati.agentservices.store.util._
 import org.joda.time.DateTime
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.protegra_ati.agentservices.core.util.ThreadRenamer._
-import com.protegra_ati.agentservices.core.util.Results
+import com.protegra_ati.agentservices.core.util.{ConfigurationManager, Results}
 
 object BasePABaseXDefaults
 {
@@ -75,7 +69,6 @@ object FetchOrElse
  */
 abstract class BasePlatformAgent
   extends Reporting
-  with JunctionConfiguration
   with ThreadPoolRunnersX
   //  with Scheduler
 {
@@ -102,56 +95,34 @@ abstract class BasePlatformAgent
     node
   }
 
-  def initFromConfig(configFilePath: String)
+  def initFromConfig(config: ConfigurationManager)
   {
-    Results.client
-    configure(configFilePath)
-    startup
-  }
+    var id: UUID = null
 
-  def initFromConfig(configFilePath: String, id: UUID)
-  {
-    configure(configFilePath)
-    _id = id
-    startup
-  }
-
-  def configure(configFilePath: String) = {
-    Configgy.configure(configFilePath)
-
-    //    ConfigurationManager.getConfigurationManager().initForProductive()
-    initBase(Configgy.config)
-    init(Configgy.config)
-
-  }
-  def startup() = {
-    loadQueues
-    startListening
-  }
-
-  def initBase(@transient configUtil: Config)
-  {
     try {
-      val idKey = "id"
-      this._id = UUID.fromString(configUtil.getString(idKey).getOrElse(""))
-    }
-    catch {
+      id = config.id
+    } catch {
       case e: Exception => report("failed to load id from config", e, Severity.Fatal)
     }
+
+    initFromConfig(config, id)
+}
+
+  def initFromConfig(config: ConfigurationManager, id: UUID)
+  {
+    _id = id
+    Results.client // starts memcached
+
+    init(config)
+    startup()
   }
 
-  protected def init(@transient configUtil: Config)
+  def startup() {
+    loadQueues()
+    startListening()
+  }
 
-  //make this protected and have another public loadFromConfig or similar method to pass in addresses?
-  //leaving this method for now for tests so they don't break
-  //set it right there.  same arguement for passing in sourceAddress which is our _location
-//  def initForTest(id: UUID)
-//  {
-//    _id = id
-//
-//    loadQueues
-//    startListening
-//  }
+  protected def init(config: ConfigurationManager)
 
   //override with each specialized agent
   protected def loadQueues()

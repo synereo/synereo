@@ -20,7 +20,7 @@ trait InvitationResponseSetCreatorPrivate
 
   def listenPrivateInvitationCreatorResponses(cnxn: AgentCnxnProxy) =
   {
-    if ( isPrivateKVDBNetworkMode() )
+    if ( isPrivateKVDBNetworkMode )
       listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(_: AgentCnxnProxy, _: Message))
     else
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Response, ChannelLevel.Private, handleInvitationResponseChannel(cnxn, _: Message))

@@ -86,7 +86,7 @@ public abstract class KryoSerializerBase extends AbstractToStringSerializer {
     protected String serializeRaw( Object objToBeSerialized )
     {
         String uid5CharLong = UUID.randomUUID().toString().substring( 0, 5 );
-        logger.report("serializeRaw - KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized, Severity.Trace());
+        //logger.report("serializeRaw - KRYO--ID:" + uid5CharLong + "--: " + objToBeSerialized, Severity.Trace());
         BufferedOutputStream oos = null;
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         //try {

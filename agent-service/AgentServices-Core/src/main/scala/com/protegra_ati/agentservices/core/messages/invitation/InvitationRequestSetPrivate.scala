@@ -19,7 +19,7 @@ trait InvitationRequestSetPrivate
 
   def listenPrivateInvitationRequest(cnxn: AgentCnxnProxy) =
   {
-    if ( isPrivateKVDBNetworkMode() ) {
+    if ( isPrivateKVDBNetworkMode ) {
       listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Creator), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(_: AgentCnxnProxy, _: Message))
       listen(_privateQ, cnxn, Channel.Invitation, Some(ChannelRole.Consumer), ChannelType.Request, ChannelLevel.Private, handlePrivateInvitationRequestChannel(_: AgentCnxnProxy, _: Message))
     }

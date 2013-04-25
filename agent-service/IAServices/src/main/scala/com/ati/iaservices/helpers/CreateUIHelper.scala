@@ -1,7 +1,8 @@
 package com.ati.iaservices.helpers
 
-import com.protegra_ati.agentservices.core.platformagents.AgentHostUIPlatformAgent
 import com.ati.iaservices.recipes.LauncherPluginUtil
+import com.protegra_ati.agentservices.core.platformagents.AgentHostUIPlatformAgent
+import com.protegra_ati.agentservices.core.util.ConfigurationManager
 
 class CreateUIHelper {
   final val UI_CONFIG = "init_ui.conf"
@@ -10,7 +11,6 @@ class CreateUIHelper {
   final val LOG_AGENTSERVICES_CONFIG = "log_agentservices.conf"
   final val LOG_AGENTSERVICES_PROPERTIES = "log_agentservices.properties"
 
-  //refactor this into core
   def checkAllStoreConfigFiles() {
     LauncherPluginUtil.configFileExists(UI_CONFIG)
     LauncherPluginUtil.configFileExists(LOG_KVDB_CONFIG)
@@ -22,7 +22,8 @@ class CreateUIHelper {
   def createUI(): AgentHostUIPlatformAgent = {
     val ui = new AgentHostUIPlatformAgent()
     checkAllStoreConfigFiles()
-    ui.initFromConfig(UI_CONFIG)
+    val config = new ConfigurationManager(UI_CONFIG)
+    ui.initFromConfig(config)
     ui
   }
 }

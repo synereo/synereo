@@ -11,7 +11,7 @@ trait ContentNotificationSetPrivate {
 
   def listenPrivateContentNotification(cnxn: AgentCnxnProxy) =
   {
-    if ( isPrivateKVDBNetworkMode() )
+    if ( isPrivateKVDBNetworkMode )
       listen(_privateQ, cnxn, Channel.Content, ChannelType.Notification, ChannelLevel.Private, handlePrivateContentNotificationChannel(_: AgentCnxnProxy, _: Message))
     else
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Content, ChannelType.Notification, ChannelLevel.Private, handlePrivateContentNotificationChannel(cnxn, _: Message))
