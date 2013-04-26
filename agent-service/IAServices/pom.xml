@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ati</groupId>
     <artifactId>iaservices</artifactId>
-    <version>1.0.0.1</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>Individual Agent class library</description>
     <inceptionYear>2013</inceptionYear>
@@ -16,7 +16,7 @@
         <scala.versionsuffix>2.10</scala.versionsuffix>
         <casbah.version>2.5.1</casbah.version>
         <scala.test.specs2.version>1.14</scala.test.specs2.version>
-        <agentservices-core.version>1.2.0.8-IA</agentservices-core.version>
+        <agentservices-core.version>1.2.1-SNAPSHOT</agentservices-core.version>
 
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,6 +32,11 @@
             <id>protegraRepo</id>
             <url>ftp://ftp.protegra.com</url>
         </repository>
+		<snapshotRepository>
+            <id>protegraRepo</id>
+            <url>ftp://ftp.protegra.com</url>
+            <uniqueVersion>true</uniqueVersion>
+        </snapshotRepository>
     </distributionManagement>
 
     <repositories>
@@ -70,7 +75,7 @@
         </dependency>
         <dependency>
             <groupId>com.protegra-ati</groupId>
-            <artifactId>agentservices-core</artifactId>
+            <artifactId>agentservices-core-ia</artifactId>
             <version>${agentservices-core.version}</version>
         </dependency>
         <dependency>
