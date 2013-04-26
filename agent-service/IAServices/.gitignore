@@ -4,3 +4,7 @@
 
 # build
 target
+
+/KVDBLogs.log
+
+/scalastyle-output.xml
