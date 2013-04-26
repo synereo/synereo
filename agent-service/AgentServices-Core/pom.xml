@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-core</artifactId>
-    <version>1.2.0.8-IA</version>
+    <version>1.2.1.1-IA</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -12,7 +12,7 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <agentservices-store.version>1.2.0.2-IA</agentservices-store.version>
+        <agentservices-store.version>1.2.1.1-IA</agentservices-store.version>
         <scala.version>2.10.0</scala.version>
         <scala.versionsuffix>2.10</scala.versionsuffix>
         <casbah.version>2.5.1</casbah.version>
