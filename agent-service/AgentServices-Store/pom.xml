@@ -1,8 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-store</artifactId>
-    <version>1.2.0.1-IA</version>
+    <version>1.2.0.2-IA</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -11,14 +12,15 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <specialk.version>1.1.4.2</specialk.version>
-	<!-- scala.version>2.9.2</scala.version -->
-	<scala.version>2.10.0</scala.version>
+        <specialk.version>1.1.4.1-IA</specialk.version>
+        <scala.version>2.10.0</scala.version>
+        <scala.versionsuffix>2.10</scala.versionsuffix>
+        <casbah.version>2.5.1</casbah.version>
         <scala.test.specs2.version>1.14</scala.test.specs2.version>
-         <!-- Common plugin settings -->
+        <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
-          <!-- vscaladoc settings -->
+        <!-- vscaladoc settings -->
         <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
         <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
@@ -58,6 +60,11 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>basex</id>
+            <name>BaseX Maven Repository</name>
+            <url>http://files.basex.org/maven</url>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -69,69 +76,106 @@
     </pluginRepositories>
 
     <dependencies>
-      <dependency>
-	<groupId>com.typesafe</groupId>
-	<artifactId>config</artifactId>
-	<version>1.0.0</version>
-      </dependency>
-      <!-- scala -->
-	<dependency>
-	  <groupId>org.scala-lang</groupId>
-	  <artifactId>scala-library</artifactId>
-	  <version>${scala.version}</version>
-	</dependency>
-	<dependency>
-	  <groupId>org.scala-lang</groupId>
-	  <artifactId>scala-actors</artifactId>
-	  <version>${scala.version}</version>
-	</dependency>            
-	<dependency>
-	  <groupId>org.scala-lang</groupId>
-	  <artifactId>scala-compiler</artifactId>
-	  <version>${scala.version}</version>
-	  <scope>test</scope>
-	</dependency>
-	<dependency>
-	  <groupId>org.scala-lang</groupId>
-	  <artifactId>jline</artifactId>
-	  <version>${scala.version}</version>
-	</dependency>
-        
         <dependency>
-	  <groupId>com.biosimilarity.lift</groupId>
-	  <artifactId>specialK</artifactId>
-	  <version>${specialk.version}</version>
-	</dependency>
-
-    <!-- for Prolog capabilities -->
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- scala -->
         <dependency>
-	  <groupId>it.unibo.alice.tuprolog</groupId>
-	  <artifactId>tuprolog</artifactId>
-	  <version>2.1.1</version>
-	</dependency>
-
-	<dependency>
-	  <groupId>org.prolog4j</groupId>
-	  <artifactId>prolog4j-api</artifactId>
-	  <version>0.2.1-SNAPSHOT</version>
-	</dependency>
-
-	<dependency>
-	  <groupId>org.prolog4j</groupId>
-	  <artifactId>prolog4j-tuprolog</artifactId>
-	  <version>0.2.1-SNAPSHOT</version>
-	</dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-actors</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>jline</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
 
         <dependency>
-	  <groupId>net.lag</groupId>
-	  <artifactId>configgy</artifactId>
-	  <version>local</version>
-	</dependency>
+            <groupId>com.biosimilarity.lift</groupId>
+            <artifactId>specialK</artifactId>
+            <version>${specialk.version}</version>
+        </dependency>
+
+        <!-- for Prolog capabilities -->
+        <dependency>
+            <groupId>it.unibo.alice.tuprolog</groupId>
+            <artifactId>tuprolog</artifactId>
+            <version>2.1.1</version>
+        </dependency>
 
         <dependency>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-          <version>1.2.16</version>
+            <groupId>org.prolog4j</groupId>
+            <artifactId>prolog4j-api</artifactId>
+            <version>0.2.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.prolog4j</groupId>
+            <artifactId>prolog4j-tuprolog</artifactId>
+            <version>0.2.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.lag</groupId>
+            <artifactId>configgy</artifactId>
+            <version>local</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.basex</groupId>
+            <artifactId>basex-api</artifactId>
+            <version>7.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>casbah_${scala.versionsuffix}</artifactId>
+            <version>${casbah.version}</version>
+            <type>pom</type>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.10</artifactId>
+            <version>3.2.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>1.4.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>biz.source_code</groupId>
+            <artifactId>base64coder</artifactId>
+            <version>2010-09-21</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.xmldb</groupId>
+            <artifactId>xmldb-api</artifactId>
+            <version>1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.16</version>
         </dependency>
 
         <dependency>
@@ -139,64 +183,69 @@
             <artifactId>ws-commons-util</artifactId>
             <version>1.0.2</version>
         </dependency>
-	
-	<dependency>
+        <dependency>
+            <groupId>commons-pool</groupId>
+            <artifactId>commons-pool</artifactId>
+            <version>1.6</version>
+        </dependency>
+
+        <dependency>
             <groupId>spy</groupId>
             <artifactId>spymemcached</artifactId>
             <version>2.8.4</version>
         </dependency>
 
-	<!-- BNFC dependencies -->
-	<dependency>
-	  <groupId>jlex</groupId>
-	  <artifactId>JLex-local</artifactId>
-	  <version>local</version>
-	</dependency>
-	<dependency>
-	  <groupId>cup</groupId>
-	  <artifactId>java-cup-11a</artifactId>
-	  <version>local</version>
-	</dependency>
-	<dependency>
-	  <groupId>cup</groupId>
-	  <artifactId>java-cup-11a-runtime</artifactId>
-	  <version>local</version>
-	</dependency>        
+        <!-- BNFC dependencies -->
+        <dependency>
+            <groupId>jlex</groupId>
+            <artifactId>JLex-local</artifactId>
+            <version>local</version>
+        </dependency>
+        <dependency>
+            <groupId>cup</groupId>
+            <artifactId>java-cup-11a</artifactId>
+            <version>local</version>
+        </dependency>
+        <dependency>
+            <groupId>cup</groupId>
+            <artifactId>java-cup-11a-runtime</artifactId>
+            <version>local</version>
+        </dependency>
 
-	<!-- rabbitmq -->
-	<dependency>
-	  <groupId>com.rabbitmq</groupId>
-	  <artifactId>amqp-client</artifactId>
-	  <!-- version>2.5.1</version -->
-	  <version>2.6.1</version>
-	</dependency>
+        <!-- rabbitmq -->
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <!-- version>2.5.1</version -->
+            <version>2.6.1</version>
+        </dependency>
 
-	<!-- jettison -->
-	<dependency>
-	  <groupId>org.codehaus.jettison</groupId>
-	  <artifactId>jettison</artifactId>
-	  <version>1.1</version>
-	</dependency>
+        <!-- jettison -->
+        <dependency>
+            <groupId>org.codehaus.jettison</groupId>
+            <artifactId>jettison</artifactId>
+            <version>1.1</version>
+        </dependency>
 
-	<dependency>
-	  <groupId>org.scalaxb</groupId>
-	  <artifactId>scalaxb</artifactId>
-	  <version>local-update</version>
-	</dependency>
+        <dependency>
+            <groupId>org.scalaxb</groupId>
+            <artifactId>scalaxb</artifactId>
+            <version>local-update</version>
+        </dependency>
 
-	<dependency>
-	  <groupId>org.scalesxml</groupId>
-	  <artifactId>scales-xml_2.10</artifactId>
-	  <version>0.4.5</version>
-	</dependency>            
-    
-	<dependency>
-	  <groupId>org.scalesxml</groupId>
-	  <artifactId>scales-jaxen_2.10</artifactId>
-	  <version>0.4.5</version>
-	</dependency>                        
- 
-	<!-- Test -->
+        <dependency>
+            <groupId>org.scalesxml</groupId>
+            <artifactId>scales-xml_2.10</artifactId>
+            <version>0.4.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalesxml</groupId>
+            <artifactId>scales-jaxen_2.10</artifactId>
+            <version>0.4.5</version>
+        </dependency>
+
+        <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -204,16 +253,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>org.specs2</groupId>
-          <artifactId>specs2_2.10</artifactId>
-          <version>${scala.test.specs2.version}</version>
-          <scope>test</scope>
+            <groupId>org.specs2</groupId>
+            <artifactId>specs2_2.10</artifactId>
+            <version>${scala.test.specs2.version}</version>
+            <scope>test</scope>
         </dependency>
-	<dependency>
-	  <groupId>org.scalatest</groupId>
-	  <artifactId>scalatest_2.10</artifactId>
-	  <version>2.0.M5b</version>
-	</dependency>           
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_2.10</artifactId>
+            <version>2.0.M5b</version>
+        </dependency>
 
     </dependencies>
     <build>
@@ -228,18 +277,18 @@
         </extensions>
         <plugins>
             <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-source-plugin</artifactId>
-              <version>2.2</version>
-              <executions>
-                <execution>
-                  <id>attach-sources</id>
-                  <phase>verify</phase>
-                  <goals>
-                    <goal>jar-no-fork</goal>
-                  </goals>
-                </execution>
-              </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.scala-tools</groupId>
@@ -256,9 +305,9 @@
                     <args>
                         <!--<arg>-Xelide-below</arg>-->
                         <!--<arg>1</arg>-->
-        <!-- arg>manager.conf</arg -->
-        <!-- <arg>-deprecation</arg> -->
-        <!-- <arg>-unchecked</arg> -->
+                        <!-- arg>manager.conf</arg -->
+                        <!-- <arg>-deprecation</arg> -->
+                        <!-- <arg>-unchecked</arg> -->
                         <arg>-P:continuations:enable</arg>
                     </args>
                     <compilerPlugins>
@@ -266,7 +315,7 @@
                             <groupId>org.scala-lang.plugins</groupId>
                             <artifactId>continuations</artifactId>
                             <version>${scala.version}</version>
-<!--                            <version>2.10.0-SNAPSHOT</version>-->
+                            <!--                            <version>2.10.0-SNAPSHOT</version>-->
                         </compilerPlugin>
                     </compilerPlugins>
                 </configuration>

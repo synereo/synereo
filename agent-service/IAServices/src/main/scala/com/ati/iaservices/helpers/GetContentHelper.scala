@@ -8,7 +8,9 @@ import java.util.UUID
 import scala.collection.JavaConversions._
 
 abstract class GetContentHelper[T <: Data] {
-  def handleListen(data: T)
+  def handleListen(data: T) {}
+
+  def handleListen(data: List[Data]) {}
 
   def request(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String, queryObject: Data, target: AgentCnxnProxy) {
     val req = MessageFactory.createGetContentRequest(agentSessionId, tag, queryObject, target)
@@ -18,6 +20,7 @@ abstract class GetContentHelper[T <: Data] {
   def listen(ui: AgentHostUIPlatformAgent, agentSessionId: UUID, tag: String) {
     ui.addListener(agentSessionId, "", new MessageEventAdapter(tag) {
       override def getContentResponseReceived(e: GetContentResponseReceivedEvent) {
+        handleListen(e.getMsg.data.toList)
         for (datum <- e.getMsg.data) {
           handleListen(datum.asInstanceOf[T])
         }

@@ -9,6 +9,7 @@ import com.protegra_ati.agentservices.core.util.Results
 import java.util.UUID
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.time.Duration
+import com.ati.iaservices.events.MessageFactory
 
 class GetContentPluginTest extends SpecificationWithJUnit
 with Serializable {
@@ -37,9 +38,7 @@ with Serializable {
       })
 
       // SETUP REQUEST
-      val queryObject = Profile.SEARCH_ALL
-      val req = new GetContentRequest(new EventKey(session.agentSessionId, tag), queryObject)
-      req.targetCnxn = session.selfCnxn
+      val req = MessageFactory.createGetContentRequest(session.agentSessionId, tag, Profile.SEARCH_ALL, session.selfCnxn)
       session.ui.send(req)
 
       // CONFIRM THAT LISTENER WAS CALLED
