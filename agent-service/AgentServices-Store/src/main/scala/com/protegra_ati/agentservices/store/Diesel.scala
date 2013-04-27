@@ -1781,23 +1781,15 @@ package diesel {
 
   }
 
-  object TestConfigurationDefaults {
+  object DieselConfigurationDefaults {
     val localHost : String = "localhost"
     val localPort : Int = 5672
     val remoteHost : String = "localhost"
     val remotePort : Int = 5672
-    val dataLocation : String = "/cnxnTestProtocol"
-    val numEntriesSeed : Int = 1000
-    val chunkSizeSeed : Int = 250
-    val numEntriesFloor : Int = 250
-    val chunkSizeFloor : Int = 250
-    val numNodesSeed : Int = 10
-    val numCnxnsSeed : Int = 100
-    val nodesFloor : Int = 1
-    val cnxnsFloor : Int = 10
+    val dataLocation : String = "/cnxnTestProtocol"    
   }
 
-  trait TestGenerationConfiguration extends ConfigurationTrampoline {
+  trait DieselManufactureConfiguration extends ConfigurationTrampoline {
     def localHost : String =
       configurationFromFile.get( "localHost" ).getOrElse( bail() )
     def localPort : Int =
@@ -1805,29 +1797,13 @@ package diesel {
     def remoteHost : String =
       configurationFromFile.get( "remoteHost" ).getOrElse( bail() )
     def remotePort : Int =
-      configurationFromFile.get( "remotePort" ).getOrElse( bail() ).toInt
+      configurationFromFile.get( "remotePort" ).getOrElse( bail() ).toInt    
     def dataLocation : String = 
       configurationFromFile.get( "dataLocation" ).getOrElse( bail() )
-    def numEntriesSeed : Int = 
-      configurationFromFile.get( "numEntriesSeed" ).getOrElse( bail() ).toInt
-    def chunkSizeSeed : Int = 
-      configurationFromFile.get( "chunkSizeSeed" ).getOrElse( bail() ).toInt
-    def numEntriesFloor : Int = 
-      configurationFromFile.get( "numEntriesFloor" ).getOrElse( bail() ).toInt
-    def chunkSizeFloor : Int = 
-      configurationFromFile.get( "chunkSizeFloor" ).getOrElse( bail() ).toInt
-    def numNodesSeed : Int = 
-      configurationFromFile.get( "numNodesSeed" ).getOrElse( bail() ).toInt
-    def numCnxnsSeed : Int = 
-      configurationFromFile.get( "numCnxnsSeed" ).getOrElse( bail() ).toInt
-    def nodesFloor : Int = 
-      configurationFromFile.get( "nodesFloor" ).getOrElse( bail() ).toInt
-    def cnxnsFloor : Int = 
-      configurationFromFile.get( "cnxnsFloor" ).getOrElse( bail() ).toInt
   }
 
-  case class AgentUseCase( override val configFileName : Option[String] )
-       extends TestGenerationConfiguration {
+  case class DieselManufacture( override val configFileName : Option[String] )
+       extends DieselManufactureConfiguration {
     import DieselEngineScope._
     import Being._
     import AgentKVDBNodeFactory._
@@ -1838,7 +1814,7 @@ package diesel {
 
     //override def configFileName : Option[String] = None
     override def configurationDefaults : ConfigurationDefaults = {
-      TestConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
+      DieselConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
     }
 
     val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
