@@ -8,8 +8,6 @@
 
 package com.biosimilarity.evaluator.distribution
 
-import com.biosimilarity.evaluator.dsl._
-
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.model.store.xml._
@@ -60,15 +58,6 @@ import java.io.ObjectInputStream
 import java.io.ByteArrayInputStream
 import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
-
-object ConcreteHL extends AbstractHL {
-  type Label = CnxnCtxtLabel[String,String,String]
-  
-  case class AgentCnxn( src : URI, label : Label, trgt : URI )
-  type Cnxn = AgentCnxn
-
-  type Substitution = Option[List[(String,Label)]]
-}
 
 object DSLEngine
        extends PersistedMonadicKVDBMongoNodeScope[String,String,String,ConcreteHL.HLExpr]

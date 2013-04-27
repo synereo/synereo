@@ -1461,7 +1461,7 @@ package diesel {
       configurationFromFile.get( "dataLocation" ).getOrElse( bail() )
   }
 
-  case class DieselManufacture( override val configFileName : Option[String] )
+  class DieselEngine( override val configFileName : Option[String] )
        extends DieselManufactureConfiguration {
     import DieselEngineScope._
     import Being._
@@ -1471,7 +1471,6 @@ package diesel {
 
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
-    //override def configFileName : Option[String] = None
     override def configurationDefaults : ConfigurationDefaults = {
       DieselConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
     }
@@ -1523,7 +1522,7 @@ package diesel {
     )(
       implicit returnTwist : Boolean
     ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
-      setup( "/agentUseCaseProtocol", localHost, localPort, remoteHost, remotePort )
+      setup( "/dieselProtocol", localHost, localPort, remoteHost, remotePort )
     }
 
     def agent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
@@ -1540,5 +1539,44 @@ package diesel {
       val fileNameRoot = fileName.split( '/' ).last
       new acT.AgentCnxn( fileNameRoot.toURI, "", fileNameRoot.toURI )
     } 
+
+    def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      node : Being.AgentKVDBNode[ReqBody,RspBody]
+    )( expr : ConcreteHL.HLExpr ) : Unit = {
+      expr match {
+	case ConcreteHL.Bottom => {
+	  throw new Exception( "divergence" )
+	}
+	case ConcreteHL.FeedExpr( filter, cnxns ) => {
+	  for( cnxn <- cnxns ) {
+	    val agntCnxn : acT.AgentCnxn =
+	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+	    reset {
+	      for( e <- node.subscribe( agntCnxn )( filter ) ) {
+	      }
+	    }
+	  }
+	}
+	case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
+	  for( cnxn <- cnxns ) {
+	    val agntCnxn : acT.AgentCnxn =
+	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+	    reset {
+	      for( e <- node.subscribe( agntCnxn )( filter ) ) {
+	      }
+	    }
+	  }
+	}
+	case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
+	  for( cnxn <- cnxns ) {
+	    val agntCnxn : acT.AgentCnxn =
+	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+	    reset {
+	      node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+	    }
+	  }
+	}
+      }
+    }
   }  
 }

@@ -51,6 +51,9 @@ trait AbstractHL {
     matchedLabel : Label,
     override val value : Value
   ) extends HLExpr with Result[Value]
+  case class PostedExpr[Value](
+    override val value : Value
+  ) extends HLExpr with Result[Value]
 }
 
 package usage {
