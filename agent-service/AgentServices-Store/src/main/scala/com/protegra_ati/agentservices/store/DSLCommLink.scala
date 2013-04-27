@@ -1,5 +1,5 @@
 // -*- mode: Scala;-*- 
-// Filename:    DSLEngine.scala<2> 
+// Filename:    DSLCommLink.scala<2> 
 // Authors:     lgm                                                    
 // Creation:    Mon Apr 22 06:04:10 2013 
 // Copyright:   Not supplied 
@@ -59,7 +59,7 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 
-object DSLEngine
+object DSLCommLink
        extends PersistedMonadicKVDBMongoNodeScope[String,String,String,ConcreteHL.HLExpr]
        with UUIDOps
   with Serializable
@@ -476,8 +476,8 @@ object DSLEngine
   }
 }
 
-object DSLEngineUsage extends Serializable {
-  import DSLEngine._   
+object DSLCommLinkCtor extends Serializable {
+  import DSLCommLink._   
   import Being._
   import PersistedKVDBNodeFactory._
 
@@ -543,6 +543,13 @@ object DSLEngineUsage extends Serializable {
 	)
       )
     }
-  }           
+  }
+
+  def link[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+  ) : Being.PersistedMonadicKVDBNode[ReqBody,RspBody] = {
+    val Right( ( client, server ) ) = 
+      setup[ReqBody,RspBody]( "localhost", 5672, "localhost", 5672 )( true )
+    client
+  }	 
   
 }

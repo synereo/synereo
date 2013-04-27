@@ -1542,7 +1542,9 @@ package diesel {
 
     def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       node : Being.AgentKVDBNode[ReqBody,RspBody]
-    )( expr : ConcreteHL.HLExpr ) : Unit = {
+    )( expr : ConcreteHL.HLExpr )(
+      handler : Option[mTT.Resource] => Unit
+    ): Unit = {
       expr match {
 	case ConcreteHL.Bottom => {
 	  throw new Exception( "divergence" )
@@ -1553,6 +1555,7 @@ package diesel {
 	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
 	    reset {
 	      for( e <- node.subscribe( agntCnxn )( filter ) ) {
+		handler( e )
 	      }
 	    }
 	  }
@@ -1563,6 +1566,7 @@ package diesel {
 	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
 	    reset {
 	      for( e <- node.subscribe( agntCnxn )( filter ) ) {
+		handler( e )
 	      }
 	    }
 	  }
@@ -1573,6 +1577,46 @@ package diesel {
 	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
 	    reset {
 	      node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+	    }
+	  }
+	}
+      }
+    }
+
+    def evalLoop() : Unit = {
+      val link = DSLCommLinkCtor.link()
+      val erql : CnxnCtxtLabel[String,String,String] =
+	DSLCommLinkCtor.ExchangeLabels.evalRequestLabel(
+	  "0", "1", "_"
+	).getOrElse( 
+	  throw new Exception( "error making evalRequestLabel" )
+	)
+      val node = agent( "/dieselProtocol" )
+
+      val forward : Option[mTT.Resource] => Unit =
+	{
+	  ( optRsrc : Option[mTT.Resource] ) => {
+	    val erspl : CnxnCtxtLabel[String,String,String] =
+	      DSLCommLinkCtor.ExchangeLabels.evalResponseLabel(
+		"0", "1", "_"
+	      ).getOrElse( "unable to make evaResponseLabel" )
+	    for( mTT.Ground( v ) <- optRsrc ) {
+	      reset {
+		link.publish(
+		  erspl,
+		  DSLCommLink.mTT.Ground( v ) 
+		)
+	      }
+	    }
+	  }
+	}
+
+      reset { 
+	for( e <- link.subscribe( erql ) ) {
+	  e match {
+	    case Some( DSLCommLink.mTT.Ground( expr ) ) =>
+	      evaluateExpression( node )( expr )( forward )
+	    case _ => {
 	    }
 	  }
 	}
