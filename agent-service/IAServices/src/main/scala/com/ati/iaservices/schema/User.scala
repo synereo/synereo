@@ -8,6 +8,8 @@
 
 package com.ati.iaservices.schema
 
+import com.biosimilarity.lift.model.store._
+
 import scala.collection.SeqProxy
 
 import java.net.URI
@@ -37,11 +39,11 @@ trait HumanEngagement {
     override val trgt : T
   ) extends GenericCnxn[S,L,T]
 
-  case class UserAgentCnxn[Namespace,Tag,Value](
+  class UserAgentCnxn[Namespace,Tag,Value](
     override val src : URI,
     override val label : CnxnCtxtLabel[Namespace,Tag,Value],
     override val trgt : URI
-  ) extends Cnxn[URI,CnxnCtxtLabel[Namespace,Tag,Value],URI]
+  ) extends Cnxn[URI,CnxnCtxtLabel[Namespace,Tag,Value],URI]( src, label, trgt )
 
   trait UserModelElement
   trait UserAttribute
@@ -61,37 +63,54 @@ trait HumanEngagement {
     word : String
   ) extends UserAttribute
   
-  case class About(
-    work : Work,
-    education : Education,
+  case class About[Namespace,Tag,Value](
+    work : WorkHistory[Namespace,Tag,Value],
+    education : Education[Namespace,Tag,Value],
     contact : Contact
   ) extends UserModelElement
   
-  case class WorkHistory(
-    override val self : Seq[WorkEngagement]
-  ) extends SeqProxy[Engagement] with UserModelElement
+  case class WorkHistory[Namespace,Tag,Value](
+    override val self : Seq[WorkEngagement[Namespace,Tag,Value]]
+  ) extends SeqProxy[Engagement[Namespace,Tag,Value]] with UserModelElement
   
-  case class Education(
-    override val self : Seq[StudyEngagement]
-  ) extends SeqProxy[Engagement] with UserModelElement
+  case class Education[Namespace,Tag,Value](
+    override val self : Seq[StudyEngagement[Namespace,Tag,Value]]
+  ) extends SeqProxy[Engagement[Namespace,Tag,Value]] with UserModelElement
   
   case class Contact(
     override val self : Seq[URI]
   ) extends SeqProxy[URI] with UserAttribute
   
-  case class Engagement(
-    duration : Duration,
-    description : String,
-    role : String
-  ) extends UserAgentCnxn with UserModelElement
+  abstract class Engagement[Namespace,Tag,Value](
+    override val src : URI,
+    override val label : CnxnCtxtLabel[Namespace,Tag,Value],
+    override val trgt : URI
+  ) extends UserAgentCnxn[Namespace,Tag,Value]( src, label, trgt )
+       with UserModelElement {
+    def duration( label : CnxnCtxtLabel[Namespace,Tag,Value] ) : Option[Duration] = None
+    def description( label : CnxnCtxtLabel[Namespace,Tag,Value] ) : Option[String] = None
+    def role( label : CnxnCtxtLabel[Namespace,Tag,Value] ) : Option[String] = None	 
+  }
 
-  case class User(
+  case class WorkEngagement[Namespace,Tag,Value](
+    override val src : URI,
+    override val label : CnxnCtxtLabel[Namespace,Tag,Value],
+    override val trgt : URI
+  ) extends Engagement[Namespace,Tag,Value]( src, label, trgt )
+
+  case class StudyEngagement[Namespace,Tag,Value](
+    override val src : URI,
+    override val label : CnxnCtxtLabel[Namespace,Tag,Value],
+    override val trgt : URI
+  ) extends Engagement[Namespace,Tag,Value]( src, label, trgt )
+
+  case class User[Namespace,Tag,Value](
     name : Name,
     userName : String,
     email : Email,
     pwd : Pwd, 
     language : Language,
-    about : About
+    about : About[Namespace,Tag,Value]
   ) extends UserModelElement
 }
 
