@@ -1,7 +1,8 @@
+import com.ati.iaservices.events.CreateReferralResponseReceivedEvent
 import com.ati.iaservices.helpers.{CreateUIHelper, CreateStoreHelper, CreateReferralHelper}
 import com.ati.iaservices.schema._
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
-import com.protegra_ati.agentservices.core.schema.{Connection, CompositeData}
+import com.protegra_ati.agentservices.core.schema.Post
 import java.util
 import java.util.UUID
 
@@ -11,75 +12,18 @@ val ui = new CreateUIHelper().createUI()
 
 // ADD LABEL FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val selfCnxn = ConnectionFactory.createSelfConnection("", "05f4482a-c4cc-4ddd-a07a-fcfb2e50700f")
+val selfCnxn = ConnectionFactory.createSelfConnection("", "c43d8aec-5187-4006-87d4-d876b17d5b85")
 
-// GET ALL CONNECTIONS FOR THE AGENT
-var connections = new util.ArrayList[Connection]()
-var getContentHelper = new GetContentHelper[Connection]() {
-  def handleListen(connection: Connection) {
-    println("Adding connection: " + connection)
-    connections.add(connection)
-  }
-}
-val connectionTag = "Connection" + UUID.randomUUID()
-getContentHelper.listen(ui, agentSessionId, connectionTag)
-getContentHelper.request(ui, agentSessionId, connectionTag, Connection.SEARCH_ALL, selfCnxn.writeCnxn)
-
-// WAIT FOR CONNECTIONS TO LOAD
-Thread.sleep(5000)
-
-val setContentHelper = new SetContentHelper[Label]() {
-  def handleListen(label: Label) {
-    println("*************** Found Label Data ***************")
-    println(label)
+val createReferralHelper = new CreateReferralHelper() {
+  def handleListen(e: CreateReferralResponseReceivedEvent) {
+    println("*************** Create Referral Response Data ***************")
+    println(e.toString)
   }
 }
 
-val tag = "SetLabel" + UUID.randomUUID()
-var label = new Label(new LabelKey("profile(name(\"Steve\"))"), new MessageContent("This is a post"))
-var compositeData = new CompositeData[Label](connections, label)
-setContentHelper.listen(ui, agentSessionId, tag)
-setContentHelper.request(ui, agentSessionId, tag, compositeData, selfCnxn.writeCnxn)
-
-label = new Label(new LabelKey("profile(name(\"Jane\"))"), new ImageContent("http://www.google.com", "Title"))
-compositeData = new CompositeData[Label](connections, label)
-setContentHelper.listen(ui, agentSessionId, tag)
-setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
-
-label = new Label(new LabelKey("profile(address(\"Jane\"))"), new MessageContent("Winnipeg"))
-compositeData = new CompositeData[Label](connections, label)
-setContentHelper.listen(ui, agentSessionId, tag)
-setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
-
-label = new Label(new LabelKey("profile(address(\"John\"))"), new EmptyContent())
-compositeData = new CompositeData[Label](connections, label)
-setContentHelper.listen(ui, agentSessionId, tag)
-setContentHelper.request(ui, agentSessionId, tag, label, selfCnxn.writeCnxn)
-
-val getContentHelper2 = new GetContentHelper[Label]() {
-  def handleListen(label: Label) {
-    println("*************** Found Label Data ***************")
-    println(label)
-  }
-}
-val getLabelTag = "GetLabel" + UUID.randomUUID()
-getContentHelper2.listen(ui, agentSessionId, getLabelTag)
-
-// GET ALL LABELS
-getContentHelper2.request(ui, agentSessionId, getLabelTag, Label.SEARCH_ALL, selfCnxn.writeCnxn)
-Thread.sleep(1000)
-// GET ALL LABELS
-getContentHelper2.request(ui, agentSessionId, getLabelTag, new Label(new LabelKey(), null), selfCnxn.writeCnxn)
-Thread.sleep(1000)
-// GET ALL LABELS WITH PROFILE
-getContentHelper2.request(ui, agentSessionId, getLabelTag, new Label(new LabelKey("profile(_)"), null), selfCnxn.writeCnxn)
-Thread.sleep(1000)
-// GET ALL LABELS WITH PROFILE(NAME)
-getContentHelper2.request(ui, agentSessionId, getLabelTag, new Label(new LabelKey("profile(name(_))"), null), selfCnxn.writeCnxn)
-Thread.sleep(1000)
-// GET ALL LABELS WITH PROFILE(NAME(JOHN))
-getContentHelper2.request(ui, agentSessionId, getLabelTag, new Label(new LabelKey("profile(name(\"John\"))"), null), selfCnxn.writeCnxn)
-Thread.sleep(1000)
-// GET ALL LABELS WITH PROFILE(NAME(JANE))
-getContentHelper2.request(ui, agentSessionId, getLabelTag, new Label(new LabelKey("profile(name(\"Jane\"))"), null), selfCnxn.writeCnxn)
+val tag = "CreateReferral" + UUID.randomUUID()
+createReferralHelper.listen(ui, agentSessionId, tag)
+createReferralHelper.request(ui, agentSessionId, tag, target)
+                            (UUID.fromString("c43d8aec-5187-4006-87d4-d876b17d5b85"), "John Smith", new Post() )
+                            (UUID.fromString("5a40a174-3c4d-48a4-a609-4d62680f55e5"), "John Smith", new Post() )
 

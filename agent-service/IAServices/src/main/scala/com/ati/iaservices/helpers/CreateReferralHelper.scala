@@ -13,15 +13,7 @@ abstract class CreateReferralHelper {
              (invitationConnectionId_A: String, alias_A: String, post_A: Post)
              (invitationConnectionId_B: String, alias_B: String, post_B: Post)
  {
-    val req = MessageFactory.createCreateReferralRequest( agentSessionId,
-                                                          tag,
-                                                          invitationConnectionId_A,
-                                                          invitationConnectionId_B,
-                                                          alias_A,
-                                                          alias_B,
-                                                          post_A,
-                                                          post_B,
-                                                          target)
+    val req = MessageFactory.createCreateReferralRequest( agentSessionId, tag, target )( invitationConnectionId_A,alias_A, post_A )( invitationConnectionId_B, alias_B, post_B )
     ui.send(req)
   }
 

@@ -6,15 +6,15 @@ package com.ati.iaservices.messages.referral
 import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.store.util.Severity
-import com.ati.iaservices.platformagents.AgentHostUIPlatformAgent
+import com.ati.iaservices.platformagents.{AgentHostDslPlatformAgent}
 
 trait ReferralResponseSetPrivate
 {
-  self: AgentHostUIPlatformAgent =>
+  self: AgentHostDslPlatformAgent =>
 
   def listenPrivateReferralResponses(cnxn: AgentCnxnProxy) =
   {
-    if ( isPrivateKVDBNetworkMode() )
+    if ( isPrivateKVDBNetworkMode )
       listen(_privateQ, cnxn, Channel.Referral, ChannelType.Response, ChannelLevel.Private, handleReferralResponseChannel(_: AgentCnxnProxy, _: Message))
      else
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Referral, ChannelType.Response, ChannelLevel.Private, handleReferralResponseChannel(cnxn, _: Message))

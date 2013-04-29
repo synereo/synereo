@@ -48,7 +48,7 @@ trait ReferralRequestSet
 
   protected def handleSystemDataLookupCreateReferral(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], createReferralRequest: CreateReferralRequest): Unit =
   {
-    //TODO: innefficient but best we can do until toSearchKey can handle lookup by AgentCnxnProxy
+    //TODO: inefficient but best we can do until toSearchKey can handle lookup by AgentCnxnProxy
     val query = Connection.SEARCH_ALL
     //comes in as write=BrokerSelf, read=RandomSelf, we want BrokerSelf
     fetchList[ Connection ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, findConnections(_: AgentCnxnProxy, _: List[ Connection ], createReferralRequest))

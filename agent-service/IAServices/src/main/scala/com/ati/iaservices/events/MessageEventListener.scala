@@ -8,4 +8,9 @@ trait MessageEventListener extends Reporting
   {
     report("createReferralResponseReceived, not implemented")
   }
+
+  def notificationResponseReceived(e: NotificationResponseReceivedEvent) =
+  {
+    report("notificationResponseReceived, not implemented")
+  }
 }

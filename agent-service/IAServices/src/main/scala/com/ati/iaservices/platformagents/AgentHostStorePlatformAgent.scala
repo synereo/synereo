@@ -11,9 +11,9 @@ import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatfor
 import com.protegra_ati.agentservices.core.messages._
 import com.protegra_ati.agentservices.core.messages.invitation.CreateInvitationRequest
 import com.protegra_ati.agentservices.core.schema.AgentCnxnProxy
+import com.protegra_ati.agentservices.core.util.ConfigurationManager
 import com.ati.iaservices.messages.referral.{ReferralRequestSetPrivate, ReferralResponseSet, ReferralRequestSet}
 import scala.Some
-import net.lag.configgy._
 
 class AgentHostStorePlatformAgent() extends CoreAgentHostStorePlatformAgent()
 //with InvitationNotifications
@@ -21,9 +21,9 @@ with ReferralRequestSet
 with ReferralResponseSet
 with ReferralRequestSetPrivate
 {
-  override def init(configUtil: Config)
+  override def init(configMgr: ConfigurationManager)
   {
-    super.init(configUtil)
+    super.init(configMgr)
   }
 
   override def loadQueues()
@@ -61,7 +61,7 @@ with ReferralRequestSetPrivate
       case _ => {/*ignore*/}
     }
 
-    if (msg.channelLevel == Some(ChannelLevel.Public) && isLocalNetworkMode())
+    if (msg.channelLevel == Some(ChannelLevel.Public) && isLocalNetworkMode)
       spawn{
         processPublicSendLocally(cnxn, msg)
       }
@@ -90,7 +90,7 @@ with ReferralRequestSetPrivate
       }
     }
     catch {
-      case e => {
+      case e : Throwable => {
         report("Exception in processPublicSendLocally: ", e, Severity.Error)
       }
     }
