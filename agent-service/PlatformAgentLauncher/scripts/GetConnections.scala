@@ -4,7 +4,7 @@ import com.protegra_ati.agentservices.core.schema.{Data, Connection}
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-val store = new CreateStoreHelper().createStore()
+//val store = new CreateStoreHelper().createStore()
 val ui = new CreateUIHelper().createUI()
 
 // GET CONNECTIONS FOR ALREADY EXISTING AGENT
