@@ -4,8 +4,8 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
-import scala.collection.JavaConversions._
-import com.protegra_ati.agentservices.core.schema.Post
+import scala.collection.convert.Wrappers.SeqWrapper
+import scala.collection.JavaConversions
 
 /* User: mgevantmakher
 */
@@ -102,7 +102,7 @@ class JavaConversionsSeqWrapperSerializer() extends Serializer[ SeqWrapper[ Any 
     }
     coll = coll.reverse
     //println("READ DONE:" + coll)
-    val javaColl: java.util.List[ Any ] = coll
+    val javaColl: java.util.List[ Any ] = JavaConversions.seqAsJavaList(coll)
     //println("READ DONE:" + javaColl)
     return javaColl.asInstanceOf[ SeqWrapper[ Any ] ]
   }
@@ -118,7 +118,7 @@ class JavaConversionsSeqWrapperSerializer() extends Serializer[ SeqWrapper[ Any 
     else {
      // if ( obj == Nil ) println("Nil Object to be serialized")
       kryo.writeObject(output, JavaConversionsSeqWrapperSerializer.NOT_NULL)
-      val collection: Traversable[ Any ] = obj
+      val collection = obj.underlying
       val len = if ( length != 0 ) length
       else {
         val size = collection.size

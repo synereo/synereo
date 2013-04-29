@@ -1,14 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package com.protegra_ati.agentservices.core.messages
 
-//string list for Enum constructor is required for serialization
-//val must be kept in same order as enum constructor
-object ChannelType extends Enumeration("Request", "Response", "Notification")
-{
+object ChannelType extends Enumeration {
   type ChannelType = Value
-  val Request, Response, Notification = Value
+
+  val Request = Value("Request")
+  val Response = Value("Response")
+  val Notification = Value("Notification")
 }

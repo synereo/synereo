@@ -116,7 +116,7 @@ trait SearchableData
       f.setAccessible(true)
       val listValue: java.util.List[ String ] = f.get(this).asInstanceOf[ java.util.List[ String ] ]
 
-      if ( listValue == null || listValue == Nil || listValue.isEmpty() || ignored )
+      if ( listValue == null || listValue.isEmpty() || ignored )
         content = SEARCH_ANY
       else
         content = getSearchFormattedFieldValue(f)

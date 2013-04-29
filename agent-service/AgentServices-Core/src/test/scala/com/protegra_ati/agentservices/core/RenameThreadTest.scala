@@ -1,7 +1,7 @@
 package com.protegra_ati.agentservices.core
 
-import scala.concurrent.ops._
-import com.protegra_ati.agentservices.core.util.ThreadRenamer._
+import com.protegra_ati.agentservices.core.util.ThreadRenamer.rename
+import scala.concurrent.ops.spawn
 import scala.util.Random
 
 /* User: mgevantmakher

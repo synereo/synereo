@@ -36,8 +36,8 @@ trait ReferralUser
           case x: GetContentResponse => {
             x.data.foreach(datum => {
               datum match {
-                case persistedMessage: PersistedMessage[ ReferralRequest ] => {
-                  val referralRequest:ReferralRequest = persistedMessage.message//.asInstanceOf[ ReferralRequest ]
+                case persistedMessage: PersistedMessage[ _ ] => {
+                  val referralRequest = persistedMessage.message.asInstanceOf[ ReferralRequest ]
                   // handler has access to the inviterToBroker post
                   handler(referralRequest.source.postToBroker)
                   //responding message
@@ -88,7 +88,7 @@ trait ReferralUser
           case x: GetContentResponse => {
             x.data.foreach(datum => {
               datum match {
-                case persistedMessage: PersistedMessage[ ReferralRequest ] => {
+                case persistedMessage: PersistedMessage[ _ ] => {
                   val referralRequest = persistedMessage.message.asInstanceOf[ ReferralRequest ]
                   // handler has access to the inviterToBroker post
                   handler(referralRequest.source.postToBroker)

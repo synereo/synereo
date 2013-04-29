@@ -28,12 +28,7 @@ with Reporting
   var originCnxn: AgentCnxnProxy = null
 
   def channelLevelAsString:String = {
-    val cl = channelLevel.getOrElse(ChannelLevel.Private) match {
-      case x:ChannelLevel.Value => x
-      case null => ChannelLevel.Private
-      case _ => ChannelLevel.Private
-    }
-    cl.toString
+    channelLevel.getOrElse(ChannelLevel.Private).toString
   }
   def getChannelKey: String =
   {

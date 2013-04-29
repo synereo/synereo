@@ -5,6 +5,7 @@ import com.protegra_ati.agentservices.core.schema._
 import com.protegra_ati.agentservices.core.util.ConfigurationManager
 import com.protegra_ati.agentservices.core.util.serializer.Serializer
 import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.{Being, PersistedKVDBNodeRequest, PersistedKVDBNodeResponse}
+import com.protegra_ati.agentservices.store.util.Severity
 import java.net.URI
 
 trait Storage {
@@ -61,6 +62,9 @@ trait Storage {
   }
 
   def deleteDataById[T <: Data](cnxn: AgentCnxnProxy, newData: T) {
+    report("[Thread %s] deleteDataById called for cnxn %s  (storeKey: %s)"
+      .format(Thread.currentThread.getName, cnxn, newData.toStoreKey), Severity.Debug)
+
     // Fetch data to delete, or if no data to delete, store newData
     // must call key before toDeleteKey to get the proper id
     val dataKey = newData.toStoreKey
@@ -69,7 +73,7 @@ trait Storage {
       store(_dbQ, cnxn, dataKey, Serializer.serialize[Data](newData))
     }
 
-    fetchListOrElse[Data](_dbQ, cnxn, newData.toDeleteKey(), handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[Data], newData))(1, 0, () => handlerElse())
+    fetchListOrElse[Data](_dbQ, cnxn, newData.toDeleteKey(), handleDeleteAfterFetch(_: AgentCnxnProxy, _: List[Data], newData))(0, 0, () => handlerElse())
   }
 
   //could use a notion of retries if it isn't safe to delete
@@ -77,18 +81,20 @@ trait Storage {
     // Call store if data is empty; otherwise attempt to delete
     dataToDelete match {
       case Nil => store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[Data](newData))
-      case _ => dataToDelete.map(x => safeDelete(cnxn, x, newData))
-    }
-  }
+      case _ => {
+        // Delete all data
+        var dataDeleted = false
+        dataToDelete.map(x => {
+          if (x != null && x != newData) {
+            delete(_dbQ, cnxn, x.toStoreKey)
+            dataDeleted = true
+          }
+        })
 
-  //exception to the convention of newData, oldData
-  protected def safeDelete(cnxn: AgentCnxnProxy, dataToDelete: Data, dataToPreserve: Data) {
-    //this check prevents the race condition occurring where the new data is saved before the fetch is finished
-    // We only want to store the data if we've deleted old data.  We do not want to
-    // call store in case we're not deleting old data, otherwise we'll end up with dupes
-    if (dataToDelete != null && dataToDelete != dataToPreserve) {
-      delete(_dbQ, cnxn, dataToDelete.toStoreKey)
-      store(_dbQ, cnxn, dataToPreserve.toStoreKey, Serializer.serialize[Data](dataToPreserve))
+        if (dataDeleted) {
+          store(_dbQ, cnxn, newData.toStoreKey, Serializer.serialize[Data](newData))
+        }
+      }
     }
   }
 
