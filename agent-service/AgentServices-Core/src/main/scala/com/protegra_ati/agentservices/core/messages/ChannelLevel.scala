@@ -1,11 +1,10 @@
 package com.protegra_ati.agentservices.core.messages
 
-/* User: mtodd
-*/
-
-object ChannelLevel extends Enumeration("Public", "Private", "Single")
-{
+object ChannelLevel extends Enumeration {
   type ChannelLevel = Value
-  val Public, Private, Single = Value
+
+  val Public = Value("Public")
+  val Private = Value("Private")
+  val Single = Value("Single")
 }
 

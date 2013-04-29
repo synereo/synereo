@@ -47,3 +47,4 @@ build.log
 build.log
 
 *.log
+/scalastyle-output.xml

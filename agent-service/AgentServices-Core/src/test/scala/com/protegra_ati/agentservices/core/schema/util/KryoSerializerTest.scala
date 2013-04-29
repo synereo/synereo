@@ -793,7 +793,7 @@ class KryoSerializerTest extends SpecificationWithJUnit with Timeouts
       val deserializedMessage = KryoSerializerTestDataInitializer.deserialize[ DisclosedData[ Profile ] ](new File("serializedDisclosedDataAppId.kryobin"))
       deserializedMessage must_!= null
       deserializedMessage match {
-        case x: DisclosedData[ AppId ] => {
+        case x: DisclosedData[ _ ] => {
 
           x must be_==(disclosedData)
         }

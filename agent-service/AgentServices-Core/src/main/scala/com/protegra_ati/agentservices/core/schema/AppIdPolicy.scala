@@ -1,8 +1,10 @@
 package com.protegra_ati.agentservices.core.schema
 
-/* User: sharder
-*/
-case object AppIdPolicy extends Enumeration("profileEditable", "businessProfileEditable", "groupProfileEditable")
-{
-  val ProfileEditable, BusinessProfileEditable, GroupProfileEditable = Value
+//lower case values necessary for prolog label eval (camelcase)
+object AppIdPolicy extends Enumeration {
+  type AppIdPolicy = Value
+
+  val ProfileEditable = Value("profileEditable")
+  val BusinessProfileEditable = Value("businessProfileEditable")
+  val GroupProfileEditable = Value("groupProfileEditable")
 }

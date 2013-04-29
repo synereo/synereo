@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>platformagentlauncher</artifactId>
-    <version>1.0.0.0</version>
+    <version>1.0.0</version>
     <name>${project.artifactId}</name>
     <description>Protunity launcher library</description>
     <inceptionYear>2012</inceptionYear>
@@ -14,7 +14,7 @@
         <encoding>UTF-8</encoding>
         <scala.version>2.10.0</scala.version>
         <scala.test.specs2.version>1.14</scala.test.specs2.version>
-        <iaservices.version>1.0.0.1</iaservices.version>
+        <iaservices.version>1.0.0-SNAPSHOT</iaservices.version>
 
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -121,6 +121,9 @@
                         <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
                     </jvmArgs>
                     <args>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                        <arg>-unchecked</arg>
                         <arg>-P:continuations:enable</arg>
                     </args>
                     <compilerPlugins>
