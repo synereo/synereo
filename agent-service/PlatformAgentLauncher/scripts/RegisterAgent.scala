@@ -5,7 +5,7 @@ import com.protegra_ati.agentservices.core.schema.Profile
 import java.util.UUID
 
 // START STORE AND UI PlatformAgents
-val store = new CreateStoreHelper().createStore()
+//val store = new CreateStoreHelper().createStore()
 val ui = new CreateUIHelper().createUI()
 
 // CREATE AN AGENTSESSION
@@ -42,7 +42,6 @@ val registerAgentHelper = new RegisterAgentHelper() {
   }
 }
 
-agentSessionId = UUID.randomUUID
-val tag = "Register" + agentSessionId.toString
+val tag = "Register" + UUID.randomUUID
 registerAgentHelper.listen(ui, agentSessionId, tag)
 registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")
