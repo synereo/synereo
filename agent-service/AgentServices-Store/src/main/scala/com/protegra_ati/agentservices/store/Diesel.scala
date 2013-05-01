@@ -1462,7 +1462,7 @@ package diesel {
   }
 
   class DieselEngine( override val configFileName : Option[String] )
-       extends DieselManufactureConfiguration {
+       extends DieselManufactureConfiguration with Serializable {	 
     import DieselEngineScope._
     import Being._
     import AgentKVDBNodeFactory._
@@ -1470,6 +1470,8 @@ package diesel {
     import CnxnConversionStringScope._
 
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+
+    val version = "0.0.1"
 
     override def configurationDefaults : ConfigurationDefaults = {
       DieselConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
@@ -1622,5 +1624,52 @@ package diesel {
 	}
       }
     }
-  }  
+  }
+
+  object Server extends Serializable {
+    lazy val helpMsg = 
+      (
+	"-help -- this message\n"
+	+ "config=<fileName>\n" 
+      )
+    def processArgs(
+      args : Array[String]
+    ) : HashMap[String,String] = {
+      val map = new HashMap[String,String]()
+      for( arg <- args ) {
+	val argNVal = arg.split( "=" )
+	if ( argNVal.size > 1 ) {
+	  ( argNVal( 0 ), argNVal( 1 ) ) match {
+	    case ( "config", file ) => {
+	      map += ( "config" -> file )
+	    }
+	  }
+	}
+	else {
+	  arg match {
+	    case "-help" => {
+	      println( helpMsg )
+	    }
+	    case _ => {
+	      println( "unrecognized arg: " + arg )
+	      println( helpMsg )
+	    }
+	  }	  
+	}
+      }
+      map
+    }
+    
+    def main( args : Array[String] ) {
+      val map = processArgs( args )
+      val engine = new DieselEngine( map.get( "config" ) )
+      val version = engine.version
+      println( "*******************************************************" )
+      println( "******************** Diesel engine ********************" )
+      println( "******************** Version " + version + " ********************" )
+      println( "*******************************************************" )
+      
+      engine.evalLoop()
+    }
+  }
 }
