@@ -11,7 +11,7 @@ val ui = new CreateUIHelper().createUI()
 
 // ADD LABEL FOR ALREADY EXISTING AGENT
 val agentSessionId = UUID.randomUUID
-val selfCnxn = ConnectionFactory.createSelfConnection("", "c7c7c097-2942-472e-9962-7066ae153c6b")
+val selfCnxn = ConnectionFactory.createSelfConnection("", "f5f3b276-772d-44dc-8d93-b0515d4d8c1a")
 
 // GET ALL CONNECTIONS FOR THE AGENT
 var connections = new util.ArrayList[Connection]()
