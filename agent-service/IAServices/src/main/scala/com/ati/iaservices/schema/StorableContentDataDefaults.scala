@@ -11,7 +11,8 @@ trait StorableContentDataDefaults extends StorableDataDefaults {
   // TODO may be it worse it to create a copy/deep clone of the object in a toSearchKey on the fly for one way use to build key to prevent a immutability break
   override def setDefaultValues(isChild: Boolean) = {
     super.setDefaultValues(isChild)
-    if (created == null)
+    if (created == null) {
       created = new DateTime()
+    }
   }
 }
