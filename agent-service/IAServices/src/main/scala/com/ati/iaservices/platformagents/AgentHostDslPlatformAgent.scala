@@ -8,8 +8,12 @@ import com.protegra_ati.agentservices.core.platformagents.{AgentHostUIPlatformAg
 import com.protegra_ati.agentservices.core.schema.AgentCnxnProxy
 import com.protegra_ati.agentservices.core.util.ConfigurationManager
 import com.protegra_ati.agentservices.store.util.Severity
+import com.ati.iaservices.messages.referral.ReferralResponseSetPrivate
+import com.ati.iaservices.messages.notification.NotificationResponseSetPrivate
 
 class AgentHostDslPlatformAgent extends CoreAgentHostUIPlatformAgent
+with ReferralResponseSetPrivate
+with NotificationResponseSetPrivate
 with DslContentResponseSetPrivate {
   override def init(config: ConfigurationManager) {
     initPrivate(config)
@@ -26,6 +30,8 @@ with DslContentResponseSetPrivate {
   }
 
   override def listenPrivate(cnxn: AgentCnxnProxy) {
+    listenPrivateReferralResponses(cnxn)
+    listenPrivateNotificationResponse(cnxn)
     listenPrivateContentResponse(cnxn)
     listenPrivateInvitationConsumerResponses(cnxn)
   }

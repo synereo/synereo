@@ -1,7 +1,7 @@
 package com.ati.iaservices.helpers
 
 import com.ati.iaservices.recipes.LauncherPluginUtil
-import com.protegra_ati.agentservices.core.platformagents.AgentHostStorePlatformAgent
+import com.ati.iaservices.platformagents.AgentHostStorePlatformAgent
 import com.protegra_ati.agentservices.core.util.ConfigurationManager
 
 class CreateStoreHelper {

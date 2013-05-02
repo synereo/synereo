@@ -1,13 +1,14 @@
 package com.ati.iaservices.events
 
+import com.ati.iaservices.messages.referral.Referral
 import com.protegra_ati.agentservices.core.messages.content.{SetContentRequest, GetContentRequest}
 import com.protegra_ati.agentservices.core.messages.EventKey
 import com.protegra_ati.agentservices.core.schema.{Post, Data, AgentCnxnProxy}
 import com.protegra_ati.agentservices.core.messages.admin.RegistrationRequest
 import com.protegra_ati.agentservices.core.messages.Identification
+import com.protegra_ati.agentservices.core.messages.invitation.{InvitationRequest, InvitationResponse}
 import java.util.UUID
 import com.ati.iaservices.messages.referral.CreateReferralRequest
-import com.protegra_ati.agentservices.core.messages.invitation.{InvitationRequest, InvitationResponse}
 
 object MessageFactory {
   def createGetContentRequest(agentSessionId: UUID, tag: String, queryObject: Data, target: AgentCnxnProxy): GetContentRequest = {
@@ -30,25 +31,32 @@ object MessageFactory {
     msg
   }
 
-  def createCreateReferralRequest( agentSessionId: UUID, tag: String, target: AgentCnxnProxy )
-                                 ( invitationConnectionId_A: String, alias_A: String, post_A: Post )
-                                 ( invitationConnectionId_B: String, alias_B: String, post_B: Post ): CreateReferralRequest = {
+  def createCreateReferralRequest(agentSessionId: UUID, tag: String, target: AgentCnxnProxy)
+                                 (referral_A: Referral)
+                                 (referral_B: Referral): CreateReferralRequest = {
     val eventKey: EventKey = EventKey(agentSessionId, tag)
     val msg: CreateReferralRequest = CreateReferralRequest(
       new Identification(),
       eventKey,
-      invitationConnectionId_A,
-      invitationConnectionId_B,
-      alias_A,
-      alias_B,
-      post_A,
-      post_B)
+      referral_A,
+      referral_B)
     msg.setTargetCnxn(target)
     msg
   }
 
-  def createInvitationResponse(agentSessionId: UUID, tag: String, target: AgentCnxnProxy)
-                              (category: String, connectionType: String, connectionName: String, post: Post, conversationThread: java.util.List[ Post ], accept: Boolean, roleBasedAlias: String, invitationRequest: InvitationRequest )
+  // scalastyle:off parameter.number
+  def createInvitationResponse(agentSessionId: UUID,
+                               tag: String,
+                               target: AgentCnxnProxy)
+                              (category: String,
+                               connectionType: String,
+                               connectionName: String,
+                               post: Post,
+                               conversationThread: java.util.List[Post],
+                               accept: Boolean,
+                               roleBasedAlias: String,
+                               invitationRequest: InvitationRequest)
+  // scalastyle:on parameter.number
   : InvitationResponse = {
     val eventKey: EventKey = EventKey(agentSessionId, tag)
     val msg: InvitationResponse = InvitationResponse(

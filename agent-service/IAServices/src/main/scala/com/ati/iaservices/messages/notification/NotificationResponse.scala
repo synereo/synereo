@@ -17,7 +17,7 @@ with EventProducer[Response]
   override def channel = Channel.Notification
 
 
-  def generateEvent(): MessageEvent[ _ <: Message with Response ] =
+  def generateEvent(): MessageEvent[_ <: Message with Response] =
   {
     new NotificationResponseReceivedEvent(this)
   }

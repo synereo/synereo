@@ -9,8 +9,8 @@ class ConnectToAllPlugin extends LauncherPluginBase {
   val exitOnFail = true
 
   override def validateSession() {
-    if (session.ui == null) {
-      throw new Exception("session.ui has not been initialized.")
+    if (session.dsl == null) {
+      throw new Exception("session.dsl has not been initialized.")
     }
 
     if (session.agentSessionId == null) {
@@ -34,6 +34,6 @@ class ConnectToAllPlugin extends LauncherPluginBase {
       }
     }
 
-    helper.connectToAll(session.ui, session.selfCnxn, session.agentSessionId, session.selfAlias, session.BIZNETWORK_AGENT_ID)
+    helper.connectToAll(session.dsl, session.selfCnxn, session.agentSessionId, session.selfAlias, session.BIZNETWORK_AGENT_ID)
   }
 }

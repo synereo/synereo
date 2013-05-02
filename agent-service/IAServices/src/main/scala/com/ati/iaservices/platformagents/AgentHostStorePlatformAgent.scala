@@ -52,7 +52,7 @@ with ReferralRequestSetPrivate
   }
 
   //TODO: better way of match so we don't have duplicate logic?
-  override def send(queue: Being.AgentKVDBNode[ PersistedKVDBNodeRequest, PersistedKVDBNodeResponse ], cnxn: AgentCnxnProxy, msg: Message)
+  override def send(queue: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse], cnxn: AgentCnxnProxy, msg: Message)
   {
     msg match {
       case x: CreateInvitationRequest => {
@@ -61,13 +61,14 @@ with ReferralRequestSetPrivate
       case _ => {/*ignore*/}
     }
 
-    if (msg.channelLevel == Some(ChannelLevel.Public) && isLocalNetworkMode)
+    if (msg.channelLevel == Some(ChannelLevel.Public) && isLocalNetworkMode) {
       spawn{
         processPublicSendLocally(cnxn, msg)
       }
-    else
+    }
+    else {
       super.send(queue, cnxn, msg)
-
+    }
   }
 
   /**
@@ -83,10 +84,12 @@ with ReferralRequestSetPrivate
       super.processPublicSendLocally(cnxn, msg)
 
       if (msg.channelType == ChannelType.Request){
-        if (msg.channel == Channel.Referral)
+        if (msg.channel == Channel.Referral) {
           handlePublicReferralRequestChannel(cnxn, msg)
-        else
+        }
+        else {
           super.processPublicSendLocally(cnxn, msg)
+        }
       }
     }
     catch {

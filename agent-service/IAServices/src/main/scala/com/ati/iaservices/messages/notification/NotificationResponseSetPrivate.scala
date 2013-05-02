@@ -12,10 +12,12 @@ trait NotificationResponseSetPrivate {
   def listenPrivateNotificationResponse(cnxn: AgentCnxnProxy) =
   {
 
-    if ( isPrivateKVDBNetworkMode )
+    if (isPrivateKVDBNetworkMode) {
       listen(_privateQ, cnxn, Channel.Notification, ChannelType.Response, ChannelLevel.Private, handleNotificationResponseChannel(_: AgentCnxnProxy, _: Message))
-    else
+    }
+    else {
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Notification, ChannelType.Response, ChannelLevel.Private, handleNotificationResponseChannel(cnxn, _: Message))
+    }
   }
 
   protected def handleNotificationResponseChannel(cnxn: AgentCnxnProxy, msg: Message) =
@@ -24,7 +26,7 @@ trait NotificationResponseSetPrivate {
 
     report("=================== HANDLE Security RESPONSE ===========, msg is :" + msg.toString, Severity.Debug)
     msg match {
-      case x: Message with EventProducer[ Response ] => {
+      case x: Message with EventProducer[Response] => {
         report("in handleSearchResponse triggering event for " + x, Severity.Trace)
         triggerEvent(x.generateEvent())
       }

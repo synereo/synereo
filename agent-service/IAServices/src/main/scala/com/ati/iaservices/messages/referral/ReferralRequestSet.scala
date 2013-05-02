@@ -43,29 +43,29 @@ trait ReferralRequestSet
     createReferralRequest.deliver();
 
     val query = SystemDataFactory.SEARCH_ALL_CONNECTION
-    fetch[ SystemData[ Connection ] ](_dbQ, cnxnBroker, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxnProxy, _: SystemData[ Connection ], createReferralRequest))
+    fetch[SystemData[Connection]](_dbQ, cnxnBroker, query.toSearchKey, handleSystemDataLookupCreateReferral(_: AgentCnxnProxy, _: SystemData[Connection], createReferralRequest))
   }
 
-  protected def handleSystemDataLookupCreateReferral(cnxn: AgentCnxnProxy, systemConnection: SystemData[ Connection ], createReferralRequest: CreateReferralRequest): Unit =
+  protected def handleSystemDataLookupCreateReferral(cnxn: AgentCnxnProxy, systemConnection: SystemData[Connection], createReferralRequest: CreateReferralRequest): Unit =
   {
     //TODO: inefficient but best we can do until toSearchKey can handle lookup by AgentCnxnProxy
     val query = Connection.SEARCH_ALL
     //comes in as write=BrokerSelf, read=RandomSelf, we want BrokerSelf
-    fetchList[ Connection ](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, findConnections(_: AgentCnxnProxy, _: List[ Connection ], createReferralRequest))
+    fetchList[Connection](_dbQ, systemConnection.data.writeCnxn, query.toSearchKey, findConnections(_: AgentCnxnProxy, _: List[Connection], createReferralRequest))
   }
 
   // search for connections Broker_A & broker_B
-  protected def findConnections(cnxnBroker_Broker: AgentCnxnProxy, connsBroker: List[ Connection ], createReferralRequest: CreateReferralRequest) =
+  protected def findConnections(cnxnBroker_Broker: AgentCnxnProxy, connsBroker: List[Connection], createReferralRequest: CreateReferralRequest) =
   {
     report("findConnections " + connsBroker)
-    val findConnBroker_A = connsBroker.filter(x => x.writeCnxn.getExchangeKey() == createReferralRequest.invitationConnectionId_A)
+    val findConnBroker_A = connsBroker.filter(x => x.writeCnxn.getExchangeKey() == createReferralRequest.referral_A.invitationConnectionId)
     findConnBroker_A.headOption match {
 
       case None => {
         report("cannot find connBroker_A", Severity.Error)
       }
       case Some(connBroker_A) => {
-        val findConnBroker_B = connsBroker.filter(x => x.writeCnxn.getExchangeKey() == createReferralRequest.invitationConnectionId_B)
+        val findConnBroker_B = connsBroker.filter(x => x.writeCnxn.getExchangeKey() == createReferralRequest.referral_B.invitationConnectionId)
         findConnBroker_B.headOption match {
           case None => {
             report("cannot find connBroker_B", Severity.Error)
@@ -96,13 +96,13 @@ trait ReferralRequestSet
       None,
       None,
       None,
-      getPosts(sourceRequest.post_A),
-      getPosts(sourceRequest.post_B),
+      getPosts(sourceRequest.referral_A.post),
+      getPosts(sourceRequest.referral_B.post),
       handleSendInvitationResponse(_: Message with Request, _: String)
     )
   }
 
-//  protected def getPosts(post: Post) : List[ Post ] =
+//  protected def getPosts(post: Post) : List[Post] =
 //  {
 //    if ( post == null )
 //      Nil

@@ -14,17 +14,19 @@ trait ReferralResponseSetPrivate
 
   def listenPrivateReferralResponses(cnxn: AgentCnxnProxy) =
   {
-    if ( isPrivateKVDBNetworkMode )
+    if ( isPrivateKVDBNetworkMode ) {
       listen(_privateQ, cnxn, Channel.Referral, ChannelType.Response, ChannelLevel.Private, handleReferralResponseChannel(_: AgentCnxnProxy, _: Message))
-     else
+    }
+    else {
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Referral, ChannelType.Response, ChannelLevel.Private, handleReferralResponseChannel(cnxn, _: Message))
+    }
   }
 
   def handleReferralResponseChannel(cnxn: AgentCnxnProxy, msg: Message)
   {
     report("=================== HANDLE REFERRAL RESPONSE ===========, msg is :" + msg.toString + " cnxn is: " + cnxn.toString, Severity.Debug)
     msg match {
-      case x: Message with EventProducer[ Response ] => {
+      case x: Message with EventProducer[Response] => {
         report("in handleContentResponse triggering event for " + x, Severity.Trace)
         triggerEvent(x.generateEvent())
       }

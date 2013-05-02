@@ -15,10 +15,12 @@ trait ReferralRequestSetPrivate
 
   def listenPrivateReferralRequest(cnxn: AgentCnxnProxy) =
   {
-    if ( isPrivateKVDBNetworkMode )
+    if ( isPrivateKVDBNetworkMode ) {
       listen(_privateQ, cnxn, Channel.Referral, ChannelType.Request, ChannelLevel.Private, handlePrivateReferralRequestChannel(_: AgentCnxnProxy, _: Message))
-    else
+    }
+    else {
       listenRabbit(_privateRabbitConfig, cnxn, Channel.Referral, ChannelType.Request, ChannelLevel.Private, handlePrivateReferralRequestChannel(_cnxnUIStore, _: Message))
+    }
   }
 
   //overriding listen for hosted connections and putting broker listen logic in

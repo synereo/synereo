@@ -12,32 +12,24 @@ import scala.reflect.BeanProperty
 case class CreateReferralRequest(
                                   override val ids: Identification,
                                   override val eventKey: EventKey,
-                                  @BeanProperty val invitationConnectionId_A: String,
-                                  @BeanProperty val invitationConnectionId_B: String,
-                                  @BeanProperty val alias_A: String,
-                                  @BeanProperty val alias_B: String,
-                                  @BeanProperty val post_A: Post,
-                                  @BeanProperty val post_B: Post) extends Message(ids, eventKey)
-                                                                  with Request
+                                  @BeanProperty val referral_A: Referral,
+                                  @BeanProperty val referral_B: Referral) extends Message(ids, eventKey)
+                                  with Request
 {
-  def this() = this(null, null, null, null, null, null, null, null) // serialization helper
+  def this() = this(null, null, null, null) // serialization helper
   def this(
           _eventKey: EventKey,
-          _invitationConnectionId_A: String,
-          _invitationConnectionId_B: String,
-          _alias_A: String,
-          _alias_B: String,
-          _post_A: Post,
-          _post_B: Post) = this(new Identification(),_eventKey,_invitationConnectionId_A,_invitationConnectionId_B,_alias_A,_alias_B,_post_A,_post_B)
+          _referral_A: Referral,
+          _referral_B: Referral) = this(new Identification(),_eventKey,_referral_A,_referral_B)
 
   override def channel = Channel.Referral
 
-  if ( post_A != null && !post_A.isSent() ) post_A.send()
-  if ( post_B != null && !post_B.isSent() ) post_B.send()
+  if ( referral_A.post != null && !referral_A.post.isSent() ) referral_A.post.send()
+  if ( referral_B.post != null && !referral_B.post.isSent() ) referral_B.post.send()
 
   def deliver() = {
-    if ( post_A != null && !post_A.isDelivered() ) post_A.deliver()
-    if ( post_B != null && !post_B.isDelivered() ) post_B.deliver()
+    if ( referral_A.post != null && !referral_A.post.isDelivered() ) referral_A.post.deliver()
+    if ( referral_B.post != null && !referral_B.post.isDelivered() ) referral_B.post.deliver()
   }
 }
 

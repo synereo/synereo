@@ -4,7 +4,7 @@ import com.ati.iaservices.messages.notification.NotificationResponse
 import com.protegra_ati.agentservices.core.events.MessageEvent
 import com.protegra_ati.agentservices.core.events.{MessageEventAdapter => CoreMessageEventAdapter}
 
-class NotificationResponseReceivedEvent(source: NotificationResponse) extends MessageEvent[ NotificationResponse ](source)
+class NotificationResponseReceivedEvent(source: NotificationResponse) extends MessageEvent[NotificationResponse](source)
 {
   override def triggerEvent(adapter: CoreMessageEventAdapter) =
   {
