@@ -15,7 +15,7 @@ import org.specs2.time.Duration
 
 class HelperTest extends SpecificationWithJUnit
 with Serializable {
-  val retries = 5
+  val retries = 10
   val timeoutDuration = 2000
   val firstName = "John"
   val lastName = "Smith"
