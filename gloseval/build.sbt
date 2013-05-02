@@ -18,7 +18,8 @@ resolvers ++= Seq(
   "biosim repo" at "http://biosimrepomirror.googlecode.com/svn/trunk/",
   "scalaz repo" at "https://github.com/scalaz/scalaz.git",
   "basex repo" at "http://files.basex.org/maven/",
-  "basex-xqj repo" at "http://xqj.net/maven/"
+  "basex-xqj repo" at "http://xqj.net/maven/",
+  "local-maven-cache repo" at "file:///Users/lgm/.m2/repository/"
 )
 
 // Change for remote install
@@ -39,7 +40,7 @@ libraryDependencies ++= Seq(
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
   "org.scala-lang"         %   "scala-actors"       % "2.10.0",
   "com.biosimilarity.lift" %   "specialK"           % "1.1.4.2",
-  "com.protegra-ati"       %   "agentservices-store" % "1.2.0.1-IA",
+  "com.protegra-ati"       %   "agentservices-store" % "1.2.0.2-IA",
   "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",

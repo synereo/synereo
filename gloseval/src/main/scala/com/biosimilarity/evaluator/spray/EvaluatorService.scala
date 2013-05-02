@@ -1,5 +1,10 @@
 package com.biosimilarity.evaluator.spray
 
+import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.lift.lib._
+
+import com.typesafe.config._
+
 import akka.actor._
 import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
@@ -116,8 +121,75 @@ case class CloseSessionException(sessionURI: String, message: String) extends Ex
 
 // this trait defines our service behavior independently from the service actor
 trait EvaluatorService extends HttpService {
+  import DSLCommLink._   
+  import Being._
+  import PersistedKVDBNodeFactory._
+  import DSLCommLinkCtor._
+
   implicit val formats = DefaultFormats
   val cometActor = actorRefFactory.actorOf(Props[CometActor])
+  var _config : Option[Config] = None
+    
+  def evalConfig() : Config = {
+    _config match {
+      case Some( cfg ) => cfg
+      case None => {
+	val cfg =
+	  ConfigFactory.load(
+	    ConfigFactory.parseFile(
+	      new java.io.File( "eval.conf" )
+	    )
+	  )
+	_config = Some( cfg )
+	cfg
+      }
+    }    
+  }
+  var _link : Option[
+    Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+  ] = None
+
+  def link() : Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
+    _link match {
+      case Some( lnk ) => lnk
+      case None => {
+	val dslCommLinkHost =
+	  try {
+	    evalConfig.getString( "DSLCommLinkHost" )
+	  }
+	  catch {
+	    case e : Throwable => "10.0.1.10"
+	  }
+	val dslCommLinkPort = 
+	  try {
+	    evalConfig.getInt( "DSLCommLinkPort" )
+	  }
+	  catch {
+	    case e : Throwable => 5672
+	  }
+	val dslCommLinkRemoteHost = 
+	  try {
+	    evalConfig.getString( "DSLCommLinkRemoteHost" )
+	  }
+	  catch {
+	    case e : Throwable => "10.0.1.8"
+	  }
+	val dslCommLinkRemotePort = 
+	  try {
+	    evalConfig.getInt( "DSLCommLinkRemotePort" )
+	  }
+	  catch {
+	    case e : Throwable => 5672
+	  }
+
+	val lnk : Being.PersistedMonadicKVDBNode[
+	  PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
+	] = DSLCommLinkCtor.link()
+	_link = Some( lnk )
+	lnk
+      }
+    }    
+  }
 
   val myRoute =
     path("signup") {
