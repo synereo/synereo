@@ -546,9 +546,11 @@ object DSLCommLinkCtor extends Serializable {
   }
 
   def link[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+    localHost : String = "localhost", localPort : Int = 5672,
+    remoteHost : String = "localhost", remotePort : Int = 5672
   ) : Being.PersistedMonadicKVDBNode[ReqBody,RspBody] = {
     val Right( ( client, server ) ) = 
-      setup[ReqBody,RspBody]( "localhost", 5672, "localhost", 5672 )( true )
+      setup[ReqBody,RspBody]( localHost, localPort, remoteHost, remotePort )( true )
     client
   }	 
   
