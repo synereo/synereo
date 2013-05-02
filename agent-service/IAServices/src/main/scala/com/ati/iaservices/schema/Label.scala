@@ -2,6 +2,8 @@ package com.ati.iaservices.schema
 
 import com.protegra_ati.agentservices.core.schema.Data
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import org.joda.time.DateTime
+import com.protegra_ati.agentservices.core.schema.behaviors.Tracking
 
 class LabelKey(var searchKey: String) extends Data {
   def this() = this("_")
@@ -23,10 +25,13 @@ object LabelKey {
   }
 }
 
-case class Label(var key: LabelKey, var content: Content) extends Data {
+case class Label(var key: LabelKey, var content: Content) extends Data
+with StorableLabelDataDefaults
+with Tracking {
   //need a no-parameter constructor to create a version of the object with only authorized fields populated
   def this() = this(new LabelKey(), null.asInstanceOf[Content])
 
+  var created: DateTime = null
   var contentType = formattedContentValueName
 
   def formattedContentValueName: String = {
@@ -42,8 +47,7 @@ case class Label(var key: LabelKey, var content: Content) extends Data {
 
   override def toString: String = {
     {
-      "Label[id=" + id + ", locale=" + localeCode + ", key=" + key + ", content=" + content + "]"
-      String.format("Label[id=%s, locale=%s, key=%s, content=%s]", id, localeCode, key, content)
+      String.format("Label[id=%s, locale=%s, key=%s, content=%s, created=%s]", id, localeCode, key, content, (if (created == null) "null" else created))
     }
   }
 }
