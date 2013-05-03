@@ -6,7 +6,7 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-package com.ati.iaservices.schema
+package com.biosimilarity.evaluator.dsl
 
 import com.biosimilarity.lift.model.store._
 
