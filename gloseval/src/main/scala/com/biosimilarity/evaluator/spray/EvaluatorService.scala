@@ -1,23 +1,31 @@
 package com.biosimilarity.evaluator.spray
 
+import com.protegra_ati.agentservices.store._
+
 import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.msgs._
+import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 
-import com.typesafe.config._
-
 import akka.actor._
-import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
 import directives.CompletionMagnet
 import spray.http._
 import spray.http.StatusCodes._
 import MediaTypes._
-import scala.concurrent.duration._
-import java.util.Date
+
 import spray.httpx.encoding._
+
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import com.biosimilarity.evaluator.msgs._
+
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.continuations._ 
+
+import com.typesafe.config._
+
+import java.util.Date
 import java.util.UUID
 
 // we don't implement our route structure directly in the service actor because
@@ -120,11 +128,13 @@ case class EvalException(sessionURI: String) extends Exception
 case class CloseSessionException(sessionURI: String, message: String) extends Exception
 
 // this trait defines our service behavior independently from the service actor
-trait EvaluatorService extends HttpService {
+trait EvaluatorService extends HttpService {  
   import DSLCommLink._   
   import Being._
   import PersistedKVDBNodeFactory._
   import DSLCommLinkCtor._
+  import diesel.ConcreteHumanEngagement._
+  import ConcreteHL._
 
   implicit val formats = DefaultFormats
   val cometActor = actorRefFactory.actorOf(Props[CometActor])
@@ -184,11 +194,88 @@ trait EvaluatorService extends HttpService {
 
 	val lnk : Being.PersistedMonadicKVDBNode[
 	  PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
-	] = DSLCommLinkCtor.link()
+	] =
+	  DSLCommLinkCtor.link(
+	    dslCommLinkHost, dslCommLinkPort,
+	    dslCommLinkRemoteHost, dslCommLinkRemotePort
+	  )
+
 	_link = Some( lnk )
 	lnk
       }
     }    
+  }
+
+  trait agentManagement {
+    def erql() : CnxnCtxtLabel[String,String,String]
+    def erspl() : CnxnCtxtLabel[String,String,String]
+    def createAgent(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      selfCnxn : Cnxn,
+      thisUser : User[String,String,String],
+      onCreation : Option[mTT.Resource] => Unit =
+	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+	link.publish( erql, InsertContent( filter, List( selfCnxn ), thisUser ) )
+      }
+      reset {
+	for( e <- link.subscribe( erspl ) ) { onCreation( e ) }
+      }
+    }
+    def post[Value](
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      content : Value,
+      onPost : Option[mTT.Resource] => Unit =
+	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+	link.publish( erql, InsertContent( filter, cnxns, content ) )
+      }
+      reset {
+	for( e <- link.subscribe( erspl ) ) { onPost( e ) }
+      }
+    }
+    def feed(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onFeedRslt : Option[mTT.Resource] => Unit =
+	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+	link.publish( erql, FeedExpr( filter, cnxns ) )
+      }
+      reset {
+	for( e <- link.subscribe( erspl ) ) { onFeedRslt( e ) }
+      }
+    }
+    def score(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      staff : Either[Seq[Cnxn],Seq[Label]],
+      onScoreRslt : Option[mTT.Resource] => Unit =
+	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+	link.publish( erql, ScoreExpr( filter, cnxns, staff ) )
+      }
+      reset {
+	for( e <- link.subscribe( erspl ) ) { onScoreRslt( e ) }
+      }
+    }
   }
 
   val myRoute =
