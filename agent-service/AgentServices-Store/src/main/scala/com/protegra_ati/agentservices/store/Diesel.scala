@@ -1588,37 +1588,37 @@ package diesel {
     def evalLoop() : Unit = {
       val link = DSLCommLinkCtor.link()
       val erql : CnxnCtxtLabel[String,String,String] =
-	DSLCommLinkCtor.ExchangeLabels.evalRequestLabel(
-	  "0", "1", "_"
-	).getOrElse( 
+	DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionID" ).getOrElse( 
 	  throw new Exception( "error making evalRequestLabel" )
 	)
-      val node = agent( "/dieselProtocol" )
-
-      val forward : Option[mTT.Resource] => Unit =
-	{
-	  ( optRsrc : Option[mTT.Resource] ) => {
-	    val erspl : CnxnCtxtLabel[String,String,String] =
-	      DSLCommLinkCtor.ExchangeLabels.evalResponseLabel(
-		"0", "1", "_"
-	      ).getOrElse( "unable to make evaResponseLabel" )
-	    for( mTT.Ground( v ) <- optRsrc ) {
-	      reset {
-		link.publish(
-		  erspl,
-		  DSLCommLink.mTT.Ground( v ) 
-		)
-	      }
-	    }
-	  }
-	}
+      val node = agent( "/dieselProtocol" )      
 
       reset { 
 	for( e <- link.subscribe( erql ) ) {
 	  e match {
-	    case Some( DSLCommLink.mTT.Ground( expr ) ) =>
-	      evaluateExpression( node )( expr )( forward )
+	    case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+	      for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+		val erspl : CnxnCtxtLabel[String,String,String] =
+		  DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
+		    sessionId
+		  ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+		      
+		val forward : Option[mTT.Resource] => Unit =
+		  {
+		    ( optRsrc : Option[mTT.Resource] ) => {
+		      for( mTT.Ground( v ) <- optRsrc ) {
+			reset {
+			  link.publish( erspl, DSLCommLink.mTT.Ground( v ) )
+			}
+		      }
+		    }
+		  }
+		
+		evaluateExpression( node )( expr )( forward )
+	      }	      
+	    }
 	    case _ => {
+	      println( "rsrc not handled: " + e )
 	    }
 	  }
 	}

@@ -482,7 +482,11 @@ object DSLCommLinkCtor extends Serializable {
   import PersistedKVDBNodeFactory._
 
   object ExchangeLabels extends CnxnString[String,String,String] {
-    def evalRequestLabel( majorVersion : String, minorVersion : String, sessionId : String ) = {
+    def evalRequestLabel(
+      majorVersion : String = "0", minorVersion : String = "1"
+    )(
+      sessionId : String
+    ) = {
       fromTermString(
 	"evalRequestLabel( majorVersion( \""
 	+ majorVersion
@@ -493,7 +497,11 @@ object DSLCommLinkCtor extends Serializable {
 	+ "\" ) )"
       )
     }
-    def evalResponseLabel( majorVersion : String, minorVersion : String, sessionId : String ) = {
+    def evalResponseLabel(
+      majorVersion : String = "0", minorVersion : String = "1"
+    )(
+      sessionId : String
+    ) = {
       fromTermString(
 	"evalResponseLabel( majorVersion( \""
 	+ majorVersion
