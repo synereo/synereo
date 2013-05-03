@@ -1,18 +1,31 @@
 package com.biosimilarity.evaluator.spray
 
+import com.protegra_ati.agentservices.store._
+
+import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.msgs._
+import com.biosimilarity.lift.model.store._
+import com.biosimilarity.lift.lib._
+
 import akka.actor._
-import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
 import directives.CompletionMagnet
 import spray.http._
 import spray.http.StatusCodes._
 import MediaTypes._
-import scala.concurrent.duration._
-import java.util.Date
+
 import spray.httpx.encoding._
+
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import com.biosimilarity.evaluator.msgs._
+
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.continuations._ 
+
+import com.typesafe.config._
+
+import java.util.Date
 import java.util.UUID
 
 // we don't implement our route structure directly in the service actor because
@@ -115,9 +128,12 @@ case class EvalException(sessionURI: String) extends Exception
 case class CloseSessionException(sessionURI: String, message: String) extends Exception
 
 // this trait defines our service behavior independently from the service actor
-trait EvaluatorService extends HttpService {
+trait EvaluatorService extends HttpService
+     with EvaluationCommsService
+     with EvalConfig
+{  
   implicit val formats = DefaultFormats
-  val cometActor = actorRefFactory.actorOf(Props[CometActor])
+  val cometActor = actorRefFactory.actorOf(Props[CometActor])    
 
   val myRoute =
     path("signup") {
@@ -157,13 +173,32 @@ trait EvaluatorService extends HttpService {
                   // TODO: check sessionURI validity
                   (cometActor ! SessionPing(sessionURI, _))
                 }
-                case "evalRequest" => {
-                  val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-                  val expression = (json \ "content" \ "expression").extract[String]
-                  if (sessionURI != "agent-session://ArtVandelay@session1") {
-                    throw EvalException(sessionURI)
-                  }
-                  cometActor ! CometMessage(sessionURI, HttpBody(`application/json`,
+                case "evalSubscribeRequest" => {
+		  val diesel.EvaluatorMessageSet.evalSubscribeRequest( sessionURI, expression ) =
+		    ( json \ "content" ).extract[diesel.EvaluatorMessageSet.evalSubscribeRequest]
+                  //val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+                  //val expression = (json \ "content" \ "expression").extract[String]
+
+                  // if (sessionURI != "agent-session://ArtVandelay@session1") {
+//                     throw EvalException(sessionURI)
+//                   }
+
+		  val sessionID = UUID.randomUUID
+		  val erql = agentMgr.erql( sessionID )
+		  val erspl = agentMgr.erspl( sessionID ) 
+
+		  expression match {
+		    case ConcreteHL.FeedExpr( filter, cnxns ) => {		      
+		      agentMgr.feed( erql, erspl )( filter, cnxns )
+		    }
+		    case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
+		      agentMgr.score( erql, erspl )( filter, cnxns, staff )
+		    }
+		    case ConcreteHL.InsertContent( filter, cnxns, content : String ) => {
+		      agentMgr.post[String]( erql, erspl )( filter, cnxns, content )
+		    }
+		  }
+                  cometActor ! CometMessage( sessionURI.uri.toString, HttpBody(`application/json`,
 """{
   "msgType": "evalComplete",
   "content": {
