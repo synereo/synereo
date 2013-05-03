@@ -19,31 +19,31 @@ trait HumanEngagement {
   type Duration
   type Language
 
-  trait GenericCnxn[S,L,T] {
-    def src() : S
-    def label() : L
-    def trgt() : T
-  }
+  // trait GenericCnxn[S,L,T] {
+//     def src() : S
+//     def label() : L
+//     def trgt() : T
+//   }
 
-  object GenericCnxn {
-    def unapply [S,L,T] (
-      gc : GenericCnxn[S,L,T]
-    ) : Option[( S, L, T )] = {
-      Some( ( gc.src, gc.label, gc.trgt ) )
-    }
-  }
+//   object GenericCnxn {
+//     def unapply [S,L,T] (
+//       gc : GenericCnxn[S,L,T]
+//     ) : Option[( S, L, T )] = {
+//       Some( ( gc.src, gc.label, gc.trgt ) )
+//     }
+//   }
 
-  class Cnxn[S,L,T](
-    override val src : S,
-    override val label : L,
-    override val trgt : T
-  ) extends GenericCnxn[S,L,T]
+//   class Cnxn[S,L,T](
+//     override val src : S,
+//     override val label : L,
+//     override val trgt : T
+//   ) extends GenericCnxn[S,L,T]
 
   class UserAgentCnxn[Namespace,Tag,Value](
     override val src : URI,
     override val label : CnxnCtxtLabel[Namespace,Tag,Value],
     override val trgt : URI
-  ) extends Cnxn[URI,CnxnCtxtLabel[Namespace,Tag,Value],URI]( src, label, trgt )
+  ) extends Cnxn[URI,CnxnCtxtLabel[Namespace,Tag,Value],URI]
 
   trait UserModelElement
   trait UserAttribute
