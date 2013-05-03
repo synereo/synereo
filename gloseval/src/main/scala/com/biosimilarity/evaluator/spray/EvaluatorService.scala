@@ -128,155 +128,12 @@ case class EvalException(sessionURI: String) extends Exception
 case class CloseSessionException(sessionURI: String, message: String) extends Exception
 
 // this trait defines our service behavior independently from the service actor
-trait EvaluatorService extends HttpService {  
-  import DSLCommLink._   
-  import Being._
-  import PersistedKVDBNodeFactory._
-  import DSLCommLinkCtor._
-  import diesel.ConcreteHumanEngagement._
-  import ConcreteHL._
-
+trait EvaluatorService extends HttpService
+     with EvaluationCommsService
+     with EvalConfig
+{  
   implicit val formats = DefaultFormats
-  val cometActor = actorRefFactory.actorOf(Props[CometActor])
-  var _config : Option[Config] = None
-    
-  def evalConfig() : Config = {
-    _config match {
-      case Some( cfg ) => cfg
-      case None => {
-	val cfg =
-	  ConfigFactory.load(
-	    ConfigFactory.parseFile(
-	      new java.io.File( "eval.conf" )
-	    )
-	  )
-	_config = Some( cfg )
-	cfg
-      }
-    }    
-  }
-  var _link : Option[
-    Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
-  ] = None
-
-  def link() : Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
-    _link match {
-      case Some( lnk ) => lnk
-      case None => {
-	val dslCommLinkHost =
-	  try {
-	    evalConfig.getString( "DSLCommLinkHost" )
-	  }
-	  catch {
-	    case e : Throwable => "10.0.1.10"
-	  }
-	val dslCommLinkPort = 
-	  try {
-	    evalConfig.getInt( "DSLCommLinkPort" )
-	  }
-	  catch {
-	    case e : Throwable => 5672
-	  }
-	val dslCommLinkRemoteHost = 
-	  try {
-	    evalConfig.getString( "DSLCommLinkRemoteHost" )
-	  }
-	  catch {
-	    case e : Throwable => "10.0.1.8"
-	  }
-	val dslCommLinkRemotePort = 
-	  try {
-	    evalConfig.getInt( "DSLCommLinkRemotePort" )
-	  }
-	  catch {
-	    case e : Throwable => 5672
-	  }
-
-	val lnk : Being.PersistedMonadicKVDBNode[
-	  PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
-	] =
-	  DSLCommLinkCtor.link(
-	    dslCommLinkHost, dslCommLinkPort,
-	    dslCommLinkRemoteHost, dslCommLinkRemotePort
-	  )
-
-	_link = Some( lnk )
-	lnk
-      }
-    }    
-  }
-
-  trait agentManagement {
-    def erql() : CnxnCtxtLabel[String,String,String]
-    def erspl() : CnxnCtxtLabel[String,String,String]
-    def createAgent(
-      erql : CnxnCtxtLabel[String,String,String],
-      erspl : CnxnCtxtLabel[String,String,String]
-    )(
-      filter : CnxnCtxtLabel[String,String,String],
-      selfCnxn : Cnxn,
-      thisUser : User[String,String,String],
-      onCreation : Option[mTT.Resource] => Unit =
-	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-    ) : Unit = {
-      reset {
-	link.publish( erql, InsertContent( filter, List( selfCnxn ), thisUser ) )
-      }
-      reset {
-	for( e <- link.subscribe( erspl ) ) { onCreation( e ) }
-      }
-    }
-    def post[Value](
-      erql : CnxnCtxtLabel[String,String,String],
-      erspl : CnxnCtxtLabel[String,String,String]
-    )(
-      filter : CnxnCtxtLabel[String,String,String],
-      cnxns : Seq[Cnxn],
-      content : Value,
-      onPost : Option[mTT.Resource] => Unit =
-	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-    ) : Unit = {
-      reset {
-	link.publish( erql, InsertContent( filter, cnxns, content ) )
-      }
-      reset {
-	for( e <- link.subscribe( erspl ) ) { onPost( e ) }
-      }
-    }
-    def feed(
-      erql : CnxnCtxtLabel[String,String,String],
-      erspl : CnxnCtxtLabel[String,String,String]
-    )(
-      filter : CnxnCtxtLabel[String,String,String],
-      cnxns : Seq[Cnxn],
-      onFeedRslt : Option[mTT.Resource] => Unit =
-	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-    ) : Unit = {
-      reset {
-	link.publish( erql, FeedExpr( filter, cnxns ) )
-      }
-      reset {
-	for( e <- link.subscribe( erspl ) ) { onFeedRslt( e ) }
-      }
-    }
-    def score(
-      erql : CnxnCtxtLabel[String,String,String],
-      erspl : CnxnCtxtLabel[String,String,String]
-    )(
-      filter : CnxnCtxtLabel[String,String,String],
-      cnxns : Seq[Cnxn],
-      staff : Either[Seq[Cnxn],Seq[Label]],
-      onScoreRslt : Option[mTT.Resource] => Unit =
-	( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-    ) : Unit = {
-      reset {
-	link.publish( erql, ScoreExpr( filter, cnxns, staff ) )
-      }
-      reset {
-	for( e <- link.subscribe( erspl ) ) { onScoreRslt( e ) }
-      }
-    }
-  }
+  val cometActor = actorRefFactory.actorOf(Props[CometActor])    
 
   val myRoute =
     path("signup") {
@@ -322,13 +179,32 @@ trait EvaluatorService extends HttpService {
                   // TODO: check sessionURI validity
                   (cometActor ! SessionPing(sessionURI, _))
                 }
-                case "evalRequest" => {
-                  val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-                  val expression = (json \ "content" \ "expression").extract[String]
-                  if (sessionURI != "agent-session://ArtVandelay@session1") {
-                    throw EvalException(sessionURI)
-                  }
-                  cometActor ! CometMessage(sessionURI, HttpBody(`application/json`,
+                case "evalSubscribeRequest" => {
+		  val diesel.EvaluatorMessageSet.evalSubscribeRequest( sessionURI, expression ) =
+		    ( json \ "content" ).extract[diesel.EvaluatorMessageSet.evalSubscribeRequest]
+                  //val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+                  //val expression = (json \ "content" \ "expression").extract[String]
+
+                  // if (sessionURI != "agent-session://ArtVandelay@session1") {
+//                     throw EvalException(sessionURI)
+//                   }
+
+		  val sessionID = UUID.randomUUID
+		  val erql = agentMgr.erql( sessionID )
+		  val erspl = agentMgr.erspl( sessionID ) 
+
+		  expression match {
+		    case ConcreteHL.FeedExpr( filter, cnxns ) => {		      
+		      agentMgr.feed( erql, erspl )( filter, cnxns )
+		    }
+		    case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
+		      agentMgr.score( erql, erspl )( filter, cnxns, staff )
+		    }
+		    case ConcreteHL.InsertContent( filter, cnxns, content : String ) => {
+		      agentMgr.post[String]( erql, erspl )( filter, cnxns, content )
+		    }
+		  }
+                  cometActor ! CometMessage( sessionURI.uri.toString, HttpBody(`application/json`,
 """{
   "msgType": "evalComplete",
   "content": {
