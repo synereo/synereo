@@ -28,10 +28,10 @@ with Serializable {
 
       // SETUP STORE AND UI - SHOULD BE DONE IN COMMON TEST START UP CODE
       new CreateStorePlugin().run()
-      new CreateUIPlugin().run()
+      new CreateDSLPlugin().run()
 
       // SETUP LISTENER
-      session.ui.addListener(session.agentSessionId, "", new MessageEventAdapter(tag) {
+      session.dsl.addListener(session.agentSessionId, "", new MessageEventAdapter(tag) {
         override def getContentResponseReceived(e: GetContentResponseReceivedEvent) {
           Results.trigger(resultKey)
         }
@@ -39,7 +39,7 @@ with Serializable {
 
       // SETUP REQUEST
       val req = MessageFactory.createGetContentRequest(session.agentSessionId, tag, Profile.SEARCH_ALL, session.selfCnxn)
-      session.ui.send(req)
+      session.dsl.send(req)
 
       // CONFIRM THAT LISTENER WAS CALLED
       Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(duration))

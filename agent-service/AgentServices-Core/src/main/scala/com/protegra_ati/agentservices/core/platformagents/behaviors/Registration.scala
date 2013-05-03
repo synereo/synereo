@@ -44,12 +44,13 @@ trait Registration extends Reporting
     val agentId = UUID.randomUUID()
     val connAgentSelf = ConnectionFactory.createConnection(msg.agentName, ConnectionCategory.Self.toString, ConnectionCategory.Self.toString, "admin", agentId.toString, agentId.toString)
 
+    val eventKey = new EventKey(msg.eventKey.agentSessionId, msg.eventKey.eventTag + UUID.randomUUID().toString)
     listenForSetContentAdminResponse(
-      msg.eventKey,
-      saveData(_: SetContentAdminResponse, connAppSelf, connAgentSelf, agentId, appAgentId)
+      eventKey,
+      saveData(_: SetContentAdminResponse, connAppSelf, connAgentSelf, agentId, appAgentId, msg.eventKey)
     )
 
-    sendSetContentAdminRequest(msg.eventKey, connAppSelf, connAgentSelf)
+    sendSetContentAdminRequest(eventKey, connAppSelf, connAgentSelf)
   }
 
   def getAppAgentId(appId: UUID): UUID = {
@@ -82,11 +83,11 @@ trait Registration extends Reporting
     send(setReq)
   }
 
-  def saveData(msg: SetContentAdminResponse, connAppSelf: Connection, connAgentSelf: Connection, agentId: UUID, appAgentId: UUID) =
+  def saveData(msg: SetContentAdminResponse, connAppSelf: Connection, connAgentSelf: Connection, agentId: UUID, appAgentId: UUID, registrationEventKey: EventKey) =
   {
     //TODO: make this transactional?
     saveAppId(msg, connAppSelf, connAgentSelf, agentId, appAgentId)
-    saveConnections(msg, connAppSelf, connAgentSelf, agentId, appAgentId)
+    saveConnections(msg, connAppSelf, connAgentSelf, agentId, appAgentId, registrationEventKey)
   }
   def saveAppId(msg: SetContentAdminResponse, connAppSelf: Connection, connAgentSelf: Connection, agentId: UUID, appAgentId: UUID) =
   {
@@ -94,7 +95,7 @@ trait Registration extends Reporting
     sendSetContentRequest(msg.eventKey.copy(agentSessionId = UUID.randomUUID()), connAgentSelf, appId)
   }
 
-  def saveConnections(msg: SetContentAdminResponse, connAppSelf: Connection, connAgentSelf: Connection, agentId: UUID, appAgentId: UUID) =
+  def saveConnections(msg: SetContentAdminResponse, connAppSelf: Connection, connAgentSelf: Connection, agentId: UUID, appAgentId: UUID, registrationEventKey: EventKey) =
   {
     val connAgentApp = ConnectionFactory.createConnection(BIZNETWORK_APP_NAME, ConnectionCategory.Person.toString, ConnectionCategory.App.toString, "admin", agentId.toString, appAgentId.toString)
     val connAppAgent = ConnectionFactory.createConnection(connAgentSelf.alias, ConnectionCategory.App.toString, ConnectionCategory.Person.toString, "admin", appAgentId.toString, agentId.toString)
@@ -105,8 +106,9 @@ trait Registration extends Reporting
     sendSetContentRequest(msg.eventKey.copy(agentSessionId = UUID.randomUUID()), connAppSelf, connAppAgent)
 
     //ok to use the eventKey as the UI won't listen to SetContentResponse on that eventTag, it will listen for RegistrationResponse
-    listenForSetContentResponse(msg.eventKey, sendRegistrationResponse(_: SetContentResponse, agentId, connAppAgent.writeCnxn.getExchangeKey))
-    sendSetContentRequest(msg.eventKey, connAgentSelf, connAgentApp)
+    val eventKey = new EventKey(msg.eventKey.agentSessionId, msg.eventKey.eventTag + UUID.randomUUID().toString)
+    listenForSetContentResponse(eventKey, sendRegistrationResponse(_: SetContentResponse, agentId, connAppAgent.writeCnxn.getExchangeKey, registrationEventKey))
+    sendSetContentRequest(eventKey, connAgentSelf, connAgentApp)
   }
 
   def sendSetContentRequest(eventKey: EventKey, connSelf: Connection, newData: Data) =
@@ -132,10 +134,10 @@ trait Registration extends Reporting
     })
   }
 
-  def sendRegistrationResponse(msg: SetContentResponse, agentId: UUID, brokerToAgentId: String) =
+  def sendRegistrationResponse(msg: SetContentResponse, agentId: UUID, brokerToAgentId: String, registrationEventKey: EventKey) =
   {
     val connSelf = ConnectionFactory.createSelfConnection("self", agentId.toString)
-    val response = new RegistrationResponse(msg.ids.copyAsChild(), msg.eventKey.copy(), agentId, connSelf, brokerToAgentId)
+    val response = new RegistrationResponse(msg.ids.copyAsChild(), registrationEventKey.copy(), agentId, connSelf, brokerToAgentId)
     triggerEvent(response.generateEvent())
   }
 

@@ -12,7 +12,7 @@ class LauncherPluginDispatcher {
 
   def getPlugin(arg: String): LauncherPluginBase = arg match {
     case "store" => new CreateStorePlugin()
-    case "ui" => new CreateUIPlugin()
+    case "dsl" => new CreateDSLPlugin()
     case "registerAgent" => new RegisterAgentPlugin() {
       def handleListen(response: RegistrationResponse) {
 

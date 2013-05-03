@@ -1,11 +1,11 @@
 package com.ati.iaservices.helpers
 
-import com.ati.iaservices.platformagents.AgentHostDslPlatformAgent
 import com.ati.iaservices.recipes.LauncherPluginUtil
+import com.ati.iaservices.platformagents.AgentHostDslPlatformAgent
 import com.protegra_ati.agentservices.core.util.ConfigurationManager
 
-class CreateDslHelper {
-  final val DSL_CONFIG = "init_ui.conf"
+class CreateDSLHelper {
+  final val DSL_CONFIG = "init_dsl.conf"
   final val LOG_KVDB_CONFIG = "log.conf"
   final val LOG_KVDB_PROPERTIES = "log.properties"
   final val LOG_AGENTSERVICES_CONFIG = "log_agentservices.conf"
@@ -19,7 +19,7 @@ class CreateDslHelper {
     LauncherPluginUtil.configFileExists(LOG_AGENTSERVICES_PROPERTIES)
   }
 
-  def createDsl(): AgentHostDslPlatformAgent = {
+  def createDSL(): AgentHostDslPlatformAgent = {
     val dsl = new AgentHostDslPlatformAgent()
     checkAllStoreConfigFiles()
     val config = new ConfigurationManager(DSL_CONFIG)

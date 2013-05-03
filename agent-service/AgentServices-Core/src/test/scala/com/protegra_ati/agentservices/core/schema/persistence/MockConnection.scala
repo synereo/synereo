@@ -5,9 +5,7 @@ import Assert._
 import org.specs2.mutable._
 import org.junit.runner._
 import org.specs2.runner._
-import java.util.UUID
-import java.util.Date
-import java.util.Locale
+import java.util.{Calendar, UUID, Date, Locale}
 import com.protegra_ati.agentservices.core.schema._
 import behaviors.Tracking
 import com.protegra_ati.agentservices.core.schema.Constants._
