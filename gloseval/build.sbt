@@ -19,7 +19,7 @@ resolvers ++= Seq(
   "scalaz repo" at "https://github.com/scalaz/scalaz.git",
   "basex repo" at "http://files.basex.org/maven/",
   "basex-xqj repo" at "http://xqj.net/maven/",
-  "local-maven-cache repo" at "file:///Users/lgm/.m2/repository/"
+  "local-maven-cache repo" at "file://" + Path.userHome.absolutePath + "/.m2/repository/"
 )
 
 // Change for remote install
