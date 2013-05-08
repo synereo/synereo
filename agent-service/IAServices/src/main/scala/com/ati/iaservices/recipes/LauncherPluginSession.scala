@@ -1,6 +1,6 @@
 package com.ati.iaservices.recipes
 
-import com.protegra_ati.agentservices.core.platformagents.{AgentHostStorePlatformAgent, AgentHostUIPlatformAgent}
+import com.ati.iaservices.platformagents.{AgentHostStorePlatformAgent, AgentHostDslPlatformAgent}
 import java.util.UUID
 import com.protegra_ati.agentservices.core.schema.AgentCnxnProxy
 
@@ -12,7 +12,7 @@ class LauncherPluginSession {
   // TBD - needs to come from elsewhere
   var userAgentId: UUID = UUID.randomUUID()
   // TBD - needs to come from elsewhere
-  var ui: AgentHostUIPlatformAgent = null
+  var dsl: AgentHostDslPlatformAgent = null
   var store: AgentHostStorePlatformAgent = null
   var selfCnxn: AgentCnxnProxy = null
 }

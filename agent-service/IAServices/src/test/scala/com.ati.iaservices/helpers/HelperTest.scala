@@ -15,15 +15,16 @@ import org.specs2.time.Duration
 
 class HelperTest extends SpecificationWithJUnit
 with Serializable {
-  val retries = 5
+  val retries = 10
   val timeoutDuration = 2000
   val firstName = "John"
   val lastName = "Smith"
   val alias = firstName + " " + lastName
+  val newAgentIdFormatString = "*************** NewAgentId = %s ***************"
   val tag = "Register"
   val BIZNETWORK_AGENT_ID = UUID.fromString("f5bc533a-d417-4d71-ad94-8c766907381b")
   val store = new CreateStoreHelper().createStore()
-  val ui = new CreateUIHelper().createUI()
+  val dsl = new CreateDSLHelper().createDSL()
 
     "RegisterAgentHelper" should {
       "Create a new agent" in {
@@ -33,15 +34,15 @@ with Serializable {
         val registerAgentHelper = new RegisterAgentHelper() {
           def handleListen(response: RegistrationResponse) {
             if (response.agentId != null) {
-              println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+              println(String.format(newAgentIdFormatString, response.agentId))
               println()
               Results.trigger(resultKey)
             }
           }
         }
         val eventKey = tag + UUID.randomUUID().toString
-        registerAgentHelper.listen(ui, agentSessionId, eventKey)
-        registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
+        registerAgentHelper.listen(dsl, agentSessionId, eventKey)
+        registerAgentHelper.request(dsl, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
 
         Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
       }
@@ -55,7 +56,7 @@ with Serializable {
         val registerAgentHelper = new RegisterAgentHelper() {
           def handleListen(response: RegistrationResponse) {
             if (response.agentId != null) {
-              println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+              println(String.format(newAgentIdFormatString, response.agentId))
               println()
               val setContentHelper = new SetContentHelper[Profile] {
                 def handleListen(profile: Profile) {
@@ -67,14 +68,14 @@ with Serializable {
               val eventKey = "Set_Profile"
               val target = new AgentCnxnProxy(response.agentId.toString.toURI, "", response.agentId.toString.toURI)
               val profile = new Profile(firstName, lastName, "", "", "", "", "", "", "")
-              setContentHelper.listen(ui, agentSessionId, eventKey)
-              setContentHelper.request(ui, agentSessionId, eventKey, profile, target)
+              setContentHelper.listen(dsl, agentSessionId, eventKey)
+              setContentHelper.request(dsl, agentSessionId, eventKey, profile, target)
             }
           }
         }
         val eventKey = tag + UUID.randomUUID().toString
-        registerAgentHelper.listen(ui, agentSessionId, eventKey)
-        registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
+        registerAgentHelper.listen(dsl, agentSessionId, eventKey)
+        registerAgentHelper.request(dsl, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
 
         Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
       }
@@ -88,7 +89,7 @@ with Serializable {
       val registerAgentHelper = new RegisterAgentHelper() {
         def handleListen(response: RegistrationResponse) {
           if (response.agentId != null) {
-            println(String.format("*************** NewAgentId = %s ***************", response.agentId))
+            println(String.format(newAgentIdFormatString, response.agentId))
             println()
 
             val connectToAllHelper = new ConnectToAllHelper {
@@ -105,8 +106,8 @@ with Serializable {
 
                   val tag = "GetConnections" + UUID.randomUUID.toString
                   val agentSessionId = UUID.randomUUID
-                  getContentHelper.listen(ui, agentSessionId, tag)
-                  getContentHelper.request(ui, agentSessionId, tag, Connection.SEARCH_ALL, ConnectionFactory.createSelfConnection("", agentId.toString).writeCnxn)
+                  getContentHelper.listen(dsl, agentSessionId, tag)
+                  getContentHelper.request(dsl, agentSessionId, tag, Connection.SEARCH_ALL, ConnectionFactory.createSelfConnection("", agentId.toString).writeCnxn)
                 }
 
                 countConnections(response.agentId, resultKey1)
@@ -114,14 +115,14 @@ with Serializable {
               }
             }
             val agentSessionId = UUID.randomUUID
-            connectToAllHelper.connectToAll(ui, ConnectionFactory.createSelfConnection(alias, response.agentId.toString).writeCnxn, agentSessionId, alias, BIZNETWORK_AGENT_ID)
+            connectToAllHelper.connectToAll(dsl, ConnectionFactory.createSelfConnection(alias, response.agentId.toString).writeCnxn, agentSessionId, alias, BIZNETWORK_AGENT_ID)
           }
         }
       }
       val eventKey = tag + UUID.randomUUID().toString
       val agentSessionId = UUID.randomUUID
-      registerAgentHelper.listen(ui, agentSessionId, eventKey)
-      registerAgentHelper.request(ui, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
+      registerAgentHelper.listen(dsl, agentSessionId, eventKey)
+      registerAgentHelper.request(dsl, agentSessionId, eventKey, BIZNETWORK_AGENT_ID, alias)
 
       // Confirm that number of BIZ connections equals number of new agent connections
       Results.counted(resultKey1) must be_==(Results.counted(resultKey2)).eventually(retries, new Duration(timeoutDuration))
@@ -146,8 +147,8 @@ with Serializable {
         }
       }
       val connectionTag = "Connection" + UUID.randomUUID()
-      getContentHelper.listen(ui, agentSessionId, connectionTag)
-      getContentHelper.request(ui, agentSessionId, connectionTag, Connection.SEARCH_ALL, target)
+      getContentHelper.listen(dsl, agentSessionId, connectionTag)
+      getContentHelper.request(dsl, agentSessionId, connectionTag, Connection.SEARCH_ALL, target)
 
       // WAIT FOR CONNECTION TO LOAD
       Thread.sleep(timeoutDuration)
@@ -161,8 +162,8 @@ with Serializable {
       val label = new Label(new LabelKey("profile(name(\"John\"))"), new MessageContent("This is a post"))
       val compositeData = new CompositeData[Label](connections, label)
       val tag = "SetLabel" + UUID.randomUUID()
-      setContentHelper.listen(ui, agentSessionId, tag)
-      setContentHelper.request(ui, agentSessionId, tag, compositeData, target)
+      setContentHelper.listen(dsl, agentSessionId, tag)
+      setContentHelper.request(dsl, agentSessionId, tag, compositeData, target)
 
       //Results.triggered(resultKey) must be_==(true).eventually(retries, new Duration(timeoutDuration))
     }

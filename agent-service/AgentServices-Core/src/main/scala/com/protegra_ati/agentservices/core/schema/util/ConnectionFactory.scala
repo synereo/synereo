@@ -24,6 +24,16 @@ object ConnectionFactory
   {
     createConnection(alias, categoryTarget, connectionType, sourceId, targetId, "true", getPolicies(categorySource,categoryTarget))
   }
+  //this should only be used during creation of test data
+  def createAffiliateUserConnection(alias: String, categorySource: String, categoryTarget: String, connectionType: String, sourceId: String, targetId: String) : Connection =
+  {
+    createConnection(alias, categoryTarget, connectionType, sourceId, targetId, "true", getAffiliateUserPolicies())
+  }
+  def createUserAffiliateConnection(alias: String, categorySource: String, categoryTarget: String, connectionType: String, sourceId: String, targetId: String) : Connection =
+  {
+    createConnection(alias, categoryTarget, connectionType, sourceId, targetId, "true", getUserAffiliatePolicies())
+  }
+
 
   /**
    * to be used for search for all connections, all fields are empty strings, policies object is Nil
@@ -82,6 +92,24 @@ object ConnectionFactory
       policies = ConnectionPolicy.SearchDisabled.toString :: ConnectionPolicy.BusinessProfileSharingEnabled.toString :: ConnectionPolicy.RoleSharingEnabled.toString ::policies
     }
     policies
+  }
+  def getAffiliateUserPolicies(): List [ String ] =
+  {
+    var policies = List[ String ]()
+    //a user for an affiliate should have the same policies as that of a user for a business
+    policies = ConnectionPolicy.BusinessProfileSharingEnabled.toString :: policies
+
+    policies
+
+  }
+  def getUserAffiliatePolicies(): List [ String ] =
+  {
+    var policies = List[ String ]()
+    //a user for an affiliate should have the same policies as that of a user for a business
+    //policies = ConnectionPolicy.RemoteSearchDisabled.toString :: policies
+
+    policies
+
   }
 
 //  def createConnection(alias: String,

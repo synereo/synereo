@@ -72,7 +72,7 @@ object MemCache
   {
     //expiry in seconds
     //default 3h for just in case to keep size from containing stale
-    client.set(key, 10800, value)
+    client.set(key, 60*60*3, value)
   }
 
   def set(key: String, value: java.io.Serializable, expiry: Int)(client: MemcachedClient) =
@@ -84,7 +84,7 @@ object MemCache
   {
     //expiry in seconds
     //default 3h for just in case to keep size from containing stale
-    client.replace(key, 10800, value)
+    client.replace(key, 60*60*3, value)
   }
 
   def replace(key: String, value: java.io.Serializable, expiry: Int)(client: MemcachedClient) =

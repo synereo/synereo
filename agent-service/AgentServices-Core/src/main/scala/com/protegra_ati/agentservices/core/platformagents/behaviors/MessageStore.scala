@@ -31,7 +31,7 @@ trait MessageStore extends Reporting
     report("MESSAGE TEMPORARY STORED: " + cnxn + ", message ids=" + requestMsg.ids + " AT " + storageMoment, Severity.Trace)
     // key can be reduced to id + snxn.src
     val key = requestMsg.ids.conversationId + DELIMITER + cnxn.src.toString + DELIMITER + cnxn.trgt.toString
-    MemCache.set(key, storageMoment)(Results.client)
+    MemCache.set(key, storageMoment, 0)(Results.client)
   }
 
   protected def isCaptured(messageConversationId: String, srcUID: String, targetUID: String): Boolean = synchronized {

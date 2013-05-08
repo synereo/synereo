@@ -13,8 +13,8 @@ abstract class RegisterAgentPlugin extends LauncherPluginBase {
 
   override def validateSession() {
     // no additional initialization required
-    if (session.ui == null) {
-      throw new SessionInvalidException("session.ui has not been initialized.")
+    if (session.dsl == null) {
+      throw new SessionInvalidException("session.dsl has not been initialized.")
     }
     if (LauncherPluginSession.session.selfAlias.isEmpty) {
       throw new Exception("session.selfAlias has not been initialized.")
@@ -43,7 +43,7 @@ abstract class RegisterAgentPlugin extends LauncherPluginBase {
         logger.info("Finish RegisterAgent")
       }
     }
-    registerAgentHelper.listen(session.ui, session.agentSessionId, eventKey)
-    registerAgentHelper.request(session.ui, session.agentSessionId, eventKey, session.BIZNETWORK_AGENT_ID, session.selfAlias)
+    registerAgentHelper.listen(session.dsl, session.agentSessionId, eventKey)
+    registerAgentHelper.request(session.dsl, session.agentSessionId, eventKey, session.BIZNETWORK_AGENT_ID, session.selfAlias)
   }
 }

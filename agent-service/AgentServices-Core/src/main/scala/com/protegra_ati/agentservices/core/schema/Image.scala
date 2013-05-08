@@ -43,7 +43,7 @@ case class Image(@BeanProperty override val name: String,
    * @param metadata keywords describing an image, for search purpose
    * @return
    */
-  @deprecated
+  @deprecated("Deprecated, use the constructor with (name: String, contentType: String, byteContent: Array[ Byte ], metadata: String) instead.", "1.0.0.9")
   def this(name: String, contentType: String, byteContent: Array[ Byte ], isChunked: Boolean, metadata: String) =
     this(name, contentType, byteContent, metadata)
 
@@ -106,7 +106,7 @@ case object Image
   }
 
 
-  @deprecated
+  @deprecated("Deprecated, use toBase64String(byteContent: Array[ Byte ]) instead.", "1.0.0.9")
   def toBase64String(byteContent: Array[ Byte ], isChunked: Boolean): String =
   {toBase64String(byteContent)}
 

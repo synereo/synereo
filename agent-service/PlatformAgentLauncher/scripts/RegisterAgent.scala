@@ -1,12 +1,12 @@
-import com.ati.iaservices.helpers.{RegisterAgentHelper, CreateUIHelper, CreateStoreHelper, SetContentHelper}
+import com.ati.iaservices.helpers.{RegisterAgentHelper, CreateDSLHelper, CreateStoreHelper, SetContentHelper}
 import com.protegra_ati.agentservices.core.messages.admin.RegistrationResponse
 import com.protegra_ati.agentservices.core.schema.util.ConnectionFactory
 import com.protegra_ati.agentservices.core.schema.Profile
 import java.util.UUID
 
-// START STORE AND UI PlatformAgents
+// START STORE AND DSL PlatformAgents
 val store = new CreateStoreHelper().createStore()
-val ui = new CreateUIHelper().createUI()
+val dsl = new CreateDSLHelper().createDSL()
 
 // CREATE AN AGENTSESSION
 var agentSessionId: UUID = UUID.randomUUID
@@ -28,8 +28,8 @@ def createProfile(agentId: UUID) {
     }
   }
   val tag = "SetProfile" + UUID.randomUUID()
-  setContentHelper.listen(ui, agentSessionId, tag)
-  setContentHelper.request(ui, agentSessionId, tag, profile, selfCnxn.writeCnxn)
+  setContentHelper.listen(dsl, agentSessionId, tag)
+  setContentHelper.request(dsl, agentSessionId, tag, profile, selfCnxn.writeCnxn)
 }
 
 // REGISTER A NEW AGENT
@@ -42,6 +42,6 @@ val registerAgentHelper = new RegisterAgentHelper() {
   }
 }
 
-val tag = "Register" + agentSessionId.toString
-registerAgentHelper.listen(ui, agentSessionId, tag)
-registerAgentHelper.request(ui, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")
+val tag = "Register" + UUID.randomUUID
+registerAgentHelper.listen(dsl, agentSessionId, tag)
+registerAgentHelper.request(dsl, agentSessionId, tag, BIZNETWORK_AGENT_ID, "John Smith")

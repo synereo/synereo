@@ -1,8 +1,7 @@
 package com.protegra_ati.agentservices.core.schema
 
-import scala.reflect.BeanProperty
-import scala.collection.JavaConversions._
-import com.protegra_ati.agentservices.core.messages.Identification
+import scala.beans.BeanProperty
+import scala.language.existentials
 
 /* User: mgevantmakher
 */
