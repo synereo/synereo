@@ -13,6 +13,7 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8",
   "-P:continuations:enable")
 
 resolvers ++= Seq(
+  "protegra repo" at "ftp://ftp.protegra.com/",
   "spray repo" at "http://repo.spray.io/",
   "json4s repo" at "http://repo.scala-sbt.org/scalasbt/repo/",
   "biosim repo" at "http://biosimrepomirror.googlecode.com/svn/trunk/",
@@ -40,7 +41,7 @@ libraryDependencies ++= Seq(
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
   "org.scala-lang"         %   "scala-actors"       % "2.10.0",
   "com.biosimilarity.lift" %   "specialK"           % "1.1.4.2",
-  "com.protegra-ati"       %   "agentservices-store" % "1.2.0.2-IA",
+  "com.protegra-ati"       %   "agentservices-store-ia" % "1.2.1.1-SNAPSHOT",
   "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",

@@ -138,7 +138,7 @@ trait EvaluatorService extends HttpService
   val myRoute =
     path("signup") {
       get {
-        _.redirect("http://64.27.3.17:6080/agentui.html?uuid=" + UUID.randomUUID(), MovedPermanently)
+        _.redirect("http://64.27.3.17:6080/agentui.html", MovedPermanently)
       }
     } ~
     path("api") {
@@ -174,8 +174,8 @@ trait EvaluatorService extends HttpService
                   (cometActor ! SessionPing(sessionURI, _))
                 }
                 case "evalSubscribeRequest" => {
-		  val diesel.EvaluatorMessageSet.evalSubscribeRequest( sessionURI, expression ) =
-		    ( json \ "content" ).extract[diesel.EvaluatorMessageSet.evalSubscribeRequest]
+                  val diesel.EvaluatorMessageSet.evalSubscribeRequest( sessionURI, expression ) =
+                    ( json \ "content" ).extract[diesel.EvaluatorMessageSet.evalSubscribeRequest]
                   //val sessionURI = (json \ "content" \ "sessionURI").extract[String]
                   //val expression = (json \ "content" \ "expression").extract[String]
 
@@ -183,21 +183,21 @@ trait EvaluatorService extends HttpService
 //                     throw EvalException(sessionURI)
 //                   }
 
-		  val sessionID = UUID.randomUUID
-		  val erql = agentMgr.erql( sessionID )
-		  val erspl = agentMgr.erspl( sessionID ) 
+                  val sessionID = UUID.randomUUID
+                  val erql = agentMgr.erql( sessionID )
+                  val erspl = agentMgr.erspl( sessionID ) 
 
-		  expression match {
-		    case ConcreteHL.FeedExpr( filter, cnxns ) => {		      
-		      agentMgr.feed( erql, erspl )( filter, cnxns )
-		    }
-		    case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
-		      agentMgr.score( erql, erspl )( filter, cnxns, staff )
-		    }
-		    case ConcreteHL.InsertContent( filter, cnxns, content : String ) => {
-		      agentMgr.post[String]( erql, erspl )( filter, cnxns, content )
-		    }
-		  }
+                  expression match {
+                    case ConcreteHL.FeedExpr( filter, cnxns ) => {                    
+                      agentMgr.feed( erql, erspl )( filter, cnxns )
+                    }
+                    case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
+                      agentMgr.score( erql, erspl )( filter, cnxns, staff )
+                    }
+                    case ConcreteHL.InsertContent( filter, cnxns, content : String ) => {
+                      agentMgr.post[String]( erql, erspl )( filter, cnxns, content )
+                    }
+                  }
                   cometActor ! CometMessage( sessionURI.uri.toString, HttpBody(`application/json`,
 """{
   "msgType": "evalComplete",

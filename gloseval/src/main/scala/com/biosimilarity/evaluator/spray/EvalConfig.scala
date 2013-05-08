@@ -43,14 +43,14 @@ trait EvalConfig {
     _config match {
       case Some( cfg ) => cfg
       case None => {
-	val cfg =
-	  ConfigFactory.load(
-	    ConfigFactory.parseFile(
-	      new java.io.File( "eval.conf" )
-	    )
-	  )
-	_config = Some( cfg )
-	cfg
+        val cfg =
+          ConfigFactory.load(
+            ConfigFactory.parseFile(
+              new java.io.File( "eval.conf" )
+            )
+          )
+        _config = Some( cfg )
+        cfg
       }
     }    
   }
