@@ -481,6 +481,10 @@ object DSLCommLinkCtor extends Serializable {
   import Being._
   import PersistedKVDBNodeFactory._
 
+  type EvaluationRequestChannel[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] =
+    Being.PersistedMonadicKVDBNode[ReqBody,RspBody]
+  type StdEvaluationRequestChannel = EvaluationRequestChannel[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+
   object ExchangeLabels extends CnxnString[String,String,String] {
     def evalRequestLabel(
       majorVersion : String = "0", minorVersion : String = "1"
@@ -520,7 +524,7 @@ object DSLCommLinkCtor extends Serializable {
     remoteHost : String, remotePort : Int
   )(
     implicit returnTwist : Boolean
-  ) : Either[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])] = {
+  ) : Either[EvaluationRequestChannel[ReqBody,RspBody],(EvaluationRequestChannel[ReqBody,RspBody],EvaluationRequestChannel[ReqBody,RspBody])] = {
     val ( localExchange, remoteExchange ) = 
       if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
 	( "/DSLExecProtocolLocal", "/DSLExecProtocolRemote" )	  
@@ -530,7 +534,7 @@ object DSLCommLinkCtor extends Serializable {
       }
     
     if ( returnTwist ) {
-      Right[Being.PersistedMonadicKVDBNode[ReqBody,RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])](
+      Right[EvaluationRequestChannel[ReqBody,RspBody],(EvaluationRequestChannel[ReqBody,RspBody],EvaluationRequestChannel[ReqBody,RspBody])](
 	(
 	  ptToPt[ReqBody, RspBody](
 	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
@@ -544,7 +548,7 @@ object DSLCommLinkCtor extends Serializable {
       )
     }
     else {
-      Left[Being.PersistedMonadicKVDBNode[ReqBody, RspBody],(Being.PersistedMonadicKVDBNode[ReqBody, RspBody],Being.PersistedMonadicKVDBNode[ReqBody, RspBody])](
+      Left[EvaluationRequestChannel[ReqBody,RspBody],(EvaluationRequestChannel[ReqBody,RspBody],EvaluationRequestChannel[ReqBody,RspBody])](
 	ptToPt(
 	  new URI( "agent", null, localHost, localPort, localExchange, null, null ),
 	  new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
@@ -556,10 +560,37 @@ object DSLCommLinkCtor extends Serializable {
   def link[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
     localHost : String = "localhost", localPort : Int = 5672,
     remoteHost : String = "localhost", remotePort : Int = 5672
-  ) : Being.PersistedMonadicKVDBNode[ReqBody,RspBody] = {
+  ) : EvaluationRequestChannel[ReqBody,RspBody] = {
     val Right( ( client, server ) ) = 
       setup[ReqBody,RspBody]( localHost, localPort, remoteHost, remotePort )( true )
     client
-  }	 
+  }
+
+  def biLink[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+    localHost : String = "localhost", localPort : Int = 5672,
+    remoteHost : String = "localhost", remotePort : Int = 5672
+  ) : ( EvaluationRequestChannel[ReqBody,RspBody], EvaluationRequestChannel[ReqBody,RspBody] ) = {
+    val Right( ( client, server ) ) = 
+      setup[ReqBody,RspBody]( localHost, localPort, remoteHost, remotePort )( true )
+    ( client, server )
+  }
+
+  def stdLink(
+    localHost : String = "localhost", localPort : Int = 5672,
+    remoteHost : String = "localhost", remotePort : Int = 5672
+  ) : StdEvaluationRequestChannel = {
+    val Right( ( client, server ) ) = 
+      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( localHost, localPort, remoteHost, remotePort )( true )
+    client
+  }
+
+  def stdBiLink(
+    localHost : String = "localhost", localPort : Int = 5672,
+    remoteHost : String = "localhost", remotePort : Int = 5672
+  ) : ( StdEvaluationRequestChannel, StdEvaluationRequestChannel ) = {
+    val Right( ( client, server ) ) = 
+      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( localHost, localPort, remoteHost, remotePort )( true )
+    ( client, server )
+  }
   
 }
