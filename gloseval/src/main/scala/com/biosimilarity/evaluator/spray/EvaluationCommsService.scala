@@ -30,13 +30,20 @@ import org.json4s.native.JsonMethods._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.continuations._ 
+import scala.collection.mutable.HashMap
 
 import com.typesafe.config._
 
+import javax.crypto._
+import javax.crypto.spec.SecretKeySpec
+
+import java.net.URI
 import java.util.Date
 import java.util.UUID
 
-trait EvaluationCommsService {
+
+
+trait EvaluationCommsService extends CnxnString[String, String, String]{
   self : EvalConfig =>
 
   import DSLCommLink._   
@@ -96,9 +103,49 @@ trait EvaluationCommsService {
     }    
   }
 
-  trait AgentManager {
+  trait AgentManager extends AgentCnxnTypes {
     def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
+    def secureCnxn( userName: String, userPwd: String, queryMap: HashMap[String, String]) : 
+        ( String, AgentCnxn, AgentCnxn, CnxnCtxtLabel[String,String,String], SecretKeySpec, SecretKeySpec, Cipher ) = {
+      // TODO: use interpolation
+      // http://docs.scala-lang.org/overviews/core/string-interpolation.html
+      // fromTermString(prolog"user($username, $fullname, $email)")
+      val userTermString = "user(" + userName + ", " + queryMap("fullname") +", " + queryMap("email") + ")"
+
+      // TODO: move all these keys out of the server code
+      val mac = Mac.getInstance("HmacSHA256")
+      mac.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
+      val hex1 = mac.doFinal(userTermString.getBytes("utf-8")).map("%02x" format _).mkString
+
+      mac.init(new SecretKeySpec("8Uh4Fzs9".getBytes("utf-8"), "HmacSHA256"))
+      val hex2 = mac.doFinal(userTermString.getBytes("utf-8")).map("%02x" format _).mkString
+
+      mac.init(new SecretKeySpec("32#a&fg4".getBytes("utf-8"), "HmacSHA256"))
+      val sysKey = mac.doFinal("BiosimilarityLLC".getBytes("utf-8")).slice(0, 16)
+      
+      mac.init(new SecretKeySpec("X@*h$ikU".getBytes("utf-8"), "HmacSHA256"))
+      val userKey = mac.doFinal(userPwd.getBytes("utf-8")).slice(0, 16)
+
+      val uri1str = "agent://" + hex1
+      val uri2str = "agent://" + hex2
+      val uri1 = new URI(uri1str)
+      val uri2 = new URI(uri2str)
+      
+      val UserCnxn = new AgentCnxn( uri1, uri1str, uri1 )
+      val RecoveryCnxn = new AgentCnxn( uri2, uri2str, uri2 )
+
+      val UserData = fromTermString(userTermString).getOrElse(
+        throw new Exception("userTermString failed to parse: " + userTermString)
+      )
+      
+      val userKeySpec = new SecretKeySpec(userKey, "AES")
+      val sysKeySpec = new SecretKeySpec(sysKey, "AES")
+      // TODO: Check encryption mode.  CBC?  If so, where's the IV?
+      val encrypt = Cipher.getInstance("AES")
+      
+      (uri1str, UserCnxn, RecoveryCnxn, UserData, userKeySpec, sysKeySpec, encrypt)
+    }
     def createAgent(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]

@@ -22,11 +22,17 @@ import org.json4s.native.JsonMethods._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.continuations._ 
+import scala.collection.mutable.HashMap
 
 import com.typesafe.config._
 
+import javax.crypto._
+import javax.crypto.spec.SecretKeySpec
+
 import java.util.Date
 import java.util.UUID
+
+
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -83,25 +89,28 @@ class CometActor extends Actor {
   val retryCount = 10                 // number of reschedule retries before dropping the message
 
   def receive = {
-    case SessionPing(sessionURI, reqCtx) =>
+    case SessionPing(sessionURI, reqCtx) => {
       requests += (sessionURI -> reqCtx)
       toTimers.get(sessionURI).map(_.cancel())
       toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
 
       aliveTimers.get(sessionURI).map(_.cancel())
       aliveTimers += (sessionURI -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(sessionURI)))
-
-    case PollTimeout(id) =>
+    }
+    
+    case PollTimeout(id) => {
       requests.get(id).map(_.complete(HttpResponse(StatusCodes.OK)))
       requests -= id
       toTimers -= id
-
-    case ClientGc(id) =>
+    }
+    
+    case ClientGc(id) => {
       requests -= id
       toTimers -= id
       aliveTimers -= id
+    }
 
-    case CometMessage(id, data, counter) =>
+    case CometMessage(id, data, counter) => {
       val reqCtx = requests.get(id)
       reqCtx.map { reqCtx =>
         reqCtx.complete(HttpResponse(entity=data))
@@ -111,14 +120,16 @@ class CometActor extends Actor {
           context.system.scheduler.scheduleOnce(rescheduleDuration, self, CometMessage(id, data, counter+1))
         }
       }
+    }
 
-    case BroadcastMessage(data) =>
+    case BroadcastMessage(data) => {
       aliveTimers.keys.map { id =>
         requests.get(id).map(_.complete(HttpResponse(entity=data))).getOrElse(self ! CometMessage(id, data))
       }
       toTimers.map(_._2.cancel)
       toTimers = Map.empty
       requests = Map.empty
+    }
   }
 }
 
@@ -132,6 +143,8 @@ trait EvaluatorService extends HttpService
      with EvaluationCommsService
      with EvalConfig
 {  
+  import DSLCommLink.mTT
+  
   implicit val formats = DefaultFormats
   val cometActor = actorRefFactory.actorOf(Props[CometActor])    
 
@@ -144,7 +157,6 @@ trait EvaluatorService extends HttpService
     path("api") {
       post {
         decodeRequest(NoEncoding) {
-          // unmarshal with in-scope unmarshaller
           entity(as[String]) { jsonStr =>
             try {
               val json = parse(jsonStr)
@@ -157,16 +169,58 @@ trait EvaluatorService extends HttpService
                   if (uri.getScheme() != "agent") {
                     throw InitializeSessionException(agentURI, "Unrecognized scheme")
                   }
-                
-                  complete(HttpResponse(entity = HttpBody(`application/json`,
+                  // TODO: get a proper library to do this
+                  val userNameAndPwd = uri.getUserInfo.split(":")
+                  val userName = userNameAndPwd(0)
+                  val userPwd = userNameAndPwd.length match {
+                    case 1 => ""
+                    case _ => userNameAndPwd(0)
+                  }
+                  val queryMap = new HashMap[String, String]
+                  uri.getRawQuery.split("&").map((x: String) => {
+                    val pair = x.split("=")
+                    queryMap += ((pair(0), pair(1)))
+                  })
+
+                  val sessionID = UUID.randomUUID
+                  val erql = agentMgr.erql( sessionID )
+                  val erspl = agentMgr.erspl( sessionID ) 
+
+                  val (uri1str, userCnxn, recoveryCnxn, userData, userKeySpec, sysKeySpec, encrypt) = 
+                    agentMgr.secureCnxn(userName, userPwd, queryMap)
+
+                  // create agent
+                  agentMgr.post[CnxnCtxtLabel[String,String,String]]( erql, erspl )(
+                     userData, List( userCnxn ), userData
+                  )
+
+                  val onPost : Option[mTT.Resource] => Unit = {
+                    ( optRsrc : Option[mTT.Resource] ) => {
+                      println( "got response: " + optRsrc )
+                      complete(HttpResponse(entity = HttpBody(`application/json`,
 """{"msgType": "initializeSessionResponse", "content": {
-  "sessionURI": "agent-session://ArtVandelay@session1",
-  "listOfAliases": [],
-  "listOfLabels": [],
-  "lastActiveFilter": ""
+   "sessionURI": "agent-session://ArtVandelay@session1",
+   "listOfAliases": [],
+   "listOfLabels": [],
+   "lastActiveFilter": ""
 }}
 """
-                  )))
+                      )))
+                    }
+                  }
+                  // Store connection
+                  encrypt.init(Cipher.ENCRYPT_MODE, userKeySpec)
+                  val uri1Bytes : Array[Byte] = uri1str.getBytes("utf-8")
+                  val userUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
+                  agentMgr.post[String]( erql, erspl )( 
+                    userData, List( recoveryCnxn ), userUri1Enc
+                  )
+                  encrypt.init(Cipher.ENCRYPT_MODE, sysKeySpec)
+                  val sysUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
+                  agentMgr.post[String]( erql, erspl )(
+                    userData, List( recoveryCnxn ), sysUri1Enc, onPost
+                  )
+                  (cometActor ! SessionPing("", _))
                 }
                 case "sessionPing" => {
                   val sessionURI = (json \ "content" \ "sessionURI").extract[String]
