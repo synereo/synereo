@@ -1,7 +1,7 @@
 package com.biosimilarity.lift.lib.extensions
 
 import java.net.URI
-import javax.ws.rs.core._
+//import javax.ws.rs.core._
 import com.biosimilarity.lift.lib.moniker._
 
 object URIExtensions
