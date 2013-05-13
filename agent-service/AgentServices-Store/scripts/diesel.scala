@@ -6,5 +6,7 @@
 // Description: 
 // ------------------------------------------------------------------------
 
+import com.biosimilarity.evaluator.distribution._
+
 object UseCaseOne extends UseCaseHelper {
 }

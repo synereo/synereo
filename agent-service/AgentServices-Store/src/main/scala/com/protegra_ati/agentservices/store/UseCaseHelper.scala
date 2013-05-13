@@ -16,10 +16,12 @@ import scala.collection.mutable.HashMap
 
 import java.util.UUID
 
-trait UseCaseHelper extends AgentCnxnTypes with CnxnString[String,String,String] {
+trait UseCaseHelper extends AgentCnxnTypes with CnxnString[String,String,String] with Serializable {
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   import DSLCommLinkCtor._
+  @transient
   val ( client1, server1 ) = stdBiLink()
+  @transient
   val sessionMap =
     new HashMap[String,( Either[ConcreteHL.HLExpr,ConcreteHL.HLExpr], Option[ConcreteHL.HLExpr] )]()
   def erql( sessionId : String = UUID.randomUUID().toString ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
