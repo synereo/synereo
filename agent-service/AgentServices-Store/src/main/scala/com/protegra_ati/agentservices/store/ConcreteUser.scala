@@ -10,7 +10,7 @@ package com.biosimilarity.evaluator.distribution
 
 package diesel {
   import com.biosimilarity.evaluator.dsl._
-  object ConcreteHumanEngagement extends HumanEngagement {
+  object ConcreteHumanEngagement extends HumanEngagement with Serializable {
     type Duration = ( String, String );
     type Language = String
   }

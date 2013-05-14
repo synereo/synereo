@@ -12,8 +12,17 @@ import com.biosimilarity.evaluator.dsl._
 import com.biosimilarity.lift.model.store._
 import com.protegra_ati.agentservices.store._
 
-object ConcreteHL extends AbstractHL {
+import java.net.URI
+
+object ConcreteHL extends AbstractHL with Serializable {  
   type Label = CnxnCtxtLabel[String,String,String]  
-  type Cnxn = AgentCnxnTypes#AgentCnxn
   type Substitution = Option[List[(String,Label)]]
+
+  case class PortableAgentCnxn(
+    val src : URI,
+    val label : String,
+    val trgt : URI
+  ) //extends Cnxn[URI,String,URI]
+
+  type Cnxn = PortableAgentCnxn
 }

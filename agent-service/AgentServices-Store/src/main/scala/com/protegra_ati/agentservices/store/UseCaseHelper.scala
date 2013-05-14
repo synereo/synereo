@@ -24,6 +24,10 @@ trait UseCaseHelper extends AgentCnxnTypes with CnxnString[String,String,String]
   @transient
   val sessionMap =
     new HashMap[String,( Either[ConcreteHL.HLExpr,ConcreteHL.HLExpr], Option[ConcreteHL.HLExpr] )]()
+
+  implicit def toAgentCnxn( pAC : ConcreteHL.PortableAgentCnxn ) : AgentCnxn = {
+    new AgentCnxn( pAC.src, pAC.label, pAC.trgt )
+  }
   def erql( sessionId : String = UUID.randomUUID().toString ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
     (
       sessionId,
@@ -64,7 +68,7 @@ trait UseCaseHelper extends AgentCnxnTypes with CnxnString[String,String,String]
       client1.put( erqlChan, DSLCommLink.mTT.Ground( ConcreteHL.Bottom ) )
     }
   }
-  def doPutFeedRequest( sessionId : String = UUID.randomUUID.toString() ) = {
+  def mkFeedExpr( sessionId : String = UUID.randomUUID.toString() ) : ConcreteHL.FeedExpr = {
     val feedLabelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )"
     val feedLabel =
       fromTermString(
@@ -73,23 +77,11 @@ trait UseCaseHelper extends AgentCnxnTypes with CnxnString[String,String,String]
 	throw new Exception( "failed to parse feed label" + feedLabelStr )
       )
     val feedCnxn =
-      AgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
-    val feedExpr =
-      ConcreteHL.FeedExpr( feedLabel, List( feedCnxn ) )
-    val ( _, erqlChan ) = erql( sessionId ) 
+      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
 
-    sessionMap += ( sessionId -> ( Left[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( feedExpr ), None ) )       
-
-    reset {
-      client1.put(
-	erqlChan,
-	DSLCommLink.mTT.Ground(
-	  feedExpr
-	)
-      )
-    }
+    ConcreteHL.FeedExpr( feedLabel, List( feedCnxn ) )      
   }
-  def doPutScoreRequest( sessionId : String = UUID.randomUUID.toString() ) = {
+  def mkScoreExpr( sessionId : String = UUID.randomUUID.toString() ) : ConcreteHL.ScoreExpr = {
     val scoreLabelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )"
     val scoreLabel =
       fromTermString(
@@ -98,27 +90,15 @@ trait UseCaseHelper extends AgentCnxnTypes with CnxnString[String,String,String]
 	throw new Exception( "failed to parse score label" + scoreLabelStr )
       )
     val scoreCnxn =
-      AgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
-    val scoreExpr =
-      ConcreteHL.ScoreExpr(
-	scoreLabel,
-	List( scoreCnxn ),
-	Left[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]]( List( scoreCnxn ) )
-      )
-    val ( _, erqlChan ) = erql( sessionId ) 
+      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
 
-    sessionMap += ( sessionId -> ( Left[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( scoreExpr ), None ) )
-
-    reset {
-      client1.put(
-	erqlChan,
-	DSLCommLink.mTT.Ground(
-	  scoreExpr
-	)
-      )
-    }
+    ConcreteHL.ScoreExpr(
+      scoreLabel,
+      List( scoreCnxn ),
+      Left[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]]( List( scoreCnxn ) )
+    )          
   }
-  def doPutPostRequest( sessionId : String = UUID.randomUUID.toString() ) = {
+  def mkPostExpr( sessionId : String = UUID.randomUUID.toString() ) : ConcreteHL.InsertContent[String] = {
     val postLabelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )"
     val postLabel =
       fromTermString( 
@@ -127,25 +107,28 @@ trait UseCaseHelper extends AgentCnxnTypes with CnxnString[String,String,String]
 	throw new Exception( "failed to parse post label" + postLabelStr )
       )
     val postCnxn =
-      AgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
-    val postExpr =
-      ConcreteHL.InsertContent[String](
-	postLabel,
-	List( postCnxn ),
-	"David Byrne"
-      )
+      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+    ConcreteHL.InsertContent[String](
+      postLabel,
+      List( postCnxn ),
+      "David Byrne"
+    )          
+  }
+  def doPutHLExprRequest( sessionId : String, expr : ConcreteHL.HLExpr ) = {
     val ( _, erqlChan ) = erql( sessionId ) 
 
-    sessionMap += ( sessionId -> ( Left[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( postExpr ), None ) )
+    sessionMap += ( sessionId -> ( Left[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None ) )       
 
-    reset {
-      client1.put(
-	erqlChan,
-	DSLCommLink.mTT.Ground(
-	  postExpr
-	)
-      )
-    }
+    reset { client1.put( erqlChan, DSLCommLink.mTT.Ground( expr ) ) }
+  }
+  def doPutFeedRequest( sessionId : String = UUID.randomUUID.toString() ) = {
+    doPutHLExprRequest( sessionId, mkFeedExpr( sessionId ) )
+  }
+  def doPutScoreRequest( sessionId : String = UUID.randomUUID.toString() ) = {
+    doPutHLExprRequest( sessionId, mkScoreExpr( sessionId ) )
+  }
+  def doPutPostRequest( sessionId : String = UUID.randomUUID.toString() ) = {
+    doPutHLExprRequest( sessionId, mkPostExpr( sessionId ) )
   }
 
   def doGetRequest( sessionId : String = "SessionId" ) = {

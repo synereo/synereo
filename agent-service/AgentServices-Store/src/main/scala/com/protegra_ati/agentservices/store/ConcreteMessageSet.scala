@@ -15,7 +15,7 @@ import com.protegra_ati.agentservices.store._
 import com.biosimilarity.evaluator.msgs._
 
 package diesel {
-  object EvaluatorMessageSet extends AbstractEvaluatorMessageSet {    
+  object EvaluatorMessageSet extends AbstractEvaluatorMessageSet with Serializable {    
     type Alias = CnxnCtxtLabel[String,String,String]  
     type Cnxn = AgentCnxnTypes#AgentCnxn
     type Filter = CnxnCtxtLabel[String,String,String]  
