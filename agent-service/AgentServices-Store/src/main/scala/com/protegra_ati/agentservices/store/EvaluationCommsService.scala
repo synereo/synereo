@@ -91,11 +91,11 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     }    
   }
 
-  trait AgentManager extends AgentCnxnTypes {
+  trait AgentManager {
     def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def secureCnxn( userName: String, userPwd: String, queryMap: HashMap[String, String]) : 
-        ( String, AgentCnxn, AgentCnxn, CnxnCtxtLabel[String,String,String], SecretKeySpec, SecretKeySpec, Cipher ) = {
+        ( String, ConcreteHL.PortableAgentCnxn, ConcreteHL.PortableAgentCnxn, CnxnCtxtLabel[String,String,String], SecretKeySpec, SecretKeySpec, Cipher ) = {
       // TODO: use interpolation
       // http://docs.scala-lang.org/overviews/core/string-interpolation.html
       // fromTermString(prolog"user($username, $fullname, $email)")
@@ -120,8 +120,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val uri1 = new URI(uri1str)
       val uri2 = new URI(uri2str)
       
-      val UserCnxn = new AgentCnxn( uri1, uri1str, uri1 )
-      val RecoveryCnxn = new AgentCnxn( uri2, uri2str, uri2 )
+      val UserCnxn = new ConcreteHL.PortableAgentCnxn( uri1, uri1str, uri1 )
+      val RecoveryCnxn = new ConcreteHL.PortableAgentCnxn( uri2, uri2str, uri2 )
 
       val UserData = fromTermString(userTermString).getOrElse(
         throw new Exception("userTermString failed to parse: " + userTermString)
