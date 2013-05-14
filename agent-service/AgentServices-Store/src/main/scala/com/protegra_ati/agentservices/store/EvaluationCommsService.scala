@@ -41,12 +41,18 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
   import diesel.ConcreteHumanEngagement._
   import ConcreteHL._
   
-  var _link : Option[
-    Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+  var _clientServerPair : Option[
+    (
+      Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse],
+      Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+    )
   ] = None
 
-  def link() : Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
-    _link match {
+  def link() : (
+    Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse],
+    Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+  ) = {
+    _clientServerPair match {
       case Some( lnk ) => lnk
       case None => {
         val dslCommLinkHost =
@@ -78,15 +84,17 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             case e : Throwable => 5672
           }
 
-        val lnk : Being.PersistedMonadicKVDBNode[
+        val ( client, server ) : ( Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
-        ] = DSLCommLinkCtor.link(
+        ], Being.PersistedMonadicKVDBNode[
+          PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
+        ] ) = DSLCommLinkCtor.stdBiLink(
           dslCommLinkHost, dslCommLinkPort,
           dslCommLinkRemoteHost, dslCommLinkRemotePort
         )
 
-        _link = Some( lnk )
-        lnk
+        _clientServerPair = Some( ( client, server ) )
+        ( client, server )
       }
     }    
   }
@@ -145,10 +153,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link.publish( erql, InsertContent( filter, List( selfCnxn ), thisUser ) )
+        link._1.publish( erql, InsertContent( filter, List( selfCnxn ), thisUser ) )
       }
       reset {
-        for( e <- link.subscribe( erspl ) ) { onCreation( e ) }
+        for( e <- link._2.subscribe( erspl ) ) { onCreation( e ) }
       }
     }
     def post[Value](
@@ -162,10 +170,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link.publish( erql, InsertContent( filter, cnxns, content ) )
+        link._1.publish( erql, InsertContent( filter, cnxns, content ) )
       }
       reset {
-        for( e <- link.subscribe( erspl ) ) { onPost( e ) }
+        for( e <- link._2.subscribe( erspl ) ) { onPost( e ) }
       }
     }
     def feed(
@@ -178,10 +186,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link.publish( erql, FeedExpr( filter, cnxns ) )
+        link._1.publish( erql, FeedExpr( filter, cnxns ) )
       }
       reset {
-        for( e <- link.subscribe( erspl ) ) { onFeedRslt( e ) }
+        for( e <- link._2.subscribe( erspl ) ) { onFeedRslt( e ) }
       }
     }
     def score(
@@ -195,10 +203,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link.publish( erql, ScoreExpr( filter, cnxns, staff ) )
+        link._1.publish( erql, ScoreExpr( filter, cnxns, staff ) )
       }
       reset {
-        for( e <- link.subscribe( erspl ) ) { onScoreRslt( e ) }
+        for( e <- link._2.subscribe( erspl ) ) { onScoreRslt( e ) }
       }
     }
   }
