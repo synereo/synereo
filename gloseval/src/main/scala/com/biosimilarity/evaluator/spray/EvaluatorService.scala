@@ -186,7 +186,15 @@ trait EvaluatorService extends HttpService
                   val erql = agentMgr.erql( sessionID )
                   val erspl = agentMgr.erspl( sessionID ) 
 
-                  val (uri1str, userCnxn, recoveryCnxn, userData, userKeySpec, sysKeySpec, encrypt) = 
+                  val (
+		    uri1str : String,
+		    userCnxn : ConcreteHL.PortableAgentCnxn,
+		    recoveryCnxn : ConcreteHL.PortableAgentCnxn,
+		    userData : CnxnCtxtLabel[String,String,String],
+		    userKeySpec : SecretKeySpec,
+		    sysKeySpec : SecretKeySpec,
+		    encrypt : Cipher
+		  ) = 
                     agentMgr.secureCnxn(userName, userPwd, queryMap)
 
                   // create agent
