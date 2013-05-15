@@ -163,20 +163,23 @@ trait EvaluatorService extends HttpService
               val msgType = (json \ "msgType").extract[String]
               msgType match {
                 case "initializeSessionRequest" => {
-		  val onPost : Option[mTT.Resource] => Unit = {
-		    ( optRsrc : Option[mTT.Resource] ) => {
-		      println( "got response: " + optRsrc )
-		      complete(HttpResponse(entity = HttpBody(`application/json`,
-"""{"msgType": "initializeSessionResponse", "content": {
-"sessionURI": "agent-session://ArtVandelay@session1",
-"listOfAliases": [],
-"listOfLabels": [],
-"lastActiveFilter": ""
-}}
-"""
-        )))
-		    }
-		  }
+                  val onPost : Option[mTT.Resource] => Unit = {
+                    ( optRsrc : Option[mTT.Resource] ) => {
+                      println( "got response: " + optRsrc )
+                      complete(HttpResponse(entity = HttpBody(`application/json`,
+                        """{
+                          "msgType": "initializeSessionResponse",
+                          "content": {
+                            "sessionURI": "agent-session://ArtVandelay@session1",
+                            "listOfAliases": [],
+                            "listOfLabels": [],
+                            "lastActiveFilter": ""
+                          }
+                        }
+                        """
+                      )))
+                    }
+                  }
                   initializeSessionRequest( json, onPost )
                   (cometActor ! SessionPing("", _))
                 }
@@ -186,16 +189,16 @@ trait EvaluatorService extends HttpService
                 }
                 case "evalSubscribeRequest" => {
                   val (sessionURI, body) = 
-		  (evalSubscribeRequest(json), HttpBody(`application/json`,
-"""{
-"msgType": "evalComplete",
-"content": {
-"sessionURI": "agent-session://ArtVandelay@session1",
-"pageOfPosts": []
-}
-}
-"""
-    ))
+                  (evalSubscribeRequest(json), HttpBody(`application/json`,
+                    """{
+                      "msgType": "evalComplete",
+                      "content": {
+                        "sessionURI": "agent-session://ArtVandelay@session1",
+                        "pageOfPosts": []
+                      }
+                    }
+                    """
+                  ))
                   cometActor ! CometMessage(sessionURI.uri.toString, body)
                   complete(StatusCodes.OK)
                 }
