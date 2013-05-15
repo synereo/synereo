@@ -66,21 +66,7 @@ trait MessageGeneration extends CnxnString[String,String,String] {
   }  
 }
 
-trait UseCaseHelper extends AgentCnxnTypes
- with CnxnString[String,String,String]
- with MessageGeneration
- with Serializable {
-  import com.protegra_ati.agentservices.store.extensions.StringExtensions._
-  import DSLCommLinkCtor._
-  @transient
-  val ( client1, server1 ) = stdBiLink()
-  @transient
-  val sessionMap =
-    new HashMap[String,( Either[ConcreteHL.HLExpr,ConcreteHL.HLExpr], Option[ConcreteHL.HLExpr] )]()
-
-  implicit def toAgentCnxn( pAC : ConcreteHL.PortableAgentCnxn ) : AgentCnxn = {
-    new AgentCnxn( pAC.src, pAC.label, pAC.trgt )
-  }
+trait ChannelGeneration {
   def erql( sessionId : String = UUID.randomUUID().toString ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
     (
       sessionId,
@@ -97,6 +83,24 @@ trait UseCaseHelper extends AgentCnxnTypes
       )
     )
   }
+}
+
+trait UseCaseHelper extends MessageGeneration
+ with ChannelGeneration
+ with AgentCnxnTypes
+ with CnxnString[String,String,String]
+ with Serializable {
+  import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+  import DSLCommLinkCtor._
+  @transient
+  val ( client1, server1 ) = stdBiLink()
+  @transient
+  val sessionMap =
+    new HashMap[String,( Either[ConcreteHL.HLExpr,ConcreteHL.HLExpr], Option[ConcreteHL.HLExpr] )]()
+
+  implicit def toAgentCnxn( pAC : ConcreteHL.PortableAgentCnxn ) : AgentCnxn = {
+    new AgentCnxn( pAC.src, pAC.label, pAC.trgt )
+  }  
   def doDrop() = {
     import com.biosimilarity.lift.model.store.mongo._
     val clntSess1 =
