@@ -144,13 +144,13 @@ trait EvalHandler {
     }
 
     (sessionURI, HttpBody(`application/json`,
-"""{
-"msgType": "closeSessionResponse",
-"content": {
-"sessionURI": "agent-session://ArtVandelay@session1",
-}
-}
-"""
+      """{
+        "msgType": "closeSessionResponse",
+        "content": {
+          "sessionURI": "agent-session://ArtVandelay@session1",
+        }
+      }
+      """
     ))
   }
 

@@ -191,10 +191,10 @@ trait EvaluatorService extends HttpService
                   val (sessionURI, body) = 
                   (evalSubscribeRequest(json), HttpBody(`application/json`,
                     """{
-                    "msgType": "evalComplete",
-                    "content": {
-                      "sessionURI": "agent-session://ArtVandelay@session1",
-                      "pageOfPosts": []
+                      "msgType": "evalComplete",
+                      "content": {
+                        "sessionURI": "agent-session://ArtVandelay@session1",
+                        "pageOfPosts": []
                       }
                     }
                     """
