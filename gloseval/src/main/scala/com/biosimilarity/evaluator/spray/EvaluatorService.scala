@@ -314,12 +314,12 @@ trait EvaluatorService extends HttpService
                 case "evalSubscribeRequest" => {
                   val (sessionURI, body) = evalSubscribeRequest(json)
                   cometActor ! CometMessage(sessionURI, body)
-                  complete(HttpResponse(200, "OK\n"))
+                  complete(StatusCodes.OK)
                 }
                 case "closeSessionRequest" => {
                   val (sessionURI, body) = closeSessionRequest(json)
                   cometActor ! CometMessage(sessionURI, body)
-                  complete(HttpResponse(200, "OK\n"))
+                  complete(StatusCodes.OK)
                 }
                 case _ => complete(HttpResponse(404, "Unknown message type: " + msgType + "\n"))
               }
