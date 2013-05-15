@@ -42,9 +42,13 @@ import java.util.UUID
 
 package usage {
   object SimpleClient
-    extends EvaluationCommsService
+    extends EvaluationCommsService  
      with EvalHandler
+     with MessageGeneration
+     with ChannelGeneration
      with EvalConfig
+     with Serializable
   {
+    import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   }
 }

@@ -13,14 +13,14 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8",
   "-P:continuations:enable")
 
 resolvers ++= Seq(
+  "local-maven-cache repo" at "file://" + Path.userHome.absolutePath + "/.m2/repository/",
   "protegra repo" at "ftp://ftp.protegra.com/",
   "spray repo" at "http://repo.spray.io/",
   "json4s repo" at "http://repo.scala-sbt.org/scalasbt/repo/",
   "biosim repo" at "http://biosimrepomirror.googlecode.com/svn/trunk/",
   "scalaz repo" at "https://github.com/scalaz/scalaz.git",
   "basex repo" at "http://files.basex.org/maven/",
-  "basex-xqj repo" at "http://xqj.net/maven/",
-  "local-maven-cache repo" at "file://" + Path.userHome.absolutePath + "/.m2/repository/"
+  "basex-xqj repo" at "http://xqj.net/maven/"
 )
 
 // Change for remote install
@@ -40,8 +40,8 @@ libraryDependencies ++= Seq(
 //  "org.json4s"             %   "json4s-jackson_2.9.2" % "3.1.0",
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
   "org.scala-lang"         %   "scala-actors"       % "2.10.0",
-  "com.biosimilarity.lift" %   "specialK"           % "1.1.4.2",
-  "com.protegra-ati"       %   "agentservices-store-ia" % "1.2.1.3-SNAPSHOT",
+  "com.biosimilarity.lift" %   "specialK"           % "1.1.4.3",
+  "com.protegra-ati"       %   "agentservices-store-ia" % "1.2.1.5-SNAPSHOT",
   "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",
