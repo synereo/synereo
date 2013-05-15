@@ -141,153 +141,12 @@ case class CloseSessionException(sessionURI: String, message: String) extends Ex
 // this trait defines our service behavior independently from the service actor
 trait EvaluatorService extends HttpService
      with EvaluationCommsService
+     with EvalHandler
      with EvalConfig
 {  
   import DSLCommLink.mTT
-  
-  implicit val formats = DefaultFormats
-  val cometActor = actorRefFactory.actorOf(Props[CometActor])    
-
-
-
-
-  def initializeSessionRequest(json: JValue) = {
-    val agentURI = (json \ "content" \ "agentURI").extract[String]
-    val uri = new java.net.URI(agentURI)
-
-    if (uri.getScheme() != "agent") {
-      throw InitializeSessionException(agentURI, "Unrecognized scheme")
-    }
-    // TODO: get a proper library to do this
-    val userNameAndPwd = uri.getUserInfo.split(":")
-    val userName = userNameAndPwd(0)
-    val userPwd = userNameAndPwd.length match {
-      case 1 => ""
-      case _ => userNameAndPwd(0)
-    }
-    val queryMap = new HashMap[String, String]
-    uri.getRawQuery.split("&").map((x: String) => {
-      val pair = x.split("=")
-      queryMap += ((pair(0), pair(1)))
-    })
-
-    val sessionID = UUID.randomUUID
-    val erql = agentMgr.erql( sessionID )
-    val erspl = agentMgr.erspl( sessionID ) 
-
-    val (
-      uri1str : String,
-      userCnxn : ConcreteHL.PortableAgentCnxn,
-      recoveryCnxn : ConcreteHL.PortableAgentCnxn,
-      userData : CnxnCtxtLabel[String,String,String],
-      userKeySpec : SecretKeySpec,
-      sysKeySpec : SecretKeySpec,
-      encrypt : Cipher
-    ) = agentMgr.secureCnxn(userName, userPwd, queryMap)
-
-    // create agent
-    agentMgr.post[CnxnCtxtLabel[String,String,String]]( erql, erspl )(
-       userData, List( userCnxn ), userData
-    )
-
-    val onPost : Option[mTT.Resource] => Unit = {
-      ( optRsrc : Option[mTT.Resource] ) => {
-        println( "got response: " + optRsrc )
-        complete(HttpResponse(entity = HttpBody(`application/json`,
-"""{"msgType": "initializeSessionResponse", "content": {
-"sessionURI": "agent-session://ArtVandelay@session1",
-"listOfAliases": [],
-"listOfLabels": [],
-"lastActiveFilter": ""
-}}
-"""
-        )))
-      }
-    }
-    // Store connection
-    encrypt.init(Cipher.ENCRYPT_MODE, userKeySpec)
-    val uri1Bytes : Array[Byte] = uri1str.getBytes("utf-8")
-    val userUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
-    agentMgr.post[String]( erql, erspl )( 
-      userData, List( recoveryCnxn ), userUri1Enc
-    )
-    encrypt.init(Cipher.ENCRYPT_MODE, sysKeySpec)
-    val sysUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
-    agentMgr.post[String]( erql, erspl )(
-      userData, List( recoveryCnxn ), sysUri1Enc, onPost
-    )
-  }
-
-
-
-
-  def evalSubscribeRequest(json: JValue) : (String, spray.http.HttpBody) = {
-    val diesel.EvaluatorMessageSet.evalSubscribeRequest( sessionURI, expression ) =
-      ( json \ "content" ).extract[diesel.EvaluatorMessageSet.evalSubscribeRequest]
-    // val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    // val expression = (json \ "content" \ "expression").extract[String]
-
-    // if (sessionURI != "agent-session://ArtVandelay@session1") {
-    //   throw EvalException(sessionURI)
-    // }
-
-    val sessionID = UUID.randomUUID
-    val erql = agentMgr.erql( sessionID )
-    val erspl = agentMgr.erspl( sessionID ) 
-
-    expression match {
-      case ConcreteHL.FeedExpr( filter, cnxns ) => {                    
-        agentMgr.feed( erql, erspl )( filter, cnxns )
-      }
-      case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
-        agentMgr.score( erql, erspl )( filter, cnxns, staff )
-      }
-      case ConcreteHL.InsertContent( filter, cnxns, content : String ) => {
-        agentMgr.post[String]( erql, erspl )( filter, cnxns, content )
-      }
-    }
-
-    (sessionURI.uri.toString, HttpBody(`application/json`,
-"""{
-"msgType": "evalComplete",
-"content": {
-"sessionURI": "agent-session://ArtVandelay@session1",
-"pageOfPosts": []
-}
-}
-"""
-    ))
-  }
-
-
-
-  def sessionPing(json: JValue) : String = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    // TODO: check sessionURI validity
-    
-    sessionURI
-  }
-
-
-
-  def closeSessionRequest(json: JValue) : (String, spray.http.HttpBody) = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    if (sessionURI != "agent-session://ArtVandelay@session1") {
-      throw CloseSessionException(sessionURI, "Unknown session.")
-    }
-
-    (sessionURI, HttpBody(`application/json`,
-"""{
-"msgType": "closeSessionResponse",
-"content": {
-"sessionURI": "agent-session://ArtVandelay@session1",
-}
-}
-"""
-    ))
-  }
-
-
+   
+  val cometActor = actorRefFactory.actorOf(Props[CometActor])        
 
   val myRoute =
     path("signup") {
@@ -304,7 +163,21 @@ trait EvaluatorService extends HttpService
               val msgType = (json \ "msgType").extract[String]
               msgType match {
                 case "initializeSessionRequest" => {
-                  initializeSessionRequest(json)
+		  val onPost : Option[mTT.Resource] => Unit = {
+		    ( optRsrc : Option[mTT.Resource] ) => {
+		      println( "got response: " + optRsrc )
+		      complete(HttpResponse(entity = HttpBody(`application/json`,
+"""{"msgType": "initializeSessionResponse", "content": {
+"sessionURI": "agent-session://ArtVandelay@session1",
+"listOfAliases": [],
+"listOfLabels": [],
+"lastActiveFilter": ""
+}}
+"""
+        )))
+		    }
+		  }
+                  initializeSessionRequest( json, onPost )
                   (cometActor ! SessionPing("", _))
                 }
                 case "sessionPing" => {
@@ -312,8 +185,18 @@ trait EvaluatorService extends HttpService
                   (cometActor ! SessionPing(sessionURI, _))
                 }
                 case "evalSubscribeRequest" => {
-                  val (sessionURI, body) = evalSubscribeRequest(json)
-                  cometActor ! CometMessage(sessionURI, body)
+                  val (sessionURI, body) = 
+		  (evalSubscribeRequest(json), HttpBody(`application/json`,
+"""{
+"msgType": "evalComplete",
+"content": {
+"sessionURI": "agent-session://ArtVandelay@session1",
+"pageOfPosts": []
+}
+}
+"""
+    ))
+                  cometActor ! CometMessage(sessionURI.uri.toString, body)
                   complete(StatusCodes.OK)
                 }
                 case "closeSessionRequest" => {
