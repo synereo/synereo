@@ -188,6 +188,7 @@ extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
   extends CnxnNavigation[String,String,String]
   with CnxnMutation[String,String,String]
   with CnxnZipperComposition[String,String,String]
+  with Serializable
 
   object ContextVar {
     import java.util.UUID
