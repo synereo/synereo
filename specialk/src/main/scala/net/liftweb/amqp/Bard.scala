@@ -8,7 +8,8 @@
 
 package net.liftweb.amqp;    
 
-import com.eaio.uuid.UUID;
+//import com.eaio.uuid.UUID;
+import java.util.UUID
 
 trait IdSupplier {
   type ActedOn = {def setId( s : String ) : Unit}
@@ -178,6 +179,6 @@ case class Fingerer(
 //     }
 //   }
   override def getNextId() = {
-    new UUID() + ""
+    UUID.randomUUID + ""
   }
 }

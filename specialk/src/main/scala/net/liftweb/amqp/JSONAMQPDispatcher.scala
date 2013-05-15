@@ -8,7 +8,7 @@
 
 package net.liftweb.amqp
 
-import _root_.com.eaio.uuid.UUID
+//import _root_.com.eaio.uuid.UUID
 import _root_.com.rabbitmq.client._
 import _root_.scala.actors.Actor
 import _root_.scala.collection.mutable.Stack
@@ -16,6 +16,7 @@ import _root_.java.io.ObjectInputStream
 import _root_.java.io.ByteArrayInputStream
 import _root_.java.util.Timer
 import _root_.java.util.TimerTask
+import java.util.UUID
 
 import _root_.com.thoughtworks.xstream.XStream
 import _root_.com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
@@ -240,7 +241,7 @@ class JSONAMQPListener( host : String ) {
     }
 
     override def getNextId() = {
-      new UUID() + ""
+      UUID.randomUUID + ""
     }
 
     def act = {

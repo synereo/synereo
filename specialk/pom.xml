@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.4.3</version>
+  <version>1.1.4.4</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -274,11 +274,11 @@
       <!-- version>1.4.2</version -->
       <version>1.4.4</version>
     </dependency> 
-    <dependency>
+    <!-- dependency>
       <groupId>com.eaio.eaio</groupId>
       <artifactId>uuid</artifactId>
       <version>3.1</version>
-    </dependency>
+    </dependency -->
     <dependency>
       <groupId>org.scalaxb</groupId>
       <artifactId>scalaxb</artifactId>
