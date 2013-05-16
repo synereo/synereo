@@ -17,8 +17,13 @@ case class BeginIntroductionRequest(
   def this() = this(None, None, None, None, None, None, None, None)
 }
 
-case class BeginIntroductionResponse(override val responseId: String, accepted: Option[Boolean])
+case class BeginIntroductionResponse(
+  override val responseId: String,
+  accepted: Option[Boolean],
+  aRejectReason: Option[String],
+  bRejectReason: Option[String])
+
   extends ProtocolResponseMessage {
 
-  def this(responseId: String) = this(responseId, None)
+  def this(responseId: String) = this(responseId, None, None, None)
 }
