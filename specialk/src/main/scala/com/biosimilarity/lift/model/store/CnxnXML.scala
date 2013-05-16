@@ -190,7 +190,7 @@ extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
   with CnxnZipperComposition[String,String,String]
   with Serializable
 
-  object ContextVar {
+  object ContextVar extends Serializable {
     import java.util.UUID
     val thisContextVar : String =
       "X" + UUID.randomUUID.toString.replace( "-", "" ) + "X"
