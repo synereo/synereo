@@ -44,6 +44,8 @@ trait EvalHandler {
   self : EvaluationCommsService =>
  
   import DSLCommLink.mTT
+
+  @transient
   implicit val formats = DefaultFormats
 
   def initializeSessionRequest(json: JValue, onPost : Option[mTT.Resource] => Unit ) = {
