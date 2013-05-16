@@ -16,56 +16,6 @@ import scala.collection.mutable.HashMap
 
 import java.util.UUID
 
-trait MessageGeneration extends CnxnString[String,String,String] {
-  import com.protegra_ati.agentservices.store.extensions.StringExtensions._
-  def mkFeedExpr( labelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )" ) : ConcreteHL.FeedExpr = {
-    val feedLabelStr : String = labelStr
-    val feedLabel =
-      fromTermString(
-	feedLabelStr
-      ).getOrElse(
-	throw new Exception( "failed to parse feed label" + feedLabelStr )
-      )
-    val feedCnxn =
-      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
-
-    ConcreteHL.FeedExpr( feedLabel, List( feedCnxn ) )      
-  }
-  def mkScoreExpr( labelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )" ) : ConcreteHL.ScoreExpr = {
-    val scoreLabelStr : String = labelStr
-    val scoreLabel =
-      fromTermString(
-	scoreLabelStr
-      ).getOrElse(
-	throw new Exception( "failed to parse score label" + scoreLabelStr )
-      )
-    val scoreCnxn =
-      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
-
-    ConcreteHL.ScoreExpr(
-      scoreLabel,
-      List( scoreCnxn ),
-      Left[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]]( List( scoreCnxn ) )
-    )          
-  }
-  def mkPostExpr( labelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )" ) : ConcreteHL.InsertContent[String] = {
-    val postLabelStr : String = labelStr
-    val postLabel =
-      fromTermString( 
-	postLabelStr
-      ).getOrElse(
-	throw new Exception( "failed to parse post label" + postLabelStr )
-      )
-    val postCnxn =
-      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
-    ConcreteHL.InsertContent[String](
-      postLabel,
-      List( postCnxn ),
-      "David Byrne"
-    )          
-  }  
-}
-
 trait ChannelGeneration {
   def erql( sessionId : String = UUID.randomUUID().toString ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
     (
@@ -85,22 +35,66 @@ trait ChannelGeneration {
   }
 }
 
-trait UseCaseHelper extends MessageGeneration
- with ChannelGeneration
- with AgentCnxnTypes
- with CnxnString[String,String,String]
- with Serializable {
+trait MessageGeneration extends CnxnString[String,String,String] {
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+
+  def defaultLabelStr = "myLife( inTheBush( ofGhosts( true ) ) )"
+  def mkFeedExpr( labelStr : String = defaultLabelStr ) : ConcreteHL.FeedExpr = {
+    val feedLabelStr : String = labelStr
+    val feedLabel =
+      fromTermString(
+	feedLabelStr
+      ).getOrElse(
+	throw new Exception( "failed to parse feed label" + feedLabelStr )
+      )
+    val feedCnxn =
+      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+
+    ConcreteHL.FeedExpr( feedLabel, List( feedCnxn ) )      
+  }
+  def mkScoreExpr( labelStr : String = defaultLabelStr ) : ConcreteHL.ScoreExpr = {
+    val scoreLabelStr : String = labelStr
+    val scoreLabel =
+      fromTermString(
+	scoreLabelStr
+      ).getOrElse(
+	throw new Exception( "failed to parse score label" + scoreLabelStr )
+      )
+    val scoreCnxn =
+      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+
+    ConcreteHL.ScoreExpr(
+      scoreLabel,
+      List( scoreCnxn ),
+      Left[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]]( List( scoreCnxn ) )
+    )          
+  }
+  def mkPostExpr( labelStr : String = defaultLabelStr ) : ConcreteHL.InsertContent[String] = {
+    val postLabelStr : String = labelStr
+    val postLabel =
+      fromTermString( 
+	postLabelStr
+      ).getOrElse(
+	throw new Exception( "failed to parse post label" + postLabelStr )
+      )
+    val postCnxn =
+      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+    ConcreteHL.InsertContent[String](
+      postLabel,
+      List( postCnxn ),
+      "David Byrne"
+    )          
+  }  
+}
+
+object CommManagement {
   import DSLCommLinkCtor._
   @transient
-  val ( client1, server1 ) = stdBiLink()
-  @transient
-  val sessionMap =
-    new HashMap[String,( Either[ConcreteHL.HLExpr,ConcreteHL.HLExpr], Option[ConcreteHL.HLExpr] )]()
+  lazy val ( client1, server1 ) = stdBiLink()
+}
 
-  implicit def toAgentCnxn( pAC : ConcreteHL.PortableAgentCnxn ) : AgentCnxn = {
-    new AgentCnxn( pAC.src, pAC.label, pAC.trgt )
-  }  
+trait StorageManagement {
+  import CommManagement._
   def doDrop() = {
     import com.biosimilarity.lift.model.store.mongo._
     val clntSess1 =
@@ -116,6 +110,20 @@ trait UseCaseHelper extends MessageGeneration
     mcExecRemote.drop
     mcExec.drop
   }
+}
+
+trait ExerciseHLDSL {  
+  self : ChannelGeneration with MessageGeneration with AgentCnxnTypes =>
+  import CommManagement._
+  import DSLCommLinkCtor._
+
+  @transient
+  val sessionMap =
+    new HashMap[String,( Either[ConcreteHL.HLExpr,ConcreteHL.HLExpr], Option[ConcreteHL.HLExpr] )]()
+
+  implicit def toAgentCnxn( pAC : ConcreteHL.PortableAgentCnxn ) : AgentCnxn = {
+    new AgentCnxn( pAC.src, pAC.label, pAC.trgt )
+  }     
   def doPutBottomRequest( sessionId : String = UUID.randomUUID.toString() ) = {
     val ( _, erqlChan ) = erql( sessionId ) 
 
@@ -246,4 +254,31 @@ trait UseCaseHelper extends MessageGeneration
       }      
     }
   }
+}
+
+trait UseCaseHelper extends MessageGeneration
+ with ChannelGeneration
+ with StorageManagement
+ with ExerciseHLDSL
+ with AgentCnxnTypes
+ with CnxnString[String,String,String] {
+}
+
+package usage {
+  object SimpleClient
+    extends EvaluationCommsService  
+     with MessageGeneration
+     with ChannelGeneration
+     with EvalConfig
+     with StorageManagement
+     with Serializable
+  {
+    import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+  }
+  
+  object MyHLDSLTrampoline
+    extends ExerciseHLDSL
+     with ChannelGeneration
+     with MessageGeneration
+     with AgentCnxnTypes
 }
