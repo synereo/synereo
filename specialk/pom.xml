@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.4.4</version>
+  <version>1.1.4.5</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -368,7 +368,7 @@
       <version>1.0</version>
     </dependency>
 
-    <dependency>
+    <!-- dependency>
       <groupId>org.jaxrx</groupId>
       <artifactId>jax-rx</artifactId>
       <version>1.2.9</version>
@@ -382,7 +382,7 @@
 	  <artifactId>jersey-server</artifactId>
 	</exclusion>
       </exclusions>
-    </dependency>
+    </dependency -->
 
     <dependency>
       <groupId>javax.xml.xquery</groupId>
