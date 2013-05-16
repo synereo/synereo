@@ -9,7 +9,7 @@
 		extra-scalaVersion="2.9.2"
 		conf="test-internal"
 		confs="compile, runtime, test, provided, optional, compile-internal, runtime-internal, test-internal, plugin, sources, docs, pom"
-		date="20130411110639"/>
+		date="20130515152031"/>
 	<dependencies>
 		<module organisation="org.scala-sbt" name="sbt">
 			<revision name="0.12.1" status="release" pubdate="20120930202729" resolver="typesafe-ivy-releases" artresolver="typesafe-ivy-releases" downloaded="false" searched="false" default="false" conf="default(compile), compile" position="3">
