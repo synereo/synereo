@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.4.6</version>
+  <version>1.1.4.7</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -345,21 +345,23 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpcore</artifactId>
-      <version>4.2-alpha1</version>
+      <!-- version>4.2-alpha1</version -->
+      <version>4.2.4</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpcore-nio</artifactId>
-      <version>4.2-alpha1</version>
+      <!-- version>4.2-alpha1</version -->
+      <version>4.2.4</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpasyncclient</artifactId>
-      <version>4.0-alpha2</version>
+      <version>4.0-beta3</version>
     </dependency>
 
     <dependency>
