@@ -48,6 +48,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     )
   ] = None
 
+  var _node : Option[
+    Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+  ] = None 
+
   def link() : (
     Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse],
     Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
@@ -95,6 +99,54 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
 
         _clientServerPair = Some( ( client, server ) )
         ( client, server )
+      }
+    }    
+  }
+
+  def node(
+    flip : Boolean = false
+  ) : Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
+    _node match {
+      case Some( n ) => n
+      case None => {
+        val dslCommLinkHost =
+          try {
+            evalConfig.getString( "DSLCommLinkHost" )
+          }
+          catch {
+            case e : Throwable => "localhost"
+          }
+        val dslCommLinkPort = 
+          try {
+            evalConfig.getInt( "DSLCommLinkPort" )
+          }
+          catch {
+            case e : Throwable => 5672
+          }
+        val dslCommLinkRemoteHost = 
+          try {
+            evalConfig.getString( "DSLCommLinkRemoteHost" )
+          }
+          catch {
+            case e : Throwable => "localhost"
+          }
+        val dslCommLinkRemotePort = 
+          try {
+            evalConfig.getInt( "DSLCommLinkRemotePort" )
+          }
+          catch {
+            case e : Throwable => 5672
+          }
+
+        val n : Being.PersistedMonadicKVDBNode[
+          PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
+        ] = DSLCommLinkCtor.stdLink(
+          dslCommLinkHost, dslCommLinkPort,
+          dslCommLinkRemoteHost, dslCommLinkRemotePort
+        )( flip )
+
+        _node = Some( n )
+        n
       }
     }    
   }
@@ -153,10 +205,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link._1.publish( erql, InsertContent( filter, List( selfCnxn ), thisUser ) )
+        node().publish( erql, InsertContent( filter, List( selfCnxn ), thisUser ) )
       }
       reset {
-        for( e <- link._2.subscribe( erspl ) ) { onCreation( e ) }
+        for( e <- node().subscribe( erspl ) ) { onCreation( e ) }
       }
     }
     def post[Value](
@@ -170,10 +222,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link._1.publish( erql, InsertContent( filter, cnxns, content ) )
+        node().publish( erql, InsertContent( filter, cnxns, content ) )
       }
       reset {
-        for( e <- link._2.subscribe( erspl ) ) { onPost( e ) }
+        for( e <- node().subscribe( erspl ) ) { onPost( e ) }
       }
     }
     def feed(
@@ -186,10 +238,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link._1.publish( erql, FeedExpr( filter, cnxns ) )
+        node().publish( erql, FeedExpr( filter, cnxns ) )
       }
       reset {
-        for( e <- link._2.subscribe( erspl ) ) { onFeedRslt( e ) }
+        for( e <- node().subscribe( erspl ) ) { onFeedRslt( e ) }
       }
     }
     def score(
@@ -203,20 +255,21 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
-        link._1.publish( erql, ScoreExpr( filter, cnxns, staff ) )
+        node().publish( erql, ScoreExpr( filter, cnxns, staff ) )
       }
       reset {
-        for( e <- link._2.subscribe( erspl ) ) { onScoreRslt( e ) }
+        for( e <- node().subscribe( erspl ) ) { onScoreRslt( e ) }
       }
     }
   }
 
   @transient
   var _agentMgr : Option[AgentManager with Serializable] = None
-  def agentMgr() : AgentManager with Serializable = {
+  def agentMgr( flip : Boolean = false ) : AgentManager with Serializable = {
     _agentMgr match {
       case Some( agntMgr ) => agntMgr
-      case None => {
+      case None => {	
+	node( flip )
         val agntMgr =
           new AgentManager with Serializable {
             override def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String] = {

@@ -518,12 +518,13 @@ object DSLCommLinkCtor extends Serializable {
     }
   }
   
-  implicit val retTwist : Boolean = false
+  //implicit val retTwist : Boolean = false
   def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
     localHost : String, localPort : Int,
     remoteHost : String, remotePort : Int
-  )(
-    implicit returnTwist : Boolean
+  )(    
+    returnTwist : Boolean = false,
+    flip : Boolean = false
   ) : Either[EvaluationRequestChannel[ReqBody,RspBody],(EvaluationRequestChannel[ReqBody,RspBody],EvaluationRequestChannel[ReqBody,RspBody])] = {
     val ( localExchange, remoteExchange ) = 
       if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
@@ -549,10 +550,17 @@ object DSLCommLinkCtor extends Serializable {
     }
     else {
       Left[EvaluationRequestChannel[ReqBody,RspBody],(EvaluationRequestChannel[ReqBody,RspBody],EvaluationRequestChannel[ReqBody,RspBody])](
-	ptToPt(
-	  new URI( "agent", null, localHost, localPort, localExchange, null, null ),
-	  new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
-	)
+	if ( flip ) {
+	  ptToPt(
+	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+	  )
+	} else {
+	  ptToPt(	    
+	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
+	    new URI( "agent", null, localHost, localPort, localExchange, null, null )
+	  )
+	}
       )
     }
   }
@@ -560,9 +568,9 @@ object DSLCommLinkCtor extends Serializable {
   def link[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
     localHost : String = "localhost", localPort : Int = 5672,
     remoteHost : String = "localhost", remotePort : Int = 5672
-  ) : EvaluationRequestChannel[ReqBody,RspBody] = {
-    val Right( ( client, server ) ) = 
-      setup[ReqBody,RspBody]( localHost, localPort, remoteHost, remotePort )( true )
+  )( flip : Boolean = false ) : EvaluationRequestChannel[ReqBody,RspBody] = {
+    val Left( client ) = 
+      setup[ReqBody,RspBody]( localHost, localPort, remoteHost, remotePort )( false, flip )
     client
   }
 
@@ -578,9 +586,11 @@ object DSLCommLinkCtor extends Serializable {
   def stdLink(
     localHost : String = "localhost", localPort : Int = 5672,
     remoteHost : String = "localhost", remotePort : Int = 5672
-  ) : StdEvaluationRequestChannel = {
-    val Right( ( client, server ) ) = 
-      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( localHost, localPort, remoteHost, remotePort )( true )
+  )( flip : Boolean = false ) : StdEvaluationRequestChannel = {
+    val Left( client ) = 
+      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+	localHost, localPort, remoteHost, remotePort
+      )( false, flip )
     client
   }
 

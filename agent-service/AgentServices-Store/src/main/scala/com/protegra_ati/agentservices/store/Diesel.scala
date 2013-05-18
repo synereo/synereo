@@ -1585,7 +1585,10 @@ package diesel {
       }
     }
 	 
-    def evalLoop( useBiLink : Option[Boolean] = Some( true ) ) : Unit = {
+    def evalLoop(
+      useBiLink : Option[Boolean] = None,
+      flip : Boolean = false
+    ) : Unit = {
       val erql : CnxnCtxtLabel[String,String,String] =
 	DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionID" ).getOrElse( 
 	  throw new Exception( "error making evalRequestLabel" )
@@ -1638,7 +1641,7 @@ package diesel {
 	  innerLoop( server, client )
 	}
 	case None => {
-	  val link = DSLCommLinkCtor.stdLink()	  
+	  val link = DSLCommLinkCtor.stdLink()( flip )
 	  
 	  innerLoop( link, link )
 	}

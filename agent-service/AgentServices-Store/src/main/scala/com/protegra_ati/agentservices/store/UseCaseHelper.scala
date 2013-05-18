@@ -90,7 +90,20 @@ trait MessageGeneration extends CnxnString[String,String,String] {
 object CommManagement {
   import DSLCommLinkCtor._
   @transient
-  lazy val ( client1, server1 ) = stdBiLink()
+  //lazy val ( client1, server1 ) = stdBiLink()
+  var _commLink : Option[StdEvaluationRequestChannel] = None
+  def commLink(
+    flip : Boolean = false
+  ) : StdEvaluationRequestChannel = {
+    _commLink match {
+      case Some( cLink ) => cLink
+      case None => {
+	val cLink : StdEvaluationRequestChannel = stdLink()( flip )
+	_commLink = Some( cLink )
+	cLink
+      }
+    }
+  }
 }
 
 trait StorageManagement {
@@ -98,13 +111,13 @@ trait StorageManagement {
   def doDrop() = {
     import com.biosimilarity.lift.model.store.mongo._
     val clntSess1 =
-      MongoClientPool.client( client1.cache.sessionURIFromConfiguration )
+      MongoClientPool.client( commLink().cache.sessionURIFromConfiguration )
     val mcExecLocal =
-      clntSess1.getDB( client1.cache.defaultDB )( "DSLExecProtocolLocal" )
+      clntSess1.getDB( commLink().cache.defaultDB )( "DSLExecProtocolLocal" )
     val mcExecRemote =
-      clntSess1.getDB( client1.cache.defaultDB )( "DSLExecProtocolRemote" )
+      clntSess1.getDB( commLink().cache.defaultDB )( "DSLExecProtocolRemote" )
     val mcExec =
-      clntSess1.getDB( client1.cache.defaultDB )( "DSLExecProtocol" )
+      clntSess1.getDB( commLink().cache.defaultDB )( "DSLExecProtocol" )
 
     mcExecLocal.drop
     mcExecRemote.drop
@@ -130,7 +143,7 @@ trait ExerciseHLDSL {
     sessionMap += ( sessionId -> ( Left[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( ConcreteHL.Bottom ), None ) )
 
     reset {      
-      client1.put( erqlChan, DSLCommLink.mTT.Ground( ConcreteHL.Bottom ) )
+      commLink().put( erqlChan, DSLCommLink.mTT.Ground( ConcreteHL.Bottom ) )
     }
   }
   def doPutHLExprRequest(
@@ -145,21 +158,21 @@ trait ExerciseHLDSL {
     reset { node.put( erqlChan, DSLCommLink.mTT.Ground( expr ) ) }
   }
   def doPutFeedRequest(
-    node : StdEvaluationRequestChannel = client1,
+    node : StdEvaluationRequestChannel = commLink(),
     labelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )",
     sessionId : String = UUID.randomUUID.toString()
   ) = {
     doPutHLExprRequest( node, sessionId, mkFeedExpr( labelStr ) )
   }
   def doPutScoreRequest(
-    node : StdEvaluationRequestChannel = client1,
+    node : StdEvaluationRequestChannel = commLink(),
     labelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )",
     sessionId : String = UUID.randomUUID.toString()
   ) = {
     doPutHLExprRequest( node, sessionId, mkScoreExpr( labelStr ) )
   }
   def doPutPostRequest(
-    node : StdEvaluationRequestChannel = client1,
+    node : StdEvaluationRequestChannel = commLink(),
     labelStr : String = "myLife( inTheBush( ofGhosts( true ) ) )",
     sessionId : String = UUID.randomUUID.toString()
   ) = {
@@ -167,8 +180,8 @@ trait ExerciseHLDSL {
   }
 
   def doGetRequest( 
-    node : StdEvaluationRequestChannel = client1,
-    sessionId : String = "SessionId" 
+    sessionId : String = "SessionId",
+    node : StdEvaluationRequestChannel = commLink()
   ) = {
     val ( _, erqlChan ) = erql( sessionId ) 
 
@@ -180,7 +193,7 @@ trait ExerciseHLDSL {
   }
   
   def doGetFeedResponse(
-    node : StdEvaluationRequestChannel = client1,
+    node : StdEvaluationRequestChannel = commLink(),
     sessionId : String = "SessionId"
   ) = {
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
@@ -205,7 +218,7 @@ trait ExerciseHLDSL {
     }
   }
   def doGetScoreResponse(
-    node : StdEvaluationRequestChannel = client1,
+    node : StdEvaluationRequestChannel = commLink(),
     sessionId : String = "SessionId" 
   ) = {    
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
@@ -230,7 +243,7 @@ trait ExerciseHLDSL {
     }
   }
   def doGetPostResponse(
-    node : StdEvaluationRequestChannel = client1,
+    node : StdEvaluationRequestChannel = commLink(),
     sessionId : String = "SessionId"
   ) = {
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
@@ -276,7 +289,7 @@ package usage {
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   }
   
-  object MyHLDSLTrampoline
+  object HLDSLProbe
     extends ExerciseHLDSL
      with ChannelGeneration
      with MessageGeneration
