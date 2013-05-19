@@ -69,8 +69,8 @@ trait EvalHandler {
     })
 
     val sessionID = UUID.randomUUID
-    val erql = agentMgr.erql( sessionID )
-    val erspl = agentMgr.erspl( sessionID ) 
+    val erql = agentMgr().erql( sessionID )
+    val erspl = agentMgr().erspl( sessionID ) 
 
     val (
       uri1str : String,
@@ -80,10 +80,10 @@ trait EvalHandler {
       userKeySpec : SecretKeySpec,
       sysKeySpec : SecretKeySpec,
       encrypt : Cipher
-    ) = agentMgr.secureCnxn(userName, userPwd, queryMap)
+    ) = agentMgr().secureCnxn(userName, userPwd, queryMap)
 
     // create agent
-    agentMgr.post[CnxnCtxtLabel[String,String,String]]( erql, erspl )(
+    agentMgr().post[CnxnCtxtLabel[String,String,String]]( erql, erspl )(
        userData, List( userCnxn ), userData
     )
     
@@ -91,12 +91,12 @@ trait EvalHandler {
     encrypt.init(Cipher.ENCRYPT_MODE, userKeySpec)
     val uri1Bytes : Array[Byte] = uri1str.getBytes("utf-8")
     val userUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
-    agentMgr.post[String]( erql, erspl )( 
+    agentMgr().post[String]( erql, erspl )( 
       userData, List( recoveryCnxn ), userUri1Enc
     )
     encrypt.init(Cipher.ENCRYPT_MODE, sysKeySpec)
     val sysUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
-    agentMgr.post[String]( erql, erspl )(
+    agentMgr().post[String]( erql, erspl )(
       userData, List( recoveryCnxn ), sysUri1Enc, onPost
     )
   }
@@ -112,18 +112,18 @@ trait EvalHandler {
     // }
 
     val sessionID = UUID.randomUUID
-    val erql = agentMgr.erql( sessionID )
-    val erspl = agentMgr.erspl( sessionID ) 
+    val erql = agentMgr().erql( sessionID )
+    val erspl = agentMgr().erspl( sessionID ) 
 
     expression match {
       case ConcreteHL.FeedExpr( filter, cnxns ) => {                    
-        agentMgr.feed( erql, erspl )( filter, cnxns )
+        agentMgr().feed( erql, erspl )( filter, cnxns )
       }
       case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
-        agentMgr.score( erql, erspl )( filter, cnxns, staff )
+        agentMgr().score( erql, erspl )( filter, cnxns, staff )
       }
       case ConcreteHL.InsertContent( filter, cnxns, content : String ) => {
-        agentMgr.post[String]( erql, erspl )( filter, cnxns, content )
+        agentMgr().post[String]( erql, erspl )( filter, cnxns, content )
       }
     }
 
