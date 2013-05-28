@@ -154,45 +154,85 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
   trait AgentManager {
     def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
-    def secureCnxn( userName: String, userPwd: String, queryMap: HashMap[String, String]) : 
-        ( String, ConcreteHL.PortableAgentCnxn, ConcreteHL.PortableAgentCnxn, CnxnCtxtLabel[String,String,String], SecretKeySpec, SecretKeySpec, Cipher ) = {
-      // TODO: use interpolation
-      // http://docs.scala-lang.org/overviews/core/string-interpolation.html
-      // fromTermString(prolog"user($username, $fullname, $email)")
-      val userTermString = "user(" + userName + ", " + queryMap("fullname") +", " + queryMap("email") + ")"
+    def secureCnxn( 
+        userName: String, 
+        userPwd: String, 
+        queryMap: HashMap[String, String], 
+        post: (CnxnCtxtLabel[String,String,String], Seq[Cnxn], String, Option[mTT.Resource] => Unit) => Unit,
+        finalOnPost: Option[mTT.Resource] => Unit
+    ) = {
+      // TODO: move all keys out of the server code
 
-      // TODO: move all these keys out of the server code
+      // TODO: use interpolation everywhere below
+      // http://docs.scala-lang.org/overviews/core/string-interpolation.html
+      // fromTermString(prolog"~")
+
+      // Hash public user data to get a convenient key for the password database
       val mac = Mac.getInstance("HmacSHA256")
       mac.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
-      val hex1 = mac.doFinal(userTermString.getBytes("utf-8")).map("%02x" format _).mkString
+      val hex1 = mac.doFinal(userName.getBytes("utf-8")).map("%02x" format _).mkString
+      val pwdbURI = new URI("pwdb://" + hex1)
+      // Create a self connection to store this entry's data
+      val pwdbCnxn = new ConcreteHL.PortableAgentCnxn(pwdbURI, "pwdb", pwdbURI)
 
-      mac.init(new SecretKeySpec("8Uh4Fzs9".getBytes("utf-8"), "HmacSHA256"))
-      val hex2 = mac.doFinal(userTermString.getBytes("utf-8")).map("%02x" format _).mkString
-
-      mac.init(new SecretKeySpec("32#a&fg4".getBytes("utf-8"), "HmacSHA256"))
-      val sysKey = mac.doFinal("BiosimilarityLLC".getBytes("utf-8")).slice(0, 16)
-      
+      // Hash actual password to test given password against in the future
       mac.init(new SecretKeySpec("X@*h$ikU".getBytes("utf-8"), "HmacSHA256"))
-      val userKey = mac.doFinal(userPwd.getBytes("utf-8")).slice(0, 16)
-
-      val uri1str = "agent://" + hex1
-      val uri2str = "agent://" + hex2
-      val uri1 = new URI(uri1str)
-      val uri2 = new URI(uri2str)
+      val pwHashStr = mac.doFinal(userPwd.getBytes("utf-8")).map("%02x" format _).mkString
+      val hashTermStr = "hash(\"" + pwHashStr + "\")"
+      val hashTerm = fromTermString(hashTermStr).getOrElse(
+          throw new Exception("hashTermStr failed to parse: " + hashTermStr)
+        )
       
-      val UserCnxn = new ConcreteHL.PortableAgentCnxn( uri1, uri1str, uri1 )
-      val RecoveryCnxn = new ConcreteHL.PortableAgentCnxn( uri2, uri2str, uri2 )
+      val onPost = ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+      // Store password hash in database
+      post(hashTerm, List(pwdbCnxn), "", onPost)
 
-      val UserData = fromTermString(userTermString).getOrElse(
-        throw new Exception("userTermString failed to parse: " + userTermString)
-      )
-      
-      val userKeySpec = new SecretKeySpec(userKey, "AES")
-      val sysKeySpec = new SecretKeySpec(sysKey, "AES")
-      // TODO: Check encryption mode.  CBC?  If so, where's the IV?
+      // The special root of all this user's authority
+      val userCap = UUID.randomUUID
+
+      // Prepare to store the root cap securely using user's password
+      mac.init(new SecretKeySpec("8Uh4Fzs9".getBytes("utf-8"), "HmacSHA256"))
+      val capEncryptKey = mac.doFinal(userPwd.getBytes("utf-8")).slice(0, 16)
+      val capEncryptSpec = new SecretKeySpec(capEncryptKey, "AES")
       val encrypt = Cipher.getInstance("AES")
+      encrypt.init(Cipher.ENCRYPT_MODE, capEncryptSpec)
+      val userEncryptedCap = encrypt.doFinal(userCap.toString.getBytes("utf-8")).map("%02x" format _).mkString
+      val userEncryptedCapTerm = fromTermString("userEncryptedCap(\"" + userEncryptedCap + "\")").getOrElse(
+          throw new Exception("userEncryptedCap failed to parse: " + userEncryptedCap)
+        )
+      // Store capability encrypted with user password in database
+      post(userEncryptedCapTerm, List(pwdbCnxn), "", onPost)
+
+      // Prepare to store the root cap securely using system password
+      val sysCapEncryptSpec = new SecretKeySpec("BiosimilarityLLC".getBytes("utf-8"), "AES")
+      encrypt.init(Cipher.ENCRYPT_MODE, sysCapEncryptSpec)
+      val sysEncryptedCap = encrypt.doFinal(userCap.toString.getBytes("utf-8")).map("%02x" format _).mkString
+      val sysEncryptedCapTerm = fromTermString("sysEncryptedCap(\"" + sysEncryptedCap + "\")").getOrElse(
+          throw new Exception("sysEncryptedCap failed to parse: " + sysEncryptedCap)
+        )
+      // Store capability encrypted with system password in database
+      post(sysEncryptedCapTerm, List(pwdbCnxn), "", onPost)
       
-      (uri1str, UserCnxn, RecoveryCnxn, UserData, userKeySpec, sysKeySpec, encrypt)
+      // Prepare to store user's data using the root cap
+      val userCapURI = new URI("usercap://" + userCap)
+      val userSelfCnxn = new ConcreteHL.PortableAgentCnxn(userCapURI, userName, userCapURI)
+      val userTermStr = "user(\"" + queryMap("fullname") +"\", \"" + queryMap("email") + "\")"
+      val userTerm = fromTermString(userTermStr).getOrElse(
+          throw new Exception("userTermStr failed to parse: " + userTermStr)
+        )
+      // Post user data to the user's self connection
+      post(userTerm, List(userSelfCnxn), "", onPost)
+      // Store username in public list of users
+      // (When asking for list of connections, iterate over this public list, but drop yourself.
+      // Form the connection by taking src, tgt to be of the form cnxn://<userName>
+      // and the label to be "public" or something)
+      val userdbURI = new URI("userdb:///");
+      val userdbCnxn = new ConcreteHL.PortableAgentCnxn(userdbURI, "userdb", userdbURI);
+      val userdbTermStr = "user(\"" + userName + "\")"
+      val userdbTerm = fromTermString(userdbTermStr).getOrElse(
+          throw new Exception("userdbTermStr failed to parse: " + userdbTermStr)
+        )
+      post(userdbTerm, List(userdbCnxn), "", finalOnPost)
     }
     def createAgent(
       erql : CnxnCtxtLabel[String,String,String],

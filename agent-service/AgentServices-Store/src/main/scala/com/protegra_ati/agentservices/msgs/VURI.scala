@@ -41,44 +41,44 @@ class ConcreteURI(
     {
       val qry = query.getOrElse( "" )
       val frg = fragment.getOrElse( "" )
-	      
+              
       userInfo match {
-	case Some( usr ) => {
-	  port match {
-	    case Some( p ) => {
-	      new URI(
-		scheme,
-		usr,
-		host,
-		p,
-		path,
-		qry,
-		frg
-	      )
-	    }
-	    case _ => {
-	      throw new Exception(
-		"invalid arguments: userInfo without port"
-	      )
-	    }
-	  }
-	}
-	case _ => {
-	  authority match {
-	    case Some( auth ) => {
-	      new URI(
-		scheme,
-		auth,
-		path,
-		qry,
-		frg
-	      )
-	    }
-	    case _ => {
-	      new URI( scheme, host, path, frg )
-	    }
-	  }	  
-	}
+        case Some( usr ) => {
+          port match {
+            case Some( p ) => {
+              new URI(
+                scheme,
+                usr,
+                host,
+                p,
+                path,
+                qry,
+                frg
+              )
+            }
+            case _ => {
+              throw new Exception(
+                "invalid arguments: userInfo without port"
+              )
+            }
+          }
+        }
+        case _ => {
+          authority match {
+            case Some( auth ) => {
+              new URI(
+                scheme,
+                auth,
+                path,
+                qry,
+                frg
+              )
+            }
+            case _ => {
+              new URI( scheme, host, path, frg )
+            }
+          }       
+        }
       }
     }
 
@@ -86,17 +86,17 @@ class ConcreteURI(
 
   override def equals( theOther : Any ) : Boolean = {
     (
-      theOther match {	
-	case that : URILike => {
-	  (
-	    scheme.equals( that.getScheme )
-	    && host.equals( that.getHost )
-	    && significantBit( path ).equals( significantBit( that.getPath ) )
-	    && fragment.equals( that.getFragment )
-	    && port.equals( that.getPort )
-	  )
-	}
-	case _ => false
+      theOther match {  
+        case that : URILike => {
+          (
+            scheme.equals( that.getScheme )
+            && host.equals( that.getHost )
+            && significantBit( path ).equals( significantBit( that.getPath ) )
+            && fragment.equals( that.getFragment )
+            && port.equals( that.getPort )
+          )
+        }
+        case _ => false
       }
     )
   }
@@ -141,14 +141,14 @@ object ConcreteURI {
   ) : Option[( String, Option[String], Option[String], String, Option[Int], String, Option[String], Option[String] )] = {
     Some( 
       (
-	curi.scheme,
-	curi.userInfo,
-	curi.authority,
-	curi.host,
-	curi.port,
-	curi.path,
-	curi.query,
-	curi.fragment
+        curi.scheme,
+        curi.userInfo,
+        curi.authority,
+        curi.host,
+        curi.port,
+        curi.path,
+        curi.query,
+        curi.fragment
       )
     )
   }

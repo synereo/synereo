@@ -41,9 +41,9 @@ trait AgentCnxnTypes extends Serializable {
 
     def code( uri : URI ) : scala.math.BigInt = {
       new scala.math.BigInt(
-	new java.math.BigInteger(
-	  uri.hashCode.abs.toString
-	)
+        new java.math.BigInteger(
+          uri.hashCode.abs.toString
+        )
       )
     }
 
