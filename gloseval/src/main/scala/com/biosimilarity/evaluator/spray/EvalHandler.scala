@@ -60,7 +60,7 @@ trait EvalHandler {
     val userName = userNameAndPwd(0)
     val userPwd = userNameAndPwd.length match {
       case 1 => ""
-      case _ => userNameAndPwd(0)
+      case _ => userNameAndPwd(1)
     }
     val queryMap = new HashMap[String, String]
     uri.getRawQuery.split("&").map((x: String) => {
