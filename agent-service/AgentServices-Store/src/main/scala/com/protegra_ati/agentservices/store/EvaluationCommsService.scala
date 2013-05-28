@@ -158,7 +158,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         userName: String, 
         userPwd: String, 
         queryMap: HashMap[String, String], 
-        post: (CnxnCtxtLabel[String,String,String], Seq[Cnxn], Value, Option[mTT.Resource] => Unit) => Unit
+        post: (CnxnCtxtLabel[String,String,String], Seq[Cnxn], String, Option[mTT.Resource] => Unit) => Unit,
+        finalOnPost: Option[mTT.Resource] => Unit
     ) = {
       // TODO: move all keys out of the server code
 
@@ -181,8 +182,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val hashTerm = fromTermString(hashTermStr).getOrElse(
           throw new Exception("hashTermStr failed to parse: " + hashTermStr)
         )
+      
+      val onPost = ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
       // Store password hash in database
-      post(hashTerm, List(pwdbCnxn), "")
+      post(hashTerm, List(pwdbCnxn), "", onPost)
 
       // The special root of all this user's authority
       val userCap = UUID.randomUUID
@@ -193,22 +196,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val capEncryptSpec = new SecretKeySpec(capEncryptKey, "AES")
       val encrypt = Cipher.getInstance("AES")
       encrypt.init(Cipher.ENCRYPT_MODE, capEncryptSpec)
-      val userEncryptedCap = encrypt.doFinal(userCap).map("%02x" format _).mkString
+      val userEncryptedCap = encrypt.doFinal(userCap.toString.getBytes("utf-8")).map("%02x" format _).mkString
       val userEncryptedCapTerm = fromTermString("userEncryptedCap(\"" + userEncryptedCap + "\")").getOrElse(
           throw new Exception("userEncryptedCap failed to parse: " + userEncryptedCap)
         )
       // Store capability encrypted with user password in database
-      post(userEncryptedCapTerm, List(pwdbCnxn), "" )
+      post(userEncryptedCapTerm, List(pwdbCnxn), "", onPost)
 
       // Prepare to store the root cap securely using system password
       val sysCapEncryptSpec = new SecretKeySpec("BiosimilarityLLC".getBytes("utf-8"), "AES")
       encrypt.init(Cipher.ENCRYPT_MODE, sysCapEncryptSpec)
-      val sysEncryptedCap = encrypt.doFinal(userCap).map("%02x" format _).mkString
+      val sysEncryptedCap = encrypt.doFinal(userCap.toString.getBytes("utf-8")).map("%02x" format _).mkString
       val sysEncryptedCapTerm = fromTermString("sysEncryptedCap(\"" + sysEncryptedCap + "\")").getOrElse(
           throw new Exception("sysEncryptedCap failed to parse: " + sysEncryptedCap)
         )
       // Store capability encrypted with system password in database
-      post(sysEncryptedCapTerm, List(pwdbCnxn), "")
+      post(sysEncryptedCapTerm, List(pwdbCnxn), "", onPost)
       
       // Prepare to store user's data using the root cap
       val userCapURI = new URI("usercap://" + userCap)
@@ -218,7 +221,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           throw new Exception("userTermStr failed to parse: " + userTermStr)
         )
       // Post user data to the user's self connection
-      post(userTerm, List(userSelfCnxn), "")
+      post(userTerm, List(userSelfCnxn), "", onPost)
       // Store username in public list of users
       // (When asking for list of connections, iterate over this public list, but drop yourself.
       // Form the connection by taking src, tgt to be of the form cnxn://<userName>
@@ -226,10 +229,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val userdbURI = new URI("userdb:///");
       val userdbCnxn = new ConcreteHL.PortableAgentCnxn(userdbURI, "userdb", userdbURI);
       val userdbTermStr = "user(\"" + userName + "\")"
-      val userdbTerm = fromTermStr(userdbTermStr).getOrElse(
+      val userdbTerm = fromTermString(userdbTermStr).getOrElse(
           throw new Exception("userdbTermStr failed to parse: " + userdbTermStr)
         )
-      post(userdbTerm, List(userdbCnxn), "")
+      post(userdbTerm, List(userdbCnxn), "", finalOnPost)
     }
     def createAgent(
       erql : CnxnCtxtLabel[String,String,String],
