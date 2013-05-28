@@ -73,9 +73,9 @@ package diesel {
   import scala.collection.mutable.ListBuffer
 
   object DieselEngineScope
-	 extends AgentKVDBMongoNodeScope[String,String,String,ConcreteHL.HLExpr]
-	 with UUIDOps
-	 with Serializable
+         extends AgentKVDBMongoNodeScope[String,String,String,ConcreteHL.HLExpr]
+         with UUIDOps
+         with Serializable
   {
     import SpecialKURIDefaults._
     import identityConversions._
@@ -111,26 +111,26 @@ package diesel {
       override def protoDrsp : DRsp = MDGetResponse( aLabel, ConcreteHL.Bottom )
       @transient
       override def protoJtsreq : JTSReq =
-	JustifiedRequest(
-	  protoDreqUUID,
-	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-	  getUUID(),
-	  protoDreq,
-	  None
-	)
+        JustifiedRequest(
+          protoDreqUUID,
+          new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+          new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+          getUUID(),
+          protoDreq,
+          None
+        )
       @transient
       override def protoJtsrsp : JTSRsp = 
-	JustifiedResponse(
-	  protoDreqUUID,
-	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-	  getUUID(),
-	  protoDrsp,
-	  None
-	)
+        JustifiedResponse(
+          protoDreqUUID,
+          new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+          new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+          getUUID(),
+          protoDrsp,
+          None
+        )
       override def protoJtsreqorrsp : JTSReqOrRsp =
-	Left( protoJtsreq )
+        Left( protoJtsreq )
     }
     
     override def protoMsgs : MsgTypes = MonadicDRsrcMsgs
@@ -141,1300 +141,1300 @@ package diesel {
       object theEMTypes extends ExcludedMiddleTypes[mTT.GetRequest,mTT.GetRequest,mTT.Resource]
        with Serializable
       {
-	case class PrologSubstitution( soln : LinkedHashMap[String,CnxnCtxtLabel[String,String,String]] )
-	   extends Function1[mTT.Resource,Option[mTT.Resource]] {
-	     override def apply( rsrc : mTT.Resource ) = {
-	       Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
-	     }
-	   }
-	override type Substitution = PrologSubstitution	
+        case class PrologSubstitution( soln : LinkedHashMap[String,CnxnCtxtLabel[String,String,String]] )
+           extends Function1[mTT.Resource,Option[mTT.Resource]] {
+             override def apply( rsrc : mTT.Resource ) = {
+               Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
+             }
+           }
+        override type Substitution = PrologSubstitution 
       }      
 
       override def protoEMTypes : EMTypes =
-	theEMTypes
+        theEMTypes
 
       object AgentKVDBNodeFactory
-	     extends BaseAgentKVDBNodeFactoryT
-	     with AgentKVDBNodeFactoryT
-	     with WireTap with Journalist
-	     with Serializable {	  	       
-	type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
+             extends BaseAgentKVDBNodeFactoryT
+             with AgentKVDBNodeFactoryT
+             with WireTap with Journalist
+             with Serializable {                       
+        type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
         //type AgentNode[Rq <: PersistedKVDBNodeRequest, Rs <: PersistedKVDBNodeResponse] = AgentKVDBNode[Rq,Rs]
 
-	override def tap [A] ( fact : A ) : Unit = {
-	  reportage( fact )
-	}
+        override def tap [A] ( fact : A ) : Unit = {
+          reportage( fact )
+        }
 
-	override def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-	  here : URI,
-	  configFileName : Option[String]
-	) : AgentCache[ReqBody,RspBody] = {
-	  new AgentKVDB[ReqBody, RspBody](
-	    MURI( here ),
-	    configFileName
-	  ) with Blobify with AMQPMonikerOps {		
-	    class StringMongoDBManifest(
-	      override val storeUnitStr : String,
-	      @transient override val labelToNS : Option[String => String],
-	      @transient override val textToVar : Option[String => String],
-	      @transient override val textToTag : Option[String => String]
-	    )
-	    extends MongoDBManifest( /* database */ ) {
-	      override def valueStorageType : String = {
-		throw new Exception( "valueStorageType not overriden in instantiation" )
-	      }
-	      override def continuationStorageType : String = {
-		throw new Exception( "continuationStorageType not overriden in instantiation" )
-	      }
-	      
-	      override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
-		cnxn match {
-		  case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
-		  case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
-		}	    
-	      }	
-	      
-	      def kvNameSpace : String = "record"
-	      def kvKNameSpace : String = "kRecord"
-	      
-	      def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
-		ns1.equals( ns2 )
-	      }
-	      
-	      override def asStoreValue(
-		rsrc : mTT.Resource
-	      ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-		tweet(
-		  "In asStoreValue on " + this + " for resource: " + rsrc
-		)
-		val storageDispatch = 
-		  rsrc match {
-		    case k : mTT.Continuation => {
-		      tweet(
-			"Resource " + rsrc + " is a continuation"
-		      )
-		      continuationStorageType
-		    }
-		    case _ => {
-		      tweet(
-			"Resource " + rsrc + " is a value"
-		      )
-		      valueStorageType
-		    }
-		  };
-		
-		tweet(
-		  "storageDispatch: " + storageDispatch
-		)
-		
-		val blob =
-		  storageDispatch match {
-		    case "Base64" => {
-		      val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
-		      val oos : ObjectOutputStream = new ObjectOutputStream( baos )
-		      oos.writeObject( rsrc.asInstanceOf[Serializable] )
-		      oos.close()
-		      new String( Base64Coder.encode( baos.toByteArray() ) )
-		    }
-		    case "CnxnCtxtLabel" => {
-		      tweet(
-			"warning: CnxnCtxtLabel method is using XStream"
-		      )
-		      toXQSafeJSONBlob( rsrc )		  		  
-		    }
-		    case "XStream" => {
-		      tweet(
-			"using XStream method"
-		      )
-		      
-		      toXQSafeJSONBlob( rsrc )
-		    }
-		    case _ => {
-		      throw new Exception( "unexpected value storage type" )
-		    }
-		  }
-		new CnxnCtxtLeaf[String,String,String](
-		  Left[String,String]( blob )
-		)
-	      }
-	      
-	      def asCacheValue(
-		ccl : CnxnCtxtLabel[String,String,String]
-	      ) : ConcreteHL.HLExpr = {
-		tweet(
-		  "converting to cache value"
-		)
-		ccl match {
-		  case CnxnCtxtBranch(
-		    "string",
-		    CnxnCtxtLeaf( Left( rv ) ) :: Nil
-		  ) => {
-		    val unBlob =
-		      fromXQSafeJSONBlob( rv )
-		    
-		    unBlob match {
-		      case rsrc : mTT.Resource => {
-			getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-		      }
-		    }
-		  }
-		  case _ => {
-		    //asPatternString( ccl )
-		    throw new Exception( "unexpected value form: " + ccl )
-		  }
-		}
-	      }
-	      
-	      override def asResource(
-		key : mTT.GetRequest, // must have the pattern to determine bindings
-		value : DBObject
-	      ) : emT.PlaceInstance = {
-		val ltns =
-		  labelToNS.getOrElse(
-		    throw new Exception( "must have labelToNS to convert mongo object" )
-		  )
-		val ttv =
-		  textToVar.getOrElse(
-		    throw new Exception( "must have textToVar to convert mongo object" )
-		  )
-		val ttt =
-		  textToTag.getOrElse(
-		    throw new Exception( "must have textToTag to convert mongo object" )
-		  )
-		//val ttt = ( x : String ) => x
-		
-		//val ptn = asPatternString( key )
-		//println( "ptn : " + ptn )		
-		
-		CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-		  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-		    matchMap( key, k ) match {
-		      case Some( soln ) => {
-			if ( compareNameSpace( ns, kvNameSpace ) ) {
-			  emT.PlaceInstance(
-			    k,
-			    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-			      mTT.Ground(
-				asCacheValue(
-				  new CnxnCtxtBranch[String,String,String](
-				    "string",
-				    v :: Nil
-				  )
-				)
-			      )
-			    ),
-			    // BUGBUG -- lgm : why can't the compiler determine
-			    // that this cast is not necessary?
-			    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-			  )
-			}
-			else {
-			  if ( compareNameSpace( ns, kvKNameSpace ) ) {
-			    val mTT.Continuation( ks ) =
-			      asCacheK(
-				new CnxnCtxtBranch[String,String,String](
-				  "string",
-				  v :: Nil
-				)
-			      )
-			    emT.PlaceInstance(
-			      k,
-			      Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-				ks
-			      ),
-			      // BUGBUG -- lgm : why can't the compiler determine
-			      // that this cast is not necessary?
-			      theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-			    )
-			  }
-			  else {
-			    throw new Exception( "unexpected namespace : (" + ns + ")" )
-			  }
-			}
-		      }
-		      case None => {
-			tweet( "Unexpected matchMap failure: " + key + " " + k )
-			throw new Exception( "matchMap failure " + key + " " + k )
-		      }
-		    }						
-		  }
-		  case _ => {
-		    throw new Exception( "unexpected record format : " + value )
-		  }
-		}				
-	      }
-	      
-	    }
-	    override def asCacheK(
-	      ccl : CnxnCtxtLabel[String,String,String]
-	    ) : Option[mTT.Continuation] = {
-	      tweet(
-		"converting to cache continuation stack" + ccl
-	      )
-	      ccl match {
-		case CnxnCtxtBranch(
-		  "string",
-		  CnxnCtxtLeaf( Left( rv ) ) :: Nil
-		) => {
-		  val unBlob =
-		    continuationStorageType match {
-		      case "CnxnCtxtLabel" => {
-			// tweet(
-			// 		      "warning: CnxnCtxtLabel method is using XStream"
-			// 		    )
-			fromXQSafeJSONBlob( rv )
-		      }
-		      case "XStream" => {
-			fromXQSafeJSONBlob( rv )
-		      }
-		      case "Base64" => {
-			val data : Array[Byte] = Base64Coder.decode( rv )
-			val ois : ObjectInputStream =
-			  new ObjectInputStream( new ByteArrayInputStream(  data ) )
-			val o : java.lang.Object = ois.readObject();
-			ois.close()
-			o
-		      }
-		    }
-		  
-		  unBlob match {
-		    case k : mTT.Resource => {
-		      Some( k.asInstanceOf[mTT.Continuation] )
-		    }
-		    case _ => {
-		      throw new Exception(
-			(
-			  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			  + "ill-formatted continuation stack blob : " + rv
-			  + "\n" 
-			  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			  + "\n"
-			  + "unBlob : " + unBlob
-			  + "\n"
-			  + "unBlob type : " + unBlob
-			  + "\n"
-			  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			)
-		      )
-		    }
-		  }
-		}
-		case _ => {
-		  throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
-		}
-	      }
-	    }
-	    
-	    override def asCacheK(
-	      ltns : String => String,
-	      ttv : String => String,
-	      value : DBObject
-	    ) : Option[mTT.Continuation] = {
-	      throw new Exception( "shouldn't be calling this version of asCacheK" )
-	    }
-	    override def persistenceManifest : Option[PersistenceManifest] = {
-	      tweet(
-		(
-		  "AgentKVDB : "
-		  + "\nthis: " + this
-		  + "\n method : persistenceManifest "
-		)
-	      )
-	      val sid = Some( ( s : String ) => recoverFieldName( s ) )
-	      val kvdb = this;
-	      Some(
-		new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
-		  override def valueStorageType : String = {
-		    kvdb.valueStorageType
-		  }
-		  override def continuationStorageType : String = {
-		    kvdb.continuationStorageType
-		  }
-		}
-	      )
-	    }
-	    def dfStoreUnitStr : String = mnkrExchange( name )
-	  }
-	}
-	override def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-	  here : URI, there : URI
-	)(
-	  implicit configFileNameOpt : Option[String] 
-	) : AgentKVDBNode[ReqBody,RspBody] = {
-	  val node =
-	    new AgentKVDBNode[ReqBody,RspBody](
-	      mkCache( MURI( here ), configFileNameOpt ),
-	      List( MURI( there ) ),
-	      None,
-	      configFileNameOpt
-	    ) {
-	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		here : URI,
-		configFileName : Option[String]
-	      ) : HashAgentKVDB[ReqBody,RspBody] = {
-		tweet(
-		  (
-		    "AgentKVDBNode : "
-		    + "\nthis: " + this
-		    + "\n method : mkInnerCache "
-		    + "\n here: " + here
-		    + "\n configFileName: " + configFileName
-		  )
-		)
-		new HashAgentKVDB[ReqBody, RspBody](
-		  MURI( here ),
-		  configFileName
-		) with Blobify with AMQPMonikerOps {		
-		  class StringMongoDBManifest(
-		    override val storeUnitStr : String,
-		    @transient override val labelToNS : Option[String => String],
-		    @transient override val textToVar : Option[String => String],
-		    @transient override val textToTag : Option[String => String]
-		  )
-		  extends MongoDBManifest( /* database */ ) {
-		    override def valueStorageType : String = {
-		      throw new Exception( "valueStorageType not overriden in instantiation" )
-		    }
-		    override def continuationStorageType : String = {
-		      throw new Exception( "continuationStorageType not overriden in instantiation" )
-		    }
-		    
-		    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
-		      cnxn match {
-			case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
-			case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
-		      }	    
-		    }	
-		    
-		    def kvNameSpace : String = "record"
-		    def kvKNameSpace : String = "kRecord"
-		    
-		    def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
-		      ns1.equals( ns2 )
-		    }
-		    
-		    override def asStoreValue(
-		      rsrc : mTT.Resource
-		    ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-		      tweet(
-			"In asStoreValue on " + this + " for resource: " + rsrc
-		      )
-		      val storageDispatch = 
-			rsrc match {
-			  case k : mTT.Continuation => {
-			    tweet(
-			      "Resource " + rsrc + " is a continuation"
-			    )
-			    continuationStorageType
-			  }
-			  case _ => {
-			    tweet(
-			      "Resource " + rsrc + " is a value"
-			    )
-			    valueStorageType
-			  }
-			};
-		      
-		      tweet(
-			"storageDispatch: " + storageDispatch
-		      )
-		      
-		      val blob =
-			storageDispatch match {
-			  case "Base64" => {
-			    val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
-			    val oos : ObjectOutputStream = new ObjectOutputStream( baos )
-			    oos.writeObject( rsrc.asInstanceOf[Serializable] )
-			    oos.close()
-			    new String( Base64Coder.encode( baos.toByteArray() ) )
-			  }
-			  case "CnxnCtxtLabel" => {
-			    tweet(
-			      "warning: CnxnCtxtLabel method is using XStream"
-			    )
-			    toXQSafeJSONBlob( rsrc )		  		  
-			  }
-			  case "XStream" => {
-			    tweet(
-			      "using XStream method"
-			    )
-			    
-			    toXQSafeJSONBlob( rsrc )
-			  }
-			  case _ => {
-			    throw new Exception( "unexpected value storage type" )
-			  }
-			}
-		      new CnxnCtxtLeaf[String,String,String](
-			Left[String,String]( blob )
-		      )
-		    }
-		    
-		    def asCacheValue(
-		      ccl : CnxnCtxtLabel[String,String,String]
-		    ) : ConcreteHL.HLExpr = {
-		      tweet(
-			"converting to cache value"
-		      )
-		      ccl match {
-			case CnxnCtxtBranch(
-			  "string",
-			  CnxnCtxtLeaf( Left( rv ) ) :: Nil
-			) => {
-			  val unBlob =
-			    fromXQSafeJSONBlob( rv )
-			  
-			  unBlob match {
-			    case rsrc : mTT.Resource => {
-			      getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-			    }
-			  }
-			}
-			case _ => {
-			  //asPatternString( ccl )
-			  throw new Exception( "unexpected value form: " + ccl )
-			}
-		      }
-		    }
-		    
-		    override def asResource(
-		      key : mTT.GetRequest, // must have the pattern to determine bindings
-		      value : DBObject
-		    ) : emT.PlaceInstance = {
-		      val ltns =
-			labelToNS.getOrElse(
-			  throw new Exception( "must have labelToNS to convert mongo object" )
-			)
-		      val ttv =
-			textToVar.getOrElse(
-			  throw new Exception( "must have textToVar to convert mongo object" )
-			)
-		      val ttt =
-			textToTag.getOrElse(
-			  throw new Exception( "must have textToTag to convert mongo object" )
-			)
-		      //val ttt = ( x : String ) => x
-		      
-		      //val ptn = asPatternString( key )
-		      //println( "ptn : " + ptn )		
-		      
-		      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-			case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-			  matchMap( key, k ) match {
-			    case Some( soln ) => {
-			      if ( compareNameSpace( ns, kvNameSpace ) ) {
-				emT.PlaceInstance(
-				  k,
-				  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-				    mTT.Ground(
-				      asCacheValue(
-					new CnxnCtxtBranch[String,String,String](
-					  "string",
-					  v :: Nil
-					)
-				      )
-				    )
-				  ),
-				  // BUGBUG -- lgm : why can't the compiler determine
-				  // that this cast is not necessary?
-				  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-				)
-			      }
-			      else {
-				if ( compareNameSpace( ns, kvKNameSpace ) ) {
-				  val mTT.Continuation( ks ) =
-				    asCacheK(
-				      new CnxnCtxtBranch[String,String,String](
-					"string",
-					v :: Nil
-				      )
-				    )
-				  emT.PlaceInstance(
-				    k,
-				    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-				      ks
-				    ),
-				    // BUGBUG -- lgm : why can't the compiler determine
-				    // that this cast is not necessary?
-				    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-				  )
-				}
-				else {
-				  throw new Exception( "unexpected namespace : (" + ns + ")" )
-				}
-			      }
-			    }
-			    case None => {
-			      tweet( "Unexpected matchMap failure: " + key + " " + k )
-			      throw new Exception( "matchMap failure " + key + " " + k )
-			    }
-			  }						
-			}
-			case _ => {
-			  throw new Exception( "unexpected record format : " + value )
-			}
-		      }
-		    }
-		    
-		  }
-		  override def asCacheK(
-		    ccl : CnxnCtxtLabel[String,String,String]
-		  ) : Option[mTT.Continuation] = {
-		    tweet(
-		      "converting to cache continuation stack" + ccl
-		    )
-		    ccl match {
-		      case CnxnCtxtBranch(
-			"string",
-			CnxnCtxtLeaf( Left( rv ) ) :: Nil
-		      ) => {
-			val unBlob =
-			  continuationStorageType match {
-			    case "CnxnCtxtLabel" => {
-			      // tweet(
-			      // 		      "warning: CnxnCtxtLabel method is using XStream"
-			      // 		    )
-			      fromXQSafeJSONBlob( rv )
-			    }
-			    case "XStream" => {
-			      fromXQSafeJSONBlob( rv )
-			    }
-			    case "Base64" => {
-			      val data : Array[Byte] = Base64Coder.decode( rv )
-			      val ois : ObjectInputStream =
-				new ObjectInputStream( new ByteArrayInputStream(  data ) )
-			      val o : java.lang.Object = ois.readObject();
-			      ois.close()
-			      o
-			    }
-			  }
-			
-			unBlob match {
-			  case k : mTT.Resource => {
-			    Some( k.asInstanceOf[mTT.Continuation] )
-			  }
-			  case _ => {
-			    throw new Exception(
-			      (
-				">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-				+ "ill-formatted continuation stack blob : " + rv
-				+ "\n" 
-				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-				+ "\n"
-				+ "unBlob : " + unBlob
-				+ "\n"
-				+ "unBlob type : " + unBlob
-				+ "\n"
-				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			      )
-			    )
-			  }
-			}
-		      }
-		      case _ => {
-			throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
-		      }
-		    }
-		  }
-		  
-		  override def asCacheK(
-		    ltns : String => String,
-		    ttv : String => String,
-		    value : DBObject
-		  ) : Option[mTT.Continuation] = {
-		    throw new Exception( "shouldn't be calling this version of asCacheK" )
-		  }
+        override def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
+          here : URI,
+          configFileName : Option[String]
+        ) : AgentCache[ReqBody,RspBody] = {
+          new AgentKVDB[ReqBody, RspBody](
+            MURI( here ),
+            configFileName
+          ) with Blobify with AMQPMonikerOps {          
+            class StringMongoDBManifest(
+              override val storeUnitStr : String,
+              @transient override val labelToNS : Option[String => String],
+              @transient override val textToVar : Option[String => String],
+              @transient override val textToTag : Option[String => String]
+            )
+            extends MongoDBManifest( /* database */ ) {
+              override def valueStorageType : String = {
+                throw new Exception( "valueStorageType not overriden in instantiation" )
+              }
+              override def continuationStorageType : String = {
+                throw new Exception( "continuationStorageType not overriden in instantiation" )
+              }
+              
+              override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+                cnxn match {
+                  case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+                  case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
+                }           
+              } 
+              
+              def kvNameSpace : String = "record"
+              def kvKNameSpace : String = "kRecord"
+              
+              def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+                ns1.equals( ns2 )
+              }
+              
+              override def asStoreValue(
+                rsrc : mTT.Resource
+              ) : CnxnCtxtLeaf[String,String,String] with Factual = {
+                tweet(
+                  "In asStoreValue on " + this + " for resource: " + rsrc
+                )
+                val storageDispatch = 
+                  rsrc match {
+                    case k : mTT.Continuation => {
+                      tweet(
+                        "Resource " + rsrc + " is a continuation"
+                      )
+                      continuationStorageType
+                    }
+                    case _ => {
+                      tweet(
+                        "Resource " + rsrc + " is a value"
+                      )
+                      valueStorageType
+                    }
+                  };
+                
+                tweet(
+                  "storageDispatch: " + storageDispatch
+                )
+                
+                val blob =
+                  storageDispatch match {
+                    case "Base64" => {
+                      val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
+                      val oos : ObjectOutputStream = new ObjectOutputStream( baos )
+                      oos.writeObject( rsrc.asInstanceOf[Serializable] )
+                      oos.close()
+                      new String( Base64Coder.encode( baos.toByteArray() ) )
+                    }
+                    case "CnxnCtxtLabel" => {
+                      tweet(
+                        "warning: CnxnCtxtLabel method is using XStream"
+                      )
+                      toXQSafeJSONBlob( rsrc )                            
+                    }
+                    case "XStream" => {
+                      tweet(
+                        "using XStream method"
+                      )
+                      
+                      toXQSafeJSONBlob( rsrc )
+                    }
+                    case _ => {
+                      throw new Exception( "unexpected value storage type" )
+                    }
+                  }
+                new CnxnCtxtLeaf[String,String,String](
+                  Left[String,String]( blob )
+                )
+              }
+              
+              def asCacheValue(
+                ccl : CnxnCtxtLabel[String,String,String]
+              ) : ConcreteHL.HLExpr = {
+                tweet(
+                  "converting to cache value"
+                )
+                ccl match {
+                  case CnxnCtxtBranch(
+                    "string",
+                    CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                  ) => {
+                    val unBlob =
+                      fromXQSafeJSONBlob( rv )
+                    
+                    unBlob match {
+                      case rsrc : mTT.Resource => {
+                        getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                      }
+                    }
+                  }
+                  case _ => {
+                    //asPatternString( ccl )
+                    throw new Exception( "unexpected value form: " + ccl )
+                  }
+                }
+              }
+              
+              override def asResource(
+                key : mTT.GetRequest, // must have the pattern to determine bindings
+                value : DBObject
+              ) : emT.PlaceInstance = {
+                val ltns =
+                  labelToNS.getOrElse(
+                    throw new Exception( "must have labelToNS to convert mongo object" )
+                  )
+                val ttv =
+                  textToVar.getOrElse(
+                    throw new Exception( "must have textToVar to convert mongo object" )
+                  )
+                val ttt =
+                  textToTag.getOrElse(
+                    throw new Exception( "must have textToTag to convert mongo object" )
+                  )
+                //val ttt = ( x : String ) => x
+                
+                //val ptn = asPatternString( key )
+                //println( "ptn : " + ptn )             
+                
+                CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
+                  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
+                    matchMap( key, k ) match {
+                      case Some( soln ) => {
+                        if ( compareNameSpace( ns, kvNameSpace ) ) {
+                          emT.PlaceInstance(
+                            k,
+                            Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                              mTT.Ground(
+                                asCacheValue(
+                                  new CnxnCtxtBranch[String,String,String](
+                                    "string",
+                                    v :: Nil
+                                  )
+                                )
+                              )
+                            ),
+                            // BUGBUG -- lgm : why can't the compiler determine
+                            // that this cast is not necessary?
+                            theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                          )
+                        }
+                        else {
+                          if ( compareNameSpace( ns, kvKNameSpace ) ) {
+                            val mTT.Continuation( ks ) =
+                              asCacheK(
+                                new CnxnCtxtBranch[String,String,String](
+                                  "string",
+                                  v :: Nil
+                                )
+                              )
+                            emT.PlaceInstance(
+                              k,
+                              Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
+                                ks
+                              ),
+                              // BUGBUG -- lgm : why can't the compiler determine
+                              // that this cast is not necessary?
+                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                            )
+                          }
+                          else {
+                            throw new Exception( "unexpected namespace : (" + ns + ")" )
+                          }
+                        }
+                      }
+                      case None => {
+                        tweet( "Unexpected matchMap failure: " + key + " " + k )
+                        throw new Exception( "matchMap failure " + key + " " + k )
+                      }
+                    }                                           
+                  }
+                  case _ => {
+                    throw new Exception( "unexpected record format : " + value )
+                  }
+                }                               
+              }
+              
+            }
+            override def asCacheK(
+              ccl : CnxnCtxtLabel[String,String,String]
+            ) : Option[mTT.Continuation] = {
+              tweet(
+                "converting to cache continuation stack" + ccl
+              )
+              ccl match {
+                case CnxnCtxtBranch(
+                  "string",
+                  CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                ) => {
+                  val unBlob =
+                    continuationStorageType match {
+                      case "CnxnCtxtLabel" => {
+                        // tweet(
+                        //                    "warning: CnxnCtxtLabel method is using XStream"
+                        //                  )
+                        fromXQSafeJSONBlob( rv )
+                      }
+                      case "XStream" => {
+                        fromXQSafeJSONBlob( rv )
+                      }
+                      case "Base64" => {
+                        val data : Array[Byte] = Base64Coder.decode( rv )
+                        val ois : ObjectInputStream =
+                          new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                        val o : java.lang.Object = ois.readObject();
+                        ois.close()
+                        o
+                      }
+                    }
+                  
+                  unBlob match {
+                    case k : mTT.Resource => {
+                      Some( k.asInstanceOf[mTT.Continuation] )
+                    }
+                    case _ => {
+                      throw new Exception(
+                        (
+                          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                          + "ill-formatted continuation stack blob : " + rv
+                          + "\n" 
+                          + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                          + "\n"
+                          + "unBlob : " + unBlob
+                          + "\n"
+                          + "unBlob type : " + unBlob
+                          + "\n"
+                          + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                        )
+                      )
+                    }
+                  }
+                }
+                case _ => {
+                  throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
+                }
+              }
+            }
+            
+            override def asCacheK(
+              ltns : String => String,
+              ttv : String => String,
+              value : DBObject
+            ) : Option[mTT.Continuation] = {
+              throw new Exception( "shouldn't be calling this version of asCacheK" )
+            }
+            override def persistenceManifest : Option[PersistenceManifest] = {
+              tweet(
+                (
+                  "AgentKVDB : "
+                  + "\nthis: " + this
+                  + "\n method : persistenceManifest "
+                )
+              )
+              val sid = Some( ( s : String ) => recoverFieldName( s ) )
+              val kvdb = this;
+              Some(
+                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                  override def valueStorageType : String = {
+                    kvdb.valueStorageType
+                  }
+                  override def continuationStorageType : String = {
+                    kvdb.continuationStorageType
+                  }
+                }
+              )
+            }
+            def dfStoreUnitStr : String = mnkrExchange( name )
+          }
+        }
+        override def ptToPt[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+          here : URI, there : URI
+        )(
+          implicit configFileNameOpt : Option[String] 
+        ) : AgentKVDBNode[ReqBody,RspBody] = {
+          val node =
+            new AgentKVDBNode[ReqBody,RspBody](
+              mkCache( MURI( here ), configFileNameOpt ),
+              List( MURI( there ) ),
+              None,
+              configFileNameOpt
+            ) {
+              override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
+                here : URI,
+                configFileName : Option[String]
+              ) : HashAgentKVDB[ReqBody,RspBody] = {
+                tweet(
+                  (
+                    "AgentKVDBNode : "
+                    + "\nthis: " + this
+                    + "\n method : mkInnerCache "
+                    + "\n here: " + here
+                    + "\n configFileName: " + configFileName
+                  )
+                )
+                new HashAgentKVDB[ReqBody, RspBody](
+                  MURI( here ),
+                  configFileName
+                ) with Blobify with AMQPMonikerOps {            
+                  class StringMongoDBManifest(
+                    override val storeUnitStr : String,
+                    @transient override val labelToNS : Option[String => String],
+                    @transient override val textToVar : Option[String => String],
+                    @transient override val textToTag : Option[String => String]
+                  )
+                  extends MongoDBManifest( /* database */ ) {
+                    override def valueStorageType : String = {
+                      throw new Exception( "valueStorageType not overriden in instantiation" )
+                    }
+                    override def continuationStorageType : String = {
+                      throw new Exception( "continuationStorageType not overriden in instantiation" )
+                    }
+                    
+                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+                      cnxn match {
+                        case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+                        case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
+                      }     
+                    }   
+                    
+                    def kvNameSpace : String = "record"
+                    def kvKNameSpace : String = "kRecord"
+                    
+                    def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+                      ns1.equals( ns2 )
+                    }
+                    
+                    override def asStoreValue(
+                      rsrc : mTT.Resource
+                    ) : CnxnCtxtLeaf[String,String,String] with Factual = {
+                      tweet(
+                        "In asStoreValue on " + this + " for resource: " + rsrc
+                      )
+                      val storageDispatch = 
+                        rsrc match {
+                          case k : mTT.Continuation => {
+                            tweet(
+                              "Resource " + rsrc + " is a continuation"
+                            )
+                            continuationStorageType
+                          }
+                          case _ => {
+                            tweet(
+                              "Resource " + rsrc + " is a value"
+                            )
+                            valueStorageType
+                          }
+                        };
+                      
+                      tweet(
+                        "storageDispatch: " + storageDispatch
+                      )
+                      
+                      val blob =
+                        storageDispatch match {
+                          case "Base64" => {
+                            val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
+                            val oos : ObjectOutputStream = new ObjectOutputStream( baos )
+                            oos.writeObject( rsrc.asInstanceOf[Serializable] )
+                            oos.close()
+                            new String( Base64Coder.encode( baos.toByteArray() ) )
+                          }
+                          case "CnxnCtxtLabel" => {
+                            tweet(
+                              "warning: CnxnCtxtLabel method is using XStream"
+                            )
+                            toXQSafeJSONBlob( rsrc )                              
+                          }
+                          case "XStream" => {
+                            tweet(
+                              "using XStream method"
+                            )
+                            
+                            toXQSafeJSONBlob( rsrc )
+                          }
+                          case _ => {
+                            throw new Exception( "unexpected value storage type" )
+                          }
+                        }
+                      new CnxnCtxtLeaf[String,String,String](
+                        Left[String,String]( blob )
+                      )
+                    }
+                    
+                    def asCacheValue(
+                      ccl : CnxnCtxtLabel[String,String,String]
+                    ) : ConcreteHL.HLExpr = {
+                      tweet(
+                        "converting to cache value"
+                      )
+                      ccl match {
+                        case CnxnCtxtBranch(
+                          "string",
+                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                        ) => {
+                          val unBlob =
+                            fromXQSafeJSONBlob( rv )
+                          
+                          unBlob match {
+                            case rsrc : mTT.Resource => {
+                              getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                            }
+                          }
+                        }
+                        case _ => {
+                          //asPatternString( ccl )
+                          throw new Exception( "unexpected value form: " + ccl )
+                        }
+                      }
+                    }
+                    
+                    override def asResource(
+                      key : mTT.GetRequest, // must have the pattern to determine bindings
+                      value : DBObject
+                    ) : emT.PlaceInstance = {
+                      val ltns =
+                        labelToNS.getOrElse(
+                          throw new Exception( "must have labelToNS to convert mongo object" )
+                        )
+                      val ttv =
+                        textToVar.getOrElse(
+                          throw new Exception( "must have textToVar to convert mongo object" )
+                        )
+                      val ttt =
+                        textToTag.getOrElse(
+                          throw new Exception( "must have textToTag to convert mongo object" )
+                        )
+                      //val ttt = ( x : String ) => x
+                      
+                      //val ptn = asPatternString( key )
+                      //println( "ptn : " + ptn )               
+                      
+                      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
+                        case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
+                          matchMap( key, k ) match {
+                            case Some( soln ) => {
+                              if ( compareNameSpace( ns, kvNameSpace ) ) {
+                                emT.PlaceInstance(
+                                  k,
+                                  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                    mTT.Ground(
+                                      asCacheValue(
+                                        new CnxnCtxtBranch[String,String,String](
+                                          "string",
+                                          v :: Nil
+                                        )
+                                      )
+                                    )
+                                  ),
+                                  // BUGBUG -- lgm : why can't the compiler determine
+                                  // that this cast is not necessary?
+                                  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                )
+                              }
+                              else {
+                                if ( compareNameSpace( ns, kvKNameSpace ) ) {
+                                  val mTT.Continuation( ks ) =
+                                    asCacheK(
+                                      new CnxnCtxtBranch[String,String,String](
+                                        "string",
+                                        v :: Nil
+                                      )
+                                    )
+                                  emT.PlaceInstance(
+                                    k,
+                                    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
+                                      ks
+                                    ),
+                                    // BUGBUG -- lgm : why can't the compiler determine
+                                    // that this cast is not necessary?
+                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                  )
+                                }
+                                else {
+                                  throw new Exception( "unexpected namespace : (" + ns + ")" )
+                                }
+                              }
+                            }
+                            case None => {
+                              tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              throw new Exception( "matchMap failure " + key + " " + k )
+                            }
+                          }                                             
+                        }
+                        case _ => {
+                          throw new Exception( "unexpected record format : " + value )
+                        }
+                      }
+                    }
+                    
+                  }
+                  override def asCacheK(
+                    ccl : CnxnCtxtLabel[String,String,String]
+                  ) : Option[mTT.Continuation] = {
+                    tweet(
+                      "converting to cache continuation stack" + ccl
+                    )
+                    ccl match {
+                      case CnxnCtxtBranch(
+                        "string",
+                        CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                      ) => {
+                        val unBlob =
+                          continuationStorageType match {
+                            case "CnxnCtxtLabel" => {
+                              // tweet(
+                              //                      "warning: CnxnCtxtLabel method is using XStream"
+                              //                    )
+                              fromXQSafeJSONBlob( rv )
+                            }
+                            case "XStream" => {
+                              fromXQSafeJSONBlob( rv )
+                            }
+                            case "Base64" => {
+                              val data : Array[Byte] = Base64Coder.decode( rv )
+                              val ois : ObjectInputStream =
+                                new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                              val o : java.lang.Object = ois.readObject();
+                              ois.close()
+                              o
+                            }
+                          }
+                        
+                        unBlob match {
+                          case k : mTT.Resource => {
+                            Some( k.asInstanceOf[mTT.Continuation] )
+                          }
+                          case _ => {
+                            throw new Exception(
+                              (
+                                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                + "ill-formatted continuation stack blob : " + rv
+                                + "\n" 
+                                + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                + "\n"
+                                + "unBlob : " + unBlob
+                                + "\n"
+                                + "unBlob type : " + unBlob
+                                + "\n"
+                                + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              )
+                            )
+                          }
+                        }
+                      }
+                      case _ => {
+                        throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
+                      }
+                    }
+                  }
+                  
+                  override def asCacheK(
+                    ltns : String => String,
+                    ttv : String => String,
+                    value : DBObject
+                  ) : Option[mTT.Continuation] = {
+                    throw new Exception( "shouldn't be calling this version of asCacheK" )
+                  }
 
-		  override def persistenceManifest : Option[PersistenceManifest] = {
-		    tweet(
-		      (
-			"HashAgentKVDB : "
-			+ "\nthis: " + this
-			+ "\n method : persistenceManifest "
-		      )
-		    )
-		    val sid = Some( ( s : String ) => recoverFieldName( s ) )
-		    val kvdb = this;
-		    Some(
-		      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
-			override def valueStorageType : String = {
-			  kvdb.valueStorageType
-			}
-			override def continuationStorageType : String = {
-			  kvdb.continuationStorageType
-			}
-		      }
-		    )
-		  }
-		  def dfStoreUnitStr : String = mnkrExchange( name )
-		}
-	      }
-	    }
-	  spawn {
-	    node.dispatchDMsgs()
-	  }
-	  node
-	}
-	override def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-	  here : URI, there : List[URI]
-	)(
-	  implicit configFileNameOpt : Option[String]
-	) : AgentKVDBNode[ReqBody,RspBody] = {
-	  val node =
-	    new AgentKVDBNode[ReqBody,RspBody](
-	      mkCache( MURI( here ), configFileNameOpt ),
-	      there.map( MURI( _ ) ),
-	      None,
-	      configFileNameOpt
-	    ) {
-	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		here : URI,
-		configFileName : Option[String]
-	      ) : HashAgentKVDB[ReqBody,RspBody] = {
-		tweet(
-		  (
-		    "AgentKVDBNode : "
-		    + "\nthis: " + this
-		    + "\n method : mkInnerCache "
-		    + "\n here: " + here
-		    + "\n configFileName: " + configFileName
-		  )
-		)
-		new HashAgentKVDB[ReqBody, RspBody](
-		  MURI( here ),
-		  configFileName
-		) with Blobify with AMQPMonikerOps {		
-		  class StringMongoDBManifest(
-		    override val storeUnitStr : String,
-		    @transient override val labelToNS : Option[String => String],
-		    @transient override val textToVar : Option[String => String],
-		    @transient override val textToTag : Option[String => String]
-		  )
-		  extends MongoDBManifest( /* database */ ) {
-		    override def valueStorageType : String = {
-		      throw new Exception( "valueStorageType not overriden in instantiation" )
-		    }
-		    override def continuationStorageType : String = {
-		      throw new Exception( "continuationStorageType not overriden in instantiation" )
-		    }
-		    
-		    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
-		      cnxn match {
-			case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
-			case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
-		      }	    
-		    }	
-		    
-		    def kvNameSpace : String = "record"
-		    def kvKNameSpace : String = "kRecord"
-		    
-		    def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
-		      ns1.equals( ns2 )
-		    }
-		    
-		    override def asStoreValue(
-		      rsrc : mTT.Resource
-		    ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-		      tweet(
-			"In asStoreValue on " + this + " for resource: " + rsrc
-		      )
-		      val storageDispatch = 
-			rsrc match {
-			  case k : mTT.Continuation => {
-			    tweet(
-			      "Resource " + rsrc + " is a continuation"
-			    )
-			    continuationStorageType
-			  }
-			  case _ => {
-			    tweet(
-			      "Resource " + rsrc + " is a value"
-			    )
-			    valueStorageType
-			  }
-			};
-		      
-		      tweet(
-			"storageDispatch: " + storageDispatch
-		      )
-		      
-		      val blob =
-			storageDispatch match {
-			  case "Base64" => {
-			    val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
-			    val oos : ObjectOutputStream = new ObjectOutputStream( baos )
-			    oos.writeObject( rsrc.asInstanceOf[Serializable] )
-			    oos.close()
-			    new String( Base64Coder.encode( baos.toByteArray() ) )
-			  }
-			  case "CnxnCtxtLabel" => {
-			    tweet(
-			      "warning: CnxnCtxtLabel method is using XStream"
-			    )
-			    toXQSafeJSONBlob( rsrc )		  		  
-			  }
-			  case "XStream" => {
-			    tweet(
-			      "using XStream method"
-			    )
-			    
-			    toXQSafeJSONBlob( rsrc )
-			  }
-			  case _ => {
-			    throw new Exception( "unexpected value storage type" )
-			  }
-			}
-		      new CnxnCtxtLeaf[String,String,String](
-			Left[String,String]( blob )
-		      )
-		    }
-		    
-		    def asCacheValue(
-		      ccl : CnxnCtxtLabel[String,String,String]
-		    ) : ConcreteHL.HLExpr = {
-		      tweet(
-			"converting to cache value"
-		      )
-		      ccl match {
-			case CnxnCtxtBranch(
-			  "string",
-			  CnxnCtxtLeaf( Left( rv ) ) :: Nil
-			) => {
-			  val unBlob =
-			    fromXQSafeJSONBlob( rv )
-			  
-			  unBlob match {
-			    case rsrc : mTT.Resource => {
-			      getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-			    }
-			  }
-			}
-			case _ => {
-			  //asPatternString( ccl )
-			  throw new Exception( "unexpected value form: " + ccl )
-			}
-		      }
-		    }
-		    
-		    override def asResource(
-		      key : mTT.GetRequest, // must have the pattern to determine bindings
-		      value : DBObject
-		    ) : emT.PlaceInstance = {
-		      val ltns =
-			labelToNS.getOrElse(
-			  throw new Exception( "must have labelToNS to convert mongo object" )
-			)
-		      val ttv =
-			textToVar.getOrElse(
-			  throw new Exception( "must have textToVar to convert mongo object" )
-			)
-		      val ttt =
-			textToTag.getOrElse(
-			  throw new Exception( "must have textToTag to convert mongo object" )
-			)
-		      //val ttt = ( x : String ) => x
-		      
-		      //val ptn = asPatternString( key )
-		      //println( "ptn : " + ptn )		
-		      
-		      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-			case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-			  matchMap( key, k ) match {
-			    case Some( soln ) => {
-			      if ( compareNameSpace( ns, kvNameSpace ) ) {
-				emT.PlaceInstance(
-				  k,
-				  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-				    mTT.Ground(
-				      asCacheValue(
-					new CnxnCtxtBranch[String,String,String](
-					  "string",
-					  v :: Nil
-					)
-				      )
-				    )
-				  ),
-				  // BUGBUG -- lgm : why can't the compiler determine
-				  // that this cast is not necessary?
-				  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-				)
-			      }
-			      else {
-				if ( compareNameSpace( ns, kvKNameSpace ) ) {
-				  val mTT.Continuation( ks ) =
-				    asCacheK(
-				      new CnxnCtxtBranch[String,String,String](
-					"string",
-					v :: Nil
-				      )
-				    )
-				  emT.PlaceInstance(
-				    k,
-				    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-				      ks
-				    ),
-				    // BUGBUG -- lgm : why can't the compiler determine
-				    // that this cast is not necessary?
-				    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-				  )
-				}
-				else {
-				  throw new Exception( "unexpected namespace : (" + ns + ")" )
-				}
-			      }
-			    }
-			    case None => {
-			      tweet( "Unexpected matchMap failure: " + key + " " + k )
-			      throw new Exception( "matchMap failure " + key + " " + k )
-			    }
-			  }						
-			}
-			case _ => {
-			  throw new Exception( "unexpected record format : " + value )
-			}
-		      }
-		    }
-		    
-		  }
-		  override def asCacheK(
-		    ccl : CnxnCtxtLabel[String,String,String]
-		  ) : Option[mTT.Continuation] = {
-		    tweet(
-		      "converting to cache continuation stack" + ccl
-		    )
-		    ccl match {
-		      case CnxnCtxtBranch(
-			"string",
-			CnxnCtxtLeaf( Left( rv ) ) :: Nil
-		      ) => {
-			val unBlob =
-			  continuationStorageType match {
-			    case "CnxnCtxtLabel" => {
-			      // tweet(
-			      // 		      "warning: CnxnCtxtLabel method is using XStream"
-			      // 		    )
-			      fromXQSafeJSONBlob( rv )
-			    }
-			    case "XStream" => {
-			      fromXQSafeJSONBlob( rv )
-			    }
-			    case "Base64" => {
-			      val data : Array[Byte] = Base64Coder.decode( rv )
-			      val ois : ObjectInputStream =
-				new ObjectInputStream( new ByteArrayInputStream(  data ) )
-			      val o : java.lang.Object = ois.readObject();
-			      ois.close()
-			      o
-			    }
-			  }
-			
-			unBlob match {
-			  case k : mTT.Resource => {
-			    Some( k.asInstanceOf[mTT.Continuation] )
-			  }
-			  case _ => {
-			    throw new Exception(
-			      (
-				">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-				+ "ill-formatted continuation stack blob : " + rv
-				+ "\n" 
-				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-				+ "\n"
-				+ "unBlob : " + unBlob
-				+ "\n"
-				+ "unBlob type : " + unBlob
-				+ "\n"
-				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			      )
-			    )
-			  }
-			}
-		      }
-		      case _ => {
-			throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
-		      }
-		    }
-		  }
-		  
-		  override def asCacheK(
-		    ltns : String => String,
-		    ttv : String => String,
-		    value : DBObject
-		  ) : Option[mTT.Continuation] = {
-		    throw new Exception( "shouldn't be calling this version of asCacheK" )
-		  }
-		  override def persistenceManifest : Option[PersistenceManifest] = {
-		    tweet(
-		      (
-			"HashAgentKVDB : "
-			+ "\nthis: " + this
-			+ "\n method : persistenceManifest "
-		      )
-		    )
-		    val sid = Some( ( s : String ) => recoverFieldName( s ) )
-		    val kvdb = this;
-		    Some(
-		      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
-			override def valueStorageType : String = {
-			  kvdb.valueStorageType
-			}
-			override def continuationStorageType : String = {
-			  kvdb.continuationStorageType
-			}
-		      }
-		    )
-		  }
-		  def dfStoreUnitStr : String = mnkrExchange( name )
-		}
-	      }
-	    }
-	  spawn {
-	    println( "initiating dispatch on " + node )
-	    node.dispatchDMsgs()
-	  }
-	  node
-	}
-	def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-	  here : URI
-	)(
-	  implicit configFileNameOpt : Option[String]
-	) : AgentKVDBNode[ReqBody,RspBody] = {
-	  val exchange = uriExchange( here )
-	  val hereNow =
-	    new URI(
-	      here.getScheme,
-	      here.getUserInfo,
-	      here.getHost,
-	      here.getPort,
-	      "/" + exchange + "Local",
-	      here.getQuery,
-	      here.getFragment
-	    )
-	  val thereNow =
-	    new URI(
-	      here.getScheme,
-	      here.getUserInfo,
-	      here.getHost,
-	      here.getPort,
-	      "/" + exchange + "Remote",
-	      here.getQuery,
-	      here.getFragment
-	    )	    
-	  
-	  val node =
-	    new AgentKVDBNode[ReqBody, RspBody](
-	      mkCache( MURI( hereNow ), configFileNameOpt ),
-	      List( MURI( thereNow ) ),
-	      None,
-	      configFileNameOpt
-	    ) {
-	      override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
-		here : URI,
-		configFileName : Option[String]
-	      ) : HashAgentKVDB[ReqBody,RspBody] = {
-		tweet(
-		  (
-		    "AgentKVDBNode : "
-		    + "\nthis: " + this
-		    + "\n method : mkInnerCache "
-		    + "\n here: " + here
-		    + "\n configFileName: " + configFileName
-		  )
-		)
-		new HashAgentKVDB[ReqBody, RspBody](
-		  MURI( here ),
-		  configFileName
-		) with Blobify with AMQPMonikerOps {		
-		  class StringMongoDBManifest(
-		    override val storeUnitStr : String,
-		    @transient override val labelToNS : Option[String => String],
-		    @transient override val textToVar : Option[String => String],
-		    @transient override val textToTag : Option[String => String]
-		  )
-		  extends MongoDBManifest( /* database */ ) {
-		    override def valueStorageType : String = {
-		      throw new Exception( "valueStorageType not overriden in instantiation" )
-		    }
-		    override def continuationStorageType : String = {
-		      throw new Exception( "continuationStorageType not overriden in instantiation" )
-		    }
-		    
-		    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
-		      cnxn match {
-			case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
-			case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
-		      }	    
-		    }	
-		    
-		    def kvNameSpace : String = "record"
-		    def kvKNameSpace : String = "kRecord"
-		    
-		    def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
-		      ns1.equals( ns2 )
-		    }
-		    
-		    override def asStoreValue(
-		      rsrc : mTT.Resource
-		    ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-		      tweet(
-			"In asStoreValue on " + this + " for resource: " + rsrc
-		      )
-		      val storageDispatch = 
-			rsrc match {
-			  case k : mTT.Continuation => {
-			    tweet(
-			      "Resource " + rsrc + " is a continuation"
-			    )
-			    continuationStorageType
-			  }
-			  case _ => {
-			    tweet(
-			      "Resource " + rsrc + " is a value"
-			    )
-			    valueStorageType
-			  }
-			};
-		      
-		      tweet(
-			"storageDispatch: " + storageDispatch
-		      )
-		      
-		      val blob =
-			storageDispatch match {
-			  case "Base64" => {
-			    val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
-			    val oos : ObjectOutputStream = new ObjectOutputStream( baos )
-			    oos.writeObject( rsrc.asInstanceOf[Serializable] )
-			    oos.close()
-			    new String( Base64Coder.encode( baos.toByteArray() ) )
-			  }
-			  case "CnxnCtxtLabel" => {
-			    tweet(
-			      "warning: CnxnCtxtLabel method is using XStream"
-			    )
-			    toXQSafeJSONBlob( rsrc )		  		  
-			  }
-			  case "XStream" => {
-			    tweet(
-			      "using XStream method"
-			    )
-			    
-			    toXQSafeJSONBlob( rsrc )
-			  }
-			  case _ => {
-			    throw new Exception( "unexpected value storage type" )
-			  }
-			}
-		      new CnxnCtxtLeaf[String,String,String](
-			Left[String,String]( blob )
-		      )
-		    }
-		    
-		    def asCacheValue(
-		      ccl : CnxnCtxtLabel[String,String,String]
-		    ) : ConcreteHL.HLExpr = {
-		      tweet(
-			"converting to cache value"
-		      )
-		      ccl match {
-			case CnxnCtxtBranch(
-			  "string",
-			  CnxnCtxtLeaf( Left( rv ) ) :: Nil
-			) => {
-			  val unBlob =
-			    fromXQSafeJSONBlob( rv )
-			  
-			  unBlob match {
-			    case rsrc : mTT.Resource => {
-			      getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-			    }
-			  }
-			}
-			case _ => {
-			  //asPatternString( ccl )
-			  throw new Exception( "unexpected value form: " + ccl )
-			}
-		      }
-		    }
-		    
-		    override def asResource(
-		      key : mTT.GetRequest, // must have the pattern to determine bindings
-		      value : DBObject
-		    ) : emT.PlaceInstance = {
-		      val ltns =
-			labelToNS.getOrElse(
-			  throw new Exception( "must have labelToNS to convert mongo object" )
-			)
-		      val ttv =
-			textToVar.getOrElse(
-			  throw new Exception( "must have textToVar to convert mongo object" )
-			)
-		      val ttt =
-			textToTag.getOrElse(
-			  throw new Exception( "must have textToTag to convert mongo object" )
-			)
-		      //val ttt = ( x : String ) => x
-		      
-		      //val ptn = asPatternString( key )
-		      //println( "ptn : " + ptn )		
-		      
-		      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-			case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-			  matchMap( key, k ) match {
-			    case Some( soln ) => {
-			      if ( compareNameSpace( ns, kvNameSpace ) ) {
-				emT.PlaceInstance(
-				  k,
-				  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-				    mTT.Ground(
-				      asCacheValue(
-					new CnxnCtxtBranch[String,String,String](
-					  "string",
-					  v :: Nil
-					)
-				      )
-				    )
-				  ),
-				  // BUGBUG -- lgm : why can't the compiler determine
-				  // that this cast is not necessary?
-				  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-				)
-			      }
-			      else {
-				if ( compareNameSpace( ns, kvKNameSpace ) ) {
-				  val mTT.Continuation( ks ) =
-				    asCacheK(
-				      new CnxnCtxtBranch[String,String,String](
-					"string",
-					v :: Nil
-				      )
-				    )
-				  emT.PlaceInstance(
-				    k,
-				    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-				      ks
-				    ),
-				    // BUGBUG -- lgm : why can't the compiler determine
-				    // that this cast is not necessary?
-				    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-				  )
-				}
-				else {
-				  throw new Exception( "unexpected namespace : (" + ns + ")" )
-				}
-			      }
-			    }
-			    case None => {
-			      tweet( "Unexpected matchMap failure: " + key + " " + k )
-			      throw new Exception( "matchMap failure " + key + " " + k )
-			    }
-			  }						
-			}
-			case _ => {
-			  throw new Exception( "unexpected record format : " + value )
-			}
-		      }
-		    }
-		    
-		  }
-		  override def asCacheK(
-		    ccl : CnxnCtxtLabel[String,String,String]
-		  ) : Option[mTT.Continuation] = {
-		    tweet(
-		      "converting to cache continuation stack" + ccl
-		    )
-		    ccl match {
-		      case CnxnCtxtBranch(
-			"string",
-			CnxnCtxtLeaf( Left( rv ) ) :: Nil
-		      ) => {
-			val unBlob =
-			  continuationStorageType match {
-			    case "CnxnCtxtLabel" => {
-			      // tweet(
-			      // 		      "warning: CnxnCtxtLabel method is using XStream"
-			      // 		    )
-			      fromXQSafeJSONBlob( rv )
-			    }
-			    case "XStream" => {
-			      fromXQSafeJSONBlob( rv )
-			    }
-			    case "Base64" => {
-			      val data : Array[Byte] = Base64Coder.decode( rv )
-			      val ois : ObjectInputStream =
-				new ObjectInputStream( new ByteArrayInputStream(  data ) )
-			      val o : java.lang.Object = ois.readObject();
-			      ois.close()
-			      o
-			    }
-			  }
-			
-			unBlob match {
-			  case k : mTT.Resource => {
-			    Some( k.asInstanceOf[mTT.Continuation] )
-			  }
-			  case _ => {
-			    throw new Exception(
-			      (
-				">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-				+ "ill-formatted continuation stack blob : " + rv
-				+ "\n" 
-				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-				+ "\n"
-				+ "unBlob : " + unBlob
-				+ "\n"
-				+ "unBlob type : " + unBlob
-				+ "\n"
-				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-			      )
-			    )
-			  }
-			}
-		      }
-		      case _ => {
-			throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
-		      }
-		    }
-		  }
-		  
-		  override def asCacheK(
-		    ltns : String => String,
-		    ttv : String => String,
-		    value : DBObject
-		  ) : Option[mTT.Continuation] = {
-		    throw new Exception( "shouldn't be calling this version of asCacheK" )
-		  }
-		  override def persistenceManifest : Option[PersistenceManifest] = {
-		    tweet(
-		      (
-			"HashAgentKVDB : "
-			+ "\nthis: " + this
-			+ "\n method : persistenceManifest "
-		      )
-		    )
-		    val sid = Some( ( s : String ) => recoverFieldName( s ) )
-		    val kvdb = this;
-		    Some(
-		      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
-			override def valueStorageType : String = {
-			  kvdb.valueStorageType
-			}
-			override def continuationStorageType : String = {
-			  kvdb.continuationStorageType
-			}
-		      }
-		    )
-		  }
-		  def dfStoreUnitStr : String = mnkrExchange( name )
-		}
-	      }
-	    }
-	  spawn {
-	    println( "initiating dispatch on " + node )
-	    node.dispatchDMsgs()
-	  }
-	  node
-	}
+                  override def persistenceManifest : Option[PersistenceManifest] = {
+                    tweet(
+                      (
+                        "HashAgentKVDB : "
+                        + "\nthis: " + this
+                        + "\n method : persistenceManifest "
+                      )
+                    )
+                    val sid = Some( ( s : String ) => recoverFieldName( s ) )
+                    val kvdb = this;
+                    Some(
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                        override def valueStorageType : String = {
+                          kvdb.valueStorageType
+                        }
+                        override def continuationStorageType : String = {
+                          kvdb.continuationStorageType
+                        }
+                      }
+                    )
+                  }
+                  def dfStoreUnitStr : String = mnkrExchange( name )
+                }
+              }
+            }
+          spawn {
+            node.dispatchDMsgs()
+          }
+          node
+        }
+        override def ptToMany[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+          here : URI, there : List[URI]
+        )(
+          implicit configFileNameOpt : Option[String]
+        ) : AgentKVDBNode[ReqBody,RspBody] = {
+          val node =
+            new AgentKVDBNode[ReqBody,RspBody](
+              mkCache( MURI( here ), configFileNameOpt ),
+              there.map( MURI( _ ) ),
+              None,
+              configFileNameOpt
+            ) {
+              override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
+                here : URI,
+                configFileName : Option[String]
+              ) : HashAgentKVDB[ReqBody,RspBody] = {
+                tweet(
+                  (
+                    "AgentKVDBNode : "
+                    + "\nthis: " + this
+                    + "\n method : mkInnerCache "
+                    + "\n here: " + here
+                    + "\n configFileName: " + configFileName
+                  )
+                )
+                new HashAgentKVDB[ReqBody, RspBody](
+                  MURI( here ),
+                  configFileName
+                ) with Blobify with AMQPMonikerOps {            
+                  class StringMongoDBManifest(
+                    override val storeUnitStr : String,
+                    @transient override val labelToNS : Option[String => String],
+                    @transient override val textToVar : Option[String => String],
+                    @transient override val textToTag : Option[String => String]
+                  )
+                  extends MongoDBManifest( /* database */ ) {
+                    override def valueStorageType : String = {
+                      throw new Exception( "valueStorageType not overriden in instantiation" )
+                    }
+                    override def continuationStorageType : String = {
+                      throw new Exception( "continuationStorageType not overriden in instantiation" )
+                    }
+                    
+                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+                      cnxn match {
+                        case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+                        case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
+                      }     
+                    }   
+                    
+                    def kvNameSpace : String = "record"
+                    def kvKNameSpace : String = "kRecord"
+                    
+                    def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+                      ns1.equals( ns2 )
+                    }
+                    
+                    override def asStoreValue(
+                      rsrc : mTT.Resource
+                    ) : CnxnCtxtLeaf[String,String,String] with Factual = {
+                      tweet(
+                        "In asStoreValue on " + this + " for resource: " + rsrc
+                      )
+                      val storageDispatch = 
+                        rsrc match {
+                          case k : mTT.Continuation => {
+                            tweet(
+                              "Resource " + rsrc + " is a continuation"
+                            )
+                            continuationStorageType
+                          }
+                          case _ => {
+                            tweet(
+                              "Resource " + rsrc + " is a value"
+                            )
+                            valueStorageType
+                          }
+                        };
+                      
+                      tweet(
+                        "storageDispatch: " + storageDispatch
+                      )
+                      
+                      val blob =
+                        storageDispatch match {
+                          case "Base64" => {
+                            val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
+                            val oos : ObjectOutputStream = new ObjectOutputStream( baos )
+                            oos.writeObject( rsrc.asInstanceOf[Serializable] )
+                            oos.close()
+                            new String( Base64Coder.encode( baos.toByteArray() ) )
+                          }
+                          case "CnxnCtxtLabel" => {
+                            tweet(
+                              "warning: CnxnCtxtLabel method is using XStream"
+                            )
+                            toXQSafeJSONBlob( rsrc )                              
+                          }
+                          case "XStream" => {
+                            tweet(
+                              "using XStream method"
+                            )
+                            
+                            toXQSafeJSONBlob( rsrc )
+                          }
+                          case _ => {
+                            throw new Exception( "unexpected value storage type" )
+                          }
+                        }
+                      new CnxnCtxtLeaf[String,String,String](
+                        Left[String,String]( blob )
+                      )
+                    }
+                    
+                    def asCacheValue(
+                      ccl : CnxnCtxtLabel[String,String,String]
+                    ) : ConcreteHL.HLExpr = {
+                      tweet(
+                        "converting to cache value"
+                      )
+                      ccl match {
+                        case CnxnCtxtBranch(
+                          "string",
+                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                        ) => {
+                          val unBlob =
+                            fromXQSafeJSONBlob( rv )
+                          
+                          unBlob match {
+                            case rsrc : mTT.Resource => {
+                              getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                            }
+                          }
+                        }
+                        case _ => {
+                          //asPatternString( ccl )
+                          throw new Exception( "unexpected value form: " + ccl )
+                        }
+                      }
+                    }
+                    
+                    override def asResource(
+                      key : mTT.GetRequest, // must have the pattern to determine bindings
+                      value : DBObject
+                    ) : emT.PlaceInstance = {
+                      val ltns =
+                        labelToNS.getOrElse(
+                          throw new Exception( "must have labelToNS to convert mongo object" )
+                        )
+                      val ttv =
+                        textToVar.getOrElse(
+                          throw new Exception( "must have textToVar to convert mongo object" )
+                        )
+                      val ttt =
+                        textToTag.getOrElse(
+                          throw new Exception( "must have textToTag to convert mongo object" )
+                        )
+                      //val ttt = ( x : String ) => x
+                      
+                      //val ptn = asPatternString( key )
+                      //println( "ptn : " + ptn )               
+                      
+                      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
+                        case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
+                          matchMap( key, k ) match {
+                            case Some( soln ) => {
+                              if ( compareNameSpace( ns, kvNameSpace ) ) {
+                                emT.PlaceInstance(
+                                  k,
+                                  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                    mTT.Ground(
+                                      asCacheValue(
+                                        new CnxnCtxtBranch[String,String,String](
+                                          "string",
+                                          v :: Nil
+                                        )
+                                      )
+                                    )
+                                  ),
+                                  // BUGBUG -- lgm : why can't the compiler determine
+                                  // that this cast is not necessary?
+                                  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                )
+                              }
+                              else {
+                                if ( compareNameSpace( ns, kvKNameSpace ) ) {
+                                  val mTT.Continuation( ks ) =
+                                    asCacheK(
+                                      new CnxnCtxtBranch[String,String,String](
+                                        "string",
+                                        v :: Nil
+                                      )
+                                    )
+                                  emT.PlaceInstance(
+                                    k,
+                                    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
+                                      ks
+                                    ),
+                                    // BUGBUG -- lgm : why can't the compiler determine
+                                    // that this cast is not necessary?
+                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                  )
+                                }
+                                else {
+                                  throw new Exception( "unexpected namespace : (" + ns + ")" )
+                                }
+                              }
+                            }
+                            case None => {
+                              tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              throw new Exception( "matchMap failure " + key + " " + k )
+                            }
+                          }                                             
+                        }
+                        case _ => {
+                          throw new Exception( "unexpected record format : " + value )
+                        }
+                      }
+                    }
+                    
+                  }
+                  override def asCacheK(
+                    ccl : CnxnCtxtLabel[String,String,String]
+                  ) : Option[mTT.Continuation] = {
+                    tweet(
+                      "converting to cache continuation stack" + ccl
+                    )
+                    ccl match {
+                      case CnxnCtxtBranch(
+                        "string",
+                        CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                      ) => {
+                        val unBlob =
+                          continuationStorageType match {
+                            case "CnxnCtxtLabel" => {
+                              // tweet(
+                              //                      "warning: CnxnCtxtLabel method is using XStream"
+                              //                    )
+                              fromXQSafeJSONBlob( rv )
+                            }
+                            case "XStream" => {
+                              fromXQSafeJSONBlob( rv )
+                            }
+                            case "Base64" => {
+                              val data : Array[Byte] = Base64Coder.decode( rv )
+                              val ois : ObjectInputStream =
+                                new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                              val o : java.lang.Object = ois.readObject();
+                              ois.close()
+                              o
+                            }
+                          }
+                        
+                        unBlob match {
+                          case k : mTT.Resource => {
+                            Some( k.asInstanceOf[mTT.Continuation] )
+                          }
+                          case _ => {
+                            throw new Exception(
+                              (
+                                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                + "ill-formatted continuation stack blob : " + rv
+                                + "\n" 
+                                + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                + "\n"
+                                + "unBlob : " + unBlob
+                                + "\n"
+                                + "unBlob type : " + unBlob
+                                + "\n"
+                                + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              )
+                            )
+                          }
+                        }
+                      }
+                      case _ => {
+                        throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
+                      }
+                    }
+                  }
+                  
+                  override def asCacheK(
+                    ltns : String => String,
+                    ttv : String => String,
+                    value : DBObject
+                  ) : Option[mTT.Continuation] = {
+                    throw new Exception( "shouldn't be calling this version of asCacheK" )
+                  }
+                  override def persistenceManifest : Option[PersistenceManifest] = {
+                    tweet(
+                      (
+                        "HashAgentKVDB : "
+                        + "\nthis: " + this
+                        + "\n method : persistenceManifest "
+                      )
+                    )
+                    val sid = Some( ( s : String ) => recoverFieldName( s ) )
+                    val kvdb = this;
+                    Some(
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                        override def valueStorageType : String = {
+                          kvdb.valueStorageType
+                        }
+                        override def continuationStorageType : String = {
+                          kvdb.continuationStorageType
+                        }
+                      }
+                    )
+                  }
+                  def dfStoreUnitStr : String = mnkrExchange( name )
+                }
+              }
+            }
+          spawn {
+            println( "initiating dispatch on " + node )
+            node.dispatchDMsgs()
+          }
+          node
+        }
+        def loopBack[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+          here : URI
+        )(
+          implicit configFileNameOpt : Option[String]
+        ) : AgentKVDBNode[ReqBody,RspBody] = {
+          val exchange = uriExchange( here )
+          val hereNow =
+            new URI(
+              here.getScheme,
+              here.getUserInfo,
+              here.getHost,
+              here.getPort,
+              "/" + exchange + "Local",
+              here.getQuery,
+              here.getFragment
+            )
+          val thereNow =
+            new URI(
+              here.getScheme,
+              here.getUserInfo,
+              here.getHost,
+              here.getPort,
+              "/" + exchange + "Remote",
+              here.getQuery,
+              here.getFragment
+            )       
+          
+          val node =
+            new AgentKVDBNode[ReqBody, RspBody](
+              mkCache( MURI( hereNow ), configFileNameOpt ),
+              List( MURI( thereNow ) ),
+              None,
+              configFileNameOpt
+            ) {
+              override def mkInnerCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
+                here : URI,
+                configFileName : Option[String]
+              ) : HashAgentKVDB[ReqBody,RspBody] = {
+                tweet(
+                  (
+                    "AgentKVDBNode : "
+                    + "\nthis: " + this
+                    + "\n method : mkInnerCache "
+                    + "\n here: " + here
+                    + "\n configFileName: " + configFileName
+                  )
+                )
+                new HashAgentKVDB[ReqBody, RspBody](
+                  MURI( here ),
+                  configFileName
+                ) with Blobify with AMQPMonikerOps {            
+                  class StringMongoDBManifest(
+                    override val storeUnitStr : String,
+                    @transient override val labelToNS : Option[String => String],
+                    @transient override val textToVar : Option[String => String],
+                    @transient override val textToTag : Option[String => String]
+                  )
+                  extends MongoDBManifest( /* database */ ) {
+                    override def valueStorageType : String = {
+                      throw new Exception( "valueStorageType not overriden in instantiation" )
+                    }
+                    override def continuationStorageType : String = {
+                      throw new Exception( "continuationStorageType not overriden in instantiation" )
+                    }
+                    
+                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+                      cnxn match {
+                        case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
+                        case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
+                      }     
+                    }   
+                    
+                    def kvNameSpace : String = "record"
+                    def kvKNameSpace : String = "kRecord"
+                    
+                    def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
+                      ns1.equals( ns2 )
+                    }
+                    
+                    override def asStoreValue(
+                      rsrc : mTT.Resource
+                    ) : CnxnCtxtLeaf[String,String,String] with Factual = {
+                      tweet(
+                        "In asStoreValue on " + this + " for resource: " + rsrc
+                      )
+                      val storageDispatch = 
+                        rsrc match {
+                          case k : mTT.Continuation => {
+                            tweet(
+                              "Resource " + rsrc + " is a continuation"
+                            )
+                            continuationStorageType
+                          }
+                          case _ => {
+                            tweet(
+                              "Resource " + rsrc + " is a value"
+                            )
+                            valueStorageType
+                          }
+                        };
+                      
+                      tweet(
+                        "storageDispatch: " + storageDispatch
+                      )
+                      
+                      val blob =
+                        storageDispatch match {
+                          case "Base64" => {
+                            val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
+                            val oos : ObjectOutputStream = new ObjectOutputStream( baos )
+                            oos.writeObject( rsrc.asInstanceOf[Serializable] )
+                            oos.close()
+                            new String( Base64Coder.encode( baos.toByteArray() ) )
+                          }
+                          case "CnxnCtxtLabel" => {
+                            tweet(
+                              "warning: CnxnCtxtLabel method is using XStream"
+                            )
+                            toXQSafeJSONBlob( rsrc )                              
+                          }
+                          case "XStream" => {
+                            tweet(
+                              "using XStream method"
+                            )
+                            
+                            toXQSafeJSONBlob( rsrc )
+                          }
+                          case _ => {
+                            throw new Exception( "unexpected value storage type" )
+                          }
+                        }
+                      new CnxnCtxtLeaf[String,String,String](
+                        Left[String,String]( blob )
+                      )
+                    }
+                    
+                    def asCacheValue(
+                      ccl : CnxnCtxtLabel[String,String,String]
+                    ) : ConcreteHL.HLExpr = {
+                      tweet(
+                        "converting to cache value"
+                      )
+                      ccl match {
+                        case CnxnCtxtBranch(
+                          "string",
+                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                        ) => {
+                          val unBlob =
+                            fromXQSafeJSONBlob( rv )
+                          
+                          unBlob match {
+                            case rsrc : mTT.Resource => {
+                              getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                            }
+                          }
+                        }
+                        case _ => {
+                          //asPatternString( ccl )
+                          throw new Exception( "unexpected value form: " + ccl )
+                        }
+                      }
+                    }
+                    
+                    override def asResource(
+                      key : mTT.GetRequest, // must have the pattern to determine bindings
+                      value : DBObject
+                    ) : emT.PlaceInstance = {
+                      val ltns =
+                        labelToNS.getOrElse(
+                          throw new Exception( "must have labelToNS to convert mongo object" )
+                        )
+                      val ttv =
+                        textToVar.getOrElse(
+                          throw new Exception( "must have textToVar to convert mongo object" )
+                        )
+                      val ttt =
+                        textToTag.getOrElse(
+                          throw new Exception( "must have textToTag to convert mongo object" )
+                        )
+                      //val ttt = ( x : String ) => x
+                      
+                      //val ptn = asPatternString( key )
+                      //println( "ptn : " + ptn )               
+                      
+                      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
+                        case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
+                          matchMap( key, k ) match {
+                            case Some( soln ) => {
+                              if ( compareNameSpace( ns, kvNameSpace ) ) {
+                                emT.PlaceInstance(
+                                  k,
+                                  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                    mTT.Ground(
+                                      asCacheValue(
+                                        new CnxnCtxtBranch[String,String,String](
+                                          "string",
+                                          v :: Nil
+                                        )
+                                      )
+                                    )
+                                  ),
+                                  // BUGBUG -- lgm : why can't the compiler determine
+                                  // that this cast is not necessary?
+                                  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                )
+                              }
+                              else {
+                                if ( compareNameSpace( ns, kvKNameSpace ) ) {
+                                  val mTT.Continuation( ks ) =
+                                    asCacheK(
+                                      new CnxnCtxtBranch[String,String,String](
+                                        "string",
+                                        v :: Nil
+                                      )
+                                    )
+                                  emT.PlaceInstance(
+                                    k,
+                                    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
+                                      ks
+                                    ),
+                                    // BUGBUG -- lgm : why can't the compiler determine
+                                    // that this cast is not necessary?
+                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                  )
+                                }
+                                else {
+                                  throw new Exception( "unexpected namespace : (" + ns + ")" )
+                                }
+                              }
+                            }
+                            case None => {
+                              tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              throw new Exception( "matchMap failure " + key + " " + k )
+                            }
+                          }                                             
+                        }
+                        case _ => {
+                          throw new Exception( "unexpected record format : " + value )
+                        }
+                      }
+                    }
+                    
+                  }
+                  override def asCacheK(
+                    ccl : CnxnCtxtLabel[String,String,String]
+                  ) : Option[mTT.Continuation] = {
+                    tweet(
+                      "converting to cache continuation stack" + ccl
+                    )
+                    ccl match {
+                      case CnxnCtxtBranch(
+                        "string",
+                        CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                      ) => {
+                        val unBlob =
+                          continuationStorageType match {
+                            case "CnxnCtxtLabel" => {
+                              // tweet(
+                              //                      "warning: CnxnCtxtLabel method is using XStream"
+                              //                    )
+                              fromXQSafeJSONBlob( rv )
+                            }
+                            case "XStream" => {
+                              fromXQSafeJSONBlob( rv )
+                            }
+                            case "Base64" => {
+                              val data : Array[Byte] = Base64Coder.decode( rv )
+                              val ois : ObjectInputStream =
+                                new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                              val o : java.lang.Object = ois.readObject();
+                              ois.close()
+                              o
+                            }
+                          }
+                        
+                        unBlob match {
+                          case k : mTT.Resource => {
+                            Some( k.asInstanceOf[mTT.Continuation] )
+                          }
+                          case _ => {
+                            throw new Exception(
+                              (
+                                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                + "ill-formatted continuation stack blob : " + rv
+                                + "\n" 
+                                + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                + "\n"
+                                + "unBlob : " + unBlob
+                                + "\n"
+                                + "unBlob type : " + unBlob
+                                + "\n"
+                                + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              )
+                            )
+                          }
+                        }
+                      }
+                      case _ => {
+                        throw new Exception( "ill-formatted continuation stack leaf: " + ccl )
+                      }
+                    }
+                  }
+                  
+                  override def asCacheK(
+                    ltns : String => String,
+                    ttv : String => String,
+                    value : DBObject
+                  ) : Option[mTT.Continuation] = {
+                    throw new Exception( "shouldn't be calling this version of asCacheK" )
+                  }
+                  override def persistenceManifest : Option[PersistenceManifest] = {
+                    tweet(
+                      (
+                        "HashAgentKVDB : "
+                        + "\nthis: " + this
+                        + "\n method : persistenceManifest "
+                      )
+                    )
+                    val sid = Some( ( s : String ) => recoverFieldName( s ) )
+                    val kvdb = this;
+                    Some(
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                        override def valueStorageType : String = {
+                          kvdb.valueStorageType
+                        }
+                        override def continuationStorageType : String = {
+                          kvdb.continuationStorageType
+                        }
+                      }
+                    )
+                  }
+                  def dfStoreUnitStr : String = mnkrExchange( name )
+                }
+              }
+            }
+          spawn {
+            println( "initiating dispatch on " + node )
+            node.dispatchDMsgs()
+          }
+          node
+        }
       }
     }
 
@@ -1462,7 +1462,7 @@ package diesel {
   }
 
   class DieselEngine( override val configFileName : Option[String] )
-       extends DieselManufactureConfiguration with Serializable {	 
+       extends DieselManufactureConfiguration with Serializable {        
     import DieselEngineScope._
     import Being._
     import AgentKVDBNodeFactory._
@@ -1487,34 +1487,34 @@ package diesel {
       implicit returnTwist : Boolean
     ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
-	if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-	  ( dataLocation, dataLocation + "Remote" )	  
-	}
-	else {
-	  ( dataLocation, dataLocation )	  
-	}
+        if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
+          ( dataLocation, dataLocation + "Remote" )       
+        }
+        else {
+          ( dataLocation, dataLocation )          
+        }
 
       if ( returnTwist ) {
-	Right[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
-	  (
-	    ptToPt[ReqBody, RspBody](
-	      new URI( "agent", null, localHost, localPort, localExchange, null, null ),
-	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
-	    ),
-	    ptToPt[ReqBody, RspBody](	      
-	      new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
-	      new URI( "agent", null, localHost, localPort, localExchange, null, null )
-	    )
-	  )
-	)
+        Right[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+          (
+            ptToPt[ReqBody, RspBody](
+              new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+              new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+            ),
+            ptToPt[ReqBody, RspBody](         
+              new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null ),
+              new URI( "agent", null, localHost, localPort, localExchange, null, null )
+            )
+          )
+        )
       }
       else {
-	Left[Being.AgentKVDBNode[ReqBody, RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
-	  ptToPt(
-	    new URI( "agent", null, localHost, localPort, localExchange, null, null ),
-	    new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
-	  )
-	)
+        Left[Being.AgentKVDBNode[ReqBody, RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+          ptToPt(
+            new URI( "agent", null, localHost, localPort, localExchange, null, null ),
+            new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
+          )
+        )
       }
     }
 
@@ -1531,11 +1531,11 @@ package diesel {
       dataLocation : String
     ) : Being.AgentKVDBNode[ReqBody,RspBody] = {
       val Right( ( client, server ) ) = 
-	setup[ReqBody,RspBody](
-	  dataLocation, "localhost", 5672, "localhost", 5672
-	)( true )
+        setup[ReqBody,RspBody](
+          dataLocation, "localhost", 5672, "localhost", 5672
+        )( true )
       client
-    }	 
+    }    
 
     def fileNameToCnxn( fileName : String ) : acT.AgentCnxn = {
       val fileNameRoot = fileName.split( '/' ).last
@@ -1548,103 +1548,103 @@ package diesel {
       handler : Option[mTT.Resource] => Unit
     ): Unit = {
       expr match {
-	case ConcreteHL.Bottom => {
-	  throw new Exception( "divergence" )
-	}
-	case ConcreteHL.FeedExpr( filter, cnxns ) => {
-	  for( cnxn <- cnxns ) {
-	    val agntCnxn : acT.AgentCnxn =
-	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-	    reset {
-	      for( e <- node.subscribe( agntCnxn )( filter ) ) {
-		handler( e )
-	      }
-	    }
-	  }
-	}
-	case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
-	  for( cnxn <- cnxns ) {
-	    val agntCnxn : acT.AgentCnxn =
-	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-	    reset {
-	      for( e <- node.subscribe( agntCnxn )( filter ) ) {
-		handler( e )
-	      }
-	    }
-	  }
-	}
-	case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
-	  for( cnxn <- cnxns ) {
-	    val agntCnxn : acT.AgentCnxn =
-	      new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-	    reset {
-	      node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
-	    }
-	  }
-	}
+        case ConcreteHL.Bottom => {
+          throw new Exception( "divergence" )
+        }
+        case ConcreteHL.FeedExpr( filter, cnxns ) => {
+          for( cnxn <- cnxns ) {
+            val agntCnxn : acT.AgentCnxn =
+              new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+            reset {
+              for( e <- node.subscribe( agntCnxn )( filter ) ) {
+                handler( e )
+              }
+            }
+          }
+        }
+        case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
+          for( cnxn <- cnxns ) {
+            val agntCnxn : acT.AgentCnxn =
+              new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+            reset {
+              for( e <- node.subscribe( agntCnxn )( filter ) ) {
+                handler( e )
+              }
+            }
+          }
+        }
+        case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
+          for( cnxn <- cnxns ) {
+            val agntCnxn : acT.AgentCnxn =
+              new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+            reset {
+              node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+            }
+          }
+        }
       }
     }
-	 
+         
     def evalLoop(
       useBiLink : Option[Boolean] = None,
       flip : Boolean = false
     ) : Unit = {
       val erql : CnxnCtxtLabel[String,String,String] =
-	DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionID" ).getOrElse( 
-	  throw new Exception( "error making evalRequestLabel" )
-	)
+        DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionID" ).getOrElse( 
+          throw new Exception( "error making evalRequestLabel" )
+        )
       val node = agent( "/dieselProtocol" )      
 
       def innerLoop(
-	client : DSLCommLinkCtor.StdEvaluationRequestChannel,
-	server : DSLCommLinkCtor.StdEvaluationRequestChannel
+        client : DSLCommLinkCtor.StdEvaluationRequestChannel,
+        server : DSLCommLinkCtor.StdEvaluationRequestChannel
       ) : Unit = {
-	reset { 
-	  for( e <- client.subscribe( erql ) ) {
-	    e match {
-	      case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-		for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
-		  val erspl : CnxnCtxtLabel[String,String,String] =
-		    DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
-		      sessionId
-		    ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
-		  
-		  val forward : Option[mTT.Resource] => Unit =
-		    {
-		      ( optRsrc : Option[mTT.Resource] ) => {
-			for( mTT.Ground( v ) <- optRsrc ) {
-			  reset {
-			    server.publish( erspl, DSLCommLink.mTT.Ground( v ) )
-			  }
-			}
-		      }
-		    }
-		  
-		  evaluateExpression( node )( expr )( forward )
-		}	      
-	      }
-	      case _ => {
-		println( "rsrc not handled: " + e )
-	      }
-	    }
-	  }
-	}
+        reset { 
+          for( e <- client.subscribe( erql ) ) {
+            e match {
+              case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                  val erspl : CnxnCtxtLabel[String,String,String] =
+                    DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
+                      sessionId
+                    ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+                  
+                  val forward : Option[mTT.Resource] => Unit =
+                    {
+                      ( optRsrc : Option[mTT.Resource] ) => {
+                        for( mTT.Ground( v ) <- optRsrc ) {
+                          reset {
+                            server.publish( erspl, DSLCommLink.mTT.Ground( v ) )
+                          }
+                        }
+                      }
+                    }
+                  
+                  evaluateExpression( node )( expr )( forward )
+                }             
+              }
+              case _ => {
+                println( "rsrc not handled: " + e )
+              }
+            }
+          }
+        }
       }
       
       useBiLink match {
-	case Some( true ) => {
-	  val ( client, server ) = DSLCommLinkCtor.stdBiLink()
-	  innerLoop( client, server )
-	}
-	case Some( false ) => {
-	  val ( client, server ) = DSLCommLinkCtor.stdBiLink()
-	  innerLoop( server, client )
-	}
-	case None => {
-	  val link = DSLCommLinkCtor.stdLink()( flip )
-	  
-	  innerLoop( link, link )
-	}
+        case Some( true ) => {
+          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          innerLoop( client, server )
+        }
+        case Some( false ) => {
+          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          innerLoop( server, client )
+        }
+        case None => {
+          val link = DSLCommLinkCtor.stdLink()( flip )
+          
+          innerLoop( link, link )
+        }
       }      
     }
   }
@@ -1652,33 +1652,33 @@ package diesel {
   object Server extends Serializable {
     lazy val helpMsg = 
       (
-	"-help -- this message\n"
-	+ "config=<fileName>\n" 
+        "-help -- this message\n"
+        + "config=<fileName>\n" 
       )
     def processArgs(
       args : Array[String]
     ) : HashMap[String,String] = {
       val map = new HashMap[String,String]()
       for( arg <- args ) {
-	val argNVal = arg.split( "=" )
-	if ( argNVal.size > 1 ) {
-	  ( argNVal( 0 ), argNVal( 1 ) ) match {
-	    case ( "config", file ) => {
-	      map += ( "config" -> file )
-	    }
-	  }
-	}
-	else {
-	  arg match {
-	    case "-help" => {
-	      println( helpMsg )
-	    }
-	    case _ => {
-	      println( "unrecognized arg: " + arg )
-	      println( helpMsg )
-	    }
-	  }	  
-	}
+        val argNVal = arg.split( "=" )
+        if ( argNVal.size > 1 ) {
+          ( argNVal( 0 ), argNVal( 1 ) ) match {
+            case ( "config", file ) => {
+              map += ( "config" -> file )
+            }
+          }
+        }
+        else {
+          arg match {
+            case "-help" => {
+              println( helpMsg )
+            }
+            case _ => {
+              println( "unrecognized arg: " + arg )
+              println( helpMsg )
+            }
+          }       
+        }
       }
       map
     }

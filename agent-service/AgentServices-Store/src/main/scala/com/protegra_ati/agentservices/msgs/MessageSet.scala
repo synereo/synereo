@@ -39,8 +39,10 @@ trait AbstractEvaluatorMessageSet {
 
   case class initializeSessionResponse(
     sessionURI : AgentSessionURI,
-    listOfAliases : Seq[Alias], defaultAlias : Alias,
-    listOfLabels : Seq[Alias], listOfCnxns : Seq[Cnxn],
+    listOfAliases : Seq[Alias],
+    defaultAlias : Alias,
+    listOfLabels : Seq[Alias],
+    listOfCnxns : Seq[Cnxn],
     lastActiveFilter : Filter    
   ) extends EvaluatorMessage
 
