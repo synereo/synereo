@@ -72,42 +72,22 @@ trait EvalHandler {
     val erql = agentMgr().erql( sessionID )
     val erspl = agentMgr().erspl( sessionID ) 
 
-    val (
-      uri1str : String,
-      userCnxn : ConcreteHL.PortableAgentCnxn,
-      recoveryCnxn : ConcreteHL.PortableAgentCnxn,
-      userData : CnxnCtxtLabel[String,String,String],
-      userKeySpec : SecretKeySpec,
-      sysKeySpec : SecretKeySpec,
-      encrypt : Cipher
-    ) = agentMgr().secureCnxn(userName, userPwd, queryMap)
-
-    // create agent
-    agentMgr().post[CnxnCtxtLabel[String,String,String]]( erql, erspl )(
-       userData, List( userCnxn ), userData
-    )
-    
-    // Store connection
-    encrypt.init(Cipher.ENCRYPT_MODE, userKeySpec)
-    val uri1Bytes : Array[Byte] = uri1str.getBytes("utf-8")
-    val userUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
-    agentMgr().post[String]( erql, erspl )( 
-      userData, List( recoveryCnxn ), userUri1Enc
-    )
-    encrypt.init(Cipher.ENCRYPT_MODE, sysKeySpec)
-    val sysUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
-    agentMgr().post[String]( erql, erspl )(
-      userData, List( recoveryCnxn ), sysUri1Enc, onPost(
-          """{
-            "msgType": "initializeSessionResponse",
-            "content": {
-              "sessionURI": "agent-session://ArtVandelay@session1",
-              "listOfAliases": [],
-              "listOfLabels": [],
-              "lastActiveFilter": ""
-            }
+    agentMgr().secureCnxn(
+      userName, 
+      userPwd, 
+      queryMap, 
+      agentMgr().post[String]( erql, erspl ), 
+      onPost(
+        """{
+          "msgType": "initializeSessionResponse",
+          "content": {
+            "sessionURI": "agent-session://ArtVandelay@session1",
+            "listOfAliases": [],
+            "listOfLabels": [],
+            "lastActiveFilter": ""
           }
-          """
+        }
+        """
       )
     )
   }
