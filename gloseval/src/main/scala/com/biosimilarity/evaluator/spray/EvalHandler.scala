@@ -97,7 +97,18 @@ trait EvalHandler {
     encrypt.init(Cipher.ENCRYPT_MODE, sysKeySpec)
     val sysUri1Enc : String = encrypt.doFinal(uri1Bytes).map("%02x" format _).mkString
     agentMgr().post[String]( erql, erspl )(
-      userData, List( recoveryCnxn ), sysUri1Enc, onPost
+      userData, List( recoveryCnxn ), sysUri1Enc, onPost(
+          """{
+            "msgType": "initializeSessionResponse",
+            "content": {
+              "sessionURI": "agent-session://ArtVandelay@session1",
+              "listOfAliases": [],
+              "listOfLabels": [],
+              "lastActiveFilter": ""
+            }
+          }
+          """
+      )
     )
   }
 

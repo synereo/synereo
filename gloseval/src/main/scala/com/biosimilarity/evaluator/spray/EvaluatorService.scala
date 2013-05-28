@@ -163,21 +163,11 @@ trait EvaluatorService extends HttpService
               val msgType = (json \ "msgType").extract[String]
               msgType match {
                 case "initializeSessionRequest" => {
-                  val onPost : Option[mTT.Resource] => Unit = {
+                  val onPost : String => Option[mTT.Resource] => Unit = {
+                    (bodyText: String) =>
                     ( optRsrc : Option[mTT.Resource] ) => {
                       println( "got response: " + optRsrc )
-                      complete(HttpResponse(entity = HttpBody(`application/json`,
-                        """{
-                          "msgType": "initializeSessionResponse",
-                          "content": {
-                            "sessionURI": "agent-session://ArtVandelay@session1",
-                            "listOfAliases": [],
-                            "listOfLabels": [],
-                            "lastActiveFilter": ""
-                          }
-                        }
-                        """
-                      )))
+                      complete(HttpResponse(entity = HttpBody(`application/json`, bodyText)))
                     }
                   }
                   initializeSessionRequest( json, onPost )
