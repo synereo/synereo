@@ -48,7 +48,7 @@ trait EvalHandler {
   @transient
   implicit val formats = DefaultFormats
 
-  def initializeSessionRequest(json: JValue, onPost : Option[mTT.Resource] => Unit ) = {
+  def initializeSessionRequest(json: JValue, onPost : String => Option[mTT.Resource] => Unit ) = {
     val agentURI = (json \ "content" \ "agentURI").extract[String]
     val uri = new java.net.URI(agentURI)
 
