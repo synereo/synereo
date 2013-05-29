@@ -516,6 +516,36 @@ object DSLCommLinkCtor extends Serializable {
         + "\" ) )"
       )
     }
+    def adminRequestLabel(
+      majorVersion : String = "0", minorVersion : String = "1"
+    )(
+      sessionId : String
+    ) = {
+      fromTermString(
+        "adminRequestLabel( majorVersion( \""
+        + majorVersion
+        + "\" ), minorVersion( \""
+        + minorVersion
+        + "\"), sessionId( \""
+        + sessionId
+        + "\" ) )"
+      )
+    }
+    def adminResponseLabel(
+      majorVersion : String = "0", minorVersion : String = "1"
+    )(
+      sessionId : String
+    ) = {
+      fromTermString(
+        "adminResponseLabel( majorVersion( \""
+        + majorVersion
+        + "\" ), minorVersion( \""
+        + minorVersion
+        + "\"), sessionId( \""
+        + sessionId
+        + "\" ) )"
+      )
+    }
   }
   
   //implicit val retTwist : Boolean = false

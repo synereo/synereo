@@ -154,6 +154,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
   trait AgentManager {
     def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
+    def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
+    def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def secureCnxn( 
         userName: String, 
         userPwd: String, 
@@ -303,6 +305,26 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     }
   }
 
+  def ensureServersConnected(
+    pulseErql : CnxnCtxtLabel[String,String,String],
+    pulseErspl : CnxnCtxtLabel[String,String,String]
+  )(
+    onConnection : Option[mTT.Resource] => Unit =
+      ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+  ) : Unit = {
+    // post to channel
+    reset {
+      node().put( pulseErql, ConcreteHL.Bottom )
+    }
+    
+    // wait for response
+    reset {
+      for( e <- node().get( pulseErspl ) ) {
+        onConnection( e )
+      }
+    }
+  }
+
   @transient
   var _agentMgr : Option[AgentManager with Serializable] = None
   def agentMgr( flip : Boolean = false ) : AgentManager with Serializable = {
@@ -321,6 +343,16 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
               ExchangeLabels.evalResponseLabel()(
                 sessionID.toString
               ).getOrElse( throw new Exception( "unable to make evalResponseLabel" ) )
+            }
+	    override def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String] = {
+              ExchangeLabels.adminRequestLabel()(
+                sessionID.toString
+              ).getOrElse( throw new Exception( "unable to make adminRequestLabel" ) )
+            }
+            override def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String] = {
+              ExchangeLabels.adminResponseLabel()(
+                sessionID.toString
+              ).getOrElse( throw new Exception( "unable to make adminResponseLabel" ) )
             }
           }
 
