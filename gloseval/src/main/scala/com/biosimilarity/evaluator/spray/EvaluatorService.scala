@@ -206,6 +206,24 @@ trait EvaluatorService extends HttpService
         } // decodeRequest
       } // post
     } ~
+    path( "admin/connectServers" ) { // allow administrators to make
+                                     // sure servers are connected
+      // BUGBUG : lgm -- make this secure!!!
+      get {
+	val pulseSessionID = UUID.randomUUID
+
+	connectServers(
+	  pulseSessionID
+	)(
+	  ( optRsrc : Option[mTT.Resource] ) => {
+            println( "got response: " + optRsrc )
+            complete(HttpResponse(entity = HttpBody(`text/html`, optRsrc.toString)))
+          }
+	)        
+
+        (cometActor ! SessionPing("", _))
+      }
+    } ~
     path("sendMessage") {
       get {
         parameters('name, 'message) { (name:String, message:String) =>

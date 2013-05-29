@@ -121,6 +121,20 @@ trait EvalHandler {
     sessionURI
   }
 
+  def connectServers( sessionId : UUID )(
+    onConnection : Option[mTT.Resource] => Unit =
+      ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+  ) : Unit = {
+    val pulseErql = agentMgr().adminErql( sessionId )
+    val pulseErspl = agentMgr().adminErspl( sessionId )
+    ensureServersConnected(
+      pulseErql,
+      pulseErspl
+    )(
+      onConnection
+    )
+  }
+
   def sessionPing(json: JValue) : String = {
     val sessionURI = (json \ "content" \ "sessionURI").extract[String]
     // TODO: check sessionURI validity
