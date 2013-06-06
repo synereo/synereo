@@ -36,7 +36,9 @@ import java.util.UUID
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
-class EvaluatorServiceActor extends Actor with EvaluatorService {
+class EvaluatorServiceActor extends Actor
+with EvaluatorService
+with Serializable {
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
@@ -53,34 +55,38 @@ class EvaluatorServiceActor extends Actor with EvaluatorService {
  * with the given id
  */
 case class CometMessage(id: String, data: HttpBody, counter: Long = 0)
+  extends Serializable
 
 /**
  * BroadcastMessage used when some data needs to be sent to all
  * alive clients
  * @param data
  */
-case class BroadcastMessage(data: HttpBody)
+case class BroadcastMessage(data: HttpBody) extends Serializable
 
 /**
  * Poll used when a client wants to register/long-poll with the
  * server
  */
-case class SessionPing(sessionURI: String, reqCtx: RequestContext)
+case class SessionPing(sessionURI: String, reqCtx: RequestContext) extends Serializable
 
 /**
  * PollTimeout sent when a long-poll requests times out
  */
-case class PollTimeout(id: String)
+case class PollTimeout(id: String) extends Serializable
 
 /**
  * ClientGc sent to deregister a client when it hasnt responded
  * in a long time
  */
-case class ClientGc(id: String)
+case class ClientGc(id: String) extends Serializable
 
-class CometActor extends Actor {
+class CometActor extends Actor with Serializable {
+  @transient
   var aliveTimers: Map[String, Cancellable] = Map.empty   // list of timers that keep track of alive clients
+  @transient
   var toTimers: Map[String, Cancellable] = Map.empty      // list of timeout timers for clients
+  @transient
   var requests: Map[String, RequestContext] = Map.empty   // list of long-poll RequestContexts
 
   val gcTime = 1 minute               // if client doesnt respond within this time, its garbage collected
@@ -133,10 +139,10 @@ class CometActor extends Actor {
   }
 }
 
-case class MalformedRequestException() extends Exception
-case class InitializeSessionException(agentURI: String, message: String) extends Exception
-case class EvalException(sessionURI: String) extends Exception
-case class CloseSessionException(sessionURI: String, message: String) extends Exception
+case class MalformedRequestException() extends Exception with Serializable
+case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
+case class EvalException(sessionURI: String) extends Exception with Serializable
+case class CloseSessionException(sessionURI: String, message: String) extends Exception with Serializable
 
 // this trait defines our service behavior independently from the service actor
 trait EvaluatorService extends HttpService
@@ -145,9 +151,11 @@ trait EvaluatorService extends HttpService
      with EvalConfig
 {  
   import DSLCommLink.mTT
-   
-  val cometActor = actorRefFactory.actorOf(Props[CometActor])        
 
+  @transient
+  val cometActor = actorRefFactory.actorOf(Props[CometActor])        
+  
+  @transient
   val myRoute =
     path("signup") {
       get {
@@ -210,18 +218,22 @@ trait EvaluatorService extends HttpService
                                      // sure servers are connected
       // BUGBUG : lgm -- make this secure!!!
       get {
-	val pulseSessionID = UUID.randomUUID
-
-	connectServers(
-	  pulseSessionID
-	)(
-	  ( optRsrc : Option[mTT.Resource] ) => {
-            println( "got response: " + optRsrc )
-            complete(HttpResponse(entity = HttpBody(`text/html`, optRsrc.toString)))
-          }
-	)        
-
-        (cometActor ! SessionPing("", _))
+	parameters('whoAmI) { 
+	  ( whoAmI : String ) => {	    
+	    val pulseSessionID = UUID.randomUUID
+	  
+	    connectServers(
+	      pulseSessionID
+	    )(
+	      ( optRsrc : Option[mTT.Resource] ) => {
+		println( "got response: " + optRsrc )
+		complete(HttpResponse(entity = HttpBody(`text/html`, optRsrc.toString)))
+              }
+	    )        
+	  
+            (cometActor ! SessionPing("", _))
+	  }
+	}
       }
     } ~
     path("sendMessage") {
