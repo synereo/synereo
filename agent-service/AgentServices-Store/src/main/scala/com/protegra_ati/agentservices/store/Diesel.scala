@@ -1549,7 +1549,9 @@ package diesel {
     ): Unit = {
       expr match {
         case ConcreteHL.Bottom => {
-          throw new Exception( "divergence" )
+          //throw new Exception( "divergence" )
+	  println( "warning: divergent expression" )
+	  handler( None )
         }
         case ConcreteHL.FeedExpr( filter, cnxns ) => {
           for( cnxn <- cnxns ) {
@@ -1584,13 +1586,131 @@ package diesel {
         }
       }
     }
+
+    /*
+    def adminLoop(
+      useBiLink : Option[Boolean] = None,
+      flip : Boolean = false
+    ) : Unit = {
+      val pulseErql : CnxnCtxtLabel[String,String,String] =
+        DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
+          throw new Exception( "error making evalRequestLabel" )
+        )
+      def innerLoop(
+        client : DSLCommLinkCtor.StdEvaluationRequestChannel,
+        server : DSLCommLinkCtor.StdEvaluationRequestChannel ,
+	onPulse : Option[DSLCommLink.mTT.Resource] => Unit =
+	  ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+      ) : Unit = {	
+        reset { 
+          for( e <- client.get( pulseErql ) ) {
+            e match {
+              case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                  val erspl : CnxnCtxtLabel[String,String,String] =
+                    DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
+                      sessionId
+                    ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+                  
+                  server.put( erspl, DSLCommLink.mTT.Ground( expr ) )
+		  onPulse( Some( DSLCommLink.mTT.Ground( expr ) ) )
+                }             
+              }
+              case _ => {
+                println( "rsrc not handled: " + e )
+              }
+            }
+          }
+        }
+      }
+
+      useBiLink match {
+        case Some( true ) => {
+          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          innerLoop( client, server )
+        }
+        case Some( false ) => {
+          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          innerLoop( server, client )
+        }
+        case None => {
+          val link = DSLCommLinkCtor.stdLink()( flip )
+          
+          innerLoop( link, link )
+        }
+      }
+    }
+    */
+
+    def adminLoop(
+      useBiLink : Option[Boolean] = None,
+      flip : Boolean = false
+    ) : Unit = {
+      val erql : CnxnCtxtLabel[String,String,String] =
+        DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
+          throw new Exception( "error making evalRequestLabel" )
+        )
+      val node = agent( "/dieselProtocol" )      
+
+      def innerLoop(
+        client : DSLCommLinkCtor.StdEvaluationRequestChannel,
+        server : DSLCommLinkCtor.StdEvaluationRequestChannel
+      ) : Unit = {
+        reset { 
+          for( e <- client.get( erql ) ) {
+            e match {
+              case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                  val erspl : CnxnCtxtLabel[String,String,String] =
+                    DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
+                      sessionId
+                    ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+                  
+                  val forward : Option[mTT.Resource] => Unit =
+                    {
+                      ( optRsrc : Option[mTT.Resource] ) => {
+                        for( mTT.Ground( v ) <- optRsrc ) {
+                          reset {
+                            server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                          }
+                        }
+                      }
+                    }
+                  
+                  evaluateExpression( node )( expr )( forward )
+                }             
+              }
+              case _ => {
+                println( "rsrc not handled: " + e )
+              }
+            }
+          }
+        }
+      }
+      
+      useBiLink match {
+        case Some( true ) => {
+          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          innerLoop( client, server )
+        }
+        case Some( false ) => {
+          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          innerLoop( server, client )
+        }
+        case None => {
+          val link = DSLCommLinkCtor.stdLink()( flip )
+          
+          innerLoop( link, link )
+        }
+      }      
+    }
          
     def evalLoop(
       useBiLink : Option[Boolean] = None,
       flip : Boolean = false
     ) : Unit = {
       val erql : CnxnCtxtLabel[String,String,String] =
-        DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionID" ).getOrElse( 
+        DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionId" ).getOrElse( 
           throw new Exception( "error making evalRequestLabel" )
         )
       val node = agent( "/dieselProtocol" )      
@@ -1693,6 +1813,7 @@ package diesel {
       println( "*******************************************************" )
       
       engine.evalLoop()
+      engine.adminLoop()
     }
   }
 }
