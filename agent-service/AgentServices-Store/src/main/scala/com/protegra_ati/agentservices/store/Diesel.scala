@@ -1440,7 +1440,7 @@ package diesel {
 
   }
 
-  object DieselConfigurationDefaults {
+  object DieselConfigurationDefaults extends Serializable {
     val localHost : String = "localhost"
     val localPort : Int = 5672
     val remoteHost : String = "localhost"
@@ -1586,62 +1586,7 @@ package diesel {
         }
       }
     }
-
-    /*
-    def adminLoop(
-      useBiLink : Option[Boolean] = None,
-      flip : Boolean = false
-    ) : Unit = {
-      val pulseErql : CnxnCtxtLabel[String,String,String] =
-        DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
-          throw new Exception( "error making evalRequestLabel" )
-        )
-      def innerLoop(
-        client : DSLCommLinkCtor.StdEvaluationRequestChannel,
-        server : DSLCommLinkCtor.StdEvaluationRequestChannel ,
-	onPulse : Option[DSLCommLink.mTT.Resource] => Unit =
-	  ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-      ) : Unit = {	
-        reset { 
-          for( e <- client.get( pulseErql ) ) {
-            e match {
-              case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
-                  val erspl : CnxnCtxtLabel[String,String,String] =
-                    DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
-                      sessionId
-                    ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
-                  
-                  server.put( erspl, DSLCommLink.mTT.Ground( expr ) )
-		  onPulse( Some( DSLCommLink.mTT.Ground( expr ) ) )
-                }             
-              }
-              case _ => {
-                println( "rsrc not handled: " + e )
-              }
-            }
-          }
-        }
-      }
-
-      useBiLink match {
-        case Some( true ) => {
-          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
-          innerLoop( client, server )
-        }
-        case Some( false ) => {
-          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
-          innerLoop( server, client )
-        }
-        case None => {
-          val link = DSLCommLinkCtor.stdLink()( flip )
-          
-          innerLoop( link, link )
-        }
-      }
-    }
-    */
-
+    
     def adminLoop(
       useBiLink : Option[Boolean] = None,
       flip : Boolean = false
@@ -1704,6 +1649,7 @@ package diesel {
         }
       }      
     }
+    
          
     def evalLoop(
       useBiLink : Option[Boolean] = None,
@@ -1803,7 +1749,7 @@ package diesel {
       map
     }
     
-    def main( args : Array[String] ) {
+    def mainEntryPoint( args : Array[String] ) {
       val map = processArgs( args )
       val engine = new DieselEngine( map.get( "config" ) )
       val version = engine.version
