@@ -40,6 +40,17 @@ import javax.crypto.spec.SecretKeySpec
 import java.util.Date
 import java.util.UUID
 
+object CompletionMapper {
+  import DSLCommLink.mTT
+  @transient
+  val map = new HashMap[String,HttpService]()
+  def complete( key : String, optRsrc : Option[mTT.Resource] ) : Unit = {
+    for( srvc <- map.get( key ) ) {
+      srvc.complete(HttpResponse(entity = HttpBody(`text/html`, optRsrc.toString)))
+    }
+  }
+}
+
 trait EvalHandler {
   self : EvaluationCommsService =>
  
@@ -119,6 +130,15 @@ trait EvalHandler {
     }
 
     sessionURI
+  }  
+
+  def connectServers( srvcKey : String, sessionId : UUID ) : Unit = {
+    connectServers( sessionId )(
+      ( optRsrc : Option[mTT.Resource] ) => {
+	println( "got response: " + optRsrc )
+	//CompletionMapper.complete( srvcKey, optRsrc )
+      }
+    )    
   }
 
   def connectServers( sessionId : UUID )(
@@ -161,4 +181,11 @@ trait EvalHandler {
     ))
   }
 
+}
+
+object EvalHandlerService
+extends EvalHandler
+with EvaluationCommsService
+with EvalConfig
+with Serializable {
 }

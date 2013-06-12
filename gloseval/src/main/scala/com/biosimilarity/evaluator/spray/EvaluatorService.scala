@@ -146,11 +146,11 @@ case class CloseSessionException(sessionURI: String, message: String) extends Ex
 
 // this trait defines our service behavior independently from the service actor
 trait EvaluatorService extends HttpService
-     with EvaluationCommsService
-     with EvalHandler
-     with EvalConfig
 {  
   import DSLCommLink.mTT
+  import EvalHandlerService._
+
+  //CompletionMapper.map += ( "evaluator-service" -> this )
 
   @transient
   val cometActor = actorRefFactory.actorOf(Props[CometActor])        
@@ -220,16 +220,7 @@ trait EvaluatorService extends HttpService
       get {
 	parameters('whoAmI) { 
 	  ( whoAmI : String ) => {	    
-	    val pulseSessionID = UUID.randomUUID
-	  
-	    connectServers(
-	      pulseSessionID
-	    )(
-	      ( optRsrc : Option[mTT.Resource] ) => {
-		println( "got response: " + optRsrc )
-		complete(HttpResponse(entity = HttpBody(`text/html`, optRsrc.toString)))
-              }
-	    )        
+	    connectServers( "evaluator-service", UUID.randomUUID )        
 	  
             (cometActor ! SessionPing("", _))
 	  }

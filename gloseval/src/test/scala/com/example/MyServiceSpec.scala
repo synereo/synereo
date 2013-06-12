@@ -4,9 +4,9 @@ import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http._
 import StatusCodes._
+import com.biosimilarity.evaluator.spray._
 
-
-class MyServiceSpec extends Specification with Specs2RouteTest with MyService {
+class MyServiceSpec extends Specification with Specs2RouteTest with EvaluatorService {
   def actorRefFactory = system
   
   "MyService" should {
