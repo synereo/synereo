@@ -136,7 +136,7 @@ trait EvalHandler {
     connectServers( sessionId )(
       ( optRsrc : Option[mTT.Resource] ) => {
 	println( "got response: " + optRsrc )
-	//CompletionMapper.complete( srvcKey, optRsrc )
+	CompletionMapper.complete( srvcKey, optRsrc )
       }
     )    
   }

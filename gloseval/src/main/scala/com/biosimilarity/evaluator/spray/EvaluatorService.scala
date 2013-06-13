@@ -150,7 +150,7 @@ trait EvaluatorService extends HttpService
   import DSLCommLink.mTT
   import EvalHandlerService._
 
-  //CompletionMapper.map += ( "evaluator-service" -> this )
+  CompletionMapper.map += ( "evaluator-service" -> this )
 
   @transient
   val cometActor = actorRefFactory.actorOf(Props[CometActor])        
