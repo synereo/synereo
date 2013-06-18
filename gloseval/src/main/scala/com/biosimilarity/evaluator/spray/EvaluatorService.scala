@@ -174,14 +174,8 @@ trait EvaluatorService extends HttpService
 		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
 		  println( "in initializeSessionRequest : " + jsonStr )
 		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  val onPost : String => Option[mTT.Resource] => Unit = {
-                    (bodyText: String) =>
-                    ( optRsrc : Option[mTT.Resource] ) => {
-                      println( "got response: " + optRsrc )
-                      complete(HttpResponse(entity = HttpBody(`application/json`, bodyText)))
-                    }
-                  }
-                  initializeSessionRequest( json, onPost )
+                  
+                  initializeSessionRequest( json, "evaluator-service" )
                   (cometActor ! SessionPing("", _))
                 }
                 case "sessionPing" => {

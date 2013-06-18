@@ -59,7 +59,12 @@ trait EvalHandler {
   @transient
   implicit val formats = DefaultFormats
 
-  def initializeSessionRequest(json: JValue, onPost : String => Option[mTT.Resource] => Unit ) = {
+  def initializeSessionRequest(
+    json : JValue,
+    srvcKey : String,
+    onPost : Option[Option[mTT.Resource] => Unit] = None
+    //( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+  ) = {
     val agentURI = (json \ "content" \ "agentURI").extract[String]
     val uri = new java.net.URI(agentURI)
 
@@ -83,23 +88,37 @@ trait EvalHandler {
     val erql = agentMgr().erql( sessionID )
     val erspl = agentMgr().erspl( sessionID ) 
 
+    val postHandler : Option[mTT.Resource] => Unit = 
+      onPost match {
+	case Some( pHndlr ) => {
+	  pHndlr
+	}
+	case None => {
+	  // BUGBUG : lgm -- fix this!
+	  val bodyText =
+	    """{
+              "msgType": "initializeSessionResponse",
+              "content": {
+		"sessionURI": "agent-session://ArtVandelay@session1",
+		"listOfAliases": [],
+		"listOfLabels": [],
+		"lastActiveFilter": ""
+              }
+            }
+          """
+	  ( optRsrc : Option[mTT.Resource] ) => {
+	    println( "got response: " + optRsrc )
+	    CompletionMapper.complete( srvcKey, optRsrc )
+	  }
+	}
+      }
+
     agentMgr().secureCnxn(
       userName, 
       userPwd, 
       queryMap, 
       agentMgr().post[String]( erql, erspl ), 
-      onPost(
-        """{
-          "msgType": "initializeSessionResponse",
-          "content": {
-            "sessionURI": "agent-session://ArtVandelay@session1",
-            "listOfAliases": [],
-            "listOfLabels": [],
-            "lastActiveFilter": ""
-          }
-        }
-        """
-      )
+      postHandler
     )
   }
 
