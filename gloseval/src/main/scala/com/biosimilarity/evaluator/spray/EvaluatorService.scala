@@ -205,10 +205,10 @@ trait EvaluatorService extends HttpService
                   cometActor ! CometMessage(sessionURI, body)
                   complete(StatusCodes.OK)
                 }
-                case _ => complete(HttpResponse(404, "Unknown message type: " + msgType + "\n"))
+                case _ => complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
               }
             } catch {
-              case th: Throwable => complete(HttpResponse(404, "Malformed request"))
+              case th: Throwable => complete(HttpResponse(500, "Malformed request"))
             }
           } // jsonStr
         } // decodeRequest
