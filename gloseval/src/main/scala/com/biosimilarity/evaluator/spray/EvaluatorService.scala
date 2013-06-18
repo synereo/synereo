@@ -220,7 +220,16 @@ trait EvaluatorService extends HttpService
                 case _ => complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
               }
             } catch {
-              case th: Throwable => complete(HttpResponse(500, "Malformed request"))
+              case th: Throwable => {
+		val writer : java.io.StringWriter = new java.io.StringWriter()
+		val printWriter : java.io.PrintWriter = new java.io.PrintWriter( writer )
+		th.printStackTrace( printWriter )
+		printWriter.flush()
+
+		val stackTrace : String = writer.toString()
+		println( "Malformed request: \n" + stackTrace )
+		complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
+	      }
             }
           } // jsonStr
         } // decodeRequest
@@ -231,10 +240,11 @@ trait EvaluatorService extends HttpService
       // BUGBUG : lgm -- make this secure!!!
       get {
 	parameters('whoAmI) { 
-	  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-	  println( "in admin/connectServers " )
-	  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
 	  ( whoAmI : String ) => {	    
+	    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+	    println( "in admin/connectServers2 " )
+	    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+	  
 	    connectServers( "evaluator-service", UUID.randomUUID )        
 	  
             (cometActor ! SessionPing("", _))
