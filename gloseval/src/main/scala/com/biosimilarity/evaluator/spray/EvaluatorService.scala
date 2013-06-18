@@ -171,6 +171,9 @@ trait EvaluatorService extends HttpService
               val msgType = (json \ "msgType").extract[String]
               msgType match {
                 case "initializeSessionRequest" => {
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+		  println( "in initializeSessionRequest : " + jsonStr )
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   val onPost : String => Option[mTT.Resource] => Unit = {
                     (bodyText: String) =>
                     ( optRsrc : Option[mTT.Resource] ) => {
@@ -182,10 +185,16 @@ trait EvaluatorService extends HttpService
                   (cometActor ! SessionPing("", _))
                 }
                 case "sessionPing" => {
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+		  println( "in sessionPing " )
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   val sessionURI = sessionPing(json)
                   (cometActor ! SessionPing(sessionURI, _))
                 }
                 case "evalSubscribeRequest" => {
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+		  println( "in evalSubscribeRequest " )
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   val (sessionURI, body) = 
                   (evalSubscribeRequest(json), HttpBody(`application/json`,
                     """{
@@ -201,6 +210,9 @@ trait EvaluatorService extends HttpService
                   complete(StatusCodes.OK)
                 }
                 case "closeSessionRequest" => {
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+		  println( "in closeSubscribeRequest " )
+		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   val (sessionURI, body) = closeSessionRequest(json)
                   cometActor ! CometMessage(sessionURI, body)
                   complete(StatusCodes.OK)
@@ -219,6 +231,9 @@ trait EvaluatorService extends HttpService
       // BUGBUG : lgm -- make this secure!!!
       get {
 	parameters('whoAmI) { 
+	  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+	  println( "in admin/connectServers " )
+	  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
 	  ( whoAmI : String ) => {	    
 	    connectServers( "evaluator-service", UUID.randomUUID )        
 	  
