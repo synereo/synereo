@@ -1537,6 +1537,65 @@ package diesel {
       client
     }    
 
+    var _linkClient : Option[DSLCommLinkCtor.StdEvaluationRequestChannel] = None
+    var _linkServer : Option[DSLCommLinkCtor.StdEvaluationRequestChannel] = None
+
+    def linkClient( flip : Boolean = false ) : DSLCommLinkCtor.StdEvaluationRequestChannel = {
+      _linkClient match {
+        case Some( lc ) => lc
+        case None => {
+          val lc : DSLCommLinkCtor.StdEvaluationRequestChannel =
+            DSLCommLinkCtor.stdLink()( flip )
+          _linkClient = Some( lc )
+          lc
+        }
+      }
+    }
+    def linkServer( flip : Boolean = false ) : DSLCommLinkCtor.StdEvaluationRequestChannel = {
+      _linkServer match {
+        case Some( ls ) => ls
+        case None => {
+          val ls : DSLCommLinkCtor.StdEvaluationRequestChannel =
+            DSLCommLinkCtor.stdLink()( flip )
+          _linkServer = Some( ls )
+          ls
+        }
+      }
+    }
+    def bilink(
+      direction : Boolean = true,
+      flip : Boolean = false
+    ) : ( DSLCommLinkCtor.StdEvaluationRequestChannel, DSLCommLinkCtor.StdEvaluationRequestChannel ) = {
+      val p@( client, server ) = DSLCommLinkCtor.stdBiLink()
+      direction match {
+        case true => {
+          _linkClient = Some( client )
+          _linkServer = Some( server )
+        }
+        case false => {
+          _linkClient = Some( server )
+          _linkServer = Some( client )
+        }
+      }
+      p
+    }
+
+    var _evalNode : Option[Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]] = None
+    def evalNode(
+      dataLocation : String
+    ) : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
+      = {
+        _evalNode match {
+          case Some( en ) => en
+          case None => {
+            val en : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = 
+              agent( "/dieselProtocol" )
+            _evalNode = Some( en )
+            en
+          }
+        }
+      }
+
     def fileNameToCnxn( fileName : String ) : acT.AgentCnxn = {
       val fileNameRoot = fileName.split( '/' ).last
       new acT.AgentCnxn( fileNameRoot.toURI, "", fileNameRoot.toURI )
@@ -1595,7 +1654,7 @@ package diesel {
         DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
           throw new Exception( "error making evalRequestLabel" )
         )
-      val node = agent( "/dieselProtocol" )      
+      val node = evalNode( "/dieselProtocol" )      
 
       def innerLoop(
         client : DSLCommLinkCtor.StdEvaluationRequestChannel,
@@ -1635,15 +1694,15 @@ package diesel {
       
       useBiLink match {
         case Some( true ) => {
-          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          val ( client, server ) = bilink( true, flip )
           innerLoop( client, server )
         }
         case Some( false ) => {
-          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          val ( client, server ) = bilink( false, flip )
           innerLoop( server, client )
         }
         case None => {
-          val link = DSLCommLinkCtor.stdLink()( flip )
+          val link = linkClient( flip )
           
           innerLoop( link, link )
         }
@@ -1659,7 +1718,7 @@ package diesel {
         DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionId" ).getOrElse( 
           throw new Exception( "error making evalRequestLabel" )
         )
-      val node = agent( "/dieselProtocol" )      
+      val node = evalNode( "/dieselProtocol" )      
 
       def innerLoop(
         client : DSLCommLinkCtor.StdEvaluationRequestChannel,
@@ -1699,15 +1758,15 @@ package diesel {
       
       useBiLink match {
         case Some( true ) => {
-          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          val ( client, server ) = bilink( true, flip )
           innerLoop( client, server )
         }
         case Some( false ) => {
-          val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+          val ( client, server ) = bilink( false, flip )
           innerLoop( server, client )
         }
         case None => {
-          val link = DSLCommLinkCtor.stdLink()( flip )
+          val link = linkClient( flip )
           
           innerLoop( link, link )
         }
