@@ -1537,7 +1537,9 @@ package diesel {
       client
     }    
 
+    @transient
     var _linkClient : Option[DSLCommLinkCtor.StdEvaluationRequestChannel] = None
+    @transient
     var _linkServer : Option[DSLCommLinkCtor.StdEvaluationRequestChannel] = None
 
     def linkClient( flip : Boolean = false ) : DSLCommLinkCtor.StdEvaluationRequestChannel = {
@@ -1580,6 +1582,7 @@ package diesel {
       p
     }
 
+    @transient
     var _evalNode : Option[Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]] = None
     def evalNode(
       dataLocation : String
