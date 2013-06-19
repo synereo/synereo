@@ -1748,18 +1748,30 @@ package diesel {
       }
       map
     }
+
+    var _engine : Option[DieselEngine] = None
+    def engine( s : Option[String] = Some( "eval.conf" ) ) : DieselEngine = {
+      _engine match {
+	case Some( e ) => e
+	case None => {
+	  val e = new DieselEngine( s )
+	  _engine = Some( e )
+	  e
+	}
+      }
+    }
     
     def mainEntryPoint( args : Array[String] ) {
       val map = processArgs( args )
-      val engine = new DieselEngine( map.get( "config" ) )
-      val version = engine.version
+      val e = engine( map.get( "config" ) )
+      val version = e.version
       println( "*******************************************************" )
       println( "******************** Diesel engine ********************" )
       println( "******************** Version " + version + " ********************" )
       println( "*******************************************************" )
       
-      engine.evalLoop()
-      engine.adminLoop()
+      e.evalLoop()
+      e.adminLoop()
     }
   }
 }
