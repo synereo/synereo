@@ -206,5 +206,6 @@ object EvalHandlerService
 extends EvalHandler
 with EvaluationCommsService
 with EvalConfig
+with DSLCommLinkConfiguration
 with Serializable {
 }
