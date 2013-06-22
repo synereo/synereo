@@ -283,6 +283,7 @@ package usage {
      with MessageGeneration
      with ChannelGeneration
      with EvalConfig
+     with DSLCommLinkConfiguration
      with StorageManagement
      with Serializable
   {

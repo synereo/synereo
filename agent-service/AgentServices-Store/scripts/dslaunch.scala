@@ -8,7 +8,7 @@
 
 import com.biosimilarity.evaluator.distribution.diesel._
 
-object Go {
+object Go extends Serializable {
   def now() = {
     val a1 = new Array[String]( 1 )
     a1( 0 ) = "config=eval.conf"

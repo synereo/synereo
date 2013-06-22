@@ -29,14 +29,14 @@ import java.util.UUID
 trait EvalConfig {
   var _config : Option[Config] = None
     
-  def evalConfig() : Config = {
+  def evalConfig( configFileName : String = "eval.conf" ) : Config = {
     _config match {
       case Some( cfg ) => cfg
       case None => {
         val cfg =
           ConfigFactory.load(
             ConfigFactory.parseFile(
-              new java.io.File( "eval.conf" )
+              new java.io.File( configFileName )
             )
           )
         _config = Some( cfg )

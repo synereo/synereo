@@ -1461,8 +1461,9 @@ package diesel {
       configurationFromFile.get( "dataLocation" ).getOrElse( bail() )
   }
 
-  class DieselEngine( override val configFileName : Option[String] )
-       extends DieselManufactureConfiguration with Serializable {        
+  object DieselEngineCtor extends EvalConfig
+  with DSLCommLinkConfiguration
+  with Serializable {
     import DieselEngineScope._
     import Being._
     import AgentKVDBNodeFactory._
@@ -1471,13 +1472,11 @@ package diesel {
 
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
-    val version = "0.0.1"
+    type LinkEvalRequestChannel = DSLCommLinkCtor.StdEvaluationRequestChannel
+    type EvalChannel[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = Being.AgentKVDBNode[ReqBody,RspBody]
+    type StdEvalChannel = EvalChannel[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
 
-    override def configurationDefaults : ConfigurationDefaults = {
-      DieselConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
-    }
-
-    val cnxnGlobal = new acT.AgentCnxn("Global".toURI, "", "Global".toURI)
+    type ChannelBundle = ( LinkEvalRequestChannel, LinkEvalRequestChannel, StdEvalChannel )
 
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       dataLocation : String,
@@ -1485,7 +1484,7 @@ package diesel {
       remoteHost : String, remotePort : Int
     )(
       implicit returnTwist : Boolean
-    ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
+    ) : Either[EvalChannel[ReqBody,RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])] = {
       val ( localExchange, remoteExchange ) = 
         if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
           ( dataLocation, dataLocation + "Remote" )       
@@ -1495,7 +1494,7 @@ package diesel {
         }
 
       if ( returnTwist ) {
-        Right[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+        Right[EvalChannel[ReqBody,RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])](
           (
             ptToPt[ReqBody, RspBody](
               new URI( "agent", null, localHost, localPort, localExchange, null, null ),
@@ -1509,7 +1508,7 @@ package diesel {
         )
       }
       else {
-        Left[Being.AgentKVDBNode[ReqBody, RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])](
+        Left[EvalChannel[ReqBody, RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])](
           ptToPt(
             new URI( "agent", null, localHost, localPort, localExchange, null, null ),
             new URI( "agent", null, remoteHost, remotePort, remoteExchange, null, null )
@@ -1523,13 +1522,13 @@ package diesel {
       remoteHost : String, remotePort : Int
     )(
       implicit returnTwist : Boolean
-    ) : Either[Being.AgentKVDBNode[ReqBody,RspBody],(Being.AgentKVDBNode[ReqBody, RspBody],Being.AgentKVDBNode[ReqBody, RspBody])] = {
+    ) : Either[EvalChannel[ReqBody,RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])] = {
       setup( "/dieselProtocol", localHost, localPort, remoteHost, remotePort )
     }
 
     def agent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
       dataLocation : String
-    ) : Being.AgentKVDBNode[ReqBody,RspBody] = {
+    ) : EvalChannel[ReqBody,RspBody] = {
       val Right( ( client, server ) ) = 
         setup[ReqBody,RspBody](
           dataLocation, "localhost", 5672, "localhost", 5672
@@ -1537,245 +1536,353 @@ package diesel {
       client
     }    
 
-    @transient
-    var _linkClient : Option[DSLCommLinkCtor.StdEvaluationRequestChannel] = None
-    @transient
-    var _linkServer : Option[DSLCommLinkCtor.StdEvaluationRequestChannel] = None
+    class DieselEngine(
+      override val configFileName : Option[String],
+      val cnxnGlobal : acT.AgentCnxn = new acT.AgentCnxn("Global".toURI, "", "Global".toURI),
+      val version : String = "0.0.1"
+    ) extends DieselManufactureConfiguration with Serializable {        
+      override def configurationDefaults : ConfigurationDefaults = {
+        DieselConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
+      }      
+      
+      def fileNameToCnxn( fileName : String ) : acT.AgentCnxn = {
+        val fileNameRoot = fileName.split( '/' ).last
+        new acT.AgentCnxn( fileNameRoot.toURI, "", fileNameRoot.toURI )
+      } 
 
-    def linkClient( flip : Boolean = false ) : DSLCommLinkCtor.StdEvaluationRequestChannel = {
-      _linkClient match {
-        case Some( lc ) => lc
-        case None => {
-          val lc : DSLCommLinkCtor.StdEvaluationRequestChannel =
-            DSLCommLinkCtor.stdLink()( flip )
-          _linkClient = Some( lc )
-          lc
+      def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+        node : EvalChannel[ReqBody,RspBody]
+      )( expr : ConcreteHL.HLExpr )(
+        handler : Option[mTT.Resource] => Unit
+      ): Unit = {
+        expr match {
+          case ConcreteHL.Bottom => {
+            //throw new Exception( "divergence" )
+	    println( "warning: divergent expression" )
+	    handler( None )
+          }
+          case ConcreteHL.FeedExpr( filter, cnxns ) => {
+            for( cnxn <- cnxns ) {
+              val agntCnxn : acT.AgentCnxn =
+                new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+              reset {
+                for( e <- node.subscribe( agntCnxn )( filter ) ) {
+                  handler( e )
+                }
+              }
+            }
+          }
+          case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
+            for( cnxn <- cnxns ) {
+              val agntCnxn : acT.AgentCnxn =
+                new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+              reset {
+                for( e <- node.subscribe( agntCnxn )( filter ) ) {
+                  handler( e )
+                }
+              }
+            }
+          }
+          case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
+            for( cnxn <- cnxns ) {
+              val agntCnxn : acT.AgentCnxn =
+                new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+              reset {
+                node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+              }
+            }
+          }
         }
       }
-    }
-    def linkServer( flip : Boolean = false ) : DSLCommLinkCtor.StdEvaluationRequestChannel = {
-      _linkServer match {
-        case Some( ls ) => ls
-        case None => {
-          val ls : DSLCommLinkCtor.StdEvaluationRequestChannel =
-            DSLCommLinkCtor.stdLink()( flip )
-          _linkServer = Some( ls )
-          ls
-        }
-      }
-    }
-    def bilink(
-      direction : Boolean = true,
-      flip : Boolean = false
-    ) : ( DSLCommLinkCtor.StdEvaluationRequestChannel, DSLCommLinkCtor.StdEvaluationRequestChannel ) = {
-      val p@( client, server ) = DSLCommLinkCtor.stdBiLink()
-      direction match {
-        case true => {
-          _linkClient = Some( client )
-          _linkServer = Some( server )
-        }
-        case false => {
-          _linkClient = Some( server )
-          _linkServer = Some( client )
-        }
-      }
-      p
-    }
 
-    @transient
-    var _evalNode : Option[Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]] = None
-    def evalNode(
-      dataLocation : String
-    ) : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
-      = {
-        _evalNode match {
-          case Some( en ) => en
+      trait MessageProcessor {
+        def innerLoop(
+          erql : CnxnCtxtLabel[String,String,String],
+          client : LinkEvalRequestChannel,
+          server : LinkEvalRequestChannel,
+          node : StdEvalChannel,
+          rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
+        ) : Unit = {
+          reset { 
+            for( e <- client.get( erql ) ) {
+              e match {
+                case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                  for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                    val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
+                    
+                    val forward : Option[mTT.Resource] => Unit =
+                      {
+                        ( optRsrc : Option[mTT.Resource] ) => {
+                          for( mTT.Ground( v ) <- optRsrc ) {
+                            reset {
+                              server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                            }
+                          }
+                        }
+                      }
+                    
+                    evaluateExpression( node )( expr )( forward )
+                  }             
+                }
+                case _ => {
+                  println( "rsrc not handled: " + e )
+                }
+              }
+            }
+          }
+        }
+        def messageProcessorLoop(
+          erql : CnxnCtxtLabel[String,String,String],
+          node : StdEvalChannel,
+          rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+          useBiLink : Option[Boolean] = None,
+          flip : Boolean = false
+        ) : Unit = {
+          val ( client, server ) = 
+            useBiLink match {
+              case Some( true ) => {
+                DSLCommLinkCtor.stdBiLink()              
+              }
+              case Some( false ) => {
+                val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+                ( server, client )
+              }
+              case None => {          
+                val link = DSLCommLinkCtor.stdLink()( flip )
+                ( link, link )
+              }
+            }
+          innerLoop( erql, client, server, node, rspLabelCtor )
+        }
+      }
+
+      class MsgProcessor(
+        @transient
+        val erql : CnxnCtxtLabel[String,String,String],
+        @transient
+        val node : StdEvalChannel,
+        @transient
+        val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+        val useBiLink : Option[Boolean] = None,
+        val flip : Boolean = false
+      ) extends MessageProcessor with Serializable {
+        def go() : Unit = {
+          messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
+        }
+      }
+
+      object MsgProcessor extends Serializable {
+        def apply(
+          erql : CnxnCtxtLabel[String,String,String],
+          node : StdEvalChannel,
+          rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+          useBiLink : Option[Boolean] = None,
+          flip : Boolean = false
+        ) : MsgProcessor = {
+          new MsgProcessor( erql, node, rspLabelCtor, useBiLink, flip )
+        }
+        def unapply(
+          mp : MsgProcessor
+        ) : Option[
+             (
+               CnxnCtxtLabel[String,String,String],
+               StdEvalChannel,
+               String =>CnxnCtxtLabel[String,String,String],
+               Option[Boolean],
+               Boolean
+             )
+        ]
+        = {
+          Some( ( mp.erql, mp.node, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
+        }
+      }
+
+      case class MsgProcessorBlock(
+        @transient
+        override val self : List[MsgProcessor]
+      ) extends scala.collection.SeqProxy[MsgProcessor] {
+        def go() { for ( mp <- self ) { mp.go() } }
+      }
+
+      def adminLooper(
+        node : StdEvalChannel,
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
+      ) : MsgProcessor = {
+        MsgProcessor(
+          DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
+            throw new Exception( "error making evalRequestLabel" )
+          ),
+          node,
+          ( sessionId : String ) => {
+            DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
+              sessionId
+            ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+          },
+          useBiLink,
+          flip
+        )
+      }
+
+      def evalLooper(
+        node : StdEvalChannel,
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
+      ) : MsgProcessor = {
+        MsgProcessor(
+          DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionId" ).getOrElse( 
+            throw new Exception( "error making evalRequestLabel" )
+          ),
+          node,
+          ( sessionId : String ) => {
+            DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
+              sessionId
+            ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+          },
+          useBiLink,
+          flip
+        )
+      }
+
+      def stdLooper(
+        node : StdEvalChannel = agent( "/dieselProtocol" ),
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
+      ) : MsgProcessorBlock = {
+        MsgProcessorBlock(
+          List[MsgProcessor](
+            adminLooper( node, useBiLink, flip ),
+            evalLooper( node, useBiLink, flip )
+          )
+        )
+      }
+
+      def adminLoop(
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
+      ) : Unit = {
+        val erql : CnxnCtxtLabel[String,String,String] =
+          DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
+            throw new Exception( "error making evalRequestLabel" )
+          )
+        val node = DieselEngineCtor.agent( "/dieselProtocol" )      
+        
+        def innerLoop(
+          client : DSLCommLinkCtor.StdEvaluationRequestChannel,
+          server : DSLCommLinkCtor.StdEvaluationRequestChannel
+        ) : Unit = {
+          reset { 
+            for( e <- client.get( erql ) ) {
+              e match {
+                case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                  for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                    val erspl : CnxnCtxtLabel[String,String,String] =
+                      DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
+                        sessionId
+                      ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+                    
+                    val forward : Option[mTT.Resource] => Unit =
+                      {
+                        ( optRsrc : Option[mTT.Resource] ) => {
+                          for( mTT.Ground( v ) <- optRsrc ) {
+                            reset {
+                              server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                            }
+                          }
+                        }
+                      }
+                    
+                    evaluateExpression( node )( expr )( forward )
+                  }             
+                }
+                case _ => {
+                  println( "rsrc not handled: " + e )
+                }
+              }
+            }
+          }
+        }
+        
+        useBiLink match {
+          case Some( true ) => {
+            val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+            innerLoop( client, server )
+          }
+          case Some( false ) => {
+            val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+            innerLoop( server, client )
+          }
           case None => {
-            val en : Being.AgentKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = 
-              agent( "/dieselProtocol" )
-            _evalNode = Some( en )
-            en
+            val link = DSLCommLinkCtor.stdLink()( flip )
+            
+            innerLoop( link, link )
           }
-        }
+        }      
       }
-
-    def fileNameToCnxn( fileName : String ) : acT.AgentCnxn = {
-      val fileNameRoot = fileName.split( '/' ).last
-      new acT.AgentCnxn( fileNameRoot.toURI, "", fileNameRoot.toURI )
-    } 
-
-    def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-      node : Being.AgentKVDBNode[ReqBody,RspBody]
-    )( expr : ConcreteHL.HLExpr )(
-      handler : Option[mTT.Resource] => Unit
-    ): Unit = {
-      expr match {
-        case ConcreteHL.Bottom => {
-          //throw new Exception( "divergence" )
-	  println( "warning: divergent expression" )
-	  handler( None )
-        }
-        case ConcreteHL.FeedExpr( filter, cnxns ) => {
-          for( cnxn <- cnxns ) {
-            val agntCnxn : acT.AgentCnxn =
-              new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-            reset {
-              for( e <- node.subscribe( agntCnxn )( filter ) ) {
-                handler( e )
-              }
-            }
-          }
-        }
-        case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
-          for( cnxn <- cnxns ) {
-            val agntCnxn : acT.AgentCnxn =
-              new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-            reset {
-              for( e <- node.subscribe( agntCnxn )( filter ) ) {
-                handler( e )
-              }
-            }
-          }
-        }
-        case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
-          for( cnxn <- cnxns ) {
-            val agntCnxn : acT.AgentCnxn =
-              new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-            reset {
-              node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
-            }
-          }
-        }
-      }
-    }
-    
-    def adminLoop(
-      useBiLink : Option[Boolean] = None,
-      flip : Boolean = false
-    ) : Unit = {
-      val erql : CnxnCtxtLabel[String,String,String] =
-        DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
-          throw new Exception( "error making evalRequestLabel" )
-        )
-      val node = evalNode( "/dieselProtocol" )      
-
-      def innerLoop(
-        client : DSLCommLinkCtor.StdEvaluationRequestChannel,
-        server : DSLCommLinkCtor.StdEvaluationRequestChannel
+             
+      def evalLoop(
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
       ) : Unit = {
-        reset { 
-          for( e <- client.get( erql ) ) {
-            e match {
-              case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
-                  val erspl : CnxnCtxtLabel[String,String,String] =
-                    DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
-                      sessionId
-                    ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
-                  
-                  val forward : Option[mTT.Resource] => Unit =
-                    {
-                      ( optRsrc : Option[mTT.Resource] ) => {
-                        for( mTT.Ground( v ) <- optRsrc ) {
-                          reset {
-                            server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+        val erql : CnxnCtxtLabel[String,String,String] =
+          DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionId" ).getOrElse( 
+            throw new Exception( "error making evalRequestLabel" )
+          )
+        val node = DieselEngineCtor.agent( "/dieselProtocol" )      
+        
+        def innerLoop(
+          client : DSLCommLinkCtor.StdEvaluationRequestChannel,
+          server : DSLCommLinkCtor.StdEvaluationRequestChannel
+        ) : Unit = {
+          reset { 
+            for( e <- client.subscribe( erql ) ) {
+              e match {
+                case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                  for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                    val erspl : CnxnCtxtLabel[String,String,String] =
+                      DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
+                        sessionId
+                      ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+                    
+                    val forward : Option[mTT.Resource] => Unit =
+                      {
+                        ( optRsrc : Option[mTT.Resource] ) => {
+                          for( mTT.Ground( v ) <- optRsrc ) {
+                            reset {
+                              server.publish( erspl, DSLCommLink.mTT.Ground( v ) )
+                            }
                           }
                         }
                       }
-                    }
-                  
-                  evaluateExpression( node )( expr )( forward )
-                }             
-              }
-              case _ => {
-                println( "rsrc not handled: " + e )
-              }
-            }
-          }
-        }
-      }
-      
-      useBiLink match {
-        case Some( true ) => {
-          val ( client, server ) = bilink( true, flip )
-          innerLoop( client, server )
-        }
-        case Some( false ) => {
-          val ( client, server ) = bilink( false, flip )
-          innerLoop( server, client )
-        }
-        case None => {
-          val link = linkClient( flip )
-          
-          innerLoop( link, link )
-        }
-      }      
-    }
-    
-         
-    def evalLoop(
-      useBiLink : Option[Boolean] = None,
-      flip : Boolean = false
-    ) : Unit = {
-      val erql : CnxnCtxtLabel[String,String,String] =
-        DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionId" ).getOrElse( 
-          throw new Exception( "error making evalRequestLabel" )
-        )
-      val node = evalNode( "/dieselProtocol" )      
-
-      def innerLoop(
-        client : DSLCommLinkCtor.StdEvaluationRequestChannel,
-        server : DSLCommLinkCtor.StdEvaluationRequestChannel
-      ) : Unit = {
-        reset { 
-          for( e <- client.subscribe( erql ) ) {
-            e match {
-              case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
-                  val erspl : CnxnCtxtLabel[String,String,String] =
-                    DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
-                      sessionId
-                    ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
-                  
-                  val forward : Option[mTT.Resource] => Unit =
-                    {
-                      ( optRsrc : Option[mTT.Resource] ) => {
-                        for( mTT.Ground( v ) <- optRsrc ) {
-                          reset {
-                            server.publish( erspl, DSLCommLink.mTT.Ground( v ) )
-                          }
-                        }
-                      }
-                    }
-                  
-                  evaluateExpression( node )( expr )( forward )
-                }             
-              }
-              case _ => {
-                println( "rsrc not handled: " + e )
+                    
+                    evaluateExpression( node )( expr )( forward )
+                  }             
+                }
+                case _ => {
+                  println( "rsrc not handled: " + e )
+                }
               }
             }
           }
         }
+        
+        useBiLink match {
+          case Some( true ) => {
+            val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+            innerLoop( client, server )
+          }
+          case Some( false ) => {
+            val ( client, server ) = DSLCommLinkCtor.stdBiLink()
+            innerLoop( server, client )
+          }
+          case None => {
+            val link = DSLCommLinkCtor.stdLink()( flip )
+            innerLoop( link, link )
+          }
+        }      
       }
-      
-      useBiLink match {
-        case Some( true ) => {
-          val ( client, server ) = bilink( true, flip )
-          innerLoop( client, server )
-        }
-        case Some( false ) => {
-          val ( client, server ) = bilink( false, flip )
-          innerLoop( server, client )
-        }
-        case None => {
-          val link = linkClient( flip )
-          
-          innerLoop( link, link )
-        }
-      }      
     }
-  }
+  }  
 
   object Server extends Serializable {
     lazy val helpMsg = 
@@ -1811,29 +1918,39 @@ package diesel {
       map
     }
 
-    var _engine : Option[DieselEngine] = None
-    def engine( s : Option[String] = Some( "eval.conf" ) ) : DieselEngine = {
-      _engine match {
-	case Some( e ) => e
-	case None => {
-	  val e = new DieselEngine( s )
-	  _engine = Some( e )
-	  e
-	}
-      }
-    }
+    // @transient
+//     var _engine : Option[DieselEngine] = None
+//     def engine( s : Option[String] = Some( "eval.conf" ) ) : DieselEngine = {
+//       _engine match {
+// 	case Some( e ) => e
+// 	case None => {
+// 	  val e = new DieselEngine( s )
+// 	  _engine = Some( e )
+// 	  e
+// 	}
+//       }
+//     }
     
-    def mainEntryPoint( args : Array[String] ) {
+    def run( args : Array[String] ) : Unit = {
+      @transient
       val map = processArgs( args )
-      val e = engine( map.get( "config" ) )
+      @transient
+      val e = new DieselEngineCtor.DieselEngine( map.get( "config" ) )
       val version = e.version
       println( "*******************************************************" )
       println( "******************** Diesel engine ********************" )
       println( "******************** Version " + version + " ********************" )
       println( "*******************************************************" )
       
-      e.evalLoop()
-      e.adminLoop()
+      //e.evalLoop()
+      //e.adminLoop()
+      e.stdLooper().go()
+    }
+
+    def run( ) : Unit = {
+      val a1 = new Array[String]( 1 )
+      a1( 0 ) = "config=eval.conf" 
+      run( a1 )
     }
   }
 }

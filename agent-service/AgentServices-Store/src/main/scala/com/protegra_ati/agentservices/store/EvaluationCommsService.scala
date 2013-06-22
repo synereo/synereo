@@ -32,7 +32,7 @@ import java.util.UUID
 
 
 trait EvaluationCommsService extends CnxnString[String, String, String]{
-  self : EvalConfig =>
+  self : EvalConfig with DSLCommLinkConfiguration =>
 
   import DSLCommLink._   
   import Being._
@@ -58,43 +58,14 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
   ) = {
     _clientServerPair match {
       case Some( lnk ) => lnk
-      case None => {
-        val dslCommLinkHost =
-          try {
-            evalConfig.getString( "DSLCommLinkHost" )
-          }
-          catch {
-            case e : Throwable => "10.0.1.10"
-          }
-        val dslCommLinkPort = 
-          try {
-            evalConfig.getInt( "DSLCommLinkPort" )
-          }
-          catch {
-            case e : Throwable => 5672
-          }
-        val dslCommLinkRemoteHost = 
-          try {
-            evalConfig.getString( "DSLCommLinkRemoteHost" )
-          }
-          catch {
-            case e : Throwable => "10.0.1.8"
-          }
-        val dslCommLinkRemotePort = 
-          try {
-            evalConfig.getInt( "DSLCommLinkRemotePort" )
-          }
-          catch {
-            case e : Throwable => 5672
-          }
-
+      case None => {        
         val ( client, server ) : ( Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
         ], Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
         ] ) = DSLCommLinkCtor.stdBiLink(
-          dslCommLinkHost, dslCommLinkPort,
-          dslCommLinkRemoteHost, dslCommLinkRemotePort
+          clientHostName, clientPort,
+          serverHostName, serverPort
         )
 
         _clientServerPair = Some( ( client, server ) )
@@ -108,41 +79,12 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
   ) : Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
     _node match {
       case Some( n ) => n
-      case None => {
-        val dslCommLinkHost =
-          try {
-            evalConfig.getString( "DSLCommLinkHost" )
-          }
-          catch {
-            case e : Throwable => "localhost"
-          }
-        val dslCommLinkPort = 
-          try {
-            evalConfig.getInt( "DSLCommLinkPort" )
-          }
-          catch {
-            case e : Throwable => 5672
-          }
-        val dslCommLinkRemoteHost = 
-          try {
-            evalConfig.getString( "DSLCommLinkRemoteHost" )
-          }
-          catch {
-            case e : Throwable => "localhost"
-          }
-        val dslCommLinkRemotePort = 
-          try {
-            evalConfig.getInt( "DSLCommLinkRemotePort" )
-          }
-          catch {
-            case e : Throwable => 5672
-          }
-
+      case None => {        
         val n : Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
         ] = DSLCommLinkCtor.stdLink(
-          dslCommLinkHost, dslCommLinkPort,
-          dslCommLinkRemoteHost, dslCommLinkRemotePort
+          serverHostName, serverPort,
+          clientHostName, clientPort
         )( flip )
 
         _node = Some( n )
