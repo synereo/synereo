@@ -1,3 +1,5 @@
+import AssemblyKeys._
+
 organization  := "com.biosimilarity"
 
 name := "GLoSEval"
@@ -46,7 +48,8 @@ libraryDependencies ++= Seq(
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",
   "com.thoughtworks.xstream" % "xstream"            % "1.4.2",
-  "org.mongodb"            %   "casbah_2.9.2"       % "2.5.1",
+  "org.mongodb"            %   "casbah_2.10"       % "2.5.1",
+//  "org.mongodb"            %   "casbah_2.9.2"       % "2.5.1",
   "org.basex"              %   "basex-api"          % "7.5",
   "biz.source_code"        %   "base64coder"        % "2010-09-21",
   compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
@@ -55,3 +58,19 @@ libraryDependencies ++= Seq(
     
 seq(Revolver.settings: _*)
 
+sbtassembly.Plugin.assemblySettings
+
+test in assembly := {}
+
+mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+  {
+    case PathList("org", "fusesource", "jansi", xs @ _*) => MergeStrategy.first
+    case PathList("META-INF", "native", "osx", "libjansi.jnilib") => MergeStrategy.first
+    case PathList("META-INF", "ECLIPSEF.RSA") => MergeStrategy.last
+    case "plugin.properties" => MergeStrategy.last
+    case "about.html" => MergeStrategy.discard
+    case x => old(x)
+  }
+}
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings
