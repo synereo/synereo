@@ -5,16 +5,15 @@
     <artifactId>platformagentlauncher</artifactId>
     <version>1.0.0</version>
     <name>${project.artifactId}</name>
-    <description>Protunity launcher library</description>
-    <inceptionYear>2012</inceptionYear>
+    <description>Platform Agent Launcher</description>
+    <inceptionYear>2013</inceptionYear>
 
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <scala.version>2.10.0</scala.version>
-        <scala.test.specs2.version>1.14</scala.test.specs2.version>
-        <iaservices.version>1.0.0-SNAPSHOT</iaservices.version>
+        <agentservices-store.version>1.4.1-SNAPSHOT</agentservices-store.version>
 
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -39,10 +38,6 @@
             <name>Scala-Tools Maven2 Repository</name>
             <url>https://oss.sonatype.org/content/groups/scala-tools/</url>
         </repository>
-        <repository>
-            <id>biosim</id>
-            <url>http://biosimrepomirror.googlecode.com/svn/trunk</url>
-        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -60,16 +55,12 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.ati</groupId>
-            <artifactId>iaservices</artifactId>
-            <version>${iaservices.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe</groupId>
-            <artifactId>config</artifactId>
-            <version>1.0.0</version>
+            <groupId>com.protegra-ati</groupId>
+            <artifactId>agentservices-store-ia</artifactId>
+            <version>${agentservices-store.version}</version>
         </dependency>
     </dependencies>
+
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <extensions>
@@ -157,32 +148,9 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.scalastyle</groupId>
-                <artifactId>scalastyle-maven-plugin</artifactId>
-                <version>0.2.0</version>
-                <configuration>
-                    <verbose>false</verbose>
-                    <failOnViolation>true</failOnViolation>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <failOnWarning>false</failOnWarning>
-                    <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
-                    <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
-                    <configLocation>${basedir}/lib/scalastyle_config.xml</configLocation>
-                    <outputFile>${project.basedir}/scalastyle-output.xml</outputFile>
-                    <outputEncoding>UTF-8</outputEncoding>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <phase>compile</phase>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
+
     <reporting>
         <plugins>
             <plugin>
