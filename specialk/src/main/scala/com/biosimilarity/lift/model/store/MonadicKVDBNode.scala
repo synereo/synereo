@@ -73,7 +73,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   val RsrcMsgs : RsrcMsgTypes = protoRsrcMsgs
 
   type KVDBNodeRequest = Msgs.MDistributedTermSpaceRequest[Namespace,Var,Tag,Value]
-  type KVDBNodeResponse = RsrcMsgs.RsrcResponse[Namespace,Var,Tag,Value]
+  type KVDBNodeResponse = RsrcMsgs.RsrcResponse[Namespace,Var,Tag,Value]  
 
   abstract class AbstractMonadicKVDB[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, +Node[Rq <: ReqBody,Rs <: RspBody] <: AbstractMonadicKVDBNode[Rq,Rs,Node]](
     override val name : Moniker

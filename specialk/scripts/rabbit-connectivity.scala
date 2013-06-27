@@ -16,6 +16,25 @@ object RabbitMQConnectivityTest extends UUIDOps {
   import AMQPDefaults._
   import MonadicAMQPUnitTest._
   import scala.collection.mutable.HashMap
+
+  def tStream[T]( seed : T )( fresh : T => T ) : Stream[T] = {
+    lazy val loopStrm : Stream[T] =
+      ( List( seed ) ).toStream append ( loopStrm map fresh );
+    loopStrm
+  }
+
+  case class Msg( b : Boolean, s : String, i : Int, r : Option[Msg] )
+
+  def msgStrm() : Stream[Msg] = {
+    tStream[Msg]( new Msg( true, "yo!", 0, None ) )(
+      {
+	( m : Msg ) => {
+	  new Msg( m.b, m.s, m.i + 1, Some( m ) )
+	}
+      }
+    )
+  }
+
   def freshQueueName() : String = {
     "amqp_" + getUUID
   }

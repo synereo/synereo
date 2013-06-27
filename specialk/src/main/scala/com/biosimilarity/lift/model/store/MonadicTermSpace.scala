@@ -111,6 +111,121 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 	 }
 
     override type Substitution = PrologSubstitution
+
+    case class KeyKUnifiySpaceLock(
+      @transient override val locker : HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int],
+      override val maxOccupancy : Int
+    ) extends ModeSpaceLock[RK,mTT.GetRequest] 
+         with CnxnUnificationTermQuery[Namespace,Var,Tag]
+         with CnxnConversions[Namespace,Var,Tag] with UUIDOps {  
+           override type ModeType = HigherStation[RK,mTT.GetRequest]
+           override def makeMode( ptn : mTT.GetRequest, rk : Option[RK] ) : ModeType = {
+             HigherStation[RK,mTT.GetRequest]( ptn, rk, true )
+           }
+           override def makeMode( ptn : mTT.GetRequest, rk : RK ) : ModeType = {
+             HigherStation[RK,mTT.GetRequest]( ptn, Some( rk ), true )
+           }
+           override def makeMode( ptn : mTT.GetRequest ) : ModeType = {
+             HigherStation[RK,mTT.GetRequest]( ptn, None, false )
+           }
+           def makeMode( ptn : mTT.GetRequest, rk : Option[RK], polarity : Boolean ) : ModeType = {
+             HigherStation[RK,mTT.GetRequest]( ptn, rk, polarity )
+           }
+           def makeMode( ptn : mTT.GetRequest, rk : RK, polarity : Boolean ) : ModeType = {
+             HigherStation[RK,mTT.GetRequest]( ptn, Some( rk ), polarity )
+           }
+           def makeMode( ptn : mTT.GetRequest, polarity : Boolean ) : ModeType = {
+             HigherStation[RK,mTT.GetRequest]( ptn, None, polarity )
+           }
+
+           override def occupy( s : ModeType ) : Unit = synchronized {
+             while ( ! allowedIn( s ) ) wait()
+           }
+           override def occupy( ptn : mTT.GetRequest ) : Unit = {
+             occupy( makeMode( ptn, false ) )
+           }
+           override def occupy( ptn : mTT.GetRequest, rk : RK ) : Unit  = {
+             occupy( makeMode( ptn, rk, true ) )
+           }
+           override def occupy( ptn : mTT.GetRequest, optRK : Option[RK] ) : Unit  = {
+             occupy( makeMode( ptn, optRK, true ) )
+           }
+           
+           // allowedIn( ( pattern, boolean ), m = [( pattern1, boolean1 ), ..., ( patternN, booleanN )] )
+           // =
+           // and( for( ( p, b ) <- m if unifies( pattern, p ) ) yield { b } )
+
+           override def allowedIn( s : ModeType ) : Boolean = {
+             val ptn = s.ptn          
+             val polarity = s.polarity
+
+             def loop(
+               pairs : List[( ModeSpaceLock[RK,mTT.GetRequest]#ModeType, Int )]
+             ) : Boolean = {
+               pairs match {
+                 case Nil => true
+                 case ( e, i ) :: rPairs => {
+                   matchMap( e.ptn, ptn ) match {
+                     case Some( _ ) => {
+                       val hs : HigherStation[RK,mTT.GetRequest] =
+                         e.asInstanceOf[HigherStation[RK,mTT.GetRequest]]
+                       if ( hs.polarity && polarity ) {
+                         loop( rPairs )
+                       }
+                       else false
+                     }
+                     case None => {
+                       loop( rPairs )
+                     }
+                   }
+                 }
+               }             
+             }
+
+             val pass = loop( locker.toList )
+             if ( pass ) { locker += ( s -> 1 ) }
+             pass
+           }
+           override def leave( s : ModeType ) : Unit = {
+             locker.get( s ) match {
+               case Some( 1 ) => {
+	         locker -= s
+	         notify()
+               }
+               case Some( i ) => {
+	         locker += ( s -> ( i - 1 ) )
+	         notify()
+               }
+               case None => {
+	         /* throw new Exception */ //println( "leaving lock without entering" )
+               }
+             }
+           }
+         }
+
+    override def spaceLock : ModeSpaceLock[RK,mTT.GetRequest] = {
+      _spaceLock match {
+        case Some( sl ) => sl
+        case null => {
+	  val sl =
+	    KeyKUnifiySpaceLock(
+	      new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
+	      1
+	    )
+	  _spaceLock = Some( sl )
+	  sl
+        }
+        case None => {
+	  val sl =
+	    KeyKUnifiySpaceLock(
+	      new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
+	      1
+	    )
+	  _spaceLock = Some( sl )
+	  sl
+        }
+      }
+    }
     
     override def representative(
       ptn : mTT.GetRequest

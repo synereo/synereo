@@ -206,6 +206,12 @@ case class Station[RK,Pattern](
   @transient override val optRK : Option[RK]
 ) extends Mode[RK,Pattern]
 
+case class HigherStation[RK,Pattern](
+  @transient override val ptn : Pattern,
+  @transient override val optRK : Option[RK],
+  polarity : Boolean
+) extends Mode[RK,Pattern]
+
 trait ModeSpaceLock[RK,Pattern] {
   type ModeType <: Mode[RK,Pattern]
   def locker : HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int]
@@ -435,6 +441,12 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def theChannels : Map[Place,Resource]
   def theWaiters : Map[Place,List[RK]]
   def theSubscriptions : Map[Place,List[RK]]
+
+  // comm( fits : ( Pattern, Pattern ) => Boolean ): 
+  // fits( t, s ) => t?( x )P | s!( y ) -> P{ y/x }
+  // commK( fits : ( Pattern, Pattern ) => Boolean ):
+  // fits( t, s ), unifies( u, v, s ) => 
+  // t?( u )P | s!( v ) -> Ps
 
   def fits( ptn : Pattern, place : Place ) : Boolean
   def fitsK( ptn : Pattern, place : Place ) : Option[Substitution]
