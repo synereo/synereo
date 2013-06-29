@@ -66,7 +66,7 @@ trait AgentKVDBMongoNodeScope[Namespace,Var,Tag,Value]
 extends PersistedMonadicKVDBMongoNodeScope[Namespace,Var,Tag,Value]
 //with CnxnDTSMsgScope[Namespace,Var,Tag,Value]
 with AgentCnxnTypeScope {
-  trait AgentPersistenceScope extends PersistenceScope {
+  trait AgentPersistenceScope extends PersistenceScope {    
     class BaseAgentKVDB[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse, +KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BaseAgentKVDBNode[Rq,Rs,KVDBNode]](
       override val name : Moniker      
     ) extends BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode](
