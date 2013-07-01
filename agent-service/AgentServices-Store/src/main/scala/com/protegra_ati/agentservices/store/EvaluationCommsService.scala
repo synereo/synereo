@@ -98,12 +98,56 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
-    // Signup process
-    // login.html asks for email, password, posts them to /signup
-    // generate cap and salt, mac cap and store salt+hash(pw+salt) on cap self connection
-    // send email with URL
-    // redirect to login
-    // def secureSignup
+    val userDataFilter = fromTermString(
+        "userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
+      ).getOrElse(throw new Exception(""))
+    val pwmacFilter = fromTermString("\"pwmac\"").getOrElse(throw new Exception(""))
+
+    def secureSignup(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      email: String,
+      password: String,
+      redirect: String => Unit
+    ) : Unit = {
+      import DSLCommLink.mTT
+      
+      // Signup process
+      // login.html asks for email, password, posts them to /signup
+      // generate cap, mac cap and store salt+mac(pw) on cap self connection
+      // send email with URL
+      // redirect to login
+      val cap = UUID.randomUUID.toString
+      val macInstance = Mac.getInstance("HmacSHA256")
+      macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
+      val hex = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
+      val capAndMac = cap + hex
+      val capURI = new URI("usercap://" + cap)
+      val capSelfCnxn = new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
+
+      macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
+      val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+
+      val onPost: Option[mTT.Resource] => Unit = ( dummy : Option[mTT.Resource] ) => {
+        post[String](erql, erspl)(
+          userDataFilter,
+          List(capSelfCnxn),
+          "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
+              "listOfCnxns(), lastActiveFilter(\"\"))",
+          ( dummy : Option[mTT.Resource] ) => {
+            // TODO: send email with capAndMac
+            redirect("login#" + capAndMac)
+          }
+        )
+      }
+      post[String](erql, erspl)(
+        pwmacFilter,
+        List(capSelfCnxn),
+        pwmac,
+        onPost
+      )
+    }
     
     def secureLogin( 
       erql : CnxnCtxtLabel[String,String,String],
@@ -111,7 +155,6 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     )(
       capAndMac: String, // 36 characters from UUID.randomUUID, 10 hex digits for 40 bits of MAC
       password: String,
-      email: String,
       complete: String => Unit
     ) : Unit = {
       import DSLCommLink.mTT
@@ -142,9 +185,6 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             if (hex != pwmac) {
               complete("Bad password.")
             } else {
-              val userDataFilter = fromTermString(
-                  "userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
-                ).getOrElse(throw new Exception(""))
               val onUserDataFeed: Option[mTT.Resource] => Unit = _ match {
                 case Some(rbnd: mTT.RBound) => {
                   val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
@@ -177,7 +217,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             }
           }
         }
-        val filter = fromTermString("userInfo()").getOrElse(throw new Exception(""))
+        val filter = fromTermString("\"pwmac\"").getOrElse(throw new Exception(""))
         feed( erql, erspl )(filter, List(capSelfCnxn), onFeed)
       }
     }
