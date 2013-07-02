@@ -162,6 +162,29 @@ trait EvaluatorService extends HttpService
         _.redirect("http://64.27.3.17:6080/agentui.html", MovedPermanently)
       }
     } ~
+    path("newUser") {
+      post {
+        decodeRequest(NoEncoding) {
+          entity(as[String]) { jsonStr => ctx =>
+            try {
+              val json = parse(jsonStr)
+              val email = (json \ "email").extract[String]
+              val password = (json \ "password").extract[String]
+              val sessionID = UUID.randomUUID
+              val erql = agentMgr().erql( sessionID )
+              val erspl = agentMgr().erspl( sessionID ) 
+              
+              val redirect: String => Unit = (capAndMac: String) => {
+                val where = "http://64.27.3.17:6080/agentui.html#" + capAndMac
+                ctx.redirect(where, StatusCodes.SeeOther)
+              }
+
+              agentMgr().secureSignup(erql, erspl)(email, password, redirect)
+            }
+          }
+        }
+      }
+    } ~
     path("api") {
       post {
         decodeRequest(NoEncoding) {
@@ -171,24 +194,24 @@ trait EvaluatorService extends HttpService
               val msgType = (json \ "msgType").extract[String]
               msgType match {
                 case "initializeSessionRequest" => {
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-		  println( "in initializeSessionRequest : " + jsonStr )
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( "in initializeSessionRequest : " + jsonStr )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   
                   initializeSessionRequest( json, "evaluator-service" )
                   (cometActor ! SessionPing("", _))
                 }
                 case "sessionPing" => {
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-		  println( "in sessionPing " )
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( "in sessionPing " )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   val sessionURI = sessionPing(json)
                   (cometActor ! SessionPing(sessionURI, _))
                 }
                 case "evalSubscribeRequest" => {
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-		  println( "in evalSubscribeRequest " )
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( "in evalSubscribeRequest " )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   val (sessionURI, body) = 
                   (evalSubscribeRequest(json), HttpBody(`application/json`,
                     """{
@@ -204,9 +227,9 @@ trait EvaluatorService extends HttpService
                   complete(StatusCodes.OK)
                 }
                 case "closeSessionRequest" => {
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-		  println( "in closeSubscribeRequest " )
-		  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( "in closeSubscribeRequest " )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   val (sessionURI, body) = closeSessionRequest(json)
                   cometActor ! CometMessage(sessionURI, body)
                   complete(StatusCodes.OK)
@@ -215,15 +238,15 @@ trait EvaluatorService extends HttpService
               }
             } catch {
               case th: Throwable => {
-		val writer : java.io.StringWriter = new java.io.StringWriter()
-		val printWriter : java.io.PrintWriter = new java.io.PrintWriter( writer )
-		th.printStackTrace( printWriter )
-		printWriter.flush()
+                val writer : java.io.StringWriter = new java.io.StringWriter()
+                val printWriter : java.io.PrintWriter = new java.io.PrintWriter( writer )
+                th.printStackTrace( printWriter )
+                printWriter.flush()
 
-		val stackTrace : String = writer.toString()
-		println( "Malformed request: \n" + stackTrace )
-		complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
-	      }
+                val stackTrace : String = writer.toString()
+                println( "Malformed request: \n" + stackTrace )
+                complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
+              }
             }
           } // jsonStr
         } // decodeRequest
@@ -233,17 +256,17 @@ trait EvaluatorService extends HttpService
                                      // sure servers are connected
       // BUGBUG : lgm -- make this secure!!!
       get {
-	parameters('whoAmI) { 
-	  ( whoAmI : String ) => {	    
-	    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-	    println( "in admin/connectServers2 " )
-	    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-	  
-	    connectServers( "evaluator-service", UUID.randomUUID )        
-	  
+        parameters('whoAmI) { 
+          ( whoAmI : String ) => {          
+            println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+            println( "in admin/connectServers2 " )
+            println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+          
+            connectServers( "evaluator-service", UUID.randomUUID )        
+          
             (cometActor ! SessionPing("", _))
-	  }
-	}
+          }
+        }
       }
     } ~
     path("sendMessage") {
