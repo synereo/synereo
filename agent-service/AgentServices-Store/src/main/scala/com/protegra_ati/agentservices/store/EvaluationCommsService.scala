@@ -137,7 +137,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
               "listOfCnxns(), lastActiveFilter(\"\"))",
           ( dummy : Option[mTT.Resource] ) => {
             // TODO: send email with capAndMac
-            redirect("login#" + capAndMac)
+            redirect(capAndMac)
           }
         )
       }
