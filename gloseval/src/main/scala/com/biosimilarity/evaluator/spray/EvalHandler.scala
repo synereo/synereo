@@ -90,29 +90,30 @@ trait EvalHandler {
 
     val postHandler : Option[mTT.Resource] => Unit = 
       onPost match {
-	case Some( pHndlr ) => {
-	  pHndlr
-	}
-	case None => {
-	  // BUGBUG : lgm -- fix this!
-	  val bodyText =
-	    """{
+        case Some( pHndlr ) => {
+          pHndlr
+        }
+        case None => {
+          // BUGBUG : lgm -- fix this!
+          val bodyText =
+            """{
               "msgType": "initializeSessionResponse",
               "content": {
-		"sessionURI": "agent-session://ArtVandelay@session1",
-		"listOfAliases": [],
-		"listOfLabels": [],
-		"lastActiveFilter": ""
+                "sessionURI": "agent-session://ArtVandelay@session1",
+                "listOfAliases": [],
+                "listOfLabels": [],
+                "lastActiveFilter": ""
               }
             }
           """
-	  ( optRsrc : Option[mTT.Resource] ) => {
-	    println( "got response: " + optRsrc )
-	    CompletionMapper.complete( srvcKey, optRsrc )
-	  }
-	}
+          ( optRsrc : Option[mTT.Resource] ) => {
+            println( "got response: " + optRsrc )
+            CompletionMapper.complete( srvcKey, optRsrc )
+          }
+        }
       }
 
+    // (str:String) => complete(HttpResponse(entity = HttpBody(`application/json`, str)))
     agentMgr().secureCnxn(
       userName, 
       userPwd, 
@@ -154,8 +155,8 @@ trait EvalHandler {
   def connectServers( srvcKey : String, sessionId : UUID ) : Unit = {
     connectServers( sessionId )(
       ( optRsrc : Option[mTT.Resource] ) => {
-	println( "got response: " + optRsrc )
-	CompletionMapper.complete( srvcKey, optRsrc )
+        println( "got response: " + optRsrc )
+        CompletionMapper.complete( srvcKey, optRsrc )
       }
     )    
   }
