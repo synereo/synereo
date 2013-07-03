@@ -305,3 +305,16 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     }    
   }
 }
+
+package usage {
+  object EvaluationServiceContext
+  extends Serializable {
+    @transient
+    lazy val eServe =
+      new EvaluationCommsService
+         with EvalConfig
+         with DSLCommLinkConfiguration
+         with Serializable {
+         }
+  }
+}
