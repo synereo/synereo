@@ -42,7 +42,7 @@ libraryDependencies ++= Seq(
 //  "org.json4s"             %   "json4s-jackson_2.9.2" % "3.1.0",
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
   "org.scala-lang"         %   "scala-actors"       % "2.10.0",
-  "com.biosimilarity.lift" %   "specialK"           % "1.1.4.8",
+  "com.biosimilarity.lift" %   "specialK"           % "1.1.4.9",
   "com.protegra-ati"       %   "agentservices-store-ia" % "1.4.5-SNAPSHOT",
   "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
