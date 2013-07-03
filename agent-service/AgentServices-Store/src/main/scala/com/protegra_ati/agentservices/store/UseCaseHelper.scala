@@ -85,6 +85,86 @@ trait MessageGeneration extends CnxnString[String,String,String] {
       "David Byrne"
     )          
   }  
+
+  def tStream[T]( seed : T )( fresh : T => T ) : Stream[T] = {
+    lazy val loopStrm : Stream[T] =
+      ( List( seed ) ).toStream append ( loopStrm map fresh );
+    loopStrm
+  }    
+  def uuidStream() : Stream[UUID] =
+    tStream[UUID]( UUID.randomUUID )(
+      {
+        ( uuid : UUID ) => {
+          UUID.randomUUID
+        }
+      }
+    )
+
+  def randomLabelStr(
+    uuidStrm : Stream[UUID] = uuidStream(),
+    prefix : String = "l",
+    maxBredth : Int = 5,
+    maxDepth : Int = 5
+  ) : String = {
+    val rndm = new scala.util.Random()
+    if ( maxBredth > 0 ) {        
+      val bredth = rndm.nextInt( maxBredth ) + 1
+      val functor = "l" + uuidStrm( 0 ).toString.replace( "-", "" )
+      val subterms =
+        if ( bredth > 1 ) {
+          ( randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString /: ( 2 to bredth ) )(
+            {
+              ( acc, e ) => {
+                acc + "," + randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString
+              }
+            }
+          )
+        }
+        else {
+          randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString
+        }
+      functor + "(" + subterms + ")"
+    } else {
+      ( rndm.nextInt( 2 ) > 0 ).toString
+    }
+  }
+
+  lazy val uuidStreamStream : Stream[Stream[UUID]] =
+      tStream[Stream[UUID]]( uuidStream() )(
+        {
+          ( uuidStrm : Stream[UUID] ) => {
+            uuidStream()
+          }
+        }
+      )    
+
+  lazy val evalRequestLabelStream : Stream[CnxnCtxtLabel[String,String,String]] = {
+    uuidStreamStream.take( 1 )( 0 ).map(
+      ( uuid : UUID ) => {
+        DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( uuid.toString ).getOrElse( 
+          throw new Exception( "error making evalRequestLabel" )
+        )
+      }
+    )
+  }
+  lazy val selfCnxnStream : Stream[ConcreteHL.PortableAgentCnxn] = {
+    uuidStreamStream.take( 2 )( 1 ).map(
+      ( uuid : UUID ) => {
+        ConcreteHL.PortableAgentCnxn( uuid.toString.toURI, "", uuid.toString.toURI) 
+      }
+    )
+  }
+  lazy val randomLabelStream : Stream[CnxnCtxtLabel[String,String,String]] = {
+    uuidStreamStream.map(
+      {
+        ( uuidStrm : Stream[UUID] ) => {
+          fromTermString(
+            randomLabelStr( uuidStrm )
+          ).getOrElse( throw new Exception( "unable to parse label string" ) )
+        }
+      }
+    )
+  }
 }
 
 object CommManagement {
@@ -274,7 +354,7 @@ trait UseCaseHelper extends MessageGeneration
  with StorageManagement
  with ExerciseHLDSL
  with AgentCnxnTypes
- with CnxnString[String,String,String] {
+ with CnxnString[String,String,String] {   
 }
 
 package usage {
