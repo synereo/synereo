@@ -104,12 +104,14 @@ trait MessageGeneration extends CnxnString[String,String,String] {
     uuidStrm : Stream[UUID] = uuidStream(),
     prefix : String = "l",
     maxBredth : Int = 5,
-    maxDepth : Int = 5
+    maxDepth : Int = 5,
+    streamPrefix : Int = 1000
   ) : String = {
     val rndm = new scala.util.Random()
     if ( maxBredth > 0 ) {        
       val bredth = rndm.nextInt( maxBredth ) + 1
-      val functor = "l" + uuidStrm( 0 ).toString.replace( "-", "" )
+      val functorLocation = rndm.nextInt( streamPrefix )
+      val functor = "l" + uuidStrm( functorLocation ).toString.replace( "-", "" )
       val subterms =
         if ( bredth > 1 ) {
           ( randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString /: ( 2 to bredth ) )(
