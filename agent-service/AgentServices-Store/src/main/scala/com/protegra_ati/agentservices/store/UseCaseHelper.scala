@@ -100,18 +100,31 @@ trait MessageGeneration extends CnxnString[String,String,String] {
       }
     )
 
+  def randomGroundTerm(
+    rndm : scala.util.Random = new scala.util.Random()
+  ) : String = {
+    val termType = rndm.nextInt( 3 )
+    termType match {
+      case 0 => ( rndm.nextInt( 2 ) > 0 ).toString
+      case 1 => rndm.nextInt( Int.MaxValue ).toString
+      //case 2 => rndm.nextInt( Int.MaxValue ).toFloat.toString
+      case 2 => "\"" + UUID.randomUUID().toString + "\""
+    }
+  }
+
   def randomLabelStr(
     uuidStrm : Stream[UUID] = uuidStream(),
-    prefix : String = "l",
+    prefix : String = "label",
     maxBredth : Int = 5,
     maxDepth : Int = 5,
+    truncate : Int = 10,
     streamPrefix : Int = 1000
   ) : String = {
     val rndm = new scala.util.Random()
     if ( maxBredth > 0 ) {        
       val bredth = rndm.nextInt( maxBredth ) + 1
       val functorLocation = rndm.nextInt( streamPrefix )
-      val functor = "l" + uuidStrm( functorLocation ).toString.replace( "-", "" )
+      val functor = prefix + uuidStrm( functorLocation ).toString.replace( "-", "" ).substring( 0, truncate )
       val subterms =
         if ( bredth > 1 ) {
           ( randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString /: ( 2 to bredth ) )(
@@ -127,7 +140,7 @@ trait MessageGeneration extends CnxnString[String,String,String] {
         }
       functor + "(" + subterms + ")"
     } else {
-      ( rndm.nextInt( 2 ) > 0 ).toString
+      randomGroundTerm( rndm )
     }
   }
 
