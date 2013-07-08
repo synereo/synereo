@@ -657,9 +657,11 @@ package usage {
     def doSomeInserts(
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
       maxPosts : Int = 1000,
+      minPosts : Int = 1,
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
-      val numPosts = rndm.nextInt( maxPosts ) + 1
+      val numPosts =
+        scala.math.min( rndm.nextInt( maxPosts ) + 1, minPosts )
       val sessionID = UUID.randomUUID
       val erql = agentMgr().erql( sessionID )
       val erspl = agentMgr().erspl( sessionID )
@@ -672,9 +674,11 @@ package usage {
     def doSomeFeeds(
       feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
       maxFeeds : Int = 1000,
+      minFeeds : Int = 1,
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
-      val numFeedExprs = rndm.nextInt( maxFeeds ) + 1
+      val numFeedExprs =
+        scala.math.min( rndm.nextInt( maxFeeds ) + 1, minFeeds )
       val sessionID = UUID.randomUUID
       val erql = agentMgr().erql( sessionID )
       val erspl = agentMgr().erspl( sessionID )
@@ -687,9 +691,11 @@ package usage {
     def doSomeScores(
       scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
       maxScores : Int = 1000,
+      minScores : Int = 1,
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
-      val numScoreExprs = rndm.nextInt( maxScores ) + 1
+      val numScoreExprs =
+        scala.math.min( rndm.nextInt( maxScores ) + 1, minScores )
       val sessionID = UUID.randomUUID
       val erql = agentMgr().erql( sessionID )
       val erspl = agentMgr().erspl( sessionID )
