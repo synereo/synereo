@@ -56,6 +56,8 @@ libraryDependencies ++= Seq(
   //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.2")
 )    
     
+// Just a touch to retrigger build
+
 seq(Revolver.settings: _*)
 
 sbtassembly.Plugin.assemblySettings
