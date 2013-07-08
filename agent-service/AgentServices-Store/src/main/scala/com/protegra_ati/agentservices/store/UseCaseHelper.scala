@@ -150,11 +150,17 @@ trait FuzzyTermStreams {
   }
   def labelTuple(
     l : Int,
-    lssMaxPos : Int = ( Int.MaxValue / 1000000 ),
+    lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
     rndm : scala.util.Random = new scala.util.Random(),
-    labelStrStream : Stream[String] = mkRandomLabelStringStream()
+    optlss : Option[Stream[String]] = None,
+    labelStrStream : Stream[String] = mkRandomLabelStringStream()    
   ) : List[String] = {
-    val lss : Stream[String] = labelStrStream.take( lssMaxPos + 1 )
+    val lss : Stream[String] = 
+      optlss match {
+        case None => labelStrStream.take( lssMaxPos + 1 )
+        case Some( l ) => l
+      }
+
     ( List[String](  ) /: ( 1 to l ) )( 
       {
         ( acc, e ) => acc ++ List[String]( lss( rndm.nextInt( lssMaxPos ) ) )
@@ -163,17 +169,18 @@ trait FuzzyTermStreams {
   }
   def mkRandomLabelStringTupleStream(
     maxLabels : Int = 10,
-    lssMaxPos : Int = ( Int.MaxValue / 1000000 ),
+    lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
     rndm : scala.util.Random = new scala.util.Random(),
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[List[String]] = {    
     val numLabels : Int = rndm.nextInt( maxLabels ) + 2
+    val lss = labelStrStrm.take( lssMaxPos + 1 )
     
     tStream[List[String]]( 
-      labelTuple( numLabels, lssMaxPos, rndm, labelStrStrm )
+      labelTuple( numLabels, lssMaxPos, rndm, Some( lss ), labelStrStrm )
     )(
       ( seed : List[String] ) => {
-        labelTuple( numLabels, lssMaxPos, rndm, labelStrStrm )
+        labelTuple( numLabels, lssMaxPos, rndm, Some( lss ), labelStrStrm )
       }
     )      
   }
@@ -239,7 +246,7 @@ trait FuzzyTermStreams {
   }
   def mkRandomCnxnTupleStream(
     maxCnxns : Int = 10,    
-    lssMaxPos : Int = ( Int.MaxValue / 1000000 ),
+    lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
     rndm : scala.util.Random = new scala.util.Random(),
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[List[ConcreteHL.PortableAgentCnxn]] = {    
@@ -251,10 +258,10 @@ trait FuzzyTermStreams {
 
     val tupleStrm : Stream[List[( String, UUID )]] = 
       tStream[List[( String, UUID )]]( 
-        ( labelTuple( numCnxns - 1 ).zip( uuidTuple( numCnxns - 1 ) ) )
+        ( labelTuple( numCnxns - 1, lssMaxPos, rndm, Some( lss ) ).zip( uuidTuple( numCnxns - 1 ) ) )
       )(
         ( seed : List[( String, UUID )] ) => {
-          ( labelTuple( numCnxns - 1 ).zip( uuidTuple( numCnxns - 1 ) ) )
+          ( labelTuple( numCnxns - 1, lssMaxPos, rndm, Some( lss ) ).zip( uuidTuple( numCnxns - 1 ) ) )
         }
       )
       
@@ -340,8 +347,7 @@ trait MessageGeneration {
 trait FuzzyMessageStreams {
   self : CnxnString[String,String,String]
           with FuzzyTerms with FuzzyStreams
-          with FuzzyTermStreams
-          with MessageGeneration =>
+          with FuzzyTermStreams =>
             import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   def mkFeedExprStream(
     maxCnxns : Int = 10,
@@ -360,6 +366,10 @@ trait FuzzyMessageStreams {
         }
       }
     )
+  }
+  @transient
+  lazy val feedExprStream : Stream[ConcreteHL.FeedExpr] = {
+    mkFeedExprStream()
   }
   def mkScoreExprStream(
     maxCnxns : Int = 10,
@@ -397,6 +407,10 @@ trait FuzzyMessageStreams {
       }
     )
   }
+  @transient
+  lazy val scoreExprStream : Stream[ConcreteHL.ScoreExpr] = {
+    mkScoreExprStream()
+  }
   def mkPostExprStream(
     maxCnxns : Int = 10,
     rndm : scala.util.Random = new scala.util.Random(),
@@ -416,6 +430,10 @@ trait FuzzyMessageStreams {
         }
       }
     )
+  }
+  @transient
+  lazy val postExprStream : Stream[ConcreteHL.InsertContent[String]] = {
+    mkPostExprStream()
   }
 }
 
@@ -630,4 +648,56 @@ package usage {
      with AgentCnxnTypes
      with CnxnString[String,String,String]
      with Serializable
+
+  object StreamBasedClient
+  extends EvaluationCommsService  
+  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
+  with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
+  with CnxnString[String,String,String] with Serializable {
+    def doSomeInserts(
+      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+      maxPosts : Int = 1000,
+      rndm : scala.util.Random = new scala.util.Random()
+    ) : Unit = {
+      val numPosts = rndm.nextInt( maxPosts ) + 1
+      val sessionID = UUID.randomUUID
+      val erql = agentMgr().erql( sessionID )
+      val erspl = agentMgr().erspl( sessionID )
+      for(
+        ConcreteHL.InsertContent( filter, cnxns, content : String ) <- postExprStrm.take( numPosts )
+      ) {
+        agentMgr().post[String]( erql, erspl )( filter, cnxns, content )
+      }
+    }
+    def doSomeFeeds(
+      feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
+      maxFeeds : Int = 1000,
+      rndm : scala.util.Random = new scala.util.Random()
+    ) : Unit = {
+      val numFeedExprs = rndm.nextInt( maxFeeds ) + 1
+      val sessionID = UUID.randomUUID
+      val erql = agentMgr().erql( sessionID )
+      val erspl = agentMgr().erspl( sessionID )
+      for(
+        ConcreteHL.FeedExpr( filter, cnxns ) <- feedExprStrm.take( numFeedExprs )
+      ) {
+        agentMgr().feed( erql, erspl )( filter, cnxns )
+      }
+    }
+    def doSomeScores(
+      scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
+      maxScores : Int = 1000,
+      rndm : scala.util.Random = new scala.util.Random()
+    ) : Unit = {
+      val numScoreExprs = rndm.nextInt( maxScores ) + 1
+      val sessionID = UUID.randomUUID
+      val erql = agentMgr().erql( sessionID )
+      val erspl = agentMgr().erspl( sessionID )
+      for(
+        ConcreteHL.ScoreExpr( filter, cnxns, staff ) <- scoreExprStrm.take( numScoreExprs )
+      ) {
+        agentMgr().score( erql, erspl )( filter, cnxns, staff )
+      }
+    }
+  }
 }
