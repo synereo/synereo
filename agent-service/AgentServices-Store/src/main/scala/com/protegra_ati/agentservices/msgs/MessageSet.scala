@@ -20,8 +20,22 @@ trait AbstractEvaluatorMessageSet {
 
   trait EvaluatorMessage
 
+  case class createUserRequest(
+    email: String,
+    password: String,
+    jsonBlob: String
+  )
+  case class createUserResponse(
+    agentURI: AgentURI
+  )
+  case class createUserError(
+    reason: String
+  )
+
   // initializeSessionRequest( sessionURI )
-  // agentURI ::= agent://[user[:pwd]@]host[:port]/agentId
+  // agentURI ::= agent://email/<emailAddress>?password=<pw> |
+  //              agent://cap/<capAndMac>?password=<pw>
+  
   case class initializeSessionRequest(
     agentURI : AgentURI
   ) extends EvaluatorMessage
@@ -32,6 +46,7 @@ trait AbstractEvaluatorMessageSet {
   //   sessionURI
   // )
   // sessionURI ::= agent-session://[userToken@]sessionId[/subsessionId]*[?parm=value[,parm=value]*]
+
   case class initializeSessionError(
     agentURI : AgentURI,
     reason : String
