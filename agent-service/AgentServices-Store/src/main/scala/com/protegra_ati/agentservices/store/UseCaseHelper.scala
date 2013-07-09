@@ -619,6 +619,32 @@ trait ExerciseHLDSL {
   }
 }
 
+trait UseCaseCapture {
+  import org.json4s._
+  import org.json4s.jackson.Serialization
+  import org.json4s.native.Serialization.{read, write}
+  implicit val formats = Serialization.formats(NoTypeHints)
+
+  def captureUseCase( 
+    fileName : String = "DieselUseCase",
+    fileSfx : String = ".txt"
+  )(
+    msg : ConcreteHL.HLExpr
+  ) : Unit = {
+    try {
+      val f : java.io.File = new java.io.File( fileName + fileSfx )
+      val p : java.io.PrintWriter = new java.io.PrintWriter( f )
+      val ser = write( msg )
+      p.println( ser )
+    }
+    catch {
+      case e : Throwable => {
+        println( "warning case not captured: " + msg )
+      }
+    }
+  }
+}
+
 trait UseCaseHelper extends MessageGeneration
  with ChannelGeneration
  with StorageManagement
