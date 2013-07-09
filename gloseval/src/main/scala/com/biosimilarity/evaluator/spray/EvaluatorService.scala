@@ -162,29 +162,6 @@ trait EvaluatorService extends HttpService
         _.redirect("http://64.27.3.17:6080/agentui.html", MovedPermanently)
       }
     } ~
-    path("newUser") {
-      post {
-        decodeRequest(NoEncoding) {
-          entity(as[String]) { jsonStr => ctx =>
-            try {
-              val json = parse(jsonStr)
-              val email = (json \ "email").extract[String]
-              val password = (json \ "password").extract[String]
-              val sessionID = UUID.randomUUID
-              val erql = agentMgr().erql( sessionID )
-              val erspl = agentMgr().erspl( sessionID ) 
-              
-              val redirect: String => Unit = (capAndMac: String) => {
-                val where = "http://64.27.3.17:6080/agentui.html#" + capAndMac
-                ctx.redirect(where, StatusCodes.SeeOther)
-              }
-
-              agentMgr().secureSignup(erql, erspl)(email, password, redirect)
-            }
-          }
-        }
-      }
-    } ~
     path("api") {
       post {
         decodeRequest(NoEncoding) {
@@ -193,6 +170,14 @@ trait EvaluatorService extends HttpService
               val json = parse(jsonStr)
               val msgType = (json \ "msgType").extract[String]
               msgType match {
+                case "createUserRequest" => {
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  println( "in createUserRequest : " + jsonStr )
+                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                  
+                  createUserRequest( json, "evaluator-service" )
+                  (cometActor ! SessionPing("", _))
+                }
                 case "initializeSessionRequest" => {
                   println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   println( "in initializeSessionRequest : " + jsonStr )

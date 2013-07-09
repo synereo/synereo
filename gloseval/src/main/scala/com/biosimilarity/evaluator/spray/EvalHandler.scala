@@ -44,9 +44,9 @@ object CompletionMapper {
   import DSLCommLink.mTT
   @transient
   val map = new HashMap[String,HttpService]()
-  def complete( key : String, optRsrc : Option[mTT.Resource] ) : Unit = {
+  def complete( key : String, message : String ) : Unit = {
     for( srvc <- map.get( key ) ) {
-      srvc.complete(HttpResponse(entity = HttpBody(`text/html`, optRsrc.toString)))
+      srvc.complete(HttpResponse(entity = HttpBody(`text/html`, message)))
     }
   }
 }
@@ -58,6 +58,27 @@ trait EvalHandler {
 
   @transient
   implicit val formats = DefaultFormats
+
+  def createUserRequest(json : JValue, srvcKey : String) = {
+    val email = (json \ "email").extract[String]
+    val password = (json \ "password").extract[String]
+    val sessionID = UUID.randomUUID
+    val erql = agentMgr().erql( sessionID )
+    val erspl = agentMgr().erspl( sessionID ) 
+    
+    def complete(capAndMac: Either[String, String]): Unit = {
+      val body = capAndMac match {
+        // TODO(mike): use escaping interpolation
+        case Left(cap) => "{\"msgType\": \"createUserResponse\", \"content\": {\"agentURI\": \"agent://" + 
+            cap + "\"}}"
+        case Right(reason) => "{\"msgType\": \"createUserError\", \"content\": {\"reason\": \"" + 
+            reason + "\"}}"
+      }
+      CompletionMapper.complete( srvcKey, body )
+    }
+    agentMgr().secureSignup(erql, erspl)(email, password, complete)
+  }
+  
 
   def initializeSessionRequest(
     json : JValue,
@@ -71,55 +92,30 @@ trait EvalHandler {
     if (uri.getScheme() != "agent") {
       throw InitializeSessionException(agentURI, "Unrecognized scheme")
     }
+    val identType = uri.getHost()
+    val identInfo = uri.getPath.substring(1) // drop leading slash
     // TODO: get a proper library to do this
-    val userNameAndPwd = uri.getUserInfo.split(":")
-    val userName = userNameAndPwd(0)
-    val userPwd = userNameAndPwd.length match {
-      case 1 => ""
-      case _ => userNameAndPwd(1)
-    }
     val queryMap = new HashMap[String, String]
     uri.getRawQuery.split("&").map((x: String) => {
       val pair = x.split("=")
       queryMap += ((pair(0), pair(1)))
     })
-
+    var password = queryMap.get("password").getOrElse("")
+    
     val sessionID = UUID.randomUUID
     val erql = agentMgr().erql( sessionID )
     val erspl = agentMgr().erspl( sessionID ) 
 
-    val postHandler : Option[mTT.Resource] => Unit = 
-      onPost match {
-        case Some( pHndlr ) => {
-          pHndlr
-        }
-        case None => {
-          // BUGBUG : lgm -- fix this!
-          val bodyText =
-            """{
-              "msgType": "initializeSessionResponse",
-              "content": {
-                "sessionURI": "agent-session://ArtVandelay@session1",
-                "listOfAliases": [],
-                "listOfLabels": [],
-                "lastActiveFilter": ""
-              }
-            }
-          """
-          ( optRsrc : Option[mTT.Resource] ) => {
-            println( "got response: " + optRsrc )
-            CompletionMapper.complete( srvcKey, optRsrc )
-          }
-        }
-      }
+    def complete(message: String): Unit = {
+      CompletionMapper.complete( srvcKey, message )
+    }
 
     // (str:String) => complete(HttpResponse(entity = HttpBody(`application/json`, str)))
-    agentMgr().secureCnxn(
-      userName, 
-      userPwd, 
-      queryMap, 
-      agentMgr().post[String]( erql, erspl ), 
-      postHandler
+    agentMgr().secureLogin(erql, erspl)(
+      identType, 
+      identInfo, 
+      password,
+      complete
     )
   }
 
@@ -156,7 +152,7 @@ trait EvalHandler {
     connectServers( sessionId )(
       ( optRsrc : Option[mTT.Resource] ) => {
         println( "got response: " + optRsrc )
-        CompletionMapper.complete( srvcKey, optRsrc )
+        CompletionMapper.complete( srvcKey, optRsrc.toString )
       }
     )    
   }
