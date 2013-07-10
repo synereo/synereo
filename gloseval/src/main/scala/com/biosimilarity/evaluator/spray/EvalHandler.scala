@@ -63,6 +63,7 @@ trait EvalHandler {
     val email = (json \ "content" \ "email").extract[String]
     val password = (json \ "content" \ "password").extract[String]
     val sessionID = UUID.randomUUID
+    println("createUserRequest sessionID = " + sessionID.toString)
     val erql = agentMgr().erql( sessionID )
     val erspl = agentMgr().erspl( sessionID ) 
     
@@ -76,7 +77,9 @@ trait EvalHandler {
       }
       CompletionMapper.complete( srvcKey, body )
     }
+    println("createUserRequest calling agentMgr().secureSignup")
     agentMgr().secureSignup(erql, erspl)(email, password, complete)
+    println("createUserRequest return from secureSignup call")
   }
   
 
