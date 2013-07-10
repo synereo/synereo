@@ -72,6 +72,8 @@ trait FuzzyStreams {
 trait FuzzyTerms {
   self : FuzzyStreams =>
   def randomGroundTerm(
+    truncate : Int = 5,
+    prefix : String = "aString",
     rndm : scala.util.Random = new scala.util.Random()
   ) : String = {
     val termType = rndm.nextInt( 3 )
@@ -79,15 +81,15 @@ trait FuzzyTerms {
       case 0 => ( rndm.nextInt( 2 ) > 0 ).toString
       case 1 => rndm.nextInt( Int.MaxValue ).toString
       //case 2 => rndm.nextInt( Int.MaxValue ).toFloat.toString
-      case 2 => "\"" + UUID.randomUUID().toString + "\""
+      case 2 => "\"" + prefix + UUID.randomUUID().toString.replace( "-", "" ).substring( 0, truncate ) + "\""
     }
   }
 
   def randomLabelStr(
     uuidStrm : Stream[UUID] = uuidStream(),
     prefix : String = "label",
-    maxBredth : Int = 3,
-    maxDepth : Int = 3,
+    maxBredth : Int = 2,
+    maxDepth : Int = 2,
     truncate : Int = 10,
     streamPrefix : Int = 1000
   ) : String = {
@@ -108,10 +110,10 @@ trait FuzzyTerms {
             )
           }
           else {
-            ( randomGroundTerm( rndm ) /: ( 2 to bredth ) )(
+            ( randomGroundTerm( truncate, "aString", rndm ) /: ( 2 to bredth ) )(
               {
                 ( acc, e ) => {
-                  acc + "," + randomGroundTerm( rndm )
+                  acc + "," + randomGroundTerm( truncate, "aString", rndm )
                 }
               }
             )
@@ -122,7 +124,7 @@ trait FuzzyTerms {
         }
       functor + "(" + subterms + ")"
     } else {
-      randomGroundTerm( rndm )
+      randomGroundTerm( truncate, "aString", rndm )
     }
   }  
 }
