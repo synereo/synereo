@@ -86,8 +86,8 @@ trait FuzzyTerms {
   def randomLabelStr(
     uuidStrm : Stream[UUID] = uuidStream(),
     prefix : String = "label",
-    maxBredth : Int = 5,
-    maxDepth : Int = 5,
+    maxBredth : Int = 3,
+    maxDepth : Int = 3,
     truncate : Int = 10,
     streamPrefix : Int = 1000
   ) : String = {
@@ -98,13 +98,24 @@ trait FuzzyTerms {
       val functor = prefix + uuidStrm( functorLocation ).toString.replace( "-", "" ).substring( 0, truncate )
       val subterms =
         if ( bredth > 1 ) {
-          ( randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString /: ( 2 to bredth ) )(
-            {
-              ( acc, e ) => {
-                acc + "," + randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString
+          if ( maxDepth > 0 ) {
+            ( randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString /: ( 2 to bredth ) )(
+              {
+                ( acc, e ) => {
+                  acc + "," + randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString
+                }
               }
-            }
-          )
+            )
+          }
+          else {
+            ( randomGroundTerm( rndm ) /: ( 2 to bredth ) )(
+              {
+                ( acc, e ) => {
+                  acc + "," + randomGroundTerm( rndm )
+                }
+              }
+            )
+          }               
         }
         else {
           randomLabelStr( uuidStrm, prefix, maxBredth - 1, maxDepth - 1 ).toString
@@ -458,16 +469,30 @@ object CommManagement {
 
 trait StorageManagement {
   import CommManagement._
-  def doDrop() = {
-    import com.biosimilarity.lift.model.store.mongo._
-    val clntSess1 =
-      MongoClientPool.client( commLink().cache.sessionURIFromConfiguration )
-    val mcExecLocal =
-      clntSess1.getDB( commLink().cache.defaultDB )( "DSLExecProtocolLocal" )
-    val mcExecRemote =
-      clntSess1.getDB( commLink().cache.defaultDB )( "DSLExecProtocolRemote" )
-    val mcExec =
-      clntSess1.getDB( commLink().cache.defaultDB )( "DSLExecProtocol" )
+  import com.biosimilarity.lift.model.store.mongo._
+  def getMongoClientSession() : com.mongodb.casbah.Imports.MongoClient = {
+    MongoClientPool.client( commLink().cache.sessionURIFromConfiguration )
+  }
+  def getExecCollLocal(
+    mongoClient : com.mongodb.casbah.Imports.MongoClient = getMongoClientSession()
+  ) = {
+    mongoClient.getDB( commLink().cache.defaultDB )( "DSLExecProtocolLocal" )
+  }
+  def getExecCollRemote(
+    mongoClient : com.mongodb.casbah.Imports.MongoClient = getMongoClientSession()
+  ) = {
+    mongoClient.getDB( commLink().cache.defaultDB )( "DSLExecProtocolRemote" )
+  }
+  def getExecColl(
+    mongoClient : com.mongodb.casbah.Imports.MongoClient = getMongoClientSession()
+  ) = {
+    mongoClient.getDB( commLink().cache.defaultDB )( "DSLExecProtocol" )
+  }
+  def doDrop() = {    
+    val clntSess1 = getMongoClientSession()      
+    val mcExecLocal = getExecCollLocal( clntSess1 )      
+    val mcExecRemote = getExecCollRemote( clntSess1 )
+    val mcExec = getExecColl( clntSess1 )
 
     mcExecLocal.drop
     mcExecRemote.drop
@@ -681,6 +706,29 @@ package usage {
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
   with StorageManagement with CnxnString[String,String,String]
   with Serializable {
+    import com.biosimilarity.lift.model.store.mongo._
+    override def getMongoClientSession() : com.mongodb.casbah.Imports.MongoClient = {
+      agentMgr()
+      MongoClientPool.client( node().cache.sessionURIFromConfiguration )
+    }
+    override def getExecCollLocal(
+      mongoClient : com.mongodb.casbah.Imports.MongoClient = getMongoClientSession()
+    ) = {
+      agentMgr()
+      mongoClient.getDB( node().cache.defaultDB )( "DSLExecProtocolLocal" )
+    }
+    override def getExecCollRemote(
+      mongoClient : com.mongodb.casbah.Imports.MongoClient = getMongoClientSession()
+    ) = {
+      agentMgr()
+      mongoClient.getDB( node().cache.defaultDB )( "DSLExecProtocolRemote" )
+    }
+    override def getExecColl(
+      mongoClient : com.mongodb.casbah.Imports.MongoClient = getMongoClientSession()
+    ) = {
+      agentMgr()
+      mongoClient.getDB( node().cache.defaultDB )( "DSLExecProtocol" )
+    }
     def doSomeInserts(
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
       maxPosts : Int = 1000,
