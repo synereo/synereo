@@ -60,8 +60,8 @@ trait EvalHandler {
   implicit val formats = DefaultFormats
 
   def createUserRequest(json : JValue, srvcKey : String) = {
-    val email = (json \ "email").extract[String]
-    val password = (json \ "password").extract[String]
+    val email = (json \ "content" \ "email").extract[String]
+    val password = (json \ "content" \ "password").extract[String]
     val sessionID = UUID.randomUUID
     val erql = agentMgr().erql( sessionID )
     val erspl = agentMgr().erspl( sessionID ) 
