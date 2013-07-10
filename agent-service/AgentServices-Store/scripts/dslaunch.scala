@@ -15,4 +15,7 @@ object Go extends Serializable {
     Server.mainEntryPoint( a1 )
     Server.engine()
   }
+  def go() = {
+    Server.run()
+  }
 }

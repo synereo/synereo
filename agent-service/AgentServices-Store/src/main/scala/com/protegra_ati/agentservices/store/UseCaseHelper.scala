@@ -679,7 +679,8 @@ package usage {
   extends EvaluationCommsService  
   with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
-  with CnxnString[String,String,String] with Serializable {
+  with StorageManagement with CnxnString[String,String,String]
+  with Serializable {
     def doSomeInserts(
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
       maxPosts : Int = 1000,
