@@ -134,7 +134,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         )
         cap
       }
-
+      println("secureSignup lcemail="+lcemail+", password="+password+", cap="+cap)
       val macInstance = Mac.getInstance("HmacSHA256")
       macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
       val mac = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
@@ -146,17 +146,20 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
       val onPost: Option[mTT.Resource] => Unit = ( dummy : Option[mTT.Resource] ) => {
+        println("secureSignup onPost1")
         post[String](erql, erspl)(
           userDataFilter,
           List(capSelfCnxn),
           "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
               "listOfCnxns(), lastActiveFilter(\"\"))",
           ( dummy : Option[mTT.Resource] ) => {
+            println("secureSignup onPost2")
             // TODO(mike): send email with capAndMac
             complete(Left(capAndMac))
           }
         )
       }
+      println("secureSignup posting pwmac")
       post[String](erql, erspl)(
         pwmacFilter,
         List(capSelfCnxn),
