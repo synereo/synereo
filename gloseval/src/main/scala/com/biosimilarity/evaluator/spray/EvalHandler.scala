@@ -47,7 +47,8 @@ object CompletionMapper {
   def complete( key : String, message : String ) : Unit = {
     println("CompletionMapper complete key="+key+", message="+message)
     for( srvc <- map.get( key ) ) {
-      srvc.complete(HttpResponse(200, message))
+      println("CompletionMapper complete srvc="+srvc)
+      srvc.complete(HttpResponse(500, message))
     }
   }
 }
@@ -60,8 +61,9 @@ trait EvalHandler {
   @transient
   implicit val formats = DefaultFormats
   
-  def dummy(srvcKey: String) = {
-    CompletionMapper.complete( srvcKey, "Dummy" )
+  def dummy1(srvcKey: String) = {
+    println("dummy1")
+    CompletionMapper.complete( srvcKey, "Dummy1" )
   }
 
   def createUserRequest(json : JValue, srvcKey : String) = {

@@ -254,10 +254,15 @@ trait EvaluatorService extends HttpService
         }
       }
     } ~
-    path("dummy") {
+    path("dummy1") {
       get {
-        dummy("evaluator-service")
+        dummy1("evaluator-service")
         (cometActor ! SessionPing("", _))
+      }
+    }~
+    path("dummy2") {
+      get {
+        complete(HttpResponse(200, "Dummy2"))
       }
     }~
     path("sendMessage") {
