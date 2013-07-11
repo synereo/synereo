@@ -240,13 +240,6 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     }    
 
     def handleValue( dreq : Msgs.DReq, oV : Option[mTT.Resource], msrc : Moniker ) : Unit = {           	   
-      val msrcKey : URM =
-	msrc match {
-	  case msrcMURI : MURI =>
-	    com.biosimilarity.lift.lib.moniker.identityConversions.toURM( msrcMURI )
-	  case msrcURM : URM => msrcURM
-	  case _ => throw new Exception( "unexpected msrc type: " + msrc.getClass )
-	}
       tweet(
 	(
 	  "BaseAgentKVDBNode : "
@@ -256,15 +249,56 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	  + "\n oV : " + oV
 	  + "\n msrc : " + msrc
 	  + "\n------------------"
-	  + "\n msrcKey : " + msrcKey
-	  + "\n q : " + stblQMap.get( msrcKey )
 	)
       )
 
-      for( q <- stblQMap.get( msrcKey ); value <- oV ) {	
-	tweet( ( this + " sending value " + oV + " back " ) )	   
-	q ! wrapResponse( msrc, dreq, value )
-      }
+      stblQMap.get( msrc ) match {        
+        case Some( q ) => {
+          tweet(
+	    (
+	      "BaseAgentKVDBNode : "
+	      + "\nmethod : handleValue "
+	      + "\nthis : " + this
+	      + "\n dreq : " + dreq
+	      + "\n oV : " + oV
+	      + "\n msrc : " + msrc
+	      + "\n------------------"
+	      + "\n q : " + q
+	    )
+          )
+          for( value <- oV ) {
+            tweet( ( this + " sending value " + oV + " back " ) )	   
+	    q ! wrapResponse( msrc, dreq, value )
+          }
+        }
+        case None => {
+          val msrcKey : URM =
+	    msrc match {
+	      case msrcMURI : MURI =>
+	        com.biosimilarity.lift.lib.moniker.identityConversions.toURM( msrcMURI )
+	      case msrcURM : URM => msrcURM
+	      case _ => throw new Exception( "unexpected msrc type: " + msrc.getClass )
+	    }
+      
+          tweet(
+	    (
+	      "BaseAgentKVDBNode : "
+	      + "\nmethod : handleValue "
+	      + "\nthis : " + this
+	      + "\n dreq : " + dreq
+	      + "\n oV : " + oV
+	      + "\n msrc : " + msrc
+	      + "\n------------------"
+              + "\n msrcKey : " + msrcKey
+	      + "\n q : " + stblQMap.get( msrcKey )
+	    )
+          )
+          for( q <- stblQMap.get( msrcKey ); value <- oV ) {	
+	    tweet( ( this + " sending value " + oV + " back " ) )	   
+	    q ! wrapResponse( msrc, dreq, value )
+          }
+        }
+      }      
     }
 
     def dispatchDMsg( dreq : FramedMsg ) : Unit = {
