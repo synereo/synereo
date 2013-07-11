@@ -41,15 +41,15 @@ import java.util.Date
 import java.util.UUID
 
 object CompletionMapper {
-  import DSLCommLink.mTT
   @transient
-  val map = new HashMap[String,HttpService]()
-  def complete( key : String, message : String ) : Unit = {
+  val map = new HashMap[String, RequestContext]()
+  def complete(key:String, message: String): Unit = {
     println("CompletionMapper complete key="+key+", message="+message)
-    for( srvc <- map.get( key ) ) {
-      println("CompletionMapper complete srvc="+srvc)
-      srvc.complete(HttpResponse(500, message))
+    for (reqCtx <- map.get(key)) {
+      println("CompletionMapper complete reqCtx="+reqCtx)
+      reqCtx.complete(HttpResponse(200, message))
     }
+    map -= key
   }
 }
 
@@ -61,12 +61,7 @@ trait EvalHandler {
   @transient
   implicit val formats = DefaultFormats
   
-  def dummy1(srvcKey: String, token: String) = {
-    println("dummy1 token="+token)
-    CompletionMapper.complete( srvcKey, "Dummy1:"+token )
-  }
-
-  def createUserRequest(json : JValue, srvcKey : String) = {
+  def createUserRequest(json : JValue, key : String): Unit = {
     val email = (json \ "content" \ "email").extract[String]
     val password = (json \ "content" \ "password").extract[String]
     val sessionID = UUID.randomUUID
@@ -84,7 +79,7 @@ trait EvalHandler {
             reason + "\"}}"
       }
       println("createUserRequest complete body="+body)
-      CompletionMapper.complete( srvcKey, body )
+      CompletionMapper.complete( key, body )
     }
     println("createUserRequest calling agentMgr().secureSignup")
     agentMgr().secureSignup(erql, erspl)(email, password, complete)
@@ -94,10 +89,9 @@ trait EvalHandler {
 
   def initializeSessionRequest(
     json : JValue,
-    srvcKey : String,
+    key : String,
     onPost : Option[Option[mTT.Resource] => Unit] = None
-    //( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-  ) = {
+  ): Unit = {
     val agentURI = (json \ "content" \ "agentURI").extract[String]
     val uri = new java.net.URI(agentURI)
 
@@ -119,7 +113,7 @@ trait EvalHandler {
     val erspl = agentMgr().erspl( sessionID ) 
 
     def complete(message: String): Unit = {
-      CompletionMapper.complete( srvcKey, message )
+      CompletionMapper.complete( key, message )
     }
 
     // (str:String) => complete(HttpResponse(entity = HttpBody(`application/json`, str)))
@@ -166,11 +160,11 @@ trait EvalHandler {
     sessionURI
   }  
 
-  def connectServers( srvcKey : String, sessionId : UUID ) : Unit = {
+  def connectServers( key : String, sessionId : UUID ) : Unit = {
     connectServers( sessionId )(
       ( optRsrc : Option[mTT.Resource] ) => {
         println( "got response: " + optRsrc )
-        CompletionMapper.complete( srvcKey, optRsrc.toString )
+        CompletionMapper.complete( key, optRsrc.toString )
       }
     )    
   }

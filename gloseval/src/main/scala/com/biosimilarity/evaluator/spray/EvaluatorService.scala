@@ -150,13 +150,11 @@ trait EvaluatorService extends HttpService
   import DSLCommLink.mTT
   import EvalHandlerService._
 
-  CompletionMapper.map += ( "evaluator-service" -> this )
-
   @transient
   val cometActor = actorRefFactory.actorOf(Props[CometActor])        
   
   @transient
-  val myRoute =
+  val myRoute = 
     path("signup") {
       get {
         _.redirect("http://64.27.3.17:6080/agentui.html", MovedPermanently)
@@ -166,71 +164,74 @@ trait EvaluatorService extends HttpService
       post {
         decodeRequest(NoEncoding) {
           entity(as[String]) { jsonStr =>
-            try {
-              val json = parse(jsonStr)
-              val msgType = (json \ "msgType").extract[String]
-              msgType match {
-                case "createUserRequest" => {
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  println( "in createUserRequest : " + jsonStr )
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+            (ctx) => {
+              try {
+                val json = parse(jsonStr)
+                val msgType = (json \ "msgType").extract[String]
+                msgType match {
+                  case "createUserRequest" => {
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    println( "in createUserRequest : " + jsonStr )
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    var key = UUID.randomUUID.toString
+                    CompletionMapper.map += ( key -> ctx )
+                    createUserRequest( json, key )
+                  }
+                  case "initializeSessionRequest" => {
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    println( "in initializeSessionRequest : " + jsonStr )
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                   
-                  createUserRequest( json, "evaluator-service" )
-                  (cometActor ! SessionPing("", _))
-                }
-                case "initializeSessionRequest" => {
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  println( "in initializeSessionRequest : " + jsonStr )
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  
-                  initializeSessionRequest( json, "evaluator-service" )
-                  (cometActor ! SessionPing("", _))
-                }
-                case "sessionPing" => {
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  println( "in sessionPing " )
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  val sessionURI = sessionPing(json)
-                  (cometActor ! SessionPing(sessionURI, _))
-                }
-                case "evalSubscribeRequest" => {
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  println( "in evalSubscribeRequest " )
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  val (sessionURI, body) = 
-                  (evalSubscribeRequest(json), HttpBody(`application/json`,
-                    """{
-                      "msgType": "evalComplete",
-                      "content": {
-                        "sessionURI": "agent-session://ArtVandelay@session1",
-                        "pageOfPosts": []
+                    var key = UUID.randomUUID.toString
+                    CompletionMapper.map += ( key -> ctx )
+                    initializeSessionRequest( json, key )
+                  }
+                  case "sessionPing" => {
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    println( "in sessionPing " )
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    val sessionURI = sessionPing(json)
+                    (cometActor ! SessionPing(sessionURI, ctx))
+                  }
+                  case "evalSubscribeRequest" => {
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    println( "in evalSubscribeRequest " )
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    val (sessionURI, body) = 
+                    (evalSubscribeRequest(json), HttpBody(`application/json`,
+                      """{
+                        "msgType": "evalComplete",
+                        "content": {
+                          "sessionURI": "agent-session://ArtVandelay@session1",
+                          "pageOfPosts": []
+                        }
                       }
-                    }
-                    """
-                  ))
-                  cometActor ! CometMessage(sessionURI.toString, body)
-                  complete(StatusCodes.OK)
+                      """
+                    ))
+                    cometActor ! CometMessage(sessionURI.toString, body)
+                    ctx.complete(StatusCodes.OK)
+                  }
+                  case "closeSessionRequest" => {
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    println( "in closeSubscribeRequest " )
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    val (sessionURI, body) = closeSessionRequest(json)
+                    cometActor ! CometMessage(sessionURI, body)
+                    ctx.complete(StatusCodes.OK)
+                  }
+                  case _ => ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
                 }
-                case "closeSessionRequest" => {
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  println( "in closeSubscribeRequest " )
-                  println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  val (sessionURI, body) = closeSessionRequest(json)
-                  cometActor ! CometMessage(sessionURI, body)
-                  complete(StatusCodes.OK)
-                }
-                case _ => complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
-              }
-            } catch {
-              case th: Throwable => {
-                val writer : java.io.StringWriter = new java.io.StringWriter()
-                val printWriter : java.io.PrintWriter = new java.io.PrintWriter( writer )
-                th.printStackTrace( printWriter )
-                printWriter.flush()
+              } catch {
+                case th: Throwable => {
+                  val writer : java.io.StringWriter = new java.io.StringWriter()
+                  val printWriter : java.io.PrintWriter = new java.io.PrintWriter( writer )
+                  th.printStackTrace( printWriter )
+                  printWriter.flush()
 
-                val stackTrace : String = writer.toString()
-                println( "Malformed request: \n" + stackTrace )
-                complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
+                  val stackTrace : String = writer.toString()
+                  println( "Malformed request: \n" + stackTrace )
+                  ctx.complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
+                }
               }
             }
           } // jsonStr
@@ -254,21 +255,6 @@ trait EvaluatorService extends HttpService
         }
       }
     } ~
-    path("dummy1") {
-      get {
-        parameters('token) {
-          (token:String) => {
-            dummy1("evaluator-service", token)
-            (cometActor ! SessionPing("", _))
-          }
-        }
-      }
-    }~
-    path("dummy2") {
-      get {
-        complete(HttpResponse(200, "Dummy2"))
-      }
-    }~
     path("sendMessage") {
       get {
         parameters('name, 'message) { (name:String, message:String) =>
