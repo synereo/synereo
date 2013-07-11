@@ -47,7 +47,7 @@ object CompletionMapper {
   def complete( key : String, message : String ) : Unit = {
     println("CompletionMapper complete key="+key+", message="+message)
     for( srvc <- map.get( key ) ) {
-      srvc.complete(HttpResponse(entity = HttpBody(`text/html`, message)))
+      srvc.complete(HttpResponse(200, message))
     }
   }
 }
