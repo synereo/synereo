@@ -45,6 +45,7 @@ object CompletionMapper {
   @transient
   val map = new HashMap[String,HttpService]()
   def complete( key : String, message : String ) : Unit = {
+    println("CompletionMapper complete key="+key+", message="+message)
     for( srvc <- map.get( key ) ) {
       srvc.complete(HttpResponse(entity = HttpBody(`text/html`, message)))
     }
@@ -60,13 +61,15 @@ trait EvalHandler {
   implicit val formats = DefaultFormats
 
   def createUserRequest(json : JValue, srvcKey : String) = {
-    val email = (json \ "email").extract[String]
-    val password = (json \ "password").extract[String]
+    val email = (json \ "content" \ "email").extract[String]
+    val password = (json \ "content" \ "password").extract[String]
     val sessionID = UUID.randomUUID
+    println("createUserRequest sessionID = " + sessionID.toString)
     val erql = agentMgr().erql( sessionID )
     val erspl = agentMgr().erspl( sessionID ) 
     
     def complete(capAndMac: Either[String, String]): Unit = {
+      println("createUserRequest complete capAndMac="+capAndMac)
       val body = capAndMac match {
         // TODO(mike): use escaping interpolation
         case Left(cap) => "{\"msgType\": \"createUserResponse\", \"content\": {\"agentURI\": \"agent://" + 
@@ -74,9 +77,12 @@ trait EvalHandler {
         case Right(reason) => "{\"msgType\": \"createUserError\", \"content\": {\"reason\": \"" + 
             reason + "\"}}"
       }
+      println("createUserRequest complete body="+body)
       CompletionMapper.complete( srvcKey, body )
     }
+    println("createUserRequest calling agentMgr().secureSignup")
     agentMgr().secureSignup(erql, erspl)(email, password, complete)
+    println("createUserRequest return from secureSignup call")
   }
   
 
