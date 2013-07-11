@@ -256,8 +256,12 @@ trait EvaluatorService extends HttpService
     } ~
     path("dummy1") {
       get {
-        dummy1("evaluator-service")
-        (cometActor ! SessionPing("", _))
+        parameters('token) {
+          (token:String) => {
+            dummy1("evaluator-service", token)
+            (cometActor ! SessionPing("", _))
+          }
+        }
       }
     }~
     path("dummy2") {

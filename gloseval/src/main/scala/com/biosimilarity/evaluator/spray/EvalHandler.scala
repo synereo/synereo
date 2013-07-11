@@ -61,9 +61,9 @@ trait EvalHandler {
   @transient
   implicit val formats = DefaultFormats
   
-  def dummy1(srvcKey: String) = {
-    println("dummy1")
-    CompletionMapper.complete( srvcKey, "Dummy1" )
+  def dummy1(srvcKey: String, token: String) = {
+    println("dummy1 token="+token)
+    CompletionMapper.complete( srvcKey, "Dummy1:"+token )
   }
 
   def createUserRequest(json : JValue, srvcKey : String) = {
