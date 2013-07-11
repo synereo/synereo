@@ -208,7 +208,7 @@ trait EvaluatorService extends HttpService
                     }
                     """
                   ))
-                  cometActor ! CometMessage(sessionURI.uri.toString, body)
+                  cometActor ! CometMessage(sessionURI.toString, body)
                   complete(StatusCodes.OK)
                 }
                 case "closeSessionRequest" => {
@@ -254,6 +254,21 @@ trait EvaluatorService extends HttpService
         }
       }
     } ~
+    path("dummy1") {
+      get {
+        parameters('token) {
+          (token:String) => {
+            dummy1("evaluator-service", token)
+            (cometActor ! SessionPing("", _))
+          }
+        }
+      }
+    }~
+    path("dummy2") {
+      get {
+        complete(HttpResponse(200, "Dummy2"))
+      }
+    }~
     path("sendMessage") {
       get {
         parameters('name, 'message) { (name:String, message:String) =>

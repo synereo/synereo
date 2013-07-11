@@ -47,7 +47,8 @@ object CompletionMapper {
   def complete( key : String, message : String ) : Unit = {
     println("CompletionMapper complete key="+key+", message="+message)
     for( srvc <- map.get( key ) ) {
-      srvc.complete(HttpResponse(entity = HttpBody(`text/html`, message)))
+      println("CompletionMapper complete srvc="+srvc)
+      srvc.complete(HttpResponse(500, message))
     }
   }
 }
@@ -59,6 +60,11 @@ trait EvalHandler {
 
   @transient
   implicit val formats = DefaultFormats
+  
+  def dummy1(srvcKey: String, token: String) = {
+    println("dummy1 token="+token)
+    CompletionMapper.complete( srvcKey, "Dummy1:"+token )
+  }
 
   def createUserRequest(json : JValue, srvcKey : String) = {
     val email = (json \ "content" \ "email").extract[String]
@@ -125,11 +131,15 @@ trait EvalHandler {
     )
   }
 
-  def evalSubscribeRequest(json: JValue) : AgentSessionURI = {
-    val diesel.EvaluatorMessageSet.evalSubscribeRequest( sessionURI, expression ) =
-      ( json \ "content" ).extract[diesel.EvaluatorMessageSet.evalSubscribeRequest]
-    // val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    // val expression = (json \ "content" \ "expression").extract[String]
+  def evalSubscribeRequest(json: JValue) : java.net.URI = {
+    import com.biosimilarity.evaluator.distribution.portable.v0_1._
+    // val evalSubscribeRequest( sessionURI, expression ) =
+    //   ( json \ "content" ).extract[evalSubscribeRequest]
+    val sessionURIstr = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURI = new java.net.URI(sessionURIstr)
+    // TODO(mike): Tag expression objects so that we can pick the right case
+    //   class in the match block below.
+    // val expression = (json \ "content" \ "expression").extract[???]
 
     // if (sessionURI != "agent-session://ArtVandelay@session1") {
     //   throw EvalException(sessionURI)
@@ -139,6 +149,7 @@ trait EvalHandler {
     val erql = agentMgr().erql( sessionID )
     val erspl = agentMgr().erspl( sessionID ) 
 
+    /*
     expression match {
       case ConcreteHL.FeedExpr( filter, cnxns ) => {                    
         agentMgr().feed( erql, erspl )( filter, cnxns )
@@ -150,6 +161,7 @@ trait EvalHandler {
         agentMgr().post[String]( erql, erspl )( filter, cnxns, content )
       }
     }
+    //*/
 
     sessionURI
   }  
