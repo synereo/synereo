@@ -208,7 +208,7 @@ trait EvaluatorService extends HttpService
                     }
                     """
                   ))
-                  cometActor ! CometMessage(sessionURI.uri.toString, body)
+                  cometActor ! CometMessage(sessionURI.toString, body)
                   complete(StatusCodes.OK)
                 }
                 case "closeSessionRequest" => {
