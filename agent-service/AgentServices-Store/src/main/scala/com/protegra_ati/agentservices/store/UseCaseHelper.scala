@@ -20,7 +20,7 @@ trait ChannelGeneration {
   def erql( sessionId : String = UUID.randomUUID().toString ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
     (
       sessionId,
-      DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( sessionId.toString ).getOrElse( 
+      DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Left[String,String]( sessionId ) ).getOrElse( 
 	throw new Exception( "error making evalRequestLabel" )
       )
     )
@@ -28,7 +28,7 @@ trait ChannelGeneration {
   def erspl( sessionId : String = "_" ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
     (
       sessionId,
-      DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()( sessionId ).getOrElse( 
+      DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()( Right[String,String]( sessionId ) ).getOrElse( 
 	throw new Exception( "error making evalRequestLabel" )
       )
     )
@@ -135,7 +135,7 @@ trait FuzzyTermStreams {
   def mkEvalRequestLabelStream() : Stream[CnxnCtxtLabel[String,String,String]] = {
     uuidStreamStream.take( 1 )( 0 ).map(
       ( uuid : UUID ) => {
-        DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( uuid.toString ).getOrElse( 
+        DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Left[String,String]( uuid.toString ) ).getOrElse( 
           throw new Exception( "error making evalRequestLabel" )
         )
       }

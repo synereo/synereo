@@ -445,22 +445,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           new AgentManager with Serializable {
             override def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String] = {
               ExchangeLabels.evalRequestLabel()(
-                sessionID.toString
+                Left[String,String]( sessionID.toString )
               ).getOrElse( throw new Exception( "unable to make evalRequestLabel" ) )
             }
             override def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String] = {
               ExchangeLabels.evalResponseLabel()(
-                sessionID.toString
+                Left[String,String]( sessionID.toString )
               ).getOrElse( throw new Exception( "unable to make evalResponseLabel" ) )
             }
 	    override def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String] = {
               ExchangeLabels.adminRequestLabel()(
-                sessionID.toString
+                Left[String,String]( sessionID.toString )
               ).getOrElse( throw new Exception( "unable to make adminRequestLabel" ) )
             }
             override def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String] = {
               ExchangeLabels.adminResponseLabel()(
-                sessionID.toString
+                Left[String,String]( sessionID.toString )
               ).getOrElse( throw new Exception( "unable to make adminResponseLabel" ) )
             }
           }

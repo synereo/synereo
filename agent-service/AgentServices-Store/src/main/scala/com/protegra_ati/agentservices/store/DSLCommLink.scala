@@ -527,61 +527,99 @@ with Serializable {
     def evalRequestLabel(
       majorVersion : String = "0", minorVersion : String = "1"
     )(
-      sessionId : String
+      sessionId : Either[String,String]
     ) = {
+      // BUGBUG : lgm -- find a java regex pattern that will pickout
+      // prolog variables
+      val sessionTerm =
+        sessionId match {
+          case Left( sessIdStr ) => {
+            "\"" + sessIdStr + "\""
+          }
+          case Right( sessIdVar ) => {
+            sessIdVar
+          }
+        }
       fromTermString(
         "evalRequestLabel( majorVersion( \""
         + majorVersion
         + "\" ), minorVersion( \""
         + minorVersion
-        + "\"), sessionId( \""
-        + sessionId
-        + "\" ) )"
+        + "\"), sessionId( "
+        + sessionTerm
+        + " ) )"
       )
     }
     def evalResponseLabel(
       majorVersion : String = "0", minorVersion : String = "1"
     )(
-      sessionId : String
+      sessionId : Either[String,String]
     ) = {
+      val sessionTerm =
+        sessionId match {
+          case Left( sessIdStr ) => {
+            "\"" + sessIdStr + "\""
+          }
+          case Right( sessIdVar ) => {
+            sessIdVar
+          }
+        }
       fromTermString(
         "evalResponseLabel( majorVersion( \""
         + majorVersion
         + "\" ), minorVersion( \""
         + minorVersion
-        + "\"), sessionId( \""
-        + sessionId
-        + "\" ) )"
+        + "\"), sessionId( "
+        + sessionTerm
+        + " ) )"
       )
     }
     def adminRequestLabel(
       majorVersion : String = "0", minorVersion : String = "1"
     )(
-      sessionId : String
+      sessionId : Either[String,String]
     ) = {
+      val sessionTerm =
+        sessionId match {
+          case Left( sessIdStr ) => {
+            "\"" + sessIdStr + "\""
+          }
+          case Right( sessIdVar ) => {
+            sessIdVar
+          }
+        }
       fromTermString(
         "adminRequestLabel( majorVersion( \""
         + majorVersion
         + "\" ), minorVersion( \""
         + minorVersion
-        + "\"), sessionId( \""
-        + sessionId
-        + "\" ) )"
+        + "\"), sessionId( "
+        + sessionTerm
+        + " ) )"
       )
     }
     def adminResponseLabel(
       majorVersion : String = "0", minorVersion : String = "1"
     )(
-      sessionId : String
+      sessionId : Either[String,String]
     ) = {
+      val sessionTerm =
+        sessionId match {
+          case Left( sessIdStr ) => {
+            "\"" + sessIdStr + "\""
+          }
+          case Right( sessIdVar ) => {
+            sessIdVar
+          }
+        }
       fromTermString(
         "adminResponseLabel( majorVersion( \""
         + majorVersion
         + "\" ), minorVersion( \""
         + minorVersion
-        + "\"), sessionId( \""
-        + sessionId
-        + "\" ) )"
+        + "\"), sessionId( "
+        + sessionTerm
+        + " ) )"
       )
     }
   }

@@ -1710,13 +1710,13 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
-          DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( "SessionId" ).getOrElse( 
+          DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
             throw new Exception( "error making evalRequestLabel" )
           ),
           node,
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
-              sessionId
+              Left[String,String]( sessionId )
             ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
           },
           useBiLink,
@@ -1730,13 +1730,13 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
-          DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( "SessionId" ).getOrElse( 
+          DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
             throw new Exception( "error making evalRequestLabel" )
           ),
           node,
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
-              sessionId
+              Left[String,String]( sessionId )
             ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
           },
           useBiLink,
