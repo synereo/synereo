@@ -59,6 +59,10 @@ trait EvalHandler {
 
   @transient
   implicit val formats = DefaultFormats
+  
+  def dummy(srvcKey: String) = {
+    CompletionMapper.complete( srvcKey, "Dummy" )
+  }
 
   def createUserRequest(json : JValue, srvcKey : String) = {
     val email = (json \ "content" \ "email").extract[String]
