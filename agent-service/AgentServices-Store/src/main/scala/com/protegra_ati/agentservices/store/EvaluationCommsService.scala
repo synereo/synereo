@@ -186,6 +186,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           println("secureLogin login onFeed rsrc="+rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
+            case None => ()
             case Some(mTT.Ground(pwmac: ConcreteHL.HLExpr)) => {
               val macInstance = Mac.getInstance("HmacSHA256")
               macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
@@ -194,6 +195,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                 complete("Bad password.")
               } else {
                 val onUserDataFeed: Option[mTT.Resource] => Unit = _ match {
+                  case None => ()
                   case Some(rbnd: mTT.RBound) => {
                     // TODO(mike): fill in response with bindings
                     val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
