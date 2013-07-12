@@ -89,7 +89,7 @@ with AgentCnxnTypeScope {
       : Generator[Option[mTT.Resource],Unit,Unit] = {
 	tweet(
 	  (
-	    "PersistedMonadicKVDBNode : "
+	    "BaseAgentKVDB : "
 	    + "\nmethod : mget "
 	    + "\nthis : " + this
 	    + "\ncnxn : " + cnxn
@@ -1323,7 +1323,7 @@ with AgentCnxnTypeScope {
       : Generator[Option[mTT.Resource],Unit,Unit] = {        
 	tweet(
 	  (
-	    "PersistedMonadicKVDBNode : "
+	    "BaseAgentKVDBNode : "
 	    + "\nmethod : mget "
 	    + "\nthis : " + this
 	    + "\ncnxn : " + cnxn
