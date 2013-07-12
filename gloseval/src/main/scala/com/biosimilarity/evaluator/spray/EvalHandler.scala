@@ -73,9 +73,9 @@ trait EvalHandler {
       println("createUserRequest complete capAndMac="+capAndMac)
       val body = capAndMac match {
         // TODO(mike): use escaping interpolation
-        case Left(cap) => "{\"msgType\": \"createUserResponse\", \"content\": {\"agentURI\": \"agent://cap/" + 
+        case Left(cap) => "{\"msgType\": \"createUserResponse\", \"content\": {\"agentURI\": \"agent://cap/" +
             cap + "\"}}"
-        case Right(reason) => "{\"msgType\": \"createUserError\", \"content\": {\"reason\": \"" + 
+        case Right(reason) => "{\"msgType\": \"createUserError\", \"content\": {\"reason\": \"" +
             reason + "\"}}"
       }
       println("createUserRequest complete body="+body)
