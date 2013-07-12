@@ -2332,6 +2332,15 @@ package usage {
 		    case _ => throw new Exception( "xml roundtrip failed " + key )
  		  }
 		*/
+                tweet(
+	          (
+	            "PersistedMonadicKVDB : "
+	            + "\nmethod : asResource "
+	            + "\nthis : " + this
+	            + "\nkey : " + key
+                    + "\nvalue : " + value
+	          )
+	        )
 		val ltns =
 		  labelToNS.getOrElse(
 		    throw new Exception( "must have labelToNS to convert mongo object" )
@@ -2347,12 +2356,24 @@ package usage {
 		CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
 		  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
 		    tweet( " ****************************** " )
-		    tweet( "vNs: " + vNs )
-		    tweet( "v: " + v )
+		    tweet( " vNs: " + vNs )
+		    tweet( " v: " + v )
 		    tweet( " ****************************** " )
-		    matchMap( key, k ) match {
+                    val matchRslt = matchMap( key, k )
+                    tweet( " ****************************** " )
+		    tweet( " matchRslt : " + matchRslt )
+		    tweet( " ****************************** " )
+
+                    matchRslt match {
 		      case Some( soln ) => {
+                        tweet( " ****************************** " )
+		        tweet( " found a solution : " + soln )
+		        tweet( " ****************************** " )
 			if ( compareNameSpace( ns, kvNameSpace ) ) {
+                          tweet( " ****************************** " )
+		          tweet( " in data space " )
+		          tweet( " ****************************** " )
+
 			  emT.PlaceInstance(
 			    k,
 			    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
@@ -2372,6 +2393,9 @@ package usage {
 			}
 			else {
 			  if ( compareNameSpace( ns, kvKNameSpace ) ) {
+                            tweet( " ****************************** " )
+		            tweet( " in continuation space " )
+		            tweet( " ****************************** " )
 			    val mTT.Continuation( ks ) =
 			      asCacheK(
 				new CnxnCtxtBranch[String,String,String](
