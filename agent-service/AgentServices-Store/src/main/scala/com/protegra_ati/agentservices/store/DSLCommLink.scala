@@ -305,22 +305,27 @@ object DSLCommLink
                         tweet( " ****************************** " )
 		        tweet( " in data space " )
 		        tweet( " ****************************** " )
-                        emT.PlaceInstance(
-                          k,
-                          Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                            mTT.Ground(
-                              asCacheValue(
-                                new CnxnCtxtBranch[String,String,String](
-                                  "string",
-                                  v :: Nil
+                        val finalRslt =
+                          emT.PlaceInstance(
+                            k,
+                            Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                              mTT.Ground(
+                                asCacheValue(
+                                  new CnxnCtxtBranch[String,String,String](
+                                    "string",
+                                    v :: Nil
+                                  )
                                 )
                               )
-                            )
-                          ),
+                            ),
                           // BUGBUG -- lgm : why can't the compiler determine
                           // that this cast is not necessary?
-                          theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                        )
+                            theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                          )
+                        tweet( " ****************************** " )
+		        tweet( " placeInstance: " + finalRslt )
+		        tweet( " ****************************** " )
+                        finalRslt
                       }
                       else {
                         if ( compareNameSpace( ns, kvKNameSpace ) ) {
