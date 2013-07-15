@@ -228,8 +228,8 @@ object DSLCommLink
             ) : ConcreteHL.HLExpr = {
               tweet(
                 "*****************************************************"
-                + "converting to cache value"
-                + "*****************************************************"
+                + "\nconverting to cache value"
+                + "\n*****************************************************"
               )
               ccl match {
                 case CnxnCtxtBranch(
@@ -238,15 +238,34 @@ object DSLCommLink
                 ) => {
                   tweet(
                     "*****************************************************"
-                    + "matched ccl to CnxnCtxtBranch"
-                    + "*****************************************************"
+                    + "\nmatched ccl to CnxnCtxtBranch"
+                    + "\n*****************************************************"
                   )
                   val unBlob =
                     fromXQSafeJSONBlob( rv )
+                  tweet(
+                    "*****************************************************"
+                    + "\nunBlob : " + unBlob
+                    + "\n*****************************************************"
+                  )
                   
                   unBlob match {
                     case rsrc : mTT.Resource => {
-                      getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                      tweet(
+                        "*****************************************************"
+                        + "\nunBlob : " + unBlob
+                        + "\n*****************************************************"
+                      )
+                      val gvRslt = getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                      tweet(
+                        "*****************************************************"
+                        + "\ngvRslt : " + gvRslt
+                        + "\n*****************************************************"
+                      )
+                      gvRslt
+                    }
+                    case _ => {
+                      throw new Exception( "unable to recognized deserialized blob : " + unBlob )
                     }
                   }
                 }
