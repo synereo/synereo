@@ -227,13 +227,20 @@ object DSLCommLink
               ccl : CnxnCtxtLabel[String,String,String]
             ) : ConcreteHL.HLExpr = {
               tweet(
-                "converting to cache value"
+                "*****************************************************"
+                + "converting to cache value"
+                + "*****************************************************"
               )
               ccl match {
                 case CnxnCtxtBranch(
                   "string",
                   CnxnCtxtLeaf( Left( rv ) ) :: Nil
                 ) => {
+                  tweet(
+                    "*****************************************************"
+                    + "matched ccl to CnxnCtxtBranch"
+                    + "*****************************************************"
+                  )
                   val unBlob =
                     fromXQSafeJSONBlob( rv )
                   
@@ -244,6 +251,11 @@ object DSLCommLink
                   }
                 }
                 case _ => {
+                  tweet(
+                    "*****************************************************"
+                    + "failed to matched ccl to CnxnCtxtBranch"
+                    + "*****************************************************"
+                  )
                   //asPatternString( ccl )
                   throw new Exception( "unexpected value form: " + ccl )
                 }
