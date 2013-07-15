@@ -294,10 +294,14 @@ object DSLCommLink
                     }
                   }
                   catch {
-                    case e : Throwable => {
+                    case e : Throwable => {                      
+                      val sw : java.io.StringWriter = new java.io.StringWriter()
+                      val pw : java.io.PrintWriter = new java.io.PrintWriter( sw )
+                      e.printStackTrace( pw )
                       tweet(
                         "*****************************************************"
                         + "\nfromXML failed"
+                        + "\n" + sw.toString
                         + "\n*****************************************************"
                       )
                       throw( e )
