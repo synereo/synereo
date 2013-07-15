@@ -1624,6 +1624,24 @@ package diesel {
                     evaluateExpression( node )( expr )( forward )
                   }             
                 }
+                case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                  for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                    val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
+                    
+                    val forward : Option[mTT.Resource] => Unit =
+                      {
+                        ( optRsrc : Option[mTT.Resource] ) => {
+                          for( mTT.Ground( v ) <- optRsrc ) {
+                            reset {
+                              server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                            }
+                          }
+                        }
+                      }
+                    
+                    evaluateExpression( node )( expr )( forward )
+                  }             
+                }
                 case _ => {
                   println( "rsrc not handled: " + e )
                 }
