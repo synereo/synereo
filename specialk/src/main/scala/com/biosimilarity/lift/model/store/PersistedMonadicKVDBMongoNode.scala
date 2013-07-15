@@ -1439,7 +1439,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					      for( rslt <- itergen[DBObject]( rslts ) ) {
 						tweet( "retrieved " + rslt.toString )
 						val ersrc = pd.asResource( path, rslt )
-						
+                                                tweet( "************************************************************" )
+						tweet( "resource: " + ersrc )
+                                                tweet( "************************************************************" )
 						consume match {
 						  case policy : RetainInStore => {
 						    tweet( "removing from store " + rslt )
