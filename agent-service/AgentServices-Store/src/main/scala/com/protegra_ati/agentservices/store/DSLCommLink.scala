@@ -305,18 +305,19 @@ object DSLCommLink
                         tweet( " ****************************** " )
 		        tweet( " in data space " )
 		        tweet( " ****************************** " )
+                        tweet( " ****************************** " )
+		        tweet( " computing cacheValue " )
+		        tweet( " ****************************** " )
+                        val cacheValueRslt =
+                          asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                        tweet( " ****************************** " )
+		        tweet( " computed cacheValue: " + cacheValueRslt )
+		        tweet( " ****************************** " )
                         val finalRslt =
                           emT.PlaceInstance(
                             k,
                             Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                              mTT.Ground(
-                                asCacheValue(
-                                  new CnxnCtxtBranch[String,String,String](
-                                    "string",
-                                    v :: Nil
-                                  )
-                                )
-                              )
+                              mTT.Ground( cacheValueRslt )
                             ),
                           // BUGBUG -- lgm : why can't the compiler determine
                           // that this cast is not necessary?
