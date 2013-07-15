@@ -234,40 +234,75 @@ object DSLCommLink
               ccl match {
                 case CnxnCtxtBranch(
                   "string",
-                  CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                  //CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                  CnxnCtxtLeaf( Left( blob ) ) :: Nil
                 ) => {
                   tweet(
                     "*****************************************************"
                     + "\nmatched ccl to CnxnCtxtBranch"
                     + "\n*****************************************************"
                   )
-                  val unBlob =
-                    fromXQSafeJSONBlob( rv )
-                  tweet(
-                    "*****************************************************"
-                    + "\nunBlob : " + unBlob
-                    + "\n*****************************************************"
-                  )
-                  
-                  unBlob match {
-                    case rsrc : mTT.Resource => {
-                      tweet(
-                        "*****************************************************"
-                        + "\nunBlob : " + unBlob
-                        + "\n*****************************************************"
-                      )
-                      val gvRslt = getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-                      tweet(
-                        "*****************************************************"
-                        + "\ngvRslt : " + gvRslt
-                        + "\n*****************************************************"
-                      )
-                      gvRslt
+                  // val unBlob =
+//                     fromXQSafeJSONBlob( rv )
+
+                  val jsonBlob =
+                    (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
+	              blob.replace(
+	                "{{",
+	                "{"
+	              ).replace(
+	                "}}",
+	                "}"
+	              )
                     }
-                    case _ => {
-                      throw new Exception( "unable to recognized deserialized blob : " + unBlob )
+                     else {
+	               blob
+                     }).replace(
+                      "&quot;",
+                      "\""
+                    )
+                  val blobXStrm = 
+                    new XStream( new JettisonMappedXmlDriver() )
+
+                  try {
+                    val unBlob =
+                      blobXStrm.fromXML( jsonBlob )
+                    tweet(
+                      "*****************************************************"
+                      + "\nunBlob : " + unBlob
+                      + "\n*****************************************************"
+                    )
+                  
+                    unBlob match {
+                      case rsrc : mTT.Resource => {
+                        tweet(
+                          "*****************************************************"
+                          + "\nunBlob : " + unBlob
+                          + "\n*****************************************************"
+                        )
+                        val gvRslt = getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                        tweet(
+                          "*****************************************************"
+                          + "\ngvRslt : " + gvRslt
+                          + "\n*****************************************************"
+                        )
+                        gvRslt
+                      }
+                      case _ => {
+                        throw new Exception( "unable to recognized deserialized blob : " + unBlob )
+                      }
                     }
                   }
+                  catch {
+                    case e : Throwable => {
+                      tweet(
+                        "*****************************************************"
+                        + "\nfromXML failed"
+                        + "\n*****************************************************"
+                      )
+                      throw( e )
+                    }
+                  }                  
                 }
                 case _ => {
                   tweet(
