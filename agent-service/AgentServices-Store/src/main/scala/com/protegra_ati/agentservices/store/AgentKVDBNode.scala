@@ -2314,6 +2314,12 @@ package usage {
             MURI( here ),
             configFileName
           ) with Blobify with AMQPMonikerOps {          
+            override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+              new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+            }
+            override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {              
+              new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+            }      
             class StringXMLDBManifest(
               override val storeUnitStr : String,
               @transient override val labelToNS : Option[String => String],
@@ -2635,6 +2641,12 @@ package usage {
                   MURI( here ),
                   configFileName
                 ) with Blobify with AMQPMonikerOps {            
+                  override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                    new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                  }
+                  override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {              
+                    new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                  }      
                   class StringXMLDBManifest(
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
@@ -2963,6 +2975,12 @@ package usage {
                   MURI( here ),
                   configFileName
                 ) with Blobify with AMQPMonikerOps {            
+                  override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                    new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                  }
+                  override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {              
+                    new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                  }      
                   class StringXMLDBManifest(
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
@@ -3318,6 +3336,12 @@ package usage {
                   MURI( here ),
                   configFileName
                 ) with Blobify with AMQPMonikerOps {            
+                  override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                    new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                  }
+                  override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {              
+                    new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                  }      
                   class StringXMLDBManifest(
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],

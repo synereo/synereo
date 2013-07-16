@@ -139,6 +139,12 @@ object DSLCommLink
     object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT with Serializable {         
       def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDB[ReqBody,RspBody] = {
         new PersistedMonadicKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {           
+          override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+            new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+          }
+          override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {              
+            new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+          }      
           class StringMongoDBManifest(
             override val storeUnitStr : String,
             @transient override val labelToNS : Option[String => String],
@@ -241,33 +247,31 @@ object DSLCommLink
                     "*****************************************************"
                     + "\nmatched ccl to CnxnCtxtBranch"
                     + "\n*****************************************************"
-                  )
-                  // val unBlob =
-//                     fromXQSafeJSONBlob( rv )
-
-                  val jsonBlob =
-                    (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
-	              blob.replace(
-	                "{{",
-	                "{"
-	              ).replace(
-	                "}}",
-	                "}"
-	              )
-                    }
-                     else {
-	               blob
-                     }).replace(
-                      "&quot;",
-                      "\""
-                    )
-                  val blobXStrm = 
-                    new XStream( new JettisonMappedXmlDriver() )
+                  )                                    
 
                   try {
                     val unBlob =
+                      fromXQSafeJSONBlob( blob )
+                    // val jsonBlob =
+//                       (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
+// 	                blob.replace(
+// 	                  "{{",
+// 	                  "{"
+// 	                ).replace(
+// 	                  "}}",
+// 	                  "}"
+// 	                )
+//                       }
+//                        else {
+// 	                 blob
+//                        }).replace(
+//                         "&quot;",
+//                         "\""
+//                       )
+//                     val blobXStrm = 
+//                       new XStream( new JettisonMappedXmlDriver() )
+                    //val unBlob =
                       //blobXStrm.fromXML( jsonBlob )
-                      blobXStrm.fromXML( blob )
                     tweet(
                       "*****************************************************"
                       + "\nunBlob : " + unBlob
