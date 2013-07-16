@@ -266,7 +266,8 @@ object DSLCommLink
 
                   try {
                     val unBlob =
-                      blobXStrm.fromXML( jsonBlob )
+                      //blobXStrm.fromXML( jsonBlob )
+                      blobXStrm.fromXML( blob )
                     tweet(
                       "*****************************************************"
                       + "\nunBlob : " + unBlob
