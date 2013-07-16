@@ -122,7 +122,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         md.update(lcemail.getBytes("utf-8"))
         val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
         val emailURI = new URI("mailto://" + lcemail)
-        val emailSelfCnxn = new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+        val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+          PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
         // TODO(mike): validate structure of email address
         // TODO(mike): delay this until after we've received confirmation that
         //   the owner of this email address wants to sign up.
@@ -140,7 +141,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val mac = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
       val capAndMac = cap + mac
       val capURI = new URI("usercap://" + cap)
-      val capSelfCnxn = new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
+      val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
+        PortableAgentCnxn(capURI, "pwdb", capURI)
 
       macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
       val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
@@ -181,7 +183,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       
       def login(cap: String): Unit = {
         val capURI = new URI("usercap://" + cap)
-        val capSelfCnxn = new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
+        val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
+          PortableAgentCnxn(capURI, "pwdb", capURI)
         val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
           println("secureLogin login onFeed rsrc="+rsrc)
           rsrc match {
@@ -256,7 +259,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
               map("%02x" format _).mkString.slice(0,36)
           // don't need mac; need to verify email is on our network
           val emailURI = new URI("mailto://" + email)
-          val emailSelfCnxn = new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+          val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+            PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
           feed(erql, erspl)(
             emailFilter,
             List(emailSelfCnxn),
@@ -292,8 +296,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val hex1 = mac.doFinal(userName.getBytes("utf-8")).map("%02x" format _).mkString
       val pwdbURI = new URI("pwdb://" + hex1)
       // Create a self connection to store this entry's data
-      val pwdbCnxn = new ConcreteHL.PortableAgentCnxn(pwdbURI, "pwdb", pwdbURI)
-
+      val pwdbCnxn = //new ConcreteHL.PortableAgentCnxn(pwdbURI, "pwdb", pwdbURI)
+        PortableAgentCnxn(pwdbURI, "pwdb", pwdbURI)
       // Hash actual password to test given password against in the future
       mac.init(new SecretKeySpec("X@*h$ikU".getBytes("utf-8"), "HmacSHA256"))
       val pwHashStr = mac.doFinal(userPwd.getBytes("utf-8")).map("%02x" format _).mkString
@@ -334,7 +338,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       
       // Prepare to store user's data using the root cap
       val userCapURI = new URI("usercap://" + userCap)
-      val userSelfCnxn = new ConcreteHL.PortableAgentCnxn(userCapURI, userName, userCapURI)
+      val userSelfCnxn = //new ConcreteHL.PortableAgentCnxn(userCapURI, userName, userCapURI)
+        PortableAgentCnxn(userCapURI, userName, userCapURI)
       val userTermStr = "user(\"" + queryMap("fullname") +"\", \"" + queryMap("email") + "\")"
       val userTerm = fromTermString(userTermStr).getOrElse(
           throw new Exception("userTermStr failed to parse: " + userTermStr)
@@ -346,7 +351,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       // Form the connection by taking src, tgt to be of the form cnxn://<userName>
       // and the label to be "public" or something)
       val userdbURI = new URI("userdb:///");
-      val userdbCnxn = new ConcreteHL.PortableAgentCnxn(userdbURI, "userdb", userdbURI);
+      val userdbCnxn = //new ConcreteHL.PortableAgentCnxn(userdbURI, "userdb", userdbURI);
+        PortableAgentCnxn(userdbURI, "userdb", userdbURI);
       val userdbTermStr = "user(\"" + userName + "\")"
       val userdbTerm = fromTermString(userdbTermStr).getOrElse(
           throw new Exception("userdbTermStr failed to parse: " + userdbTermStr)

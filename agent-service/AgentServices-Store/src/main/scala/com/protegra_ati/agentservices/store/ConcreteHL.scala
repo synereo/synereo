@@ -14,15 +14,15 @@ import com.protegra_ati.agentservices.store._
 
 import java.net.URI
 
+case class PortableAgentCnxn(
+  val src : URI,
+  val label : String,
+  val trgt : URI
+) //extends Cnxn[URI,String,URI]
+  
 object ConcreteHL extends AbstractHL with Serializable {  
   type Label = CnxnCtxtLabel[String,String,String]  
-  type Substitution = Option[List[(String,Label)]]
-
-  case class PortableAgentCnxn(
-    val src : URI,
-    val label : String,
-    val trgt : URI
-  ) //extends Cnxn[URI,String,URI]
+  type Substitution = Option[List[(String,Label)]]  
 
   type Cnxn = PortableAgentCnxn
 }
