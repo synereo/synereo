@@ -1,0 +1,22 @@
+Paper Title:              A reflective higher-order calculus
+Journal title:            Electronic Notes in Theoretical Computer Science
+Journal Acronym:          ENTCS
+First Author Initials:      L.G.M.
+First Author Last Name:     Meredith
+Corr Author Title:          Mr.
+Corr Author Initials:       L.G.M.
+Corr Author Last Name:      Meredith
+Corr Author Institute:      Djinnisys Corporation
+Corr Author Address 1:      505 N72nd St
+Corr Author Address 2:      
+Corr Author City:           Seattle
+Corr Author Country:        US
+Corr Author Postcode:       98103
+Corr Author Phone:          +1 206.650.3740
+Corr Author Fax:            +1 206.789.9110
+Corr Author Email:          lgreg.meredith@gmail.com
+Editorial Office No.:       (to be supplied by the managing editor)
+Date of Receipt:            (to be supplied by the editor)
+Date of last Revision:      (to be supplied by the editor)
+Date of acceptance:         (to be supplied by the editor)
+Number of Figures:          (to be suppplied by author)

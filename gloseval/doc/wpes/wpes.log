@@ -1,0 +1,371 @@
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/MacPorts 2012_10) (format=pdflatex 2013.6.16)  17 JUL 2013 20:21
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**wpes.tex
+(./wpes.tex
+LaTeX2e <2011/06/27>
+Babel <v3.8m> and hyphenation patterns for english, dumylang, nohyphenation, cz
+ech, slovak, dutch, ukenglish, usenglishmax, basque, french, german-x-2012-05-3
+0, ngerman-x-2012-05-30, german, ngerman, swissgerman, italian, polish, portugu
+ese, spanish, catalan, galician, loaded.
+(/opt/local/share/texmf-texlive-dist/tex/latex/amscls/amsart.cls
+Document Class: amsart 2009/07/02 v2.20.1
+\linespacing=\dimen102
+\normalparindent=\dimen103
+\normaltopskip=\skip41
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2000/07/18 v2.13 AMS math features
+\@mathmargin=\skip42
+
+For additional information on amsmath, use the `?' option.
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0
+\@emptytoks=\toks14
+\ex@=\dimen104
+))
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d
+\pmbraise@=\dimen105
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 1999/12/14 v2.01 operator names
+)
+\inf@bad=\count79
+LaTeX Info: Redefining \frac on input line 211.
+\uproot@=\count80
+\leftroot@=\count81
+LaTeX Info: Redefining \overline on input line 307.
+\classnum@=\count82
+\DOTSCASE@=\count83
+LaTeX Info: Redefining \ldots on input line 379.
+LaTeX Info: Redefining \dots on input line 382.
+LaTeX Info: Redefining \cdots on input line 467.
+\Mathstrutbox@=\box26
+\strutbox@=\box27
+\big@size=\dimen106
+LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
+\macc@depth=\count84
+\c@MaxMatrixCols=\count85
+\dotsspace@=\muskip10
+\c@parentequation=\count86
+\dspbrk@lvl=\count87
+\tag@help=\toks15
+\row@=\count88
+\column@=\count89
+\maxfields@=\count90
+\andhelp@=\toks16
+\eqnshift@=\dimen107
+\alignsep@=\dimen108
+\tagshift@=\dimen109
+\tagwidth@=\dimen110
+\totwidth@=\dimen111
+\lineht@=\dimen112
+\@envbody=\toks17
+\multlinegap=\skip43
+\multlinetaggap=\skip44
+\mathdisplay@stack=\toks18
+LaTeX Info: Redefining \[ on input line 2666.
+LaTeX Info: Redefining \] on input line 2667.
+)
+LaTeX Font Info:    Try loading font information for U+msa on input line 388.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2009/06/22 v3.00 AMS symbols A
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
+)
+\copyins=\insert233
+\abstractbox=\box28
+\listisep=\skip45
+\c@part=\count91
+\c@section=\count92
+\c@subsection=\count93
+\c@subsubsection=\count94
+\c@paragraph=\count95
+\c@subparagraph=\count96
+\c@figure=\count97
+\c@table=\count98
+\abovecaptionskip=\skip46
+\belowcaptionskip=\skip47
+\captionindent=\dimen113
+\thm@style=\toks19
+\thm@bodyfont=\toks20
+\thm@headfont=\toks21
+\thm@notefont=\toks22
+\thm@headpunct=\toks23
+\thm@preskip=\skip48
+\thm@postskip=\skip49
+\thm@headsep=\skip50
+\dth@everypar=\toks24
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip11
+Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
+)
+(/opt/local/share/texmf-texlive/tex/latex/bigpage.sty)
+(/opt/local/share/texmf-texlive/tex/latex/bcprules.sty
+\afterruleskip=\skip51
+\labelminsep=\skip52
+\labelcolwidth=\dimen114
+\@labelbox=\box29
+\rulebox=\box30
+\ruledim=\dimen115
+\labeldim=\dimen116
+)
+(/opt/local/share/texmf-texlive/tex/latex/code.sty)
+(/opt/local/share/texmf-texlive-dist/tex/latex/base/latexsym.sty
+Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
+\symlasy=\mathgroup6
+LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
+(Font)                  U/lasy/m/n --> U/lasy/b/n on input line 47.
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2009/06/22 v3.00
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/caption/caption.sty
+Package: caption 2012/02/19 v3.2f Customizing captions (AR)
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/caption/caption3.sty
+Package: caption3 2012/01/12 v1.4b caption3 kernel (AR)
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks25
+)
+\captionmargin=\dimen117
+\captionmargin@=\dimen118
+\captionwidth=\dimen119
+\caption@indent=\dimen120
+\caption@parindent=\dimen121
+\caption@hangindent=\dimen122
+)
+Package caption Info: AMS or SMF document class.
+\c@ContinuedFloat=\count99
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/tools/multicol.sty
+Package: multicol 2011/06/27 v1.7a multicolumn formatting (FMi)
+\c@tracingmulticols=\count100
+\mult@box=\box31
+\multicol@leftmargin=\dimen123
+\c@unbalance=\count101
+\c@collectmore=\count102
+\doublecol@number=\count103
+\multicoltolerance=\count104
+\multicolpretolerance=\count105
+\full@width=\dimen124
+\page@free=\dimen125
+\premulticols=\dimen126
+\postmulticols=\dimen127
+\multicolsep=\skip53
+\multicolbaselineskip=\skip54
+\partial@page=\box32
+\last@line=\box33
+\mult@rightbox=\box34
+\mult@grightbox=\box35
+\mult@gfirstbox=\box36
+\mult@firstbox=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\@tempa=\box50
+\@tempa=\box51
+\@tempa=\box52
+\@tempa=\box53
+\@tempa=\box54
+\c@columnbadness=\count106
+\c@finalcolumnbadness=\count107
+\last@try=\dimen128
+\multicolovershoot=\dimen129
+\multicolundershoot=\dimen130
+\mult@nat@firstbox=\box55
+\colbreak@box=\box56
+\multicol@sort@counter=\count108
+)
+\ltext=\skip55
+\lmath=\skip56
+\cmath=\skip57
+\rmath=\skip58
+\rtext=\skip59
+LaTeX Font Info:    Try loading font information for U+msa on input line 163.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2009/06/22 v3.00 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 163.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2009/06/22 v3.00 AMS symbols B
+)
+LaTeX Font Info:    Try loading font information for U+lasy on input line 163.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/base/ulasy.fd
+File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
+)
+\c@thm=\count109
+ (./wpes.aux)
+\openout1 = `wpes.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 264.
+LaTeX Font Info:    ... okay on input line 264.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 264.
+LaTeX Font Info:    ... okay on input line 264.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 264.
+LaTeX Font Info:    ... okay on input line 264.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 264.
+LaTeX Font Info:    ... okay on input line 264.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 264.
+LaTeX Font Info:    ... okay on input line 264.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 264.
+LaTeX Font Info:    ... okay on input line 264.
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
+
+Underfull \hbox (badness 10000) in paragraph at lines 331--334
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 331--334
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 331--334
+
+ []
+
+
+LaTeX Warning: Citation `milner91polyadicpi' on page 1 undefined on input line 
+352.
+
+
+LaTeX Warning: Citation `biztalk' on page 1 undefined on input line 358.
+
+[1{/opt/local/var/db/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+
+LaTeX Warning: Citation `lisp3' on page 2 undefined on input line 410.
+
+[2]
+
+LaTeX Warning: Citation `SangiorgiWalker' on page 3 undefined on input line 503
+.
+
+
+LaTeX Warning: Citation `Barendregt84' on page 3 undefined on input line 513.
+
+
+LaTeX Warning: Citation `Krivine-TheCurryHowardCorre' on page 3 undefined on in
+put line 535.
+
+
+LaTeX Warning: Citation `ONAG' on page 3 undefined on input line 537.
+
+[3] [4]
+LaTeX Font Info:    Try loading font information for OMS+cmtt on input line 650
+.
+LaTeX Font Info:    No file OMScmtt.fd. on input line 650.
+
+
+LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
+(Font)              using `OMS/cmsy/m/n' instead
+(Font)              for symbol `textbraceleft' on input line 650.
+
+[5] [6] [7]
+
+LaTeX Warning: Citation `SangiorgiWalker' on page 8 undefined on input line 891
+.
+
+[8] [9] [10]
+
+LaTeX Warning: Citation `globalpi' on page 11 undefined on input line 1164.
+
+[11]
+
+LaTeX Warning: Citation `hop' on page 12 undefined on input line 1233.
+
+
+LaTeX Warning: Citation `facile' on page 12 undefined on input line 1234.
+
+
+LaTeX Warning: Citation `DBLP:conf/tacs/Milner97' on page 12 undefined on input
+ line 1288.
+
+
+LaTeX Warning: Citation `DBLP:conf/concur/HermidaP95' on page 12 undefined on i
+nput line 1290.
+
+
+LaTeX Warning: Citation `GabbayMJ:picfm' on page 12 undefined on input line 129
+1.
+
+
+LaTeX Warning: Citation `polysync' on page 12 undefined on input line 1294.
+
+
+LaTeX Warning: Citation `Fontana' on page 12 undefined on input line 1309.
+
+[12] (./wpes.bbl) [13] (./wpes.aux)
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 3122 strings out of 494763
+ 41609 string characters out of 3171442
+ 104668 words of memory out of 3000000
+ 6176 multiletter control sequences out of 15000+200000
+ 14131 words of font info for 58 fonts, out of 3000000 for 9000
+ 295 hyphenation exceptions out of 8191
+ 36i,13n,38p,241b,326s stack positions out of 5000i,500n,10000p,200000b,50000s
+</opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmbx10.pf
+b></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb
+></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pf
+b></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmex10.pf
+b></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmitt10.p
+fb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmmi10.p
+fb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmmi7.pf
+b></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb
+></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+</opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></
+opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></op
+t/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></op
+t/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></opt
+/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></opt
+/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmti8.pfb></opt/
+local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></opt/
+local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb><
+/opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/symbols/msam7.p
+fb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/symbols/msb
+m10.pfb>
+Output written on wpes.pdf (13 pages, 265176 bytes).
+PDF statistics:
+ 123 PDF objects out of 1000 (max. 8388607)
+ 88 compressed objects within 1 object stream
+ 0 named destinations out of 1000 (max. 500000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+

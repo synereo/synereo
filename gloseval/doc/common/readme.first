@@ -1,0 +1,67 @@
+% This file is part of the ENTCS LaTeX package.
+% ------------------------------------------------
+% Version: 3
+% Date:    20 July 2003
+
+Copyright (C) 2003
+
+IMPORTANT NOTICE:
+
+You are not allowed to change this readme file.
+
+This the ENTCS LaTeX package. You need the new standard LaTeX2e if you
+want to utilize this package to typeset LaTex to suit the formatting
+requirements of ENTCS. The older version of LaTeX, version 2.09 of 14
+January 1992 or later, is no longer supported. These files are based
+on Elsevier Sceince's elsart.sty package, and the documentation for
+that package (suitably modified for the ENTCS files) can be found in
+the files instraut.dvi (for which you need AMSFonts v2.1),
+instraut.ps, and inst.ascii and example.tex. (Note, however, that
+these files acknowledge support for LaTeX, which is no longer true.)
+
+ENTCS is being incoporated in SceinceDirect, Elsevier's main platform
+for publishing electronic series. Because of this, only .pdf files are
+required -- the use of PostScript files is no longer required, nor
+supported. Complete instructions about to create .pdf files can be
+found in the file example.tex, which is included in this
+package. While one can use pdfLaTeX to prepare a suitable .pdf file,
+this approach does have drawbacks if .eps files are used for
+graphics. The same problem occurs if Paul Gastin's gastex package is
+used to prepare diagrams. If this is the case, it usually is simpler
+to use LaTeX 2e, followed by dvips, and then by ps2pdf to prepare the
+.pdf file. More details is included in the file example.tex.  This
+file can be used as templates for your own files.
+
+In any case, you should read over example.pdf *before* preparing your
+own files. There are special requirements that using .pdf files
+imposes -- in particular, you must use LaTeX2e to accomplish this.
+
+You should have the following files:
+
+readme.first    The file you are reading now.
+ 
+ascii.tab	    A table of ascii codes for the various keyboard symbols.
+		    A copy of this should be included in you main file to
+		    allow any differneces in keyboard coding to be easily 
+		    corrected.
+
+entcs.cls	    The main document style for LaTeX 2e..  Copy this
+                    to the directory where all other .sty files are kept
+
+entcsmacro.sty      A style file with additional macros for the entcs package.
+
+example.tex         A sample LaTeX file to be compiled using the encs package,
+		    which also serves as a template for preparing your
+		    paper. There also are included the output file
+		    example.dvi, as well as the usual LaTeX files
+		    example.aux and example.log.
+
+instr.ascii	    A plain ascii file telling you how to set things up.
+
+instraut.dvi        Booklet containing instructions on how to prepare a 
+                    file suitable for processing by Elsevier. This is for use 
+                    with Elsevier's earlier version of its own LaTeX  
+                    preparation package, but it provides some useful hints 
+                    for the ENTCS package as well. 
+
+instraut.ps         PostScript version of the booklet

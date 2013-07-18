@@ -1,0 +1,71 @@
+\providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
+\providecommand{\MR}{\relax\ifhmode\unskip\space\fi MR }
+% \MRhref is called by the amsart/book/proc definition of \MR.
+\providecommand{\MRhref}[2]{%
+  \href{http://www.ams.org/mathscinet-getitem?mr=#1}{#2}
+}
+\providecommand{\href}[2]{#2}
+\begin{thebibliography}{10}
+
+\bibitem{Barendregt84}
+Hendrik~Pieter Barendregt, \emph{{The Lambda Calculus -- Its Syntax and
+  Semantics}}, Studies in Logic and the Foundations of Mathematics, vol. 103,
+  North-Holland, 1984.
+
+\bibitem{ONAG}
+John~Horton Conway, \emph{{On Numbers and Games}}, Academic Press, 1976.
+
+\bibitem{lisp3}
+J.~des Rivieres and B.~C. Smith, \emph{The implementation of procedurally
+  reflective languages}, ACM Symposium on Lisp and Functional Programming,
+  1984, pp.~331--347.
+
+\bibitem{Fontana}
+Walter Fontana, \emph{private conversation}, 2004.
+
+\bibitem{GabbayMJ:picfm}
+M.~J. Gabbay, \emph{The $\pi$-calculus in {FM}}, Thirty-five years of
+  {A}utomath (Fairouz Kamareddine, ed.), Kluwer, 2003.
+
+\bibitem{DBLP:conf/concur/HermidaP95}
+Claudio Hermida and John Power, \emph{Fibrational control structures.}, CONCUR,
+  1995, pp.~117--129.
+
+\bibitem{Krivine-TheCurryHowardCorre}
+Jean-Louis Krivine, \emph{The curry-howard correspondence in set theory},
+  Proceedings of the Fifteenth Annual IEEE Symp. on Logic in Computer Science,
+  {LICS} 2000 (Martin Abadi, ed.), IEEE Computer Society Press, June 2000.
+
+\bibitem{biztalk}
+\mbox{Microsoft} Corporation, \emph{Microsoft biztalk server},
+  microsoft.com/biztalk/default.asp.
+
+\bibitem{polysync}
+M.Carbone and S.Maffeis, \emph{On the expressive power of polyadic
+  synchronisation in pi-calculus}, Nordic Journal of Computing \textbf{10(2)}
+  (2003), 70--98.
+
+\bibitem{milner91polyadicpi}
+Robin Milner, \emph{The polyadic $\pi$-calculus: A tutorial}, Logic and Algebra
+  of Specification \textbf{Springer-Verlag} (1993).
+
+\bibitem{DBLP:conf/tacs/Milner97}
+\bysame, \emph{Strong normalisation in higher-order action calculi.}, TACS,
+  1997, pp.~1--19.
+
+\bibitem{SangiorgiWalker}
+David Sangiorgi and David Walker, \emph{The $\pi$-calculus: A theory of mobile
+  processes}, Cambridge University Press, 2001.
+
+\bibitem{hop}
+Davide Sangiorgi, \emph{Bisimulation in higher-order process calculi},
+  Information and Computation \textbf{131} (1996), 141--178.
+
+\bibitem{facile}
+B.~Thomsen, \emph{{A Theory of Higher Order Communication Systems}},
+  Information and Computation \textbf{116} (1995), no.~1, 38--57.
+
+\bibitem{globalpi}
+Lucian Wischik, \emph{Old names for nu}, Submitted for publication, 2004.
+
+\end{thebibliography}

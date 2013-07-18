@@ -1,0 +1,55 @@
+This is BibTeX, Version 0.99d (TeX Live 2012/MacPorts 2012_10)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: wpes.aux
+The style file: amsplain.bst
+Database file #1: wpes.bib
+A bad cross reference---entry "DBLP:conf/tacs/Milner97"
+refers to entry "conf/tacs/1997", which doesn't exist
+A bad cross reference---entry "DBLP:conf/concur/HermidaP95"
+refers to entry "conf/concur/1995", which doesn't exist
+Warning--I didn't find a database entry for "conf/tacs/1997"
+Warning--I didn't find a database entry for "conf/concur/1995"
+Warning--missing note in Fontana
+Warning--missing pages in milner91polyadicpi
+You've used 15 entries,
+            2213 wiz_defined-function locations,
+            592 strings with 5747 characters,
+and the built_in function-call counts, 3996 in all, are:
+= -- 343
+> -- 134
+< -- 1
++ -- 59
+- -- 39
+* -- 271
+:= -- 650
+add.period$ -- 15
+call.type$ -- 15
+change.case$ -- 64
+chr.to.int$ -- 0
+cite$ -- 17
+duplicate$ -- 201
+empty$ -- 387
+format.name$ -- 39
+if$ -- 854
+int.to.chr$ -- 0
+int.to.str$ -- 15
+missing$ -- 30
+newline$ -- 55
+num.names$ -- 33
+pop$ -- 95
+preamble$ -- 1
+purify$ -- 49
+quote$ -- 0
+skip$ -- 131
+stack$ -- 0
+substring$ -- 210
+swap$ -- 39
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 54
+warning$ -- 2
+while$ -- 42
+width$ -- 17
+write$ -- 133
+(There were 2 error messages)

@@ -1,0 +1,24 @@
+Here are the basic instructions for using the ENTCS macro package.
+The files should work seamlessly with LaTeX2e and with pdfLaTeX.
+
+Assuming you have retrieved the necessary files, then,
+  1) Place the *.sty files in a directory where LaTeX looks for 
+     input files. This can be the directory containing the source file
+     for your paper.
+  2) Read the file instraut.dvi file. This describes the generic
+     set of files elsart.sty and elsart12.sty, upon which the entcs
+     files are based. 
+  3) (pdf)LaTeX and print the file example.tex.  This file describes how
+     the ENTCS style files differ from the generic Elsevier article
+     styles.  This file also provides a template for preparing your own
+     paper for your Proceedings.  You simply can replace relevant
+     material in example.tex with your own data.  
+  4) If you run into problems, contact your Program Chairman or me at
+     mwm@math.tulane.edu.
+  5) When you're finished, send a copy of your source file, together
+     with any macro files you need to your Program Chairman or whomever
+     is handling the processing of the papers. 
+
+Mike Mislove
+Founding Editor
+Electronic Notes in Theoretical Computer Science
