@@ -1631,6 +1631,7 @@ package diesel {
             for( e <- client.get( erql ) ) {
               e match {
                 case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                  tweet( "rsrc type: DSLCommLink.mTT.RBoundAList" )
                   for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                     val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                     
@@ -1649,6 +1650,7 @@ package diesel {
                   }             
                 }
                 case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                  tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
                   for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                     val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                     
@@ -1666,8 +1668,45 @@ package diesel {
                     evaluateExpression( node )( expr )( forward )
                   }             
                 }
+                case Some( rsrc ) => {
+                  rsrc match {
+                    case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
+                      tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
+                      innerOptRsrc match {
+                        case Some( DSLCommLink.mTT.Ground( expr ) ) => {
+                          for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                            val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
+                            
+                            val forward : Option[mTT.Resource] => Unit =
+                              {
+                                ( optRsrc : Option[mTT.Resource] ) => {
+                                  for( mTT.Ground( v ) <- optRsrc ) {
+                                    reset {
+                                      server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                                    }
+                                  }
+                                }
+                              }                        
+                            evaluateExpression( node )( expr )( forward )
+                          }
+                        }
+                        case Some( innerRrsc ) => {
+                          tweet( "unexpected inner rsrc type: " + innerRrsc )
+                          tweet( "inner rsrc type: " + innerRrsc.getClass )
+                        }
+                      }                      
+                    }
+                    case _ => {
+                      tweet( "unexpected rsrc type: " + rsrc )
+                      tweet( "rsrc type: " + rsrc.getClass )
+                    }
+                  }             
+                }
+                case None => {
+                  tweet( "server loop waiting." )
+                }
                 case _ => {
-                  println( "rsrc not handled: " + e )
+                  tweet( "rsrc not handled: " + e )
                 }
               }
             }
