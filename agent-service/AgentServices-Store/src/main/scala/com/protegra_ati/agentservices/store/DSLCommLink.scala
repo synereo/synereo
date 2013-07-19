@@ -388,11 +388,17 @@ object DSLCommLink
                         tweet( " ****************************** " )
 		        tweet( " computed cacheValue: " + cacheValueRslt )
 		        tweet( " ****************************** " )
+                        val groundWrapper =
+                          mTT.Ground( cacheValueRslt )
+                        val boundHMWrapper =
+                          mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                        val boundWrapper =
+                          mTT.asRBoundAList( boundHMWrapper )
                         val finalRslt =
                           emT.PlaceInstance(
                             k,
                             Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                              mTT.Ground( cacheValueRslt )
+                              boundWrapper
                             ),
                           // BUGBUG -- lgm : why can't the compiler determine
                           // that this cast is not necessary?
