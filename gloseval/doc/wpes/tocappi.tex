@@ -1,0 +1,1145 @@
+% ------------------------------------------------------------------------
+% AMS-LaTeX Paper ********************************************************
+% ------------------------------------------------------------------------
+% Submitted:      Dec 15 2003
+% Final Version:  
+% Accepted:       
+% ------------------------------------------------------------------------
+% This is a journal top-matter template file for use with AMS-LaTeX.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\documentclass{tran-l}
+%\documentclass[twocolumn]{amsart}
+\documentclass[]{amsart}
+%\documentclass[]{llncs}
+
+%\documentclass[]{prentcsmacro}
+
+%\usepackage[active]{srcltx} % SRC Specials for DVI Searching
+\usepackage{url}
+
+% From Allen's stable.
+\usepackage{bigpage}
+\usepackage{bcprules}
+\usepackage{code}
+\usepackage{amsfonts}
+\usepackage{latexsym}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{multicol}
+
+% Double brackets
+\newcommand{\ldb}{[\![}
+\newcommand{\rdb}{]\!]}
+\newcommand{\ldrb}{(\!(}
+\newcommand{\rdrb}{)\!)}
+\newcommand{\lliftb}{\langle\!|}
+\newcommand{\rliftb}{|\!\rangle}
+% \newcommand{\lpquote}{\langle}
+% \newcommand{\rpquote}{\rangle}
+% \newcommand{\lpquote}{\lceil}
+% \newcommand{\rpquote}{\rceil}
+\newcommand{\lpquote}{\ulcorner}
+\newcommand{\rpquote}{\urcorner}
+\newcommand{\newkw}{\nu}
+
+% SYNTAX
+\newcommand{\id}[1]{\texttt{#1}}
+\newcommand{\none}{\emptyset}
+\newcommand{\eps}{\epsilon}
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\rep}[2]{\id{\{$#1$,$#2$\}}}
+\newcommand{\elt}[2]{\id{$#1$[$#2$]}}
+\newcommand{\infinity}{$\infty$}
+
+\newcommand{\pzero}{\mathbin{0}}
+\newcommand{\seq}{\mathbin{\id{,}}}
+\newcommand{\all}{\mathbin{\id{\&}}}
+\newcommand{\choice}{\mathbin{\id{|}}}
+\newcommand{\altern}{\mathbin{\id{+}}}
+\newcommand{\juxtap}{\mathbin{\id{|}}}
+\newcommand{\concat}{\mathbin{.}}
+\newcommand{\punify}{\mathbin{\id{:=:}}}
+\newcommand{\fuse}{\mathbin{\id{=}}}
+\newcommand{\scong}{\mathbin{\equiv}}
+\newcommand{\nameeq}{\mathbin{\equiv_N}}
+\newcommand{\alphaeq}{\mathbin{\equiv_{\alpha}}}
+\newcommand{\names}[1]{\mathbin{\mathcal{N}(#1)}}
+\newcommand{\freenames}[1]{\mathbin{\mathcal{FN}(#1)}}
+\newcommand{\boundnames}[1]{\mathbin{\mathcal{BN}(#1)}}
+%\newcommand{\lift}[2]{\texttt{lift} \; #1 \concat #2}
+\newcommand{\binpar}[2]{#1 \juxtap #2}
+\newcommand{\outputp}[2]{#1 \id{[} #2 \id{]}}
+\newcommand{\prefix}[3]{#1 \id{(} #2 \id{)} \concat #3}
+\newcommand{\lift}[2]{#1 \lliftb #2 \rliftb}
+\newcommand{\quotep}[1]{\lpquote #1 \rpquote}
+\newcommand{\dropn}[1]{\rpquote #1 \lpquote}
+
+\newcommand{\newp}[2]{\id{(}\newkw \; #1 \id{)} #2}
+\newcommand{\bangp}[1]{\id{!} #1}
+
+\newcommand{\substp}[2]{\id{\{} \quotep{#1} / \quotep{#2} \id{\}}}
+\newcommand{\substn}[2]{\id{\{} #1 / #2 \id{\}}}
+
+\newcommand{\psubstp}[2]{\widehat{\substp{#1}{#2}}}
+\newcommand{\psubstn}[2]{\widehat{\substn{#1}{#2}}}
+
+\newcommand{\applyp}[2]{#1 \langle #2 \rangle}
+\newcommand{\absp}[2]{\id{(} #1 \id{)} #2}
+
+\newcommand{\transitions}[3]{\mathbin{#1 \stackrel{#2}{\longrightarrow} #3}}
+\newcommand{\meaningof}[1]{\ldb #1 \rdb}
+\newcommand{\pmeaningof}[1]{\ldb #1 \rdb}
+\newcommand{\nmeaningof}[1]{\ldrb #1 \rdrb}
+
+\newcommand{\Proc}{\mathbin{Proc}}
+\newcommand{\QProc}{\quotep{\mathbin{Proc}}}
+
+\newcommand{\entailm}{\mathbin{\vdash_{\mathfrak m}}} %matching
+\newcommand{\entailp}{\mathbin{\vdash_{\mathfrak p}}} %behavioral
+\newcommand{\entailv}{\mathbin{\vdash_{\mathfrak v}}} %validation
+\newcommand{\congd}{\mathbin{\equiv_{\mathfrak d}}}
+\newcommand{\congs}{\mathbin{\equiv_{\mathfrak s}}}
+\newcommand{\congp}{\mathbin{\equiv_{\mathfrak p}}}
+%\newcommand{\logequiv}{\mathbin{\leftrightarrow}}
+
+\newcommand{\barb}[2]{\mathbin{#1 \downarrow_{#2}}}
+\newcommand{\dbarb}[2]{\mathbin{#1 \Downarrow_{#2}}}
+
+% From pi-duce paper
+\newcommand{\red}{\rightarrow}
+\newcommand{\wred}{\Rightarrow}
+\newcommand{\redhat}{\hat{\longrightarrow}}
+\newcommand{\lred}[1]{\stackrel{#1}{\longrightarrow}} %transitions
+\newcommand{\wlred}[1]{\stackrel{#1}{\Longrightarrow}}
+
+\newcommand{\opm}[2]{\overline{#1} [ #2 ]} % monadic
+\newcommand{\ipm}[2]{{#1} ( #2 )} 
+\newcommand{\ipmv}[2]{{#1} ( #2 )} % monadic
+\newcommand{\parop}{\;|\;}		% parallel operator
+\newcommand{\patmatch}[3]{#2 \in #3 \Rightarrow #1}
+\newcommand{\sdot}{\, . \,}		% Space around '.'
+\newcommand{\bang}{!\,}
+%\newcommand{\fuse}[1]{\langle #1 \rangle}		
+\newcommand{\fusion}[2]{#1 = #2} % fusion prefix/action
+\newcommand{\rec}[2]{\mbox{\textsf{rec}} \, #1. \, #2}
+\newcommand{\match}[2]{\mbox{\textsf{match}} \; #1 \; \mbox{\textsf{with}} \; #2}
+\newcommand{\sep}{:}
+\newcommand{\val}[2]{\mbox{\textsf{val}} \; #1 \; \mbox{\textsf{as}} \; #2}
+
+\newcommand{\rel}[1]{\;{\mathcal #1}\;} %relation
+\newcommand{\bisim}{\stackrel{.}{\sim}_b} %bisimilar
+\newcommand{\wb}{\approx_b} %weak bisimilar
+\newcommand{\bbisim}{\stackrel{\centerdot}{\sim}} %barbed bisimilar
+\newcommand{\wbbisim}{\stackrel{\centerdot}{\approx}} %weak barbed bisimilar
+\newcommand{\bxless}{\lesssim}	%expansion less (amssymb required)
+\newcommand{\bxgtr}{\gtrsim}	%expansion greater (amssymb required)
+\newcommand{\beq}{\sim}		%barbed congruent
+\newcommand{\fwbeq}{\stackrel{\circ}{\approx}}	%weak barbed congruent
+\newcommand{\wbeq}{\approx}	%weak barbed congruent
+\newcommand{\sheq}{\simeq}	%symbolic hypereq
+\newcommand{\wbc}{\approx_{cb}}
+
+% End piduce contribution
+
+% rho logic
+
+\newcommand{\ptrue}{\mathbin{true}}
+\newcommand{\psatisfies}[2]{#1 \models #2}
+\newcommand{\pdropf}[1]{\rpquote #1 \lpquote}
+\newcommand{\plift}[2]{#1 \lliftb #2 \rliftb}
+\newcommand{\pprefix}[3]{\langle #1 ? #2 \rangle #3}
+\newcommand{\pgfp}[2]{\textsf{rec} \; #1 \mathbin{.} #2}
+\newcommand{\pquant}[3]{\forall #1 \mathbin{:} #2 \mathbin{.} #3}
+\newcommand{\pquantuntyped}[2]{\forall #1 \mathbin{.} #2}
+\newcommand{\riff}{\Leftrightarrow}
+
+\newcommand{\PFormula}{\mathbin{PForm}}
+\newcommand{\QFormula}{\mathbin{QForm}}
+\newcommand{\PropVar}{\mathbin{\mathcal{V}}}
+
+\newcommand{\typedby}{\mathbin{\:\colon}}
+\newcommand{\mixedgroup}[1]{\id{mixed($#1$)}}
+\newcommand{\cast}[2]{\id{CAST AS} \; #1 \; (#2)}
+\newcommand{\bslsh}{\mathbin{\id{\\}}}
+\newcommand{\bslshslsh}{\mathbin{\id{\\\\}}}
+\newcommand{\fslsh}{\mathbin{\id{/}}}
+\newcommand{\fslshslsh}{\mathbin{\id{//}}}
+\newcommand{\bb}[1]{\mbox{#1}}
+\newcommand{\bc}{\mathbin{\mathbf{::=}}}
+\newcommand{\bm}{\mathbin{\mathbf\mid}}
+\newcommand{\be}{\mathbin{=}}
+\newcommand{\bd}{\mathbin{\buildrel {\rm \scriptscriptstyle def} \over \be}}
+\newcommand{\category}[1]{\mbox{\bf #1}}
+
+%GRAMMAR
+\newlength{\ltext}
+\newlength{\lmath}
+\newlength{\cmath}
+\newlength{\rmath}
+\newlength{\rtext}
+
+\settowidth{\ltext}{complex type name}
+\settowidth{\lmath}{$xxx$}
+\settowidth{\cmath}{$::=$}
+\settowidth{\rmath}{\id{attributeGroup}}
+\settowidth{\rtext}{repetition of $g$ between $m$ and $n$ times}
+
+\newenvironment{grammar}{
+  \[
+  \begin{array}{l@{\quad}rcl@{\quad}l}
+  \hspace{\ltext} & \hspace{\lmath} & \hspace{\cmath} & \hspace{\rmath} & \hspace{\rtext} \\
+}{
+  \end{array}\]
+}
+
+% Over-full v-boxes on even pages are due to the \v{c} in author's name
+\vfuzz2pt % Don't report over-full v-boxes if over-edge is small
+
+% THEOREM Environments ---------------------------------------------------
+ \newtheorem{thm}{Theorem}[subsection]
+ \newtheorem{cor}[thm]{Corollary}
+ \newtheorem{lem}[thm]{Lemma}
+ \newtheorem{prop}[thm]{Proposition}
+ \theoremstyle{definition}
+ \newtheorem{defn}[thm]{Definition}
+ \theoremstyle{remark}
+ \newtheorem{rem}[thm]{Remark}
+ \newtheorem{example}[thm]{Example}
+ \numberwithin{equation}{subsection}
+% MATH -------------------------------------------------------------------
+ \DeclareMathOperator{\RE}{Re}
+ \DeclareMathOperator{\IM}{Im}
+ \DeclareMathOperator{\ess}{ess}
+ \newcommand{\veps}{\varepsilon}
+ \newcommand{\To}{\longrightarrow}
+ \newcommand{\h}{\mathcal{H}}
+ \newcommand{\s}{\mathcal{S}}
+ \newcommand{\A}{\mathcal{A}}
+ \newcommand{\J}{\mathcal{J}}
+ \newcommand{\M}{\mathcal{M}}
+ \newcommand{\W}{\mathcal{W}}
+ \newcommand{\X}{\mathcal{X}}
+ \newcommand{\BOP}{\mathbf{B}}
+ \newcommand{\BH}{\mathbf{B}(\mathcal{H})}
+ \newcommand{\KH}{\mathcal{K}(\mathcal{H})}
+ \newcommand{\Real}{\mathbb{R}}
+ \newcommand{\Complex}{\mathbb{C}}
+ \newcommand{\Field}{\mathbb{F}}
+ \newcommand{\RPlus}{\Real^{+}}
+ \newcommand{\Polar}{\mathcal{P}_{\s}}
+ \newcommand{\Poly}{\mathcal{P}(E)}
+ \newcommand{\EssD}{\mathcal{D}}
+ \newcommand{\Lom}{\mathcal{L}}
+ \newcommand{\States}{\mathcal{T}}
+ \newcommand{\abs}[1]{\left\vert#1\right\vert}
+% \newcommand{\set}[1]{\left\{#1\right\}}
+%\newcommand{\seq}[1]{\left<#1\right>}
+ \newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+ \newcommand{\essnorm}[1]{\norm{#1}_{\ess}}
+
+%%% NAMES
+\newcommand{\Names}{{\mathcal N}}
+\newcommand{\Channels}{{\sf X}}
+\newcommand{\Variables}{{\mathcal V}}
+\newcommand{\Enames}{{\mathcal E}}
+\newcommand{\Nonterminals}{{\mathcal S}}
+\newcommand{\Pnames}{{\mathcal P}}
+\newcommand{\Dnames}{{\mathcal D}}
+\newcommand{\Types}{{\mathcal T}}
+
+\newcommand{\fcalc}{fusion calculus}
+\newcommand{\xcalc}{${\mathfrak x}$-calculus}
+\newcommand{\lcalc}{$\lambda$-calculus}
+\newcommand{\pic}{$\pi$-calculus}
+\newcommand{\rhoc}{$\rho$-calculus}
+\newcommand{\hcalc}{highwire calculus}
+\newcommand{\dcalc}{data calculus}
+%XML should be all caps, not small caps. --cb
+%\newcommand{\xml}{\textsc{xml}}
+\newcommand{\xml}{XML} 
+
+\newcommand{\papertitle}{Policy as Types}
+% use static date to preserve date of actual publication
+ \newcommand{\paperversion}{Draft Version 0.1 - July 19, 2013}
+
+\newenvironment{toc}
+{
+\begin{list}{}{
+   \setlength{\leftmargin}{0.4in}
+   \setlength{\rightmargin}{0.6in}
+   \setlength{\parskip}{0pt}
+ } \item }
+{\end{list}}
+
+\newenvironment{narrow}
+{
+\begin{list}{}{
+   \setlength{\leftmargin}{0.4in}
+   \setlength{\rightmargin}{0.6in}
+ } \item }
+{\end{list}}
+
+%%% ----------------------------------------------------------------------
+\begin{document}
+
+%These margin values appear to be relative to the bigpage package settings. --cb
+\setlength{\topmargin}{0in}
+\setlength{\textheight}{8.5in}
+\setlength{\parskip}{6pt}
+
+%\title{\huge{\papertitle}}
+\title{\papertitle}
+
+\author{ L.G. Meredith }
+\author{ Mark Miller }
+\author{ Mike Stay }
+
+%\address{Systems Biology, Harvard Medical School, Boston, Massachussetts, USA}
+
+%\email{lg_meredith@hms.harvard.edu}
+
+%\thanks{This work was completed during a visiting appointment at the Department of Systems Biology, Harvard Medical School.}
+
+%\subjclass{Primary 47A15; Secondary 46A32, 47D20}
+
+\keywords{ object-capability, concurrency, message-passing, policy, types, Curry-Howard }
+
+%\date{April 6, 2002.}
+
+\dedicatory{}
+
+%\commby{Daniel J. Rudolph}
+
+%%% ----------------------------------------------------------------------
+
+\begin{abstract}
+\normalsize{ 
+
+  Drossopoulou and Nolan argue persuasively for the need for a means
+  to express policy in object-capability-based systems. We investigate
+  a practical means to realize their aim via the Curry-Howard
+  isomorphism. Specifically, we investigate representing policy as
+  types in a behavioral type system for the \pic.
+
+}
+
+\end{abstract}
+
+\noindent
+{\large \textbf{Submission to WPES}}\\
+\rule{6.25in}{0.75pt}\\\\\\
+
+%%% ----------------------------------------------------------------------
+\maketitle
+%%% ----------------------------------------------------------------------
+
+% \begin{center}
+% \paperversion\\
+% \end{center}
+
+% \begin{toc}
+% \tableofcontents
+% \end{toc}
+
+% \newpage
+% ------------------------------------------------------------------------
+
+\section{Introduction}
+
+Object capabilities need policy. Policy is to object programs as types
+are to object programs.
+
+\subsection{Overview and contributions} 
+
+Other approaches to policy. Curry-Howard. Contracts as types.
+
+%%% ----------------------------------------------------------------------
+
+\section{The calculus}
+
+\subsubsection{Notation}
+
+We let ${P, Q, R}$ range over processes and ${x, y, z}$ range over names.
+
+\begin{grammar}
+\mbox{\rhoc}		& {P, Q}		& \bc	& \pzero & \mbox{null process} \\
+%				&					& \bm	& {x}\id{[}{y}\id{]} & \mbox{output} \\
+				&					& \bm	& {x}\id{(}{y}\id{)} \concat {P} & \mbox{input} \\
+				&					& \bm	& \lift{{x}}{{P}} & \mbox{lift} \\
+				&					& \bm	& \dropn{{x}} & \mbox{ drop } \\
+				&					& \bm	& {P} \juxtap {Q} & \mbox{ parallel } \\
+				& {x, y}  		& \bc	& \quotep{{P}} & \mbox{ quote } \\
+\end{grammar}
+
+\subsubsection{Quote}
+
+Working in a bottom-up fashion, we begin with names. The technical
+detail corresponding to the {\pic}' parametricity in a theory of
+\textit{names} shows up in standard presentations in the grammar
+describing terms of the language: there is no production for names;
+names are taken to be terminals in the grammar. Our first point of
+departure from a more standard presentation of an asynchronous mobile
+process calculus is here. The grammar for the terms of the language
+will include a production for names in the grammar. A name is a
+\textit{quoted} process, $\quotep{P}$.
+
+\subsubsection{Parallel}
+
+This constructor is the usual parallel composition, denoting
+concurrent execution of the composed processes.
+
+\subsubsection{Lift and drop}
+Despite the fact that names are built from (the codes of) processes,
+we still maintain a careful disinction in kind between process and
+name; thus, name construction is not process construction. So, if one
+wants to be able to generate a name from a given process, there must
+be a process constructor for a term that creates a name from a
+process. This is the motivation for the production $\lift{x}{P}$,
+dubbed here the \emph{lift} operator. The intuitive meaning of this
+term is that the process $P$ will be packaged up as its code,
+$\quotep{P}$, and ultimately made available as an output at the port
+$x$.
+
+A more formal motivation for the introduction of this operator will
+become clear in the sequel. But, it will suffice to say now that
+$\quotep{P}$ is impervious to substitution. In the $\rho$-calculus,
+substitution does not affect the process body between quote marks. On
+the other hand, $\lift{x}{P}$ is susceptible to substitution and as
+such constitutes a dynamic form of quoting because the process body
+ultimately quoted will be different depending on the context in which
+the $\lift{x}{P}$ expression occurs.
+
+Of course, when a name is a quoted process, it is very handy to have a
+way of evaluating such an entity. Thus, the $\dropn{x}$ operator,
+pronounced \textit{drop} $x$, (eventually) extracts the process from a
+name. We say `eventually' because this extraction only happens when a
+quoted process is substituted into this expression. A consequence of
+this behavior is that $\dropn{x}$ is inert except under and input
+prefix. One way of saying this is that if you want to get something
+done, sometimes you need to drop a name, but it should be the name of
+an agent you know.
+
+\begin{rem} %{No $\nu$ is good news}
+The lift operator turns out to play a role analogous to $(\nu \;
+x)P$. As mentioned in the introduction, it is essential to the
+computational completeness of the calculus, playing a key role in the
+implementation of replication. It also provides an essential
+ingredient in the compositional encoding of the $\nu$ operator.
+\end{rem}
+
+\begin{rem} %{Dropping replication}
+It is well-known that replication is not required in a higher-order
+process algebra \cite{SangiorgiWalker}. While our algebra is
+\textit{not} higher-order in the traditional sense (there are not
+formal process variables of a different type from names) it has all
+the features of a higher-order process algebra. Thus, it turns out
+that there is no need for a term for recursion. To illustrate this we
+present below an encoding of $!P$ in this calculus. Intuitively, this
+will amount to receiving a quoted form of a process, evaluating it,
+while making the quoted form available again. The reader familiar with
+the $\lambda$-calculus will note the formal similarity between the
+crucial term in the encoding and the paradoxical combinator
+\cite{Barendregt84}.
+\end{rem}
+
+\subsubsection{Input and output}
+
+The input constructor is standard for an asynchronous name-passing
+calculus. Input blocks its continuation from execution until it
+receives a communication. Lift is a form of output which -- because
+the calculus is asynchronous -- is allowed no continuation. It also
+affords a convenient syntactic sugar, which we define here.
+
+\begin{equation*}
+	{x}\id{[}{y}\id{]} \triangleq \lift{x}{\dropn{y}}
+\end{equation*}
+
+\subsubsection{The null process}
+
+As we will see below, the null process has a more distinguished role
+in this calculus. It provides the sole atom out of which all other
+processes (and the names they use) arise much in the same way that the
+number $0$ is the sole number out of which the natural numbers are
+constructed; or the empty set is the sole set out of which all sets
+are built in $ZF$-set theory \cite{Krivine-TheCurryHowardCorre}; or
+the empty game is the sole game out of which all games are built in
+Conway's theory of games and numbers \cite{ONAG}. This analogy to
+these other theories draws attention, in our opinion, to the
+foundational issues raised in the introduction regarding the design of
+calculi of interaction.
+
+\subsection{The name game}
+
+Before presenting some of the more standard features of a mobile
+process calculus, the calculation of free names, structural
+equivalence, etc., we wish to consider some examples of processes and
+names. In particular, if processes are built out of names, and names
+are built out of processes, is it ever possible to get off the ground?
+Fortunately, there is one process the construction of which involves
+no names, the null process, $0$. Since we have at least one process,
+we can construct at least one name, namely $\quotep{0}$ \footnote{pun
+gratefully accepted ;-)}. Armed with one name we can now construct at
+least two new processes that are evidently syntactically different
+from the $0$, these are $\quotep{0}\id{[}{\quotep{0}}\id{]}$ and
+$\quotep{0}\id{(}{\quotep{0}}\id{)} \concat 0$. As we might expect,
+the intuitive operational interpretation of these processes is also
+distinct from the null process. Intuitively, we expect that the first
+outputs the name $\quotep{0}$ on the channel $\quotep{0}$, much like
+the ordinary {\pic} process $x\id{[}x\id{]}$ outputs the name $x$ on
+the channel $x$, and the second inputs on the channel $\quotep{0}$,
+much like the ordinary {\pic} process $x\id{(}x\id{)} \concat 0$
+inputs on the channel $x$.
+
+Of course, now that we have two more processes, we have two more
+names, $\quotep{\quotep{0}\id{[}{\quotep{0}}\id{]}}$ and
+$\quotep{\quotep{0}\id{(}{\quotep{0}}\id{)} \concat 0}$. Having three
+names at our disposal we can construct a whole new supply of processes
+that generate a fresh supply of names, and we're off and running. It
+should be pointed out, though, that as soon as we had the null process
+we also had $0 \juxtap 0$ and $0 \juxtap 0 \juxtap 0$ and
+consequently, we had the names $\quotep{ 0 \juxtap 0 }$, and $\quotep{
+0 \juxtap 0 \juxtap 0}$, and .... But, since we ultimately wish to
+treat these compositions as merely other ways of writing the null
+process and not distinct from it, should we admit the codes of these
+processes as distinct from $\quotep{0}$?
+
+This question leads to several intriguing and apparently fundamental
+questions. Firstly, if names have structure, whether this derives from
+the structure of processes or something else, what is a reasonable
+notion of equality on names? How much computation, and of what kind,
+should go into ascertaining equality on names? Additionally, what
+roles should name equality play in a calculus of processes? In
+constructing this calculus we became conscious that substitution and
+synchronization identify two potentially very different roles for name
+equality to play in name-passing calculi. That these are very
+different roles is suggested by the fact that they may be carried out
+by very different mechanisms in a workable and effective theory. We
+offer one choice, but this is just one design choice among infinitely
+many. Most likely, the primary value of this proposal is to raise the
+question. Likewise, we offer a proposal regarding the calculation of
+name equality that is just one of many and whose real purpose is to
+make the question vivid. We wish to turn to the core mechanics of the
+calculus with these questions in mind.
+
+\subsection{Free and bound names}
+
+The syntax has been chosen so that a binding occurrence of a name is
+sandwiched between round braces, $\id{(} \cdot \id{)}$. Thus, the
+calculation of the free names of a process, $P$, denoted
+$\freenames{P}$ is given recursively by
+
+%\begin{multicols}{2}
+%{
+	\begin{eqnarray*}
+		\freenames{\pzero} & = & \emptyset \\
+%		\freenames{x \id{[}y\id{]}} & = & \{ x, y \} \\
+		\freenames{x \id{(}y\id{)} \concat P} & = & \{ x \} \cup (\freenames{P} \setminus \{ y \}) \\
+		\freenames{\lift{x}{P}} & = & \{ x \} \cup \freenames{P} \\
+		\freenames{\binpar{P}{Q}} & = & \freenames{P} \cup \freenames{Q} \\
+		\freenames{\dropn{x}} & = & \{ x \} \\
+	\end{eqnarray*}
+%}
+%\end{multicols}
+
+An occurrence of $x$ in a process $P$ is \textit{bound} if it is not
+free. The set of names occurring in a process (bound or free) is
+denoted by $\names{P}$.
+
+\subsection{Structural congruence}
+
+The {\em structural congruence} of processes, noted $\scong$, is the
+least congruence, containing $\alpha$-equivalence, $\alphaeq$, that
+satisfies the following laws:
+
+\begin{eqnarray*}
+	{P} \juxtap \pzero	
+		&  \scong \; {P} \; \scong & 
+			\pzero \juxtap {P} \\
+	{P} \juxtap {Q}	
+		& \scong & 
+			{Q} \juxtap {P} \\
+	({P} \juxtap {Q}) \juxtap {R}
+		& \scong & 
+			{P} \juxtap ({Q} \juxtap {R}) \\
+\end{eqnarray*}
+
+\subsection{Name equivalence}
+
+We now come to one of the first real subtleties of this calculus. Both
+the calculation of the free names of a process and the determination
+of structural congruence between processes critically depend on being
+able to establish whether two names are equal. In the case of the
+calculation of the free names of an input-guarded process, for
+example, to remove the bound name we must determine whether it is in
+the set of free names of the continuation. Likewise, structural
+congruence includes $\alpha$-equivalence. But, establishing
+$\alpha$-equivalence between the processes $x \id{(} z \id{)}\concat \lift{w}{y
+\id{[}z\id{]}}$ and $x \id{(} v \id{)}\concat \lift{w}{y
+\id{[}v\id{]}}$, for instance, requires calculating a substitution, e.g. $x \id{(} v \id{)}\concat \lift{w}{y
+\id{[}v\id{]}} \id{\{}z / v \id{\}}$. But this calculation requires, in turn, being able to
+determine whether two names, in this case the name in the object
+position of the output, and the name being substituted for, are equal.
+
+As will be seen, the equality on names involves structural equivalence
+on processes, which in turn involves alpha equivalence, which involves
+name equivalence. This is a subtle mutual recursion, but one that
+turns out to be well-founded. Before presenting the technical details,
+the reader may note that the grammar above enforces a strict
+alternation between quotes and process constructors. Each question
+about a process that involves a question about names may in turn
+involve a question about processes, but the names in the processes the
+next level down, as it were, are under fewer quotes. To put it another
+way, each `recursive call' to name equivalence will involve one less
+level of quoting, ultimately bottoming out in the quoted zero process.
+
+Let us assume that we have an account of (syntactic) substitution and
+$\alpha$-equivalence upon which we can rely to formulate a notion of
+name equivalence, and then bootstrap our notions of substitution and
+$\alpha$-equivalence from that. We take name equivalence, written
+$\nameeq$, to be the smallest equivalence relation generated by the
+following rules.
+
+
+\infrule[Quote-drop]
+{  }
+{ \quotep{\dropn{x}} \nameeq x }
+
+\infrule[Struct-equiv]
+{ P \scong Q }
+{ \quotep{P} \nameeq \quotep{Q} }
+
+\subsection{Syntactic substitution}
+
+Now we build the substitution used by $\alpha$-equivalence. We use
+$\Proc$ for the set of processes, $\QProc$ for the set of names, and
+$\id{\{}\vec{y} / \vec{x} \id{\}}$ to denote partial maps, $s : \QProc
+\rightarrow \QProc$. A map, $s$ lifts, uniquely, to a map on process terms, $\widehat{s} :
+\Proc \rightarrow \Proc$ by the following equations.
+
+\begin{eqnarray*}
+(0) \psubstp{Q}{P}         & = &    0 \\
+(R \juxtap S) \psubstp{Q}{P}
+		& = &    
+		(R)\psubstp{Q}{P} \juxtap (S) \psubstp{Q}{P} \\
+(x \id{(} y\id{)}\concat R) \psubstp{Q}{P}    
+		& = &    
+		(x)\substp{Q}{P} \id{(}z\id{)}\concat( (R \psubstn{z}{y}) \psubstp{Q}{P} ) \\
+%(x\id{[}y\id{]}) \psubstp{Q}{P}
+%		& = &    
+%		(x)\substp{Q}{P} \id{[}(y)\substp{Q}{P} \id{]} \\
+(\lift{x}{R}) \psubstp{Q}{P}  
+ 		& = &
+ 		\lift{(x)\substp{Q}{P}}{ R \psubstp{Q}{P} } \\
+(\dropn{x})  \psubstp{Q}{P}       
+		& = & 
+		\left\{ 
+			\begin{array}{ccc} 
+				\dropn{\quotep{Q}} & & x \nameeq \quotep{P} \\
+                              	\dropn{x} & & otherwise \\
+			\end{array}
+		\right.
+\end{eqnarray*}
+ 
+
+where
+
+\begin{equation*}
+(x)\id{\{} \lpquote Q \rpquote / \lpquote P \rpquote \id{\}}            = 
+		\left\{ 
+			\begin{array}{ccc}
+				\lpquote Q \rpquote & & x \nameeq \lpquote P \rpquote \\
+                                x & & otherwise \\
+			\end{array}
+		\right.
+\end{equation*}
+
+and $z$ is chosen distinct from $\quotep{P}$, $\quotep{Q}$, the free
+names in $Q$, and all the names in $R$. Our $\alpha$-equivalence will
+be built in the standard way from this substitution.
+
+But, given these mutual recursions, the question is whether the calculation
+of $\nameeq$ (respectively, $\scong$, $\alphaeq$) terminates. To
+answer this question it suffices to formalize our intuitions regarding
+level of quotes, or quote depth, $\#(x)$, of a name $x$ as
+follows.
+
+\begin{eqnarray*}
+	\#(\quotep{P}) & = & 1 + \#(P) \\
+    \#(P) & = & \left\{
+			   \begin{array}{ccc}
+				 max\{ \#(x) : x \in \names{P} \} & & \names{P} \neq \emptyset \\
+				 0 & & otherwise \\
+			   \end{array}
+			\right.
+\end{eqnarray*}
+
+The grammar ensures that $\#(\quotep{P})$ is bounded. Then the
+termination of $\nameeq$ (respectively, $\scong$, $\alphaeq$) is an
+easy induction on quote depth.
+
+\subsection{ Dynamic quote: an example }
+
+Anticipating something of what's to come, consider applying the
+substitution, $\widehat{\id{\{}u / z \id{\}}}$, to the following pair
+of processes, $\lift{w}{y \id{[}z\id{]}}$ and $w\id{[} \lpquote
+y\id{[}z\id{]} \rpquote \id{]}$.
+
+\begin{eqnarray*}
+	\lift{w}{y \id{[}z\id{]}}\widehat{\id{\{}u / z \id{\}}}
+		& = &
+		\lift{w}{y \id{[}u\id{]}} \\
+	w\id{[} \lpquote y\id{[}z\id{]} \rpquote \id{]} \widehat{ \id{\{}u / z \id{\}} }
+		& = &
+		w\id{[} \lpquote y\id{[}z\id{]} \rpquote \id{]}
+\end{eqnarray*}
+
+Because the body of the process between quotes is impervious to
+substitution, we get radically different answers. In fact, by
+examining the first process in an input context, e.g. $x \id{(} z
+\id{)}\concat \lift{w}{y
+\id{[}z\id{]}}$, we see that the process under the lift operator may
+be shaped by prefixed inputs binding a name inside it. In this sense,
+the lift operator will be seen as a way to dynamically construct
+processes before reifying them as names.
+
+\subsection{Semantic substitution}
+
+The substitution used in $\alpha$-equivalence is really only a device
+to formally recognize that binding occurrences do not depend on the
+specific names. It is not the engine of computation. The proposal here
+is that while synchronization is the driver of that engine, the real
+engine of computation is a semantic notion of substitution that
+recognizes that a dropped name is a request to run a process. Which
+process? Why the one whose code has been bound to the name being
+dropped. Formally, this amounts to a notion of substitution that
+differs from syntactic substitution in its application to a dropped
+name.
+
+\begin{eqnarray*}
+(\dropn{x})  \psubstp{Q}{P}       
+		& = & 
+		\left\{ 
+			\begin{array}{ccc} 
+				Q & & x \nameeq \quotep{P} \\
+                              	\dropn{x} & & otherwise \\
+			\end{array}
+		\right.
+\end{eqnarray*}
+
+In the remainder of the paper we will refer to semantic and syntactic
+substitutions simply as substitutions and rely on context to
+distinguish which is meant. Similarly, we will abuse notation and
+write $\substn{y}{x}$ for $\psubstn{y}{x}$.
+
+Finally equipped with these standard features we can present the
+dynamics of the calculus.
+
+\subsection{Operational Semantics}
+The reduction rules for {\rhoc}  are
+% \infrule[Comm]
+% { {{x}_0 \nameeq {x}_3} }
+% {{{{x}_{0}\id{[}{x}_{2}\id{]}}} \juxtap {{x}_{3}\id{(}{x}_{1}\id{)} \concat {P}}
+% \red {P}\id{\{}{x}_{2} \id{/} {x}_{1} \id{\}}}
+
+%\infrule[Comm]
+%{ {x}_{0} \nameeq {x}_{1} }
+%{{{ x_{0} \id{[} z \id{]}}} \juxtap { x_{1} \id{(} y \id{)} \concat {P}}
+%\red {P}\id{\{} z \id{/} y \id{\}}}
+
+\infrule[Comm]
+{ {x}_{0} \nameeq {x}_{1} }
+{{\lift{x_{0}}{Q} \juxtap { x_{1} \id{(}{y} \id{)} \concat {P}}}
+\red {P}\id{\{}\quotep{Q} \id{/} {y} \id{\}}}
+
+In addition, we have the following context rules:
+
+\infrule[Par]{{P} \red {P}'}{{{P} \juxtap {Q}} \red {{P}' \juxtap {Q}}}
+
+\infrule[Equiv]{{{P} \scong {P}'} \andalso {{P}' \red {Q}'} \andalso {{Q}' \scong {Q}}}{{P} \red {Q}}
+
+The context rules are entirely standard and we do not say much about
+them, here. The communication rule does what was promised, namely make
+it possible for agents to synchronize and communicate processes
+packaged as names. For example, using the comm rule and name
+equivalence we can now justify our syntactic sugar for output.
+
+\begin{eqnarray*}
+	& {x}\id{[}{z}\id{]} \juxtap x \id{(}y\id{)} \concat P & \\
+	= 
+	& \lift{x}{\dropn{z}} \juxtap x \id{(}y\id{)} \concat P & \\
+	\red 
+	& P \substn{\quotep{\dropn{z}}}{y} & \\
+	\scong & P \substn{z}{y} & \\
+\end{eqnarray*}
+
+But, it also provides a scheme that identifies the role of name
+equality in synchronization. There are other relationships between
+names with structure that could also mediate
+synchronization. Consider, for example, a calculus identical to the
+one presented above, but with an alternative rule governing
+communication.
+
+\infrule[Comm-annihilation]
+{ \forall R . [ P_{channel} \juxtap Q_{channel} \red^* R ] \Rightarrow R \red^* 0 }
+{{\lift{\quotep{Q_{channel}}}{Q} \juxtap { {\quotep{P_{channel}}} \id{(}{y} \id{)} \concat {P}}}
+\red {P}\id{\{}\quotep{Q} \id{/} {y} \id{\}}}
+
+Intuitively, it says that the codes of a pair of processes,
+$P_{channel}$, $Q_{channel}$, stand in channel/co-channel relation
+just when the composition of the processes always eventually reduces
+to $0$, that is, when the processes annihilate one another.  This rule
+is well-founded, for observe that because $0 \scong 0 \juxtap 0$, $0
+\juxtap 0 \red^* 0$. Thus, $\quotep{0}$ serves as its own
+co-channel. Analogous to our generation of names from $0$, with one
+such channel/co-channel pair, we can find many such pairs. What we
+wish to point out about this rule is that we can see precisely an
+account of the calculation of the channel/co-channel relationship as
+deriving from the theory of interaction. We do not know if the
+computation of name equality has a similar presentation, driving home
+the potential difference of those two roles in calculi of interaction.
+
+We mention, as a brief aside, that there is no reason why $0$ is
+special in the scheme above. We posit a family of calculi, indexed by
+a set of processes $\{ S_{\alpha} \}$, and differing only in their
+communication rule each of which conforms to the scheme below.
+
+\infrule[Comm-annihilation-S]
+{ \forall R . [ P_{channel} \juxtap Q_{channel} \red^* R ] \Rightarrow R \red^* R' \scong S_{\alpha} }
+{{\lift{\quotep{Q_{channel}}}{Q} \juxtap { {\quotep{P_{channel}}} \id{(}{y} \id{)} \concat {P}}}
+\red {P}\id{\{}\quotep{Q} \id{/} {y} \id{\}}}
+
+We explore this family of calculi in a forthcoming paper. For the rest
+of this paper, however, we restrict our attention to the calculus with
+the less exotic communication rule, using $\red$ for reduction
+according to that system and $\wred$ for $\red^*$.
+
+\section{Replication}
+
+As mentioned before, it is known that replication (and hence
+recursion) can be implemented in a higher-order process algebra
+\cite{SangiorgiWalker}. As our first example of calculation with the
+machinery thus far presented we give the construction explicitly in
+the {\rhoc}.
+
+% \begin{equation*}
+% !P \triangleq \lift{x}{(x\id{(}y\id{)}\concat(\rpquote y\lpquote \juxtap x\id{[}y\id{]}) \juxtap P)} \juxtap x\id{(}z\id{)}\concat(\rpquote z\lpquote \juxtap x\id{[}z\id{]})
+% \end{equation*}
+
+\begin{eqnarray*}
+	D(x) & \triangleq & \prefix{x}{y}{(\binpar{\outputp{x}{y}}{\dropn{y}})} \\
+	\bangp{P}(x) & \triangleq & \binpar{\lift{x}{\binpar{D(x)}{P}}}{D(x)}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+	\bangp{P}(x) & & \\
+	=
+	& \lift{x}{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} 
+	      \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
+%	\red
+%	& \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
+%	  \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
+	\red
+	& (\outputp{x}{y} \juxtap \dropn{y})\substn{\quotep{(\prefix{x}{y}{(\dropn{y} \juxtap \outputp{x}{y})) \juxtap P}}}{y} & \\
+	=
+	& \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
+	  \juxtap {(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} & \\
+	\red
+	& \ldots & \\
+	\red^*
+	& P \juxtap P \juxtap \ldots & \\
+\end{eqnarray*}
+
+Of course, this encoding, as an implementation, runs away, unfolding
+$\bangp{P}$ eagerly. A lazier and more implementable replication
+operator, restricted to input-guarded processes, may be obtained as follows.
+
+\begin{equation*}
+\bangp{\prefix{u}{v}{P}} 
+	\triangleq 
+	\binpar{\lift{x}{\prefix{u}{v}{(\binpar{D(x)}{P})}}}{D(x)}
+\end{equation*}
+
+It is worth noting that the lift operator is essential to get
+computational completeness. A similar calculus equipped with only a
+static quote enjoys a computational expressiveness at least equivalent
+to context-free grammars, but short of context-sensitive. This fact is
+established and exploited in a forthcoming paper on a type system for
+the {\rhoc}.
+
+\section{Bisimulation}
+
+Having taken the notion of restriction out of the language, we
+carefully place it back into the notion of observation, and hence into
+the notion of program equality, i.e. bisimulation. That is, we
+parameterize the notion of barbed bisimulation by a set of names over
+which we are allowed to set the barbs. The motivation for this choice
+is really comparison with other calculi. The set of names of the
+{\rhoc} is \textit{global}. It is impossible, in the grammar of
+processes, to guard terms from being placed into contexts that can
+potentially observe communication. So, we provide a place for
+reasoning about such limitations on the scope of observation in the
+theory of bisimulation.
+
+% [Ed. note: suppose c is not in a barb set, can we make hidden links in
+% programs? Does this screw up the notion of a parameterized barbed
+% bisimulation?]
+%will become clearer when we treat the encoding of the asynchronous {\pic}.
+
+\begin{defn}
+An \emph{observation relation}, $\downarrow_{\mathcal N}$, over a set
+of names, $\mathcal N$, is the smallest relation satisfying the rules
+below.
+
+\infrule[Out-barb]{y \in {\mathcal N}, \; x \nameeq y}
+		  {\outputp{x}{v} \downarrow_{\mathcal N} x}
+\infrule[Par-barb]{\mbox{$P\downarrow_{\mathcal N} x$ or $Q\downarrow_{\mathcal N} x$}}
+		  {\binpar{P}{Q} \downarrow_{\mathcal N} x}
+
+We write $P \Downarrow_{\mathcal N} x$ if there is $Q$ such that 
+$P \wred Q$ and $Q \downarrow_{\mathcal N} x$.
+\end{defn}
+
+Notice that $\prefix{x}{y}{P}$ has no barb.  Indeed, in {\rhoc} as well
+as other asynchronous calculi, an observer has no direct means to
+detect if a message sent has been received or not.
+
+\begin{defn}
+%\label{def.bbisim}
+An  ${\mathcal N}$-\emph{barbed bisimulation} over a set of names, ${\mathcal N}$, is a symmetric binary relation 
+${\mathcal S}_{\mathcal N}$ between agents such that $P\rel{S}_{\mathcal N}Q$ implies:
+\begin{enumerate}
+\item If $P \red P'$ then $Q \wred Q'$ and $P'\rel{S}_{\mathcal N} Q'$.
+\item If $P\downarrow_{\mathcal N} x$, then $Q\Downarrow_{\mathcal N} x$.
+\end{enumerate}
+$P$ is ${\mathcal N}$-barbed bisimilar to $Q$, written
+$P \wbbisim_{\mathcal N} Q$, if $P \rel{S}_{\mathcal N} Q$ for some ${\mathcal N}$-barbed bisimulation ${\mathcal S}_{\mathcal N}$.
+\end{defn}
+
+% \emph{Barbed congruence}, written $\fwbeq_{\mathcal N}$, is the largest
+% ${\mathcal N}$-barbed bisimulation which is also a congruence.
+% \end{defn}
+
+% \begin{rem}
+% 	Asking for congruence including contexts of the form
+% 	$\lift{x}{\diamond}$ requires that $P \wbbisim Q$ implies that
+% 	$\quotep{P} \nameeq \quotep{Q}$. This is too
+% 	stringent. Instead we seek a weaker form of equivalence,
+% 	closed only up to substitions.
+% \end{rem}
+
+% \begin{defn}
+% $P$ is \emph{barbed equivalent} to $Q$, written $P \wbeq Q$, if and only if $P \sigma \parop R \wbbisim Q \sigma 
+% \parop R$, for every $R$ and substitution $\sigma$.
+% \end{defn}
+
+% It is well-known that, due to the universal quantification over
+% contexts, barbed congruence is hard to demonstrate.  A standard remedy
+% mitigating this difficulty is the context lemma below.
+
+% \begin{lem}
+% %\label{contextlemma}
+% $P \wbeq Q$ if and only if $P \sigma \parop R \wbbisim Q \sigma 
+% \parop R$, for every $R$ and substitution $\sigma$.
+% \end{lem}
+% This lemma replaces the quantification over contexts 
+% with a quantification over parallel contexts and substitutions, which
+% is still hard to verify. 
+
+\section{Logic}
+Namespace logic resides in the subfamily of Hennessy-Milner logics
+discovered by Caires and Cardelli and known as spatial logics
+\cite{DBLP:journals/tcs/CairesC04}. Thus, as is seen below, in
+addition to the action modalities, we also find formulae for
+\emph{separation}, corresponding, at the logical level, to the
+structural content of the parallel operator at the level of the
+calculus. Likewise, we have quantification over names. 
+
+In this connection, however, we find an interesting difference between
+spatial logics investigated heretofore and this one. As in the
+calculus, we find no need for an operator corresponding to the $\nu$
+construction. However, revelation in spatial logic, is a structural
+notion \cite{DBLP:journals/tcs/CairesC04}. It detects the
+\emph{declaration} of a new name. No such information is available in
+the reflective calculus or in namespace logic. The calculus and the
+logic can arrange that names are used in a manner consistent with
+their being declared as new in the {\pic}, but it cannot detect the
+declaration itself. Seen from this perspective, revelation is a
+somewhat remarkable observation, as it seems to be about detecting the
+programmer's intent.
+
+\begin{grammar}
+\mbox{reflective logic}	& {\phi, \psi}	& \bc	& \ptrue & \mbox{verity} \\
+				&					& \bm	& \pzero & \mbox{nullity} \\
+				&					& \bm	& \neg \phi & \mbox{negation} \\
+				&					& \bm	& \phi \& \psi & \mbox{conjunction} \\
+				&					& \bm	& \phi \juxtap \psi & \mbox{separation} \\
+				&					& \bm	& \pdropf{b} & \mbox{descent} \\
+				&					& \bm	& \plift{a}{\phi} & \mbox{elevation} \\
+				&					& \bm	& \pprefix{a}{b}{\phi} & \mbox{activity} \\
+                                &					& \bm	& \pgfp{X}{\phi} & \mbox{greatest fix point} \\
+                                &					& \bm	& \pquant{n}{\psi}{\phi} & \mbox{quantification} \\
+				& {a}  		& \bc	& \quotep{\phi} & \mbox{indication} \\
+				&					& \bm	& b & \mbox{...} \\
+				& {b}  		& \bc	& \quotep{P} & \mbox{nomination} \\
+                                &					& \bm	& n & \mbox{...} \\
+\end{grammar}
+
+We let $\PFormula$ denote the set of formulae generated by the
+$\phi$-production, $\QFormula$ denote the set of formulae generated by
+the $a$-production and $\PropVar$ denote the set of propositional
+variables used in the $\textsf{rec}$ production.
+
+% The satisfaction relation, $\models \subseteq \Proc \times \Formula$, between processes and formulae is given by
+
+% \begin{eqnarray}
+% 	P & \models & \ptrue \nonumber \\ 
+%     P & \models & \pzero \riff P \scong \pzero \nonumber \\ 
+%     P & \models & \neg \phi \riff P \not\models \phi \nonumber\\
+%     P & \models & \phi \& \psi \riff P \models \phi \; \& P \; \models \psi \nonumber\\
+%     P & \models & \binpar{\phi}{\psi} \riff \exists P_0, P_1.P \scong \binpar{P_0}{P_1}
+%       \; \& \; P_0 \models \phi \; \& \;  P_1 \models \psi \nonumber\\
+%     P & \models & \pdropf{b} \riff \exists Q, P'.P \scong \binpar{Q}{\dropn{x}}
+% 	    \; \& \; x \models b \nonumber\\	
+% 	P & \models & \plift{a}{\phi} \riff \exists Q, P'.P \scong \binpar{Q}{\lift{x}{P'}} 
+% 		\; \& \; x \models a 
+% 		\; \& \; P' \models \phi \nonumber\\
+% 	P & \models & \pprefix{a}{b}{\phi} \riff \exists Q, P'.P \scong \binpar{Q}{\prefix{x}{y}{P'}} \nonumber\\
+% 	  & & x \models a \nonumber\\
+% 	  & & \forall c . \exists z . {P'}\substn{z}{y} \models {\phi}\substn{c}{b} \nonumber\\
+%     \quotep{P} & \models & \quotep{\phi} \riff P \models \phi \nonumber\\
+%     \quotep{P} & \models & \quotep{Q} \riff \quotep{P} \nameeq \quotep{Q} \nonumber
+% \end{eqnarray}
+
+Inspired by Caires' presentation of spatial logic
+\cite{DBLP:conf/fossacs/Caires04}, we give the semantics in terms of
+sets of processes (and names). We need the notion of a valuation $v :
+\PropVar \to \wp(\Proc)$, and use the notation $v\substn{\mathcal{S}}{X}$ to mean 
+
+\begin{eqnarray}
+  v\substn{\mathcal{S}}{X}(Y) & = &
+  \left\{ \begin{array}{ccc}
+      S & & Y = X \\
+      v(Y) & & otherwise \\
+    \end{array}
+  \right.\nonumber
+\end{eqnarray}
+
+The meaning of formulae is given in terms of two mutually recursive functions,
+
+\begin{eqnarray}
+\pmeaningof{ - }( - ) : \PFormula \times [\PropVar \to \wp(\Proc)] \to \wp(\Proc) \nonumber\\
+\nmeaningof{ - }( - ) : \QFormula \times [\PropVar \to \wp(\Proc)] \to \wp(\QProc) \nonumber
+\end{eqnarray}
+
+taking a formula of the appropriate type and a valuation, and
+returning a set of processes or a set of names, respectively.
+
+\begin{eqnarray}
+  \pmeaningof{\ptrue}(v) & = & \Proc \nonumber \\ 
+  \pmeaningof{\pzero}(v) & = & \{ P : P \scong \pzero \} \nonumber \\ 
+  \pmeaningof{\neg \phi}(v) & = & \Proc / \pmeaningof{\phi}(v) \nonumber\\
+  \pmeaningof{\phi \& \psi}(v) & = & \pmeaningof{\phi}(v) \cap \pmeaningof{\psi}(v) \nonumber\\
+  \pmeaningof{\binpar{\phi}{\psi}}(v) & = &
+  \{ P : \exists P_0, P_1.P \scong \binpar{P_0}{P_1}, \; P_0 \in \pmeaningof{\phi}(v), \;  P_1 \in \pmeaningof{\psi}(v) \} \nonumber\\
+  \pmeaningof{\pdropf{b}}(v) & = & \{ P : \exists Q, P'.P \scong \binpar{Q}{\dropn{x}}, \; x \in \nmeaningof{b}(v) \} \nonumber\\	
+  \pmeaningof{\plift{a}{\phi}}(v) & = & \{ P : \exists Q, P'.P \scong \binpar{Q}{\lift{x}{P'}},
+                                           \; x \in \nmeaningof{a}(v), 
+                                           \; P' \in \pmeaningof{\phi}(v) \} \nonumber\\
+  \pmeaningof{\pprefix{a}{b}{\phi}}(v) & = & \{ P : \exists Q, P'.P \scong \binpar{Q}{\prefix{x}{y}{P'}}, x \in \nmeaningof{a}(v), \nonumber\\
+                                   &   &            \; \; \; \forall c . \exists z . {P'}\substn{z}{y} \in \pmeaningof{{\phi}\substn{c}{b}}(v) \} \nonumber\\
+  \pmeaningof{\pgfp{X}{\phi}}(v) & = & \cup \{ \mathcal{S} \subseteq \Proc : \mathcal{S} \subseteq \pmeaningof{\phi}(v\substn{\mathcal{S}}{X})\} \nonumber\\
+  \pmeaningof{\pquant{n}{\psi}{\phi}}(v) & = & \cap_{x \in \nmeaningof{\quotep{\psi}}(v)} \pmeaningof{{\phi}\substn{x}{n}}(v) \nonumber\\
+  \nmeaningof{\quotep{\phi}}(v) & = & \{ x : x \nameeq \quotep{P}, P \in \pmeaningof{\phi}(v) \} \nonumber\\
+  \nmeaningof{\quotep{P}}(v) & = & \{ x : x \nameeq  \quotep{P} \} \nonumber
+\end{eqnarray}
+
+We say $P$ witnesses $\phi$ (resp., $x$ witnesses $\quotep{\phi}$),
+written $P \models \phi$ (resp., $x \models \quotep{\phi}$) just when
+$\forall v . P \in \meaningof{\phi}(v)$ (resp., $\forall v . x \in \meaningof{\quotep{\phi}}(v)$).
+
+\begin{thm}[Equivalence]
+	$P \wbbisim Q \riff \forall \phi . P \models \phi \riff Q \models \phi .$
+\end{thm}
+
+The proof employs an adaptation of the standard strategy. As noted in
+the introduction, this theorem means that there is no algorithm
+guaranteeing that a check for the witness relation will terminate.
+
+\subsubsection{Syntactic sugar }
+
+In the examples below, we freely employ the usual DeMorgan-based
+syntactic sugar. For example,
+
+\begin{eqnarray}
+	\phi \Rightarrow \psi & \triangleq & \neg ( \phi \& \neg \psi ) \nonumber\\
+	\phi \vee \psi & \triangleq & \neg ( \neg \phi \& \neg \psi ) \nonumber
+\end{eqnarray}
+
+Also, when quantification ranges over all of $\Proc$, as in
+$\pquant{n}{\quotep{\ptrue}}{\phi}$, we omit the typing for the
+quantification variable, writing $\pquantuntyped{n}{\phi}$.
+
+\subsection{Examples}
+
+\subsubsection{Controlling access to namespaces}
+
+Suppose that $\quotep{\phi}$ describes some namespace, i.e. some
+collection of names. We can insist that a process restrict its next
+input to names in that namespace by insisting that it witness the formula
+
+\begin{eqnarray}
+  \pprefix{\quotep{\phi}}{b}{\ptrue} \& \neg \pprefix{\quotep{\neg \phi}}{b}{\ptrue} \nonumber
+\end{eqnarray}
+
+which simply says the the process is currently able to take input from
+a name in the namespace $\quotep{\phi}$ and is not capable of input on
+any name not in that namespace. In a similar manner, we can limit a
+server to serving only inputs in $\quotep{\phi}$ throughout the
+lifetime of its behavior \footnote{Of course, this formula also says
+  the server never goes down, either -- or at least is always willing
+  to take such input...;-)}
+
+\begin{eqnarray}
+  \pgfp{X}{\pprefix{\quotep{\phi}}{b}{X} \& \neg \pprefix{\quotep{\neg \phi}}{b}{\ptrue}} \nonumber
+\end{eqnarray} 
+
+This formula is reminiscent of the functionality of a firewall, except
+that it is a \emph{static} check. A process witnessing this formula
+will behave as though it were behind a firewall admitting only access
+to the ports in $\quotep{\phi}$ without the need for the additional
+overhead of the watchdog machinery.
+
+\section{Interpreting object-capabilities in \pic}
+
+Interpreting object-capabilities in \pic is surprisingly intuitive and
+natural. Essentially, a capability, i.e. access to some behavior,
+power or authority is represented by a channel. When an agent in the
+\pic has access to a channel it has exactly that: access to some
+behavior, power or authority.
+
+\section{Interpreting policy}
+
+Focus on deniability.
+
+\section{Conclusions and future work}
+
+We looked at policy as types.
+
+\paragraph{Acknowledgments.}
+The authors wish to thank Sophia Drossopoulou and James Nolan for
+thoughtful and stimulating conversation about policy, object
+capabilities and types.
+
+% ------------------------------------------------------------------------
+%GATHER{Xbib.bib}   % For Gather Purpose Only
+%GATHER{Paper.bbl}  % For Gather Purpose Only
+\bibliographystyle{amsplain}
+\bibliography{topcappi}
+
+% ------------------------------------------------------------------------
+
+% ------------------------------------------------------------------------
+
+\end{document}
+% ------------------------------------------------------------------------
