@@ -744,11 +744,17 @@ package usage {
       agentMgr()
       mongoClient.getDB( node().cache.defaultDB )( "DSLExecProtocol" )
     }
-    def doSomeInserts(
-      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+    def doSomeInserts(      
       maxPosts : Int = 1000,
       minPosts : Int = 1,
-      rndm : scala.util.Random = new scala.util.Random()
+      onPost : Option[DSLCommLink.mTT.Resource] => Unit =
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          println( "got response: " + optRsrc )
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        },
+      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+      rndm : scala.util.Random = new scala.util.Random()      
     ) : Unit = {
       val numPosts =
         scala.math.min( rndm.nextInt( maxPosts ) + 1, minPosts )
@@ -758,13 +764,19 @@ package usage {
       for(
         ConcreteHL.InsertContent( filter, cnxns, content : String ) <- postExprStrm.take( numPosts )
       ) {
-        agentMgr().post[String]( erql, erspl )( filter, cnxns, content )
+        agentMgr().post[String]( erql, erspl )( filter, cnxns, content, onPost )
       }
     }
-    def doSomeFeeds(
-      feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
+    def doSomeFeeds(      
       maxFeeds : Int = 1000,
       minFeeds : Int = 1,
+      onFeedRslt : Option[DSLCommLink.mTT.Resource] => Unit =
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          println( "got response: " + optRsrc )
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        },
+      feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numFeedExprs =
@@ -775,13 +787,19 @@ package usage {
       for(
         ConcreteHL.FeedExpr( filter, cnxns ) <- feedExprStrm.take( numFeedExprs )
       ) {
-        agentMgr().feed( erql, erspl )( filter, cnxns )
+        agentMgr().feed( erql, erspl )( filter, cnxns, onFeedRslt )
       }
     }
-    def doSomeScores(
-      scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
+    def doSomeScores(      
       maxScores : Int = 1000,
       minScores : Int = 1,
+      onScoreRslt : Option[DSLCommLink.mTT.Resource] => Unit =
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          println( "got response: " + optRsrc )
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        },
+      scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numScoreExprs =
@@ -792,7 +810,7 @@ package usage {
       for(
         ConcreteHL.ScoreExpr( filter, cnxns, staff ) <- scoreExprStrm.take( numScoreExprs )
       ) {
-        agentMgr().score( erql, erspl )( filter, cnxns, staff )
+        agentMgr().score( erql, erspl )( filter, cnxns, staff, onScoreRslt )
       }
     }
   }
