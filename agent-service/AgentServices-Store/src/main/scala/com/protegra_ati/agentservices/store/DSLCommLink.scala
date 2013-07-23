@@ -139,6 +139,12 @@ object DSLCommLink
     object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT with Serializable {         
       def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDB[ReqBody,RspBody] = {
         new PersistedMonadicKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {           
+          override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+            new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+          }
+          override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {              
+            new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+          }      
           class StringMongoDBManifest(
             override val storeUnitStr : String,
             @transient override val labelToNS : Option[String => String],
@@ -227,23 +233,92 @@ object DSLCommLink
               ccl : CnxnCtxtLabel[String,String,String]
             ) : ConcreteHL.HLExpr = {
               tweet(
-                "converting to cache value"
+                "*****************************************************"
+                + "\nconverting to cache value"
+                + "\n*****************************************************"
               )
               ccl match {
                 case CnxnCtxtBranch(
                   "string",
-                  CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                  //CnxnCtxtLeaf( Left( rv ) ) :: Nil
+                  CnxnCtxtLeaf( Left( blob ) ) :: Nil
                 ) => {
-                  val unBlob =
-                    fromXQSafeJSONBlob( rv )
+                  tweet(
+                    "*****************************************************"
+                    + "\nmatched ccl to CnxnCtxtBranch"
+                    + "\n*****************************************************"
+                  )                                    
+
+                  try {
+                    val unBlob =
+                      fromXQSafeJSONBlob( blob )
+                    // val jsonBlob =
+//                       (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
+// 	                blob.replace(
+// 	                  "{{",
+// 	                  "{"
+// 	                ).replace(
+// 	                  "}}",
+// 	                  "}"
+// 	                )
+//                       }
+//                        else {
+// 	                 blob
+//                        }).replace(
+//                         "&quot;",
+//                         "\""
+//                       )
+//                     val blobXStrm = 
+//                       new XStream( new JettisonMappedXmlDriver() )
+                    //val unBlob =
+                      //blobXStrm.fromXML( jsonBlob )
+                    tweet(
+                      "*****************************************************"
+                      + "\nunBlob : " + unBlob
+                      + "\n*****************************************************"
+                    )
                   
-                  unBlob match {
-                    case rsrc : mTT.Resource => {
-                      getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                    unBlob match {
+                      case rsrc : mTT.Resource => {
+                        tweet(
+                          "*****************************************************"
+                          + "\nunBlob : " + unBlob
+                          + "\n*****************************************************"
+                        )
+                        val gvRslt = getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
+                        tweet(
+                          "*****************************************************"
+                          + "\ngvRslt : " + gvRslt
+                          + "\n*****************************************************"
+                        )
+                        gvRslt
+                      }
+                      case _ => {
+                        throw new Exception( "unable to recognized deserialized blob : " + unBlob )
+                      }
                     }
                   }
+                  catch {
+                    case e : Throwable => {                      
+                      val sw : java.io.StringWriter = new java.io.StringWriter()
+                      val pw : java.io.PrintWriter = new java.io.PrintWriter( sw )
+                      e.printStackTrace( pw )
+                      tweet(
+                        "*****************************************************"
+                        + "\nfromXML failed"
+                        + "\n" + sw.toString
+                        + "\n*****************************************************"
+                      )
+                      throw( e )
+                    }
+                  }                  
                 }
                 case _ => {
+                  tweet(
+                    "*****************************************************"
+                    + "failed to matched ccl to CnxnCtxtBranch"
+                    + "*****************************************************"
+                  )
                   //asPatternString( ccl )
                   throw new Exception( "unexpected value form: " + ccl )
                 }
@@ -265,6 +340,15 @@ object DSLCommLink
                case _ => throw new Exception( "xml roundtrip failed " + key )
                }
                */
+              tweet(
+	          (
+	            "DSLCommLink -- PersistedMonadicKVDB : "
+	            + "\nmethod : asResource "
+	            + "\nthis : " + this
+	            + "\nkey : " + key
+                    + "\nvalue : " + value
+	          )
+	        )
               val ltns =
                 labelToNS.getOrElse(
                   throw new Exception( "must have labelToNS to convert mongo object" )
@@ -283,28 +367,53 @@ object DSLCommLink
                   tweet( "vNs: " + vNs )
                   tweet( "v: " + v )
                   tweet( " ****************************** " )
-                  matchMap( key, k ) match {
+                  val matchRslt = matchMap( key, k )
+                  tweet( " ****************************** " )
+		  tweet( " matchRslt : " + matchRslt )
+		  tweet( " ****************************** " )
+                  matchRslt match {
                     case Some( soln ) => {
+                      tweet( " ****************************** " )
+		      tweet( " found a solution : " + soln )
+		      tweet( " ****************************** " )                        
                       if ( compareNameSpace( ns, kvNameSpace ) ) {
-                        emT.PlaceInstance(
-                          k,
-                          Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                            mTT.Ground(
-                              asCacheValue(
-                                new CnxnCtxtBranch[String,String,String](
-                                  "string",
-                                  v :: Nil
-                                )
-                              )
-                            )
-                          ),
+                        tweet( " ****************************** " )
+		        tweet( " in data space " )
+		        tweet( " ****************************** " )
+                        tweet( " ****************************** " )
+		        tweet( " computing cacheValue " )
+		        tweet( " ****************************** " )
+                        val cacheValueRslt =
+                          asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                        tweet( " ****************************** " )
+		        tweet( " computed cacheValue: " + cacheValueRslt )
+		        tweet( " ****************************** " )
+                        val groundWrapper =
+                          mTT.Ground( cacheValueRslt )
+                        val boundHMWrapper =
+                          mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                        val boundWrapper =
+                          mTT.asRBoundAList( boundHMWrapper )
+                        val finalRslt =
+                          emT.PlaceInstance(
+                            k,
+                            Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                              boundWrapper
+                            ),
                           // BUGBUG -- lgm : why can't the compiler determine
                           // that this cast is not necessary?
-                          theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                        )
+                            theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                          )
+                        tweet( " ****************************** " )
+		        tweet( " placeInstance: " + finalRslt )
+		        tweet( " ****************************** " )
+                        finalRslt
                       }
                       else {
                         if ( compareNameSpace( ns, kvKNameSpace ) ) {
+                          tweet( " ****************************** " )
+		          tweet( " in continuation space " )
+		          tweet( " ****************************** " )
                           val mTT.Continuation( ks ) =
                             asCacheK(
                               new CnxnCtxtBranch[String,String,String](

@@ -217,7 +217,7 @@ trait FuzzyTermStreams {
   def mkSelfCnxnStream(
     rndm : scala.util.Random = new scala.util.Random(),
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
-  ) : Stream[ConcreteHL.PortableAgentCnxn] = {
+  ) : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + 2
     val strmStrm : Stream[Stream[UUID]] = uuidStreamStream.take( pos1 )
     val strm : Stream[UUID] = strmStrm( pos1 - 1 )
@@ -226,18 +226,19 @@ trait FuzzyTermStreams {
       ( uuidLabelPair : ( UUID, String ) ) => {
         val uri = uuidLabelPair._1.toString.toURI
         val lbl = uuidLabelPair._2
-        ConcreteHL.PortableAgentCnxn( uri, lbl, uri ) 
+        //ConcreteHL.PortableAgentCnxn( uri, lbl, uri ) 
+        PortableAgentCnxn( uri, lbl, uri ) 
       }
     )
   }
   @transient
-  lazy val selfCnxnStream : Stream[ConcreteHL.PortableAgentCnxn] = {
+  lazy val selfCnxnStream : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     mkSelfCnxnStream()
   }
   def mkRandomCnxnStream(
     rndm : scala.util.Random = new scala.util.Random(),
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
-  ) : Stream[ConcreteHL.PortableAgentCnxn] = {
+  ) : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + 2
     val strmStrm : Stream[Stream[UUID]] = uuidStreamStream.take( pos1 )
     val strmL : Stream[UUID] = strmStrm( pos1 - 1 )
@@ -245,7 +246,8 @@ trait FuzzyTermStreams {
     
     strmL.zip( labelStrStrm.zip( strmR ) ).map(
       ( uuidPair : ( UUID, ( String, UUID ) ) ) => {
-        ConcreteHL.PortableAgentCnxn(
+        //ConcreteHL.PortableAgentCnxn(
+        PortableAgentCnxn(
           uuidPair._1.toString.toURI,
           uuidPair._2._1,
           uuidPair._2._2.toString.toURI
@@ -254,7 +256,7 @@ trait FuzzyTermStreams {
     )
   }
   @transient
-  lazy val randomCnxnStream : Stream[ConcreteHL.PortableAgentCnxn] = {
+  lazy val randomCnxnStream : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     mkRandomCnxnStream()
   }
   def mkRandomCnxnTupleStream(
@@ -262,7 +264,7 @@ trait FuzzyTermStreams {
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
     rndm : scala.util.Random = new scala.util.Random(),
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
-  ) : Stream[List[ConcreteHL.PortableAgentCnxn]] = {    
+  ) : Stream[List[PortableAgentCnxn]] /* Stream[List[ConcreteHL.PortableAgentCnxn]] */ = {    
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 2
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + numCnxns + 2
     val strmStrm : Stream[Stream[UUID]] = uuidStreamStream.take( pos1 )   
@@ -280,12 +282,15 @@ trait FuzzyTermStreams {
       
     strmL.zip( tupleStrm ).map(
       ( uuidPair : ( UUID, List[( String, UUID )] ) ) => {
-        ( List[ConcreteHL.PortableAgentCnxn]() /: uuidPair._2 )(
+        //( List[ConcreteHL.PortableAgentCnxn]() /: uuidPair._2 )(
+        ( List[PortableAgentCnxn]() /: uuidPair._2 )(
           {
             ( acc, e ) => {
               acc ++ (
-                List[ConcreteHL.PortableAgentCnxn](
-                  ConcreteHL.PortableAgentCnxn(
+                //List[ConcreteHL.PortableAgentCnxn](
+                List[PortableAgentCnxn](
+                  //ConcreteHL.PortableAgentCnxn(
+                  PortableAgentCnxn(
                     uuidPair._1.toString.toURI,
                     e._1,
                     e._2.toString.toURI
@@ -299,7 +304,7 @@ trait FuzzyTermStreams {
     )
   }
   @transient
-  lazy val randomCnxnTupleStream : Stream[List[ConcreteHL.PortableAgentCnxn]] = {
+  lazy val randomCnxnTupleStream : Stream[List[PortableAgentCnxn]] /* Stream[List[ConcreteHL.PortableAgentCnxn]] */ = {
     mkRandomCnxnTupleStream()
   }
 }
@@ -318,7 +323,8 @@ trait MessageGeneration {
 	throw new Exception( "failed to parse feed label" + feedLabelStr )
       )
     val feedCnxn =
-      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+      //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+      PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
 
     ConcreteHL.FeedExpr( feedLabel, List( feedCnxn ) )      
   }
@@ -331,7 +337,8 @@ trait MessageGeneration {
 	throw new Exception( "failed to parse score label" + scoreLabelStr )
       )
     val scoreCnxn =
-      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+      //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+      PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
 
     ConcreteHL.ScoreExpr(
       scoreLabel,
@@ -348,7 +355,8 @@ trait MessageGeneration {
 	throw new Exception( "failed to parse post label" + postLabelStr )
       )
     val postCnxn =
-      ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+      //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
+      PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
     ConcreteHL.InsertContent[String](
       postLabel,
       List( postCnxn ),
@@ -368,10 +376,11 @@ trait FuzzyMessageStreams {
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream()
   ) : Stream[ConcreteHL.FeedExpr] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
-    val cnxnStrm : Stream[List[ConcreteHL.PortableAgentCnxn]] = mkRandomCnxnTupleStream()
+    val cnxnStrm : Stream[List[PortableAgentCnxn]] /* Stream[List[ConcreteHL.PortableAgentCnxn]] */ = mkRandomCnxnTupleStream()
     labelStrm.zip( cnxnStrm ).map(
       { 
-        ( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], List[ConcreteHL.PortableAgentCnxn] ) ) => {
+        //( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], List[ConcreteHL.PortableAgentCnxn] ) ) => {
+        ( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], List[PortableAgentCnxn] ) ) => {
           ConcreteHL.FeedExpr(
             lblCnxnPair._1,
             lblCnxnPair._2
@@ -390,14 +399,16 @@ trait FuzzyMessageStreams {
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream()
   ) : Stream[ConcreteHL.ScoreExpr] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
-    val cnxnStrm : Stream[List[ConcreteHL.PortableAgentCnxn]] =
+    //val cnxnStrm : Stream[List[ConcreteHL.PortableAgentCnxn]] =
+    val cnxnStrm : Stream[List[PortableAgentCnxn]] =
       mkRandomCnxnTupleStream()
     val lblStrm : Stream[List[CnxnCtxtLabel[String,String,String]]] =
       mkRandomLabelTupleStream()
     val cnxnOrLabelStrm : Stream[Either[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]]] =
       cnxnStrm.zip( lblStrm ).map( 
         {
-          ( cnxnLblPair : ( List[ConcreteHL.PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) ) => {
+          //( cnxnLblPair : ( List[ConcreteHL.PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) ) => {
+          ( cnxnLblPair : ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) ) => {
             if ( ( rndm.nextInt( 2 ) > 1 ) ) {
               Left[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]]( cnxnLblPair._1 )
             }
@@ -410,7 +421,8 @@ trait FuzzyMessageStreams {
 
     labelStrm.zip( cnxnStrm.zip( cnxnOrLabelStrm ) ).map(
       { 
-        ( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], ( List[ConcreteHL.PortableAgentCnxn], Either[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]] ) ) ) => {
+        //( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], ( List[ConcreteHL.PortableAgentCnxn], Either[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]] ) ) ) => {
+        ( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], ( List[PortableAgentCnxn], Either[Seq[ConcreteHL.Cnxn],Seq[ConcreteHL.Label]] ) ) ) => {  
           ConcreteHL.ScoreExpr(
             lblCnxnPair._1,
             lblCnxnPair._2._1,
@@ -431,10 +443,11 @@ trait FuzzyMessageStreams {
     uuidStrm : Stream[UUID] = uuidStream()
   ) : Stream[ConcreteHL.InsertContent[String]] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
-    val cnxnStrm : Stream[List[ConcreteHL.PortableAgentCnxn]] = mkRandomCnxnTupleStream()
+    val cnxnStrm : Stream[List[PortableAgentCnxn]] /* Stream[List[ConcreteHL.PortableAgentCnxn]] */ = mkRandomCnxnTupleStream()
     labelStrm.zip( cnxnStrm.zip( uuidStrm ) ).map(
       { 
-        ( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], ( List[ConcreteHL.PortableAgentCnxn], UUID ) ) ) => {
+        //( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], ( List[ConcreteHL.PortableAgentCnxn], UUID ) ) ) => {
+        ( lblCnxnPair : ( CnxnCtxtLabel[String,String,String], ( List[PortableAgentCnxn], UUID ) ) ) => {  
           ConcreteHL.InsertContent(
             lblCnxnPair._1,
             lblCnxnPair._2._1,
@@ -511,7 +524,7 @@ trait ExerciseHLDSL {
   val sessionMap =
     new HashMap[String,( Either[ConcreteHL.HLExpr,ConcreteHL.HLExpr], Option[ConcreteHL.HLExpr] )]()
 
-  implicit def toAgentCnxn( pAC : ConcreteHL.PortableAgentCnxn ) : AgentCnxn = {
+  implicit def toAgentCnxn( pAC : PortableAgentCnxn /* ConcreteHL.PortableAgentCnxn */ ) : AgentCnxn = {
     new AgentCnxn( pAC.src, pAC.label, pAC.trgt )
   }     
   def doPutBottomRequest( sessionId : String = UUID.randomUUID.toString() ) = {
@@ -731,11 +744,17 @@ package usage {
       agentMgr()
       mongoClient.getDB( node().cache.defaultDB )( "DSLExecProtocol" )
     }
-    def doSomeInserts(
-      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+    def doSomeInserts(      
       maxPosts : Int = 1000,
       minPosts : Int = 1,
-      rndm : scala.util.Random = new scala.util.Random()
+      onPost : Option[DSLCommLink.mTT.Resource] => Unit =
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          println( "got response: " + optRsrc )
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        },
+      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+      rndm : scala.util.Random = new scala.util.Random()      
     ) : Unit = {
       val numPosts =
         scala.math.min( rndm.nextInt( maxPosts ) + 1, minPosts )
@@ -745,13 +764,19 @@ package usage {
       for(
         ConcreteHL.InsertContent( filter, cnxns, content : String ) <- postExprStrm.take( numPosts )
       ) {
-        agentMgr().post[String]( erql, erspl )( filter, cnxns, content )
+        agentMgr().post[String]( erql, erspl )( filter, cnxns, content, onPost )
       }
     }
-    def doSomeFeeds(
-      feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
+    def doSomeFeeds(      
       maxFeeds : Int = 1000,
       minFeeds : Int = 1,
+      onFeedRslt : Option[DSLCommLink.mTT.Resource] => Unit =
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          println( "got response: " + optRsrc )
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        },
+      feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numFeedExprs =
@@ -762,13 +787,19 @@ package usage {
       for(
         ConcreteHL.FeedExpr( filter, cnxns ) <- feedExprStrm.take( numFeedExprs )
       ) {
-        agentMgr().feed( erql, erspl )( filter, cnxns )
+        agentMgr().feed( erql, erspl )( filter, cnxns, onFeedRslt )
       }
     }
-    def doSomeScores(
-      scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
+    def doSomeScores(      
       maxScores : Int = 1000,
       minScores : Int = 1,
+      onScoreRslt : Option[DSLCommLink.mTT.Resource] => Unit =
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          println( "got response: " + optRsrc )
+          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        },
+      scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numScoreExprs =
@@ -779,7 +810,7 @@ package usage {
       for(
         ConcreteHL.ScoreExpr( filter, cnxns, staff ) <- scoreExprStrm.take( numScoreExprs )
       ) {
-        agentMgr().score( erql, erspl )( filter, cnxns, staff )
+        agentMgr().score( erql, erspl )( filter, cnxns, staff, onScoreRslt )
       }
     }
   }
