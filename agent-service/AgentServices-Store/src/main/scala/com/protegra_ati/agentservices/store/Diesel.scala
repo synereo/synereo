@@ -1621,7 +1621,7 @@ package diesel {
 
       trait MessageProcessor {
         def innerLoop(
-          erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
+          erql : CnxnCtxtLabel[String,String,String],
           client : LinkEvalRequestChannel,
           server : LinkEvalRequestChannel,
           node : StdEvalChannel,
@@ -1638,9 +1638,9 @@ package diesel {
           // assigned. This has to always be so because of the
           // underlying mechanism. If it isn't there's a bug in
           // the underlying comms structure.
-          def loop( sessId : UUID, erql : CnxnCtxtLabel[String,String,String] ) : Unit = {
+          //def loop() : Unit = {
             reset { 
-              for( e <- client.get( erql ) ) {
+              for( e <- client.subscribe( erql ) ) {
                 e match {
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     tweet( "rsrc type: DSLCommLink.mTT.RBoundAList" )
@@ -1650,12 +1650,10 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            for( mTT.Ground( v ) <- optRsrc ) {
-                              val ( newSessId, newErql ) = erqlCtor() 
+                            for( mTT.Ground( v ) <- optRsrc ) {                              
                               reset {
                                 server.put( erspl, DSLCommLink.mTT.Ground( v ) )                                
                               }
-                              loop( newSessId, newErql )
                             }
                           }
                         }
@@ -1671,12 +1669,11 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            for( mTT.Ground( v ) <- optRsrc ) {
-                              val ( newSessId, newErql ) = erqlCtor() 
+                            for( mTT.Ground( v ) <- optRsrc ) {                              
                               reset {
                                 server.put( erspl, DSLCommLink.mTT.Ground( v ) )
                               }
-                              loop( newSessId, newErql )
+                              //loop()
                             }
                           }
                         }
@@ -1696,12 +1693,11 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
-                                    for( mTT.Ground( v ) <- optRsrc ) {
-                                      val ( newSessId, newErql ) = erqlCtor() 
+                                    for( mTT.Ground( v ) <- optRsrc ) {                                      
                                       reset {
                                         server.put( erspl, DSLCommLink.mTT.Ground( v ) )
                                       }
-                                      loop( newSessId, newErql )
+                                      //loop()
                                     }
                                   }
                                 }                        
@@ -1729,12 +1725,11 @@ package diesel {
                 }
               }
             }
-          }
-          val ( newSessId, newErql ) = erqlCtor() 
-          loop( newSessId, newErql )
+          //}          
+          //loop()
         }
         def messageProcessorLoop(
-          erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
+          erql : CnxnCtxtLabel[String,String,String],
           node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
           useBiLink : Option[Boolean] = None,
@@ -1754,13 +1749,13 @@ package diesel {
                 ( link, link )
               }
             }
-          innerLoop( erqlCtor, client, server, node, rspLabelCtor )
+          innerLoop( erql, client, server, node, rspLabelCtor )
         }
       }
 
       class MsgProcessor(
         @transient
-        val erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
+        val erql : CnxnCtxtLabel[String,String,String],
         @transient
         val node : StdEvalChannel,
         @transient
@@ -1769,25 +1764,25 @@ package diesel {
         val flip : Boolean = false
       ) extends MessageProcessor with Serializable {
         def go() : Unit = {
-          messageProcessorLoop( erqlCtor, node, rspLabelCtor, useBiLink, flip )
+          messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
         }
       }
 
       object MsgProcessor extends Serializable {
         def apply(
-          erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
+          erql : CnxnCtxtLabel[String,String,String],
           node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
           useBiLink : Option[Boolean] = None,
           flip : Boolean = false
         ) : MsgProcessor = {
-          new MsgProcessor( erqlCtor, node, rspLabelCtor, useBiLink, flip )
+          new MsgProcessor( erql, node, rspLabelCtor, useBiLink, flip )
         }
         def unapply(
           mp : MsgProcessor
         ) : Option[
              (
-               Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
+               CnxnCtxtLabel[String,String,String],
                StdEvalChannel,
                String =>CnxnCtxtLabel[String,String,String],
                Option[Boolean],
@@ -1795,7 +1790,7 @@ package diesel {
              )
         ]
         = {
-          Some( ( mp.erqlCtor, mp.node, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
+          Some( ( mp.erql, mp.node, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
         }
       }
 
@@ -1812,16 +1807,9 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
-          Unit => {
-            val sessionId = UUID.randomUUID
-            (
-              sessionId,
-              DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( Left[String,String]( sessionId.toString ) ).getOrElse( 
-                throw new Exception( "error making evalRequestLabel" )
-              )
-            )
-              
-          },
+          DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
+            throw new Exception( "error making evalRequestLabel" )
+          ),
           node,
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
@@ -1839,15 +1827,9 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
-          Unit => {
-            val sessionId = UUID.randomUUID
-            (
-              sessionId,
-              DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Left[String,String]( sessionId.toString ) ).getOrElse( 
-                throw new Exception( "error making evalRequestLabel" )
-              )
-            )
-          },
+          DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
+              throw new Exception( "error making evalRequestLabel" )
+            ),
           node,
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(

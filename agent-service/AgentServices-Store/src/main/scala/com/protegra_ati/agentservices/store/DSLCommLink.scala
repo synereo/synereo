@@ -437,8 +437,8 @@ object DSLCommLink
                       }
                     }
                     case None => {
-                      tweet( "Unexpected matchMap failure: " + key + " " + k )
-                      throw new Exception( "matchMap failure " + key + " " + k )
+                      //tweet( "Unexpected matchMap failure: " + key + " " + k )
+                      throw new UnificationQueryFilter( key, k, value )
                     }
                   }
                 }
