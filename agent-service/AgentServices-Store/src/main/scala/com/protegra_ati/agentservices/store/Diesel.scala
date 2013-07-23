@@ -1621,99 +1621,118 @@ package diesel {
 
       trait MessageProcessor {
         def innerLoop(
-          erql : CnxnCtxtLabel[String,String,String],
+          erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
           client : LinkEvalRequestChannel,
           server : LinkEvalRequestChannel,
           node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
-          reset { 
-            for( e <- client.get( erql ) ) {
-              e match {
-                case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                  tweet( "rsrc type: DSLCommLink.mTT.RBoundAList" )
-                  for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
-                    val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
-                    
-                    val forward : Option[mTT.Resource] => Unit =
-                      {
-                        ( optRsrc : Option[mTT.Resource] ) => {
-                          for( mTT.Ground( v ) <- optRsrc ) {
-                            reset {
-                              server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+          // BUGBUG -- lgm : to accelerate progress at this level
+          // while waiting on a fix at the KVDB level the code has
+          // flipped around session id generation. The server now
+          // generates the session id. This means that the name of
+          // variable where the session id is bound is part of the
+          // contract between the client and the server. For this
+          // code to be more correct it should issue a check that
+          // the session id returned matches the session id
+          // assigned. This has to always be so because of the
+          // underlying mechanism. If it isn't there's a bug in
+          // the underlying comms structure.
+          def loop( sessId : UUID, erql : CnxnCtxtLabel[String,String,String] ) : Unit = {
+            reset { 
+              for( e <- client.get( erql ) ) {
+                e match {
+                  case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                    tweet( "rsrc type: DSLCommLink.mTT.RBoundAList" )
+                    for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                      val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
+                      
+                      val forward : Option[mTT.Resource] => Unit =
+                        {
+                          ( optRsrc : Option[mTT.Resource] ) => {
+                            for( mTT.Ground( v ) <- optRsrc ) {
+                              val ( newSessId, newErql ) = erqlCtor() 
+                              reset {
+                                server.put( erspl, DSLCommLink.mTT.Ground( v ) )                                
+                              }
+                              loop( newSessId, newErql )
                             }
                           }
                         }
-                      }
-                    
-                    evaluateExpression( node )( expr )( forward )
-                  }             
-                }
-                case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                  tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
-                  for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
-                    val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
-                    
-                    val forward : Option[mTT.Resource] => Unit =
-                      {
-                        ( optRsrc : Option[mTT.Resource] ) => {
-                          for( mTT.Ground( v ) <- optRsrc ) {
-                            reset {
-                              server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                      
+                      evaluateExpression( node )( expr )( forward )
+                    }             
+                  }
+                  case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
+                    tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
+                    for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                      val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
+                      
+                      val forward : Option[mTT.Resource] => Unit =
+                        {
+                          ( optRsrc : Option[mTT.Resource] ) => {
+                            for( mTT.Ground( v ) <- optRsrc ) {
+                              val ( newSessId, newErql ) = erqlCtor() 
+                              reset {
+                                server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                              }
+                              loop( newSessId, newErql )
                             }
                           }
                         }
-                      }
-                    
-                    evaluateExpression( node )( expr )( forward )
-                  }             
-                }
-                case Some( rsrc ) => {
-                  rsrc match {
-                    case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
-                      tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
-                      innerOptRsrc match {
-                        case Some( DSLCommLink.mTT.Ground( expr ) ) => {
-                          for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
-                            val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
-                            
-                            val forward : Option[mTT.Resource] => Unit =
-                              {
-                                ( optRsrc : Option[mTT.Resource] ) => {
-                                  for( mTT.Ground( v ) <- optRsrc ) {
-                                    reset {
-                                      server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                      
+                      evaluateExpression( node )( expr )( forward )
+                    }             
+                  }
+                  case Some( rsrc ) => {
+                    rsrc match {
+                      case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
+                        tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
+                        innerOptRsrc match {
+                          case Some( DSLCommLink.mTT.Ground( expr ) ) => {
+                            for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
+                              val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
+                              
+                              val forward : Option[mTT.Resource] => Unit =
+                                {
+                                  ( optRsrc : Option[mTT.Resource] ) => {
+                                    for( mTT.Ground( v ) <- optRsrc ) {
+                                      val ( newSessId, newErql ) = erqlCtor() 
+                                      reset {
+                                        server.put( erspl, DSLCommLink.mTT.Ground( v ) )
+                                      }
+                                      loop( newSessId, newErql )
                                     }
                                   }
-                                }
-                              }                        
-                            evaluateExpression( node )( expr )( forward )
+                                }                        
+                              evaluateExpression( node )( expr )( forward )
+                            }
                           }
-                        }
-                        case Some( innerRrsc ) => {
-                          tweet( "unexpected inner rsrc type: " + innerRrsc )
-                          tweet( "inner rsrc type: " + innerRrsc.getClass )
-                        }
-                      }                      
-                    }
-                    case _ => {
-                      tweet( "unexpected rsrc type: " + rsrc )
-                      tweet( "rsrc type: " + rsrc.getClass )
-                    }
-                  }             
-                }
-                case None => {
-                  tweet( "server loop waiting." )
-                }
-                case _ => {
-                  tweet( "rsrc not handled: " + e )
+                          case Some( innerRrsc ) => {
+                            tweet( "unexpected inner rsrc type: " + innerRrsc )
+                            tweet( "inner rsrc type: " + innerRrsc.getClass )
+                          }
+                        }                      
+                      }
+                      case _ => {
+                        tweet( "unexpected rsrc type: " + rsrc )
+                        tweet( "rsrc type: " + rsrc.getClass )
+                      }
+                    }             
+                  }
+                  case None => {
+                    tweet( "server loop waiting." )
+                  }
+                  case _ => {
+                    tweet( "rsrc not handled: " + e )
+                  }
                 }
               }
             }
           }
         }
         def messageProcessorLoop(
-          erql : CnxnCtxtLabel[String,String,String],
+          erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
           node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
           useBiLink : Option[Boolean] = None,
@@ -1733,13 +1752,13 @@ package diesel {
                 ( link, link )
               }
             }
-          innerLoop( erql, client, server, node, rspLabelCtor )
+          innerLoop( erqlCtor, client, server, node, rspLabelCtor )
         }
       }
 
       class MsgProcessor(
         @transient
-        val erql : CnxnCtxtLabel[String,String,String],
+        val erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
         @transient
         val node : StdEvalChannel,
         @transient
@@ -1748,25 +1767,25 @@ package diesel {
         val flip : Boolean = false
       ) extends MessageProcessor with Serializable {
         def go() : Unit = {
-          messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
+          messageProcessorLoop( erqlCtor, node, rspLabelCtor, useBiLink, flip )
         }
       }
 
       object MsgProcessor extends Serializable {
         def apply(
-          erql : CnxnCtxtLabel[String,String,String],
+          erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
           node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
           useBiLink : Option[Boolean] = None,
           flip : Boolean = false
         ) : MsgProcessor = {
-          new MsgProcessor( erql, node, rspLabelCtor, useBiLink, flip )
+          new MsgProcessor( erqlCtor, node, rspLabelCtor, useBiLink, flip )
         }
         def unapply(
           mp : MsgProcessor
         ) : Option[
              (
-               CnxnCtxtLabel[String,String,String],
+               Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
                StdEvalChannel,
                String =>CnxnCtxtLabel[String,String,String],
                Option[Boolean],
@@ -1774,7 +1793,7 @@ package diesel {
              )
         ]
         = {
-          Some( ( mp.erql, mp.node, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
+          Some( ( mp.erqlCtor, mp.node, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
         }
       }
 
@@ -1791,9 +1810,16 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
-          DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
-            throw new Exception( "error making evalRequestLabel" )
-          ),
+          Unit => {
+            val sessionId = UUID.randomUUID
+            (
+              sessionId,
+              DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( Left[String,String]( sessionId.toString ) ).getOrElse( 
+                throw new Exception( "error making evalRequestLabel" )
+              )
+            )
+              
+          },
           node,
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
@@ -1811,9 +1837,15 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
-          DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
-            throw new Exception( "error making evalRequestLabel" )
-          ),
+          Unit => {
+            val sessionId = UUID.randomUUID
+            (
+              sessionId,
+              DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Left[String,String]( sessionId.toString ) ).getOrElse( 
+                throw new Exception( "error making evalRequestLabel" )
+              )
+            )
+          },
           node,
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
