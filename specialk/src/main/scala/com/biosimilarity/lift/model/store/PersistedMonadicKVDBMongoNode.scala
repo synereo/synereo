@@ -1351,162 +1351,147 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			      // Defensively check that db is actually available
 			      
 			      checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
-				case true => {
-				  val oQry = query( xmlCollName, path )
+				case true => {	
+				  // tweet( ">>>>> compiled query for path " + path )
+// 				  tweet(
+// 				    (
+// 				      "retrieval query : \n" + qry
+// 				    )
+// 				  )
+				  val tPath = Left[mTT.GetRequest,mTT.GetRequest]( path )
+				  val rslts = executeWithResults( pd, xmlCollName, tPath )
 				  
-				  oQry match {
-				    case None => {
-				      tweet( "Reader departing spaceLock PMKVDBNode 2" + this + " for mget on " + path + "." )
-				      //spaceLock.depart( Some( rk ) )
-				      spaceLock.depart( path, Some( rk ) )
-				      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
-				      rk( oV )
-				    }
-				    case Some( qry ) => {	
-				      tweet( ">>>>> compiled query for path " + path )
+				  rslts match {
+				    case Nil => {	
 				      tweet(
 					(
-					  "retrieval query : \n" + qry
+					  "database "
+					  + xmlCollName
+					  + " had no matching resources."
 					)
 				      )
 				      
-				      val rslts = executeWithResults( xmlCollName, qry )
+				      storeKQuery( xmlCollName, pd )( path, rk )
 				      
-				      rslts match {
-					case Nil => {	
-					  tweet(
-					    (
-					      "database "
-					      + xmlCollName
-					      + " had no matching resources."
-					    )
-					  )
-					  
-					  storeKQuery( xmlCollName, pd )( path, rk )
-					  
-					  // Then forward the request
-					  //forward( ask, hops, path )			  
-					  rk( oV )
-					}
-					case _ => { 			  
-					  tweet(
-					    (
-					      "database "
-					      + xmlCollName
-					      + " had "
-					      + rslts.length
-					      + " matching resources."
-					    )
-					  )		  				  
-					  
-					  if ( cursor )
-					    {
-                                              var rsrcRslts : List[mTT.Resource] = Nil
-                                              for( rslt <- itergen[DBObject]( rslts ) ) {
-						tweet( "retrieved " + rslt.toString )
-												
-						consume match {
-						  case policy : RetainInStore => {
-						    tweet( "removing from store " + rslt )
-						    removeFromStore(
-						      persist,
-						      rslt,
-						      collName
-						    )
-						  }
-						  case _ => {
-						    tweet( "policy indicates not to remove from store " + rslt )
-						  }
-						}
-						
-						// BUGBUG -- LGM : This is a
-						// window of possible
-						// failure; if we crash here,
-						// then the result is out of
-						// the store, but we haven't
-						// completed processing. This is
-						// where we need Tx.
-
-						val ersrc : emT.PlaceInstance = pd.asResource( path, rslt )
-						ersrc.stuff match {
-						  case Left( r ) => rsrcRslts = r :: rsrcRslts
-						  case _ => {}
-						}
-						
-                                              }
-					      
-                                              val rsrcCursor = asCursor( rsrcRslts )
-                                              //tweet( "returning cursor" + rsrcCursor )
-
-					      tweet( "Reader departing spaceLock PMKVDBNode Version 4" + this + " for mget on " + path + "." )
-					      //spaceLock.depart( Some( rk ) )
-					      spaceLock.depart( path, Some( rk ) )
-					      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-					      
-                                              rk( rsrcCursor )
-					    }
-					  else
-					    {
-					      for( rslt <- itergen[DBObject]( rslts ) ) {
-						tweet( "retrieved " + rslt.toString )
-						val ersrc = pd.asResource( path, rslt )
-                                                tweet( "************************************************************" )
-						tweet( "resource: " + ersrc )
-                                                tweet( "************************************************************" )
-						consume match {
-						  case policy : RetainInStore => {
-						    tweet( "removing from store " + rslt )
-						    removeFromStore( 
-						      persist,
-						      rslt,
-						      collName
-						    )
-						  }
-						  case _ => {
-						    tweet( "policy indicates not to remove from store" + rslt )
-						  }
-						}
-						
-						// BUGBUG -- LGM : This is a
-						// window of possible
-						// failure; if we crash here,
-						// then the result is out of
-						// the store, but we haven't
-						// completed processing. This is
-						// where we need Tx.
-						
-						ersrc.stuff match {
-						  case Left( r ) => {
-						    tweet( "returning " + r )
-
-						    tweet( "Reader departing spaceLock PMKVDBNode Version 5 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
-						    //spaceLock.depart( Some( rk ) )
-						    spaceLock.depart( path, Some( rk ) )
-						    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-						    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
-						    rk( Some( r ) )
-						  }
-						  case _ => {
-						    throw new Exception(
-						      "violated excluded middle contract: " + ersrc
-						    )
-						  }
-						}					  
+				      // Then forward the request
+				      //forward( ask, hops, path )			  
+				      rk( oV )
+				    }
+				    case _ => { 			  
+				      tweet(
+					(
+					  "database "
+					  + xmlCollName
+					  + " had "
+					  + rslts.length
+					  + " matching resources."
+					)
+				      )		  				  
+				      
+				      if ( cursor )
+					{
+                                          var rsrcRslts : List[mTT.Resource] = Nil
+                                          for( ( rslt, ersrc ) <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+					    tweet( "retrieved " + rslt.toString )
+					    
+					    consume match {
+					      case policy : RetainInStore => {
+						tweet( "removing from store " + rslt )
+						removeFromStore(
+						  persist,
+						  rslt,
+						  collName
+						)
+					      }
+					      case _ => {
+						tweet( "policy indicates not to remove from store " + rslt )
 					      }
 					    }
+					    
+					    // BUGBUG -- LGM : This is a
+					    // window of possible
+					    // failure; if we crash here,
+					    // then the result is out of
+					    // the store, but we haven't
+					    // completed processing. This is
+					    // where we need Tx.
+                                            
+					    //val ersrc : emT.PlaceInstance = pd.asResource( path, rslt )
+					    ersrc.stuff match {
+					      case Left( r ) => rsrcRslts = r :: rsrcRslts
+					      case _ => {}
+					    }
+					    
+                                          }
+					  
+                                          val rsrcCursor = asCursor( rsrcRslts )
+                                          //tweet( "returning cursor" + rsrcCursor )
+                                          
+					  tweet( "Reader departing spaceLock PMKVDBNode Version 4" + this + " for mget on " + path + "." )
+					  //spaceLock.depart( Some( rk ) )
+					  spaceLock.depart( path, Some( rk ) )
+					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					  
+                                          rk( rsrcCursor )
 					}
-				      }
-				    }			    
-				  }			      
+				      else
+					{
+					  for( ( rslt, ersrc ) <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+					    tweet( "retrieved " + rslt.toString )
+					    //val ersrc = pd.asResource( path, rslt )
+                                            tweet( "************************************************************" )
+					    tweet( "resource: " + ersrc )
+                                            tweet( "************************************************************" )
+					    consume match {
+					      case policy : RetainInStore => {
+						tweet( "removing from store " + rslt )
+						removeFromStore( 
+						  persist,
+						  rslt,
+						  collName
+						)
+					      }
+					      case _ => {
+						tweet( "policy indicates not to remove from store" + rslt )
+					      }
+					    }
+					    
+					    // BUGBUG -- LGM : This is a
+					    // window of possible
+					    // failure; if we crash here,
+					    // then the result is out of
+					    // the store, but we haven't
+					    // completed processing. This is
+					    // where we need Tx.
+					    
+					    ersrc.stuff match {
+					      case Left( r ) => {
+						tweet( "returning " + r )
+                                                
+						tweet( "Reader departing spaceLock PMKVDBNode Version 5 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
+						//spaceLock.depart( Some( rk ) )
+						spaceLock.depart( path, Some( rk ) )
+						//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+						//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                                
+						rk( Some( r ) )
+					      }
+					      case _ => {
+						throw new Exception(
+						  "violated excluded middle contract: " + ersrc
+						)
+					      }
+					    }					  
+					  }
+					}
+				    }
+				  }
 				}
 				case false => {
 				  // tweet( ">>>>> forwarding..." )
-// 				  forward( ask, hops, path )
-
+                                  // 				  forward( ask, hops, path )
+                                  
 				  tweet( "Reader departing spaceLock PMKVDBNode Version 6 " + this + " for mget on " + path + "." )
 				  //spaceLock.depart( Some( rk ) )
 				  spaceLock.depart( path, Some( rk ) )
@@ -1540,14 +1525,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				)
 			      )
-
-
+                              
+                              
 			      tweet( "Reader departing spaceLock PMKVDBNode Version 7 " + this + " for mget on " + path + "." )
 			      //spaceLock.depart( Some( rk ) )
 			      spaceLock.depart( path, Some( rk ) )
 			      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
 			      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
+                              
 			      rk( oV )
 			    }
 			    case Some( pd ) => {
@@ -1570,123 +1555,104 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				    )
 				  )
-
+                                  
 				  tweet( "Reader departing spaceLock PMKVDBNode Version 8 " + this + " for mget on " + path + "." )
 				  //spaceLock.depart( Some( rk ) )
 				  spaceLock.depart( path, Some( rk ) )
 				  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
 				  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
+                                  
 				  rk( oV )
 				}
 				case true => {
-				  query( xmlCollName, path ) match {
-				    case None => {
+                                  val tPath = Left[mTT.GetRequest,mTT.GetRequest]( path )
+                                  val dataQryRslts = executeWithResults( pd, xmlCollName, tPath )
+
+				  dataQryRslts match {
+				    case Nil => {
 				      tweet( 
 					(
 					  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 					  + "mgetting " + path + ".\n"
-					  + "result in cache on " + this + " without a query.\n"
+					  + "result in cache on " + this + " no matching results in store.\n"
 					  + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 					)
 				      )
-
-				      tweet( "Reader departing spaceLock PMKVDBNode Version 9 " + this + " for mget on " + path + "." )
-				      //spaceLock.depart( Some( rk ) )
-				      spaceLock.depart( path, Some( rk ) )
+				      
 				      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
 				      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
-				      rk( oV )
-				    }
-				    case Some( qry ) => {
-				      executeWithResults( xmlCollName, qry ) match {
-					case Nil => {
-					  tweet( 
-					    (
-					      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-					      + "mgetting " + path + ".\n"
-					      + "result in cache on " + this + " no matching results in store.\n"
-					      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-					    )
-					  )
-					  
-					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-
-					  // Need to store continuation if
-					  // this is a subscribe
-					  consume match {
-					    case policy : Subscription => {
-					      storeKQuery( xmlCollName, pd )( path, rk )
-					      rk( oV )
-					    }
-					    case _ => {
-					      tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
-					      //spaceLock.depart( Some( rk ) )
-					      spaceLock.depart( path, Some( rk ) )
-					      rk( oV )
-					    }
-					  }
-					  
+                                      
+				      // Need to store continuation if
+				      // this is a subscribe
+				      consume match {
+					case policy : Subscription => {
+					  storeKQuery( xmlCollName, pd )( path, rk )
+					  rk( oV )
 					}
-					case rslts => {
-					  tweet(
-					    (
-					      "database "
-					      + xmlCollName
-					      + " had "
-					      + rslts.length
-					      + " matching resources."
-					    )
-					  )
-
-					  // BUGBUG -- lgm : what to
-					  // do in the case that
-					  // what's in store doesn't
-					  // match what's in cache?
-					  for( rslt <- itergen[DBObject]( rslts ) ) {
-					    tweet( "retrieved " + rslt.toString )					    
-						
-					    consume match {
-					      case policy : RetainInStore => {
-						tweet( "removing from store " + rslt )
-						removeFromStore( 
-						  persist,
-						  rslt,
-						  collName
-						)
-					      }
-					      case _ => {
-						tweet( "policy indicates not to remove from store" + rslt )
-					      }
-					    }
-											    					  
-					  }
-
-					  //tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
+					case _ => {
+					  tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
 					  //spaceLock.depart( Some( rk ) )
-					  //spaceLock.depart( path, Some( rk ) )
-					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-					  // Need to store continuation if
-					  // this is a subscribe
-					  consume match {
-					    case policy : Subscription => {
-					      storeKQuery( xmlCollName, pd )( path, rk )
-					      rk( oV )
-					    }
-					    case _ => {
-					      tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
-					      //spaceLock.depart( Some( rk ) )
-					      spaceLock.depart( path, Some( rk ) )
-					      rk( oV )
-					    }
-					  }					  
+					  spaceLock.depart( path, Some( rk ) )
+					  rk( oV )
 					}
-				      }				      
+				      }
+				      
 				    }
-				  }				  				  
+				    case rslts => {
+				      tweet(
+					(
+					  "database "
+					  + xmlCollName
+					  + " had "
+					  + rslts.length
+					  + " matching resources."
+					)
+				      )
+                                      
+					  // BUGBUG -- lgm : what to
+				      // do in the case that
+				      // what's in store doesn't
+				      // match what's in cache?
+				      for( ( rslt, ersrc ) <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+					tweet( "retrieved " + rslt.toString )					    
+					
+					consume match {
+					  case policy : RetainInStore => {
+					    tweet( "removing from store " + rslt )
+					    removeFromStore( 
+					      persist,
+					      rslt,
+					      collName
+					    )
+					  }
+					  case _ => {
+					    tweet( "policy indicates not to remove from store" + rslt )
+					  }
+					}
+					
+				      }
+                                      
+				      //tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
+				      //spaceLock.depart( Some( rk ) )
+				      //spaceLock.depart( path, Some( rk ) )
+				      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				      // Need to store continuation if
+				      // this is a subscribe
+				      consume match {
+					case policy : Subscription => {
+					  storeKQuery( xmlCollName, pd )( path, rk )
+					  rk( oV )
+					}
+					case _ => {
+					  tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+					  //spaceLock.depart( Some( rk ) )
+					  spaceLock.depart( path, Some( rk ) )
+					  rk( oV )
+					}
+				      }					  
+				    }
+				  }				      
 				}				
 			      }
 			    }
