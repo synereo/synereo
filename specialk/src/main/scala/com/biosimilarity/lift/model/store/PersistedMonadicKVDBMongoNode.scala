@@ -58,6 +58,11 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 
+case class UnificationQueryFilter[Namespace,Var,Tag](
+  ptn : CnxnCtxtLabel[Namespace,Var,Tag],  
+  key : CnxnCtxtLabel[Namespace,Var,Tag],
+  dbRslt : DBObject
+) extends Exception( "unification refuted" )
 
 trait PersistedMonadicKVDBMongoNodeScope[Namespace,Var,Tag,Value] 
 extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {  
@@ -718,6 +723,43 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	
 	implicit val SyncTable : Option[( UUID, HashMap[UUID,Int] )] = None
 
+        def executeWithResults(
+          pd : PersistenceManifest,
+          xmlCollName : String,
+          tPath : Either[mTT.GetRequest,mTT.GetRequest]
+        ) : List[( DBObject, emT.PlaceInstance )] = {
+          // BUGBUG : lgm -- this is not very performant!
+          // The better approach is to find a way to inline the
+          // asResource code
+          val ( qFn, path ) : (( String, mTT.GetRequest ) => Option[String],mTT.GetRequest) =
+            tPath match {
+              case Left( pth ) => ( query, pth );
+              case Right( pth ) => ( kquery, pth )
+            }
+          val pairs : Option[List[( DBObject, emT.PlaceInstance )]] = 
+            for(
+              qry <- qFn( xmlCollName, path )
+            ) yield {
+              ( List[( DBObject, emT.PlaceInstance )]( ) /: executeWithResults( xmlCollName, qry ) )(
+                {
+                  ( acc, e ) => {
+                    try {
+                      val ersrc = pd.asResource( path, e )
+                      val pair = ( e, ersrc )
+                      acc ++ List[( DBObject, emT.PlaceInstance )]( pair )
+                    }
+                    catch {
+                      case e : UnificationQueryFilter[Namespace,Var,Tag] => {
+                        tweet( "filtering refuted pattern: " + e.ptn + "; key: " + e.key )
+                        acc
+                      }
+                    }
+                  }
+                }
+              )              
+            }
+          pairs.getOrElse( List[( DBObject, emT.PlaceInstance )]( ) )
+        }
 	def putInStore(
 	  persist : Option[PersistenceManifest],
 	  channels : Map[mTT.GetRequest,mTT.Resource],
@@ -828,11 +870,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
 	  for(
 	    pd <- persist;	    
-	    kqry <- kquery( xmlCollName, path );
+	    //kqry <- kquery( xmlCollName, path );
 	    if checkIfDBExists( xmlCollName, true )
 	  ) yield {
-	    for( krslt <- executeWithResults( xmlCollName, kqry ) ) yield {
-	      tweet( ">>>>>>***>>>>>>***>>>>>>" )
+	    //for( krslt <- executeWithResults( xmlCollName, kqry ) ) yield {
+            val tPath = Right[mTT.GetRequest,mTT.GetRequest]( path )
+	    for(
+              ( krslt, ekrsrc ) <- executeWithResults( pd, xmlCollName, tPath )
+            ) yield {  
+              tweet( ">>>>>>***>>>>>>***>>>>>>" )
 	      tweet( "retrieved " + krslt.toString )
 	      tweet( "<<<<<<***<<<<<<***<<<<<<" )
 	      val ekrsrc = pd.asResource( path, krslt )
@@ -879,67 +925,49 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
 	    case true => {
 	      tweet( "database " + xmlCollName + " found" )
-	      val oKQry = kquery( xmlCollName, ptn )
-	      oKQry match {
-		case None => {
-		  throw new Exception(
-		    "failed to compile a continuation query" 
-		  )				  
-		}
-		case Some( kqry ) => {
-		  tweet( "kqry : " + kqry )
-		  val krslts = executeWithResults( xmlCollName, kqry )
-		  krslts match {
-		    case Nil => {
-		      // Nothing to do
-		      tweet( " no continuations in store " )
-		      None
+              for( pm <- persist ) yield {
+                val tPath = Right[mTT.GetRequest,mTT.GetRequest]( ptn )
+		for(
+                  ( krslt, ekrsrc ) <- executeWithResults( pm, xmlCollName, tPath )
+                ) yield {
+		  tweet( "retrieved " + krslt.toString )
+		  //val ekrsrc = pm.asResource( ptn, krslt )
+		  tweet( "krslt as resource " + ekrsrc )
+		  ekrsrc.stuff match {
+		    case Right( k :: ks ) => {
+		      tweet( "have a list of continuations " )
+		      if ( consume ) {
+			// BUGBUG -- lgm : write XQuery to update node
+			tweet( "removing from store " + krslt )
+			removeFromStore( 
+			  persist,
+			  krslt,
+			  collName
+			)
+			tweet( "updating store " )
+			putKInStore(
+			  persist,
+			  ptn,
+			  mTT.Continuation( ks ),
+			  collName,
+			  //true
+			  false
+			)
+		      }
+		      ekrsrc
+		    }
+		    case Right( Nil ) => {
+		      tweet( " have empty list of continuations; no continuations in store " )
+		      ekrsrc
 		    }
 		    case _ => {
-		      for( pm <- persist ) yield {
-			for( krslt <- krslts ) yield {
-			  tweet( "retrieved " + krslt.toString )
-			  val ekrsrc = pm.asResource( ptn, krslt )
-			  tweet( "krslt as resource " + ekrsrc )
-			  ekrsrc.stuff match {
-			    case Right( k :: ks ) => {
-			      tweet( "have a list of continuations " )
-			      if ( consume ) {
-				// BUGBUG -- lgm : write XQuery to update node
-				tweet( "removing from store " + krslt )
-				removeFromStore( 
-				  persist,
-				  krslt,
-				  collName
-				)
-				tweet( "updating store " )
-				putKInStore(
-				  persist,
-				  ptn,
-				  mTT.Continuation( ks ),
-				  collName,
-				  //true
-				  false
-				)
-			      }
-			      ekrsrc
-			    }
-			    case Right( Nil ) => {
-			      tweet( " have empty list of continuations; no continuations in store " )
-			      ekrsrc
-			    }
-			    case _ => {
-			      throw new Exception(
-				"Non-continuation resource (1) stored in kRecord" + ekrsrc
-			      )
-			    }
-			  }
-			}
-		      }
+		      throw new Exception(
+			"Non-continuation resource (1) stored in kRecord" + ekrsrc
+		      )
 		    }
 		  }
 		}
-	      }
+	      }	      
 	    }
 	    case false => {
 	      tweet( "warning: failed to find a database!" )			  
@@ -1167,117 +1195,103 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ) : Unit @suspendable = {
 	    // Need to store the
 	    // continuation on the tail of
-	    // the continuation entry
-	    val oKQry = kquery( xmlCollName, path )
-	    oKQry match {
-	      case None => {
-		throw new Exception(
-		  "failed to compile a continuation query" 
-		)				  
+	    // the continuation entry             
+            val pm = persist.getOrElse( throw new Exception( "storeKQuery needs persistence manifest" ) )
+            val tPath = Right[mTT.GetRequest,mTT.GetRequest]( path )
+	    val krslts = executeWithResults( pm, xmlCollName, tPath )
+		
+	    val stbl = new HashMap[UUID,Int]()
+	    val skey = getUUID		      
+		
+	    // This is the easy case!
+	    // There are no locations
+	    // matching the pattern with
+	    // stored continuations	  					  
+	    krslts match {
+	      case Nil => {
+		stbl += ( skey -> 1 )  	  
+		putKInStore(
+		  persist,
+		  path,
+		  mTT.Continuation( List( rk ) ),
+		  Some( xmlCollName ),
+		  false
+		  //true
+		)( Some( ( skey, stbl ) ) )
+		
+		while ( stbl( skey ) > 0 ){}
+                
+		tweet(
+		  (
+		    "Reader departing spaceLock PMKVDBNode Version 3 "
+		    + this
+		    + " on a PersistedMonadicKVDBNode for mget on "
+		    + path + "."
+		  )
+		)
+		//spaceLock.depart( Some( rk ) )
+		spaceLock.depart( path, Some( rk ) )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )		  
 	      }
-	      case Some( kqry ) => {
-		//tweet( ">>>>>>***>>>>>>***>>>>>>" )
-		//tweet( "kqry: " + kqry )
-		//println( "query text: " + kqry )
-		//tweet( "<<<<<<***<<<<<<***<<<<<<" )
-		val krslts = executeWithResults( xmlCollName, kqry )
-		
-		val stbl = new HashMap[UUID,Int]()
-		val skey = getUUID		      
-		
-		// This is the easy case!
-		// There are no locations
-		// matching the pattern with
-		// stored continuations	  					  
-		krslts match {
-		  case Nil => {
-		    stbl += ( skey -> 1 )  	  
-		    putKInStore(
-		      persist,
-		      path,
-		      mTT.Continuation( List( rk ) ),
-		      Some( xmlCollName ),
-		      false
-		      //true
-		    )( Some( ( skey, stbl ) ) )
-		    
-		    while ( stbl( skey ) > 0 ){}
-
-		    tweet(
-		      (
-			"Reader departing spaceLock PMKVDBNode Version 3 "
-			+ this
-			+ " on a PersistedMonadicKVDBNode for mget on "
-			+ path + "."
+	      case _ => {
+		// A more subtle
+		// case. Do we store
+		// the continutation on
+		// each match?
+		// Answer: Yes!
+		stbl += ( skey -> krslts.length )  	  
+		for( ( krslt, ekrsrc ) <- itergen[(DBObject,emT.PlaceInstance)]( krslts ) ) {
+		  tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		  tweet( "retrieved " + krslt.toString )
+		  tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		  //val ekrsrc = pd.asResource( path, krslt )
+		  
+		  tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		  tweet( "retrieved " + ekrsrc )
+		  tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		  
+		  ekrsrc.stuff match {
+		    case Right( ks ) => {  
+		      tweet( "removing from store " + krslt )
+		      removeFromStore( 
+			persist,
+			krslt,
+			Some( xmlCollName )
 		      )
-		    )
-		    //spaceLock.depart( Some( rk ) )
-		    spaceLock.depart( path, Some( rk ) )
-		    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
-		    
-		  }
-		  case _ => {
-		    // A more subtle
-		    // case. Do we store
-		    // the continutation on
-		    // each match?
-		    // Answer: Yes!
-		    stbl += ( skey -> krslts.length )  	  
-		    for( krslt <- itergen[DBObject]( krslts ) ) {
-		      tweet( ">>>>>>***>>>>>>***>>>>>>" )
-		      tweet( "retrieved " + krslt.toString )
-		      tweet( "<<<<<<***<<<<<<***<<<<<<" )
-		      val ekrsrc = pd.asResource( path, krslt )
-		      
-		      tweet( ">>>>>>***>>>>>>***>>>>>>" )
-		      tweet( "retrieved " + ekrsrc )
-		      tweet( "<<<<<<***<<<<<<***<<<<<<" )
-		      
-		      ekrsrc.stuff match {
-			case Right( ks ) => {  
-			  tweet( "removing from store " + krslt )
-			  removeFromStore( 
-			    persist,
-			    krslt,
-			    Some( xmlCollName )
-			  )
-			  putKInStore(
-			    persist,
-			    path,
-			    mTT.Continuation( ks ++ List( rk ) ),
-			    Some( xmlCollName ),
-			    false //true
-			  )( Some( ( skey, stbl ) ) )
-			}
-			case _ => {
-			  throw new Exception(
-			    "Non-continuation resource (2) stored in kRecord" + ekrsrc
-			  )
-			}
-		      }
+		      putKInStore(
+			persist,
+			path,
+			mTT.Continuation( ks ++ List( rk ) ),
+			Some( xmlCollName ),
+			false //true
+		      )( Some( ( skey, stbl ) ) )
 		    }
-		    
-		    while ( stbl( skey ) > 0 ){ }
-		    tweet(
-		      (
-			"Reader departing spaceLock PMKVDBNode Version 3 "
-			+ this
-			+ " on a PersistedMonadicKVDBNode for mget on "
-			+ path
-			+ "."
+		    case _ => {
+		      throw new Exception(
+			"Non-continuation resource (2) stored in kRecord" + ekrsrc
 		      )
-		    )
-		    //spaceLock.depart( Some( rk ) )
-		    spaceLock.depart( path, Some( rk ) )
-		    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
-		    
+		    }
 		  }
-		}					      
+		}
+		
+		while ( stbl( skey ) > 0 ){ }
+		tweet(
+		  (
+		    "Reader departing spaceLock PMKVDBNode Version 3 "
+		    + this
+		    + " on a PersistedMonadicKVDBNode for mget on "
+		    + path
+		    + "."
+		  )
+		)
+		//spaceLock.depart( Some( rk ) )
+		spaceLock.depart( path, Some( rk ) )
+		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 	      }
-	    }
-	  }
+	    }			      
+          }	  
 
 	  Generator {	
 	    rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
@@ -2375,23 +2389,36 @@ package usage {
                           tweet( " ****************************** " )
 		          tweet( " in data space " )
 		          tweet( " ****************************** " )
+                          tweet( " ****************************** " )
+		          tweet( " computing cacheValue " )
+		          tweet( " ****************************** " )
+                          val cacheValueRslt =
+                            asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                          tweet( " ****************************** " )
+		          tweet( " computed cacheValue: " + cacheValueRslt )
+		          tweet( " ****************************** " )
+                          val groundWrapper =
+                            mTT.Ground( cacheValueRslt )
+                          val boundHMWrapper =
+                            mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                          val boundWrapper =
+                            mTT.asRBoundAList( boundHMWrapper )
+                          val finalRslt =
+                            emT.PlaceInstance(
+                              k,
+                              Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                boundWrapper
+                              ),
+                              // BUGBUG -- lgm : why can't the compiler determine
+                              // that this cast is not necessary?
+                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                            )
 
-			  emT.PlaceInstance(
-			    k,
-			    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-			      mTT.Ground(
-				asCacheValue(
-				  new CnxnCtxtBranch[String,String,String](
-				    "string",
-				    v :: Nil
-				  )
-				)
-			      )
-			    ),
-			    // BUGBUG -- lgm : why can't the compiler determine
-			    // that this cast is not necessary?
-			    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-			  )
+                          tweet( " ****************************** " )
+		          tweet( " placeInstance: " + finalRslt )
+		          tweet( " ****************************** " )
+                          			  
+                          finalRslt
 			}
 			else {
 			  if ( compareNameSpace( ns, kvKNameSpace ) ) {
@@ -2421,8 +2448,8 @@ package usage {
 			}
 		      }
 		      case None => {
-			tweet( "Unexpected matchMap failure: " + key + " " + k )
-			throw new Exception( "matchMap failure " + key + " " + k )
+			//tweet( "Unexpected matchMap failure: " + key + " " + k )
+			throw new UnificationQueryFilter( key, k, value )
 		      }
 		    }
 		  }

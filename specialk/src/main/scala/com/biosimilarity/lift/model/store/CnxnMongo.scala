@@ -109,6 +109,38 @@ extends CnxnMongoSelectors {
     }
   }
 
+  def unifierPaths( cnxn : CnxnCtxtLabel[Namespace,Var,Tag] )(
+    implicit nameSpaceToString : Namespace => String,
+    varToString : Var => String,
+    tagToString : Tag => String
+  ) : List[String] = {
+    def extendPath( path : String, innerFunctor : String ) = {
+      path match {
+	case "" => innerFunctor + ""
+	case _ => innerFunctor + "." + path
+      }
+    }
+    cnxn match {
+      case CnxnCtxtLeaf( Left( tag ) ) => {
+	List( "" )
+      }      
+      case CnxnCtxtLeaf( Right( v ) ) => {
+	List( "" )
+      }
+      case CnxnCtxtBranch( innerFunctor, innerFactuals ) => {
+	( List[String]() /: innerFactuals )(
+	  {
+	    ( acc, e ) => {
+	      acc ++ unifierPaths(
+		e
+	      )( nameSpaceToString, varToString, tagToString ).map( extendPath( _, innerFunctor ) )
+	    }
+	  }
+	)
+      }
+    }
+  }
+
   def filteredPaths(
     cnxn : CnxnCtxtLabel[Namespace,Var,Tag],
     filter : CnxnCtxtLabel[Namespace,Var,Tag] => Boolean
@@ -172,7 +204,35 @@ extends CnxnMongoSelectors {
 
       }
     }
-  }  
+  }
+
+  def toMongoUnificationQuery(
+    cnxn : CnxnCtxtLabel[Namespace,Var,Tag]
+  )(
+    implicit nameSpaceToString : Namespace => String,
+    varToString : Var => String,
+    tagToString : Tag => String
+  ) : DBObject = {
+    cnxn match {
+      case CnxnCtxtLeaf( Left( tag ) ) => {
+	( tagToString( tag ) $exists true ) ++ ( tagSelector $exists true )
+      }
+      case CnxnCtxtLeaf( Right( v ) ) => {
+	// BUGBUG : lgm -- incorrect semantics
+	( varToString( v ) $exists true ) ++ ( varSelector $exists true )
+      }
+      case ccb@CnxnCtxtBranch( functor, factuals ) => {	
+	( MongoDBObject.empty /: unifierPaths( ccb ) )(
+	  {
+	    ( acc, e ) => {
+	      acc ++ ( e $exists true )
+	    }
+	  }
+	)
+
+      }
+    }
+  }
 
   def queryBindings(
     cnxn : CnxnCtxtLabel[Namespace,Var,Tag],
