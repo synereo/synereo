@@ -1730,6 +1730,8 @@ package diesel {
               }
             }
           }
+          val ( newSessId, newErql ) = erqlCtor() 
+          loop( newSessId, newErql )
         }
         def messageProcessorLoop(
           erqlCtor : Unit => ( UUID, CnxnCtxtLabel[String,String,String] ),
