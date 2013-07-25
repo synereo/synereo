@@ -27,6 +27,7 @@
 \usepackage{amssymb}
 \usepackage{caption}
 \usepackage{multicol}
+\usepackage{mathpartir}
 
 % Double brackets
 \newcommand{\ldb}{[\![}
@@ -58,7 +59,8 @@
 \newcommand{\choice}{\mathbin{\id{|}}}
 \newcommand{\altern}{\mathbin{\id{+}}}
 \newcommand{\juxtap}{\mathbin{\id{|}}}
-\newcommand{\concat}{\mathbin{.}}
+%\newcommand{\concat}{\mathbin{.}}
+\newcommand{\concat}{\Rightarrow}
 \newcommand{\punify}{\mathbin{\id{:=:}}}
 \newcommand{\fuse}{\mathbin{\id{=}}}
 \newcommand{\scong}{\mathbin{\equiv}}
@@ -69,11 +71,12 @@
 \newcommand{\boundnames}[1]{\mathbin{\mathcal{BN}(#1)}}
 %\newcommand{\lift}[2]{\texttt{lift} \; #1 \concat #2}
 \newcommand{\binpar}[2]{#1 \juxtap #2}
-\newcommand{\outputp}[2]{#1 \id{[} #2 \id{]}}
-\newcommand{\prefix}[3]{#1 \id{(} #2 \id{)} \concat #3}
-\newcommand{\lift}[2]{#1 \lliftb #2 \rliftb}
-\newcommand{\quotep}[1]{\lpquote #1 \rpquote}
-\newcommand{\dropn}[1]{\rpquote #1 \lpquote}
+\newcommand{\outputp}[2]{#1 ! ( * #2 )}
+\newcommand{\prefix}[3]{#1 ? ( #2 ) \concat #3}
+\newcommand{\lift}[2]{#1 ! ( #2 )}
+%\newcommand{\quotep}[1]{\lpquote #1 \rpquote}
+\newcommand{\quotep}[1]{@#1}
+\newcommand{\dropn}[1]{*#1}
 
 \newcommand{\newp}[2]{\id{(}\newkw \; #1 \id{)} #2}
 \newcommand{\bangp}[1]{\id{!} #1}
@@ -146,8 +149,8 @@
 
 \newcommand{\ptrue}{\mathbin{true}}
 \newcommand{\psatisfies}[2]{#1 \models #2}
-\newcommand{\pdropf}[1]{\rpquote #1 \lpquote}
-\newcommand{\plift}[2]{#1 \lliftb #2 \rliftb}
+\newcommand{\pdropf}[1]{* #1}
+\newcommand{\plift}[2]{#1 ! ( #2 )}
 \newcommand{\pprefix}[3]{\langle #1 ? #2 \rangle #3}
 \newcommand{\pgfp}[2]{\textsf{rec} \; #1 \mathbin{.} #2}
 \newcommand{\pquant}[3]{\forall #1 \mathbin{:} #2 \mathbin{.} #3}
@@ -363,169 +366,32 @@ Other approaches to policy. Curry-Howard. Contracts as types.
 We let ${P, Q, R}$ range over processes and ${x, y, z}$ range over names.
 
 \begin{grammar}
-\mbox{\rhoc}		& {P, Q}		& \bc	& \pzero & \mbox{null process} \\
-%				&					& \bm	& {x}\id{[}{y}\id{]} & \mbox{output} \\
-				&					& \bm	& {x}\id{(}{y}\id{)} \concat {P} & \mbox{input} \\
-				&					& \bm	& \lift{{x}}{{P}} & \mbox{lift} \\
-				&					& \bm	& \dropn{{x}} & \mbox{ drop } \\
-				&					& \bm	& {P} \juxtap {Q} & \mbox{ parallel } \\
-				& {x, y}  		& \bc	& \quotep{{P}} & \mbox{ quote } \\
+\mbox{\rhoc}		& {M, N}		& \bc	& \pzero & \mbox{null process} \\
+				&					& \bm	& {x}{?}{A} & \mbox{input} \\
+				&					& \bm	& {x}{!}{C} & \mbox{output} \\
+				&					& \bm	& {M}{+}{N} & \mbox{choice} \\
+				& { P, Q }              & \bc			& M & \mbox{include guarded processes} \\                                
+				&                        		& \bm	& {P} \juxtap {Q} & \mbox{parallel} \\                                
+				&					& \bm	& {*}{x} & \mbox{dereference} \\
+                                & { A }                 & \bc   & {( y_1, \ldots, y_N )} \Rightarrow {P} & \mbox{abstraction} \\
+                                & { C }                 & \bc   & {( Q_1, \ldots, Q_N )} & \mbox{data} \\
+				& {x, y}  		& \bc	& {@}{P} & \mbox{reference} \\
 \end{grammar}
 
-\subsubsection{Quote}
-
-Working in a bottom-up fashion, we begin with names. The technical
-detail corresponding to the {\pic}' parametricity in a theory of
-\textit{names} shows up in standard presentations in the grammar
-describing terms of the language: there is no production for names;
-names are taken to be terminals in the grammar. Our first point of
-departure from a more standard presentation of an asynchronous mobile
-process calculus is here. The grammar for the terms of the language
-will include a production for names in the grammar. A name is a
-\textit{quoted} process, $\quotep{P}$.
-
-\subsubsection{Parallel}
-
-This constructor is the usual parallel composition, denoting
-concurrent execution of the composed processes.
-
-\subsubsection{Lift and drop}
-Despite the fact that names are built from (the codes of) processes,
-we still maintain a careful disinction in kind between process and
-name; thus, name construction is not process construction. So, if one
-wants to be able to generate a name from a given process, there must
-be a process constructor for a term that creates a name from a
-process. This is the motivation for the production $\lift{x}{P}$,
-dubbed here the \emph{lift} operator. The intuitive meaning of this
-term is that the process $P$ will be packaged up as its code,
-$\quotep{P}$, and ultimately made available as an output at the port
-$x$.
-
-A more formal motivation for the introduction of this operator will
-become clear in the sequel. But, it will suffice to say now that
-$\quotep{P}$ is impervious to substitution. In the $\rho$-calculus,
-substitution does not affect the process body between quote marks. On
-the other hand, $\lift{x}{P}$ is susceptible to substitution and as
-such constitutes a dynamic form of quoting because the process body
-ultimately quoted will be different depending on the context in which
-the $\lift{x}{P}$ expression occurs.
-
-Of course, when a name is a quoted process, it is very handy to have a
-way of evaluating such an entity. Thus, the $\dropn{x}$ operator,
-pronounced \textit{drop} $x$, (eventually) extracts the process from a
-name. We say `eventually' because this extraction only happens when a
-quoted process is substituted into this expression. A consequence of
-this behavior is that $\dropn{x}$ is inert except under and input
-prefix. One way of saying this is that if you want to get something
-done, sometimes you need to drop a name, but it should be the name of
-an agent you know.
-
-\begin{rem} %{No $\nu$ is good news}
-The lift operator turns out to play a role analogous to $(\nu \;
-x)P$. As mentioned in the introduction, it is essential to the
-computational completeness of the calculus, playing a key role in the
-implementation of replication. It also provides an essential
-ingredient in the compositional encoding of the $\nu$ operator.
-\end{rem}
-
-\begin{rem} %{Dropping replication}
-It is well-known that replication is not required in a higher-order
-process algebra \cite{SangiorgiWalker}. While our algebra is
-\textit{not} higher-order in the traditional sense (there are not
-formal process variables of a different type from names) it has all
-the features of a higher-order process algebra. Thus, it turns out
-that there is no need for a term for recursion. To illustrate this we
-present below an encoding of $!P$ in this calculus. Intuitively, this
-will amount to receiving a quoted form of a process, evaluating it,
-while making the quoted form available again. The reader familiar with
-the $\lambda$-calculus will note the formal similarity between the
-crucial term in the encoding and the paradoxical combinator
-\cite{Barendregt84}.
-\end{rem}
-
-\subsubsection{Input and output}
-
-The input constructor is standard for an asynchronous name-passing
-calculus. Input blocks its continuation from execution until it
-receives a communication. Lift is a form of output which -- because
-the calculus is asynchronous -- is allowed no continuation. It also
-affords a convenient syntactic sugar, which we define here.
-
-\begin{equation*}
-	{x}\id{[}{y}\id{]} \triangleq \lift{x}{\dropn{y}}
-\end{equation*}
-
-\subsubsection{The null process}
-
-As we will see below, the null process has a more distinguished role
-in this calculus. It provides the sole atom out of which all other
-processes (and the names they use) arise much in the same way that the
-number $0$ is the sole number out of which the natural numbers are
-constructed; or the empty set is the sole set out of which all sets
-are built in $ZF$-set theory \cite{Krivine-TheCurryHowardCorre}; or
-the empty game is the sole game out of which all games are built in
-Conway's theory of games and numbers \cite{ONAG}. This analogy to
-these other theories draws attention, in our opinion, to the
-foundational issues raised in the introduction regarding the design of
-calculi of interaction.
-
-\subsection{The name game}
-
-Before presenting some of the more standard features of a mobile
-process calculus, the calculation of free names, structural
-equivalence, etc., we wish to consider some examples of processes and
-names. In particular, if processes are built out of names, and names
-are built out of processes, is it ever possible to get off the ground?
-Fortunately, there is one process the construction of which involves
-no names, the null process, $0$. Since we have at least one process,
-we can construct at least one name, namely $\quotep{0}$ \footnote{pun
-gratefully accepted ;-)}. Armed with one name we can now construct at
-least two new processes that are evidently syntactically different
-from the $0$, these are $\quotep{0}\id{[}{\quotep{0}}\id{]}$ and
-$\quotep{0}\id{(}{\quotep{0}}\id{)} \concat 0$. As we might expect,
-the intuitive operational interpretation of these processes is also
-distinct from the null process. Intuitively, we expect that the first
-outputs the name $\quotep{0}$ on the channel $\quotep{0}$, much like
-the ordinary {\pic} process $x\id{[}x\id{]}$ outputs the name $x$ on
-the channel $x$, and the second inputs on the channel $\quotep{0}$,
-much like the ordinary {\pic} process $x\id{(}x\id{)} \concat 0$
-inputs on the channel $x$.
-
-Of course, now that we have two more processes, we have two more
-names, $\quotep{\quotep{0}\id{[}{\quotep{0}}\id{]}}$ and
-$\quotep{\quotep{0}\id{(}{\quotep{0}}\id{)} \concat 0}$. Having three
-names at our disposal we can construct a whole new supply of processes
-that generate a fresh supply of names, and we're off and running. It
-should be pointed out, though, that as soon as we had the null process
-we also had $0 \juxtap 0$ and $0 \juxtap 0 \juxtap 0$ and
-consequently, we had the names $\quotep{ 0 \juxtap 0 }$, and $\quotep{
-0 \juxtap 0 \juxtap 0}$, and .... But, since we ultimately wish to
-treat these compositions as merely other ways of writing the null
-process and not distinct from it, should we admit the codes of these
-processes as distinct from $\quotep{0}$?
-
-This question leads to several intriguing and apparently fundamental
-questions. Firstly, if names have structure, whether this derives from
-the structure of processes or something else, what is a reasonable
-notion of equality on names? How much computation, and of what kind,
-should go into ascertaining equality on names? Additionally, what
-roles should name equality play in a calculus of processes? In
-constructing this calculus we became conscious that substitution and
-synchronization identify two potentially very different roles for name
-equality to play in name-passing calculi. That these are very
-different roles is suggested by the fact that they may be carried out
-by very different mechanisms in a workable and effective theory. We
-offer one choice, but this is just one design choice among infinitely
-many. Most likely, the primary value of this proposal is to raise the
-question. Likewise, we offer a proposal regarding the calculation of
-name equality that is just one of many and whose real purpose is to
-make the question vivid. We wish to turn to the core mechanics of the
-calculus with these questions in mind.
+% \begin{mathpar}
+%   \inferrule* [lab=IO: stop input output choice] {} {{M,N} \bc \pzero \;|\; x?A \;|\; x!C \;|\; M+N }
+%   \and
+%   \inferrule* [lab=agent: abstraction data] {} {{A} \bc ({x_1}, \ldots, {x_N}) \Rightarrow P \;| \; {(}{Q_1, \ldots, Q_N}{)}}
+%   \and
+%   \inferrule* [lab=process] {} {{P,Q} \bc M \;| \;P|Q \;|\; {*}{x}}
+%   \and
+%   \inferrule* [lab=name] {} {{x,y} \bc {@}{P}}
+% \end{mathpar} 
 
 \subsection{Free and bound names}
 
 The syntax has been chosen so that a binding occurrence of a name is
-sandwiched between round braces, $\id{(} \cdot \id{)}$. Thus, the
+sandwiched between round braces, ${(} \cdot {)}$. Thus, the
 calculation of the free names of a process, $P$, denoted
 $\freenames{P}$ is given recursively by
 
@@ -534,10 +400,10 @@ $\freenames{P}$ is given recursively by
 	\begin{eqnarray*}
 		\freenames{\pzero} & = & \emptyset \\
 %		\freenames{x \id{[}y\id{]}} & = & \{ x, y \} \\
-		\freenames{x \id{(}y\id{)} \concat P} & = & \{ x \} \cup (\freenames{P} \setminus \{ y \}) \\
-		\freenames{\lift{x}{P}} & = & \{ x \} \cup \freenames{P} \\
+		\freenames{{x}{?}{( y_1, \ldots, y_N )} \Rightarrow {P}} & = & \{ x \} \cup (\freenames{P} \setminus \{ y_1, \ldots y_N \}) \\
+		\freenames{{x}{!}{( Q_1, \ldots, Q_N )}} & = & \{ x \} \cup \bigcup \freenames{Q_i} \\
 		\freenames{\binpar{P}{Q}} & = & \freenames{P} \cup \freenames{Q} \\
-		\freenames{\dropn{x}} & = & \{ x \} \\
+		\freenames{{*}{x}} & = & \{ x \} \\
 	\end{eqnarray*}
 %}
 %\end{multicols}
@@ -564,57 +430,16 @@ satisfies the following laws:
 			{P} \juxtap ({Q} \juxtap {R}) \\
 \end{eqnarray*}
 
-\subsection{Name equivalence}
-
-We now come to one of the first real subtleties of this calculus. Both
-the calculation of the free names of a process and the determination
-of structural congruence between processes critically depend on being
-able to establish whether two names are equal. In the case of the
-calculation of the free names of an input-guarded process, for
-example, to remove the bound name we must determine whether it is in
-the set of free names of the continuation. Likewise, structural
-congruence includes $\alpha$-equivalence. But, establishing
-$\alpha$-equivalence between the processes $x \id{(} z \id{)}\concat \lift{w}{y
-\id{[}z\id{]}}$ and $x \id{(} v \id{)}\concat \lift{w}{y
-\id{[}v\id{]}}$, for instance, requires calculating a substitution, e.g. $x \id{(} v \id{)}\concat \lift{w}{y
-\id{[}v\id{]}} \id{\{}z / v \id{\}}$. But this calculation requires, in turn, being able to
-determine whether two names, in this case the name in the object
-position of the output, and the name being substituted for, are equal.
-
-As will be seen, the equality on names involves structural equivalence
-on processes, which in turn involves alpha equivalence, which involves
-name equivalence. This is a subtle mutual recursion, but one that
-turns out to be well-founded. Before presenting the technical details,
-the reader may note that the grammar above enforces a strict
-alternation between quotes and process constructors. Each question
-about a process that involves a question about names may in turn
-involve a question about processes, but the names in the processes the
-next level down, as it were, are under fewer quotes. To put it another
-way, each `recursive call' to name equivalence will involve one less
-level of quoting, ultimately bottoming out in the quoted zero process.
-
-Let us assume that we have an account of (syntactic) substitution and
-$\alpha$-equivalence upon which we can rely to formulate a notion of
-name equivalence, and then bootstrap our notions of substitution and
-$\alpha$-equivalence from that. We take name equivalence, written
-$\nameeq$, to be the smallest equivalence relation generated by the
-following rules.
-
-
-\infrule[Quote-drop]
-{  }
-{ \quotep{\dropn{x}} \nameeq x }
-
-\infrule[Struct-equiv]
-{ P \scong Q }
-{ \quotep{P} \nameeq \quotep{Q} }
+\paragraph{Name equivalence} As discussed in
+\cite{DBLP:journals/tgc/MeredithR05} name-equivalence is subtly
+recursively related to $\alpha$-equivalence and structural equivalence.
 
 \subsection{Syntactic substitution}
 
 Now we build the substitution used by $\alpha$-equivalence. We use
 $\Proc$ for the set of processes, $\QProc$ for the set of names, and
-$\id{\{}\vec{y} / \vec{x} \id{\}}$ to denote partial maps, $s : \QProc
-\rightarrow \QProc$. A map, $s$ lifts, uniquely, to a map on process terms, $\widehat{s} :
+${\{}{y_1} / {x_1}, \ldots, {y_n} / {x_n}{\}}$ to denote partial maps, $s : \QProc
+\rightarrow \QProc$. A map, $s$, lifts uniquely to a map on process terms, $\widehat{s} :
 \Proc \rightarrow \Proc$ by the following equations.
 
 \begin{eqnarray*}
@@ -622,16 +447,16 @@ $\id{\{}\vec{y} / \vec{x} \id{\}}$ to denote partial maps, $s : \QProc
 (R \juxtap S) \psubstp{Q}{P}
 		& = &    
 		(R)\psubstp{Q}{P} \juxtap (S) \psubstp{Q}{P} \\
-(x \id{(} y\id{)}\concat R) \psubstp{Q}{P}    
+({x}{?}{( y_1, \ldots, y_N )} \Rightarrow R) \psubstp{Q}{P}    
 		& = &    
-		(x)\substp{Q}{P} \id{(}z\id{)}\concat( (R \psubstn{z}{y}) \psubstp{Q}{P} ) \\
+		{(x)}\substp{Q}{P}{?}{( z_1, \ldots, z_N )}\Rightarrow (R \psubstn{z_1}{y_1}\ldots\psubstn{z_N}{y_N}) \psubstp{Q}{P} \\
 %(x\id{[}y\id{]}) \psubstp{Q}{P}
 %		& = &    
 %		(x)\substp{Q}{P} \id{[}(y)\substp{Q}{P} \id{]} \\
-(\lift{x}{R}) \psubstp{Q}{P}  
+({x}{!}{(}{R}{)}) \psubstp{Q}{P}  
  		& = &
- 		\lift{(x)\substp{Q}{P}}{ R \psubstp{Q}{P} } \\
-(\dropn{x})  \psubstp{Q}{P}       
+ 		{(x)\substp{Q}{P}}{!}{(}{ R \psubstp{Q}{P} }{)} \\
+({*}{x})  \psubstp{Q}{P}       
 		& = & 
 		\left\{ 
 			\begin{array}{ccc} 
@@ -645,63 +470,43 @@ $\id{\{}\vec{y} / \vec{x} \id{\}}$ to denote partial maps, $s : \QProc
 where
 
 \begin{equation*}
-(x)\id{\{} \lpquote Q \rpquote / \lpquote P \rpquote \id{\}}            = 
+(x){\{} {@}Q / {@}P {\}}            = 
 		\left\{ 
 			\begin{array}{ccc}
-				\lpquote Q \rpquote & & x \nameeq \lpquote P \rpquote \\
+				{@}Q & & x \nameeq {@}P \\
                                 x & & otherwise \\
 			\end{array}
 		\right.
 \end{equation*}
 
-and $z$ is chosen distinct from $\quotep{P}$, $\quotep{Q}$, the free
-names in $Q$, and all the names in $R$. Our $\alpha$-equivalence will
-be built in the standard way from this substitution.
-
-But, given these mutual recursions, the question is whether the calculation
-of $\nameeq$ (respectively, $\scong$, $\alphaeq$) terminates. To
-answer this question it suffices to formalize our intuitions regarding
-level of quotes, or quote depth, $\#(x)$, of a name $x$ as
-follows.
-
-\begin{eqnarray*}
-	\#(\quotep{P}) & = & 1 + \#(P) \\
-    \#(P) & = & \left\{
-			   \begin{array}{ccc}
-				 max\{ \#(x) : x \in \names{P} \} & & \names{P} \neq \emptyset \\
-				 0 & & otherwise \\
-			   \end{array}
-			\right.
-\end{eqnarray*}
-
-The grammar ensures that $\#(\quotep{P})$ is bounded. Then the
-termination of $\nameeq$ (respectively, $\scong$, $\alphaeq$) is an
-easy induction on quote depth.
+and $z_i$ is chosen distinct from $\quotep{P}$, $\quotep{Q}$, the free
+names in $Q$, and all the names in $R$ in the equation for input. Our
+$\alpha$-equivalence will be built in the standard way from this
+substitution.
 
 \subsection{ Dynamic quote: an example }
 
 Anticipating something of what's to come, consider applying the
-substitution, $\widehat{\id{\{}u / z \id{\}}}$, to the following pair
-of processes, $\lift{w}{y \id{[}z\id{]}}$ and $w\id{[} \lpquote
-y\id{[}z\id{]} \rpquote \id{]}$.
+substitution, $\widehat{{\{}u / z {\}}}$, to the following pair
+of processes, ${w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$ and ${w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}$.
 
 \begin{eqnarray*}
-	\lift{w}{y \id{[}z\id{]}}\widehat{\id{\{}u / z \id{\}}}
+	{w}{!}{(}{y}{!}{(}{*}{z}{)}{)}\widehat{{\{}u / z{\}}}
 		& = &
-		\lift{w}{y \id{[}u\id{]}} \\
-	w\id{[} \lpquote y\id{[}z\id{]} \rpquote \id{]} \widehat{ \id{\{}u / z \id{\}} }
+		{w}{!}{(}{y}{!}{(}{*}u{)}{)} \\
+        {w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
 		& = &
-		w\id{[} \lpquote y\id{[}z\id{]} \rpquote \id{]}
+		{w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
 \end{eqnarray*}
 
 Because the body of the process between quotes is impervious to
 substitution, we get radically different answers. In fact, by
-examining the first process in an input context, e.g. $x \id{(} z
-\id{)}\concat \lift{w}{y
-\id{[}z\id{]}}$, we see that the process under the lift operator may
-be shaped by prefixed inputs binding a name inside it. In this sense,
-the lift operator will be seen as a way to dynamically construct
-processes before reifying them as names.
+examining the first process in an input context, e.g. $x{(}{z}{)}
+\Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$, we see that combinations
+of reference and dereference may be shaped by prefixed inputs binding
+dereferenced names. In this sense, these operators provide a means to
+dynamically construct processes before reifying them as names,
+functioning much like quasiquote in \texttt{Lisp}.
 
 \subsection{Semantic substitution}
 
@@ -749,8 +554,8 @@ The reduction rules for {\rhoc}  are
 
 \infrule[Comm]
 { {x}_{0} \nameeq {x}_{1} }
-{{\lift{x_{0}}{Q} \juxtap { x_{1} \id{(}{y} \id{)} \concat {P}}}
-\red {P}\id{\{}\quotep{Q} \id{/} {y} \id{\}}}
+{{{ x_{0}{?}{(}{y_1},\ldots,{y_N}{)} \concat {P}}\juxtap {x_{1}}{!}{(}{Q_1},\ldots,{Q_N}{)}}
+\red {{P}{\{}\quotep{Q_1}{/}{y_1},\ldots,\quotep{Q_N}{/}{y_N}{\}}}}
 
 In addition, we have the following context rules:
 
@@ -759,60 +564,15 @@ In addition, we have the following context rules:
 \infrule[Equiv]{{{P} \scong {P}'} \andalso {{P}' \red {Q}'} \andalso {{Q}' \scong {Q}}}{{P} \red {Q}}
 
 The context rules are entirely standard and we do not say much about
-them, here. The communication rule does what was promised, namely make
-it possible for agents to synchronize and communicate processes
-packaged as names. For example, using the comm rule and name
-equivalence we can now justify our syntactic sugar for output.
+them, here. The communication rule makes it possible for agents to
+synchronize at name-equivalent guards and communicate processes
+packaged as names. Here is a simple example of the use of quasiquote.
 
 \begin{eqnarray*}
-	& {x}\id{[}{z}\id{]} \juxtap x \id{(}y\id{)} \concat P & \\
-	= 
-	& \lift{x}{\dropn{z}} \juxtap x \id{(}y\id{)} \concat P & \\
+	& x{(}{z}{)} \Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)} \juxtap x{!}{(}{P}{)} & \\
 	\red 
-	& P \substn{\quotep{\dropn{z}}}{y} & \\
-	\scong & P \substn{z}{y} & \\
+	& {w}{!}{(}{y}{!}{(}P{)}{)} & \\
 \end{eqnarray*}
-
-But, it also provides a scheme that identifies the role of name
-equality in synchronization. There are other relationships between
-names with structure that could also mediate
-synchronization. Consider, for example, a calculus identical to the
-one presented above, but with an alternative rule governing
-communication.
-
-\infrule[Comm-annihilation]
-{ \forall R . [ P_{channel} \juxtap Q_{channel} \red^* R ] \Rightarrow R \red^* 0 }
-{{\lift{\quotep{Q_{channel}}}{Q} \juxtap { {\quotep{P_{channel}}} \id{(}{y} \id{)} \concat {P}}}
-\red {P}\id{\{}\quotep{Q} \id{/} {y} \id{\}}}
-
-Intuitively, it says that the codes of a pair of processes,
-$P_{channel}$, $Q_{channel}$, stand in channel/co-channel relation
-just when the composition of the processes always eventually reduces
-to $0$, that is, when the processes annihilate one another.  This rule
-is well-founded, for observe that because $0 \scong 0 \juxtap 0$, $0
-\juxtap 0 \red^* 0$. Thus, $\quotep{0}$ serves as its own
-co-channel. Analogous to our generation of names from $0$, with one
-such channel/co-channel pair, we can find many such pairs. What we
-wish to point out about this rule is that we can see precisely an
-account of the calculation of the channel/co-channel relationship as
-deriving from the theory of interaction. We do not know if the
-computation of name equality has a similar presentation, driving home
-the potential difference of those two roles in calculi of interaction.
-
-We mention, as a brief aside, that there is no reason why $0$ is
-special in the scheme above. We posit a family of calculi, indexed by
-a set of processes $\{ S_{\alpha} \}$, and differing only in their
-communication rule each of which conforms to the scheme below.
-
-\infrule[Comm-annihilation-S]
-{ \forall R . [ P_{channel} \juxtap Q_{channel} \red^* R ] \Rightarrow R \red^* R' \scong S_{\alpha} }
-{{\lift{\quotep{Q_{channel}}}{Q} \juxtap { {\quotep{P_{channel}}} \id{(}{y} \id{)} \concat {P}}}
-\red {P}\id{\{}\quotep{Q} \id{/} {y} \id{\}}}
-
-We explore this family of calculi in a forthcoming paper. For the rest
-of this paper, however, we restrict our attention to the calculus with
-the less exotic communication rule, using $\red$ for reduction
-according to that system and $\wred$ for $\red^*$.
 
 \section{Replication}
 
@@ -1042,11 +802,11 @@ returning a set of processes or a set of names, respectively.
   \pmeaningof{\phi \& \psi}(v) & = & \pmeaningof{\phi}(v) \cap \pmeaningof{\psi}(v) \nonumber\\
   \pmeaningof{\binpar{\phi}{\psi}}(v) & = &
   \{ P : \exists P_0, P_1.P \scong \binpar{P_0}{P_1}, \; P_0 \in \pmeaningof{\phi}(v), \;  P_1 \in \pmeaningof{\psi}(v) \} \nonumber\\
-  \pmeaningof{\pdropf{b}}(v) & = & \{ P : \exists Q, P'.P \scong \binpar{Q}{\dropn{x}}, \; x \in \nmeaningof{b}(v) \} \nonumber\\	
-  \pmeaningof{\plift{a}{\phi}}(v) & = & \{ P : \exists Q, P'.P \scong \binpar{Q}{\lift{x}{P'}},
+  \pmeaningof{\pdropf{b}}(v) & = & \{ P : \exists x.P \scong {\dropn{x}}, \; x \in \nmeaningof{b}(v) \} \nonumber\\	
+  \pmeaningof{\plift{a}{\phi}}(v) & = & \{ P : \exists P'.P \scong {\lift{x}{P'}},
                                            \; x \in \nmeaningof{a}(v), 
                                            \; P' \in \pmeaningof{\phi}(v) \} \nonumber\\
-  \pmeaningof{\pprefix{a}{b}{\phi}}(v) & = & \{ P : \exists Q, P'.P \scong \binpar{Q}{\prefix{x}{y}{P'}}, x \in \nmeaningof{a}(v), \nonumber\\
+  \pmeaningof{\pprefix{a}{b}{\phi}}(v) & = & \{ P : \exists P'.P \scong {\prefix{x}{y}{P'}}, x \in \nmeaningof{a}(v), \nonumber\\
                                    &   &            \; \; \; \forall c . \exists z . {P'}\substn{z}{y} \in \pmeaningof{{\phi}\substn{c}{b}}(v) \} \nonumber\\
   \pmeaningof{\pgfp{X}{\phi}}(v) & = & \cup \{ \mathcal{S} \subseteq \Proc : \mathcal{S} \subseteq \pmeaningof{\phi}(v\substn{\mathcal{S}}{X})\} \nonumber\\
   \pmeaningof{\pquant{n}{\psi}{\phi}}(v) & = & \cap_{x \in \nmeaningof{\quotep{\psi}}(v)} \pmeaningof{{\phi}\substn{x}{n}}(v) \nonumber\\
