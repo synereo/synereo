@@ -155,7 +155,8 @@
 
 \newcommand{\ptrue}{\mathbin{true}}
 \newcommand{\psatisfies}[2]{#1 \models #2}
-\newcommand{\pdropf}[1]{* #1}
+\newcommand{\pdropf}[1]{\rpquote #1 \lpquote}
+\newcommand{\pquotep}[1]{\lpquote #1 \rpquote}
 \newcommand{\plift}[2]{#1 ! ( #2 )}
 \newcommand{\pprefix}[3]{\langle #1 ? #2 \rangle #3}
 \newcommand{\pgfp}[2]{\textsf{rec} \; #1 \mathbin{.} #2}
@@ -366,6 +367,16 @@ are to object programs.
 
 Other approaches to policy. Curry-Howard. Contracts as types.
 
+\subsubsection{Organization of the rest of the paper}
+
+We introduce the calculus, then the logic. Armed with these we
+illustrate translating a simple ocap example into the calculus. Then
+we illustrate how we can reason about properties of the translated
+program and from there move to interpreting policy, focusing on
+deniability. Finally, we conclude with a discussion of some of the
+limitations of the approach and how we might approach these in future
+work.
+
 %%% ----------------------------------------------------------------------
 
 \section{The calculus}
@@ -502,6 +513,17 @@ We let ${P, Q, R}$ range over processes and ${x, y, z}$ range over names.
 %   \and
 %   \inferrule* [lab=name] {} {{x,y} \bc {@}{P}}
 % \end{mathpar} 
+
+The examples from the previous section use mild (and entirely
+standard) syntactic sugar: \texttt{def} making recursive definitions a
+little more convenient than their higher-order encodings, \texttt{new}
+making fresh channel allocation a little more convenient and
+\texttt{match} for purely input-guarded choice. Additionally, the
+examples use line breaks, rather than $\binpar{}{}$ for parallel
+composition. Thus the expression $v!( state )$ is actually a thread
+running in parallel with the \texttt{match} expression in the $Cell$
+definition. The interested reader is directed to the appendix for more
+details.
 
 \subsection{Free and bound names}
 
@@ -679,95 +701,20 @@ synchronize at name-equivalent guards and communicate processes
 packaged as names. Here is a simple example of the use of quasiquote:
 
 \begin{eqnarray*}
-	& x{(}{z}{)} \Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)} \juxtap x{!}{(}{P}{)} & \\
-	\red 
-	& {w}{!}{(}{y}{!}{(}P{)}{)} & \\
+	x{(}{z}{)} \Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)} \juxtap x{!}{(}{P}{)} & \red & {w}{!}{(}{y}{!}{(}P{)}{)} \\
 \end{eqnarray*}
 
-\section{Bisimulation}
+\paragraph{Bisimulation}
 
-Having taken the notion of restriction out of the language, we
-carefully place it back into the notion of observation, and hence into
-the notion of program equality, {\em i.e.} bisimulation. That is, we
-parameterize the notion of barbed bisimulation by a set of names over
-which we are allowed to set the barbs. The motivation for this choice
-is really comparison with other calculi. The set of names of the
-{\rhoc} is \textit{global}. It is impossible, in the grammar of
-processes, to guard terms from being placed into contexts that can
-potentially observe communication, so we provide a place for
-reasoning about such limitations on the scope of observation in the
-theory of bisimulation.
-
-From an ocap perspective, having the ability to enumerate names is
-usually a sign that a language is not even memory-safe, let alone
-capability-safe.  However, in Section \ref{namespace} below, we show
-that we can use types to create namespaces and then statically prove
-which namespaces a process has access to.
-
-% [Ed. note: suppose c is not in a barb set, can we make hidden links in
-% programs? Does this screw up the notion of a parameterized barbed
-% bisimulation?]
-%will become clearer when we treat the encoding of the asynchronous {\pic}.
-
-\begin{defn}
-An \emph{observation relation}, $\downarrow_{\mathcal N}$, over a set
-of names, $\mathcal N$, is the smallest relation satisfying the rules
-below.
-
-\infrule[Out-barb]{y \in {\mathcal N}, \; x \nameeq y}
-		  {\outputp{x}{v} \downarrow_{\mathcal N} x}
-\infrule[Par-barb]{\mbox{$P\downarrow_{\mathcal N} x$ or $Q\downarrow_{\mathcal N} x$}}
-		  {\binpar{P}{Q} \downarrow_{\mathcal N} x}
-
-We write $P \Downarrow_{\mathcal N} x$ if there is $Q$ such that 
-$P \wred Q$ and $Q \downarrow_{\mathcal N} x$.
-\end{defn}
-
-Notice that $\prefix{x}{y}{P}$ has no barb.  Indeed, in {\rhoc} as well
-as other asynchronous calculi, an observer has no direct means to
-detect if a sent message has been received or not.
-
-\begin{defn}
-%\label{def.bbisim}
-An  ${\mathcal N}$-\emph{barbed bisimulation} over a set of names, ${\mathcal N}$, is a symmetric binary relation 
-${\mathcal S}_{\mathcal N}$ between agents such that $P\rel{S}_{\mathcal N}Q$ implies:
-\begin{enumerate}
-\item If $P \red P'$ then $Q \wred Q'$ and $P'\rel{S}_{\mathcal N} Q'$.
-\item If $P\downarrow_{\mathcal N} x$, then $Q\Downarrow_{\mathcal N} x$.
-\end{enumerate}
-$P$ is ${\mathcal N}$-barbed bisimilar to $Q$, written
-$P \wbbisim_{\mathcal N} Q$, if $P \rel{S}_{\mathcal N} Q$ for some ${\mathcal N}$-barbed bisimulation ${\mathcal S}_{\mathcal N}$.
-\end{defn}
-
-% \emph{Barbed congruence}, written $\fwbeq_{\mathcal N}$, is the largest
-% ${\mathcal N}$-barbed bisimulation which is also a congruence.
-% \end{defn}
-
-% \begin{rem}
-% 	Asking for congruence including contexts of the form
-% 	$\lift{x}{\diamond}$ requires that $P \wbbisim Q$ implies that
-% 	$\quotep{P} \nameeq \quotep{Q}$. This is too
-% 	stringent. Instead we seek a weaker form of equivalence,
-% 	closed only up to substitions.
-% \end{rem}
-
-% \begin{defn}
-% $P$ is \emph{barbed equivalent} to $Q$, written $P \wbeq Q$, if and only if $P \sigma \parop R \wbbisim Q \sigma 
-% \parop R$, for every $R$ and substitution $\sigma$.
-% \end{defn}
-
-% It is well-known that, due to the universal quantification over
-% contexts, barbed congruence is hard to demonstrate.  A standard remedy
-% mitigating this difficulty is the context lemma below.
-
-% \begin{lem}
-% %\label{contextlemma}
-% $P \wbeq Q$ if and only if $P \sigma \parop R \wbbisim Q \sigma 
-% \parop R$, for every $R$ and substitution $\sigma$.
-% \end{lem}
-% This lemma replaces the quantification over contexts 
-% with a quantification over parallel contexts and substitutions, which
-% is still hard to verify. 
+One of the central features of process calculi, called bisimulation,
+is an effective notion of substitutability, i.e. when one process can
+be substituted for another, and with it a range of powerful proof
+techniques. For this paper we focus principally on the use of logic to
+interpret policy and so move a discussion of bisimulation to an
+appendix. The main theorem of the next section relates the logic to
+bisimulation. The reader unfamiliar with this important aspect of
+programming language semantics is strongly encouraged to look at
+\cite{DBLP:LNCS/Sangiorgi06}.
 
 \section{Logic}
 Namespace logic resides in the subfamily of Hennessy-Milner logics
@@ -802,9 +749,9 @@ programmer's intent.
 				&					& \bm	& \pprefix{a}{b}{\phi} & \mbox{activity} \\
                                 &					& \bm	& \pgfp{X}{\phi} & \mbox{greatest fix point} \\
                                 &					& \bm	& \pquant{n}{\psi}{\phi} & \mbox{quantification} \\
-				& {a}  		& \bc	& \quotep{\phi} & \mbox{indication} \\
+				& {a}  		& \bc	& \pquotep{\phi} & \mbox{indication} \\
 				&					& \bm	& b & \mbox{...} \\
-				& {b}  		& \bc	& \quotep{P} & \mbox{nomination} \\
+				& {b}  		& \bc	& \pquotep{P} & \mbox{nomination} \\
                                 &					& \bm	& n & \mbox{...} \\
 \end{grammar}
 
@@ -873,13 +820,13 @@ returning a set of processes or a set of names, respectively.
                                    &   &            \; \; \; \forall c . \exists z . {P'}\substn{z}{y} \in \pmeaningof{{\phi}\substn{c}{b}}(v) \} \nonumber\\
   \pmeaningof{\pgfp{X}{\phi}}(v) & = & \cup \{ \mathcal{S} \subseteq \Proc : \mathcal{S} \subseteq \pmeaningof{\phi}(v\substn{\mathcal{S}}{X})\} \nonumber\\
   \pmeaningof{\pquant{n}{\psi}{\phi}}(v) & = & \cap_{x \in \nmeaningof{\quotep{\psi}}(v)} \pmeaningof{{\phi}\substn{x}{n}}(v) \nonumber\\
-  \nmeaningof{\quotep{\phi}}(v) & = & \{ x : x \nameeq \quotep{P}, P \in \pmeaningof{\phi}(v) \} \nonumber\\
-  \nmeaningof{\quotep{P}}(v) & = & \{ x : x \nameeq  \quotep{P} \} \nonumber
+  \nmeaningof{\pquotep{\phi}}(v) & = & \{ x : x \nameeq \quotep{P}, P \in \pmeaningof{\phi}(v) \} \nonumber\\
+  \nmeaningof{\pquotep{P}}(v) & = & \{ x : x \nameeq  \quotep{P} \} \nonumber
 \end{eqnarray}
 
-We say $P$ witnesses $\phi$ (resp., $x$ witnesses $\quotep{\phi}$),
-written $P \models \phi$ (resp., $x \models \quotep{\phi}$) just when
-$\forall v . P \in \meaningof{\phi}(v)$ (resp., $\forall v . x \in \meaningof{\quotep{\phi}}(v)$).
+We say $P$ witnesses $\phi$ (resp., $x$ witnesses $\pquotep{\phi}$),
+written $P \models \phi$ (resp., $x \models \pquotep{\phi}$) just when
+$\forall v . P \in \meaningof{\phi}(v)$ (resp., $\forall v . x \in \meaningof{\pquotep{\phi}}(v)$).
 
 \begin{thm}[Equivalence]
 	$P \wbbisim Q \riff \forall \phi . P \models \phi \riff Q \models \phi .$
@@ -912,25 +859,25 @@ collection of names. We can insist that a process restrict its next
 input to names in that namespace by insisting that it witness the formula
 
 \begin{eqnarray}
-  \pprefix{\quotep{\phi}}{b}{\ptrue} \& \neg \pprefix{\quotep{\neg \phi}}{b}{\ptrue} \nonumber
+  \pprefix{\pquotep{\phi}}{b}{\ptrue} \& \neg \pprefix{\pquotep{\neg \phi}}{b}{\ptrue} \nonumber
 \end{eqnarray}
 
 \noindent which simply says the the process is currently able to take input from
-a name in the namespace $\quotep{\phi}$ and is not capable of input on
+a name in the namespace $\pquotep{\phi}$ and is not capable of input on
 any name not in that namespace. In a similar manner, we can limit a
-server to serving only inputs in $\quotep{\phi}$ throughout the
+server to serving only inputs in $\pquotep{\phi}$ throughout the
 lifetime of its behavior \footnote{Of course, this formula also says
 the server never goes down, either---or at least is always willing
 to take such input.}
 
 \begin{eqnarray}
-  \pgfp{X}{\pprefix{\quotep{\phi}}{b}{X} \& \neg \pprefix{\quotep{\neg \phi}}{b}{X}} \nonumber
+  \pgfp{X}{\pprefix{\pquotep{\phi}}{b}{X} \& \neg \pprefix{\pquotep{\neg \phi}}{b}{X}} \nonumber
 \end{eqnarray} 
 
 This formula is reminiscent of the functionality of a firewall, except
 that it is a \emph{static} check. A process witnessing this formula
 will behave as though it were behind a firewall admitting only access
-to the ports in $\quotep{\phi}$ without the need for the additional
+to the ports in $\pquotep{\phi}$ without the need for the additional
 overhead of the watchdog machinery.
 
 \section{Interpreting object-capabilities in \rhoc}
@@ -1052,11 +999,11 @@ logic to state and verify this fact. Adapting the firewall formula
 we have
 
 $Cell (slot, state) \models 
-\pgfp{X}{\pprefix{\quotep{\texttt{slot}}}{b}{X} \& 
-\neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
+\pgfp{X}{\pprefix{\pquotep{\texttt{slot}}}{b}{X} \& 
+\neg \pprefix{\pquotep{\neg \texttt{slot}}}{b}{X}}$
 
 If we have that $P \models \pgfp{X}{\neg
-  \pprefix{\quotep{\texttt{slot}}}{b}{X}}, \;$ then
+  \pprefix{\pquotep{\texttt{slot}}}{b}{X}}, \;$ then
 $\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
 \binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim 0$
 
@@ -1094,13 +1041,11 @@ capabilities and types.
 
 % ------------------------------------------------------------------------
 
-\section{Appendix: Replication}
+\section{Appendix: $\rho$ sugar}
 
-As mentioned before, it is known that replication (and hence
-recursion) can be implemented in a higher-order process algebra
-\cite{SangiorgiWalker}. As our first example of calculation with the
-machinery thus far presented we give the construction explicitly in
-the {\rhoc}.
+It is known that replication (and hence recursion) can be implemented
+in a higher-order process algebra \cite{SangiorgiWalker}. This
+encoding provides a good example of calculation with the {\rhoc}.
 
 % \begin{equation*}
 % !P \defneqls \lift{x}{(x\id{(}y\id{)}\concat(\rpquote y\lpquote \juxtap x\id{[}y\id{]}) \juxtap P)} \juxtap x\id{(}z\id{)}\concat(\rpquote z\lpquote \juxtap x\id{[}z\id{]})
@@ -1141,9 +1086,11 @@ operator, restricted to input-guarded processes, may be obtained as follows.
 \end{equation*}
 
 It is worth noting that the combination of reference and dereference
-operator is essential to get computational completeness. 
+operators is essential to get computational completeness. 
 
-\section{Appendix: $\rho$ sugar}
+Armed with this we can consider a conservative extension of the
+calculus presented above.
+
 \begin{grammar}
 \mbox{\rhoc-extended}		& { P, Q }              & \bc			& \ldots & \mbox{previous syntax} \\
 				&                        		& \bm	& (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )}& \mbox{definition} \\ 
@@ -1151,11 +1098,12 @@ operator is essential to get computational completeness.
 				&					& \bm	& \texttt{new}( x_1, \ldots, x_N )P & \mbox{allocation} \\
 \end{grammar}
 
-It is completely standard to interpret recursive definition in terms
-of replication. The chosen notation is slightly quirky in that it
+The notation for recursive definitions is slightly quirky in that it
 simultaneously defines and invokes the definition to some arguments --
 in order to make the recursive form be a process expression, as
-opposed to a separate category of declaration.
+opposed to a separate category of declaration. Comparing this with the
+examples above we have simply omitted the application of the recursive
+definitions to initial arguments in the interest of brevity.
 
 \begin{eqnarray*}
   (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} & \defneqls & \binpar{\bangxp{(n( X, P ) \Rightarrow P')}{n( X, P )}}{n( X, P )!( Q_1, \ldots, Q_N )} \\  
@@ -1192,6 +1140,91 @@ $\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a 
     x?( z1, ... , zN ) => R
   }
 \end{lstlisting}
+
+\section{Appendix: bisimulation}
+
+Having taken the notion of restriction out of the language, we
+carefully place it back into the notion of observation, and hence into
+the notion of program equality, {\em i.e.} bisimulation. That is, we
+parameterize the notion of barbed bisimulation by a set of names over
+which we are allowed to set the barbs. The motivation for this choice
+is really comparison with other calculi. The set of names of the
+{\rhoc} is \textit{global}. It is impossible, in the grammar of
+processes, to guard terms from being placed into contexts that can
+potentially observe communication, so we provide a place for
+reasoning about such limitations on the scope of observation in the
+theory of bisimulation.
+
+From an ocap perspective, having the ability to enumerate names is
+usually a sign that a language is not even memory-safe, let alone
+capability-safe.  However, in Section \ref{namespace} below, we show
+that we can use types to create namespaces and then statically prove
+which namespaces a process has access to.
+
+% [Ed. note: suppose c is not in a barb set, can we make hidden links in
+% programs? Does this screw up the notion of a parameterized barbed
+% bisimulation?]
+%will become clearer when we treat the encoding of the asynchronous {\pic}.
+
+\begin{defn}
+An \emph{observation relation}, $\downarrow_{\mathcal N}$, over a set
+of names, $\mathcal N$, is the smallest relation satisfying the rules
+below.
+
+\infrule[Out-barb]{y \in {\mathcal N}, \; x \nameeq y}
+		  {\outputp{x}{v} \downarrow_{\mathcal N} x}
+\infrule[Par-barb]{\mbox{$P\downarrow_{\mathcal N} x$ or $Q\downarrow_{\mathcal N} x$}}
+		  {\binpar{P}{Q} \downarrow_{\mathcal N} x}
+
+We write $P \Downarrow_{\mathcal N} x$ if there is $Q$ such that 
+$P \wred Q$ and $Q \downarrow_{\mathcal N} x$.
+\end{defn}
+
+Notice that $\prefix{x}{y}{P}$ has no barb.  Indeed, in {\rhoc} as well
+as other asynchronous calculi, an observer has no direct means to
+detect if a sent message has been received or not.
+
+\begin{defn}
+%\label{def.bbisim}
+An  ${\mathcal N}$-\emph{barbed bisimulation} over a set of names, ${\mathcal N}$, is a symmetric binary relation 
+${\mathcal S}_{\mathcal N}$ between agents such that $P\rel{S}_{\mathcal N}Q$ implies:
+\begin{enumerate}
+\item If $P \red P'$ then $Q \wred Q'$ and $P'\rel{S}_{\mathcal N} Q'$.
+\item If $P\downarrow_{\mathcal N} x$, then $Q\Downarrow_{\mathcal N} x$.
+\end{enumerate}
+$P$ is ${\mathcal N}$-barbed bisimilar to $Q$, written
+$P \wbbisim_{\mathcal N} Q$, if $P \rel{S}_{\mathcal N} Q$ for some ${\mathcal N}$-barbed bisimulation ${\mathcal S}_{\mathcal N}$.
+\end{defn}
+
+% \emph{Barbed congruence}, written $\fwbeq_{\mathcal N}$, is the largest
+% ${\mathcal N}$-barbed bisimulation which is also a congruence.
+% \end{defn}
+
+% \begin{rem}
+% 	Asking for congruence including contexts of the form
+% 	$\lift{x}{\diamond}$ requires that $P \wbbisim Q$ implies that
+% 	$\quotep{P} \nameeq \quotep{Q}$. This is too
+% 	stringent. Instead we seek a weaker form of equivalence,
+% 	closed only up to substitions.
+% \end{rem}
+
+% \begin{defn}
+% $P$ is \emph{barbed equivalent} to $Q$, written $P \wbeq Q$, if and only if $P \sigma \parop R \wbbisim Q \sigma 
+% \parop R$, for every $R$ and substitution $\sigma$.
+% \end{defn}
+
+% It is well-known that, due to the universal quantification over
+% contexts, barbed congruence is hard to demonstrate.  A standard remedy
+% mitigating this difficulty is the context lemma below.
+
+% \begin{lem}
+% %\label{contextlemma}
+% $P \wbeq Q$ if and only if $P \sigma \parop R \wbbisim Q \sigma 
+% \parop R$, for every $R$ and substitution $\sigma$.
+% \end{lem}
+% This lemma replaces the quantification over contexts 
+% with a quantification over parallel contexts and substitutions, which
+% is still hard to verify. 
 
 % ------------------------------------------------------------------------
 
