@@ -392,7 +392,7 @@ logic suffices to capture the key notion of deniability.
 
 \subsection{Overview and contributions} 
 
-Other approaches to policy. Curry-Howard. Contracts as types.
+Other approaches to policy. Curry-Howard. Contracts as types \cite{Meredith:2003:CT:944217.944236}.
 
 \subsubsection{Organization of the rest of the paper}
 
@@ -546,11 +546,11 @@ standard) syntactic sugar: \texttt{def} making recursive definitions a
 little more convenient than their higher-order encodings, \texttt{new}
 making fresh channel allocation a little more convenient and
 \texttt{match} for purely input-guarded choice. Additionally, the
-examples use line breaks, rather than $\binpar{}{}$ for parallel
-composition. Thus the expression $v!( state )$ is actually a thread
-running in parallel with the \texttt{match} expression in the $Cell$
-definition. The interested reader is directed to the appendix for more
-details.
+examples use $\{\}$-enclosed blocks together with line breaks, rather
+than $\binpar{}{}$ for parallel composition. Thus the expression $v!(
+state )$ is actually a thread running in parallel with the
+\texttt{match} expression in the $Cell$ definition. The interested
+reader is directed to the appendix for more details.
 
 \subsection{Free and bound names}
 
@@ -746,7 +746,7 @@ semantics is strongly encouraged to look at
 
 \section{Interpreting object-capabilities in \rhoc}
 
-Rather than giving a translation of the whole of {\tt JavaScript} into
+Rather than giving a translation of the whole of {\tt ECMAScript} into
 \rhoc, we focus on one example from
 \cite{Drossopoulou:2013:NCP:2489804.2489811} designed to illustrate
 key aspects of object-capabilities and requirements for a policy
@@ -1035,7 +1035,7 @@ visual inspection is not reliable in settings only mildly more
 complex, as in the bank example above; Yee showed that a 90-man-hour
 review of around a hundred lines of heavily commented Python code 
 by security specialists was not sufficient to discover three 
-inserted bugs \cite[Section 7]{Pvote}. 
+inserted bugs \cite[Section 7]{Yee:2006:PUI:1251003.1251009}. 
 However, we can use our logic to state and verify the fact that $P$
 cannot affect any {\tt Cell}. Adapting the firewall formula we have
 
