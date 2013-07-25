@@ -21,13 +21,15 @@
 % From Allen's stable.
 \usepackage{bigpage}
 \usepackage{bcprules}
-\usepackage{code}
+%\usepackage{code}
 \usepackage{amsfonts}
 \usepackage{latexsym}
 \usepackage{amssymb}
 \usepackage{caption}
 \usepackage{multicol}
 \usepackage{mathpartir}
+\usepackage{listings}
+\usepackage{mathtools}
 
 % Double brackets
 \newcommand{\ldb}{[\![}
@@ -79,7 +81,9 @@
 \newcommand{\dropn}[1]{*#1}
 
 \newcommand{\newp}[2]{\id{(}\newkw \; #1 \id{)} #2}
-\newcommand{\bangp}[1]{\id{!} #1}
+\newcommand{\bangp}[1]{\int #1}
+\newcommand{\xbangp}[2]{\int_{#2} #1}
+\newcommand{\bangxp}[2]{\int^{#2} #1}
 
 \newcommand{\substp}[2]{\id{\{} \quotep{#1} / \quotep{#2} \id{\}}}
 \newcommand{\substn}[2]{\id{\{} #1 / #2 \id{\}}}
@@ -104,6 +108,8 @@
 \newcommand{\congd}{\mathbin{\equiv_{\mathfrak d}}}
 \newcommand{\congs}{\mathbin{\equiv_{\mathfrak s}}}
 \newcommand{\congp}{\mathbin{\equiv_{\mathfrak p}}}
+%\newcommand{\defneqls}{:\!=}
+\newcommand{\defneqls}{\coloneqq}
 %\newcommand{\logequiv}{\mathbin{\leftrightarrow}}
 
 \newcommand{\barb}[2]{\mathbin{#1 \downarrow_{#2}}}
@@ -285,6 +291,7 @@
 
 %%% ----------------------------------------------------------------------
 \begin{document}
+\lstset{language=erlang}
 
 %These margin values appear to be relative to the bigpage package settings. --cb
 \setlength{\topmargin}{0in}
@@ -319,7 +326,7 @@
 \begin{abstract}
 \normalsize{ 
 
-  Drossopoulou and Nolan argue persuasively for the need for a means
+  rossopoulou and Nolan argue persuasively for the need for a means
   to express policy in object-capability-based systems. We investigate
   a practical means to realize their aim via the Curry-Howard
   isomorphism. Specifically, we investigate representing policy as
@@ -398,12 +405,12 @@ $\freenames{P}$ is given recursively by
 %\begin{multicols}{2}
 %{
 	\begin{eqnarray*}
-		\freenames{\pzero} & = & \emptyset \\
+		\freenames{\pzero} & \defneqls & \emptyset \\
 %		\freenames{x \id{[}y\id{]}} & = & \{ x, y \} \\
-		\freenames{{x}{?}{( y_1, \ldots, y_N )} \Rightarrow {P}} & = & \{ x \} \cup (\freenames{P} \setminus \{ y_1, \ldots y_N \}) \\
-		\freenames{{x}{!}{( Q_1, \ldots, Q_N )}} & = & \{ x \} \cup \bigcup \freenames{Q_i} \\
-		\freenames{\binpar{P}{Q}} & = & \freenames{P} \cup \freenames{Q} \\
-		\freenames{{*}{x}} & = & \{ x \} \\
+		\freenames{{x}{?}{( y_1, \ldots, y_N )} \Rightarrow {P}} & \defneqls & \{ x \} \cup (\freenames{P} \setminus \{ y_1, \ldots y_N \}) \\
+		\freenames{{x}{!}{( Q_1, \ldots, Q_N )}} & \defneqls & \{ x \} \cup \bigcup \freenames{Q_i} \\
+		\freenames{\binpar{P}{Q}} & \defneqls & \freenames{P} \cup \freenames{Q} \\
+		\freenames{{*}{x}} & \defneqls & \{ x \} \\
 	\end{eqnarray*}
 %}
 %\end{multicols}
@@ -443,21 +450,21 @@ ${\{}{y_1} / {x_1}, \ldots, {y_n} / {x_n}{\}}$ to denote partial maps, $s : \QPr
 \Proc \rightarrow \Proc$ by the following equations.
 
 \begin{eqnarray*}
-(0) \psubstp{Q}{P}         & = &    0 \\
+(0) \psubstp{Q}{P}         & \defneqls &    0 \\
 (R \juxtap S) \psubstp{Q}{P}
-		& = &    
+		& \defneqls &    
 		(R)\psubstp{Q}{P} \juxtap (S) \psubstp{Q}{P} \\
 ({x}{?}{( y_1, \ldots, y_N )} \Rightarrow R) \psubstp{Q}{P}    
-		& = &    
+		& \defneqls &    
 		{(x)}\substp{Q}{P}{?}{( z_1, \ldots, z_N )}\Rightarrow (R \psubstn{z_1}{y_1}\ldots\psubstn{z_N}{y_N}) \psubstp{Q}{P} \\
 %(x\id{[}y\id{]}) \psubstp{Q}{P}
-%		& = &    
+%		& \defneqls &    
 %		(x)\substp{Q}{P} \id{[}(y)\substp{Q}{P} \id{]} \\
 ({x}{!}{(}{R}{)}) \psubstp{Q}{P}  
- 		& = &
+ 		& \defneqls &
  		{(x)\substp{Q}{P}}{!}{(}{ R \psubstp{Q}{P} }{)} \\
 ({*}{x})  \psubstp{Q}{P}       
-		& = & 
+		& \defneqls & 
 		\left\{ 
 			\begin{array}{ccc} 
 				\dropn{\quotep{Q}} & & x \nameeq \quotep{P} \\
@@ -470,7 +477,7 @@ ${\{}{y_1} / {x_1}, \ldots, {y_n} / {x_n}{\}}$ to denote partial maps, $s : \QPr
 where
 
 \begin{equation*}
-(x){\{} {@}Q / {@}P {\}}            = 
+(x){\{} {@}Q / {@}P {\}}            \defneqls 
 		\left\{ 
 			\begin{array}{ccc}
 				{@}Q & & x \nameeq {@}P \\
@@ -523,7 +530,7 @@ name.
 
 \begin{eqnarray*}
 (\dropn{x})  \psubstp{Q}{P}       
-		& = & 
+		& \defneqls & 
 		\left\{ 
 			\begin{array}{ccc} 
 				Q & & x \nameeq \quotep{P} \\
@@ -583,16 +590,16 @@ machinery thus far presented we give the construction explicitly in
 the {\rhoc}.
 
 % \begin{equation*}
-% !P \triangleq \lift{x}{(x\id{(}y\id{)}\concat(\rpquote y\lpquote \juxtap x\id{[}y\id{]}) \juxtap P)} \juxtap x\id{(}z\id{)}\concat(\rpquote z\lpquote \juxtap x\id{[}z\id{]})
+% !P \defneqls \lift{x}{(x\id{(}y\id{)}\concat(\rpquote y\lpquote \juxtap x\id{[}y\id{]}) \juxtap P)} \juxtap x\id{(}z\id{)}\concat(\rpquote z\lpquote \juxtap x\id{[}z\id{]})
 % \end{equation*}
 
 \begin{eqnarray*}
-	D(x) & \triangleq & \prefix{x}{y}{(\binpar{\outputp{x}{y}}{\dropn{y}})} \\
-	\bangp{P}(x) & \triangleq & \binpar{\lift{x}{\binpar{D(x)}{P}}}{D(x)}
+	D(x) & \defneqls & \prefix{x}{y}{(\binpar{\outputp{x}{y}}{\dropn{y}})} \\
+	\xbangp{P}{x} & \defneqls & \binpar{\lift{x}{\binpar{D(x)}{P}}}{D(x)}
 \end{eqnarray*}
 
 \begin{eqnarray*}
-	\bangp{P}(x) & & \\
+	\xbangp{P}{x} & & \\
 	=
 	& \lift{x}{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} 
 	      \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
@@ -611,21 +618,67 @@ the {\rhoc}.
 \end{eqnarray*}
 
 Of course, this encoding, as an implementation, runs away, unfolding
-$\bangp{P}$ eagerly. A lazier and more implementable replication
+$\xbangp{P}{x}$ eagerly. A lazier and more implementable replication
 operator, restricted to input-guarded processes, may be obtained as follows.
 
 \begin{equation*}
-\bangp{\prefix{u}{v}{P}} 
-	\triangleq 
+\bangxp{\prefix{u}{v}{P}}{x}
+	\defneqls 
 	\binpar{\lift{x}{\prefix{u}{v}{(\binpar{D(x)}{P})}}}{D(x)}
 \end{equation*}
 
-It is worth noting that the lift operator is essential to get
-computational completeness. A similar calculus equipped with only a
-static quote enjoys a computational expressiveness at least equivalent
-to context-free grammars, but short of context-sensitive. This fact is
-established and exploited in a forthcoming paper on a type system for
-the {\rhoc}.
+It is worth noting that the combination of reference and dereference
+operator is essential to get computational completeness. 
+
+\section{$\rho$ sugar}
+\begin{grammar}
+\mbox{\rhoc-extended}		& { P, Q }              & \bc			& \ldots & \mbox{previous syntax} \\
+				&                        		& \bm	& (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )}& \mbox{definition} \\ 
+				&					& \bm	& {X}{( Q_1, \ldots, Q_N )} & \mbox{invocation} \\
+				&					& \bm	& \texttt{new}( x_1, \ldots, x_N )P & \mbox{allocation} \\
+\end{grammar}
+
+It is completely standard to interpret recursive definition in terms
+of replication. The chosen notation is slightly quirky in that it
+simultaneously defines and invokes the definition to some arguments --
+in order to make the recursive form be a process expression, as
+opposed to a separate category of declaration.
+
+\begin{eqnarray*}
+  (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} & \defneqls & \binpar{\bangxp{(n( X, P ) \Rightarrow P')}{n( X, P )}}{n( X, P )!( Q_1, \ldots, Q_N )} \\  
+\end{eqnarray*}
+
+where $P' \defneqls P \{ n( X, P )!( Q_1, \ldots, Q_N )/ X( Q_1,
+\ldots, Q_N )\}$, i.e., the body of $P$ in which every occurrence of
+$X( Q_1, \ldots, Q_N )$ is replaced with $n( X, P )!( Q_1, \ldots, Q_N
+)$, and $n( X, P )$ generates a name from $X$ guaranteed fresh in $P$.
+
+Likewise, there are several translation of the \pic\; $\texttt{new}$
+operator into the \rhoc. Rather than take up space in this paper we
+simply refer the reader to \cite{DBLP:journals/entcs/MeredithR05}, or
+better yet, invite them to come up with a definition to test their
+understanding of the calculus.
+
+Additionally, we call out input-guarded only summations using the notation
+
+$\texttt{match}\{ x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 ; \ldots ; x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M \}$ 
+
+instead of 
+
+$x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
+
+In a \texttt{match} context we avail ourselves of a pattern-matching
+syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k )$.
+
+Finally, we use $\{ \ldots \}$ for grouping expressions and in more complex examples, omit
+$\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a classic race-condition $\binpar{ x?( y_1, \ldots, y_N ) \Rightarrow P}{\binpar{x!( Q_1, \ldots, Q_N )}{ x?( z_1, \ldots, z_N ) \Rightarrow R}}$ might be written
+\begin{lstlisting}
+  {
+    x?( y1, ... , yN ) => P
+    x!( Q1, ... , QN )
+    x?( z1, ... , zN ) => R
+  }
+\end{lstlisting}
 
 \section{Bisimulation}
 
@@ -832,11 +885,11 @@ In the examples below, we freely employ the usual DeMorgan-based
 syntactic sugar. For example,
 
 \begin{eqnarray}
-	\phi \Rightarrow \psi & \triangleq & \neg ( \phi \& \neg \psi ) \nonumber\\
-	\phi \vee \psi & \triangleq & \neg ( \neg \phi \& \neg \psi ) \nonumber
+	\phi \Rightarrow \psi & \defneqls & \neg ( \phi \& \neg \psi ) \nonumber\\
+	\phi \vee \psi & \defneqls & \neg ( \neg \phi \& \neg \psi ) \nonumber
 \end{eqnarray}
 
-Also, when quantification ranges over all of $\Proc$, as in
+Also, when quantification ranges over all of $\QProc$, as in
 $\pquant{n}{\quotep{\ptrue}}{\phi}$, we omit the typing for the
 quantification variable, writing $\pquantuntyped{n}{\phi}$.
 
@@ -861,7 +914,7 @@ lifetime of its behavior \footnote{Of course, this formula also says
   to take such input...;-)}
 
 \begin{eqnarray}
-  \pgfp{X}{\pprefix{\quotep{\phi}}{b}{X} \& \neg \pprefix{\quotep{\neg \phi}}{b}{\ptrue}} \nonumber
+  \pgfp{X}{\pprefix{\quotep{\phi}}{b}{X} \& \neg \pprefix{\quotep{\neg \phi}}{b}{X}} \nonumber
 \end{eqnarray} 
 
 This formula is reminiscent of the functionality of a firewall, except
@@ -872,19 +925,184 @@ overhead of the watchdog machinery.
 
 \section{Interpreting object-capabilities in \pic}
 
-Interpreting object-capabilities in \pic is surprisingly intuitive and
-natural. Essentially, a capability, i.e. access to some behavior,
-power or authority is represented by a channel. When an agent in the
-\pic has access to a channel it has exactly that: access to some
-behavior, power or authority.
+Rather than giving a translation of the whole of \texttt{Javascript}
+into \rhoc, we focus on one example from \cite{Drossopoulou} designed
+to illustrate key aspects of object-capabilities and requirements for
+a policy language.
+
+\begin{lstlisting}
+var makeMint = () => {
+  var m = WeakMap();
+  var makePurse = () => mint(0);
+  var mint = balance => {
+    var purse = def({
+      getBalance: () => balance,
+      makePurse: makePurse,
+      deposit: (amount, srcP) => Q(srcP).then(src => {
+        Nat(balance + amount);
+        m.get(src)(Nat(amount));
+        balance += amount;
+      })
+    });
+    var decr = amount => {
+      balance = Nat(balance - amount);
+    };
+    m.set(purse, decr);
+    return purse;
+  };
+  return mint;
+};
+\end{lstlisting}
+
+Interpreting this code illustrates how surprisingly intuitive and
+natural it is to represent and reason about object-capabilities in
+\rhoc. Essentially, a capability, i.e. access to some behavior, power
+or authority is represented by a channel. When an agent in the \rhoc\;
+has access to a channel it has exactly that: access to some behavior,
+power or authority.
+
+We illustrate the point with two gadgets that make ECMAScript easier
+to interpret in \rhoc. The first is a mutable single-place cell for
+storing and retrieving state.
+
+\begin{lstlisting}
+def Cell( slot, state ) => {
+  new ( v ) {
+    v!( state )
+    match {
+      slot ? get( ret ) => { 
+        v?( s ) => ret!( s )
+        Cell( slot, s )
+      }
+      slot ? set( s ) => {
+        Cell( slot, s )
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+Notice that the cell's access to $\texttt{state}$ is kept in a private channel
+$\texttt{v}$. The external API is through $\texttt{slot}$. When translating
+\texttt{Javascript} ocap examples to \rhoc\; we will effectively treat
+the state of an object as a parallel composition of cells.
+
+The second gadget is an immutable map.
+
+\begin{lstlisting}
+def Map( slot1, state1, ... , slotN, stateN ) => {
+  new ( v1, ... , vN ) {
+    v1!( state1 )
+    ...
+    vN!( stateN )
+    slot1 ? get( ret ) => { 
+      v1?( x ) => ret!( x )
+      Map( slot1, x, ... , slotN, stateN )
+    }
+    … 
+    slotN ? get( ret ) => { 
+      vN?( x ) => ret!( x )
+      Map( slot1, state1, ... , slotN, x )
+    }
+  }
+}
+\end{lstlisting}
+
+A visual inspection of the code for $\texttt{Cell}$ reveals that if a
+process $P$’s names are fresh wrt to $\texttt{slot}$, then $P$ cannot
+directly affect any $\texttt{Cell}( \texttt{slot}, \texttt{state}
+)$. Unfortunately, visual inspection is not as reliable in more
+settings even more mildly complex, as in the bank example
+above. However we can use our logic to state and verify this
+fact. Adapting the firewall formula we have
+
+$\texttt{Cell}(\texttt{slot},\texttt{state}) \models \pgfp{X}{\pprefix{\quotep{\texttt{slot}}}{b}{X} \& \neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
+
+If we have that $P \models \pgfp{X}{\neg
+  \pprefix{\quotep{\texttt{slot}}}{b}{X}}$, then
+$\forall \; \texttt{state}.\texttt{new}(\texttt{slot})\{\binpar{P}{\texttt{Cell}(\texttt{slot},\texttt{state})\}}
+\wbbisim 0$
+
+We will iterate this basic idea to build up to modeling the bank
+example. The central intuition is that the purse is essentially a
+cell.
+
+More generally, note that objects involve not just one cell, but
+many. By restricting those cells to slots that live in namespace $Slot
+\defneqls {@}\phi$ for some $\phi$ we can scale our formula to
+separate objects from a given environment. We'll say more about this
+in the conclusions.
+
+% Can we get away with describing the difference between WeakMap and Map just in English?
+
+Armed with the two gadgets above, we can translate the language elements of
+needed to translate the whole bank example into \rhoc.
+
+\begin{eqnarray*}
+ \meaningof{\texttt{var}\; x}( k ) & \defneqls & \binpar{\texttt{Cell}( x, \texttt{undefined} )}{k!()} \\
+ \meaningof{\texttt{var}\; x = v}( k ) & \defneqls & \texttt{Cell}( x, \meaningof{ v }( k ) ) \\
+ \meaningof{ P ; Q }( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( k_1 )}{ k_1?() => \meaningof{ Q }( k )} \} \\
+ \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! \texttt{get}( r )}{r?( v ) \Rightarrow \texttt{i}! \texttt{set}( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
+\end{eqnarray*}
+
+% \begin{lstlisting}
+% {
+%   new( rslt ){
+%     balance ! get( rslt )
+%     rslt?( b ) => {
+%       balance ! set( b + amount )
+%     }
+%   } 
+%   [| P |] 
+% }
+% \end{lstlisting}
+
+% We need to address the translation of promises. We need to address the translation of Nat( … ).
+
+The key point is that the translation is compositional and therefore
+we can reason equationally in the translated code. For example, to
+translate the code fragment $\meaningof{ \texttt{var}\;
+  \texttt{balance} = \texttt{initAmt}; \texttt{balance} +\!=
+  \texttt{amount}; P }( k )$ we calculate directly
+
+% K[X] := var balance = initAmt; X
+
+% [| K[balance += amount; P] |]
+% =
+% [| var balance = initAmt; balance += amount; P |]
+% = 
+% { 
+%   Cell( balance, initAmt ) 
+%   k!() 
+%   [| balance += amount; P |]
+% }
+% =
+\begin{lstlisting}
+{ 
+  Cell( balance, initAmt ) 
+  k!() 
+  {
+    new( rslt ){
+      balance ! get( rslt )  
+       rslt?( b ) => {
+        balance ! set( b + amount )
+      }
+    } 
+    [| P |] 
+  }
+}
+\end{lstlisting}
+
 
 \section{Interpreting policy}
 
-Focus on deniability.
+Focus on deniability. The core idea is to use rely-guarantee combined with the adjunct to spatial separation.
 
 \section{Conclusions and future work}
 
 We looked at policy as types.
+
+Dependent types are future work.
 
 \paragraph{Acknowledgments.}
 The authors wish to thank Sophia Drossopoulou and James Nolan for
