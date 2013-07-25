@@ -330,7 +330,8 @@
   to express policy in object-capability-based systems. We investigate
   a practical means to realize their aim via the Curry-Howard
   isomorphism. Specifically, we investigate representing policy as
-  types in a behavioral type system for the \pic.
+  types in a behavioral type system for the \rhoc, a reflective-higher order
+  variant of the \pic.
 
 }
 
@@ -658,105 +659,6 @@ packaged as names. Here is a simple example of the use of quasiquote.
 	\red 
 	& {w}{!}{(}{y}{!}{(}P{)}{)} & \\
 \end{eqnarray*}
-
-\section{Replication}
-
-As mentioned before, it is known that replication (and hence
-recursion) can be implemented in a higher-order process algebra
-\cite{SangiorgiWalker}. As our first example of calculation with the
-machinery thus far presented we give the construction explicitly in
-the {\rhoc}.
-
-% \begin{equation*}
-% !P \defneqls \lift{x}{(x\id{(}y\id{)}\concat(\rpquote y\lpquote \juxtap x\id{[}y\id{]}) \juxtap P)} \juxtap x\id{(}z\id{)}\concat(\rpquote z\lpquote \juxtap x\id{[}z\id{]})
-% \end{equation*}
-
-\begin{eqnarray*}
-	D(x) & \defneqls & \prefix{x}{y}{(\binpar{\outputp{x}{y}}{\dropn{y}})} \\
-	\xbangp{P}{x} & \defneqls & \binpar{\lift{x}{\binpar{D(x)}{P}}}{D(x)}
-\end{eqnarray*}
-
-\begin{eqnarray*}
-	\xbangp{P}{x} & & \\
-	=
-	& \lift{x}{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} 
-	      \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
-%	\red
-%	& \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
-%	  \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
-	\red
-	& (\outputp{x}{y} \juxtap \dropn{y})\substn{\quotep{(\prefix{x}{y}{(\dropn{y} \juxtap \outputp{x}{y})) \juxtap P}}}{y} & \\
-	=
-	& \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
-	  \juxtap {(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} & \\
-	\red
-	& \ldots & \\
-	\red^*
-	& P \juxtap P \juxtap \ldots & \\
-\end{eqnarray*}
-
-Of course, this encoding, as an implementation, runs away, unfolding
-$\xbangp{P}{x}$ eagerly. A lazier and more implementable replication
-operator, restricted to input-guarded processes, may be obtained as follows.
-
-\begin{equation*}
-\bangxp{\prefix{u}{v}{P}}{x}
-	\defneqls 
-	\binpar{\lift{x}{\prefix{u}{v}{(\binpar{D(x)}{P})}}}{D(x)}
-\end{equation*}
-
-It is worth noting that the combination of reference and dereference
-operator is essential to get computational completeness. 
-
-\section{$\rho$ sugar}
-\begin{grammar}
-\mbox{\rhoc-extended}		& { P, Q }              & \bc			& \ldots & \mbox{previous syntax} \\
-				&                        		& \bm	& (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )}& \mbox{definition} \\ 
-				&					& \bm	& {X}{( Q_1, \ldots, Q_N )} & \mbox{invocation} \\
-				&					& \bm	& \texttt{new}( x_1, \ldots, x_N )P & \mbox{allocation} \\
-\end{grammar}
-
-It is completely standard to interpret recursive definition in terms
-of replication. The chosen notation is slightly quirky in that it
-simultaneously defines and invokes the definition to some arguments --
-in order to make the recursive form be a process expression, as
-opposed to a separate category of declaration.
-
-\begin{eqnarray*}
-  (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} & \defneqls & \binpar{\bangxp{(n( X, P ) \Rightarrow P')}{n( X, P )}}{n( X, P )!( Q_1, \ldots, Q_N )} \\  
-\end{eqnarray*}
-
-where $P' \defneqls P \{ n( X, P )!( Q_1, \ldots, Q_N )/ X( Q_1,
-\ldots, Q_N )\}$, i.e., the body of $P$ in which every occurrence of
-$X( Q_1, \ldots, Q_N )$ is replaced with $n( X, P )!( Q_1, \ldots, Q_N
-)$, and $n( X, P )$ generates a name from $X$ guaranteed fresh in $P$.
-
-Likewise, there are several translation of the \pic\; $\texttt{new}$
-operator into the \rhoc. Rather than take up space in this paper we
-simply refer the reader to \cite{DBLP:journals/entcs/MeredithR05}, or
-better yet, invite them to come up with a definition to test their
-understanding of the calculus.
-
-Additionally, we call out input-guarded only summations using the notation
-
-$\texttt{match}\{ x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 ; \ldots ; x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M \}$ 
-
-instead of 
-
-$x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
-
-In a \texttt{match} context we avail ourselves of a pattern-matching
-syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k )$.
-
-Finally, we use $\{ \ldots \}$ for grouping expressions and in more complex examples, omit
-$\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a classic race-condition $\binpar{ x?( y_1, \ldots, y_N ) \Rightarrow P}{\binpar{x!( Q_1, \ldots, Q_N )}{ x?( z_1, \ldots, z_N ) \Rightarrow R}}$ might be written
-\begin{lstlisting}
-  {
-    x?( y1, ... , yN ) => P
-    x!( Q1, ... , QN )
-    x?( z1, ... , zN ) => R
-  }
-\end{lstlisting}
 
 \section{Bisimulation}
 
@@ -1158,6 +1060,105 @@ capabilities and types.
 \bibliography{topcappi}
 
 % ------------------------------------------------------------------------
+
+\section{Appendix: Replication}
+
+As mentioned before, it is known that replication (and hence
+recursion) can be implemented in a higher-order process algebra
+\cite{SangiorgiWalker}. As our first example of calculation with the
+machinery thus far presented we give the construction explicitly in
+the {\rhoc}.
+
+% \begin{equation*}
+% !P \defneqls \lift{x}{(x\id{(}y\id{)}\concat(\rpquote y\lpquote \juxtap x\id{[}y\id{]}) \juxtap P)} \juxtap x\id{(}z\id{)}\concat(\rpquote z\lpquote \juxtap x\id{[}z\id{]})
+% \end{equation*}
+
+\begin{eqnarray*}
+	D(x) & \defneqls & \prefix{x}{y}{(\binpar{\outputp{x}{y}}{\dropn{y}})} \\
+	\xbangp{P}{x} & \defneqls & \binpar{\lift{x}{\binpar{D(x)}{P}}}{D(x)}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+	\xbangp{P}{x} & & \\
+	=
+	& \lift{x}{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} 
+	      \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
+%	\red
+%	& \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
+%	  \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
+	\red
+	& (\outputp{x}{y} \juxtap \dropn{y})\substn{\quotep{(\prefix{x}{y}{(\dropn{y} \juxtap \outputp{x}{y})) \juxtap P}}}{y} & \\
+	=
+	& \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
+	  \juxtap {(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} & \\
+	\red
+	& \ldots & \\
+	\red^*
+	& P \juxtap P \juxtap \ldots & \\
+\end{eqnarray*}
+
+Of course, this encoding, as an implementation, runs away, unfolding
+$\xbangp{P}{x}$ eagerly. A lazier and more implementable replication
+operator, restricted to input-guarded processes, may be obtained as follows.
+
+\begin{equation*}
+\bangxp{\prefix{u}{v}{P}}{x}
+	\defneqls 
+	\binpar{\lift{x}{\prefix{u}{v}{(\binpar{D(x)}{P})}}}{D(x)}
+\end{equation*}
+
+It is worth noting that the combination of reference and dereference
+operator is essential to get computational completeness. 
+
+\section{Appendix: $\rho$ sugar}
+\begin{grammar}
+\mbox{\rhoc-extended}		& { P, Q }              & \bc			& \ldots & \mbox{previous syntax} \\
+				&                        		& \bm	& (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )}& \mbox{definition} \\ 
+				&					& \bm	& {X}{( Q_1, \ldots, Q_N )} & \mbox{invocation} \\
+				&					& \bm	& \texttt{new}( x_1, \ldots, x_N )P & \mbox{allocation} \\
+\end{grammar}
+
+It is completely standard to interpret recursive definition in terms
+of replication. The chosen notation is slightly quirky in that it
+simultaneously defines and invokes the definition to some arguments --
+in order to make the recursive form be a process expression, as
+opposed to a separate category of declaration.
+
+\begin{eqnarray*}
+  (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} & \defneqls & \binpar{\bangxp{(n( X, P ) \Rightarrow P')}{n( X, P )}}{n( X, P )!( Q_1, \ldots, Q_N )} \\  
+\end{eqnarray*}
+
+where $P' \defneqls P \{ n( X, P )!( Q_1, \ldots, Q_N )/ X( Q_1,
+\ldots, Q_N )\}$, i.e., the body of $P$ in which every occurrence of
+$X( Q_1, \ldots, Q_N )$ is replaced with $n( X, P )!( Q_1, \ldots, Q_N
+)$, and $n( X, P )$ generates a name from $X$ guaranteed fresh in $P$.
+
+Likewise, there are several translation of the \pic\; $\texttt{new}$
+operator into the \rhoc. Rather than take up space in this paper we
+simply refer the reader to \cite{DBLP:journals/entcs/MeredithR05}, or
+better yet, invite them to come up with a definition to test their
+understanding of the calculus.
+
+Additionally, we call out input-guarded only summations using the notation
+
+$\texttt{match}\{ x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 ; \ldots ; x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M \}$ 
+
+instead of 
+
+$x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
+
+In a \texttt{match} context we avail ourselves of a pattern-matching
+syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k )$.
+
+Finally, we use $\{ \ldots \}$ for grouping expressions and in more complex examples, omit
+$\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a classic race-condition $\binpar{ x?( y_1, \ldots, y_N ) \Rightarrow P}{\binpar{x!( Q_1, \ldots, Q_N )}{ x?( z_1, \ldots, z_N ) \Rightarrow R}}$ might be written
+\begin{lstlisting}
+  {
+    x?( y1, ... , yN ) => P
+    x!( Q1, ... , QN )
+    x?( z1, ... , zN ) => R
+  }
+\end{lstlisting}
 
 % ------------------------------------------------------------------------
 
