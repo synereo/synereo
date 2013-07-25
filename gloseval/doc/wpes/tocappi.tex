@@ -370,13 +370,13 @@ object can modify any state but its own is by sending messages on the object
 references it possesses.  Authority can then be denied simply by not providing
 the relevant object reference. Ocap languages do not provide ambient, undeniable 
 authority such as the global variables in JavaScript,
-static mutable fields in Java and C#, or allowing access to arbitrary objects
+static mutable fields in Java and C\#, or allowing access to arbitrary objects
 through pointer arithmetic as in C and C++.  
 
 We would like a way to declare the authority that an object ought to
 possess and then check whether the implementation matches the intent; that is,
 we would like a language for declaring security policy.
-Drossopoulou and Nolan \cite{Drossopoulou} convincingly argue that none 
+Drossopoulou and Nolan \cite{Drossopoulou:2013:NCP:2489804.2489811} convincingly argue that none 
 of the current specification methods adequately capture all of the capability 
 policies required to support ocap systems.
 
@@ -733,37 +733,83 @@ packaged as names. Here is a simple example of the use of quasiquote:
 
 \paragraph{Bisimulation}
 
-One of the central features of process calculi, called bisimulation,
-is an effective notion of substitutability, i.e. when one process can
-be substituted for another, and with it a range of powerful proof
-techniques. For this paper we focus principally on the use of logic to
-interpret policy and so move a discussion of bisimulation to an
-appendix. The main theorem of the next section relates the logic to
-bisimulation. The reader unfamiliar with this important aspect of
-programming language semantics is strongly encouraged to look at
+One of the central features of process calculi, referred to in the
+literature as bisimulation, is an effective notion of
+substitutability, i.e. when one process can be substituted for
+another, and with it a range of powerful proof techniques. For this
+paper we focus principally on the use of logic to interpret policy and
+so move a discussion of bisimulation to an appendix. The main theorem
+of the next section relates the logic to bisimulation. The reader
+unfamiliar with this important aspect of programming language
+semantics is strongly encouraged to look at
 \cite{DBLP:LNCS/Sangiorgi06}.
 
 \section{Logic}
 Namespace logic resides in the subfamily of Hennessy-Milner logics
 discovered by Caires and Cardelli known as spatial logics
-\cite{DBLP:conf/fossacs/Caires04}. Thus, as is seen below, in
-addition to the action modalities, we also find formulae for
-\emph{separation} corresponding, at the logical level, to the
-structural content of the parallel operator at the level of the
-calculus. Likewise, we have quantification over names. 
+\cite{DBLP:conf/fossacs/Caires04}. Thus, as is seen below, in addition
+to the action modalities, we also find formulae for \emph{separation}
+corresponding, at the logical level, to the structural content of the
+parallel operator at the level of the calculus. Likewise, we have
+quantification over names. There are important differences between the
+logic presented here and Caires' logic. The interested reader is
+referred to \cite{DBLP:conf/tgc/MeredithR05}.
 
-In this connection, however, we find an interesting difference between
-spatial logics investigated heretofore and this one. As in the
-calculus, we find no need for a type operator corresponding to the $\nu$
-construction. However, revelation in spatial logic is a structural
-notion \cite{DBLP:conf/fossacs/Caires04}. It detects the
-\emph{declaration} of a new name. No such information is available in
-the reflective calculus or in namespace logic. The calculus and the
-logic can arrange that names are used in a manner consistent with
-their being declared as new in the {\pic}, but it cannot detect the
-declaration itself. Seen from this perspective, revelation is a
-somewhat remarkable observation, as it seems to be about detecting the
-programmer's intent.
+% In this connection, however, we find an interesting difference between
+% spatial logics investigated heretofore and this one. As in the
+% calculus, we find no need for a type operator corresponding to the $\nu$
+% construction. However, revelation in spatial logic is a structural
+% notion \cite{DBLP:conf/fossacs/Caires04}. It detects the
+% \emph{declaration} of a new name. No such information is available in
+% the reflective calculus or in namespace logic. The calculus and the
+% logic can arrange that names are used in a manner consistent with
+% their being declared as new in the {\pic}, but it cannot detect the
+% declaration itself. Seen from this perspective, revelation is a
+% somewhat remarkable observation, as it seems to be about detecting the
+% programmer's intent.
+
+\subsection{Examples}
+
+A principal advantage to using logical formulae, aka types, of this
+kind is that they denote classes or programs. Unlike the usual notion
+of type, where a types inhabitants are instances of data structures,
+in namespace logic a formulae (i.e. a type) $\phi$ is inhabited by
+programs -- namely all the programs that satisfy the
+formulae. Namespace logic takes this a step further. Because it is
+built on a reflective programming language (the \rhoc) it also has
+formulae, $\pquotep{\phi}$, for describing classes of names. Said
+another way, the inhabitants of types of the form $\pquotep{\phi}$ are
+names and hence these types have the right to be called
+namespaces. The next two examples show how useful namespaces are in
+the security setting.
+
+\subsubsection{Controlling access to namespaces}
+\label{namespace}
+Suppose that $\pquotep{\phi}$ describes some namespace, {\em i.e.} some
+collection of names. We can insist that a process restrict its next
+input to names in that namespace by insisting that it witness the formula
+
+\begin{eqnarray}
+  \pprefix{\pquotep{\phi}}{b}{\ptrue} \& \neg \pprefix{\pquotep{\neg \phi}}{b}{\ptrue} \nonumber
+\end{eqnarray}
+
+\noindent which simply says the the process is currently able to take input from
+a name in the namespace $\pquotep{\phi}$ and is not capable of input on
+any name not in that namespace. In a similar manner, we can limit a
+server to serving only inputs in $\pquotep{\phi}$ throughout the
+lifetime of its behavior \footnote{Of course, this formula also says
+the server never goes down, either---or at least is always willing
+to take such input.}
+
+\begin{eqnarray}
+  \pgfp{X}{\pprefix{\pquotep{\phi}}{b}{X} \& \neg \pprefix{\pquotep{\neg \phi}}{b}{X}} \nonumber
+\end{eqnarray} 
+
+This formula is reminiscent of the functionality of a firewall, except
+that it is a \emph{static} check. A process witnessing this formula
+will behave as though it were behind a firewall admitting only access
+to the ports in $\pquotep{\phi}$ without the need for the additional
+overhead of the watchdog machinery.
 
 \begin{grammar}
 \mbox{reflective logic}	& {\phi, \psi}	& \bc	& \ptrue & \mbox{verity} \\
@@ -877,36 +923,6 @@ Also, when quantification ranges over all of $\QProc$, as in
 $\pquant{n}{\quotep{\ptrue}}{\phi}$, we omit the typing for the
 quantification variable, writing $\pquantuntyped{n}{\phi}$.
 
-\subsection{Examples}
-
-\subsubsection{Controlling access to namespaces}
-\label{namespace}
-Suppose that $\quotep{\phi}$ describes some namespace, {\em i.e.} some
-collection of names. We can insist that a process restrict its next
-input to names in that namespace by insisting that it witness the formula
-
-\begin{eqnarray}
-  \pprefix{\pquotep{\phi}}{b}{\ptrue} \& \neg \pprefix{\pquotep{\neg \phi}}{b}{\ptrue} \nonumber
-\end{eqnarray}
-
-\noindent which simply says the the process is currently able to take input from
-a name in the namespace $\pquotep{\phi}$ and is not capable of input on
-any name not in that namespace. In a similar manner, we can limit a
-server to serving only inputs in $\pquotep{\phi}$ throughout the
-lifetime of its behavior \footnote{Of course, this formula also says
-the server never goes down, either---or at least is always willing
-to take such input.}
-
-\begin{eqnarray}
-  \pgfp{X}{\pprefix{\pquotep{\phi}}{b}{X} \& \neg \pprefix{\pquotep{\neg \phi}}{b}{X}} \nonumber
-\end{eqnarray} 
-
-This formula is reminiscent of the functionality of a firewall, except
-that it is a \emph{static} check. A process witnessing this formula
-will behave as though it were behind a firewall admitting only access
-to the ports in $\pquotep{\phi}$ without the need for the additional
-overhead of the watchdog machinery.
-
 \section{Interpreting object-capabilities in \rhoc}
 
 Rather than giving a translation of the whole of {\tt JavaScript} into
@@ -951,10 +967,10 @@ power or authority.
 Armed with the two gadgets above, we can translate each of the language elements from the bank example into \rhoc.
 
 \begin{eqnarray*}
- \meaningof{\texttt{var}\; x}( k ) & \defneqls & \binpar{\texttt{Cell}( x, \texttt{undefined} )}{k!()} \\
- \meaningof{\texttt{var}\; x = v}( k ) & \defneqls & \texttt{Cell}( x, \meaningof{ v }( k ) ) \\
+ \meaningof{\texttt{var}\; x}( k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{k!()} \\
+ \meaningof{\texttt{var}\; x = v}( k ) & \defneqls & Cell( x, \meaningof{ v }( k ) ) \\
  \meaningof{ P ; Q }( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( k_1 )}{ k_1?() => \meaningof{ Q }( k )} \} \\
- \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! \texttt{get}( r )}{r?( v ) \Rightarrow \texttt{i}! \texttt{set}( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
+ \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
 \end{eqnarray*}
 
 % \begin{verbatim}
@@ -1029,11 +1045,11 @@ However, we can use our logic to state and verify the fact that $P$
 cannot affect any {\tt Cell}. Adapting the firewall formula we have
 
 $Cell (slot, state) \models 
-\pgfp{X}{\pprefix{\pquotep{\texttt{slot}}}{b}{X} \& 
-\neg \pprefix{\pquotep{\neg \texttt{slot}}}{b}{X}}$
+\pgfp{X}{\pprefix{\pquotep{slot}}{b}{X} \& 
+\neg \pprefix{\pquotep{\neg slot}}{b}{X}}$
 
 If we have that $P \models \pgfp{X}{\neg
-  \pprefix{\pquotep{\texttt{slot}}}{b}{X}}, \;$ then
+  \pprefix{\pquotep{slot}}{b}{X}}, \;$ then
 $\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
 \binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim 0$
 
