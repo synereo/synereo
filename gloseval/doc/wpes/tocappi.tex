@@ -374,7 +374,7 @@ couple of examples that illustrate a design pattern used over and over
 in this paper. The first is a mutable single-place cell for storing
 and retrieving state.
 
-\begin{lstlisting}
+\begin{verbatim}
 def Cell( slot, state ) => {
   new ( v ) {
     v!( state )
@@ -389,21 +389,21 @@ def Cell( slot, state ) => {
     }
   }
 }
-\end{lstlisting}
+\end{verbatim}
 
-We read this as saying that a $\texttt{Cell}$ is parametric in some (initial)
-$\texttt{state}$ and a $\texttt{slot}$ for accessing and mutating the
-cell's state. A $\texttt{Cell}$ allocates a private channel
-$\texttt{v}$ where it makes the initially supplied $\texttt{state}$
+We read this as saying that a {\tt Cell} is parametric in some (initial)
+{\tt state} and a {\tt slot} for accessing and mutating the
+cell's state. A {\tt Cell} allocates a private channel
+{\tt v} where it makes the initially supplied {\tt state}
 available to its internal computations. If on the channel
-$\texttt{slot}$ it receives a $\texttt{get}$ message containing a
-channel $\texttt{ret}$ indicating where to send the state of the cell,
-it accesses the private channel $\texttt{v}$ and sends the value it
-received on to the $\texttt{ret}$ channel; then it resumes behaving as
-a $Cell$. Alternatively, it if receives a $\texttt{set}$ message
-containing some new state, $\texttt{s}$, it simply continues as a
-$Cell$ instantiated with accessor, $\texttt{slot}$ and state,
-$\texttt{s}$.
+{\tt slot} it receives a {\tt get} message containing a
+channel {\tt ret} indicating where to send the state of the cell,
+it accesses the private channel {\tt v} and sends the value it
+received on to the {\tt ret} channel; then it resumes behaving as
+a $Cell$. Alternatively, it if receives a {\tt set} message
+containing some new state, {\tt s}, it simply continues as a
+{\tt Cell} instantiated with accessor, {\tt slot} and state,
+{\tt s}.
 
 Despite the fact that this example bears as striking resemblance to code
 in any of a number of popular libraries, notably the \texttt{AKKA}
@@ -411,8 +411,8 @@ library for the \texttt{Scala} language, it is only a mildly sugared
 form of the direct representation in our calculus. Notice, also, that
 like modern application code it exhibits encapsulation and separation
 of implementation from API: a cell's internal access to
-$\texttt{state}$ is kept in a private channel $\texttt{v}$ while
-external access is through $\texttt{slot}$. Another nice thing about
+{\tt state} is kept in a private channel {\tt v} while
+external access is through {\tt slot}. Another nice thing about
 this design pattern is that it scales through composition: when
 translating ocap examples expressed in \texttt{ECMAScript} to \rhoc\
 we will effectively treat the state of an object as a parallel
@@ -420,7 +420,7 @@ composition of cells comprising its state.
 
 The second gadget is an immutable map.
 
-\begin{lstlisting}
+\begin{verbatim}
 def Map( slot1, state1, ... , slotN, stateN ) => {
   new ( v1, ... , vN ) {
     v1!( state1 )
@@ -437,7 +437,7 @@ def Map( slot1, state1, ... , slotN, stateN ) => {
     }
   }
 }
-\end{lstlisting}
+\end{verbatim}
 
 The design pattern for maps is related the the one for cells, but is
 missing the capability to mutate the map. The code does not serve a
@@ -726,12 +726,12 @@ opposed to a separate category of declaration.
   (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} & \defneqls & \binpar{\bangxp{(n( X, P ) \Rightarrow P')}{n( X, P )}}{n( X, P )!( Q_1, \ldots, Q_N )} \\  
 \end{eqnarray*}
 
-where $P' \defneqls P \{ n( X, P )!( Q_1, \ldots, Q_N )/ X( Q_1,
+\noindent where $P' \defneqls P \{ n( X, P )!( Q_1, \ldots, Q_N )/ X( Q_1,
 \ldots, Q_N )\}$, i.e., the body of $P$ in which every occurrence of
 $X( Q_1, \ldots, Q_N )$ is replaced with $n( X, P )!( Q_1, \ldots, Q_N
 )$, and $n( X, P )$ generates a name from $X$ guaranteed fresh in $P$.
 
-Likewise, there are several translation of the \pic\; $\texttt{new}$
+Likewise, there are several translation of the \pic\; {\tt new}
 operator into the \rhoc. Rather than take up space in this paper we
 simply refer the reader to \cite{DBLP:journals/entcs/MeredithR05}, or
 better yet, invite them to come up with a definition to test their
@@ -739,24 +739,24 @@ understanding of the calculus.
 
 Additionally, we call out input-guarded only summations using the notation
 
-$\texttt{match}\{ x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 ; \ldots ; x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M \}$ 
+{\tt match \{ $x_1$?( $y_{1,1}, \ldots, y_{1,N}$ ) => $P_1$ ; $\ldots$ ; $x_M$?($y_{M,1}, \ldots, y_{M,N'}$) => $P_M$ \}} 
 
-instead of 
+\noindent instead of 
 
 $x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
 
-In a \texttt{match} context we avail ourselves of a pattern-matching
-syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k )$.
+In a {\tt match} context we avail ourselves of a pattern-matching
+syntax, such as $\mbox{\tt x?get(ret) => ret!(v)}$ and $\mbox{\tt x!get(k)}$.
 
 Finally, we use $\{ \ldots \}$ for grouping expressions and in more complex examples, omit
 $\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a classic race-condition $\binpar{ x?( y_1, \ldots, y_N ) \Rightarrow P}{\binpar{x!( Q_1, \ldots, Q_N )}{ x?( z_1, \ldots, z_N ) \Rightarrow R}}$ might be written
-\begin{lstlisting}
+\begin{verbatim}
   {
     x?( y1, ... , yN ) => P
     x!( Q1, ... , QN )
     x?( z1, ... , zN ) => R
   }
-\end{lstlisting}
+\end{verbatim}
 
 \section{Bisimulation}
 
@@ -1008,7 +1008,7 @@ into \rhoc, we focus on one example from \cite{Drossopoulou} designed
 to illustrate key aspects of object-capabilities and requirements for
 a policy language.
 
-\begin{lstlisting}
+\begin{verbatim}
 var makeMint = () => {
   var m = WeakMap();
   var makePurse = () => mint(0);
@@ -1030,7 +1030,7 @@ var makeMint = () => {
   };
   return mint;
 };
-\end{lstlisting}
+\end{verbatim}
 
 Interpreting this code illustrates how surprisingly intuitive and
 natural it is to represent and reason about object-capabilities in
@@ -1051,7 +1051,7 @@ needed to translate the whole bank example into \rhoc.
  \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! \texttt{get}( r )}{r?( v ) \Rightarrow \texttt{i}! \texttt{set}( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
 \end{eqnarray*}
 
-% \begin{lstlisting}
+% \begin{verbatim}
 % {
 %   new( rslt ){
 %     balance ! get( rslt )
@@ -1061,7 +1061,7 @@ needed to translate the whole bank example into \rhoc.
 %   } 
 %   [| P |] 
 % }
-% \end{lstlisting}
+% \end{verbatim}
 
 % We need to address the translation of promises. We need to address the translation of Nat( … ).
 
@@ -1083,7 +1083,7 @@ translate the code fragment $\meaningof{ \texttt{var}\;
 %   [| balance += amount; P |]
 % }
 % =
-\begin{lstlisting}
+\begin{verbatim}
 { 
   Cell( balance, initAmt ) 
   k!() 
@@ -1097,7 +1097,7 @@ translate the code fragment $\meaningof{ \texttt{var}\;
     [| P |] 
   }
 }
-\end{lstlisting}
+\end{verbatim}
 
 
 \section{Interpreting policy}
@@ -1110,20 +1110,22 @@ straightforward. For the reader familiar with logics of concurrency the
 core idea is to use rely-guarantee combined with the adjunct to
 spatial separation.
 
-A visual inspection of the code for $\texttt{Cell}$ reveals that if a
-process $P$’s names are fresh wrt to $\texttt{slot}$, then $P$ cannot
-directly affect any $\texttt{Cell}( \texttt{slot}, \texttt{state}
-)$. Unfortunately, visual inspection is not as reliable in more
-settings even more mildly complex, as in the bank example
-above. However we can use our logic to state and verify this
-fact. Adapting the firewall formula we have
+A visual inspection of the code for {\tt Cell} reveals that if a
+process $P$’s names are fresh wrt to {\tt slot}, then $P$ cannot
+directly affect any {\tt Cell( slot, state )}. Unfortunately, 
+visual inspection is not reliable in settings only mildly more 
+complex, as in the bank example above. However we can use our 
+logic to state and verify this fact. Adapting the firewall formula 
+we have
 
-$\texttt{Cell}(\texttt{slot},\texttt{state}) \models \pgfp{X}{\pprefix{\quotep{\texttt{slot}}}{b}{X} \& \neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
+$\mbox{\tt Cell (slot, state)} \models 
+\pgfp{X}{\pprefix{\quotep{\texttt{slot}}}{b}{X} \& 
+\neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
 
 If we have that $P \models \pgfp{X}{\neg
   \pprefix{\quotep{\texttt{slot}}}{b}{X}}$, then
-$\forall \; \texttt{state}.\texttt{new}(\texttt{slot})\{\binpar{P}{\texttt{Cell}(\texttt{slot},\texttt{state})\}}
-\wbbisim 0$
+$\forall \; \mbox{\tt state.new(slot)\{}
+\binpar{P}{\mbox{\tt Cell(slot, state)}}{\tt \}} \wbbisim 0$
 
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
