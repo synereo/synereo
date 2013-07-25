@@ -327,12 +327,12 @@
 \begin{abstract}
 \normalsize{ 
 
-  Drossopoulou and Nolan argue persuasively for the need for a means
-  to express policy in object-capability-based systems. We investigate
-  a practical means to realize their aim via the Curry-Howard
-  isomorphism. Specifically, we investigate representing policy as
-  types in a behavioral type system for the \rhoc, a reflective-higher order
-  variant of the \pic.
+  Drossopoulou and Nolan \cite{Drossopoulou:2013:NCP:2489804.2489811}
+  argue persuasively for the need for a means to express policy in
+  object-capability-based systems. We investigate a practical means to
+  realize their aim via the Curry-Howard isomorphism. Specifically, we
+  investigate representing policy as types in a behavioral type system
+  for the \rhoc, a reflective-higher order variant of the \pic.
 
 }
 
@@ -546,7 +546,7 @@ satisfies the following laws:
 \end{eqnarray*}
 
 \paragraph{Name equivalence} As discussed in
-\cite{DBLP:journals/tgc/MeredithR05} name-equivalence is subtly
+\cite{DBLP:conf/tgc/MeredithR05} name-equivalence is subtly
 recursively related to $\alpha$-equivalence and structural equivalence.
 
 \subsection{Syntactic substitution}
@@ -772,7 +772,7 @@ $P \wbbisim_{\mathcal N} Q$, if $P \rel{S}_{\mathcal N} Q$ for some ${\mathcal N
 \section{Logic}
 Namespace logic resides in the subfamily of Hennessy-Milner logics
 discovered by Caires and Cardelli known as spatial logics
-\cite{DBLP:journals/tcs/CairesC04}. Thus, as is seen below, in
+\cite{DBLP:conf/fossacs/Caires04}. Thus, as is seen below, in
 addition to the action modalities, we also find formulae for
 \emph{separation} corresponding, at the logical level, to the
 structural content of the parallel operator at the level of the
@@ -782,7 +782,7 @@ In this connection, however, we find an interesting difference between
 spatial logics investigated heretofore and this one. As in the
 calculus, we find no need for a type operator corresponding to the $\nu$
 construction. However, revelation in spatial logic is a structural
-notion \cite{DBLP:journals/tcs/CairesC04}. It detects the
+notion \cite{DBLP:conf/fossacs/Caires04}. It detects the
 \emph{declaration} of a new name. No such information is available in
 the reflective calculus or in namespace logic. The calculus and the
 logic can arrange that names are used in a manner consistent with
@@ -935,10 +935,11 @@ overhead of the watchdog machinery.
 
 \section{Interpreting object-capabilities in \rhoc}
 
-Rather than giving a translation of the whole of {\tt JavaScript}
-into \rhoc, we focus on one example from \cite{MvCT2013} designed
-to illustrate key aspects of object-capabilities and requirements for
-a policy language.
+Rather than giving a translation of the whole of {\tt JavaScript} into
+\rhoc, we focus on one example from
+\cite{Drossopoulou:2013:NCP:2489804.2489811} designed to illustrate
+key aspects of object-capabilities and requirements for a policy
+language.
 
 \begin{verbatim}
 var makeMint = () => {
@@ -1034,7 +1035,7 @@ we calculate directly
 
 \section{Interpreting policy}
 
-Drossopoulou \cite{Drossopoulou} argues for several different types of policy
+Drossopoulou \cite{Drossopoulou:2013:NCP:2489804.2489811} argues for several different types of policy
 specifications. In this paper we focus on deniability policies, since the
 others have ready translations in this setting. Deniability is the one
 type of policy specification where the translation is not at all
@@ -1072,7 +1073,7 @@ cell. In the paragraphs above we witnessed a basic form of argumentation: if $Q
 $\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \wbbisim S$ for some properties
 $\phi$ and $\psi$ and some behavior, $S$. This shape turns out to be
 very close to the use of rely-guarantee identified by Honda in
-\cite{HondoRG}.
+\cite{Honda:2008:UTP:2227536.2227558}.
 
 \section{Conclusions and future work}
 
@@ -1089,7 +1090,7 @@ capabilities and types.
 %GATHER{Xbib.bib}   % For Gather Purpose Only
 %GATHER{Paper.bbl}  % For Gather Purpose Only
 \bibliographystyle{amsplain}
-\bibliography{topcappi}
+\bibliography{tocappi}
 
 % ------------------------------------------------------------------------
 
