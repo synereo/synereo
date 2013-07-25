@@ -500,7 +500,7 @@ def $Map( slot1, state1, \ldots , slotN, stateN ) \Rightarrow$ {
 }
 \end{lstlisting}
 
-The design pattern for maps is related the the one for cells, but is
+The design pattern for maps is related to the one for cells, but is
 missing the capability to mutate the map. The code does not serve a
 request to set any of the slots it contains.
 
@@ -830,18 +830,8 @@ we calculate directly
 % =
 \begin{lstlisting}[mathescape]
 { 
-  $Cell( balance, initAmt )$
-  $k!()$
-  {
-    new $( rslt, k_1 )$ {
-      $balance ! get( rslt )$  
-       $rslt?( b ) \Rightarrow$ {
-        $balance ! set( b + amount )$
-        $k1$
-      }
-    } 
-    $k_1?() \Rightarrow \meaningof{ P }( k )$
-  }
+  $\binpar{Cell( balance, initAmt )}{k!()}$
+  new $( rslt, k_1 )$ { $\binpar{\binpar{balance ! get( rslt )}{rslt?( b ) \Rightarrow \{ \binpar{balance ! set( b + amount )}{k1!()} \} }}{k_1?() \Rightarrow \meaningof{ P }( k )}$ }
 }
 \end{lstlisting}
 
@@ -1184,11 +1174,11 @@ syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k )$.
 
 Finally, we use $\{ \ldots \}$ for grouping expressions and in more complex examples, omit
 $\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a classic race-condition $\binpar{ x?( y_1, \ldots, y_N ) \Rightarrow P}{\binpar{x!( Q_1, \ldots, Q_N )}{ x?( z_1, \ldots, z_N ) \Rightarrow R}}$ might be written
-\begin{lstlisting}
+\begin{lstlisting}[mathescape]
   {
-    x?( y1, ... , yN ) => P
-    x!( Q1, ... , QN )
-    x?( z1, ... , zN ) => R
+    $x?( y_1, ... , y_N ) \Rightarrow P$
+    $x!( Q_1, ... , Q_N )$
+    $x?( z_1, ... , z_N ) \Rightarrow R$
   }
 \end{lstlisting}
 
