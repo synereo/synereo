@@ -391,7 +391,7 @@ def Cell( slot, state ) => {
 }
 \end{lstlisting}
 
-The code says that a $\texttt{Cell}$ is parametric in some (initial)
+We read this as saying that a $\texttt{Cell}$ is parametric in some (initial)
 $\texttt{state}$ and a $\texttt{slot}$ for accessing and mutating the
 cell's state. A $\texttt{Cell}$ allocates a private channel
 $\texttt{v}$ where it makes the initially supplied $\texttt{state}$
@@ -405,7 +405,7 @@ containing some new state, $\texttt{s}$, it simply continues as a
 $Cell$ instantiated with accessor, $\texttt{slot}$ and state,
 $\texttt{s}$.
 
-Despite the fact that this code bears as striking resemblance to code
+Despite the fact that this example bears as striking resemblance to code
 in any of a number of popular libraries, notably the \texttt{AKKA}
 library for the \texttt{Scala} language, it is only a mildly sugared
 form of the direct representation in our calculus. Notice, also, that
