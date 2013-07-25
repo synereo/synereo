@@ -326,7 +326,7 @@
 \begin{abstract}
 \normalsize{ 
 
-  rossopoulou and Nolan argue persuasively for the need for a means
+  Drossopoulou and Nolan argue persuasively for the need for a means
   to express policy in object-capability-based systems. We investigate
   a practical means to realize their aim via the Curry-Howard
   isomorphism. Specifically, we investigate representing policy as
@@ -367,6 +367,89 @@ Other approaches to policy. Curry-Howard. Contracts as types.
 %%% ----------------------------------------------------------------------
 
 \section{The calculus}
+
+Before giving the formal presentation of the calculus and logic where
+we interpret ocap programs and policy (respectively) we begin with a
+couple of examples that illustrate a design pattern used over and over
+in this paper. The first is a mutable single-place cell for storing
+and retrieving state.
+
+\begin{lstlisting}
+def Cell( slot, state ) => {
+  new ( v ) {
+    v!( state )
+    match {
+      slot ? get( ret ) => { 
+        v?( s ) => ret!( s )
+        Cell( slot, s )
+      }
+      slot ? set( s ) => {
+        Cell( slot, s )
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+The code says that a $\texttt{Cell}$ is parametric in some (initial)
+$\texttt{state}$ and a $\texttt{slot}$ for accessing and mutating the
+cell's state. A $\texttt{Cell}$ allocates a private channel
+$\texttt{v}$ where it makes the initially supplied $\texttt{state}$
+available to its internal computations. If on the channel
+$\texttt{slot}$ it receives a $\texttt{get}$ message containing a
+channel $\texttt{ret}$ indicating where to send the state of the cell,
+it accesses the private channel $\texttt{v}$ and sends the value it
+received on to the $\texttt{ret}$ channel; then it resumes behaving as
+a $Cell$. Alternatively, it if receives a $\texttt{set}$ message
+containing some new state, $\texttt{s}$, it simply continues as a
+$Cell$ instantiated with accessor, $\texttt{slot}$ and state,
+$\texttt{s}$.
+
+Despite the fact that this code bears as striking resemblance to code
+in any of a number of popular libraries, notably the \texttt{AKKA}
+library for the \texttt{Scala} language, it is only a mildly sugared
+form of the direct representation in our calculus. Notice, also, that
+like modern application code it exhibits encapsulation and separation
+of implementation from API: a cell's internal access to
+$\texttt{state}$ is kept in a private channel $\texttt{v}$ while
+external access is through $\texttt{slot}$. Another nice thing about
+this design pattern is that it scales through composition: when
+translating ocap examples expressed in \texttt{ECMAScript} to \rhoc\
+we will effectively treat the state of an object as a parallel
+composition of cells comprising its state.
+
+The second gadget is an immutable map.
+
+\begin{lstlisting}
+def Map( slot1, state1, ... , slotN, stateN ) => {
+  new ( v1, ... , vN ) {
+    v1!( state1 )
+    ...
+    vN!( stateN )
+    slot1 ? get( ret ) => { 
+      v1?( x ) => ret!( x )
+      Map( slot1, x, ... , slotN, stateN )
+    }
+    ...
+    slotN ? get( ret ) => { 
+      vN?( x ) => ret!( x )
+      Map( slot1, state1, ... , slotN, x )
+    }
+  }
+}
+\end{lstlisting}
+
+The design pattern for maps is related the the one for cells, but is
+missing the capability to mutate the map. The code does not serve a
+request to set any of the slots it contains.
+
+With these two patterns in hand it will be much easier to treat the
+examples. Moreover, as we will see in the sequel, even with these
+basic patterns we can already reason about policy and the shape of the
+reason about policy for these examples scales compositionally to
+reasoning about application-level policy.
+
+Now lets introduce the calculus and its logic.
 
 \subsubsection{Notation}
 
@@ -519,14 +602,9 @@ functioning much like quasiquote in \texttt{Lisp}.
 
 The substitution used in $\alpha$-equivalence is really only a device
 to formally recognize that binding occurrences do not depend on the
-specific names. It is not the engine of computation. The proposal here
-is that while synchronization is the driver of that engine, the real
-engine of computation is a semantic notion of substitution that
-recognizes that a dropped name is a request to run a process. Which
-process? Why the one whose code has been bound to the name being
-dropped. Formally, this amounts to a notion of substitution that
-differs from syntactic substitution in its application to a dropped
-name.
+specific names. Semantic subsitution, the engine of computation in
+this calculus, differs from syntactic substitution in its application
+to a dropped name.
 
 \begin{eqnarray*}
 (\dropn{x})  \psubstp{Q}{P}       
@@ -961,78 +1039,6 @@ or authority is represented by a channel. When an agent in the \rhoc\;
 has access to a channel it has exactly that: access to some behavior,
 power or authority.
 
-We illustrate the point with two gadgets that make ECMAScript easier
-to interpret in \rhoc. The first is a mutable single-place cell for
-storing and retrieving state.
-
-\begin{lstlisting}
-def Cell( slot, state ) => {
-  new ( v ) {
-    v!( state )
-    match {
-      slot ? get( ret ) => { 
-        v?( s ) => ret!( s )
-        Cell( slot, s )
-      }
-      slot ? set( s ) => {
-        Cell( slot, s )
-      }
-    }
-  }
-}
-\end{lstlisting}
-
-Notice that the cell's access to $\texttt{state}$ is kept in a private channel
-$\texttt{v}$. The external API is through $\texttt{slot}$. When translating
-\texttt{Javascript} ocap examples to \rhoc\; we will effectively treat
-the state of an object as a parallel composition of cells.
-
-The second gadget is an immutable map.
-
-\begin{lstlisting}
-def Map( slot1, state1, ... , slotN, stateN ) => {
-  new ( v1, ... , vN ) {
-    v1!( state1 )
-    ...
-    vN!( stateN )
-    slot1 ? get( ret ) => { 
-      v1?( x ) => ret!( x )
-      Map( slot1, x, ... , slotN, stateN )
-    }
-    … 
-    slotN ? get( ret ) => { 
-      vN?( x ) => ret!( x )
-      Map( slot1, state1, ... , slotN, x )
-    }
-  }
-}
-\end{lstlisting}
-
-A visual inspection of the code for $\texttt{Cell}$ reveals that if a
-process $P$’s names are fresh wrt to $\texttt{slot}$, then $P$ cannot
-directly affect any $\texttt{Cell}( \texttt{slot}, \texttt{state}
-)$. Unfortunately, visual inspection is not as reliable in more
-settings even more mildly complex, as in the bank example
-above. However we can use our logic to state and verify this
-fact. Adapting the firewall formula we have
-
-$\texttt{Cell}(\texttt{slot},\texttt{state}) \models \pgfp{X}{\pprefix{\quotep{\texttt{slot}}}{b}{X} \& \neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
-
-If we have that $P \models \pgfp{X}{\neg
-  \pprefix{\quotep{\texttt{slot}}}{b}{X}}$, then
-$\forall \; \texttt{state}.\texttt{new}(\texttt{slot})\{\binpar{P}{\texttt{Cell}(\texttt{slot},\texttt{state})\}}
-\wbbisim 0$
-
-We will iterate this basic idea to build up to modeling the bank
-example. The central intuition is that the purse is essentially a
-cell.
-
-More generally, note that objects involve not just one cell, but
-many. By restricting those cells to slots that live in namespace $Slot
-\defneqls {@}\phi$ for some $\phi$ we can scale our formula to
-separate objects from a given environment. We'll say more about this
-in the conclusions.
-
 % Can we get away with describing the difference between WeakMap and Map just in English?
 
 Armed with the two gadgets above, we can translate the language elements of
@@ -1096,7 +1102,43 @@ translate the code fragment $\meaningof{ \texttt{var}\;
 
 \section{Interpreting policy}
 
-Focus on deniability. The core idea is to use rely-guarantee combined with the adjunct to spatial separation.
+\cite{Drossopoulou} argues for several different types of policy
+specifications. In this paper we focus on deniability policies as the
+others have ready translations in this setting. Deniability is the one
+type of policy specification where the translation is not at all
+straightforward. For the reader familiar with logics of concurrency the
+core idea is to use rely-guarantee combined with the adjunct to
+spatial separation.
+
+A visual inspection of the code for $\texttt{Cell}$ reveals that if a
+process $P$’s names are fresh wrt to $\texttt{slot}$, then $P$ cannot
+directly affect any $\texttt{Cell}( \texttt{slot}, \texttt{state}
+)$. Unfortunately, visual inspection is not as reliable in more
+settings even more mildly complex, as in the bank example
+above. However we can use our logic to state and verify this
+fact. Adapting the firewall formula we have
+
+$\texttt{Cell}(\texttt{slot},\texttt{state}) \models \pgfp{X}{\pprefix{\quotep{\texttt{slot}}}{b}{X} \& \neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
+
+If we have that $P \models \pgfp{X}{\neg
+  \pprefix{\quotep{\texttt{slot}}}{b}{X}}$, then
+$\forall \; \texttt{state}.\texttt{new}(\texttt{slot})\{\binpar{P}{\texttt{Cell}(\texttt{slot},\texttt{state})\}}
+\wbbisim 0$
+
+More generally, note that objects involve not just one cell, but
+many. By restricting those cells to slots that live in namespace $Slot
+\defneqls {@}\phi$ for some $\phi$ we can scale our formula to
+separate objects from a given environment. We'll say more about this
+in the conclusions. 
+
+For now we refine the basic idea to build up to modeling the bank
+example. The central intuition is that the purse is essentially a
+cell. In the paragraphs above we witnessed a basic form of argumentation: if $Q
+\models \phi$ then when $P \models \psi$ we have that
+$\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \wbbisim S$ for some properties
+$\phi$ and $\psi$ and some behavior, $S$. This shape turns out to be
+very close to the use of rely-guarantee identified by Honda in
+\cite{HondoRG}.
 
 \section{Conclusions and future work}
 
