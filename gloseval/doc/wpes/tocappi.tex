@@ -330,7 +330,7 @@
   to express policy in object-capability-based systems. We investigate
   a practical means to realize their aim via the Curry-Howard
   isomorphism. Specifically, we investigate representing policy as
-  types in a behavioral type system for the \pic.
+  types in a behavioral type system for the \rhoc.
 
 }
 
@@ -369,7 +369,7 @@ Other approaches to policy. Curry-Howard. Contracts as types.
 \section{The calculus}
 
 Before giving the formal presentation of the calculus and logic where
-we interpret ocap programs and policy (respectively) we begin with a
+we interpret ocap programs and policy, respectively, we begin with a
 couple of examples that illustrate a design pattern used over and over
 in this paper. The first is a mutable single-place cell for storing
 and retrieving state.
@@ -400,21 +400,21 @@ available to its internal computations. If on the channel
 channel {\tt ret} indicating where to send the state of the cell,
 it accesses the private channel {\tt v} and sends the value it
 received on to the {\tt ret} channel; then it resumes behaving as
-a $Cell$. Alternatively, it if receives a {\tt set} message
-containing some new state, {\tt s}, it simply continues as a
-{\tt Cell} instantiated with accessor, {\tt slot} and state,
+a {\tt Cell}. Alternatively, if it receives a {\tt set} message
+containing some new state {\tt s}, it simply continues as a
+{\tt Cell} instantiated with accessor {\tt slot} and state
 {\tt s}.
 
-Despite the fact that this example bears as striking resemblance to code
-in any of a number of popular libraries, notably the \texttt{AKKA}
-library for the \texttt{Scala} language, it is only a mildly sugared
-form of the direct representation in our calculus. Notice, also, that
-like modern application code it exhibits encapsulation and separation
+Despite the fact that this example bears a striking resemblance to code
+in any of a number of popular libraries, notably the {\tt AKKA}
+library for the {\tt Scala} language, it is only a mildly sugared
+form of the direct representation in our calculus. Notice also that
+like modern application code, it exhibits encapsulation and separation
 of implementation from API: a cell's internal access to
 {\tt state} is kept in a private channel {\tt v} while
 external access is through {\tt slot}. Another nice thing about
 this design pattern is that it scales through composition: when
-translating ocap examples expressed in \texttt{ECMAScript} to \rhoc\
+translating ocap examples expressed in {\tt ECMAScript} to \rhoc\
 we will effectively treat the state of an object as a parallel
 composition of cells comprising its state.
 
@@ -449,7 +449,7 @@ basic patterns we can already reason about policy and the shape of the
 reason about policy for these examples scales compositionally to
 reasoning about application-level policy.
 
-Now lets introduce the calculus and its logic.
+Now let's introduce the calculus and its logic.
 
 \subsubsection{Notation}
 
@@ -505,7 +505,7 @@ denoted by $\names{P}$.
 \subsection{Structural congruence}
 
 The {\em structural congruence} of processes, noted $\scong$, is the
-least congruence, containing $\alpha$-equivalence, $\alphaeq$, that
+least congruence containing $\alpha$-equivalence, $\alphaeq$, that
 satisfies the following laws:
 
 \begin{eqnarray*}
@@ -584,19 +584,19 @@ of processes, ${w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$ and ${w}{!}{(}{*}{@}({y}{!}{(}{*z
 	{w}{!}{(}{y}{!}{(}{*}{z}{)}{)}\widehat{{\{}u / z{\}}}
 		& = &
 		{w}{!}{(}{y}{!}{(}{*}u{)}{)} \\
-        {w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
+       {w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
 		& = &
-		{w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
+		{w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}
 \end{eqnarray*}
 
-Because the body of the process between quotes is impervious to
+Because the body of the referenced process is impervious to
 substitution, we get radically different answers. In fact, by
 examining the first process in an input context, e.g. $x{(}{z}{)}
 \Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$, we see that combinations
 of reference and dereference may be shaped by prefixed inputs binding
 dereferenced names. In this sense, these operators provide a means to
 dynamically construct processes before reifying them as names,
-functioning much like quasiquote in \texttt{Lisp}.
+functioning much like quasiquote in {\tt Lisp}.
 
 \subsection{Semantic substitution}
 
@@ -649,9 +649,9 @@ In addition, we have the following context rules:
 \infrule[Equiv]{{{P} \scong {P}'} \andalso {{P}' \red {Q}'} \andalso {{Q}' \scong {Q}}}{{P} \red {Q}}
 
 The context rules are entirely standard and we do not say much about
-them, here. The communication rule makes it possible for agents to
+them here. The communication rule makes it possible for agents to
 synchronize at name-equivalent guards and communicate processes
-packaged as names. Here is a simple example of the use of quasiquote.
+packaged as names. Here is a simple example of the use of quasiquote:
 
 \begin{eqnarray*}
 	& x{(}{z}{)} \Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)} \juxtap x{!}{(}{P}{)} & \\
@@ -695,9 +695,9 @@ the {\rhoc}.
 	& P \juxtap P \juxtap \ldots & \\
 \end{eqnarray*}
 
-Of course, this encoding, as an implementation, runs away, unfolding
+Of course, this encoding runs away, unfolding
 $\xbangp{P}{x}$ eagerly. A lazier and more implementable replication
-operator, restricted to input-guarded processes, may be obtained as follows.
+operator, restricted to input-guarded processes, may be obtained as follows:
 
 \begin{equation*}
 \bangxp{\prefix{u}{v}{P}}{x}
@@ -718,7 +718,7 @@ operator is essential to get computational completeness.
 
 It is completely standard to interpret recursive definition in terms
 of replication. The chosen notation is slightly quirky in that it
-simultaneously defines and invokes the definition to some arguments --
+simultaneously defines and invokes the definition to some arguments
 in order to make the recursive form be a process expression, as
 opposed to a separate category of declaration.
 
@@ -727,13 +727,13 @@ opposed to a separate category of declaration.
 \end{eqnarray*}
 
 \noindent where $P' \defneqls P \{ n( X, P )!( Q_1, \ldots, Q_N )/ X( Q_1,
-\ldots, Q_N )\}$, i.e., the body of $P$ in which every occurrence of
+\ldots, Q_N )\}$, {\em i.e.}, the body of $P$ in which every occurrence of
 $X( Q_1, \ldots, Q_N )$ is replaced with $n( X, P )!( Q_1, \ldots, Q_N
 )$, and $n( X, P )$ generates a name from $X$ guaranteed fresh in $P$.
 
 Likewise, there are several translation of the \pic\; {\tt new}
-operator into the \rhoc. Rather than take up space in this paper we
-simply refer the reader to \cite{DBLP:journals/entcs/MeredithR05}, or
+operator into the \rhoc. Rather than take up space in this paper, we
+simply refer the reader to \cite{DBLP:journals/entcs/MeredithR05}---or
 better yet, invite them to come up with a definition to test their
 understanding of the calculus.
 
@@ -762,15 +762,21 @@ $\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a 
 
 Having taken the notion of restriction out of the language, we
 carefully place it back into the notion of observation, and hence into
-the notion of program equality, i.e. bisimulation. That is, we
+the notion of program equality, {\em i.e.} bisimulation. That is, we
 parameterize the notion of barbed bisimulation by a set of names over
 which we are allowed to set the barbs. The motivation for this choice
 is really comparison with other calculi. The set of names of the
 {\rhoc} is \textit{global}. It is impossible, in the grammar of
 processes, to guard terms from being placed into contexts that can
-potentially observe communication. So, we provide a place for
+potentially observe communication, so we provide a place for
 reasoning about such limitations on the scope of observation in the
 theory of bisimulation.
+
+From an ocap perspective, having the ability to enumerate names is
+usually a sign that a language is not even memory-safe, let alone
+capability-safe.  However, in Section \ref{namespace} below, we show
+that we can use types to create namespaces and then statically prove
+which namespaces a process has access to.
 
 % [Ed. note: suppose c is not in a barb set, can we make hidden links in
 % programs? Does this screw up the notion of a parameterized barbed
@@ -793,7 +799,7 @@ $P \wred Q$ and $Q \downarrow_{\mathcal N} x$.
 
 Notice that $\prefix{x}{y}{P}$ has no barb.  Indeed, in {\rhoc} as well
 as other asynchronous calculi, an observer has no direct means to
-detect if a message sent has been received or not.
+detect if a sent message has been received or not.
 
 \begin{defn}
 %\label{def.bbisim}
@@ -839,17 +845,17 @@ $P \wbbisim_{\mathcal N} Q$, if $P \rel{S}_{\mathcal N} Q$ for some ${\mathcal N
 
 \section{Logic}
 Namespace logic resides in the subfamily of Hennessy-Milner logics
-discovered by Caires and Cardelli and known as spatial logics
+discovered by Caires and Cardelli known as spatial logics
 \cite{DBLP:journals/tcs/CairesC04}. Thus, as is seen below, in
 addition to the action modalities, we also find formulae for
-\emph{separation}, corresponding, at the logical level, to the
+\emph{separation} corresponding, at the logical level, to the
 structural content of the parallel operator at the level of the
 calculus. Likewise, we have quantification over names. 
 
 In this connection, however, we find an interesting difference between
 spatial logics investigated heretofore and this one. As in the
-calculus, we find no need for an operator corresponding to the $\nu$
-construction. However, revelation in spatial logic, is a structural
+calculus, we find no need for a type operator corresponding to the $\nu$
+construction. However, revelation in spatial logic is a structural
 notion \cite{DBLP:journals/tcs/CairesC04}. It detects the
 \emph{declaration} of a new name. No such information is available in
 the reflective calculus or in namespace logic. The calculus and the
@@ -923,7 +929,7 @@ The meaning of formulae is given in terms of two mutually recursive functions,
 \nmeaningof{ - }( - ) : \QFormula \times [\PropVar \to \wp(\Proc)] \to \wp(\QProc) \nonumber
 \end{eqnarray}
 
-taking a formula of the appropriate type and a valuation, and
+\noindent taking a formula of the appropriate type and a valuation, and
 returning a set of processes or a set of names, respectively.
 
 \begin{eqnarray}
@@ -974,8 +980,8 @@ quantification variable, writing $\pquantuntyped{n}{\phi}$.
 \subsection{Examples}
 
 \subsubsection{Controlling access to namespaces}
-
-Suppose that $\quotep{\phi}$ describes some namespace, i.e. some
+\label{namespace}
+Suppose that $\quotep{\phi}$ describes some namespace, {\em i.e.} some
 collection of names. We can insist that a process restrict its next
 input to names in that namespace by insisting that it witness the formula
 
@@ -983,13 +989,13 @@ input to names in that namespace by insisting that it witness the formula
   \pprefix{\quotep{\phi}}{b}{\ptrue} \& \neg \pprefix{\quotep{\neg \phi}}{b}{\ptrue} \nonumber
 \end{eqnarray}
 
-which simply says the the process is currently able to take input from
+\noindent which simply says the the process is currently able to take input from
 a name in the namespace $\quotep{\phi}$ and is not capable of input on
 any name not in that namespace. In a similar manner, we can limit a
 server to serving only inputs in $\quotep{\phi}$ throughout the
 lifetime of its behavior \footnote{Of course, this formula also says
-  the server never goes down, either -- or at least is always willing
-  to take such input...;-)}
+the server never goes down, either---or at least is always willing
+to take such input.}
 
 \begin{eqnarray}
   \pgfp{X}{\pprefix{\quotep{\phi}}{b}{X} \& \neg \pprefix{\quotep{\neg \phi}}{b}{X}} \nonumber
@@ -1001,10 +1007,10 @@ will behave as though it were behind a firewall admitting only access
 to the ports in $\quotep{\phi}$ without the need for the additional
 overhead of the watchdog machinery.
 
-\section{Interpreting object-capabilities in \pic}
+\section{Interpreting object-capabilities in \rhoc}
 
-Rather than giving a translation of the whole of \texttt{Javascript}
-into \rhoc, we focus on one example from \cite{Drossopoulou} designed
+Rather than giving a translation of the whole of {\tt JavaScript}
+into \rhoc, we focus on one example from \cite{MvCT2013} designed
 to illustrate key aspects of object-capabilities and requirements for
 a policy language.
 
@@ -1034,15 +1040,14 @@ var makeMint = () => {
 
 Interpreting this code illustrates how surprisingly intuitive and
 natural it is to represent and reason about object-capabilities in
-\rhoc. Essentially, a capability, i.e. access to some behavior, power
-or authority is represented by a channel. When an agent in the \rhoc\;
+\rhoc. Essentially, a capability---{\em i.e.} access to some behavior, power
+or authority---is represented by a channel. When an agent in the \rhoc
 has access to a channel it has exactly that: access to some behavior,
 power or authority.
 
 % Can we get away with describing the difference between WeakMap and Map just in English?
 
-Armed with the two gadgets above, we can translate the language elements of
-needed to translate the whole bank example into \rhoc.
+Armed with the two gadgets above, we can translate each of the language elements from the bank example into \rhoc.
 
 \begin{eqnarray*}
  \meaningof{\texttt{var}\; x}( k ) & \defneqls & \binpar{\texttt{Cell}( x, \texttt{undefined} )}{k!()} \\
@@ -1067,9 +1072,9 @@ needed to translate the whole bank example into \rhoc.
 
 The key point is that the translation is compositional and therefore
 we can reason equationally in the translated code. For example, to
-translate the code fragment $\meaningof{ \texttt{var}\;
-  \texttt{balance} = \texttt{initAmt}; \texttt{balance} +\!=
-  \texttt{amount}; P }( k )$ we calculate directly
+translate the code fragment 
+\[\meaningof{ \mbox{\tt var balance = initAmt; balance += amount;} P }( k )\]
+we calculate directly
 
 % K[X] := var balance = initAmt; X
 
@@ -1102,8 +1107,8 @@ translate the code fragment $\meaningof{ \texttt{var}\;
 
 \section{Interpreting policy}
 
-\cite{Drossopoulou} argues for several different types of policy
-specifications. In this paper we focus on deniability policies as the
+Drossopoulou \cite{Drossopoulou} argues for several different types of policy
+specifications. In this paper we focus on deniability policies, since the
 others have ready translations in this setting. Deniability is the one
 type of policy specification where the translation is not at all
 straightforward. For the reader familiar with logics of concurrency the
@@ -1114,7 +1119,7 @@ A visual inspection of the code for {\tt Cell} reveals that if a
 process $P$’s names are fresh wrt to {\tt slot}, then $P$ cannot
 directly affect any {\tt Cell( slot, state )}. Unfortunately, 
 visual inspection is not reliable in settings only mildly more 
-complex, as in the bank example above. However we can use our 
+complex, as in the bank example above. However, we can use our 
 logic to state and verify this fact. Adapting the firewall formula 
 we have
 
@@ -1123,8 +1128,8 @@ $\mbox{\tt Cell (slot, state)} \models
 \neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
 
 If we have that $P \models \pgfp{X}{\neg
-  \pprefix{\quotep{\texttt{slot}}}{b}{X}}$, then
-$\forall \; \mbox{\tt state.new(slot)\{}
+  \pprefix{\quotep{\texttt{slot}}}{b}{X}}, \;$ then
+$\; \forall \; \mbox{\tt state.new(slot)\{}
 \binpar{P}{\mbox{\tt Cell(slot, state)}}{\tt \}} \wbbisim 0$
 
 More generally, note that objects involve not just one cell, but
