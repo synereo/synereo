@@ -304,8 +304,8 @@
 \title{\papertitle}
 
 \author{ L.G. Meredith }
-%\author{ Mark Miller }
 \author{ Mike Stay }
+\author{ Mark Miller }
 
 %\address{Systems Biology, Harvard Medical School, Boston, Massachussetts, USA}
 
@@ -385,7 +385,7 @@ that propositions are to types as proofs are to programs.  Hennessey-Milner
 logic lets us treat the type of a concurrent process as an assertion that 
 it belongs to a set of processes, all of which satisfy some property.  
 
-In this paper, we show that a concurrent process calculus called \rhoc is
+In this paper, we show that a concurrent process calculus called \rhoc\; is
 an ocap language and sketch a translation from a subset of JavaScript into
 the calculus; we also demonstrate that the corresponding Hennessey-Milner
 logic suffices to capture the key notion of deniability.
@@ -396,9 +396,9 @@ Other approaches to policy. Curry-Howard. Contracts as types.
 
 \subsubsection{Organization of the rest of the paper}
 
-We introduce the calculus, then the logic. Armed with these we
-illustrate translating a simple ocap example into the calculus. Then
-we illustrate how we can reason about properties of the translated
+We introduce the calculus. So equipped we illustrate translating a
+simple ocap example into the calculus. Next, we introduce the logic,
+and illustrate how we can reason about properties of the translated
 program and from there move to interpreting policy, focusing on
 deniability. Finally, we conclude with a discussion of some of the
 limitations of the approach and how we might approach these in future
@@ -475,7 +475,7 @@ of implementation from API: a cell's internal access to
 {\tt state} is kept in a private channel {\tt v} while
 external access is through {\tt slot}. Another nice thing about
 this design pattern is that it scales through composition: when
-translating ocap examples expressed in {\tt ECMAScript} to \rhoc\
+translating ocap examples expressed in {\tt ECMAScript} to \rhoc\;
 we will effectively treat the state of an object as a parallel
 composition of cells comprising its state.
 
@@ -744,6 +744,107 @@ unfamiliar with this important aspect of programming language
 semantics is strongly encouraged to look at
 \cite{DBLP:LNCS/Sangiorgi06}.
 
+\section{Interpreting object-capabilities in \rhoc}
+
+Rather than giving a translation of the whole of {\tt JavaScript} into
+\rhoc, we focus on one example from
+\cite{Drossopoulou:2013:NCP:2489804.2489811} designed to illustrate
+key aspects of object-capabilities and requirements for a policy
+language.
+
+\begin{verbatim}
+var makeMint = () => {
+  var m = WeakMap();
+  var makePurse = () => mint(0);
+  var mint = balance => {
+    var purse = def({
+      getBalance: () => balance,
+      makePurse: makePurse,
+      deposit: (amount, srcP) => Q(srcP).then(src => {
+        Nat(balance + amount);
+        m.get(src)(Nat(amount));
+        balance += amount;
+      })
+    });
+    var decr = amount => {
+      balance = Nat(balance - amount);
+    };
+    m.set(purse, decr);
+    return purse;
+  };
+  return mint;
+};
+\end{verbatim}
+
+Interpreting this code illustrates how surprisingly intuitive and
+natural it is to represent and reason about object-capabilities in
+\rhoc. Essentially, a capability---{\em i.e.} access to some behavior, power
+or authority---is represented by a channel. When an agent in the \rhoc\;
+has access to a channel it has exactly that: access to some behavior,
+power or authority.
+
+% Can we get away with describing the difference between WeakMap and Map just in English?
+
+Armed with $Cell$ and $Map$ from the first section, we can translate
+each of the language elements from the bank example into \rhoc.
+
+\begin{eqnarray*}
+ \meaningof{\texttt{var}\; x}( k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{k!()} \\
+ \meaningof{\texttt{var}\; x = v}( k ) & \defneqls & Cell( x, \meaningof{ v }( k ) ) \\
+ \meaningof{ P ; Q }( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( k_1 )}{ k_1?() => \meaningof{ Q }( k )} \} \\
+ \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
+ \meaningof{\texttt{def}(\{\ldots\})} & \defneqls & Map( \ldots ) \\
+\end{eqnarray*}
+
+% \begin{verbatim}
+% {
+%   new( rslt ){
+%     balance ! get( rslt )
+%     rslt?( b ) => {
+%       balance ! set( b + amount )
+%     }
+%   } 
+%   [| P |] 
+% }
+% \end{verbatim}
+
+% We need to address the translation of promises. We need to address the translation of Nat( … ).
+
+The key point is that the translation is compositional and therefore
+we can reason equationally in the translated code. For example, to
+translate the code fragment 
+\[\meaningof{ \mbox{\tt var}\; balance = initAmt; balance\; +\!= \; amount; P }( k )\]
+we calculate directly
+
+% K[X] := var balance = initAmt; X
+
+% [| K[balance += amount; P] |]
+% =
+% [| var balance = initAmt; balance += amount; P |]
+% = 
+% { 
+%   Cell( balance, initAmt ) 
+%   k!() 
+%   [| balance += amount; P |]
+% }
+% =
+\begin{lstlisting}[mathescape]
+{ 
+  $Cell( balance, initAmt )$
+  $k!()$
+  {
+    new $( rslt, k_1 )$ {
+      $balance ! get( rslt )$  
+       $rslt?( b ) \Rightarrow$ {
+        $balance ! set( b + amount )$
+        $k1$
+      }
+    } 
+    $k_1?() \Rightarrow \meaningof{ P }( k )$
+  }
+}
+\end{lstlisting}
+
 \section{Logic}
 Namespace logic resides in the subfamily of Hennessy-Milner logics
 discovered by Caires and Cardelli known as spatial logics
@@ -810,6 +911,10 @@ that it is a \emph{static} check. A process witnessing this formula
 will behave as though it were behind a firewall admitting only access
 to the ports in $\pquotep{\phi}$ without the need for the additional
 overhead of the watchdog machinery.
+
+We will use refinements this basic technique of walling off a behavior
+behind a namespace when reasoning about the ocap examples and
+especially in the context of deniability.
 
 \begin{grammar}
 \mbox{reflective logic}	& {\phi, \psi}	& \bc	& \ptrue & \mbox{verity} \\
@@ -923,106 +1028,6 @@ Also, when quantification ranges over all of $\QProc$, as in
 $\pquant{n}{\quotep{\ptrue}}{\phi}$, we omit the typing for the
 quantification variable, writing $\pquantuntyped{n}{\phi}$.
 
-\section{Interpreting object-capabilities in \rhoc}
-
-Rather than giving a translation of the whole of {\tt JavaScript} into
-\rhoc, we focus on one example from
-\cite{Drossopoulou:2013:NCP:2489804.2489811} designed to illustrate
-key aspects of object-capabilities and requirements for a policy
-language.
-
-\begin{verbatim}
-var makeMint = () => {
-  var m = WeakMap();
-  var makePurse = () => mint(0);
-  var mint = balance => {
-    var purse = def({
-      getBalance: () => balance,
-      makePurse: makePurse,
-      deposit: (amount, srcP) => Q(srcP).then(src => {
-        Nat(balance + amount);
-        m.get(src)(Nat(amount));
-        balance += amount;
-      })
-    });
-    var decr = amount => {
-      balance = Nat(balance - amount);
-    };
-    m.set(purse, decr);
-    return purse;
-  };
-  return mint;
-};
-\end{verbatim}
-
-Interpreting this code illustrates how surprisingly intuitive and
-natural it is to represent and reason about object-capabilities in
-\rhoc. Essentially, a capability---{\em i.e.} access to some behavior, power
-or authority---is represented by a channel. When an agent in the \rhoc
-has access to a channel it has exactly that: access to some behavior,
-power or authority.
-
-% Can we get away with describing the difference between WeakMap and Map just in English?
-
-Armed with the two gadgets above, we can translate each of the language elements from the bank example into \rhoc.
-
-\begin{eqnarray*}
- \meaningof{\texttt{var}\; x}( k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{k!()} \\
- \meaningof{\texttt{var}\; x = v}( k ) & \defneqls & Cell( x, \meaningof{ v }( k ) ) \\
- \meaningof{ P ; Q }( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( k_1 )}{ k_1?() => \meaningof{ Q }( k )} \} \\
- \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
-\end{eqnarray*}
-
-% \begin{verbatim}
-% {
-%   new( rslt ){
-%     balance ! get( rslt )
-%     rslt?( b ) => {
-%       balance ! set( b + amount )
-%     }
-%   } 
-%   [| P |] 
-% }
-% \end{verbatim}
-
-% We need to address the translation of promises. We need to address the translation of Nat( … ).
-
-The key point is that the translation is compositional and therefore
-we can reason equationally in the translated code. For example, to
-translate the code fragment 
-\[\meaningof{ \mbox{\tt var}\; balance = initAmt; balance\; +\!= \; amount; P }( k )\]
-we calculate directly
-
-% K[X] := var balance = initAmt; X
-
-% [| K[balance += amount; P] |]
-% =
-% [| var balance = initAmt; balance += amount; P |]
-% = 
-% { 
-%   Cell( balance, initAmt ) 
-%   k!() 
-%   [| balance += amount; P |]
-% }
-% =
-\begin{lstlisting}[mathescape]
-{ 
-  $Cell( balance, initAmt )$
-  $k!()$
-  {
-    new $( rslt, k_1 )$ {
-      $balance ! get( rslt )$  
-       $rslt?( b ) \Rightarrow$ {
-        $balance ! set( b + amount )$
-        $k1$
-      }
-    } 
-    $k_1?() \Rightarrow \meaningof{ P }( k )$
-  }
-}
-\end{lstlisting}
-
-
 \section{Interpreting policy}
 
 Drossopoulou \cite{Drossopoulou:2013:NCP:2489804.2489811} argues for several different types of policy
@@ -1075,7 +1080,7 @@ We looked at policy as types.
 Dependent types are future work.
 
 \paragraph{Acknowledgments.}
-The authors wish to thank Mark Miller, Sophia Drossopoulou and James Nolan for
+The authors wish to thank Sophia Drossopoulou and James Nolan for
 thoughtful and stimulating conversation about policy, object
 capabilities and types.
 
