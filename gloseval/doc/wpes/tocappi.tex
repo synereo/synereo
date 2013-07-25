@@ -291,7 +291,8 @@
 
 %%% ----------------------------------------------------------------------
 \begin{document}
-\lstset{language=erlang}
+%\lstset{language=erlang}
+\lstset{language=}
 
 %These margin values appear to be relative to the bigpage package settings. --cb
 \setlength{\topmargin}{0in}
@@ -375,36 +376,57 @@ couple of examples that illustrate a design pattern used over and over
 in this paper. The first is a mutable single-place cell for storing
 and retrieving state.
 
-\begin{verbatim}
-def Cell( slot, state ) => {
-  new ( v ) {
-    v!( state )
+% \begin{lstlisting}[mathescape]
+% def $Cell( slot, state ) \Rightarrow$ {
+%   new $( v )$ {
+%     $v!( state )$
+%     match {
+%       $slot ? get( ret ) \Rightarrow$ { 
+%         $v?( s ) \Rightarrow ret!( s )$
+%         $Cell( slot, s )$
+%       }
+%       $slot ? set( s ) \Rightarrow$ {
+%         $Cell( slot, s )$
+%       }
+%     }
+%   }
+% }
+% \end{lstlisting}
+
+\begin{lstlisting}[mathescape]
+def $Cell( slot, state ) \Rightarrow$ {
+  new $( v )$ {
+    $v!( state )$
     match {
-      slot ? get( ret ) => { 
-        v?( s ) => ret!( s )
-        Cell( slot, s )
+      $slot ? get( ret ) \Rightarrow$ {
+        $v?( s ) \Rightarrow ret!( s )$
+        $Cell( slot, s )$
       }
-      slot ? set( s ) => {
-        Cell( slot, s )
-      }
+      $slot ? set( s ) \Rightarrow$ { $Cell( slot, s )$ }
     }
   }
 }
-\end{verbatim}
+\end{lstlisting}
 
-We read this as saying that a {\tt Cell} is parametric in some (initial)
-{\tt state} and a {\tt slot} for accessing and mutating the
-cell's state. A {\tt Cell} allocates a private channel
-{\tt v} where it makes the initially supplied {\tt state}
-available to its internal computations. If on the channel
-{\tt slot} it receives a {\tt get} message containing a
-channel {\tt ret} indicating where to send the state of the cell,
-it accesses the private channel {\tt v} and sends the value it
-received on to the {\tt ret} channel; then it resumes behaving as
-a {\tt Cell}. Alternatively, if it receives a {\tt set} message
-containing some new state {\tt s}, it simply continues as a
-{\tt Cell} instantiated with accessor {\tt slot} and state
-{\tt s}.
+% \begin{lstlisting}[mathescape]
+% def $Cell( slot, state ) \Rightarrow$ {
+%   new $( v )$ {
+%     $v!( state )$
+%     $slot ? get( ret ) \Rightarrow$ { $v?( s ) \Rightarrow ret!( s )$ | $Cell( slot, s )$ } $+$ $slot ? set( s ) \Rightarrow$ { $Cell( slot, s )$ }
+%   }
+% }
+% \end{lstlisting}
+
+We read this as saying that a $Cell$ is parametric in some (initial)
+$state$ and a $slot$ for accessing and mutating the cell's state. A
+$Cell$ allocates a private channel $v$ where it makes the initially
+supplied $state$ available to its internal computations. If on the
+channel $slot$ it receives a $get$ message containing a channel $ret$
+indicating where to send the state of the cell, it accesses the
+private channel $v$ and sends the value it received on to the $ret$
+channel; then it resumes behaving as a $Cell$. Alternatively, if it
+receives a $set$ message containing some new state $s$, it simply
+continues as a $Cell$ instantiated with accessor $slot$ and state $s$.
 
 Despite the fact that this example bears a striking resemblance to code
 in any of a number of popular libraries, notably the {\tt AKKA}
@@ -421,24 +443,24 @@ composition of cells comprising its state.
 
 The second gadget is an immutable map.
 
-\begin{verbatim}
-def Map( slot1, state1, ... , slotN, stateN ) => {
-  new ( v1, ... , vN ) {
-    v1!( state1 )
-    ...
-    vN!( stateN )
-    slot1 ? get( ret ) => { 
-      v1?( x ) => ret!( x )
-      Map( slot1, x, ... , slotN, stateN )
+\begin{lstlisting}[mathescape]
+def $Map( slot1, state1, \ldots , slotN, stateN ) \Rightarrow$ {
+  new $( v1, \ldots )$ {
+    $v1!( state1 )$
+    $\ldots$
+    $vN!( stateN )$
+    $slot1 ? get( ret ) \Rightarrow$ { 
+      $v1?( x ) \Rightarrow ret!( x )$
+      $Map( slot1, x, \ldots , slotN, stateN )$
     }
-    ...
-    slotN ? get( ret ) => { 
-      vN?( x ) => ret!( x )
-      Map( slot1, state1, ... , slotN, x )
+    $\ldots$
+    $slotN ? get( ret ) \Rightarrow$ { 
+      $vN?( x ) \Rightarrow ret!( x )$
+      $Map( slot1, state1, \ldots , slotN, x )$
     }
   }
 }
-\end{verbatim}
+\end{lstlisting}
 
 The design pattern for maps is related the the one for cells, but is
 missing the capability to mutate the map. The code does not serve a
@@ -458,14 +480,16 @@ We let ${P, Q, R}$ range over processes and ${x, y, z}$ range over names.
 
 \begin{grammar}
 \mbox{\rhoc}		& {M, N}		& \bc	& \pzero & \mbox{null process} \\
-				&					& \bm	& {x}{?}{A} & \mbox{input} \\
-				&					& \bm	& {x}{!}{C} & \mbox{output} \\
+%				&					& \bm	& {x}{?}{A} & \mbox{input} \\
+				&					& \bm	& {x}{?}{( y_1, \ldots, y_N )} \Rightarrow {P} & \mbox{input} \\
+%				&					& \bm	& {x}{!}{C} & \mbox{output} \\
+				&					& \bm	& {x}{!}{( Q_1, \ldots, Q_N )} & \mbox{output} \\
 				&					& \bm	& {M}{+}{N} & \mbox{choice} \\
 				& { P, Q }              & \bc			& M & \mbox{include guarded processes} \\                                
 				&                        		& \bm	& {P} \juxtap {Q} & \mbox{parallel} \\                                
 				&					& \bm	& {*}{x} & \mbox{dereference} \\
-                                & { A }                 & \bc   & {( y_1, \ldots, y_N )} \Rightarrow {P} & \mbox{abstraction} \\
-                                & { C }                 & \bc   & {( Q_1, \ldots, Q_N )} & \mbox{data} \\
+%                                & { A }                 & \bc   & {( y_1, \ldots, y_N )} \Rightarrow {P} & \mbox{abstraction} \\
+%                                & { C }                 & \bc   & {( Q_1, \ldots, Q_N )} & \mbox{data} \\
 				& {x, y}  		& \bc	& {@}{P} & \mbox{reference} \\
 \end{grammar}
 
@@ -975,7 +999,7 @@ Armed with the two gadgets above, we can translate each of the language elements
 The key point is that the translation is compositional and therefore
 we can reason equationally in the translated code. For example, to
 translate the code fragment 
-\[\meaningof{ \mbox{\tt var balance = initAmt; balance += amount;} P }( k )\]
+\[\meaningof{ \mbox{\tt var}\; balance = initAmt; balance\; +\!= \; amount; P }( k )\]
 we calculate directly
 
 % K[X] := var balance = initAmt; X
@@ -990,21 +1014,22 @@ we calculate directly
 %   [| balance += amount; P |]
 % }
 % =
-\begin{verbatim}
+\begin{lstlisting}[mathescape]
 { 
-  Cell( balance, initAmt ) 
-  k!() 
+  $Cell( balance, initAmt )$
+  $k!()$
   {
-    new( rslt ){
-      balance ! get( rslt )  
-       rslt?( b ) => {
-        balance ! set( b + amount )
+    new $( rslt, k_1 )$ {
+      $balance ! get( rslt )$  
+       $rslt?( b ) \Rightarrow$ {
+        $balance ! set( b + amount )$
+        $k1$
       }
     } 
-    [| P |] 
+    $k_1?() \Rightarrow \meaningof{ P }( k )$
   }
 }
-\end{verbatim}
+\end{lstlisting}
 
 
 \section{Interpreting policy}
@@ -1017,22 +1042,22 @@ straightforward. For the reader familiar with logics of concurrency the
 core idea is to use rely-guarantee combined with the adjunct to
 spatial separation.
 
-A visual inspection of the code for {\tt Cell} reveals that if a
-process $P$’s names are fresh wrt to {\tt slot}, then $P$ cannot
-directly affect any {\tt Cell( slot, state )}. Unfortunately, 
+A visual inspection of the code for $Cell$ reveals that if a
+process $P$’s names are fresh wrt to $slot$, then $P$ cannot
+directly affect any $Cell( slot, state )$. Unfortunately, 
 visual inspection is not reliable in settings only mildly more 
 complex, as in the bank example above. However, we can use our 
 logic to state and verify this fact. Adapting the firewall formula 
 we have
 
-$\mbox{\tt Cell (slot, state)} \models 
+$Cell (slot, state) \models 
 \pgfp{X}{\pprefix{\quotep{\texttt{slot}}}{b}{X} \& 
 \neg \pprefix{\quotep{\neg \texttt{slot}}}{b}{X}}$
 
 If we have that $P \models \pgfp{X}{\neg
   \pprefix{\quotep{\texttt{slot}}}{b}{X}}, \;$ then
-$\; \forall \; \mbox{\tt state.new(slot)\{}
-\binpar{P}{\mbox{\tt Cell(slot, state)}}{\tt \}} \wbbisim 0$
+$\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
+\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim 0$
 
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
