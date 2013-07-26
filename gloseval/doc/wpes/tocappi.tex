@@ -8,6 +8,10 @@
 % This is a journal top-matter template file for use with AMS-LaTeX.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% TODO(mike): elaborate on how Map shows up in the interpretation of object literals
+%             fill in bibtex entries
+
+
 %\documentclass{tran-l}
 %\documentclass[twocolumn]{amsart}
 \documentclass[]{amsart}
@@ -371,28 +375,38 @@ references it possesses.  Authority can then be denied simply by not providing
 the relevant object reference. Ocap languages do not provide ambient, undeniable 
 authority such as the global variables in JavaScript,
 static mutable fields in Java and C\#, or allowing access to arbitrary objects
-through pointer arithmetic as in C and C++.  
+through pointer arithmetic as in C and C++.
+
+The electronic society is moving steadily towards the object capability model.
+ECMAScript 5, the standard version of JavaScript adopted by all modern
+browsers, introduced a new security API that enables the web browser to
+be turned into an ocap-safe platform; Google's Caja project is an implementation
+\cite{Caja}.  Brendan Eich, CTO of Mozilla, wrote, ``In SpiderMonkey + Gecko in 
+Firefox, and probably in other browsers, we actually use OCap under the hood 
+and have for years. In HTML5, the WindowProxy/Window distinction was finally 
+specified, as an ad-hoc instance of OCap membranes.  Any time we deviate from 
+OCap, we regret it for both security bug and access-checking overhead reasons.''
+\cite{Eich}
 
 We would like a way to declare the authority that an object ought to
 possess and then check whether the implementation matches the intent; that is,
 we would like a language for declaring security policy.
-Drossopoulou and Nolan \cite{Drossopoulou:2013:NCP:2489804.2489811} convincingly argue that none 
-of the current specification methods adequately capture all of the capability 
-policies required to support ocap systems.
+Drossopoulou and Noble \cite{Drossopoulou:2013:NCP:2489804.2489811}
+convincingly argue that none of the current specification methods
+adequately capture all of the capability policies required to support
+ocap systems.  In this paper, we show that a concurrent process calculus 
+called \rhoc is an ocap language and sketch a translation from a 
+subset of JavaScript into the calculus; we also demonstrate that 
+the corresponding Hennessey-Milner logic suffices to capture the 
+key notion of deniability.
 
 The Curry-Howard isomorphism relates formal logic to type theory; it says 
 that propositions are to types as proofs are to programs.  Hennessey-Milner
 logic lets us treat the type of a concurrent process as an assertion that 
-it belongs to a set of processes, all of which satisfy some property.  
-
-In this paper, we show that a concurrent process calculus called \rhoc\; is
-an ocap language and sketch a translation from a subset of JavaScript into
-the calculus; we also demonstrate that the corresponding Hennessey-Milner
-logic suffices to capture the key notion of deniability.
-
-\subsection{Overview and contributions} 
-
-Other approaches to policy. Curry-Howard. Contracts as types \cite{Meredith:2003:CT:944217.944236}.
+it belongs to a set of processes, all of which satisfy some property.  We
+can treat these properties as contracts governing the behavior of the
+process \cite{Meredith:2003:CT:944217.944236}; in other words, the 
+language of behavioral types suffices as a security policy language.
 
 \subsubsection{Organization of the rest of the paper}
 
@@ -1011,7 +1025,7 @@ The proof employs an adaptation of the standard strategy. A
 consequence of this theorem is that there is no algorithm guaranteeing
 that a check for the witness relation will terminate. However there is
 a large class of interesting formulae for which the witness check does
-terminate, see \cite{DBLP:conf/fossacs/Caires04}. Note bene: including
+terminate, see \cite{DBLP:conf/fossacs/Caires04}. {\em Nota bene}: including
 separation makes the logic strictly more observant than bismulation.
 
 \subsubsection{Syntactic sugar }
