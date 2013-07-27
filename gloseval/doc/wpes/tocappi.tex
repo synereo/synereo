@@ -501,19 +501,19 @@ The second gadget is an immutable map.
 \pagebreak
 
 \begin{lstlisting}[mathescape]
-def $Map( slot, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
+def $Map( chan, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
   new $( v_1, \ldots v_n)$ {
     $v_1!( state_1 )$
     $\ldots$
     $v_n!( state_n )$
-    $slot ? get( key_1, ret ) \Rightarrow$ { 
+    $chan ? get( key_1, ret ) \Rightarrow$ { 
       $v_1?( x ) \Rightarrow ret!( x )$
-      $Map( slot, key_1, state_1, \ldots , key_n, state_n )$
+      $Map( chan, key_1, state_1, \ldots , key_n, state_n )$
     }
     $\ldots$
-    $slot ? get( key_n, ret ) \Rightarrow$ { 
+    $chan ? get( key_n, ret ) \Rightarrow$ { 
       $v_n?( x ) \Rightarrow ret!( x )$
-      $Map( slot, key_1, state_1, \ldots , key_n, state_n )$
+      $Map( chan, key_1, state_1, \ldots , key_n, state_n )$
     }
   }
 }
@@ -521,7 +521,7 @@ def $Map( slot, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
 
 The design pattern for maps is related to the one for cells, but is
 missing the capability to mutate the map. The code does not serve a
-request to set any of the slots it contains. With these two patterns
+request to set any of the values it contains. With these two patterns
 in hand it will be much easier to treat the examples. Moreover, as we
 will see in the sequel, even with these basic patterns we can already
 reason about policy.  The shape of the reason about policy for these
@@ -753,11 +753,11 @@ hand, is unneeded because {\rhoc} is inherently asynchronous.
  \meaningof{\texttt{var}\; x = v; P}( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{Cell( x, \meaningof{ v }(x, k_1 ) )}{k_1?() \Rightarrow \meaningof{P}(k)}\} \\
  \meaningof{ P ; Q }( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( k_1 )}{ k_1?() => \meaningof{ Q }( k )} \} \\
  \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
- \meaningof{\texttt{def}(\{key_1: state_1, \ldots, key_n: state_n\})}(x, k) & \defneqls & Map(x, key_1, state_1, \ldots, key_n, state_n) | k!() \\
+ \meaningof{\texttt{def}(\{key_1: state_1, \ldots, key_n: state_n\})}(x, k) & \defneqls & \binpar{ Map(x, key_1, state_1, \ldots, key_n, state_n)}{k!()} \\
 \end{eqnarray*}
 
 We do not give an explicit translation of {\tt WeakMap} because it is quite
-large, but it's essentially the same as $Map$ plus some machinery for performing
+large, but it is essentially the same as $Map$ plus some machinery for performing
 updates.
 
 % \begin{verbatim}
@@ -1016,7 +1016,7 @@ $Cell (slot, state) \models
 If we have that $P \models \pgfp{X}{\neg
   \pprefix{\pquotep{slot}}{b}{X}}, \;$ then
 $\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
-\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P$
+\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P$.
 
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
@@ -1189,7 +1189,7 @@ Additionally, we call out input-guarded only summations using the notation
 
 $\texttt{match}\{ x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 ; \ldots ; x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M \}$ 
 
-instead of 
+\noindent instead of 
 
 $x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
 
