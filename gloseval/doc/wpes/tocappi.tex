@@ -1067,17 +1067,25 @@ To apply this to the bank example amounts to recognizing that the
 \texttt{purse} is essentially a generalized $Cell$. There are two
 means to access the internal state: \texttt{deposit} and
 \texttt{decr}. The example, however, enjoys an additional level of
-indirection in that these are scoped just to that purse. Attempting to
-model this naively will quickly run into problems as a parallel
-composition of purses will contend over serving balance update
-messages. This is where the higher order nature of the {\rhoc} makes
-it more suitable than the {\pic} for modeling these kinds of
-programs. In our translation a reference to \texttt{purse}
-$\meaningof{\texttt{var}\; purse = \ldots}$ is a $Cell$ that holds the
-\emph{code} of a process for a (generalized) $Cell$ serving the
-\texttt{deposit} and \texttt{decr} messages.
-
-[TODO: finish this section.]
+indirection in that in the \texttt{ECMAScript} the corresponding
+functions these are scoped just to that purse and affect no
+other. Attempting to model this naively will quickly run into
+problems, e.g.  as a parallel composition of purses will contend over
+serving balance update messages. This is where the higher order nature
+of the {\rhoc} makes it more suitable than the {\pic} for modeling
+these kinds of programs. In our translation a reference to
+\texttt{purse} $\meaningof{\texttt{var}\; purse = \ldots}$ is a $Cell$
+that holds the \emph{code} of a process for a (generalized) $Cell$
+serving the \texttt{deposit} and \texttt{decr} messages. Updates
+through a purse first access an execute the behavior to serve balance
+update messages and then put the modified \emph{behavior} (with the
+new balance) back in the $Cell$ for the purse. Thus, to express the
+property that no one can affect the balance of a purse they don't have
+\cite{Drossopoulou:2013:NCP:2489804.2489811} we only have to reason
+about access through this one channel, $purse$, providing access to
+the outer $Cell$. The higher-order nature of the calculus does the
+rest of the state management for us. But, we have already accomplished
+that for $Cell$'s, generically, in our previous reasoning.
 
 \section{Conclusions and future work}
 
