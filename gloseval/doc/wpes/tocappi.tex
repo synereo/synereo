@@ -501,19 +501,19 @@ The second gadget is an immutable map.
 \pagebreak
 
 \begin{lstlisting}[mathescape]
-def $Map( slot, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
+def $Map( chan, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
   new $( v_1, \ldots v_n)$ {
     $v_1!( state_1 )$
     $\ldots$
     $v_n!( state_n )$
-    $slot ? get( key_1, ret ) \Rightarrow$ { 
+    $chan ? get( key_1, ret ) \Rightarrow$ { 
       $v_1?( x ) \Rightarrow ret!( x )$
-      $Map( slot, key_1, state_1, \ldots , key_n, state_n )$
+      $Map( chan, key_1, state_1, \ldots , key_n, state_n )$
     }
     $\ldots$
-    $slot ? get( key_n, ret ) \Rightarrow$ { 
+    $chan ? get( key_n, ret ) \Rightarrow$ { 
       $v_n?( x ) \Rightarrow ret!( x )$
-      $Map( slot, key_1, state_1, \ldots , key_n, state_n )$
+      $Map( chan, key_1, state_1, \ldots , key_n, state_n )$
     }
   }
 }
@@ -521,7 +521,7 @@ def $Map( slot, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
 
 The design pattern for maps is related to the one for cells, but is
 missing the capability to mutate the map. The code does not serve a
-request to set any of the slots it contains. With these two patterns
+request to set any of the values it contains. With these two patterns
 in hand it will be much easier to treat the examples. Moreover, as we
 will see in the sequel, even with these basic patterns we can already
 reason about policy.  The shape of the reason about policy for these
