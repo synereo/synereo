@@ -1023,7 +1023,7 @@ be free in $P$, thus
 
 $\mbox{\tt new}(slot)\mbox{\tt \{} \binpar{P}{Cell(slot, state)} \scong \binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}}$
 
-which means $\binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}} \wbbisim \binpar{P}{0} \scong P$.
+\noindent which means $\binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}} \wbbisim \binpar{P}{0} \scong P$.
 
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
@@ -1038,12 +1038,12 @@ properties $\phi$ and $\psi$ and some behavior, $S$. In light of
 theorem \ref{sec:equivalence_theorem} we can, in principle, transform
 this into a statement of the form, ``If $Q \models \phi,$ then when $P
 \models \psi$ we have that $\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q}
-\models \omega$ for some properties $\phi$,$\psi$, and $\omega$.'' This
+\models \omega$ for some properties $\phi$, $\psi$, and $\omega$.'' This
 is the shape of our encoding of deniability policies. The key insight
-here is to mediate between the closed-world and open-world forms of
+here is to mediate between closed-world and open-world forms of
 deniability. In this open-world formulation we do not quantify over
 all potential contexts and attackers, but work just with those that
-can be relied upon to use the API---even in attacks.
+can be relied upon to use the API, even in attacks.
 
 The first element of this encoding we wish to draw attention to is
 that this provides just the emphasis on necessary rather than
@@ -1061,7 +1061,7 @@ semantics $\pmeaningof{\phi \rhd_{\vec{x}} \psi}( v ) = \{ P : \forall
 Q. Q \in \pmeaningof{\phi}( v ) \Rightarrow
 \mbox{\texttt{new}}(x_1,\ldots,x_N)\mbox{\{}\binpar{P}{Q}\mbox{\}}\in
 \pmeaningof{\psi}(v) \}$, as the logical form that mediates between
-closed-world and open-world formulation of deniability.
+closed-world and open-world formulations of deniability.
 
 To apply this to the bank example amounts to recognizing that the
 \texttt{purse} is essentially a generalized $Cell$. There are two
@@ -1077,7 +1077,7 @@ these kinds of programs. In our translation a reference to
 \texttt{purse} $\meaningof{\texttt{var}\; purse = \ldots}$ is a $Cell$
 that holds the \emph{code} of a process for a (generalized) $Cell$
 serving the \texttt{deposit} and \texttt{decr} messages. Updates
-through a purse first access an execute the behavior to serve balance
+through a purse first access and execute the behavior to serve balance
 update messages and then put the modified \emph{behavior} (with the
 new balance) back in the $Cell$ for the purse. Thus, to express the
 property that no one can affect the balance of a purse they don't have
@@ -1085,7 +1085,7 @@ property that no one can affect the balance of a purse they don't have
 about access through this one channel, $purse$, providing access to
 the outer $Cell$. The higher-order nature of the calculus does the
 rest of the state management for us. But, we have already accomplished
-that for $Cell$'s, generically, in our previous reasoning.
+that for $Cell$s, generically, in our previous reasoning.
 
 \section{Conclusions and future work}
 
