@@ -754,7 +754,7 @@ hand, is unneeded because {\rhoc} is inherently asynchronous.
 \end{eqnarray*}
 
 We do not give an explicit translation of {\tt WeakMap} because it is quite
-large, but it's essentially the same as $Map$ plus some machinery for performing
+large, but it is essentially the same as $Map$ plus some machinery for performing
 updates.
 
 % \begin{verbatim}
@@ -1013,7 +1013,7 @@ $Cell (slot, state) \models
 If we have that $P \models \pgfp{X}{\neg
   \pprefix{\pquotep{slot}}{b}{X}}, \;$ then
 $\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
-\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P$
+\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P$.
 
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
@@ -1239,7 +1239,7 @@ Additionally, we call out input-guarded only summations using the notation
 
 $\texttt{match}\{ x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 ; \ldots ; x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M \}$ 
 
-instead of 
+\noindent instead of 
 
 $x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
 
