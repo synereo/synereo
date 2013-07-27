@@ -1070,13 +1070,13 @@ quantification variable, writing $\pquantuntyped{n}{\phi}$.
 
 \section{Interpreting policy}
 
-Drossopoulou \cite{Drossopoulou:2013:NCP:2489804.2489811} argues for several different types of policy
-specifications. In this paper we focus on deniability policies, since the
-others have ready translations in this setting. Deniability is the one
-type of policy specification where the translation is not at all
-straightforward. For the reader familiar with logics of concurrency the
-core idea is to use rely-guarantee combined with the adjunct to
-spatial separation.
+Drossopoulou \cite{Drossopoulou:2013:NCP:2489804.2489811} argues for
+several different types of policy specifications. In this paper we
+focus on deniability policies, since the others have ready
+translations in this setting. Deniability is the one type of policy
+specification where the translation is not at all straightforward. For
+the reader familiar with logics of concurrency the core idea is to use
+rely-guarantee combined with the adjunct to spatial separation.
 
 A visual inspection of the code for $Cell$ reveals that if a
 process $P$’s names are fresh wrt to $slot$, then $P$ cannot
@@ -1104,7 +1104,7 @@ many. By restricting those cells to slots that live in namespace $Slot
 separate objects from a given environment. We'll say more about this
 in the conclusions. 
 
-For now we refine the basic idea to build up to modeling the bank
+For now, we refine the basic idea to build up to modeling the bank
 example. The central intuition is that the purse is essentially a
 cell. In the paragraphs above we witnessed a basic form of
 argumentation: if $Q \models \phi$ then when $P \models \psi$ we have
@@ -1122,7 +1122,10 @@ precisely that of rely-guarantee identified by Honda in
 \cite{Honda:2008:UTP:2227536.2227558} and, as Honda observes, can be
 internalized in the logic as the adjunct to separation. 
 
-Thus, we include formulae of the form $\phi \rhd \psi$ with semantics $\pmeaningof{\phi \rhd \psi}( v ) = \{ P : \forall P_0. P_0 \in \pmeaningof{\phi}( v ) \Rightarrow \binpar{P_0}{P}, \; P_0 \in \pmeaningof{\psi}(v), \;  P_1 \in \pmeaningof{\psi}(v) \}$
+Thus, we include formulae of the form $\phi \rhd \psi$ with semantics
+$\pmeaningof{\phi \rhd \psi}( v ) = \{ P : \forall Q. Q \in
+\pmeaningof{\phi}( v ) \Rightarrow \binpar{P}{Q}\in
+\pmeaningof{\psi}(v) \}$
 
 [Todo: finish this section!]
 
