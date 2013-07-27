@@ -8,10 +8,7 @@
 % This is a journal top-matter template file for use with AMS-LaTeX.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TODO(mike): elaborate on how Map shows up in the interpretation of object literals
-%             fill in bibtex entries for Kosic
-%             asynchrony and Q
-%             locating a closure at a name: how to translate a closure into a process that gets stuck into the cell
+% TODO(mike): locating a closure at a name: how to translate a closure into a process that gets stuck into the cell
 
 
 
@@ -501,20 +498,22 @@ composition of cells comprising its state.
 
 The second gadget is an immutable map.
 
+\pagebreak
+
 \begin{lstlisting}[mathescape]
-def $Map( slot1, state1, \ldots , slotN, stateN ) \Rightarrow$ {
-  new $( v1, \ldots )$ {
-    $v1!( state1 )$
+def $Map( slot, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
+  new $( v_1, \ldots v_n)$ {
+    $v_1!( state_1 )$
     $\ldots$
-    $vN!( stateN )$
-    $slot1 ? get( ret ) \Rightarrow$ { 
-      $v1?( x ) \Rightarrow ret!( x )$
-      $Map( slot1, x, \ldots , slotN, stateN )$
+    $v_n!( state_n )$
+    $slot ? get( key_1, ret ) \Rightarrow$ { 
+      $v_1?( x ) \Rightarrow ret!( x )$
+      $Map( slot, key_1, state_1, \ldots , key_n, state_n )$
     }
     $\ldots$
-    $slotN ? get( ret ) \Rightarrow$ { 
-      $vN?( x ) \Rightarrow ret!( x )$
-      $Map( slot1, state1, \ldots , slotN, x )$
+    $slot ? get( key_n, ret ) \Rightarrow$ { 
+      $v_n?( x ) \Rightarrow ret!( x )$
+      $Map( slot, key_1, state_1, \ldots , key_n, state_n )$
     }
   }
 }
@@ -820,15 +819,23 @@ power or authority.
 % Can we get away with describing the difference between WeakMap and Map just in English?
 
 Armed with $Cell$ and $Map$ from the first section, we can translate
-each of the language elements from the bank example into \rhoc.
-
+each of the language elements from the bank example into \rhoc.  Note
+that the interpretation takes a channel $k$ on which to signal 
+completion of the statement; synchronous JavaScript necessarily needs 
+to be transformed into continuation-passing style as part of the
+interpretation in {\rhoc}.  The asynchronous {\tt Q} library, on the other
+hand, is unneeded because {\rhoc} is inherently asynchronous.  
 \begin{eqnarray*}
- \meaningof{\texttt{var}\; x}( k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{k!()} \\
- \meaningof{\texttt{var}\; x = v}( k ) & \defneqls & Cell( x, \meaningof{ v }( k ) ) \\
+ \meaningof{\texttt{var}\; x; P}( k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{\meaningof{P}(k)} \\
+ \meaningof{\texttt{var}\; x = v; P}( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{Cell( x, \meaningof{ v }(x, k_1 ) )}{k_1?() \Rightarrow \meaningof{P}(k)}\} \\
  \meaningof{ P ; Q }( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( k_1 )}{ k_1?() => \meaningof{ Q }( k )} \} \\
  \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
- \meaningof{\texttt{def}(\{\ldots\})} & \defneqls & Map( \ldots ) \\
+ \meaningof{\texttt{def}(\{key_1: state_1, \ldots, key_n: state_n\})}(x, k) & \defneqls & Map(x, key_1, state_1, \ldots, key_n, state_n) | k!() \\
 \end{eqnarray*}
+
+We do not give an explicit translation of {\tt WeakMap} because it is quite
+large, but it's essentially the same as $Map$ plus some machinery for performing
+updates.
 
 % \begin{verbatim}
 % {
@@ -847,7 +854,6 @@ each of the language elements from the bank example into \rhoc.
 The key point is that the translation is compositional and therefore
 we can reason equationally in the translated code. For example, to
 translate the code fragment below we calculate directly
-\[\]
 
 % K[X] := var balance = initAmt; X
 
