@@ -496,7 +496,7 @@ translating ocap examples expressed in {\tt ECMAScript} to \rhoc\;
 we will effectively treat the state of an object as a parallel
 composition of cells comprising its state.
 
-The second gadget is an immutable map.
+The second gadget is an immutable map:
 
 \pagebreak
 
@@ -524,7 +524,7 @@ missing the capability to mutate the map. The code does not serve a
 request to set any of the values it contains. With these two patterns
 in hand it will be much easier to treat the examples. Moreover, as we
 will see in the sequel, even with these basic patterns we can already
-reason about policy.  The shape of the reason about policy for these
+reason about policy.  The shape of the reasoning about policy for these
 examples scales compositionally to reasoning about application-level
 policy.
 
@@ -832,11 +832,11 @@ referred to \cite{DBLP:conf/tgc/MeredithR05}.
 
 \subsection{Examples}
 
-A principal advantage to using logical formulae, aka types, of this
+A principal advantage to using logical formulae, also known as types, of this
 kind is that they denote classes or programs. Unlike the usual notion
-of type, where a types inhabitants are instances of data structures,
-in namespace logic a formulae (i.e. a type) $\phi$ is inhabited by
-programs -- namely all the programs that satisfy the
+of type, where a type's inhabitants are instances of data structures,
+in namespace logic a formula ({\em i.e.} a type) $\phi$ is inhabited by
+programs---namely all the programs that satisfy the
 formulae. Namespace logic takes this a step further. Because it is
 built on a reflective programming language (the \rhoc) it also has
 formulae, $\pquotep{\phi}$, for describing classes of names. Said
@@ -1036,20 +1036,20 @@ deniability. The shape of the logical statement above is: if $Q
 $\texttt{new}(x_1,\ldots,x_N)\{ \binpar{P}{Q} \} \wbbisim S$ for some
 properties $\phi$ and $\psi$ and some behavior, $S$. In light of
 theorem \ref{sec:equivalence_theorem} we can, in principle, transform
-this into a statement of the form if $Q \models \phi$ then when $P
+this into a statement of the form, ``If $Q \models \phi,$ then when $P
 \models \psi$ we have that $\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q}
-\models \omega$ for some properties $\phi$,$\psi$, and $\omega$. This
+\models \omega$ for some properties $\phi$,$\psi$, and $\omega$.'' This
 is the shape of our encoding of deniability policies. The key insight
-here is to mediate between closed-world and open-world forms of
+here is to mediate between the closed-world and open-world forms of
 deniability. In this open-world formulation we do not quantify over
 all potential contexts and attackers, but work just with those that
-can be relied upon to use the API -- even in attacks.
+can be relied upon to use the API---even in attacks.
 
 The first element of this encoding we wish to draw attention to is
 that this provides just the emphasis on necessary rather than
 sufficient conditions. Moreover, notice that the form of the statement
 remains true to the intent of deniability even if the logic is
-\emph{more} discriminating than bisimulation -- which is the case if
+\emph{more} discriminating than bisimulation---which is the case if
 we include the separation operator (as noted in
 \cite{DBLP:conf/fossacs/Caires04}). In the presence of a logic with
 separation this shape turns out to a form of rely-guarantee identified
