@@ -521,15 +521,12 @@ def $Map( slot, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
 
 The design pattern for maps is related to the one for cells, but is
 missing the capability to mutate the map. The code does not serve a
-request to set any of the slots it contains.
-
-With these two patterns in hand it will be much easier to treat the
-examples. Moreover, as we will see in the sequel, even with these
-basic patterns we can already reason about policy.  The shape of the
-reason about policy for these examples scales compositionally to
-reasoning about application-level policy.
-
-Now let's introduce the calculus and its logic.
+request to set any of the slots it contains. With these two patterns
+in hand it will be much easier to treat the examples. Moreover, as we
+will see in the sequel, even with these basic patterns we can already
+reason about policy.  The shape of the reason about policy for these
+examples scales compositionally to reasoning about application-level
+policy.
 
 \subsubsection{The \rhoc}
 
@@ -628,90 +625,18 @@ satisfies the following laws:
 \end{eqnarray*}
 
 \paragraph{Name equivalence} As discussed in
-\cite{DBLP:conf/tgc/MeredithR05} name-equivalence is subtly
-recursively related to $\alpha$-equivalence and structural equivalence.
-
-\subsection{Syntactic substitution}
-
-Now we build the substitution used by $\alpha$-equivalence. We use
-$\Proc$ for the set of processes, $\QProc$ for the set of names, and
-${\{}{y_1} / {x_1}, \ldots, {y_n} / {x_n}{\}}$ to denote partial maps, $s : \QProc
-\rightarrow \QProc$. A map, $s$, lifts uniquely to a map on process terms, $\widehat{s} :
-\Proc \rightarrow \Proc$ by the following equations.
-
-\begin{eqnarray*}
-(0) \psubstp{Q}{P}         & \defneqls &    0 \\
-(R \juxtap S) \psubstp{Q}{P}
-		& \defneqls &    
-		(R)\psubstp{Q}{P} \juxtap (S) \psubstp{Q}{P} \\
-({x}{?}{( y_1, \ldots, y_N )} \Rightarrow R) \psubstp{Q}{P}    
-		& \defneqls &    
-		{(x)}\substp{Q}{P}{?}{( z_1, \ldots, z_N )}\Rightarrow (R \psubstn{z_1}{y_1}\ldots\psubstn{z_N}{y_N}) \psubstp{Q}{P} \\
-%(x\id{[}y\id{]}) \psubstp{Q}{P}
-%		& \defneqls &    
-%		(x)\substp{Q}{P} \id{[}(y)\substp{Q}{P} \id{]} \\
-({x}{!}{(}{R}{)}) \psubstp{Q}{P}  
- 		& \defneqls &
- 		{(x)\substp{Q}{P}}{!}{(}{ R \psubstp{Q}{P} }{)} \\
-({*}{x})  \psubstp{Q}{P}       
-		& \defneqls & 
-		\left\{ 
-			\begin{array}{ccc} 
-				\dropn{\quotep{Q}} & & x \nameeq \quotep{P} \\
-                              	\dropn{x} & & otherwise \\
-			\end{array}
-		\right.
-\end{eqnarray*}
- 
-
-where
-
-\begin{equation*}
-(x){\{} {@}Q / {@}P {\}}            \defneqls 
-		\left\{ 
-			\begin{array}{ccc}
-				{@}Q & & x \nameeq {@}P \\
-                                x & & otherwise \\
-			\end{array}
-		\right.
-\end{equation*}
-
-and $z_i$ is chosen distinct from $\quotep{P}$, $\quotep{Q}$, the free
-names in $Q$, and all the names in $R$ in the equation for input. Our
-$\alpha$-equivalence will be built in the standard way from this
-substitution.
-
-\subsection{ Dynamic quote: an example }
-
-Anticipating something of what's to come, consider applying the
-substitution, $\widehat{{\{}u / z {\}}}$, to the following pair
-of processes, ${w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$ and ${w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}$.
-
-\begin{eqnarray*}
-	{w}{!}{(}{y}{!}{(}{*}{z}{)}{)}\widehat{{\{}u / z{\}}}
-		& = &
-		{w}{!}{(}{y}{!}{(}{*}u{)}{)} \\
-       {w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
-		& = &
-		{w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}
-\end{eqnarray*}
-
-Because the body of the referenced process is impervious to
-substitution, we get radically different answers. In fact, by
-examining the first process in an input context, e.g. $x{(}{z}{)}
-\Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$, we see that combinations
-of reference and dereference may be shaped by prefixed inputs binding
-dereferenced names. In this sense, these operators provide a means to
-dynamically construct processes before reifying them as names,
-functioning much like quasiquote in {\tt Lisp}.
+\cite{DBLP:conf/tgc/MeredithR05} the calculus uses an equality,
+$\nameeq$, pronounced name-equivalence that is recursively related to
+$\alpha$-equivalence and structural equivalence.
 
 \subsection{Semantic substitution}
 
-The substitution used in $\alpha$-equivalence is really only a device
-to formally recognize that binding occurrences do not depend on the
-specific names. Semantic subsitution, the engine of computation in
-this calculus, differs from syntactic substitution in its application
-to a dropped name.
+The engine of computation in this calculus is the interaction between
+synchronization and a form of substitution, that called semantics
+substitution, differs from the ordinary syntactic substitution one
+might expect in its application to a dropped name. For more details
+see the appendix \ref{sec:syntactic_substitution} or
+\cite{DBLP:journals/entcs/MeredithR05}
 
 \begin{eqnarray*}
 (\dropn{x})  \psubstp{Q}{P}       
@@ -723,11 +648,6 @@ to a dropped name.
 			\end{array}
 		\right.
 \end{eqnarray*}
-
-In the remainder of the paper we will refer to semantic and syntactic
-substitutions simply as substitutions and rely on context to
-distinguish which is meant. Similarly, we will abuse notation and
-write $\substn{y}{x}$ for $\psubstn{y}{x}$.
 
 Finally equipped with these standard features we can present the
 dynamics of the calculus.
@@ -851,9 +771,11 @@ updates.
 
 % We need to address the translation of promises. We need to address the translation of Nat( … ).
 
-The key point is that the translation is compositional and therefore
-we can reason equationally in the translated code. For example, to
-translate the code fragment below we calculate directly
+The key point is that the translation is compositional, so we can
+build up the translation of the whole from the translation of the
+parts. Moreover, we can reason equationally in the translated
+code. For example, to translate the code fragment below we calculate
+directly
 
 % K[X] := var balance = initAmt; X
 
@@ -869,12 +791,12 @@ translate the code fragment below we calculate directly
 % =
 \begin{lstlisting}[mathescape]
 $\meaningof{ \mbox{\tt var}\; balance = initAmt; balance\; +\!= \; amount; P }( k )$
-$=$
+$=$ (defn)
 { 
   $\binpar{Cell( balance, initAmt )}{k!()}$
   new $( rslt, k_1 )$ { $\binpar{\binpar{balance ! get( rslt )}{rslt?( b ) \Rightarrow \{ \binpar{balance ! set( b + amount )}{k1!()} \} }}{k_1?() \Rightarrow \meaningof{ P }( k )}$ }
 }
-$=$
+$=$ (extrusion laws for new)
 new $( rslt, k_1 )$ {
   $\binpar{Cell( balance, initAmt )}{k!()}$
   $\binpar{\binpar{balance ! get( rslt )}{rslt?( b ) \Rightarrow \{ \binpar{balance ! set( b + amount )}{k1!()} \} }}{k_1?() \Rightarrow \meaningof{ P }( k )}$
@@ -1043,7 +965,7 @@ We say $P$ witnesses $\phi$ (resp., $x$ witnesses $\pquotep{\phi}$),
 written $P \models \phi$ (resp., $x \models \pquotep{\phi}$) just when
 $\forall v . P \in \meaningof{\phi}(v)$ (resp., $\forall v . x \in \meaningof{\pquotep{\phi}}(v)$).
 
-\begin{thm}[Equivalence]
+\begin{thm}[Equivalence]\label{sec:equivalence_theorem}
 	$P \wbbisim Q \riff \forall \phi \in \PFormula_{-Par} . P \models \phi \riff Q \models \phi .$
 \end{thm}
 
@@ -1057,15 +979,10 @@ separation makes the logic strictly more observant than bismulation.
 \subsubsection{Syntactic sugar }
 
 In the examples below, we freely employ the usual DeMorgan-based
-syntactic sugar. For example,
-
-\begin{eqnarray}
-	\phi \Rightarrow \psi & \defneqls & \neg ( \phi \& \neg \psi ) \nonumber\\
-	\phi \vee \psi & \defneqls & \neg ( \neg \phi \& \neg \psi ) \nonumber
-\end{eqnarray}
-
-Also, when quantification ranges over all of $\QProc$, as in
-$\pquant{n}{\quotep{\ptrue}}{\phi}$, we omit the typing for the
+syntactic sugar. For example, $\phi \Rightarrow \psi \defneqls \neg (
+\phi \& \neg \psi )$ and $\phi \vee \psi \defneqls \neg ( \neg \phi \&
+\neg \psi )$. Also, when quantification ranges over all of $\QProc$,
+as in $\pquant{n}{\quotep{\ptrue}}{\phi}$, we omit the typing for the
 quantification variable, writing $\pquantuntyped{n}{\phi}$.
 
 \section{Interpreting policy}
@@ -1104,28 +1021,39 @@ many. By restricting those cells to slots that live in namespace $Slot
 separate objects from a given environment. We'll say more about this
 in the conclusions. 
 
-For now, we refine the basic idea to build up to modeling the bank
-example. The central intuition is that the purse is essentially a
-cell. In the paragraphs above we witnessed a basic form of
-argumentation: if $Q \models \phi$ then when $P \models \psi$ we have
-that $\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \wbbisim S$ for some
-properties $\phi$ and $\psi$ and some behavior, $S$. In light of
-theorem 3.0.1 we can transform this into a statement of the form if $Q
+For now, we refine the basic idea to illustrate how to model
+deniability. The shape of the logical statement above is: if $Q
 \models \phi$ then when $P \models \psi$ we have that
-$\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \models \omega$ for some
-properties $\phi$,$\psi$, and $\omega$. Notice that the form of the
-statement remains true to the intent of capturing deniability even if
-the logic is \emph{more} discriminating than bisimulation -- which is
-the case if we include the separation operator (as noted in
-\cite{DBLP:conf/fossacs/Caires04}). This shape turns out to be
-precisely that of rely-guarantee identified by Honda in
-\cite{Honda:2008:UTP:2227536.2227558} and, as Honda observes, can be
-internalized in the logic as the adjunct to separation. 
+$\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \wbbisim S$ for some
+properties $\phi$ and $\psi$ and some behavior, $S$. In light of
+theorem \ref{sec:equivalence_theorem} we can, in principle, transform
+this into a statement of the form if $Q \models \phi$ then when $P
+\models \psi$ we have that $\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q}
+\models \omega$ for some properties $\phi$,$\psi$, and $\omega$. This
+is the shape of our encoding of deniability policies. The key insight
+here is to mediate between closed-world and open-world forms of
+deniability. In this open-world formulation we do not quantify over
+all potential contexts and attackers, but work just with those that
+can be relied upon to use the API -- even in attacks.
 
-Thus, we include formulae of the form $\phi \rhd \psi$ with semantics
-$\pmeaningof{\phi \rhd \psi}( v ) = \{ P : \forall Q. Q \in
-\pmeaningof{\phi}( v ) \Rightarrow \binpar{P}{Q}\in
-\pmeaningof{\psi}(v) \}$
+The first element of this encoding we wish to draw attention to is
+that this provides just the emphasis on necessary rather than
+sufficient conditions. Moreover, notice that the form of the statement
+remains true to the intent of deniability even if the logic is
+\emph{more} discriminating than bisimulation -- which is the case if
+we include the separation operator (as noted in
+\cite{DBLP:conf/fossacs/Caires04}). In the presence of a logic with
+separation this shape turns out to be precisely that of rely-guarantee
+identified by Honda in \cite{Honda:2008:UTP:2227536.2227558} and, as
+Honda observes, can be internalized in the logic as the adjunct to
+separation. Thus, we include rely-guarantee formulae, $\phi \rhd \psi$
+with semantics $\pmeaningof{\phi \rhd \psi}( v ) = \{ P : \forall Q. Q
+\in \pmeaningof{\phi}( v ) \Rightarrow \binpar{P}{Q}\in
+\pmeaningof{\psi}(v) \}$, as the logical form that mediates between
+closed-world and open-world formulation of deniability.
+
+To apply this to the bank example amounts to recognizing that the
+purse is essentially a cell, the internal state of which is balance.
 
 [Todo: finish this section!]
 
@@ -1152,7 +1080,83 @@ capabilities and types.
 
 % ------------------------------------------------------------------------
 
-\section{Appendix: $\rho$ sugar}
+\section{Appendix: $\rho$-calculus substitution and sugar}
+
+\subsection{Syntactic substitution}\label{sec:syntactic_substitution}
+
+Now we build the substitution used by $\alpha$-equivalence. We use
+$\Proc$ for the set of processes, $\QProc$ for the set of names, and
+${\{}{y_1} / {x_1}, \ldots, {y_n} / {x_n}{\}}$ to denote partial maps, $s : \QProc
+\rightarrow \QProc$. A map, $s$, lifts uniquely to a map on process terms, $\widehat{s} :
+\Proc \rightarrow \Proc$ by the following equations.
+
+\begin{eqnarray*}
+(0) \psubstp{Q}{P}         & \defneqls &    0 \\
+(R \juxtap S) \psubstp{Q}{P}
+		& \defneqls &    
+		(R)\psubstp{Q}{P} \juxtap (S) \psubstp{Q}{P} \\
+({x}{?}{( y_1, \ldots, y_N )} \Rightarrow R) \psubstp{Q}{P}    
+		& \defneqls &    
+		{(x)}\substp{Q}{P}{?}{( z_1, \ldots, z_N )}\Rightarrow (R \psubstn{z_1}{y_1}\ldots\psubstn{z_N}{y_N}) \psubstp{Q}{P} \\
+%(x\id{[}y\id{]}) \psubstp{Q}{P}
+%		& \defneqls &    
+%		(x)\substp{Q}{P} \id{[}(y)\substp{Q}{P} \id{]} \\
+({x}{!}{(}{R}{)}) \psubstp{Q}{P}  
+ 		& \defneqls &
+ 		{(x)\substp{Q}{P}}{!}{(}{ R \psubstp{Q}{P} }{)} \\
+({*}{x})  \psubstp{Q}{P}       
+		& \defneqls & 
+		\left\{ 
+			\begin{array}{ccc} 
+				\dropn{\quotep{Q}} & & x \nameeq \quotep{P} \\
+                              	\dropn{x} & & otherwise \\
+			\end{array}
+		\right.
+\end{eqnarray*}
+ 
+
+where
+
+\begin{equation*}
+(x){\{} {@}Q / {@}P {\}}            \defneqls 
+		\left\{ 
+			\begin{array}{ccc}
+				{@}Q & & x \nameeq {@}P \\
+                                x & & otherwise \\
+			\end{array}
+		\right.
+\end{equation*}
+
+and $z_i$ is chosen distinct from $\quotep{P}$, $\quotep{Q}$, the free
+names in $Q$, and all the names in $R$ in the equation for input. Our
+$\alpha$-equivalence will be built in the standard way from this
+substitution.
+
+\subsection{ Dynamic quote: an example }
+
+Anticipating something of what's to come, consider applying the
+substitution, $\widehat{{\{}u / z {\}}}$, to the following pair
+of processes, ${w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$ and ${w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}$.
+
+\begin{eqnarray*}
+	{w}{!}{(}{y}{!}{(}{*}{z}{)}{)}\widehat{{\{}u / z{\}}}
+		& = &
+		{w}{!}{(}{y}{!}{(}{*}u{)}{)} \\
+       {w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
+		& = &
+		{w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}
+\end{eqnarray*}
+
+Because the body of the referenced process is impervious to
+substitution, we get radically different answers. In fact, by
+examining the first process in an input context, e.g. $x{(}{z}{)}
+\Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$, we see that combinations
+of reference and dereference may be shaped by prefixed inputs binding
+dereferenced names. In this sense, these operators provide a means to
+dynamically construct processes before reifying them as names,
+functioning much like quasiquote in {\tt Lisp}.
+
+\subsection{Sugar}
 
 It is known that replication (and hence recursion) can be implemented
 in a higher-order process algebra \cite{SangiorgiWalker}. This
