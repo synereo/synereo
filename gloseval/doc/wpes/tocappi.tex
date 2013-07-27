@@ -626,8 +626,9 @@ satisfies the following laws:
 
 \paragraph{Name equivalence} As discussed in
 \cite{DBLP:conf/tgc/MeredithR05} the calculus uses an equality,
-$\nameeq$, pronounced name-equivalence that is recursively related to
-$\alpha$-equivalence and structural equivalence.
+$\nameeq$, pronounced name-equivalence, recursively related to
+$\alpha$-equivalence and structural equivalence, to judge when two
+names are equivalent, when deciding synchronization and substitution.
 
 \subsection{Semantic substitution}
 
@@ -635,8 +636,7 @@ The engine of computation in this calculus is the interaction between
 synchronization and a form of substitution, that called semantics
 substitution, differs from the ordinary syntactic substitution one
 might expect in its application to a dropped name. For more details
-see the appendix \ref{sec:syntactic_substitution} or
-\cite{DBLP:journals/entcs/MeredithR05}
+see \cite{DBLP:journals/entcs/MeredithR05}
 
 \begin{eqnarray*}
 (\dropn{x})  \psubstp{Q}{P}       
@@ -678,11 +678,14 @@ In addition, we have the following context rules:
 The context rules are entirely standard and we do not say much about
 them here. The communication rule makes it possible for agents to
 synchronize at name-equivalent guards and communicate processes
-packaged as names. Here is a simple example of the use of quasiquote:
-
-\begin{eqnarray*}
-	x{(}{z}{)} \Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)} \juxtap x{!}{(}{P}{)} & \red & {w}{!}{(}{y}{!}{(}P{)}{)} \\
-\end{eqnarray*}
+packaged as names. Here is a simple example of the use of
+synchronization, reduction and quasiquote: $x{(}{z}{)} \Rightarrow
+{w}{!}{(}{y}{!}{(}{*}{z}{)}{)} \juxtap x{!}{(}{P}{)} \red
+{w}{!}{(}{y}{!}{(}P{)}{)}$. The input-guarded process, $x{(}{z}{)}
+\Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$, waits to receive the code
+of $P$ from the output-guarded data, $x{!}{(}{P}{)}$, and then reduces
+to a new process the body of which is rewritten to include $P$,
+${w}{!}{(}{y}{!}{(}P{)}{)}$.
 
 \paragraph{Bisimulation}
 
@@ -1053,17 +1056,40 @@ with semantics $\pmeaningof{\phi \rhd \psi}( v ) = \{ P : \forall Q. Q
 closed-world and open-world formulation of deniability.
 
 To apply this to the bank example amounts to recognizing that the
-purse is essentially a cell, the internal state of which is balance.
-
-[Todo: finish this section!]
+\texttt{purse} is essentially a $Cell$ with $slot$, \texttt{purse},
+the internal state of which is \texttt{balance} and that \texttt{mint}
+is simply a cell factory. If a process $Q$ is walled off from
+\texttt{purse},
+i.e. $\pgfp{X}{\pprefix{\pquotep{\texttt{purse}}}{b}{X} \& \neg
+  \pprefix{\pquotep{\neg \texttt{purse}}}{b}{X}}$, then it cannot
+affect \texttt{balance}, $\pgfp{X}{\neg
+  \pprefix{\pquotep{balance}}{b}{X}}$. In short,
+$Cell(\texttt{purse},initBal) \models
+\pgfp{X}{\pprefix{\pquotep{\texttt{purse}}}{b}{X} \& \neg
+  \pprefix{\pquotep{\neg \texttt{purse}}}{b}{X}} \rhd \pgfp{X}{\neg
+  \pprefix{\pquotep{balance}}{b}{X}}$.
 
 \section{Conclusions and future work}
 
-We looked at policy as types.
+The bulk of our work in modeling deniability policies as
+rely-guarantee formulae in a logic with separation was in setting up
+the calculi and logic. Once these are absorbed, the actual model is
+short and to the point. We take this as evidence that the approach is
+natural and commensurate with the expressiveness demands of the
+expressiveness of deniability style policies.
 
-Dependent types are future work.
+In this connection it is important to note that a lot is already known
+about the complexity characteristics of spatial-behavioral
+logics. Interpreting ocap policy in this setting, therefore, has the
+further advantage that we are able to classify policy statements that
+are potentially too hard to check automatically, or even check at
+all. To wit, \cite{Caires04eliminationof} note that the addition of
+the adjunct to separation is not a conservative extension!
 
-[Todo: finish this section!]
+In developing this approach we uncovered several situations where
+value-dependent policies were of interest or importance. This suggests
+that some sort of dependent types may be necessary for addressing more
+realistic examples.
 
 \paragraph{Acknowledgments.}
 The authors wish to thank Sophia Drossopoulou and James Noble for
@@ -1080,83 +1106,7 @@ capabilities and types.
 
 % ------------------------------------------------------------------------
 
-\section{Appendix: $\rho$-calculus substitution and sugar}
-
-\subsection{Syntactic substitution}\label{sec:syntactic_substitution}
-
-Now we build the substitution used by $\alpha$-equivalence. We use
-$\Proc$ for the set of processes, $\QProc$ for the set of names, and
-${\{}{y_1} / {x_1}, \ldots, {y_n} / {x_n}{\}}$ to denote partial maps, $s : \QProc
-\rightarrow \QProc$. A map, $s$, lifts uniquely to a map on process terms, $\widehat{s} :
-\Proc \rightarrow \Proc$ by the following equations.
-
-\begin{eqnarray*}
-(0) \psubstp{Q}{P}         & \defneqls &    0 \\
-(R \juxtap S) \psubstp{Q}{P}
-		& \defneqls &    
-		(R)\psubstp{Q}{P} \juxtap (S) \psubstp{Q}{P} \\
-({x}{?}{( y_1, \ldots, y_N )} \Rightarrow R) \psubstp{Q}{P}    
-		& \defneqls &    
-		{(x)}\substp{Q}{P}{?}{( z_1, \ldots, z_N )}\Rightarrow (R \psubstn{z_1}{y_1}\ldots\psubstn{z_N}{y_N}) \psubstp{Q}{P} \\
-%(x\id{[}y\id{]}) \psubstp{Q}{P}
-%		& \defneqls &    
-%		(x)\substp{Q}{P} \id{[}(y)\substp{Q}{P} \id{]} \\
-({x}{!}{(}{R}{)}) \psubstp{Q}{P}  
- 		& \defneqls &
- 		{(x)\substp{Q}{P}}{!}{(}{ R \psubstp{Q}{P} }{)} \\
-({*}{x})  \psubstp{Q}{P}       
-		& \defneqls & 
-		\left\{ 
-			\begin{array}{ccc} 
-				\dropn{\quotep{Q}} & & x \nameeq \quotep{P} \\
-                              	\dropn{x} & & otherwise \\
-			\end{array}
-		\right.
-\end{eqnarray*}
- 
-
-where
-
-\begin{equation*}
-(x){\{} {@}Q / {@}P {\}}            \defneqls 
-		\left\{ 
-			\begin{array}{ccc}
-				{@}Q & & x \nameeq {@}P \\
-                                x & & otherwise \\
-			\end{array}
-		\right.
-\end{equation*}
-
-and $z_i$ is chosen distinct from $\quotep{P}$, $\quotep{Q}$, the free
-names in $Q$, and all the names in $R$ in the equation for input. Our
-$\alpha$-equivalence will be built in the standard way from this
-substitution.
-
-\subsection{ Dynamic quote: an example }
-
-Anticipating something of what's to come, consider applying the
-substitution, $\widehat{{\{}u / z {\}}}$, to the following pair
-of processes, ${w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$ and ${w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}$.
-
-\begin{eqnarray*}
-	{w}{!}{(}{y}{!}{(}{*}{z}{)}{)}\widehat{{\{}u / z{\}}}
-		& = &
-		{w}{!}{(}{y}{!}{(}{*}u{)}{)} \\
-       {w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}\widehat{{\{}u / z{\}} }
-		& = &
-		{w}{!}{(}{*}{@}({y}{!}{(}{*z}{)}{)}{)}
-\end{eqnarray*}
-
-Because the body of the referenced process is impervious to
-substitution, we get radically different answers. In fact, by
-examining the first process in an input context, e.g. $x{(}{z}{)}
-\Rightarrow {w}{!}{(}{y}{!}{(}{*}{z}{)}{)}$, we see that combinations
-of reference and dereference may be shaped by prefixed inputs binding
-dereferenced names. In this sense, these operators provide a means to
-dynamically construct processes before reifying them as names,
-functioning much like quasiquote in {\tt Lisp}.
-
-\subsection{Sugar}
+\section{Appendix: $\rho$-calculus sugar}
 
 It is known that replication (and hence recursion) can be implemented
 in a higher-order process algebra \cite{SangiorgiWalker}. This
