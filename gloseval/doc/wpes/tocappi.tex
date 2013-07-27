@@ -1073,22 +1073,33 @@ $Cell (slot, state) \models
 If we have that $P \models \pgfp{X}{\neg
   \pprefix{\pquotep{slot}}{b}{X}}, \;$ then
 $\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
-\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim 0$
+\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P$
 
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
-\defneqls {@}\phi$ for some $\phi$ we can scale our formula to
+\defneqls \pquotep{\phi}$ for some $\phi$ we can scale our formula to
 separate objects from a given environment. We'll say more about this
 in the conclusions. 
 
 For now we refine the basic idea to build up to modeling the bank
 example. The central intuition is that the purse is essentially a
-cell. In the paragraphs above we witnessed a basic form of argumentation: if $Q
+cell. In the paragraphs above we witnessed a basic form of
+argumentation: if $Q \models \phi$ then when $P \models \psi$ we have
+that $\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \wbbisim S$ for some
+properties $\phi$ and $\psi$ and some behavior, $S$. In light of
+theorem 3.0.1 we can transform this into a statement of the form if $Q
 \models \phi$ then when $P \models \psi$ we have that
-$\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \wbbisim S$ for some properties
-$\phi$ and $\psi$ and some behavior, $S$. This shape turns out to be
-very close to the use of rely-guarantee identified by Honda in
-\cite{Honda:2008:UTP:2227536.2227558}.
+$\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \models \omega$ for some
+properties $\phi$,$\psi$, and $\omega$. Notice that the form of the
+statement remains true to the intent of capturing deniability even if
+the logic is \emph{more} discriminating than bisimulation -- which is
+the case if we include the separation operator (as noted in
+\cite{DBLP:conf/fossacs/Caires04}). This shape turns out to be
+precisely that of rely-guarantee identified by Honda in
+\cite{Honda:2008:UTP:2227536.2227558} and, as Honda observes, can be
+internalized in the logic as the adjunct to separation. 
+
+Thus, we include formulae of the form $\phi \rhd \psi$ with semantics $\pmeaningof{\phi \rhd \psi}( v ) = \{ P : \forall P_0. P_0 \in \pmeaningof{\phi}( v ) \Rightarrow \binpar{P_0}{P}, \; P_0 \in \pmeaningof{\psi}(v), \;  P_1 \in \pmeaningof{\psi}(v) \}$
 
 [Todo: finish this section!]
 
