@@ -749,10 +749,10 @@ to be transformed into continuation-passing style as part of the
 interpretation in {\rhoc}.  The asynchronous {\tt Q} library, on the other
 hand, is unneeded because {\rhoc} is inherently asynchronous.  
 \begin{eqnarray*}
- \meaningof{\texttt{var}\; x; P}( k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{\meaningof{P}(k)} \\
- \meaningof{\texttt{var}\; x = v; P}( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{Cell( x, \meaningof{ v }(x, k_1 ) )}{k_1?() \Rightarrow \meaningof{P}(k)}\} \\
- \meaningof{ P ; Q }( k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( k_1 )}{ k_1?() => \meaningof{ Q }( k )} \} \\
- \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( k )} \}\\
+ \meaningof{\texttt{var}\; x; P}( x, k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{\meaningof{P}( x, k )} \\
+ \meaningof{\texttt{var}\; x = v; P}( x, k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{Cell( x, \meaningof{ v }(x, k_1 ) )}{k_1?() \Rightarrow \meaningof{P}( x, k )}\} \\
+ \meaningof{ P ; Q }( x, k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( x, k_1 )}{ k_1?() => \meaningof{ Q }( x, k )} \} \\
+ \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( x, k ) & \defneqls & \texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( x, k )} \}\\
  \meaningof{\texttt{def}(\{key_1: state_1, \ldots, key_n: state_n\})}(x, k) & \defneqls & \binpar{ Map(x, key_1, state_1, \ldots, key_n, state_n)}{k!()} \\
 \end{eqnarray*}
 
@@ -998,36 +998,42 @@ specification where the translation is not at all straightforward. For
 the reader familiar with logics of concurrency the core idea is to use
 rely-guarantee combined with the adjunct to spatial separation.
 
-A visual inspection of the code for $Cell$ reveals that if a
-process $P$’s names are fresh wrt to $slot$, then $P$ cannot
-directly affect any $Cell( slot, state )$. Unfortunately, 
-visual inspection is not reliable in settings only mildly more 
-complex, as in the bank example above; Yee showed that a 90-man-hour
-review of around a hundred lines of heavily commented Python code 
-by security specialists was not sufficient to discover three 
-inserted bugs \cite[Section 7]{Yee:EECS-2007-136}. 
-However, we can use our logic to state and verify the fact that $P$
-cannot affect any {\tt Cell}. Adapting the firewall formula we have
+A visual inspection of the code for $Cell$ reveals that if a process
+$P$’s names are fresh wrt to $slot$, then $P$ cannot directly affect
+any $Cell( slot, state )$. Unfortunately, visual inspection is not
+reliable in settings only mildly more complex, as in the bank example
+above; Yee showed that a 90-man-hour review of around a hundred lines
+of heavily commented Python code by security specialists was not
+sufficient to discover three inserted bugs \cite[Section
+7]{Yee:EECS-2007-136}.  However, we can use our logic to state and
+verify the fact that $P$ cannot affect any {\tt Cell}. Adapting the
+firewall formula, let $soleAccess( slot ) \defneqls
+\pgfp{X}{\pprefix{slot}{b}{X} \& \neg \pprefix{\neg slot}{b}{X}}$, and
+$noAccess( slot ) \defneqls \pgfp{X}{\neg \pprefix{slot}{b}{X}}$ then
+we have
 
-$Cell (slot, state) \models 
-\pgfp{X}{\pprefix{\pquotep{slot}}{b}{X} \& 
-\neg \pprefix{\pquotep{\neg slot}}{b}{X}}$
+$Cell (slot, state) \models soleAccess( slot )$ which implies
+${\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}}
+\wbbisim 0$.
 
-If we have that $P \models \pgfp{X}{\neg
-  \pprefix{\pquotep{slot}}{b}{X}}, \;$ then
-$\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
-\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P$.
+If we have that $P \models noAccess( slot ), \;$ then $\; \forall \;
+state . \mbox{\tt new}(slot)\mbox{\tt \{} \binpar{P}{Cell(slot,
+  state)} \mbox{\tt \}}\wbbisim P$. For, by hypothesis, $slot$ cannot
+be free in $P$, thus
+
+$\mbox{\tt new}(slot)\mbox{\tt \{} \binpar{P}{Cell(slot, state)} \scong \binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}}$
+
+which means $\binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}} \wbbisim \binpar{P}{0} \scong P$.
 
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
 \defneqls \pquotep{\phi}$ for some $\phi$ we can scale our formula to
-separate objects from a given environment. We'll say more about this
-in the conclusions. 
+separate objects from a given environment. 
 
 For now, we refine the basic idea to illustrate how to model
 deniability. The shape of the logical statement above is: if $Q
 \models \phi$ then when $P \models \psi$ we have that
-$\texttt{new}(x_1,\ldots,x_N)\binpar{P}{Q} \wbbisim S$ for some
+$\texttt{new}(x_1,\ldots,x_N)\{ \binpar{P}{Q} \} \wbbisim S$ for some
 properties $\phi$ and $\psi$ and some behavior, $S$. In light of
 theorem \ref{sec:equivalence_theorem} we can, in principle, transform
 this into a statement of the form if $Q \models \phi$ then when $P
@@ -1046,28 +1052,32 @@ remains true to the intent of deniability even if the logic is
 \emph{more} discriminating than bisimulation -- which is the case if
 we include the separation operator (as noted in
 \cite{DBLP:conf/fossacs/Caires04}). In the presence of a logic with
-separation this shape turns out to be precisely that of rely-guarantee
-identified by Honda in \cite{Honda:2008:UTP:2227536.2227558} and, as
-Honda observes, can be internalized in the logic as the adjunct to
-separation. Thus, we include rely-guarantee formulae, $\phi \rhd \psi$
-with semantics $\pmeaningof{\phi \rhd \psi}( v ) = \{ P : \forall Q. Q
-\in \pmeaningof{\phi}( v ) \Rightarrow \binpar{P}{Q}\in
+separation this shape turns out to a form of rely-guarantee identified
+by Honda in \cite{Honda:2008:UTP:2227536.2227558} and, as Honda
+observes, can be internalized in the logic as the adjunct to
+separation. Thus, we include a form of rely-guarantee formulae, $\phi
+\rhd_{\vec{x}} \psi$, where $\vec{x} = \{ x_1,\ldots,x_N\}$, with
+semantics $\pmeaningof{\phi \rhd_{\vec{x}} \psi}( v ) = \{ P : \forall
+Q. Q \in \pmeaningof{\phi}( v ) \Rightarrow
+\mbox{\texttt{new}}(x_1,\ldots,x_N)\mbox{\{}\binpar{P}{Q}\mbox{\}}\in
 \pmeaningof{\psi}(v) \}$, as the logical form that mediates between
 closed-world and open-world formulation of deniability.
 
 To apply this to the bank example amounts to recognizing that the
-\texttt{purse} is essentially a $Cell$ with $slot$, \texttt{purse},
-the internal state of which is \texttt{balance} and that \texttt{mint}
-is simply a cell factory. If a process $Q$ is walled off from
-\texttt{purse},
-i.e. $\pgfp{X}{\pprefix{\pquotep{\texttt{purse}}}{b}{X} \& \neg
-  \pprefix{\pquotep{\neg \texttt{purse}}}{b}{X}}$, then it cannot
-affect \texttt{balance}, $\pgfp{X}{\neg
-  \pprefix{\pquotep{balance}}{b}{X}}$. In short,
-$Cell(\texttt{purse},initBal) \models
-\pgfp{X}{\pprefix{\pquotep{\texttt{purse}}}{b}{X} \& \neg
-  \pprefix{\pquotep{\neg \texttt{purse}}}{b}{X}} \rhd \pgfp{X}{\neg
-  \pprefix{\pquotep{balance}}{b}{X}}$.
+\texttt{purse} is essentially a generalized $Cell$. There are two
+means to access the internal state: \texttt{deposit} and
+\texttt{decr}. The example, however, enjoys an additional level of
+indirection in that these are scoped just to that purse. Attempting to
+model this naively will quickly run into problems as a parallel
+composition of purses will contend over serving balance update
+messages. This is where the higher order nature of the {\rhoc} makes
+it more suitable than the {\pic} for modeling these kinds of
+programs. In our translation a reference to \texttt{purse}
+$\meaningof{\texttt{var}\; purse = \ldots}$ is a $Cell$ that holds the
+\emph{code} of a process for a (generalized) $Cell$ serving the
+\texttt{deposit} and \texttt{decr} messages.
+
+[TODO: finish this section.]
 
 \section{Conclusions and future work}
 
