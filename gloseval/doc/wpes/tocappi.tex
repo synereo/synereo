@@ -269,7 +269,7 @@
 \newcommand{\xcalc}{${\mathfrak x}$-calculus}
 \newcommand{\lcalc}{$\lambda$-calculus}
 \newcommand{\pic}{$\pi$-calculus}
-\newcommand{\rhoc}{$\rho$-calculus}
+\newcommand{\rhoc}{${\textsc{rho}}$-calculus}
 \newcommand{\hcalc}{highwire calculus}
 \newcommand{\dcalc}{data calculus}
 %XML should be all caps, not small caps. --cb
@@ -425,14 +425,17 @@ condition), and that this property is satisfied by all extensions of
 the account library (open). In contrast, classical Hoare Logic
 specifications \cite{Hoare:1969:ABC:363235.363259} describe sufficient
 conditions and are closed.  In this paper we concentrate of the use of
-the {\rhoc} for expressing deniability. To express necessary
-conditions, we invert the assertion and use bisimulation (e.g. any
-piece of code which does not have access to the account will be
-bisimilar to code in which the balance of the account is not
-modified). To express openness, we adapt the concept of the adjoint to
-the separation operator, i.e. any further code P which is attached to
-the current code will be bisimilar to P in parallel with code which
-does not modify the balance of the account.
+the {\rhoc} \cite{DBLP:conf/tgc/MeredithR05} \footnote{the
+  \emph{R}eflective \emph{H}igher-\emph{O}rder calculus, not to
+  be confused with the $\rho$-calculus
+  \cite{CirsteaFaureKirchnerWLRA2004}} for expressing deniability. To
+express necessary conditions, we invert the assertion and use
+bisimulation (e.g. any piece of code which does not have access to the
+account will be bisimilar to code in which the balance of the account
+is not modified). To express openness, we adapt the concept of the
+adjoint to the separation operator, i.e. any further code P which is
+attached to the current code will be bisimilar to P in parallel with
+code which does not modify the balance of the account.
 
 In short, we show that a concurrent process calculus called \rhoc\; is
 an ocap language and sketch a translation from a subset of JavaScript
@@ -493,9 +496,6 @@ and retrieving state.
 % \end{lstlisting}
 
 \begin{lstlisting}[mathescape]
-
-
-
 def $Cell( slot, state ) \Rightarrow$ {
   new $( v )$ {
     $v!( state )$
@@ -1129,7 +1129,7 @@ the reader familiar with logics of concurrency the core idea is to use
 rely-guarantee combined with the adjunct to spatial separation.
 
 A visual inspection of the code for $Cell$ reveals that if a process
-$P$’s names are fresh wrt to $slot$, then $P$ cannot directly affect
+$P$\'s names are fresh wrt to $slot$, then $P$ cannot directly affect
 any $Cell( slot, state )$. Unfortunately, visual inspection is not
 reliable in settings only mildly more complex, as in the bank example
 above; Yee showed that a 90-man-hour review of around a hundred lines
@@ -1251,18 +1251,24 @@ value-dependent policies were of interest or importance. This suggests
 that some sort of dependent types may be necessary for addressing more
 realistic examples.
 
+Finally, implementations of an interpreter for the {\rhoc} and a
+model-checker for namespace logic are available upon request and a
+more industrial scale version of the core concepts are used heavily in
+the \texttt{SpecialK} library available on \texttt{github}. This
+library is already in use in industrial projects such as the Protunity
+Business Matching Network.
+
 \paragraph{Acknowledgments.}
-The authors wish to thank Mark Miller and James Noble for
-thoughtful and stimulating conversation about policy, object
-capabilities and types.
+The authors wish to thank Fred Fisher, Mark Miller and James Noble for thoughtful
+and stimulating conversation about policy, object capabilities and
+types. The first two author's work on this topic is generously support
+by Agent Technologies, Inc.
 
 % ------------------------------------------------------------------------
 %GATHER{Xbib.bib}   % For Gather Purpose Only
 %GATHER{Paper.bbl}  % For Gather Purpose Only
 \bibliographystyle{amsplain}
 \bibliography{tocappi}
-
-[Todo: What's TGC in the reference for namespace logic?]
 
 % ------------------------------------------------------------------------
 
@@ -1310,8 +1316,8 @@ encoding provides a good example of calculation with the {\rhoc}.
     & \red  \\
     & (\outputp{x}{y} \juxtap \dropn{y})\substn{\quotep{(\prefix{x}{y}{(\dropn{y} \juxtap \outputp{x}{y})) \juxtap P}}}{y} \\
     & = \\
-    & \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
-    \juxtap {(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} \\
+    & \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}} \\
+    & \;\;\;\;\;\juxtap {(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} \\
     & \red \\
     & \ldots \\
     & \red^* \\
@@ -1336,10 +1342,10 @@ Armed with this we can consider a conservative extension of the
 calculus presented above.
 
 \begin{grammar}
-{ P, Q } \bc \ldots & \mbox{previous syntax} \\
-\;\;\; \bm \; (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )}& \mbox{definition} \\ 
-\;\;\; \bm \; {X}{( Q_1, \ldots, Q_N )} & \mbox{invocation} \\
-\;\;\; \bm \; \texttt{new}( x_1, \ldots, x_N )P & \mbox{allocation} \\
+{ P, Q } \bc \ldots \\
+\;\;\; \bm \; (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} \\ 
+\;\;\; \bm \; {X}{( Q_1, \ldots, Q_N )} \\
+\;\;\; \bm \; \texttt{new}( x_1, \ldots, x_N )P \\
 \end{grammar}
 
 The notation for recursive definitions is slightly quirky in that it
