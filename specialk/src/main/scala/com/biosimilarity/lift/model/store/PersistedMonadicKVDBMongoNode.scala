@@ -769,6 +769,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  collName : Option[String],
 	  spawnDBCall : Boolean
 	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
+          tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : putInStore "
+	      + "\nthis : " + this
+	      + "\nptn : " + ptn
+              + "\nrsrc : " + rsrc
+	      + "\ncollName : " + collName
+	    )
+	  )
 	  persist match {
 	    case None => {
 	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
