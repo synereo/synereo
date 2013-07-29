@@ -315,15 +315,14 @@
 \alignauthor 
 L.G. Meredith\\
   \affaddr{Biosimilarity, LLC}\\
-  \affaddr{7329 39th Ave SW, Seattle, WA US}\\
-  \email{lgreg.meredith@gmail.com}
+  \email{lgreg.meredith@gmail.com}\\
 \alignauthor
 Mike Stay\\
   \affaddr{Biosimilarity, LLC}\\
-  \affaddr{7329 39th Ave SW, Seattle, WA US}\\
   \email{metaweta@gmail.com}\\
 \alignauthor
 Sophia Drossopoulou\\
+  \affaddr{Imperial College, London}\\
   \email{s.drossopoulou@imperial.ac.uk}
 }
 
@@ -408,24 +407,51 @@ OCap, we regret it for both security bug and access-checking overhead reasons.''
 \cite{Eich:2013}
 
 We would like a way to declare the authority that an object ought to
-possess and then check whether the implementation matches the intent; that is,
-we would like a language for declaring security policy.
+possess and then check whether the implementation matches the intent;
+that is, we would like a language for declaring security policy.
 Drossopoulou and Noble \cite{Drossopoulou:2013:NCP:2489804.2489811}
 convincingly argue that none of the current specification methods
 adequately capture all of the capability policies required to support
-ocap systems.  In this paper, we show that a concurrent process calculus 
-called \rhoc\; is an ocap language and sketch a translation from a 
-subset of JavaScript into the calculus; we also demonstrate that 
-the corresponding Hennessy-Milner logic suffices to capture the 
-key notion of deniability.
+ocap systems. The most intriguing aspect of the capability policies
+proposed in \cite{Drossopoulou:2013:NCP:2489804.2489811} is {\em
+  deniability}. Deniability differs from usual style of specifications
+in the following two aspects: a) it describes policies which are {\em
+  open}, i.e. apply to a module as well as all its extensions, and b)
+describes {\em necessary} conditions for some effect to take
+place. For example, a policy may require that in order for any piece
+of code to modify the balance of a bank account, it needs to have
+access to that account (access to the account is a necessary
+condition), and that this property is satisfied by all extensions of
+the account library (open). In contrast, classical Hoare Logic
+specifications \cite{Hoare:1969:ABC:363235.363259} describe sufficient
+conditions and are closed.  In this paper we concentrate of the use of
+the {\rhoc} for expressing deniability. To express necessary
+conditions, we invert the assertion and use bisimulation (e.g. any
+piece of code which does not have access to the account will be
+bisimilar to code in which the balance of the account is not
+modified). To express openness, we adapt the concept of the adjoint to
+the separation operator, i.e. any further code P which is attached to
+the current code will be bisimilar to P in parallel with code which
+does not modify the balance of the account.
 
-The Curry-Howard isomorphism relates formal logic to type theory; it says 
-that propositions are to types as proofs are to programs.  Hennessy-Milner
-logic lets us treat the type of a concurrent process as an assertion that 
-it belongs to a set of processes, all of which satisfy some property.  We
-can treat these properties as contracts governing the behavior of the
-process \cite{Meredith:2003:CT:944217.944236}; in other words, the 
-language of behavioral types suffices as a security policy language.
+In short, we show that a concurrent process calculus called \rhoc\; is
+an ocap language and sketch a translation from a subset of JavaScript
+into the calculus; we also demonstrate that the corresponding
+Hennessy-Milner logic suffices to capture the key notion of
+deniability. 
+
+In the larger scheme, this relates
+\cite{Drossopoulou:2013:NCP:2489804.2489811}'s notion of policy to the
+proposition-as-types paradigm, aka The Curry-Howard isomorphism
+\cite{Abramsky:1992:PP:194588.194591}
+\cite{Krivine-TheCurryHowardCorre}. The Curry-Howard isomorphism
+relates formal logic to type theory; it says that propositions are to
+types as proofs are to programs.  Hennessy-Milner logic lets us treat
+the type of a concurrent process as an assertion that it belongs to a
+set of processes, all of which satisfy some property.  We can treat
+these properties as contracts governing the behavior of the process
+\cite{Meredith:2003:CT:944217.944236}; in other words, the language of
+behavioral types suffices as a security policy language.
 
 \subsubsection{Organization of the rest of the paper}
 
@@ -447,6 +473,8 @@ couple of examples that illustrate a design pattern used over and over
 in this paper. The first is a mutable single-place cell for storing
 and retrieving state.
 
+
+
 % \begin{lstlisting}[mathescape]
 % def $Cell( slot, state ) \Rightarrow$ {
 %   new $( v )$ {
@@ -465,6 +493,9 @@ and retrieving state.
 % \end{lstlisting}
 
 \begin{lstlisting}[mathescape]
+
+
+
 def $Cell( slot, state ) \Rightarrow$ {
   new $( v )$ {
     $v!( state )$
