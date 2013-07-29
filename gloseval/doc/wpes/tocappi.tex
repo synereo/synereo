@@ -703,8 +703,8 @@ names are equivalent, when deciding synchronization and substitution.
 
 The engine of computation in this calculus is the interaction between
 synchronization and a form of substitution, called semantic
-substitution, differs from the ordinary syntactic substitution one
-might expect in its application to a dropped name. For more details
+substitution. Semantic substitution differs from ordinary syntactic
+substitution in its application to a dropped name. For more details
 see \cite{DBLP:journals/entcs/MeredithR05}
 
 \begin{eqnarray*}
@@ -1181,12 +1181,12 @@ The first element of this encoding we wish to draw attention to is
 that this provides just the emphasis on necessary rather than
 sufficient conditions. Moreover, notice that the form of the statement
 remains true to the intent of deniability even if the logic is
-\emph{more} discriminating than bisimulation---which is the case if
-we include the separation operator (as noted in
+\emph{more} discriminating than bisimulation---which is the case if we
+include the separation operator (as noted in
 \cite{DBLP:conf/fossacs/Caires04}). In the presence of a logic with
-separation this shape turns out to a form of rely-guarantee identified
-by Honda in \cite{Honda:2008:UTP:2227536.2227558} and, as Honda
-observes, can be internalized in the logic as the adjunct to
+separation this shape turns out to be a form of rely-guarantee
+identified by Honda in \cite{Honda:2008:UTP:2227536.2227558} and, as
+Honda observes, can be internalized in the logic as the adjunct to
 separation. Thus, we include a form of rely-guarantee formulae, $\phi
 \rhd_{\vec{x}} \psi$, where $\vec{x} = \{ x_1,\ldots,x_N\}$, with
 semantics $\pmeaningof{\phi \rhd_{\vec{x}} \psi}( v ) = \{ P : \forall
@@ -1225,8 +1225,8 @@ The bulk of our work in modeling deniability policies as
 rely-guarantee formulae in a logic with separation was in setting up
 the calculi and logic. Once these are absorbed, the actual model is
 short and to the point. We take this as evidence that the approach is
-natural and commensurate with the expressiveness demands of the
-expressiveness of deniability style policies.
+natural and commensurate with the expressiveness demands of
+deniability style policies.
 
 In this connection it is important to note that a lot is already known
 about the complexity characteristics of spatial-behavioral
@@ -1381,7 +1381,9 @@ Additionally, we call out input-guarded only summations using the notation
 $x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
 
 In a \texttt{match} context we avail ourselves of a pattern-matching
-syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k )$.
+syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k
+)$. Again, encodings are quite standard, e.g. see
+\cite{Brown05piduce:a}.
 
 Finally, we use $\{ \ldots \}$ for grouping expressions and in more complex examples, omit
 $\binpar{}{}$ in favor of line breaks for legibility. Thus, an expression for a classic race-condition $\binpar{ x?( y_1, \ldots, y_N ) \Rightarrow P}{\binpar{x!( Q_1, \ldots, Q_N )}{ x?( z_1, \ldots, z_N ) \Rightarrow R}}$ might be written
