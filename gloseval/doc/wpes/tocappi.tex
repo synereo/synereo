@@ -310,9 +310,22 @@
 %\title{\huge{\papertitle}}
 \title{\papertitle}
 
-\author{ L.G. Meredith }
-\author{ Mike Stay }
-\author{ Mark Miller }
+\numberofauthors{3}
+\author{
+\alignauthor 
+L.G. Meredith\\
+  \affaddr{Biosimilarity, LLC}\\
+  \affaddr{7329 39th Ave SW, Seattle, WA US}\\
+  \email{lgreg.meredith@gmail.com}
+\alignauthor
+Mike Stay\\
+  \affaddr{Biosimilarity, LLC}\\
+  \affaddr{7329 39th Ave SW, Seattle, WA US}\\
+  \email{metaweta@gmail.com}\\
+\alignauthor
+Sophia Drossopoulou\\
+  \email{s.drossopoulou@imperial.ac.uk}
+}
 
 %\address{Systems Biology, Harvard Medical School, Boston, Massachussetts, USA}
 
@@ -1208,7 +1221,7 @@ that some sort of dependent types may be necessary for addressing more
 realistic examples.
 
 \paragraph{Acknowledgments.}
-The authors wish to thank Sophia Drossopoulou and James Noble for
+The authors wish to thank Mark Miller and James Noble for
 thoughtful and stimulating conversation about policy, object
 capabilities and types.
 
@@ -1232,10 +1245,12 @@ encoding provides a good example of calculation with the {\rhoc}.
 % !P \defneqls \lift{x}{(x\id{(}y\id{)}\concat(\rpquote y\lpquote \juxtap x\id{[}y\id{]}) \juxtap P)} \juxtap x\id{(}z\id{)}\concat(\rpquote z\lpquote \juxtap x\id{[}z\id{]})
 % \end{equation*}
 
-\begin{eqnarray*}
-	D(x) & \defneqls & \prefix{x}{y}{(\binpar{\outputp{x}{y}}{\dropn{y}})} \\
-	\xbangp{P}{x} & \defneqls & \binpar{\lift{x}{\binpar{D(x)}{P}}}{D(x)}
-\end{eqnarray*}
+\begin{equation*}
+  \begin{aligned}
+    & D(x) \defneqls \prefix{x}{y}{(\binpar{\outputp{x}{y}}{\dropn{y}})} \\
+    & \xbangp{P}{x} \defneqls \binpar{\lift{x}{\binpar{D(x)}{P}}}{D(x)} \\
+  \end{aligned}
+\end{equation*}
 
 % \begin{eqnarray*}
 % 	\xbangp{P}{x} & & \\
@@ -1255,21 +1270,23 @@ encoding provides a good example of calculation with the {\rhoc}.
 % 	\red^*
 % 	& P \juxtap P \juxtap \ldots & \\
 % \end{eqnarray*}
-\begin{eqnarray*}
-  \xbangp{P}{x} & & \\
-  =
-  & \lift{x}{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} 
-  \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} & \\
-  \red
-  & (\outputp{x}{y} \juxtap \dropn{y})\substn{\quotep{(\prefix{x}{y}{(\dropn{y} \juxtap \outputp{x}{y})) \juxtap P}}}{y} & \\
-  =
-  & \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
-  \juxtap {(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} & \\
-  \red
-  & \ldots & \\
-  \red^*
-  & P \juxtap P \juxtap \ldots & \\
-\end{eqnarray*}
+\begin{equation*}
+  \begin{aligned}
+    & \xbangp{P}{x} \\
+    & = \\
+    & \lift{x}{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} 
+    \juxtap \prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})} \\
+    & \red  \\
+    & (\outputp{x}{y} \juxtap \dropn{y})\substn{\quotep{(\prefix{x}{y}{(\dropn{y} \juxtap \outputp{x}{y})) \juxtap P}}}{y} \\
+    & = \\
+    & \outputp{x}{\quotep{(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}}}
+    \juxtap {(\prefix{x}{y}{(\outputp{x}{y} \juxtap \dropn{y})) \juxtap P}} \\
+    & \red \\
+    & \ldots \\
+    & \red^* \\
+    & P \juxtap P \juxtap \ldots & \\
+  \end{aligned}
+\end{equation*}
 
 Of course, this encoding, as an implementation, runs away, unfolding
 $\xbangp{P}{x}$ eagerly. A lazier and more implementable replication
@@ -1288,10 +1305,10 @@ Armed with this we can consider a conservative extension of the
 calculus presented above.
 
 \begin{grammar}
-\mbox{\rhoc-extended}		& { P, Q }              & \bc			& \ldots & \mbox{previous syntax} \\
-				&                        		& \bm	& (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )}& \mbox{definition} \\ 
-				&					& \bm	& {X}{( Q_1, \ldots, Q_N )} & \mbox{invocation} \\
-				&					& \bm	& \texttt{new}( x_1, \ldots, x_N )P & \mbox{allocation} \\
+{ P, Q } \bc \ldots & \mbox{previous syntax} \\
+\;\;\; \bm \; (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )}& \mbox{definition} \\ 
+\;\;\; \bm \; {X}{( Q_1, \ldots, Q_N )} & \mbox{invocation} \\
+\;\;\; \bm \; \texttt{new}( x_1, \ldots, x_N )P & \mbox{allocation} \\
 \end{grammar}
 
 The notation for recursive definitions is slightly quirky in that it
@@ -1301,13 +1318,19 @@ opposed to a separate category of declaration. Comparing this with the
 examples above we have simply omitted the application of the recursive
 definitions to initial arguments in the interest of brevity.
 
-\begin{eqnarray*}
-  (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} & \defneqls & \binpar{\bangxp{(n( X, P ) \Rightarrow P')}{n( X, P )}}{n( X, P )!( Q_1, \ldots, Q_N )} \\  
-\end{eqnarray*}
+\begin{equation*}
+  \begin{aligned}
+    & (\texttt{def} {X}{( y_1, \ldots, y_N )} \Rightarrow {P}){( Q_1, \ldots, Q_N )} \defneqls \\
+    & \;\;\;\binpar{\bangxp{(n( X, P ) \Rightarrow P')}{n( X, P )}}{n( X, P )!( Q_1, \ldots, Q_N )} \\  
+  \end{aligned}
+\end{equation*}
 
 where $P' \defneqls P \{ n( X, P )!( Q_1, \ldots, Q_N )/ X( Q_1,
 \ldots, Q_N )\}$, i.e., the body of $P$ in which every occurrence of
-$X( Q_1, \ldots, Q_N )$ is replaced with $n( X, P )!( Q_1, \ldots, Q_N
+
+$X( Q_1, \ldots, Q_N )$
+
+is replaced with $n( X, P )!( Q_1, \ldots, Q_N
 )$, and $n( X, P )$ generates a name from $X$ guaranteed fresh in $P$.
 
 Likewise, there are several translation of the \pic\; $\texttt{new}$
@@ -1318,7 +1341,13 @@ understanding of the calculus.
 
 Additionally, we call out input-guarded only summations using the notation
 
-$\texttt{match}\{ x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 ; \ldots ; x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M \}$ 
+\begin{lstlisting}[mathescape]
+  match { 
+   $x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 $
+   $ \ldots $
+   $x_M?(y_{M,1}, \ldots, y_{M,N'} ) \Rightarrow P_M $ 
+  }
+\end{lstlisting}
 
 \noindent instead of 
 
