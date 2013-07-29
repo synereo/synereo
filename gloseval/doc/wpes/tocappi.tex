@@ -444,7 +444,7 @@ capture the key notion of deniability.
 
 In the larger scheme, this identifies
 \cite{Drossopoulou:2013:NCP:2489804.2489811}'s notion of policy with
-the proposition-as-types paradigm, aka The Curry-Howard isomorphism
+the proposition-as-types paradigm, also known as The Curry-Howard isomorphism
 \cite{Abramsky:1992:PP:194588.194591}
 \cite{Krivine-TheCurryHowardCorre}. The Curry-Howard isomorphism
 relates formal logic to type theory; it says that propositions are to
@@ -543,8 +543,6 @@ we will effectively treat the state of an object as a parallel
 composition of cells comprising its state.
 
 The second gadget is an immutable map:
-
-\pagebreak
 
 \begin{lstlisting}[mathescape]
 def $Map( chan, key_1, state_1, \ldots , key_n, state_n ) \Rightarrow$ {
@@ -806,7 +804,7 @@ var makeMint = () => {
 
 Interpreting this code illustrates how surprisingly intuitive and
 natural it is to represent and reason about object-capabilities in
-\rhoc. Essentially, a capability---{\em i.e.} access to some behavior, power
+\rhoc. Essentially, a \\ capability---{\em i.e.} access to some behavior, power
 or authority---is represented by a channel. When an agent in the \rhoc\;
 has access to a channel it has exactly that: access to some behavior,
 power or authority.
@@ -886,7 +884,8 @@ directly
 % }
 % =
 \begin{lstlisting}[mathescape]
-$\meaningof{ \mbox{\tt var}\; balance = initAmt; balance\; +\!= \; amount; P }( k )$
+$\ldb \mbox{\tt var}\; balance = initAmt;$
+$\; \; \mbox{\\} balance\; +\!= \; amount; P \rdb( balance, k )$
 $=$ (defn)
 { 
   ${Cell( balance, initAmt )}{k!()}$
@@ -896,7 +895,7 @@ $=$ (defn)
       $balance ! set( b + amount )$
       $k1!()$
     }
-    ${k_1?() \Rightarrow \meaningof{ P }( k )}$
+    ${k_1?() \Rightarrow \meaningof{ P }( balance, k )}$
   }
 }
 $=$ (extrusion laws for new)
@@ -908,7 +907,7 @@ new $( rslt, k_1 )$ {
     $balance ! set( b + amount )$
     $k1!() $
   }
-  ${k_1?() \Rightarrow \meaningof{ P }( k )}$
+  ${k_1?() \Rightarrow \meaningof{ P }( balance, k )}$
 }
 \end{lstlisting}
 
@@ -1119,7 +1118,7 @@ quantification variable, writing $\pquantuntyped{n}{\phi}$.
 
 \section{Interpreting policy}
 
-Drossopoulou \cite{Drossopoulou:2013:NCP:2489804.2489811} argues for
+Drossopoulou and Noble \cite{Drossopoulou:2013:NCP:2489804.2489811} argue for
 several different types of policy specifications. In this paper we
 focus on deniability policies, since the others have ready
 translations in this setting. Deniability is the one type of policy
@@ -1128,31 +1127,26 @@ the reader familiar with logics of concurrency the core idea is to use
 rely-guarantee combined with the adjunct to spatial separation.
 
 A visual inspection of the code for $Cell$ reveals that if a process
-$P$\'s names are fresh wrt to $slot$, then $P$ cannot directly affect
+$P$'s names are fresh with respect to $slot$, then $P$ cannot directly affect
 any $Cell( slot, state )$. Unfortunately, visual inspection is not
 reliable in settings only mildly more complex, as in the bank example
-above; Yee showed that a 90-man-hour review of around a hundred lines
+above; Yee reports that a 90-man-hour review of around a hundred lines
 of heavily commented Python code by security specialists was not
 sufficient to discover three inserted bugs \cite[Section
 7]{Yee:EECS-2007-136}.  However, we can use our logic to state and
 verify the fact that $P$ cannot affect any {\tt Cell}. Adapting the
 firewall formula, let $soleAccess( slot ) \defneqls
 \pgfp{X}{\pprefix{slot}{b}{X} \& \neg \pprefix{\neg slot}{b}{X}}$, and
-$noAccess( slot ) \defneqls \pgfp{X}{\neg \pprefix{slot}{b}{X}}$ then
+$noAccess( slot ) \defneqls \pgfp{X}{\neg \pprefix{slot}{b}{X}}$; then
 we have
-
-$Cell (slot, state) \models soleAccess( slot )$ which implies
-
-${\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}}
-\wbbisim 0$.
-
+\[Cell (slot, state) \models soleAccess( slot )\]
+which implies
+\[{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}}
+\wbbisim 0.\]
 If we have that $P \models noAccess( slot ), \;$ then 
-
-$\; \forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
-\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P$.
-
+\[\forall \; state . \mbox{\tt new}(slot)\mbox{\tt \{}
+\binpar{P}{Cell(slot, state)} \mbox{\tt \}}\wbbisim P.\]
 For, by hypothesis, $slot$ cannot be free in $P$, thus
-
 \begin{equation*}
   \begin{aligned}
     & \mbox{\tt new}(slot)\mbox{\tt \{} \binpar{P}{Cell(slot, state)} \\
@@ -1160,12 +1154,9 @@ For, by hypothesis, $slot$ cannot be free in $P$, thus
     & \binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}} \\
   \end{aligned}
 \end{equation*}
-
 \noindent which means
-
-$\binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state)
-  \mbox{\tt \}}} \wbbisim \binpar{P}{0} \scong P$.
-
+\[\binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state)
+  \mbox{\tt \}}} \wbbisim \binpar{P}{0} \scong P.\]
 More generally, note that objects involve not just one cell, but
 many. By restricting those cells to slots that live in namespace $Slot
 \defneqls \pquotep{\phi}$ for some $\phi$ we can scale our formula to
@@ -1260,7 +1251,7 @@ such as the Protunity Business Matching Network \cite{Protunity}.
 \paragraph{Acknowledgments.}
 The authors wish to thank Fred Fisher, Mark Miller and James Noble for thoughtful
 and stimulating conversation about policy, object capabilities and
-types. The first two author's work on this topic is generously supported
+types. The first two authors' work on this topic is generously supported
 by Agent Technologies, Inc.
 
 % ------------------------------------------------------------------------
