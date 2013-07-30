@@ -834,8 +834,8 @@ unneeded because {\rhoc} is inherently asynchronous.
     & \meaningof{ P ; Q }( x, k ) \defneqls \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( x, k_1 )}{ k_1?() => \meaningof{ Q }( x, k )} \} \\
     & \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( x, k ) \defneqls \\
     & \;\;\;\;\;\texttt{new}(k_1) \{ \\
-    & \;\;\;\;\;\;\;\;\meaningof{\texttt{i}}( x, k_1 ) ! get( r ) \\
-    & \;\;\;\;\;\;\;\;{r?( v ) \Rightarrow \meaningof{\texttt{i}}( x, k_1 )! set( v + \meaningof{\texttt{a}}( x, k_1 ) ) } \\
+    & \;\;\;\;\;\;\;\;\texttt{i} ! get( r ) \\
+    & \;\;\;\;\;\;\;\;{r?( v ) \Rightarrow \texttt{i}! set( v + \meaningof{\texttt{a}}( x, k ) ) } \\
     & \;\;\;\;\;\;\;\;{\meaningof{P}( x, k_1 )} \\
     & \;\;\;\;\; \} \\
     & \meaningof{\texttt{def}(\{key_1: state_1, \ldots, key_n: state_n\})}(x, k) \defneqls \\
