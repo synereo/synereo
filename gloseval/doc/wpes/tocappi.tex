@@ -886,29 +886,30 @@ directly
 % =
 \begin{lstlisting}[mathescape]
 $\ldb \mbox{\tt var}\; balance = initAmt;$
-$\; \; \mbox{\\} balance\; +\!= \; amount; P \rdb( balance, k )$
+$\; \; \mbox{\\} balance\; +\!= \; amount; P \rdb( x, k )$
 $=$ (defn)
 { 
-  ${Cell( balance, initAmt )}{k!()}$
+  ${Cell( balance, \meaningof{initAmt}( x, k ) )}$
+  ${k!()}$
   new $( rslt, k_1 )$ { 
     ${balance ! get( rslt )}$
     $rslt?( b ) \Rightarrow$ {
-      $balance ! set( b + amount )$
+      $balance ! set( b + \meaningof{ amount }( x, k_1 ) )$
       $k1!()$
     }
-    ${k_1?() \Rightarrow \meaningof{ P }( balance, k )}$
+    ${k_1?() \Rightarrow \meaningof{ P }( x, k )}$
   }
 }
 $=$ (extrusion laws for new)
 new $( rslt, k_1 )$ {
-  ${Cell( balance, initAmt )}$
+  ${Cell( balance, \meaningof{initAmt}( x, k ) )}$
   ${k!()}$
   $balance ! get( rslt )$
   $rslt?( b ) \Rightarrow ${
-    $balance ! set( b + amount )$
+    $balance ! set( b + \meaningof{amount}( x, k ) )$
     $k1!() $
   }
-  ${k_1?() \Rightarrow \meaningof{ P }( balance, k )}$
+  ${k_1?() \Rightarrow \meaningof{ P }( x, k )}$
 }
 \end{lstlisting}
 
@@ -1150,7 +1151,7 @@ If we have that $P \models noAccess( slot ), \;$ then
 For, by hypothesis, $slot$ cannot be free in $P$, thus
 \begin{equation*}
   \begin{aligned}
-    & \mbox{\tt new}(slot)\mbox{\tt \{} \binpar{P}{Cell(slot, state)} \\
+    & \mbox{\tt new}(slot)\mbox{\tt \{} \binpar{P}{Cell(slot, state)} \mbox{\tt \}}\\
     & \scong \\
     & \binpar{P}{\mbox{\tt new}(slot)\mbox{\tt \{} Cell(slot, state) \mbox{\tt \}}} \\
   \end{aligned}
