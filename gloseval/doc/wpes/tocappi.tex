@@ -898,8 +898,8 @@ $=$ (defn)
   new $( rslt, k_1 )$ { 
     ${balance ! get( rslt )}$
     $rslt?( b ) \Rightarrow$ {
-      $balance ! set( b + \meaningof{ amount }( x, k_1 ) )$
-      $k1!()$
+      $balance ! set( b + \meaningof{ amount }( x, k ) )$
+      $k_1!()$
     }
     ${k_1?() \Rightarrow \meaningof{ P }( x, k )}$
   }
@@ -911,7 +911,7 @@ new $( rslt, k_1 )$ {
   $balance ! get( rslt )$
   $rslt?( b ) \Rightarrow ${
     $balance ! set( b + \meaningof{amount}( x, k ) )$
-    $k1!() $
+    $k_1!() $
   }
   ${k_1?() \Rightarrow \meaningof{ P }( x, k )}$
 }
