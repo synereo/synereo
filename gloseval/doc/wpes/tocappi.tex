@@ -813,11 +813,12 @@ power or authority.
 
 Armed with $Cell$ and $Map$ from the first section, we can translate
 each of the language elements from the bank example into \rhoc.  Note
-that the interpretation takes a channel $k$ on which to signal 
-completion of the statement; synchronous JavaScript necessarily needs 
+that the interpretation takes a channel $k$ on which to signal
+completion of the statement; synchronous JavaScript necessarily needs
 to be transformed into continuation-passing style as part of the
-interpretation in {\rhoc}.  The asynchronous {\tt Q} library, on the other
-hand, is unneeded because {\rhoc} is inherently asynchronous.  
+interpretation in {\rhoc}.  The asynchronous {\tt Q} library used in
+the definition of the \texttt{deposit} method, on the other hand, is
+unneeded because {\rhoc} is inherently asynchronous.
 % \begin{eqnarray*}
 %  \meaningof{\texttt{var}\; x; P}( x, k ) & \defneqls & \binpar{Cell( x, \texttt{undefined} )}{\meaningof{P}( x, k )} \\
 %  \meaningof{\texttt{var}\; x = v; P}( x, k ) & \defneqls & \texttt{new}(k_1)\{ \binpar{Cell( x, \meaningof{ v }(x, k_1 ) )}{k_1?() \Rightarrow \meaningof{P}( x, k )}\} \\
@@ -937,10 +938,10 @@ referred to \cite{DBLP:conf/tgc/MeredithR05}.
 
 \subsection{Examples}
 
-A principal advantage to using logical formulae, also known as types, of this
-kind is that they denote classes or programs. Unlike the usual notion
-of type, where a type's inhabitants are instances of data structures,
-in namespace logic a formula ({\em i.e.} a type) $\phi$ is inhabited by
+A principal advantage to using logical formulae of this kind is that
+they denote classes or programs. Unlike the usual notion of type,
+where a type's inhabitants are instances of data structures, in
+namespace logic a formula (i.e. a \emph{type}) $\phi$ is inhabited by
 programs---namely all the programs that satisfy the
 formulae. Namespace logic takes this a step further. Because it is
 built on a reflective programming language (the \rhoc) it also has
@@ -1113,7 +1114,7 @@ In the examples below, we freely employ the usual DeMorgan-based
 syntactic sugar. For example, $\phi \Rightarrow \psi \defneqls \neg (
 \phi \& \neg \psi )$ and $\phi \vee \psi \defneqls \neg ( \neg \phi \&
 \neg \psi )$. Also, when quantification ranges over all of $\QProc$,
-as in $\pquant{n}{\quotep{\ptrue}}{\phi}$, we omit the typing for the
+as in $\pquant{n}{\pquotep{\ptrue}}{\phi}$, we omit the typing for the
 quantification variable, writing $\pquantuntyped{n}{\phi}$.
 
 \section{Interpreting policy}
@@ -1241,12 +1242,13 @@ value-dependent policies were of interest or importance. This suggests
 that some sort of dependent types may be necessary for addressing more
 realistic examples.
 
-Finally, implementations of an interpreter for the {\rhoc} and a
-model-checker for namespace logic are available upon request and a
-more industrial scale version of the core concepts are used heavily in
-the \texttt{SpecialK} library available on \texttt{github}
-\cite{SpecialK}. This library is already in use in industrial projects
-such as the Protunity Business Matching Network \cite{Protunity}.
+Finally, source code for implementations of an interpreter for the
+{\rhoc} and a model-checker for namespace logic are available upon
+request and a more industrial scale version of the core concepts are
+used heavily in the \texttt{SpecialK} library available on
+\texttt{github} \cite{SpecialK}. This library is already in use in
+industrial projects such as the Protunity Business Matching Network
+\cite{Protunity}.
 
 \paragraph{Acknowledgments.}
 The authors wish to thank Fred Fisher, Mark Miller and James Noble for thoughtful
@@ -1381,7 +1383,7 @@ Additionally, we call out input-guarded only summations using the notation
 $x_1?( y_{1,1}, \ldots, y_{1,N} ) \Rightarrow P_1 + \ldots + x_M?( y_{M,1},\ldots, y_{M,N'} ) \Rightarrow P_M$
 
 In a \texttt{match} context we avail ourselves of a pattern-matching
-syntax, such as $x ? get( ret ) => ret!( v )$ and $x ! get( k
+syntax, such as $x ? get( ret ) \Rightarrow ret!( v )$ and $x ! get( k
 )$. Again, encodings are quite standard, e.g. see
 \cite{Brown05piduce:a}.
 
