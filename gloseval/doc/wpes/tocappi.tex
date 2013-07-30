@@ -833,7 +833,7 @@ unneeded because {\rhoc} is inherently asynchronous.
     & \;\;\;\;\;\texttt{new}(k_1)\{ \binpar{Cell( x, \meaningof{ v }(x, k_1 ) )}{k_1?() \Rightarrow \meaningof{P}( x, k )}\} \\
     & \meaningof{ P ; Q }( x, k ) \defneqls \texttt{new}(k_1)\{ \binpar{\meaningof{ P }( x, k_1 )}{ k_1?() => \meaningof{ Q }( x, k )} \} \\
     & \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( x, k ) \defneqls \\
-    & \;\;\;\;\;\texttt{new} \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( x, k )} \}\\
+    & \;\;\;\;\;\texttt{new}(k_1) \{ \binpar{\binpar{\texttt{i} ! get( r )}{r?( v ) \Rightarrow \texttt{i}! set( v + \texttt{a} ) }}{\meaningof{P}( x, k_1 )} \}\\
     & \meaningof{\texttt{def}(\{key_1: state_1, \ldots, key_n: state_n\})}(x, k) \defneqls \\
     & \;\;\;\;\;\binpar{ Map(x, key_1, state_1, \ldots, key_n, state_n)}{k!()} \\
   \end{aligned}
