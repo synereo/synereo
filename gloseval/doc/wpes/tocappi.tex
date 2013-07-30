@@ -835,7 +835,7 @@ unneeded because {\rhoc} is inherently asynchronous.
     & \meaningof{ \texttt{i} +\!= \texttt{a} ; P }( x, k ) \defneqls \\
     & \;\;\;\;\;\texttt{new}(k_1) \{ \\
     & \;\;\;\;\;\;\;\;\texttt{i} ! get( r ) \\
-    & \;\;\;\;\;\;\;\;{r?( v ) \Rightarrow \texttt{i}! set( v + \meaningof{\texttt{a}}( x, k ) ) } \\
+    & \;\;\;\;\;\;\;\;{r?( v ) \Rightarrow \texttt{\{} \binpar{\texttt{i}! set( v + \meaningof{\texttt{a}}( x, k ) )}{k_1!()} \texttt{\}} } \\
     & \;\;\;\;\;\;\;\;{\meaningof{P}( x, k_1 )} \\
     & \;\;\;\;\; \} \\
     & \meaningof{\texttt{def}(\{key_1: state_1, \ldots, key_n: state_n\})}(x, k) \defneqls \\
