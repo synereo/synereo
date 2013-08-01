@@ -759,8 +759,20 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                   + "\n------------------------------------------------"
                   + "\ncompiled query : \n" + qry
 	        )
+	      )              
+              val qryRslts = executeWithResults( xmlCollName, qry )
+              tweet(
+	        (
+	          "PersistedMonadicKVDBNode : "
+	          + "\nmethod : executeWithResults "
+	          + "\nthis : " + this
+                  + "\ncollName : " + xmlCollName
+	          + "\ntPath : " + tPath
+                  + "\n------------------------------------------------"
+                  + "\nqryRslts : \n" + qryRslts
+	        )
 	      )
-              ( List[( DBObject, emT.PlaceInstance )]( ) /: executeWithResults( xmlCollName, qry ) )(
+              ( List[( DBObject, emT.PlaceInstance )]( ) /: qryRslts )(
                 {
                   ( acc, e ) => {
                     try {
