@@ -810,11 +810,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      + "\ncollName : " + collName
 	    )
 	  )
+          tweet("putInStore")
 	  persist match {
 	    case None => {
+	      tweet("putInStore, None")
 	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
 	    }
 	    case Some( pd ) => {
+	      tweet("putInStore, Some")
 	      val dbAccessExpr =
 		() => {
 		  for(
@@ -836,13 +839,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
 	      tweet( "accessing db : " /* + pd.db */ )
 	      // remove this line to force to db on get
-	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
+	      channels( wtr.getOrElse( ptn ) ) = rsrc
 	      if ( spawnDBCall ) {
+	        tweet("putInStore, spawning db call")
 		spawn {
 		  dbAccessExpr()
 		}
 	      }
 	      else {
+	        tweet("putInStore, calling dbAccessExpr directly")
 		dbAccessExpr()
 	      }
 	    }
@@ -966,10 +971,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
 	    case true => {
 	      tweet( "database " + xmlCollName + " found" )
-              for( pm <- persist ) yield {
-                val tPath = Right[mTT.GetRequest,mTT.GetRequest]( ptn )
+              val tPath = Right[mTT.GetRequest,mTT.GetRequest]( ptn )
+
+              for(
+                pm <- persist;
+                resultList = executeWithResults( pm, xmlCollName, tPath )
+                if( resultList.length > 0 )
+              ) yield {
+
 		for(
-                  ( krslt, ekrsrc ) <- executeWithResults( pm, xmlCollName, tPath )
+                  ( krslt, ekrsrc ) <- resultList
                 ) yield {
 		  tweet( "retrieved " + krslt.toString )
 		  //val ekrsrc = pm.asResource( ptn, krslt )
