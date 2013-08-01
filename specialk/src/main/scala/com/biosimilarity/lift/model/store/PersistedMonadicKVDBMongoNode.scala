@@ -731,6 +731,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
           // BUGBUG : lgm -- this is not very performant!
           // The better approach is to find a way to inline the
           // asResource code
+          tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : executeWithResults "
+	      + "\nthis : " + this
+              + "\ncollName : " + xmlCollName
+	      + "\ntPath : " + tPath
+	    )
+	  )
           val ( qFn, path ) : (( String, mTT.GetRequest ) => Option[String],mTT.GetRequest) =
             tPath match {
               case Left( pth ) => ( query, pth );
@@ -740,6 +749,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
             for(
               qry <- qFn( xmlCollName, path )
             ) yield {
+              tweet(
+	        (
+	          "PersistedMonadicKVDBNode : "
+	          + "\nmethod : executeWithResults "
+	          + "\nthis : " + this
+                  + "\ncollName : " + xmlCollName
+	          + "\ntPath : " + tPath
+                  + "\n------------------------------------------------"
+                  + "\ncompiled query : \n" + qry
+	        )
+	      )
               ( List[( DBObject, emT.PlaceInstance )]( ) /: executeWithResults( xmlCollName, qry ) )(
                 {
                   ( acc, e ) => {
@@ -758,6 +778,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                 }
               )              
             }
+          tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : executeWithResults "
+	      + "\nthis : " + this
+              + "\ncollName : " + xmlCollName
+	      + "\ntPath : " + tPath
+              + "\n------------------------------------------------"
+              + "\npairs : " + pairs
+	    )
+	  )
           pairs.getOrElse( List[( DBObject, emT.PlaceInstance )]( ) )
         }
 	def putInStore(
