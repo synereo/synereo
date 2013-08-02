@@ -1,21 +1,30 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.biosimilarity</groupId>
     <artifactId>GLoSEval</artifactId>
     <version>0.1</version>
     <name>${project.artifactId}</name>
-    <description></description>
+    <description>GLoSEval</description>
     <inceptionYear>2013</inceptionYear>
+
+    <!--<parent>
+        <groupId>com.protegra-ati</groupId>
+        <artifactId>ia-parent</artifactId>
+        <version>1.0</version>
+    </parent>-->
 
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <specialk.version>1.1.6.0</specialk.version>
-        <agentservices-store-ia.version>1.8.2-SNAPSHOT</agentservices-store-ia.version>
+        <agentservices-store.version>1.8.2-SNAPSHOT</agentservices-store.version>
         <scala.version>2.10.0</scala.version>
         <scala.versionsuffix>2.10</scala.versionsuffix>
         <io.spray.version>1.1-M7</io.spray.version>
+
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
@@ -79,18 +88,7 @@
             <artifactId>scala-actors</artifactId>
             <version>${scala.version}</version>
         </dependency>
-        <!--<dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-compiler</artifactId>
-            <version>${scala.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>jline</artifactId>
-            <version>${scala.version}</version>
-        </dependency>-->
-        
+
         <!-- io.spray -->
         <dependency>
             <groupId>io.spray</groupId>
@@ -147,7 +145,7 @@
         <dependency>
             <groupId>com.protegra-ati</groupId>
             <artifactId>agentservices-store-ia</artifactId>
-            <version>${agentservices-store-ia.version}</version>
+            <version>${agentservices-store.version}</version>
         </dependency>
         
         <dependency>
