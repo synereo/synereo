@@ -9,12 +9,6 @@
     <description>Platform Agent Launcher</description>
     <inceptionYear>2013</inceptionYear>
 
-    <parent>
-        <groupId>com.protegra-ati</groupId>
-        <artifactId>ia-parent</artifactId>
-        <version>1.0</version>
-    </parent>
-
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
