@@ -510,13 +510,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    ).toString
 	  }
 	}
-	
-	def queryRsrc(
+
+        
+
+        def queryRsrcDBObject(
 	  xmlCollStr : String,
 	  ptn : mTT.GetRequest
 	)(
 	  nameSpace : Namespace
-	): Option[String] = {
+	): Option[DBObject] = {
 	  for( ttv <- textToVar )
 	  yield {
 	    val ccb =
@@ -541,7 +543,21 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      )
 	    CnxnMongoQuerifier.toMongoQuery( ccb )(
 	      nameSpaceToString, varToString, tagToString
-	    ).toString
+	    )
+	  }
+	}
+	
+	def queryRsrc(
+	  xmlCollStr : String,
+	  ptn : mTT.GetRequest
+	)(
+	  nameSpace : Namespace
+	): Option[String] = {
+	  for(
+            qryRrscDBObj <- queryRsrcDBObject( xmlCollStr, ptn )( nameSpace )
+          )
+	  yield {	    
+	    qryRrscDBObj.toString
 	  }
 	}
 	
@@ -557,6 +573,20 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ptn : mTT.GetRequest
 	) : Option[String] = {
 	  queryRsrc( xmlCollStr, ptn )( kvKNameSpace )
+	}
+
+        def queryDBObject(
+	  xmlCollStr : String,
+	  ptn : mTT.GetRequest
+	) : Option[DBObject] = {
+	  queryRsrcDBObject( xmlCollStr, ptn )( kvNameSpace )
+	}
+	
+	def kqueryDBObject(
+	  xmlCollStr : String,
+	  ptn : mTT.GetRequest
+	) : Option[DBObject] = {
+	  queryRsrcDBObject( xmlCollStr, ptn )( kvKNameSpace )
 	}
 	
 	override def toFile(
@@ -740,10 +770,36 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      + "\ntPath : " + tPath
 	    )
 	  )
-          val ( qFn, path ) : (( String, mTT.GetRequest ) => Option[String],mTT.GetRequest) =
+          val mongoPD : MongoDBManifest = 
+            pd match {
+              case mngoPM : MongoDBManifest => mngoPM
+              case _ => throw new Exception( "unexpected Persistence Manifest type: " + pd )
+            }
+          //val ( qFn, path ) : (( String, mTT.GetRequest ) => Option[String],mTT.GetRequest) =
+          val ( qFn, path ) : (( String, mTT.GetRequest ) => Option[DBObject],mTT.GetRequest) =
             tPath match {
-              case Left( pth ) => ( query, pth );
-              case Right( pth ) => ( kquery, pth )
+              //case Left( pth ) => ( query, pth );
+              case Left( pth ) => {
+                (
+                  {
+                    ( collectionName : String, ptn : mTT.GetRequest ) => {
+                      mongoPD.queryDBObject( collectionName, ptn )
+                    }
+                  },
+                  pth
+                )
+              }
+              //case Right( pth ) => ( kquery, pth )
+              case Right( pth ) => {
+                (
+                  {
+                    ( collectionName : String, ptn : mTT.GetRequest ) => {
+                      mongoPD.kqueryDBObject( collectionName, ptn )
+                    }
+                  },
+                  pth
+                )
+              }
             }
           val pairs : Option[List[( DBObject, emT.PlaceInstance )]] = 
             for(
@@ -758,9 +814,29 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	          + "\ntPath : " + tPath
                   + "\n------------------------------------------------"
                   + "\ncompiled query : \n" + qry
+                  + "\ncompiled query string : \n" + qry.toString
 	        )
 	      )              
-              val qryRslts = executeWithResults( xmlCollName, qry )
+              val qryClntSessFn : ( MongoClient, String ) => List[DBObject] = {
+                ( clientSession : MongoClient, collectionName : String ) => {
+                  val mc = clientSession.getDB( defaultDB )( collectionName )
+                  tweet(
+	            (
+	              "PersistedMonadicKVDBNode : "
+	              + "\nmethod : executeWithResults "
+                      + "\nlocal function: qryClntSessFn"
+	              + "\nthis : " + this
+                      + "\nclientSession : " + clientSession
+                      + "\ncollectionName : " + collectionName
+                      + "\n------------------------------------------------"
+	            )
+	          )
+                  mc.find( qry ).toList
+                }
+              }
+              //val qryRslts = executeWithResults( xmlCollName, qry )
+              val qryRslts = wrapAction( qryClntSessFn )( xmlCollName )
+
               tweet(
 	        (
 	          "PersistedMonadicKVDBNode : "
