@@ -971,6 +971,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      + "\nptn : " + ptn
 	      + "\nconsume : " + consume
 	      + "\ncollName : " + collName
+              + "\n------------------------------------------------"
+	      + "\npersist : " + persist              
 	    )
 	  )
 	  val xmlCollName =
