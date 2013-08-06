@@ -1902,6 +1902,21 @@ package diesel {
 	}
       }
     }
+
+    @transient
+    var _looper : Option[DieselEngineCtor.DieselEngine#MsgProcessorBlock] = None
+    def looper(
+      e : DieselEngineCtor.DieselEngine = engine( None )
+    ) : DieselEngineCtor.DieselEngine#MsgProcessorBlock = {
+      _looper match {
+        case Some( mpb ) => mpb
+        case None => {
+          val mpb = e.stdLooper()
+          _looper = Some( mpb )
+          mpb
+        }
+      }
+    }
     
     def run( args : Array[String] ) : Unit = {
       @transient
@@ -1917,7 +1932,8 @@ package diesel {
       
       //e.evalLoop()
       //e.adminLoop()
-      e.stdLooper().go()      
+      //e.stdLooper().go()      
+      looper( e ).go()
     }
 
     def run( ) : Unit = {
