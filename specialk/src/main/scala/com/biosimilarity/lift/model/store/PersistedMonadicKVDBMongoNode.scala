@@ -505,7 +505,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )
 		)
 	      )
-	    CnxnMongoQuerifier.toMongoQuery( qryCCL )(
+	    //CnxnMongoQuerifier.toMongoQuery( qryCCL )(
+            CnxnMongoQuerifier.toMongoUnificationQuery( qryCCL )(
 	      nameSpaceToString, varToString, tagToString
 	    ).toString
 	  }
@@ -541,7 +542,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )
 		)
 	      )
-	    CnxnMongoQuerifier.toMongoQuery( ccb )(
+	    //CnxnMongoQuerifier.toMongoQuery( ccb )(
+            CnxnMongoQuerifier.toMongoUnificationQuery( ccb )(
 	      nameSpaceToString, varToString, tagToString
 	    )
 	  }
