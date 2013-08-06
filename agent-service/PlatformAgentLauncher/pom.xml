@@ -1,5 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>platformagentlauncher</artifactId>
@@ -8,12 +9,18 @@
     <description>Platform Agent Launcher</description>
     <inceptionYear>2013</inceptionYear>
 
+    <parent>
+        <groupId>com.protegra-ati</groupId>
+        <artifactId>ia-parent</artifactId>
+        <version>1.0</version>
+    </parent>
+
     <properties>
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <scala.version>2.10.0</scala.version>
-        <agentservices-store.version>1.4.2-SNAPSHOT</agentservices-store.version>
+        <agentservices-store.version>1.8.2-SNAPSHOT</agentservices-store.version>
 
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
