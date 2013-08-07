@@ -2167,13 +2167,25 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  )( path )    
 	}
 			
-	override def put( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
-	  val perD = cache.persistenceManifest
-	  val xmlCollName = 
-	    perD match {
-	      case None => None
-	      case Some( pd ) => Some( pd.storeUnitStr )
-	    }
+	override def put( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {	  
+	  val ( perD : Option[PersistenceManifest], xmlCollName : Option[String] ) =
+            ( for( cpm <- cache.persistenceManifest ) yield { ( cpm, cpm.storeUnitStr ) } ) match {
+              case Some( ( perD, xmlCollName ) ) => ( Some( perD ), Some( xmlCollName ) );
+              case None => ( None, None )
+            }
+          tweet(
+	    (
+	      "PersistedMonadicKVDBNode : "
+	      + "\nmethod : put "
+	      + "\nthis : " + this
+              + "\nptn : " + ptn
+	      + "\nrsrc : " + rsrc
+              + "\n------------------------------------"
+	      + "\nperD : " + perD
+              + "\nxmlCollName : " + xmlCollName
+	    )
+	  )
+
 	  cache.mput( perD )( cache.theMeetingPlace, cache.theWaiters, true, xmlCollName )( ptn, rsrc )
 	}
 	override def publish( ptn : CnxnCtxtLabel[Namespace,Var,Tag], rsrc : mTT.Resource ) = {
