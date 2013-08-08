@@ -100,7 +100,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     val userDataFilter = fromTermString(
-        "userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
+        //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
+        "\"userData\""
       ).getOrElse(throw new Exception(""))
     val pwmacFilter = fromTermString("\"pwmac\"").getOrElse(throw new Exception(""))
     val emailFilter = fromTermString("\"email\"").getOrElse(throw new Exception(""))
