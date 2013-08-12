@@ -1582,38 +1582,132 @@ package diesel {
         expr match {
           case ConcreteHL.Bottom => {
             //throw new Exception( "divergence" )
-	    println( "warning: divergent expression" )
+	    //println( "warning: divergent expression" )
+            tweet( "warning: divergent expression" )
 	    handler( None )
           }
           case ConcreteHL.FeedExpr( filter, cnxns ) => {
+            tweet( "method: evaluateExpression" )
+            tweet( "\nin ConcreteHL.FeedExpr case " )
+            tweet( "\nthis: " + this )
+            tweet( "\nnode: " + node )
+            tweet( "\nexpr: " + expr )
+            tweet( "\nhandler: " + handler )
+            tweet( "\n-----------------------------------------" )
+            tweet( "\nfilter: " + filter )
+            tweet( "\ncnxns: " + cnxns )
+            
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
+                
+                tweet( "method: evaluateExpression" )
+                tweet( "\n calling node.subscribe " )
+                tweet( "\nthis: " + this )
+                tweet( "\nnode: " + node )
+                tweet( "\nexpr: " + expr )
+                tweet( "\nhandler: " + handler )
+                tweet( "\n-----------------------------------------" )
+                tweet( "\nagntCnxn: " + agntCnxn )
+                tweet( "\nfilter: " + filter )
+
                 for( e <- node.subscribe( agntCnxn )( filter ) ) {
+
+                  tweet( "method: evaluateExpression" )
+                  tweet( "\n returned from node.subscribe " )
+                  tweet( "\nthis: " + this )
+                  tweet( "\nnode: " + node )
+                  tweet( "\nexpr: " + expr )
+                  tweet( "\nhandler: " + handler )
+                  tweet( "\n-----------------------------------------" )
+                  tweet( "\nagntCnxn: " + agntCnxn )
+                  tweet( "\nfilter: " + filter )
+                  tweet( "\ne: " + e )
+
                   handler( e )
                 }
               }
             }
           }
           case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
+            
+            tweet( "method: evaluateExpression" )
+            tweet( "\nin ConcreteHL.ScoreExpr case " )
+            tweet( "\nthis: " + this )
+            tweet( "\nnode: " + node )
+            tweet( "\nexpr: " + expr )
+            tweet( "\nhandler: " + handler )
+            tweet( "\n-----------------------------------------" )
+            tweet( "\nfilter: " + filter )
+            tweet( "\ncnxns: " + cnxns )
+            tweet( "\ncnxns: " + staff )
+
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
+                tweet( "method: evaluateExpression" )
+                tweet( "\n calling node.subscribe " )
+                tweet( "\nthis: " + this )
+                tweet( "\nnode: " + node )
+                tweet( "\nexpr: " + expr )
+                tweet( "\nhandler: " + handler )
+                tweet( "\n-----------------------------------------" )
+                tweet( "\nagntCnxn: " + agntCnxn )
+                tweet( "\nfilter: " + filter )
+
                 for( e <- node.subscribe( agntCnxn )( filter ) ) {
+                  
+                  tweet( "method: evaluateExpression" )
+                  tweet( "\n returned from node.subscribe " )
+                  tweet( "\nthis: " + this )
+                  tweet( "\nnode: " + node )
+                  tweet( "\nexpr: " + expr )
+                  tweet( "\nhandler: " + handler )
+                  tweet( "\n-----------------------------------------" )
+                  tweet( "\nagntCnxn: " + agntCnxn )
+                  tweet( "\nfilter: " + filter )
+                  tweet( "\ne: " + e )
+
                   handler( e )
                 }
               }
             }
           }
           case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
+            
+            tweet( "method: evaluateExpression" )
+            tweet( "\nin ConcreteHL.FeedExpr case " )
+            tweet( "\nthis: " + this )
+            tweet( "\nnode: " + node )
+            tweet( "\nexpr: " + expr )
+            tweet( "\nhandler: " + handler )
+            tweet( "\n-----------------------------------------" )
+            tweet( "\nfilter: " + filter )
+            tweet( "\ncnxns: " + cnxns )
+            tweet( "\nvalue: " + value )
+
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
+                
+                tweet( "method: evaluateExpression" )
+                tweet( "\n calling node.publish " )
+                tweet( "\nthis: " + this )
+                tweet( "\nnode: " + node )
+                tweet( "\nexpr: " + expr )
+                tweet( "\nhandler: " + handler )
+                tweet( "\n-----------------------------------------" )
+                tweet( "\nagntCnxn: " + agntCnxn )
+                tweet( "\nfilter: " + filter )
+                tweet( "\nvalue: " + value )
+
                 node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
               }
+
+              handler( None )
             }
           }
         }
