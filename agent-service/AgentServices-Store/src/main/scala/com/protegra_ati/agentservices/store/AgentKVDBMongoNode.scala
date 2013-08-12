@@ -1124,7 +1124,7 @@ with AgentCnxnTypeScope {
 		)
 		val npmgj = makeSpace( cnxn )
 		//spawn { npmgj.dispatchDMsgs() }
-		cnxnPartition( cnxn ) = npmgj
+		cnxnPartition += ( cnxn -> npmgj )
 		npmgj
 	      }
 	      case Some( npmgj ) => {
