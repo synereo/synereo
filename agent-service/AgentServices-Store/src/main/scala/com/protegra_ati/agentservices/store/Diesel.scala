@@ -1713,7 +1713,16 @@ package diesel {
         }
       }
 
+      trait MessageProcessorElements {
+        def erql() : CnxnCtxtLabel[String,String,String]
+        def rspLabelCtor() : String => CnxnCtxtLabel[String,String,String]
+        def useBiLink() : Option[Boolean]
+        def flip() : Boolean
+      }
+
       trait MessageProcessor {
+        self : MessageProcessorElements =>
+
         def innerLoop(
           erql : CnxnCtxtLabel[String,String,String],
           client : LinkEvalRequestChannel,
@@ -1845,53 +1854,135 @@ package diesel {
             }
           innerLoop( erql, client, server, node, rspLabelCtor )
         }
-      }
-
-      class MsgProcessor(
-        @transient
-        val erql : CnxnCtxtLabel[String,String,String],
-        @transient
-        val node : StdEvalChannel,
-        @transient
-        val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
-        val useBiLink : Option[Boolean] = None,
-        val flip : Boolean = false
-      ) extends MessageProcessor with Serializable {
         def go() : Unit = {
-          messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
+          throw new Exception( "attempting to run an abstract MessageProcessor" )
         }
-      }
+      }      
 
-      object MsgProcessor extends Serializable {
+      class MsgProcessorVals(
+        @transient
+        override val erql : CnxnCtxtLabel[String,String,String],
+        @transient
+        override val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+        override val useBiLink : Option[Boolean] = None,
+        override val flip : Boolean = false
+      ) extends MessageProcessorElements
+
+      object MsgProcessorVals extends Serializable {
         def apply(
           erql : CnxnCtxtLabel[String,String,String],
-          node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
           useBiLink : Option[Boolean] = None,
           flip : Boolean = false
-        ) : MsgProcessor = {
-          new MsgProcessor( erql, node, rspLabelCtor, useBiLink, flip )
+        ) : MsgProcessorVals = {
+          new MsgProcessorVals( erql, rspLabelCtor, useBiLink, flip )
         }
         def unapply(
-          mp : MsgProcessor
+          mp : MsgProcessorVals
         ) : Option[
              (
-               CnxnCtxtLabel[String,String,String],
-               StdEvalChannel,
+               CnxnCtxtLabel[String,String,String],               
                String =>CnxnCtxtLabel[String,String,String],
                Option[Boolean],
                Boolean
              )
         ]
         = {
-          Some( ( mp.erql, mp.node, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
+          Some( ( mp.erql, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
+        }
+      }
+
+      class MsgProcessor(
+        @transient
+        val node : StdEvalChannel,        
+        @transient
+        override val erql : CnxnCtxtLabel[String,String,String],
+        @transient
+        override val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+        override val useBiLink : Option[Boolean] = None,
+        override val flip : Boolean = false
+      ) extends MsgProcessorVals(
+        erql, rspLabelCtor, useBiLink, flip
+      ) with MessageProcessor with Serializable {
+        override def go() : Unit = {
+          messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
+        }
+      }
+
+      object MsgProcessor extends Serializable {
+        def apply(
+          node : StdEvalChannel,
+          erql : CnxnCtxtLabel[String,String,String],
+          rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+          useBiLink : Option[Boolean] = None,
+          flip : Boolean = false
+        ) : MsgProcessor = {
+          new MsgProcessor( node, erql, rspLabelCtor, useBiLink, flip )
+        }
+        def unapply(
+          mp : MsgProcessor
+        ) : Option[
+             (
+               StdEvalChannel,
+               CnxnCtxtLabel[String,String,String],               
+               String =>CnxnCtxtLabel[String,String,String],
+               Option[Boolean],
+               Boolean
+             )
+        ]
+        = {
+          Some( ( mp.node, mp.erql, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
+        }
+      }
+
+      class IndirectMsgProcessor(
+        val node : String,
+        @transient
+        override val erql : CnxnCtxtLabel[String,String,String],
+        @transient
+        override val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+        override val useBiLink : Option[Boolean] = None,
+        override val flip : Boolean = false
+      ) extends MsgProcessorVals(
+        erql, rspLabelCtor, useBiLink, flip
+      ) with MessageProcessor with Serializable {
+        override def go() : Unit = {
+          for( n <- EvalNodeMapper.get( node ) ) {
+            messageProcessorLoop( erql, n, rspLabelCtor, useBiLink, flip )
+          }
+        }
+      }
+
+      object IndirectMsgProcessor extends Serializable {
+        def apply(
+          node : String,
+          erql : CnxnCtxtLabel[String,String,String],
+          rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
+          useBiLink : Option[Boolean] = None,
+          flip : Boolean = false
+        ) : IndirectMsgProcessor = {
+          new IndirectMsgProcessor( node, erql, rspLabelCtor, useBiLink, flip )
+        }
+        def unapply(
+          mp : IndirectMsgProcessor
+        ) : Option[
+             (
+               String,
+               CnxnCtxtLabel[String,String,String],
+               String =>CnxnCtxtLabel[String,String,String],
+               Option[Boolean],
+               Boolean
+             )
+        ]
+        = {
+          Some( ( mp.node, mp.erql, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
         }
       }
 
       case class MsgProcessorBlock(
         @transient
-        override val self : List[MsgProcessor]
-      ) extends scala.collection.SeqProxy[MsgProcessor] {
+        override val self : List[MessageProcessor]
+      ) extends scala.collection.SeqProxy[MessageProcessor] {
         def go() { for ( mp <- self ) { mp.go() } }
       }
 
@@ -1901,10 +1992,30 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
+          node,
           DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
             throw new Exception( "error making evalRequestLabel" )
           ),
+          ( sessionId : String ) => {
+            DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
+              Left[String,String]( sessionId )
+            ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+          },
+          useBiLink,
+          flip
+        )
+      }
+
+      def indirectAdminLooper(
+        node : String,
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
+      ) : IndirectMsgProcessor = {
+        IndirectMsgProcessor(
           node,
+          DSLCommLinkCtor.ExchangeLabels.adminRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
+            throw new Exception( "error making evalRequestLabel" )
+          ),
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.adminResponseLabel()(
               Left[String,String]( sessionId )
@@ -1921,10 +2032,30 @@ package diesel {
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
+          node,
           DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
               throw new Exception( "error making evalRequestLabel" )
             ),
+          ( sessionId : String ) => {
+            DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
+              Left[String,String]( sessionId )
+            ).getOrElse( throw new Exception( "unable to make evaResponseLabel" ) )
+          },
+          useBiLink,
+          flip
+        )
+      }
+
+      def indirectEvalLooper(
+        node : String,
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
+      ) : IndirectMsgProcessor = {
+        IndirectMsgProcessor(
           node,
+          DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
+              throw new Exception( "error making evalRequestLabel" )
+            ),
           ( sessionId : String ) => {
             DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()(
               Left[String,String]( sessionId )
@@ -1946,9 +2077,32 @@ package diesel {
             evalLooper( node, useBiLink, flip )
           )
         )
-      }      
+      }
+      
+      def indirectStdLooper(
+        node : String,
+        useBiLink : Option[Boolean] = None,
+        flip : Boolean = false
+      ) : MsgProcessorBlock = {
+        MsgProcessorBlock(
+          List[MessageProcessor](
+            indirectAdminLooper( node, useBiLink, flip ),
+            indirectEvalLooper( node, useBiLink, flip )
+          )
+        )
+      }
     }
-  }  
+  }
+
+  object CommsLinkMapper extends MapProxy[String,DSLCommLinkCtor.StdEvaluationRequestChannel] {
+    @transient
+    override val self = new HashMap[String,DSLCommLinkCtor.StdEvaluationRequestChannel]()
+  }
+
+  object EvalNodeMapper extends MapProxy[String,DieselEngineCtor.StdEvalChannel] {
+    @transient
+    override val self = new HashMap[String,DieselEngineCtor.StdEvalChannel]()
+  }
 
   object Server extends Serializable {
     lazy val helpMsg = 
@@ -2005,7 +2159,10 @@ package diesel {
       _looper match {
         case Some( mpb ) => mpb
         case None => {
-          val mpb = e.stdLooper()
+          val nodeId = UUID.randomUUID()
+          val nodeKey = nodeId.toString
+          EvalNodeMapper += ( nodeKey -> DieselEngineCtor.agent( "/dieselProtocol" ) )
+          val mpb = e.indirectStdLooper( nodeKey )
           _looper = Some( mpb )
           mpb
         }
