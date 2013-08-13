@@ -1579,6 +1579,13 @@ package diesel {
       )( expr : ConcreteHL.HLExpr )(
         handler : Option[mTT.Resource] => Unit
       ): Unit = {
+        tweet(
+          "entering method: evaluateExpression"
+          + "\nthis: " + this
+          + "\nnode: " + node
+          + "\nexpr: " + expr
+          + "\nhandler: " + handler
+        )
         expr match {
           case ConcreteHL.Bottom => {
             //throw new Exception( "divergence" )
@@ -1587,43 +1594,49 @@ package diesel {
 	    handler( None )
           }
           case ConcreteHL.FeedExpr( filter, cnxns ) => {
-            tweet( "method: evaluateExpression" )
-            tweet( "\nin ConcreteHL.FeedExpr case " )
-            tweet( "\nthis: " + this )
-            tweet( "\nnode: " + node )
-            tweet( "\nexpr: " + expr )
-            tweet( "\nhandler: " + handler )
-            tweet( "\n-----------------------------------------" )
-            tweet( "\nfilter: " + filter )
-            tweet( "\ncnxns: " + cnxns )
+            tweet(
+              "method: evaluateExpression"
+              + "\nin ConcreteHL.FeedExpr case "
+              + "\nthis: " + this
+              + "\nnode: " + node
+              + "\nexpr: " + expr
+              + "\nhandler: " + handler
+              + "\n-----------------------------------------"
+              + "\nfilter: " + filter
+              + "\ncnxns: " + cnxns
+            )
             
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
                 
-                tweet( "method: evaluateExpression" )
-                tweet( "\n calling node.subscribe " )
-                tweet( "\nthis: " + this )
-                tweet( "\nnode: " + node )
-                tweet( "\nexpr: " + expr )
-                tweet( "\nhandler: " + handler )
-                tweet( "\n-----------------------------------------" )
-                tweet( "\nagntCnxn: " + agntCnxn )
-                tweet( "\nfilter: " + filter )
+                tweet(
+                  "method: evaluateExpression"
+                  + "\n calling node.subscribe "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                )
 
                 for( e <- node.subscribe( agntCnxn )( filter ) ) {
 
-                  tweet( "method: evaluateExpression" )
-                  tweet( "\n returned from node.subscribe " )
-                  tweet( "\nthis: " + this )
-                  tweet( "\nnode: " + node )
-                  tweet( "\nexpr: " + expr )
-                  tweet( "\nhandler: " + handler )
-                  tweet( "\n-----------------------------------------" )
-                  tweet( "\nagntCnxn: " + agntCnxn )
-                  tweet( "\nfilter: " + filter )
-                  tweet( "\ne: " + e )
+                  tweet(
+                    "method: evaluateExpression"
+                    + "\n returned from node.subscribe "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\ne: " + e
+                  )
 
                   handler( e )
                 }
@@ -1632,43 +1645,49 @@ package diesel {
           }
           case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
             
-            tweet( "method: evaluateExpression" )
-            tweet( "\nin ConcreteHL.ScoreExpr case " )
-            tweet( "\nthis: " + this )
-            tweet( "\nnode: " + node )
-            tweet( "\nexpr: " + expr )
-            tweet( "\nhandler: " + handler )
-            tweet( "\n-----------------------------------------" )
-            tweet( "\nfilter: " + filter )
-            tweet( "\ncnxns: " + cnxns )
-            tweet( "\ncnxns: " + staff )
+            tweet(
+              "method: evaluateExpression"
+              + "\nin ConcreteHL.ScoreExpr case "
+              + "\nthis: " + this
+              + "\nnode: " + node
+              + "\nexpr: " + expr
+              + "\nhandler: " + handler
+              + "\n-----------------------------------------"
+              + "\nfilter: " + filter
+              + "\ncnxns: " + cnxns
+              + "\ncnxns: " + staff
+            )
 
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
-                tweet( "method: evaluateExpression" )
-                tweet( "\n calling node.subscribe " )
-                tweet( "\nthis: " + this )
-                tweet( "\nnode: " + node )
-                tweet( "\nexpr: " + expr )
-                tweet( "\nhandler: " + handler )
-                tweet( "\n-----------------------------------------" )
-                tweet( "\nagntCnxn: " + agntCnxn )
-                tweet( "\nfilter: " + filter )
+                tweet(
+                  "method: evaluateExpression"
+                  + "\n calling node.subscribe "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                )
 
                 for( e <- node.subscribe( agntCnxn )( filter ) ) {
                   
-                  tweet( "method: evaluateExpression" )
-                  tweet( "\n returned from node.subscribe " )
-                  tweet( "\nthis: " + this )
-                  tweet( "\nnode: " + node )
-                  tweet( "\nexpr: " + expr )
-                  tweet( "\nhandler: " + handler )
-                  tweet( "\n-----------------------------------------" )
-                  tweet( "\nagntCnxn: " + agntCnxn )
-                  tweet( "\nfilter: " + filter )
-                  tweet( "\ne: " + e )
+                  tweet(
+                    "method: evaluateExpression"
+                    + "\n returned from node.subscribe "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\ne: " + e
+                  )
 
                   handler( e )
                 }
@@ -1677,32 +1696,36 @@ package diesel {
           }
           case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
             
-            tweet( "method: evaluateExpression" )
-            tweet( "\nin ConcreteHL.FeedExpr case " )
-            tweet( "\nthis: " + this )
-            tweet( "\nnode: " + node )
-            tweet( "\nexpr: " + expr )
-            tweet( "\nhandler: " + handler )
-            tweet( "\n-----------------------------------------" )
-            tweet( "\nfilter: " + filter )
-            tweet( "\ncnxns: " + cnxns )
-            tweet( "\nvalue: " + value )
-
+            tweet(
+              "method: evaluateExpression"
+              + "\nin ConcreteHL.FeedExpr case "
+              + "\nthis: " + this
+              + "\nnode: " + node
+              + "\nexpr: " + expr
+              + "\nhandler: " + handler
+              + "\n-----------------------------------------"
+              + "\nfilter: " + filter
+              + "\ncnxns: " + cnxns
+              + "\nvalue: " + value
+            )
+              
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
                 
-                tweet( "method: evaluateExpression" )
-                tweet( "\n calling node.publish " )
-                tweet( "\nthis: " + this )
-                tweet( "\nnode: " + node )
-                tweet( "\nexpr: " + expr )
-                tweet( "\nhandler: " + handler )
-                tweet( "\n-----------------------------------------" )
-                tweet( "\nagntCnxn: " + agntCnxn )
-                tweet( "\nfilter: " + filter )
-                tweet( "\nvalue: " + value )
+                tweet(
+                  "method: evaluateExpression"                  
+                  + "\n calling node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\nvalue: " + value
+                )
 
                 node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
               }
@@ -1718,6 +1741,15 @@ package diesel {
       )( expr : ConcreteHL.HLExpr )(
         handler : Option[mTT.Resource] => Unit
       ): Unit = {
+        tweet(
+          "entering method: evaluateExpression"
+          + "\nthis: " + this
+          + "\nnode: " + node
+          + "\nexpr: " + expr
+          + "\nhandler: " + handler
+          + "\n-----------------------------------------"
+          + "\n n: " + EvalNodeMapper.get( node )
+        )
         for ( n <- EvalNodeMapper.get( node ) ) {
           expr match {
             case ConcreteHL.Bottom => {
@@ -1727,43 +1759,49 @@ package diesel {
 	      handler( None )
             }
             case ConcreteHL.FeedExpr( filter, cnxns ) => {
-              tweet( "method: evaluateExpression" )
-              tweet( "\nin ConcreteHL.FeedExpr case " )
-              tweet( "\nthis: " + this )
-              tweet( "\nnode: " + node )
-              tweet( "\nexpr: " + expr )
-              tweet( "\nhandler: " + handler )
-              tweet( "\n-----------------------------------------" )
-              tweet( "\nfilter: " + filter )
-              tweet( "\ncnxns: " + cnxns )
+              tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.FeedExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+              )
               
               for( cnxn <- cnxns ) {
                 val agntCnxn : acT.AgentCnxn =
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
                   
-                  tweet( "method: evaluateExpression" )
-                  tweet( "\n calling node.subscribe " )
-                  tweet( "\nthis: " + this )
-                  tweet( "\nnode: " + node )
-                  tweet( "\nexpr: " + expr )
-                  tweet( "\nhandler: " + handler )
-                  tweet( "\n-----------------------------------------" )
-                  tweet( "\nagntCnxn: " + agntCnxn )
-                  tweet( "\nfilter: " + filter )
+                  tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.subscribe "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
                   
                   for( e <- n.subscribe( agntCnxn )( filter ) ) {
                     
-                    tweet( "method: evaluateExpression" )
-                    tweet( "\n returned from node.subscribe " )
-                    tweet( "\nthis: " + this )
-                    tweet( "\nnode: " + node )
-                    tweet( "\nexpr: " + expr )
-                    tweet( "\nhandler: " + handler )
-                    tweet( "\n-----------------------------------------" )
-                    tweet( "\nagntCnxn: " + agntCnxn )
-                    tweet( "\nfilter: " + filter )
-                    tweet( "\ne: " + e )
+                    tweet(
+                      "method: evaluateExpression"
+                      + "\n returned from node.subscribe "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
                     
                     handler( e )
                   }
@@ -1772,43 +1810,49 @@ package diesel {
             }
             case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
               
-              tweet( "method: evaluateExpression" )
-              tweet( "\nin ConcreteHL.ScoreExpr case " )
-              tweet( "\nthis: " + this )
-              tweet( "\nnode: " + node )
-              tweet( "\nexpr: " + expr )
-              tweet( "\nhandler: " + handler )
-              tweet( "\n-----------------------------------------" )
-              tweet( "\nfilter: " + filter )
-              tweet( "\ncnxns: " + cnxns )
-              tweet( "\ncnxns: " + staff )
+              tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.ScoreExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\ncnxns: " + staff
+              )
               
               for( cnxn <- cnxns ) {
                 val agntCnxn : acT.AgentCnxn =
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
-                  tweet( "method: evaluateExpression" )
-                  tweet( "\n calling node.subscribe " )
-                  tweet( "\nthis: " + this )
-                  tweet( "\nnode: " + node )
-                  tweet( "\nexpr: " + expr )
-                  tweet( "\nhandler: " + handler )
-                  tweet( "\n-----------------------------------------" )
-                  tweet( "\nagntCnxn: " + agntCnxn )
-                  tweet( "\nfilter: " + filter )
+                  tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.subscribe "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
                   
                   for( e <- n.subscribe( agntCnxn )( filter ) ) {
                     
-                    tweet( "method: evaluateExpression" )
-                    tweet( "\n returned from node.subscribe " )
-                    tweet( "\nthis: " + this )
-                    tweet( "\nnode: " + node )
-                    tweet( "\nexpr: " + expr )
-                    tweet( "\nhandler: " + handler )
-                    tweet( "\n-----------------------------------------" )
-                    tweet( "\nagntCnxn: " + agntCnxn )
-                    tweet( "\nfilter: " + filter )
-                    tweet( "\ne: " + e )
+                    tweet(
+                      "method: evaluateExpression"
+                      + "\n returned from node.subscribe "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
                     
                     handler( e )
                   }
@@ -1817,32 +1861,36 @@ package diesel {
             }
             case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
               
-              tweet( "method: evaluateExpression" )
-              tweet( "\nin ConcreteHL.FeedExpr case " )
-              tweet( "\nthis: " + this )
-              tweet( "\nnode: " + node )
-              tweet( "\nexpr: " + expr )
-              tweet( "\nhandler: " + handler )
-              tweet( "\n-----------------------------------------" )
-              tweet( "\nfilter: " + filter )
-              tweet( "\ncnxns: " + cnxns )
-              tweet( "\nvalue: " + value )
+              tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.FeedExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\nvalue: " + value 
+              )
               
               for( cnxn <- cnxns ) {
                 val agntCnxn : acT.AgentCnxn =
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
                   
-                  tweet( "method: evaluateExpression" )
-                  tweet( "\n calling node.publish " )
-                  tweet( "\nthis: " + this )
-                  tweet( "\nnode: " + node )
-                  tweet( "\nexpr: " + expr )
-                  tweet( "\nhandler: " + handler )
-                  tweet( "\n-----------------------------------------" )
-                  tweet( "\nagntCnxn: " + agntCnxn )
-                  tweet( "\nfilter: " + filter )
-                  tweet( "\nvalue: " + value )
+                  tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.publish "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\nvalue: " + value
+                  )
                   
                   n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
