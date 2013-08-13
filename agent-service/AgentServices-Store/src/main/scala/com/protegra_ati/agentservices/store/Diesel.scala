@@ -1919,23 +1919,42 @@ package diesel {
           node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
-          // BUGBUG -- lgm : to accelerate progress at this level
-          // while waiting on a fix at the KVDB level the code has
-          // flipped around session id generation. The server now
-          // generates the session id. This means that the name of
-          // variable where the session id is bound is part of the
-          // contract between the client and the server. For this
-          // code to be more correct it should issue a check that
-          // the session id returned matches the session id
-          // assigned. This has to always be so because of the
-          // underlying mechanism. If it isn't there's a bug in
-          // the underlying comms structure.
-          //def loop() : Unit = {
+          tweet(
+            "entering method: innerLoop"
+            + "\nthis: " + this
+            + "\nerql: " + erql
+            + "\nclient: " + client
+            + "\nserver: " + server
+            + "\nnode: " + node            
+            + "\nrspLabelCtor: " + rspLabelCtor
+          )
             reset { 
               for( e <- client.subscribe( erql ) ) {
+                tweet(
+                  "method: innerLoop"
+                  + "\n completed client.subscribe "
+                  + "\nthis: " + this
+                  + "\nerql: " + erql
+                  + "\nclient: " + client
+                  + "\nserver: " + server
+                  + "\nnode: " + node
+                  + "\n-----------------------------------------"
+                  + "\ne: " + e
+                )
                 e match {
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet( "rsrc type: DSLCommLink.mTT.RBoundAList" )
+                    tweet(
+                      "method: innerLoop"
+                      + "\n case rsrc type: DSLCommLink.mTT.RBoundAList"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -1954,7 +1973,18 @@ package diesel {
                     }             
                   }
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
+                    tweet(
+                      "method: innerLoop"
+                      + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -1976,7 +2006,18 @@ package diesel {
                   case Some( rsrc ) => {
                     rsrc match {
                       case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
-                        tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
+                        tweet(
+                          "method: innerLoop"
+                          + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
+                          + "\n completed client.subscribe "
+                          + "\nthis: " + this
+                          + "\nerql: " + erql
+                          + "\nclient: " + client
+                          + "\nserver: " + server
+                          + "\nnode: " + node
+                          + "\n-----------------------------------------"
+                          + "\ne: " + e
+                        )
                         innerOptRsrc match {
                           case Some( DSLCommLink.mTT.Ground( expr ) ) => {
                             for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
@@ -1997,14 +2038,36 @@ package diesel {
                             }
                           }
                           case Some( innerRrsc ) => {
-                            tweet( "unexpected inner rsrc type: " + innerRrsc )
-                            tweet( "inner rsrc type: " + innerRrsc.getClass )
+                            tweet(
+                              "method: innerLoop"
+                              + "\n case unexpected inner rsrc type: " + innerRrsc
+                              + "\ninner rsrc type: " + innerRrsc.getClass
+                              + "\n completed client.subscribe "
+                              + "\nthis: " + this
+                              + "\nerql: " + erql
+                              + "\nclient: " + client
+                              + "\nserver: " + server
+                              + "\nnode: " + node
+                              + "\n-----------------------------------------"
+                              + "\ne: " + e
+                            )
                           }
                         }                      
                       }
                       case _ => {
-                        tweet( "unexpected rsrc type: " + rsrc )
-                        tweet( "rsrc type: " + rsrc.getClass )
+                        tweet(
+                          "method: innerLoop"
+                          + "\n case unexpected rsrc type: " + rsrc
+                          + "\ninner rsrc type: " + rsrc.getClass
+                          + "\n completed client.subscribe "
+                          + "\nthis: " + this
+                          + "\nerql: " + erql
+                          + "\nclient: " + client
+                          + "\nserver: " + server
+                          + "\nnode: " + node
+                          + "\n-----------------------------------------"
+                          + "\ne: " + e
+                        )
                       }
                     }             
                   }
@@ -2012,7 +2075,16 @@ package diesel {
                     tweet( "server loop waiting." )
                   }
                   case _ => {
-                    tweet( "rsrc not handled: " + e )
+                    tweet(
+                      "method: innerLoop"
+                      + "\n rsrc not handled: " + e
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                    )
                   }
                 }
               }
@@ -2028,23 +2100,30 @@ package diesel {
           node : String,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
-          // BUGBUG -- lgm : to accelerate progress at this level
-          // while waiting on a fix at the KVDB level the code has
-          // flipped around session id generation. The server now
-          // generates the session id. This means that the name of
-          // variable where the session id is bound is part of the
-          // contract between the client and the server. For this
-          // code to be more correct it should issue a check that
-          // the session id returned matches the session id
-          // assigned. This has to always be so because of the
-          // underlying mechanism. If it isn't there's a bug in
-          // the underlying comms structure.
-          //def loop() : Unit = {
+          tweet(
+            "entering method: innerLoop"
+            + "\nthis: " + this
+            + "\nerql: " + erql
+            + "\nclient: " + client
+            + "\nserver: " + server
+            + "\nnode: " + node            
+            + "\nrspLabelCtor: " + rspLabelCtor
+          )
             reset { 
               for( e <- client.subscribe( erql ) ) {
                 e match {
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet( "rsrc type: DSLCommLink.mTT.RBoundAList" )
+                    tweet(
+                      "method: innerLoop"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2063,7 +2142,18 @@ package diesel {
                     }             
                   }
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
+                    tweet(
+                      "method: innerLoop"
+                      + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2085,7 +2175,18 @@ package diesel {
                   case Some( rsrc ) => {
                     rsrc match {
                       case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
-                        tweet( "rsrc type: DSLCommLink.mTT.RBoundHM" )
+                        tweet(
+                          "method: innerLoop"
+                          + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
+                          + "\n completed client.subscribe "
+                          + "\nthis: " + this
+                          + "\nerql: " + erql
+                          + "\nclient: " + client
+                          + "\nserver: " + server
+                          + "\nnode: " + node
+                          + "\n-----------------------------------------"
+                          + "\ne: " + e
+                        )
                         innerOptRsrc match {
                           case Some( DSLCommLink.mTT.Ground( expr ) ) => {
                             for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
@@ -2106,14 +2207,36 @@ package diesel {
                             }
                           }
                           case Some( innerRrsc ) => {
-                            tweet( "unexpected inner rsrc type: " + innerRrsc )
-                            tweet( "inner rsrc type: " + innerRrsc.getClass )
+                            tweet(
+                              "method: innerLoop"
+                              + "\n case unexpected inner rsrc type: " + innerRrsc
+                              + "\ninner rsrc type: " + innerRrsc.getClass
+                              + "\n completed client.subscribe "
+                              + "\nthis: " + this
+                              + "\nerql: " + erql
+                              + "\nclient: " + client
+                              + "\nserver: " + server
+                              + "\nnode: " + node
+                              + "\n-----------------------------------------"
+                              + "\ne: " + e
+                            )
                           }
                         }                      
                       }
                       case _ => {
-                        tweet( "unexpected rsrc type: " + rsrc )
-                        tweet( "rsrc type: " + rsrc.getClass )
+                        tweet(
+                          "method: innerLoop"
+                          + "\n case unexpected rsrc type: " + rsrc
+                          + "\ninner rsrc type: " + rsrc.getClass
+                          + "\n completed client.subscribe "
+                          + "\nthis: " + this
+                          + "\nerql: " + erql
+                          + "\nclient: " + client
+                          + "\nserver: " + server
+                          + "\nnode: " + node
+                          + "\n-----------------------------------------"
+                          + "\ne: " + e
+                        )
                       }
                     }             
                   }
@@ -2121,7 +2244,16 @@ package diesel {
                     tweet( "server loop waiting." )
                   }
                   case _ => {
-                    tweet( "rsrc not handled: " + e )
+                    tweet(
+                      "method: innerLoop"
+                      + "\n rsrc not handled: " + e
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                    )
                   }
                 }
               }
