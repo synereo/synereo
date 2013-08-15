@@ -145,10 +145,12 @@ trait FuzzyTermStreams {
   lazy val evalRequestLabelStream : Stream[CnxnCtxtLabel[String,String,String]] = {
     mkEvalRequestLabelStream()
   }
-  def mkRandomLabelStringStream(
+  def mkRandomLabelStringStream(    
+    prefix : String = "label",
+    maxLabelDepth : Int = 2,
     uuidStrmStrm : Stream[Stream[UUID]] = mkUuidStreamStream()
   ) : Stream[String] = {
-    uuidStrmStrm.map( randomLabelStr( _ ) )
+    uuidStrmStrm.map( randomLabelStr( _, prefix, maxLabelDepth ) )
   }
   def mkRandomLabelStream() : Stream[CnxnCtxtLabel[String,String,String]] = {
     mkRandomLabelStringStream().map(
@@ -263,7 +265,7 @@ trait FuzzyTermStreams {
     maxCnxns : Int = 10,    
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
     rndm : scala.util.Random = new scala.util.Random(),
-    labelStrStrm : Stream[String] = mkRandomLabelStringStream()
+    labelStrStrm : Stream[String] = mkRandomLabelStringStream( "label", 0 )
   ) : Stream[List[PortableAgentCnxn]] /* Stream[List[ConcreteHL.PortableAgentCnxn]] */ = {    
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 2
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + numCnxns + 2
