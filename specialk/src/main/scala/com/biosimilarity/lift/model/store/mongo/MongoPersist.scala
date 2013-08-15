@@ -121,7 +121,7 @@ extends MongoStoreConfiguration {
 trait StdMongoStoreConfiguration extends MongoStoreConfigurationProxy {
   // @transient
   // override final val underlyingConfiguration = MongoConfigInfo
-  def underlyingConfiguration = MongoConfigInfo
+  def underlyingConfiguration = MongoConfigInfoFactory.createMongoConfigInfo()
 }
 
 trait MongoResultsParser[Namespace,Var,Tag]

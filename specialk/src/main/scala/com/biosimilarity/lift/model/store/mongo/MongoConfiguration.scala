@@ -14,7 +14,7 @@ import com.biosimilarity.lift.model.MongoDefaults
 
 import java.net.URI
 
-object MongoConfigInfo
+trait MongoConfigInfoT
 extends MongoStoreConfiguration
 with URIFromConfigurationT {  
   override def configFileName: Option[String] = None
@@ -30,3 +30,12 @@ with URIFromConfigurationT {
   lazy val _defaultDB = defaultDB
 }
 
+object MongoConfigInfo extends MongoConfigInfoT
+
+trait MongoConfigInfoFactoryT {
+  def createMongoConfigInfo() : MongoConfigInfoT = {
+    new MongoConfigInfoT { }
+  }
+}
+
+object MongoConfigInfoFactory extends MongoConfigInfoFactoryT
