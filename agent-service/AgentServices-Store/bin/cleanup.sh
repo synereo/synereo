@@ -4,6 +4,6 @@ sudo ~/work/src/devtools/rabbitmq/rabbitmq_server-2.6.1/sbin/rabbitmqctl stop_ap
 sudo ~/work/src/devtools/rabbitmq/rabbitmq_server-2.6.1/sbin/rabbitmqctl reset; \
 sudo ~/work/src/devtools/rabbitmq/rabbitmq_server-2.6.1/sbin/rabbitmqctl stop; \
 sudo sleep 2; \
-mv KVDBLogs.log* history \
+mv KVDBLogs.log* history; \
 sudo ~/work/src/devtools/rabbitmq/rabbitmq_server-2.6.1/sbin/rabbitmq-server &
 
