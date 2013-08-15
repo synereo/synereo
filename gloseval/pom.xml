@@ -30,14 +30,6 @@
 
     <repositories>
         <repository>
-            <id>protegraRepo</id>
-            <url>ftp://ftp.protegra.com</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
             <id>biosim</id>
             <url>http://biosimrepomirror.googlecode.com/svn/trunk</url>
             <snapshots>
