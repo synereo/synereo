@@ -2360,6 +2360,7 @@ package diesel {
       ) extends MsgProcessorVals(
         erql, rspLabelCtor, useBiLink, flip
       ) with MessageProcessor with Serializable {
+        def this() = { this( null, null, null, None, false ) }
         override def go( derefNodeEarly : Boolean = true ) : Unit = {
           if ( derefNodeEarly ) {
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
