@@ -1903,6 +1903,7 @@ package diesel {
       }
       
       trait MessageProcessorElements {
+        self : Serializable =>
         def erql() : CnxnCtxtLabel[String,String,String]
         def rspLabelCtor() : String => CnxnCtxtLabel[String,String,String]
         def useBiLink() : Option[Boolean]
@@ -2322,7 +2323,7 @@ package diesel {
         override val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
         override val useBiLink : Option[Boolean] = None,
         override val flip : Boolean = false
-      ) extends MessageProcessorElements {
+      ) extends MessageProcessorElements with Serializable {
         def this() = { this( null, null, None, false ) }
       }
 
@@ -2361,8 +2362,8 @@ package diesel {
         override val flip : Boolean = false
       ) extends MsgProcessorVals(
         erql, rspLabelCtor, useBiLink, flip
-      ) with MessageProcessor {
-        //def this() = { this( null, null, null, None, false ) }
+      ) with MessageProcessor with Serializable {
+        def this() = { this( null, null, null, None, false ) }
         override def go( derefNodeEarly : Boolean = true ) : Unit = {
           if ( derefNodeEarly ) {
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
@@ -2413,7 +2414,7 @@ package diesel {
       ) extends MsgProcessorVals(
         erql, rspLabelCtor, useBiLink, flip
       ) with MessageProcessor with Serializable {
-        //def this() = { this( null, null, null, None, false ) }
+        def this() = { this( null, null, null, None, false ) }
         override def go( derefNodeEarly : Boolean = false ) : Unit = {
           if ( derefNodeEarly ) {            
             for( n <- EvalNodeMapper.get( node ) ) {
