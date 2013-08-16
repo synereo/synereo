@@ -863,6 +863,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                         tweet( "filtering refuted pattern: " + e.ptn + "; key: " + e.key )
                         acc
                       }
+                      case t : Throwable => {
+                        val errors : java.io.StringWriter = new java.io.StringWriter()
+                        t.printStackTrace( new java.io.PrintWriter( errors ) )
+                        tweet( "unhandled exception : " + errors.toString( ) )
+                        throw( t )
+                      }
                     }
                   }
                 }
