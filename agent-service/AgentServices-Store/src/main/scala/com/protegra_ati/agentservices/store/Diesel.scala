@@ -1910,7 +1910,7 @@ package diesel {
       }
 
       trait MessageProcessor {
-        self : MessageProcessorElements =>
+        self : MessageProcessorElements with Serializable =>
 
         def innerLoop(
           erql : CnxnCtxtLabel[String,String,String],
@@ -2322,7 +2322,9 @@ package diesel {
         override val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
         override val useBiLink : Option[Boolean] = None,
         override val flip : Boolean = false
-      ) extends MessageProcessorElements
+      ) extends MessageProcessorElements {
+        def this() = { this( null, null, None, false ) }
+      }
 
       object MsgProcessorVals extends Serializable {
         def apply(
@@ -2348,7 +2350,7 @@ package diesel {
         }
       }
 
-      class MsgProcessor(
+      case class MsgProcessor(
         @transient
         val node : StdEvalChannel,        
         @transient
@@ -2359,8 +2361,8 @@ package diesel {
         override val flip : Boolean = false
       ) extends MsgProcessorVals(
         erql, rspLabelCtor, useBiLink, flip
-      ) with MessageProcessor with Serializable {
-        def this() = { this( null, null, null, None, false ) }
+      ) with MessageProcessor {
+        //def this() = { this( null, null, null, None, false ) }
         override def go( derefNodeEarly : Boolean = true ) : Unit = {
           if ( derefNodeEarly ) {
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
@@ -2372,6 +2374,7 @@ package diesel {
         }
       }
 
+/*
       object MsgProcessor extends Serializable {
         def apply(
           node : StdEvalChannel,
@@ -2397,8 +2400,9 @@ package diesel {
           Some( ( mp.node, mp.erql, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
         }
       }
+ */
 
-      class IndirectMsgProcessor(
+      case class IndirectMsgProcessor(
         val node : String,
         @transient
         override val erql : CnxnCtxtLabel[String,String,String],
@@ -2409,7 +2413,7 @@ package diesel {
       ) extends MsgProcessorVals(
         erql, rspLabelCtor, useBiLink, flip
       ) with MessageProcessor with Serializable {
-        def this() = { this( null, null, null, None, false ) }
+        //def this() = { this( null, null, null, None, false ) }
         override def go( derefNodeEarly : Boolean = false ) : Unit = {
           if ( derefNodeEarly ) {            
             for( n <- EvalNodeMapper.get( node ) ) {
@@ -2422,6 +2426,7 @@ package diesel {
         }
       }
 
+/*
       object IndirectMsgProcessor extends Serializable {
         def apply(
           node : String,
@@ -2447,6 +2452,7 @@ package diesel {
           Some( ( mp.node, mp.erql, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
         }
       }
+*/
 
       case class MsgProcessorBlock(
         @transient
