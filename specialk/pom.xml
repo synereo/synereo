@@ -37,10 +37,6 @@
 
   <repositories>
     <repository>
-      <id>protegraRepo</id>
-      <url>ftp://ftp.protegra.com</url>
-    </repository>
-    <repository>
       <id>scala-tools.releases</id>
       <name>Scala-Tools Dependencies Repository for Releases</name>
       <url>http://scala-tools.org/repo-releases</url>
@@ -89,7 +85,11 @@
     <repository>
       <id>biosim</id>
       <url>http://biosimrepomirror.googlecode.com/svn/trunk</url>
-    </repository>     
+    </repository>
+    <repository>
+      <id>xqj</id>
+      <url>http://xqj.net/maven</url>
+    </repository>
   </repositories>
 
   <pluginRepositories>
