@@ -1125,6 +1125,26 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    }
 	  }
 	}
+
+        /*
+        def wrapWithCatch(
+          sk : Option[mTT.Resource] => Unit @suspendable
+        ) : Option[mTT.Resource] => Unit @suspendable = {
+          ( optRsrc ) => {
+            try {
+	      sk( optRsrc )
+            }
+            catch {
+              case t : Throwable => {
+                val errors : java.io.StringWriter = new java.io.StringWriter()
+                t.printStackTrace( new java.io.PrintWriter( errors ) )
+                tweet( "unhandled exception : " + errors.toString( ) )
+                throw( t )
+              }
+            }
+          }
+        }
+        */
 	
 	def putPlaces( persist : Option[PersistenceManifest] )(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
@@ -1145,7 +1165,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      + "\nconsume : " + consume
 	      + "\ncollName : " + collName
 	    )
-	  )
+	  )          
+
 	  Generator {
 	    k : ( emT.PlaceInstance => Unit @suspendable ) => 
 	      // Are there outstanding waiters at this pattern?    
@@ -1184,7 +1205,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			case Right( k :: ks ) => {
 			  for( sk <- ( k :: ks ) ) {
 			    spawn {
-			      sk( pI.subst( rsrc ) )
+                              sk( pI.subst( rsrc ) )
 			    }
 			  }
 			}

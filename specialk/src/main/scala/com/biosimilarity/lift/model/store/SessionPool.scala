@@ -111,7 +111,14 @@ trait SessionMapAbstractionsT[ClientSession <: {def close() : Unit}] {
         // Try to close the object, doing nothing on failure
         try {
           obj.close
-        } catch { case _ => }
+        } catch {
+          case t : Throwable => {
+            val errors : java.io.StringWriter = new java.io.StringWriter()
+            t.printStackTrace( new java.io.PrintWriter( errors ) )
+            println( "unhandled exception : " + errors.toString( ) );
+            //throw( t )
+          }
+        }
       }
     }    
   }
@@ -221,6 +228,14 @@ abstract class SessionPool[ClientSession <: {def close() : Unit}](
   ) = {
     try {
       getPool( host, port, user, pwd ).invalidateObject( cs )
-    } catch { case _ => }
+    } catch {
+      //case _ =>
+      case t : Throwable => {
+        val errors : java.io.StringWriter = new java.io.StringWriter()
+        t.printStackTrace( new java.io.PrintWriter( errors ) )
+        println( "unhandled exception : " + errors.toString( ) );
+        //throw( t )
+      }
+    }
   }
 }
