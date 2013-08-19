@@ -765,7 +765,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
           // asResource code
           tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : executeWithResults "
 	      + "\nthis : " + this
               + "\ncollName : " + xmlCollName
@@ -809,7 +809,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
             ) yield {
               tweet(
 	        (
-	          "PersistedMonadicKVDBNode : "
+	          "PersistedMonadicKVDBMongoNode : "
 	          + "\nmethod : executeWithResults "
 	          + "\nthis : " + this
                   + "\ncollName : " + xmlCollName
@@ -824,7 +824,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                   val mc = clientSession.getDB( defaultDB )( collectionName )
                   tweet(
 	            (
-	              "PersistedMonadicKVDBNode : "
+	              "PersistedMonadicKVDBMongoNode : "
 	              + "\nmethod : executeWithResults "
                       + "\nlocal function: qryClntSessFn"
 	              + "\nthis : " + this
@@ -841,7 +841,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
               tweet(
 	        (
-	          "PersistedMonadicKVDBNode : "
+	          "PersistedMonadicKVDBMongoNode : "
 	          + "\nmethod : executeWithResults "
 	          + "\nthis : " + this
                   + "\ncollName : " + xmlCollName
@@ -876,7 +876,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
             }
           tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : executeWithResults "
 	      + "\nthis : " + this
               + "\ncollName : " + xmlCollName
@@ -898,7 +898,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
           tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : putInStore "
 	      + "\nthis : " + this
 	      + "\nptn : " + ptn
@@ -1049,7 +1049,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Option[List[emT.PlaceInstance]] = {
 	  tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : updateKStore "
 	      + "\nthis : " + this
 	      + "\nptn : " + ptn
@@ -1126,25 +1126,23 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  }
 	}
 
-        /*
-        def wrapWithCatch(
-          sk : Option[mTT.Resource] => Unit @suspendable
-        ) : Option[mTT.Resource] => Unit @suspendable = {
-          ( optRsrc ) => {
-            try {
-	      sk( optRsrc )
-            }
-            catch {
-              case t : Throwable => {
-                val errors : java.io.StringWriter = new java.io.StringWriter()
-                t.printStackTrace( new java.io.PrintWriter( errors ) )
-                tweet( "unhandled exception : " + errors.toString( ) )
-                throw( t )
-              }
-            }
-          }
-        }
-        */
+        // def wrapWithCatch(
+//           sk : Option[mTT.Resource] => Unit @suspendable
+//         ) : Option[mTT.Resource] => Unit @suspendable = {
+//           ( optRsrc ) => {
+//             try {
+// 	      sk( optRsrc )
+//             }
+//             catch {
+//               case t : Throwable => {
+//                 val errors : java.io.StringWriter = new java.io.StringWriter()
+//                 t.printStackTrace( new java.io.PrintWriter( errors ) )
+//                 tweet( "unhandled exception : " + errors.toString( ) );                
+//               }
+//             }
+//           }
+//         }
+        
 	
 	def putPlaces( persist : Option[PersistenceManifest] )(
 	  channels : Map[mTT.GetRequest,mTT.Resource],
@@ -1156,7 +1154,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Generator[emT.PlaceInstance,Unit,Unit] = {    
 	  tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : putPlaces "
 	      + "\nthis : " + this
 	      + "\nchannels : " + channels
@@ -1199,17 +1197,67 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		updateKStore( persist )(
 		  ptn, consume, collName
 		) match {
-		  case Some( pIs ) => {
+		  case uKSRslts@Some( pIs ) => {
+                    tweet(
+	              (
+	                "PersistedMonadicKVDBMongoNode : "
+	                + "\n in method : putPlaces dispatching on updateKStore results "
+	                + "\nthis : " + this
+	                + "\nptn : " + ptn
+	                + "\nconsume : " + consume
+	                + "\ncollName : " + collName
+                        + "\n--------------------------------------"
+                        + "\nupdateKStore rslts : " + uKSRslts
+	              )
+	            )
 		    for ( pI <- pIs ) {
 		      pI.stuff match {
-			case Right( k :: ks ) => {
+			case pIStuff@Right( k :: ks ) => {
+                          tweet(
+	                    (
+	                      "PersistedMonadicKVDBMongoNode : "
+	                      + "\n in method : putPlaces dispatching on pI.stuff"
+	                      + "\nthis : " + this
+	                      + "\nptn : " + ptn
+	                      + "\nconsume : " + consume
+	                      + "\ncollName : " + collName
+                              + "\n--------------------------------------"
+                              + "\npI.stuff : " + pIStuff
+	                    )
+	                  )
 			  for( sk <- ( k :: ks ) ) {
+                            tweet(
+	                      (
+	                        "PersistedMonadicKVDBMongoNode : "
+	                        + "\n in method : putPlaces spawning thread to call a continuation"
+	                        + "\nthis : " + this
+	                        + "\nchannels : " + channels
+	                        + "\nregistered : " + registered
+	                        + "\nptn : " + ptn
+	                        + "\nconsume : " + consume
+	                        + "\ncollName : " + collName
+                                + "\n--------------------------------------"
+                                + "\nsk : " + sk
+	                      )
+	                    )
 			    spawn {
                               sk( pI.subst( rsrc ) )
 			    }
 			  }
 			}
 			case Right( Nil ) => {
+                          tweet(
+	                    (
+	                      "PersistedMonadicKVDBMongoNode : "
+	                      + "\n in method : putPlaces dispatching on pI.stuff"
+	                      + "\nthis : " + this
+	                      + "\nptn : " + ptn
+	                      + "\nconsume : " + consume
+	                      + "\ncollName : " + collName
+                              + "\n--------------------------------------"
+                              + "\npI.stuff : Right( Nil )"
+	                    )
+	                  )
 			  putInStore(
 			    persist, channels, ptn, None, rsrc, collName, false //true
 			  )
@@ -1256,7 +1304,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Unit @suspendable = {
 	  tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : mput "
 	      + "\nthis : " + this
 	      + "\nchannels : " + channels
@@ -1344,7 +1392,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	: Generator[Option[mTT.Resource],Unit,Unit] = {
 	  tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : mget "
 	      + "\nthis : " + this
 	      + "\nchannels : " + channels
@@ -1910,7 +1958,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
 	  tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : dispatchDMsg "
 	      + "\nthis : " + this
 	      + "\ndreq : " + dreq
@@ -2079,7 +2127,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	: Generator[Option[mTT.Resource],Unit,Unit] = {        
 	  tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : mget "
 	      + "\nthis : " + this
 	      + "\nchannels : " + channels
@@ -2202,7 +2250,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
             }
           tweet(
 	    (
-	      "PersistedMonadicKVDBNode : "
+	      "PersistedMonadicKVDBMongoNode : "
 	      + "\nmethod : put "
 	      + "\nthis : " + this
               + "\nptn : " + ptn
