@@ -1241,7 +1241,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	                      )
 	                    )
 			    spawn {
-                              sk( pI.subst( rsrc ) )
+                              println("Spawning: ")
+                              println("Spawning: rsrc = " + rsrc)
+                              val arg = pI.subst( rsrc )
+                              println("Spawning: arg = " + arg)
+                              sk( arg )
+                              println("Done with spawn")
 			    }
 			  }
 			}
