@@ -6,8 +6,8 @@ name := "GLoSEval"
 
 version       := "0.1"
 
-scalaVersion  := "2.10.2"
-//scalaVersion  := "2.10.0"
+//scalaVersion  := "2.10.2"
+scalaVersion  := "2.10.0"
 //scalaVersion  := "2.9.2"
 
 autoCompilerPlugins := true
@@ -49,13 +49,13 @@ libraryDependencies ++= Seq(
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",
   "com.thoughtworks.xstream" % "xstream"            % "1.4.2",
-  "org.mongodb"            %   "casbah_2.10"       % "2.6.2",
-//  "org.mongodb"            %   "casbah_2.10"       % "2.5.1",
+//  "org.mongodb"            %   "casbah_2.10"       % "2.6.2",
+  "org.mongodb"            %   "casbah_2.10"       % "2.5.1",
 //  "org.mongodb"            %   "casbah_2.9.2"       % "2.5.1",
   "org.basex"              %   "basex-api"          % "7.5",
   "biz.source_code"        %   "base64coder"        % "2010-09-21",
-  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.2")
-  //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
+  //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.2")
+  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
   //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.2")
 )    
     
