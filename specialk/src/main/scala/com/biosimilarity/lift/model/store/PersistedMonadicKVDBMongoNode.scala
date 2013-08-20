@@ -66,6 +66,8 @@ case class UnificationQueryFilter[Namespace,Var,Tag](
 
 trait PersistedMonadicKVDBMongoNodeScope[Namespace,Var,Tag,Value] 
 extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {  
+
+  object Scribbler extends com.biosimilarity.lift.model.store.scribble.Scribble[mTT.Resource]
   //type PersistedKVDBNodeRequest = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeRequest
   //type PersistedKVDBNodeResponse = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeResponse
   
@@ -1240,8 +1242,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                 + "\nsk : " + sk
 	                      )
 	                    )
+
+                            val skC = Scribbler.wrapWithCatch( sk )
 			    spawn {
-                              sk( pI.subst( rsrc ) )
+                              skC( pI.subst( rsrc ) )
 			    }
 			  }
 			}
@@ -1460,7 +1464,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		// each match?
 		// Answer: Yes!
 		stbl += ( skey -> krslts.length )  	  
-		for( ( krslt, ekrsrc ) <- itergen[(DBObject,emT.PlaceInstance)]( krslts ) ) {
+		for( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)]( krslts ) ) {
+                  val ( krslt, ekrsrc ) = rsltRsrcPair
 		  tweet( ">>>>>>***>>>>>>***>>>>>>" )
 		  tweet( "retrieved " + krslt.toString )
 		  tweet( "<<<<<<***<<<<<<***<<<<<<" )
@@ -1610,7 +1615,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				      if ( cursor )
 					{
                                           var rsrcRslts : List[mTT.Resource] = Nil
-                                          for( ( rslt, ersrc ) <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+                                          for( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+                                            val ( rslt, ersrc ) = rsltRsrcPair
 					    tweet( "retrieved " + rslt.toString )
 					    
 					    consume match {
@@ -1656,7 +1662,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					}
 				      else
 					{
-					  for( ( rslt, ersrc ) <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+					  for( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+                                            val ( rslt, ersrc ) = rsltRsrcPair
 					    tweet( "retrieved " + rslt.toString )
 					    //val ersrc = pd.asResource( path, rslt )
                                             tweet( "************************************************************" )
@@ -1832,7 +1839,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				      // do in the case that
 				      // what's in store doesn't
 				      // match what's in cache?
-				      for( ( rslt, ersrc ) <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+				      for( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+                                        val ( rslt, ersrc ) = rsltRsrcPair
 					tweet( "retrieved " + rslt.toString )					    
 					
 					consume match {

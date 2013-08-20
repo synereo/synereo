@@ -373,6 +373,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
   }
 
+  /*
   class InMemoryMonadicJunction(
     override val name : Moniker,
     override val acquaintances : Seq[Moniker]
@@ -689,7 +690,9 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       get( Nil )( path, next )    
     }
   }
+  */
 
+  /*
   class MonadicJoin[PlaceT <: CnxnCtxtLabel[Namespace,Var,Tag]](
     override val name : Moniker,
     override val acquaintances : Seq[Moniker]
@@ -752,7 +755,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
       }
     }
 
-    //def join( hops : List[URI] )(
     def join( hops : List[Moniker] )(
       asks : Generator[PlaceT,Unit,Unit],
       fulfilled : TMap[Namespace,Var,Tag,Value],
@@ -832,7 +834,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	  }
       }
 
-    //def serve( hops : List[URI] )(
     def serve( hops : List[Moniker] )(
       placePatterns : Seq[PlaceT] // TODO replace with Generator which
 				  // implies adding flatMap to Generator
@@ -890,6 +891,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
 
   }
+  */
   
 }
 

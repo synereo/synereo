@@ -595,6 +595,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     }
   }
 
+  /*
   class DistributedMonadicGeneratorJunction(
     override val name : Moniker,
     override val acquaintances : Seq[Moniker]
@@ -1108,6 +1109,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 	  }
       }
   }
+  */
    
 }
 
@@ -1116,6 +1118,7 @@ package usage {
  * Mostly self-contained object to support unit testing
  * ------------------------------------------------------------------ */ 
 
+/*
 object MonadicTS
  extends MonadicTermStoreScope[String,String,String,String] 
   with UUIDOps {
@@ -1171,5 +1174,6 @@ object MonadicTS
     
     override def protoMsgs : MsgTypes = MonadicDMsgs
   }
+  */
 
 }
