@@ -448,18 +448,35 @@ extends CnxnMongoSelectors {
 }
 
 trait JSONIfy[Namespace,Var,Tag] {  
+  type CMQ = CnxnMongoQuery[Namespace,Var,Tag] with CnxnCtxtInjector[Namespace,Var,Tag] with CnxnString[Namespace,Var,Tag] with Blobify with UUIDOps
+  type CMO = CnxnMongoObject[Namespace,Var,Tag] with CnxnCtxtInjector[Namespace,Var,Tag] with CnxnString[Namespace,Var,Tag] with Blobify with UUIDOps
   @transient
-  val CnxnMongoQuerifier =
-    new CnxnMongoQuery[Namespace,Var,Tag]
-    with CnxnCtxtInjector[Namespace,Var,Tag]
-         with CnxnString[Namespace,Var,Tag]
-	 with Blobify with UUIDOps { }
+  var _CnxnMongoQuerifier : Option[CMQ] = None
+
+  def CnxnMongoQuerifier() : CMQ = {    
+    _CnxnMongoQuerifier match {
+      case Some( cmq : CMQ ) => cmq
+      case None | null => {
+        val cmq : CMQ = 
+          new CnxnMongoQuery[Namespace,Var,Tag] with CnxnCtxtInjector[Namespace,Var,Tag] with CnxnString[Namespace,Var,Tag] with Blobify with UUIDOps { }
+        _CnxnMongoQuerifier = Some( cmq )
+        cmq
+      }
+    }
+    
+  }
   @transient
-  val CnxnMongoObjectifier =
-    new CnxnMongoObject[Namespace,Var,Tag]
-    with CnxnCtxtInjector[Namespace,Var,Tag]
-         with CnxnString[Namespace,Var,Tag]
-	 with Blobify with UUIDOps { }
+  var _CnxnMongoObjectifier : Option[CMO] = None
+  def CnxnMongoObjectifier() : CMO = {
+    _CnxnMongoObjectifier match {
+      case Some( cmo : CMO ) => cmo
+      case None | null => {
+        val cmo : CMO = new CnxnMongoObject[Namespace,Var,Tag] with CnxnCtxtInjector[Namespace,Var,Tag] with CnxnString[Namespace,Var,Tag] with Blobify with UUIDOps {}
+        _CnxnMongoObjectifier = Some( cmo )
+        cmo
+      }
+    }
+  }
 
   case class CCLStringConversionsWrapper(
     s : String
