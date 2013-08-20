@@ -67,7 +67,10 @@ case class UnificationQueryFilter[Namespace,Var,Tag](
 trait PersistedMonadicKVDBMongoNodeScope[Namespace,Var,Tag,Value] 
 extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {  
 
-  object Scribbler extends com.biosimilarity.lift.model.store.scribble.Scribble[mTT.Resource]
+  @transient
+  val Scribbler = new
+  com.biosimilarity.lift.model.store.scribble.Scribble[mTT.Resource] {
+  }
   //type PersistedKVDBNodeRequest = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeRequest
   //type PersistedKVDBNodeResponse = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeResponse
   
