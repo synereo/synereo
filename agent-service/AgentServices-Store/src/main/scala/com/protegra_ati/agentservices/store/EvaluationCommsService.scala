@@ -190,48 +190,58 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           println("secureLogin login onFeed rsrc="+rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(pwmac: ConcreteHL.HLExpr))), _)) => {
-              println("secureLogin | login | onFeed: Cap is good")
-              val macInstance = Mac.getInstance("HmacSHA256")
-              macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
-              val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-              if (hex != pwmac.toString) {
-                complete("Bad password.")
-              } else {
-                val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
-                  println("secureLogin | login | onFeed | onUserDataFeed: optRsrc = " + optRsrc)
-                  optRsrc match {
-                    case None => ()
-                    case Some(rbnd: mTT.RBound) => {
-                      // TODO(mike): fill in response with bindings
-                      val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                      complete(
-                        """{
-                          "msgType": "initializeSessionResponse",
-                          "content": {
-                            "sessionURI": "agent-session://ArtVandelay@session1",
-                            "listOfAliases": [],
-                            "defaultAlias": "",
-                            "listOfLabels": [],
-                            "listOfCnxns": [],
-                            "lastActiveFilter": ""
+            case Some(rboundhm) => {
+              rboundhm match {
+                case mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _) => {
+                  println("secureLogin | login | onFeed: Cap is good")
+                  postedexpr match {
+                    case PostedExpr(pwmac: ConcreteHL.HLExpr) => {
+                      val macInstance = Mac.getInstance("HmacSHA256")
+                      macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
+                      val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+                      if (hex != pwmac.toString) {
+                        complete("Bad password.")
+                      } else {
+                        val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
+                          println("secureLogin | login | onFeed | onUserDataFeed: optRsrc = " + optRsrc)
+                          optRsrc match {
+                            case None => ()
+                            case Some(rbnd: mTT.RBound) => {
+                              // TODO(mike): fill in response with bindings
+                              val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
+                              complete(
+                                """{
+                                  "msgType": "initializeSessionResponse",
+                                  "content": {
+                                    "sessionURI": "agent-session://ArtVandelay@session1",
+                                    "listOfAliases": [],
+                                    "defaultAlias": "",
+                                    "listOfLabels": [],
+                                    "listOfCnxns": [],
+                                    "lastActiveFilter": ""
+                                  }
+                                }
+                                """
+                              )
+                            }
                           }
                         }
-                        """
-                      )
+                        feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
+                        complete(
+                          """{
+                            "msgType": "initializeSessionResponse",
+                            "content": {
+                              "sessionURI": "agent-session://ArtVandelay@session1"
+                            }
+                          }
+                          """
+                        )
+                      }
                     }
+                    case _ => println("PostedExpr problem.")
                   }
                 }
-                feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
-                complete(
-                  """{
-                    "msgType": "initializeSessionResponse",
-                    "content": {
-                      "sessionURI": "agent-session://ArtVandelay@session1"
-                    }
-                  }
-                  """
-                )
+                case _ => println("mTT problem.")
               }
             }
             case _ => {
