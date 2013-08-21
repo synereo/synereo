@@ -197,7 +197,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                   println("postedexpr: " + postedexpr)
                   println("postedexpr class: " + postedexpr.getClass)
                   println("postedexpr value: " + postedexpr.asInstanceOf[PostedExpr[String]].value)
-                  postedexpr match {
+                  postedexpr.asInstanceOf[PostedExpr[String]] match {
                     case PostedExpr(pwmac) => {
                       println ("pwmac: " + pwmac)
                       println ("pwmac class: " + pwmac.getClass)
@@ -232,15 +232,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                           }
                         }
                         feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
-                        complete(
-                          """{
-                            "msgType": "initializeSessionResponse",
-                            "content": {
-                              "sessionURI": "agent-session://ArtVandelay@session1"
-                            }
-                          }
-                          """
-                        )
+                        ()
                       }
                     }
                     case _ => println("PostedExpr problem.")
