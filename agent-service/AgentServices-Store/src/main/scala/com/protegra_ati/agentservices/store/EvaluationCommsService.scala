@@ -195,7 +195,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                 case mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _) => {
                   println("secureLogin | login | onFeed: Cap is good")
                   postedexpr match {
-                    case PostedExpr(pwmac: ConcreteHL.HLExpr) => {
+                    case ConcreteHL.PostedExpr(pwmac: ConcreteHL.HLExpr) => {
                       val macInstance = Mac.getInstance("HmacSHA256")
                       macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
                       val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
