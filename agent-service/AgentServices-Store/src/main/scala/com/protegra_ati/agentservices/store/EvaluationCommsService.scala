@@ -101,10 +101,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     val userDataFilter = fromTermString(
         //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
-        "\"userData\""
+        "userData(\"\")"
       ).getOrElse(throw new Exception(""))
-    val pwmacFilter = fromTermString("\"pwmac\"").getOrElse(throw new Exception(""))
-    val emailFilter = fromTermString("\"email\"").getOrElse(throw new Exception(""))
+    val pwmacFilter = fromTermString("pwmac(\"\")").getOrElse(throw new Exception(""))
+    val emailFilter = fromTermString("email(\"\")").getOrElse(throw new Exception(""))
 
     // Under what conditions can this fail?
     def secureSignup(
@@ -191,31 +191,35 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(pwmac: ConcreteHL.HLExpr))), _)) => {
+              println("secureLogin | login | onFeed: Cap is good")
               val macInstance = Mac.getInstance("HmacSHA256")
               macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
               val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
               if (hex != pwmac.toString) {
                 complete("Bad password.")
               } else {
-                val onUserDataFeed: Option[mTT.Resource] => Unit = _ match {
-                  case None => ()
-                  case Some(rbnd: mTT.RBound) => {
-                    // TODO(mike): fill in response with bindings
-                    val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                    complete(
-                      """{
-                        "msgType": "initializeSessionResponse",
-                        "content": {
-                          "sessionURI": "agent-session://ArtVandelay@session1",
-                          "listOfAliases": [],
-                          "defaultAlias": "",
-                          "listOfLabels": [],
-                          "listOfCnxns": [],
-                          "lastActiveFilter": ""
+                val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
+                  println("secureLogin | login | onFeed | onUserDataFeed: optRsrc = " + optRsrc)
+                  optRsrc match {
+                    case None => ()
+                    case Some(rbnd: mTT.RBound) => {
+                      // TODO(mike): fill in response with bindings
+                      val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
+                      complete(
+                        """{
+                          "msgType": "initializeSessionResponse",
+                          "content": {
+                            "sessionURI": "agent-session://ArtVandelay@session1",
+                            "listOfAliases": [],
+                            "defaultAlias": "",
+                            "listOfLabels": [],
+                            "listOfCnxns": [],
+                            "lastActiveFilter": ""
+                          }
                         }
-                      }
-                      """
-                    )
+                        """
+                      )
+                    }
                   }
                 }
                 feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
@@ -230,11 +234,12 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                 )
               }
             }
-            case _ => ()
+            case _ => {
+              println("Unrecognized resource")
+            }
           }
         }
-        val filter = fromTermString("\"pwmac\"").getOrElse(throw new Exception(""))
-        feed( erql, erspl )(filter, List(capSelfCnxn), onFeed)
+        feed( erql, erspl )(pwmacFilter, List(capSelfCnxn), onFeed)
       }
       
       // identType is either "cap" or "email"
