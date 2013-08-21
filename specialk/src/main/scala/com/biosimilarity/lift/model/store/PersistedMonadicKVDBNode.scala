@@ -2793,15 +2793,7 @@ package usage {
 	  case Some( kmap ) => {
 	    kmap
 	  }
-	  case null => {
-	    val kmap = new HashMap[CnxnCtxtLabel[String,String,String],Double]()
-	    for( ( ccl, amt ) <- pkm ) {
-	      kmap += ( ccl -> amt )
-	    }
-	    _kmap = Some( kmap )
-	    kmap
-	  }
-	  case None => {
+	  case None | null => {
 	    val kmap = new HashMap[CnxnCtxtLabel[String,String,String],Double]()
 	    for( ( ccl, amt ) <- pkm ) {
 	      kmap += ( ccl -> amt )

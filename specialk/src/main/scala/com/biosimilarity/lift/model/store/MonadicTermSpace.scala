@@ -182,7 +182,18 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                }             
              }
 
+             val lockerList = locker.toList
              val pass = loop( locker.toList )
+             println(
+               "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
+               + "\nin method: allowedIn"
+               + "\nthis : " + this
+               + "\npass : " + pass
+               + "\ns.ptn : " + s.ptn
+               + "\ns.polarity : " + s.polarity
+               + "\nlockerList : " + lockerList
+               + "\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
+             )
              if ( pass ) { locker += ( s -> 1 ) }
              pass
            }
@@ -205,17 +216,8 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
 
     override def spaceLock : ModeSpaceLock[RK,mTT.GetRequest] = {
       _spaceLock match {
-        case Some( sl ) => sl
-        case null => {
-	  val sl =
-	    KeyKUnifiySpaceLock(
-	      new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
-	      1
-	    )
-	  _spaceLock = Some( sl )
-	  sl
-        }
-        case None => {
+        case Some( sl ) => sl        
+        case None | null => {
 	  val sl =
 	    KeyKUnifiySpaceLock(
 	      new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),

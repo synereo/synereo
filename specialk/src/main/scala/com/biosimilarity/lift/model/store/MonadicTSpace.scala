@@ -416,16 +416,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   def spaceLock : ModeSpaceLock[RK,Pattern] = {
     _spaceLock match {
       case Some( sl ) => sl
-      case null => {
-	val sl =
-	  KeyNoKSpaceLock[RK,Pattern](
-	    new HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int](),
-	    1
-	  )
-	_spaceLock = Some( sl )
-	sl
-      }
-      case None => {
+      case None | null => {
 	val sl =
 	  KeyNoKSpaceLock[RK,Pattern](
 	    new HashMap[ModeSpaceLock[RK,Pattern]#ModeType,Int](),
