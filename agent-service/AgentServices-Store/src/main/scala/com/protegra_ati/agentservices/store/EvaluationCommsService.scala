@@ -197,7 +197,9 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                   println("postedexpr: " + postedexpr)
                   println("postedexpr class: " + postedexpr.getClass)
                   postedexpr match {
-                    case AbstractHL.PostedExpr(pwmac: ConcreteHL.HLExpr) => {
+                    case PostedExpr(pwmac) => {
+                      println ("pwmac: " + pwmac)
+                      println ("pwmac class: " + pwmac.getClass)
                       val macInstance = Mac.getInstance("HmacSHA256")
                       macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
                       val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
