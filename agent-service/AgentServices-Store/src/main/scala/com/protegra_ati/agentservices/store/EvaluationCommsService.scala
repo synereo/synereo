@@ -190,8 +190,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           println("secureLogin login onFeed rsrc="+rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
-            case None => ()
-            case Some(mTT.Ground(pwmac: ConcreteHL.HLExpr)) => {
+            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(pwmac: ConcreteHL.HLExpr))), _)) => {
               val macInstance = Mac.getInstance("HmacSHA256")
               macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
               val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
@@ -231,6 +230,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                 )
               }
             }
+            case _ => ()
           }
         }
         val filter = fromTermString("\"pwmac\"").getOrElse(throw new Exception(""))

@@ -1589,9 +1589,9 @@ package diesel {
         expr match {
           case ConcreteHL.Bottom => {
             //throw new Exception( "divergence" )
-	    //println( "warning: divergent expression" )
+            //println( "warning: divergent expression" )
             tweet( "warning: divergent expression" )
-	    handler( None )
+            handler( None )
           }
           case ConcreteHL.FeedExpr( filter, cnxns ) => {
             tweet(
@@ -1754,9 +1754,9 @@ package diesel {
           expr match {
             case ConcreteHL.Bottom => {
               //throw new Exception( "divergence" )
-	      //println( "warning: divergent expression" )
+              //println( "warning: divergent expression" )
               tweet( "warning: divergent expression" )
-	      handler( None )
+              handler( None )
             }
             case ConcreteHL.FeedExpr( filter, cnxns ) => {
               tweet(
@@ -2618,12 +2618,12 @@ package diesel {
     var _engine : Option[DieselEngineCtor.DieselEngine] = None
     def engine( s : Option[String] = Some( "eval.conf" ) ) : DieselEngineCtor.DieselEngine = {
       _engine match {
-	case Some( e ) => e
-	case None => {
-	  val e = new DieselEngineCtor.DieselEngine( s )
-	  _engine = Some( e )
-	  e
-	}
+        case Some( e ) => e
+        case None => {
+          val e = new DieselEngineCtor.DieselEngine( s )
+          _engine = Some( e )
+          e
+        }
       }
     }
 
