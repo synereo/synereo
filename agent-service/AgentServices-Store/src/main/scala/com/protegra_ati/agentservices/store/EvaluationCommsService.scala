@@ -196,6 +196,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                   println("secureLogin | login | onFeed: Cap is good")
                   println("postedexpr: " + postedexpr)
                   println("postedexpr class: " + postedexpr.getClass)
+                  println("postedexpr value: " + postedexpr.asInstanceOf[PostedExpr[String]].value)
                   postedexpr match {
                     case PostedExpr(pwmac) => {
                       println ("pwmac: " + pwmac)
