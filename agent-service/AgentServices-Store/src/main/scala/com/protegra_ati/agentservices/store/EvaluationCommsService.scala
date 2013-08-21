@@ -100,11 +100,11 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     val userDataFilter = fromTermString(
-        //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
-        "userData(\"\")"
+        "userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
+        //"userData(X)"
       ).getOrElse(throw new Exception(""))
-    val pwmacFilter = fromTermString("pwmac(\"\")").getOrElse(throw new Exception(""))
-    val emailFilter = fromTermString("email(\"\")").getOrElse(throw new Exception(""))
+    val pwmacFilter = fromTermString("pwmac(X)").getOrElse(throw new Exception(""))
+    val emailFilter = fromTermString("email(X)").getOrElse(throw new Exception(""))
 
     // Under what conditions can this fail?
     def secureSignup(
