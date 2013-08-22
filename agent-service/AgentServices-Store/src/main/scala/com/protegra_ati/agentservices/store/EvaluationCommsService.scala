@@ -100,11 +100,11 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     val userDataFilter = fromTermString(
-        //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
-        "userData(\"\")"
-      ).getOrElse(throw new Exception(""))
-    val pwmacFilter = fromTermString("pwmac(\"\")").getOrElse(throw new Exception(""))
-    val emailFilter = fromTermString("email(\"\")").getOrElse(throw new Exception(""))
+        "userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
+        //"userData(X)"
+      ).getOrElse(throw new Exception("Couldn't parse userDataFilter"))
+    val pwmacFilter = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacFilter"))
+    val emailFilter = fromTermString("email(X)").getOrElse(throw new Exception("Couldn't parse emailFilter"))
 
     // Under what conditions can this fail?
     def secureSignup(
@@ -186,66 +186,53 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         val capURI = new URI("usercap://" + cap)
         val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
           PortableAgentCnxn(capURI, "pwdb", capURI)
-        val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
-          println("secureLogin login onFeed rsrc="+rsrc)
+        val onPwmacFeed: Option[mTT.Resource] => Unit = (rsrc) => {
+          println("secureLogin | login | onFeed: rsrc = " + rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
-            case Some(rboundhm) => {
-              rboundhm match {
-                case mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _) => {
-                  println("secureLogin | login | onFeed: Cap is good")
-                  println("postedexpr: " + postedexpr)
-                  println("postedexpr class: " + postedexpr.getClass)
-                  postedexpr match {
-                    case PostedExpr(pwmac) => {
-                      println ("pwmac: " + pwmac)
-                      println ("pwmac class: " + pwmac.getClass)
-                      val macInstance = Mac.getInstance("HmacSHA256")
-                      macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
-                      val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-                      if (hex != pwmac.toString) {
-                        complete("Bad password.")
-                      } else {
-                        val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
-                          println("secureLogin | login | onFeed | onUserDataFeed: optRsrc = " + optRsrc)
-                          optRsrc match {
-                            case None => ()
-                            case Some(rbnd: mTT.RBound) => {
-                              // TODO(mike): fill in response with bindings
-                              val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                              complete(
-                                """{
-                                  "msgType": "initializeSessionResponse",
-                                  "content": {
-                                    "sessionURI": "agent-session://ArtVandelay@session1",
-                                    "listOfAliases": [],
-                                    "defaultAlias": "",
-                                    "listOfLabels": [],
-                                    "listOfCnxns": [],
-                                    "lastActiveFilter": ""
-                                  }
-                                }
-                                """
-                              )
+            case None => ()
+            case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
+              println("secureLogin | login | onFeed: Cap is good")
+              postedexpr.asInstanceOf[PostedExpr[String]] match {
+                case PostedExpr(pwmac) => {
+                  println ("secureLogin | login | onPwmacFeed: pwmac = " + pwmac)
+                  val macInstance = Mac.getInstance("HmacSHA256")
+                  macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
+                  val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+                  println ("secureLogin | login | onPwmacFeed: hex = " + hex)
+                  if (hex != pwmac.toString) {
+                    println("secureLogin | login | onPwmacFeed: Password mismatch.")
+                    complete("Bad password.")
+                  } else {
+                    val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
+                      println("secureLogin | login | onPwmacFeed | onUserDataFeed: optRsrc = " + optRsrc)
+                      optRsrc match {
+                        case None => ()
+                        case Some(rbnd: mTT.RBound) => {
+                          // TODO(mike): fill in response with bindings
+                          val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
+                          complete(
+                            """{
+                              "msgType": "initializeSessionResponse",
+                              "content": {
+                                "sessionURI": "agent-session://ArtVandelay@session1",
+                                "listOfAliases": [],
+                                "defaultAlias": "",
+                                "listOfLabels": [],
+                                "listOfCnxns": [],
+                                "lastActiveFilter": ""
+                              }
                             }
-                          }
+                            """
+                          )
                         }
-                        feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
-                        complete(
-                          """{
-                            "msgType": "initializeSessionResponse",
-                            "content": {
-                              "sessionURI": "agent-session://ArtVandelay@session1"
-                            }
-                          }
-                          """
-                        )
                       }
                     }
-                    case _ => println("PostedExpr problem.")
+                    feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
+                    ()
                   }
                 }
-                case _ => println("mTT problem.")
+                case _ => println("PostedExpr problem.")
               }
             }
             case _ => {
@@ -253,7 +240,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             }
           }
         }
-        feed( erql, erspl )(pwmacFilter, List(capSelfCnxn), onFeed)
+        feed( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFeed)
       }
       
       // identType is either "cap" or "email"
@@ -295,90 +282,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         }
       }
       
-    }
-    
-    def secureCnxn( 
-        userName: String, 
-        userPwd: String, 
-        queryMap: HashMap[String, String], 
-        post: (CnxnCtxtLabel[String,String,String], Seq[Cnxn], String, Option[mTT.Resource] => Unit) => Unit,
-        finalOnPost: Option[mTT.Resource] => Unit
-    ) = {
-      // TODO: move all keys out of the server code
-
-      // TODO: use interpolation everywhere below
-      // http://docs.scala-lang.org/overviews/core/string-interpolation.html
-      // fromTermString(prolog"~")
-
-      // Hash public user data to get a convenient key for the password database
-      val mac = Mac.getInstance("HmacSHA256")
-      mac.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
-      val hex1 = mac.doFinal(userName.getBytes("utf-8")).map("%02x" format _).mkString
-      val pwdbURI = new URI("pwdb://" + hex1)
-      // Create a self connection to store this entry's data
-      val pwdbCnxn = //new ConcreteHL.PortableAgentCnxn(pwdbURI, "pwdb", pwdbURI)
-        PortableAgentCnxn(pwdbURI, "pwdb", pwdbURI)
-      // Hash actual password to test given password against in the future
-      mac.init(new SecretKeySpec("X@*h$ikU".getBytes("utf-8"), "HmacSHA256"))
-      val pwHashStr = mac.doFinal(userPwd.getBytes("utf-8")).map("%02x" format _).mkString
-      val hashTermStr = "hash(\"" + pwHashStr + "\")"
-      val hashTerm = fromTermString(hashTermStr).getOrElse(
-          throw new Exception("hashTermStr failed to parse: " + hashTermStr)
-        )
-      
-      val onPost = ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-      // Store password hash in database
-      post(hashTerm, List(pwdbCnxn), "", onPost)
-
-      // The special root of all this user's authority
-      val userCap = UUID.randomUUID
-
-      // Prepare to store the root cap securely using user's password
-      mac.init(new SecretKeySpec("8Uh4Fzs9".getBytes("utf-8"), "HmacSHA256"))
-      val capEncryptKey = mac.doFinal(userPwd.getBytes("utf-8")).slice(0, 16)
-      val capEncryptSpec = new SecretKeySpec(capEncryptKey, "AES")
-      val encrypt = Cipher.getInstance("AES")
-      encrypt.init(Cipher.ENCRYPT_MODE, capEncryptSpec)
-      val userEncryptedCap = encrypt.doFinal(userCap.toString.getBytes("utf-8")).map("%02x" format _).mkString
-      val userEncryptedCapTerm = fromTermString("userEncryptedCap(\"" + userEncryptedCap + "\")").getOrElse(
-          throw new Exception("userEncryptedCap failed to parse: " + userEncryptedCap)
-        )
-      // Store capability encrypted with user password in database
-      post(userEncryptedCapTerm, List(pwdbCnxn), "", onPost)
-
-      // Prepare to store the root cap securely using system password
-      val sysCapEncryptSpec = new SecretKeySpec("BiosimilarityLLC".getBytes("utf-8"), "AES")
-      encrypt.init(Cipher.ENCRYPT_MODE, sysCapEncryptSpec)
-      val sysEncryptedCap = encrypt.doFinal(userCap.toString.getBytes("utf-8")).map("%02x" format _).mkString
-      val sysEncryptedCapTerm = fromTermString("sysEncryptedCap(\"" + sysEncryptedCap + "\")").getOrElse(
-          throw new Exception("sysEncryptedCap failed to parse: " + sysEncryptedCap)
-        )
-      // Store capability encrypted with system password in database
-      post(sysEncryptedCapTerm, List(pwdbCnxn), "", onPost)
-      
-      // Prepare to store user's data using the root cap
-      val userCapURI = new URI("usercap://" + userCap)
-      val userSelfCnxn = //new ConcreteHL.PortableAgentCnxn(userCapURI, userName, userCapURI)
-        PortableAgentCnxn(userCapURI, userName, userCapURI)
-      val userTermStr = "user(\"" + queryMap("fullname") +"\", \"" + queryMap("email") + "\")"
-      val userTerm = fromTermString(userTermStr).getOrElse(
-          throw new Exception("userTermStr failed to parse: " + userTermStr)
-        )
-      // Post user data to the user's self connection
-      post(userTerm, List(userSelfCnxn), "", onPost)
-      // Store username in public list of users
-      // (When asking for list of connections, iterate over this public list, but drop yourself.
-      // Form the connection by taking src, tgt to be of the form cnxn://<userName>
-      // and the label to be "public" or something)
-      val userdbURI = new URI("userdb:///");
-      val userdbCnxn = //new ConcreteHL.PortableAgentCnxn(userdbURI, "userdb", userdbURI);
-        PortableAgentCnxn(userdbURI, "userdb", userdbURI);
-      val userdbTermStr = "user(\"" + userName + "\")"
-      val userdbTerm = fromTermString(userdbTermStr).getOrElse(
-          throw new Exception("userdbTermStr failed to parse: " + userdbTermStr)
-        )
-      post(userdbTerm, List(userdbCnxn), "", finalOnPost)
-    }
+    }    
     def createAgent(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
