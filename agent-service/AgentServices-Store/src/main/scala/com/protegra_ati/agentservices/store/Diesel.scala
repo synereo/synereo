@@ -1778,7 +1778,7 @@ package diesel {
                   
                   tweet(
                     "method: evaluateExpression"
-                    + "\n calling node.subscribe "
+                    + "\n calling node.read "
                     + "\nthis: " + this
                     + "\nnode: " + node
                     + "\nexpr: " + expr
@@ -1793,6 +1793,56 @@ package diesel {
                     tweet(
                       "method: evaluateExpression"
                       + "\n returned from node.read "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    handler( e )
+                  }
+                }
+              }
+            }
+            case ConcreteHL.FetchExpr( filter, cnxns ) => {
+              tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.FetchExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.fetch "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.fetch( agntCnxn )( filter ) ) {
+                    
+                    tweet(
+                      "method: evaluateExpression"
+                      + "\n returned from node.fetch "
                       + "\nthis: " + this
                       + "\nnode: " + node
                       + "\nexpr: " + expr

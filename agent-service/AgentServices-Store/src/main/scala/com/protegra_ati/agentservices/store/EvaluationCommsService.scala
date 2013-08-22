@@ -186,26 +186,26 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         val capURI = new URI("usercap://" + cap)
         val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
           PortableAgentCnxn(capURI, "pwdb", capURI)
-        val onPwmacRead: Option[mTT.Resource] => Unit = (rsrc) => {
-          println("secureLogin | login | onPwmacRead: rsrc = " + rsrc)
+        val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
+          println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
-              println("secureLogin | login | onPwmacRead: Cap is good")
+              println("secureLogin | login | onPwmacFetch: Cap is good")
               postedexpr.asInstanceOf[PostedExpr[String]] match {
                 case PostedExpr(pwmac) => {
-                  println ("secureLogin | login | onPwmacRead: pwmac = " + pwmac)
+                  println ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
                   val macInstance = Mac.getInstance("HmacSHA256")
                   macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
                   val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-                  println ("secureLogin | login | onPwmacRead: hex = " + hex)
+                  println ("secureLogin | login | onPwmacFetch: hex = " + hex)
                   if (hex != pwmac.toString) {
-                    println("secureLogin | login | onPwmacRead: Password mismatch.")
+                    println("secureLogin | login | onPwmacFetch: Password mismatch.")
                     complete("Bad password.")
                   } else {
-                    val onUserDataRead: Option[mTT.Resource] => Unit = (optRsrc) => {
-                      println("secureLogin | login | onPwmacRead | onUserDataRead: optRsrc = " + optRsrc)
+                    val onUserDataFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
+                      println("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
                       optRsrc match {
                         case None => ()
                         case Some(rbnd: mTT.RBound) => {
@@ -228,7 +228,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                         }
                       }
                     }
-                    read( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataRead)
+                    fetch( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFetch)
                     ()
                   }
                 }
@@ -240,7 +240,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             }
           }
         }
-        read( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacRead)
+        fetch( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFetch)
       }
       
       // identType is either "cap" or "email"
@@ -268,7 +268,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           val emailURI = new URI("mailto://" + email)
           val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
             PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
-          read(erql, erspl)(
+          fetch(erql, erspl)(
             emailFilter,
             List(emailSelfCnxn),
             (optRsrc: Option[mTT.Resource]) => {
@@ -317,6 +317,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         for( e <- node().subscribe( erspl ) ) { onPost( e ) }
       }
     }
+    // TODO(metaweta): factor case class out of read, fetch, and feed
     def read(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
@@ -331,6 +332,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       }
       reset {
         for( e <- node().subscribe( erspl ) ) { onReadRslt( e ) }
+      }
+    }
+    def fetch(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onFetchRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+        node().publish( erql, FetchExpr( filter, cnxns ) )
+      }
+      reset {
+        for( e <- node().subscribe( erspl ) ) { onFetchRslt( e ) }
       }
     }
     def feed(
