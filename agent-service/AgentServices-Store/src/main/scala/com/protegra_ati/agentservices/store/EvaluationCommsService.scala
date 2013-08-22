@@ -102,9 +102,9 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     val userDataFilter = fromTermString(
         "userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
         //"userData(X)"
-      ).getOrElse(throw new Exception(""))
-    val pwmacFilter = fromTermString("pwmac(X)").getOrElse(throw new Exception(""))
-    val emailFilter = fromTermString("email(X)").getOrElse(throw new Exception(""))
+      ).getOrElse(throw new Exception("Couldn't parse userDataFilter"))
+    val pwmacFilter = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacFilter"))
+    val emailFilter = fromTermString("email(X)").getOrElse(throw new Exception("Couldn't parse emailFilter"))
 
     // Under what conditions can this fail?
     def secureSignup(
@@ -186,59 +186,53 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         val capURI = new URI("usercap://" + cap)
         val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
           PortableAgentCnxn(capURI, "pwdb", capURI)
-        val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
-          println("secureLogin login onFeed rsrc="+rsrc)
+        val onPwmacFeed: Option[mTT.Resource] => Unit = (rsrc) => {
+          println("secureLogin | login | onFeed: rsrc = " + rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
-            case Some(rboundhm) => {
-              rboundhm match {
-                case mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _) => {
-                  println("secureLogin | login | onFeed: Cap is good")
-                  println("postedexpr: " + postedexpr)
-                  println("postedexpr class: " + postedexpr.getClass)
-                  println("postedexpr value: " + postedexpr.asInstanceOf[PostedExpr[String]].value)
-                  postedexpr.asInstanceOf[PostedExpr[String]] match {
-                    case PostedExpr(pwmac) => {
-                      println ("pwmac: " + pwmac)
-                      println ("pwmac class: " + pwmac.getClass)
-                      val macInstance = Mac.getInstance("HmacSHA256")
-                      macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
-                      val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-                      if (hex != pwmac.toString) {
-                        complete("Bad password.")
-                      } else {
-                        val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
-                          println("secureLogin | login | onFeed | onUserDataFeed: optRsrc = " + optRsrc)
-                          optRsrc match {
-                            case None => ()
-                            case Some(rbnd: mTT.RBound) => {
-                              // TODO(mike): fill in response with bindings
-                              val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                              complete(
-                                """{
-                                  "msgType": "initializeSessionResponse",
-                                  "content": {
-                                    "sessionURI": "agent-session://ArtVandelay@session1",
-                                    "listOfAliases": [],
-                                    "defaultAlias": "",
-                                    "listOfLabels": [],
-                                    "listOfCnxns": [],
-                                    "lastActiveFilter": ""
-                                  }
-                                }
-                                """
-                              )
+            case None => ()
+            case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
+              println("secureLogin | login | onFeed: Cap is good")
+              postedexpr.asInstanceOf[PostedExpr[String]] match {
+                case PostedExpr(pwmac) => {
+                  println ("secureLogin | login | onPwmacFeed: pwmac = " + pwmac)
+                  val macInstance = Mac.getInstance("HmacSHA256")
+                  macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
+                  val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+                  println ("secureLogin | login | onPwmacFeed: hex = " + hex)
+                  if (hex != pwmac.toString) {
+                    println("secureLogin | login | onPwmacFeed: Password mismatch.")
+                    complete("Bad password.")
+                  } else {
+                    val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
+                      println("secureLogin | login | onPwmacFeed | onUserDataFeed: optRsrc = " + optRsrc)
+                      optRsrc match {
+                        case None => ()
+                        case Some(rbnd: mTT.RBound) => {
+                          // TODO(mike): fill in response with bindings
+                          val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
+                          complete(
+                            """{
+                              "msgType": "initializeSessionResponse",
+                              "content": {
+                                "sessionURI": "agent-session://ArtVandelay@session1",
+                                "listOfAliases": [],
+                                "defaultAlias": "",
+                                "listOfLabels": [],
+                                "listOfCnxns": [],
+                                "lastActiveFilter": ""
+                              }
                             }
-                          }
+                            """
+                          )
                         }
-                        feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
-                        ()
                       }
                     }
-                    case _ => println("PostedExpr problem.")
+                    feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
+                    ()
                   }
                 }
-                case _ => println("mTT problem.")
+                case _ => println("PostedExpr problem.")
               }
             }
             case _ => {
@@ -246,7 +240,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             }
           }
         }
-        feed( erql, erspl )(pwmacFilter, List(capSelfCnxn), onFeed)
+        feed( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFeed)
       }
       
       // identType is either "cap" or "email"
