@@ -14,7 +14,7 @@
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <specialk.version>1.1.7.6</specialk.version>
-        <agentservices-store.version>1.8.7-SNAPSHOT</agentservices-store.version>
+        <agentservices-store.version>1.8.8-SNAPSHOT</agentservices-store.version>
         <!-- scala.version>2.10.0</scala.version -->
         <scala.version>2.10.0</scala.version>
         <scala.versionsuffix>2.10</scala.versionsuffix>
