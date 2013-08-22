@@ -186,26 +186,26 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         val capURI = new URI("usercap://" + cap)
         val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
           PortableAgentCnxn(capURI, "pwdb", capURI)
-        val onPwmacFeed: Option[mTT.Resource] => Unit = (rsrc) => {
-          println("secureLogin | login | onFeed: rsrc = " + rsrc)
+        val onPwmacRead: Option[mTT.Resource] => Unit = (rsrc) => {
+          println("secureLogin | login | onPwmacRead: rsrc = " + rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
-              println("secureLogin | login | onFeed: Cap is good")
+              println("secureLogin | login | onPwmacRead: Cap is good")
               postedexpr.asInstanceOf[PostedExpr[String]] match {
                 case PostedExpr(pwmac) => {
-                  println ("secureLogin | login | onPwmacFeed: pwmac = " + pwmac)
+                  println ("secureLogin | login | onPwmacRead: pwmac = " + pwmac)
                   val macInstance = Mac.getInstance("HmacSHA256")
                   macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
                   val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-                  println ("secureLogin | login | onPwmacFeed: hex = " + hex)
+                  println ("secureLogin | login | onPwmacRead: hex = " + hex)
                   if (hex != pwmac.toString) {
-                    println("secureLogin | login | onPwmacFeed: Password mismatch.")
+                    println("secureLogin | login | onPwmacRead: Password mismatch.")
                     complete("Bad password.")
                   } else {
-                    val onUserDataFeed: Option[mTT.Resource] => Unit = (optRsrc) => { 
-                      println("secureLogin | login | onPwmacFeed | onUserDataFeed: optRsrc = " + optRsrc)
+                    val onUserDataRead: Option[mTT.Resource] => Unit = (optRsrc) => {
+                      println("secureLogin | login | onPwmacRead | onUserDataRead: optRsrc = " + optRsrc)
                       optRsrc match {
                         case None => ()
                         case Some(rbnd: mTT.RBound) => {
@@ -228,7 +228,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                         }
                       }
                     }
-                    feed( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFeed)
+                    read( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataRead)
                     ()
                   }
                 }
@@ -240,7 +240,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             }
           }
         }
-        feed( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFeed)
+        read( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacRead)
       }
       
       // identType is either "cap" or "email"
@@ -268,7 +268,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           val emailURI = new URI("mailto://" + email)
           val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
             PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
-          feed(erql, erspl)(
+          read(erql, erspl)(
             emailFilter,
             List(emailSelfCnxn),
             (optRsrc: Option[mTT.Resource]) => {
