@@ -34,6 +34,11 @@ trait AbstractHL {
     override val cnxns : Seq[Cnxn]
   ) extends HLExpr with Query
 
+  case class ReadExpr(
+    override val filter : Label,
+    override val cnxns : Seq[Cnxn]
+  ) extends HLExpr with Query
+
   case class ScoreExpr(
     override val filter : Label,
     override val cnxns : Seq[Cnxn],

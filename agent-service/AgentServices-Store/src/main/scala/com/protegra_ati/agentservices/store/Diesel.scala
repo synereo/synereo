@@ -1758,6 +1758,56 @@ package diesel {
               tweet( "warning: divergent expression" )
               handler( None )
             }
+            case ConcreteHL.ReadExpr( filter, cnxns ) => {
+              tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.ReadExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.subscribe "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.read( agntCnxn )( filter ) ) {
+                    
+                    tweet(
+                      "method: evaluateExpression"
+                      + "\n returned from node.read "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    handler( e )
+                  }
+                }
+              }
+            }
             case ConcreteHL.FeedExpr( filter, cnxns ) => {
               tweet(
                 "method: evaluateExpression"

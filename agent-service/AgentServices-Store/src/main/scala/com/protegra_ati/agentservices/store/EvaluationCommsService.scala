@@ -413,6 +413,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         for( e <- node().subscribe( erspl ) ) { onPost( e ) }
       }
     }
+    def read(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onReadRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+        node().publish( erql, ReadExpr( filter, cnxns ) )
+      }
+      reset {
+        for( e <- node().subscribe( erspl ) ) { onReadRslt( e ) }
+      }
+    }
     def feed(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
