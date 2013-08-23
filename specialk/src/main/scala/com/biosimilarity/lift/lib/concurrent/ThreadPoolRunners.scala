@@ -75,7 +75,6 @@ object TPR extends ThreadPoolRunners {
 
 trait ThreadPoolRunnersX {
   def spawn(ctx: =>(Any @cps[Unit])): Unit = {
-    println("In ThreadPoolRunnersX.spawn")
     TPR.spawn( ctx )( TPR.mainTaskRunner )
   }
 }
