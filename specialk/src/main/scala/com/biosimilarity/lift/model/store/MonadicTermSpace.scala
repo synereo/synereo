@@ -101,14 +101,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     extends HashMap[mTT.GetRequest,List[RK]]
 
     case class PrologSubstitution( soln : LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]] )
-	 extends Function1[mTT.Resource,Option[mTT.Resource]] {
-	   override def apply( rsrc : mTT.Resource ) = {
-	     soln.isEmpty match {
-	       case true => Some( rsrc )
-	       case _ => Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
-	     }
-	   }
-	 }
+         extends Function1[mTT.Resource,Option[mTT.Resource]] {
+           override def apply( rsrc : mTT.Resource ) = {
+             soln.isEmpty match {
+               case true => Some( rsrc )
+               case _ => Some( mTT.RBoundHM( Some( rsrc ), Some( soln ) ) )
+             }
+           }
+         }
 
     override type Substitution = PrologSubstitution
 
@@ -186,7 +186,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
              val pass = loop( locker.toList )
              println(
                "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
-               + "\nin method: allowedIn"
+               + "\nin method: KeyKUnifySpaceLock.allowedIn"
                + "\nthis : " + this
                + "\npass : " + pass
                + "\ns.ptn : " + s.ptn
@@ -200,15 +200,15 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
            override def leave( s : ModeType ) : Unit = {
              locker.get( s ) match {
                case Some( 1 ) => {
-	         locker -= s
-	         notify()
+                 locker -= s
+                 notify()
                }
                case Some( i ) => {
-	         locker += ( s -> ( i - 1 ) )
-	         notify()
+                 locker += ( s -> ( i - 1 ) )
+                 notify()
                }
                case None => {
-	         /* throw new Exception */ //println( "leaving lock without entering" )
+                 /* throw new Exception */ //println( "leaving lock without entering" )
                }
              }
            }
@@ -218,13 +218,13 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       _spaceLock match {
         case Some( sl ) => sl        
         case None | null => {
-	  val sl =
-	    KeyKUnifiySpaceLock(
-	      new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
-	      1
-	    )
-	  _spaceLock = Some( sl )
-	  sl
+          val sl =
+            KeyKUnifiySpaceLock(
+              new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
+              1
+            )
+          _spaceLock = Some( sl )
+          sl
         }
       }
     }
@@ -239,12 +239,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       place : mTT.GetRequest
     ) : Boolean = {
       matchMap( ptn, place ) match {
-	case Some( soln ) => {
-	  true
-	}
-	case None => {
-	  false
-	}
+        case Some( soln ) => {
+          true
+        }
+        case None => {
+          false
+        }
       }
     }
 
@@ -254,20 +254,20 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     ) : Option[Substitution] = {
       val matchRslts = matchMap( ptn, place )
       matchRslts match {
-	case Some( soln : LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]] ) => {
-	  Some( PrologSubstitution( soln ) )
-	}
-	case None => {
-	  None
-	}
+        case Some( soln : LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]] ) => {
+          Some( PrologSubstitution( soln ) )
+        }
+        case None => {
+          None
+        }
       }
     }
 
     def getGV( rsrc : mTT.Resource ) : Option[Value] = {
       rsrc match {
-	case mTT.Ground( v ) => Some( v )
-	case mTT.RBoundHM( Some( nrsrc ), _ ) => getGV( nrsrc )
-	case _ => None
+        case mTT.Ground( v ) => Some( v )
+        case mTT.RBoundHM( Some( nrsrc ), _ ) => getGV( nrsrc )
+        case _ => None
       }
     }    
 
@@ -276,15 +276,15 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     ) : Option[mTT.Resource] = {
       
       val ig : mTT.Generator[mTT.Resource, Unit, Unit]  = mTT.itergen[mTT.Resource]( values )
-	  
+          
       // BUGBUG -- LGM need to return the Solution
       // Currently the PersistenceManifest has no access to the
       // unification machinery
       Some (
         mTT.RBoundHM(
-	  Some( mTT.Cursor( ig ) ),
-	  None
-  	)
+          Some( mTT.Cursor( ig ) ),
+          None
+        )
       )
     }
 
@@ -307,148 +307,148 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     )( ptn : mTT.GetRequest )( implicit spaceLockKey : Option[Option[mTT.Resource] => Unit @suspendable] )
     : Generator[Option[mTT.Resource],Unit,Unit] =
       Generator {
-	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
-	  shift {
-	    outerk : ( Unit => Unit ) =>
-	      reset {
-		// if ( ! spaceLock.available ) {
-		// 		rk( None )
-		// 	      }
-		// 	      else {
-		val slk = spaceLockKey match {
-		  case None => Some( rk )
-		  case _ => spaceLockKey
-		}
-		
-		//spaceLock.occupy( slk )
-		spaceLock.occupy( ptn, slk )
-		
-		tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
-		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-		
-		val map = Left[Map[mTT.GetRequest,mTT.Resource],Map[mTT.GetRequest,List[RK]]]( channels )
-		val meets = locations( map, ptn )
-		
-		if ( meets.isEmpty ) {
-		  val place = representative( ptn )
-		  tweet( "did not find a resource, storing a continuation: " + rk )
-		  tweet( "registered continuation storage: " + registered )
-		  tweet( "theWaiters: " + theWaiters )
-		  tweet( "theSubscriptions: " + theSubscriptions )		  
-		  
-		  keep match {
-		    case policy : RetainInCache => {
-		      registered( place ) =
-			registered.get( place ).getOrElse( Nil ) ++ List( rk )
-		    }
-		    case _ => {
-		      tweet( "policy indicates not to retain in cache: " + rk )
-		    }
-		  }
-		  
-		  tweet( "stored a continuation: " + rk )
-		  tweet( "registered continuation storage: " + registered )
-		  tweet( "theWaiters: " + theWaiters )
-		  tweet( "theSubscriptions: " + theSubscriptions )
-		  
-		  keep match {
-		    case storagePolicy : RetainInStore => {
-		    }
-		    case _ => {
-		      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-		      //spaceLock.depart( slk )
-		      spaceLock.depart( ptn, slk )
-		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-		    }
-		  }
-		  
-		  rk( None )
-		}
-		else {
-		  cursor match {
-		    case true => {
-		      val rsrcRslts : ListBuffer[mTT.Resource] = new ListBuffer[mTT.Resource]()
-		      for( placeNRrscNSubst <- meets ) {
-			val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
-			
-			tweet( "found a resource: " + rsrc )
-			
-			rsrcRslts += rsrc
-			
-			consume match {
-			  case policy : RetainInCache => {
-			    channels -= place
-			  }
-			  case _ => {
-			    tweet( "policy indicates not to consume from cache: " + place )
-			  }
-			}
-		      	
-			//shift { k : ( Unit => Unit ) => k() }
- 		      }
-		      
-		      val rsrcCursor = asCursor( rsrcRslts.toList )
-		      
-		      keep match {
-			case storagePolicy : RetainInStore => {
-			}
-			case _ => {
-			  tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-			  //spaceLock.depart( slk )
-			  spaceLock.depart( ptn, slk )
-			  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-			}
-		      }
-		      
-		      rk( rsrcCursor )
-		    }
-		    case false => {
-		      for(
-			placeNRrscNSubst <- itergen[PlaceInstance](
-			  meets
-			)
-		      ) {
-			val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
-			
-			tweet( "found a resource: " + rsrc )		    
-			
-			consume match {
-			  case policy : RetainInCache => {
-			    channels -= place
-			  }
-			  case _ => {
-			    tweet( "policy indicates not to consume from cache: " + place )
-			  }
-			}
-			
-			keep match {
-			  case storagePolicy : RetainInStore => {
-			  }
-			  case _ => {
-			    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-			    //spaceLock.depart( slk )
-			    spaceLock.depart( ptn, slk )
-			    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-			  }
-			}
-			
-			rk( s( rsrc ) )
-			
-			//shift { k : ( Unit => Unit ) => k() }
- 		      }
-		    }
-		  }
-		  
- 		}				
-		//}
- 		//tweet( "get returning" )
- 		outerk()
- 	      }
- 	  }
+        rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+          shift {
+            outerk : ( Unit => Unit ) =>
+              reset {
+                // if ( ! spaceLock.available ) {
+                //              rk( None )
+                //            }
+                //            else {
+                val slk = spaceLockKey match {
+                  case None => Some( rk )
+                  case _ => spaceLockKey
+                }
+                
+                //spaceLock.occupy( slk )
+                spaceLock.occupy( ptn, slk )
+                
+                tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
+                //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                
+                val map = Left[Map[mTT.GetRequest,mTT.Resource],Map[mTT.GetRequest,List[RK]]]( channels )
+                val meets = locations( map, ptn )
+                
+                if ( meets.isEmpty ) {
+                  val place = representative( ptn )
+                  tweet( "did not find a resource, storing a continuation: " + rk )
+                  tweet( "registered continuation storage: " + registered )
+                  tweet( "theWaiters: " + theWaiters )
+                  tweet( "theSubscriptions: " + theSubscriptions )                
+                  
+                  keep match {
+                    case policy : RetainInCache => {
+                      registered( place ) =
+                        registered.get( place ).getOrElse( Nil ) ++ List( rk )
+                    }
+                    case _ => {
+                      tweet( "policy indicates not to retain in cache: " + rk )
+                    }
+                  }
+                  
+                  tweet( "stored a continuation: " + rk )
+                  tweet( "registered continuation storage: " + registered )
+                  tweet( "theWaiters: " + theWaiters )
+                  tweet( "theSubscriptions: " + theSubscriptions )
+                  
+                  keep match {
+                    case storagePolicy : RetainInStore => {
+                    }
+                    case _ => {
+                      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                      //spaceLock.depart( slk )
+                      spaceLock.depart( ptn, slk )
+                      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                    }
+                  }
+                  
+                  rk( None )
+                }
+                else {
+                  cursor match {
+                    case true => {
+                      val rsrcRslts : ListBuffer[mTT.Resource] = new ListBuffer[mTT.Resource]()
+                      for( placeNRrscNSubst <- meets ) {
+                        val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+                        
+                        tweet( "found a resource: " + rsrc )
+                        
+                        rsrcRslts += rsrc
+                        
+                        consume match {
+                          case policy : RetainInCache => {
+                            channels -= place
+                          }
+                          case _ => {
+                            tweet( "policy indicates not to consume from cache: " + place )
+                          }
+                        }
+                        
+                        //shift { k : ( Unit => Unit ) => k() }
+                      }
+                      
+                      val rsrcCursor = asCursor( rsrcRslts.toList )
+                      
+                      keep match {
+                        case storagePolicy : RetainInStore => {
+                        }
+                        case _ => {
+                          tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                          //spaceLock.depart( slk )
+                          spaceLock.depart( ptn, slk )
+                          //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                          //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                        }
+                      }
+                      
+                      rk( rsrcCursor )
+                    }
+                    case false => {
+                      for(
+                        placeNRrscNSubst <- itergen[PlaceInstance](
+                          meets
+                        )
+                      ) {
+                        val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
+                        
+                        tweet( "found a resource: " + rsrc )                
+                        
+                        consume match {
+                          case policy : RetainInCache => {
+                            channels -= place
+                          }
+                          case _ => {
+                            tweet( "policy indicates not to consume from cache: " + place )
+                          }
+                        }
+                        
+                        keep match {
+                          case storagePolicy : RetainInStore => {
+                          }
+                          case _ => {
+                            tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                            //spaceLock.depart( slk )
+                            spaceLock.depart( ptn, slk )
+                            //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                            //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                          }
+                        }
+                        
+                        rk( s( rsrc ) )
+                        
+                        //shift { k : ( Unit => Unit ) => k() }
+                      }
+                    }
+                  }
+                  
+                }                               
+                //}
+                //tweet( "get returning" )
+                outerk()
+              }
+          }
       }
     
   }
@@ -481,12 +481,12 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
   with MonadicGenerators {
     def this() = {
       this(
-	MURI( new URI( "agent", "localhost", "/connect", "" ) ),
-	Nil,
-	new ListBuffer[Msgs.JTSReq](),
-	new ListBuffer[Msgs.JTSRsp](),
-	None,
-	null
+        MURI( new URI( "agent", "localhost", "/connect", "" ) ),
+        Nil,
+        new ListBuffer[Msgs.JTSReq](),
+        new ListBuffer[Msgs.JTSRsp](),
+        None,
+        null
       )
     }
 
@@ -515,7 +515,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     ) : Unit = {
 
       tweet(
-	( this + " in forwardGet with hops: " + hops )
+        ( this + " in forwardGet with hops: " + hops )
       )
 
       // Dummy declarations to avoid a bug in the scala runtime
@@ -523,34 +523,34 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       val dasClass = ask.getClass
       
       for(
-	( uri, jsndr ) <- agentTwistedPairs
-	if !hops.contains( uri )
+        ( uri, jsndr ) <- agentTwistedPairs
+        if !hops.contains( uri )
       ) {
-	tweet(
-	  ( this + " forwarding to " + uri )
-	)
-	val smajatp : SMAJATwistedPair =
-	  jsndr.asInstanceOf[SMAJATwistedPair]
-	
-	smajatp.send(
-	  ask match {
-	    case dAT.AGet => {
-	      Msgs.MDGetRequest[Namespace,Var,Tag,Value](
-		path
-	      ).asInstanceOf[Msgs.DReq]
-	    }
-	    case dAT.AFetch => {
-	      Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
-		path
-	      ).asInstanceOf[Msgs.DReq]
-	    }
-	    case dAT.ASubscribe => {
-	      Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
-		path
-	      ).asInstanceOf[Msgs.DReq]
-	    }
-	  }
-	)
+        tweet(
+          ( this + " forwarding to " + uri )
+        )
+        val smajatp : SMAJATwistedPair =
+          jsndr.asInstanceOf[SMAJATwistedPair]
+        
+        smajatp.send(
+          ask match {
+            case dAT.AGet => {
+              Msgs.MDGetRequest[Namespace,Var,Tag,Value](
+                path
+              ).asInstanceOf[Msgs.DReq]
+            }
+            case dAT.AFetch => {
+              Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
+                path
+              ).asInstanceOf[Msgs.DReq]
+            }
+            case dAT.ASubscribe => {
+              Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
+                path
+              ).asInstanceOf[Msgs.DReq]
+            }
+          }
+        )
       }
     }
     
@@ -561,38 +561,38 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     ) : Unit = {
 
       tweet(
-	( this + " in forwardGet with hops: " + hops )
+        ( this + " in forwardGet with hops: " + hops )
       )
 
       for(
-	( uri, jsndr ) <- agentTwistedPairs
-	if !hops.contains( uri )
+        ( uri, jsndr ) <- agentTwistedPairs
+        if !hops.contains( uri )
       ) {
-	tweet(
-	  ( this + " forwarding to " + uri )
-	)
-	val smajatp : SMAJATwistedPair =
-	  jsndr.asInstanceOf[SMAJATwistedPair]
-	
-	smajatp.send(
-	  ask match {
-	    case dAT.AGetNum => {
-	      Msgs.MDGetRequest[Namespace,Var,Tag,Value](
-		path
-	      ).asInstanceOf[Msgs.DReq]
-	    }
-	    case dAT.AFetchNum => {
-	      Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
-		path
-	      ).asInstanceOf[Msgs.DReq]
-	    }
-	    case dAT.ASubscribeNum => {
-	      Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
-		path
-	      ).asInstanceOf[Msgs.DReq]
-	    }
-	  }
-	)
+        tweet(
+          ( this + " forwarding to " + uri )
+        )
+        val smajatp : SMAJATwistedPair =
+          jsndr.asInstanceOf[SMAJATwistedPair]
+        
+        smajatp.send(
+          ask match {
+            case dAT.AGetNum => {
+              Msgs.MDGetRequest[Namespace,Var,Tag,Value](
+                path
+              ).asInstanceOf[Msgs.DReq]
+            }
+            case dAT.AFetchNum => {
+              Msgs.MDFetchRequest[Namespace,Var,Tag,Value](
+                path
+              ).asInstanceOf[Msgs.DReq]
+            }
+            case dAT.ASubscribeNum => {
+              Msgs.MDSubscribeRequest[Namespace,Var,Tag,Value](
+                path
+              ).asInstanceOf[Msgs.DReq]
+            }
+          }
+        )
       }
     }
   }
@@ -611,8 +611,8 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
   ) with QueueNameVender {
     def this() = {
       this(
-	MURI( new URI( "agent", "localhost", "/connect", "" ) ),
-	Nil
+        MURI( new URI( "agent", "localhost", "/connect", "" ) ),
+        Nil
       )
     }
     override def acqQName( acqURI : Moniker ) : String = {
@@ -620,64 +620,64 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     }
     def sendRsp(
       atp : SemiMonadicAgentJSONAMQPTwistedPair[String],
-      dreq : Msgs.DReq,	
+      dreq : Msgs.DReq, 
       oGv : Option[Value]
     ) = {
       val smajatp : SMAJATwistedPair =
-	atp.asInstanceOf[SMAJATwistedPair]
+        atp.asInstanceOf[SMAJATwistedPair]
       
       smajatp.send(
-	dreq match {
-	  case Msgs.MDGetRequest( path ) => {
-	    oGv match {
-	      case Some( gv ) => {
-		Msgs.MDGetResponse[Namespace,Var,Tag,Value](
-		  path,
-		  gv
-		)
-	      }
-	      case None => {
-		throw new Exception( "get must take value" )
-	      }
-	    }
-	  }
-	  case Msgs.MDFetchRequest( path ) => {
-	    oGv match {
-	      case Some( gv ) => {
-		Msgs.MDFetchResponse[Namespace,Var,Tag,Value](
-		  path,
-		  gv
-		)
-	      }
-	      case None => {
-		throw new Exception( "fetch must take value" )
-	      }
-	    }
-	  }
-	  case Msgs.MDSubscribeRequest( path ) => {
-	    oGv match {
-	      case Some( gv ) => {
-		Msgs.MDSubscribeResponse[Namespace,Var,Tag,Value](
-		  path,
-		  gv
-		)
-	      }
-	      case None => {
-		throw new Exception( "subscribe must take value" )
-	      }
-	    }
-	  }
-	  case Msgs.MDPutRequest( path, _ ) => {
-	    Msgs.MDPutResponse[Namespace,Var,Tag,Value](
-	      path
-	    )
-	  }
-	  case Msgs.MDPublishRequest( path, _ ) => {
-	    Msgs.MDPublishResponse[Namespace,Var,Tag,Value](
-	      path
-	    )
-	  }
-	}
+        dreq match {
+          case Msgs.MDGetRequest( path ) => {
+            oGv match {
+              case Some( gv ) => {
+                Msgs.MDGetResponse[Namespace,Var,Tag,Value](
+                  path,
+                  gv
+                )
+              }
+              case None => {
+                throw new Exception( "get must take value" )
+              }
+            }
+          }
+          case Msgs.MDFetchRequest( path ) => {
+            oGv match {
+              case Some( gv ) => {
+                Msgs.MDFetchResponse[Namespace,Var,Tag,Value](
+                  path,
+                  gv
+                )
+              }
+              case None => {
+                throw new Exception( "fetch must take value" )
+              }
+            }
+          }
+          case Msgs.MDSubscribeRequest( path ) => {
+            oGv match {
+              case Some( gv ) => {
+                Msgs.MDSubscribeResponse[Namespace,Var,Tag,Value](
+                  path,
+                  gv
+                )
+              }
+              case None => {
+                throw new Exception( "subscribe must take value" )
+              }
+            }
+          }
+          case Msgs.MDPutRequest( path, _ ) => {
+            Msgs.MDPutResponse[Namespace,Var,Tag,Value](
+              path
+            )
+          }
+          case Msgs.MDPublishRequest( path, _ ) => {
+            Msgs.MDPublishResponse[Namespace,Var,Tag,Value](
+              path
+            )
+          }
+        }
       )
     }
 
@@ -687,203 +687,203 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       msrc : Moniker
     ) : Unit = {
       for(
-	atp <- agentTwistedPairs.get( msrc );
-	value <- oV
-      ) {	
+        atp <- agentTwistedPairs.get( msrc );
+        value <- oV
+      ) {       
 
-	value match {
-	  case mTT.RBoundHM(
-	    Some( mTT.Ground( gv ) ),
-	    Some( soln ) 
-	  ) => {
-	    tweet(
-	      (
-		this + " sending value " + oV + " back "
-	      )
-	    )
-	    
-	    sendRsp( atp, dreq, Some( gv ) )
-	      
-	  }
+        value match {
+          case mTT.RBoundHM(
+            Some( mTT.Ground( gv ) ),
+            Some( soln ) 
+          ) => {
+            tweet(
+              (
+                this + " sending value " + oV + " back "
+              )
+            )
+            
+            sendRsp( atp, dreq, Some( gv ) )
+              
+          }
 
-	  case mTT.RBoundHM(
-	    Some( mTT.Ground( gv ) ),
-	    None 
-	  ) => {
-	    tweet(
-	      (
-		this + " sending value " + oV + " back "
-	      )
-	    )
-	    
-	    sendRsp( atp, dreq, Some( gv ) )
-	      
-	  }
+          case mTT.RBoundHM(
+            Some( mTT.Ground( gv ) ),
+            None 
+          ) => {
+            tweet(
+              (
+                this + " sending value " + oV + " back "
+              )
+            )
+            
+            sendRsp( atp, dreq, Some( gv ) )
+              
+          }
 
-	  case mTT.Ground( gv ) => {
-	    tweet(
-	      (
-		this + " sending value " + oV + " back "
-	      )
-	    )
-	    
-	    sendRsp( atp, dreq, Some( gv ) )
+          case mTT.Ground( gv ) => {
+            tweet(
+              (
+                this + " sending value " + oV + " back "
+              )
+            )
+            
+            sendRsp( atp, dreq, Some( gv ) )
 
-	  }
-	  case _ => {
-	    tweet(
-	      (
-		this 
-		+ " not sending composite value " + oV
-		+ " back "
-	      )
-	    )
-	  }
-	}
+          }
+          case _ => {
+            tweet(
+              (
+                this 
+                + " not sending composite value " + oV
+                + " back "
+              )
+            )
+          }
+        }
       }
       oV
     }
 
     def handleRequest( dreq : Msgs.JTSReq ) : Unit = {      
       val JustifiedRequest( 
-	msgId, mtrgt, msrc, lbl, body, _
+        msgId, mtrgt, msrc, lbl, body, _
       ) = dreq
 
       tweet( this + "handling : " + dreq )
 
       body match {
-	case dgreq@Msgs.MDGetRequest( path ) => {	  
-	  tweet(
-	    ( this + "getting locally for location : " + path )
-	  )
-	  reset {
-	    for( v <- get( List( msrc ) )( false )( path ) ) {
-	      tweet(
-		(
-		  this 
-		  + " returning from local get for location : "
-		  + path
-		  + "\nwith value : " + v
-		)
-	      )
-	      handleValue( dgreq, v, msrc )
-	    }
-	  }
-	}
-	
-	case dfreq@Msgs.MDFetchRequest( path ) => {
-	  tweet(
-	    ( this + "fetching locally for location : " + path )
-	  )
-	  reset {
-	    for( v <- fetch( List( msrc ) )( false )( path ) ) {
-	      tweet(
-		(
-		  this 
-		  + " returning from local fetch for location : "
-		  + path
-		  + "\nwith value : " + v
-		)
-	      )
-	      handleValue( dfreq, v, msrc )
-	    }
-	  }
-	}
+        case dgreq@Msgs.MDGetRequest( path ) => {         
+          tweet(
+            ( this + "getting locally for location : " + path )
+          )
+          reset {
+            for( v <- get( List( msrc ) )( false )( path ) ) {
+              tweet(
+                (
+                  this 
+                  + " returning from local get for location : "
+                  + path
+                  + "\nwith value : " + v
+                )
+              )
+              handleValue( dgreq, v, msrc )
+            }
+          }
+        }
+        
+        case dfreq@Msgs.MDFetchRequest( path ) => {
+          tweet(
+            ( this + "fetching locally for location : " + path )
+          )
+          reset {
+            for( v <- fetch( List( msrc ) )( false )( path ) ) {
+              tweet(
+                (
+                  this 
+                  + " returning from local fetch for location : "
+                  + path
+                  + "\nwith value : " + v
+                )
+              )
+              handleValue( dfreq, v, msrc )
+            }
+          }
+        }
 
-	case dsreq@Msgs.MDSubscribeRequest( path ) => {
-	  tweet(
-	    ( this + "fetching locally for location : " + path )
-	  )
-	  reset {
-	    for( v <- subscribe( List( msrc ) )( path ) ) {
-	      tweet(
-		(
-		  this 
-		  + " returning from local subscribe for location : "
-		  + path
-		  + "\nwith value : " + v
-		)
-	      )
-	      handleValue( dsreq, v, msrc )
-	    }
-	  }
-	}
-	
-	case dpreq@Msgs.MDPutRequest( path, value ) => {	
-	  reset { put( path, mTT.Ground( value ) ) }
-	  for( atp <- agentTwistedPairs.get( msrc ) ) {
-	    sendRsp( atp, dpreq, None )
-	  }
-	}
-	case dpbreq@Msgs.MDPublishRequest( path, value ) => {	
-	  reset { publish( path, mTT.Ground( value ) ) }
-	  for( atp <- agentTwistedPairs.get( msrc ) ) {
-	    sendRsp( atp, dpbreq, None )
-	  }
-	}
+        case dsreq@Msgs.MDSubscribeRequest( path ) => {
+          tweet(
+            ( this + "fetching locally for location : " + path )
+          )
+          reset {
+            for( v <- subscribe( List( msrc ) )( path ) ) {
+              tweet(
+                (
+                  this 
+                  + " returning from local subscribe for location : "
+                  + path
+                  + "\nwith value : " + v
+                )
+              )
+              handleValue( dsreq, v, msrc )
+            }
+          }
+        }
+        
+        case dpreq@Msgs.MDPutRequest( path, value ) => {        
+          reset { put( path, mTT.Ground( value ) ) }
+          for( atp <- agentTwistedPairs.get( msrc ) ) {
+            sendRsp( atp, dpreq, None )
+          }
+        }
+        case dpbreq@Msgs.MDPublishRequest( path, value ) => {   
+          reset { publish( path, mTT.Ground( value ) ) }
+          for( atp <- agentTwistedPairs.get( msrc ) ) {
+            sendRsp( atp, dpbreq, None )
+          }
+        }
       }
     }
     
     def handleResponse( drsp : Msgs.JTSRsp ) : Unit = {      
       val JustifiedResponse( 
-	  msgId, mtrgt, msrc, lbl, body, _
+          msgId, mtrgt, msrc, lbl, body, _
       ) = drsp
 
       body match {
-	case Msgs.MDGetResponse( path, value ) => {
-	  reset { put( path, mTT.Ground( value ) ) }
-	}
-	case Msgs.MDFetchResponse( path, value ) => {
-	  reset { put( path, mTT.Ground( value ) ) }
-	}
-	case Msgs.MDSubscribeResponse( path, value ) => {
-	  reset { publish( path, mTT.Ground( value ) ) }
-	}
-	case dput : Msgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
-	}
-	case dpub : Msgs.MDPublishResponse[Namespace,Var,Tag,Value] => {	
-	}
-	case _ => {
-	  tweet(
-	    (
-	      this 
-	      + " handling unexpected message : " + body
-	    )
-	  )
-	}
+        case Msgs.MDGetResponse( path, value ) => {
+          reset { put( path, mTT.Ground( value ) ) }
+        }
+        case Msgs.MDFetchResponse( path, value ) => {
+          reset { put( path, mTT.Ground( value ) ) }
+        }
+        case Msgs.MDSubscribeResponse( path, value ) => {
+          reset { publish( path, mTT.Ground( value ) ) }
+        }
+        case dput : Msgs.MDPutResponse[Namespace,Var,Tag,Value] => {    
+        }
+        case dpub : Msgs.MDPublishResponse[Namespace,Var,Tag,Value] => {        
+        }
+        case _ => {
+          tweet(
+            (
+              this 
+              + " handling unexpected message : " + body
+            )
+          )
+        }
       }
     }
     
     override def handleIncoming( dmsg : Msgs.JTSReqOrRsp ) : Unit = {
       dmsg match {
-	case Left(
-	  dreq@JustifiedRequest( 
-	    msgId, mtrgt, msrc, lbl, body, _
-	  )
-	) => {
-	  tweet(
-	    (
-	      this + " handling : " + dmsg
-	      + " from " + msrc
-	      + " on behalf of " + mtrgt
-	    )
-	  )
-	  handleRequest( dreq )
-	}
-	case Right(
-	  drsp@JustifiedResponse( 
-	    msgId, mtrgt, msrc, lbl, body, _
-	  )
-	) => {
-	  tweet(
-	    (
-	      this + " handling : " + dmsg
-	      + " from " + msrc
-	      + " on behalf of " + mtrgt
-	    )
-	  )
-	  handleResponse( drsp )
-	}
+        case Left(
+          dreq@JustifiedRequest( 
+            msgId, mtrgt, msrc, lbl, body, _
+          )
+        ) => {
+          tweet(
+            (
+              this + " handling : " + dmsg
+              + " from " + msrc
+              + " on behalf of " + mtrgt
+            )
+          )
+          handleRequest( dreq )
+        }
+        case Right(
+          drsp@JustifiedResponse( 
+            msgId, mtrgt, msrc, lbl, body, _
+          )
+        ) => {
+          tweet(
+            (
+              this + " handling : " + dmsg
+              + " from " + msrc
+              + " on behalf of " + mtrgt
+            )
+          )
+          handleResponse( drsp )
+        }
       }
     }
 
@@ -898,23 +898,23 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       Generator {
-	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
-	  shift {
-	    outerk : ( Unit => Unit ) =>
-	      reset {
-		for(
-		  oV <- mget( channels, registered, consume, keep, cursor )( path ) 
-		) {
-		  oV match {
-		    case None => {
-		      forward( ask, hops, path )
-		      rk( oV )
-		    }
-		    case _ => rk( oV )
-		  }
-		}
-	      }
-	  }
+        rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+          shift {
+            outerk : ( Unit => Unit ) =>
+              reset {
+                for(
+                  oV <- mget( channels, registered, consume, keep, cursor )( path ) 
+                ) {
+                  oV match {
+                    case None => {
+                      forward( ask, hops, path )
+                      rk( oV )
+                    }
+                    case _ => rk( oV )
+                  }
+                }
+              }
+          }
       }
     }
 
@@ -929,24 +929,24 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       Generator {
-	rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
-	  shift {
-	    outerk : ( Unit => Unit ) =>
-	      reset {
-		for(
-		  oV <- mget( channels, registered, consume, keep, cursor )( path ) 
-		) {
-		  oV match {
-		    case None => {
-		      //tweet( ">>>>> forwarding..." )
-		      forward( ask, hops, path )
-		      rk( oV )
-		    }
-		    case _ => rk( oV )
-		  }
-		}
-	      }
-	  }
+        rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
+          shift {
+            outerk : ( Unit => Unit ) =>
+              reset {
+                for(
+                  oV <- mget( channels, registered, consume, keep, cursor )( path ) 
+                ) {
+                  oV match {
+                    case None => {
+                      //tweet( ">>>>> forwarding..." )
+                      forward( ask, hops, path )
+                      rk( oV )
+                    }
+                    case _ => rk( oV )
+                  }
+                }
+              }
+          }
       }
     }
   
@@ -957,7 +957,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AGetNum, hops )(
-	theMeetingPlace, theWaiters, Cache, Cache, cursor
+        theMeetingPlace, theWaiters, Cache, Cache, cursor
       )( path )    
     }
 
@@ -982,29 +982,29 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     ) : Generator[Value,Unit,Unit] = {
       var suspension : Option[Unit => Unit] = None
       def suspend : Unit @suspendable = {
-	shift {
-	  ( k : Unit => Unit ) => {
-	    suspension = Some( k )
-	  }
-	}
+        shift {
+          ( k : Unit => Unit ) => {
+            suspension = Some( k )
+          }
+        }
       }
       Generator {
-	k : ( Value => Unit @suspendable ) =>
-	  for(
-	    orsrc <- get( path )
-	  ) {
-	    orsrc match {
-	      case Some( rsrc ) => {
-		getGV( rsrc ) match {
-		  case Some( gv ) => k( gv )
-		  case None =>
-		}
-	      }
-	      case None => {
-		suspend;
-	      }
-	    };
-	  }
+        k : ( Value => Unit @suspendable ) =>
+          for(
+            orsrc <- get( path )
+          ) {
+            orsrc match {
+              case Some( rsrc ) => {
+                getGV( rsrc ) match {
+                  case Some( gv ) => k( gv )
+                  case None =>
+                }
+              }
+              case None => {
+                suspend;
+              }
+            };
+          }
       }
     }
 
@@ -1012,20 +1012,20 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Generator[Value,Unit,Unit] =
       Generator {
-	k : ( Value => Unit @suspendable ) =>
-	  for(
-	    orsrc <- get( path )
-	  ) {
-	    orsrc match {
-	      case Some( rsrc ) => {
-		getGV( rsrc ) match {
-		  case Some( gv ) => k( gv )
-		  case None =>
-		}
-	      }
-	      case None => 
-	    };
-	  }
+        k : ( Value => Unit @suspendable ) =>
+          for(
+            orsrc <- get( path )
+          ) {
+            orsrc match {
+              case Some( rsrc ) => {
+                getGV( rsrc ) match {
+                  case Some( gv ) => k( gv )
+                  case None =>
+                }
+              }
+              case None => 
+            };
+          }
       }
 
     def fetch( hops : List[Moniker] )(
@@ -1035,7 +1035,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {              
       mget( dAT.AFetchNum, hops )(
-	theMeetingPlace, theWaiters, DoNotRetain, DoNotRetain, cursor
+        theMeetingPlace, theWaiters, DoNotRetain, DoNotRetain, cursor
       )( path )    
     }
 
@@ -1059,20 +1059,20 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Generator[Value,Unit,Unit] = 
       Generator {
-	k : ( Value => Unit @suspendable ) =>
-	  for(
-	    orsrc <- fetch( path )
-	  ) {
-	    orsrc match {
-	      case Some( rsrc ) => {
-		getGV( rsrc ) match {
-		  case Some( gv ) => k( gv )
-		  case None =>
-		}
-	      }
-	      case None => 
-	    };
-	  }
+        k : ( Value => Unit @suspendable ) =>
+          for(
+            orsrc <- fetch( path )
+          ) {
+            orsrc match {
+              case Some( rsrc ) => {
+                getGV( rsrc ) match {
+                  case Some( gv ) => k( gv )
+                  case None =>
+                }
+              }
+              case None => 
+            };
+          }
       }
 
     def subscribe( hops : List[Moniker] )(
@@ -1080,7 +1080,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
     )
     : Generator[Option[mTT.Resource],Unit,Unit] = {        
       mget( dAT.ASubscribeNum, hops )(
-	theChannels, theSubscriptions, Cache, Cache, false
+        theChannels, theSubscriptions, Cache, Cache, false
       )( path )    
     }
 
@@ -1095,20 +1095,20 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Generator[Value,Unit,Unit] = 
       Generator {
-	k : ( Value => Unit @suspendable ) =>
-	  for(
-	    orsrc <- subscribe( path )
-	  ) {
-	    orsrc match {
-	      case Some( rsrc ) => {
-		getGV( rsrc ) match {
-		  case Some( gv ) => k( gv )
-		  case None =>
-		}
-	      }
-	      case None => 
-	    };
-	  }
+        k : ( Value => Unit @suspendable ) =>
+          for(
+            orsrc <- subscribe( path )
+          ) {
+            orsrc match {
+              case Some( rsrc ) => {
+                getGV( rsrc ) match {
+                  case Some( gv ) => k( gv )
+                  case None =>
+                }
+              }
+              case None => 
+            };
+          }
       }
   }
   */
@@ -1153,25 +1153,25 @@ object MonadicTS
       override def protoDreq : DReq = MDGetRequest( aLabel )
       override def protoDrsp : DRsp = MDGetResponse( aLabel, aLabel.toString )
       override def protoJtsreq : JTSReq =
-	JustifiedRequest(
-	  protoDreqUUID,
-	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-	  new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
-	  getUUID(),
-	  protoDreq,
-	  None
-	)
+        JustifiedRequest(
+          protoDreqUUID,
+          new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+          new URI( "agent", protoDreqUUID.toString, "/invitation", "" ),
+          getUUID(),
+          protoDreq,
+          None
+        )
       override def protoJtsrsp : JTSRsp = 
-	JustifiedResponse(
-	  protoDreqUUID,
-	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-	  new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
-	  getUUID(),
-	  protoDrsp,
-	  None
-	)
+        JustifiedResponse(
+          protoDreqUUID,
+          new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+          new URI( "agent", protoDrspUUID.toString, "/invitation", "" ),
+          getUUID(),
+          protoDrsp,
+          None
+        )
       override def protoJtsreqorrsp : JTSReqOrRsp =
-	Left( protoJtsreq )
+        Left( protoJtsreq )
     }
     
     override def protoMsgs : MsgTypes = MonadicDMsgs
