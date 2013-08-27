@@ -212,24 +212,28 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                       println("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
                       optRsrc match {
                         case None => ()
-                        case Some(rbnd: mTT.RBound) => {
+                        case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
                           // TODO(mike): fill in response with bindings
                           val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                          val content = parse(
-                            """{
-                                 "sessionURI": "agent-session://ArtVandelay@session1",
-                                 "listOfAliases": [],
-                                 "defaultAlias": "",
-                                 "listOfLabels": [],
-                                 "listOfCnxns": [],
-                                 "lastActiveFilter": ""
-                               }
-                            """) // ~ (jsonBlob -> parse(rbnd))
-                          
-                          complete(compact(render(
-                            ("msgType" -> "initializeSessionResponse") ~ 
-                            ("content" -> content)
-                          )))
+                          postedexpr.asInstanceOf[PostedExpr[String]] match {
+                            case PostedExpr(jsonBlob) => {
+                              val content = parse(
+                                """{
+                                     "sessionURI": "agent-session://ArtVandelay@session1",
+                                     "listOfAliases": [],
+                                     "defaultAlias": "",
+                                     "listOfLabels": [],
+                                     "listOfCnxns": [],
+                                     "lastActiveFilter": ""
+                                   }
+                                """).asInstanceOf[JObject] ~ ("jsonBlob" -> parse(jsonBlob))
+
+                              complete(compact(render(
+                                ("msgType" -> "initializeSessionResponse") ~
+                                ("content" -> content)
+                              )))
+                            }
+                          }
                         }
                       }
                     }
