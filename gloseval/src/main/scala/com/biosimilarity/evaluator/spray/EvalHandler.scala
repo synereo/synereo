@@ -26,6 +26,7 @@ import spray.httpx.encoding._
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,6 +65,7 @@ trait EvalHandler {
   def createUserRequest(json : JValue, key : String): Unit = {
     val email = (json \ "content" \ "email").extract[String]
     val password = (json \ "content" \ "password").extract[String]
+    val jsonBlob = compact(render(json \ "content" \ "jsonBlob"))
     val sessionID = UUID.randomUUID
     println("createUserRequest sessionID = " + sessionID.toString)
     val erql = agentMgr().erql( sessionID )
@@ -82,7 +84,7 @@ trait EvalHandler {
       CompletionMapper.complete( key, body )
     }
     println("createUserRequest calling agentMgr().secureSignup")
-    agentMgr().secureSignup(erql, erspl)(email, password, complete)
+    agentMgr().secureSignup(erql, erspl)(email, password, jsonBlob, complete)
     println("createUserRequest return from secureSignup call")
   }
   
@@ -133,7 +135,7 @@ trait EvalHandler {
     val sessionURI = new java.net.URI(sessionURIstr)
     // TODO(mike): Tag expression objects so that we can pick the right case
     //   class in the match block below.
-    // val expression = (json \ "content" \ "expression").extract[???]
+    val expression = (json \ "content" \ "expression").extract[String]
 
     // if (sessionURI != "agent-session://ArtVandelay@session1") {
     //   throw EvalException(sessionURI)
