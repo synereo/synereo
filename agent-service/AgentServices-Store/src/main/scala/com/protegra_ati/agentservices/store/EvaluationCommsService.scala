@@ -15,6 +15,7 @@ import com.biosimilarity.lift.lib._
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
 
 import scala.concurrent.duration._
 import scala.util.continuations._ 
@@ -100,8 +101,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     val userDataFilter = fromTermString(
-        "userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
-        //"userData(X)"
+        //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
+        "userData(X)"
       ).getOrElse(throw new Exception("Couldn't parse userDataFilter"))
     val pwmacFilter = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacFilter"))
     val emailFilter = fromTermString("email(X)").getOrElse(throw new Exception("Couldn't parse emailFilter"))
@@ -113,6 +114,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     )(
       email: String,
       password: String,
+      jsonBlob: String,
       complete: Either[String, String] => Unit
     ) : Unit = {
       import DSLCommLink.mTT
@@ -150,11 +152,13 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
 
       val onPost: Option[mTT.Resource] => Unit = ( dummy : Option[mTT.Resource] ) => {
         println("secureSignup onPost1")
+        // Change String to Term throughout.
         post[String](erql, erspl)(
           userDataFilter,
           List(capSelfCnxn),
-          "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
-              "listOfCnxns(), lastActiveFilter(\"\"))",
+          // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
+          //     "listOfCnxns(), lastActiveFilter(\"\"))",
+          jsonBlob,
           ( dummy : Option[mTT.Resource] ) => {
             println("secureSignup onPost2")
             // TODO(mike): send email with capAndMac
@@ -211,20 +215,21 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                         case Some(rbnd: mTT.RBound) => {
                           // TODO(mike): fill in response with bindings
                           val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                          complete(
+                          val content = parse(
                             """{
-                              "msgType": "initializeSessionResponse",
-                              "content": {
-                                "sessionURI": "agent-session://ArtVandelay@session1",
-                                "listOfAliases": [],
-                                "defaultAlias": "",
-                                "listOfLabels": [],
-                                "listOfCnxns": [],
-                                "lastActiveFilter": ""
-                              }
-                            }
-                            """
-                          )
+                                 "sessionURI": "agent-session://ArtVandelay@session1",
+                                 "listOfAliases": [],
+                                 "defaultAlias": "",
+                                 "listOfLabels": [],
+                                 "listOfCnxns": [],
+                                 "lastActiveFilter": ""
+                               }
+                            """) // ~ (jsonBlob -> parse(rbnd))
+                          
+                          complete(compact(render(
+                            ("msgType" -> "initializeSessionResponse") ~ 
+                            ("content" -> content)
+                          )))
                         }
                       }
                     }
