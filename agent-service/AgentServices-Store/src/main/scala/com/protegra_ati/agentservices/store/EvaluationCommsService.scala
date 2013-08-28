@@ -124,7 +124,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         val md = MessageDigest.getInstance("SHA1")
         md.update(lcemail.getBytes("utf-8"))
         val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
-        val emailURI = new URI("mailto://" + lcemail)
+        val emailURI = new URI("mailto:" + lcemail)
         val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
           PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
         // TODO(mike): validate structure of email address
@@ -281,6 +281,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             emailFilter,
             List(emailSelfCnxn),
             (optRsrc: Option[mTT.Resource]) => {
+              println("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
               optRsrc match {
                 case None => ()
                 case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
