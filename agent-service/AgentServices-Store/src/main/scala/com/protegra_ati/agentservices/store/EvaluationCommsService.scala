@@ -282,12 +282,16 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             List(emailSelfCnxn),
             (optRsrc: Option[mTT.Resource]) => {
               optRsrc match {
+                case None => ()
                 case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
                   postedexpr.asInstanceOf[PostedExpr[String]] match {
                     case PostedExpr(cap) => {
                       login(cap)
                     }
                   }
+                }
+                case _ => {
+                  throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
                 }
               }
             }
