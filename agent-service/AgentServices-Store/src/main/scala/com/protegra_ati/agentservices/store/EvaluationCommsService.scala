@@ -121,7 +121,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val lcemail = email.toLowerCase
       val cap = if (lcemail == "") UUID.randomUUID.toString else {
         // If email is nonempty, hash it for the cap part
-        val md = MessageDigest.getInstance("SHA-256")
+        val md = MessageDigest.getInstance("SHA1")
         md.update(lcemail.getBytes("utf-8"))
         val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
         val emailURI = new URI("mailto://" + lcemail)
@@ -268,13 +268,13 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         }
         
         case "email" => {
-          val email = identInfo.toLowerCase
+          val lcemail = identInfo.toLowerCase
           // hash the email to get cap
-          val md = MessageDigest.getInstance("SHA256")
-          val cap = md.digest(email.getBytes("UTF-8")).
-              map("%02x" format _).mkString.slice(0,36)
+          val md = MessageDigest.getInstance("SHA1")
+          md.update(lcemail.getBytes("utf-8"))
+          val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
           // don't need mac; need to verify email is on our network
-          val emailURI = new URI("mailto://" + email)
+          val emailURI = new URI("mailto://" + lcemail)
           val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
             PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
           fetch(erql, erspl)(
@@ -282,16 +282,19 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             List(emailSelfCnxn),
             (optRsrc: Option[mTT.Resource]) => {
               optRsrc match {
-                case Some(mTT.Ground(cap: ConcreteHL.HLExpr)) => {
-                  login(cap.toString)
+                case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
+                  postedexpr.asInstanceOf[PostedExpr[String]] match {
+                    case PostedExpr(cap) => {
+                      login(cap)
+                    }
+                  }
                 }
               }
             }
           )
         }
       }
-      
-    }    
+    }
     def createAgent(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
