@@ -476,5 +476,5 @@ package usage {
          with DSLCommLinkConfiguration
          with Serializable {
          }    
-  }
+  }  
 }
