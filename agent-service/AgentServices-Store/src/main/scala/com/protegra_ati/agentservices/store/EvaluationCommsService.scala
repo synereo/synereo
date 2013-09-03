@@ -98,8 +98,18 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
   trait AgentManager {
     def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
+    def makePolarizedPair() = {
+      val sessionID = UUID.randomUUID
+      (erql( sessionID ), erspl( sessionID ))
+    }
+
     def adminErql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def adminErspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
+    def makePolarizedAdminPair() = {
+      val sessionID = UUID.randomUUID
+      (adminErql( sessionID ), adminErspl( sessionID ))
+    }
+
     val userDataFilter = fromTermString(
         //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
         "userData(X)"
@@ -109,9 +119,6 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
 
     // Under what conditions can this fail?
     def secureSignup(
-      erql : CnxnCtxtLabel[String,String,String],
-      erspl : CnxnCtxtLabel[String,String,String]
-    )(
       email: String,
       password: String,
       jsonBlob: String,
@@ -124,13 +131,15 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         val md = MessageDigest.getInstance("SHA1")
         md.update(lcemail.getBytes("utf-8"))
         val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
-        val emailURI = new URI("mailto:" + lcemail)
+        val emailURI = new URI("emailhash://" + cap)
         val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
-          PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+          PortableAgentCnxn(emailURI, "emailhash", emailURI)
         // TODO(mike): validate structure of email address
         // TODO(mike): delay this until after we've received confirmation that
         //   the owner of this email address wants to sign up.
         //   Signing up twice is safe, since the cap is a pure function of the email.
+        // TODO(mike): use a mac instead of a hash
+        val (erql, erspl) = makePolarizedPair()
         post[String](erql, erspl)(
           emailFilter,
           List(emailSelfCnxn),
@@ -153,6 +162,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val onPost: Option[mTT.Resource] => Unit = ( dummy : Option[mTT.Resource] ) => {
         println("secureSignup onPost1")
         // Change String to Term throughout.
+        val (erql, erspl) = makePolarizedPair()
         post[String](erql, erspl)(
           userDataFilter,
           List(capSelfCnxn),
@@ -167,6 +177,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         )
       }
       println("secureSignup posting pwmac")
+      val (erql, erspl) = makePolarizedPair()
       post[String](erql, erspl)(
         pwmacFilter,
         List(capSelfCnxn),
@@ -175,10 +186,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       )
     }
     
-    def secureLogin( 
-      erql : CnxnCtxtLabel[String,String,String],
-      erspl : CnxnCtxtLabel[String,String,String]
-    )(
+    def secureLogin(
       identType: String,
       identInfo: String,
       password: String,
@@ -237,6 +245,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                         }
                       }
                     }
+                    val (erql, erspl) = makePolarizedPair()
                     fetch( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFetch)
                     ()
                   }
@@ -249,6 +258,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             }
           }
         }
+        val (erql, erspl) = makePolarizedPair()
         fetch( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFetch)
       }
       
@@ -275,8 +285,8 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
           // don't need mac; need to verify email is on our network
           val emailURI = new URI("mailto://" + lcemail)
-          val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
-            PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+          val emailSelfCnxn = PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+          val (erql, erspl) = makePolarizedPair()
           fetch(erql, erspl)(
             emailFilter,
             List(emailSelfCnxn),
@@ -298,23 +308,6 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
             }
           )
         }
-      }
-    }
-    def createAgent(
-      erql : CnxnCtxtLabel[String,String,String],
-      erspl : CnxnCtxtLabel[String,String,String]
-    )(
-      filter : CnxnCtxtLabel[String,String,String],
-      selfCnxn : Cnxn,
-      thisUser : User[String,String,String],
-      onCreation : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-    ) : Unit = {
-      reset {
-        node().publish( erql, InsertContent( filter, List( selfCnxn ), thisUser ) )
-      }
-      reset {
-        for( e <- node().subscribe( erspl ) ) { onCreation( e ) }
       }
     }
     def post[Value](
