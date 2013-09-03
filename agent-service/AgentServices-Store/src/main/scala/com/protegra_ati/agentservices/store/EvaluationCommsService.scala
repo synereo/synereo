@@ -153,8 +153,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val mac = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
       val capAndMac = cap + mac
       val capURI = new URI("usercap://" + cap)
-      val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
-        PortableAgentCnxn(capURI, "pwdb", capURI)
+      val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
 
       macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
       val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
@@ -196,8 +195,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       
       def login(cap: String): Unit = {
         val capURI = new URI("usercap://" + cap)
-        val capSelfCnxn = //new ConcreteHL.PortableAgentCnxn(capURI, "pwdb", capURI)
-          PortableAgentCnxn(capURI, "pwdb", capURI)
+        val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
         val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
           println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
           rsrc match {
@@ -283,9 +281,9 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           val md = MessageDigest.getInstance("SHA1")
           md.update(lcemail.getBytes("utf-8"))
           val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
-          // don't need mac; need to verify email is on our network
-          val emailURI = new URI("mailto://" + lcemail)
-          val emailSelfCnxn = PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
+          // don't need mac of cap; need to verify email is on our network
+          val emailURI = new URI("emailhash://" + cap)
+          val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
           val (erql, erspl) = makePolarizedPair()
           fetch(erql, erspl)(
             emailFilter,
