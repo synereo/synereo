@@ -66,10 +66,6 @@ trait EvalHandler {
     val email = (json \ "content" \ "email").extract[String]
     val password = (json \ "content" \ "password").extract[String]
     val jsonBlob = compact(render(json \ "content" \ "jsonBlob"))
-    val sessionID = UUID.randomUUID
-    println("createUserRequest sessionID = " + sessionID.toString)
-    val erql = agentMgr().erql( sessionID )
-    val erspl = agentMgr().erspl( sessionID ) 
     
     def complete(capAndMac: Either[String, String]): Unit = {
       println("createUserRequest complete capAndMac="+capAndMac)
@@ -84,7 +80,7 @@ trait EvalHandler {
       CompletionMapper.complete( key, body )
     }
     println("createUserRequest calling agentMgr().secureSignup")
-    agentMgr().secureSignup(erql, erspl)(email, password, jsonBlob, complete)
+    agentMgr().secureSignup(email, password, jsonBlob, complete)
     println("createUserRequest return from secureSignup call")
   }
   
@@ -110,16 +106,12 @@ trait EvalHandler {
     })
     var password = queryMap.get("password").getOrElse("")
     
-    val sessionID = UUID.randomUUID
-    val erql = agentMgr().erql( sessionID )
-    val erspl = agentMgr().erspl( sessionID ) 
-
     def complete(message: String): Unit = {
       CompletionMapper.complete( key, message )
     }
 
     // (str:String) => complete(HttpResponse(entity = HttpBody(`application/json`, str)))
-    agentMgr().secureLogin(erql, erspl)(
+    agentMgr().secureLogin(
       identType, 
       identInfo, 
       password,
@@ -136,14 +128,11 @@ trait EvalHandler {
     // TODO(mike): Tag expression objects so that we can pick the right case
     //   class in the match block below.
     val expression = (json \ "content" \ "expression").extract[String]
+    
 
     // if (sessionURI != "agent-session://ArtVandelay@session1") {
     //   throw EvalException(sessionURI)
     // }
-
-    val sessionID = UUID.randomUUID
-    val erql = agentMgr().erql( sessionID )
-    val erspl = agentMgr().erspl( sessionID ) 
 
     /*
     expression match {

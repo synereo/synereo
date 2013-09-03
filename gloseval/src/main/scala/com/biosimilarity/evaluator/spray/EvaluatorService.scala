@@ -197,19 +197,36 @@ trait EvaluatorService extends HttpService
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                     println( "in evalSubscribeRequest " )
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    val (sessionURI, body) = 
-                    (evalSubscribeRequest(json), HttpBody(`application/json`,
-                      """{
-                        "msgType": "evalComplete",
-                        "content": {
-                          "sessionURI": "agent-session://ArtVandelay@session1",
-                          "pageOfPosts": []
+                    try {
+                      val (sessionURI, body) = 
+                      (evalSubscribeRequest(json), HttpBody(`application/json`,
+                        """{
+                          "msgType": "evalComplete",
+                          "content": {
+                            "sessionURI": "agent-session://ArtVandelay@session1",
+                            "pageOfPosts": []
+                          }
                         }
+                        """
+                      ))
+                      cometActor ! CometMessage(sessionURI.toString, body)
+                      ctx.complete(StatusCodes.OK)
+                    } catch {
+                      case _ => {
+                        // return an eval error
+                        val sessionURI = "agent-session://ArtVandelay@session1";
+                        val body = HttpBody(`application/json`,
+                          """{
+                            "msgType": "evalError",
+                            "content": {
+                              "sessionURI": "agent-session://ArtVandelay@session1",
+                              "reason": ""
+                            }
+                          }""")
+                        cometActor ! CometMessage(sessionURI.toString, body)
+                        ctx.complete(StatusCodes.OK)
                       }
-                      """
-                    ))
-                    cometActor ! CometMessage(sessionURI.toString, body)
-                    ctx.complete(StatusCodes.OK)
+                    }
                   }
                   case "closeSessionRequest" => {
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
