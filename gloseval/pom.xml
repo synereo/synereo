@@ -14,7 +14,7 @@
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <specialk.version>1.1.7.7</specialk.version>
-        <agentservices-store.version>1.8.8-SNAPSHOT</agentservices-store.version>
+        <agentservices-store.version>1.8.9-SNAPSHOT</agentservices-store.version>
         <!-- scala.version>2.10.0</scala.version -->
         <scala.version>2.10.0</scala.version>
         <scala.versionsuffix>2.10</scala.versionsuffix>
@@ -243,28 +243,34 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.biosimilarity.evaluator.spray.Boot</mainClass>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
-                        <configuration>
-                            <finalName>${project.artifactId}</finalName>
-                        </configuration>
                         <goals>
-                            <goal>single</goal>
+                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.biosimilarity.evaluator.spray.Boot</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                            </transformers>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

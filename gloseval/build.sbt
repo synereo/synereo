@@ -44,7 +44,7 @@ libraryDependencies ++= Seq(
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
   "org.scala-lang"         %   "scala-actors"       % "2.10.0",
   "com.biosimilarity.lift" %   "specialK"           % "1.1.7.7",
-  "com.protegra-ati"       %   "agentservices-store-ia" % "1.8.8-SNAPSHOT",
+  "com.protegra-ati"       %   "agentservices-store-ia" % "1.8.9-SNAPSHOT",
   "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",
