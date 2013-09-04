@@ -808,6 +808,38 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                 )
               }
             }
+
+          def loop(
+            acc : List[( DBObject, emT.PlaceInstance )],
+            rawQryRslts : List[DBObject]
+          ) : List[( DBObject, emT.PlaceInstance )] = {
+            rawQryRslts match {
+              case Nil => acc              
+              case e :: qryRslts => {
+                try {
+                  val ersrc = pd.asResource( path, e )
+                  val pair = ( e, ersrc )
+                    loop(
+                      acc ++ List[( DBObject, emT.PlaceInstance )]( pair ),
+                      qryRslts
+                    )
+                }
+                catch {
+                  case e : UnificationQueryFilter[Namespace,Var,Tag] => {
+                    tweet( "filtering refuted pattern: " + e.ptn + "; key: " + e.key )
+                    loop( acc, qryRslts )
+                  }
+                  case t : Throwable => {
+                    val errors : java.io.StringWriter = new java.io.StringWriter()
+                    t.printStackTrace( new java.io.PrintWriter( errors ) )
+                    tweet( "unhandled exception : " + errors.toString( ) )
+                    throw( t )
+                  }
+                }
+              }
+            }            
+          }
+
           val pairs : Option[List[( DBObject, emT.PlaceInstance )]] = 
             for(
               qry <- qFn( xmlCollName, path )
@@ -855,29 +887,34 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                   + "\nqryRslts : \n" + qryRslts
 	        )
 	      )
-              ( List[( DBObject, emT.PlaceInstance )]( ) /: qryRslts )(
-                {
-                  ( acc, e ) => {
-                    try {
-                      val ersrc = pd.asResource( path, e )
-                      val pair = ( e, ersrc )
-                      acc ++ List[( DBObject, emT.PlaceInstance )]( pair )
-                    }
-                    catch {
-                      case e : UnificationQueryFilter[Namespace,Var,Tag] => {
-                        tweet( "filtering refuted pattern: " + e.ptn + "; key: " + e.key )
-                        acc
-                      }
-                      case t : Throwable => {
-                        val errors : java.io.StringWriter = new java.io.StringWriter()
-                        t.printStackTrace( new java.io.PrintWriter( errors ) )
-                        tweet( "unhandled exception : " + errors.toString( ) )
-                        throw( t )
-                      }
-                    }
-                  }
-                }
-              )              
+              loop( 
+                List[( DBObject, emT.PlaceInstance )]( ),
+                qryRslts
+              )
+              // ( List[( DBObject, emT.PlaceInstance )]( ) /: qryRslts )(
+//                 {
+//                   ( acc, e ) => {
+//                     try {
+//                       val ersrc = pd.asResource( path, e )
+//                       val pair = ( e, ersrc )
+//                       acc ++ List[( DBObject, emT.PlaceInstance )]( pair )
+//                     }
+//                     catch {
+//                       case e : UnificationQueryFilter[Namespace,Var,Tag] => {
+//                         tweet( "filtering refuted pattern: " + e.ptn + "; key: " + e.key )
+//                         acc
+//                       }
+//                       case t : Throwable => {
+//                         val errors : java.io.StringWriter = new java.io.StringWriter()
+//                         t.printStackTrace( new java.io.PrintWriter( errors ) )
+//                         tweet( "unhandled exception : " + errors.toString( ) )
+//                         throw( t )
+//                       }
+//                     }
+//                   }
+//                 }
+//               )
+              
             }
           tweet(
 	    (

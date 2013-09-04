@@ -138,8 +138,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
              HigherStation[RK,mTT.GetRequest]( ptn, None, polarity )
            }
 
-           override def occupy( s : ModeType ) : Unit = synchronized {
-             while ( ! allowedIn( s ) ) wait()
+           override def occupy( s : ModeType ) : Unit = { //synchronized {
+             this.synchronized {
+               while ( ! allowedIn( s ) ) wait()
+             }
            }
            override def occupy( ptn : mTT.GetRequest ) : Unit = {
              occupy( makeMode( ptn, false ) )
@@ -155,10 +157,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
            // =
            // and( for( ( p, b ) <- m if unifies( pattern, p ) ) yield { b } )
 
+           val predicateLock = new scala.concurrent.Lock()
+
            override def allowedIn( s : ModeType ) : Boolean = {
              val ptn = s.ptn          
-             val polarity = s.polarity
-
+             val polarity = s.polarity                                      
              def loop(
                pairs : List[( ModeSpaceLock[RK,mTT.GetRequest]#ModeType, Int )]
              ) : Boolean = {
@@ -181,7 +184,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                  }
                }             
              }
-
+             predicateLock.acquire()
              val lockerList = locker.toList
              val pass = loop( locker.toList )
              println(
@@ -195,8 +198,10 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                + "\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
              )
              if ( pass ) { locker += ( s -> 1 ) }
+             predicateLock.release()
              pass
            }
+
            override def leave( s : ModeType ) : Unit = {
              locker.get( s ) match {
                case Some( 1 ) => {
