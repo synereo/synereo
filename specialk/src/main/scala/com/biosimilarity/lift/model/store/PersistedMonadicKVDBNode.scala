@@ -2831,7 +2831,7 @@ package usage {
 	      cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
 	      cellCytoplasm.pkm += ( ( kinasePtn, ( kamt + inc ) ) )
 	      reset { 
-		println(
+		BasicLogService.tweet(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
@@ -2863,7 +2863,7 @@ package usage {
     ) : Unit = {
       val ( kinaseToConsumeProto, optKinaseToProduceProto ) = kinasePair
       val kinaseToConsumeProtoPtn = molPtnMap( kinaseToConsumeProto )
-      println(
+      BasicLogService.tweet(
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
@@ -2879,7 +2879,7 @@ package usage {
       cellCytoplasm += ( ( kinaseToConsumeProtoPtn, nAmt ) )
       cellCytoplasm.pkm += ( ( kinaseToConsumeProtoPtn, nAmt ) )
       
-      println(
+      BasicLogService.tweet(
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
@@ -2894,7 +2894,7 @@ package usage {
 	  for( amt <- cellCytoplasm.get( kinaseToConsumeProtoPtn ) ) {
 	    // Got enough!
 	    if ( amt > trigger ) {
-	      println( 
+	      BasicLogService.tweet( 
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + "\n"
@@ -2907,7 +2907,7 @@ package usage {
 	      )
 
 	      for( nextTrigger <- cascadeTransitionMap.get( kinaseToProduceProto ) ) {
-		println(
+		BasicLogService.tweet(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
@@ -2927,7 +2927,7 @@ package usage {
 	    }
 	    // Not quite enough...
 	    else {
-	      println(
+	      BasicLogService.tweet(
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + "\n"
@@ -2947,7 +2947,7 @@ package usage {
 	  }		    		    
 	}
 	case _ => {
-	  println( 
+	  BasicLogService.tweet( 
 	    (
 	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + kvdbNode + "\n"
@@ -2964,7 +2964,7 @@ package usage {
       cellCytoplasm : Cytoplasm,
       kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     ) : Unit = {            
-      println( 
+      BasicLogService.tweet( 
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
@@ -2983,7 +2983,7 @@ package usage {
       reset {
 	// Wait for kinase
 	for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
-	  println(
+	  BasicLogService.tweet(
 	    (
 	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + kvdbNode + " received resource : " + kinaseRsrc + "\n"
@@ -3003,7 +3003,7 @@ package usage {
 	    }
 	    // Got none... so wait
 	    case None => {
-	      println( 
+	      BasicLogService.tweet( 
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + " received nothing; waiting for kinase, "

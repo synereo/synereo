@@ -93,7 +93,7 @@ class KeyKUnifySpaceLock[Namespace,Var,Tag,RK](
          
          val lockerList = locker.toList
          val pass = loop( locker.toList )
-         println(
+         BasicLogService.tweet(
            "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
            + "\nin method: allowedIn"
            + "\nthis : " + this
@@ -171,15 +171,15 @@ package unify.space.lock.usage {
             new Thread {
               override def run() = {
                 val sleepTime : Int = rndm.nextInt( maxWaitTime ) + 1
-                println( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
-                println( "     reader occupying lock      " )
-                println( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
+                BasicLogService.tweet( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
+                BasicLogService.tweet( "     reader occupying lock      " )
+                BasicLogService.tweet( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
                 lock.occupy( lbl );
                 Thread.sleep( sleepTime )
                 lock.depart( lbl )
-                println( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
-                println( "     reader departing lock      " )
-                println( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
+                BasicLogService.tweet( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
+                BasicLogService.tweet( "     reader departing lock      " )
+                BasicLogService.tweet( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
               }
             }
           t.run()
@@ -201,15 +201,15 @@ package unify.space.lock.usage {
             new Thread {
               override def run() = {
                 val sleepTime : Int = rndm.nextInt( maxWaitTime ) + 1
-                println( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
-                println( "     writer occupying lock      " )
-                println( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
+                BasicLogService.tweet( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
+                BasicLogService.tweet( "     writer occupying lock      " )
+                BasicLogService.tweet( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
                 lock.occupy( lbl );
                 Thread.sleep( sleepTime )
                 lock.depart( lbl )
-                println( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
-                println( "     writer departing lock      " )
-                println( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
+                BasicLogService.tweet( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
+                BasicLogService.tweet( "     writer departing lock      " )
+                BasicLogService.tweet( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
               }
             }
           t.run()
@@ -267,15 +267,15 @@ package unify.space.lock.usage {
               new Thread {
                 override def run() = {
                   val sleepTime : Int = rndm.nextInt( maxWaitTime ) + 1
-                  println( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
-                  println( "     reader occupying lock      " )
-                  println( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
+                  BasicLogService.tweet( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
+                  BasicLogService.tweet( "     reader occupying lock      " )
+                  BasicLogService.tweet( ">R>R>R>R>R>R>R>R>R>R>R>R>R>R>R>R" )
                   lock.occupy( lbl );
                   Thread.sleep( sleepTime )
                   lock.depart( lbl )
-                  println( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
-                  println( "     reader departing lock      " )
-                  println( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
+                  BasicLogService.tweet( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
+                  BasicLogService.tweet( "     reader departing lock      " )
+                  BasicLogService.tweet( "<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R<R" )
                 }
               }
             }
@@ -283,15 +283,15 @@ package unify.space.lock.usage {
             new Thread {
                 override def run() = {
                   val sleepTime : Int = rndm.nextInt( maxWaitTime ) + 1
-                  println( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
-                  println( "     writer occupying lock      " )
-                  println( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
+                  BasicLogService.tweet( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
+                  BasicLogService.tweet( "     writer occupying lock      " )
+                  BasicLogService.tweet( ">W>W>W>W>W>W>W>W>W>W>W>W>W>W>W>W" )
                   lock.occupy( lbl );
                   Thread.sleep( sleepTime )
                   lock.depart( lbl )
-                  println( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
-                  println( "     writer departing lock      " )
-                  println( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
+                  BasicLogService.tweet( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
+                  BasicLogService.tweet( "     writer departing lock      " )
+                  BasicLogService.tweet( "<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W<W" )
                 }
               }
           }

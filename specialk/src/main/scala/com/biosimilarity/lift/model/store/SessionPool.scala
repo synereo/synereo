@@ -1,5 +1,7 @@
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.lib.BasicLogService
+
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.MapLike
 import scala.collection.mutable.MapProxy
@@ -115,7 +117,7 @@ trait SessionMapAbstractionsT[ClientSession <: {def close() : Unit}] {
           case t : Throwable => {
             val errors : java.io.StringWriter = new java.io.StringWriter()
             t.printStackTrace( new java.io.PrintWriter( errors ) )
-            println( "unhandled exception : " + errors.toString( ) );
+            BasicLogService.tweet( "unhandled exception : " + errors.toString( ) );
             //throw( t )
           }
         }
@@ -233,7 +235,7 @@ abstract class SessionPool[ClientSession <: {def close() : Unit}](
       case t : Throwable => {
         val errors : java.io.StringWriter = new java.io.StringWriter()
         t.printStackTrace( new java.io.PrintWriter( errors ) )
-        println( "unhandled exception : " + errors.toString( ) );
+        BasicLogService.tweet( "unhandled exception : " + errors.toString( ) );
         //throw( t )
       }
     }

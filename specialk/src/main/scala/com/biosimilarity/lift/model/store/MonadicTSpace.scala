@@ -40,7 +40,7 @@ class SpaceLock[RK](
   val maxRROccupancy : Int
 ) {
   def allowedIn( rk : RK ) : Boolean = {
-    println(
+    BasicLogService.tweet(
       "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
       + "\nin method: SpaceLock.allowedIn(rk)"
       + "\nthis : " + this
@@ -65,7 +65,7 @@ class SpaceLock[RK](
   }
   
   def allowedIn() : Boolean = {
-    println(
+    BasicLogService.tweet(
       "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
       + "\nin method: SpaceLock.allowedIn()"
       + "\nthis : " + this
@@ -242,7 +242,7 @@ trait ModeSpaceLock[RK,Pattern] {
   def makeMode( ptn : Pattern ) : ModeType
   
   def allowedIn( s : ModeType ) : Boolean = {
-    println(
+    BasicLogService.tweet(
       "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
       + "\nin method: ModeSpaceLock.allowedIn(s)"
       + "\nthis : " + this

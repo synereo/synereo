@@ -187,7 +187,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
              predicateLock.acquire()
              val lockerList = locker.toList
              val pass = loop( locker.toList )
-             println(
+             BasicLogService.tweet(
                "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+"
                + "\nin method: KeyKUnifySpaceLock.allowedIn"
                + "\nthis : " + this

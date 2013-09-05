@@ -361,3 +361,5 @@ class ConfiggyReporter(
   with ConfiggyReporting	 
   with ConfiggyJournal {
 }
+
+object BasicLogService extends Journalist

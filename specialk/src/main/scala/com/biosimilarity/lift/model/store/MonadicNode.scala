@@ -502,10 +502,10 @@ package usage {
 	override def run() : Unit = {
 	  reset {
 	    for( msg <- dispatcher ?() ) {
-	      println( dispatcher + " received: " + msg )
+	      BasicLogService.tweet( dispatcher + " received: " + msg )
 	      msg match {
 		case Right( rsp@UseCaseResponseOne( b, j, a, r ) ) => {
-		  println( dispatcher + " handling response for the " + j + "th " + "request" )
+		  BasicLogService.tweet( dispatcher + " handling response for the " + j + "th " + "request" )
 		  msgMap.get( j ) match {		
 		    case Some( Left( req ) ) => {
 		      msgMap += ( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( ( req, rsp ) ) )
@@ -515,7 +515,7 @@ package usage {
 			dispatcher ! reqs( j + 1 ) 
 		      }
 		      else {
-			println( "Client side of test complete." )
+			BasicLogService.tweet( "Client side of test complete." )
 		      }
 		    }
 		    case unExpected@_ => {
@@ -542,11 +542,11 @@ package usage {
 	override def run() : Unit = {
 	  reset {
 	    for( msg <- dispatcher ?() ) {
-	      println( dispatcher + " received: " + msg )
+	      BasicLogService.tweet( dispatcher + " received: " + msg )
 	      msg match {
 		// Close with right brace ...
 		case Left( req@UseCaseRequestOne( b, j, a, r ) ) => {
-		  println( dispatcher + " handling the " + j + "th " + "request" )
+		  BasicLogService.tweet( dispatcher + " handling the " + j + "th " + "request" )
 		  if ( j < numMsgs ) {
 		    msgMap.get( j ) match {
 		      case None => {
@@ -555,7 +555,7 @@ package usage {
 			( j -> Right[UseCaseRequest,(UseCaseRequest,UseCaseResponse)]( req, rsp ) )	
 			dispatcher !! rsp
 			if ( msgMap.size == numMsgs ) {
-			  println( "Server side of test complete." )
+			  BasicLogService.tweet( "Server side of test complete." )
 			}
 		      }
 		      case unExpected@_ => {
@@ -564,7 +564,7 @@ package usage {
 		    }		
 		  }
 		  else {
-		    println( "Server side of test complete." )
+		    BasicLogService.tweet( "Server side of test complete." )
 		  }	      
 		}
 		case unExpected@_ => {

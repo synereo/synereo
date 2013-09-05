@@ -3092,7 +3092,7 @@ package usage {
 	      cellCytoplasm += ( kinasePtn -> ( kamt + inc ) )
 	      cellCytoplasm.pkm += ( ( kinasePtn, ( kamt + inc ) ) )
 	      reset { 
-		println(
+		BasicLogService.tweet(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
@@ -3124,7 +3124,7 @@ package usage {
     ) : Unit = {
       val ( kinaseToConsumeProto, optKinaseToProduceProto ) = kinasePair
       val kinaseToConsumeProtoPtn = molPtnMap( kinaseToConsumeProto )
-      println(
+      BasicLogService.tweet(
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
@@ -3140,7 +3140,7 @@ package usage {
       cellCytoplasm += ( ( kinaseToConsumeProtoPtn, nAmt ) )
       cellCytoplasm.pkm += ( ( kinaseToConsumeProtoPtn, nAmt ) )
       
-      println(
+      BasicLogService.tweet(
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
@@ -3155,7 +3155,7 @@ package usage {
 	  for( amt <- cellCytoplasm.get( kinaseToConsumeProtoPtn ) ) {
 	    // Got enough!
 	    if ( amt > trigger ) {
-	      println( 
+	      BasicLogService.tweet( 
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + "\n"
@@ -3168,7 +3168,7 @@ package usage {
 	      )
 
 	      for( nextTrigger <- cascadeTransitionMap.get( kinaseToProduceProto ) ) {
-		println(
+		BasicLogService.tweet(
 		  (
 		    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		    + kvdbNode + "\n"
@@ -3188,7 +3188,7 @@ package usage {
 	    }
 	    // Not quite enough...
 	    else {
-	      println(
+	      BasicLogService.tweet(
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + "\n"
@@ -3208,7 +3208,7 @@ package usage {
 	  }		    		    
 	}
 	case _ => {
-	  println( 
+	  BasicLogService.tweet( 
 	    (
 	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + kvdbNode + "\n"
@@ -3225,7 +3225,7 @@ package usage {
       cellCytoplasm : Cytoplasm,
       kinasePair : ( ConcreteKinase, Option[ConcreteKinase] )
     ) : Unit = {            
-      println( 
+      BasicLogService.tweet( 
 	(
 	  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	  + kvdbNode + "\n"
@@ -3244,7 +3244,7 @@ package usage {
       reset {
 	// Wait for kinase
 	for( kinaseRsrc <- kvdbNode.get( kinasePtn ) ) {
-	  println(
+	  BasicLogService.tweet(
 	    (
 	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + kvdbNode + " received resource : " + kinaseRsrc + "\n"
@@ -3264,7 +3264,7 @@ package usage {
 	    }
 	    // Got none... so wait
 	    case None => {
-	      println( 
+	      BasicLogService.tweet( 
 		(
 		  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 		  + kvdbNode + " received nothing; waiting for kinase, "
@@ -3376,13 +3376,13 @@ package usage {
 	)
       }
       def doGet() = {
-	reset { for( e <- node1.get( RAFQry1 ) ) { println( e ) } }
+	reset { for( e <- node1.get( RAFQry1 ) ) { BasicLogService.tweet( e ) } }
       }
       def doPut() = {
 	reset { node1.put( RAFQry1, 5.0 ) }
       }
       def doSubscribe() = {
-	reset { for( e <- node1.subscribe( RAFQry1 ) ) { println( e ) } }
+	reset { for( e <- node1.subscribe( RAFQry1 ) ) { BasicLogService.tweet( e ) } }
       }
       def doPublish() = {
 	reset { node1.publish( RAFQry1, 10.0 ) }
@@ -3402,7 +3402,7 @@ package usage {
 
       def doGet( termStr : String ) = {
 	for( term <- fromTermString( termStr ) ) {
-	  reset { for( e <- node1.get( term ) ) { println( e ) } }
+	  reset { for( e <- node1.get( term ) ) { BasicLogService.tweet( e ) } }
 	}
       }
       def doPut( termStr : String, amount : Double ) = {
@@ -3413,7 +3413,7 @@ package usage {
       def doSubscribe( termStr : String ) = {
 	for( term <- fromTermString( termStr ) ) {
 	  reset {
-	    for( e <- node1.subscribe( term ) ) { println( e ) }
+	    for( e <- node1.subscribe( term ) ) { BasicLogService.tweet( e ) }
 	  }
 	}
       }
@@ -3431,38 +3431,38 @@ package usage {
       val mc1 =
 	clntSess1.getDB( node1.cache.defaultDB )( pd1.storeUnitStr )
       def doDoThatVoodoo() {
-	println( "/* Dropping */" )
+	BasicLogService.tweet( "/* Dropping */" )
 	mc1.drop
-	println( "/* Storing */" )
-	println( "/* Collection */" )
-	println( mc1 )
+	BasicLogService.tweet( "/* Storing */" )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
 	doStore()
-	println( "/* Collection */" )
-	println( mc1 )
-	println( "/* Getting */" )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
+	BasicLogService.tweet( "/* Getting */" )
 	doGet()
-	println( "/* Collection */" )
-	println( mc1 )
-	println( "/* Putting */" )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
+	BasicLogService.tweet( "/* Putting */" )
 	doPut()
-	println( "/* Collection */" )
-	println( mc1 )
-	println( "/* Getting */" )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
+	BasicLogService.tweet( "/* Getting */" )
 	doGet()
-	println( "/* Collection */" )
-	println( mc1 )
-	println( "/* Subscribing */" )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
+	BasicLogService.tweet( "/* Subscribing */" )
 	doSubscribe()
-	println( "/* Collection */" )
-	println( mc1 )
-	println( "/* Publishing */" )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
+	BasicLogService.tweet( "/* Publishing */" )
 	doPublish()
-	println( "/* Collection */" )
-	println( mc1 )
-	println( "/* Publishing */" )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
+	BasicLogService.tweet( "/* Publishing */" )
 	doPublish()
-	println( "/* Collection */" )
-	println( mc1 )
+	BasicLogService.tweet( "/* Collection */" )
+	BasicLogService.tweet( mc1 )
       }
     }    
   }

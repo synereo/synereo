@@ -7,6 +7,8 @@
 // ------------------------------------------------------------------------
 
 package com.biosimilarity.lift.model.store.scribble
+import com.biosimilarity.lift.lib.BasicLogService
+
 import scala.util.continuations._ 
 
 trait Scribble[Resource] {
@@ -24,7 +26,7 @@ trait Scribble[Resource] {
       }
       catch {
         case t : Throwable => {
-          println( "unhandled exception : \n" + stackTraceToString( t ) )
+          BasicLogService.tweet( "unhandled exception : \n" + stackTraceToString( t ) )
           throw( t )
         }
       }

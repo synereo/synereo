@@ -710,21 +710,25 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
     def fromCC(
       cc : java.lang.Object
     ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-      println( "in fromCC with " + cc )
+      //println( "in fromCC with " + cc )
+      BasicLogService.tweet( "in fromCC with " + cc )
       if ( isGroundValueType( cc.asInstanceOf[AnyRef] ) ) {	
-	println( cc + " is a ground value" )
+	//println( cc + " is a ground value" )
+        BasicLogService.tweet( cc + " is a ground value" )
 	new CnxnCtxtLeaf[Namespace,Var,Tag](
 	  Left( valToTag( cc ) )
 	)
       }
       else {
 	if ( cc.isInstanceOf[Option[_]] ) {
-	  println( cc + " is an option" )
+	  //println( cc + " is an option" )
+          BasicLogService.tweet( cc + " is an option" )
 	  cc match {
 	    case Some(
 	      thing : ScalaObject with Product with Serializable
 	    ) => {
-	      println( cc + " is Some( <case class instance> )" )
+	      //println( cc + " is Some( <case class instance> )" )
+              BasicLogService.tweet( cc + " is Some( <case class instance> )" )
 	      new CnxnCtxtBranch[Namespace,Var,Tag](
 		labelToNS( "some" ),
 		List(
@@ -735,13 +739,16 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
 	    case Some(
 	      thingElse : AnyRef
 	    ) => {
-	      println( cc + " is Some( <some other kind of instance> )" )
+	      //println( cc + " is Some( <some other kind of instance>
+              //)" )
+              BasicLogService.tweet( cc + " is Some( <some other kind of instance> )" )
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( valToTag( thingElse ) )
 	      )
 	    }
 	    case None => {
-	      println( cc + " is None" )
+	      //println( cc + " is None" )
+              BasicLogService.tweet( cc + " is None" )
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( valToTag( "none" ) )
 	      )
@@ -749,8 +756,10 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
 	  }	  
 	}
 	else {	  	  
-	  println( cc + " is a plain old case class" )
-	  println( "iterating through fields" )
+	  //println( cc + " is a plain old case class" )
+          BasicLogService.tweet( cc + " is a plain old case class" )
+	  //println( "iterating through fields" )
+          BasicLogService.tweet( "iterating through fields" )
 	  val facts =
 	    (
 	      for(
@@ -758,19 +767,26 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
 	      ) yield {
 		varMap.get( m.getName ) match {
 		  case Some( v ) => {
-		    println( cc + "'s field, " + m.getName + " is in the list of vars" )
+		    //println( cc + "'s field, " + m.getName + " is in
+                    //the list of vars" )
+                    BasicLogService.tweet( cc + "'s field, " + m.getName + " is in the list of vars" )
 		    new CnxnCtxtLeaf[Namespace,Var,Tag](
 		      Right( strToVar( v ) )
 		    )
 		  }
 		  case None => {
-		    println( cc + "'s field, " + m.getName + " is not in the list of vars" )
+		    //println( cc + "'s field, " + m.getName + " is
+                    //not in the list of vars" )
+                    BasicLogService.tweet( cc + "'s field, " + m.getName + " is not in the list of vars" )
 		    val faccess = m.isAccessible
 		    m.setAccessible( true )
 		    val fval = m.get( cc )
 		    m.setAccessible( faccess )
 		    
-		    println( "recursing on the value, " + fval + ", of " + cc + "'s field, " + m.getName + " is not in the list of vars" )
+		    //println( "recursing on the value, " + fval + ",
+                    //of " + cc + "'s field, " + m.getName + " is not
+                    //in the list of vars" )
+                    BasicLogService.tweet( "recursing on the value, " + fval + ", of " + cc + "'s field, " + m.getName + " is not in the list of vars" )
 		    new CnxnCtxtBranch[Namespace,Var,Tag](
 		      labelToNS( nameStrCleansing( m.getName ) ),
 		      //List( fromCC( m.invoke( cc ) ) )
@@ -845,7 +861,7 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
 	)
       }
       case e : Elem => {
-	//println( "elem with children = " + cciElem.child.toList )
+        //BasicLogService.tweet( "elem with children = " + cciElem.child.toList )
 	val attrs =
 	  for( m <- cciElem.attributes ) 
 	    yield {

@@ -229,7 +229,8 @@ with PrologMgr {
 
   def toNameSpace( str : String ) : Namespace = {
     // BUGBUG -- lgm : should at least report to log
-    println( "warning: coercing String, " + str + " to Namespace" )
+    //println( "warning: coercing String, " + str + " to Namespace" )
+    BasicLogService.tweet( "warning: coercing String, " + str + " to Namespace" )
     str.asInstanceOf[Namespace]
   }
   def asCnxnCtxtLabel(
