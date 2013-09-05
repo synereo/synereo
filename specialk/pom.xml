@@ -213,13 +213,18 @@
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-compiler</artifactId>
       <version>${scala.version}</version>
-      <scope>test</scope>
+      <!--scope>test</scope-->
     </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>jline</artifactId>
       <version>${scala.version}</version>
     </dependency>    
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-reflect</artifactId>
+      <version>${scala.version}</version>
+    </dependency>            
     <dependency>
       <groupId>org.prolog4j</groupId>
       <artifactId>prolog4j-api</artifactId>
