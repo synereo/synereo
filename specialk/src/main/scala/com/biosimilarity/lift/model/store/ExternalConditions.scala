@@ -27,7 +27,7 @@ class ExternalConditionsMap[V](
   override val self : HashMap[String,V]
 ) extends MapProxy[String,V]
 
-object ExternalConditions extends Serializable {
+trait ExternalConditionsT extends Serializable {
   import scala.reflect.runtime.universe._
   import scala.tools.reflect.ToolBox
   import scala.reflect.runtime.{currentMirror => cMr}
@@ -56,12 +56,12 @@ object ExternalConditions extends Serializable {
     contents : AnyRef
   )
 
-  var _exCndMap : Option[ExternalConditionsMap[Specimen]] = None
-  def exCndMap() : ExternalConditionsMap[Specimen] = {
+  var _exCndMap : Option[ExternalConditionsMap[ExternalConditionsT#Specimen]] = None
+  def exCndMap() : ExternalConditionsMap[ExternalConditionsT#Specimen] = {
     _exCndMap match {
       case Some( ecm ) => ecm
       case None => {
-        val ecm = new ExternalConditionsMap[Specimen]( new HashMap[String,Specimen]() )
+        val ecm = new ExternalConditionsMap[ExternalConditionsT#Specimen]( new HashMap[String,ExternalConditionsT#Specimen]() )
         _exCndMap = Some( ecm )
         ecm
       }
@@ -108,4 +108,15 @@ object ExternalConditions extends Serializable {
       }
     }
   }
+  def retrieveSpecimen(
+    tag : String
+  ) : Option[ExternalConditionsT#Specimen] = {
+    exCndMap.get( tag )
+  }
+}
+
+object ExternalConditions extends ExternalConditionsT
+       with MapProxy[String,ExternalConditionsT#Specimen]
+{
+  override def self = exCndMap.self
 }
