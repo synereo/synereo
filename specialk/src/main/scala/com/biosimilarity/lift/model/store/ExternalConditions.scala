@@ -108,6 +108,11 @@ with MapProxy[String,ReflectiveSurfaceT#Specimen]
           specimen.contents.asInstanceOf[T]
         }
         else {
+          BasicLogService.tweet(
+            "retrieveContent failed to verify type constraint"
+            + "\nspecimen.originalType: " + specimen.originalType
+            + "\nrequested type: " + t
+          )
           throw new java.lang.ClassCastException()
         }
       }
