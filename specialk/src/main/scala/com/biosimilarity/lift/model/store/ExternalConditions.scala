@@ -27,7 +27,7 @@ class ExternalConditionsMap[V](
   override val self : HashMap[String,V]
 ) extends MapProxy[String,V]
 
-trait ExternalConditionsT extends Serializable {
+trait ReflectiveSurfaceT {
   import scala.reflect.runtime.universe._
   import scala.tools.reflect.ToolBox
   import scala.reflect.runtime.{currentMirror => cMr}
@@ -50,28 +50,43 @@ trait ExternalConditionsT extends Serializable {
 
   type ExprTree = tb.u.Tree
 
+  def getType[T: TypeTag](obj: T) = typeOf[T]
+
   case class Specimen(
     originalType : reflect.runtime.universe.Type,
     generatingExpression : Option[ExprTree],
     contents : AnyRef
-  )
+  )  
+}
 
-  var _exCndMap : Option[ExternalConditionsMap[ExternalConditionsT#Specimen]] = None
-  def exCndMap() : ExternalConditionsMap[ExternalConditionsT#Specimen] = {
+trait ExternalConditionsT extends Serializable
+with ReflectiveSurfaceT
+with MapProxy[String,ReflectiveSurfaceT#Specimen]
+{
+  import scala.reflect.runtime.universe._
+
+  override def self = exCndMap.self
+  var _exCndMap : Option[ExternalConditionsMap[ReflectiveSurfaceT#Specimen]] = None
+  def exCndMap() : ExternalConditionsMap[ReflectiveSurfaceT#Specimen] = {
     _exCndMap match {
       case Some( ecm ) => ecm
       case None => {
-        val ecm = new ExternalConditionsMap[ExternalConditionsT#Specimen]( new HashMap[String,ExternalConditionsT#Specimen]() )
+        val ecm = new ExternalConditionsMap[ReflectiveSurfaceT#Specimen]( new HashMap[String,ReflectiveSurfaceT#Specimen]() )
         _exCndMap = Some( ecm )
         ecm
       }
     }
-  }
-
-  def getType[T: TypeTag](obj: T) = typeOf[T]
+  }  
 
   implicit def captureSpecimen( content : AnyRef ) : Specimen = {
     Specimen( getType( content ), None, content )
+  }
+
+  def captureSpecimen(
+    content : AnyRef,
+    genExpr : ReflectiveSurfaceT#ExprTree
+  ) : Specimen = {
+    Specimen( getType( content ), Some( genExpr ), content )
   }
 
   def registerContent( content : AnyRef ) : String = {
@@ -108,15 +123,7 @@ trait ExternalConditionsT extends Serializable {
       }
     }
   }
-  def retrieveSpecimen(
-    tag : String
-  ) : Option[ExternalConditionsT#Specimen] = {
-    exCndMap.get( tag )
-  }
 }
 
 object ExternalConditions extends ExternalConditionsT
-       with MapProxy[String,ExternalConditionsT#Specimen]
-{
-  override def self = exCndMap.self
-}
+
