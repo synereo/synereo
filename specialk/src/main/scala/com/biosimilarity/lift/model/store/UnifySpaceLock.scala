@@ -124,11 +124,21 @@ class KeyKUnifySpaceLock[Namespace,Var,Tag,RK](
      }
 
 object KeyKUnifySpaceLock {
+  import scala.reflect.runtime.universe._
   def apply [Namespace,Var,Tag,RK] (
     locker : HashMap[ModeSpaceLock[RK,CnxnCtxtLabel[Namespace,Var,Tag]]#ModeType,Int],
     maxOccupancy : Int
   ) : KeyKUnifySpaceLock[Namespace,Var,Tag,RK] = {
     new KeyKUnifySpaceLock( locker, maxOccupancy )
+  }
+  def apply [Namespace : TypeTag, Var : TypeTag, Tag : TypeTag, RK : TypeTag] (
+    weakMap : ExternalConditionsT,
+    locker : HashMap[ModeSpaceLock[RK,CnxnCtxtLabel[Namespace,Var,Tag]]#ModeType,Int],
+    maxOccupancy : Int
+  ) : ( String, KeyKUnifySpaceLock[Namespace,Var,Tag,RK] ) = {
+    val lock = new KeyKUnifySpaceLock( locker, maxOccupancy )    
+    val tag = weakMap.registerContentAsT[KeyKUnifySpaceLock[Namespace,Var,Tag,RK]]( lock )
+    ( tag, lock )
   }
   def unapply [Namespace,Var,Tag,RK] ( 
     kkusl : KeyKUnifySpaceLock[Namespace,Var,Tag,RK]
