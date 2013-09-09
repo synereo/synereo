@@ -11,6 +11,7 @@ package com.biosimilarity.evaluator.spray
 import com.protegra_ati.agentservices.store._
 
 import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.dsl.usage.ConcreteHL._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
@@ -119,36 +120,72 @@ trait EvalHandler {
     )
   }
 
-  def evalSubscribeRequest(json: JValue) : java.net.URI = {
+  def evalSubscribeRequest(json: JValue, cometMessage: (String, String) => Unit) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
-    // val evalSubscribeRequest( sessionURI, expression ) =
-    //   ( json \ "content" ).extract[evalSubscribeRequest]
-    val sessionURIstr = (json \ "content" \ "sessionURI").extract[String]
-    val sessionURI = new java.net.URI(sessionURIstr)
+
+    val content = (json \ "content").asInstanceOf[JObject]
+    val sessionURIstr = (content \ "sessionURI").extract[String]
+    val (erql, erspl) = agentMgr().makePolarizedPair()
     // TODO(mike): Tag expression objects so that we can pick the right case
     //   class in the match block below.
-    val expression = (json \ "content" \ "expression").extract[String]
-    
+    if (content.obj.contains("feed")) {
+      val feedExpr = (content \ "feed").extract[ConcreteHL.FeedExpr]
+      val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
+        rsrc match {
+          case None => ()
+          case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
+            postedExpr.asInstanceOf[PostedExpr[String]] match {
+              case PostedExpr(postedStr) => {
+                val content =
+                  ("sessionURI" -> sessionURIstr) ~
+                  ("pageOfPosts" -> List(postedStr))
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                cometMessage(sessionURIstr, compact(render(response)))
+              }
+            }
+          }
+          case _ => throw new Exception("Unrecognized resource: " + rsrc)
+        }
+      }      
+      agentMgr().feed(erql, erspl)(feedExpr.filter, feedExpr.cnxns, onFeed)
 
-    // if (sessionURI != "agent-session://ArtVandelay@session1") {
-    //   throw EvalException(sessionURI)
-    // }
 
-    /*
-    expression match {
-      case ConcreteHL.FeedExpr( filter, cnxns ) => {                    
-        agentMgr().feed( erql, erspl )( filter, cnxns )
-      }
-      case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
-        agentMgr().score( erql, erspl )( filter, cnxns, staff )
-      }
-      case ConcreteHL.InsertContent( filter, cnxns, content : String ) => {
-        agentMgr().post[String]( erql, erspl )( filter, cnxns, content )
-      }
+    } else if (content.obj.contains("score")) {
+      val scoreExpr = (content \ "score").extract[ConcreteHL.ScoreExpr]
+      val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
+        rsrc match {
+          case None => ()
+          case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
+            postedExpr.asInstanceOf[PostedExpr[String]] match {
+              case PostedExpr(postedStr) => {
+                val content =
+                  ("sessionURI" -> sessionURIstr) ~
+                  ("pageOfPosts" -> List(postedStr))
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                cometMessage(sessionURIstr, compact(render(response)))
+              }
+            }
+          }
+          case _ => throw new Exception("Unrecognized resource: " + rsrc)
+        }
+      }      
+      agentMgr().score(erql, erspl)(scoreExpr.filter, scoreExpr.cnxns, scoreExpr.staff, onScore)
+
+
+    } else if (content.obj.contains("insert")) {
+      val insertContent = (content \ "insert").extract[ConcreteHL.InsertContent[String]]
+      val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
+        // evalComplete, empty seq of posts
+        val content =
+          ("sessionURI" -> sessionURIstr) ~
+          ("pageOfPosts" -> List())
+        val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+        cometMessage(sessionURIstr, compact(render(response)))
+      }      
+      agentMgr().post(erql, erspl)(insertContent.filter, insertContent.cnxns, insertContent.value, onPost)
+    } else {
+      throw new Exception("Unrecognized request: " + compact(render(json)))
     }
-    //*/
-
-    sessionURI
   }  
 
   def connectServers( key : String, sessionId : UUID ) : Unit = {
