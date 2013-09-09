@@ -255,7 +255,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
             }
           }
         }
-        case None => {
+        case None | null => {
           val sl = 
             KeyKUnifiySpaceLock(
               new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
