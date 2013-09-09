@@ -219,16 +219,53 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
            }
          }
 
+    // override def spaceLock : ModeSpaceLock[RK,mTT.GetRequest] = {
+//       _spaceLock match {
+//         case Some( sl ) => sl        
+//         case None | null => {
+//           val sl =
+//             KeyKUnifiySpaceLock(
+//               new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
+//               1
+//             )
+//           _spaceLock = Some( sl )
+//           sl
+//         }
+//       }
+//     }
+
+    var _spaceLockKey : Option[String] = None
     override def spaceLock : ModeSpaceLock[RK,mTT.GetRequest] = {
-      _spaceLock match {
-        case Some( sl ) => sl        
-        case None | null => {
-          val sl =
+      _spaceLockKey match {
+        case Some( slk ) => {
+          ExternalConditions.retrieveContent[ModeSpaceLock[RK,mTT.GetRequest]]( slk ) match {
+            case Some( sl ) => sl
+            case None => {
+              val sl = 
+                KeyKUnifiySpaceLock(
+                  new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
+                  1
+                )
+              val slk =
+                ExternalConditions.registerContentAsT[ModeSpaceLock[RK,mTT.GetRequest]](
+                  sl
+                )
+              _spaceLockKey = Some( slk )
+              sl
+            }
+          }
+        }
+        case None => {
+          val sl = 
             KeyKUnifiySpaceLock(
               new HashMap[ModeSpaceLock[RK,mTT.GetRequest]#ModeType,Int](),
               1
             )
-          _spaceLock = Some( sl )
+          val slk =
+            ExternalConditions.registerContentAsT[ModeSpaceLock[RK,mTT.GetRequest]](
+              sl
+            )
+          _spaceLockKey = Some( slk )
           sl
         }
       }

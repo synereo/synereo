@@ -9,6 +9,7 @@
 package com.biosimilarity.lift.model.store
 import com.biosimilarity.lift.lib._
 
+import scala.reflect.runtime.universe._
 import scala.concurrent.{Channel => Chan, _}
 import scala.concurrent.cpsops._
 import scala.util.continuations._ 
@@ -27,8 +28,7 @@ class ExternalConditionsMap[V](
   override val self : HashMap[String,V]
 ) extends MapProxy[String,V]
 
-trait ReflectiveSurfaceT {
-  import scala.reflect.runtime.universe._
+trait ReflectiveSurfaceT {  
   import scala.tools.reflect.ToolBox
   import scala.reflect.runtime.{currentMirror => cMr}
 
