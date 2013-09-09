@@ -197,19 +197,11 @@ trait EvaluatorService extends HttpService
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                     println( "in evalSubscribeRequest " )
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    def cometMessage(sessionURI: String, jsonBody: String): Unit = {
+                      cometActor ! CometMessage(sessionURI, HttpBody(`application/json`, jsonBody))
+                    }
                     try {
-                      val (sessionURI, body) = 
-                      (evalSubscribeRequest(json), HttpBody(`application/json`,
-                        """{
-                          "msgType": "evalComplete",
-                          "content": {
-                            "sessionURI": "agent-session://ArtVandelay@session1",
-                            "pageOfPosts": []
-                          }
-                        }
-                        """
-                      ))
-                      cometActor ! CometMessage(sessionURI.toString, body)
+                      evalSubscribeRequest(json, cometMessage)
                       ctx.complete(StatusCodes.OK)
                     } catch {
                       case _ => {
