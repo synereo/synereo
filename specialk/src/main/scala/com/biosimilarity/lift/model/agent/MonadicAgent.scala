@@ -23,7 +23,7 @@ trait MonadicAgency[TxPort,ReqBody,RspBody]
 	 with Awareness[ReqBody,RspBody]
 	 with Focus[ReqBody,RspBody]
 {
-  self : MonadicWireToTrgtConversion with MonadicGenerators with WireTap with Journalist =>
+  self : MonadicWireToTrgtConversion with MonadicGenerators with WireTap =>
   
   type Wire = TxPort
   type Trgt =

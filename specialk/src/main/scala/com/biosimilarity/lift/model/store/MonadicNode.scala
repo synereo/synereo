@@ -100,8 +100,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
   //with FJTaskRunners
   with UUIDOps
   with WireTap 
-  with Journalist
-{ 
+{
   self : MessageFraming[TxPort,ReqBody,RspBody] =>
 
   import identityConversions._

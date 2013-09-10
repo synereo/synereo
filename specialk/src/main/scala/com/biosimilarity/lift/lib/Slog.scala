@@ -332,34 +332,7 @@ trait Journalist {
 
 }
 
-trait ConfiggyReporting {
-  self : Journalist =>
-  
-}
-
-trait ConfiggyJournal {
-  self : Journalist with ConfiggyReporting =>
-}
-
 object ConfiguredJournalDefaults {
-}
-
-trait ConfiguredJournal {
-  self : Journalist
-       with ConfiggyReporting
-	with ConfigurationTrampoline =>    
-
-}
-
-abstract class Reporter( val notebook : StringBuffer )
-	 extends Journalist
-
-class ConfiggyReporter(
-  override val notebook : StringBuffer
-) extends Reporter( notebook )
-  with Journalist
-  with ConfiggyReporting	 
-  with ConfiggyJournal {
 }
 
 object BasicLogService extends Journalist

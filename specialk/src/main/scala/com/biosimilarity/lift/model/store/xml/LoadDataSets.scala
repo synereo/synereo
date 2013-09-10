@@ -103,9 +103,6 @@ trait BaseXXMLUtilities
 extends BaseXXMLStore
 with BXGraphQueryResources
  with Blobify
- with Journalist
- with ConfiggyReporting
- with ConfiguredJournal
  with ConfigurationTrampoline
  with UUIDOps {
    val outerGraphExprCCL =

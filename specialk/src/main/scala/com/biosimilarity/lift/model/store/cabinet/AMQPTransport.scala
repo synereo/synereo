@@ -111,10 +111,7 @@ trait EndPoint[Namespace,Var,Tag,Value] {
 class EndPointLocuter[Namespace,Var,Tag,Value](
   //override val location : URI
   override val location : Moniker
-) extends EndPoint[Namespace,Var,Tag,Value]
-with Journalist
-with ConfiggyReporting
-with ConfiggyJournal {
+) extends EndPoint[Namespace,Var,Tag,Value] {
   // val reportage = report( Twitterer() ) _
   override def handleRequest( 
     dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
@@ -136,9 +133,6 @@ class AgentTwistedPair[Namespace,Var,Tag,Value](
 ) extends JSONAMQPTwisted( src.location.getHost, trgt.location.getHost )
 with AgentsOverAMQP[Namespace,Var,Tag,Value]
 with Rabbitter
-with Journalist
-with ConfiggyReporting
-with ConfiggyJournal
 with UUIDOps {
   // val reportage = report( Twitterer() ) _
 

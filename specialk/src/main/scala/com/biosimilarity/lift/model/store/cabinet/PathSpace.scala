@@ -22,7 +22,6 @@ extends HashMap[
 ]
 
 trait PathSpace[Namespace,Tag,Value] {
-  self : Journalist =>
   type Resource = Either[PathMap[Namespace,Tag,Value],Value]
   type WhatNext = Option[Resource] => Option[Resource]
   type GetContinuation = Option[Resource] => Option[Resource]
@@ -50,10 +49,7 @@ trait PathSpace[Namespace,Tag,Value] {
 
 class PathStore[Namespace,Tag,Value](
 )
-extends PathSpace[Namespace,Tag,Value] 
-with Journalist
-with ConfiggyReporting
-with ConfiggyJournal {
+extends PathSpace[Namespace,Tag,Value] {
   lazy val _pathMap = new PathMap[Namespace,Tag,Value]()
   lazy val _pathCache = new HashMap[GetContinuation,Resource]()
   lazy val _waiters = new HashMap[GetRequest,List[GetContinuation]]()  

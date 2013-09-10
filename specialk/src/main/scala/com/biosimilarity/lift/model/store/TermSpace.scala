@@ -49,7 +49,7 @@ extends HashMap[
 
 trait TermSpace[Namespace,Var,Tag,Value]
 extends TermTypes[Namespace,Var,Tag,Value] {
-  self : CnxnCtxtInjector[Namespace,Var,Tag] with Journalist with WireTap =>
+  self : CnxnCtxtInjector[Namespace,Var,Tag] with WireTap =>
 
   // val reportage = report( Twitterer() ) _
   
@@ -159,10 +159,6 @@ with CnxnXML[Namespace,Var,Tag]
 with BaseXXMLStore
 with Blobify
 with WireTap
-with Journalist
-with ConfiggyReporting
-//with ConfiggyJournal
-with ConfiguredJournal
 with ConfigurationTrampoline
 with UUIDOps {
   lazy val _labelMap = new TMap[Namespace,Var,Tag,Value]()

@@ -31,7 +31,7 @@ import _root_.java.util.TimerTask
 
 trait MonadicAMQPDispatcher[T]
  extends MonadicDispatcher[T] with Serializable {
-   self : WireTap with Journalist =>
+   self : WireTap =>
 
   case class AMQPDelivery(
     tag   : String,
@@ -224,13 +224,13 @@ extends WireToTrgtConversion {
 trait MonadicJSONAMQPDispatcher[T]
 extends JSONWireToTrgtConversion
 {
-  self : MonadicWireToTrgtConversion with WireTap with Journalist =>
+  self : MonadicWireToTrgtConversion with WireTap =>
     type Trgt = T   
 }
 
 trait DefaultMonadicAMQPDispatcher[T]
 extends MonadicAMQPDispatcher[T] {
-  self : WireTap with Journalist =>
+  self : WireTap =>
   //import AMQPDefaults._
   
   def host : String
@@ -255,10 +255,7 @@ class StdMonadicAMQPDispatcher[T](
   override val host : String,
   override val port : Int
 ) extends DefaultMonadicAMQPDispatcher[T](
-) with WireTap
-  with Journalist
-  with ConfiggyReporting
-  with ConfiggyJournal {
+) with WireTap {
 }
 
 class StdMonadicJSONAMQPDispatcher[T](
@@ -286,7 +283,7 @@ object StdMonadicAMQPDispatcher {
 
 trait SemiMonadicJSONAMQPTwistedPair[T]
 {  
-  self : WireTap with Journalist =>
+  self : WireTap =>
 
   import AMQPDefaults._
   
@@ -387,10 +384,7 @@ class SMJATwistedPair[T](
   override val srcURI : Moniker,
   override val trgtURI : Moniker
 ) extends SemiMonadicJSONAMQPTwistedPair[T]
-  with WireTap
-  with Journalist
-  with ConfiggyReporting
-  with ConfiggyJournal {
+  with WireTap {
     override def tap [A] ( fact : A ) : Unit = {
       BasicLogService.reportage( fact )
     }

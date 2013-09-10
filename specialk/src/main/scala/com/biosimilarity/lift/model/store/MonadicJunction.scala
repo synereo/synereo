@@ -68,9 +68,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     self : MonadicWireToTrgtConversion
       with MonadicGenerators
       with WireTap
-      with Journalist
-      with ConfiggyReporting
-      with ConfiguredJournal
       with ConfigurationTrampoline =>
       
     override type Trgt = Msgs.JTSReqOrRsp    
@@ -129,9 +126,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
   ) extends SemiMonadicAgentJSONAMQPTwistedPair[String] 
   with MonadicJSONAMQPDispatcher[Msgs.JTSReqOrRsp]
   with MonadicWireToTrgtConversion with MonadicGenerators with WireTap
-  with Journalist
-  with ConfiggyReporting
-  with ConfiguredJournal
   with ConfigurationTrampoline
   with UUIDOps {
     override type Wire = String
@@ -254,10 +248,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     self : MonadicWireToTrgtConversion
 	with MonadicGenerators
 	with WireTap
-	with Journalist
-	with ConfiggyReporting
-  //with ConfiggyJournal
-	with ConfiguredJournal
 	with ConfigurationTrampoline =>
     
     def agentTwistedPairs :
@@ -271,17 +261,6 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     //def acqQName( acqURI : URI ) : String
     def acqQName( acqURI : Moniker ) : String
 
-    override def setLoggingLevel( verb : Verbosity ) : Unit = {
-      _loggingLevel = Some( verb )
-      for( ( uri, acquaintance ) <- agentTwistedPairs ) {
-	acquaintance match {
-	  case sma : SMAJATwistedPair => {
-	    sma.setLoggingLevel( verb )
-	  }
-	}
-      }
-    }
-    
     def meetNGreet( acquaintances : Seq[Moniker] )
     : Map[Moniker,SemiMonadicAgentJSONAMQPTwistedPair[String]] =
       {

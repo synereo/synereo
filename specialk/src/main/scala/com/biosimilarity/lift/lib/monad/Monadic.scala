@@ -22,7 +22,7 @@ import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
 trait MonadicGenerators {
-  //self : WireTap with Journalist =>
+  //self : WireTap =>
 
   trait Generable[+A,-B,+C] {
     def funK : (A => (B @suspendable)) => (C @suspendable)
@@ -160,8 +160,7 @@ trait MonadicConcurrentGenerators {
   self : MonadicGenerators
     //with FJTaskRunnersX
     with ThreadPoolRunnersX
-    with WireTap
-    with Journalist =>
+    with WireTap =>
     def spawnGen[T]( 
       gen : Generator[T,Unit,Unit]
     ) =
@@ -194,7 +193,7 @@ trait WireToTrgtConversion {
 trait MonadicWireToTrgtConversion 
 {
   self : MonadicGenerators
-       with WireToTrgtConversion with WireTap with Journalist =>
+       with WireToTrgtConversion with WireTap =>
 
   def xformAndDispatch(
     msgGenerator : Generator[Wire,Unit,Unit]
@@ -221,7 +220,7 @@ trait MonadicDispatcher[T]
   with ThreadPoolRunnersX
   //with FJTaskRunnersX
 {
-  self : WireTap with Journalist =>
+  self : WireTap =>
 
   type Channel
 //  type ConnectionParameters

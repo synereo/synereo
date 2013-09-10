@@ -401,9 +401,7 @@ with ThreadPoolRunnersX
 with ExcludedMiddleTypes[Place,Pattern,Resource]
 {
   self : WireTap
-      with Journalist
-      with ConfiggyReporting 
-      with ConfigurationTrampoline =>           
+      with ConfigurationTrampoline =>
 
   @transient
   //var _spaceLock : Option[SpaceLock[RK]] = None
@@ -1062,10 +1060,6 @@ import java.util.regex.{Pattern => RegexPtn, Matcher => RegexMatcher}
 object MonadicRegexTSpace
        extends MonadicTupleSpace[String,String,String]
        with WireTap
-       with Journalist
-       with ConfiggyReporting
-       //with ConfiggyJournal
-       with ConfiguredJournal
        with ConfigurationTrampoline
 {
 

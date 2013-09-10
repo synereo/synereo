@@ -77,9 +77,6 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
     with CnxnConversions[Namespace,Var,Tag]
     with WireTap
-    with Journalist
-    with ConfiggyReporting
-    with ConfiguredJournal
     with ConfigurationTrampoline
     with UUIDOps
     with Serializable

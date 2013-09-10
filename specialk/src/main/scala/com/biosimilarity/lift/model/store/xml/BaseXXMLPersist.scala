@@ -59,10 +59,7 @@ import java.util.UUID
 import java.io.File
 
 trait BaseXXMLStore extends BaseXPersist {
-  self : /* Journalist
-	 with ConfiggyReporting
-	 with ConfiguredJournal */
-         ConfigurationTrampoline
+  self : ConfigurationTrampoline
 	 /* with UUIDOps */ =>
 
   def driverClass : Class[_] = {
@@ -83,9 +80,6 @@ trait BaseXCnxnStorage[Namespace,Var,Tag]
     extends BaseXPersist
     with XMLIfy[Namespace,Var] {
   self : BaseXXMLStore
-        /* with Journalist
-	with ConfiggyReporting
-	with ConfiguredJournal */
         with ConfigurationTrampoline
 	with UUIDOps =>
     
@@ -145,10 +139,7 @@ trait BaseXCnxnStorage[Namespace,Var,Tag]
 package usage {
 
 class BaseXRetrieveExample
-extends Journalist
-with ConfiggyReporting
-with ConfiggyJournal
-with UUIDOps {
+extends UUIDOps {
   def get(
     xmlColl : String,
     xmlRsrc : String,
