@@ -240,7 +240,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     }    
 
     def handleValue( dreq : Msgs.DReq, oV : Option[mTT.Resource], msrc : Moniker ) : Unit = {           	   
-      tweet(
+      BasicLogService.tweet(
 	(
 	  "BaseAgentKVDBNode : "
 	  + "\nmethod : handleValue "
