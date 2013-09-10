@@ -393,7 +393,7 @@ object BX extends BaseXXMLUtilities
     }
     catch {
       case e : BaseXException => {
-	tweetTrace( e )
+	BasicLogService.tweetTrace( e )
       }
     }
   }
