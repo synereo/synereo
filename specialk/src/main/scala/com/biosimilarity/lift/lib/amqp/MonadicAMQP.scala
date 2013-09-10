@@ -237,7 +237,7 @@ extends MonadicAMQPDispatcher[T] {
   def port : Int
 
   override def tap [A] ( fact : A ) : Unit = {
-    reportage( fact )
+    BasicLogService.reportage( fact )
   }
 
   def acceptConnections()( implicit connectionFactory : ConnectionFactory )
@@ -392,7 +392,7 @@ class SMJATwistedPair[T](
   with ConfiggyReporting
   with ConfiggyJournal {
     override def tap [A] ( fact : A ) : Unit = {
-      reportage( fact )
+      BasicLogService.reportage( fact )
     }
 }
 

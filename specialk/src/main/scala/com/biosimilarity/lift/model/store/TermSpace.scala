@@ -169,7 +169,7 @@ with UUIDOps {
   lazy val _waiters = new HashMap[GetRequest,List[GetContinuation]]()  
 
   override def tap [A] ( fact : A ) : Unit = {
-    reportage( fact )
+    BasicLogService.reportage( fact )
   }
 
   override def configurationDefaults : ConfigurationDefaults = {
@@ -230,7 +230,7 @@ with UUIDOps {
 		  k( None )
 		}	    	      
 	      }
-	    reportage(
+	    BasicLogService.reportage(
 	      (
 		this
 		+ "resuming with value : "
@@ -270,7 +270,7 @@ with UUIDOps {
 // 		_waiters.get( place ).getOrElse( Nil ) ++ List( k )
 // 	    }	    	      
 // 	  }
-// 	reportage(
+// 	BasicLogService.reportage(
 // 	  ( 
 // 	    this
 // 	    + "resuming with value : "

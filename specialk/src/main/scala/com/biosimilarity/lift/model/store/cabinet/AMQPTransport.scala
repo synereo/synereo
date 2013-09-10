@@ -119,13 +119,13 @@ with ConfiggyJournal {
   override def handleRequest( 
     dmsg : JustifiedRequest[DistributedTermSpaceRequest[Namespace,Var,Tag,Value],DistributedTermSpaceResponse[Namespace,Var,Tag,Value]]
   ) : Boolean = {
-    reportage( this + "is handling : " + dmsg )
+    BasicLogService.reportage( this + "is handling : " + dmsg )
     true
   }
   override def handleResponse( 
     dmsg : DistributedTermSpaceResponse[Namespace,Var,Tag,Value]
   ) : Boolean = {
-    reportage( this + "is handling : " + dmsg )
+    BasicLogService.reportage( this + "is handling : " + dmsg )
     true
   }
 }
@@ -181,7 +181,7 @@ with UUIDOps {
       request : JTSReq,
       k : Status[JTSReq] => Status[JTSReq]
     ) = {
-      reportage( this + "is handling : " + request )
+      BasicLogService.reportage( this + "is handling : " + request )
       request match {
 	case JustifiedRequest(
 	  msgId, mtrgt, msrc, lbl, body, None
@@ -210,7 +210,7 @@ with UUIDOps {
       response : JTSRsp,
       k : Status[JTSRsp] => Status[JTSRsp]
     ) = {
-      reportage( this + " is handling : " + response )
+      BasicLogService.reportage( this + " is handling : " + response )
       response match {
 	case JustifiedResponse(
 	  msgId, mtrgt, msrc, lbl, body, just
@@ -238,7 +238,7 @@ with UUIDOps {
 	case Some( map ) => {
 	  receive {
 	    case msg@AMQPMessage( cntnt : String ) => {
-	      reportage(
+	      BasicLogService.reportage(
 		this + " is handling : " + msg + " with contents :" + cntnt
 	      )
 	      val h2o = rehydrate( cntnt ) 
@@ -256,7 +256,7 @@ with UUIDOps {
 	      = jr.asInstanceOf[JustifiedRequest[DReq,DRsp]]
     
 	      if ( validate( jrJSON ) ) {
-		reportage(
+		BasicLogService.reportage(
 		  (
 		    this
 		    + " is calling handleWithContinuation on "
@@ -282,7 +282,7 @@ with UUIDOps {
 	      val jrJSON : JustifiedResponse[DReq,DRsp]
 	      = jr.asInstanceOf[JustifiedResponse[DReq,DRsp]]
 	      if ( validate( jrJSON ) ) {
-		reportage(
+		BasicLogService.reportage(
 		  (
 		    this
 		    + " is calling handleWithContinuation on "
@@ -302,7 +302,7 @@ with UUIDOps {
 	    }
 	    case ir@InspectRequests( t, f ) => {
 	      if ( validate( ir ) ) {
-		reportage(
+		BasicLogService.reportage(
 		  (
 		    this 
 		    + "is calling handle on "
@@ -315,7 +315,7 @@ with UUIDOps {
 	    }
 	    case ir@InspectResponses( t, f ) => {
 	      if ( validate( ir ) ) {
-		reportage(
+		BasicLogService.reportage(
 		  (
 		    this 
 		    + " is calling handle on "
@@ -328,7 +328,7 @@ with UUIDOps {
 	    }
 	    case ir@InspectNamespace( t, f ) => {
 	      if ( validate( ir ) ) {
-		reportage(
+		BasicLogService.reportage(
 		  (
 		    this 
 		    + " is calling handle on "
@@ -384,7 +384,7 @@ with UUIDOps {
   }
 
   def send( contents : DReq ) : Unit = {    
-    // reportage(
+    // BasicLogService.reportage(
 //       (
 // 	this
 // 	+ " is sending : "
@@ -410,7 +410,7 @@ with UUIDOps {
   }
 
   def send( contents : DRsp ) : Unit = {
-    // reportage(
+    // BasicLogService.reportage(
 //       (
 // 	this
 // 	+ " is sending : "

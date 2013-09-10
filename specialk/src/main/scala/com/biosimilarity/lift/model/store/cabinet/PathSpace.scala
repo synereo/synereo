@@ -71,11 +71,11 @@ with ConfiggyJournal {
 	      ( k : GetContinuation ) => {	      
 		_waiters( path ) =
 		  _waiters.get( path ).getOrElse( Nil ) ++ List( k )
-		reportage( "pivot point" )
+		BasicLogService.reportage( "pivot point" )
 		k( _pathCache.get( k ) )
 	      }	    	      
 	    }
-	  reportage( "pivot back, rslt = " + rslt )
+	  BasicLogService.reportage( "pivot back, rslt = " + rslt )
 	  rslt match {
 	    case Some( v ) => {
 	      next( rslt )

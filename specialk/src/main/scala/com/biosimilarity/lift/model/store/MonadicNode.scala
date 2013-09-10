@@ -241,7 +241,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
     }
   }
   
-  override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
+  override def tap [A] ( fact : A ) : Unit = { BasicLogService.reportage( fact ) }
     
   def srcHost : String = mnkrHost( name )  
   def srcPort : Int = mnkrPort( name )

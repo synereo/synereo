@@ -137,7 +137,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     override type Wire = String
     override type Trgt = Msgs.JTSReqOrRsp
     override def tap [A] ( fact : A ) : Unit = {
-      reportage( fact )
+      BasicLogService.reportage( fact )
     }
 
     override def configFileName : Option[String] = None

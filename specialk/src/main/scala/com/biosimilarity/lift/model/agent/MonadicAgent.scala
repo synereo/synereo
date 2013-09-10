@@ -57,7 +57,7 @@ trait MonadicAgency[TxPort,ReqBody,RspBody]
 		    )
 		  ) => {
 		    if ( validate( jreq ) ) {
-		      reportage( "calling handler on " + jreq )
+		      BasicLogService.reportage( "calling handler on " + jreq )
 		      k( l )
 		    }
 		  }
@@ -69,7 +69,7 @@ trait MonadicAgency[TxPort,ReqBody,RspBody]
 		    )
 		  ) => {
 		    if ( validate( jrsp ) ) {
-		      reportage( "calling handler on " + jrsp )
+		      BasicLogService.reportage( "calling handler on " + jrsp )
 		      k( r )
 		    }
 		  }
@@ -77,7 +77,7 @@ trait MonadicAgency[TxPort,ReqBody,RspBody]
 
 	      }
 
-	      reportage( "dispatch returning" )
+	      BasicLogService.reportage( "dispatch returning" )
   	      outerK()
 	    }
 	}

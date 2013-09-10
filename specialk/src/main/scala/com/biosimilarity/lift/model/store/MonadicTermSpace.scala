@@ -85,7 +85,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     with Serializable
   {
     override def tap [A] ( fact : A ) : Unit = {
-      reportage( fact )
+      BasicLogService.reportage( fact )
     }
     
     override lazy val theMeetingPlace =

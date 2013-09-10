@@ -112,7 +112,7 @@ with Collective[Namespace,Var,Tag,Value] {
   
   def forwardGet( path : CnxnCtxtLabel[Namespace,Var,Tag] ) : Unit = {
     for( ( uri, jsndr ) <- agentTwistedPairs ) {
-      reportage(
+      BasicLogService.reportage(
 	(
 	  this
 	  + " forwarding to "
@@ -130,7 +130,7 @@ with Collective[Namespace,Var,Tag,Value] {
       case JustifiedRequest(
 	msgId, mtrgt, msrc, lbl, body, _
       ) => { 
-	reportage(
+	BasicLogService.reportage(
 	  (
 	    this
 	    + " handling : "
@@ -144,7 +144,7 @@ with Collective[Namespace,Var,Tag,Value] {
 	// Handle a justified request with no initiating response	  
 	body match {
 	  case dgreq@DGetRequest( path ) => {
-	    reportage(
+	    BasicLogService.reportage(
 	      ( 
 		this 
 		+ " handling : "
@@ -175,7 +175,7 @@ with Collective[Namespace,Var,Tag,Value] {
 	    get( path, k )
 	  }
 	  case dfreq@DFetchRequest( path ) => {
-	    reportage(
+	    BasicLogService.reportage(
 	      (
 		this 
 		+ "handling : "
@@ -206,7 +206,7 @@ with Collective[Namespace,Var,Tag,Value] {
 	    fetch( path, k )
 	  }
 	  case dpreq@DPutRequest( path, value ) => {	
-	    reportage(
+	    BasicLogService.reportage(
 	      (
 		this
 		+ " handling : "
@@ -234,7 +234,7 @@ with Collective[Namespace,Var,Tag,Value] {
       case dput : DPutResponse[Namespace,Var,Tag,Value] => {	
       }
       case _ => {
-	reportage(
+	BasicLogService.reportage(
 	  (
 	    this 
 	    + " handling unexpected message : "
@@ -264,7 +264,7 @@ with Collective[Namespace,Var,Tag,Value] {
 	    val rslt : Option[Resource] = 
 	      shift {
 		( k : GetContinuation ) => {	      
-		  reportage(
+		  BasicLogService.reportage(
 		    (
 		      this
 		      + " storing continuation to wait for value : "
@@ -275,7 +275,7 @@ with Collective[Namespace,Var,Tag,Value] {
 		    _waiters.get( place )
 			    .getOrElse( Nil ) ++ List( k )
 		  
-		  reportage(
+		  BasicLogService.reportage(
 		    (
 		      this 
 		      + " forwarding to acquaintances "
@@ -286,7 +286,7 @@ with Collective[Namespace,Var,Tag,Value] {
 		  k( None )
 		}	    	      
 	      }
-	    reportage(
+	    BasicLogService.reportage(
 	      (
 		this
 		+ " resuming with value : "

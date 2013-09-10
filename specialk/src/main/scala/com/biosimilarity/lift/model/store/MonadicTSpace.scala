@@ -1077,7 +1077,7 @@ object MonadicRegexTSpace
   override val theSubscriptions = new HashMap[String,List[RK]]()
 
   override def tap [A] ( fact : A ) : Unit = {
-    reportage( fact )
+    BasicLogService.reportage( fact )
   }
 
   override def configFileName : Option[String] = None
