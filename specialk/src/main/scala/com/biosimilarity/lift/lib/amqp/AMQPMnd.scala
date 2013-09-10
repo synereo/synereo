@@ -587,7 +587,7 @@ class AMQPNodeJSScope (
 		  shift { k : ( Unit => Unit ) => k() }
   		}
   		
-  		blog( "readT returning" )
+  		BasicLogService.blog( "readT returning" )
   		outerk()
 	      }
 	  }
@@ -601,14 +601,14 @@ class AMQPNodeJSScope (
     ) = Generator {
       k : ( String => Unit @suspendable ) =>
 	//shift {
-	blog(
+	BasicLogService.blog(
 	  "The rabbit is running... (with apologies to John Updike)"
 	)
 
 	for( channel <- acceptConnections( factory, host, port ) ) {
 	  spawn {
 	    // Open bracket
-	    blog( "Connected: " + channel )
+	    BasicLogService.blog( "Connected: " + channel )
             val qname = (exQNameRoot + "_queue")
             channel.exchangeDeclare( exQNameRoot, "direct" )
             channel.queueDeclare(qname, true, false, false, null);

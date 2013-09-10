@@ -97,14 +97,14 @@ trait MonadicAMQPDispatcher[T]
   ) = Generator {
     k : ( T => Unit @suspendable ) =>
       //shift {
-	blog(
+	BasicLogService.blog(
 	  "The rabbit is running... (with apologies to John Updike)"
 	)
 
 	for( channel <- acceptConnections( factory, host, port ) ) {
 	  spawn {
 	    // Open bracket
-	    blog( "Connected: " + channel )
+	    BasicLogService.blog( "Connected: " + channel )
             val qname = (exQNameRoot + "_queue")
             channel.exchangeDeclare( exQNameRoot, "direct" )
             channel.queueDeclare(qname, true, false, false, null);
@@ -128,7 +128,7 @@ trait MonadicAMQPDispatcher[T]
     Generator {
       k : ( Payload => Unit @suspendable) =>
 
-      blog("level 1 callbacks")
+      BasicLogService.blog("level 1 callbacks")
 
       shift {
 	outerk : (Unit => Any) =>
@@ -142,18 +142,18 @@ trait MonadicAMQPDispatcher[T]
 	       body : Array[Byte]
 	     ) {
     		 spawn { 
-  		   blog("before continuation in callback")
+  		   BasicLogService.blog("before continuation in callback")
   		
     		   k( AMQPDelivery( tag, env, props, body ) )
     		
-    		   blog("after continuation in callback")
+    		   BasicLogService.blog("after continuation in callback")
     		   
 		   outerk()
     		 }
     	     }
 	   }
   	
-  	blog("before registering callback")
+  	BasicLogService.blog("before registering callback")
   	
 	channel.basicConsume(
 //	  ticket,
@@ -162,7 +162,7 @@ trait MonadicAMQPDispatcher[T]
 	  TheRendezvous
 	)
   	
-  	blog("after registering callback")
+  	BasicLogService.blog("after registering callback")
   	// stop
       }
     }
@@ -199,7 +199,7 @@ trait MonadicAMQPDispatcher[T]
 		 shift { k : ( Unit => Unit ) => k() }
   	       }
   	       
-  	       blog( "readT returning" )
+  	       BasicLogService.blog( "readT returning" )
   	       outerk()
 	     }
 	 }

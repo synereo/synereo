@@ -139,7 +139,7 @@ trait MonadicGenerators {
 		k( trgtElem )
 	      }
 	      
-	      //blog( "mapStream returning" )
+	      //BasicLogService.blog( "mapStream returning" )
   	      outerK()
 	    }
 	}
@@ -172,9 +172,9 @@ trait MonadicConcurrentGenerators {
 	      reset {
 		for( g <- gen ) {
 		  spawn {
-		    blog( "before continuation in spawn gen" )
+		    BasicLogService.blog( "before continuation in spawn gen" )
 		    k( g )
-		    blog( "after continuation in spawn gen" )
+		    BasicLogService.blog( "after continuation in spawn gen" )
 		    outerK()
 		  }
 		}
@@ -205,11 +205,11 @@ trait MonadicWireToTrgtConversion
 	  outerK : ( Unit => Unit ) =>
 	    reset {
 	      for( msg <- mapStream[Wire,Trgt]( msgGenerator, wire2Trgt ) ) {		
-		blog( "calling dispatch " )
+		BasicLogService.blog( "calling dispatch " )
 		k( msg )
 	      }
 
-	      blog( "dispatch returning" )
+	      BasicLogService.blog( "dispatch returning" )
   	      outerK()
 	    }
 	}
