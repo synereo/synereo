@@ -95,22 +95,22 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   
     import identityConversions._
     override def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
-      //tweet( "unwrapping transport message : " + txPortMsg )
+      //BasicLogService.tweet( "unwrapping transport message : " + txPortMsg )
       // BUGBUG -- lgm : there's a bug in the JettisonMappedXmlDriver
       // that misses the option declaration inside the RBound subtype
       // of Resource; so, the workaround is to use XML instead of JSON
       //val xstrm = new XStream( new JettisonMappedXmlDriver )
       val xstrm = new XStream( )
       val fmsg = xstrm.fromXML( txPortMsg )
-      //tweet( "resulting framed message : " + fmsg )
+      //BasicLogService.tweet( "resulting framed message : " + fmsg )
       fmsg.asInstanceOf[A]
     }
     override def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
-      //tweet( "wrapping framed message : " + txPortMsg )
+      //BasicLogService.tweet( "wrapping framed message : " + txPortMsg )
       //val xstrm = new XStream( new JettisonMappedXmlDriver )
       val xstrm = new XStream( )
       val xmsg = xstrm.toXML( txPortMsg )
-      //tweet( "resulting transport message : " + xmsg )
+      //BasicLogService.tweet( "resulting transport message : " + xmsg )
       xmsg
     }
   }  
@@ -254,7 +254,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 
       stblQMap.get( msrc ) match {        
         case Some( q ) => {
-          tweet(
+          BasicLogService.tweet(
 	    (
 	      "BaseAgentKVDBNode : "
 	      + "\nmethod : handleValue "
@@ -267,7 +267,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    )
           )
           for( value <- oV ) {
-            tweet( ( this + " sending value " + oV + " back " ) )	   
+            BasicLogService.tweet( ( this + " sending value " + oV + " back " ) )
 	    q ! wrapResponse( msrc, dreq, value )
           }
         }
@@ -280,7 +280,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	      case _ => throw new Exception( "unexpected msrc type: " + msrc.getClass )
 	    }
       
-          tweet(
+          BasicLogService.tweet(
 	    (
 	      "BaseAgentKVDBNode : "
 	      + "\nmethod : handleValue "
@@ -294,7 +294,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    )
           )
           for( q <- stblQMap.get( msrcKey ); value <- oV ) {	
-	    tweet( ( this + " sending value " + oV + " back " ) )	   
+	    BasicLogService.tweet( ( this + " sending value " + oV + " back " ) )
 	    q ! wrapResponse( msrc, dreq, value )
           }
         }
@@ -302,7 +302,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     }
 
     def dispatchDMsg( dreq : FramedMsg ) : Unit = {
-      tweet(
+      BasicLogService.tweet(
 	(
 	  "BaseMonadicKVDBNode : "
 	  + "\nmethod : dispatchDMsg "
@@ -314,7 +314,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	  body match {
 	    case dgreq@Msgs.MDGetRequest( path ) => {	  
-	      tweet(
+	      BasicLogService.tweet(
 		(
 		  "BaseMonadicKVDBNode : "
 		  + this
@@ -324,7 +324,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	      )
 	      reset {
 		for( v <- get( List( msrc ) )( false )( path ) ) {
-		  tweet(
+		  BasicLogService.tweet(
 		    (
 		      this 
 		      + " returning from local get for location : "
@@ -338,10 +338,10 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    }
 	    
 	    case dfreq@Msgs.MDFetchRequest( path ) => {
-	      tweet( ( this + "fetching locally for location : " + path ) )
+	      BasicLogService.tweet( ( this + "fetching locally for location : " + path ) )
 	      reset {
 		for( v <- fetch( List( msrc ) )( false )( path ) ) {
-		  tweet(
+		  BasicLogService.tweet(
 		    (
 		      this 
 		      + " returning from local fetch for location : "
@@ -355,10 +355,10 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    }
 	    
 	    case dsreq@Msgs.MDSubscribeRequest( path ) => {
-	      tweet( ( this + "subscribing locally for location : " + path ) )
+	      BasicLogService.tweet( ( this + "subscribing locally for location : " + path ) )
 	      reset {
 		for( v <- subscribe( List( msrc ) )( path ) ) {
-		  tweet(
+		  BasicLogService.tweet(
 		    (
 		      this 
 		      + " returning from local subscribe for location : "
@@ -453,7 +453,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	    case dput : RsrcMsgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
 	    }
 	    case _ => {
-	      tweet(
+	      BasicLogService.tweet(
 		(
 		  this 
 		  + " handling unexpected message : "
@@ -474,7 +474,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     def dispatchDMsgs()  : Unit = {
       reset {
 	for( dreq <- ??() ) {
-	  tweet( "BaseMonadicKVDBNode: " + this + " handling : " + dreq + " calling dispatchDMsg " )	
+	  BasicLogService.tweet( "BaseMonadicKVDBNode: " + this + " handling : " + dreq + " calling dispatchDMsg " )
 	  dispatchDMsg( dreq )
 	}
       }
@@ -486,7 +486,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
 
-      tweet( ( this + " in forwardGet with hops: " + hops ) )
+      BasicLogService.tweet( ( this + " in forwardGet with hops: " + hops ) )
 
       for( trgt <- acquaintances; q <- stblQMap.get( trgt ) if !hops.contains( trgt ) ) {	
 	val request : KVDBNodeRequest = 
@@ -511,7 +511,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	request match {
 	  case rqbdy : ReqBody => {
 	    val framedReq = frameRequest( trgt )( rqbdy )
-	    tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
+	    BasicLogService.tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
 	    q ! framedReq
 	  }
 	  case _ => {
@@ -541,7 +541,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 		) {
 		  oV match {
 		    case None => {
-		      //tweet( ">>>>> forwarding..." )
+		      //BasicLogService.tweet( ">>>>> forwarding..." )
 		      forward( ask, hops, path )
 		      rk( oV )
 		    }

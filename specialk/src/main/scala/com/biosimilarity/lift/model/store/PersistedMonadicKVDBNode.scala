@@ -587,25 +587,25 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ttv : String => Var,
 	  value : Elem
 	) : Option[Value] = {      
-	  tweet(
+	  BasicLogService.tweet(
 	    "converting store value to cache value"
 	  )
 	  valueStorageType match {
 	    case "CnxnCtxtLabel" => {
-	      tweet(
+	      BasicLogService.tweet(
 		"using CnxnCtxtLabel method"
 	      )
 	      val ttt = ( x : String ) => x
 	      xmlIfier.fromXML( ltns, ttv, ttt )( value ) match {
 		case Some( CnxnCtxtBranch( ns, k :: v :: Nil ) ) => {
-		  tweet(
+		  BasicLogService.tweet(
 		    "Good news! Value has the shape of a record"
 		  )
 		  if ( kvNameSpace.getOrElse( "" ).equals( ns ) ) {
-		    tweet(
+		    BasicLogService.tweet(
 		      "namespace matches : " + ns
 		    )
-		    tweet(
+		    BasicLogService.tweet(
 		      "value before conversion is \n" + v
 		    )
 		    for(
@@ -617,10 +617,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  }
 		  else {
 		    if ( kvKNameSpace.getOrElse( "" ).equals( ns ) ) {
-		      tweet(
+		      BasicLogService.tweet(
 			"namespace matches : " + ns
 		      )
-		      tweet(
+		      BasicLogService.tweet(
 			"value before conversion is \n" + v
 		      )
 		      for(
@@ -630,7 +630,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			)		
 		      ) yield { vale }
 		    } else {
-		      tweet(
+		      BasicLogService.tweet(
 			(
 			  "namespace mismatch: "
 			  + "kvNameSpace : " + kvNameSpace
@@ -643,7 +643,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  }
 		}
 		case _ => {
-		  tweet(
+		  BasicLogService.tweet(
 		    "Value failed to embody the shape of a record" + value
 		  )
 		  None
@@ -651,7 +651,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      }
 	    }
 	    case "XStream" => {
-	      tweet(
+	      BasicLogService.tweet(
 		"using XStream method"
 	      )
 	      xmlIfier.fromXML( ltns, ttv )( value ) match {
@@ -700,7 +700,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    rcrd <- asStoreRecord( ptn, rsrc );
 		    sus <- collName
 		  ) {
-		    tweet(
+		    BasicLogService.tweet(
 		      (
 			"storing to db : " + pd.db
 			+ " pair : " + rcrd
@@ -711,7 +711,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  }
 		}
 
-	      tweet( "accessing db : " + pd.db )
+	      BasicLogService.tweet( "accessing db : " + pd.db )
 	      // remove this line to force to db on get
 	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
 	      if ( spawnDBCall ) {
@@ -738,17 +738,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  persist match {
 	    case None => {
 	      // Nothing to do
-	      tweet( "warning : no store in which to put continuation " + rsrc )
+	      BasicLogService.tweet( "warning : no store in which to put continuation " + rsrc )
 	    }
 	    case Some( pd ) => {
-	      tweet( "putKInStore accessing db : " + pd.db )
+	      BasicLogService.tweet( "putKInStore accessing db : " + pd.db )
 	      val dbAccessExpr =
 		() => {
 		  for(
 		    rcrd <- asStoreKRecord( ptn, rsrc );
 		    sus <- collName
 		  ) {
-		    tweet(
+		    BasicLogService.tweet(
 		      (
 			"storing to db : " + pd.db
 			+ " pair : " + rcrd
@@ -778,9 +778,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag],
 	  collName : Option[String]
 	) : Option[List[emT.PlaceInstance]] = {
-	  tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
-	  tweet( "pulling krecords" )
-	  tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+	  BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+	  BasicLogService.tweet( "pulling krecords" )
+	  BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
 	  val xmlCollName =
 	    collName.getOrElse( storeUnitStr.getOrElse( bail( ) ) )
 
@@ -790,21 +790,21 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    if checkIfDBExists( xmlCollName, true )
 	  ) yield {
 	    for( krslt <- executeWithResults( xmlCollName, kqry ) ) yield {
-	      tweet( ">>>>>>***>>>>>>***>>>>>>" )
-	      tweet( "retrieved " + krslt.toString )
-	      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+	      BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
+	      BasicLogService.tweet( "retrieved " + krslt.toString )
+	      BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
 	      val ekrsrc = pd.asResource( path, krslt )
 	      
-	      tweet( ">>>>>>***>>>>>>***>>>>>>" )
-	      tweet( "retrieved " + ekrsrc )
-	      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+	      BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
+	      BasicLogService.tweet( "retrieved " + ekrsrc )
+	      BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
 	      
-	      tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
-	      tweet(
+	      BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+	      BasicLogService.tweet(
 		"removing " + krslt + "\n"
 		+ "from " + xmlCollName + "\n"
 	      )
-	      tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+	      BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
 	      removeFromStore( persist, krslt, collName )
 	      
 	      ekrsrc
@@ -817,7 +817,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  consume : Boolean,
 	  collName : Option[String]
 	) : Option[List[emT.PlaceInstance]] = {
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      "PersistedMonadicKVDBNode : "
 	      + "\nmethod : updateKStore "
@@ -836,7 +836,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  
 	  checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
 	    case true => {
-	      tweet( "database " + xmlCollName + " found" )
+	      BasicLogService.tweet( "database " + xmlCollName + " found" )
 	      val oKQry = kquery( xmlCollName, ptn )
 	      oKQry match {
 		case None => {
@@ -845,32 +845,32 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  )				  
 		}
 		case Some( kqry ) => {
-		  tweet( "kqry : " + kqry )
+		  BasicLogService.tweet( "kqry : " + kqry )
 		  val krslts = executeWithResults( xmlCollName, kqry )
 		  krslts match {
 		    case Nil => {
 		      // Nothing to do
-		      tweet( " no continuations in store " )
+		      BasicLogService.tweet( " no continuations in store " )
 		      None
 		    }
 		    case _ => {
 		      for( pm <- persist ) yield {
 			for( krslt <- krslts ) yield {
-			  tweet( "retrieved " + krslt.toString )
+			  BasicLogService.tweet( "retrieved " + krslt.toString )
 			  val ekrsrc = pm.asResource( ptn, krslt )
-			  tweet( "krslt as resource " + ekrsrc )
+			  BasicLogService.tweet( "krslt as resource " + ekrsrc )
 			  ekrsrc.stuff match {
 			    case Right( k :: ks ) => {
-			      tweet( "have a list of continuations " )
+			      BasicLogService.tweet( "have a list of continuations " )
 			      if ( consume ) {
 				// BUGBUG -- lgm : write XQuery to update node
-				tweet( "removing from store " + krslt )
+				BasicLogService.tweet( "removing from store " + krslt )
 				removeFromStore( 
 				  persist,
 				  krslt,
 				  collName
 				)
-				tweet( "updating store " )
+				BasicLogService.tweet( "updating store " )
 				putKInStore(
 				  persist,
 				  ptn,
@@ -883,7 +883,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			      ekrsrc
 			    }
 			    case Right( Nil ) => {
-			      tweet( " have empty list of continuations; no continuations in store " )
+			      BasicLogService.tweet( " have empty list of continuations; no continuations in store " )
 			      ekrsrc
 			    }
 			    case _ => {
@@ -900,7 +900,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      }
 	    }
 	    case false => {
-	      tweet( "warning: failed to find a database!" )			  
+	      BasicLogService.tweet( "warning: failed to find a database!" )
 	      None
 	    }
 	  }
@@ -914,7 +914,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  consume : Boolean,
 	  collName : Option[String]
 	) : Generator[emT.PlaceInstance,Unit,Unit] = {    
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      "PersistedMonadicKVDBNode : "
 	      + "\nmethod : putPlaces "
@@ -939,20 +939,20 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    waitlist match {
 	      // Yes!
 	      case waiter :: waiters => {
-		tweet( "found waiters " + waitlist + " waiting for a value at " + ptn )
+		BasicLogService.tweet( "found waiters " + waitlist + " waiting for a value at " + ptn )
 		val itr = waitlist.toList.iterator	    
 		var nPI : emT.PlaceInstance = null
 		while( itr.hasNext ) {
 		  // BUGBUG -- lgm : SHOULD NOT HAVE TO CAST
 		  nPI  = itr.next.asInstanceOf[emT.PlaceInstance]
-		  tweet( "calling " + k + " on " + nPI )
+		  BasicLogService.tweet( "calling " + k + " on " + nPI )
 		  k( nPI )
 		}
 	      }
 	      // No...
 	      case Nil => {
 		// Store the rsrc at a representative of the ptn
-		tweet( "in BasePersistedMonadicKVDB level putPlaces: no waiters waiting for a value at " + ptn )
+		BasicLogService.tweet( "in BasePersistedMonadicKVDB level putPlaces: no waiters waiting for a value at " + ptn )
 		//channels( representative( ptn ) ) = rsrc
 
 		updateKStore( persist )(
@@ -983,11 +983,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  }
 		}
 
-		tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
+		BasicLogService.tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
 		//spaceLock.depart( None )
 		spaceLock.depart( ptn )
-		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		//BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		
 	      }
 	    }
@@ -1001,7 +1001,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Unit = {
 	  for( pd <- persist; clNm <- collName )
 	    {
-	      tweet( "removing from db : " + pd.db )
+	      BasicLogService.tweet( "removing from db : " + pd.db )
 	      val ( rcrdKey, rcrdType ) =
 		record match {
 		  case <record>{ kv @_* }</record> => {
@@ -1070,14 +1070,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  rcrdType
 		)
 	      
-	      tweet( "deletion query record type : \n" + rcrdType )
-	      tweet( "deletion query : \n" + deletionQry )
+	      BasicLogService.tweet( "deletion query record type : \n" + rcrdType )
+	      BasicLogService.tweet( "deletion query : \n" + deletionQry )
 
 	      val ostrm = new java.io.ByteArrayOutputStream()
 
         //execute( List( deletionQry ) )
 	      execute( clNm, List( deletionQry ) )
-	      tweet(
+	      BasicLogService.tweet(
 		"deletion results: \n" + ostrm.toString
 	      )
 	    }
@@ -1092,7 +1092,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ptn : mTT.GetRequest,
 	  rsrc : mTT.Resource
 	) : Unit @suspendable = {
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      "PersistedMonadicKVDBNode : "
 	      + "\nmethod : mput "
@@ -1105,9 +1105,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  )
 	  //spaceLock.occupy( None )
 	  spaceLock.occupy( ptn )
-	  tweet( "Writer occupying spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
-	  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-	  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+	  BasicLogService.tweet( "Writer occupying spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
+	  //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+	  //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 	  for(
 	    placeNRKsNSubst
@@ -1116,7 +1116,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    )( channels, registered, ptn, rsrc, consume, collName )
 	  ) {	      
 	    val emT.PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-	    tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+	    BasicLogService.tweet( "waiters waiting for a value at " + wtr + " : " + rks )
 	    updateKStore( persist )(
 	      ptn, consume, collName
 	    ) match {
@@ -1124,11 +1124,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		for ( pI <- pIs ) {
 		  pI.stuff match {
 		    case Right( k :: ks ) => {		      
-		      tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
+		      BasicLogService.tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
 		      //spaceLock.depart( None )
 		      spaceLock.depart( ptn )
-		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+		      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 		      for( sk <- ( k :: ks ) ) {			
 			spawn {
@@ -1141,11 +1141,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			persist, channels, ptn, None, rsrc, collName, false //true
 		      )
 
-		      tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
+		      BasicLogService.tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
 		      //spaceLock.depart( None )
 		      spaceLock.depart( ptn )
-		      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )		      
+		      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		    }
 		  }
 		}
@@ -1155,11 +1155,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  persist, channels, ptn, None, rsrc, collName, false //true
 		)
 
-		tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
+		BasicLogService.tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
 		//spaceLock.depart( None )
 		spaceLock.depart( ptn )
-		//tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		//tweet( "spaceLock writing room: " + spaceLock.writingRoom )		
+		//BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		//BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 	      }
 	    }            
 	  }
@@ -1180,7 +1180,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
 	: Generator[Option[mTT.Resource],Unit,Unit] = {
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      "PersistedMonadicKVDBNode : "
 	      + "\nmethod : mget "
@@ -1213,10 +1213,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		)				  
 	      }
 	      case Some( kqry ) => {
-		//tweet( ">>>>>>***>>>>>>***>>>>>>" )
-		//tweet( "kqry: " + kqry )
+		//BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		//BasicLogService.tweet( "kqry: " + kqry )
 		//println( "query text: " + kqry )
-		//tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		//BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
 		val krslts = executeWithResults( xmlCollName, kqry )
 		
 		val stbl = new HashMap[UUID,Int]()
@@ -1240,7 +1240,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    
 		    while ( stbl( skey ) > 0 ){}
 
-		    tweet(
+		    BasicLogService.tweet(
 		      (
 			"Reader departing spaceLock PMKVDBNode Version 3 "
 			+ this
@@ -1250,8 +1250,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    )
 		    //spaceLock.depart( Some( rk ) )
 		    spaceLock.depart( path, Some( rk ) )
-		    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
+		    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		    
 		  }
 		  case _ => {
@@ -1262,18 +1262,18 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    // Answer: Yes!
 		    stbl += ( skey -> krslts.length )  	  
 		    for( krslt <- itergen[Elem]( krslts ) ) {
-		      tweet( ">>>>>>***>>>>>>***>>>>>>" )
-		      tweet( "retrieved " + krslt.toString )
-		      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		      BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		      BasicLogService.tweet( "retrieved " + krslt.toString )
+		      BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
 		      val ekrsrc = pd.asResource( path, krslt )
 		      
-		      tweet( ">>>>>>***>>>>>>***>>>>>>" )
-		      tweet( "retrieved " + ekrsrc )
-		      tweet( "<<<<<<***<<<<<<***<<<<<<" )
+		      BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
+		      BasicLogService.tweet( "retrieved " + ekrsrc )
+		      BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
 		      
 		      ekrsrc.stuff match {
 			case Right( ks ) => {  
-			  tweet( "removing from store " + krslt )
+			  BasicLogService.tweet( "removing from store " + krslt )
 			  removeFromStore( 
 			    persist,
 			    krslt,
@@ -1296,7 +1296,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    }
 		    
 		    while ( stbl( skey ) > 0 ){ }
-		    tweet(
+		    BasicLogService.tweet(
 		      (
 			"Reader departing spaceLock PMKVDBNode Version 3 "
 			+ this
@@ -1307,8 +1307,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    )
 		    //spaceLock.depart( Some( rk ) )
 		    spaceLock.depart( path, Some( rk ) )
-		    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-		    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )					      
+		    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+		    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 		    
 		  }
 		}					      
@@ -1326,7 +1326,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    ) {
 		      oV match {
 			case None => {
-			  tweet( 
+			  BasicLogService.tweet(
 			    (
 			      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			      + "mgetting " + path + ".\n"
@@ -1336,7 +1336,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			  )
 			  persist match {
 			    case None => {
-			      tweet( 
+			      BasicLogService.tweet(
 				(
 				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				  + "mgetting " + path + ".\n"
@@ -1345,16 +1345,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				)
 			      )
 
-			      tweet( "Reader departing spaceLock PMKVDB Version 1" + this + " for mget on " + path + "." )
+			      BasicLogService.tweet( "Reader departing spaceLock PMKVDB Version 1" + this + " for mget on " + path + "." )
 			      //spaceLock.depart( Some( rk ) )
 			      spaceLock.depart( path, Some( rk ) )
-			      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 			      rk( oV )
 			    }
 			    case Some( pd ) => {
-			      tweet( 
+			      BasicLogService.tweet(
 				(
 				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				  + "mgetting " + path + ".\n"
@@ -1379,17 +1379,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				  
 				  oQry match {
 				    case None => {
-				      tweet( "Reader departing spaceLock PMKVDBNode 2" + this + " for mget on " + path + "." )
+				      BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode 2" + this + " for mget on " + path + "." )
 				      //spaceLock.depart( Some( rk ) )
 				      spaceLock.depart( path, Some( rk ) )
-				      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 				      rk( oV )
 				    }
 				    case Some( qry ) => {	
-				      tweet( ">>>>> compiled query for path " + path )
-				      tweet(
+				      BasicLogService.tweet( ">>>>> compiled query for path " + path )
+				      BasicLogService.tweet(
 					(
 					  "retrieval query : \n" + qry
 					)
@@ -1399,7 +1399,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				      
 				      rslts match {
 					case Nil => {	
-					  tweet(
+					  BasicLogService.tweet(
 					    (
 					      "database "
 					      + xmlCollName
@@ -1414,7 +1414,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					  rk( oV )
 					}
 					case _ => { 			  
-					  tweet(
+					  BasicLogService.tweet(
 					    (
 					      "database "
 					      + xmlCollName
@@ -1428,11 +1428,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					    {
                                               var rsrcRslts : List[mTT.Resource] = Nil
                                               for( rslt <- itergen[Elem]( rslts ) ) {
-						tweet( "retrieved " + rslt.toString )
+						BasicLogService.tweet( "retrieved " + rslt.toString )
 												
 						consume match {
 						  case policy : RetainInStore => {
-						    tweet( "removing from store " + rslt )
+						    BasicLogService.tweet( "removing from store " + rslt )
 						    removeFromStore(
 						      persist,
 						      rslt,
@@ -1440,7 +1440,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						    )
 						  }
 						  case _ => {
-						    tweet( "policy indicates not to remove from store " + rslt )
+						    BasicLogService.tweet( "policy indicates not to remove from store " + rslt )
 						  }
 						}
 						
@@ -1461,25 +1461,25 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                               }
 					      
                                               val rsrcCursor = asCursor( rsrcRslts )
-                                              //tweet( "returning cursor" + rsrcCursor )
+                                              //BasicLogService.tweet( "returning cursor" + rsrcCursor )
 
-					      tweet( "Reader departing spaceLock PMKVDBNode Version 4" + this + " for mget on " + path + "." )
+					      BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 4" + this + " for mget on " + path + "." )
 					      //spaceLock.depart( Some( rk ) )
 					      spaceLock.depart( path, Some( rk ) )
-					      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 					      
                                               rk( rsrcCursor )
 					    }
 					  else
 					    {
 					      for( rslt <- itergen[Elem]( rslts ) ) {
-						tweet( "retrieved " + rslt.toString )
+						BasicLogService.tweet( "retrieved " + rslt.toString )
 						val ersrc = pd.asResource( path, rslt )
 						
 						consume match {
 						  case policy : RetainInStore => {
-						    tweet( "removing from store " + rslt )
+						    BasicLogService.tweet( "removing from store " + rslt )
 						    removeFromStore( 
 						      persist,
 						      rslt,
@@ -1487,7 +1487,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						    )
 						  }
 						  case _ => {
-						    tweet( "policy indicates not to remove from store" + rslt )
+						    BasicLogService.tweet( "policy indicates not to remove from store" + rslt )
 						  }
 						}
 						
@@ -1501,13 +1501,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						
 						ersrc.stuff match {
 						  case Left( r ) => {
-						    tweet( "returning " + r )
+						    BasicLogService.tweet( "returning " + r )
 
-						    tweet( "Reader departing spaceLock PMKVDBNode Version 5 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
+						    BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 5 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
 						    //spaceLock.depart( Some( rk ) )
 						    spaceLock.depart( path, Some( rk ) )
-						    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-						    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+						    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+						    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 						    rk( Some( r ) )
 						  }
@@ -1525,14 +1525,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				  }			      
 				}
 				case false => {
-				  // tweet( ">>>>> forwarding..." )
+				  // BasicLogService.tweet( ">>>>> forwarding..." )
 // 				  forward( ask, hops, path )
 
-				  tweet( "Reader departing spaceLock PMKVDBNode Version 6 " + this + " for mget on " + path + "." )
+				  BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 6 " + this + " for mget on " + path + "." )
 				  //spaceLock.depart( Some( rk ) )
 				  spaceLock.depart( path, Some( rk ) )
-				  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				  //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				  //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 				  
 				  rk( oV )
 				}
@@ -1541,7 +1541,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			  }
 			}
 			case oCacheV@Some( cacheV ) => {			  
-			  tweet( 
+			  BasicLogService.tweet(
 			    (
 			      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			      + "mgetting " + path + ".\n"
@@ -1553,7 +1553,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			  )
 			  persist match {
 			    case None => {
-			      tweet( 
+			      BasicLogService.tweet(
 				(
 				  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				  + "mgetting " + path + ".\n"
@@ -1563,11 +1563,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			      )
 
 
-			      tweet( "Reader departing spaceLock PMKVDBNode Version 7 " + this + " for mget on " + path + "." )
+			      BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 7 " + this + " for mget on " + path + "." )
 			      //spaceLock.depart( Some( rk ) )
 			      spaceLock.depart( path, Some( rk ) )
-			      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-			      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+			      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+			      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 			      rk( oV )
 			    }
@@ -1583,7 +1583,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			      
 			      checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
 				case false => {
-				  tweet( 
+				  BasicLogService.tweet(
 				    (
 				      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 				      + "mgetting " + path + ".\n"
@@ -1592,18 +1592,18 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				    )
 				  )
 
-				  tweet( "Reader departing spaceLock PMKVDBNode Version 8 " + this + " for mget on " + path + "." )
+				  BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 8 " + this + " for mget on " + path + "." )
 				  //spaceLock.depart( Some( rk ) )
 				  spaceLock.depart( path, Some( rk ) )
-				  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				  //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				  //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 				  rk( oV )
 				}
 				case true => {
 				  query( xmlCollName, path ) match {
 				    case None => {
-				      tweet( 
+				      BasicLogService.tweet(
 					(
 					  "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 					  + "mgetting " + path + ".\n"
@@ -1612,18 +1612,18 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					)
 				      )
 
-				      tweet( "Reader departing spaceLock PMKVDBNode Version 9 " + this + " for mget on " + path + "." )
+				      BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 9 " + this + " for mget on " + path + "." )
 				      //spaceLock.depart( Some( rk ) )
 				      spaceLock.depart( path, Some( rk ) )
-				      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+				      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+				      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 				      rk( oV )
 				    }
 				    case Some( qry ) => {
 				      executeWithResults( xmlCollName, qry ) match {
 					case Nil => {
-					  tweet( 
+					  BasicLogService.tweet(
 					    (
 					      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 					      + "mgetting " + path + ".\n"
@@ -1632,8 +1632,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					    )
 					  )
 					  
-					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					  //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					  //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
 					  // Need to store continuation if
 					  // this is a subscribe
@@ -1643,7 +1643,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					      rk( oV )
 					    }
 					    case _ => {
-					      tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+					      BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
 					      //spaceLock.depart( Some( rk ) )
 					      spaceLock.depart( path, Some( rk ) )
 					      rk( oV )
@@ -1652,7 +1652,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					  
 					}
 					case rslts => {
-					  tweet(
+					  BasicLogService.tweet(
 					    (
 					      "database "
 					      + xmlCollName
@@ -1667,11 +1667,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					  // what's in store doesn't
 					  // match what's in cache?
 					  for( rslt <- itergen[Elem]( rslts ) ) {
-					    tweet( "retrieved " + rslt.toString )					    
+					    BasicLogService.tweet( "retrieved " + rslt.toString )
 						
 					    consume match {
 					      case policy : RetainInStore => {
-						tweet( "removing from store " + rslt )
+						BasicLogService.tweet( "removing from store " + rslt )
 						removeFromStore( 
 						  persist,
 						  rslt,
@@ -1679,17 +1679,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						)
 					      }
 					      case _ => {
-						tweet( "policy indicates not to remove from store" + rslt )
+						BasicLogService.tweet( "policy indicates not to remove from store" + rslt )
 					      }
 					    }
 											    					  
 					  }
 
-					  //tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
+					  //BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
 					  //spaceLock.depart( Some( rk ) )
 					  //spaceLock.depart( path, Some( rk ) )
-					  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-					  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+					  //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+					  //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 					  // Need to store continuation if
 					  // this is a subscribe
 					  consume match {
@@ -1698,7 +1698,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					      rk( oV )
 					    }
 					    case _ => {
-					      tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+					      BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
 					      //spaceLock.depart( Some( rk ) )
 					      spaceLock.depart( path, Some( rk ) )
 					      rk( oV )
@@ -1761,9 +1761,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  outerK : ( Unit => Unit ) =>
 		    reset { 		      
 		      for( pI <- itergen[emT.PlaceInstance]( placeInstances ) ){
-			tweet( ">>>>>>***>>>>>>***>>>>>>" )
-			tweet( "resubmitting " + pI.toString + " " )
-			tweet( "<<<<<<***<<<<<<***<<<<<<" )
+			BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
+			BasicLogService.tweet( "resubmitting " + pI.toString + " " )
+			BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
 			//forward( resubmissionAsk, List[Moniker]( ), pI.place )
 			gk( pI )
 		      }		    
@@ -1792,7 +1792,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}
 
 	override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      "PersistedMonadicKVDBNode : "
 	      + "\nmethod : dispatchDMsg "
@@ -1804,10 +1804,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
 	      body match {
 		case dgreq@Msgs.MDGetRequest( path ) => {	  
-		  tweet( ( this + " getting locally for location : " + path ) )
+		  BasicLogService.tweet( ( this + " getting locally for location : " + path ) )
 		  reset {
 		    for( v <- get( List( msrc ) )( false )( path ) ) {
-		      tweet(
+		      BasicLogService.tweet(
 			(
 			  this 
 			  + " returning from local get for location : "
@@ -1821,10 +1821,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		}
 		
 		case dfreq@Msgs.MDFetchRequest( path ) => {
-		  tweet( ( this + "fetching locally for location : " + path ) )
+		  BasicLogService.tweet( ( this + "fetching locally for location : " + path ) )
 		  reset {
 		    for( v <- fetch( List( msrc ) )( false )( path ) ) {
-		      tweet(
+		      BasicLogService.tweet(
 			(
 			  this 
 			  + " returning from local fetch for location : "
@@ -1838,10 +1838,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		}
 		
 		case dsreq@Msgs.MDSubscribeRequest( path ) => {
-		  tweet( ( this + "subscribing locally for location : " + path ) )
+		  BasicLogService.tweet( ( this + "subscribing locally for location : " + path ) )
 		  reset {
 		    for( v <- subscribe( List( msrc ) )( path ) ) {
-		      tweet(
+		      BasicLogService.tweet(
 			(
 			  this 
 			  + " returning from local subscribe for location : "
@@ -1936,7 +1936,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		case dput : RsrcMsgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
 		}
 		case _ => {
-		  tweet(
+		  BasicLogService.tweet(
 		    (
 		      this 
 		      + " handling unexpected message : "
@@ -1961,7 +1961,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  path : CnxnCtxtLabel[Namespace,Var,Tag]
 	)
 	: Generator[Option[mTT.Resource],Unit,Unit] = {        
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      "PersistedMonadicKVDBNode : "
 	      + "\nmethod : mget "
@@ -1983,7 +1983,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      shift {
 		outerk : ( Unit => Unit ) =>
 		  reset {
-		    tweet( 
+		    BasicLogService.tweet(
 		      (
 			"\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			+ "mgetting " + path + ".\n"
@@ -1997,8 +1997,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    ) {
 		      oV match {
 			case None => {
-			  //tweet( ">>>>> forwarding..." )
-			  tweet( 
+			  //BasicLogService.tweet( ">>>>> forwarding..." )
+			  BasicLogService.tweet(
 			    (
 			      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 			      + "mgetting " + path + ".\n"
@@ -2031,7 +2031,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  tweet( 
+	  BasicLogService.tweet(
 	    (
 	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + "mgetting " + path + ".\n"
@@ -2106,7 +2106,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      case None => None
 	      case Some( pd ) => Some( pd.storeUnitStr )
 	    }
-	  tweet( 
+	  BasicLogService.tweet(
 	    (
 	      "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
 	      + "unbinding cached continuations " + path + ".\n"
@@ -2273,26 +2273,26 @@ package usage {
 	      override def asStoreValue(
 		rsrc : mTT.Resource
 	      ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-		tweet(
+		BasicLogService.tweet(
 		  "In asStoreValue on " + this + " for resource: " + rsrc
 		)
 		val storageDispatch = 
 		  rsrc match {
 		    case k : mTT.Continuation => {
-		      tweet(
+		      BasicLogService.tweet(
 			"Resource " + rsrc + " is a continuation"
 		      )
 		      continuationStorageType
 		    }
 		    case _ => {
-		      tweet(
+		      BasicLogService.tweet(
 			"Resource " + rsrc + " is a value"
 		      )
 		      valueStorageType
 		    }
 		  };
 		
-		tweet(
+		BasicLogService.tweet(
 		  "storageDispatch: " + storageDispatch
 		)
 		
@@ -2306,13 +2306,13 @@ package usage {
 		      new String( Base64Coder.encode( baos.toByteArray() ) )
 		    }
 		    case "CnxnCtxtLabel" => {
-		      tweet(
+		      BasicLogService.tweet(
 			"warning: CnxnCtxtLabel method is using XStream"
 		      )
 		      toXQSafeJSONBlob( rsrc )		  		  
 		    }
 		    case "XStream" => {
-		      tweet(
+		      BasicLogService.tweet(
 			"using XStream method"
 		      )
 		      
@@ -2330,7 +2330,7 @@ package usage {
 	      def asCacheValue(
 		ccl : CnxnCtxtLabel[String,String,String]
 	      ) : Double = {
-		tweet(
+		BasicLogService.tweet(
 		  "converting to cache value"
 		)
 		ccl match {
@@ -2420,7 +2420,7 @@ package usage {
 			    )
 			  }
 			  case None => {
-			    tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
+			    BasicLogService.tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
 			    throw new Exception( "matchMap failure " + cclKey + " " + k )
 			  }
 			}						
@@ -2446,7 +2446,7 @@ package usage {
 	    override def asCacheK(
 	      ccl : CnxnCtxtLabel[String,String,String]
 	    ) : Option[mTT.Continuation] = {
-	      tweet(
+	      BasicLogService.tweet(
 		"converting to cache continuation stack" + ccl
 	      )
 	      ccl match {
@@ -2457,7 +2457,7 @@ package usage {
 		  val unBlob =
 		    continuationStorageType match {
 		      case "CnxnCtxtLabel" => {
-			// tweet(
+			// BasicLogService.tweet(
 			// 		      "warning: CnxnCtxtLabel method is using XStream"
 			// 		    )
 			fromXQSafeJSONBlob( rv )

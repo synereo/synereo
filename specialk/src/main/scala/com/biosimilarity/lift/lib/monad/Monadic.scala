@@ -133,9 +133,9 @@ trait MonadicGenerators {
 	  outerK : ( Unit => Unit ) =>
 	    reset {
 	      for( elem <- strmGenerator ) {
-		//tweet( "calling conversion on elem " + elem )
+		//BasicLogService.tweet( "calling conversion on elem " + elem )
 		val trgtElem = cnvrtr( elem )
-		//tweet( "calling handler on converted elem " + elem )
+		//BasicLogService.tweet( "calling handler on converted elem " + elem )
 		k( trgtElem )
 	      }
 	      

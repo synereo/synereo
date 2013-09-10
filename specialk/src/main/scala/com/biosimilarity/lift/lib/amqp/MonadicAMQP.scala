@@ -367,7 +367,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 	  new JettisonMappedXmlDriver()
 	).toXML( contents )	
 
-      // tweet(
+      // BasicLogService.tweet(
 // 	(
 // 	  this 
 // 	  + " is sending "

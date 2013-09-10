@@ -176,7 +176,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
 
     def send( dreq : Msgs.DReq ) : Unit = {
-      tweet(
+      BasicLogService.tweet(
 	(
 	  this
 	  + " is sending : "
@@ -200,7 +200,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
 
     def send( drsp : Msgs.DRsp ) : Unit = {
-      tweet(
+      BasicLogService.tweet(
 	(
 	  this
 	  + " is sending : "
@@ -356,7 +356,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	( uri, jsndr ) <- agentTwistedPairs
 	if !hops.contains( uri )
       ) {
-	tweet(
+	BasicLogService.tweet(
 	  (
 	    this
 	    + " forwarding to "
@@ -392,7 +392,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	  ) => {
 	    body match {
 	      case dgreq@Msgs.MDGetRequest( path ) => {
-		tweet(
+		BasicLogService.tweet(
 		  (
 		    this 
 		    + "handling : "
@@ -411,7 +411,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			val smajatp : SMAJATwistedPair =
 			  atp.asInstanceOf[SMAJATwistedPair]
 
-			tweet(
+			BasicLogService.tweet(
 			  (
 			    this 
 			    + " returning from local get for location : "
@@ -428,7 +428,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			    Some( Ground( gv ) ),
 			    Some( soln ) 
 			  ) => {
-			    tweet(
+			    BasicLogService.tweet(
 			      (
 				this 
 				+ " sending value "
@@ -448,7 +448,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			    Some( Ground( gv ) ),
 			    None 
 			  ) => {
-			    tweet(
+			    BasicLogService.tweet(
 			      (
 				this 
 				+ " sending value "
@@ -465,7 +465,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			    )
 			  }
 			  case Ground( gv ) => {
-			    tweet(
+			    BasicLogService.tweet(
 			      (
 				this 
 				+ " sending value "
@@ -482,7 +482,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			    )
 			  }
 			  case _ => {
-			    tweet(
+			    BasicLogService.tweet(
 			      (
 				this 
 				+ " not sending composite value "
@@ -496,7 +496,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      v
 		    }
 		  }
-		tweet(
+		BasicLogService.tweet(
 		  (
 		    this 
 		    + "calling get locally for location : "
@@ -506,7 +506,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		get( List( msrc ) )( path, k )
 	      }
 	      case dfreq@Msgs.MDFetchRequest( path ) => {
-		tweet(
+		BasicLogService.tweet(
 		  (
 		    this 
 		    + "handling : "
@@ -540,7 +540,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		fetch( path, k )
 	      }
 	      case dpreq@Msgs.MDPutRequest( path, value ) => {	
-		tweet(
+		BasicLogService.tweet(
 		  (
 		    this
 		    + " handling : "
@@ -569,7 +569,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    case dput : Msgs.MDPutResponse[Namespace,Var,Tag,Value] => {	
 	    }
 	    case _ => {
-	      tweet(
+	      BasicLogService.tweet(
 		(
 		  this 
 		  + " handling unexpected message : "
@@ -589,7 +589,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    msgId, mtrgt, msrc, lbl, body, _
 	  )
 	) => {
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      this
 	      + " handling : "
@@ -607,7 +607,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	    msgId, mtrgt, msrc, lbl, body, _
 	  )
 	) => {
-	  tweet(
+	  BasicLogService.tweet(
 	    (
 	      this
 	      + " handling : "
@@ -642,7 +642,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 	      val rslt : Option[Resource] = 
 		shift {
 		  ( k : GetContinuation ) => {	      
-		    tweet(
+		    BasicLogService.tweet(
 		      (
 			this
 			+ " storing continuation to wait for value : "
@@ -653,7 +653,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      _waiters.get( place )
 		    .getOrElse( Nil ) ++ List( k )
 		    
-		    tweet(
+		    BasicLogService.tweet(
 		      (
 			this 
 			+ " forwarding to acquaintances "
@@ -665,7 +665,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		    k( None )
 		  }	    	      
 		}
-	      tweet(
+	      BasicLogService.tweet(
 		(
 		  this
 		  + " resuming with value : "
@@ -771,7 +771,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      val rslt : Option[Resource] =
 			shift {
 			  ( wk : GetContinuation ) => {		  
-			    tweet(
+			    BasicLogService.tweet(
 			      (
 				this
 				+ " storing continuation "
@@ -798,7 +798,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 			  }		  		  
 			}
 		      
-		      tweet(
+		      BasicLogService.tweet(
 			(
 			  this
 			  + " resuming with value : "
@@ -823,12 +823,12 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 		      }
 		    }
 
-		  tweet( "join resuming with result: " + oRsrc )
+		  BasicLogService.tweet( "join resuming with result: " + oRsrc )
 
 		  k( oRsrc )
 		}
 
-		tweet( "join returning" )
+		BasicLogService.tweet( "join returning" )
 		outerK()
 	      }
 	  }
@@ -839,7 +839,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
 				  // implies adding flatMap to Generator
     ) = Generator {
       k : ( Option[Resource] => Unit @suspendable ) =>
-	tweet(
+	BasicLogService.tweet(
 	  "Agent is serving now... "
 	)
       val locations =
