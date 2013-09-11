@@ -224,7 +224,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                           postedexpr.asInstanceOf[PostedExpr[String]] match {
                             case PostedExpr(jsonBlob) => {
                               val content = 
-                                ("sessionURI" -> "agent-session://" + cap) ~
+                                ("sessionURI" -> ("agent-session://" + cap)) ~
                                 ("listOfAliases" -> List()) ~
                                 ("defaultAlias" -> "") ~
                                 ("listOfLabels" -> List()) ~
