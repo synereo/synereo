@@ -14,7 +14,7 @@
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <specialk.version>1.1.8.0</specialk.version>
-        <agentservices-store.version>1.9.0-SNAPSHOT</agentservices-store.version>
+        <agentservices-store.version>1.9.1-SNAPSHOT</agentservices-store.version>
         <!-- scala.version>2.10.0</scala.version -->
         <scala.version>2.10.0</scala.version>
         <scala.versionsuffix>2.10</scala.versionsuffix>
@@ -75,6 +75,23 @@
             <artifactId>scala-actors</artifactId>
             <version>${scala.version}</version>
         </dependency>
+        <dependency>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-compiler</artifactId>
+          <version>${scala.version}</version>
+          <!--scope>test</scope-->
+        </dependency>
+        <dependency>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>jline</artifactId>
+          <version>${scala.version}</version>
+        </dependency>        
+        <dependency>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-reflect</artifactId>
+          <version>${scala.version}</version>
+        </dependency>            
+    
 
         <!-- io.spray -->
         <dependency>
