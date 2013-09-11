@@ -201,9 +201,9 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
             case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
+            case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
               tweet("secureLogin | login | onPwmacFetch: Cap is good")
-              postedexpr.asInstanceOf[PostedExpr[String]] match {
+              postedExpr.asInstanceOf[PostedExpr[String]] match {
                 case PostedExpr(pwmac) => {
                   tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
                   val macInstance = Mac.getInstance("HmacSHA256")
@@ -223,16 +223,14 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                           val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
                           postedexpr.asInstanceOf[PostedExpr[String]] match {
                             case PostedExpr(jsonBlob) => {
-                              val content = parse(
-                                """{
-                                     "sessionURI": "agent-session://ArtVandelay@session1",
-                                     "listOfAliases": [],
-                                     "defaultAlias": "",
-                                     "listOfLabels": [],
-                                     "listOfCnxns": [],
-                                     "lastActiveFilter": ""
-                                   }
-                                """).asInstanceOf[JObject] ~ ("jsonBlob" -> parse(jsonBlob))
+                              val content = 
+                                ("sessionURI" -> "agent-session://" + cap) ~
+                                ("listOfAliases" -> List()) ~
+                                ("defaultAlias" -> "") ~
+                                ("listOfLabels" -> List()) ~
+                                ("listOfCnxns" -> List()) ~
+                                ("lastActiveFilter" -> "") ~
+                                ("jsonBlob" -> parse(jsonBlob))
 
                               complete(compact(render(
                                 ("msgType" -> "initializeSessionResponse") ~
