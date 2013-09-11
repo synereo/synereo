@@ -95,7 +95,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     }    
   }
 
-  trait AgentManager extends Journalist {
+  trait AgentManager {
     def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def makePolarizedPair() = {
@@ -147,7 +147,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         )
         cap
       }
-      tweet("secureSignup lcemail="+lcemail+", password="+password+", cap="+cap)
+      BasicLogService.tweet("secureSignup lcemail="+lcemail+", password="+password+", cap="+cap)
       val macInstance = Mac.getInstance("HmacSHA256")
       macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
       val mac = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
@@ -159,7 +159,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
       val onPost: Option[mTT.Resource] => Unit = ( dummy : Option[mTT.Resource] ) => {
-        tweet("secureSignup onPost1")
+        BasicLogService.tweet("secureSignup onPost1")
         // Change String to Term throughout.
         val (erql, erspl) = makePolarizedPair()
         post[String](erql, erspl)(
@@ -169,13 +169,13 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           //     "listOfCnxns(), lastActiveFilter(\"\"))",
           jsonBlob,
           ( dummy : Option[mTT.Resource] ) => {
-            tweet("secureSignup onPost2")
+            BasicLogService.tweet("secureSignup onPost2")
             // TODO(mike): send email with capAndMac
             complete(Left(capAndMac))
           }
         )
       }
-      tweet("secureSignup posting pwmac")
+      BasicLogService.tweet("secureSignup posting pwmac")
       val (erql, erspl) = makePolarizedPair()
       post[String](erql, erspl)(
         pwmacFilter,
@@ -197,25 +197,25 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         val capURI = new URI("usercap://" + cap)
         val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
         val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
-          tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
+          BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
           rsrc match {
             // At this point the cap is good, but we have to verify the pw mac
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
-              tweet("secureLogin | login | onPwmacFetch: Cap is good")
+              BasicLogService.tweet("secureLogin | login | onPwmacFetch: Cap is good")
               postedexpr.asInstanceOf[PostedExpr[String]] match {
                 case PostedExpr(pwmac) => {
-                  tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
+                  BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
                   val macInstance = Mac.getInstance("HmacSHA256")
                   macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
                   val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-                  tweet ("secureLogin | login | onPwmacFetch: hex = " + hex)
+                  BasicLogService.tweet ("secureLogin | login | onPwmacFetch: hex = " + hex)
                   if (hex != pwmac.toString) {
-                    tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
+                    BasicLogService.tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
                     complete("Bad password.")
                   } else {
                     val onUserDataFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
-                      tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
+                      BasicLogService.tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
                       optRsrc match {
                         case None => ()
                         case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
@@ -248,23 +248,23 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                     ()
                   }
                 }
-                case _ => tweet("PostedExpr problem.")
+                case _ => BasicLogService.tweet("PostedExpr problem.")
               }
             }
             case _ => {
-              tweet("Unrecognized resource")
+              BasicLogService.tweet("Unrecognized resource")
             }
           }
         }
         val (erql, erspl) = makePolarizedPair()
-        tweet ("secureLogin | login: fetching with eqrl, erspl = " + erql + ", " + erspl)
+        BasicLogService.tweet ("secureLogin | login: fetching with eqrl, erspl = " + erql + ", " + erspl)
         fetch( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFetch)
       }
       
       // identType is either "cap" or "email"
       identType match {
         case "cap" => {
-          tweet("secureLogin | cap branch")
+          BasicLogService.tweet("secureLogin | cap branch")
           val cap = identInfo.slice(0, 36)
           val mac = identInfo.slice(36, 46)
           val macInstance = Mac.getInstance("HmacSHA256")
@@ -273,14 +273,14 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           if (hex != mac) {
             complete("This link wasn't generated by us.")
           } else {
-            tweet("Link OK, logging in")
+            BasicLogService.tweet("Link OK, logging in")
             login(cap)
           }
         }
         
         case "email" => {
           val lcemail = identInfo.toLowerCase
-          tweet("secureLogin | email branch: lcemail = " + lcemail)
+          BasicLogService.tweet("secureLogin | email branch: lcemail = " + lcemail)
           // hash the email to get cap
           val md = MessageDigest.getInstance("SHA1")
           md.update(lcemail.getBytes("utf-8"))
@@ -289,12 +289,12 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
           val emailURI = new URI("emailhash://" + cap)
           val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
           val (erql, erspl) = makePolarizedPair()
-          tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
+          BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
           fetch(erql, erspl)(
             emailFilter,
             List(emailSelfCnxn),
             (optRsrc: Option[mTT.Resource]) => {
-              tweet("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
+              BasicLogService.tweet("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
               optRsrc match {
                 case None => ()
                 case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
@@ -321,7 +321,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       cnxns : Seq[Cnxn],
       content : Value,
       onPost : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, InsertContent( filter, cnxns, content ) )
@@ -338,7 +338,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       onReadRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, ReadExpr( filter, cnxns ) )
@@ -354,7 +354,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       onFetchRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, FetchExpr( filter, cnxns ) )
@@ -370,7 +370,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       onFeedRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, FeedExpr( filter, cnxns ) )
@@ -387,7 +387,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       cnxns : Seq[Cnxn],
       staff : Either[Seq[Cnxn],Seq[Label]],
       onScoreRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, ScoreExpr( filter, cnxns, staff ) )

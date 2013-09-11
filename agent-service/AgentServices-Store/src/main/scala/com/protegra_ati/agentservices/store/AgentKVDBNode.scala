@@ -89,7 +89,7 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {
-        tweet(
+        BasicLogService.tweet(
           (
             "PersistedMonadicKVDBNode : "
             + "\nmethod : mget "
@@ -150,12 +150,12 @@ with AgentCnxnTypeScope {
                     // each match?
                     // Answer: Yes!
                     for ( krslt <- itergen[ Elem ](krslts) ) {
-                      tweet("retrieved " + krslt.toString)
+                      BasicLogService.tweet("retrieved " + krslt.toString)
                       val ekrsrc = pd.asResource(path, krslt)
 
                       ekrsrc.stuff match {
                         case Right(ks) => {
-                          tweet("removing from store " + krslt)
+                          BasicLogService.tweet("removing from store " + krslt)
                           removeFromStore(
                             persist,
                             krslt,
@@ -181,7 +181,7 @@ with AgentCnxnTypeScope {
               }
             }
             case _ => {
-              tweet("policy indicates not to store kQuery: " + path)
+              BasicLogService.tweet("policy indicates not to store kQuery: " + path)
             }
           }
         }
@@ -199,7 +199,7 @@ with AgentCnxnTypeScope {
                   ) {
                     oV match {
                       case None => {
-                        tweet( 
+                        BasicLogService.tweet( 
                           (
                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                             + "mgetting " + path + ".\n"
@@ -209,7 +209,7 @@ with AgentCnxnTypeScope {
                         )
                         persist match {
                           case None => {
-                            tweet( 
+                            BasicLogService.tweet( 
                               (
                                 "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                 + "mgetting " + path + ".\n"
@@ -217,11 +217,11 @@ with AgentCnxnTypeScope {
                                 + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                               )
                             )
-                            tweet( "Reader departing spaceLock AgentKVDBNode Version 1 on " + this + " for mget on " + path + "." )
+                            BasicLogService.tweet( "Reader departing spaceLock AgentKVDBNode Version 1 on " + this + " for mget on " + path + "." )
                             //spaceLock.depart( Some( rk ) )
                             spaceLock.depart( path, rk )
-                            //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                            //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                            //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                            //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                             rk(oV)
                           }
@@ -233,7 +233,7 @@ with AgentCnxnTypeScope {
                                 )
                               )
 
-                            tweet( 
+                            BasicLogService.tweet( 
                               (
                                 "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                 + "mgetting " + path + ".\n"
@@ -247,7 +247,7 @@ with AgentCnxnTypeScope {
                             // Defensively check that db is actually
                             // available
 
-                            tweet(
+                            BasicLogService.tweet(
                               "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                               + "checking if db exists"
                               + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -255,7 +255,7 @@ with AgentCnxnTypeScope {
                             
                             checkIfDBExistsAndCreateIfNot(xmlCollName, true) match {
                               case true => {
-                                tweet( 
+                                BasicLogService.tweet( 
                                   (
                                     "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                     + "mgetting " + path + ".\n"
@@ -268,7 +268,7 @@ with AgentCnxnTypeScope {
                                 
                                 oQry match {
                                   case None => {
-                                    tweet( 
+                                    BasicLogService.tweet( 
                                       (
                                         "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                         + "mgetting " + path + ".\n"
@@ -276,16 +276,16 @@ with AgentCnxnTypeScope {
                                         + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                       )
                                     )
-                                    tweet( "Reader departing spaceLock AgentKVDBNode Version 2 on " + this + " for mget on " + path + "." )
+                                    BasicLogService.tweet( "Reader departing spaceLock AgentKVDBNode Version 2 on " + this + " for mget on " + path + "." )
                                     //spaceLock.depart( Some( rk ) )
                                     spaceLock.depart( path, rk )
-                                    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                                    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                                    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                                     rk(oV)
                                   }
                                   case Some(qry) => {
-                                    tweet( 
+                                    BasicLogService.tweet( 
                                       (
                                         "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                         + "mgetting " + path + ".\n"
@@ -301,7 +301,7 @@ with AgentCnxnTypeScope {
                                     rslts match {
                                       case Nil => {
 
-                                        tweet(
+                                        BasicLogService.tweet(
                                           (
                                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                               + "mgetting " + path + ".\n"
@@ -321,16 +321,16 @@ with AgentCnxnTypeScope {
                                         // Then forward the request
                                         //forward( ask, hops, path )
 
-                                        tweet( "Reader departing spaceLock AgentKVDBNode Version 3 on " + this + " for mget on " + path + "." )
+                                        BasicLogService.tweet( "Reader departing spaceLock AgentKVDBNode Version 3 on " + this + " for mget on " + path + "." )
                                         //spaceLock.depart( Some( rk ) )
                                         spaceLock.depart( path, rk )
-                                        //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                                        //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                        //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                                        //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                                         
                                         rk(oV)
                                       }
                                       case _ => {
-                                        tweet( 
+                                        BasicLogService.tweet( 
                                           (
                                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                             + "mgetting " + path + ".\n"
@@ -358,11 +358,11 @@ with AgentCnxnTypeScope {
                                           var rsrcRslts: List[ mTT.Resource ] = Nil
                                           
                                           for ( rslt <- itergen[ Elem ](rslts) ) {
-                                            tweet("retrieved " + rslt.toString)
+                                            BasicLogService.tweet("retrieved " + rslt.toString)
                                             
                                              consume match {
                                                case policy : RetainInStore => {
-                                                 tweet("removing from store " + rslt)
+                                                 BasicLogService.tweet("removing from store " + rslt)
                                                  removeFromStore(
                                                    persist,
                                                    rslt,
@@ -370,7 +370,7 @@ with AgentCnxnTypeScope {
                                                  )
                                                }
                                                case _ => {
-                                                 tweet( "policy indicates not to remove from store " + rslt )
+                                                 BasicLogService.tweet( "policy indicates not to remove from store " + rslt )
                                                }
                                             }
                                             
@@ -387,7 +387,7 @@ with AgentCnxnTypeScope {
                                           // this is a subscribe
                                           consume match {
                                             case policy : Subscription => {
-                                              tweet(
+                                              BasicLogService.tweet(
                                                 "\n===================================================================\n"
                                                 + "Storing subscription continuation"
                                                 + "with keep : " + keep
@@ -397,7 +397,7 @@ with AgentCnxnTypeScope {
                                               rk( rsrcCursor )
                                             }
                                             case _ => {
-                                              tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                              BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
                                               //spaceLock.depart( Some( rk ) )
                                               spaceLock.depart( path, Some( rk ) )
                                               rk( rsrcCursor )
@@ -408,7 +408,7 @@ with AgentCnxnTypeScope {
                                         else {
                                           consume match {
                                             case policy : Subscription => {
-                                              tweet(
+                                              BasicLogService.tweet(
                                                 "\n===================================================================\n"
                                                 + "Storing subscription continuation"
                                                 + "with keep : " + keep
@@ -416,11 +416,11 @@ with AgentCnxnTypeScope {
                                               )                                       
                                               for ( rslt <- itergen[ Elem ](rslts) ) {
                                                 
-                                                tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet("retrieved " + rslt.toString)
                                             
                                                 consume match {
                                                   case policy : RetainInStore => {
-                                                    tweet("removing from store " + rslt)
+                                                    BasicLogService.tweet("removing from store " + rslt)
                                                     removeFromStore(
                                                       persist,
                                                       rslt,
@@ -428,7 +428,7 @@ with AgentCnxnTypeScope {
                                                     )
                                                   }
                                                   case _ => {
-                                                    tweet( "policy indicates not to remove from store" + rslt )
+                                                    BasicLogService.tweet( "policy indicates not to remove from store" + rslt )
                                                   }
                                                 }
                                               }
@@ -437,7 +437,7 @@ with AgentCnxnTypeScope {
 
                                               for ( rslt <- itergen[ Elem ](rslts) ) {
                                                 val ersrc = pd.asResource(path, rslt)
-                                                tweet("returning " + ersrc)                                             
+                                                BasicLogService.tweet("returning " + ersrc)                                             
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
                                                   case _ => {}
@@ -445,16 +445,16 @@ with AgentCnxnTypeScope {
                                               }
                                             }
                                             case _ => {
-                                              tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                              BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
                                               //spaceLock.depart( Some( rk ) )
                                               spaceLock.depart( path, Some( rk ) )
                                               for ( rslt <- itergen[ Elem ](rslts) ) {
                                             
-                                                tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet("retrieved " + rslt.toString)
                                                 
                                                 consume match {
                                                   case policy : RetainInStore => {
-                                                    tweet("removing from store " + rslt)
+                                                    BasicLogService.tweet("removing from store " + rslt)
                                                     removeFromStore(
                                                       persist,
                                                       rslt,
@@ -462,12 +462,12 @@ with AgentCnxnTypeScope {
                                                     )
                                                   }
                                                   case _ => {
-                                                    tweet( "policy indicates not to remove from store" + rslt )
+                                                    BasicLogService.tweet( "policy indicates not to remove from store" + rslt )
                                                   }
                                                 }
                                                 
                                                 val ersrc = pd.asResource(path, rslt)
-                                                tweet("returning " + ersrc)                                             
+                                                BasicLogService.tweet("returning " + ersrc)                                             
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
                                                   case _ => {}
@@ -484,10 +484,10 @@ with AgentCnxnTypeScope {
                               }
                               case false => {
 
-                                tweet( "Reader departing spaceLock AgentKVDBNode Version 5 on " + this + " for mget on " + path + "." )
+                                BasicLogService.tweet( "Reader departing spaceLock AgentKVDBNode Version 5 on " + this + " for mget on " + path + "." )
                                 spaceLock.depart( path, rk )
-                                //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                                //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                                //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                                 rk(oV)
                               }
@@ -497,7 +497,7 @@ with AgentCnxnTypeScope {
                       }
 
                       case oCacheV@Some( cacheV ) => {                    
-                        tweet( 
+                        BasicLogService.tweet( 
                           (
                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                             + "mgetting " + path + ".\n"
@@ -509,7 +509,7 @@ with AgentCnxnTypeScope {
                         )
                         persist match {
                           case None => {
-                            tweet( 
+                            BasicLogService.tweet( 
                               (
                                 "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                 + "mgetting " + path + ".\n"
@@ -519,18 +519,18 @@ with AgentCnxnTypeScope {
                             )
                             
                             
-                            tweet( "Reader departing spaceLock PMKVDBNode Version 7 " + this + " for mget on " + path + "." )
+                            BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 7 " + this + " for mget on " + path + "." )
                             //spaceLock.depart( Some( rk ) )
                             spaceLock.depart( path, Some( rk ) )
-                            //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                            //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                            //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                            //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                             if ( !cursor ) {
                               rk( oV )
                             }
                             else {
                               var rsrcRslts: List[ mTT.Resource ] = Nil
                               for ( rslt <- results ) {
-                                tweet("retrieved " + rslt.toString)
+                                BasicLogService.tweet("retrieved " + rslt.toString)
                           
                                 rslt match {
                                   case Some(r) => rsrcRslts = r :: rsrcRslts
@@ -552,7 +552,7 @@ with AgentCnxnTypeScope {
                             
                             checkIfDBExistsAndCreateIfNot( xmlCollName, true ) match {
                               case false => {
-                                tweet( 
+                                BasicLogService.tweet( 
                                   (
                                     "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                     + "mgetting " + path + ".\n"
@@ -561,11 +561,11 @@ with AgentCnxnTypeScope {
                                   )
                                 )
                                 
-                                tweet( "Reader departing spaceLock PMKVDBNode Version 8 " + this + " for mget on " + path + "." )
+                                BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 8 " + this + " for mget on " + path + "." )
                                 //spaceLock.depart( Some( rk ) )
                                 spaceLock.depart( path, Some( rk ) )
-                                //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                                //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                                //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                                 
                                 if ( !cursor ) {
                                   rk( oV )
@@ -573,7 +573,7 @@ with AgentCnxnTypeScope {
                                 else {
                                   var rsrcRslts: List[ mTT.Resource ] = Nil
                                   for ( rslt <- results ) {
-                                    tweet("retrieved " + rslt.toString)
+                                    BasicLogService.tweet("retrieved " + rslt.toString)
                                     
                                     rslt match {
                                       case Some(r) => rsrcRslts = r :: rsrcRslts
@@ -586,7 +586,7 @@ with AgentCnxnTypeScope {
                               case true => {
                                 query( xmlCollName, path ) match {
                                   case None => {
-                                    tweet( 
+                                    BasicLogService.tweet( 
                                       (
                                         "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                         + "mgetting " + path + ".\n"
@@ -595,11 +595,11 @@ with AgentCnxnTypeScope {
                                       )
                                     )
                                     
-                                    tweet( "Reader departing spaceLock PMKVDBNode Version 9 " + this + " for mget on " + path + "." )
+                                    BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 9 " + this + " for mget on " + path + "." )
                                     //spaceLock.depart( Some( rk ) )
                                     spaceLock.depart( path, Some( rk ) )
-                                    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                                    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                                    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                                     
                                     if ( !cursor ) {
                                       rk( oV )
@@ -607,7 +607,7 @@ with AgentCnxnTypeScope {
                                     else {
                                       var rsrcRslts: List[ mTT.Resource ] = Nil
                                       for ( rslt <- results ) {
-                                        tweet("retrieved " + rslt.toString)
+                                        BasicLogService.tweet("retrieved " + rslt.toString)
                                         
                                         rslt match {
                                           case Some(r) => rsrcRslts = r :: rsrcRslts
@@ -620,7 +620,7 @@ with AgentCnxnTypeScope {
                                   case Some( qry ) => {
                                     executeWithResults( xmlCollName, qry ) match {
                                       case Nil => {
-                                        tweet( 
+                                        BasicLogService.tweet( 
                                           (
                                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                             + "mgetting " + path + ".\n"
@@ -630,14 +630,14 @@ with AgentCnxnTypeScope {
                                           )
                                         )
                                         
-                                        //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                                        //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                        //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                                        //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                                         
                                         // Need to store continuation if
                                         // this is a subscribe
                                         consume match {
                                           case policy : Subscription => {
-                                            tweet(
+                                            BasicLogService.tweet(
                                               "\n===================================================================\n"
                                               + "Storing subscription continuation"
                                               + "with keep : " + keep
@@ -650,7 +650,7 @@ with AgentCnxnTypeScope {
                                             else {
                                               var rsrcRslts: List[ mTT.Resource ] = Nil
                                               for ( rslt <- results ) {
-                                                tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet("retrieved " + rslt.toString)
                                                 
                                                 rslt match {
                                                   case Some(r) => rsrcRslts = r :: rsrcRslts
@@ -661,7 +661,7 @@ with AgentCnxnTypeScope {
                                             }
                                           }
                                           case _ => {
-                                            tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                            BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
                                             //spaceLock.depart( Some( rk ) )
                                             spaceLock.depart( path, Some( rk ) )
                                             if ( !cursor ) {
@@ -670,7 +670,7 @@ with AgentCnxnTypeScope {
                                             else {
                                               var rsrcRslts: List[ mTT.Resource ] = Nil
                                               for ( rslt <- results ) {
-                                                tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet("retrieved " + rslt.toString)
                                                 
                                                 rslt match {
                                                   case Some(r) => rsrcRslts = r :: rsrcRslts
@@ -684,7 +684,7 @@ with AgentCnxnTypeScope {
                                         
                                       }
                                       case rslts => {
-                                        tweet( 
+                                        BasicLogService.tweet( 
                                           (
                                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                             + "mgetting " + path + ".\n"
@@ -700,11 +700,11 @@ with AgentCnxnTypeScope {
                                         // what's in store doesn't
                                         // match what's in cache?
                                         for( rslt <- itergen[Elem]( rslts ) ) {
-                                          tweet( "retrieved " + rslt.toString )                                     
+                                          BasicLogService.tweet( "retrieved " + rslt.toString )                                     
                                           
                                           consume match {
                                             case policy : RetainInStore => {
-                                              tweet( "removing from store " + rslt )
+                                              BasicLogService.tweet( "removing from store " + rslt )
                                               removeFromStore( 
                                                 persist,
                                                 rslt,
@@ -712,22 +712,22 @@ with AgentCnxnTypeScope {
                                               )
                                             }
                                             case _ => {
-                                              tweet( "policy indicates not to remove from store" + rslt )
+                                              BasicLogService.tweet( "policy indicates not to remove from store" + rslt )
                                             }
                                           }
                                           
                                         }
                                         
-                                        //tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
+                                        //BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
                                         //spaceLock.depart( Some( rk ) )
                                         //spaceLock.depart( path, Some( rk ) )
-                                        //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                                        //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                                        //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                                        //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                                         // Need to store continuation if
                                         // this is a subscribe
                                         consume match {
                                           case policy : Subscription => {
-                                            tweet(
+                                            BasicLogService.tweet(
                                               "\n===================================================================\n"
                                               + "Storing subscription continuation"
                                               + "with keep : " + keep
@@ -740,7 +740,7 @@ with AgentCnxnTypeScope {
                                             else {
                                               var rsrcRslts: List[ mTT.Resource ] = Nil
                                               for ( rslt <- results ) {
-                                                tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet("retrieved " + rslt.toString)
                                                 
                                                 rslt match {
                                                   case Some(r) => rsrcRslts = r :: rsrcRslts
@@ -751,7 +751,7 @@ with AgentCnxnTypeScope {
                                             }
                                           }
                                           case _ => {
-                                            tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                            BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
                                             //spaceLock.depart( Some( rk ) )
                                             spaceLock.depart( path, Some( rk ) )
                                             if ( !cursor ) {
@@ -760,7 +760,7 @@ with AgentCnxnTypeScope {
                                             else {
                                               var rsrcRslts: List[ mTT.Resource ] = Nil
                                               for ( rslt <- results ) {
-                                                tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet("retrieved " + rslt.toString)
                                                 
                                                 rslt match {
                                                   case Some(r) => rsrcRslts = r :: rsrcRslts
@@ -873,7 +873,7 @@ with AgentCnxnTypeScope {
                   pm += ( cnxn -> hakvdbn )
                 }
                 case _ => {
-                  tweet( "warning: not hashing " + ( cnxn, node ) + " because node is not a compatible type" )
+                  BasicLogService.tweet( "warning: not hashing " + ( cnxn, node ) + " because node is not a compatible type" )
                 }
               }
             }
@@ -888,7 +888,7 @@ with AgentCnxnTypeScope {
                   pm += ( cnxn -> hakvdbn )
                 }
                 case _ => {
-                  tweet( "warning: not hashing " + ( cnxn, node ) + " because node is not a compatible type" )
+                  BasicLogService.tweet( "warning: not hashing " + ( cnxn, node ) + " because node is not a compatible type" )
                 }
               }
             }
@@ -909,7 +909,7 @@ with AgentCnxnTypeScope {
           )
         val oPM = nodeCache.persistenceManifest
 
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -944,7 +944,7 @@ with AgentCnxnTypeScope {
         cnxn : acT.AgentCnxn,
         ptn : CnxnCtxtLabel[Namespace,Var,Tag] with Factual
       ) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -974,7 +974,7 @@ with AgentCnxnTypeScope {
                 ptn
               )
             )
-          //    tweet(
+          //    BasicLogService.tweet(
           //      (
           //        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
           //        + " embedding cnxn " + embeddedCnxn.toString
@@ -994,7 +994,7 @@ with AgentCnxnTypeScope {
               pm <- persistenceManifest;
               if ( pm.isInstanceOf[XMLDBManifest] )           
             ) yield {
-              //            tweet(
+              //            BasicLogService.tweet(
               //              (
               //                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
               //                + " embedded cnxn " + ccl.toString
@@ -1025,7 +1025,7 @@ with AgentCnxnTypeScope {
         cnxn2 : acT.AgentCnxn
       ) : Boolean = {
         
-        tweet(
+        BasicLogService.tweet(
           (
             "matching " + cnxn1 + " with " + cnxn2 + "\n"
             + "cnxn1.src = " + cnxn1.src
@@ -1073,7 +1073,7 @@ with AgentCnxnTypeScope {
                && ( cnxn1.trgt == cnxn2.trgt )
                && ( cnxn1.label == cnxn2.label)));
         
-        tweet( if ( rslt ) "matched" else "did not match" )
+        BasicLogService.tweet( if ( rslt ) "matched" else "did not match" )
         
         rslt
       }    
@@ -1098,7 +1098,7 @@ with AgentCnxnTypeScope {
           }
         }
         
-        tweet(
+        BasicLogService.tweet(
           "Map failed searching map pairs : " + cnxnPartition.toList
         )
         
@@ -1115,7 +1115,7 @@ with AgentCnxnTypeScope {
           case None => {
             searchCnxnPartition( cnxn ) match {
               case None => {
-                tweet(
+                BasicLogService.tweet(
                   (
                     "No matching space for "
                     + cnxn
@@ -1129,7 +1129,7 @@ with AgentCnxnTypeScope {
                 npmgj
               }
               case Some( npmgj ) => {
-                tweet(
+                BasicLogService.tweet(
                   "Found cnxn matching through search " + cnxn + "\n"
                 )
                 npmgj
@@ -1137,7 +1137,7 @@ with AgentCnxnTypeScope {
             }
           }
           case Some( npmgj ) => {
-            tweet(
+            BasicLogService.tweet(
               "Found matching space for " + cnxn
             )
             npmgj
@@ -1148,7 +1148,7 @@ with AgentCnxnTypeScope {
       def getLocalPartition(
         cnxn : acT.AgentCnxn   // C( localProvider, l, remoteRequester )
       ) : HashAgentKVDBNode[ReqBody,RspBody] = {
-        tweet(
+        BasicLogService.tweet(
           "Getting local partition using " + cnxn
         )
         getPartition( cnxn )   // C( localProvider, l, remoteRequester )
@@ -1157,7 +1157,7 @@ with AgentCnxnTypeScope {
       def getRemotePartition(
         cnxn : acT.AgentCnxn   // C( remoteRequester, l, localProvider )
       ) : HashAgentKVDBNode[ReqBody,RspBody] = {
-        tweet(
+        BasicLogService.tweet(
           "Getting remote partition using " + cnxn
         )
         //       val rvrsCnxn =         // C( localProvider, l, remoteRequester )
@@ -1210,7 +1210,7 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       ) : Unit = {
         
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -1228,7 +1228,7 @@ with AgentCnxnTypeScope {
             {
               ( acc, e ) => {
                 val same = there.equals( e )
-                // tweet(
+                // BasicLogService.tweet(
 //                ( "comparing " + e + " with " + there + " : " + same )
 //              )
                 acc || same
@@ -1247,7 +1247,7 @@ with AgentCnxnTypeScope {
               cnxn,
               path.asInstanceOf[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]
             )
-         tweet(
+         BasicLogService.tweet(
            (
              "BaseAgentKVDBNode : "
              + "\nthis: " + this
@@ -1292,7 +1292,7 @@ with AgentCnxnTypeScope {
             request match {
               case rqbdy : ReqBody => {
                 val framedReq = frameRequest( trgt )( rqbdy )
-                tweet( ( "BaseAgentKVDBNode: " + this + " forwarding " + framedReq + " to " + trgt ) )
+                BasicLogService.tweet( ( "BaseAgentKVDBNode: " + this + " forwarding " + framedReq + " to " + trgt ) )
                 q ! framedReq
               }
               case _ => {
@@ -1322,7 +1322,7 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {        
-        tweet(
+        BasicLogService.tweet(
           (
             "PersistedMonadicKVDBNode : "
             + "\nmethod : mget "
@@ -1345,7 +1345,7 @@ with AgentCnxnTypeScope {
             shift {
               outerk : ( Unit => Unit ) =>
                 reset {
-                  tweet( 
+                  BasicLogService.tweet( 
                     (
                       "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                       + "mgetting " + path + ".\n"
@@ -1359,8 +1359,8 @@ with AgentCnxnTypeScope {
                   ) {
                     oV match {
                       case None => {
-                        //tweet( ">>>>> forwarding..." )
-                        tweet( 
+                        //BasicLogService.tweet( ">>>>> forwarding..." )
+                        BasicLogService.tweet( 
                           (
                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                             + "mgetting " + path + ".\n"
@@ -1391,7 +1391,7 @@ with AgentCnxnTypeScope {
       def put( cnxn : acT.AgentCnxn )(
         ptn : mTT.GetRequest, rsrc : mTT.Resource
       ) = {
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -1404,7 +1404,7 @@ with AgentCnxnTypeScope {
           )
         )
         
-        tweet(
+        BasicLogService.tweet(
           "Partitions : " + cnxnPartition.toList
           
         )
@@ -1412,12 +1412,12 @@ with AgentCnxnTypeScope {
         val ( pmgj, perD, xmlCollName ) =
           getLocalPartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Partitions : " + cnxnPartition.toList
           
         )
         
-        tweet(
+        BasicLogService.tweet(
           "Storing " + ptn + " " + rsrc + " in partition " + pmgj
           
         )
@@ -1430,7 +1430,7 @@ with AgentCnxnTypeScope {
       def publish( cnxn : acT.AgentCnxn )(
         ptn : mTT.GetRequest, rsrc : mTT.Resource
       ) = {
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -1444,7 +1444,7 @@ with AgentCnxnTypeScope {
         )
         val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Publishing " + rsrc + " on " + ptn + " in partition " + pmgj
           
         )
@@ -1457,7 +1457,7 @@ with AgentCnxnTypeScope {
       def remotePut( cnxn : acT.AgentCnxn )(
         ptn : mTT.GetRequest, rsrc : mTT.Resource
       ) = {
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -1472,7 +1472,7 @@ with AgentCnxnTypeScope {
         
         val ( pmgj, perD, xmlCollName ) =       getRemotePartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Storing " + ptn + " " + rsrc + " in partition " + pmgj
           
         )
@@ -1485,7 +1485,7 @@ with AgentCnxnTypeScope {
       def remotePublish( cnxn : acT.AgentCnxn )(
         ptn : mTT.GetRequest, rsrc : mTT.Resource
       ) = {
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -1499,7 +1499,7 @@ with AgentCnxnTypeScope {
         )
         val ( pmgj, perD, xmlCollName ) = getRemotePartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Publishing " + rsrc + " on " + ptn + " in partition " + pmgj
           
         )
@@ -1517,12 +1517,12 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based get with cnxn " + cnxn
           
         )
         
-        tweet(
+        BasicLogService.tweet(
           "Partitions : " + cnxnPartition.toList
           
         )
@@ -1530,12 +1530,12 @@ with AgentCnxnTypeScope {
         val ( pmgj, perD, xmlCollName ) =
           getLocalPartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Partitions : " + cnxnPartition.toList
           
         )
         
-        tweet(
+        BasicLogService.tweet(
           "Retrieving " + path + " from partition " + pmgj
           
         )
@@ -1571,7 +1571,7 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {
-        tweet(
+        BasicLogService.tweet(
           (
             "BaseAgentKVDBNode : "
             + "\nthis: " + this
@@ -1586,7 +1586,7 @@ with AgentCnxnTypeScope {
         
         val ( pmgj, perD, xmlCollName ) = getRemotePartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Retrieving " + path + " from partition " + pmgj          
         )
         
@@ -1603,14 +1603,14 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {   
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based fetch with cnxn " + cnxn
           
         )
         
         val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Retrieving " + path + " from partition " + pmgj
           
         )
@@ -1646,14 +1646,14 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {   
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based fetch with cnxn " + cnxn
           
         )
         
         val ( pmgj, perD, xmlCollName ) =       getRemotePartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Retrieving " + path + " from partition " + pmgj
           
         )
@@ -1672,14 +1672,14 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {   
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based read with cnxn " + cnxn
           
         )
         
         val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Retrieving " + path + " from partition " + pmgj
           
         )
@@ -1716,14 +1716,14 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {    
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based subscribe with cnxn " + cnxn
           
         )
         
         val ( pmgj, perD, xmlCollName ) = getLocalPartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Retrieving " + path + " from partition " + pmgj
           
         )
@@ -1748,14 +1748,14 @@ with AgentCnxnTypeScope {
         path : CnxnCtxtLabel[Namespace,Var,Tag]
       )
       : Generator[Option[mTT.Resource],Unit,Unit] = {    
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based subscribe with cnxn " + cnxn
           
         )
         
         val ( pmgj, perD, xmlCollName ) = getRemotePartitionActuals( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "Retrieving " + path + " from partition " + pmgj
           
         )
@@ -1773,14 +1773,14 @@ with AgentCnxnTypeScope {
       ) : Unit = {
         // BUGBUG -- LGM this should store at all patterns
         // It looks as if putPlaces is not doing the full calculation
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based store with cnxn " + cnxn
           
         )
         
         val pmgj = getLocalPartition( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based store with partition " + pmgj
           
         )
@@ -1788,7 +1788,7 @@ with AgentCnxnTypeScope {
         for( pd <- pmgj.cache.persistenceManifest ) {
           spawn {
             val rcrd = pd.asStoreRecord( ptn, rsrc )
-            tweet(
+            BasicLogService.tweet(
               (
                 "storing to db : " + pd.db
                 + " pair : " + rcrd
@@ -1806,13 +1806,13 @@ with AgentCnxnTypeScope {
         path : mTT.GetRequest
       )
       : Unit = {
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based delete with cnxn " + cnxn
         )
         
         val pmgj = getLocalPartition( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based delete with partition " + pmgj
         )
         
@@ -1820,10 +1820,10 @@ with AgentCnxnTypeScope {
           spawn {
             reset{
               for( pI <- pmgj.delete( path ) ) {
-                tweet( "place deleted from cache: " + pI )
+                BasicLogService.tweet( "place deleted from cache: " + pI )
               }
             }
-            tweet(
+            BasicLogService.tweet(
               "deleting from db : " + pd.db
               + " key : " + path.toString
               + " in coll : " + pd.storeUnitStr( cnxn ) 
@@ -1834,7 +1834,7 @@ with AgentCnxnTypeScope {
                 pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)
               }
               case _ => {
-                tweet( "warning: unable to delete key from db" )
+                BasicLogService.tweet( "warning: unable to delete key from db" )
               }
             }       
           }
@@ -1843,19 +1843,19 @@ with AgentCnxnTypeScope {
       
       def drop ( cnxn:acT.AgentCnxn )
       : Unit = {
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based drop with cnxn " + cnxn
         )
         
         val pmgj = getLocalPartition( cnxn )
         
-        tweet(
+        BasicLogService.tweet(
           "In cnxn-based drop with partition " + pmgj
         )
         
         for( pd <- pmgj.cache.persistenceManifest ) {
           spawn {
-            tweet(
+            BasicLogService.tweet(
               "dropping coll " + pd.storeUnitStr( cnxn ) 
             )
             pmgj.cache.drop(pd.storeUnitStr( cnxn ))
@@ -1938,7 +1938,7 @@ with AgentCnxnTypeScope {
        * -------------------------------------------------------------------- */
 
       override def dispatchDMsg( dreq : FramedMsg ) : Unit = {
-        tweet(
+        BasicLogService.tweet(
             (
               "BaseAgentKVDBNode : "
               + "\nmethod : dispatchDMsg "
@@ -1948,7 +1948,7 @@ with AgentCnxnTypeScope {
           )
         dreq match {
           case Left( JustifiedRequest( msgId, mtrgt, msrc, lbl, body, _ ) ) => {
-            tweet(
+            BasicLogService.tweet(
               (
                 "BaseAgentKVDBNode : "
                 + "\nmethod : dispatchDMsg "
@@ -1963,7 +1963,7 @@ with AgentCnxnTypeScope {
             )
             body match {
               case dgreq@Msgs.MDGetRequest( path ) => {   
-                tweet(
+                BasicLogService.tweet(
                   (
                     "BaseAgentKVDBNode : "
                     + "\nmethod : dispatchDMsg "
@@ -1973,7 +1973,7 @@ with AgentCnxnTypeScope {
                   )
                 )
                 val cnxnNPath = extractCnxn( path )
-                tweet(
+                BasicLogService.tweet(
                   (
                     "BaseAgentKVDBNode : "
                     + "\nmethod : dispatchDMsg "
@@ -1982,10 +1982,10 @@ with AgentCnxnTypeScope {
                   )
                 )
                 for( ( cnxn, npath ) <- cnxnNPath ) {
-                  tweet( ( this + " getting locally for location : " + path ) )
+                  BasicLogService.tweet( ( this + " getting locally for location : " + path ) )
                   reset {
                     for( v <- remoteGet( List( msrc ) )( cnxn )( npath ) ) {
-                      tweet(
+                      BasicLogService.tweet(
                         (
                           this 
                           + " returning from local get for location : "
@@ -2001,10 +2001,10 @@ with AgentCnxnTypeScope {
               
               case dfreq@Msgs.MDFetchRequest( path ) => {
                 for( ( cnxn, npath ) <- extractCnxn( path ) ) {
-                  tweet( ( this + "fetching locally for location : " + npath ) )
+                  BasicLogService.tweet( ( this + "fetching locally for location : " + npath ) )
                   reset {
                     for( v <- remoteFetch( List( msrc ) )( cnxn )( npath ) ) {
-                      tweet(
+                      BasicLogService.tweet(
                         (
                           this 
                           + " returning from local fetch for location : "
@@ -2020,10 +2020,10 @@ with AgentCnxnTypeScope {
               
               case dsreq@Msgs.MDSubscribeRequest( path ) => {
                 for( ( cnxn, npath ) <- extractCnxn( path ) ) {
-                  tweet( ( this + "subscribing locally for location : " + npath ) )
+                  BasicLogService.tweet( ( this + "subscribing locally for location : " + npath ) )
                   reset {
                     for( v <- remoteSubscribe( List( msrc ) )( cnxn )( npath ) ) {
-                      tweet(
+                      BasicLogService.tweet(
                         (
                           this 
                           + " returning from local subscribe for location : "
@@ -2125,7 +2125,7 @@ with AgentCnxnTypeScope {
               case dput : RsrcMsgs.MDPutResponse[Namespace,Var,Tag,Value] => {  
               }
               case _ => {
-                tweet(
+                BasicLogService.tweet(
                   (
                     this 
                     + " handling unexpected message : "
@@ -2297,13 +2297,13 @@ package usage {
       object AgentKVDBNodeFactory
              extends BaseAgentKVDBNodeFactoryT
              with AgentKVDBNodeFactoryT
-             with WireTap with Journalist
+             with WireTap
              with Serializable {                       
         type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
         //type AgentNode[Rq <: PersistedKVDBNodeRequest, Rs <: PersistedKVDBNodeResponse] = AgentKVDBNode[Rq,Rs]
 
         override def tap [A] ( fact : A ) : Unit = {
-          reportage( fact )
+          BasicLogService.reportage( fact )
         }
 
         override def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
@@ -2351,26 +2351,26 @@ package usage {
               override def asStoreValue(
                 rsrc : mTT.Resource
               ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                tweet(
+                BasicLogService.tweet(
                   "In asStoreValue on " + this + " for resource: " + rsrc
                 )
                 val storageDispatch = 
                   rsrc match {
                     case k : mTT.Continuation => {
-                      tweet(
+                      BasicLogService.tweet(
                         "Resource " + rsrc + " is a continuation"
                       )
                       continuationStorageType
                     }
                     case _ => {
-                      tweet(
+                      BasicLogService.tweet(
                         "Resource " + rsrc + " is a value"
                       )
                       valueStorageType
                     }
                   };
                 
-                tweet(
+                BasicLogService.tweet(
                   "storageDispatch: " + storageDispatch
                 )
                 
@@ -2384,13 +2384,13 @@ package usage {
                       new String( Base64Coder.encode( baos.toByteArray() ) )
                     }
                     case "CnxnCtxtLabel" => {
-                      tweet(
+                      BasicLogService.tweet(
                         "warning: CnxnCtxtLabel method is using XStream"
                       )
                       toXQSafeJSONBlob( rsrc )                            
                     }
                     case "XStream" => {
-                      tweet(
+                      BasicLogService.tweet(
                         "using XStream method"
                       )
                       
@@ -2408,7 +2408,7 @@ package usage {
               def asCacheValue(
                 ccl : CnxnCtxtLabel[String,String,String]
               ) : String = {
-                tweet(
+                BasicLogService.tweet(
                   "converting to cache value"
                 )
                 ccl match {
@@ -2498,7 +2498,7 @@ package usage {
                             )
                           }
                           case None => {
-                            tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
+                            BasicLogService.tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
                             throw new Exception( "matchMap failure " + cclKey + " " + k )
                           }
                         }                                               
@@ -2524,7 +2524,7 @@ package usage {
             override def asCacheK(
               ccl : CnxnCtxtLabel[String,String,String]
             ) : Option[mTT.Continuation] = {
-              tweet(
+              BasicLogService.tweet(
                 "converting to cache continuation stack" + ccl
               )
               ccl match {
@@ -2535,7 +2535,7 @@ package usage {
                   val unBlob =
                     continuationStorageType match {
                       case "CnxnCtxtLabel" => {
-                        // tweet(
+                        // BasicLogService.tweet(
                         //                    "warning: CnxnCtxtLabel method is using XStream"
                         //                  )
                         fromXQSafeJSONBlob( rv )
@@ -2589,7 +2589,7 @@ package usage {
               throw new Exception( "shouldn't be calling this version of asCacheK" )
             }
             override def persistenceManifest : Option[PersistenceManifest] = {
-              tweet(
+              BasicLogService.tweet(
                 (
                   "AgentKVDB : "
                   + "\nthis: " + this
@@ -2628,7 +2628,7 @@ package usage {
                 here : URI,
                 configFileName : Option[String]
               ) : HashAgentKVDB[ReqBody,RspBody] = {
-                tweet(
+                BasicLogService.tweet(
                   (
                     "AgentKVDBNode : "
                     + "\nthis: " + this
@@ -2678,26 +2678,26 @@ package usage {
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                      tweet(
+                      BasicLogService.tweet(
                         "In asStoreValue on " + this + " for resource: " + rsrc
                       )
                       val storageDispatch = 
                         rsrc match {
                           case k : mTT.Continuation => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a continuation"
                             )
                             continuationStorageType
                           }
                           case _ => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a value"
                             )
                             valueStorageType
                           }
                         };
                       
-                      tweet(
+                      BasicLogService.tweet(
                         "storageDispatch: " + storageDispatch
                       )
                       
@@ -2711,13 +2711,13 @@ package usage {
                             new String( Base64Coder.encode( baos.toByteArray() ) )
                           }
                           case "CnxnCtxtLabel" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "warning: CnxnCtxtLabel method is using XStream"
                             )
                             toXQSafeJSONBlob( rsrc )                              
                           }
                           case "XStream" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "using XStream method"
                             )
                             
@@ -2735,7 +2735,7 @@ package usage {
                     def asCacheValue(
                       ccl : CnxnCtxtLabel[String,String,String]
                     ) : String = {
-                      tweet(
+                      BasicLogService.tweet(
                         "converting to cache value"
                       )
                       ccl match {
@@ -2825,7 +2825,7 @@ package usage {
                                   )
                                 }
                                 case None => {
-                                  tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
+                                  BasicLogService.tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
                                   throw new Exception( "matchMap failure " + cclKey + " " + k )
                                 }
                               }                                         
@@ -2851,7 +2851,7 @@ package usage {
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
-                    tweet(
+                    BasicLogService.tweet(
                       "converting to cache continuation stack" + ccl
                     )
                     ccl match {
@@ -2862,7 +2862,7 @@ package usage {
                         val unBlob =
                           continuationStorageType match {
                             case "CnxnCtxtLabel" => {
-                              // tweet(
+                              // BasicLogService.tweet(
                               //                      "warning: CnxnCtxtLabel method is using XStream"
                               //                    )
                               fromXQSafeJSONBlob( rv )
@@ -2917,7 +2917,7 @@ package usage {
                   }
 
                   override def persistenceManifest : Option[PersistenceManifest] = {
-                    tweet(
+                    BasicLogService.tweet(
                       (
                         "HashAgentKVDB : "
                         + "\nthis: " + this
@@ -2962,7 +2962,7 @@ package usage {
                 here : URI,
                 configFileName : Option[String]
               ) : HashAgentKVDB[ReqBody,RspBody] = {
-                tweet(
+                BasicLogService.tweet(
                   (
                     "AgentKVDBNode : "
                     + "\nthis: " + this
@@ -3012,26 +3012,26 @@ package usage {
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                      tweet(
+                      BasicLogService.tweet(
                         "In asStoreValue on " + this + " for resource: " + rsrc
                       )
                       val storageDispatch = 
                         rsrc match {
                           case k : mTT.Continuation => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a continuation"
                             )
                             continuationStorageType
                           }
                           case _ => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a value"
                             )
                             valueStorageType
                           }
                         };
                       
-                      tweet(
+                      BasicLogService.tweet(
                         "storageDispatch: " + storageDispatch
                       )
                       
@@ -3045,13 +3045,13 @@ package usage {
                             new String( Base64Coder.encode( baos.toByteArray() ) )
                           }
                           case "CnxnCtxtLabel" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "warning: CnxnCtxtLabel method is using XStream"
                             )
                             toXQSafeJSONBlob( rsrc )                              
                           }
                           case "XStream" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "using XStream method"
                             )
                             
@@ -3069,7 +3069,7 @@ package usage {
                     def asCacheValue(
                       ccl : CnxnCtxtLabel[String,String,String]
                     ) : String = {
-                      tweet(
+                      BasicLogService.tweet(
                         "converting to cache value"
                       )
                       ccl match {
@@ -3138,10 +3138,10 @@ package usage {
                                   case _ => throw new Exception( "xml roundtrip failed " + key )
                                 }
 
-                              tweet( "******************* asResource *********************" )
-                              tweet( "cclKey : " + cclKey )
-                              tweet( "k : " + k )
-                              tweet( "******************* asResource *********************" )
+                              BasicLogService.tweet( "******************* asResource *********************" )
+                              BasicLogService.tweet( "cclKey : " + cclKey )
+                              BasicLogService.tweet( "k : " + k )
+                              BasicLogService.tweet( "******************* asResource *********************" )
                               
                               matchMap( cclKey, k ) match {
                                 case Some( soln ) => {
@@ -3164,7 +3164,7 @@ package usage {
                                   )
                                 }
                                 case None => {
-                                  tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
+                                  BasicLogService.tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
                                   throw new Exception( "matchMap failure " + cclKey + " " + k )
                                 }
                               }                                         
@@ -3190,7 +3190,7 @@ package usage {
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
-                    tweet(
+                    BasicLogService.tweet(
                       "converting to cache continuation stack" + ccl
                     )
                     ccl match {
@@ -3201,7 +3201,7 @@ package usage {
                         val unBlob =
                           continuationStorageType match {
                             case "CnxnCtxtLabel" => {
-                              // tweet(
+                              // BasicLogService.tweet(
                               //                      "warning: CnxnCtxtLabel method is using XStream"
                               //                    )
                               fromXQSafeJSONBlob( rv )
@@ -3255,7 +3255,7 @@ package usage {
                     throw new Exception( "shouldn't be calling this version of asCacheK" )
                   }
                   override def persistenceManifest : Option[PersistenceManifest] = {
-                    tweet(
+                    BasicLogService.tweet(
                       (
                         "HashAgentKVDB : "
                         + "\nthis: " + this
@@ -3323,7 +3323,7 @@ package usage {
                 here : URI,
                 configFileName : Option[String]
               ) : HashAgentKVDB[ReqBody,RspBody] = {
-                tweet(
+                BasicLogService.tweet(
                   (
                     "AgentKVDBNode : "
                     + "\nthis: " + this
@@ -3373,26 +3373,26 @@ package usage {
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                      tweet(
+                      BasicLogService.tweet(
                         "In asStoreValue on " + this + " for resource: " + rsrc
                       )
                       val storageDispatch = 
                         rsrc match {
                           case k : mTT.Continuation => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a continuation"
                             )
                             continuationStorageType
                           }
                           case _ => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a value"
                             )
                             valueStorageType
                           }
                         };
                       
-                      tweet(
+                      BasicLogService.tweet(
                         "storageDispatch: " + storageDispatch
                       )
                       
@@ -3406,13 +3406,13 @@ package usage {
                             new String( Base64Coder.encode( baos.toByteArray() ) )
                           }
                           case "CnxnCtxtLabel" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "warning: CnxnCtxtLabel method is using XStream"
                             )
                             toXQSafeJSONBlob( rsrc )                              
                           }
                           case "XStream" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "using XStream method"
                             )
                             
@@ -3430,7 +3430,7 @@ package usage {
                     def asCacheValue(
                       ccl : CnxnCtxtLabel[String,String,String]
                     ) : String = {
-                      tweet(
+                      BasicLogService.tweet(
                         "converting to cache value"
                       )
                       ccl match {
@@ -3520,7 +3520,7 @@ package usage {
                                   )
                                 }
                                 case None => {
-                                  tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
+                                  BasicLogService.tweet( "Unexpected matchMap failure: " + cclKey + " " + k )
                                   throw new Exception( "matchMap failure " + cclKey + " " + k )
                                 }
                               }                                         
@@ -3546,7 +3546,7 @@ package usage {
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
-                    tweet(
+                    BasicLogService.tweet(
                       "converting to cache continuation stack" + ccl
                     )
                     ccl match {
@@ -3557,7 +3557,7 @@ package usage {
                         val unBlob =
                           continuationStorageType match {
                             case "CnxnCtxtLabel" => {
-                              // tweet(
+                              // BasicLogService.tweet(
                               //                      "warning: CnxnCtxtLabel method is using XStream"
                               //                    )
                               fromXQSafeJSONBlob( rv )
@@ -3611,7 +3611,7 @@ package usage {
                     throw new Exception( "shouldn't be calling this version of asCacheK" )
                   }
                   override def persistenceManifest : Option[PersistenceManifest] = {
-                    tweet(
+                    BasicLogService.tweet(
                       (
                         "HashAgentKVDB : "
                         + "\nthis: " + this
@@ -3647,9 +3647,7 @@ package usage {
     import java.util.regex.{Pattern => RegexPtn, Matcher => RegexMatcher}
     
     def createExchange[Rsrc]() : MonadicTupleSpace[String,String,Rsrc] = {
-      new MonadicTupleSpace[String,String,Rsrc] with WireTap with Journalist
-                  with ConfiggyReporting
-                  with ConfiguredJournal
+      new MonadicTupleSpace[String,String,Rsrc] with WireTap
                   with ConfigurationTrampoline {
 
                     override type Substitution = IdentitySubstitution
@@ -3660,7 +3658,7 @@ package usage {
                     override val theSubscriptions = new HashMap[String,List[RK]]()
                     
                     override def tap [A] ( fact : A ) : Unit = {
-                      reportage( fact )
+                      BasicLogService.reportage( fact )
                     }
                     
                     override def configFileName : Option[String] = None
