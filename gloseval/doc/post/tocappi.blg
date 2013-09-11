@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2012/MacPorts 2012_10)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: tocappi.aux
+The style file: amsplain.bst
+Database file #1: tocappi.bib
+A bad cross reference---entry "conf/fsttcs/Odersky95"
+refers to entry "conf/fsttcs/1995", which doesn't exist
+Warning--I didn't find a database entry for "conf/fsttcs/1995"
+Warning--missing pages in milner91polyadicpi
+You've used 23 entries,
+            2213 wiz_defined-function locations,
+            665 strings with 8073 characters,
+and the built_in function-call counts, 7159 in all, are:
+= -- 647
+> -- 262
+< -- 3
++ -- 111
+- -- 79
+* -- 503
+:= -- 1102
+add.period$ -- 23
+call.type$ -- 23
+change.case$ -- 105
+chr.to.int$ -- 0
+cite$ -- 24
+duplicate$ -- 350
+empty$ -- 668
+format.name$ -- 79
+if$ -- 1570
+int.to.chr$ -- 0
+int.to.str$ -- 23
+missing$ -- 40
+newline$ -- 79
+num.names$ -- 53
+pop$ -- 174
+preamble$ -- 1
+purify$ -- 83
+quote$ -- 0
+skip$ -- 249
+stack$ -- 0
+substring$ -- 412
+swap$ -- 86
+text.length$ -- 3
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 90
+warning$ -- 1
+while$ -- 76
+width$ -- 25
+write$ -- 215
+(There was 1 error message)

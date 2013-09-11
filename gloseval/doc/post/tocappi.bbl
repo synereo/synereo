@@ -1,0 +1,121 @@
+\providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
+\providecommand{\MR}{\relax\ifhmode\unskip\space\fi MR }
+% \MRhref is called by the amsart/book/proc definition of \MR.
+\providecommand{\MRhref}[2]{%
+  \href{http://www.ams.org/mathscinet-getitem?mr=#1}{#2}
+}
+\providecommand{\href}[2]{#2}
+\begin{thebibliography}{10}
+
+\bibitem{Abramsky:1992:PP:194588.194591}
+Samson Abramsky, \emph{Proofs as processes}, Theor. Comput. Sci. \textbf{135}
+  (1992), no.~1, 5--9.
+
+\bibitem{Brown05piduce:a}
+Allen~L. Brown, Cosimo Laneve, and L.~Gregory Meredith, \emph{Piduce: A process
+  calculus with native xml datatypes}, In Proc. of EPEW05/WS-F0M5, volume 3670
+  of Lect, Springer, 2005, pp.~18--34.
+
+\bibitem{DBLP:conf/fossacs/Caires04}
+Lu\'{i}s Caires, \emph{Behavioral and spatial observations in a logic for the
+  pi-calculus.}, FoSSaCS, 2004, pp.~72--89.
+
+\bibitem{Caires04eliminationof}
+Lu\'{i}s Caires and Etienne Lozes, \emph{Elimination of quantifiers and
+  undecidability in spatial logics for concurrency}, 2004.
+
+\bibitem{CirsteaFaureKirchnerWLRA2004}
+Horatiu Cirstea, Germain Faure, and Claude Kirchner, \emph{A rho-calculus of
+  explicit constraint application}, Proceedings of the 5th workshop on
+  rewriting logic and applications, vol. 117 of Electronic Notes in Theoretical
+  Computer Science, 2004.
+
+\bibitem{Drossopoulou:2013:NCP:2489804.2489811}
+Sophia Drossopoulou and James Noble, \emph{The need for capability policies},
+  Proceedings of the 15th Workshop on Formal Techniques for Java-like Programs
+  (New York, NY, USA), FTfJP '13, ACM, 2013, pp.~6:1--6:7.
+
+\bibitem{Eich:2013}
+Brendan Eich,
+  \url{https://mail.mozilla.org/pipermail/es-discuss/2013-March/029080.html},
+  2013.
+
+\bibitem{Hoare:1969:ABC:363235.363259}
+C.~A.~R. Hoare, \emph{An axiomatic basis for computer programming}, Commun. ACM
+  \textbf{12} (1969), no.~10, 576--580.
+
+\bibitem{Honda:2008:UTP:2227536.2227558}
+Kohei Honda and Nobuko Yoshida, \emph{A unified theory of program logics: an
+  approach based on the $\pi$-calculus}, Proceedings of the 2008 international
+  conference on Visions of Computer Science: BCS International Academic
+  Conference (Swinton, UK, UK), VoCS'08, British Computer Society, 2008,
+  pp.~259--274.
+
+\bibitem{Protunity}
+Wadood Ibrahim, Jassen Klassen, and Lucius~G. Meredith, \emph{Protunity
+  business matching network}, \url{http://www.protunity.com}, Launched April
+  2013.
+
+\bibitem{Caja:2013}
+Google Inc., \emph{Html service: Caja sanitization},
+  \url{https://developers.google.com/apps-script/guides/html-service-caja},
+  2013.
+
+\bibitem{kosik:dep}
+Matej Ko\u{s}\'{i}k, \emph{{A Contribution to Techniques for Building
+  Dependable Operating Systems}}, Ph.D. thesis, Slovak University of Technology
+  in Bratislava, May 2011.
+
+\bibitem{Krivine-TheCurryHowardCorre}
+Jean-Louis Krivine, \emph{The curry-howard correspondence in set theory},
+  Proceedings of the Fifteenth Annual IEEE Symp. on Logic in Computer Science,
+  {LICS} 2000 (Martin Abadi, ed.), IEEE Computer Society Press, June 2000.
+
+\bibitem{Meredith:2003:CT:944217.944236}
+L.~G. Meredith and Steve Bjorg, \emph{Contracts and types}, Commun. ACM
+  \textbf{46} (2003), no.~10, 41--47.
+
+\bibitem{DBLP:conf/tgc/MeredithR05}
+L.~Gregory Meredith and Matthias Radestock, \emph{Namespace logic: A logic for
+  a reflective higher-order calculus.}, in \emph{TGC}
+  \cite{DBLP:journals/entcs/MeredithR05}, pp.~353--369.
+
+\bibitem{DBLP:journals/entcs/MeredithR05}
+\bysame, \emph{A reflective higher-order calculus.}, Electr. Notes Theor.
+  Comput. Sci. \textbf{141} (2005), no.~5, 49--67.
+
+\bibitem{SpecialK}
+Lucius~G. Meredith, \emph{Specialk scala library},
+  \url{https://github.com/leithaus/SpecialK}, Launched April 2013.
+
+\bibitem{milner91polyadicpi}
+Robin Milner, \emph{The polyadic $\pi$-calculus: A tutorial}, Logic and Algebra
+  of Specification \textbf{Springer-Verlag} (1993).
+
+\bibitem{conf/fsttcs/Odersky95}
+Martin Odersky, \emph{Polarized name passing.}, FSTTCS (P.~S. Thiagarajan,
+  ed.), Lecture Notes in Computer Science, vol. 1026, Springer, 1995,
+  pp.~324--337.
+
+\bibitem{PierceTurner:PictDesign}
+Benjamin~C. Pierce and David~N. Turner, \emph{Pict: A programming language
+  based on the pi-calculus}, Proof, Language and Interaction: Essays in Honour
+  of Robin Milner (Gordon Plotkin, Colin Stirling, and Mads Tofte, eds.), MIT
+  Press, 2000, pp.~455--494.
+
+\bibitem{SangiorgiWalker}
+David Sangiorgi and David Walker, \emph{The $\pi$-calculus: A theory of mobile
+  processes}, Cambridge University Press, 2001.
+
+\bibitem{DBLP:LNCS/Sangiorgi06}
+Davide Sangiorgi, \emph{The bisimulation proof method: Enhancements and open
+  problems}, Formal Methods for Open Object-Based Distributed Systems (Roberto
+  Gorrieri and Heike Wehrheim, eds.), Lecture Notes in Computer Science, vol.
+  4037, Springer Berlin Heidelberg, 2006, pp.~18--19.
+
+\bibitem{Yee:EECS-2007-136}
+Ka-Ping Yee, \emph{Report on the pvote security review}, Tech. Report
+  UCB/EECS-2007-136, EECS Department, University of California, Berkeley, Nov
+  2007.
+
+\end{thebibliography}

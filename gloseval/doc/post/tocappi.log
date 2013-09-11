@@ -1,0 +1,593 @@
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012/MacPorts 2012_10) (format=pdflatex 2013.6.16)  29 JUL 2013 22:02
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**tocappi.tex
+(./tocappi.tex
+LaTeX2e <2011/06/27>
+Babel <v3.8m> and hyphenation patterns for english, dumylang, nohyphenation, cz
+ech, slovak, dutch, ukenglish, usenglishmax, basque, french, german-x-2012-05-3
+0, ngerman-x-2012-05-30, german, ngerman, swissgerman, italian, polish, portugu
+ese, spanish, catalan, galician, loaded.
+(./acm_proc_article-sp.cls
+(/opt/local/share/texmf-texlive-dist/tex/latex/graphics/epsfig.sty
+Package: epsfig 1999/02/16 v1.7a (e)psfig emulation (SPQR)
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/latexconfig/graphics.cfg
+File: graphics.cfg 2010/04/23 v1.9 graphics configuration of TeX Live
+)
+Package graphics Info: Driver file: pdftex.def on input line 91.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
+
+(/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/infwarerr.sty
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+)
+(/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/ltxcmds.sty
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count79
+))
+\Gin@req@height=\dimen102
+\Gin@req@width=\dimen103
+)
+\epsfxsize=\dimen104
+\epsfysize=\dimen105
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2009/06/22 v3.00
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
+\@emptytoks=\toks15
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
+))
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2000/07/18 v2.13 AMS math features
+\@mathmargin=\skip41
+
+For additional information on amsmath, use the `?' option.
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0
+\@emptytoks=\toks16
+\ex@=\dimen106
+))
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d
+\pmbraise@=\dimen107
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 1999/12/14 v2.01 operator names
+)
+\inf@bad=\count80
+LaTeX Info: Redefining \frac on input line 211.
+\uproot@=\count81
+\leftroot@=\count82
+LaTeX Info: Redefining \overline on input line 307.
+\classnum@=\count83
+\DOTSCASE@=\count84
+LaTeX Info: Redefining \ldots on input line 379.
+LaTeX Info: Redefining \dots on input line 382.
+LaTeX Info: Redefining \cdots on input line 467.
+\Mathstrutbox@=\box26
+\strutbox@=\box27
+\big@size=\dimen108
+LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
+\macc@depth=\count85
+\c@MaxMatrixCols=\count86
+\dotsspace@=\muskip10
+\c@parentequation=\count87
+\dspbrk@lvl=\count88
+\tag@help=\toks17
+\row@=\count89
+\column@=\count90
+\maxfields@=\count91
+\andhelp@=\toks18
+\eqnshift@=\dimen109
+\alignsep@=\dimen110
+\tagshift@=\dimen111
+\tagwidth@=\dimen112
+\totwidth@=\dimen113
+\lineht@=\dimen114
+\@envbody=\toks19
+\multlinegap=\skip42
+\multlinetaggap=\skip43
+\mathdisplay@stack=\toks20
+LaTeX Info: Redefining \[ on input line 2666.
+LaTeX Info: Redefining \] on input line 2667.
+)
+Document Class 'acm_proc_article-sp' <22nd. April '09>. Modified by G.K.M. Tobi
+n
+Based in part upon document Style `acmconf' <22 May 89>. Hacked 4/91 by
+shivers@cs.cmu.edu, 4/93 by theobald@cs.mcgill.ca
+Excerpts were taken from (Journal Style) 'esub2acm.cls'.
+****** Bugs/comments/suggestions to Gerry Murray -- murray@hq.acm.org ******
+\footheight=\dimen115
+\@maxsep=\dimen116
+\@dblmaxsep=\dimen117
+\aucount=\count92
+\originalaucount=\count93
+\auwidth=\dimen118
+\auskip=\dimen119
+\auskipcount=\count94
+\auskip=\dimen120
+\allauboxes=\dimen121
+\addauthors=\toks21
+\addauflag=\count95
+\subtitletext=\toks22
+\savesection=\count96
+\sectioncntr=\count97
+\c@figure=\count98
+\c@table=\count99
+\titleboxnotes=\toks23
+\titleboxnoteflag=\count100
+Document Class: acm_proc_article-sp 2009/04/22 - V3.2SP - based on esub2acm.sty
+ <23 April 96>
+(/opt/local/share/texmf-texlive-dist/tex/latex/base/latexsym.sty
+Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
+\symlasy=\mathgroup6
+LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
+(Font)                  U/lasy/m/n --> U/lasy/b/n on input line 47.
+)
+\@acmtitlebox=\box28
+\titlenotecount=\count101
+\tntoks=\toks24
+\tntokstwo=\toks25
+\tntoksthree=\toks26
+\tntoksfour=\toks27
+\tntoksfive=\toks28
+\catcount=\count102
+\copyrightnotice=\toks29
+\conf=\toks30
+\confinfo=\toks31
+\c@part=\count103
+\c@section=\count104
+\c@subsection=\count105
+\c@subsubsection=\count106
+\c@paragraph=\count107
+
+Using 'Abbrev' bibliography style
+LaTeX Info: Redefining \cite on input line 1236.
+\bibindent=\dimen122
+\colcntr=\count108
+\saveb@x=\box29
+\copyrtyr=\toks32
+\acmcopyr=\toks33
+\boilerplate=\toks34
+\copyrightetc=\toks35
+(/opt/local/share/texmf-texlive-dist/tex/latex/base/fontenc.sty
+Package: fontenc 2005/09/27 v1.99g Standard LaTeX package
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/base/t1enc.def
+File: t1enc.def 2005/09/27 v1.99g Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 43.
+)
+LaTeX Font Info:    Try loading font information for T1+aer on input line 100.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/ae/t1aer.fd
+File: t1aer.fd 1997/11/16 Font definitions for T1/aer.
+)))
+(/opt/local/share/texmf-texlive-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip11
+Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
+)
+(/opt/local/share/texmf-texlive/tex/latex/bigpage.sty)
+(/opt/local/share/texmf-texlive/tex/latex/bcprules.sty
+\afterruleskip=\skip44
+\labelminsep=\skip45
+\labelcolwidth=\dimen123
+\@labelbox=\box30
+\rulebox=\box31
+\ruledim=\dimen124
+\labeldim=\dimen125
+) (./mathpartir.sty
+Package: mathpartir 2003/07/10 version 1.1.1 Math Paragraph for Typesetting Inf
+erence Rules
+\mpr@tmpdim=\dimen126
+\mpr@andskip=\skip46
+\mpr@lista=\toks36
+\mpr@listb=\toks37
+\mpr@hlist=\box32
+\mpr@vlist=\box33
+\mpr@right=\box34
+\rule@dimen=\dimen127
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/listings/listings.sty
+\lst@mode=\count109
+\lst@gtempboxa=\box35
+\lst@token=\toks38
+\lst@length=\count110
+\lst@currlwidth=\dimen128
+\lst@column=\count111
+\lst@pos=\count112
+\lst@lostspace=\dimen129
+\lst@width=\dimen130
+\lst@newlines=\count113
+\lst@lineno=\count114
+\abovecaptionskip=\skip47
+\belowcaptionskip=\skip48
+\lst@maxwidth=\dimen131
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2007/02/22 1.4 (Carsten Heinz)
+\c@lstnumber=\count115
+\lst@skipnumbers=\count116
+\lst@framebox=\box36
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/listings/listings.cfg
+File: listings.cfg 2007/02/22 1.4 listings configuration
+))
+Package: listings 2007/02/22 1.4 (Carsten Heinz)
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/mh/mathtools.sty
+Package: mathtools 2012/04/24 v1.12 mathematical typesetting tools
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/tools/calc.sty
+Package: calc 2007/08/22 v4.3 Infix arithmetic (KKT,FJ)
+\calc@Acount=\count117
+\calc@Bcount=\count118
+\calc@Adimen=\dimen132
+\calc@Bdimen=\dimen133
+\calc@Askip=\skip49
+\calc@Bskip=\skip50
+LaTeX Info: Redefining \setlength on input line 76.
+LaTeX Info: Redefining \addtolength on input line 77.
+\calc@Ccount=\count119
+\calc@Cskip=\skip51
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/mh/mhsetup.sty
+Package: mhsetup 2010/01/21 v1.2a programming setup (MH)
+)
+\g_MT_multlinerow_int=\count120
+\l_MT_multwidth_dim=\dimen134
+\origjot=\skip52
+\l_MT_shortvdotswithinadjustabove_dim=\dimen135
+\l_MT_shortvdotswithinadjustbelow_dim=\dimen136
+\l_MT_above_intertext_dim=\dimen137
+\l_MT_below_intertext_dim=\dimen138
+\l_MT_above_shortintertext_dim=\dimen139
+\l_MT_below_shortintertext_dim=\dimen140
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/caption/caption.sty
+Package: caption 2012/02/19 v3.2f Customizing captions (AR)
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/caption/caption3.sty
+Package: caption3 2012/01/12 v1.4b caption3 kernel (AR)
+\captionmargin=\dimen141
+\captionmargin@=\dimen142
+\captionwidth=\dimen143
+\caption@indent=\dimen144
+\caption@parindent=\dimen145
+\caption@hangindent=\dimen146
+Package caption Info: Unknown document class (or package),
+(caption)             standard defaults will be used.
+)
+
+Package caption Warning: Unsupported document class (or package) detected,
+(caption)                usage of the caption package is not recommended.
+See the caption package documentation for explanation.
+
+Package caption Info: \@makecaption = \long macro:#1#2-> \vskip \baselineskip \
+setbox \@tempboxa \hbox {\textbf {#1: #2}} \ifdim \wd \@tempboxa >\hsize \textb
+f {#1: #2}\par \else \hbox to\hsize {\hfil \box \@tempboxa \hfil }\par \fi .
+\c@ContinuedFloat=\count121
+Package caption Info: listings package is loaded.
+)
+\ltext=\skip53
+\lmath=\skip54
+\cmath=\skip55
+\rmath=\skip56
+\rtext=\skip57
+LaTeX Font Info:    Try loading font information for U+msa on input line 200.
+ (/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2009/06/22 v3.00 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 200.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2009/06/22 v3.00 AMS symbols B
+)
+LaTeX Font Info:    Try loading font information for U+lasy on input line 200.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/base/ulasy.fd
+File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
+)
+LaTeX Font Info:    Try loading font information for T1+aett on input line 202.
+
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/ae/t1aett.fd
+File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
+)
+\c@thm=\count122
+ (./tocappi.aux)
+\openout1 = `tocappi.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 301.
+LaTeX Font Info:    ... okay on input line 301.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 301.
+LaTeX Font Info:    ... okay on input line 301.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 301.
+LaTeX Font Info:    ... okay on input line 301.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 301.
+LaTeX Font Info:    ... okay on input line 301.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 301.
+LaTeX Font Info:    ... okay on input line 301.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 301.
+LaTeX Font Info:    ... okay on input line 301.
+
+(/opt/local/share/texmf-texlive-dist/tex/context/base/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count123
+\scratchdimen=\dimen147
+\scratchbox=\box37
+\nofMPsegments=\count124
+\nofMParguments=\count125
+\everyMPshowfont=\toks39
+\MPscratchCnt=\count126
+\MPscratchDim=\dimen148
+\MPnumerator=\count127
+\makeMPintoPDFobject=\count128
+\everyMPtoPDFconversion=\toks40
+) (/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/pdftexcmds.sty
+Package: pdftexcmds 2011/11/29 v0.20 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/ifluatex.sty
+Package: ifluatex 2010/03/01 v1.3 Provides the ifluatex switch (HO)
+Package ifluatex Info: LuaTeX not detected.
+)
+(/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/ifpdf.sty
+Package: ifpdf 2011/01/30 v2.3 Provides the ifpdf switch (HO)
+Package ifpdf Info: pdfTeX in PDF mode is detected.
+)
+Package pdftexcmds Info: LuaTeX not detected.
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+)
+(/opt/local/share/texmf-texlive-dist/tex/latex/oberdiek/epstopdf-base.sty
+Package: epstopdf-base 2010/02/09 v2.5 Base part for package epstopdf
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/oberdiek/grfext.sty
+Package: grfext 2010/08/19 v1.1 Manage graphics extensions (HO)
+
+(/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/kvdefinekeys.sty
+Package: kvdefinekeys 2011/04/07 v1.3 Define keys (HO)
+))
+(/opt/local/share/texmf-texlive-dist/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2011/06/30 v3.11 Key value format for package options (HO)
+
+(/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/kvsetkeys.sty
+Package: kvsetkeys 2012/04/25 v1.16 Key value parser (HO)
+
+(/opt/local/share/texmf-texlive-dist/tex/generic/oberdiek/etexcmds.sty
+Package: etexcmds 2011/02/16 v1.5 Avoid name clashes with e-TeX commands (HO)
+Package etexcmds Info: Could not find \expanded.
+(etexcmds)             That can mean that you are not using pdfTeX 1.50 or
+(etexcmds)             that some package has redefined \expanded.
+(etexcmds)             In the latter case, load this package earlier.
+)))
+Package grfext Info: Graphics extension search list:
+(grfext)             [.png,.pdf,.jpg,.mps,.jpeg,.jbig2,.jb2,.PNG,.PDF,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 452.
+
+(/opt/local/share/texmf-texlive-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+\c@lstlisting=\count129
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
+
+Overfull \hbox (236.06546pt too wide) in paragraph at lines 364--367
+[] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 364--367
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 364--367
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 364--367
+
+ []
+
+[1
+
+{/opt/local/var/db/texmf/fonts/map/pdftex/updmap/pdftex.map}
+
+]
+Overfull \hbox (24.37796pt too wide) in paragraph at lines 369--369
+ [] 
+ []
+
+
+Overfull \hbox (10.58835pt too wide) in paragraph at lines 398--408
+\T1/aer/m/n/9 browser to be turned into an ocap-safe plat-form; Google's
+ []
+
+[2
+
+]
+Overfull \hbox (1.68547pt too wide) in paragraph at lines 577--590
+\T1/aer/m/n/9 port-ing li-braries; un-for-tu-nately, the au-thor-ity pro-vided
+ []
+
+[3]
+Overfull \hbox (238.3733pt too wide) detected at line 621
+[]
+ []
+
+
+Overfull \hbox (9.44923pt too wide) in paragraph at lines 696--701
+\T1/aer/m/n/9 re-cur-sively re-lated to $\OML/cmm/m/it/9 $\T1/aer/m/n/9 -equiv
+alence and struc-tural equiv-
+ []
+
+[4]
+Overfull \hbox (1.31061pt too wide) in paragraph at lines 803--803
+[]       \T1/aett/m/n/9 (amount, srcP) => Q(srcP).then(src => {[] 
+ []
+
+
+Overfull \hbox (2.36255pt too wide) in paragraph at lines 805--811
+\T1/aer/m/n/9 authority---is rep-re-sented by a chan-nel. When an agent
+ []
+
+
+Overfull \hbox (12.1342pt too wide) detected at line 844
+[] []
+ []
+
+[5]
+LaTeX Font Info:    Try loading font information for T1+aess on input line 978.
+
+ (/opt/local/share/texmf-texlive-dist/tex/latex/ae/t1aess.fd
+File: t1aess.fd 1997/11/16 Font definitions for T1/aess.
+)
+Overfull \hbox (211.70624pt too wide) detected at line 1006
+[]
+ []
+
+
+Overfull \hbox (8.73743pt too wide) detected at line 1099
+[] []
+ []
+
+
+Underfull \vbox (badness 3679) has occurred while \output is active []
+
+ [6]
+Overfull \hbox (2.81255pt too wide) in paragraph at lines 1106--1107
+[]$\OML/cmm/m/it/9 P [] Q \OMS/cmsy/m/n/9 , 8\OML/cmm/m/it/9 ^^^ \OMS/cmsy/m/n/
+9 2
+ []
+
+
+Overfull \hbox (1.4177pt too wide) in paragraph at lines 1109--1115
+[]\T1/aer/m/n/9 The proof em-ploys an adap-ta-tion of the stan-dard strat-
+ []
+
+
+Overfull \hbox (1.32155pt too wide) in paragraph at lines 1135--1148
+\T1/aer/m/n/9 let $\OML/cmm/m/it/9 soleAccess\OT1/cmr/m/n/9 (\OML/cmm/m/it/9 sl
+ot\OT1/cmr/m/n/9 ) [] [] \OML/cmm/m/it/9 X : \OMS/cmsy/m/n/9 h\OML/cmm/m/it/9 s
+lot\OT1/cmr/m/n/9 ?\OML/cmm/m/it/9 b\OMS/cmsy/m/n/9 i\OML/cmm/m/it/9 X\OT1/cmr/
+m/n/9 &\OMS/cmsy/m/n/9 :h:\OML/cmm/m/it/9 slot\OT1/cmr/m/n/9 ?\OML/cmm/m/it/9 b
+\OMS/cmsy/m/n/9 i\OML/cmm/m/it/9 X$\T1/aer/m/n/9 ,
+ []
+
+[7]
+Overfull \hbox (14.76231pt too wide) in paragraph at lines 1228--1228
+[]\secfnt CONCLUSIONS AND FU-TURE WORK 
+ []
+
+
+Overfull \hbox (1.22806pt too wide) in paragraph at lines 1250--1257
+\T1/aer/m/n/9 [17]. This li-brary is al-ready in use in in-dus-trial projects
+ []
+
+(./tocappi.bbl [8])
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+Overfull \hbox (15.18094pt too wide) detected at line 1323
+[] []
+ []
+
+
+Overfull \hbox (245.34215pt too wide) detected at line 1346
+[]
+ []
+
+[9]
+Overfull \hbox (7.61945pt too wide) in paragraph at lines 1362--1364
+[]\T1/aer/m/n/9 where $\OML/cmm/m/it/9 P[] [] P\OMS/cmsy/m/n/9 f\OML/cmm/m/it/9
+ n\OT1/cmr/m/n/9 (\OML/cmm/m/it/9 X; P\OT1/cmr/m/n/9 )!(\OML/cmm/m/it/9 Q[]; []
+ ; Q[]\OT1/cmr/m/n/9 )\OML/cmm/m/it/9 =X\OT1/cmr/m/n/9 (\OML/cmm/m/it/9 Q[]; []
+ ; Q[]\OT1/cmr/m/n/9 )\OMS/cmsy/m/n/9 g$\T1/aer/m/n/9 ,
+ []
+
+
+Overfull \hbox (6.90384pt too wide) in paragraph at lines 1388--1389
+[]$\OML/cmm/m/it/9 x[]\OT1/cmr/m/n/9 ?(\OML/cmm/m/it/9 y[]; [] ; y[]\OT1/cmr/m/
+n/9 ) \OMS/cmsy/m/n/9 ) \OML/cmm/m/it/9 P[] \OT1/cmr/m/n/9 + [] + \OML/cmm/m/it
+/9 x[]\OT1/cmr/m/n/9 ?(\OML/cmm/m/it/9 y[]; [] ; y[]\OT1/cmr/m/n/9 ) \OMS/cmsy/
+m/n/9 )
+ []
+
+
+Overfull \hbox (6.6342pt too wide) in paragraph at lines 1431--1434
+[]\T1/aer/m/it/9 An \T1/aer/m/n/9 ob-ser-va-tion re-la-tion\T1/aer/m/it/9 , $\O
+MS/cmsy/m/n/9 #[]$\T1/aer/m/it/9 , over
+ []
+
+[10] (./tocappi.aux) ) 
+Here is how much of TeX's memory you used:
+ 6060 strings out of 494763
+ 86106 string characters out of 3171442
+ 161513 words of memory out of 3000000
+ 9139 multiletter control sequences out of 15000+200000
+ 77266 words of font info for 106 fonts, out of 3000000 for 9000
+ 134 hyphenation exceptions out of 8191
+ 41i,12n,38p,268b,863s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/opt/local/share/texmf-texlive-dist/fonts/enc/dvips/base
+/8r.enc}</opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmb
+x12.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmb
+x9.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmcs
+c10.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cmextr
+a/cmex9.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm
+/cmitt10.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/c
+m/cmmi6.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm
+/cmmi9.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/
+cmr6.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cm
+r8.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmr9
+.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmss9.
+pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmsy5.p
+fb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmsy6.pf
+b></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb
+></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb>
+</opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb><
+/opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/latxfont/lasy9.
+pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/symbols/ms
+am10.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/symbo
+ls/msam7.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/public/amsfonts/s
+ymbols/msbm10.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/urw/helvetic
+/uhvb8a.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/urw/helvetic/uhvr8
+a.pfb></opt/local/share/texmf-texlive-dist/fonts/type1/urw/times/utmb8a.pfb></o
+pt/local/share/texmf-texlive-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on tocappi.pdf (10 pages, 293206 bytes).
+PDF statistics:
+ 134 PDF objects out of 1000 (max. 8388607)
+ 97 compressed objects within 1 object stream
+ 0 named destinations out of 1000 (max. 500000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+
