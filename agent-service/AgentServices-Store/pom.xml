@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-store-ia</artifactId>
-    <version>1.9.0-SNAPSHOT</version>
+    <version>1.9.1-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -89,7 +89,12 @@
             <artifactId>jline</artifactId>
             <version>${scala.version}</version>
         </dependency>
-
+        <dependency>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-reflect</artifactId>
+          <version>${scala.version}</version>
+        </dependency>            
+    
         <dependency>
             <groupId>com.biosimilarity.lift</groupId>
             <artifactId>specialK</artifactId>
