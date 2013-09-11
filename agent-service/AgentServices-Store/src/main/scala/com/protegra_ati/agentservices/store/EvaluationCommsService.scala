@@ -225,10 +225,10 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
                             case PostedExpr(jsonBlob) => {
                               val content = 
                                 ("sessionURI" -> ("agent-session://" + cap)) ~
-                                ("listOfAliases" -> List()) ~
+                                ("listOfAliases" -> List[String]()) ~
                                 ("defaultAlias" -> "") ~
-                                ("listOfLabels" -> List()) ~
-                                ("listOfCnxns" -> List()) ~
+                                ("listOfLabels" -> List[String]()) ~
+                                ("listOfCnxns" -> List[String]()) ~
                                 ("lastActiveFilter" -> "") ~
                                 ("jsonBlob" -> parse(jsonBlob))
 
