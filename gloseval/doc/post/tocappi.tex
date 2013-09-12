@@ -16,8 +16,8 @@
 %\documentclass[twocolumn]{amsart}
 %\documentclass[]{amsart}
 %\documentclass[]{sig-alternate}
-\documentclass[]{acm_proc_article-sp}
-%\documentclass[]{llncs}
+%\documentclass[]{acm_proc_article-sp}
+\documentclass[runningheads,a4paper]{llncs}
 
 %\documentclass[]{prentcsmacro}
 
@@ -32,7 +32,7 @@
 \usepackage{listings}
 \usepackage{mathtools}
 %\usepackage[fleqn]{amsmath}
-\usepackage{amsfonts}
+%\usepackage{amsfonts}
 \usepackage{latexsym}
 \usepackage{amssymb}
 \usepackage{caption}
@@ -214,16 +214,16 @@
 \vfuzz2pt % Don't report over-full v-boxes if over-edge is small
 
 % THEOREM Environments ---------------------------------------------------
- \newtheorem{thm}{Theorem}[subsection]
- \newtheorem{cor}[thm]{Corollary}
- \newtheorem{lem}[thm]{Lemma}
- \newtheorem{prop}[thm]{Proposition}
+%  \newtheorem{thm}{Theorem}[subsection]
+%  \newtheorem{cor}[thm]{Corollary}
+%  \newtheorem{lem}[thm]{Lemma}
+%  \newtheorem{prop}[thm]{Proposition}
 % \theoremstyle{definition}
- \newtheorem{defn}[thm]{Definition}
+% \newtheorem{defn}[thm]{Definition}
 % \theoremstyle{remark}
- \newtheorem{rem}[thm]{Remark}
- \newtheorem{example}[thm]{Example}
- \numberwithin{equation}{subsection}
+%  \newtheorem{rem}[thm]{Remark}
+%  \newtheorem{example}[thm]{Example}
+%  \numberwithin{equation}{subsection}
 % MATH -------------------------------------------------------------------
  \DeclareMathOperator{\RE}{Re}
  \DeclareMathOperator{\IM}{Im}
@@ -310,20 +310,14 @@
 %\title{\huge{\papertitle}}
 \title{\papertitle}
 
-\numberofauthors{3}
-\author{
-\alignauthor 
-L.G. Meredith\\
-  \affaddr{Biosimilarity, LLC}\\
-  \email{\fontsize{8}{8}\selectfont lgreg.meredith@biosimilarity.com}\\
-\alignauthor
-Mike Stay\\
-  \affaddr{Biosimilarity, LLC}\\
-  \email{\fontsize{8}{8}\selectfont mike.stay@biosimilarity.com}\\
-\alignauthor
-Sophia Drossopoulou\\
-  \affaddr{Imperial College, London}\\
-  \email{\fontsize{8}{8}\selectfont s.drossopoulou@imperial.ac.uk}
+%\numberofauthors{3}
+\author{ Lucius Gregory Meredith\inst{1} \and Mike Stay\inst{2} \and Sophia Drossopoulou\inst{3} }
+\institute{Biosimilarity, LLC\\ 7329 39th Ave SW, Seattle, WA 98136, USA, \\
+  \email{ lgreg.meredith@gmail.com } \\
+  \and Biosimilarity, LLC\\ 7329 39th Ave SW, Seattle, WA 98136, USA, \\
+  \email{mike.stay@biosimilarity.com}
+  \and Imperial College, London \\
+  \email{ s.drossopoulou@imperial.ac.uk }
 }
 
 %\address{Systems Biology, Harvard Medical School, Boston, Massachussetts, USA}
@@ -334,7 +328,7 @@ Sophia Drossopoulou\\
 
 %\subjclass{Primary 47A15; Secondary 46A32, 47D20}
 
-\keywords{ object-capability, concurrency, message-passing, policy, types, Curry-Howard }
+%\keywords{ object-capability, concurrency, message-passing, policy, types, Curry-Howard }
 
 %\date{April 6, 2002.}
 
@@ -1102,9 +1096,9 @@ We say $P$ witnesses $\phi$ (resp., $x$ witnesses $\pquotep{\phi}$),
 written $P \models \phi$ (resp., $x \models \pquotep{\phi}$) just when
 $\forall v . P \in \meaningof{\phi}(v)$ (resp., $\forall v . x \in \meaningof{\pquotep{\phi}}(v)$).
 
-\begin{thm}[Equivalence]\label{sec:equivalence_theorem}
+\begin{theorem}[Equivalence]\label{sec:equivalence_theorem}
 	$P \wbbisim Q \riff \forall \phi \in \PFormula_{-Par} . P \models \phi \riff Q \models \phi .$
-\end{thm}
+\end{theorem}
 
 The proof employs an adaptation of the standard strategy. A
 consequence of this theorem is that there is no algorithm guaranteeing
@@ -1427,7 +1421,7 @@ which namespaces a process has access to.
 % bisimulation?]
 %will become clearer when we treat the encoding of the asynchronous {\pic}.
 
-\begin{defn}
+\begin{definition}
 An \emph{observation relation}, $\downarrow_{\mathcal N}$, over a set
 of names, $\mathcal N$, is the smallest relation satisfying the rules
 below.
@@ -1439,13 +1433,13 @@ below.
 
 We write $P \Downarrow_{\mathcal N} x$ if there is $Q$ such that 
 $P \wred Q$ and $Q \downarrow_{\mathcal N} x$.
-\end{defn}
+\end{definition}
 
 Notice that $\prefix{x}{y}{P}$ has no barb.  Indeed, in {\rhoc} as well
 as other asynchronous calculi, an observer has no direct means to
 detect if a sent message has been received or not.
 
-\begin{defn}
+\begin{definition}
 %\label{def.bbisim}
 An  ${\mathcal N}$-\emph{barbed bisimulation} over a set of names, ${\mathcal N}$, is a symmetric binary relation 
 ${\mathcal S}_{\mathcal N}$ between agents such that $P\rel{S}_{\mathcal N}Q$ implies:
@@ -1455,7 +1449,7 @@ ${\mathcal S}_{\mathcal N}$ between agents such that $P\rel{S}_{\mathcal N}Q$ im
 \end{enumerate}
 $P$ is ${\mathcal N}$-barbed bisimilar to $Q$, written
 $P \wbbisim_{\mathcal N} Q$, if $P \rel{S}_{\mathcal N} Q$ for some ${\mathcal N}$-barbed bisimulation ${\mathcal S}_{\mathcal N}$.
-\end{defn}
+\end{definition}
 
 % \emph{Barbed congruence}, written $\fwbeq_{\mathcal N}$, is the largest
 % ${\mathcal N}$-barbed bisimulation which is also a congruence.
