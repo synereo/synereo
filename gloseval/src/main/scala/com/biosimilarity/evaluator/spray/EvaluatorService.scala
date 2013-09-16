@@ -156,6 +156,10 @@ trait EvaluatorService extends HttpService
   @transient
   val cometActor = actorRefFactory.actorOf(Props[CometActor])        
   
+  def cometMessageJSON(sessionURI: String, jsonBody: String): Unit = {
+    cometActor ! CometMessage(sessionURI, HttpBody(`application/json`, jsonBody))
+  }
+
   @transient
   val myRoute = 
     path("signup") {
@@ -200,11 +204,9 @@ trait EvaluatorService extends HttpService
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                     println( "in evalSubscribeRequest " )
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    def cometMessage(sessionURI: String, jsonBody: String): Unit = {
-                      cometActor ! CometMessage(sessionURI, HttpBody(`application/json`, jsonBody))
-                    }
+                    // TODO(mike): pull out the sessionURI
                     try {
-                      evalSubscribeRequest(json, cometMessage)
+                      evalSubscribeRequest(json, cometMessageJSON)
                       ctx.complete(StatusCodes.OK)
                     } catch {
                       case _ => {
@@ -230,6 +232,15 @@ trait EvaluatorService extends HttpService
                     val (sessionURI, body) = closeSessionRequest(json)
                     cometActor ! CometMessage(sessionURI, body)
                     ctx.complete(StatusCodes.OK)
+                  }
+                  case "confirmEmailToken" => {
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    println( "in confirmEmailToken " )
+                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                    val token = (json \ "content" \ "token").extract[String]
+                    val key = UUID.randomUUID.toString
+                    CompletionMapper.map += ( key -> ctx )
+                    confirmEmailToken(token, key)
                   }
                   case _ => ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
                 }
