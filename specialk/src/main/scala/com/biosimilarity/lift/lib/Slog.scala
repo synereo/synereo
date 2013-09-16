@@ -17,6 +17,7 @@ import scala.annotation.elidable._
 import scala.xml._
 import scala.collection.mutable.HashMap
 import java.util.UUID
+import java.io.File
 
 //import net.lag.configgy._
 
@@ -133,7 +134,7 @@ with Serializable {
 
   //@transient lazy val config = Configgy.config
   @transient lazy val config = 
-    ConfigFactory.load( "log.conf" )
+    ConfigFactory.load( ConfigFactory.parseFile( new File( "log.conf" ) ) )
 
   var tweetLevel =
     try {

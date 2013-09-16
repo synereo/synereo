@@ -13,6 +13,7 @@ import com.typesafe.config._
 
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
+import java.io.File
 
 trait ConfigurationTrampolineDefaults {
   type ConfigurationDefaults <: java.lang.Object
@@ -53,7 +54,7 @@ extends ConfigurationTrampolineDefaults {
     //val config = Configgy.config    
 
     val config =
-      ConfigFactory.load( confFileName )    
+      ConfigFactory.load( ConfigFactory.parseFile( new File( confFileName ) ) )
 
     for(
       m <- configurationDefaults.getClass.getMethods;      
