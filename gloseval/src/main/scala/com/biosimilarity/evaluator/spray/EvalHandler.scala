@@ -128,63 +128,65 @@ trait EvalHandler {
     val (erql, erspl) = agentMgr().makePolarizedPair()
     // TODO(mike): Tag expression objects so that we can pick the right case
     //   class in the match block below.
-    if (content.obj.contains("feed")) {
-      val feedExpr = (content \ "feed").extract[com.biosimilarity.evaluator.distribution.portable.dsl.FeedExpr]
-      val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
-        rsrc match {
-          case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
-            postedExpr.asInstanceOf[PostedExpr[String]] match {
-              case PostedExpr(postedStr) => {
-                val content =
-                  ("sessionURI" -> sessionURIstr) ~
-                  ("pageOfPosts" -> List(postedStr))
-                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                cometMessage(sessionURIstr, compact(render(response)))
+    val exprType = (content \ "msgType").extract[String]
+    exprType match {
+      case "feedExpr" => {
+        val feedExpr = (content \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.FeedExpr]
+        val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
+          rsrc match {
+            case None => ()
+            case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
+              postedExpr.asInstanceOf[PostedExpr[String]] match {
+                case PostedExpr(postedStr) => {
+                  val content =
+                    ("sessionURI" -> sessionURIstr) ~
+                    ("pageOfPosts" -> List(postedStr))
+                  val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                  cometMessage(sessionURIstr, compact(render(response)))
+                }
               }
             }
+            case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
-          case _ => throw new Exception("Unrecognized resource: " + rsrc)
         }
-      }      
-      agentMgr().feed(erql, erspl)(feedExpr.filter, feedExpr.cnxns, onFeed)
-
-
-    } else if (content.obj.contains("score")) {
-      val scoreExpr = (content \ "score").extract[com.biosimilarity.evaluator.distribution.portable.dsl.ScoreExpr]
-      val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
-        rsrc match {
-          case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
-            postedExpr.asInstanceOf[PostedExpr[String]] match {
-              case PostedExpr(postedStr) => {
-                val content =
-                  ("sessionURI" -> sessionURIstr) ~
-                  ("pageOfPosts" -> List(postedStr))
-                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                cometMessage(sessionURIstr, compact(render(response)))
+        agentMgr().feed(erql, erspl)(feedExpr.filter, feedExpr.cnxns, onFeed)
+      }
+      case "scoreExpr" => {
+        val scoreExpr = (content \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.ScoreExpr]
+        val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
+          rsrc match {
+            case None => ()
+            case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
+              postedExpr.asInstanceOf[PostedExpr[String]] match {
+                case PostedExpr(postedStr) => {
+                  val content =
+                    ("sessionURI" -> sessionURIstr) ~
+                    ("pageOfPosts" -> List(postedStr))
+                  val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                  cometMessage(sessionURIstr, compact(render(response)))
+                }
               }
             }
+            case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
-          case _ => throw new Exception("Unrecognized resource: " + rsrc)
         }
-      }      
-      agentMgr().score(erql, erspl)(scoreExpr.filter, scoreExpr.cnxns, scoreExpr.staff, onScore)
-
-
-    } else if (content.obj.contains("insert")) {
-      val insertContent = (content \ "insert").extract[com.biosimilarity.evaluator.distribution.portable.dsl.InsertContent[String]]
-      val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
-        // evalComplete, empty seq of posts
-        val content =
-          ("sessionURI" -> sessionURIstr) ~
-          ("pageOfPosts" -> List())
-        val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-        cometMessage(sessionURIstr, compact(render(response)))
-      }      
-      agentMgr().post(erql, erspl)(insertContent.filter, insertContent.cnxns, insertContent.value, onPost)
-    } else {
-      throw new Exception("Unrecognized request: " + compact(render(json)))
+        agentMgr().score(erql, erspl)(scoreExpr.filter, scoreExpr.cnxns, scoreExpr.staff, onScore)
+      }
+      case "insertContent" => {
+        val insertContent = (content \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.InsertContent[String]]
+        val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
+          // evalComplete, empty seq of posts
+          val content =
+            ("sessionURI" -> sessionURIstr) ~
+            ("pageOfPosts" -> List())
+          val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+          cometMessage(sessionURIstr, compact(render(response)))
+        }
+        agentMgr().post(erql, erspl)(insertContent.filter, insertContent.cnxns, insertContent.value, onPost)
+      }
+      case _ => {
+        throw new Exception("Unrecognized request: " + compact(render(json)))
+      }
     }
   }  
 
