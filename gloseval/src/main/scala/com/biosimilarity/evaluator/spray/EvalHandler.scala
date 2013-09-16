@@ -126,12 +126,12 @@ trait EvalHandler {
     val content = (json \ "content").asInstanceOf[JObject]
     val sessionURIstr = (content \ "sessionURI").extract[String]
     val (erql, erspl) = agentMgr().makePolarizedPair()
-    // TODO(mike): Tag expression objects so that we can pick the right case
-    //   class in the match block below.
-    val exprType = (content \ "msgType").extract[String]
+    
+    val expression = (content \ "expression")
+    val exprType = (expression \ "msgType").extract[String]
     exprType match {
       case "feedExpr" => {
-        val feedExpr = (content \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.FeedExpr]
+        val feedExpr = (expression \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.FeedExpr]
         val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
           rsrc match {
             case None => ()
@@ -152,7 +152,7 @@ trait EvalHandler {
         agentMgr().feed(erql, erspl)(feedExpr.filter, feedExpr.cnxns, onFeed)
       }
       case "scoreExpr" => {
-        val scoreExpr = (content \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.ScoreExpr]
+        val scoreExpr = (expression \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.ScoreExpr]
         val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
           rsrc match {
             case None => ()
@@ -173,7 +173,7 @@ trait EvalHandler {
         agentMgr().score(erql, erspl)(scoreExpr.filter, scoreExpr.cnxns, scoreExpr.staff, onScore)
       }
       case "insertContent" => {
-        val insertContent = (content \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.InsertContent[String]]
+        val insertContent = (expression \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.InsertContent[String]]
         val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
           // evalComplete, empty seq of posts
           val content =
