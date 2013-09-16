@@ -129,7 +129,7 @@ trait EvalHandler {
     // TODO(mike): Tag expression objects so that we can pick the right case
     //   class in the match block below.
     if (content.obj.contains("feed")) {
-      val feedExpr = (content \ "feed").extract[ConcreteHL.FeedExpr]
+      val feedExpr = (content \ "feed").extract[com.biosimilarity.evaluator.distribution.portable.dsl.FeedExpr]
       val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
         rsrc match {
           case None => ()
@@ -151,7 +151,7 @@ trait EvalHandler {
 
 
     } else if (content.obj.contains("score")) {
-      val scoreExpr = (content \ "score").extract[ConcreteHL.ScoreExpr]
+      val scoreExpr = (content \ "score").extract[com.biosimilarity.evaluator.distribution.portable.dsl.ScoreExpr]
       val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
         rsrc match {
           case None => ()
@@ -173,7 +173,7 @@ trait EvalHandler {
 
 
     } else if (content.obj.contains("insert")) {
-      val insertContent = (content \ "insert").extract[ConcreteHL.InsertContent[String]]
+      val insertContent = (content \ "insert").extract[com.biosimilarity.evaluator.distribution.portable.dsl.InsertContent[String]]
       val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
         // evalComplete, empty seq of posts
         val content =
