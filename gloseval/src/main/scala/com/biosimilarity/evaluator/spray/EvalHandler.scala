@@ -178,7 +178,7 @@ trait EvalHandler extends Journalist {
             // TODO(mike): send email with capAndMac
             CompletionMapper.complete(key, compact(render(
               ("msgType" -> "createUserResponse") ~
-              ("content" -> ("agentURI" -> ("agent://" + capAndMac))) 
+              ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
             )))
           }
         )
