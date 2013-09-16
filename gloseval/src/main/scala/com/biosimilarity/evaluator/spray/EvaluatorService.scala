@@ -18,6 +18,7 @@ import spray.httpx.encoding._
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -105,7 +106,9 @@ class CometActor extends Actor with Serializable {
     }
     
     case PollTimeout(id) => {
-      requests.get(id).map(_.complete(HttpResponse(StatusCodes.OK)))
+      requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
+        ("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id))
+      )))))
       requests -= id
       toTimers -= id
     }
