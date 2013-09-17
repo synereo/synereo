@@ -23,16 +23,12 @@ import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT.
 import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
 import com.protegra_ati.agentservices.store.mongo.usage._
 
-//import com.biosimilarity.lift.lib.Journalist
-
-
 import util.Results
 
 trait KNodeSetup extends Scope
 with KVDBHelpers
 with RabbitTestSetup
 with Timeouts
-//with Journalist
 with ThreadPoolRunnersX
 //with FJTaskRunnersX
 with Serializable
@@ -237,7 +233,6 @@ class AgentKVDBNodeKUpdateTest extends SpecificationWithJUnit
 with SpecsKVDBHelpers
 with RabbitTestSetup
 with Timeouts
-//with Journalist
 with Serializable
 {
   sequential

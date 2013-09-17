@@ -156,13 +156,13 @@ package diesel {
       object AgentKVDBNodeFactory
              extends BaseAgentKVDBNodeFactoryT
              with AgentKVDBNodeFactoryT
-             with WireTap with Journalist
+             with WireTap
              with Serializable {                       
         type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
         //type AgentNode[Rq <: PersistedKVDBNodeRequest, Rs <: PersistedKVDBNodeResponse] = AgentKVDBNode[Rq,Rs]
 
         override def tap [A] ( fact : A ) : Unit = {
-          reportage( fact )
+          BasicLogService.reportage( fact )
         }
 
         override def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
@@ -210,26 +210,26 @@ package diesel {
               override def asStoreValue(
                 rsrc : mTT.Resource
               ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                tweet(
+                BasicLogService.tweet(
                   "In asStoreValue on " + this + " for resource: " + rsrc
                 )
                 val storageDispatch = 
                   rsrc match {
                     case k : mTT.Continuation => {
-                      tweet(
+                      BasicLogService.tweet(
                         "Resource " + rsrc + " is a continuation"
                       )
                       continuationStorageType
                     }
                     case _ => {
-                      tweet(
+                      BasicLogService.tweet(
                         "Resource " + rsrc + " is a value"
                       )
                       valueStorageType
                     }
                   };
                 
-                tweet(
+                BasicLogService.tweet(
                   "storageDispatch: " + storageDispatch
                 )
                 
@@ -243,13 +243,13 @@ package diesel {
                       new String( Base64Coder.encode( baos.toByteArray() ) )
                     }
                     case "CnxnCtxtLabel" => {
-                      tweet(
+                      BasicLogService.tweet(
                         "warning: CnxnCtxtLabel method is using XStream"
                       )
                       toXQSafeJSONBlob( rsrc )                            
                     }
                     case "XStream" => {
-                      tweet(
+                      BasicLogService.tweet(
                         "using XStream method"
                       )
                       
@@ -267,7 +267,7 @@ package diesel {
               def asCacheValue(
                 ccl : CnxnCtxtLabel[String,String,String]
               ) : ConcreteHL.HLExpr = {
-                tweet(
+                BasicLogService.tweet(
                   "converting to cache value"
                 )
                 ccl match {
@@ -359,7 +359,7 @@ package diesel {
                         }
                       }
                       case None => {
-                        tweet( "Unexpected matchMap failure: " + key + " " + k )
+                        BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
                         throw new Exception( "matchMap failure " + key + " " + k )
                       }
                     }                                           
@@ -374,7 +374,7 @@ package diesel {
             override def asCacheK(
               ccl : CnxnCtxtLabel[String,String,String]
             ) : Option[mTT.Continuation] = {
-              tweet(
+              BasicLogService.tweet(
                 "converting to cache continuation stack" + ccl
               )
               ccl match {
@@ -385,7 +385,7 @@ package diesel {
                   val unBlob =
                     continuationStorageType match {
                       case "CnxnCtxtLabel" => {
-                        // tweet(
+                        // BasicLogService.tweet(
                         //                    "warning: CnxnCtxtLabel method is using XStream"
                         //                  )
                         fromXQSafeJSONBlob( rv )
@@ -439,7 +439,7 @@ package diesel {
               throw new Exception( "shouldn't be calling this version of asCacheK" )
             }
             override def persistenceManifest : Option[PersistenceManifest] = {
-              tweet(
+              BasicLogService.tweet(
                 (
                   "AgentKVDB : "
                   + "\nthis: " + this
@@ -478,7 +478,7 @@ package diesel {
                 here : URI,
                 configFileName : Option[String]
               ) : HashAgentKVDB[ReqBody,RspBody] = {
-                tweet(
+                BasicLogService.tweet(
                   (
                     "AgentKVDBNode : "
                     + "\nthis: " + this
@@ -528,26 +528,26 @@ package diesel {
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                      tweet(
+                      BasicLogService.tweet(
                         "In asStoreValue on " + this + " for resource: " + rsrc
                       )
                       val storageDispatch = 
                         rsrc match {
                           case k : mTT.Continuation => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a continuation"
                             )
                             continuationStorageType
                           }
                           case _ => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a value"
                             )
                             valueStorageType
                           }
                         };
                       
-                      tweet(
+                      BasicLogService.tweet(
                         "storageDispatch: " + storageDispatch
                       )
                       
@@ -561,13 +561,13 @@ package diesel {
                             new String( Base64Coder.encode( baos.toByteArray() ) )
                           }
                           case "CnxnCtxtLabel" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "warning: CnxnCtxtLabel method is using XStream"
                             )
                             toXQSafeJSONBlob( rsrc )                              
                           }
                           case "XStream" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "using XStream method"
                             )
                             
@@ -585,7 +585,7 @@ package diesel {
                     def asCacheValue(
                       ccl : CnxnCtxtLabel[String,String,String]
                     ) : ConcreteHL.HLExpr = {
-                      tweet(
+                      BasicLogService.tweet(
                         "converting to cache value"
                       )
                       ccl match {
@@ -677,7 +677,7 @@ package diesel {
                               }
                             }
                             case None => {
-                              tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
                               throw new Exception( "matchMap failure " + key + " " + k )
                             }
                           }                                             
@@ -692,7 +692,7 @@ package diesel {
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
-                    tweet(
+                    BasicLogService.tweet(
                       "converting to cache continuation stack" + ccl
                     )
                     ccl match {
@@ -703,7 +703,7 @@ package diesel {
                         val unBlob =
                           continuationStorageType match {
                             case "CnxnCtxtLabel" => {
-                              // tweet(
+                              // BasicLogService.tweet(
                               //                      "warning: CnxnCtxtLabel method is using XStream"
                               //                    )
                               fromXQSafeJSONBlob( rv )
@@ -758,7 +758,7 @@ package diesel {
                   }
 
                   override def persistenceManifest : Option[PersistenceManifest] = {
-                    tweet(
+                    BasicLogService.tweet(
                       (
                         "HashAgentKVDB : "
                         + "\nthis: " + this
@@ -803,7 +803,7 @@ package diesel {
                 here : URI,
                 configFileName : Option[String]
               ) : HashAgentKVDB[ReqBody,RspBody] = {
-                tweet(
+                BasicLogService.tweet(
                   (
                     "AgentKVDBNode : "
                     + "\nthis: " + this
@@ -853,26 +853,26 @@ package diesel {
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                      tweet(
+                      BasicLogService.tweet(
                         "In asStoreValue on " + this + " for resource: " + rsrc
                       )
                       val storageDispatch = 
                         rsrc match {
                           case k : mTT.Continuation => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a continuation"
                             )
                             continuationStorageType
                           }
                           case _ => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a value"
                             )
                             valueStorageType
                           }
                         };
                       
-                      tweet(
+                      BasicLogService.tweet(
                         "storageDispatch: " + storageDispatch
                       )
                       
@@ -886,13 +886,13 @@ package diesel {
                             new String( Base64Coder.encode( baos.toByteArray() ) )
                           }
                           case "CnxnCtxtLabel" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "warning: CnxnCtxtLabel method is using XStream"
                             )
                             toXQSafeJSONBlob( rsrc )                              
                           }
                           case "XStream" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "using XStream method"
                             )
                             
@@ -910,7 +910,7 @@ package diesel {
                     def asCacheValue(
                       ccl : CnxnCtxtLabel[String,String,String]
                     ) : ConcreteHL.HLExpr = {
-                      tweet(
+                      BasicLogService.tweet(
                         "converting to cache value"
                       )
                       ccl match {
@@ -1002,7 +1002,7 @@ package diesel {
                               }
                             }
                             case None => {
-                              tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
                               throw new Exception( "matchMap failure " + key + " " + k )
                             }
                           }                                             
@@ -1017,7 +1017,7 @@ package diesel {
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
-                    tweet(
+                    BasicLogService.tweet(
                       "converting to cache continuation stack" + ccl
                     )
                     ccl match {
@@ -1028,7 +1028,7 @@ package diesel {
                         val unBlob =
                           continuationStorageType match {
                             case "CnxnCtxtLabel" => {
-                              // tweet(
+                              // BasicLogService.tweet(
                               //                      "warning: CnxnCtxtLabel method is using XStream"
                               //                    )
                               fromXQSafeJSONBlob( rv )
@@ -1082,7 +1082,7 @@ package diesel {
                     throw new Exception( "shouldn't be calling this version of asCacheK" )
                   }
                   override def persistenceManifest : Option[PersistenceManifest] = {
-                    tweet(
+                    BasicLogService.tweet(
                       (
                         "HashAgentKVDB : "
                         + "\nthis: " + this
@@ -1150,7 +1150,7 @@ package diesel {
                 here : URI,
                 configFileName : Option[String]
               ) : HashAgentKVDB[ReqBody,RspBody] = {
-                tweet(
+                BasicLogService.tweet(
                   (
                     "AgentKVDBNode : "
                     + "\nthis: " + this
@@ -1200,26 +1200,26 @@ package diesel {
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-                      tweet(
+                      BasicLogService.tweet(
                         "In asStoreValue on " + this + " for resource: " + rsrc
                       )
                       val storageDispatch = 
                         rsrc match {
                           case k : mTT.Continuation => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a continuation"
                             )
                             continuationStorageType
                           }
                           case _ => {
-                            tweet(
+                            BasicLogService.tweet(
                               "Resource " + rsrc + " is a value"
                             )
                             valueStorageType
                           }
                         };
                       
-                      tweet(
+                      BasicLogService.tweet(
                         "storageDispatch: " + storageDispatch
                       )
                       
@@ -1233,13 +1233,13 @@ package diesel {
                             new String( Base64Coder.encode( baos.toByteArray() ) )
                           }
                           case "CnxnCtxtLabel" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "warning: CnxnCtxtLabel method is using XStream"
                             )
                             toXQSafeJSONBlob( rsrc )                              
                           }
                           case "XStream" => {
-                            tweet(
+                            BasicLogService.tweet(
                               "using XStream method"
                             )
                             
@@ -1257,7 +1257,7 @@ package diesel {
                     def asCacheValue(
                       ccl : CnxnCtxtLabel[String,String,String]
                     ) : ConcreteHL.HLExpr = {
-                      tweet(
+                      BasicLogService.tweet(
                         "converting to cache value"
                       )
                       ccl match {
@@ -1349,7 +1349,7 @@ package diesel {
                               }
                             }
                             case None => {
-                              tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
                               throw new Exception( "matchMap failure " + key + " " + k )
                             }
                           }                                             
@@ -1364,7 +1364,7 @@ package diesel {
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
-                    tweet(
+                    BasicLogService.tweet(
                       "converting to cache continuation stack" + ccl
                     )
                     ccl match {
@@ -1375,7 +1375,7 @@ package diesel {
                         val unBlob =
                           continuationStorageType match {
                             case "CnxnCtxtLabel" => {
-                              // tweet(
+                              // BasicLogService.tweet(
                               //                      "warning: CnxnCtxtLabel method is using XStream"
                               //                    )
                               fromXQSafeJSONBlob( rv )
@@ -1429,7 +1429,7 @@ package diesel {
                     throw new Exception( "shouldn't be calling this version of asCacheK" )
                   }
                   override def persistenceManifest : Option[PersistenceManifest] = {
-                    tweet(
+                    BasicLogService.tweet(
                       (
                         "HashAgentKVDB : "
                         + "\nthis: " + this
@@ -1579,7 +1579,7 @@ package diesel {
       )( expr : ConcreteHL.HLExpr )(
         handler : Option[mTT.Resource] => Unit
       ): Unit = {
-        tweet(
+        BasicLogService.tweet(
           "entering method: evaluateExpression"
           + "\nthis: " + this
           + "\nnode: " + node
@@ -1590,11 +1590,11 @@ package diesel {
           case ConcreteHL.Bottom => {
             //throw new Exception( "divergence" )
             //println( "warning: divergent expression" )
-            tweet( "warning: divergent expression" )
+            BasicLogService.tweet( "warning: divergent expression" )
             handler( None )
           }
           case ConcreteHL.FeedExpr( filter, cnxns ) => {
-            tweet(
+            BasicLogService.tweet(
               "method: evaluateExpression"
               + "\nin ConcreteHL.FeedExpr case "
               + "\nthis: " + this
@@ -1611,7 +1611,7 @@ package diesel {
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
                 
-                tweet(
+                BasicLogService.tweet(
                   "method: evaluateExpression"
                   + "\n calling node.subscribe "
                   + "\nthis: " + this
@@ -1625,7 +1625,7 @@ package diesel {
 
                 for( e <- node.subscribe( agntCnxn )( filter ) ) {
 
-                  tweet(
+                  BasicLogService.tweet(
                     "method: evaluateExpression"
                     + "\n returned from node.subscribe "
                     + "\nthis: " + this
@@ -1645,7 +1645,7 @@ package diesel {
           }
           case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
             
-            tweet(
+            BasicLogService.tweet(
               "method: evaluateExpression"
               + "\nin ConcreteHL.ScoreExpr case "
               + "\nthis: " + this
@@ -1662,7 +1662,7 @@ package diesel {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
-                tweet(
+                BasicLogService.tweet(
                   "method: evaluateExpression"
                   + "\n calling node.subscribe "
                   + "\nthis: " + this
@@ -1676,7 +1676,7 @@ package diesel {
 
                 for( e <- node.subscribe( agntCnxn )( filter ) ) {
                   
-                  tweet(
+                  BasicLogService.tweet(
                     "method: evaluateExpression"
                     + "\n returned from node.subscribe "
                     + "\nthis: " + this
@@ -1696,7 +1696,7 @@ package diesel {
           }
           case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
             
-            tweet(
+            BasicLogService.tweet(
               "method: evaluateExpression"
               + "\nin ConcreteHL.InsertContent case "
               + "\nthis: " + this
@@ -1714,7 +1714,7 @@ package diesel {
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
               reset {
                 
-                tweet(
+                BasicLogService.tweet(
                   "method: evaluateExpression"                  
                   + "\n calling node.publish "
                   + "\nthis: " + this
@@ -1741,7 +1741,7 @@ package diesel {
       )( expr : ConcreteHL.HLExpr )(
         handler : Option[mTT.Resource] => Unit
       ): Unit = {
-        tweet(
+        BasicLogService.tweet(
           "entering method: evaluateExpression"
           + "\nthis: " + this
           + "\nnode: " + node
@@ -1755,11 +1755,11 @@ package diesel {
             case ConcreteHL.Bottom => {
               //throw new Exception( "divergence" )
               //println( "warning: divergent expression" )
-              tweet( "warning: divergent expression" )
+              BasicLogService.tweet( "warning: divergent expression" )
               handler( None )
             }
             case ConcreteHL.ReadExpr( filter, cnxns ) => {
-              tweet(
+              BasicLogService.tweet(
                 "method: evaluateExpression"
                 + "\nin ConcreteHL.ReadExpr case "
                 + "\nthis: " + this
@@ -1776,7 +1776,7 @@ package diesel {
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
                   
-                  tweet(
+                  BasicLogService.tweet(
                     "method: evaluateExpression"
                     + "\n calling node.read "
                     + "\nthis: " + this
@@ -1790,7 +1790,7 @@ package diesel {
                   
                   for( e <- n.read( agntCnxn )( filter ) ) {
                     
-                    tweet(
+                    BasicLogService.tweet(
                       "method: evaluateExpression"
                       + "\n returned from node.read "
                       + "\nthis: " + this
@@ -1809,7 +1809,7 @@ package diesel {
               }
             }
             case ConcreteHL.FetchExpr( filter, cnxns ) => {
-              tweet(
+              BasicLogService.tweet(
                 "method: evaluateExpression"
                 + "\nin ConcreteHL.FetchExpr case "
                 + "\nthis: " + this
@@ -1826,7 +1826,7 @@ package diesel {
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
                   
-                  tweet(
+                  BasicLogService.tweet(
                     "method: evaluateExpression"
                     + "\n calling node.fetch "
                     + "\nthis: " + this
@@ -1840,7 +1840,7 @@ package diesel {
                   
                   for( e <- n.fetch( agntCnxn )( filter ) ) {
                     
-                    tweet(
+                    BasicLogService.tweet(
                       "method: evaluateExpression"
                       + "\n returned from node.fetch "
                       + "\nthis: " + this
@@ -1859,7 +1859,7 @@ package diesel {
               }
             }
             case ConcreteHL.FeedExpr( filter, cnxns ) => {
-              tweet(
+              BasicLogService.tweet(
                 "method: evaluateExpression"
                 + "\nin ConcreteHL.FeedExpr case "
                 + "\nthis: " + this
@@ -1876,7 +1876,7 @@ package diesel {
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
                   
-                  tweet(
+                  BasicLogService.tweet(
                     "method: evaluateExpression"
                     + "\n calling node.subscribe "
                     + "\nthis: " + this
@@ -1890,7 +1890,7 @@ package diesel {
                   
                   for( e <- n.subscribe( agntCnxn )( filter ) ) {
                     
-                    tweet(
+                    BasicLogService.tweet(
                       "method: evaluateExpression"
                       + "\n returned from node.subscribe "
                       + "\nthis: " + this
@@ -1910,7 +1910,7 @@ package diesel {
             }
             case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
               
-              tweet(
+              BasicLogService.tweet(
                 "method: evaluateExpression"
                 + "\nin ConcreteHL.ScoreExpr case "
                 + "\nthis: " + this
@@ -1927,7 +1927,7 @@ package diesel {
                 val agntCnxn : acT.AgentCnxn =
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
-                  tweet(
+                  BasicLogService.tweet(
                     "method: evaluateExpression"
                     + "\n calling node.subscribe "
                     + "\nthis: " + this
@@ -1941,7 +1941,7 @@ package diesel {
                   
                   for( e <- n.subscribe( agntCnxn )( filter ) ) {
                     
-                    tweet(
+                    BasicLogService.tweet(
                       "method: evaluateExpression"
                       + "\n returned from node.subscribe "
                       + "\nthis: " + this
@@ -1961,7 +1961,7 @@ package diesel {
             }
             case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
               
-              tweet(
+              BasicLogService.tweet(
                 "method: evaluateExpression"
                 + "\nin ConcreteHL.FeedExpr case "
                 + "\nthis: " + this
@@ -1979,7 +1979,7 @@ package diesel {
                   new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
                 reset {
                   
-                  tweet(
+                  BasicLogService.tweet(
                     "method: evaluateExpression"
                     + "\n calling node.publish "
                     + "\nthis: " + this
@@ -2020,7 +2020,7 @@ package diesel {
           node : StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
-          tweet(
+          BasicLogService.tweet(
             "entering method: innerLoop"
             + "\nthis: " + this
             + "\nerql: " + erql
@@ -2031,7 +2031,7 @@ package diesel {
           )
             reset { 
               for( e <- client.subscribe( erql ) ) {
-                tweet(
+                BasicLogService.tweet(
                   "method: innerLoop"
                   + "\n completed client.subscribe "
                   + "\nthis: " + this
@@ -2044,7 +2044,7 @@ package diesel {
                 )
                 e match {
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet(
+                    BasicLogService.tweet(
                       "method: innerLoop"
                       + "\n case rsrc type: DSLCommLink.mTT.RBoundAList"
                       + "\n completed client.subscribe "
@@ -2074,7 +2074,7 @@ package diesel {
                     }             
                   }
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet(
+                    BasicLogService.tweet(
                       "method: innerLoop"
                       + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                       + "\n completed client.subscribe "
@@ -2107,7 +2107,7 @@ package diesel {
                   case Some( rsrc ) => {
                     rsrc match {
                       case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
-                        tweet(
+                        BasicLogService.tweet(
                           "method: innerLoop"
                           + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                           + "\n completed client.subscribe "
@@ -2139,7 +2139,7 @@ package diesel {
                             }
                           }
                           case Some( innerRrsc ) => {
-                            tweet(
+                            BasicLogService.tweet(
                               "method: innerLoop"
                               + "\n case unexpected inner rsrc type: " + innerRrsc
                               + "\ninner rsrc type: " + innerRrsc.getClass
@@ -2156,7 +2156,7 @@ package diesel {
                         }                      
                       }
                       case _ => {
-                        tweet(
+                        BasicLogService.tweet(
                           "method: innerLoop"
                           + "\n case unexpected rsrc type: " + rsrc
                           + "\ninner rsrc type: " + rsrc.getClass
@@ -2173,10 +2173,10 @@ package diesel {
                     }             
                   }
                   case None => {
-                    tweet( "server loop waiting." )
+                    BasicLogService.tweet( "server loop waiting." )
                   }
                   case _ => {
-                    tweet(
+                    BasicLogService.tweet(
                       "method: innerLoop"
                       + "\n rsrc not handled: " + e
                       + "\n completed client.subscribe "
@@ -2201,7 +2201,7 @@ package diesel {
           node : String,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
-          tweet(
+          BasicLogService.tweet(
             "entering method: innerLoop"
             + "\nthis: " + this
             + "\nerql: " + erql
@@ -2214,7 +2214,7 @@ package diesel {
               for( e <- client.subscribe( erql ) ) {
                 e match {
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet(
+                    BasicLogService.tweet(
                       "method: innerLoop"
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
@@ -2243,7 +2243,7 @@ package diesel {
                     }             
                   }
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
-                    tweet(
+                    BasicLogService.tweet(
                       "method: innerLoop"
                       + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                       + "\n completed client.subscribe "
@@ -2276,7 +2276,7 @@ package diesel {
                   case Some( rsrc ) => {
                     rsrc match {
                       case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
-                        tweet(
+                        BasicLogService.tweet(
                           "method: innerLoop"
                           + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                           + "\n completed client.subscribe "
@@ -2308,7 +2308,7 @@ package diesel {
                             }
                           }
                           case Some( innerRrsc ) => {
-                            tweet(
+                            BasicLogService.tweet(
                               "method: innerLoop"
                               + "\n case unexpected inner rsrc type: " + innerRrsc
                               + "\ninner rsrc type: " + innerRrsc.getClass
@@ -2325,7 +2325,7 @@ package diesel {
                         }                      
                       }
                       case _ => {
-                        tweet(
+                        BasicLogService.tweet(
                           "method: innerLoop"
                           + "\n case unexpected rsrc type: " + rsrc
                           + "\ninner rsrc type: " + rsrc.getClass
@@ -2342,10 +2342,10 @@ package diesel {
                     }             
                   }
                   case None => {
-                    tweet( "server loop waiting." )
+                    BasicLogService.tweet( "server loop waiting." )
                   }
                   case _ => {
-                    tweet(
+                    BasicLogService.tweet(
                       "method: innerLoop"
                       + "\n rsrc not handled: " + e
                       + "\n completed client.subscribe "
