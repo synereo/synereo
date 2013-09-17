@@ -333,6 +333,12 @@
                             <!--                            <version>2.10.0-SNAPSHOT</version>-->
                         </compilerPlugin>
                     </compilerPlugins>
+                    <launchers>
+                        <launcher>
+                            <id>diesel</id>
+                            <mainClass>com.protegra_ati.agentservices.runner.Diesel</mainClass>
+                        </launcher>
+                    </launchers>
                 </configuration>
                 <executions>
                     <execution>
