@@ -71,7 +71,7 @@ object ConfirmationEmail {
     simple.setSubject("Confirm individual agent signup")
     // TODO(mike): get the URL from a config file
     simple.setMsg("""Please click on the following link to confirm that you'd like to create a new individual agent:
-      http://ec2-54-212-15-76.us-west-2.compute.amazonaws.com/confirm?token=""" + token)
+      http://64.27.3.17:6080/agentui.html?demo=false&token=""" + token)
     simple.addTo(email)
     simple.send()
   }
@@ -98,6 +98,7 @@ trait EvalHandler extends Journalist {
     val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
     
     val (erql, erspl) = agentMgr().makePolarizedPair()
+    // TODO(mike): change from fetch to a consuming verb
     agentMgr().fetch(erql, erspl)(tokenFilter, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
         case None => ()
@@ -201,7 +202,7 @@ trait EvalHandler extends Journalist {
     } else {
       // Email provided; send a confirmation email
       import ConfirmationEmail._
-      val token = UUID.randomUUID.toString
+      val token = UUID.randomUUID.toString.substring(0,8)
       val tokenUri = new URI("token://" + token)
       val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
 
@@ -216,7 +217,7 @@ trait EvalHandler extends Journalist {
           // Notify user to check her email
           CompletionMapper.complete(key, compact(render(
             ("msgType" -> "createUserWaiting") ~
-            ("content" -> ("email" -> email)) 
+            ("content" -> List()) // List() is rendered as "{}" 
           )))
         }
       )
@@ -392,9 +393,11 @@ trait EvalHandler extends Journalist {
     
     val expression = (content \ "expression")
     val exprType = (expression \ "msgType").extract[String]
+    case class CX(src: String, label: String, tgt: String)
+    case class E(filter: String, cnxns: List[CX])
+    case class IC(filter: String, cnxns: List[CX], value: String)
     exprType match {
       case "feedExpr" => {
-        val feedExpr = (expression \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.FeedExpr]
         val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
           rsrc match {
             case None => ()
@@ -412,10 +415,14 @@ trait EvalHandler extends Journalist {
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
         }
-        agentMgr().feed(erql, erspl)(feedExpr.filter, feedExpr.cnxns, onFeed)
+        val fe = (expression \ "content").extract[E]
+        val filter = fromTermString(fe.filter).getOrElse(
+          throw new Exception("Couldn't parse filter: " + compact(render(json)))
+        )
+        val cnxns = fe.cnxns.map((cx: CX) => new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt)))
+        agentMgr().feed(erql, erspl)(filter, cnxns, onFeed)
       }
       case "scoreExpr" => {
-        val scoreExpr = (expression \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.ScoreExpr]
         val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
           rsrc match {
             case None => ()
@@ -433,10 +440,35 @@ trait EvalHandler extends Journalist {
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
         }
-        agentMgr().score(erql, erspl)(scoreExpr.filter, scoreExpr.cnxns, scoreExpr.staff, onScore)
+        val se = (expression \ "content").extract[E]
+        val filter = fromTermString(se.filter).getOrElse(
+          throw new Exception("Couldn't parse filter: " + compact(render(json)))
+        )
+        val cnxns = se.cnxns.map((cx: CX) => 
+          new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
+        )
+        val staff = (expression \ "content" \ "staff") match {
+          case JObject(List((which: String, vals@JArray(_)))) => {
+            // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
+            which match {
+              case "a" => Left(
+                vals.extract[List[CX]].map((cx: CX) => 
+                  new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
+                )
+              )
+              case "b" => Right(
+                vals.extract[List[String]].map((t: String) => 
+                  fromTermString(t).getOrElse(throw new Exception("Couldn't parse staff: " + json))
+                )
+              )
+              case _ => throw new Exception("Couldn't parse staff: " + json)
+            }
+          }
+          case _ => throw new Exception("Couldn't parse staff: " + json)
+        }
+        agentMgr().score(erql, erspl)(filter, cnxns, staff, onScore)
       }
       case "insertContent" => {
-        val insertContent = (expression \ "content").extract[com.biosimilarity.evaluator.distribution.portable.dsl.InsertContent[String]]
         val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
           // evalComplete, empty seq of posts
           val content =
@@ -445,7 +477,14 @@ trait EvalHandler extends Journalist {
           val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
           cometMessageJSON(sessionURIstr, compact(render(response)))
         }
-        agentMgr().post(erql, erspl)(insertContent.filter, insertContent.cnxns, insertContent.value, onPost)
+        val ic = (expression \ "content").extract[IC]
+        val filter = fromTermString(ic.filter).getOrElse(
+          throw new Exception("Couldn't parse filter: " + compact(render(json)))
+        )
+        val cnxns = ic.cnxns.map((cx: CX) => 
+          new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
+        )
+        agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
       }
       case _ => {
         throw new Exception("Unrecognized request: " + compact(render(json)))
