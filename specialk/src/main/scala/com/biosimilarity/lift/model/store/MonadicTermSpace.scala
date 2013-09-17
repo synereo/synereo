@@ -77,15 +77,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
     with CnxnUnificationCompositeTermQuery[Namespace,Var,Tag]
     with CnxnConversions[Namespace,Var,Tag]
     with WireTap
-    with Journalist
-    with ConfiggyReporting
-    with ConfiguredJournal
     with ConfigurationTrampoline
     with UUIDOps
     with Serializable
   {
     override def tap [A] ( fact : A ) : Unit = {
-      reportage( fact )
+      BasicLogService.reportage( fact )
     }
     
     override lazy val theMeetingPlace =
@@ -365,19 +362,19 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                 //spaceLock.occupy( slk )
                 spaceLock.occupy( ptn, slk )
                 
-                tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
-                //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                BasicLogService.tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
+                //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                 
                 val map = Left[Map[mTT.GetRequest,mTT.Resource],Map[mTT.GetRequest,List[RK]]]( channels )
                 val meets = locations( map, ptn )
                 
                 if ( meets.isEmpty ) {
                   val place = representative( ptn )
-                  tweet( "did not find a resource, storing a continuation: " + rk )
-                  tweet( "registered continuation storage: " + registered )
-                  tweet( "theWaiters: " + theWaiters )
-                  tweet( "theSubscriptions: " + theSubscriptions )                
+                  BasicLogService.tweet( "did not find a resource, storing a continuation: " + rk )
+                  BasicLogService.tweet( "registered continuation storage: " + registered )
+                  BasicLogService.tweet( "theWaiters: " + theWaiters )
+                  BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
                   
                   keep match {
                     case policy : RetainInCache => {
@@ -385,24 +382,24 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                         registered.get( place ).getOrElse( Nil ) ++ List( rk )
                     }
                     case _ => {
-                      tweet( "policy indicates not to retain in cache: " + rk )
+                      BasicLogService.tweet( "policy indicates not to retain in cache: " + rk )
                     }
                   }
                   
-                  tweet( "stored a continuation: " + rk )
-                  tweet( "registered continuation storage: " + registered )
-                  tweet( "theWaiters: " + theWaiters )
-                  tweet( "theSubscriptions: " + theSubscriptions )
+                  BasicLogService.tweet( "stored a continuation: " + rk )
+                  BasicLogService.tweet( "registered continuation storage: " + registered )
+                  BasicLogService.tweet( "theWaiters: " + theWaiters )
+                  BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
                   
                   keep match {
                     case storagePolicy : RetainInStore => {
                     }
                     case _ => {
-                      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                      BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
                       //spaceLock.depart( slk )
                       spaceLock.depart( ptn, slk )
-                      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                     }
                   }
                   
@@ -415,7 +412,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                       for( placeNRrscNSubst <- meets ) {
                         val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
                         
-                        tweet( "found a resource: " + rsrc )
+                        BasicLogService.tweet( "found a resource: " + rsrc )
                         
                         rsrcRslts += rsrc
                         
@@ -424,7 +421,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                             channels -= place
                           }
                           case _ => {
-                            tweet( "policy indicates not to consume from cache: " + place )
+                            BasicLogService.tweet( "policy indicates not to consume from cache: " + place )
                           }
                         }
                         
@@ -437,11 +434,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                         case storagePolicy : RetainInStore => {
                         }
                         case _ => {
-                          tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                          BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
                           //spaceLock.depart( slk )
                           spaceLock.depart( ptn, slk )
-                          //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                          //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                          //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                          //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                         }
                       }
                       
@@ -455,14 +452,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                       ) {
                         val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
                         
-                        tweet( "found a resource: " + rsrc )                
+                        BasicLogService.tweet( "found a resource: " + rsrc )
                         
                         consume match {
                           case policy : RetainInCache => {
                             channels -= place
                           }
                           case _ => {
-                            tweet( "policy indicates not to consume from cache: " + place )
+                            BasicLogService.tweet( "policy indicates not to consume from cache: " + place )
                           }
                         }
                         
@@ -470,11 +467,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                           case storagePolicy : RetainInStore => {
                           }
                           case _ => {
-                            tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                            BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
                             //spaceLock.depart( slk )
                             spaceLock.depart( ptn, slk )
-                            //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                            //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                            //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                            //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                           }
                         }
                         
@@ -487,7 +484,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                   
                 }                               
                 //}
-                //tweet( "get returning" )
+                //BasicLogService.tweet( "get returning" )
                 outerk()
               }
           }
@@ -556,7 +553,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
 
-      tweet(
+      BasicLogService.tweet(
         ( this + " in forwardGet with hops: " + hops )
       )
 
@@ -568,7 +565,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
         ( uri, jsndr ) <- agentTwistedPairs
         if !hops.contains( uri )
       ) {
-        tweet(
+        BasicLogService.tweet(
           ( this + " forwarding to " + uri )
         )
         val smajatp : SMAJATwistedPair =
@@ -602,7 +599,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
       path : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : Unit = {
 
-      tweet(
+      BasicLogService.tweet(
         ( this + " in forwardGet with hops: " + hops )
       )
 
@@ -610,7 +607,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
         ( uri, jsndr ) <- agentTwistedPairs
         if !hops.contains( uri )
       ) {
-        tweet(
+        BasicLogService.tweet(
           ( this + " forwarding to " + uri )
         )
         val smajatp : SMAJATwistedPair =
@@ -738,7 +735,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
             Some( mTT.Ground( gv ) ),
             Some( soln ) 
           ) => {
-            tweet(
+            BasicLogService.tweet(
               (
                 this + " sending value " + oV + " back "
               )
@@ -752,7 +749,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
             Some( mTT.Ground( gv ) ),
             None 
           ) => {
-            tweet(
+            BasicLogService.tweet(
               (
                 this + " sending value " + oV + " back "
               )
@@ -763,7 +760,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
           }
 
           case mTT.Ground( gv ) => {
-            tweet(
+            BasicLogService.tweet(
               (
                 this + " sending value " + oV + " back "
               )
@@ -773,7 +770,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
 
           }
           case _ => {
-            tweet(
+            BasicLogService.tweet(
               (
                 this 
                 + " not sending composite value " + oV
@@ -791,16 +788,16 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
         msgId, mtrgt, msrc, lbl, body, _
       ) = dreq
 
-      tweet( this + "handling : " + dreq )
+      BasicLogService.tweet( this + "handling : " + dreq )
 
       body match {
         case dgreq@Msgs.MDGetRequest( path ) => {         
-          tweet(
+          BasicLogService.tweet(
             ( this + "getting locally for location : " + path )
           )
           reset {
             for( v <- get( List( msrc ) )( false )( path ) ) {
-              tweet(
+              BasicLogService.tweet(
                 (
                   this 
                   + " returning from local get for location : "
@@ -814,12 +811,12 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
         }
         
         case dfreq@Msgs.MDFetchRequest( path ) => {
-          tweet(
+          BasicLogService.tweet(
             ( this + "fetching locally for location : " + path )
           )
           reset {
             for( v <- fetch( List( msrc ) )( false )( path ) ) {
-              tweet(
+              BasicLogService.tweet(
                 (
                   this 
                   + " returning from local fetch for location : "
@@ -833,12 +830,12 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
         }
 
         case dsreq@Msgs.MDSubscribeRequest( path ) => {
-          tweet(
+          BasicLogService.tweet(
             ( this + "fetching locally for location : " + path )
           )
           reset {
             for( v <- subscribe( List( msrc ) )( path ) ) {
-              tweet(
+              BasicLogService.tweet(
                 (
                   this 
                   + " returning from local subscribe for location : "
@@ -886,7 +883,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
         case dpub : Msgs.MDPublishResponse[Namespace,Var,Tag,Value] => {        
         }
         case _ => {
-          tweet(
+          BasicLogService.tweet(
             (
               this 
               + " handling unexpected message : " + body
@@ -903,7 +900,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
             msgId, mtrgt, msrc, lbl, body, _
           )
         ) => {
-          tweet(
+          BasicLogService.tweet(
             (
               this + " handling : " + dmsg
               + " from " + msrc
@@ -917,7 +914,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
             msgId, mtrgt, msrc, lbl, body, _
           )
         ) => {
-          tweet(
+          BasicLogService.tweet(
             (
               this + " handling : " + dmsg
               + " from " + msrc
@@ -980,7 +977,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]  {
                 ) {
                   oV match {
                     case None => {
-                      //tweet( ">>>>> forwarding..." )
+                      //BasicLogService.tweet( ">>>>> forwarding..." )
                       forward( ask, hops, path )
                       rk( oV )
                     }

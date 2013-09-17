@@ -31,7 +31,7 @@ import _root_.java.util.TimerTask
 
 trait MonadicAMQPDispatcher[T]
  extends MonadicDispatcher[T] with Serializable {
-   self : WireTap with Journalist =>
+   self : WireTap =>
 
   case class AMQPDelivery(
     tag   : String,
@@ -97,14 +97,14 @@ trait MonadicAMQPDispatcher[T]
   ) = Generator {
     k : ( T => Unit @suspendable ) =>
       //shift {
-	blog(
+	BasicLogService.blog(
 	  "The rabbit is running... (with apologies to John Updike)"
 	)
 
 	for( channel <- acceptConnections( factory, host, port ) ) {
 	  spawn {
 	    // Open bracket
-	    blog( "Connected: " + channel )
+	    BasicLogService.blog( "Connected: " + channel )
             val qname = (exQNameRoot + "_queue")
             channel.exchangeDeclare( exQNameRoot, "direct" )
             channel.queueDeclare(qname, true, false, false, null);
@@ -128,7 +128,7 @@ trait MonadicAMQPDispatcher[T]
     Generator {
       k : ( Payload => Unit @suspendable) =>
 
-      blog("level 1 callbacks")
+      BasicLogService.blog("level 1 callbacks")
 
       shift {
 	outerk : (Unit => Any) =>
@@ -142,18 +142,18 @@ trait MonadicAMQPDispatcher[T]
 	       body : Array[Byte]
 	     ) {
     		 spawn { 
-  		   blog("before continuation in callback")
+  		   BasicLogService.blog("before continuation in callback")
   		
     		   k( AMQPDelivery( tag, env, props, body ) )
     		
-    		   blog("after continuation in callback")
+    		   BasicLogService.blog("after continuation in callback")
     		   
 		   outerk()
     		 }
     	     }
 	   }
   	
-  	blog("before registering callback")
+  	BasicLogService.blog("before registering callback")
   	
 	channel.basicConsume(
 //	  ticket,
@@ -162,7 +162,7 @@ trait MonadicAMQPDispatcher[T]
 	  TheRendezvous
 	)
   	
-  	blog("after registering callback")
+  	BasicLogService.blog("after registering callback")
   	// stop
       }
     }
@@ -199,7 +199,7 @@ trait MonadicAMQPDispatcher[T]
 		 shift { k : ( Unit => Unit ) => k() }
   	       }
   	       
-  	       blog( "readT returning" )
+  	       BasicLogService.blog( "readT returning" )
   	       outerk()
 	     }
 	 }
@@ -224,20 +224,20 @@ extends WireToTrgtConversion {
 trait MonadicJSONAMQPDispatcher[T]
 extends JSONWireToTrgtConversion
 {
-  self : MonadicWireToTrgtConversion with WireTap with Journalist =>
+  self : MonadicWireToTrgtConversion with WireTap =>
     type Trgt = T   
 }
 
 trait DefaultMonadicAMQPDispatcher[T]
 extends MonadicAMQPDispatcher[T] {
-  self : WireTap with Journalist =>
+  self : WireTap =>
   //import AMQPDefaults._
   
   def host : String
   def port : Int
 
   override def tap [A] ( fact : A ) : Unit = {
-    reportage( fact )
+    BasicLogService.reportage( fact )
   }
 
   def acceptConnections()( implicit connectionFactory : ConnectionFactory )
@@ -255,10 +255,7 @@ class StdMonadicAMQPDispatcher[T](
   override val host : String,
   override val port : Int
 ) extends DefaultMonadicAMQPDispatcher[T](
-) with WireTap
-  with Journalist
-  with ConfiggyReporting
-  with ConfiggyJournal {
+) with WireTap {
 }
 
 class StdMonadicJSONAMQPDispatcher[T](
@@ -286,7 +283,7 @@ object StdMonadicAMQPDispatcher {
 
 trait SemiMonadicJSONAMQPTwistedPair[T]
 {  
-  self : WireTap with Journalist =>
+  self : WireTap =>
 
   import AMQPDefaults._
   
@@ -367,7 +364,7 @@ trait SemiMonadicJSONAMQPTwistedPair[T]
 	  new JettisonMappedXmlDriver()
 	).toXML( contents )	
 
-      // tweet(
+      // BasicLogService.tweet(
 // 	(
 // 	  this 
 // 	  + " is sending "
@@ -387,12 +384,9 @@ class SMJATwistedPair[T](
   override val srcURI : Moniker,
   override val trgtURI : Moniker
 ) extends SemiMonadicJSONAMQPTwistedPair[T]
-  with WireTap
-  with Journalist
-  with ConfiggyReporting
-  with ConfiggyJournal {
+  with WireTap {
     override def tap [A] ( fact : A ) : Unit = {
-      reportage( fact )
+      BasicLogService.reportage( fact )
     }
 }
 

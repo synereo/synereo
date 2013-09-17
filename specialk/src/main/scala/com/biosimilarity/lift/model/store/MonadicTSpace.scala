@@ -401,9 +401,7 @@ with ThreadPoolRunnersX
 with ExcludedMiddleTypes[Place,Pattern,Resource]
 {
   self : WireTap
-      with Journalist
-      with ConfiggyReporting 
-      with ConfigurationTrampoline =>           
+      with ConfigurationTrampoline =>
 
   @transient
   //var _spaceLock : Option[SpaceLock[RK]] = None
@@ -474,7 +472,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 //       sched.submitTask(() => run(ctx))
 //     }
 //     else {
-//       tweet( "warning: implicit argument, sched, is null" )
+//       BasicLogService.tweet( "warning: implicit argument, sched, is null" )
 //       createDefaultTaskRunner().submitTask(() => run(ctx))
 //     }
 //   }
@@ -576,7 +574,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                       channels -= place
                     }
                     case _ => {
-                      tweet( "policy indicates not to remove from cache: " + place )
+                      BasicLogService.tweet( "policy indicates not to remove from cache: " + place )
                     }
                   }
 
@@ -614,19 +612,19 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
               //spaceLock.occupy( slk )
               spaceLock.occupy( ptn, slk )
 
-              tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
-              //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-              //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+              BasicLogService.tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
+              //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+              //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
               val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
               val meets = locations( map, ptn )
               
               if ( meets.isEmpty ) {
                 val place = representative( ptn )
-                tweet( "did not find a resource, storing a continuation: " + rk )
-                tweet( "registered continuation storage: " + registered )
-                tweet( "theWaiters: " + theWaiters )
-                tweet( "theSubscriptions: " + theSubscriptions )                  
+                BasicLogService.tweet( "did not find a resource, storing a continuation: " + rk )
+                BasicLogService.tweet( "registered continuation storage: " + registered )
+                BasicLogService.tweet( "theWaiters: " + theWaiters )
+                BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
                 
                 keep match {
                   case policy : RetainInCache => {
@@ -634,24 +632,24 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                       registered.get( place ).getOrElse( Nil ) ++ List( rk )
                   }
                   case _ => {
-                    tweet( "policy indicates not to retain in cache: " + rk )
+                    BasicLogService.tweet( "policy indicates not to retain in cache: " + rk )
                   }
                 }
                 
-                tweet( "stored a continuation: " + rk )
-                tweet( "registered continuation storage: " + registered )
-                tweet( "theWaiters: " + theWaiters )
-                tweet( "theSubscriptions: " + theSubscriptions )
+                BasicLogService.tweet( "stored a continuation: " + rk )
+                BasicLogService.tweet( "registered continuation storage: " + registered )
+                BasicLogService.tweet( "theWaiters: " + theWaiters )
+                BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
                                 
                 keep match {
                   case storagePolicy : RetainInStore => {
                   }
                   case _ => {
-                    tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                    BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
                     //spaceLock.depart( slk )
                     spaceLock.depart( ptn, slk )
-                    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                   }
                 }
                 
@@ -665,14 +663,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                 ) {
                   val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
                   
-                  tweet( "found a resource: " + rsrc )              
+                  BasicLogService.tweet( "found a resource: " + rsrc )
                   
                   consume match {
                     case policy : RetainInCache => {
                       channels -= place
                     }
                     case _ => {
-                      tweet( "policy indicates not to consume from cache: " + place )
+                      BasicLogService.tweet( "policy indicates not to consume from cache: " + place )
                     }
                   }
                   
@@ -680,11 +678,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                     case storagePolicy : RetainInStore => {
                     }
                     case _ => {
-                      tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                      BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
                       //spaceLock.depart( slk )
                       spaceLock.depart( ptn, slk )
-                      //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                      //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                     }
                   }
 
@@ -716,7 +714,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     Generator {
       k : ( PlaceInstance => Unit @suspendable ) => 
         // Are there outstanding waiters at this pattern?    
-        tweet(
+        BasicLogService.tweet(
           (
             ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
             + "in putPlaces\n"
@@ -734,7 +732,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
         waitlist match {
           // Yes!
           case waiter :: waiters => {
-            tweet( "found waiters waiting for a value at " + ptn )
+            BasicLogService.tweet( "found waiters waiting for a value at " + ptn )
             val itr = waitlist.toList.iterator      
             while( itr.hasNext ) {
               k( itr.next )
@@ -756,7 +754,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {    
     for( placeNRKsNSubst <- putPlacesWithSuspension( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-      tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+      BasicLogService.tweet( "waiters waiting for a value at " + wtr + " : " + rks )
       rks match {
         case rk :: rrks => {    
           if ( consume ) {
@@ -809,7 +807,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     Generator {
       k : ( PlaceInstance => Unit @suspendable ) => 
         // Are there outstanding waiters at this pattern?    
-        tweet(
+        BasicLogService.tweet(
           (
             ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
             + "in putPlaces\n"
@@ -827,7 +825,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
         waitlist match {
           // Yes!
           case waiter :: waiters => {
-            tweet( "found waiters waiting for a value at " + ptn )
+            BasicLogService.tweet( "found waiters waiting for a value at " + ptn )
             val itr = waitlist.toList.iterator      
             while( itr.hasNext ) {
               k( itr.next )
@@ -836,14 +834,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
           // No...
           case Nil => {
             // Store the rsrc at a representative of the ptn
-            tweet( "no waiters waiting for a value at " + ptn )     
+            BasicLogService.tweet( "no waiters waiting for a value at " + ptn )
             channels( representative( ptn ) ) = rsrc
 
-            tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+            BasicLogService.tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
             //spaceLock.depart( None )
             spaceLock.depart( ptn )
-            //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-            //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+            //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+            //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
           }
         }
     }
@@ -856,22 +854,22 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
   )( ptn : Pattern, rsrc : Resource ) : Unit @suspendable = {        
     //spaceLock.occupy( None )
     spaceLock.occupy( ptn )
-    tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
-    //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-    //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+    BasicLogService.tweet( "Writer occupying spaceLock on " + this + " for mput on " + ptn + "." )
+    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
     for( placeNRKsNSubst <- putPlaces( channels, registered, ptn, rsrc ) ) {
       val PlaceInstance( wtr, Right( rks ), s ) = placeNRKsNSubst
-      tweet( "waiters waiting for a value at " + wtr + " : " + rks )
+      BasicLogService.tweet( "waiters waiting for a value at " + wtr + " : " + rks )
       rks match {
         case rk :: rrks => {    
           if ( consume ) {
 
-            tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+            BasicLogService.tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
             //spaceLock.depart( None )
             spaceLock.depart( ptn )
-            //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-            //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+            //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+            //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
             for( sk <- rks ) {
               spawn {
@@ -881,11 +879,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
           }
           else {
 
-            tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+            BasicLogService.tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
             //spaceLock.depart( None )
             spaceLock.depart( ptn )
-            //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-            //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+            //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+            //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
             registered( wtr ) = rrks
 
@@ -895,7 +893,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
         case Nil => {
           //channels( wtr ) = rsrc        
           //channels( ptn ) = rsrc        
-          tweet(
+          BasicLogService.tweet(
             (
               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
               + "in mput with empty waitlist; about to put rsrc\n"
@@ -912,7 +910,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
           else {
             channels( wtr ) = rsrc
           }
-          tweet(
+          BasicLogService.tweet(
             (
               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
               + "in mput with empty waitlist; having put rsrc\n"
@@ -924,11 +922,11 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
             )
           )
 
-          tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
+          BasicLogService.tweet( "Writer departing spaceLock on " + this + " for mput on " + ptn + "." )
           //spaceLock.depart( None )
           spaceLock.depart( ptn )
-          //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-          //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+          //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+          //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
         }
       }
@@ -961,40 +959,40 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
 
               //spaceLock.occupy( slk )
               spaceLock.occupy( ptn, slk )
-              tweet( "Delete occupying spaceLock on " + this + " for delete on " + ptn + "." )
-              //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-              //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+              BasicLogService.tweet( "Delete occupying spaceLock on " + this + " for delete on " + ptn + "." )
+              //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+              //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
               val map = Left[Map[Place,Resource],Map[Place,List[RK]]]( channels )
               val meets = locations( map, ptn )
               
               if ( meets.isEmpty ) {
-                tweet( "Delete found no locations matching pattern: " + ptn )
-                tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
+                BasicLogService.tweet( "Delete found no locations matching pattern: " + ptn )
+                BasicLogService.tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
                 //spaceLock.depart( slk )
                 spaceLock.depart( ptn, slk )
-                //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                 
                 //spaceLock.occupy( None )
                 spaceLock.occupy( ptn )
-                tweet( "Delete occupying spaceLock on " + this + " for mdelete on " + ptn + "." )
-                //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                BasicLogService.tweet( "Delete occupying spaceLock on " + this + " for mdelete on " + ptn + "." )
+                //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                 val map = Right[Map[Place,Resource],Map[Place,List[RK]]]( registered )
                 val waitlist = locations( map, ptn )
 
-                tweet( "Delete departing spaceLock on " + this + " for mdelete on " + ptn + "." )
+                BasicLogService.tweet( "Delete departing spaceLock on " + this + " for mdelete on " + ptn + "." )
                 //spaceLock.depart( None )
                 spaceLock.depart( ptn )
-                //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                 waitlist match {
                   // Yes!
                   case waiter :: waiters => {
-                    tweet( "found waiters waiting for a value at " + ptn )
+                    BasicLogService.tweet( "found waiters waiting for a value at " + ptn )
                     val itr = waitlist.toList.iterator
                     // BUGBUG : lgm -- the compiler crashes if we
                     // attempt to use std pattern matching inside
@@ -1011,13 +1009,13 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                   // No...
                   case Nil => {
                     // Store the rsrc at a representative of the ptn
-                    tweet( "no waiters waiting for a value at " + ptn )     
+                    BasicLogService.tweet( "no waiters waiting for a value at " + ptn )
                     rk( None )                              
                   }
                 }                               
               }
               else {
-                tweet( "Delete found " + meets.length + " locations matching pattern: " + ptn )
+                BasicLogService.tweet( "Delete found " + meets.length + " locations matching pattern: " + ptn )
                 for(
                   placeNRrscNSubst <- itergen[PlaceInstance](
                     meets
@@ -1025,15 +1023,15 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                 ) {
                   val PlaceInstance( place, Left( rsrc ), s ) = placeNRrscNSubst
                   
-                  tweet( "found a resource: " + rsrc )              
+                  BasicLogService.tweet( "found a resource: " + rsrc )
                   
                   channels -= place                               
 
-                  tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
+                  BasicLogService.tweet( "Delete departing spaceLock on " + this + " for delete on " + ptn + "." )
                   //spaceLock.depart( slk )
                   spaceLock.depart( ptn, slk )
-                  //tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                  //tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                  //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
+                  //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
 
                   rk( Some( placeNRrscNSubst ) )
                   
@@ -1062,10 +1060,6 @@ import java.util.regex.{Pattern => RegexPtn, Matcher => RegexMatcher}
 object MonadicRegexTSpace
        extends MonadicTupleSpace[String,String,String]
        with WireTap
-       with Journalist
-       with ConfiggyReporting
-       //with ConfiggyJournal
-       with ConfiguredJournal
        with ConfigurationTrampoline
 {
 
@@ -1077,7 +1071,7 @@ object MonadicRegexTSpace
   override val theSubscriptions = new HashMap[String,List[RK]]()
 
   override def tap [A] ( fact : A ) : Unit = {
-    reportage( fact )
+    BasicLogService.reportage( fact )
   }
 
   override def configFileName : Option[String] = None

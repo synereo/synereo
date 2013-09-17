@@ -59,10 +59,7 @@ import java.util.UUID
 import java.io.File
 
 trait BaseXXMLStore extends BaseXPersist {
-  self : /* Journalist
-	 with ConfiggyReporting
-	 with ConfiguredJournal */
-         ConfigurationTrampoline
+  self : ConfigurationTrampoline
 	 /* with UUIDOps */ =>
 
   def driverClass : Class[_] = {
@@ -83,9 +80,6 @@ trait BaseXCnxnStorage[Namespace,Var,Tag]
     extends BaseXPersist
     with XMLIfy[Namespace,Var] {
   self : BaseXXMLStore
-        /* with Journalist
-	with ConfiggyReporting
-	with ConfiguredJournal */
         with ConfigurationTrampoline
 	with UUIDOps =>
     
@@ -145,10 +139,7 @@ trait BaseXCnxnStorage[Namespace,Var,Tag]
 package usage {
 
 class BaseXRetrieveExample
-extends Journalist
-with ConfiggyReporting
-with ConfiggyJournal
-with UUIDOps {
+extends UUIDOps {
   def get(
     xmlColl : String,
     xmlRsrc : String,
@@ -156,20 +147,20 @@ with UUIDOps {
   ) : Unit = {
     val context : Context = new Context();
  
-    reportage( "=== QueryCollection ===" )
+    BasicLogService.reportage( "=== QueryCollection ===" )
  
     // ------------------------------------------------------------------------
     // Create a collection from all XML documents in the 'etc' directory
-    reportage( "\n* Create a collection." )
+    BasicLogService.reportage( "\n* Create a collection." )
  
     new CreateDB( xmlColl, xmlPath ).execute( context )
  
     // ------------------------------------------------------------------------
     // List all documents in the database
-    reportage( "\n* List all documents in the database:" )
+    BasicLogService.reportage( "\n* List all documents in the database:" )
  
     // The XQuery base-uri() function returns a file path
-    reportage(
+    BasicLogService.reportage(
       new XQuery(
         "for $doc in collection('" + xmlColl + "')" +
         "return <doc path='{ base-uri($doc) }'/>"
@@ -178,11 +169,11 @@ with UUIDOps {
  
     // ------------------------------------------------------------------------
     // Evaluate a query on a single document
-    reportage( "\n* Evaluate a query on a single document:" )
+    BasicLogService.reportage( "\n* Evaluate a query on a single document:" )
  
     // If the name of the database is omitted in the collection() function,
     // the currently opened database will be referenced
-    reportage(
+    BasicLogService.reportage(
       new XQuery(
         "for $doc in collection()" +
         "let $file-path := base-uri($doc)" +
@@ -193,7 +184,7 @@ with UUIDOps {
  
     // ------------------------------------------------------------------------
     // Drop the database
-    reportage( "\n* Drop the database." )
+    BasicLogService.reportage( "\n* Drop the database." )
  
     new DropDB( xmlColl ).execute( context )
  

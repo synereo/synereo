@@ -22,7 +22,7 @@ import _root_.java.util.Timer
 import _root_.java.util.TimerTask
 
 trait MonadicGenerators {
-  //self : WireTap with Journalist =>
+  //self : WireTap =>
 
   trait Generable[+A,-B,+C] {
     def funK : (A => (B @suspendable)) => (C @suspendable)
@@ -133,13 +133,13 @@ trait MonadicGenerators {
 	  outerK : ( Unit => Unit ) =>
 	    reset {
 	      for( elem <- strmGenerator ) {
-		//tweet( "calling conversion on elem " + elem )
+		//BasicLogService.tweet( "calling conversion on elem " + elem )
 		val trgtElem = cnvrtr( elem )
-		//tweet( "calling handler on converted elem " + elem )
+		//BasicLogService.tweet( "calling handler on converted elem " + elem )
 		k( trgtElem )
 	      }
 	      
-	      //blog( "mapStream returning" )
+	      //BasicLogService.blog( "mapStream returning" )
   	      outerK()
 	    }
 	}
@@ -160,8 +160,7 @@ trait MonadicConcurrentGenerators {
   self : MonadicGenerators
     //with FJTaskRunnersX
     with ThreadPoolRunnersX
-    with WireTap
-    with Journalist =>
+    with WireTap =>
     def spawnGen[T]( 
       gen : Generator[T,Unit,Unit]
     ) =
@@ -172,9 +171,9 @@ trait MonadicConcurrentGenerators {
 	      reset {
 		for( g <- gen ) {
 		  spawn {
-		    blog( "before continuation in spawn gen" )
+		    BasicLogService.blog( "before continuation in spawn gen" )
 		    k( g )
-		    blog( "after continuation in spawn gen" )
+		    BasicLogService.blog( "after continuation in spawn gen" )
 		    outerK()
 		  }
 		}
@@ -194,7 +193,7 @@ trait WireToTrgtConversion {
 trait MonadicWireToTrgtConversion 
 {
   self : MonadicGenerators
-       with WireToTrgtConversion with WireTap with Journalist =>
+       with WireToTrgtConversion with WireTap =>
 
   def xformAndDispatch(
     msgGenerator : Generator[Wire,Unit,Unit]
@@ -205,11 +204,11 @@ trait MonadicWireToTrgtConversion
 	  outerK : ( Unit => Unit ) =>
 	    reset {
 	      for( msg <- mapStream[Wire,Trgt]( msgGenerator, wire2Trgt ) ) {		
-		blog( "calling dispatch " )
+		BasicLogService.blog( "calling dispatch " )
 		k( msg )
 	      }
 
-	      blog( "dispatch returning" )
+	      BasicLogService.blog( "dispatch returning" )
   	      outerK()
 	    }
 	}
@@ -221,7 +220,7 @@ trait MonadicDispatcher[T]
   with ThreadPoolRunnersX
   //with FJTaskRunnersX
 {
-  self : WireTap with Journalist =>
+  self : WireTap =>
 
   type Channel
 //  type ConnectionParameters

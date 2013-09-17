@@ -100,8 +100,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
   //with FJTaskRunners
   with UUIDOps
   with WireTap 
-  with Journalist
-{ 
+{
   self : MessageFraming[TxPort,ReqBody,RspBody] =>
 
   import identityConversions._
@@ -171,10 +170,10 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
       override val tQP : TwistedQueuePair[TxPort]
     ) extends AMQPTwistedPairXForm[TxPort,FMsg](
       ( txPortMsg : TxPort ) => {
-	//tweet( "calling txPort2FramedMsg" )
+	//BasicLogService.tweet( "calling txPort2FramedMsg" )
 	txPort2FramedMsg[FramedMsg]( txPortMsg ) match {
 	  case fmsg : FMsg => {
-	    tweet( "fmsg : " + fmsg )
+	    BasicLogService.tweet( "fmsg : " + fmsg )
 	    fmsg
 	  }
 	  case _ => {
@@ -183,11 +182,11 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
 	}
       },
       ( fmsg : FMsg ) => {
-	//tweet( "calling framedMsg2TxPort" )
+	//BasicLogService.tweet( "calling framedMsg2TxPort" )
 	fmsg match {
 	  case trgt : FramedMsg => {
 	    val txPortMsg = framedMsg2TxPort[FramedMsg]( fmsg.asInstanceOf[FramedMsg] )
-	    //tweet( "txPortMsg : " + txPortMsg )
+	    //BasicLogService.tweet( "txPortMsg : " + txPortMsg )
 	    txPortMsg
 	  }
 	  case _ => {
@@ -241,7 +240,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
     }
   }
   
-  override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
+  override def tap [A] ( fact : A ) : Unit = { BasicLogService.reportage( fact ) }
     
   def srcHost : String = mnkrHost( name )  
   def srcPort : Int = mnkrPort( name )
@@ -352,7 +351,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
 	val acqItr = acquaintances.iterator
 	while( acqItr.hasNext ) {
 	  val trgt = acqItr.next.asInstanceOf[Moniker]
-	  tweet( "getting next message in target queue of " + trgt )
+	  BasicLogService.tweet( "getting next message in target queue of " + trgt )
 	  val ( q, tpm, scope ) =
 	    ( stblQMap( trgt ), stblTPMMap( trgt ), stblScopeMap( trgt ) );
 	  val tpmp : scope.TxPortOverAMQPTwistedQueuePairM[FramedMsg] =
@@ -361,7 +360,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
 	    q.asInstanceOf[scope.TxPortOverAMQPTwistedPairXForm[FramedMsg]]
 	  
 	  for( msg <- tpmp( qp ) ) {
-	    tweet( "handling " + msg + " in target queue of " + trgt )
+	    BasicLogService.tweet( "handling " + msg + " in target queue of " + trgt )
 	    reset{ k( msg ) }
 	  }
 	}
@@ -379,17 +378,17 @@ class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
   import identityConversions._
   
   def txPort2FramedMsg [A <: FramedMsg] ( txPortMsg : String ) : A = {
-    //tweet( "message before xform : " + txPortMsg )
+    //BasicLogService.tweet( "message before xform : " + txPortMsg )
     val xstrm = new XStream( new JettisonMappedXmlDriver )
     val msgA = xstrm.fromXML( txPortMsg ).asInstanceOf[A]
-    //tweet( "message after xform : " + msgA )
+    //BasicLogService.tweet( "message after xform : " + msgA )
     msgA
   }
   def framedMsg2TxPort [A >: FramedMsg] ( txPortMsg : A ) : String = {
-    tweet( "message before xform : " + txPortMsg )
+    BasicLogService.tweet( "message before xform : " + txPortMsg )
     val xstrm = new XStream( new JettisonMappedXmlDriver )
     val msgStr = xstrm.toXML( txPortMsg )
-    tweet( "message after xform : " + msgStr )
+    BasicLogService.tweet( "message after xform : " + msgStr )
     msgStr
   }
 }

@@ -11,8 +11,8 @@ import scala.util.continuations._
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-object WWW extends MonadicEmbeddedJetty[String] with WireTap with Journalist {
-  override def tap [A] ( fact : A ) : Unit = { reportage( fact ) }
+object WWW extends MonadicEmbeddedJetty[String] with WireTap {
+  override def tap [A] ( fact : A ) : Unit = { BasicLogService.reportage( fact ) }
 
   def fillInResponse( request : HttpServletRequest, response : HttpServletResponse ) : Unit = {
     response.setContentType( "text/html" )
