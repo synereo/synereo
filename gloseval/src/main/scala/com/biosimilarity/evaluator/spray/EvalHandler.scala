@@ -62,18 +62,18 @@ object CompletionMapper {
 object ConfirmationEmail {
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
-    val simple = new SimpleEmail();
-    simple.setHostName("smtp.googlsimple.com");
-    simple.setSmtpPort(465);
-    simple.setAuthenticator(new DefaultAuthenticator("individualagenttech", "4gent"));
-    simple.setSSLOnConnect(true);
-    simple.setFrom("individualagenttech@gmail.com");
-    simple.setSubject("Confirm individual agent signup");
+    val simple = new SimpleEmail()
+    simple.setHostName("smtp.googlsimple.com")
+    simple.setSmtpPort(465)
+    simple.setAuthenticator(new DefaultAuthenticator("individualagenttech", "4genttech"))
+    simple.setSSLOnConnect(true)
+    simple.setFrom("individualagenttech@gmail.com")
+    simple.setSubject("Confirm individual agent signup")
     // TODO(mike): get the URL from a config file
     simple.setMsg("""Please click on the following link to confirm that you'd like to create a new individual agent:
-      http://ec2-54-212-15-76.us-west-2.compute.amazonaws.com/confirm?token=""" + token);
-    simple.addTo(email);
-    simple.send();
+      http://ec2-54-212-15-76.us-west-2.compute.amazonaws.com/confirm?token=""" + token)
+    simple.addTo(email)
+    simple.send()
   }
 }
 
