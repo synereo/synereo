@@ -497,14 +497,14 @@ trait EvalHandler {
           val cnxns = ic.cnxns.map((cx: CX) => 
             new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
           )
+          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
+          agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
         } catch {
           case (t: Throwable) => {
             BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: t = " + t.printStackTrace)
             throw t
           }
         }
-        BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-        agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
       }
       case _ => {
         throw new Exception("Unrecognized request: " + compact(render(json)))
