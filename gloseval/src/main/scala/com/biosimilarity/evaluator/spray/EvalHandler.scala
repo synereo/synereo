@@ -46,11 +46,6 @@ import java.util.UUID
 
 import java.net.URI
 
-// Evil kludge
-case class CX(src: String, label: String, tgt: String)
-case class E(filter: String, cnxns: List[CX])
-case class IC(filter: String, cnxns: List[CX], value: String)
-
 object CompletionMapper {
   @transient
   val map = new HashMap[String, RequestContext]()
@@ -389,6 +384,22 @@ trait EvalHandler {
     secureLogin(identType, identInfo, password, key)
   }
 
+  def extractCnxn(cx: JObject) = new PortableAgentCnxn(
+    new URI((cx \ "src").extract[String]),
+    (cx \ "label").extract[String],
+    new URI((cx \ "tgt").extract[String])
+  )
+
+  def extractFilterAndCnxns(exprContent: JObject) = {
+    val filter = fromTermString((exprContent \ "filter").extract[String]).getOrElse(
+      throw new Exception("Couldn't parse filter: " + compact(render(exprContent)))
+    )
+    val cnxns = (exprContent \ "cnxns") match {
+      case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
+    }
+    (filter, cnxns)
+  }
+
   def evalSubscribeRequest(json: JValue, cometMessageJSON: (String, String) => Unit) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
 
@@ -398,6 +409,8 @@ trait EvalHandler {
     val (erql, erspl) = agentMgr().makePolarizedPair()
     
     val expression = (content \ "expression")
+    val ec = (expression \ "content").asInstanceOf[JObject]
+    val (filter, cnxns) = extractFilterAndCnxns(ec)
     val exprType = (expression \ "msgType").extract[String]
     exprType match {
       case "feedExpr" => {
@@ -421,11 +434,6 @@ trait EvalHandler {
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
         }
-        val fe = (expression \ "content").extract[E]
-        val filter = fromTermString(fe.filter).getOrElse(
-          throw new Exception("Couldn't parse filter: " + compact(render(json)))
-        )
-        val cnxns = fe.cnxns.map((cx: CX) => new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt)))
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
         agentMgr().feed(erql, erspl)(filter, cnxns, onFeed)
       }
@@ -450,22 +458,13 @@ trait EvalHandler {
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
         }
-        val se = (expression \ "content").extract[E]
-        val filter = fromTermString(se.filter).getOrElse(
-          throw new Exception("Couldn't parse filter: " + compact(render(json)))
-        )
-        val cnxns = se.cnxns.map((cx: CX) => 
-          new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
-        )
         val staff = (expression \ "content" \ "staff") match {
           case JObject(List((which: String, vals@JArray(_)))) => {
             // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
             which match {
-              case "a" => Left(
-                vals.extract[List[CX]].map((cx: CX) => 
-                  new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
-                )
-              )
+              case "a" => vals match {
+                case JArray(arr: List[JObject]) => Left(arr.map(extractCnxn _))
+              }
               case "b" => Right(
                 vals.extract[List[String]].map((t: String) => 
                   fromTermString(t).getOrElse(throw new Exception("Couldn't parse staff: " + json))
@@ -491,18 +490,9 @@ trait EvalHandler {
           BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
           cometMessageJSON(sessionURIstr, compact(render(response)))
         }
-        BasicLogService.tweet("evalSubscribeRequest | insertContent | before ic: expression.content = " + compact(render(expression \ "content")))
-        val ic = (expression \ "content").extract[IC]
-        BasicLogService.tweet("evalSubscribeRequest | insertContent | before filter")
-        val filter = fromTermString(ic.filter).getOrElse(
-          throw new Exception("Couldn't parse filter: " + compact(render(json)))
-        )
-        BasicLogService.tweet("evalSubscribeRequest | insertContent | before cnxns")
-        val cnxns = ic.cnxns.map((cx: CX) => 
-          new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
-        )
+        val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-        agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
+        agentMgr().post(erql, erspl)(filter, cnxns, value, onPost)
       }
       case _ => {
         throw new Exception("Unrecognized request: " + compact(render(json)))
