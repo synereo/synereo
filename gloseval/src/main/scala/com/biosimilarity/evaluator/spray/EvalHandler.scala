@@ -46,6 +46,11 @@ import java.util.UUID
 
 import java.net.URI
 
+// Evil kludge
+case class CX(src: String, label: String, tgt: String)
+case class E(filter: String, cnxns: List[CX])
+case class IC(filter: String, cnxns: List[CX], value: String)
+
 object CompletionMapper {
   @transient
   val map = new HashMap[String, RequestContext]()
@@ -394,9 +399,6 @@ trait EvalHandler {
     
     val expression = (content \ "expression")
     val exprType = (expression \ "msgType").extract[String]
-    case class CX(src: String, label: String, tgt: String)
-    case class E(filter: String, cnxns: List[CX])
-    case class IC(filter: String, cnxns: List[CX], value: String)
     exprType match {
       case "feedExpr" => {
         BasicLogService.tweet("evalSubscribeRequest | feedExpr")
