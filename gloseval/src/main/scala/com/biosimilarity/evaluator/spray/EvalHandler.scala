@@ -490,7 +490,7 @@ trait EvalHandler {
           cometMessageJSON(sessionURIstr, compact(render(response)))
         }
         try {
-          BasicLogService.tweet("evalSubscribeRequest | insertContent | before ic")
+          BasicLogService.tweet("evalSubscribeRequest | insertContent | before ic: expression.content = " + compact(render(expression \ "content")))
           val ic = (expression \ "content").extract[IC]
           BasicLogService.tweet("evalSubscribeRequest | insertContent | before filter")
           val filter = fromTermString(ic.filter).getOrElse(
