@@ -77,7 +77,7 @@ object ConfirmationEmail {
   }
 }
 
-trait EvalHandler extends Journalist {
+trait EvalHandler {
   self : EvaluationCommsService =>
  
   import DSLCommLink.mTT
@@ -147,7 +147,7 @@ trait EvalHandler extends Journalist {
   ) : Unit = {
     import DSLCommLink.mTT
     val cap = if (email == "") UUID.randomUUID.toString else storeCapByEmail(email)
-    tweet("secureSignup email="+email+", password="+password+", cap="+cap)
+    BasicLogService.tweet("secureSignup email="+email+", password="+password+", cap="+cap)
     val macInstance = Mac.getInstance("HmacSHA256")
     macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
     val mac = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
@@ -158,14 +158,14 @@ trait EvalHandler extends Journalist {
     macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
     val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
-    tweet("secureSignup posting pwmac")
+    BasicLogService.tweet("secureSignup posting pwmac")
     val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().post[String](erql, erspl)(
       pwmacFilter,
       List(capSelfCnxn),
       pwmac,
       ( dummy : Option[mTT.Resource] ) => {
-        tweet("secureSignup onPost1")
+        BasicLogService.tweet("secureSignup onPost1")
         // Change String to Term throughout.
         val (erql, erspl) = agentMgr().makePolarizedPair()
         agentMgr().post[String](erql, erspl)(
@@ -175,7 +175,7 @@ trait EvalHandler extends Journalist {
           //     "listOfCnxns(), lastActiveFilter(\"\"))",
           jsonBlob,
           ( dummy : Option[mTT.Resource] ) => {
-            tweet("secureSignup onPost2")
+            BasicLogService.tweet("secureSignup onPost2")
             // TODO(mike): send email with capAndMac
             CompletionMapper.complete(key, compact(render(
               ("msgType" -> "createUserResponse") ~
@@ -237,28 +237,28 @@ trait EvalHandler extends Journalist {
       val capURI = new URI("usercap://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
       val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
-        tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
+        BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
         rsrc match {
           // At this point the cap is good, but we have to verify the pw mac
           case None => ()
           case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
-            tweet("secureLogin | login | onPwmacFetch: Cap is good")
+            BasicLogService.tweet("secureLogin | login | onPwmacFetch: Cap is good")
             postedExpr.asInstanceOf[PostedExpr[String]] match {
               case PostedExpr(pwmac) => {
-                tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
+                BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
                 val macInstance = Mac.getInstance("HmacSHA256")
                 macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
                 val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-                tweet ("secureLogin | login | onPwmacFetch: hex = " + hex)
+                BasicLogService.tweet ("secureLogin | login | onPwmacFetch: hex = " + hex)
                 if (hex != pwmac.toString) {
-                  tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
+                  BasicLogService.tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
                   CompletionMapper.complete(key, compact(render(
                     ("msgType" -> "initializeSessionError") ~
                     ("content" -> ("reason" -> "Bad password.")) 
                   )))
                 } else {
                   val onUserDataFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
-                    tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
+                    BasicLogService.tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
                     optRsrc match {
                       case None => ()
                       case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
@@ -292,23 +292,23 @@ trait EvalHandler extends Journalist {
                   ()
                 }
               }
-              case _ => tweet("PostedExpr problem: " + postedExpr)
+              case _ => BasicLogService.tweet("PostedExpr problem: " + postedExpr)
             }
           }
           case _ => {
-            tweet("Unrecognized resource: " + rsrc)
+            BasicLogService.tweet("Unrecognized resource: " + rsrc)
           }
         }
       }
       val (erql, erspl) = agentMgr().makePolarizedPair()
-      tweet ("secureLogin | login: fetching with eqrl, erspl = " + erql + ", " + erspl)
+      BasicLogService.tweet ("secureLogin | login: fetching with eqrl, erspl = " + erql + ", " + erspl)
       agentMgr().fetch( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFetch)
     }
     
     // identType is either "cap" or "email"
     identType match {
       case "cap" => {
-        tweet("secureLogin | cap branch")
+        BasicLogService.tweet("secureLogin | cap branch")
         val cap = identInfo.slice(0, 36)
         val mac = identInfo.slice(36, 46)
         val macInstance = Mac.getInstance("HmacSHA256")
@@ -320,14 +320,14 @@ trait EvalHandler extends Journalist {
             ("content" -> ("reason" -> "This link wasn't generated by us.")) 
           )))
         } else {
-          tweet("Link OK, logging in")
+          BasicLogService.tweet("Link OK, logging in")
           login(cap)
         }
       }
       
       case "email" => {
         val lcemail = identInfo.toLowerCase
-        tweet("secureLogin | email branch: lcemail = " + lcemail)
+        BasicLogService.tweet("secureLogin | email branch: lcemail = " + lcemail)
         // hash the email to get cap
         val md = MessageDigest.getInstance("SHA1")
         md.update(lcemail.getBytes("utf-8"))
@@ -336,12 +336,12 @@ trait EvalHandler extends Journalist {
         val emailURI = new URI("emailhash://" + cap)
         val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
         val (erql, erspl) = agentMgr().makePolarizedPair()
-        tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
+        BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
         agentMgr().fetch(erql, erspl)(
           emailFilter,
           List(emailSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
-            tweet("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
+            BasicLogService.tweet("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
             optRsrc match {
               case None => ()
               case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
