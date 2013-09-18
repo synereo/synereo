@@ -63,7 +63,7 @@ object ConfirmationEmail {
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
     val simple = new SimpleEmail()
-    simple.setHostName("smtp.googlsimple.com")
+    simple.setHostName("smtp.googlemail.com")
     simple.setSmtpPort(465)
     simple.setAuthenticator(new DefaultAuthenticator("individualagenttech", "4genttech"))
     simple.setSSLOnConnect(true)
