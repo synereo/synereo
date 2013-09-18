@@ -175,26 +175,26 @@ object DSLCommLink
             override def asStoreValue(
               rsrc : mTT.Resource
             ) : CnxnCtxtLeaf[String,String,String] with Factual = {
-              tweet(
+              BasicLogService.tweet(
                 "In asStoreValue on " + this + " for resource: " + rsrc
               )
               val storageDispatch = 
                 rsrc match {
                   case k : mTT.Continuation => {
-                    tweet(
+                    BasicLogService.tweet(
                       "Resource " + rsrc + " is a continuation"
                     )
                     continuationStorageType
                   }
                   case _ => {
-                    tweet(
+                    BasicLogService.tweet(
                       "Resource " + rsrc + " is a value"
                     )
                     valueStorageType
                   }
                 };
               
-              tweet(
+              BasicLogService.tweet(
                 "storageDispatch: " + storageDispatch
               )
               
@@ -208,13 +208,13 @@ object DSLCommLink
                     new String( Base64Coder.encode( baos.toByteArray() ) )
                   }
                   case "CnxnCtxtLabel" => {
-                    tweet(
+                    BasicLogService.tweet(
                       "warning: CnxnCtxtLabel method is using XStream"
                     )
                     toXQSafeJSONBlob( rsrc )                              
                   }
                   case "XStream" => {
-                    tweet(
+                    BasicLogService.tweet(
                       "using XStream method"
                     )
                     
@@ -232,7 +232,7 @@ object DSLCommLink
             def asCacheValue(
               ccl : CnxnCtxtLabel[String,String,String]
             ) : ConcreteHL.HLExpr = {
-              tweet(
+              BasicLogService.tweet(
                 "*****************************************************"
                 + "\nconverting to cache value"
                 + "\n*****************************************************"
@@ -243,7 +243,7 @@ object DSLCommLink
                   //CnxnCtxtLeaf( Left( rv ) ) :: Nil
                   CnxnCtxtLeaf( Left( blob ) ) :: Nil
                 ) => {
-                  tweet(
+                  BasicLogService.tweet(
                     "*****************************************************"
                     + "\nmatched ccl to CnxnCtxtBranch"
                     + "\n*****************************************************"
@@ -254,16 +254,16 @@ object DSLCommLink
                       fromXQSafeJSONBlob( blob )
                     // val jsonBlob =
 //                       (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
-// 	                blob.replace(
-// 	                  "{{",
-// 	                  "{"
-// 	                ).replace(
-// 	                  "}}",
-// 	                  "}"
-// 	                )
+//                      blob.replace(
+//                        "{{",
+//                        "{"
+//                      ).replace(
+//                        "}}",
+//                        "}"
+//                      )
 //                       }
 //                        else {
-// 	                 blob
+//                       blob
 //                        }).replace(
 //                         "&quot;",
 //                         "\""
@@ -272,7 +272,7 @@ object DSLCommLink
 //                       new XStream( new JettisonMappedXmlDriver() )
                     //val unBlob =
                       //blobXStrm.fromXML( jsonBlob )
-                    tweet(
+                    BasicLogService.tweet(
                       "*****************************************************"
                       + "\nunBlob : " + unBlob
                       + "\n*****************************************************"
@@ -280,13 +280,13 @@ object DSLCommLink
                   
                     unBlob match {
                       case rsrc : mTT.Resource => {
-                        tweet(
+                        BasicLogService.tweet(
                           "*****************************************************"
                           + "\nunBlob : " + unBlob
                           + "\n*****************************************************"
                         )
                         val gvRslt = getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-                        tweet(
+                        BasicLogService.tweet(
                           "*****************************************************"
                           + "\ngvRslt : " + gvRslt
                           + "\n*****************************************************"
@@ -303,7 +303,7 @@ object DSLCommLink
                       val sw : java.io.StringWriter = new java.io.StringWriter()
                       val pw : java.io.PrintWriter = new java.io.PrintWriter( sw )
                       e.printStackTrace( pw )
-                      tweet(
+                      BasicLogService.tweet(
                         "*****************************************************"
                         + "\nfromXML failed"
                         + "\n" + sw.toString
@@ -314,7 +314,7 @@ object DSLCommLink
                   }                  
                 }
                 case _ => {
-                  tweet(
+                  BasicLogService.tweet(
                     "*****************************************************"
                     + "failed to matched ccl to CnxnCtxtBranch"
                     + "*****************************************************"
@@ -340,15 +340,15 @@ object DSLCommLink
                case _ => throw new Exception( "xml roundtrip failed " + key )
                }
                */
-              tweet(
-	          (
-	            "DSLCommLink -- PersistedMonadicKVDB : "
-	            + "\nmethod : asResource "
-	            + "\nthis : " + this
-	            + "\nkey : " + key
+              BasicLogService.tweet(
+                  (
+                    "DSLCommLink -- PersistedMonadicKVDB : "
+                    + "\nmethod : asResource "
+                    + "\nthis : " + this
+                    + "\nkey : " + key
                     + "\nvalue : " + value
-	          )
-	        )
+                  )
+                )
               val ltns =
                 labelToNS.getOrElse(
                   throw new Exception( "must have labelToNS to convert mongo object" )
@@ -363,31 +363,31 @@ object DSLCommLink
                 )
               CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                 case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-                  tweet( " ****************************** " )
-                  tweet( "vNs: " + vNs )
-                  tweet( "v: " + v )
-                  tweet( " ****************************** " )
+                  BasicLogService.tweet( " ****************************** " )
+                  BasicLogService.tweet( "vNs: " + vNs )
+                  BasicLogService.tweet( "v: " + v )
+                  BasicLogService.tweet( " ****************************** " )
                   val matchRslt = matchMap( key, k )
-                  tweet( " ****************************** " )
-		  tweet( " matchRslt : " + matchRslt )
-		  tweet( " ****************************** " )
+                  BasicLogService.tweet( " ****************************** " )
+                  BasicLogService.tweet( " matchRslt : " + matchRslt )
+                  BasicLogService.tweet( " ****************************** " )
                   matchRslt match {
                     case Some( soln ) => {
-                      tweet( " ****************************** " )
-		      tweet( " found a solution : " + soln )
-		      tweet( " ****************************** " )                        
+                      BasicLogService.tweet( " ****************************** " )
+                      BasicLogService.tweet( " found a solution : " + soln )
+                      BasicLogService.tweet( " ****************************** " )                        
                       if ( compareNameSpace( ns, kvNameSpace ) ) {
-                        tweet( " ****************************** " )
-		        tweet( " in data space " )
-		        tweet( " ****************************** " )
-                        tweet( " ****************************** " )
-		        tweet( " computing cacheValue " )
-		        tweet( " ****************************** " )
+                        BasicLogService.tweet( " ****************************** " )
+                        BasicLogService.tweet( " in data space " )
+                        BasicLogService.tweet( " ****************************** " )
+                        BasicLogService.tweet( " ****************************** " )
+                        BasicLogService.tweet( " computing cacheValue " )
+                        BasicLogService.tweet( " ****************************** " )
                         val cacheValueRslt =
                           asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
-                        tweet( " ****************************** " )
-		        tweet( " computed cacheValue: " + cacheValueRslt )
-		        tweet( " ****************************** " )
+                        BasicLogService.tweet( " ****************************** " )
+                        BasicLogService.tweet( " computed cacheValue: " + cacheValueRslt )
+                        BasicLogService.tweet( " ****************************** " )
                         val groundWrapper =
                           mTT.Ground( cacheValueRslt )
                         val boundHMWrapper =
@@ -404,16 +404,16 @@ object DSLCommLink
                           // that this cast is not necessary?
                             theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
                           )
-                        tweet( " ****************************** " )
-		        tweet( " placeInstance: " + finalRslt )
-		        tweet( " ****************************** " )
+                        BasicLogService.tweet( " ****************************** " )
+                        BasicLogService.tweet( " placeInstance: " + finalRslt )
+                        BasicLogService.tweet( " ****************************** " )
                         finalRslt
                       }
                       else {
                         if ( compareNameSpace( ns, kvKNameSpace ) ) {
-                          tweet( " ****************************** " )
-		          tweet( " in continuation space " )
-		          tweet( " ****************************** " )
+                          BasicLogService.tweet( " ****************************** " )
+                          BasicLogService.tweet( " in continuation space " )
+                          BasicLogService.tweet( " ****************************** " )
                           val mTT.Continuation( ks ) =
                             asCacheK(
                               new CnxnCtxtBranch[String,String,String](
@@ -437,7 +437,7 @@ object DSLCommLink
                       }
                     }
                     case None => {
-                      //tweet( "Unexpected matchMap failure: " + key + " " + k )
+                      //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
                       throw new UnificationQueryFilter( key, k, value )
                     }
                   }
@@ -451,7 +451,7 @@ object DSLCommLink
           override def asCacheK(
             ccl : CnxnCtxtLabel[String,String,String]
           ) : Option[mTT.Continuation] = {
-            tweet(
+            BasicLogService.tweet(
               "converting to cache continuation stack" + ccl
             )
             ccl match {
@@ -462,7 +462,7 @@ object DSLCommLink
                 val unBlob =
                   continuationStorageType match {
                     case "CnxnCtxtLabel" => {
-                      // tweet(
+                      // BasicLogService.tweet(
                       //                      "warning: CnxnCtxtLabel method is using XStream"
                       //                    )
                       fromXQSafeJSONBlob( rv )

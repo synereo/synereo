@@ -91,7 +91,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     }    
   }
 
-  trait AgentManager extends Journalist {
+  trait AgentManager {
     def erql( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def erspl( sessionID : UUID ) : CnxnCtxtLabel[String,String,String]
     def makePolarizedPair() = {
@@ -114,7 +114,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       cnxns : Seq[Cnxn],
       content : Value,
       onPost : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, InsertContent( filter, cnxns, content ) )
@@ -131,7 +131,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       onReadRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, ReadExpr( filter, cnxns ) )
@@ -147,7 +147,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       onFetchRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, FetchExpr( filter, cnxns ) )
@@ -163,7 +163,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       onFeedRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, FeedExpr( filter, cnxns ) )
@@ -180,7 +180,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       cnxns : Seq[Cnxn],
       staff : Either[Seq[Cnxn],Seq[Label]],
       onScoreRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { tweet( "got response: " + optRsrc ) }
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       reset {
         node().publish( erql, ScoreExpr( filter, cnxns, staff ) )
