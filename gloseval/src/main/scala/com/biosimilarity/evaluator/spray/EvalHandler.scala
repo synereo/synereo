@@ -387,7 +387,7 @@ trait EvalHandler {
   def evalSubscribeRequest(json: JValue, cometMessageJSON: (String, String) => Unit) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
 
-    BasicLogService.tweet("evalSubscribeRequest: json = " + json);
+    BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
     val content = (json \ "content").asInstanceOf[JObject]
     val sessionURIstr = (content \ "sessionURI").extract[String]
     val (erql, erspl) = agentMgr().makePolarizedPair()
@@ -490,19 +490,22 @@ trait EvalHandler {
           cometMessageJSON(sessionURIstr, compact(render(response)))
         }
         try {
+          BasicLogService.tweet("evalSubscribeRequest | insertContent | before ic")
           val ic = (expression \ "content").extract[IC]
+          BasicLogService.tweet("evalSubscribeRequest | insertContent | before filter")
           val filter = fromTermString(ic.filter).getOrElse(
             throw new Exception("Couldn't parse filter: " + compact(render(json)))
           )
+          BasicLogService.tweet("evalSubscribeRequest | insertContent | before cnxns")
           val cnxns = ic.cnxns.map((cx: CX) => 
             new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
           )
           BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
           agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
         } catch {
-          case (t: Throwable) => {
-            BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: t = " + t.printStackTrace)
-            throw t
+          case (ex: Exception) => {
+            BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: ex = " + ex.getStackTrace.mkString("\n"))
+            throw ex
           }
         }
       }
