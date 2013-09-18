@@ -505,7 +505,6 @@ trait EvalHandler {
         } catch {
           case (ex: Exception) => {
             BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: ex = " + ex.getStackTrace.mkString("\n"))
-            throw ex
           }
         }
       }
