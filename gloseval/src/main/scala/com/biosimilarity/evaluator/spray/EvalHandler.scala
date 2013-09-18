@@ -47,9 +47,9 @@ import java.util.UUID
 import java.net.URI
 
 // Evil kludge
-case class CX(src: String, label: String, tgt: String) extends Serializable
-case class E(filter: String, cnxns: List[CX]) extends Serializable
-case class IC(filter: String, cnxns: List[CX], value: String) extends Serializable
+case class CX(src: String, label: String, tgt: String)
+case class E(filter: String, cnxns: List[CX])
+case class IC(filter: String, cnxns: List[CX], value: String)
 
 object CompletionMapper {
   @transient
@@ -491,24 +491,18 @@ trait EvalHandler {
           BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
           cometMessageJSON(sessionURIstr, compact(render(response)))
         }
-        try {
-          BasicLogService.tweet("evalSubscribeRequest | insertContent | before ic: expression.content = " + compact(render(expression \ "content")))
-          val ic = (expression \ "content").extract[IC]
-          BasicLogService.tweet("evalSubscribeRequest | insertContent | before filter")
-          val filter = fromTermString(ic.filter).getOrElse(
-            throw new Exception("Couldn't parse filter: " + compact(render(json)))
-          )
-          BasicLogService.tweet("evalSubscribeRequest | insertContent | before cnxns")
-          val cnxns = ic.cnxns.map((cx: CX) => 
-            new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
-          )
-          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-          agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
-        } catch {
-          case (ex: Exception) => {
-            BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: ex = " + ex + "\n" + ex.getStackTrace.mkString("\n"))
-          }
-        }
+        BasicLogService.tweet("evalSubscribeRequest | insertContent | before ic: expression.content = " + compact(render(expression \ "content")))
+        val ic = (expression \ "content").extract[IC]
+        BasicLogService.tweet("evalSubscribeRequest | insertContent | before filter")
+        val filter = fromTermString(ic.filter).getOrElse(
+          throw new Exception("Couldn't parse filter: " + compact(render(json)))
+        )
+        BasicLogService.tweet("evalSubscribeRequest | insertContent | before cnxns")
+        val cnxns = ic.cnxns.map((cx: CX) => 
+          new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
+        )
+        BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
+        agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
       }
       case _ => {
         throw new Exception("Unrecognized request: " + compact(render(json)))
