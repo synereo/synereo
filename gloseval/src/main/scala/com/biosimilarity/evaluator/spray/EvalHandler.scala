@@ -387,6 +387,7 @@ trait EvalHandler {
   def evalSubscribeRequest(json: JValue, cometMessageJSON: (String, String) => Unit) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
 
+    BasicLogService.tweet("evalSubscribeRequest: json = " + json);
     val content = (json \ "content").asInstanceOf[JObject]
     val sessionURIstr = (content \ "sessionURI").extract[String]
     val (erql, erspl) = agentMgr().makePolarizedPair()
@@ -398,7 +399,9 @@ trait EvalHandler {
     case class IC(filter: String, cnxns: List[CX], value: String)
     exprType match {
       case "feedExpr" => {
+        BasicLogService.tweet("evalSubscribeRequest | feedExpr")
         val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
+          BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + rsrc)
           rsrc match {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
@@ -408,6 +411,7 @@ trait EvalHandler {
                     ("sessionURI" -> sessionURIstr) ~
                     ("pageOfPosts" -> List(postedStr))
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                  BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   cometMessageJSON(sessionURIstr, compact(render(response)))
                 }
               }
@@ -420,10 +424,13 @@ trait EvalHandler {
           throw new Exception("Couldn't parse filter: " + compact(render(json)))
         )
         val cnxns = fe.cnxns.map((cx: CX) => new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt)))
+        BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
         agentMgr().feed(erql, erspl)(filter, cnxns, onFeed)
       }
       case "scoreExpr" => {
+        BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
         val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
+          BasicLogService.tweet("evalSubscribeRequest | onScore: rsrc = " + rsrc)
           rsrc match {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
@@ -433,6 +440,7 @@ trait EvalHandler {
                     ("sessionURI" -> sessionURIstr) ~
                     ("pageOfPosts" -> List(postedStr))
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                  BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
                   cometMessageJSON(sessionURIstr, compact(render(response)))
                 }
               }
@@ -466,15 +474,19 @@ trait EvalHandler {
           }
           case _ => throw new Exception("Couldn't parse staff: " + json)
         }
+        BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
         agentMgr().score(erql, erspl)(filter, cnxns, staff, onScore)
       }
       case "insertContent" => {
+        BasicLogService.tweet("evalSubscribeRequest | insertContent")
         val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
+          BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
           // evalComplete, empty seq of posts
           val content =
             ("sessionURI" -> sessionURIstr) ~
             ("pageOfPosts" -> List[String]())
           val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+          BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
           cometMessageJSON(sessionURIstr, compact(render(response)))
         }
         val ic = (expression \ "content").extract[IC]
@@ -484,6 +496,7 @@ trait EvalHandler {
         val cnxns = ic.cnxns.map((cx: CX) => 
           new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
         )
+        BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
       }
       case _ => {
