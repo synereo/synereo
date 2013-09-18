@@ -489,13 +489,20 @@ trait EvalHandler {
           BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
           cometMessageJSON(sessionURIstr, compact(render(response)))
         }
-        val ic = (expression \ "content").extract[IC]
-        val filter = fromTermString(ic.filter).getOrElse(
-          throw new Exception("Couldn't parse filter: " + compact(render(json)))
-        )
-        val cnxns = ic.cnxns.map((cx: CX) => 
-          new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
-        )
+        try {
+          val ic = (expression \ "content").extract[IC]
+          val filter = fromTermString(ic.filter).getOrElse(
+            throw new Exception("Couldn't parse filter: " + compact(render(json)))
+          )
+          val cnxns = ic.cnxns.map((cx: CX) => 
+            new PortableAgentCnxn(new URI(cx.src), cx.label, new URI(cx.tgt))
+          )
+        } catch {
+          case (t: Throwable) => {
+            BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: t = " + t.printStackTrace)
+            throw t
+          }
+        }
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
       }
