@@ -504,7 +504,7 @@ trait EvalHandler {
           agentMgr().post(erql, erspl)(filter, cnxns, ic.value, onPost)
         } catch {
           case (ex: Exception) => {
-            BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: ex = " + ex.getStackTrace.mkString("\n"))
+            BasicLogService.tweet("evalSubscribeRequest | insertContent | exception: ex = " + ex + "\n" + ex.getStackTrace.mkString("\n"))
           }
         }
       }
