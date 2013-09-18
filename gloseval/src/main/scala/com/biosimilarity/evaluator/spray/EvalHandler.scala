@@ -47,9 +47,9 @@ import java.util.UUID
 import java.net.URI
 
 // Evil kludge
-case class CX(src: String, label: String, tgt: String)
-case class E(filter: String, cnxns: List[CX])
-case class IC(filter: String, cnxns: List[CX], value: String)
+case class CX(src: String, label: String, tgt: String) extends Serializable
+case class E(filter: String, cnxns: List[CX]) extends Serializable
+case class IC(filter: String, cnxns: List[CX], value: String) extends Serializable
 
 object CompletionMapper {
   @transient
