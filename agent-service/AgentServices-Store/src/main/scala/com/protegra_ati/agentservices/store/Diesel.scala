@@ -2062,6 +2062,7 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
+                            BasicLogService.tweet("Diesel.scala:2065 forward(" + optRsrc + ")")
                             for( mTT.Ground( v ) <- optRsrc ) {                              
                               reset {
                                 server.put( erspl, DSLCommLink.mTT.Ground( v ) )                                
@@ -2092,6 +2093,7 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
+                            BasicLogService.tweet("Diesel.scala:2096 forward(" + optRsrc + ")")
                             for( mTT.Ground( v ) <- optRsrc ) {                              
                               reset {
                                 server.put( erspl, DSLCommLink.mTT.Ground( v ) )
@@ -2127,6 +2129,7 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
+                                    BasicLogService.tweet("Diesel.scala:2132 forward(" + optRsrc + ")")
                                     for( mTT.Ground( v ) <- optRsrc ) {                                      
                                       reset {
                                         server.put( erspl, DSLCommLink.mTT.Ground( v ) )
@@ -2231,6 +2234,7 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
+                            BasicLogService.tweet("Diesel.scala:2237 forward(" + optRsrc + ")")
                             for( mTT.Ground( v ) <- optRsrc ) {                              
                               reset {
                                 server.put( erspl, DSLCommLink.mTT.Ground( v ) )                                
@@ -2261,6 +2265,7 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
+                            BasicLogService.tweet("Diesel.scala:2268 forward(" + optRsrc + ")")
                             for( mTT.Ground( v ) <- optRsrc ) {                              
                               reset {
                                 server.put( erspl, DSLCommLink.mTT.Ground( v ) )
@@ -2296,6 +2301,7 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
+                                    BasicLogService.tweet("Diesel.scala:2304 forward(" + optRsrc + ")")
                                     for( mTT.Ground( v ) <- optRsrc ) {                                      
                                       reset {
                                         server.put( erspl, DSLCommLink.mTT.Ground( v ) )
