@@ -481,6 +481,7 @@ trait EvalHandler {
       case "insertContent" => {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
+          println("evalSubscribeRequest | insertContent | onPost")
           BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
           // evalComplete, empty seq of posts
           val content =
