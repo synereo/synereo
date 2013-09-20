@@ -407,6 +407,7 @@ trait EvalHandler {
     val content = (json \ "content").asInstanceOf[JObject]
     val sessionURIstr = (content \ "sessionURI").extract[String]
     val (erql, erspl) = agentMgr().makePolarizedPair()
+    BasicLogService.tweet("evalSubscribeRequest: erql = " + erql + ", erspl = " + erspl)
     
     val expression = (content \ "expression")
     val ec = (expression \ "content").asInstanceOf[JObject]
