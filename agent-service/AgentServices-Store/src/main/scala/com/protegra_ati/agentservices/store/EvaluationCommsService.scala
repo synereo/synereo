@@ -120,7 +120,12 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         node().publish( erql, InsertContent( filter, cnxns, content ) )
       }
       reset {
-        for( e <- node().subscribe( erspl ) ) { onPost( e ) }
+        BasicLogService.tweet("agentMgr | post | before subscribe")
+        for( e <- node().subscribe( erspl ) ) { 
+          BasicLogService.tweet("agentMgr | post | invoking onPost: " + e)
+          onPost( e ) 
+        }
+        BasicLogService.tweet("agentMgr | post | after subscribe")
       }
     }
     // TODO(metaweta): factor case class out of read, fetch, and feed
