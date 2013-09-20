@@ -1730,7 +1730,7 @@ package diesel {
                 node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
               }
 
-              handler( None )
+              handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
             }
           }
         }
@@ -1995,7 +1995,7 @@ package diesel {
                   n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
                 
-                handler( None )
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
               }
             }
           }
