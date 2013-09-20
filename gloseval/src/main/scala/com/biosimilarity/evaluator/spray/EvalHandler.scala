@@ -164,25 +164,35 @@ trait EvalHandler {
       pwmacFilter,
       List(capSelfCnxn),
       pwmac,
-      ( dummy : Option[mTT.Resource] ) => {
-        BasicLogService.tweet("secureSignup onPost1")
-        // Change String to Term throughout.
-        val (erql, erspl) = agentMgr().makePolarizedPair()
-        agentMgr().post[String](erql, erspl)(
-          userDataFilter,
-          List(capSelfCnxn),
-          // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
-          //     "listOfCnxns(), lastActiveFilter(\"\"))",
-          jsonBlob,
-          ( dummy : Option[mTT.Resource] ) => {
-            BasicLogService.tweet("secureSignup onPost2")
-            // TODO(mike): send email with capAndMac
-            CompletionMapper.complete(key, compact(render(
-              ("msgType" -> "createUserResponse") ~
-              ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
-            )))
+      ( optRsrc : Option[mTT.Resource] ) => {
+        BasicLogService.tweet("secureSignup onPost1: optRsrc = " + optRsrc)
+        optRsrc match {
+          case None => ()
+          case Some(_) => {
+            // Change String to Term throughout.
+            val (erql, erspl) = agentMgr().makePolarizedPair()
+            agentMgr().post[String](erql, erspl)(
+              userDataFilter,
+              List(capSelfCnxn),
+              // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
+              //     "listOfCnxns(), lastActiveFilter(\"\"))",
+              jsonBlob,
+              ( optRsrc : Option[mTT.Resource] ) => {
+                BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(_) => {
+                    // TODO(mike): send email with capAndMac
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "createUserResponse") ~
+                      ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
+                    )))
+                  }
+                }
+              }
+            )
           }
-        )
+        }
       }
     )
   }
@@ -212,13 +222,19 @@ trait EvalHandler {
         List(tokenCnxn),
         // email, password, and jsonBlob
         compact(render(json \ "content")),
-        (dummy: Option[mTT.Resource]) => {
-          confirm(email, token)
-          // Notify user to check her email
-          CompletionMapper.complete(key, compact(render(
-            ("msgType" -> "createUserWaiting") ~
-            ("content" -> List()) // List() is rendered as "{}" 
-          )))
+        (optRsrc: Option[mTT.Resource]) => {
+          BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
+          optRsrc match {
+            case None => ()
+            case Some(_) => {
+              confirm(email, token)
+              // Notify user to check her email
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "createUserWaiting") ~
+                ("content" -> List()) // List() is rendered as "{}" 
+              )))
+            }
+          }
         }
       )
     }
@@ -484,13 +500,18 @@ trait EvalHandler {
         val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
           println("evalSubscribeRequest | insertContent | onPost")
           BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
-          // evalComplete, empty seq of posts
-          val content =
-            ("sessionURI" -> sessionURIstr) ~
-            ("pageOfPosts" -> List[String]())
-          val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-          BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-          cometMessageJSON(sessionURIstr, compact(render(response)))
+          rsrc match {
+            case None => ()
+            case Some(_) => {
+              // evalComplete, empty seq of posts
+              val content =
+                ("sessionURI" -> sessionURIstr) ~
+                ("pageOfPosts" -> List[String]())
+              val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+              BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+              cometMessageJSON(sessionURIstr, compact(render(response)))
+            }
+          }
         }
         val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
@@ -506,7 +527,10 @@ trait EvalHandler {
     connectServers( sessionId )(
       ( optRsrc : Option[mTT.Resource] ) => {
         println( "got response: " + optRsrc )
-        CompletionMapper.complete( key, optRsrc.toString )
+        optRsrc match {
+          case None => ()
+          case Some(rsrc) => CompletionMapper.complete( key, rsrc.toString )
+        }
       }
     )    
   }
