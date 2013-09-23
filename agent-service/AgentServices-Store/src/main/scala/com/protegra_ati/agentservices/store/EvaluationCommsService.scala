@@ -120,7 +120,25 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         node().publish( erql, InsertContent( filter, cnxns, content ) )
       }
       reset {
-        for( e <- node().subscribe( erspl ) ) { onPost( e ) }
+        try { 
+          for(
+            e <- try { node().subscribe( erspl ) }
+            catch {
+              case e : Throwable => {
+                BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
+                throw e
+              }
+            }
+          ) {
+            onPost( e )
+          }
+        }
+        catch {
+          case e : Throwable => {
+            BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
+            throw e
+          }
+        }
       }
     }
     // TODO(metaweta): factor case class out of read, fetch, and feed
