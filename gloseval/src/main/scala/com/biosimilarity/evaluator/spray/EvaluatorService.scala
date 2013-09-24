@@ -156,10 +156,6 @@ trait EvaluatorService extends HttpService
   @transient
   val cometActor = actorRefFactory.actorOf(Props[CometActor])        
   
-  def cometMessageJSON(sessionURI: String, jsonBody: String): Unit = {
-    cometActor ! CometMessage(sessionURI, HttpBody(`application/json`, jsonBody))
-  }
-
   @transient
   val myRoute = 
     path("signup") {
@@ -206,7 +202,9 @@ trait EvaluatorService extends HttpService
                     println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                     // TODO(mike): pull out the sessionURI
                     try {
-                      evalSubscribeRequest(json, cometMessageJSON)
+                      var key = UUID.randomUUID.toString
+                      CometActorMapper.map += (key -> cometActor)
+                      evalSubscribeRequest(json, key)
                       ctx.complete(StatusCodes.OK)
                     } catch {
                       case e : Throwable => {

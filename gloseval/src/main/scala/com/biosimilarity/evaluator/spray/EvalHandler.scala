@@ -49,11 +49,20 @@ import java.net.URI
 object CompletionMapper {
   @transient
   val map = new HashMap[String, RequestContext]()
-  def complete(key:String, message: String): Unit = {
-    println("CompletionMapper complete key="+key+", message="+message)
+  def complete(key: String, message: String): Unit = {
     for (reqCtx <- map.get(key)) {
-      println("CompletionMapper complete reqCtx="+reqCtx)
       reqCtx.complete(HttpResponse(200, message))
+    }
+    map -= key
+  }
+}
+
+object CometActorMapper {
+  @transient
+  val map = new HashMap[String, akka.actor.ActorRef]()
+  def cometMessage(key: String, sessionURI: String, jsonBody: String): Unit = {
+    for (cometActor <- map.get(key)) {
+      cometActor ! CometMessage(sessionURI, HttpBody(`application/json`, jsonBody))
     }
     map -= key
   }
@@ -416,7 +425,7 @@ trait EvalHandler {
     (filter, cnxns)
   }
 
-  def evalSubscribeRequest(json: JValue, cometMessageJSON: (String, String) => Unit) : Unit = {
+  def evalSubscribeRequest(json: JValue, key: String) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
 
     BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
@@ -444,7 +453,7 @@ trait EvalHandler {
                     ("pageOfPosts" -> List(postedStr))
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                   BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-                  cometMessageJSON(sessionURIstr, compact(render(response)))
+                  CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
                 }
               }
             }
@@ -468,7 +477,7 @@ trait EvalHandler {
                     ("pageOfPosts" -> List(postedStr))
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                   BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-                  cometMessageJSON(sessionURIstr, compact(render(response)))
+                  CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
                 }
               }
             }
@@ -497,25 +506,29 @@ trait EvalHandler {
       }
       case "insertContent" => {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
-        val onPost: Option[mTT.Resource] => Unit = (rsrc) => {
-          println("evalSubscribeRequest | insertContent | onPost")
-          BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
-          rsrc match {
-            case None => ()
-            case Some(_) => {
-              // evalComplete, empty seq of posts
-              val content =
-                ("sessionURI" -> sessionURIstr) ~
-                ("pageOfPosts" -> List[String]())
-              val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-              BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-              cometMessageJSON(sessionURIstr, compact(render(response)))
-            }
-          }
-        }
         val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-        agentMgr().post(erql, erspl)(filter, cnxns, value, onPost)
+        agentMgr().post(erql, erspl)(
+          filter,
+          cnxns,
+          value,
+          (rsrc: Option[mTT.Resource]) => {
+            println("evalSubscribeRequest | insertContent | onPost")
+            BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
+            rsrc match {
+              case None => ()
+              case Some(_) => {
+                // evalComplete, empty seq of posts
+                val content =
+                  ("sessionURI" -> sessionURIstr) ~
+                  ("pageOfPosts" -> List[String]())
+                val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+                BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
+              }
+            }
+          }
+        )
       }
       case _ => {
         throw new Exception("Unrecognized request: " + compact(render(json)))
