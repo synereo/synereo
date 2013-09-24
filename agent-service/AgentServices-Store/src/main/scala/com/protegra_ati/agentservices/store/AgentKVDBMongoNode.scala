@@ -1862,7 +1862,7 @@ with AgentCnxnTypeScope {
         )
         
         val pmgj = getLocalPartition( cnxn )
-        
+
         BasicLogService.tweet(
           "In cnxn-based drop with partition " + pmgj
         )
