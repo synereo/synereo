@@ -254,6 +254,12 @@
                             <version>${scala.version}</version>
                         </compilerPlugin>
                     </compilerPlugins>
+                    <launchers>
+                        <launcher>
+                            <id>gloseval</id>
+                            <mainClass>com.biosimilarity.evaluator.spray.Boot</mainClass>
+                        </launcher>
+                    </launchers>
                 </configuration>
                 <executions>
                     <execution>
