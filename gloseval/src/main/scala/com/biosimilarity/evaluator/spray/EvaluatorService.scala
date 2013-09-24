@@ -209,7 +209,9 @@ trait EvaluatorService extends HttpService
                       evalSubscribeRequest(json, cometMessageJSON)
                       ctx.complete(StatusCodes.OK)
                     } catch {
-                      case _ => {
+                      case e : Throwable => {
+                        BasicLogService.tweet( "Caught something: " + e )
+                        BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
                         // return an eval error
                         val sessionURI = "agent-session://ArtVandelay@session1";
                         val body = HttpBody(`application/json`,
