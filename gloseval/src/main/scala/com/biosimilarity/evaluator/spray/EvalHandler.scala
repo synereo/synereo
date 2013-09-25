@@ -353,7 +353,7 @@ trait EvalHandler {
       
       case "email" => {
         val email = identInfo.toLowerCase
-        BasicLogService.tweet("secureLogin | email branch: lcemail = " + lcemail)
+        BasicLogService.tweet("secureLogin | email branch: email = " + email)
         // hash the email to get cap
         val cap = emailToCap(email)
         // don't need mac of cap; need to verify email is on our network
