@@ -220,7 +220,6 @@ trait EvalHandler {
       )
     } else {
       // Email provided; send a confirmation email
-      import ConfirmationEmail._
       val token = UUID.randomUUID.toString.substring(0,8)
       val tokenUri = new URI("token://" + token)
       val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
@@ -236,7 +235,7 @@ trait EvalHandler {
           optRsrc match {
             case None => ()
             case Some(_) => {
-              confirm(email, token)
+              ConfirmationEmail.confirm(email, token)
               // Notify user to check her email
               CompletionMapper.complete(key, compact(render(
                 ("msgType" -> "createUserWaiting") ~
