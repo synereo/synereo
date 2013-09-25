@@ -169,7 +169,7 @@ trait EvaluatorService extends HttpService
           entity(as[String]) { jsonStr =>
             (ctx) => {
               try {
-                BasicLogService.tweet(jsonStr)
+                BasicLogService.tweet("json: [" + jsonStr + "]")
                 val json = parse(jsonStr)
                 val msgType = (json \ "msgType").extract[String]
                 msgType match {
