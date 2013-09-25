@@ -127,14 +127,16 @@ trait EvalHandler {
     })
   }
   
+  // Compute the mac of an email address
   def emailToCap(email: String): String = {
     val macInstance = Mac.getInstance("HmacSHA256")
     macInstance.init(new SecretKeySpec("emailmac".getBytes("utf-8"), "HmacSHA256"))
     macInstance.doFinal(email.getBytes("utf-8")).map("%02x" format _).mkString.substring(0,36)
   }
 
+  // Given an email, mac it then create Cnxn(mac, "emailhash", mac) and post "email(X): mac"
+  // to show we know about the email.  Return the mac
   def storeCapByEmail(email: String): String = {
-    // If email is nonempty, hash it for the cap part
     val cap = emailToCap(email)
     val emailURI = new URI("emailhash://" + cap)
     val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
@@ -350,12 +352,10 @@ trait EvalHandler {
       }
       
       case "email" => {
-        val lcemail = identInfo.toLowerCase
+        val email = identInfo.toLowerCase
         BasicLogService.tweet("secureLogin | email branch: lcemail = " + lcemail)
         // hash the email to get cap
-        val md = MessageDigest.getInstance("SHA1")
-        md.update(lcemail.getBytes("utf-8"))
-        val cap = md.digest().map("%02x" format _).mkString.substring(0,36)
+        val cap = emailToCap(email)
         // don't need mac of cap; need to verify email is on our network
         val emailURI = new URI("emailhash://" + cap)
         val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
