@@ -1577,15 +1577,32 @@ package diesel {
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
         node : EvalChannel[ReqBody,RspBody]
       )( expr : ConcreteHL.HLExpr )(
-        handler : Option[mTT.Resource] => Unit
+        innerHandler : Option[mTT.Resource] => Unit,
+        tellDataAbsent : Boolean = true
       ): Unit = {
         BasicLogService.tweet(
           "entering method: evaluateExpression"
           + "\nthis: " + this
           + "\nnode: " + node
           + "\nexpr: " + expr
-          + "\nhandler: " + handler
+          + "\nhandler: " + innerHandler
         )
+        val handler : Option[mTT.Resource] => Unit =
+          if ( tellDataAbsent ) {
+            ( oRsrc : Option[mTT.Resource] ) => {
+              oRsrc match {
+                case None => {
+                  innerHandler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                }
+                case _ => {
+                  innerHandler( oRsrc )
+                }
+              }
+            }
+          } 
+          else {
+            innerHandler
+          }
         expr match {
           case ConcreteHL.Bottom => {
             //throw new Exception( "divergence" )
@@ -1739,17 +1756,34 @@ package diesel {
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
         node : String
       )( expr : ConcreteHL.HLExpr )(
-        handler : Option[mTT.Resource] => Unit
+        innerHandler : Option[mTT.Resource] => Unit,
+        tellDataAbsent : Boolean = true
       ): Unit = {
         BasicLogService.tweet(
           "entering method: evaluateExpression"
           + "\nthis: " + this
           + "\nnode: " + node
           + "\nexpr: " + expr
-          + "\nhandler: " + handler
+          + "\nhandler: " + innerHandler
           + "\n-----------------------------------------"
           + "\n n: " + EvalNodeMapper.get( node )
         )
+        val handler : Option[mTT.Resource] => Unit =
+          if ( tellDataAbsent ) {
+            ( oRsrc : Option[mTT.Resource] ) => {
+              oRsrc match {
+                case None => {
+                  innerHandler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                }
+                case _ => {
+                  innerHandler( oRsrc )
+                }
+              }
+            }
+          } 
+          else {
+            innerHandler
+          }
         for ( n <- EvalNodeMapper.get( node ) ) {
           expr match {
             case ConcreteHL.Bottom => {
