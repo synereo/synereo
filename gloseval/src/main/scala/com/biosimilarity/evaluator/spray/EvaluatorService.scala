@@ -41,6 +41,9 @@ class EvaluatorServiceActor extends Actor
 with EvaluatorService
 with Serializable {
 
+  // TODO(mike): Insert code here to create an agent for holding stuff like email->agent maps
+  
+
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
   def actorRefFactory = context
