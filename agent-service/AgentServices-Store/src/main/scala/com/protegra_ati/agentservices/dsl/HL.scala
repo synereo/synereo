@@ -18,7 +18,7 @@ trait AbstractHL {
 
   trait HLExpr
   trait Query {
-    def filter : Label
+    def label : Label
     def cnxns : Seq[Cnxn]
   }
   trait ValueExpr[Value] {
@@ -30,28 +30,28 @@ trait AbstractHL {
   case object Bottom extends HLExpr
 
   case class FeedExpr(
-    override val filter : Label,
+    override val label : Label,
     override val cnxns : Seq[Cnxn]
   ) extends HLExpr with Query
 
   case class ReadExpr(
-    override val filter : Label,
+    override val label : Label,
     override val cnxns : Seq[Cnxn]
   ) extends HLExpr with Query
 
   case class FetchExpr(
-    override val filter : Label,
+    override val label : Label,
     override val cnxns : Seq[Cnxn]
   ) extends HLExpr with Query
 
   case class ScoreExpr(
-    override val filter : Label,
+    override val label : Label,
     override val cnxns : Seq[Cnxn],
     staff : Either[Seq[Cnxn],Seq[Label]]
   ) extends HLExpr with Query
 
   case class InsertContent[Value](
-    override val filter : Label,
+    override val label : Label,
     override val cnxns : Seq[Cnxn],
     override val value : Value
   ) extends HLExpr with Query with Modification[Value]
