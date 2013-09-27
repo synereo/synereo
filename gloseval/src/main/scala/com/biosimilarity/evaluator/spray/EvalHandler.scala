@@ -415,6 +415,7 @@ trait EvalHandler {
   )
 
   def extractLabelAndCnxns(exprContent: JObject) = {
+    BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
     val label = fromTermString((exprContent \ "label").extract[String]).getOrElse(
       throw new Exception("Couldn't parse label: " + compact(render(exprContent)))
     )
