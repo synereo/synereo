@@ -17,7 +17,7 @@ import java.net.URI
 
 trait HLExpr
 trait Query {
-  def filter : CnxnCtxtLabel[String,String,String]
+  def label : CnxnCtxtLabel[String,String,String]
   def cnxns : Seq[PortableAgentCnxn]
 }
 trait ValueExpr[Value] {
@@ -29,28 +29,28 @@ trait Result[Value] extends ValueExpr[Value]
 case object Bottom extends HLExpr
 
 case class FeedExpr(
-  override val filter : CnxnCtxtLabel[String,String,String],
+  override val label : CnxnCtxtLabel[String,String,String],
   override val cnxns : Seq[PortableAgentCnxn]
 ) extends HLExpr with Query
 
 case class ReadExpr(
-  override val filter : CnxnCtxtLabel[String,String,String],
+  override val label : CnxnCtxtLabel[String,String,String],
   override val cnxns : Seq[PortableAgentCnxn]
 ) extends HLExpr with Query
 
 case class FetchExpr(
-  override val filter : CnxnCtxtLabel[String,String,String],
+  override val label : CnxnCtxtLabel[String,String,String],
   override val cnxns : Seq[PortableAgentCnxn]
 ) extends HLExpr with Query
 
 case class ScoreExpr(
-  override val filter : CnxnCtxtLabel[String,String,String],
+  override val label : CnxnCtxtLabel[String,String,String],
   override val cnxns : Seq[PortableAgentCnxn],
   staff : Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
 ) extends HLExpr with Query
 
 case class InsertContent[Value](
-  override val filter : CnxnCtxtLabel[String,String,String],
+  override val label : CnxnCtxtLabel[String,String,String],
   override val cnxns : Seq[PortableAgentCnxn],
   override val value : Value
 ) extends HLExpr with Query with Modification[Value]
@@ -69,7 +69,7 @@ object PortableToInternalDSL {
     expr : FeedExpr
   ) : com.biosimilarity.evaluator.distribution.ConcreteHL.FeedExpr = {
     com.biosimilarity.evaluator.distribution.ConcreteHL.FeedExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns
     )
   }
@@ -77,7 +77,7 @@ object PortableToInternalDSL {
     expr : ReadExpr
   ) : com.biosimilarity.evaluator.distribution.ConcreteHL.ReadExpr = {
     com.biosimilarity.evaluator.distribution.ConcreteHL.ReadExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns
     )
   }
@@ -85,7 +85,7 @@ object PortableToInternalDSL {
     expr : FetchExpr
   ) : com.biosimilarity.evaluator.distribution.ConcreteHL.FetchExpr = {
     com.biosimilarity.evaluator.distribution.ConcreteHL.FetchExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns
     )
   }
@@ -93,7 +93,7 @@ object PortableToInternalDSL {
     expr : ScoreExpr
   ) : com.biosimilarity.evaluator.distribution.ConcreteHL.ScoreExpr = {
     com.biosimilarity.evaluator.distribution.ConcreteHL.ScoreExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns,
       expr.staff
     )
@@ -102,7 +102,7 @@ object PortableToInternalDSL {
     expr : InsertContent[Value]
   ) : com.biosimilarity.evaluator.distribution.ConcreteHL.InsertContent[Value] = {
     com.biosimilarity.evaluator.distribution.ConcreteHL.InsertContent( 
-      expr.filter,
+      expr.label,
       expr.cnxns,
       expr.value
     )
@@ -130,7 +130,7 @@ object InternalToPortableDSL {
     expr : com.biosimilarity.evaluator.distribution.ConcreteHL.FeedExpr
   ) : FeedExpr  = {
     FeedExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns
     )
   }
@@ -138,7 +138,7 @@ object InternalToPortableDSL {
     expr : com.biosimilarity.evaluator.distribution.ConcreteHL.ReadExpr
   ) : ReadExpr  = {
     ReadExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns
     )
   }
@@ -146,7 +146,7 @@ object InternalToPortableDSL {
     expr : com.biosimilarity.evaluator.distribution.ConcreteHL.FetchExpr
   ) : FetchExpr  = {
     FetchExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns
     )
   }
@@ -154,7 +154,7 @@ object InternalToPortableDSL {
     expr : com.biosimilarity.evaluator.distribution.ConcreteHL.ScoreExpr
   ) : ScoreExpr  = {
     ScoreExpr( 
-      expr.filter,
+      expr.label,
       expr.cnxns,
       expr.staff
     )
@@ -163,7 +163,7 @@ object InternalToPortableDSL {
     expr : com.biosimilarity.evaluator.distribution.ConcreteHL.InsertContent[Value]
   ) : InsertContent[Value] = {
     InsertContent( 
-      expr.filter,
+      expr.label,
       expr.cnxns,
       expr.value
     )
