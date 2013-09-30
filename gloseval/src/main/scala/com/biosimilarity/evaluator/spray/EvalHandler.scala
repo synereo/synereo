@@ -93,7 +93,39 @@ trait EvalHandler {
 
   @transient
   implicit val formats = DefaultFormats
-  
+
+  // Setup
+  def createAgentRequest(json: JValue, key: String): Unit = {}
+  // Agents
+  def addAgentExternalIdentityRequest(json: JValue, key: String): Unit = {}
+  def addAgentExternalIdentityToken(json: JValue, key: String): Unit = {}
+  def removeAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
+  def getAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
+  def addAgentAliasesRequest(json: JValue, key: String): Unit = {}
+  def removeAgentAliasesRequest(json: JValue, key: String): Unit = {}
+  def getAgentAliasesRequest(json: JValue, key: String): Unit = {}
+  def getDefaultAliasRequest(json: JValue, key: String): Unit = {}
+  def setDefaultAliasRequest(json: JValue, key: String): Unit = {}
+  // Aliases
+  def addAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
+  def removeAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
+  def getAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
+  def setAliasDefaultExternalIdentityRequest(json: JValue, key: String): Unit = {}
+  // Connections
+  def addAliasConnectionsRequest(json: JValue, key: String): Unit = {}
+  def removeAliasConnectionsRequest(json: JValue, key: String): Unit = {}
+  def getAliasConnectionsRequest(json: JValue, key: String): Unit = {}
+  def setAliasDefaultConnectionRequest(json: JValue, key: String): Unit = {}
+  // Labels
+  def addAliasLabelsRequest(json: JValue, key: String): Unit = {}
+  def removeAliasLabelsRequest(json: JValue, key: String): Unit = {}
+  def getAliasLabelsRequest(json: JValue, key: String): Unit = {}
+  def setAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
+  def getAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
+  // DSL
+  // def evalSubscribeRequest(JValue json, String key): Unit = {}
+  def evalSubscribeCancelRequest(son: JValue, key: String): Unit = {}
+
   val userDataLabel = fromTermString(
       //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveLabel(F))"
       "userData(X)"
@@ -387,8 +419,7 @@ trait EvalHandler {
 
   def initializeSessionRequest(
     json : JValue,
-    key : String,
-    onPost : Option[Option[mTT.Resource] => Unit] = None
+    key : String
   ): Unit = {
     val agentURI = (json \ "content" \ "agentURI").extract[String]
     val uri = new URI(agentURI)

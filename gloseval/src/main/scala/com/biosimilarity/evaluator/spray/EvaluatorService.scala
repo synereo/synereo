@@ -160,6 +160,47 @@ trait EvaluatorService extends HttpService
   val cometActor = actorRefFactory.actorOf(Props[CometActor])        
   
   @transient
+  val syncMethods = HashMap[String, (JValue, String) => Unit](
+    ("createAgentRequest", createAgentRequest),
+    ("initializeSessionRequest", initializeSessionRequest),
+    // Old messages
+    ("createUserRequest", createUserRequest)
+  )
+  
+  @transient
+  val asyncMethods = HashMap[String, (JValue, String) => Unit](
+    // Agents
+    ("addAgentExternalIdentityRequest", addAgentExternalIdentityRequest),
+    ("addAgentExternalIdentityToken", addAgentExternalIdentityToken),
+    ("removeAgentExternalIdentitiesRequest", removeAgentExternalIdentitiesRequest),
+    ("getAgentExternalIdentitiesRequest", getAgentExternalIdentitiesRequest),
+    ("addAgentAliasesRequest", addAgentAliasesRequest),
+    ("removeAgentAliasesRequest", removeAgentAliasesRequest),
+    ("getAgentAliasesRequest", getAgentAliasesRequest),
+    ("getDefaultAliasRequest", getDefaultAliasRequest),
+    ("setDefaultAliasRequest", setDefaultAliasRequest),
+    // Aliases
+    ("addAliasExternalIdentitiesRequest", addAliasExternalIdentitiesRequest),
+    ("removeAliasExternalIdentitiesRequest", removeAliasExternalIdentitiesRequest),
+    ("getAliasExternalIdentitiesRequest", getAliasExternalIdentitiesRequest),
+    ("setAliasDefaultExternalIdentityRequest", setAliasDefaultExternalIdentityRequest),
+    // Connections
+    ("addAliasConnectionsRequest", addAliasConnectionsRequest),
+    ("removeAliasConnectionsRequest", removeAliasConnectionsRequest),
+    ("getAliasConnectionsRequest", getAliasConnectionsRequest),
+    ("setAliasDefaultConnectionRequest", setAliasDefaultConnectionRequest),
+    // Labels
+    ("addAliasLabelsRequest", addAliasLabelsRequest),
+    ("removeAliasLabelsRequest", removeAliasLabelsRequest),
+    ("getAliasLabelsRequest", getAliasLabelsRequest),
+    ("setAliasDefaultLabelRequest", setAliasDefaultLabelRequest),
+    ("getAliasDefaultLabelRequest", getAliasDefaultLabelRequest),
+    // DSL
+    ("evalSubscribeRequest", evalSubscribeRequest),
+    ("evalSubscribeCancelRequest", evalSubscribeCancelRequest)
+  )
+
+  @transient
   val myRoute = 
     path("signup") {
       get {
@@ -175,78 +216,30 @@ trait EvaluatorService extends HttpService
                 BasicLogService.tweet("json: " + jsonStr)
                 val json = parse(jsonStr)
                 val msgType = (json \ "msgType").extract[String]
-                msgType match {
-                  case "createUserRequest" => {
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    println( "in createUserRequest : " + jsonStr )
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                asyncMethods.get(msgType) match {
+                  case Some(fn) => {
                     var key = UUID.randomUUID.toString
-                    CompletionMapper.map += ( key -> ctx )
-                    createUserRequest( json, key )
-                  }
-                  case "initializeSessionRequest" => {
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    println( "in initializeSessionRequest : " + jsonStr )
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                  
-                    var key = UUID.randomUUID.toString
-                    CompletionMapper.map += ( key -> ctx )
-                    initializeSessionRequest( json, key )
-                  }
-                  case "sessionPing" => {
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    println( "in sessionPing " )
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    val sessionURI = sessionPing(json)
-                    (cometActor ! SessionPing(sessionURI, ctx))
-                  }
-                  case "evalSubscribeRequest" => {
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    println( "in evalSubscribeRequest " )
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    // TODO(mike): pull out the sessionURI
-                    try {
-                      var key = UUID.randomUUID.toString
-                      CometActorMapper.map += (key -> cometActor)
-                      evalSubscribeRequest(json, key)
-                      ctx.complete(StatusCodes.OK)
-                    } catch {
-                      case e : Throwable => {
-                        BasicLogService.tweet( "Caught something: " + e )
-                        BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
-                        // return an eval error
-                        val sessionURI = "agent-session://ArtVandelay@session1";
-                        val body = HttpBody(`application/json`,
-                          """{
-                            "msgType": "evalError",
-                            "content": {
-                              "sessionURI": "agent-session://ArtVandelay@session1",
-                              "reason": ""
-                            }
-                          }""")
-                        cometActor ! CometMessage(sessionURI.toString, body)
-                        ctx.complete(StatusCodes.OK)
-                      }
-                    }
-                  }
-                  case "closeSessionRequest" => {
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    println( "in closeSubscribeRequest " )
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    val (sessionURI, body) = closeSessionRequest(json)
-                    cometActor ! CometMessage(sessionURI, body)
+                    CometActorMapper.map += (key -> cometActor)
+                    fn(json, key)
                     ctx.complete(StatusCodes.OK)
                   }
-                  case "confirmEmailToken" => {
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    println( "in confirmEmailToken " )
-                    println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                    val token = (json \ "content" \ "token").extract[String]
-                    val key = UUID.randomUUID.toString
-                    CompletionMapper.map += ( key -> ctx )
-                    confirmEmailToken(token, key)
+                  case None => syncMethods.get(msgType) match {
+                    case Some(fn) => {
+                      var key = UUID.randomUUID.toString
+                      CompletionMapper.map += (key -> ctx)
+                      fn(json, key)
+                    }
+                    case None => msgType match {
+                      case "sessionPing" => {
+                        println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                        println( "in sessionPing " )
+                        println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                        val sessionURI = sessionPing(json)
+                        (cometActor ! SessionPing(sessionURI, ctx))
+                      }
+                      case _ => ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
+                    }
                   }
-                  case _ => ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
                 }
               } catch {
                 case th: Throwable => {
