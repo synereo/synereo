@@ -1464,6 +1464,61 @@ package diesel {
 
   }
 
+  trait DSLEvaluatorConfiguration {
+    self : EvalConfig =>
+      def dslEvaluatorHostName() : String = {
+        try {
+          evalConfig().getString( "DSLEvaluatorHost" )
+        }
+        catch {
+          case e : Throwable => "localhost" 
+        }
+      }
+    def dslEvaluatorHostPort() : Int = {
+      try {
+        evalConfig().getInt( "DSLEvaluatorPort" )
+      }
+      catch {
+        case e : Throwable => 5672
+      }
+    }
+    def dslEvaluatorHostData() : String = {
+        try {
+          evalConfig().getString( "DSLEvaluatorHostData" )
+        }
+        catch {
+          case e : Throwable => "dieselProtocol" 
+        }
+      }
+    def dslEvaluatorPreferredSupplierHostName() : String = {
+        try {
+          evalConfig().getString( "DSLEvaluatorPreferredSupplierHost" )
+        }
+        catch {
+          case e : Throwable => "localhost" 
+        }
+      }
+    def dslEvaluatorPreferredSupplierPort() : Int = {
+      try {
+        evalConfig().getInt( "DSLEvaluatorPreferredSupplierPort" )
+      }
+      catch {
+        case e : Throwable => 5672
+      }
+    }
+    def dslEvaluatorNetwork() : List[String] = {
+      import scala.collection.JavaConverters._
+      try {
+        val rslt : java.util.List[String] =
+          evalConfig().getStringList( "DSLEvaluatorNetwork" )
+        rslt.asScala.toList
+      }
+      catch {
+        case e : Throwable => List[String]( )
+      }
+    }
+  }
+
   object DieselConfigurationDefaults extends Serializable {
     val localHost : String = "localhost"
     val localPort : Int = 5672
@@ -1487,6 +1542,7 @@ package diesel {
 
   object DieselEngineCtor extends EvalConfig
   with DSLCommLinkConfiguration
+  with DSLEvaluatorConfiguration
   with Serializable {
     import DieselEngineScope._
     import Being._
@@ -1503,9 +1559,11 @@ package diesel {
     type ChannelBundle = ( LinkEvalRequestChannel, LinkEvalRequestChannel, StdEvalChannel )
 
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-      dataLocation : String,
-      localHost : String, localPort : Int,
-      remoteHost : String, remotePort : Int
+      dataLocation : String = dslEvaluatorHostData,
+      localHost : String = dslEvaluatorHostName,
+      localPort : Int = dslEvaluatorHostPort,
+      remoteHost : String = dslEvaluatorPreferredSupplierHostName,
+      remotePort : Int = dslEvaluatorPreferredSupplierPort
     )(
       implicit returnTwist : Boolean
     ) : Either[EvalChannel[ReqBody,RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])] = {
@@ -1539,7 +1597,7 @@ package diesel {
           )
         )
       }
-    }
+    }    
 
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       localHost : String, localPort : Int,
@@ -1548,6 +1606,17 @@ package diesel {
       implicit returnTwist : Boolean
     ) : Either[EvalChannel[ReqBody,RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])] = {
       setup( "/dieselProtocol", localHost, localPort, remoteHost, remotePort )
+    }
+
+    def setupDSLEvaluatorNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      dataLocation : String = dslEvaluatorHostData,
+      localHost : String = dslEvaluatorHostName,
+      localPort : Int = dslEvaluatorHostPort
+    ) : EvalChannel[ReqBody, RspBody] = {      
+      ptToMany(
+        new URI( "agent", null, localHost, localPort, dataLocation, null, null ),
+        List[URI]( )
+      )
     }
 
     def agent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
@@ -1559,6 +1628,11 @@ package diesel {
         )( true )
       client
     }    
+
+    def dslEvaluatorAgent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+    ): EvalChannel[ReqBody,RspBody] = {
+      setupDSLEvaluatorNode[ReqBody,RspBody]()
+    }
 
     class DieselEngine(
       override val configFileName : Option[String],
@@ -2705,7 +2779,8 @@ package diesel {
       }
 
       def stdLooper(
-        node : StdEvalChannel = agent( "/dieselProtocol" ),
+        //node : StdEvalChannel = agent( "/dieselProtocol" ),
+        node : StdEvalChannel = dslEvaluatorAgent( ),
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : MsgProcessorBlock = {
@@ -2799,7 +2874,8 @@ package diesel {
         case None => {
           val nodeId = UUID.randomUUID()
           val nodeKey = nodeId.toString
-          EvalNodeMapper += ( nodeKey -> DieselEngineCtor.agent( "/dieselProtocol" ) )
+          //EvalNodeMapper += ( nodeKey -> DieselEngineCtor.agent( "/dieselProtocol" ) )
+          EvalNodeMapper += ( nodeKey -> DieselEngineCtor.dslEvaluatorAgent( ) )
           val mpb = e.indirectStdLooper( nodeKey )
           _looper = Some( mpb )
           mpb
