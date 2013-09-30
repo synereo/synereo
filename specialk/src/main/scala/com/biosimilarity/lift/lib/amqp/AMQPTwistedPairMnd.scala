@@ -55,6 +55,10 @@ trait AMQPTwistedPairScope[T]
 	srcQ.exchange
       }
       else {
+        BasicLogService.tweet( "**********************************************************************" )
+        BasicLogService.tweet( "in method: exchange" )
+        BasicLogService.tweet( "srcQ.exchange: " + srcQ.exchange + " trgtQ.exchange: " + trgtQ.exchange )
+        BasicLogService.tweet( "**********************************************************************" )
 	throw new Exception( "src & trgt Q's exchange not equal" )
       }
     }
@@ -63,6 +67,10 @@ trait AMQPTwistedPairScope[T]
 	srcQ.routingKey
       }
       else {
+        BasicLogService.tweet( "**********************************************************************" )
+        BasicLogService.tweet( "in method: routingKey" )
+        BasicLogService.tweet( "srcQ.routingKey: " + srcQ.routingKey + " trgtQ.routingKey: " + trgtQ.routingKey )
+        BasicLogService.tweet( "**********************************************************************" )
 	throw new Exception( "src & trgt Q's routingKey not equal" )
       }
     }    
