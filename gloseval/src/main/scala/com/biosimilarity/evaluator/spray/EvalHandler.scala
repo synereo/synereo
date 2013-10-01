@@ -94,13 +94,13 @@ trait EvalHandler {
   @transient
   implicit val formats = DefaultFormats
   
-  val userDataFilter = fromTermString(
-      //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveFilter(F))"
+  val userDataLabel = fromTermString(
+      //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveLabel(F))"
       "userData(X)"
-    ).getOrElse(throw new Exception("Couldn't parse userDataFilter"))
-  val pwmacFilter = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacFilter"))
-  val emailFilter = fromTermString("email(X)").getOrElse(throw new Exception("Couldn't parse emailFilter"))
-  val tokenFilter = fromTermString("token(X)").getOrElse(throw new Exception("Couldn't parse tokenFilter"))
+    ).getOrElse(throw new Exception("Couldn't parse userDataLabel"))
+  val pwmacLabel = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacLabel"))
+  val emailLabel = fromTermString("email(X)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
+  val tokenLabel = fromTermString("token(X)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
 
   def confirmEmailToken(token: String, key: String): Unit = {
     val tokenUri = new URI("token://" + token)
@@ -108,7 +108,7 @@ trait EvalHandler {
     
     val (erql, erspl) = agentMgr().makePolarizedPair()
     // TODO(mike): change from fetch to a consuming verb
-    agentMgr().fetch(erql, erspl)(tokenFilter, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
+    agentMgr().fetch(erql, erspl)(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
         case None => ()
         case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
@@ -143,7 +143,7 @@ trait EvalHandler {
       PortableAgentCnxn(emailURI, "emailhash", emailURI)
     val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().post[String](erql, erspl)(
-      emailFilter,
+      emailLabel,
       List(emailSelfCnxn),
       cap
     )
@@ -172,7 +172,7 @@ trait EvalHandler {
     BasicLogService.tweet("secureSignup posting pwmac")
     val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().post[String](erql, erspl)(
-      pwmacFilter,
+      pwmacLabel,
       List(capSelfCnxn),
       pwmac,
       ( optRsrc : Option[mTT.Resource] ) => {
@@ -183,10 +183,10 @@ trait EvalHandler {
             // Change String to Term throughout.
             val (erql, erspl) = agentMgr().makePolarizedPair()
             agentMgr().post[String](erql, erspl)(
-              userDataFilter,
+              userDataLabel,
               List(capSelfCnxn),
               // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
-              //     "listOfCnxns(), lastActiveFilter(\"\"))",
+              //     "listOfCnxns(), lastActiveLabel(\"\"))",
               jsonBlob,
               ( optRsrc : Option[mTT.Resource] ) => {
                 BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
@@ -228,7 +228,7 @@ trait EvalHandler {
 
       val (erql, erspl) = agentMgr().makePolarizedPair()
       agentMgr().post[String](erql, erspl)(
-        tokenFilter,
+        tokenLabel,
         List(tokenCnxn),
         // email, password, and jsonBlob
         compact(render(json \ "content")),
@@ -298,7 +298,7 @@ trait EvalHandler {
                               ("defaultAlias" -> "") ~
                               ("listOfLabels" -> List[String]()) ~
                               ("listOfCnxns" -> List[String]()) ~
-                              ("lastActiveFilter" -> "") ~
+                              ("lastActiveLabel" -> "") ~
                               ("jsonBlob" -> parse(jsonBlob))
 
                             CompletionMapper.complete(key, compact(render(
@@ -314,7 +314,7 @@ trait EvalHandler {
                     }
                   }
                   val (erql, erspl) = agentMgr().makePolarizedPair()
-                  agentMgr().fetch( erql, erspl )(userDataFilter, List(capSelfCnxn), onUserDataFetch)
+                  agentMgr().fetch( erql, erspl )(userDataLabel, List(capSelfCnxn), onUserDataFetch)
                   ()
                 }
               }
@@ -328,7 +328,7 @@ trait EvalHandler {
       }
       val (erql, erspl) = agentMgr().makePolarizedPair()
       BasicLogService.tweet ("secureLogin | login: fetching with eqrl, erspl = " + erql + ", " + erspl)
-      agentMgr().fetch( erql, erspl )(pwmacFilter, List(capSelfCnxn), onPwmacFetch)
+      agentMgr().fetch( erql, erspl )(pwmacLabel, List(capSelfCnxn), onPwmacFetch)
     }
     
     // identType is either "cap" or "email"
@@ -362,7 +362,7 @@ trait EvalHandler {
         val (erql, erspl) = agentMgr().makePolarizedPair()
         BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
         agentMgr().fetch(erql, erspl)(
-          emailFilter,
+          emailLabel,
           List(emailSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
             BasicLogService.tweet("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
@@ -414,14 +414,15 @@ trait EvalHandler {
     new URI((cx \ "tgt").extract[String])
   )
 
-  def extractFilterAndCnxns(exprContent: JObject) = {
-    val filter = fromTermString((exprContent \ "filter").extract[String]).getOrElse(
-      throw new Exception("Couldn't parse filter: " + compact(render(exprContent)))
+  def extractLabelAndCnxns(exprContent: JObject) = {
+    BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
+    val label = fromTermString((exprContent \ "label").extract[String]).getOrElse(
+      throw new Exception("Couldn't parse label: " + compact(render(exprContent)))
     )
     val cnxns = (exprContent \ "cnxns") match {
       case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
     }
-    (filter, cnxns)
+    (label, cnxns)
   }
 
   def evalSubscribeRequest(json: JValue, key: String) : Unit = {
@@ -435,7 +436,7 @@ trait EvalHandler {
     
     val expression = (content \ "expression")
     val ec = (expression \ "content").asInstanceOf[JObject]
-    val (filter, cnxns) = extractFilterAndCnxns(ec)
+    val (label, cnxns) = extractLabelAndCnxns(ec)
     val exprType = (expression \ "msgType").extract[String]
     exprType match {
       case "feedExpr" => {
@@ -460,7 +461,7 @@ trait EvalHandler {
           }
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-        agentMgr().feed(erql, erspl)(filter, cnxns, onFeed)
+        agentMgr().feed(erql, erspl)(label, cnxns, onFeed)
       }
       case "scoreExpr" => {
         BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
@@ -501,14 +502,14 @@ trait EvalHandler {
           case _ => throw new Exception("Couldn't parse staff: " + json)
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-        agentMgr().score(erql, erspl)(filter, cnxns, staff, onScore)
+        agentMgr().score(erql, erspl)(label, cnxns, staff, onScore)
       }
       case "insertContent" => {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         agentMgr().post(erql, erspl)(
-          filter,
+          label,
           cnxns,
           value,
           (rsrc: Option[mTT.Resource]) => {
