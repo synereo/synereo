@@ -616,7 +616,6 @@ trait EvalHandler {
       """
     ))
   }
-
 }
 
 object EvalHandlerService

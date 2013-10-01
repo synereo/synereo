@@ -161,14 +161,18 @@ trait EvaluatorService extends HttpService
   
   @transient
   val syncMethods = HashMap[String, (JValue, String) => Unit](
+    // Old stuff
+    ("createUserRequest", createUserRequest),
+    ("confirmEmailToken", confirmEmailToken),
+    // New API
     ("createAgentRequest", createAgentRequest),
     ("initializeSessionRequest", initializeSessionRequest),
-    // Old messages
-    ("createUserRequest", createUserRequest)
   )
   
   @transient
   val asyncMethods = HashMap[String, (JValue, String) => Unit](
+    // Old stuff
+    ("closeSessionRequest", closeSessionRequest),
     // Agents
     ("addAgentExternalIdentityRequest", addAgentExternalIdentityRequest),
     ("addAgentExternalIdentityToken", addAgentExternalIdentityToken),
