@@ -1487,7 +1487,7 @@ package diesel {
           evalConfig().getString( "DSLEvaluatorHostData" )
         }
         catch {
-          case e : Throwable => "dieselProtocol" 
+          case e : Throwable => "/dieselProtocol" 
         }
       }
     def dslEvaluatorPreferredSupplierHostName() : String = {
