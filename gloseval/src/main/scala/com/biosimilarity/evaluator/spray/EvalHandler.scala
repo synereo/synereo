@@ -11,7 +11,7 @@ package com.biosimilarity.evaluator.spray
 import com.protegra_ati.agentservices.store._
 
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.dsl.usage.ConcreteHL._
+//import com.biosimilarity.evaluator.dsl.usage.ConcreteHL._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
@@ -90,6 +90,7 @@ trait EvalHandler {
   self : EvaluationCommsService =>
  
   import DSLCommLink.mTT
+  import ConcreteHL._
 
   @transient
   implicit val formats = DefaultFormats
@@ -111,9 +112,11 @@ trait EvalHandler {
     agentMgr().fetch(erql, erspl)(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
         case None => ()
-        case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
-          postedExpr.asInstanceOf[PostedExpr[String]] match {
-            case PostedExpr(postedStr) => {
+        case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
+          v match {
+            case Bottom => {
+            }
+            case PostedExpr( postedStr : String ) => {
               val content = parse(postedStr)
               val email = (content \ "email").extract[String]
               val password = (content \ "password").extract[String]
