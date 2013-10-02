@@ -8,6 +8,8 @@
 
 package com.biosimilarity.evaluator.msgs.agent.crud
 
+import com.biosimilarity.lift.model.store._
+
 import java.util.UUID
 import java.net.URI
 
@@ -300,10 +302,10 @@ case class setAliasDefaultConnectionResponse(
 
 //### Labels
 //#### addAliasLabels
-case class addAliasLabelsRequest[Label](
+case class addAliasLabelsRequest(
   sessionURI : URI,
   alias : String,
-  labels : List[Label]
+  labels : List[CnxnCtxtLabel[String,String,String]]
 ) extends AgentCRUD
 //    - `Label = String`
 case class addAliasLabelsError(
@@ -315,10 +317,10 @@ case class addAliasLabelsResponse(
 ) extends AgentCRUD
 
 //#### removeAliasLabels
-case class removeAliasLabelsRequest[Label](
+case class removeAliasLabelsRequest(
   sessionURI : URI,
   alias : String,
-  Labels : List[Label]
+  Labels : List[CnxnCtxtLabel[String,String,String]]
 ) extends AgentCRUD
 case class removeAliasLabelsError(
   sessionURI : URI,
@@ -337,16 +339,16 @@ case class getAliasLabelsError(
   sessionURI : URI,
   reason : String
 ) extends AgentCRUD
-case class getAliasLabelsResponse[Label](
+case class getAliasLabelsResponse(
   sessionURI : URI,
-  Labels : List[Label]
+  Labels : List[CnxnCtxtLabel[String,String,String]]
 ) extends AgentCRUD
 
 //#### setAliasDefaultLabel
-case class setAliasDefaultLabelRequest[Label](
+case class setAliasDefaultLabelRequest(
   sessionURI : URI,
   alias : String,
-  Label : Label
+  Label : CnxnCtxtLabel[String,String,String]
 ) extends AgentCRUD
 case class setAliasDefaultLabelError(
   sessionURI : URI,
@@ -365,9 +367,9 @@ case class getAliasDefaultLabelError(
   sessionURI : URI,
   reason : String
 ) extends AgentCRUD
-case class getAliasDefaultLabelResponse[Label](
+case class getAliasDefaultLabelResponse(
   sessionURI : URI,
-  Label : Label
+  Label : CnxnCtxtLabel[String,String,String]
 ) extends AgentCRUD
 
 //### DSL
