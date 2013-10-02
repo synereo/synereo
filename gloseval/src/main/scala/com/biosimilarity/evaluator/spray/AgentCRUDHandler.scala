@@ -267,7 +267,7 @@ trait AgentCRUDHandler {
     msg : addAgentAliasesRequest
   ) : Unit = {
     BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
+      "Entering: handleaddAgentAliasesRequest with msg : " + msg
     )
     val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
@@ -307,7 +307,13 @@ trait AgentCRUDHandler {
                 )
               }
             }
-          }        
+          }
+          case wonky => {
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "addAgentAliasesError") ~
+              ("content" -> ("reason" -> "Got wonky response: " + wonky.toString))
+            )))
+          }
         }
       }
     
@@ -653,9 +659,9 @@ trait AgentCRUDHandler {
   
   //### Labels
   //#### addAliasLabels
-  def handleaddAliasLabelsRequest[Label](
+  def handleaddAliasLabelsRequest(
     key : String,
-    msg : addAliasLabelsRequest[Label]
+    msg : addAliasLabelsRequest
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
@@ -680,9 +686,9 @@ trait AgentCRUDHandler {
   }
   
   //#### removeAliasLabels
-  def handleremoveAliasLabelsRequest[Label](
+  def handleremoveAliasLabelsRequest(
     key : String,
-    msg : removeAliasLabelsRequest[Label]
+    msg : removeAliasLabelsRequest
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
@@ -722,9 +728,9 @@ trait AgentCRUDHandler {
       "Entering: handlegetAliasLabelsError with msg : " + msg
     )
   }
-  def handlegetAliasLabelsResponse[Label](
+  def handlegetAliasLabelsResponse(
     key : String,
-    msg : getAliasLabelsResponse[Label]
+    msg : getAliasLabelsResponse
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
@@ -732,9 +738,9 @@ trait AgentCRUDHandler {
   }
   
   //#### setAliasDefaultLabel
-  def handlesetAliasDefaultLabelRequest[Label](
+  def handlesetAliasDefaultLabelRequest(
     key : String,
-    msg : setAliasDefaultLabelRequest[Label]
+    msg : setAliasDefaultLabelRequest
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
@@ -774,9 +780,9 @@ trait AgentCRUDHandler {
       "Entering: handlegetAliasDefaultLabelError with msg : " + msg
     )
   }
-  def handlegetAliasDefaultLabelResponse[Label](
+  def handlegetAliasDefaultLabelResponse(
     key : String,
-    msg : getAliasDefaultLabelResponse[Label]
+    msg : getAliasDefaultLabelResponse
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg

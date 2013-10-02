@@ -166,7 +166,7 @@ trait EvaluatorService extends HttpService
     ("confirmEmailToken", confirmEmailToken),
     // New API
     ("createAgentRequest", createAgentRequest),
-    ("initializeSessionRequest", initializeSessionRequest),
+    ("initializeSessionRequest", initializeSessionRequest)
   )
   
   @transient

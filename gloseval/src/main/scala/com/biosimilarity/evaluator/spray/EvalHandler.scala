@@ -39,7 +39,6 @@ import javax.crypto._
 import javax.crypto.spec.SecretKeySpec
 import java.security._
 
-
 import java.util.Date
 import java.util.UUID
 
@@ -104,18 +103,107 @@ trait EvalHandler {
  
   import DSLCommLink.mTT
   import ConcreteHL._
-
+  
   @transient
   implicit val formats = DefaultFormats
 
   // Setup
-  def createAgentRequest(json: JValue, key: String): Unit = {}
+  val userPWDBLabel = fromTermString("""pwdb(Salt, Hash, "user", K)""").
+    getOrElse(throw new Exception("Couldn't parse label."))
+  val adminPWDBLabel = fromTermString("""pwdb(Salt, Hash, "admin", K)""").
+    getOrElse(throw new Exception("Couldn't parse label."))
+
+  def toHex(bytes: Array[Byte]): String = {
+    bytes.map("%02X" format _).mkString
+  }
+
+  def createAgentRequest(json: JValue, key: String): Unit = {
+    try {
+      var authType = (json \ "content" \ "authType").extract[String].toLowerCase
+      if (authType != "password") {
+        createAgentError(key, "Only password authentication is currently supported.")
+      } else {
+        val authValue = (json \ "content" \ "authValue").extract[String]
+        val (salt, hash) = saltAndHash(authValue)
+
+        // TODO(mike): explicitly manage randomness pool
+        val rand = new SecureRandom()
+        val bytes = new Array[Byte](16)
+        
+        // Generate random Agent URI
+        rand.nextBytes(bytes)
+        val uri = new URI("agent://" + toHex(bytes))
+        val agentIdCnxn = PortableAgentCnxn(uri, "identity", uri)
+        
+        // Generate K for encrypting the lists of aliases, external identities, etc. on the Agent
+        // term = pwdb(<salt>, hash = SHA(salt + pw), "user", AES_hash(K)) 
+        // post term.toString on (Agent, term)
+        {
+          // Since we're encrypting exactly 128 bits, ECB is OK
+          val aes = Cipher.getInstance("AES/ECB/NoPadding")
+          aes.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(hash, "AES"))
+          // Generate K
+          rand.nextBytes(bytes)
+          // AES_hash(K)
+          val aesHashK = toHex(aes.doFinal(bytes))
+        
+          val (erql, erspl) = agentMgr().makePolarizedPair()
+          agentMgr().post(erql, erspl)(
+            userPWDBLabel,
+            List(agentIdCnxn),
+            // TODO(mike): do proper context-aware interpolation
+            "pwdb(" + List(salt, toHex(hash), "user", aesHashK).map('"'+_+'"').mkString(",") + ")",
+            (optRsrc: Option[mTT.Resource]) => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "createAgentResponse") ~
+                ("content" -> (
+                  "agentURI" -> uri.toString
+                ))
+              )))
+            }
+          )
+        }
+      }
+    } catch {
+      case e: Exception => {
+        createAgentError(key, e.toString)
+      }
+    }
+  }
+  def createAgentError(key: String, reason: String): Unit = {
+    CompletionMapper.complete(key, compact(render(
+      ("msgType" -> "createAgentError") ~
+      ("content" -> (
+        "reason" -> reason
+      ))
+    )))
+  }
+  def saltAndHash(pw: String): (String, Array[Byte]) = {
+    val md = MessageDigest.getInstance("SHA1")
+    val salt = UUID.randomUUID.toString.substring(0,8)
+    md.update(salt.getBytes("utf-8"))
+    md.update(pw.getBytes("utf-8"))
+    (salt, md.digest)
+  }
+
   // Agents
   def addAgentExternalIdentityRequest(json: JValue, key: String): Unit = {}
   def addAgentExternalIdentityToken(json: JValue, key: String): Unit = {}
   def removeAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def getAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
-  def addAgentAliasesRequest(json: JValue, key: String): Unit = {}
+  def addAgentAliasesRequest(json: JValue, key: String): Unit = {
+    object handler extends EvalConfig
+      with DSLCommLinkConfiguration
+      with EvaluationCommsService 
+      with com.biosimilarity.evaluator.spray.AgentCRUDHandler {}
+    handler.handleaddAgentAliasesRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
+        new URI((json \ "content" \ "sessionURI").extract[String]),
+        (json \ "content" \ "sessionURI").extract[List[String]]
+      )
+    )
+  }
   def removeAgentAliasesRequest(json: JValue, key: String): Unit = {}
   def getAgentAliasesRequest(json: JValue, key: String): Unit = {}
   def getDefaultAliasRequest(json: JValue, key: String): Unit = {}
@@ -148,7 +236,8 @@ trait EvalHandler {
   val emailLabel = fromTermString("email(X)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
   val tokenLabel = fromTermString("token(X)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
 
-  def confirmEmailToken(token: String, key: String): Unit = {
+  def confirmEmailToken(json: JValue, key: String): Unit = {
+    val token = (json \ "content" \ "token").extract[String]
     val tokenUri = new URI("token://" + token)
     val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
     
@@ -250,8 +339,6 @@ trait EvalHandler {
     agentMgr().post[String](erql2, erspl2)(
       userDataLabel,
       List(capSelfCnxn),
-      // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
-      //     "listOfCnxns(), lastActiveLabel(\"\"))",
       jsonBlob,
       ( optRsrc : Option[mTT.Resource] ) => {
         BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
@@ -652,21 +739,15 @@ trait EvalHandler {
     sessionURI
   }
 
-  def closeSessionRequest(json: JValue) : (String, spray.http.HttpBody) = {
+  def closeSessionRequest(json: JValue, key: String) : Unit = {
     val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    if (sessionURI != "agent-session://ArtVandelay@session1") {
-      throw CloseSessionException(sessionURI, "Unknown session.")
-    }
 
-    (sessionURI, HttpBody(`application/json`,
-      """{
-        "msgType": "closeSessionResponse",
-        "content": {
-          "sessionURI": "agent-session://ArtVandelay@session1",
-        }
-      }
-      """
-    ))
+    CompletionMapper.complete(key, compact(render(
+      ("msgType" -> "closeSessionResponse")~
+      ("content" ->
+        ("sessionURI" -> sessionURI)
+      )
+    )))
   }
 }
 
