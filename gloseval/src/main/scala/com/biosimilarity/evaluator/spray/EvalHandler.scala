@@ -195,7 +195,7 @@ trait EvalHandler {
     object handler extends EvalConfig
       with DSLCommLinkConfiguration
       with EvaluationCommsService 
-      with com.biosimilarity.evaluator.spray.AgentCRUDHandler {}
+      with AgentCRUDHandler {}
     handler.handleaddAgentAliasesRequest(
       key,
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
