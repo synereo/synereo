@@ -221,6 +221,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet(
       "Entering: handleaddAgentAliasesRequest with msg : " + msg
     )
+    val sessionURIStr = msg.sessionURI.toString
     val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
@@ -236,14 +237,10 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             val onPut : Option[mTT.Resource] => Unit =
               ( optRsrc : Option[mTT.Resource] ) => {
                 BasicLogService.tweet("handleaddAgentAliasesRequest | onGet | onPut")
-                CompletionMapper.complete(
-                  key, 
-                  compact(
-                    render(
-                      ( "msgType" -> "addAgentAliasesResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
-                    )
-                  )
-                )
+                CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+                  ( "msgType" -> "addAgentAliasesResponse" ) ~
+                  ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+                )))
               }
             v match {              
               case PostedExpr( previousAliasList : List[String] ) => {              
@@ -261,9 +258,9 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             }
           }
           case wonky => {
-            CompletionMapper.complete(key, compact(render(
+            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
               ("msgType" -> "addAgentAliasesError") ~
-              ("content" -> ("reason" -> "Got wonky response: " + wonky.toString))
+              ("content" -> ("reason" -> ("Got wonky response: " + wonky.toString)))
             )))
           }
         }
@@ -418,6 +415,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
+    val sessionURIStr = msg.sessionURI.toString
     val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       getAliasCnxn( msg.sessionURI, msg.alias )
@@ -437,14 +435,10 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             val onPut : Option[mTT.Resource] => Unit =
               ( optRsrc : Option[mTT.Resource] ) => {
                 BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut")
-                CompletionMapper.complete(
-                  key, 
-                  compact(
-                    render(
-                      ( "msgType" -> "addAliasLabelsResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
-                    )
-                  )
-                )
+                CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+                  ( "msgType" -> "addAliasLabelsResponse" ) ~ 
+                  ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+                )))
               }
             v match {              
               case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {              
@@ -461,6 +455,12 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
               }
             }
           }        
+          case wonky => {
+            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+              ( "msgType" -> "addAliasLabelsError" ) ~ 
+              ( "content" -> ( "reason" -> ("Got wonky response: " + wonky) ) )
+            )))
+          }
         }
       }
     
@@ -540,3 +540,4 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       "Entering: handleevalSubscribeCancelRequest with msg : " + msg
     )
   }
+}
