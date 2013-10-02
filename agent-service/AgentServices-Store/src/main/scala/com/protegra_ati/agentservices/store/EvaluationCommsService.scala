@@ -141,6 +141,41 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         }
       }
     }
+    def put[Value](
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      content : Value,
+      onPut : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+        node().publish( erql, PutContent( filter, cnxns, content ) )
+      }
+      reset {
+        try { 
+          for(
+            e <- try { node().subscribe( erspl ) }
+            catch {
+              case e : Throwable => {
+                BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
+                throw e
+              }
+            }
+          ) {
+            onPut( e )
+          }
+        }
+        catch {
+          case e : Throwable => {
+            BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
+            throw e
+          }
+        }
+      }
+    }
     // TODO(metaweta): factor case class out of read, fetch, and feed
     def read(
       erql : CnxnCtxtLabel[String,String,String],
@@ -188,6 +223,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       }
       reset {
         for( e <- node().subscribe( erspl ) ) { onFeedRslt( e ) }
+      }
+    }
+    def get(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onGetRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      reset {
+        node().publish( erql, GetExpr( filter, cnxns ) )
+      }
+      reset {
+        for( e <- node().subscribe( erspl ) ) { onGetRslt( e ) }
       }
     }
     def score(

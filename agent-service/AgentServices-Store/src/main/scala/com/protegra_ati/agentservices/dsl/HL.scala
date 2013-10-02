@@ -44,6 +44,11 @@ trait AbstractHL {
     override val cnxns : Seq[Cnxn]
   ) extends HLExpr with Query
 
+  case class GetExpr(
+    override val label : Label,
+    override val cnxns : Seq[Cnxn]
+  ) extends HLExpr with Query
+
   case class ScoreExpr(
     override val label : Label,
     override val cnxns : Seq[Cnxn],
@@ -51,6 +56,12 @@ trait AbstractHL {
   ) extends HLExpr with Query
 
   case class InsertContent[Value](
+    override val label : Label,
+    override val cnxns : Seq[Cnxn],
+    override val value : Value
+  ) extends HLExpr with Query with Modification[Value]
+
+  case class PutContent[Value](
     override val label : Label,
     override val cnxns : Seq[Cnxn],
     override val value : Value

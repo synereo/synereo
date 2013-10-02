@@ -1648,6 +1648,9 @@ package diesel {
         new acT.AgentCnxn( fileNameRoot.toURI, "", fileNameRoot.toURI )
       } 
 
+      // BUGBUG : lgm -- this code is not in sync with the weak map
+      // case -- please introduce abstraction!!!
+
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
         node : EvalChannel[ReqBody,RspBody]
       )( expr : ConcreteHL.HLExpr )(
@@ -1982,6 +1985,57 @@ package diesel {
                 }
               }
             }
+
+            case ConcreteHL.GetExpr( filter, cnxns ) => {
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.GetExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.get "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.get( agntCnxn )( filter ) ) {
+                    
+                    BasicLogService.tweet(
+                      "method: evaluateExpression"
+                      + "\n returned from node.get "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    handler( e )
+                  }
+                }
+              }
+            }
             case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
               
               BasicLogService.tweet(
@@ -2037,7 +2091,7 @@ package diesel {
               
               BasicLogService.tweet(
                 "method: evaluateExpression"
-                + "\nin ConcreteHL.FeedExpr case "
+                + "\nin ConcreteHL.InsertContent case "
                 + "\nthis: " + this
                 + "\nnode: " + node
                 + "\nexpr: " + expr
@@ -2067,6 +2121,45 @@ package diesel {
                   )
                   
                   n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                }
+                
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+              }
+            }
+            case ConcreteHL.PutContent( filter, cnxns, value : String ) => {
+              
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.PutContent case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\nvalue: " + value 
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.put "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\nvalue: " + value
+                  )
+                  
+                  n.put( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
                 
                 handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
