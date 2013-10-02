@@ -303,7 +303,7 @@ case class setAliasDefaultConnectionResponse(
 case class addAliasLabelsRequest[Label](
   sessionURI : URI,
   alias : String,
-  Labels : List[Label]
+  labels : List[Label]
 ) extends AgentCRUD
 //    - `Label = String`
 case class addAliasLabelsError(
