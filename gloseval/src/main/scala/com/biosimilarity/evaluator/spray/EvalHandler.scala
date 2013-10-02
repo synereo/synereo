@@ -178,8 +178,15 @@ trait EvalHandler {
     val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
     BasicLogService.tweet("secureSignup posting pwmac")
-    val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().post[String](erql, erspl)(
+    val (erql1, erspl1) = agentMgr().makePolarizedPair()
+    var counter = 0
+    def bothDone() = {
+      CompletionMapper.complete(key, compact(render(
+        ("msgType" -> "createUserResponse") ~
+        ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
+      )))
+    }
+    agentMgr().post[String](erql1, erspl1)(
       pwmacLabel,
       List(capSelfCnxn),
       pwmac,
@@ -188,28 +195,26 @@ trait EvalHandler {
         optRsrc match {
           case None => ()
           case Some(_) => {
-            // Change String to Term throughout.
-            val (erql, erspl) = agentMgr().makePolarizedPair()
-            agentMgr().post[String](erql, erspl)(
-              userDataLabel,
-              List(capSelfCnxn),
-              // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
-              //     "listOfCnxns(), lastActiveLabel(\"\"))",
-              jsonBlob,
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(_) => {
-                    // TODO(mike): send email with capAndMac
-                    CompletionMapper.complete(key, compact(render(
-                      ("msgType" -> "createUserResponse") ~
-                      ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
-                    )))
-                  }
-                }
-              }
-            )
+            counter = counter + 1
+            if (counter >= 2) { bothDone() }
+          }
+        }
+      }
+    )
+    val (erql2, erspl2) = agentMgr().makePolarizedPair()
+    agentMgr().post[String](erql2, erspl2)(
+      userDataLabel,
+      List(capSelfCnxn),
+      // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
+      //     "listOfCnxns(), lastActiveLabel(\"\"))",
+      jsonBlob,
+      ( optRsrc : Option[mTT.Resource] ) => {
+        BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
+        optRsrc match {
+          case None => ()
+          case Some(_) => {
+            counter = counter + 1
+            if (counter >= 2) { bothDone() }
           }
         }
       }
