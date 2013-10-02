@@ -876,7 +876,8 @@ package usage {
           BasicLogService.tweet( "got response: " + optRsrc )
           BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 1 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
           BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 2 initiated! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
-          agentMgr().post[String]( erql, erspl )(
+          val ( erqlNew, ersplNew ) = agentMgr().makePolarizedPair()
+          agentMgr().post[String]( erqlNew, ersplNew )(
             theSecondInsertContentExpr.label, theSecondInsertContentExpr.cnxns, theSecondInsertContentExpr.value, onPost2
           )
         }
