@@ -320,7 +320,7 @@ case class addAliasLabelsResponse(
 case class removeAliasLabelsRequest(
   sessionURI : URI,
   alias : String,
-  Labels : List[CnxnCtxtLabel[String,String,String]]
+  labels : List[CnxnCtxtLabel[String,String,String]]
 ) extends AgentCRUD
 case class removeAliasLabelsError(
   sessionURI : URI,
@@ -341,14 +341,14 @@ case class getAliasLabelsError(
 ) extends AgentCRUD
 case class getAliasLabelsResponse(
   sessionURI : URI,
-  Labels : List[CnxnCtxtLabel[String,String,String]]
+  labels : List[CnxnCtxtLabel[String,String,String]]
 ) extends AgentCRUD
 
 //#### setAliasDefaultLabel
 case class setAliasDefaultLabelRequest(
   sessionURI : URI,
   alias : String,
-  Label : CnxnCtxtLabel[String,String,String]
+  label : CnxnCtxtLabel[String,String,String]
 ) extends AgentCRUD
 case class setAliasDefaultLabelError(
   sessionURI : URI,
@@ -369,7 +369,7 @@ case class getAliasDefaultLabelError(
 ) extends AgentCRUD
 case class getAliasDefaultLabelResponse(
   sessionURI : URI,
-  Label : CnxnCtxtLabel[String,String,String]
+  label : CnxnCtxtLabel[String,String,String]
 ) extends AgentCRUD
 
 //### DSL
@@ -379,10 +379,10 @@ case class evalSubscribeRequest[GloSExpr](
   expression : GloSExpr
 ) extends AgentCRUD
 //    - `GlosExpr =`
-//        - `InsertContent(Labels: List[Label], cnxns: List[Cnxn], value: Value)`
+//        - `InsertContent(labels: List[Label], cnxns: List[Cnxn], value: Value)`
 //            - `Value = String`
-//        - `FeedExpr(Labels: List[Label], cnxns: List[Cnxn])`
-//        - `ScoreExpr(Labels: List[Label], cnxns: List[Cnxn], staff: Staff`
+//        - `FeedExpr(labels: List[Label], cnxns: List[Cnxn])`
+//        - `ScoreExpr(labels: List[Label], cnxns: List[Cnxn], staff: Staff`
 //            - `Staff =`
 //                - `List[Cnxn]`
 //                - `List[Label]`
