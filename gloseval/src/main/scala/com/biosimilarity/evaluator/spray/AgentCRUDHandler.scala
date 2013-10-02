@@ -46,7 +46,84 @@ import java.util.UUID
 
 import java.net.URI
 
-trait AgentCRUDHandler {
+trait AgentCRUDSchema {
+  self : EvaluationCommsService =>
+ 
+  import DSLCommLink.mTT
+  import ConcreteHL._
+
+  var _aliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def aliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _aliasStorageLocation match {
+      case Some( asl ) => asl
+      case None => {
+        fromTermString(
+          "aliasList( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "aliasList( true )" )
+        )          
+      }
+    }
+  }
+  
+  var _labelsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def labelsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _labelsStorageLocation match {
+      case Some( lsl ) => lsl
+      case None => {
+        fromTermString(
+          "labelsList( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "labelsList( true )" )
+        )          
+      }
+    }
+  }
+
+  var _cnxnsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def cnxnsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _cnxnsStorageLocation match {
+      case Some( csl ) => csl
+      case None => {
+        fromTermString(
+          "cnxnsList( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "cnxnsList( true )" )
+        )          
+      }
+    }
+  }
+
+  def agentFromSession(
+    sessionURI: URI
+  ) : URI = {
+    new URI(
+      "agentURI",
+      sessionURI.getUserInfo(),
+      sessionURI.getAuthority(),
+      sessionURI.getPort(),
+      sessionURI.getPath(),
+      sessionURI.getQuery(),
+      sessionURI.getFragment()
+    )    
+  }
+  def identityAliasFromAgent(
+    agentURI : URI
+  ) : PortableAgentCnxn = {
+    PortableAgentCnxn(agentURI, "identity", agentURI)
+  }  
+
+  def getAliasCnxn(
+    sessionURI : URI,
+    aliasStr : String
+  ) : PortableAgentCnxn = {
+    val agentURI : URI = agentFromSession( sessionURI )
+    PortableAgentCnxn( agentURI, aliasStr, agentURI )
+  }    
+  
+}
+
+trait AgentCRUDHandler extends AgentCRUDSchema {
   self : EvaluationCommsService =>
  
   import DSLCommLink.mTT
@@ -80,24 +157,6 @@ trait AgentCRUDHandler {
     )
   }
   //    - `authType == "password"` (case-insensitive)
-  def handlecreateAgentError(
-    key : String,
-    msg : createAgentError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlecreateAgentError with msg : " + msg
-    )
-  }
-  //    - returned synchronously
-  def handlecreateAgentResponse(
-    key : String,
-    msg : createAgentResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlecreateAgentResponse with msg : " + msg
-    )
-  }
-  //    - returned synchronously
   
   //### initializeSession
   def handleinitializeSessionRequest(
@@ -108,24 +167,6 @@ trait AgentCRUDHandler {
       "Entering: handleinitializeSessionRequest with msg : " + msg
     )
   }
-  def handleinitializeSessionError(
-    key : String,
-    msg : initializeSessionError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleinitializeSessionError with msg : " + msg
-    )
-  }
-  //    - returned synchronously
-  def handleinitializeSessionResponse(
-    key : String,
-    msg : initializeSessionResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleinitializeSessionResponse with msg : " + msg
-    )
-  }
-  //    - returned synchronously
   
   //### External identities
   //#### addAgentExternalIdentity
@@ -140,22 +181,6 @@ trait AgentCRUDHandler {
   //    - `ID(idType: IDType, idValue: String)`
   //        - `IDType = Email`
   //    - We only support adding one identity per message because of need for confirmation
-  def handleaddAgentExternalIdentityError(
-    key : String,
-    msg : addAgentExternalIdentityError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAgentExternalIdentityError with msg : " + msg
-    )
-  }
-  def handleaddAgentExternalIdentityWaiting(
-    key : String,
-    msg : addAgentExternalIdentityWaiting
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAgentExternalIdentityWaiting with msg : " + msg
-    )
-  }
   def handleaddAgentExternalIdentityToken(
     key : String,
     msg : addAgentExternalIdentityToken
@@ -164,14 +189,7 @@ trait AgentCRUDHandler {
       "Entering: handleaddAgentExternalIdentityToken with msg : " + msg
     )
   }
-  def handleaddAgentExternalIdentityResponse(
-    key : String,
-    msg : addAgentExternalIdentityResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAgentExternalIdentityResponse with msg : " + msg
-    )
-  }
+  
   
   //#### removeAgentExternalIdentities
   def handleremoveAgentExternalIdentitiesRequest[ID](
@@ -180,23 +198,6 @@ trait AgentCRUDHandler {
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
-  def handleremoveAgentExternalIdentitiesError(
-    key : String,
-    msg : removeAgentExternalIdentitiesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAgentExternalIdentitiesError with msg : "
-  + msg
-    )
-  }
-  def handleremoveAgentExternalIdentitiesResponse(
-    key : String,
-    msg : removeAgentExternalIdentitiesResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAgentExternalIdentitiesResponse with msg : " + msg
     )
   }
   
@@ -210,55 +211,6 @@ trait AgentCRUDHandler {
     )
   }
   //    - One value of `IDType` is `ANY`
-  def handlegetAgentExternalIdentitiesError(
-    key : String,
-    msg : getAgentExternalIdentitiesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlegetAgentExternalIdentitiesError with msg : " + msg
-    )
-  }
-  def handlegetAgentExternalIdentitiesResponse[ID](
-    key : String,
-    msg : getAgentExternalIdentitiesResponse[ID]
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
-
-  var _aliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def aliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
-    _aliasStorageLocation match {
-      case Some( asl ) => asl
-      case None => {
-        fromTermString(
-          "aliasList( true )"
-        ).getOrElse(
-          throw new Exception( "Couldn't parse label: " + "aliasList( true )" )
-        )          
-      }
-    }
-  }  
-
-  def agentFromSession(
-    sessionURI: URI
-  ) : URI = {
-    new URI(
-      "agentURI",
-      sessionURI.getUserInfo(),
-      sessionURI.getAuthority(),
-      sessionURI.getPort(),
-      sessionURI.getPath(),
-      sessionURI.getQuery(),
-      sessionURI.getFragment()
-    )    
-  }
-  def identityAliasFromAgent(
-    agentURI : URI
-  ) : PortableAgentCnxn = {
-    PortableAgentCnxn(agentURI, "identity", agentURI)
-  }
 
   //### Aliases
   //#### addAgentAliases
@@ -320,22 +272,7 @@ trait AgentCRUDHandler {
     agentMgr().get( erql, erql )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   //    - `Alias = String`
-  def handleaddAgentAliasesError(
-    key : String,
-    msg : addAgentAliasesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAgentAliasesError with msg : " + msg
-    )
-  }
-  def handleaddAgentAliasesResponse(
-    key : String,
-    msg : addAgentAliasesResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAgentAliasesResponse with msg : " + msg
-    )
-  }
+  
   
   //#### removeAgentAliases
   def handleremoveAgentAliasesRequest(
@@ -346,22 +283,7 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handleremoveAgentAliasesError(
-    key : String,
-    msg : removeAgentAliasesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAgentAliasesError with msg : " + msg
-    )
-  }
-  def handleremoveAgentAliasesResponse(
-    key : String,
-    msg : removeAgentAliasesResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAgentAliasesResponse with msg : " + msg
-    )
-  }
+  
   
   //#### getAgentAliases
   def handlegetAgentAliasesRequest(
@@ -372,22 +294,7 @@ trait AgentCRUDHandler {
       "Entering: handlegetAgentAliasesRequest with msg : " + msg
     )
   }
-  def handlegetAgentAliasesError(
-    key : String,
-    msg : getAgentAliasesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlegetAgentAliasesError with msg : " + msg
-    )
-  }
-  def handlegetAgentAliasesResponse(
-    key : String,
-    msg : getAgentAliasesResponse
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
+  
   
   //#### getDefaultAlias
   def handlegetDefaultAliasRequest(
@@ -398,22 +305,7 @@ trait AgentCRUDHandler {
       "Entering: handlegetDefaultAliasRequest with msg : " + msg
     )
   }
-  def handlegetDefaultAliasError(
-    key : String,
-    msg : getDefaultAliasError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlegetDefaultAliasError with msg : " + msg
-    )
-  }
-  def handlegetDefaultAliasResponse(
-    key : String,
-    msg : getDefaultAliasResponse
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
+  
   
   //#### setDefaultAlias
   def handlesetDefaultAliasRequest(
@@ -424,22 +316,7 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handlesetDefaultAliasError(
-    key : String,
-    msg : setDefaultAliasError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetDefaultAliasError with msg : " + msg
-    )
-  }
-  def handlesetDefaultAliasResponse(
-    key : String,
-    msg : setDefaultAliasResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetDefaultAliasResponse with msg : " + msg
-    )
-  }
+  
   
   //## Methods on Aliases
   //### External identities
@@ -453,23 +330,7 @@ trait AgentCRUDHandler {
     )
   }
   //    - Only ids already on the agent are allowed
-  def handleaddAliasExternalIdentitiesError(
-    key : String,
-    msg : addAliasExternalIdentitiesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAliasExternalIdentitiesError with msg : " + msg
-    )
-  }
-  def handleaddAliasExternalIdentitiesResponse(
-    key : String,
-    msg : addAliasExternalIdentitiesResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAliasExternalIdentitiesResponse with msg : "
-  + msg
-    )
-  }
+  
   
   //#### removeAliasExternalIdentities
   def handleremoveAliasExternalIdentitiesRequest[ID](
@@ -480,23 +341,7 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handleremoveAliasExternalIdentitiesError(
-    key : String,
-    msg : removeAliasExternalIdentitiesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAliasExternalIdentitiesError with msg : "
-  + msg
-    )
-  }
-  def handleremoveAliasExternalIdentitiesResponse(
-    key : String,
-    msg : removeAliasExternalIdentitiesResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAliasExternalIdentitiesResponse with msg : " + msg
-    )
-  }
+  
   
   //#### getAliasExternalIdentities
   def handlegetAliasExternalIdentitiesRequest[IDType](
@@ -508,22 +353,6 @@ trait AgentCRUDHandler {
     )
   }
   //    - One value of `IDType` is `ANY`
-  def handlegetAliasExternalIdentitiesError(
-    key : String,
-    msg : getAliasExternalIdentitiesError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlegetAliasExternalIdentitiesError with msg : " + msg
-    )
-  }
-  def handlegetAliasExternalIdentitiesResponse[IDType](
-    key : String,
-    msg : getAliasExternalIdentitiesResponse[IDType]
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
   
   //#### setAliasDefaultExternalIdentity
   def handlesetAliasDefaultExternalIdentityRequest[ID](
@@ -534,22 +363,7 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handlesetAliasDefaultExternalIdentityError(
-    key : String,
-    msg : setAliasDefaultExternalIdentityError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetAliasDefaultExternalIdentityError with msg : " + msg
-    )
-  }
-  def handlesetAliasDefaultExternalIdentityResponse(
-    key : String,
-    msg : setAliasDefaultExternalIdentityResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetAliasDefaultExternalIdentityResponse with msg : " + msg
-    )
-  }
+  
   
   //### Connections
   //#### addAliasConnections
@@ -562,22 +376,7 @@ trait AgentCRUDHandler {
     )
   }
   //    - `Cnxn = (URI, FlatTerm, URI)`
-  def handleaddAliasConnectionsError(
-    key : String,
-    msg : addAliasConnectionsError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAliasConnectionsError with msg : " + msg
-    )
-  }
-  def handleaddAliasConnectionsResponse(
-    key : String,
-    msg : addAliasConnectionsResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAliasConnectionsResponse with msg : " + msg
-    )
-  }
+  
   
   //#### removeAliasConnections
   def handleremoveAliasConnectionsRequest[Cnxn](
@@ -588,43 +387,12 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handleremoveAliasConnectionsError(
-    key : String,
-    msg : removeAliasConnectionsError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAliasConnectionsError with msg : " + msg
-    )
-  }
-  def handleremoveAliasConnectionsResponse(
-    key : String,
-    msg : removeAliasConnectionsResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAliasConnectionsResponse with msg : " + msg
-    )
-  }
+  
   
   //#### getAliasConnections
   def handlegetAliasConnectionsRequest(
     key : String,
     msg : getAliasConnectionsRequest
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
-  def handlegetAliasConnectionsError(
-    key : String,
-    msg : getAliasConnectionsError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlegetAliasConnectionsError with msg : " + msg
-    )
-  }
-  def handlegetAliasConnectionsResponse[Cnxn](
-    key : String,
-    msg : getAliasConnectionsResponse[Cnxn]
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
@@ -640,22 +408,6 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handlesetAliasDefaultConnectionError(
-    key : String,
-    msg : setAliasDefaultConnectionError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetAliasDefaultConnectionError with msg : " + msg
-    )
-  }
-  def handlesetAliasDefaultConnectionResponse(
-    key : String,
-    msg : setAliasDefaultConnectionResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetAliasDefaultConnectionResponse with msg : " + msg
-    )
-  }
   
   //### Labels
   //#### addAliasLabels
@@ -666,24 +418,56 @@ trait AgentCRUDHandler {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
+    val (erql, erspl) = agentMgr().makePolarizedPair()
+    val aliasStorageCnxn =
+      getAliasCnxn( msg.sessionURI, msg.alias )
+    val onGet : Option[mTT.Resource] => Unit = 
+      ( optRsrc : Option[mTT.Resource] ) => {
+        optRsrc match {
+          case None => {
+            // Nothing to be done
+            BasicLogService.tweet(
+              "handleaddAliasLabelsRequest | onGet: got None"
+            )
+          }
+          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+            BasicLogService.tweet(
+              "handleaddAliasLabelsRequest | onGet: got " + v
+            )
+            val onPut : Option[mTT.Resource] => Unit =
+              ( optRsrc : Option[mTT.Resource] ) => {
+                BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut")
+                CompletionMapper.complete(
+                  key, 
+                  compact(
+                    render(
+                      ( "msgType" -> "addAliasLabelsResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
+                    )
+                  )
+                )
+              }
+            v match {              
+              case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {              
+                val newLabelList = previousLabelList ++ msg.labels
+                BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating aliasList with " + newLabelList )
+                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erql )(
+                  labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut
+                )
+              }
+              case Bottom => {
+                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erql )(
+                  labelsStorageLocation, List( aliasStorageCnxn ), msg.labels, onPut
+                )
+              }
+            }
+          }        
+        }
+      }
+    
+    agentMgr().get( erql, erql )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   //    - `Label = String`
-  def handleaddAliasLabelsError(
-    key : String,
-    msg : addAliasLabelsError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAliasLabelsError with msg : " + msg
-    )
-  }
-  def handleaddAliasLabelsResponse(
-    key : String,
-    msg : addAliasLabelsResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleaddAliasLabelsResponse with msg : " + msg
-    )
-  }
+  
   
   //#### removeAliasLabels
   def handleremoveAliasLabelsRequest(
@@ -694,43 +478,12 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handleremoveAliasLabelsError(
-    key : String,
-    msg : removeAliasLabelsError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAliasLabelsError with msg : " + msg
-    )
-  }
-  def handleremoveAliasLabelsResponse(
-    key : String,
-    msg : removeAliasLabelsResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleremoveAliasLabelsResponse with msg : " + msg
-    )
-  }
+  
   
   //#### getAliasLabels
   def handlegetAliasLabelsRequest(
     key : String,
     msg : getAliasLabelsRequest
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
-  def handlegetAliasLabelsError(
-    key : String,
-    msg : getAliasLabelsError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlegetAliasLabelsError with msg : " + msg
-    )
-  }
-  def handlegetAliasLabelsResponse(
-    key : String,
-    msg : getAliasLabelsResponse
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
@@ -746,43 +499,12 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
   }
-  def handlesetAliasDefaultLabelError(
-    key : String,
-    msg : setAliasDefaultLabelError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetAliasDefaultLabelError with msg : " + msg
-    )
-  }
-  def handlesetAliasDefaultLabelResponse(
-    key : String,
-    msg : setAliasDefaultLabelResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlesetAliasDefaultLabelResponse with msg : " + msg
-    )
-  }
+  
   
   //#### getAliasDefaultLabel
   def handlegetAliasDefaultLabelRequest(
     key : String,
     msg : getAliasDefaultLabelRequest
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
-  def handlegetAliasDefaultLabelError(
-    key : String,
-    msg : getAliasDefaultLabelError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handlegetAliasDefaultLabelError with msg : " + msg
-    )
-  }
-  def handlegetAliasDefaultLabelResponse(
-    key : String,
-    msg : getAliasDefaultLabelResponse
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
@@ -800,29 +522,13 @@ trait AgentCRUDHandler {
     )
   }
   //    - `GlosExpr =`
-  //        - `InsertContent(Labels: List[Label], cnxns: List[Cnxn], value: Value)`
+  //        - `InsertContent(Labels: List, cnxns: List[Cnxn], value: Value)`
   //            - `Value = String`
-  //        - `FeedExpr(Labels: List[Label], cnxns: List[Cnxn])`
-  //        - `ScoreExpr(Labels: List[Label], cnxns: List[Cnxn], staff: Staff`
+  //        - `FeedExpr(Labels: List, cnxns: List[Cnxn])`
+  //        - `ScoreExpr(Labels: List, cnxns: List[Cnxn], staff: Staff`
   //            - `Staff =`
   //                - `List[Cnxn]`
-  //                - `List[Label]`
-  def handleevalSubscribeError(
-    key : String,
-    msg : evalSubscribeError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleevalSubscribeError with msg : " + msg
-    )
-  }
-  def handleevalSubscribeResponse[Value](
-    key : String,
-    msg : evalSubscribeResponse[Value]
-  ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
+  //                - `List`
   //- Can we know when we are done to send back an `evalSubscribeComplete`?
   
   //#### evalSubscribeCancel
@@ -834,20 +540,3 @@ trait AgentCRUDHandler {
       "Entering: handleevalSubscribeCancelRequest with msg : " + msg
     )
   }
-  def handleevalSubscribeCancelError(
-    key : String,
-    msg : evalSubscribeCancelError
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleevalSubscribeCancelError with msg : " + msg
-    )
-  }
-  def handleevalSubscribeCancelResponse(
-    key : String,
-    msg : evalSubscribeCancelResponse
-  ) : Unit = {
-    BasicLogService.tweet( 
-      "Entering: handleevalSubscribeCancelResponse with msg : " + msg
-    )
-  }
-}
