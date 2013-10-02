@@ -805,9 +805,9 @@ package usage {
               }
               println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
             }
-          }
-          onPost( nestingLevel )( None )
+          }          
         }
+        onPost( nestingLevel )( None )
       }
     }
     def doSomeFeeds(      
