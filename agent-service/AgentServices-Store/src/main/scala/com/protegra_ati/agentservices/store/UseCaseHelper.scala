@@ -768,30 +768,15 @@ package usage {
       ) {
         agentMgr().post[String]( erql, erspl )( filter, cnxns, content, onPost )
       }
-    }
-    def nestedOnPost(
+    }    
+    def doSomeNestedInserts(            
       maxPosts : Int = 1000,
       minPosts : Int = 1,
-      nestingLevel : Int = 2,
-      @transient
-      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()
-    ) : Option[DSLCommLink.mTT.Resource] => Unit = {
-      ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
-        println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
-        println( "got response: " + optRsrc )
-        println( "calling doSomeNestedInserts recursively" )
-        doSomeNestedInserts( maxPosts, minPosts, nestingLevel, postExprStrm )
-        println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
-      }
-    }
-    def doSomeNestedInserts(      
-      maxPosts : Int = 1000,
-      minPosts : Int = 1,
-      nestingLevel : Int = 2,
-      @transient
-      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()
-    ) : Unit = {
+      nestingLevel : Int = 2
+    ) : Unit = {      
       if ( nestingLevel > 0 ) {
+        @transient
+        val postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()        
         val numPosts =
           scala.math.min( (new scala.util.Random()).nextInt( maxPosts ) + 1, minPosts )
         val sessionID = UUID.randomUUID
@@ -801,13 +786,27 @@ package usage {
         val newLabelStrm = mkRandomLabelStream()
         val concreteLabelStrm = newLabelStrm.take( maxPosts + 2 )
         val newLabelPostExprPairStrm = concretePostExprStrm.zip( concreteLabelStrm )
-        for(
-          ( ConcreteHL.InsertContent( filter, cnxns, content : String ), newFilter ) <- newLabelPostExprPairStrm.take( numPosts )
-        ) {
-          agentMgr().post[String]( erql, erspl )(
-            newFilter, cnxns, content,
-            nestedOnPost( maxPosts, minPosts, nestingLevel - 1, concretePostExprStrm )
-          )
+        
+        def onPost(
+          nLvl : Int
+        ) : Option[DSLCommLink.mTT.Resource] => Unit = {
+          ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+            if ( nLvl > 0 ) {
+              println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+              println( "got response: " + optRsrc )
+              println( "calling doSomeNestedInserts recursively" )
+              for(
+                ( ConcreteHL.InsertContent( filter, cnxns, content : String ), newFilter ) <- newLabelPostExprPairStrm.take( numPosts )
+              ) {
+                agentMgr().post[String]( erql, erspl )(
+                  newFilter, cnxns, content,
+                  onPost( nLvl - 1 )
+                )
+              }
+              println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+            }
+          }
+          onPost( nestingLevel )( None )
         }
       }
     }
