@@ -769,6 +769,9 @@ package usage {
         agentMgr().post[String]( erql, erspl )( filter, cnxns, content, onPost )
       }
     }    
+    def pickANumber( min : Int, max : Int ) : Int = {
+      scala.math.min( (new scala.util.Random()).nextInt( max ) + 1, min )
+    }
     def doSomeNestedInserts(            
       maxPosts : Int = 1000,
       minPosts : Int = 1,
@@ -777,8 +780,7 @@ package usage {
       if ( nestingLevel > 0 ) {
         @transient
         val postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()        
-        val numPosts =
-          scala.math.min( (new scala.util.Random()).nextInt( maxPosts ) + 1, minPosts )
+        val numPosts = pickANumber( maxPosts, minPosts )
         val sessionID = UUID.randomUUID
         val erql = agentMgr().erql( sessionID )
         val erspl = agentMgr().erspl( sessionID )
