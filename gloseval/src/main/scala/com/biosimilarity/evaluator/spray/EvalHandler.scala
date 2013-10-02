@@ -319,22 +319,32 @@ trait EvalHandler {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
                 optRsrc match {
                   case None => ()
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(PostedExpr(jsonBlob: String))), _)) => {
-                    // TODO(mike): fill in response with bindings
-                    val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                    val content = 
-                      ("sessionURI" -> ("agent-session://" + cap)) ~
-                      ("listOfAliases" -> List[String]()) ~
-                      ("defaultAlias" -> "") ~
-                      ("listOfLabels" -> List[String]()) ~
-                      ("listOfCnxns" -> List[String]()) ~
-                      ("lastActiveLabel" -> "") ~
-                      ("jsonBlob" -> parse(jsonBlob))
+                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    v match {
+                      case PostedExpr(jsonBlob: String) => {
+                        // TODO(mike): fill in response with bindings
+                        val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
+                        val content = 
+                          ("sessionURI" -> ("agent-session://" + cap)) ~
+                          ("listOfAliases" -> List[String]()) ~
+                          ("defaultAlias" -> "") ~
+                          ("listOfLabels" -> List[String]()) ~
+                          ("listOfCnxns" -> List[String]()) ~
+                          ("lastActiveLabel" -> "") ~
+                          ("jsonBlob" -> parse(jsonBlob))
 
-                    CompletionMapper.complete(key, compact(render(
-                      ("msgType" -> "initializeSessionResponse") ~
-                      ("content" -> content)
-                    )))
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionResponse") ~
+                          ("content" -> content) 
+                        )))
+                      }
+                      case Bottom => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> "Strange: found pwmac but not userdata!?"))
+                        )))
+                      }
+                    }
                   }
                   case _ => {
                     throw new Exception("Unrecognized resource: " + optRsrc)
