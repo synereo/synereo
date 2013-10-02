@@ -11,7 +11,6 @@ package com.biosimilarity.evaluator.spray
 import com.protegra_ati.agentservices.store._
 
 import com.biosimilarity.evaluator.distribution._
-//import com.biosimilarity.evaluator.dsl.usage.ConcreteHL._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
@@ -115,6 +114,12 @@ trait EvalHandler {
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
           v match {
             case Bottom => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "createUserError")~
+                ("content" ->
+                  ("reason", "No such token.")
+                )
+              )))
             }
             case PostedExpr( postedStr : String ) => {
               val content = parse(postedStr)
@@ -229,22 +234,49 @@ trait EvalHandler {
       val tokenUri = new URI("token://" + token)
       val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
 
+      val cap = emailToCap(email)
+      val capURI = new URI("usercap://" + cap)
+      val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
+
       val (erql, erspl) = agentMgr().makePolarizedPair()
-      agentMgr().post[String](erql, erspl)(
-        tokenLabel,
-        List(tokenCnxn),
-        // email, password, and jsonBlob
-        compact(render(json \ "content")),
+      // See if the email is already there
+      agentMgr().fetch( erql, erspl )(
+        userDataLabel,
+        List(capSelfCnxn),
         (optRsrc: Option[mTT.Resource]) => {
-          BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
+          BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)
           optRsrc match {
             case None => ()
-            case Some(_) => {
-              ConfirmationEmail.confirm(email, token)
-              // Notify user to check her email
+            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
+              // No such email exists, create it
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().post[String](erql, erspl)(
+                tokenLabel,
+                List(tokenCnxn),
+                // email, password, and jsonBlob
+                compact(render(json \ "content")),
+                (optRsrc: Option[mTT.Resource]) => {
+                  BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
+                  optRsrc match {
+                    case None => ()
+                    case Some(_) => {
+                      ConfirmationEmail.confirm(email, token)
+                      // Notify user to check her email
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "createUserWaiting") ~
+                        ("content" -> List()) // List() is rendered as "{}" 
+                      )))
+                    }
+                  }
+                }
+              )
+            }
+            case _ => {
               CompletionMapper.complete(key, compact(render(
-                ("msgType" -> "createUserWaiting") ~
-                ("content" -> List()) // List() is rendered as "{}" 
+                ("msgType" -> "createUserError") ~
+                ("content" ->
+                  ("reason" -> "Email is already registered.")
+                )
               )))
             }
           }
@@ -270,58 +302,48 @@ trait EvalHandler {
         rsrc match {
           // At this point the cap is good, but we have to verify the pw mac
           case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
-            BasicLogService.tweet("secureLogin | login | onPwmacFetch: Cap is good")
-            postedExpr.asInstanceOf[PostedExpr[String]] match {
-              case PostedExpr(pwmac) => {
-                BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
-                val macInstance = Mac.getInstance("HmacSHA256")
-                macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
-                val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-                BasicLogService.tweet ("secureLogin | login | onPwmacFetch: hex = " + hex)
-                if (hex != pwmac.toString) {
-                  BasicLogService.tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
-                  CompletionMapper.complete(key, compact(render(
-                    ("msgType" -> "initializeSessionError") ~
-                    ("content" -> ("reason" -> "Bad password.")) 
-                  )))
-                } else {
-                  val onUserDataFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
-                    BasicLogService.tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
-                    optRsrc match {
-                      case None => ()
-                      case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
-                        // TODO(mike): fill in response with bindings
-                        val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
-                        postedexpr.asInstanceOf[PostedExpr[String]] match {
-                          case PostedExpr(jsonBlob) => {
-                            val content = 
-                              ("sessionURI" -> ("agent-session://" + cap)) ~
-                              ("listOfAliases" -> List[String]()) ~
-                              ("defaultAlias" -> "") ~
-                              ("listOfLabels" -> List[String]()) ~
-                              ("listOfCnxns" -> List[String]()) ~
-                              ("lastActiveLabel" -> "") ~
-                              ("jsonBlob" -> parse(jsonBlob))
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(pwmac: String))), _)) => {
+            BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
+            val macInstance = Mac.getInstance("HmacSHA256")
+            macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
+            val hex = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+            BasicLogService.tweet ("secureLogin | login | onPwmacFetch: hex = " + hex)
+            if (hex != pwmac.toString) {
+              BasicLogService.tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                ("content" -> ("reason" -> "Bad password.")) 
+              )))
+            } else {
+              val onUserDataFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(PostedExpr(jsonBlob: String))), _)) => {
+                    // TODO(mike): fill in response with bindings
+                    val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
+                    val content = 
+                      ("sessionURI" -> ("agent-session://" + cap)) ~
+                      ("listOfAliases" -> List[String]()) ~
+                      ("defaultAlias" -> "") ~
+                      ("listOfLabels" -> List[String]()) ~
+                      ("listOfCnxns" -> List[String]()) ~
+                      ("lastActiveLabel" -> "") ~
+                      ("jsonBlob" -> parse(jsonBlob))
 
-                            CompletionMapper.complete(key, compact(render(
-                              ("msgType" -> "initializeSessionResponse") ~
-                              ("content" -> content)
-                            )))
-                          }
-                        }
-                      }
-                      case _ => {
-                        throw new Exception("Unrecognized resource: " + optRsrc)
-                      }
-                    }
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionResponse") ~
+                      ("content" -> content)
+                    )))
                   }
-                  val (erql, erspl) = agentMgr().makePolarizedPair()
-                  agentMgr().fetch( erql, erspl )(userDataLabel, List(capSelfCnxn), onUserDataFetch)
-                  ()
+                  case _ => {
+                    throw new Exception("Unrecognized resource: " + optRsrc)
+                  }
                 }
               }
-              case _ => BasicLogService.tweet("PostedExpr problem: " + postedExpr)
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().fetch( erql, erspl )(userDataLabel, List(capSelfCnxn), onUserDataFetch)
+              ()
             }
           }
           case _ => {
@@ -371,9 +393,17 @@ trait EvalHandler {
             BasicLogService.tweet("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
             optRsrc match {
               case None => ()
-              case Some(mTT.RBoundHM(Some(mTT.Ground(postedexpr)), _)) => {
-                postedexpr.asInstanceOf[PostedExpr[String]] match {
-                  case PostedExpr(cap) => {
+              case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                v match {
+                  case Bottom => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError")~
+                      ("content" -> 
+                        ("reason" -> "No such email.")
+                      )
+                    )))
+                  }
+                  case PostedExpr(cap: String) => {
                     login(cap)
                   }
                 }
@@ -448,17 +478,13 @@ trait EvalHandler {
           BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + rsrc)
           rsrc match {
             case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
-              postedExpr.asInstanceOf[PostedExpr[String]] match {
-                case PostedExpr(postedStr) => {
-                  val content =
-                    ("sessionURI" -> sessionURIstr) ~
-                    ("pageOfPosts" -> List(postedStr))
-                  val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
-                }
-              }
+            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
+              val content =
+                ("sessionURI" -> sessionURIstr) ~
+                ("pageOfPosts" -> List(postedStr))
+              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+              BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+              CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
@@ -472,17 +498,13 @@ trait EvalHandler {
           BasicLogService.tweet("evalSubscribeRequest | onScore: rsrc = " + rsrc)
           rsrc match {
             case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(postedExpr)), _)) => {
-              postedExpr.asInstanceOf[PostedExpr[String]] match {
-                case PostedExpr(postedStr) => {
-                  val content =
-                    ("sessionURI" -> sessionURIstr) ~
-                    ("pageOfPosts" -> List(postedStr))
-                  val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
-                }
-              }
+            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
+              val content =
+                ("sessionURI" -> sessionURIstr) ~
+                ("pageOfPosts" -> List(postedStr))
+              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+              BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
+              CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
