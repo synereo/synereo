@@ -769,6 +769,39 @@ package usage {
         agentMgr().post[String]( erql, erspl )( filter, cnxns, content, onPost )
       }
     }
+    def nestedOnPost(
+      maxPosts : Int = 1000,
+      minPosts : Int = 1,
+      nestingLevel : Int = 2
+    ) : Option[DSLCommLink.mTT.Resource] => Unit = {
+      ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+        println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        println( "got response: " + optRsrc )
+        println( "calling doSomeNestedInserts recursively" )
+        doSomeNestedInserts( maxPosts, minPosts, nestingLevel )
+        println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+      }
+    }
+    def doSomeNestedInserts(      
+      maxPosts : Int = 1000,
+      minPosts : Int = 1,
+      nestingLevel : Int = 2,
+      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+      rndm : scala.util.Random = new scala.util.Random()      
+    ) : Unit = {
+      if ( nestingLevel > 0 ) {
+        val numPosts =
+          scala.math.min( rndm.nextInt( maxPosts ) + 1, minPosts )
+        val sessionID = UUID.randomUUID
+        val erql = agentMgr().erql( sessionID )
+        val erspl = agentMgr().erspl( sessionID )
+        for(
+          ConcreteHL.InsertContent( filter, cnxns, content : String ) <- postExprStrm.take( numPosts )
+        ) {
+          agentMgr().post[String]( erql, erspl )( filter, cnxns, content, nestedOnPost( maxPosts, minPosts, nestingLevel - 1 ) )
+        }
+      }
+    }
     def doSomeFeeds(      
       maxFeeds : Int = 1000,
       minFeeds : Int = 1,

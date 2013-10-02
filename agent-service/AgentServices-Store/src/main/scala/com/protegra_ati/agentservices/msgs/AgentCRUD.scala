@@ -15,6 +15,14 @@ import java.net.URI
 
 trait AgentCRUD
 
+/* ------------------------------------------------------------------------ *
+ * DANGER, Will Robinson, DANGER
+ * The message types below are parametric in ID, IDType, Alias, Cnxn, Label
+ * To get a consistent message set you have to consistently bind these
+ * Normally, we'd put a trait around the whole message set and use
+ * type alias', however that raises inner-class headaches.
+ * ------------------------------------------------------------------------ */
+
 //## Methods on Sessions
 //### Ping and pong
 case class sessionPing(
