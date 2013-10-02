@@ -67,6 +67,20 @@ object CometActorMapper {
   }
 }
 
+object CompletionCounter {
+  @transient
+  val map = new HashMap[String, Int]()
+  def increment(key: String, limit: Int, onLimit: () => Unit): Unit = {
+    for (current <- map.get(key)) {
+      map += (key -> (current + 1))
+      if (current + 1 >= limit) {
+        map -= key
+        onLimit()
+      }
+    }
+  }
+}
+
 object ConfirmationEmail {
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
@@ -179,13 +193,13 @@ trait EvalHandler {
 
     BasicLogService.tweet("secureSignup posting pwmac")
     val (erql1, erspl1) = agentMgr().makePolarizedPair()
-    var counter = 0
     def bothDone() = {
       CompletionMapper.complete(key, compact(render(
         ("msgType" -> "createUserResponse") ~
         ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
       )))
     }
+    CompletionCounter.map += (key -> 0)
     agentMgr().post[String](erql1, erspl1)(
       pwmacLabel,
       List(capSelfCnxn),
@@ -195,8 +209,7 @@ trait EvalHandler {
         optRsrc match {
           case None => ()
           case Some(_) => {
-            counter = counter + 1
-            if (counter >= 2) { bothDone() }
+            CompletionCounter.increment(key, 2, bothDone)
           }
         }
       }
@@ -213,8 +226,7 @@ trait EvalHandler {
         optRsrc match {
           case None => ()
           case Some(_) => {
-            counter = counter + 1
-            if (counter >= 2) { bothDone() }
+            CompletionCounter.increment(key, 2, bothDone)
           }
         }
       }
