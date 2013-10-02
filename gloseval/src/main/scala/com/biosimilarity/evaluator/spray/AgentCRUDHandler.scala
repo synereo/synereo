@@ -46,7 +46,84 @@ import java.util.UUID
 
 import java.net.URI
 
-trait AgentCRUDHandler {
+trait AgentCRUDSchema {
+  self : EvaluationCommsService =>
+ 
+  import DSLCommLink.mTT
+  import ConcreteHL._
+
+  var _aliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def aliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _aliasStorageLocation match {
+      case Some( asl ) => asl
+      case None => {
+        fromTermString(
+          "aliasList( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "aliasList( true )" )
+        )          
+      }
+    }
+  }
+  
+  var _labelsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def labelsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _labelsStorageLocation match {
+      case Some( lsl ) => lsl
+      case None => {
+        fromTermString(
+          "labelsList( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "labelsList( true )" )
+        )          
+      }
+    }
+  }
+
+  var _cnxnsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def cnxnsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _cnxnsStorageLocation match {
+      case Some( csl ) => csl
+      case None => {
+        fromTermString(
+          "cnxnsList( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "cnxnsList( true )" )
+        )          
+      }
+    }
+  }
+
+  def agentFromSession(
+    sessionURI: URI
+  ) : URI = {
+    new URI(
+      "agentURI",
+      sessionURI.getUserInfo(),
+      sessionURI.getAuthority(),
+      sessionURI.getPort(),
+      sessionURI.getPath(),
+      sessionURI.getQuery(),
+      sessionURI.getFragment()
+    )    
+  }
+  def identityAliasFromAgent(
+    agentURI : URI
+  ) : PortableAgentCnxn = {
+    PortableAgentCnxn(agentURI, "identity", agentURI)
+  }  
+
+  def getAliasCnxn(
+    sessionURI : URI,
+    aliasStr : String
+  ) : PortableAgentCnxn = {
+    val agentURI : URI = agentFromSession( sessionURI )
+    PortableAgentCnxn( agentURI, aliasStr, agentURI )
+  }    
+  
+}
+
+trait AgentCRUDHandler extends AgentCRUDSchema {
   self : EvaluationCommsService =>
  
   import DSLCommLink.mTT
@@ -197,40 +274,7 @@ trait AgentCRUDHandler {
     BasicLogService.tweet(
       "Entering: handleevalSubscribeCancelResponse with msg : " + msg
     )
-  }
-
-  var _aliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def aliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
-    _aliasStorageLocation match {
-      case Some( asl ) => asl
-      case None => {
-        fromTermString(
-          "aliasList( true )"
-        ).getOrElse(
-          throw new Exception( "Couldn't parse label: " + "aliasList( true )" )
-        )          
-      }
-    }
-  }  
-
-  def agentFromSession(
-    sessionURI: URI
-  ) : URI = {
-    new URI(
-      "agentURI",
-      sessionURI.getUserInfo(),
-      sessionURI.getAuthority(),
-      sessionURI.getPort(),
-      sessionURI.getPath(),
-      sessionURI.getQuery(),
-      sessionURI.getFragment()
-    )    
-  }
-  def identityAliasFromAgent(
-    agentURI : URI
-  ) : PortableAgentCnxn = {
-    PortableAgentCnxn(agentURI, "identity", agentURI)
-  }
+  }    
 
   //### Aliases
   //#### addAgentAliases
@@ -543,29 +587,6 @@ trait AgentCRUDHandler {
       "Entering: handlesetAliasDefaultConnectionError with msg : " + msg
     )
   }
-  
-
-  var _labelsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def labelsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
-    _labelsStorageLocation match {
-      case Some( asl ) => asl
-      case None => {
-        fromTermString(
-          "labelsList( true )"
-        ).getOrElse(
-          throw new Exception( "Couldn't parse label: " + "labelsList( true )" )
-        )          
-      }
-    }
-  }
-
-  def getAliasCnxn(
-    sessionURI : URI,
-    aliasStr : String
-  ) : PortableAgentCnxn = {
-    val agentURI : URI = agentFromSession( sessionURI )
-    PortableAgentCnxn( agentURI, aliasStr, agentURI )
-  }  
   
   //### Labels
   //#### addAliasLabels
