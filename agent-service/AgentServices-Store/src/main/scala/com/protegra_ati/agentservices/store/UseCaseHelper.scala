@@ -792,9 +792,8 @@ package usage {
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()
     ) : Unit = {
       if ( nestingLevel > 0 ) {
-        val rndm : scala.util.Random = new scala.util.Random()      
         val numPosts =
-          scala.math.min( rndm.nextInt( maxPosts ) + 1, minPosts )
+          scala.math.min( (new scala.util.Random()).nextInt( maxPosts ) + 1, minPosts )
         val sessionID = UUID.randomUUID
         val erql = agentMgr().erql( sessionID )
         val erspl = agentMgr().erspl( sessionID )
