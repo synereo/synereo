@@ -67,20 +67,6 @@ object CometActorMapper {
   }
 }
 
-object CompletionCounter {
-  @transient
-  val map = new HashMap[String, Int]()
-  def increment(key: String, limit: Int, onLimit: () => Unit): Unit = {
-    for (current <- map.get(key)) {
-      map += (key -> (current + 1))
-      if (current + 1 >= limit) {
-        map -= key
-        onLimit()
-      }
-    }
-  }
-}
-
 object ConfirmationEmail {
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
@@ -110,11 +96,11 @@ trait EvalHandler {
   
   val userDataLabel = fromTermString(
       //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveLabel(F))"
-      "userData(X)"
+      "userData(W)"
     ).getOrElse(throw new Exception("Couldn't parse userDataLabel"))
   val pwmacLabel = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacLabel"))
-  val emailLabel = fromTermString("email(X)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
-  val tokenLabel = fromTermString("token(X)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
+  val emailLabel = fromTermString("email(Y)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
+  val tokenLabel = fromTermString("token(Z)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
 
   def confirmEmailToken(token: String, key: String): Unit = {
     val tokenUri = new URI("token://" + token)
@@ -192,15 +178,11 @@ trait EvalHandler {
     val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
     BasicLogService.tweet("secureSignup posting pwmac")
-    val (erql1, erspl1) = agentMgr().makePolarizedPair()
     def bothDone() = {
-      CompletionMapper.complete(key, compact(render(
-        ("msgType" -> "createUserResponse") ~
-        ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
-      )))
+      
     }
-    CompletionCounter.map += (key -> 0)
-    agentMgr().post[String](erql1, erspl1)(
+    val (erql, erspl) = agentMgr().makePolarizedPair()
+    agentMgr().post[String](erql, erspl)(
       pwmacLabel,
       List(capSelfCnxn),
       pwmac,
@@ -209,24 +191,26 @@ trait EvalHandler {
         optRsrc match {
           case None => ()
           case Some(_) => {
-            CompletionCounter.increment(key, 2, bothDone)
-          }
-        }
-      }
-    )
-    val (erql2, erspl2) = agentMgr().makePolarizedPair()
-    agentMgr().post[String](erql2, erspl2)(
-      userDataLabel,
-      List(capSelfCnxn),
-      // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
-      //     "listOfCnxns(), lastActiveLabel(\"\"))",
-      jsonBlob,
-      ( optRsrc : Option[mTT.Resource] ) => {
-        BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
-        optRsrc match {
-          case None => ()
-          case Some(_) => {
-            CompletionCounter.increment(key, 2, bothDone)
+            val (erql, erspl) = agentMgr().makePolarizedPair()
+            agentMgr().post[String](erql, erspl)(
+              userDataLabel,
+              List(capSelfCnxn),
+              // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
+              //     "listOfCnxns(), lastActiveLabel(\"\"))",
+              jsonBlob,
+              ( optRsrc : Option[mTT.Resource] ) => {
+                BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(_) => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "createUserResponse") ~
+                      ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
+                    )))
+                  }
+                }
+              }
+            )
           }
         }
       }
