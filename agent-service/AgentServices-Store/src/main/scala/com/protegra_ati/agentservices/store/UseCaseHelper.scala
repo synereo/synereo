@@ -773,6 +773,7 @@ package usage {
       maxPosts : Int = 1000,
       minPosts : Int = 1,
       nestingLevel : Int = 2,
+      @transient
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()
     ) : Option[DSLCommLink.mTT.Resource] => Unit = {
       ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
@@ -787,7 +788,9 @@ package usage {
       maxPosts : Int = 1000,
       minPosts : Int = 1,
       nestingLevel : Int = 2,
+      @transient
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+      @transient
       rndm : scala.util.Random = new scala.util.Random()      
     ) : Unit = {
       if ( nestingLevel > 0 ) {
