@@ -76,6 +76,7 @@ trait FuzzyTerms {
   def randomGroundTerm(
     truncate : Int = 5,
     prefix : String = "aString",
+    @transient
     rndm : scala.util.Random = new scala.util.Random()
   ) : String = {
     val termType = rndm.nextInt( 3 )
@@ -95,6 +96,7 @@ trait FuzzyTerms {
     truncate : Int = 10,
     streamPrefix : Int = 1000
   ) : String = {
+    @transient
     val rndm = new scala.util.Random()
     if ( maxBredth > 0 ) {        
       val bredth = rndm.nextInt( maxBredth ) + 1
@@ -168,8 +170,11 @@ trait FuzzyTermStreams {
   def labelTuple(
     l : Int,
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     optlss : Option[Stream[String]] = None,
+    @transient
     labelStrStream : Stream[String] = mkRandomLabelStringStream()    
   ) : List[String] = {
     val lss : Stream[String] = 
@@ -187,7 +192,9 @@ trait FuzzyTermStreams {
   def mkRandomLabelStringTupleStream(
     maxLabels : Int = 10,
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[List[String]] = {    
     val numLabels : Int = rndm.nextInt( maxLabels ) + 2
@@ -219,7 +226,9 @@ trait FuzzyTermStreams {
     mkRandomLabelTupleStream()
   }
   def mkSelfCnxnStream(
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + 2
@@ -240,7 +249,9 @@ trait FuzzyTermStreams {
     mkSelfCnxnStream()
   }
   def mkRandomCnxnStream(
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + 2
@@ -266,7 +277,9 @@ trait FuzzyTermStreams {
   def mkRandomCnxnTupleStream(
     maxCnxns : Int = 10,    
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream( "label", 0 )
   ) : Stream[List[PortableAgentCnxn]] /* Stream[List[ConcreteHL.PortableAgentCnxn]] */ = {    
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 2
@@ -376,7 +389,9 @@ trait FuzzyMessageStreams {
             import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   def mkFeedExprStream(
     maxCnxns : Int = 10,
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream()
   ) : Stream[ConcreteHL.FeedExpr] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
@@ -399,7 +414,9 @@ trait FuzzyMessageStreams {
   }
   def mkScoreExprStream(
     maxCnxns : Int = 10,
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream()
   ) : Stream[ConcreteHL.ScoreExpr] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
@@ -442,8 +459,11 @@ trait FuzzyMessageStreams {
   }
   def mkPostExprStream(
     maxCnxns : Int = 10,
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream(),    
+    @transient
     uuidStrm : Stream[UUID] = uuidStream()
   ) : Stream[ConcreteHL.InsertContent[String]] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
@@ -890,13 +910,16 @@ package usage {
     def doSomeFeeds(      
       maxFeeds : Int = 1000,
       minFeeds : Int = 1,
+      @transient
       onFeedRslt : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
           println( "got response: " + optRsrc )
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
+      @transient
       feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
+      @transient
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numFeedExprs =
