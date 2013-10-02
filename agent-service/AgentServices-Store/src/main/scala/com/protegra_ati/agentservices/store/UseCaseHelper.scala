@@ -10,11 +10,13 @@ package com.biosimilarity.evaluator.distribution
 
 import com.protegra_ati.agentservices.store._
 import com.biosimilarity.lift.model.store._
+import com.biosimilarity.lift.lib._
 
 import scala.util.continuations._ 
 import scala.collection.mutable.HashMap
 
 import java.util.UUID
+import java.net.URI
 
 trait ChannelGeneration {
   def erql( sessionId : String = UUID.randomUUID().toString ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
@@ -717,6 +719,13 @@ package usage {
      with CnxnString[String,String,String]
      with Serializable
 
+  object AgentURIGenerator {
+    import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+    def mkAgentURI() : URI = {
+      UUID.randomUUID.toString.toURI
+    }
+  }
+
   object StreamBasedClient
   extends EvaluationCommsService  
   with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
@@ -749,13 +758,16 @@ package usage {
     def doSomeInserts(      
       maxPosts : Int = 1000,
       minPosts : Int = 1,
+      @transient
       onPost : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
           println( "got response: " + optRsrc )
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
+      @transient
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+      @transient
       rndm : scala.util.Random = new scala.util.Random()      
     ) : Unit = {
       val numPosts =
@@ -812,6 +824,68 @@ package usage {
         onPost( nestingLevel )( None )
       }
     }
+
+    def doOneNestedInsert(
+    ) : Unit = {      
+      val theCnxn = 
+        PortableAgentCnxn(
+          AgentURIGenerator.mkAgentURI,
+          "true",
+          AgentURIGenerator.mkAgentURI
+        )
+      val theLocationLabel = 
+        fromTermString(
+          "location( space( Here ), time( Now ) )"
+        ).getOrElse(
+          throw new Exception( "unable to parse label string : " + "location( space( Here ), time( Now ) )" )
+        )
+      val theOtherLocationLabel = 
+        fromTermString(
+          "centers( head( Center ), heart( Center ), hands( Center ) )"
+        ).getOrElse(
+          throw new Exception( "unable to parse label string : " + "location( space( Here ), time( Now ) )" )
+        )
+      val theLocationValueOne = "Alan Watts"
+      val theLocationValueTwo = "Ram Das"
+
+      val theFirstInsertContentExpr = 
+        ConcreteHL.InsertContent[String](
+          theLocationLabel,
+          List( theCnxn ),
+          theLocationValueOne
+        )
+      val theSecondInsertContentExpr = 
+        ConcreteHL.InsertContent[String](
+          theOtherLocationLabel,
+          List( theCnxn ),
+          theLocationValueTwo
+        )
+
+      val ( erql, erspl ) = agentMgr().makePolarizedPair()
+
+      val onPost2 : Option[DSLCommLink.mTT.Resource] => Unit = 
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 2 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 2 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        }
+
+      val onPost1 : Option[DSLCommLink.mTT.Resource] => Unit = 
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 1 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 1 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 2 initiated! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          agentMgr().post[String]( erql, erspl )(
+            theSecondInsertContentExpr.label, theSecondInsertContentExpr.cnxns, theSecondInsertContentExpr.value, onPost2
+          )
+        }
+      
+      BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 1 initiated! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+      agentMgr().post[String]( erql, erspl )(
+        theFirstInsertContentExpr.label, theFirstInsertContentExpr.cnxns, theFirstInsertContentExpr.value, onPost1
+      )
+    }
     def doSomeFeeds(      
       maxFeeds : Int = 1000,
       minFeeds : Int = 1,
@@ -838,13 +912,16 @@ package usage {
     def doSomeScores(      
       maxScores : Int = 1000,
       minScores : Int = 1,
+      @transient
       onScoreRslt : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
           println( "got response: " + optRsrc )
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
+      @transient
       scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
+      @transient
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numScoreExprs =
