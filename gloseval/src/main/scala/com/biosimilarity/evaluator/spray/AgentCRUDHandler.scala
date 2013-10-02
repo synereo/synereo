@@ -669,7 +669,8 @@ trait AgentCRUDHandler {
     sessionURI : URI,
     aliasStr : String
   ) : PortableAgentCnxn = {
-    throw new Exception( "not yet implemented" )
+    val agentURI : URI = agentFromSession( sessionURI )
+    PortableAgentCnxn( agentURI, aliasStr, agentURI )
   }  
   
   //### Labels
