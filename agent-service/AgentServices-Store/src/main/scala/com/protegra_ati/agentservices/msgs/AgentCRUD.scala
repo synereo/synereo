@@ -116,9 +116,9 @@ case class getAgentExternalIdentitiesResponse[ID](
 
 //### Aliases
 //#### addAgentAliases
-case class addAgentAliasesRequest[Alias](
+case class addAgentAliasesRequest(
   sessionURI : URI,
-  aliases : List[Alias]
+  aliases : List[String]
 ) extends AgentCRUD
 //    - `Alias = String`
 case class addAgentAliasesError(
@@ -130,9 +130,9 @@ case class addAgentAliasesResponse(
 ) extends AgentCRUD
 
 //#### removeAgentAliases
-case class removeAgentAliasesRequest[Alias](
+case class removeAgentAliasesRequest(
   sessionURI : URI,
-  aliases : List[Alias]
+  aliases : List[String]
 ) extends AgentCRUD
 case class removeAgentAliasesError(
   sessionURI : URI,
@@ -148,9 +148,9 @@ case class getAgentAliasesError(
   sessionURI : URI,
   reason : String
 ) extends AgentCRUD
-case class getAgentAliasesResponse[Alias](
+case class getAgentAliasesResponse(
   sessionURI : URI,
-  aliases : List[Alias]
+  aliases : List[String]
 ) extends AgentCRUD
 
 //#### getDefaultAlias
@@ -161,15 +161,15 @@ case class getDefaultAliasError(
   sessionURI : URI,
   reason : String
 ) extends AgentCRUD
-case class getDefaultAliasResponse[Alias](
+case class getDefaultAliasResponse(
   sessionURI : URI,
-  alias : Alias
+  alias : String
 ) extends AgentCRUD
 
 //#### setDefaultAlias
-case class setDefaultAliasRequest[Alias](
+case class setDefaultAliasRequest(
   sessionURI : URI,
-  alias : Alias
+  alias : String
 ) extends AgentCRUD
 case class setDefaultAliasError(
   sessionURI : URI,
@@ -182,9 +182,9 @@ case class setDefaultAliasResponse(
 //## Methods on Aliases
 //### External identities
 //#### addAliasExternalIdentities
-case class addAliasExternalIdentitiesRequest[Alias,ID](
+case class addAliasExternalIdentitiesRequest[ID](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   ids: List[ID]
 ) extends AgentCRUD
 //    - Only ids already on the agent are allowed
@@ -197,9 +197,9 @@ case class addAliasExternalIdentitiesResponse(
 ) extends AgentCRUD
 
 //#### removeAliasExternalIdentities
-case class removeAliasExternalIdentitiesRequest[Alias,ID](
+case class removeAliasExternalIdentitiesRequest[ID](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   ids : List[ID]
 ) extends AgentCRUD
 case class removeAliasExternalIdentitiesError(
@@ -211,9 +211,9 @@ case class removeAliasExternalIdentitiesResponse(
 ) extends AgentCRUD
 
 //#### getAliasExternalIdentities
-case class getAliasExternalIdentitiesRequest[Alias,IDType](
+case class getAliasExternalIdentitiesRequest[IDType](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   idType : IDType
 ) extends AgentCRUD
 //    - One value of `IDType` is `ANY`
@@ -227,9 +227,9 @@ case class getAliasExternalIdentitiesResponse[IDType](
 ) extends AgentCRUD
 
 //#### setAliasDefaultExternalIdentity
-case class setAliasDefaultExternalIdentityRequest[Alias,ID](
+case class setAliasDefaultExternalIdentityRequest[ID](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   id : ID
 ) extends AgentCRUD
 case class setAliasDefaultExternalIdentityError(
@@ -242,9 +242,9 @@ case class setAliasDefaultExternalIdentityResponse(
 
 //### Connections
 //#### addAliasConnections
-case class addAliasConnectionsRequest[Alias,Cnxn](
+case class addAliasConnectionsRequest[Cnxn](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   cnxns : List[Cnxn]
 ) extends AgentCRUD
 //    - `Cnxn = (URI, FlatTerm, URI)`
@@ -257,9 +257,9 @@ case class addAliasConnectionsResponse(
 ) extends AgentCRUD
 
 //#### removeAliasConnections
-case class removeAliasConnectionsRequest[Alias,Cnxn](
+case class removeAliasConnectionsRequest[Cnxn](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   cnxns : List[Cnxn]
 ) extends AgentCRUD
 case class removeAliasConnectionsError(
@@ -271,9 +271,9 @@ case class removeAliasConnectionsResponse(
 ) extends AgentCRUD
 
 //#### getAliasConnections
-case class getAliasConnectionsRequest[Alias](
+case class getAliasConnectionsRequest(
   sessionURI : URI,
-  alias : Alias
+  alias : String
 ) extends AgentCRUD
 case class getAliasConnectionsError(
   sessionURI : URI,
@@ -285,9 +285,9 @@ case class getAliasConnectionsResponse[Cnxn](
 ) extends AgentCRUD
 
 //#### setAliasDefaultConnection
-case class setAliasDefaultConnectionRequest[Alias,Cnxn](
+case class setAliasDefaultConnectionRequest[Cnxn](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   cnxn : Cnxn
 ) extends AgentCRUD
 case class setAliasDefaultConnectionError(
@@ -300,9 +300,9 @@ case class setAliasDefaultConnectionResponse(
 
 //### Labels
 //#### addAliasLabels
-case class addAliasLabelsRequest[Alias,Label](
+case class addAliasLabelsRequest[Label](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   Labels : List[Label]
 ) extends AgentCRUD
 //    - `Label = String`
@@ -315,9 +315,9 @@ case class addAliasLabelsResponse(
 ) extends AgentCRUD
 
 //#### removeAliasLabels
-case class removeAliasLabelsRequest[Alias,Label](
+case class removeAliasLabelsRequest[Label](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   Labels : List[Label]
 ) extends AgentCRUD
 case class removeAliasLabelsError(
@@ -329,9 +329,9 @@ case class removeAliasLabelsResponse(
 ) extends AgentCRUD
 
 //#### getAliasLabels
-case class getAliasLabelsRequest[Alias](
+case class getAliasLabelsRequest(
   sessionURI : URI,
-  alias : Alias
+  alias : String
 ) extends AgentCRUD
 case class getAliasLabelsError(
   sessionURI : URI,
@@ -343,9 +343,9 @@ case class getAliasLabelsResponse[Label](
 ) extends AgentCRUD
 
 //#### setAliasDefaultLabel
-case class setAliasDefaultLabelRequest[Alias,Label](
+case class setAliasDefaultLabelRequest[Label](
   sessionURI : URI,
-  alias : Alias,
+  alias : String,
   Label : Label
 ) extends AgentCRUD
 case class setAliasDefaultLabelError(
@@ -357,9 +357,9 @@ case class setAliasDefaultLabelResponse(
 ) extends AgentCRUD
 
 //#### getAliasDefaultLabel
-case class getAliasDefaultLabelRequest[Alias](
+case class getAliasDefaultLabelRequest(
   sessionURI : URI,
-  alias : Alias
+  alias : String
 ) extends AgentCRUD
 case class getAliasDefaultLabelError(
   sessionURI : URI,

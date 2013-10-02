@@ -789,11 +789,10 @@ package usage {
       minPosts : Int = 1,
       nestingLevel : Int = 2,
       @transient
-      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
-      @transient
-      rndm : scala.util.Random = new scala.util.Random()      
+      postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()
     ) : Unit = {
       if ( nestingLevel > 0 ) {
+        val rndm : scala.util.Random = new scala.util.Random()      
         val numPosts =
           scala.math.min( rndm.nextInt( maxPosts ) + 1, minPosts )
         val sessionID = UUID.randomUUID
