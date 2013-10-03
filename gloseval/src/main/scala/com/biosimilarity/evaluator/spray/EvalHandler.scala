@@ -220,8 +220,9 @@ trait EvalHandler {
           map(_.getOrElse(
             CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
               ("msgType" -> "addAliasLabelsError") ~
-              ("content" -> ("reason" -> "Couldn't parse a label:" + 
-                compact(render(json \ "content" \ "labels"))))
+              ("content" -> ("reason" -> ("Couldn't parse a label:" + 
+                compact(render(json \ "content" \ "labels"))
+              )))
             )))
           )).asInstanceOf[List[CnxnCtxtLabel[String,String,String]]]
       )
@@ -434,7 +435,6 @@ trait EvalHandler {
       )
     }
   }
-  
 
   def secureLogin(
     identType: String,
@@ -635,12 +635,43 @@ trait EvalHandler {
     (label, cnxns)
   }
 
+  def updateUserRequest(json: JValue, key: String): Unit = {
+    val content = (json \ "content").asInstanceOf[JObject]
+    val sessionURIStr = (content \ "sessionURI").extract[String]
+    val sessionURI = new URI(sessionURIStr)
+    val agentURIStr = sessionURIStr.replaceFirst("agent-session", "agent")
+    val agentURI = new URI(agentURIStr)
+    val agentIdCnxn = PortableAgentCnxn(agentURI, "identity", agentURI)
+    val (erql, erspl) = agentMgr().makePolarizedPair()
+    agentMgr().fetch(erql, erspl)(
+      jsonBlobLabel,
+      List(agentIdCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        optRsrc match {
+          case None => ()
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
+            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+              ("msgType" -> "updateUserResponse") ~
+              ("content" -> ("sessionURI" -> sessionURIStr))
+            )))
+          }
+          case _ => {
+            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+              ("msgType" -> "updateUserError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource: " + optRsrc.toString)))
+            )))
+          }
+        }
+      }
+    )
+  }
+
   def evalSubscribeRequest(json: JValue, key: String) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
 
     BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
     val content = (json \ "content").asInstanceOf[JObject]
-    val sessionURIstr = (content \ "sessionURI").extract[String]
+    val sessionURIStr = (content \ "sessionURI").extract[String]
     val (erql, erspl) = agentMgr().makePolarizedPair()
     BasicLogService.tweet("evalSubscribeRequest: erql = " + erql + ", erspl = " + erspl)
     
@@ -657,11 +688,11 @@ trait EvalHandler {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
               val content =
-                ("sessionURI" -> sessionURIstr) ~
+                ("sessionURI" -> sessionURIStr) ~
                 ("pageOfPosts" -> List(postedStr))
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
+              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
@@ -677,11 +708,11 @@ trait EvalHandler {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
               val content =
-                ("sessionURI" -> sessionURIstr) ~
+                ("sessionURI" -> sessionURIStr) ~
                 ("pageOfPosts" -> List(postedStr))
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
+              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
@@ -722,11 +753,11 @@ trait EvalHandler {
               case Some(_) => {
                 // evalComplete, empty seq of posts
                 val content =
-                  ("sessionURI" -> sessionURIstr) ~
+                  ("sessionURI" -> sessionURIStr) ~
                   ("pageOfPosts" -> List[String]())
                 val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
                 BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                CometActorMapper.cometMessage(key, sessionURIstr, compact(render(response)))
+                CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
               }
             }
           }
