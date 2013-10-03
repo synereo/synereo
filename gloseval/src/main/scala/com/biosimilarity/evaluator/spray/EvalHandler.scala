@@ -66,6 +66,21 @@ object CometActorMapper {
   }
 }
 
+object CounterMapper {
+  @transient
+  val map = new HashMap[String, Int]()
+  def increment(key: String, limit: Int, onLimit: () => Unit): Unit = {
+    for (count <- map.get(key)) {
+      map += (key -> (count + 1))
+      if (count + 1 >= limit) {
+        map -= key
+        onLimit()
+      }
+    }
+    map -= key
+  }
+}
+
 object ConfirmationEmail {
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
@@ -216,13 +231,11 @@ trait EvalHandler {
   // def evalSubscribeRequest(JValue json, String key): Unit = {}
   def evalSubscribeCancelRequest(son: JValue, key: String): Unit = {}
 
-  val userDataLabel = fromTermString(
-      //"userData(listOfAliases(A), defaultAlias(DA), listOfLabels(L), listOfCnxns(C), lastActiveLabel(F))"
-      "userData(W)"
-    ).getOrElse(throw new Exception("Couldn't parse userDataLabel"))
+  val jsonBlobLabel = fromTermString("jsonBlob(W)").getOrElse(throw new Exception("Couldn't parse jsonBlobLabel"))
   val pwmacLabel = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacLabel"))
   val emailLabel = fromTermString("email(Y)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
   val tokenLabel = fromTermString("token(Z)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
+  val aliasListLabel = fromTermString("aliasList(true)").getOrElse(throw new Exception("Couldn't parse aliasListLabel"))
 
   def confirmEmailToken(json: JValue, key: String): Unit = {
     val token = (json \ "content" \ "token").extract[String]
@@ -301,43 +314,35 @@ trait EvalHandler {
     val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
     BasicLogService.tweet("secureSignup posting pwmac")
-    def bothDone() = {
-      
+    CounterMapper.map += (key -> 0)
+    def allDone() {
+      CompletionMapper.complete(key, compact(render(
+        ("msgType" -> "createUserResponse") ~
+        ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
+      )))
     }
-    val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().post[String](erql, erspl)(
-      pwmacLabel,
-      List(capSelfCnxn),
-      pwmac,
-      ( optRsrc : Option[mTT.Resource] ) => {
-        BasicLogService.tweet("secureSignup onPost1: optRsrc = " + optRsrc)
-        optRsrc match {
-          case None => ()
-          case Some(_) => {
-            val (erql, erspl) = agentMgr().makePolarizedPair()
-            agentMgr().post[String](erql, erspl)(
-              userDataLabel,
-              List(capSelfCnxn),
-              // "userData(listOfAliases(), defaultAlias(\"\"), listOfLabels(), " +
-              //     "listOfCnxns(), lastActiveLabel(\"\"))",
-              jsonBlob,
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(_) => {
-                    CompletionMapper.complete(key, compact(render(
-                      ("msgType" -> "createUserResponse") ~
-                      ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
-                    )))
-                  }
-                }
-              }
-            )
+    List(
+      (pwmacLabel, pwmac),
+      (jsonBlobLabel, jsonBlob),
+      (aliasListLabel, List(email))
+    ).map((pair) => {
+      val (label, content) = pair
+      val (erql, erspl) = agentMgr().makePolarizedPair()
+      agentMgr().post(erql, erspl)(
+        label,
+        List(capSelfCnxn),
+        content,
+        ( optRsrc : Option[mTT.Resource] ) => {
+          BasicLogService.tweet("secureSignup onPost1: optRsrc = " + optRsrc)
+          optRsrc match {
+            case None => ()
+            case Some(_) => {
+              CounterMapper.increment(key, 3, allDone)
+            }
           }
         }
-      }
-    )
+      )
+    })
   }
 
   def createUserRequest(json : JValue, key : String): Unit = {
@@ -365,7 +370,7 @@ trait EvalHandler {
       val (erql, erspl) = agentMgr().makePolarizedPair()
       // See if the email is already there
       agentMgr().read( erql, erspl )(
-        userDataLabel,
+        jsonBlobLabel,
         List(capSelfCnxn),
         (optRsrc: Option[mTT.Resource]) => {
           BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)
@@ -439,8 +444,8 @@ trait EvalHandler {
                 ("content" -> ("reason" -> "Bad password.")) 
               )))
             } else {
-              val onUserDataFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
-                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onUserDataFetch: optRsrc = " + optRsrc)
+              val onJSONBlobFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
                 optRsrc match {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
@@ -465,7 +470,7 @@ trait EvalHandler {
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
                           ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> "Strange: found pwmac but not userdata!?"))
+                          ("content" -> ("reason" -> "Strange: found pwmac but not jsonBlob!?"))
                         )))
                       }
                     }
@@ -476,7 +481,7 @@ trait EvalHandler {
                 }
               }
               val (erql, erspl) = agentMgr().makePolarizedPair()
-              agentMgr().fetch( erql, erspl )(userDataLabel, List(capSelfCnxn), onUserDataFetch)
+              agentMgr().fetch( erql, erspl )(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
               ()
             }
           }
