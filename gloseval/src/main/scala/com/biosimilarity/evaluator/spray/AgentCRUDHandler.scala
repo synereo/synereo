@@ -86,9 +86,9 @@ trait AgentCRUDSchema {
       case Some( lsl ) => lsl
       case None => {
         fromTermString(
-          "labelsList( true )"
+          "labelList( true )"
         ).getOrElse(
-          throw new Exception( "Couldn't parse label: " + "labelsList( true )" )
+          throw new Exception( "Couldn't parse label: " + "labelList( true )" )
         )          
       }
     }
