@@ -84,6 +84,12 @@ object ConfirmationEmail {
   }
 }
 
+class AgentCRUDHandlerMaker extends EvalConfig
+  with DSLCommLinkConfiguration
+  with EvaluationCommsService 
+  with AgentCRUDHandler {}
+
+
 trait EvalHandler {
   self : EvaluationCommsService =>
  
@@ -178,11 +184,8 @@ trait EvalHandler {
   def removeAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def getAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def addAgentAliasesRequest(json: JValue, key: String): Unit = {
-/*    @transient
-    object handler extends EvalConfig
-      with DSLCommLinkConfiguration
-      with EvaluationCommsService 
-      with AgentCRUDHandler {}
+    @transient
+    val handler = new AgentCRUDHandlerMaker()
     handler.handleaddAgentAliasesRequest(
       key,
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
@@ -190,7 +193,7 @@ trait EvalHandler {
         (json \ "content" \ "aliases").extract[List[String]]
       )
     )
-*/
+
   }
   def removeAgentAliasesRequest(json: JValue, key: String): Unit = {}
   def getAgentAliasesRequest(json: JValue, key: String): Unit = {}
