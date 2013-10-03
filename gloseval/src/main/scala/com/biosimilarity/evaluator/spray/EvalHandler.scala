@@ -519,7 +519,7 @@ trait EvalHandler {
                     v match {
                       case PostedExpr(aliasList: String) => {
                         val (erql, erspl) = agentMgr().makePolarizedPair()
-                        agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onLabelsFetch(jsonBlob, aliasList))
+                        agentMgr().fetch( erql, erspl )(labelListLabel, List(capSelfCnxn), onLabelsFetch(jsonBlob, aliasList))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
