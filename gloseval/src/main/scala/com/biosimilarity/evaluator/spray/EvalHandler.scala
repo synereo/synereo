@@ -292,8 +292,8 @@ trait EvalHandler {
     macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
     val mac = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
     val capAndMac = cap + mac
-    val capURI = new URI("usercap://" + cap)
-    val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
+    val capURI = new URI("agent://" + cap)
+    val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
     macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
     val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
@@ -366,8 +366,8 @@ trait EvalHandler {
       val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
 
       val cap = emailToCap(email)
-      val capURI = new URI("usercap://" + cap)
-      val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
+      val capURI = new URI("agent://" + cap)
+      val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
       val (erql, erspl) = agentMgr().makePolarizedPair()
       // See if the email is already there
@@ -426,8 +426,8 @@ trait EvalHandler {
     import DSLCommLink.mTT
     
     def login(cap: String): Unit = {
-      val capURI = new URI("usercap://" + cap)
-      val capSelfCnxn = PortableAgentCnxn(capURI, "pwdb", capURI)
+      val capURI = new URI("agent://" + cap)
+      val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
       val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
         BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
         rsrc match {
