@@ -624,17 +624,4 @@ trait EvalHandler {
 
 }
 
-object EvalHandlerService
-extends EvalHandler
-with EvaluationCommsService
-with EvalConfig
-with DSLCommLinkConfiguration
-with Serializable {
-}
 
-package usage {
-  object EvalHandlerHandler {
-    val sampleCreateUserRequest : JValue =
-      parse("""{"msgType":"createUserRequest","content":{"email":"metaweta+1@gmail.com","password":"4gent","jsonBlob":{"name":"Agent 007"}}}""")
-  }
-}
