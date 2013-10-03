@@ -246,12 +246,12 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
               case PostedExpr( previousAliasList : List[String] ) => {              
                 val newAliasList = previousAliasList ++ msg.aliases
                 BasicLogService.tweet("handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
-                agentMgr().put[List[String]]( erql, erql )(
+                agentMgr().put[List[String]]( erql, erspl )(
                   aliasStorageLocation, List( aliasStorageCnxn ), newAliasList, onPut
                 )
               }
               case Bottom => {
-                agentMgr().put[List[String]]( erql, erql )(
+                agentMgr().put[List[String]]( erql, erspl )(
                   aliasStorageLocation, List( aliasStorageCnxn ), msg.aliases, onPut
                 )
               }
@@ -266,7 +266,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
       }
     
-    agentMgr().get( erql, erql )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().get( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   //    - `Alias = String`
   
@@ -307,7 +307,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
               case PostedExpr( previousAliasList : List[String] ) => {
                 val newAliasList = previousAliasList.filterNot(msg.aliases.contains)
                 BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
-                agentMgr().put[List[String]]( erql, erql )(
+                agentMgr().put[List[String]]( erql, erspl )(
                   aliasStorageLocation, List( aliasStorageCnxn ), newAliasList, onPut
                 )
               }
@@ -319,7 +319,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
       }
 
-    agentMgr().get( erql, erql )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().get( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
   
@@ -363,7 +363,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
       }
 
-    agentMgr().get( erql, erql )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().get( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
   
@@ -518,12 +518,12 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
               case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {              
                 val newLabelList = previousLabelList ++ msg.labels
                 BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
-                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erql )(
+                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
                   labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut
                 )
               }
               case Bottom => {
-                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erql )(
+                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
                   labelsStorageLocation, List( aliasStorageCnxn ), msg.labels, onPut
                 )
               }
@@ -538,7 +538,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
       }
     
-    agentMgr().get( erql, erql )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().get( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   //    - `Label = String`
   
@@ -583,7 +583,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
               case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {
                 val newLabelList = previousLabelList.filterNot(msg.labels.contains)
                 BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
-                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erql )(
+                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
                   labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut
                 )
               }
@@ -595,7 +595,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
       }
 
-    agentMgr().get( erql, erql )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().get( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
   
@@ -639,7 +639,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
       }
 
-    agentMgr().get( erql, erql )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().get( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
   //#### setAliasDefaultLabel
