@@ -241,7 +241,7 @@ trait EvalHandler {
 
       val (erql, erspl) = agentMgr().makePolarizedPair()
       // See if the email is already there
-      agentMgr().fetch( erql, erspl )(
+      agentMgr().read( erql, erspl )(
         userDataLabel,
         List(capSelfCnxn),
         (optRsrc: Option[mTT.Resource]) => {
