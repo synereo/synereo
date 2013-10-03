@@ -98,7 +98,7 @@ trait AgentCRUDSchema {
     sessionURI: URI
   ) : URI = {
     new URI(
-      "agentURI",
+      "agent",
       sessionURI.getUserInfo(),
       sessionURI.getAuthority(),
       sessionURI.getPort(),
