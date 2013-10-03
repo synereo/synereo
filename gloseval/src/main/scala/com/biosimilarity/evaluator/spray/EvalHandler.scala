@@ -241,6 +241,7 @@ trait EvalHandler {
   val emailLabel = fromTermString("email(Y)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
   val tokenLabel = fromTermString("token(Z)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
   val aliasListLabel = fromTermString("aliasList(true)").getOrElse(throw new Exception("Couldn't parse aliasListLabel"))
+  val labelListLabel = fromTermString("labelList(true)").getOrElse(throw new Exception("Couldn't parse labelListLabel"))
 
   def confirmEmailToken(json: JValue, key: String): Unit = {
     val token = (json \ "content" \ "token").extract[String]
@@ -349,10 +350,24 @@ trait EvalHandler {
                         optRsrc match {
                           case None => ()
                           case Some(_) => {
-                            CompletionMapper.complete(key, compact(render(
-                              ("msgType" -> "createUserResponse") ~
-                              ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
-                            )))
+                            val (erql, erspl) = agentMgr().makePolarizedPair()
+                            agentMgr().post(erql, erspl)(
+                              labelListLabel,
+                              List(capSelfCnxn),
+                              """[]""",
+                              ( optRsrc : Option[mTT.Resource] ) => {
+                                BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
+                                optRsrc match {
+                                  case None => ()
+                                  case Some(_) => {
+                                    CompletionMapper.complete(key, compact(render(
+                                      ("msgType" -> "createUserResponse") ~
+                                      ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
+                                    )))
+                                  }
+                                }
+                              }
+                            )
                           }
                         }
                       }
@@ -465,18 +480,18 @@ trait EvalHandler {
                 ("content" -> ("reason" -> "Bad password.")) 
               )))
             } else {
-              def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+              def onLabelsFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
                 optRsrc match {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
-                      case PostedExpr(aliasList: String) => {
+                      case PostedExpr(labelList: String) => {
                         val content = 
                           ("sessionURI" -> ("agent-session://" + cap)) ~
                           ("listOfAliases" -> parse(aliasList)) ~
-                          ("defaultAlias" -> "") ~
-                          ("listOfLabels" -> List[String]()) ~ // for default alias
+                          ("defaultAlias" -> "alias") ~
+                          ("listOfLabels" -> parse(labelList)) ~ // for default alias
                           ("listOfCnxns" -> List[String]()) ~  // for default alias
                           ("lastActiveLabel" -> "") ~
                           ("jsonBlob" -> parse(jsonBlob))
@@ -485,6 +500,26 @@ trait EvalHandler {
                           ("msgType" -> "initializeSessionResponse") ~
                           ("content" -> content) 
                         )))
+                      }
+                      case Bottom => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> "Strange: found other data but not labels!?"))
+                        )))
+                      }
+                    }
+                  }
+                }
+              }
+              def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    v match {
+                      case PostedExpr(aliasList: String) => {
+                        val (erql, erspl) = agentMgr().makePolarizedPair()
+                        agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onLabelsFetch(jsonBlob, aliasList))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
@@ -643,17 +678,30 @@ trait EvalHandler {
     val agentURI = new URI(agentURIStr)
     val agentIdCnxn = PortableAgentCnxn(agentURI, "identity", agentURI)
     val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().fetch(erql, erspl)(
+    agentMgr().get(erql, erspl)(
       jsonBlobLabel,
       List(agentIdCnxn),
       (optRsrc: Option[mTT.Resource]) => {
         optRsrc match {
           case None => ()
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
-              ("msgType" -> "updateUserResponse") ~
-              ("content" -> ("sessionURI" -> sessionURIStr))
-            )))
+            val (erql, erspl) = agentMgr().makePolarizedPair()
+            agentMgr().put(erql, erspl)(
+              jsonBlobLabel,
+              List(agentIdCnxn),
+              compact(render(json \ "content" \ "jsonBlob")),
+              (optRsrc: Option[mTT.Resource]) => {
+                optRsrc match {
+                  case None => ()
+                  case Some(_) => {
+                    CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+                      ("msgType" -> "updateUserResponse") ~
+                      ("content" -> ("sessionURI" -> sessionURIStr))
+                    )))
+                  }
+                }
+              }
+            )
           }
           case _ => {
             CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
