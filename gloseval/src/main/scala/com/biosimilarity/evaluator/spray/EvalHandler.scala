@@ -324,7 +324,7 @@ trait EvalHandler {
     List(
       (pwmacLabel, pwmac),
       (jsonBlobLabel, jsonBlob),
-      (aliasListLabel, List("alias"))
+      (aliasListLabel, """["alias"]""")
     ).map((pair) => {
       val (label, content) = pair
       val (erql, erspl) = agentMgr().makePolarizedPair()
