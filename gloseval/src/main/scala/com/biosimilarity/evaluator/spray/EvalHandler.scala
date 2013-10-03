@@ -186,7 +186,7 @@ trait EvalHandler {
       key,
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
         new URI((json \ "content" \ "sessionURI").extract[String]),
-        (json \ "content" \ "sessionURI").extract[List[String]]
+        (json \ "content" \ "aliases").extract[List[String]]
       )
     )
   }
