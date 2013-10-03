@@ -178,7 +178,7 @@ trait EvalHandler {
   def removeAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def getAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def addAgentAliasesRequest(json: JValue, key: String): Unit = {
-    @transient
+/*    @transient
     object handler extends EvalConfig
       with DSLCommLinkConfiguration
       with EvaluationCommsService 
@@ -190,6 +190,7 @@ trait EvalHandler {
         (json \ "content" \ "aliases").extract[List[String]]
       )
     )
+*/
   }
   def removeAgentAliasesRequest(json: JValue, key: String): Unit = {}
   def getAgentAliasesRequest(json: JValue, key: String): Unit = {}
