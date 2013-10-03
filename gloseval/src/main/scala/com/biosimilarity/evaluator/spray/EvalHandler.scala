@@ -446,21 +446,19 @@ trait EvalHandler {
                 ("content" -> ("reason" -> "Bad password.")) 
               )))
             } else {
-              val onJSONBlobFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
+              def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
                 optRsrc match {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
-                      case PostedExpr(jsonBlob: String) => {
-                        // TODO(mike): fill in response with bindings
-                        val bindings = rbnd.sbst.getOrElse(throw new Exception(""))
+                      case PostedExpr(aliasList: String) => {
                         val content = 
                           ("sessionURI" -> ("agent-session://" + cap)) ~
-                          ("listOfAliases" -> List[String]()) ~
+                          ("listOfAliases" -> parse(aliasList)) ~
                           ("defaultAlias" -> "") ~
-                          ("listOfLabels" -> List[String]()) ~
-                          ("listOfCnxns" -> List[String]()) ~
+                          ("listOfLabels" -> List[String]()) ~ // for default alias
+                          ("listOfCnxns" -> List[String]()) ~  // for default alias
                           ("lastActiveLabel" -> "") ~
                           ("jsonBlob" -> parse(jsonBlob))
 
@@ -468,6 +466,26 @@ trait EvalHandler {
                           ("msgType" -> "initializeSessionResponse") ~
                           ("content" -> content) 
                         )))
+                      }
+                      case Bottom => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> "Strange: found pwmac and jsonBlob but not aliases!?"))
+                        )))
+                      }
+                    }
+                  }
+                }
+              }
+              val onJSONBlobFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    v match {
+                      case PostedExpr(jsonBlob: String) => {
+                        val (erql, erspl) = agentMgr().makePolarizedPair()
+                        agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
