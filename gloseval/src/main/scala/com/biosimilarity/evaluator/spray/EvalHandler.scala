@@ -635,6 +635,6 @@ with Serializable {
 package usage {
   object EvalHandlerHandler {
     val sampleCreateUserRequest : JValue =
-      ("msgType" -> "createUserRequest")~("content"->(("email"->"metaweta+1@gmail.com")~("password"->"4gent")~("jsonBlob"->List())))
+      parse("""{"msgType":"createUserRequest","content":{"email":"metaweta+1@gmail.com","password":"4gent","jsonBlob":{"name":"Agent 007"}}}""")
   }
 }
