@@ -222,50 +222,51 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       "Entering: handleaddAgentAliasesRequest with msg : " + msg
     )
     val sessionURIStr = msg.sessionURI.toString
-    val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
-    val onGet : Option[mTT.Resource] => Unit = 
-      ( optRsrc : Option[mTT.Resource] ) => {
-        optRsrc match {
-          case None => {
-            // Nothing to be done
-            BasicLogService.tweet("handleaddAgentAliasesRequest | onGet: got None")
-          }
-          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-            BasicLogService.tweet("handleaddAgentAliasesRequest | onGet: got " + v )
-            val onPut : Option[mTT.Resource] => Unit =
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("handleaddAgentAliasesRequest | onGet | onPut")
-                CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
-                  ( "msgType" -> "addAgentAliasesResponse" ) ~
-                  ( "content" -> ( "sessionURI" -> sessionURIStr ) )
-                )))
-              }
-            v match {              
-              case PostedExpr( previousAliasList : String ) => {
-                val newAliasList = compact(render(parse(previousAliasList) ++ msg.aliases))
-                BasicLogService.tweet("handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
-                agentMgr().put[String]( erql, erspl )(
-                  aliasStorageLocation, List( aliasStorageCnxn ), newAliasList, onPut
-                )
-              }
-              case Bottom => {
-                agentMgr().put[String]( erql, erspl )(
-                  aliasStorageLocation, List( aliasStorageCnxn ), compact(render(msg.aliases)), onPut
-                )
-              }
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet("handleaddAgentAliasesRequest | onGet: got None")
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet("handleaddAgentAliasesRequest | onGet: got " + v )
+          val onPut : Option[mTT.Resource] => Unit =
+            ( optRsrc : Option[mTT.Resource] ) => {
+              BasicLogService.tweet("handleaddAgentAliasesRequest | onGet | onPut")
+              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+                ( "msgType" -> "addAgentAliasesResponse" ) ~
+                ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+              )))
+            }
+          v match {              
+            case PostedExpr( previousAliasList : String ) => {
+              val newAliasList = compact(render(parse(previousAliasList) ++ msg.aliases))
+              BasicLogService.tweet("handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().put[String]( erql, erspl )(
+                aliasStorageLocation, List( aliasStorageCnxn ), newAliasList, onPut
+              )
+            }
+            case Bottom => {
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().put[String]( erql, erspl )(
+                aliasStorageLocation, List( aliasStorageCnxn ), compact(render(msg.aliases)), onPut
+              )
             }
           }
-          case wonky => {
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
-              ("msgType" -> "addAgentAliasesError") ~
-              ("content" -> ("reason" -> ("Got wonky response: " + wonky.toString)))
-            )))
-          }
+        }
+        case wonky => {
+          CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            ("msgType" -> "addAgentAliasesError") ~
+            ("content" -> ("reason" -> ("Got wonky response: " + wonky.toString)))
+          )))
         }
       }
-    
+    }
+      
+    val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().get( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   //    - `Alias = String`
@@ -279,46 +280,46 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet(
       "Entering: handleremoveAgentAliasesRequest with msg : " + msg
     )
-    val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
-    val onGet : Option[mTT.Resource] => Unit =
-      ( optRsrc : Option[mTT.Resource] ) => {
-        optRsrc match {
-          case None => {
-            // Nothing to be done
-            BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet: got None")
-          }
-          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-            BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet: got " + v )
-            val onPut : Option[mTT.Resource] => Unit =
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet | onPut")
-                CompletionMapper.complete(
-                  key,
-                  compact(
-                    render(
-                      ( "msgType" -> "removeAgentAliasesResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
-                    )
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet: got None")
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet: got " + v )
+          val onPut : Option[mTT.Resource] => Unit =
+            ( optRsrc : Option[mTT.Resource] ) => {
+              BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet | onPut")
+              CompletionMapper.complete(
+                key,
+                compact(
+                  render(
+                    ( "msgType" -> "removeAgentAliasesResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
                   )
                 )
-              }
-            v match {
-              case PostedExpr( previousAliasList : List[String] ) => {
-                val newAliasList = previousAliasList.filterNot(msg.aliases.contains)
-                BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
-                agentMgr().put[List[String]]( erql, erspl )(
-                  aliasStorageLocation, List( aliasStorageCnxn ), newAliasList, onPut
-                )
-              }
-              case Bottom => {
-                BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet: no aliasList exists")
-              }
+              )
+            }
+          v match {
+            case PostedExpr( previousAliasList : List[String] ) => {
+              val newAliasList = previousAliasList.filterNot(msg.aliases.contains)
+              BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().put[List[String]]( erql, erspl )(
+                aliasStorageLocation, List( aliasStorageCnxn ), newAliasList, onPut
+              )
+            }
+            case Bottom => {
+              BasicLogService.tweet("handleremoveAgentAliasesRequest | onGet: no aliasList exists")
             }
           }
         }
       }
+    }
 
+    val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().get( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
@@ -331,38 +332,37 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( 
       "Entering: handlegetAgentAliasesRequest with msg : " + msg
     )
-    val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
-    val onGet : Option[mTT.Resource] => Unit =
-      ( optRsrc : Option[mTT.Resource] ) => {
-        optRsrc match {
-          case None => {
-            // Nothing to be done
-            BasicLogService.tweet("handlegetAgentAliasesRequest | onGet: got None")
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet("handlegetAgentAliasesRequest | onGet: got None")
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet("handlegetAgentAliasesRequest | onGet: got " + v )
+          val aliasList = v match {
+            case PostedExpr( aliasList : List[String] ) => aliasList
+            case Bottom => Nil
           }
-          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-            BasicLogService.tweet("handlegetAgentAliasesRequest | onGet: got " + v )
-            val aliasList = v match {
-              case PostedExpr( aliasList : List[String] ) => aliasList
-              case Bottom => Nil
-            }
-            CompletionMapper.complete(
-              key,
-              compact(
-                render(
-                  ( "msgType" -> "getAgentAliasesResponse" ) ~
-                  ( "content" ->
-                    ( "sessionURI" -> msg.sessionURI.toString ) ~
-                    ( "aliases" -> aliasList )
-                  )
+          CompletionMapper.complete(
+            key,
+            compact(
+              render(
+                ( "msgType" -> "getAgentAliasesResponse" ) ~
+                ( "content" ->
+                  ( "sessionURI" -> msg.sessionURI.toString ) ~
+                  ( "aliases" -> aliasList )
                 )
               )
             )
-          }
+          )
         }
       }
-
+    }
+    
+    val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().get( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
@@ -490,54 +490,55 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       "Entering: handleaddAliasLabelsRequest with msg : " + msg
     )
     val sessionURIStr = msg.sessionURI.toString
-    val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       getAliasCnxn( msg.sessionURI, msg.alias )
-    val onGet : Option[mTT.Resource] => Unit = 
-      ( optRsrc : Option[mTT.Resource] ) => {
-        optRsrc match {
-          case None => {
-            // Nothing to be done
-            BasicLogService.tweet(
-              "handleaddAliasLabelsRequest | onGet: got None"
-            )
-          }
-          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-            BasicLogService.tweet(
-              "handleaddAliasLabelsRequest | onGet: got " + v
-            )
-            val onPut : Option[mTT.Resource] => Unit =
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut")
-                CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
-                  ( "msgType" -> "addAliasLabelsResponse" ) ~ 
-                  ( "content" -> ( "sessionURI" -> sessionURIStr ) )
-                )))
-              }
-            v match {              
-              case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {              
-                val newLabelList = previousLabelList ++ msg.labels
-                BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
-                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
-                  labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut
-                )
-              }
-              case Bottom => {
-                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
-                  labelsStorageLocation, List( aliasStorageCnxn ), msg.labels, onPut
-                )
-              }
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet(
+            "handleaddAliasLabelsRequest | onGet: got None"
+          )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet(
+            "handleaddAliasLabelsRequest | onGet: got " + v
+          )
+          val onPut : Option[mTT.Resource] => Unit =
+            ( optRsrc : Option[mTT.Resource] ) => {
+              BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut")
+              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+                ( "msgType" -> "addAliasLabelsResponse" ) ~ 
+                ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+              )))
             }
-          }        
-          case wonky => {
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
-              ( "msgType" -> "addAliasLabelsError" ) ~ 
-              ( "content" -> ( "reason" -> ("Got wonky response: " + wonky) ) )
-            )))
+          v match {              
+            case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {              
+              val newLabelList = previousLabelList ++ msg.labels
+              BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
+                labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut
+              )
+            }
+            case Bottom => {
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
+                labelsStorageLocation, List( aliasStorageCnxn ), msg.labels, onPut
+              )
+            }
           }
+        }        
+        case wonky => {
+          CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            ( "msgType" -> "addAliasLabelsError" ) ~ 
+            ( "content" -> ( "reason" -> ("Got wonky response: " + wonky) ) )
+          )))
         }
       }
+    }
     
+    val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().get( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   //    - `Label = String`
@@ -551,50 +552,50 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet(
       "Entering: handleremoveAliasLabelsRequest with msg : " + msg
     )
-    val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       getAliasCnxn( msg.sessionURI, msg.alias )
-    val onGet : Option[mTT.Resource] => Unit =
-      ( optRsrc : Option[mTT.Resource] ) => {
-        optRsrc match {
-          case None => {
-            // Nothing to be done
-            BasicLogService.tweet(
-              "handleremoveAliasLabelsRequest | onGet: got None"
-            )
-          }
-          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-            BasicLogService.tweet(
-              "handleremoveAliasLabelsRequest | onGet: got " + v
-            )
-            val onPut : Option[mTT.Resource] => Unit =
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet | onPut")
-                CompletionMapper.complete(
-                  key,
-                  compact(
-                    render(
-                      ( "msgType" -> "removeAliasLabelsResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
-                    )
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet(
+            "handleremoveAliasLabelsRequest | onGet: got None"
+          )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet(
+            "handleremoveAliasLabelsRequest | onGet: got " + v
+          )
+          val onPut : Option[mTT.Resource] => Unit =
+            ( optRsrc : Option[mTT.Resource] ) => {
+              BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet | onPut")
+              CompletionMapper.complete(
+                key,
+                compact(
+                  render(
+                    ( "msgType" -> "removeAliasLabelsResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
                   )
                 )
-              }
-            v match {
-              case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {
-                val newLabelList = previousLabelList.filterNot(msg.labels.contains)
-                BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
-                agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
-                  labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut
-                )
-              }
-              case Bottom => {
-                BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet: no labelList exists")
-              }
+              )
+            }
+          v match {
+            case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {
+              val newLabelList = previousLabelList.filterNot(msg.labels.contains)
+              BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
+              val (erql, erspl) = agentMgr().makePolarizedPair()
+              agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( erql, erspl )(
+                labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut
+              )
+            }
+            case Bottom => {
+              BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet: no labelList exists")
             }
           }
         }
       }
+    }
 
+    val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().get( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
@@ -607,38 +608,37 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet(
       "Entering: handlegetAliasLabelsRequest with msg : " + msg
     )
-    val (erql, erspl) = agentMgr().makePolarizedPair()
     val aliasStorageCnxn =
       getAliasCnxn( msg.sessionURI, msg.alias )
-    val onGet : Option[mTT.Resource] => Unit =
-      ( optRsrc : Option[mTT.Resource] ) => {
-        optRsrc match {
-          case None => {
-            // Nothing to be done
-            BasicLogService.tweet("handlegetAliasLabelsRequest | onGet: got None")
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet("handlegetAliasLabelsRequest | onGet: got None")
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet("handlegetAliasLabelsRequest | onGet: got " + v)
+          val labelList = v match {
+            case PostedExpr( labelList : List[CnxnCtxtLabel[String,String,String]] ) => labelList
+            case Bottom => Nil
           }
-          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-            BasicLogService.tweet("handlegetAliasLabelsRequest | onGet: got " + v)
-            val labelList = v match {
-              case PostedExpr( labelList : List[CnxnCtxtLabel[String,String,String]] ) => labelList
-              case Bottom => Nil
-            }
-            CompletionMapper.complete(
-              key,
-              compact(
-                render(
-                  ( "msgType" -> "getAliasLabelsResponse" ) ~
-                  ( "content" ->
-                    ( "sessionURI" -> msg.sessionURI.toString ) ~
-                    ( "labels" -> labelList.map( l => l.toString ) )
-                  )
+          CompletionMapper.complete(
+            key,
+            compact(
+              render(
+                ( "msgType" -> "getAliasLabelsResponse" ) ~
+                ( "content" ->
+                  ( "sessionURI" -> msg.sessionURI.toString ) ~
+                  ( "labels" -> labelList.map( l => l.toString ) )
                 )
               )
             )
-          }
+          )
         }
       }
+    }
 
+    val (erql, erspl) = agentMgr().makePolarizedPair()
     agentMgr().get( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
