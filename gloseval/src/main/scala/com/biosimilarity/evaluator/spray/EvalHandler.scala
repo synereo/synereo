@@ -71,10 +71,12 @@ object CounterMapper {
   val map = new HashMap[String, Int]()
   def increment(key: String, limit: Int, onLimit: () => Unit): Unit = {
     for (count <- map.get(key)) {
-      map += (key -> (count + 1))
-      if (count + 1 >= limit) {
-        map -= key
-        onLimit()
+      synchronized {
+        map += (key -> (count + 1))
+        if (count + 1 >= limit) {
+          map -= key
+          onLimit()
+        }
       }
     }
     map -= key
