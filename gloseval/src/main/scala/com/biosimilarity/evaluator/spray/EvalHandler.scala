@@ -350,10 +350,11 @@ trait EvalHandler {
                         optRsrc match {
                           case None => ()
                           case Some(_) => {
+                            val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
                             val (erql, erspl) = agentMgr().makePolarizedPair()
                             agentMgr().post(erql, erspl)(
                               labelListLabel,
-                              List(capSelfCnxn),
+                              List(aliasCnxn),
                               """[]""",
                               ( optRsrc : Option[mTT.Resource] ) => {
                                 BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
