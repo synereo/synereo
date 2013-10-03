@@ -346,7 +346,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
   def agentMgr( flip : Boolean = false ) : AgentManager with Serializable = {
     _agentMgr match {
       case Some( agntMgr ) => agntMgr
-      case None => {    
+      case None | null => {    
         node( flip )
         val agntMgr =
           new AgentManager with Serializable {
