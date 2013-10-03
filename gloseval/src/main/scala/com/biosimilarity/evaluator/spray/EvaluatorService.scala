@@ -173,6 +173,7 @@ trait EvaluatorService extends HttpService
   val asyncMethods = HashMap[String, (JValue, String) => Unit](
     // Old stuff
     ("closeSessionRequest", closeSessionRequest),
+    ("updateUserRequest", updateUserRequest),
     // Agents
     ("addAgentExternalIdentityRequest", addAgentExternalIdentityRequest),
     ("addAgentExternalIdentityToken", addAgentExternalIdentityToken),
