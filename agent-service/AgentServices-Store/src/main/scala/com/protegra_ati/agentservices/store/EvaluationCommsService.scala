@@ -113,8 +113,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       content : Value,
-      onPost : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      onPost : Option[mTT.Resource] => Unit        
     ) : Unit = {
       reset {
         node().publish( erql, InsertContent( filter, cnxns, content ) )
@@ -141,6 +140,18 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         }
       }
     }
+
+    def post[Value](
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      content : Value,
+      onPost : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      post[Value]( erql, erspl )( filter, cnxns, content, onPost )
+    }
+
     def put[Value](
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
@@ -148,8 +159,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       content : Value,
-      onPut : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      onPut : Option[mTT.Resource] => Unit
     ) : Unit = {
       reset {
         node().publish( erql, PutContent( filter, cnxns, content ) )
@@ -176,6 +186,16 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         }
       }
     }
+    def put[Value](
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      content : Value,
+      onPut : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      put[Value]( erql, erspl )( filter, cnxns, content, onPut )
+    }
     // TODO(metaweta): factor case class out of read, fetch, and feed
     def read(
       erql : CnxnCtxtLabel[String,String,String],
@@ -183,8 +203,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     )(
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
-      onReadRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      onReadRslt : Option[mTT.Resource] => Unit
     ) : Unit = {
       reset {
         node().publish( erql, ReadExpr( filter, cnxns ) )
@@ -193,14 +212,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         for( e <- node().subscribe( erspl ) ) { onReadRslt( e ) }
       }
     }
+    def read(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onReadRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      read( erql, erspl )( filter, cnxns, onReadRslt )
+    }
     def fetch(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
     )(
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
-      onFetchRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      onFetchRslt : Option[mTT.Resource] => Unit
     ) : Unit = {
       reset {
         node().publish( erql, FetchExpr( filter, cnxns ) )
@@ -209,14 +236,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         for( e <- node().subscribe( erspl ) ) { onFetchRslt( e ) }
       }
     }
+    def fetch(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onFetchRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      fetch( erql, erspl )( filter, cnxns, onFetchRslt ) 
+    }
     def feed(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
     )(
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
-      onFeedRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      onFeedRslt : Option[mTT.Resource] => Unit
     ) : Unit = {
       reset {
         node().publish( erql, FeedExpr( filter, cnxns ) )
@@ -225,14 +260,22 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         for( e <- node().subscribe( erspl ) ) { onFeedRslt( e ) }
       }
     }
+    def feed(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onFeedRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      feed( filter, cnxns, onFeedRslt )
+    }
     def get(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
     )(
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
-      onGetRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      onGetRslt : Option[mTT.Resource] => Unit
     ) : Unit = {
       reset {
         node().publish( erql, GetExpr( filter, cnxns ) )
@@ -241,6 +284,15 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         for( e <- node().subscribe( erspl ) ) { onGetRslt( e ) }
       }
     }
+    def get(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      onGetRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      get( erql, erspl )( filter, cnxns, onGetRslt )
+    }
     def score(
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]
@@ -248,8 +300,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       staff : Either[Seq[Cnxn],Seq[Label]],
-      onScoreRslt : Option[mTT.Resource] => Unit =
-        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      onScoreRslt : Option[mTT.Resource] => Unit
     ) : Unit = {
       reset {
         node().publish( erql, ScoreExpr( filter, cnxns, staff ) )
@@ -257,6 +308,16 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       reset {
         for( e <- node().subscribe( erspl ) ) { onScoreRslt( e ) }
       }
+    }
+    def score(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      staff : Either[Seq[Cnxn],Seq[Label]],
+      onScoreRslt : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      score( erql, erspl )( filter, cnxns, staff, onScoreRslt )
     }
   }
 
