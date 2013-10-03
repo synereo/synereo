@@ -270,8 +270,8 @@ trait EvalHandler {
     val emailURI = new URI("emailhash://" + cap)
     val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
       PortableAgentCnxn(emailURI, "emailhash", emailURI)
-    val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().post[String](erql, erspl)(
+    //val (erql, erspl) = agentMgr().makePolarizedPair()
+    agentMgr().post[String](
       emailLabel,
       List(emailSelfCnxn),
       cap
