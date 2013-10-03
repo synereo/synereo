@@ -172,18 +172,19 @@ trait EvalHandler {
     (salt, md.digest)
   }
 
+  @transient
+  object handler extends EvalConfig
+    with DSLCommLinkConfiguration
+    with EvaluationCommsService
+    with AgentCRUDHandler
+    with Serializable {}
+
   // Agents
   def addAgentExternalIdentityRequest(json: JValue, key: String): Unit = {}
   def addAgentExternalIdentityToken(json: JValue, key: String): Unit = {}
   def removeAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def getAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def addAgentAliasesRequest(json: JValue, key: String): Unit = {
-    @transient
-    object handler extends EvalConfig
-      with DSLCommLinkConfiguration
-      with EvaluationCommsService
-      with AgentCRUDHandler
-      with Serializable {}
     handler.handleaddAgentAliasesRequest(
       key,
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
@@ -207,7 +208,25 @@ trait EvalHandler {
   def getAliasConnectionsRequest(json: JValue, key: String): Unit = {}
   def setAliasDefaultConnectionRequest(json: JValue, key: String): Unit = {}
   // Labels
-  def addAliasLabelsRequest(json: JValue, key: String): Unit = {}
+  def addAliasLabelsRequest(json: JValue, key: String): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    handler.handleaddAliasLabelsRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.addAliasLabelsRequest(
+        new URI(sessionURIStr),
+        (json \ "content" \ "alias").extract[String],
+        (json \ "content" \ "labels").extract[List[String]].
+          map(fromTermString).
+          map(_.getOrElse(
+            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+              ("msgType" -> "addAliasLabelsError") ~
+              ("content" -> ("reason" -> "Couldn't parse a label:" + 
+                compact(render(json \ "content" \ "labels"))))
+            )))
+          )).asInstanceOf[List[CnxnCtxtLabel[String,String,String]]]
+      )
+    )
+  }
   def removeAliasLabelsRequest(json: JValue, key: String): Unit = {}
   def getAliasLabelsRequest(json: JValue, key: String): Unit = {}
   def setAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
