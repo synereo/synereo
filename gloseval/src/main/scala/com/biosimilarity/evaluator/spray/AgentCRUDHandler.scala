@@ -243,16 +243,16 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
                 )))
               }
             v match {              
-              case PostedExpr( previousAliasList : List[String] ) => {              
-                val newAliasList = previousAliasList ++ msg.aliases
+              case PostedExpr( previousAliasList : String ) => {
+                val newAliasList = compact(render(parse(previousAliasList) ++ msg.aliases))
                 BasicLogService.tweet("handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
-                agentMgr().put[List[String]]( erql, erspl )(
+                agentMgr().put[String]( erql, erspl )(
                   aliasStorageLocation, List( aliasStorageCnxn ), newAliasList, onPut
                 )
               }
               case Bottom => {
-                agentMgr().put[List[String]]( erql, erspl )(
-                  aliasStorageLocation, List( aliasStorageCnxn ), msg.aliases, onPut
+                agentMgr().put[String]( erql, erspl )(
+                  aliasStorageLocation, List( aliasStorageCnxn ), compact(render(msg.aliases)), onPut
                 )
               }
             }
