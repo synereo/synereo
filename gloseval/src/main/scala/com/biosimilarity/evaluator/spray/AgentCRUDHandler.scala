@@ -65,6 +65,20 @@ trait AgentCRUDSchema {
       }
     }
   }
+
+  var _defaultAliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def defaultAliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _defaultAliasStorageLocation match {
+      case Some( dasl ) => dasl
+      case None => {
+        fromTermString(
+          "defaultAlias( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "defaultAlias( true )" )
+        )
+      }
+    }
+  }
   
   var _labelsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
   def labelsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
@@ -76,6 +90,20 @@ trait AgentCRUDSchema {
         ).getOrElse(
           throw new Exception( "Couldn't parse label: " + "labelsList( true )" )
         )          
+      }
+    }
+  }
+
+  var _defaultLabelStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def defaultLabelStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _defaultLabelStorageLocation match {
+      case Some( dlsl ) => dlsl
+      case None => {
+        fromTermString(
+          "defaultLabel( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "defaultLabel( true )" )
+        )
       }
     }
   }
@@ -334,14 +362,14 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     )
     val aliasStorageCnxn =
       identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
-    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
       optRsrc match {
         case None => {
           // Nothing to be done
-          BasicLogService.tweet("handlegetAgentAliasesRequest | onGet: got None")
+            BasicLogService.tweet("handlegetAgentAliasesRequest | onFetch: got None")
         }
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-          BasicLogService.tweet("handlegetAgentAliasesRequest | onGet: got " + v )
+            BasicLogService.tweet("handlegetAgentAliasesRequest | onFetch: got " + v )
           val aliasList = v match {
             case PostedExpr( aliasList : List[String] ) => aliasList
             case Bottom => Nil
@@ -363,7 +391,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     }
     
     val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().get( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().fetch( erql, erspl )( aliasStorageLocation, List( aliasStorageCnxn ), onFetch )
   }
   
   
@@ -375,6 +403,53 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( 
       "Entering: handlegetDefaultAliasRequest with msg : " + msg
     )
+    val aliasStorageCnxn =
+      identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
+    val onFetch : Option[mTT.Resource] => Unit =
+      ( optRsrc : Option[mTT.Resource] ) => {
+        optRsrc match {
+          case None => {
+            // Nothing to be done
+            BasicLogService.tweet("handlegetDefaultAliasRequest | onFetch: got None")
+          }
+          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+            BasicLogService.tweet("handlegetDefaultAliasRequest | onFetch: got " + v)
+            v match {
+              case PostedExpr( defaultAlias : String ) => {
+                CompletionMapper.complete(
+                  key,
+                  compact(
+                    render(
+                      ( "msgType" -> "getDefaultAliasResponse" ) ~
+                      ( "content" ->
+                        ( "sessionURI" -> msg.sessionURI.toString ) ~
+                        ( "alias" -> defaultAlias )
+                      )
+                    )
+                  )
+                )
+              }
+              case Bottom => {
+                CompletionMapper.complete(
+                  key,
+                  compact(
+                    render(
+                      ( "msgType" -> "getDefaultAliasError" ) ~
+                      ( "content" ->
+                        ( "sessionURI" -> msg.sessionURI.toString ) ~
+                        ( "reason" -> "No default alias" )
+                      )
+                    )
+                  )
+                )
+              }
+            }
+          }
+        }
+      }
+
+    val (erql, erspl) = agentMgr().makePolarizedPair()
+    agentMgr().fetch( erql, erspl )( defaultAliasStorageLocation, List( aliasStorageCnxn ), onFetch )
   }
   
   
@@ -385,6 +460,25 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handlesetDefaultAliasRequest with msg : " + msg
+    )
+    val aliasStorageCnxn =
+      identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
+    val onPut : Option[mTT.Resource] => Unit =
+      ( optRsrc : Option[mTT.Resource] ) => {
+        BasicLogService.tweet("handlesetDefaultAliasRequest | onPut")
+        CompletionMapper.complete(
+          key,
+          compact(
+            render(
+              ( "msgType" -> "setDefaultAliasResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
+            )
+          )
+        )
+      }
+
+    val (erql, erspl) = agentMgr().makePolarizedPair()
+    agentMgr().put[String]( erql, erspl )(
+      defaultAliasStorageLocation, List( aliasStorageCnxn ), msg.alias, onPut
     )
   }
   
@@ -610,14 +704,14 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     )
     val aliasStorageCnxn =
       getAliasCnxn( msg.sessionURI, msg.alias )
-    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
       optRsrc match {
         case None => {
           // Nothing to be done
-          BasicLogService.tweet("handlegetAliasLabelsRequest | onGet: got None")
+            BasicLogService.tweet("handlegetAliasLabelsRequest | onFetch: got None")
         }
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-          BasicLogService.tweet("handlegetAliasLabelsRequest | onGet: got " + v)
+            BasicLogService.tweet("handlegetAliasLabelsRequest | onFetch: got " + v)
           val labelList = v match {
             case PostedExpr( labelList : List[CnxnCtxtLabel[String,String,String]] ) => labelList
             case Bottom => Nil
@@ -639,7 +733,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     }
 
     val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().get( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().fetch( erql, erspl )( labelsStorageLocation, List( aliasStorageCnxn ), onFetch )
   }
   
   //#### setAliasDefaultLabel
@@ -649,6 +743,25 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
   ) : Unit = {
     BasicLogService.tweet(
       "Entering: handlesetAliasDefaultLabelRequest with msg : " + msg
+    )
+    val aliasStorageCnxn =
+      getAliasCnxn( msg.sessionURI, msg.alias )
+    val onPut : Option[mTT.Resource] => Unit =
+      ( optRsrc : Option[mTT.Resource] ) => {
+        BasicLogService.tweet("handlesetAliasDefaultLabelRequest | onPut")
+        CompletionMapper.complete(
+          key,
+          compact(
+            render(
+              ( "msgType" -> "setAliasDefaultLabelResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
+            )
+          )
+        )
+      }
+
+    val (erql, erspl) = agentMgr().makePolarizedPair()
+    agentMgr().put[CnxnCtxtLabel[String,String,String]]( erql, erspl )(
+      defaultLabelStorageLocation, List( aliasStorageCnxn ), msg.label, onPut
     )
   }
   
@@ -661,6 +774,53 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet(
       "Entering: handlegetAliasDefaultLabelRequest with msg : " + msg
     )
+    val aliasStorageCnxn =
+      getAliasCnxn( msg.sessionURI, msg.alias )
+    val onFetch : Option[mTT.Resource] => Unit =
+      ( optRsrc : Option[mTT.Resource] ) => {
+        optRsrc match {
+          case None => {
+            // Nothing to be done
+            BasicLogService.tweet("handlegetAliasDefaultLabelRequest | onFetch: got None")
+          }
+          case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+            BasicLogService.tweet("handlegetAliasDefaultLabelRequest | onFetch: got " + v)
+            v match {
+              case PostedExpr( defaultLabel : CnxnCtxtLabel[String,String,String] ) => {
+                CompletionMapper.complete(
+                  key,
+                  compact(
+                    render(
+                      ( "msgType" -> "getAliasDefaultLabelResponse" ) ~
+                      ( "content" ->
+                        ( "sessionURI" -> msg.sessionURI.toString ) ~
+                        ( "label" -> defaultLabel.toString )
+                      )
+                    )
+                  )
+                )
+              }
+              case Bottom => {
+                CompletionMapper.complete(
+                  key,
+                  compact(
+                    render(
+                      ( "msgType" -> "getAliasDefaultLabelError" ) ~
+                      ( "content" ->
+                        ( "sessionURI" -> msg.sessionURI.toString ) ~
+                        ( "reason" -> "No default label" )
+                      )
+                    )
+                  )
+                )
+              }
+            }
+          }
+        }
+      }
+
+    val (erql, erspl) = agentMgr().makePolarizedPair()
+    agentMgr().fetch( erql, erspl )( defaultLabelStorageLocation, List( aliasStorageCnxn ), onFetch )
   }
   
   //### DSL
