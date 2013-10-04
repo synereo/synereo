@@ -79,6 +79,34 @@ trait AgentCRUDSchema {
       }
     }
   }
+
+  var _externalIdsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def externalIdsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _externalIdsStorageLocation match {
+      case Some( csl ) => csl
+      case None => {
+        fromTermString(
+          "externalIdsList( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "externalIdsList( true )" )
+        )
+      }
+    }
+  }
+
+  var _defaultExternalIdStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def defaultExternalIdStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _defaultExternalIdStorageLocation match {
+      case Some( csl ) => csl
+      case None => {
+        fromTermString(
+          "defaultExternalId( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "defaultExternalId( true )" )
+        )
+      }
+    }
+  }
   
   var _labelsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
   def labelsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
@@ -118,6 +146,20 @@ trait AgentCRUDSchema {
         ).getOrElse(
           throw new Exception( "Couldn't parse label: " + "cnxnsList( true )" )
         )          
+      }
+    }
+  }
+
+  var _defaultCnxnStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def defaultCnxnStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _defaultCnxnStorageLocation match {
+      case Some( dcsl ) => dcsl
+      case None => {
+        fromTermString(
+          "defaultCnxn( true )"
+        ).getOrElse(
+          throw new Exception( "Couldn't parse label: " + "defaultCnxn( true )" )
+        )
       }
     }
   }
@@ -478,9 +520,49 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     key : String,
     msg : addAliasExternalIdentitiesRequest[ID]
   ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleaddAliasExternalIdentitiesRequest with msg : " + msg
-    )
+    BasicLogService.tweet( "Entering: handleaddAliasExternalIdentitiesRequest with msg : " + msg )
+
+    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handleaddAliasExternalIdentitiesRequest | onGet: got None" )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet( "handleaddAliasExternalIdentitiesRequest | onGet: got " + v )
+
+          val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+            BasicLogService.tweet( "handleaddAliasExternalIdentitiesRequest | onGet | onPut" )
+
+            val sessionURIStr = msg.sessionURI.toString
+
+            CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
+              ( "msgType" -> "addAliasExternalIdentitiesResponse" ) ~
+              ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+            ) ) )
+          }
+
+          v match {
+            case PostedExpr( previousExternalIdsList : List[ID] ) => {
+              val newExternalIdsList = previousExternalIdsList ++ msg.ids
+
+              BasicLogService.tweet(
+                "handleaddAliasExternalIdentitiesRequest | onGet | onPut | updating externalIdsList with " + newExternalIdsList
+              )
+
+              agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), newExternalIdsList, onPut )
+            }
+            case Bottom => {
+              agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), msg.ids, onPut )
+            }
+          }
+        }
+      }
+    }
+
+    agentMgr().get( externalIdsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   //    - Only ids already on the agent are allowed
   
@@ -490,9 +572,57 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     key : String,
     msg : removeAliasExternalIdentitiesRequest[ID]
   ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleremoveAliasExternalIdentitiesRequest with msg : " + msg
-    )
+    BasicLogService.tweet( "Entering: handleremoveAliasExternalIdentitiesRequest with msg : " + msg )
+
+    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+
+    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet: got None" )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet: got " + v )
+
+          val sessionURIStr = msg.sessionURI.toString
+
+          val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+            BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet | onPut" )
+
+            CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
+              ( "msgType" -> "removeAliasExternalIdentitiesResponse" ) ~
+              ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+            ) ) )
+          }
+
+          v match {
+            case PostedExpr( previousExternalIdsList : List[ID] ) => {
+              val newExternalIdsList = previousExternalIdsList.filterNot( msg.ids.contains )
+
+              BasicLogService.tweet(
+                "handleremoveAliasExternalIdentitiesRequest | onGet | onPut | updating cnxnList with " + newExternalIdsList
+              )
+
+              agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), newExternalIdsList, onPut )
+            }
+            case Bottom => {
+              BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet: no externalIdsList exists" )
+
+              CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
+                ( "msgType" -> "removeAliasExternalIdentitiesError" ) ~
+                ( "content" ->
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> "no externalIdsList exists" )
+                )
+              ) ) )
+            }
+          }
+        }
+      }
+    }
+
+    agentMgr().get( externalIdsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
   
   
@@ -501,9 +631,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     key : String,
     msg : getAliasExternalIdentitiesRequest[IDType]
   ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handlegetAliasExternalIdentitiesRequest with msg : " + msg
-    )
+    BasicLogService.tweet( "Entering: handlegetAliasExternalIdentitiesRequest with msg : " + msg )
   }
   //    - One value of `IDType` is `ANY`
   
@@ -512,9 +640,22 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     key : String,
     msg : setAliasDefaultExternalIdentityRequest[ID]
   ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handlesetAliasDefaultExternalIdentityRequest with msg : " + msg
-    )
+    BasicLogService.tweet( "Entering: handlesetAliasDefaultExternalIdentityRequest with msg : " + msg )
+
+    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+
+    val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet( "handlesetAliasDefaultExternalIdentityRequest | onPut" )
+
+      val sessionURIStr = msg.sessionURI.toString
+
+      CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
+        ( "msgType" -> "setAliasDefaultExternalIdentityResponse" ) ~
+        ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+      ) ) )
+    }
+
+    agentMgr().put[ID]( defaultExternalIdStorageLocation, List( aliasStorageCnxn ), msg.id, onPut )
   }
   
   
@@ -546,8 +687,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
               ( "msgType" -> "addAliasConnectionsResponse" ) ~
               ( "content" -> ( "sessionURI" -> sessionURIStr ) )
             ) ) )
-
           }
+
           v match {
             case PostedExpr( previousCnxnList : List[Cnxn] ) => {
               val newCnxnList = previousCnxnList ++ msg.cnxns
@@ -635,9 +776,38 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     key : String,
     msg : getAliasConnectionsRequest
   ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handlegetAliasConnectionsRequest with msg : " + msg
-    )
+    BasicLogService.tweet( "Entering: handlegetAliasConnectionsRequest with msg : " + msg )
+
+    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+
+    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handlegetAliasConnectionsRequest | onFetch: got None" )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet( "handlegetAliasConnectionsRequest | onFetch: got " + v )
+
+          val sessionURIStr = msg.sessionURI.toString
+
+          val cnxnList = v match {
+            case PostedExpr( cnxnList : List[Cnxn] ) => cnxnList
+            case Bottom => Nil
+          }
+
+          CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
+            ( "msgType" -> "getAliasConnectionsResponse" ) ~
+            ( "content" ->
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "cnxns" -> cnxnList.map( _.toString ) )
+            )
+          ) ) )
+        }
+      }
+    }
+
+    agentMgr().fetch( cnxnsStorageLocation, List( aliasStorageCnxn ), onFetch )
   }
   
   //#### setAliasDefaultConnection
@@ -645,9 +815,22 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     key : String,
     msg : setAliasDefaultConnectionRequest[Cnxn]
   ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handlesetAliasDefaultConnectionRequest with msg : " + msg
-    )
+    BasicLogService.tweet( "Entering: handlesetAliasDefaultConnectionRequest with msg : " + msg )
+
+    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+
+    val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet( "handlesetAliasDefaultConnectionRequest | onPut" )
+
+      val sessionURIStr = msg.sessionURI.toString
+
+      CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
+        ( "msgType" -> "setAliasDefaultConnectionResponse" ) ~
+        ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+      ) ) )
+    }
+
+    agentMgr().put[Cnxn]( defaultCnxnStorageLocation, List( aliasStorageCnxn ), msg.cnxn, onPut )
   }
   
   //### Labels
@@ -795,7 +978,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             ( "msgType" -> "getAliasLabelsResponse" ) ~
             ( "content" ->
               ( "sessionURI" -> sessionURIStr ) ~
-              ( "labels" -> labelList.map( l => l.toString ) )
+              ( "labels" -> labelList.map( _.toString ) )
             )
           ) ) )
         }
