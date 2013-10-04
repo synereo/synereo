@@ -628,14 +628,24 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
                 ( "content" -> ( "sessionURI" -> sessionURIStr ) )
               )))
             }
-          v match {              
-            case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {              
-              val newLabelList = previousLabelList ++ msg.labels
+          v match {
+            case PostedExpr( previousLabelList : String ) => {
+              val newLabelList = compact(render(parse(previousLabelList) ++ msg.labels.map(_.toString)))
               BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
-              agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut )
+              agentMgr().put[String](
+                labelsStorageLocation,
+                List( aliasStorageCnxn ),
+                newLabelList,
+                onPut
+              )
             }
             case Bottom => {
-              agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( labelsStorageLocation, List( aliasStorageCnxn ), msg.labels, onPut )
+              agentMgr().put[String](
+                labelsStorageLocation,
+                List( aliasStorageCnxn ),
+                compact(render(msg.labels.map(_.toString))),
+                onPut
+              )
             }
           }
         }        

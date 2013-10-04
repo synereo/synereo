@@ -249,8 +249,8 @@ trait EvalHandler {
     val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
     
     val (erql, erspl) = agentMgr().makePolarizedPair()
-    // TODO(mike): change from fetch to a consuming verb
-    agentMgr().fetch(erql, erspl)(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
+    // TODO(mike): remove the token after it's been used
+    agentMgr().read(erql, erspl)(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
         case None => ()
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
@@ -284,15 +284,14 @@ trait EvalHandler {
     macInstance.doFinal(email.getBytes("utf-8")).map("%02x" format _).mkString.substring(0,36)
   }
 
-  // Given an email, mac it then create Cnxn(mac, "emailhash", mac) and post "email(X): mac"
+  // Given an email, mac it, then create Cnxn(mac, "emailhash", mac) and post "email(X): mac"
   // to show we know about the email.  Return the mac
   def storeCapByEmail(email: String): String = {
     val cap = emailToCap(email)
     val emailURI = new URI("emailhash://" + cap)
     val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
       PortableAgentCnxn(emailURI, "emailhash", emailURI)
-    //val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().post[String](
+    agentMgr().put[String](
       emailLabel,
       List(emailSelfCnxn),
       cap
