@@ -228,7 +228,26 @@ trait EvalHandler {
       )
     )
   }
-  def removeAliasLabelsRequest(json: JValue, key: String): Unit = {}
+  def updateAliasLabelsRequest(json: JValue, key: String): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    handler.handleupdateAliasLabelsRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.updateAliasLabelsRequest(
+        new URI(sessionURIStr),
+        (json \ "content" \ "alias").extract[String],
+        (json \ "content" \ "labels").extract[List[String]].
+          map(fromTermString).
+          map(_.getOrElse(
+            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+              ("msgType" -> "updateAliasLabelsError") ~
+              ("content" -> ("reason" -> ("Couldn't parse a label:" +
+                compact(render(json \ "content" \ "labels"))
+              )))
+            )))
+          )).asInstanceOf[List[CnxnCtxtLabel[String,String,String]]]
+      )
+    )
+  }
   def getAliasLabelsRequest(json: JValue, key: String): Unit = {}
   def setAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
   def getAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}

@@ -630,7 +630,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             }
           v match {
             case PostedExpr( previousLabelList : String ) => {
-              val newLabelList = compact(render(parse(previousLabelList) ++ msg.labels.map(_.toString)))
+              val newLabelList = compact(render(parse(previousLabelList) ++ msg.labels.map(_.toString.replace("'",""))))
               BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
               agentMgr().put[String](
                 labelsStorageLocation,
@@ -643,7 +643,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
               agentMgr().put[String](
                 labelsStorageLocation,
                 List( aliasStorageCnxn ),
-                compact(render(msg.labels.map(_.toString))),
+                compact(render(msg.labels.map(_.toString.replace("'","")))),
                 onPut
               )
             }
@@ -664,12 +664,12 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
   
   
   //#### removeAliasLabels
-  def handleremoveAliasLabelsRequest(
+  def handleupdateAliasLabelsRequest(
     key : String,
-    msg : removeAliasLabelsRequest
+    msg : updateAliasLabelsRequest
   ) : Unit = {
     BasicLogService.tweet(
-      "Entering: handleremoveAliasLabelsRequest with msg : " + msg
+      "Entering: handleupdateAliasLabelsRequest with msg : " + msg
     )
     val aliasStorageCnxn =
       getAliasCnxn( msg.sessionURI, msg.alias )
@@ -678,16 +678,16 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         case None => {
           // Nothing to be done
           BasicLogService.tweet(
-            "handleremoveAliasLabelsRequest | onGet: got None"
+            "handleupdateAliasLabelsRequest | onGet: got None"
           )
         }
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
           BasicLogService.tweet(
-            "handleremoveAliasLabelsRequest | onGet: got " + v
+            "handleupdateAliasLabelsRequest | onGet: got " + v
           )
           val onPut : Option[mTT.Resource] => Unit =
             ( optRsrc : Option[mTT.Resource] ) => {
-              BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet | onPut")
+              BasicLogService.tweet("handleupdateAliasLabelsRequest | onGet | onPut")
               CompletionMapper.complete(
                 key,
                 compact(
@@ -700,11 +700,11 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           v match {
             case PostedExpr( previousLabelList : List[CnxnCtxtLabel[String,String,String]] ) => {
               val newLabelList = previousLabelList.filterNot(msg.labels.contains)
-              BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
+              BasicLogService.tweet("handleupdateAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
               agentMgr().put[List[CnxnCtxtLabel[String,String,String]]]( labelsStorageLocation, List( aliasStorageCnxn ), newLabelList, onPut )
             }
             case Bottom => {
-              BasicLogService.tweet("handleremoveAliasLabelsRequest | onGet: no labelList exists")
+              BasicLogService.tweet("handleupdateAliasLabelsRequest | onGet: no labelList exists")
             }
           }
         }
