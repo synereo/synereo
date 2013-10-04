@@ -316,17 +316,17 @@ case class addAliasLabelsResponse(
   sessionURI : URI
 ) extends AgentCRUD
 
-//#### removeAliasLabels
-case class removeAliasLabelsRequest(
+//#### updateAliasLabels
+case class updateAliasLabelsRequest(
   sessionURI : URI,
   alias : String,
   labels : List[CnxnCtxtLabel[String,String,String]]
 ) extends AgentCRUD
-case class removeAliasLabelsError(
+case class updateAliasLabelsError(
   sessionURI : URI,
   reason : String
 ) extends AgentCRUD
-case class removeAliasLabelsResponse(
+case class updateAliasLabelsResponse(
   sessionURI : URI
 ) extends AgentCRUD
 
