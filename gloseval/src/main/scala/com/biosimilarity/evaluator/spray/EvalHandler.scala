@@ -248,7 +248,16 @@ trait EvalHandler {
       )
     )
   }
-  def getAliasLabelsRequest(json: JValue, key: String): Unit = {}
+  def getAliasLabelsRequest(json: JValue, key: String): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    handler.handlegetAliasLabelsRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.getAliasLabelsRequest(
+        new URI(sessionURIStr),
+        (json \ "content" \ "alias").extract[String]
+      )
+    )
+  }
   def setAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
   def getAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
   // DSL

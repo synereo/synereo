@@ -169,12 +169,9 @@ trait AgentCRUDSchema {
   ) : URI = {
     new URI(
       "agent",
-      sessionURI.getUserInfo(),
-      sessionURI.getAuthority(),
-      sessionURI.getPort(),
-      sessionURI.getPath(),
-      sessionURI.getQuery(),
-      sessionURI.getFragment()
+      sessionURI.getHost(),
+      null,
+      null
     )    
   }
   def identityAliasFromAgent(
