@@ -678,7 +678,7 @@ trait EvalHandler {
         val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
         val (erql, erspl) = agentMgr().makePolarizedPair()
         BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
-        agentMgr().fetch(erql, erspl)(
+        agentMgr().read(erql, erspl)(
           emailLabel,
           List(emailSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
