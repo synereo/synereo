@@ -203,10 +203,60 @@ trait EvalHandler {
   def getAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def setAliasDefaultExternalIdentityRequest(json: JValue, key: String): Unit = {}
   // Connections
-  def addAliasConnectionsRequest(json: JValue, key: String): Unit = {}
-  def removeAliasConnectionsRequest(json: JValue, key: String): Unit = {}
-  def getAliasConnectionsRequest(json: JValue, key: String): Unit = {}
-  def setAliasDefaultConnectionRequest(json: JValue, key: String): Unit = {}
+  def addAliasConnectionsRequest(json: JValue, key: String): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
+    handler.handleaddAliasConnectionsRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.addAliasConnectionsRequest(
+        new URI(sessionURIStr),
+        (json \ "content" \ "alias").extract[String],
+        jcnxns.map((c: JValue) => PortableAgentCnxn(
+          new URI((c \ "src").extract[String]),
+          (c \ "label").extract[String],
+          new URI((c \ "tgt").extract[String])
+        ))
+      )
+    )
+  }
+  def removeAliasConnectionsRequest(json: JValue, key: String): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    case class JCnxn(src: String, label: String, tgt: String)
+    val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
+    handler.handleremoveAliasConnectionsRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.removeAliasConnectionsRequest(
+        new URI(sessionURIStr),
+        (json \ "content" \ "alias").extract[String],
+        jcnxns.map((c: JValue) => PortableAgentCnxn(
+          new URI((c \ "src").extract[String]),
+          (c \ "label").extract[String],
+          new URI((c \ "tgt").extract[String])
+        ))
+      )
+    )
+  }
+  def getAliasConnectionsRequest(json: JValue, key: String): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    handler.handlegetAliasConnectionsRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.getAliasConnectionsRequest(
+        new URI(sessionURIStr),
+        (json \ "content" \ "alias").extract[String]
+      )
+    )
+  }
+  def setAliasDefaultConnectionRequest(json: JValue, key: String): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val jcnxn = (json \ "content" \ "connection").asInstanceOf[JObject]
+    handler.handlegetAliasConnectionsRequest(
+      key,
+      com.biosimilarity.evaluator.msgs.agent.crud.getAliasConnectionsRequest(
+        new URI(sessionURIStr),
+        (json \ "content" \ "alias").extract[String]
+      )
+    )    
+  }
   // Labels
   def addAliasLabelsRequest(json: JValue, key: String): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
