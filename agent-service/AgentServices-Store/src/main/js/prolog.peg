@@ -15,31 +15,40 @@ start
 
 predicate
   = atom:atom { return atom; }
-  / functor "(" [term]+ ")"
+  / functor "(" (term ["," term]*) ")"
 
 atom
   = lident:lident { return lident; }
   / "'" ident "'"
 
 functor
-  = lident
+  = lident:lident { return lident; }
 
 term
-  = atom
-  / literal
-  / var
+  = atom:atom { return atom; }
+  / literal:literal { return literal; }
+  / v:var { return v; }
   / functor "(" [term]+ ")"
-  / lyst
+  / lyst:lyst { return lyst; }
 
 var
-  = uident
-  / wild
+  = uident:uident { return uident; }
+  / wild:wild { return wild; }
 
 lyst 
-  = "[" "]"
-  / "[" [term]+ "]"
-  / "[" [term]+ "|" lyst "]"
-  / "[" [term]+ "|" var "]"
+  = "[" "]" { return []; }
+  / "[" extension:extension "]" { return extension; }
+  / "[" extension:extension "|" lyst:lyst "]" { return extension + lyst; }
+  / "[" extension:extension "|" v:var "]" { return extension + [v]; }
+
+extension
+  = term:term tail:["," term]* {
+       var result = term;
+       for (var i = 0; i < tail.length; i++) {
+        result.push(tail[i]);
+       }
+       return result;
+    }
 
 lident
   = [a-z]([a-z] / [A-Z] / [0-9])*
