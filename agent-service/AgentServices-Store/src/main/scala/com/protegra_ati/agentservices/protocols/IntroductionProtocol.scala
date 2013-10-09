@@ -14,7 +14,6 @@ class IntroductionProtocol extends Serializable {
 
     reset {
       // listen for BeginIntroductionRequest message
-println("listen for BeginIntroductionRequest on " + cnxn)
       for (birq <- kvdbNode.subscribe(cnxn)(new BeginIntroductionRequest().toCnxnCtxtLabel)) {
 
         birq match {
@@ -28,7 +27,7 @@ println("listen for BeginIntroductionRequest on " + cnxn)
           Some(bRspCnxn),
           aMessage,
           bMessage)))), _)) => {
-println("found BeginIntroductionRequest on " + cnxn)
+
             // create A's GetIntroductionProfileRequest message
             val aGetIntroProfileRq = new GetIntroductionProfileRequest(
               Some(sessionId),
@@ -37,10 +36,9 @@ println("found BeginIntroductionRequest on " + cnxn)
 
             // send A's GetIntroductionProfileRequest message
             reset { kvdbNode.publish(aRqCnxn)(aGetIntroProfileRq.toCnxnCtxtLabel, aGetIntroProfileRq.toGround) }
-println("sent GetIntroductionProfileRequest on " + aRqCnxn)
+
             reset {
               // listen for A's GetIntroductionProfileResponse message
-println("listen for GetIntroductionProfileResponse on " + aRspCnxn)
               for (agiprsp <- kvdbNode.get(
                 aRspCnxn)(
                 new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.requestId.get).toCnxnCtxtLabel)) {
@@ -49,7 +47,7 @@ println("listen for GetIntroductionProfileResponse on " + aRspCnxn)
                 // TODO: Get introduction profile from message
                 agiprsp match {
                   case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, GetIntroductionProfileResponse(_, _)))), _)) => {
-println("found GetIntroductionProfileResponse on " + aRspCnxn)
+
                     // create B's GetIntroductionProfileRequest message
                     val bGetIntroProfileRq = new GetIntroductionProfileRequest(
                       Some(sessionId),
@@ -58,10 +56,9 @@ println("found GetIntroductionProfileResponse on " + aRspCnxn)
 
                     // send B's GetIntroductionProfileRequest message
                     reset { kvdbNode.publish(bRqCnxn)(bGetIntroProfileRq.toCnxnCtxtLabel, bGetIntroProfileRq.toGround) }
-println("sent GetIntroductionProfileRequest on " + bRqCnxn)
+
                     reset {
                       // listen for B's GetIntroductionProfileResponse message
-println("listen for GetIntroductionProfileResponse on " + bRspCnxn)
                       for (bgiprsp <- kvdbNode.get(
                         bRspCnxn)(
                         new GetIntroductionProfileResponse(Some(sessionId), bGetIntroProfileRq.requestId.get).toCnxnCtxtLabel)) {
@@ -70,7 +67,7 @@ println("listen for GetIntroductionProfileResponse on " + bRspCnxn)
                         // TODO: Get introduction profile from message
                         bgiprsp match {
                           case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, GetIntroductionProfileResponse(_, _)))), _)) => {
-println("found GetIntroductionProfileResponse on " + bRspCnxn)
+
                             // create A's IntroductionRequest message
                             // TODO: Add introduction profile to message
                             val aIntroRq = new IntroductionRequest(
@@ -80,10 +77,9 @@ println("found GetIntroductionProfileResponse on " + bRspCnxn)
 
                             // send A's IntroductionRequest message
                             reset { kvdbNode.publish(aRqCnxn)(aIntroRq.toCnxnCtxtLabel, aIntroRq.toGround) }
-println("sent IntroductionRequest on " + aRqCnxn)
+
                             reset {
                               // listen for A's IntroductionResponse message
-println("listen for IntroductionResponse on " + aRspCnxn)
                               for (airsp <- kvdbNode.get(
                                 aRspCnxn)(
                                 new IntroductionResponse(Some(sessionId), aIntroRq.requestId.get).toCnxnCtxtLabel)) {
@@ -97,7 +93,7 @@ println("listen for IntroductionResponse on " + aRspCnxn)
                                   aCnxnName,
                                   aRejectReason,
                                   Some(aConnectId))))), _)) => {
-println("found IntroductionResponse on " + aRspCnxn)
+
                                     // create B's IntroductionRequest message
                                     // TODO: Add introduction profile to message
                                     val bIntroRq = new IntroductionRequest(
@@ -107,10 +103,9 @@ println("found IntroductionResponse on " + aRspCnxn)
 
                                     // send B's IntroductionRequest message
                                     reset { kvdbNode.publish(bRqCnxn)(bIntroRq.toCnxnCtxtLabel, bIntroRq.toGround) }
-println("sent IntroductionRequest on " + bRqCnxn)
+
                                     reset {
                                       // listen for B's IntroductionResponse message
-println("listen for IntroductionResponse on " + bRspCnxn)
                                       for (birsp <- kvdbNode.get(
                                         bRspCnxn)(
                                         new IntroductionResponse(Some(sessionId), bIntroRq.requestId.get).toCnxnCtxtLabel)) {
@@ -124,7 +119,7 @@ println("listen for IntroductionResponse on " + bRspCnxn)
                                           bCnxnName,
                                           bRejectReason,
                                           Some(bConnectId))))), _)) => {
-println("found IntroductionResponse on " + bRspCnxn)
+
                                             // create BeginIntroductionResponse message
                                             val beginIntroRsp = new BeginIntroductionResponse(
                                               Some(sessionId),
@@ -148,16 +143,13 @@ println("found IntroductionResponse on " + bRspCnxn)
 
                                               // send Connect messages
                                               reset { kvdbNode.put(aRqCnxn)(aConnect.toCnxnCtxtLabel, aConnect.toGround) }
-println("sent Connect on " + aRqCnxn)
                                               reset { kvdbNode.put(bRqCnxn)(bConnect.toCnxnCtxtLabel, bConnect.toGround) }
-println("sent Connect on " + bRqCnxn)
+
                                               // send BeginIntroductionResponse message
                                               reset { kvdbNode.put(biRspCnxn)(beginIntroRsp.toCnxnCtxtLabel, beginIntroRsp.toGround) }
-println("sent BeginIntroductionResponse on " + biRspCnxn)
                                             } else {
                                               // send BeginIntroductionResponse message
                                               reset { kvdbNode.put(biRspCnxn)(beginIntroRsp.toCnxnCtxtLabel, beginIntroRsp.toGround) }
-println("sent BeginIntroductionResponse on " + biRspCnxn)
                                             }
                                           }
                                           case None => {}
@@ -215,7 +207,6 @@ println("sent BeginIntroductionResponse on " + biRspCnxn)
 
     reset {
       // listen for GetIntroductionProfileRequest message
-println("listen for GetIntroductionProfileRequest on " + cnxn)
       for (giprq <- kvdbNode.subscribe(cnxn)(new GetIntroductionProfileRequest().toCnxnCtxtLabel)) {
 
         giprq match {
@@ -223,7 +214,7 @@ println("listen for GetIntroductionProfileRequest on " + cnxn)
             Some(sessionId),
             Some(rqId),
             Some(rspCnxn))))), _)) => {
-println("found GetIntroductionProfileRequest on " + cnxn)
+
             // TODO: Load introduction profile
 
             // create GetIntroductionProfileResponse message
@@ -233,7 +224,6 @@ println("found GetIntroductionProfileRequest on " + cnxn)
             // send GetIntroductionProfileResponse message
             Thread.sleep(1000)
             reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
-println("sent GetIntroductionProfileResponse on " + rspCnxn)
           }
           case None => {}
           case _ => {
@@ -246,7 +236,6 @@ println("sent GetIntroductionProfileResponse on " + rspCnxn)
 
     reset {
       // listen for IntroductionRequest message
-println("listen for IntroductionRequest on " + cnxn)
       for (irq <- kvdbNode.subscribe(cnxn)(new IntroductionRequest().toCnxnCtxtLabel)) {
 
         irq match {
@@ -255,7 +244,7 @@ println("listen for IntroductionRequest on " + cnxn)
             Some(rqId),
             Some(rspCnxn),
             message)))), _)) => {
-println("found IntroductionRequest on " + cnxn)
+
             // create IntroductionRequest message
             // TODO: Add introduction profile to message
             val introRq = new IntroductionRequest(
@@ -265,10 +254,9 @@ println("found IntroductionRequest on " + cnxn)
 
             // send IntroductionRequest message
             reset { kvdbNode.put(privateWriteCnxn)(introRq.toCnxnCtxtLabel, introRq.toGround) }
-println("sent IntroductionRequest on " + privateWriteCnxn)
+
             reset {
               // listen for IntroductionResponse message
-println("listen for IntroductionResponse on " + privateReadCnxn)
               for (irsp <- kvdbNode.get(
                 privateReadCnxn)(
                 new IntroductionResponse(Some(sessionId), introRq.requestId.get).toCnxnCtxtLabel)) {
@@ -281,7 +269,7 @@ println("listen for IntroductionResponse on " + privateReadCnxn)
                   cnxnName,
                   rejectReason,
                   _)))), _)) => {
-println("found IntroductionResponse on " + privateReadCnxn)
+
                     // create IntroductionResponse message
                     val introRsp = new IntroductionResponse(
                       Some(sessionId),
@@ -293,11 +281,10 @@ println("found IntroductionResponse on " + privateReadCnxn)
 
                     // send IntroductionResponse message
                     reset { kvdbNode.put(rspCnxn)(introRsp.toCnxnCtxtLabel, introRsp.toGround) }
-println("sent IntroductionResponse on " + rspCnxn)
+
                     if (accepted) {
                       reset {
                         // listen for Connect message
-println("listen for Connect on " + cnxn)
                         for (connect <- kvdbNode.get(
                           cnxn)(
                           new Connect(Some(sessionId), introRsp.connectId.get).toCnxnCtxtLabel)) {
@@ -309,23 +296,21 @@ println("listen for Connect on " + cnxn)
                             Some(cnxnName),
                             Some(readCnxn),
                             Some(writeCnxn))))), _)) => {
-println("found Connect on " + cnxn)
+
                               // TODO: Register behaviors on new request cnxn
                               reset {
                                 // get the list of cnxns
-println("listen for Cnxns on " + selfCnxn)
                                 for (cnxns <- kvdbNode.get(selfCnxn)(new Cnxns().toCnxnCtxtLabel)) {
                                   cnxns match {
                                     case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, Cnxns(
                                     _,
                                     cnxnList)))), _)) => {
-println("found Cnxns on " + selfCnxn)
+
                                       // create new Cnxns object with the new cnxns
                                       val cnxns = new Cnxns(Some(new Date()), (readCnxn, writeCnxn) :: cnxnList)
 
                                       // save new Cnxns object
                                       reset { kvdbNode.put(selfCnxn)(cnxns.toCnxnCtxtLabel, cnxns.toGround) }
-println("sent Cnxns on " + selfCnxn)
                                     }
                                     case _ => {
                                       // expected Cnxns
