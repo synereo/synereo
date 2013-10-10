@@ -174,6 +174,89 @@ extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
   }
 }
 
+trait CnxnCtxtHash[Namespace,Var,Tag] 
+extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
+  class TermParser extends JavaTokenParsers {
+    def rpnTerm : Parser[Any] =
+      path | combination
+    def path : Parser[Any] =
+      "["~repsep( stringLiteral, "," )~"]"
+    def combination : Parser[Any] =
+      anyCombo | allCombo | eachCombo
+    def anyCombo : Parser[Any] =
+      "any"~"("~repsep( rpnTerm, "," )~")"
+    def allCombo : Parser[Any] =
+      "all"~"("~repsep( rpnTerm, "," )~")"
+    def eachCombo : Parser[Any] =
+      "each"~"("~repsep( rpnTerm, "," )~")"
+
+    def rpnTermXform : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      pathX | combinationX
+
+    def pathLoop(
+      steps : List[String]
+    ) : CnxnCtxtLabel[String,String,Any] with Factual = {
+      steps match {
+	case step :: rSteps => {
+	  val terminal : CnxnCtxtLabel[String,String,Any] with Factual =
+	    new CnxnCtxtLeaf[String,String,Any]( Right( "_" ) )
+	  ( steps :\ terminal )( 
+	    {
+	      ( e : String, acc : CnxnCtxtLabel[String,String,Any] with Factual ) => {
+		new CnxnCtxtBranch[String,String,Any](
+		  e,
+		  List[CnxnCtxtLabel[String,String,Any] with Factual]( acc )
+		)
+	      }
+	    }
+	  )
+	}
+	case Nil => {
+	  throw new Exception( "empty path" )
+	}
+      }
+    }
+    def pathX : Parser[CnxnCtxtLabel[String,String,Any] with Factual] = 
+      "["~repsep( stringLiteral, "," )~"]" ^^ {
+	case "["~steps~"]" => {
+	  pathLoop( steps )
+	}
+      }
+    def combinationX : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      anyComboX | allComboX | eachComboX
+
+    def anyComboX : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      "any"~"("~repsep( rpnTermXform, "," )~")" ^^ {
+	case "any"~"("~rpnTerms~")" => {
+	  new CnxnCtxtBranch[String,String,Any](
+	    "any",
+	    rpnTerms
+	  )
+	}
+      }
+    
+    def allComboX : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      "all"~"("~repsep( rpnTermXform, "," )~")" ^^ {
+	case "all"~"("~rpnTerms~")" => {
+	  new CnxnCtxtBranch[String,String,Any](
+	    "all",
+	    rpnTerms
+	  )
+	}
+      }
+
+    def eachComboX : Parser[CnxnCtxtLabel[String,String,Any] with Factual] =
+      "each"~"("~repsep( rpnTermXform, "," )~")" ^^ {
+	case "each"~"("~rpnTerms~")" => {
+	  new CnxnCtxtBranch[String,String,Any](
+	    "each",
+	    rpnTerms
+	  )
+	}
+      }    
+  }
+}
+
 trait CnxnString[Namespace,Var,Tag]
 extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
   import com.biosimilarity.lift.lib.term.conversion._
