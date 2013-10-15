@@ -4,7 +4,7 @@ import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 
 case class GetIntroductionProfileRequest(
     override val sessionId: Option[String],
-    override val requestId: Option[String],
+    override val correlationId: Option[String],
     override val responseCnxn: Option[acT.AgentCnxn])
   extends ProtocolRequestMessage {
 

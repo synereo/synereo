@@ -4,15 +4,14 @@ import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 
 case class BeginIntroductionRequest(
     override val sessionId: Option[String],
-    override val requestId: Option[String],
-    override val responseCnxn: Option[acT.AgentCnxn],
-    aRequestCnxn: Option[acT.AgentCnxn],
-    aResponseCnxn: Option[acT.AgentCnxn],
-    bRequestCnxn: Option[acT.AgentCnxn],
-    bResponseCnxn: Option[acT.AgentCnxn],
+    aBiCnxn: Option[acT.AgentBiCnxn],
+    bBiCnxn: Option[acT.AgentBiCnxn],
     aMessage: Option[String],
     bMessage: Option[String])
   extends ProtocolRequestMessage {
 
-  def this() = this(None, None, None, None, None, None, None, None, None)
+  def this() = this(None, None, None, None, None)
+
+  override val correlationId = None
+  override val responseCnxn = None
 }

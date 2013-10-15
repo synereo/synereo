@@ -15,17 +15,6 @@ class ProtocolMessageTest extends SpecificationWithJUnit {
     }
   }
 
-  "BeginIntroductionResponse" should {
-    "convert to CnxnCtxtLabel" in {
-      val sessionId = UUID.randomUUID.toString
-      val responseId = UUID.randomUUID.toString
-      val value = new BeginIntroductionResponse(Some(sessionId), responseId).toCnxnCtxtLabel
-      val expected = ("protocolMessage(beginIntroductionResponse(sessionId(\"" + sessionId + "\"),responseId(\"" + responseId + "\")))").toLabel
-
-      value must be_==(expected)
-    }
-  }
-
   "IntroductionRequest" should {
     "convert to CnxnCtxtLabel" in {
       val value = new IntroductionRequest().toCnxnCtxtLabel
@@ -38,9 +27,9 @@ class ProtocolMessageTest extends SpecificationWithJUnit {
   "IntroductionResponse" should {
     "convert to CnxnCtxtLabel" in {
       val sessionId = UUID.randomUUID.toString
-      val responseId = UUID.randomUUID.toString
-      val value = new IntroductionResponse(Some(sessionId), responseId).toCnxnCtxtLabel
-      val expected = ("protocolMessage(introductionResponse(sessionId(\"" + sessionId + "\"),responseId(\"" + responseId + "\")))").toLabel
+      val correlationId = UUID.randomUUID.toString
+      val value = new IntroductionResponse(Some(sessionId), correlationId).toCnxnCtxtLabel
+      val expected = ("protocolMessage(introductionResponse(sessionId(\"" + sessionId + "\"),correlationId(\"" + correlationId + "\")))").toLabel
 
       value must be_==(expected)
     }
@@ -58,9 +47,9 @@ class ProtocolMessageTest extends SpecificationWithJUnit {
   "GetIntroductionProfileResponse" should {
     "convert to CnxnCtxtLabel" in {
       val sessionId = UUID.randomUUID.toString
-      val responseId = UUID.randomUUID.toString
-      val value = new GetIntroductionProfileResponse(Some(sessionId), responseId).toCnxnCtxtLabel
-      val expected = ("protocolMessage(getIntroductionProfileResponse(sessionId(\"" + sessionId + "\"),responseId(\"" + responseId + "\")))").toLabel
+      val correlationId = UUID.randomUUID.toString
+      val value = new GetIntroductionProfileResponse(Some(sessionId), correlationId).toCnxnCtxtLabel
+      val expected = ("protocolMessage(getIntroductionProfileResponse(sessionId(\"" + sessionId + "\"),correlationId(\"" + correlationId + "\")))").toLabel
 
       value must be_==(expected)
     }
