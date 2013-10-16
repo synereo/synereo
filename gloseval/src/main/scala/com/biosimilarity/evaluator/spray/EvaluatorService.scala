@@ -202,7 +202,9 @@ trait EvaluatorService extends HttpService
     ("getAliasDefaultLabelRequest", getAliasDefaultLabelRequest),
     // DSL
     ("evalSubscribeRequest", evalSubscribeRequest),
-    ("evalSubscribeCancelRequest", evalSubscribeCancelRequest)
+    ("evalSubscribeCancelRequest", evalSubscribeCancelRequest),
+    // Introduction Protocol
+    ("beginIntroductionRequest", beginIntroductionRequest)
   )
 
   @transient

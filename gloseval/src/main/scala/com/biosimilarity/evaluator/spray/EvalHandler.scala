@@ -177,6 +177,7 @@ trait EvalHandler {
     with DSLCommLinkConfiguration
     with EvaluationCommsService
     with AgentCRUDHandler
+    with AgentIntroductionHandler
     with Serializable {}
 
   // Agents
@@ -312,7 +313,43 @@ trait EvalHandler {
   def getAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
   // DSL
   // def evalSubscribeRequest(JValue json, String key): Unit = {}
-  def evalSubscribeCancelRequest(son: JValue, key: String): Unit = {}
+  def evalSubscribeCancelRequest(json: JValue, key: String): Unit = {}
+  // Introduction Protocol
+  def beginIntroductionRequest(json: JValue, key: String): Unit = {
+    handler.handlebeginIntroductionRequest(
+      key,
+      com.protegra_ati.agentservices.msgs.agent.introduction.beginIntroductionRequest(
+        new URI((json \ "content" \ "sessionURI").extract[String]),
+        (json \ "content" \ "alias").extract[String],
+        new PortableAgentBiCnxn(
+          new PortableAgentCnxn(
+            new URI((json \ "content" \ "aBiConnection" \ "readConnection" \ "src").extract[String]),
+            (json \ "content" \ "aBiConnection" \ "readConnection" \ "label").extract[String],
+            new URI((json \ "content" \ "aBiConnection" \ "readConnection" \ "trgt").extract[String])
+          ),
+          new PortableAgentCnxn(
+            new URI((json \ "content" \ "aBiConnection" \ "writeConnection" \ "src").extract[String]),
+            (json \ "content" \ "aBiConnection" \ "writeConnection" \ "label").extract[String],
+            new URI((json \ "content" \ "aBiConnection" \ "writeConnection" \ "trgt").extract[String])
+          )
+        ),
+        new PortableAgentBiCnxn(
+          new PortableAgentCnxn(
+            new URI((json \ "content" \ "bBiConnection" \ "readConnection" \ "src").extract[String]),
+            (json \ "content" \ "bBiConnection" \ "readConnection" \ "label").extract[String],
+            new URI((json \ "content" \ "bBiConnection" \ "readConnection" \ "trgt").extract[String])
+          ),
+          new PortableAgentCnxn(
+            new URI((json \ "content" \ "bBiConnection" \ "writeConnection" \ "src").extract[String]),
+            (json \ "content" \ "bBiConnection" \ "writeConnection" \ "label").extract[String],
+            new URI((json \ "content" \ "bBiConnection" \ "writeConnection" \ "trgt").extract[String])
+          )
+        ),
+        (json \ "content" \ "aMessage").extract[String],
+        (json \ "content" \ "bMessage").extract[String]
+      )
+    )
+  }
 
   val jsonBlobLabel = fromTermString("jsonBlob(W)").getOrElse(throw new Exception("Couldn't parse jsonBlobLabel"))
   val pwmacLabel = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacLabel"))
