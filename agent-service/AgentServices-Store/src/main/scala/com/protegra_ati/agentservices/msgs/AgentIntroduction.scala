@@ -1,5 +1,6 @@
 package com.protegra_ati.agentservices.msgs.agent.introduction
 
+import com.biosimilarity.evaluator.distribution.ConcreteHL._
 import java.net.URI
 
 //# Message Set
@@ -9,7 +10,7 @@ trait AgentIntroduction
 //## Methods on Aliases
 //### Introduction Protocol
 //#### beginIntroduction
-case class beginIntroductionRequest[BiCnxn](
+case class beginIntroductionRequest(
   sessionURI : URI,
   alias : String,
   aBiCnxn : BiCnxn,

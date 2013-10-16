@@ -19,10 +19,13 @@ case class PortableAgentCnxn(
   val label : String,
   val trgt : URI
 ) //extends Cnxn[URI,String,URI]
+
+case class PortableAgentBiCnxn( readCnxn : PortableAgentCnxn, writeCnxn : PortableAgentCnxn )
   
 object ConcreteHL extends AbstractHL with Serializable {  
   type Label = CnxnCtxtLabel[String,String,String]  
   type Substitution = Option[List[(String,Label)]]  
 
   type Cnxn = PortableAgentCnxn
+  type BiCnxn = PortableAgentBiCnxn
 }
