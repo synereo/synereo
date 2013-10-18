@@ -809,8 +809,9 @@ trait EvalHandler {
         case Nil => Set(List(List[String]()))
         // case sop::Nil => sop
         case sop::tail => {
-          sops.foldLeft(Set(List(List[String]())))((acc, sop2) => {
-            if (acc.size == 1) sop2
+          val zero = Set(List(List[String]()))
+          sops.foldLeft(zero)((acc, sop2) => {
+            if (acc == zero) sop2
             else for (prod <- acc; prod2 <- sop2) yield {
               (prod ++ prod2).sortWith((a,b) => a.mkString < b.mkString)
             }
