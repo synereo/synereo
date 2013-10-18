@@ -784,6 +784,7 @@ trait EvalHandler {
   
   import scala.util.parsing.combinator._
   type Path = List[String]
+  @transient
   object SumOfProducts extends RegexParsers {
 
     def Node: Parser[String] = """[A-Za-z0-9]+""".r
