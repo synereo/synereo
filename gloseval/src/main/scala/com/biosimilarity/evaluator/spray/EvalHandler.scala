@@ -775,17 +775,6 @@ trait EvalHandler {
     new URI((cx \ "tgt").extract[String])
   )
 
-  def extractLabelAndCnxns(exprContent: JObject) = {
-    BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
-    val label = fromTermString((exprContent \ "label").extract[String]).getOrElse(
-      throw new Exception("Couldn't parse label: " + compact(render(exprContent)))
-    )
-    val cnxns = (exprContent \ "cnxns") match {
-      case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
-    }
-    (label, cnxns)
-  }
-
   def updateUserRequest(json: JValue, key: String): Unit = {
     val content = (json \ "content").asInstanceOf[JObject]
     val sessionURIStr = (content \ "sessionURI").extract[String]
@@ -829,6 +818,73 @@ trait EvalHandler {
       }
     )
   }
+  
+  import scala.util.parsing.combinator._
+  type Path = List[String]
+  class SumOfProducts extends RegexParsers {
+
+    def Node: Parser[String] = """[A-Za-z0-9]+""".r
+
+    def Path: Parser[Set[List[Path]]] = "[" ~> repsep(Node, ",") <~ "]" ^^
+    {
+      // A path is a trivial sum of a trivial product
+      (nodes: List[String]) => 
+      Set(List(nodes.reverse))
+    }
+
+    def Sum: Parser[Set[List[Path]]] = ("each" | "any") ~ "(" ~> repsep(SOP, ",") <~ ")" ^^ 
+    {
+      // Given a list of sums of products, return the sum of the list
+      (sops: List[Set[List[Path]]]) =>
+      (Set[List[Path]]() /: sops)(_ union _)
+    }
+
+    def Product: Parser[Set[List[Path]]] = "all(" ~> repsep(SOP, ",") <~ ")" ^^
+    {
+      (sops: List[Set[List[Path]]]) =>
+      sops match {
+        case Nil => Set(List(List[String]()))
+        // case sop::Nil => sop
+        case sop::tail => {
+          val zero = Set(List(List[String]()))
+          sops.foldLeft(zero)((acc, sop2) => {
+            if (acc == zero) sop2
+            else for (prod <- acc; prod2 <- sop2) yield {
+              (prod ++ prod2).sortWith((a,b) => a.mkString < b.mkString)
+            }
+          })
+        }
+      }
+    }
+
+    def SOP: Parser[Set[List[Path]]] = Path | Product | Sum
+    
+    def sumOfProductsToFilterSet(sop: Set[List[Path]]): Set[CnxnCtxtLabel[String, String, String]] = {
+      for (prod <- sop) yield {
+        // List(List("Greg", "Biosim", "Work"), List("Personal"))
+        // => fromTermString("all(vWork(vBiosim(vGreg(_))), vPersonal(_))").get
+        fromTermString("all(" + prod.map(path => {
+          val (l, r) = path.foldLeft(("",""))((acc, tag) => {
+            val (l2, r2) = acc
+            (l2 + "v" + tag + "(", ")" + r2)
+          })
+          l + "_" + r        
+        }).mkString(",") + ")").get
+      }
+    }
+
+    def apply(s: String) = sumOfProductsToFilterSet(parseAll(SOP, s).get)
+  }
+
+  def extractFiltersAndCnxns(exprContent: JObject) = {
+    BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
+    
+    val label = new SumOfProducts()((exprContent \ "label").extract[String])
+    val cnxns = (exprContent \ "cnxns") match {
+      case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
+    }
+    (label, cnxns)
+  }
 
   def evalSubscribeRequest(json: JValue, key: String) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
@@ -836,12 +892,10 @@ trait EvalHandler {
     BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
     val content = (json \ "content").asInstanceOf[JObject]
     val sessionURIStr = (content \ "sessionURI").extract[String]
-    val (erql, erspl) = agentMgr().makePolarizedPair()
-    BasicLogService.tweet("evalSubscribeRequest: erql = " + erql + ", erspl = " + erspl)
     
     val expression = (content \ "expression")
     val ec = (expression \ "content").asInstanceOf[JObject]
-    val (label, cnxns) = extractLabelAndCnxns(ec)
+    val (filters, cnxns) = extractFiltersAndCnxns(ec)
     val exprType = (expression \ "msgType").extract[String]
     exprType match {
       case "feedExpr" => {
@@ -862,7 +916,10 @@ trait EvalHandler {
           }
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-        agentMgr().feed(erql, erspl)(label, cnxns, onFeed)
+        for (filter <- filters) {
+          val (erql, erspl) = agentMgr().makePolarizedPair()
+          agentMgr().feed(erql, erspl)(filter, cnxns, onFeed)
+        }
       }
       case "scoreExpr" => {
         BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
@@ -899,33 +956,39 @@ trait EvalHandler {
           case _ => throw new Exception("Couldn't parse staff: " + json)
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-        agentMgr().score(erql, erspl)(label, cnxns, staff, onScore)
+        for (filter <- filters) {
+          val (erql, erspl) = agentMgr().makePolarizedPair()
+          agentMgr().score(erql, erspl)(filter, cnxns, staff, onScore)
+        }
       }
       case "insertContent" => {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-        agentMgr().post(erql, erspl)(
-          label,
-          cnxns,
-          value,
-          (rsrc: Option[mTT.Resource]) => {
-            println("evalSubscribeRequest | insertContent | onPost")
-            BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
-            rsrc match {
-              case None => ()
-              case Some(_) => {
-                // evalComplete, empty seq of posts
-                val content =
-                  ("sessionURI" -> sessionURIStr) ~
-                  ("pageOfPosts" -> List[String]())
-                val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-                BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
+        for (filter <- filters) {
+          val (erql, erspl) = agentMgr().makePolarizedPair()
+          agentMgr().post(erql, erspl)(
+            filter,
+            cnxns,
+            value,
+            (rsrc: Option[mTT.Resource]) => {
+              println("evalSubscribeRequest | insertContent | onPost")
+              BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
+              rsrc match {
+                case None => ()
+                case Some(_) => {
+                  // evalComplete, empty seq of posts
+                  val content =
+                    ("sessionURI" -> sessionURIStr) ~
+                    ("pageOfPosts" -> List[String]())
+                  val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+                  BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                  CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
+                }
               }
             }
-          }
-        )
+          )
+        }
       }
       case _ => {
         throw new Exception("Unrecognized request: " + compact(render(json)))
