@@ -40,9 +40,10 @@ import java.util.UUID
 class EvaluatorServiceActor extends Actor
 with EvaluatorService
 with Serializable {
+  import EvalHandlerService._
 
-  // TODO(mike): Insert code here to create an agent for holding stuff like email->agent maps
-  
+  // create well-known node user
+  createNodeUser("individualagenttechnology@googlegroups.com", "U32vbN6WVJ", "{name:\"ATI\",imgSrc:\"\"}")
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test

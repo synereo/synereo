@@ -1039,6 +1039,84 @@ trait EvalHandler {
       )
     )))
   }
+
+  def createNodeUser(email: String, password: String, jsonBlob: String): Unit = {
+    val cap = emailToCap(email)
+    val capURI = new URI("agent://" + cap)
+    val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
+
+    agentMgr().read(
+      jsonBlobLabel,
+      List(capSelfCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        BasicLogService.tweet("createNodeUser | onRead: optRsrc = " + optRsrc)
+
+        // Check if agent for email exists. If it doesn't, create the agent.
+        optRsrc match {
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
+            // Store the email
+            agentMgr().put[String](emailLabel, List(capSelfCnxn), cap)
+
+            // Generate pwmac
+            val macInstance = Mac.getInstance("HmacSHA256")
+            macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
+            val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+
+            // Store pwmac
+            agentMgr().post(
+              pwmacLabel,
+              List(capSelfCnxn),
+              pwmac,
+              ( optRsrc : Option[mTT.Resource] ) => {
+                BasicLogService.tweet("createNodeUser | onPost1: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(_) => {
+                    // Store jsonBlob
+                    agentMgr().post(
+                      jsonBlobLabel,
+                      List(capSelfCnxn),
+                      jsonBlob,
+                      ( optRsrc : Option[mTT.Resource] ) => {
+                        BasicLogService.tweet("createNodeUser | onPost2: optRsrc = " + optRsrc)
+                        optRsrc match {
+                          case None => ()
+                          case Some(_) => {
+                            // Store alias list containing just the default alias
+                            agentMgr().post(
+                              aliasListLabel,
+                              List(capSelfCnxn),
+                              """["alias"]""",
+                              ( optRsrc : Option[mTT.Resource] ) => {
+                                BasicLogService.tweet("createNodeUser | onPost3: optRsrc = " + optRsrc)
+                                optRsrc match {
+                                  case None => ()
+                                  case Some(_) => {
+                                    val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
+                                    // Store empty label list on alias cnxn
+                                    agentMgr().post(
+                                      labelListLabel,
+                                      List(aliasCnxn),
+                                      """[]"""
+                                    )
+                                  }
+                                }
+                              }
+                            )
+                          }
+                        }
+                      }
+                    )
+                  }
+                }
+              }
+            )
+          }
+          case _ => ()
+        }
+      }
+    )
+  }
 }
 
 
