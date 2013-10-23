@@ -7,8 +7,7 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
 trait ProtocolMessage {
   val sessionId: Option[String]
-  val innerLabel = s"sessionId(${generateLabelValue(sessionId)})"
-  lazy val labelStr = "protocolMessage(" + getClass.getName.trimPackage.toCamelCase + "(" + innerLabel + "))"
+  protected val innerLabel = s"sessionId(${generateLabelValue(sessionId)})"
   private lazy val label = ("protocolMessage(" + getClass.getName.trimPackage.toCamelCase + "(" + innerLabel + "))").toLabel
 
   protected def generateLabelValue(value: Option[String]): String = {

@@ -71,7 +71,7 @@ with AgentCnxnTypeScope {
       override val name : Moniker      
     ) extends BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode](
       name
-    ) {
+    ) {      
       def mget( cnxn : acT.AgentCnxn )(
         persist : Option[PersistenceManifest],
         ask : dAT.AskNum,
@@ -125,7 +125,10 @@ with AgentCnxnTypeScope {
                 )
               }
               case Some(kqry) => {
-                val krslts = executeWithResults(xmlCollName, kqry)
+		val pm = persist.getOrElse( throw new Exception( "storeKQuery needs persistence manifest" ) )
+		val tPath = Right[mTT.GetRequest,mTT.GetRequest]( path )
+                //val krslts = executeWithResults(xmlCollName, kqry)
+		val krslts = executeWithResults( pm, xmlCollName, tPath )
 
                 // This is the easy case!
                 // There are no locations
@@ -147,9 +150,10 @@ with AgentCnxnTypeScope {
                     // the continutation on
                     // each match?
                     // Answer: Yes!
-                    for ( krslt <- itergen[DBObject](krslts) ) {
+                    for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](krslts) ) {
+		      val ( krslt, ekrsrc ) = rsltRsrcPair
                       BasicLogService.tweet("retrieved " + krslt.toString)
-                      val ekrsrc = pd.asResource(path, krslt)
+                      //val ekrsrc = pd.asResource(path, krslt)
 
                       ekrsrc.stuff match {
                         case Right(ks) => {
@@ -282,7 +286,7 @@ with AgentCnxnTypeScope {
 
                                     rk(oV)
                                   }
-                                  case Some(qry) => {
+                                  case Some(qry) => {				    
                                     BasicLogService.tweet( 
                                       (
                                         "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -294,7 +298,9 @@ with AgentCnxnTypeScope {
                                       )
                                     )                                    
                                     
-                                    val rslts = executeWithResults(xmlCollName, qry)
+                                    //val rslts = executeWithResults(xmlCollName, qry)
+				    val tPath = Left[mTT.GetRequest,mTT.GetRequest]( path )
+				    val rslts = executeWithResults( pd, xmlCollName, tPath )
                                     
                                     rslts match {
                                       case Nil => {
@@ -354,8 +360,9 @@ with AgentCnxnTypeScope {
                                         if ( cursor ) {
                                           var rsrcRslts: List[ mTT.Resource ] = Nil
                                           
-                                          for ( rslt <- itergen[DBObject](rslts) ) {
-                                            BasicLogService.tweet("retrieved " + rslt.toString)
+                                          for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+                                            val ( rslt, ersrc ) = rsltRsrcPair
+					    BasicLogService.tweet("retrieved " + rslt.toString)
                                             
                                              consume match {
                                                case policy : RetainInStore => {
@@ -371,7 +378,7 @@ with AgentCnxnTypeScope {
                                                }
                                             }
                                             
-                                            val ersrc: emT.PlaceInstance = pd.asResource(path, rslt)
+                                            //val ersrc: emT.PlaceInstance = pd.asResource(path, rslt)
                                             ersrc.stuff match {
                                               case Left( r ) => rsrcRslts = r :: rsrcRslts
                                               case _ => {}
@@ -411,8 +418,8 @@ with AgentCnxnTypeScope {
                                                 + "with keep : " + keep
                                                 + "\n===================================================================\n"
                                               )                                       
-                                              for ( rslt <- itergen[DBObject](rslts) ) {
-                                                
+                                              for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+                                                val ( rslt, ersrc ) = rsltRsrcPair
                                                 BasicLogService.tweet("retrieved " + rslt.toString)
                                             
                                                 consume match {
@@ -432,8 +439,9 @@ with AgentCnxnTypeScope {
 
                                               storeKQuery( xmlCollName, pd )( path, keep, rk )
 
-                                              for ( rslt <- itergen[DBObject](rslts) ) {
-                                                val ersrc = pd.asResource(path, rslt)
+                                              for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+						val ( rslt, ersrc ) = rsltRsrcPair
+                                                //val ersrc = pd.asResource(path, rslt)
                                                 BasicLogService.tweet("returning " + ersrc)                                             
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
@@ -445,8 +453,8 @@ with AgentCnxnTypeScope {
                                               BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
                                               //spaceLock.depart( Some( rk ) )
                                               spaceLock.depart( path, Some( rk ) )
-                                              for ( rslt <- itergen[DBObject](rslts) ) {
-                                            
+                                              for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+						val ( rslt, ersrc ) = rsltRsrcPair
                                                 BasicLogService.tweet("retrieved " + rslt.toString)
                                                 
                                                 consume match {
@@ -463,7 +471,7 @@ with AgentCnxnTypeScope {
                                                   }
                                                 }
                                                 
-                                                val ersrc = pd.asResource(path, rslt)
+                                                //val ersrc = pd.asResource(path, rslt)
                                                 BasicLogService.tweet("returning " + ersrc)                                             
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
@@ -615,7 +623,10 @@ with AgentCnxnTypeScope {
                                     }
                                   }
                                   case Some( qry ) => {
-                                    executeWithResults( xmlCollName, qry ) match {
+				    val tPath = Left[mTT.GetRequest,mTT.GetRequest]( path )
+				    val ewrRslts = executeWithResults( pd, xmlCollName, tPath )
+                                    //executeWithResults( xmlCollName, qry ) match {
+				    ewrRslts match {
                                       case Nil => {
                                         BasicLogService.tweet( 
                                           (
@@ -696,7 +707,8 @@ with AgentCnxnTypeScope {
                                         // do in the case that
                                         // what's in store doesn't
                                         // match what's in cache?
-                                        for( rslt <- itergen[DBObject]( rslts ) ) {
+                                        for( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+					  val ( rslt, ersrc ) = rsltRsrcPair
                                           BasicLogService.tweet( "retrieved " + rslt.toString )                                     
                                           
                                           consume match {
