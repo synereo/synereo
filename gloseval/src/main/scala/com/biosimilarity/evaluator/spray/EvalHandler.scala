@@ -47,9 +47,9 @@ import java.net.URI
 object CompletionMapper {
   @transient
   val map = new HashMap[String, RequestContext]()
-  def complete(key: String, message: String): Unit = {
+  def complete(key: String, message: JValue): Unit = {
     for (reqCtx <- map.get(key)) {
-      reqCtx.complete(HttpResponse(200, message))
+      reqCtx.complete(HttpResponse(200, compact(render(message))))
     }
     map -= key
   }
@@ -58,9 +58,9 @@ object CompletionMapper {
 object CometActorMapper {
   @transient
   val map = new HashMap[String, akka.actor.ActorRef]()
-  def cometMessage(key: String, sessionURI: String, jsonBody: String): Unit = {
+  def cometMessage(key: String, sessionURI: String, jsonBody: JValue): Unit = {
     for (cometActor <- map.get(key)) {
-      cometActor ! CometMessage(sessionURI, HttpBody(`application/json`, jsonBody))
+      cometActor ! CometMessage(sessionURI, compact(render(jsonBody)))
     }
     map -= key
   }
@@ -269,12 +269,12 @@ trait EvalHandler {
         (json \ "content" \ "labels").extract[List[String]].
           map(fromTermString).
           map(_.getOrElse(
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            CometActorMapper.cometMessage(key, sessionURIStr, 
               ("msgType" -> "addAliasLabelsError") ~
               ("content" -> ("reason" -> ("Couldn't parse a label:" + 
                 compact(render(json \ "content" \ "labels"))
               )))
-            )))
+            )
           )).asInstanceOf[List[CnxnCtxtLabel[String,String,String]]]
       )
     )
@@ -289,12 +289,12 @@ trait EvalHandler {
         (json \ "content" \ "labels").extract[List[String]].
           map(fromTermString).
           map(_.getOrElse(
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            CometActorMapper.cometMessage(key, sessionURIStr,
               ("msgType" -> "updateAliasLabelsError") ~
               ("content" -> ("reason" -> ("Couldn't parse a label:" +
                 compact(render(json \ "content" \ "labels"))
               )))
-            )))
+            )
           )).asInstanceOf[List[CnxnCtxtLabel[String,String,String]]]
       )
     )
@@ -372,12 +372,12 @@ trait EvalHandler {
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
           v match {
             case Bottom => {
-              CompletionMapper.complete(key, compact(render(
+              CompletionMapper.complete(key,
                 ("msgType" -> "createUserError")~
                 ("content" ->
                   ("reason", "No such token.")
                 )
-              )))
+              )
             }
             case PostedExpr( postedStr : String ) => {
               val content = parse(postedStr)
@@ -480,10 +480,10 @@ trait EvalHandler {
                                       cap,
                                       aliasCnxn,
                                       Unit => {
-                                        CompletionMapper.complete(key, compact(render(
+                                        CompletionMapper.complete(key,
                                           ("msgType" -> "createUserResponse") ~
                                             ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac)))
-                                        )))
+                                        )
                                       }
                                     )
                                   }
@@ -613,22 +613,22 @@ trait EvalHandler {
                     case Some(_) => {
                       ConfirmationEmail.confirm(email, token)
                       // Notify user to check her email
-                      CompletionMapper.complete(key, compact(render(
+                      CompletionMapper.complete(key,
                         ("msgType" -> "createUserWaiting") ~
                         ("content" -> List()) // List() is rendered as "{}" 
-                      )))
+                      )
                     }
                   }
                 }
               )
             }
             case _ => {
-              CompletionMapper.complete(key, compact(render(
+              CompletionMapper.complete(key,
                 ("msgType" -> "createUserError") ~
                 ("content" ->
                   ("reason" -> "Email is already registered.")
                 )
-              )))
+              )
             }
           }
         }
@@ -660,10 +660,10 @@ trait EvalHandler {
             BasicLogService.tweet ("secureLogin | login | onPwmacFetch: hex = " + hex)
             if (hex != pwmac.toString) {
               BasicLogService.tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
-              CompletionMapper.complete(key, compact(render(
+              CompletionMapper.complete(key,
                 ("msgType" -> "initializeSessionError") ~
                 ("content" -> ("reason" -> "Bad password.")) 
-              )))
+              )
             } else {
               def onLabelsFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
@@ -681,16 +681,16 @@ trait EvalHandler {
                           ("lastActiveLabel" -> "") ~
                           ("jsonBlob" -> parse(jsonBlob))
 
-                        CompletionMapper.complete(key, compact(render(
+                        CompletionMapper.complete(key,
                           ("msgType" -> "initializeSessionResponse") ~
                           ("content" -> content) 
-                        )))
+                        )
                       }
                       case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
+                        CompletionMapper.complete(key,
                           ("msgType" -> "initializeSessionError") ~
                           ("content" -> ("reason" -> "Strange: found other data but not labels!?"))
-                        )))
+                        )
                       }
                     }
                   }
@@ -708,10 +708,10 @@ trait EvalHandler {
                         agentMgr().fetch( erql, erspl )(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList))
                       }
                       case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
+                        CompletionMapper.complete(key,
                           ("msgType" -> "initializeSessionError") ~
                           ("content" -> ("reason" -> "Strange: found pwmac and jsonBlob but not aliases!?"))
-                        )))
+                        )
                       }
                     }
                   }
@@ -728,10 +728,10 @@ trait EvalHandler {
                         agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
                       }
                       case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
+                        CompletionMapper.complete(key,
                           ("msgType" -> "initializeSessionError") ~
                           ("content" -> ("reason" -> "Strange: found pwmac but not jsonBlob!?"))
-                        )))
+                        )
                       }
                     }
                   }
@@ -765,10 +765,10 @@ trait EvalHandler {
         macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
         val hex = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
         if (hex != mac) {
-          CompletionMapper.complete(key, compact(render(
+          CompletionMapper.complete(key,
             ("msgType" -> "initializeSessionError") ~
             ("content" -> ("reason" -> "This link wasn't generated by us.")) 
-          )))
+          )
         } else {
           BasicLogService.tweet("Link OK, logging in")
           login(cap)
@@ -795,12 +795,12 @@ trait EvalHandler {
               case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                 v match {
                   case Bottom => {
-                    CompletionMapper.complete(key, compact(render(
+                    CompletionMapper.complete(key,
                       ("msgType" -> "initializeSessionError")~
                       ("content" -> 
                         ("reason" -> "No such email.")
                       )
-                    )))
+                    )
                   }
                   case PostedExpr(cap: String) => {
                     login(cap)
@@ -869,20 +869,20 @@ trait EvalHandler {
                 optRsrc match {
                   case None => ()
                   case Some(_) => {
-                    CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+                    CometActorMapper.cometMessage(key, sessionURIStr,
                       ("msgType" -> "updateUserResponse") ~
                       ("content" -> ("sessionURI" -> sessionURIStr))
-                    )))
+                    )
                   }
                 }
               }
             )
           }
           case _ => {
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            CometActorMapper.cometMessage(key, sessionURIStr,
               ("msgType" -> "updateUserError") ~
               ("content" -> ("reason" -> ("Unrecognized resource: " + optRsrc.toString)))
-            )))
+            )
           }
         }
       }
@@ -980,7 +980,7 @@ trait EvalHandler {
                 ("pageOfPosts" -> List(postedStr))
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
+              CometActorMapper.cometMessage(key, sessionURIStr, response)
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
@@ -1003,7 +1003,7 @@ trait EvalHandler {
                 ("pageOfPosts" -> List(postedStr))
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
+              CometActorMapper.cometMessage(key, sessionURIStr, response)
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
@@ -1053,7 +1053,7 @@ trait EvalHandler {
                     ("pageOfPosts" -> List[String]())
                   val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
                   BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
+                  CometActorMapper.cometMessage(key, sessionURIStr, response)
                 }
               }
             }
@@ -1102,12 +1102,12 @@ trait EvalHandler {
   def closeSessionRequest(json: JValue, key: String) : Unit = {
     val sessionURI = (json \ "content" \ "sessionURI").extract[String]
 
-    CompletionMapper.complete(key, compact(render(
+    CompletionMapper.complete(key,
       ("msgType" -> "closeSessionResponse")~
       ("content" ->
         ("sessionURI" -> sessionURI)
       )
-    )))
+    )
   }
 
   def createNodeUser(email: String, password: String, jsonBlob: String): Unit = {

@@ -23,7 +23,7 @@ import org.json4s.JsonDSL._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.continuations._ 
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.{HashMap, MultiMap, HashSet}
 
 import com.typesafe.config._
 
@@ -59,15 +59,8 @@ with Serializable {
  * CometMessage used when some data needs to be sent to a client
  * with the given id
  */
-case class CometMessage(id: String, data: HttpBody, counter: Long = 0)
+case class CometMessage(id: String, data: String, counter: Long = 0)
   extends Serializable
-
-/**
- * BroadcastMessage used when some data needs to be sent to all
- * alive clients
- * @param data
- */
-case class BroadcastMessage(data: HttpBody) extends Serializable
 
 /**
  * Poll used when a client wants to register/long-poll with the
@@ -88,28 +81,43 @@ case class ClientGc(id: String) extends Serializable
 
 class CometActor extends Actor with Serializable {
   @transient
-  var aliveTimers: Map[String, Cancellable] = Map.empty   // list of timers that keep track of alive clients
+  val aliveTimers = new HashMap[String, Cancellable]   // list of timers that keep track of alive clients
   @transient
-  var toTimers: Map[String, Cancellable] = Map.empty      // list of timeout timers for clients
+  val toTimers = new HashMap[String, Cancellable]      // list of timeout timers for clients
   @transient
-  var requests: Map[String, RequestContext] = Map.empty   // list of long-poll RequestContexts
+  val requests = new HashMap[String, RequestContext]  // list of long-poll RequestContexts
+  @transient
+  val sets = new HashMap[String, HashSet[String]]         // sets of async return messages
 
   val gcTime = 1 minute               // if client doesnt respond within this time, its garbage collected
   val clientTimeout = 7 seconds       // long-poll requests are closed after this much time, clients reconnect after this
   val rescheduleDuration = 5 seconds  // reschedule time for alive client which hasnt polled since last message
-  val retryCount = 10                 // number of reschedule retries before dropping the message
 
   def receive = {
-    case SessionPing(sessionURI, reqCtx) => {
-      requests += (sessionURI -> reqCtx)
-      toTimers.get(sessionURI).map(_.cancel())
-      toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
-
+    case SessionPing(sessionURI, reqCtx) => synchronized {
       aliveTimers.get(sessionURI).map(_.cancel())
       aliveTimers += (sessionURI -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(sessionURI)))
+
+      // If there's something waiting, respond immediately.
+      sets.get(sessionURI) match {
+        case None => {
+          requests += (sessionURI -> reqCtx)
+          toTimers.get(sessionURI).map(_.cancel())
+          toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
+        }
+        case Some(set) => {
+          if (set.size == 0) {
+            requests += (sessionURI -> reqCtx)
+            toTimers.get(sessionURI).map(_.cancel())
+            toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
+          } else {
+            reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
+          }
+        }
+      }
     }
     
-    case PollTimeout(id) => {
+    case PollTimeout(id) => synchronized {
       requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
         ("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id))
       )))))
@@ -117,31 +125,23 @@ class CometActor extends Actor with Serializable {
       toTimers -= id
     }
     
-    case ClientGc(id) => {
+    case ClientGc(id) => synchronized {
       requests -= id
       toTimers -= id
       aliveTimers -= id
     }
 
-    case CometMessage(id, data, counter) => {
-      val reqCtx = requests.get(id)
-      reqCtx.map { reqCtx =>
-        reqCtx.complete(HttpResponse(entity=data))
-        requests = requests - id
-      } getOrElse {
-        if(aliveTimers.contains(id) && counter < retryCount) {
-          context.system.scheduler.scheduleOnce(rescheduleDuration, self, CometMessage(id, data, counter+1))
-        }
+    case CometMessage(id, data, counter) => synchronized {
+      val set = sets.get(id).getOrElse({
+        val newSet = new HashSet[String]
+        sets += (id -> newSet)
+        newSet
+      })
+      val optReqCtx = requests.get(id)
+      optReqCtx.map { reqCtx =>
+        reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
+        requests -= id
       }
-    }
-
-    case BroadcastMessage(data) => {
-      aliveTimers.keys.map { id =>
-        requests.get(id).map(_.complete(HttpResponse(entity=data))).getOrElse(self ! CometMessage(id, data))
-      }
-      toTimers.map(_._2.cancel)
-      toTimers = Map.empty
-      requests = Map.empty
     }
   }
 }
@@ -280,14 +280,6 @@ trait EvaluatorService extends HttpService
           
             (cometActor ! SessionPing("", _))
           }
-        }
-      }
-    } ~
-    path("sendMessage") {
-      get {
-        parameters('name, 'message) { (name:String, message:String) =>
-          cometActor ! BroadcastMessage(HttpBody("%s : %s".format(name, message)))
-          complete(StatusCodes.OK)
         }
       }
     } ~
