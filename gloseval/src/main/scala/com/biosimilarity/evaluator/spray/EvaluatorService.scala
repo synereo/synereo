@@ -119,7 +119,7 @@ class CometActor extends Actor with Serializable {
     
     case PollTimeout(id) => synchronized {
       requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
-        ("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id))
+        List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
       )))))
       requests -= id
       toTimers -= id
@@ -137,6 +137,7 @@ class CometActor extends Actor with Serializable {
         sets += (id -> newSet)
         newSet
       })
+      set += data
       val optReqCtx = requests.get(id)
       optReqCtx.map { reqCtx =>
         reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
