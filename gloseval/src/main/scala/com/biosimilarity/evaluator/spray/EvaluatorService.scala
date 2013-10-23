@@ -43,7 +43,7 @@ with Serializable {
   import EvalHandlerService._
 
   // create well-known node user
-  createNodeUser("individualagenttechnology@googlegroups.com", "U32vbN6WVJ", "{name:\"ATI\",imgSrc:\"\"}")
+  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test

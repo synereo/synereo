@@ -357,6 +357,7 @@ trait EvalHandler {
   val tokenLabel = fromTermString("token(Z)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
   val aliasListLabel = fromTermString("aliasList(true)").getOrElse(throw new Exception("Couldn't parse aliasListLabel"))
   val labelListLabel = fromTermString("labelList(true)").getOrElse(throw new Exception("Couldn't parse labelListLabel"))
+  val biCnxnsListLabel = fromTermString("biCnxnsList(true)").getOrElse(throw new Exception( "Couldn't parse biCnxnsListLabel"))
 
   def confirmEmailToken(json: JValue, key: String): Unit = {
     val token = (json \ "content" \ "token").extract[String]
@@ -475,14 +476,83 @@ trait EvalHandler {
                                 optRsrc match {
                                   case None => ()
                                   case Some(_) => {
-                                    CompletionMapper.complete(key, compact(render(
-                                      ("msgType" -> "createUserResponse") ~
-                                      ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))) 
-                                    )))
+                                    connectToNodeUser(
+                                      cap,
+                                      aliasCnxn,
+                                      Unit => {
+                                        CompletionMapper.complete(key, compact(render(
+                                          ("msgType" -> "createUserResponse") ~
+                                            ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac)))
+                                        )))
+                                      }
+                                    )
                                   }
                                 }
                               }
                             )
+                          }
+                        }
+                      }
+                    )
+                  }
+                }
+              }
+            )
+          }
+        }
+      }
+    )
+  }
+
+  def connectToNodeUser(
+    cap: String,
+    aliasCnxn: PortableAgentCnxn,
+    onSuccess: Unit => Unit = Unit => ()): Unit = {
+
+    val aliasURI = new URI("alias://" + cap + "/alias")
+    val nodeAgentCap = emailToCap(NodeUser.email)
+    val nodeAgentURI = new URI("agent://" + cap)
+    val nodeAliasURI = new URI("alias://" + nodeAgentCap + "/alias")
+    val nodeUserAliasCnxn = PortableAgentCnxn(nodeAliasURI, "alias", nodeAliasURI)
+    val cnxnLabel = UUID.randomUUID().toString
+    val nodeToThisCnxn = PortableAgentCnxn(nodeAliasURI, cnxnLabel, aliasURI)
+    val thisToNode = PortableAgentCnxn(aliasURI, cnxnLabel, nodeAliasURI)
+    val biCnxn = PortableAgentBiCnxn(nodeToThisCnxn, thisToNode)
+    val nodeAgentBiCnxn = PortableAgentBiCnxn(thisToNode, nodeToThisCnxn)
+
+    agentMgr().post(
+      biCnxnsListLabel,
+      List(aliasCnxn),
+      serializeBiCnxnList(List(biCnxn)),
+      (optRsrc: Option[mTT.Resource]) => {
+        BasicLogService.tweet("connectToNodeUser | onPost : optRsrc = " + optRsrc)
+        optRsrc match {
+          case None => ()
+          case Some(_) => {
+            agentMgr().get(
+              biCnxnsListLabel,
+              List(nodeUserAliasCnxn),
+              (optRsrc: Option[mTT.Resource]) => {
+                BasicLogService.tweet("connectToNodeUser | onGet : optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(mTT.RBoundHM(Some( mTT.Ground(v)), _)) => {
+                    val newBiCnxnList = v match {
+                      case PostedExpr(previousBiCnxnListStr: String) => {
+                        nodeAgentBiCnxn :: deserializeBiCnxnList(previousBiCnxnListStr)
+                      }
+                      case Bottom => List(nodeAgentBiCnxn)
+                    }
+                    agentMgr().put(
+                      biCnxnsListLabel,
+                      List(nodeUserAliasCnxn),
+                      serializeBiCnxnList(newBiCnxnList),
+                      (optRsrc: Option[mTT.Resource]) => {
+                        BasicLogService.tweet("connectToNodeUser | onPut : optRsrc = " + optRsrc)
+                        optRsrc match {
+                          case None => ()
+                          case Some(_) => {
+                            onSuccess()
                           }
                         }
                       }
@@ -1097,7 +1167,21 @@ trait EvalHandler {
                                     agentMgr().post(
                                       labelListLabel,
                                       List(aliasCnxn),
-                                      """[]"""
+                                      """[]""",
+                                      ( optRsrc : Option[mTT.Resource] ) => {
+                                        BasicLogService.tweet("createNodeUser | onPost4: optRsrc = " + optRsrc)
+                                        optRsrc match {
+                                          case None => ()
+                                          case Some(_) => {
+                                            // Store empty bi-cnxn list on alias cnxn
+                                            agentMgr().post(
+                                              biCnxnsListLabel,
+                                              List(aliasCnxn),
+                                              ""
+                                            )
+                                          }
+                                        }
+                                      }
                                     )
                                   }
                                 }
@@ -1117,6 +1201,35 @@ trait EvalHandler {
       }
     )
   }
+
+  def serializeCnxn(cnxn: PortableAgentCnxn): String = {
+    cnxn.src.toString + "|" + cnxn.label + "|" + cnxn.trgt.toString
+  }
+
+  def serializeBiCnxn(biCnxn: PortableAgentBiCnxn): String = {
+    serializeCnxn(biCnxn.readCnxn) + "!" + serializeCnxn(biCnxn.writeCnxn)
+  }
+
+  def serializeBiCnxnList(biCnxnList: List[PortableAgentBiCnxn]): String = {
+    (for (biCnxn <- biCnxnList) yield serializeBiCnxn(biCnxn)).mkString(",")
+  }
+
+  def deserializeCnxn(cnxnStr: String): PortableAgentCnxn = {
+    val tokens = cnxnStr.split("""\|""")
+    PortableAgentCnxn(new URI(tokens(0)), tokens(1), new URI(tokens(2)))
+  }
+
+  def deserializeBiCnxn(biCnxnStr: String): PortableAgentBiCnxn = {
+    val tokens = biCnxnStr.split("!")
+    PortableAgentBiCnxn(deserializeCnxn(tokens(0)), deserializeCnxn(tokens(1)))
+  }
+
+  def deserializeBiCnxnList(biCnxnListStr: String): List[PortableAgentBiCnxn] = {
+    val tokens = biCnxnListStr.split(",")
+    var list: List[PortableAgentBiCnxn] = Nil
+    for (token <- tokens if token.size > 0) {
+      list = deserializeBiCnxn(token) :: list
+    }
+    list.reverse
+  }
 }
-
-
