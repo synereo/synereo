@@ -142,6 +142,7 @@ class CometActor extends Actor with Serializable {
       optReqCtx.map { reqCtx =>
         reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
         requests -= id
+        sets -= id
       }
     }
   }
