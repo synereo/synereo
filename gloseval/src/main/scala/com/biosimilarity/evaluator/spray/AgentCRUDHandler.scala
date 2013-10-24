@@ -136,29 +136,15 @@ trait AgentCRUDSchema {
     }
   }
 
-  var _cnxnsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def cnxnsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
-    _cnxnsStorageLocation match {
+  var _biCnxnsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
+  def biCnxnsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+    _biCnxnsStorageLocation match {
       case Some( csl ) => csl
       case None => {
         fromTermString(
-          "cnxnsList( true )"
+          "biCnxnsList( true )"
         ).getOrElse(
-          throw new Exception( "Couldn't parse label: " + "cnxnsList( true )" )
-        )          
-      }
-    }
-  }
-
-  var _defaultCnxnStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def defaultCnxnStorageLocation() : CnxnCtxtLabel[String,String,String] = {
-    _defaultCnxnStorageLocation match {
-      case Some( dcsl ) => dcsl
-      case None => {
-        fromTermString(
-          "defaultCnxn( true )"
-        ).getOrElse(
-          throw new Exception( "Couldn't parse label: " + "defaultCnxn( true )" )
+          throw new Exception( "Couldn't parse label: " + "biCnxnsList( true )" )
         )
       }
     }
@@ -657,62 +643,10 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
   
   
   //### Connections
-  //#### addAliasConnections
-  def handleaddAliasConnectionsRequest[Cnxn](
-    key : String,
-    msg : addAliasConnectionsRequest[Cnxn]
-  ) : Unit = {
-    BasicLogService.tweet( "Entering: handleaddAliasConnectionsRequest with msg : " + msg )
-
-    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
-
-    val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
-      optRsrc match {
-        case None => {
-          // Nothing to be done
-          BasicLogService.tweet( "handleaddAliasConnectionsRequest | onGet: got None" )
-        }
-        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-          BasicLogService.tweet( "handleaddAliasConnectionsRequest | onGet: got " + v )
-
-          val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
-            BasicLogService.tweet( "handleaddAliasConnectionsRequest | onGet | onPut" )
-
-            val sessionURIStr = msg.sessionURI.toString
-
-            CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
-              ( "msgType" -> "addAliasConnectionsResponse" ) ~
-              ( "content" -> ( "sessionURI" -> sessionURIStr ) )
-            ) ) )
-          }
-
-          v match {
-            case PostedExpr( previousCnxnList : List[Cnxn] ) => {
-              val newCnxnList = previousCnxnList ++ msg.cnxns
-
-              BasicLogService.tweet(
-                "handleaddAliasConnectionsRequest | onGet | onPut | updating cnxnList with " + newCnxnList
-              )
-
-              agentMgr().put[List[Cnxn]]( cnxnsStorageLocation, List( aliasStorageCnxn ), newCnxnList, onPut )
-            }
-            case Bottom => {
-              agentMgr().put[List[Cnxn]]( cnxnsStorageLocation, List( aliasStorageCnxn ), msg.cnxns, onPut )
-            }
-          }
-        }
-      }
-    }
-
-    agentMgr().get( cnxnsStorageLocation, List( aliasStorageCnxn ), onGet )
-  }
-  //    - `Cnxn = (URI, FlatTerm, URI)`
-  
-  
   //#### removeAliasConnections
-  def handleremoveAliasConnectionsRequest[Cnxn](
+  def handleremoveAliasConnectionsRequest(
     key : String,
-    msg : removeAliasConnectionsRequest[Cnxn]
+    msg : removeAliasConnectionsRequest
   ) : Unit = {
     BasicLogService.tweet( "Entering: handleremoveAliasConnectionsRequest with msg : " + msg )
 
@@ -732,6 +666,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
             BasicLogService.tweet( "handleremoveAliasConnectionsRequest | onGet | onPut" )
 
+            // TODO: Should the write cnxn be cleared out or removed?
+
             CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
               ( "msgType" -> "removeAliasConnectionsResponse" ) ~
               ( "content" -> ( "sessionURI" -> sessionURIStr ) )
@@ -739,35 +675,26 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( previousCnxnList : List[Cnxn] ) => {
-              val newCnxnList = previousCnxnList.filterNot( msg.cnxns.contains )
+            case PostedExpr( previousBiCnxnListStr : String ) => {
+              // TODO: Deserialize string
+              // TODO: Filter BiCnxns based on passed in Cnxns
+              // TODO: Serialize new BiCnxns list
+              val newBiCnxnListStr = previousBiCnxnListStr
 
               BasicLogService.tweet(
-                "handleremoveAliasConnectionsRequest | onGet | onPut | updating cnxnList with " + newCnxnList
+                "handleremoveAliasConnectionsRequest | onGet | onPut | updating biCnxnList with " + newBiCnxnListStr
               )
 
-              agentMgr().put[List[Cnxn]]( cnxnsStorageLocation, List( aliasStorageCnxn ), newCnxnList, onPut )
-            }
-            case Bottom => {
-              BasicLogService.tweet( "handleremoveAliasConnectionsRequest | onGet: no cnxnList exists" )
-
-              CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
-                ( "msgType" -> "removeAliasConnectionsError" ) ~
-                ( "content" ->
-                  ( "sessionURI" -> sessionURIStr ) ~
-                  ( "reason" -> "no cnxnList exists" )
-                )
-              ) ) )
+              agentMgr().put( biCnxnsStorageLocation, List( aliasStorageCnxn ), newBiCnxnListStr, onPut )
             }
           }
         }
       }
     }
 
-    agentMgr().get( cnxnsStorageLocation, List( aliasStorageCnxn ), onGet )
+    agentMgr().get( biCnxnsStorageLocation, List( aliasStorageCnxn ), onGet )
   }
-  
-  
+
   //#### getAliasConnections
   def handlegetAliasConnectionsRequest(
     key : String,
@@ -788,48 +715,35 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
           val sessionURIStr = msg.sessionURI.toString
 
-          val cnxnList = v match {
-            case PostedExpr( cnxnList : List[Cnxn] ) => cnxnList
+          val biCnxnList = v match {
+            case PostedExpr( biCnxnListStr : String ) => {
+              Serializer.deserialize[List[PortableAgentBiCnxn]]( biCnxnListStr )
+            }
             case Bottom => Nil
+          }
+
+          def biCnxnToConnectionStr( biCnxn : PortableAgentBiCnxn ) : String = {
+            compact( render(
+              ("source" -> biCnxn.writeCnxn.src.toString) ~
+              ("label" -> biCnxn.writeCnxn.label) ~
+              ("target" -> biCnxn.writeCnxn.trgt.toString)
+            ) )
           }
 
           CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
             ( "msgType" -> "getAliasConnectionsResponse" ) ~
             ( "content" ->
               ( "sessionURI" -> sessionURIStr ) ~
-              ( "cnxns" -> cnxnList.map( _.toString ) )
+              ( "connections" -> biCnxnList.map( biCnxnToConnectionStr( _ ) ) )
             )
           ) ) )
         }
       }
     }
 
-    agentMgr().fetch( cnxnsStorageLocation, List( aliasStorageCnxn ), onFetch )
+    agentMgr().fetch( biCnxnsStorageLocation, List( aliasStorageCnxn ), onFetch )
   }
-  
-  //#### setAliasDefaultConnection
-  def handlesetAliasDefaultConnectionRequest[Cnxn](
-    key : String,
-    msg : setAliasDefaultConnectionRequest[Cnxn]
-  ) : Unit = {
-    BasicLogService.tweet( "Entering: handlesetAliasDefaultConnectionRequest with msg : " + msg )
 
-    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
-
-    val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
-      BasicLogService.tweet( "handlesetAliasDefaultConnectionRequest | onPut" )
-
-      val sessionURIStr = msg.sessionURI.toString
-
-      CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
-        ( "msgType" -> "setAliasDefaultConnectionResponse" ) ~
-        ( "content" -> ( "sessionURI" -> sessionURIStr ) )
-      ) ) )
-    }
-
-    agentMgr().put[Cnxn]( defaultCnxnStorageLocation, List( aliasStorageCnxn ), msg.cnxn, onPut )
-  }
-  
   //### Labels
   //#### addAliasLabels
   def handleaddAliasLabelsRequest(

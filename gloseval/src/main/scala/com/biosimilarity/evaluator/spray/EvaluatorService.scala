@@ -191,10 +191,8 @@ trait EvaluatorService extends HttpService
     ("getAliasExternalIdentitiesRequest", getAliasExternalIdentitiesRequest),
     ("setAliasDefaultExternalIdentityRequest", setAliasDefaultExternalIdentityRequest),
     // Connections
-    ("addAliasConnectionsRequest", addAliasConnectionsRequest),
     ("removeAliasConnectionsRequest", removeAliasConnectionsRequest),
     ("getAliasConnectionsRequest", getAliasConnectionsRequest),
-    ("setAliasDefaultConnectionRequest", setAliasDefaultConnectionRequest),
     // Labels
     ("addAliasLabelsRequest", addAliasLabelsRequest),
     ("updateAliasLabelsRequest", updateAliasLabelsRequest),

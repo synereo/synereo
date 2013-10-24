@@ -204,22 +204,6 @@ trait EvalHandler {
   def getAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
   def setAliasDefaultExternalIdentityRequest(json: JValue, key: String): Unit = {}
   // Connections
-  def addAliasConnectionsRequest(json: JValue, key: String): Unit = {
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
-    val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
-    handler.handleaddAliasConnectionsRequest(
-      key,
-      com.biosimilarity.evaluator.msgs.agent.crud.addAliasConnectionsRequest(
-        new URI(sessionURIStr),
-        (json \ "content" \ "alias").extract[String],
-        jcnxns.map((c: JValue) => PortableAgentCnxn(
-          new URI((c \ "src").extract[String]),
-          (c \ "label").extract[String],
-          new URI((c \ "tgt").extract[String])
-        ))
-      )
-    )
-  }
   def removeAliasConnectionsRequest(json: JValue, key: String): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
     case class JCnxn(src: String, label: String, tgt: String)
@@ -230,9 +214,9 @@ trait EvalHandler {
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String],
         jcnxns.map((c: JValue) => PortableAgentCnxn(
-          new URI((c \ "src").extract[String]),
+          new URI((c \ "source").extract[String]),
           (c \ "label").extract[String],
-          new URI((c \ "tgt").extract[String])
+          new URI((c \ "target").extract[String])
         ))
       )
     )
@@ -246,17 +230,6 @@ trait EvalHandler {
         (json \ "content" \ "alias").extract[String]
       )
     )
-  }
-  def setAliasDefaultConnectionRequest(json: JValue, key: String): Unit = {
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
-    val jcnxn = (json \ "content" \ "connection").asInstanceOf[JObject]
-    handler.handlegetAliasConnectionsRequest(
-      key,
-      com.biosimilarity.evaluator.msgs.agent.crud.getAliasConnectionsRequest(
-        new URI(sessionURIStr),
-        (json \ "content" \ "alias").extract[String]
-      )
-    )    
   }
   // Labels
   def addAliasLabelsRequest(json: JValue, key: String): Unit = {
@@ -523,7 +496,7 @@ trait EvalHandler {
     agentMgr().post(
       biCnxnsListLabel,
       List(aliasCnxn),
-      serializeBiCnxnList(List(biCnxn)),
+      Serializer.serialize(List(biCnxn)),
       (optRsrc: Option[mTT.Resource]) => {
         BasicLogService.tweet("connectToNodeUser | onPost : optRsrc = " + optRsrc)
         optRsrc match {
@@ -539,14 +512,14 @@ trait EvalHandler {
                   case Some(mTT.RBoundHM(Some( mTT.Ground(v)), _)) => {
                     val newBiCnxnList = v match {
                       case PostedExpr(previousBiCnxnListStr: String) => {
-                        nodeAgentBiCnxn :: deserializeBiCnxnList(previousBiCnxnListStr)
+                        nodeAgentBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
                       }
                       case Bottom => List(nodeAgentBiCnxn)
                     }
                     agentMgr().put(
                       biCnxnsListLabel,
                       List(nodeUserAliasCnxn),
-                      serializeBiCnxnList(newBiCnxnList),
+                      Serializer.serialize(newBiCnxnList),
                       (optRsrc: Option[mTT.Resource]) => {
                         BasicLogService.tweet("connectToNodeUser | onPut : optRsrc = " + optRsrc)
                         optRsrc match {
@@ -1200,36 +1173,5 @@ trait EvalHandler {
         }
       }
     )
-  }
-
-  def serializeCnxn(cnxn: PortableAgentCnxn): String = {
-    cnxn.src.toString + "|" + cnxn.label + "|" + cnxn.trgt.toString
-  }
-
-  def serializeBiCnxn(biCnxn: PortableAgentBiCnxn): String = {
-    serializeCnxn(biCnxn.readCnxn) + "!" + serializeCnxn(biCnxn.writeCnxn)
-  }
-
-  def serializeBiCnxnList(biCnxnList: List[PortableAgentBiCnxn]): String = {
-    (for (biCnxn <- biCnxnList) yield serializeBiCnxn(biCnxn)).mkString(",")
-  }
-
-  def deserializeCnxn(cnxnStr: String): PortableAgentCnxn = {
-    val tokens = cnxnStr.split("""\|""")
-    PortableAgentCnxn(new URI(tokens(0)), tokens(1), new URI(tokens(2)))
-  }
-
-  def deserializeBiCnxn(biCnxnStr: String): PortableAgentBiCnxn = {
-    val tokens = biCnxnStr.split("!")
-    PortableAgentBiCnxn(deserializeCnxn(tokens(0)), deserializeCnxn(tokens(1)))
-  }
-
-  def deserializeBiCnxnList(biCnxnListStr: String): List[PortableAgentBiCnxn] = {
-    val tokens = biCnxnListStr.split(",")
-    var list: List[PortableAgentBiCnxn] = Nil
-    for (token <- tokens if token.size > 0) {
-      list = deserializeBiCnxn(token) :: list
-    }
-    list.reverse
   }
 }
