@@ -98,19 +98,21 @@ class CometActor extends Actor with Serializable {
       aliveTimers.get(sessionURI).map(_.cancel())
       aliveTimers += (sessionURI -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(sessionURI)))
 
-      // If there's something waiting, respond immediately.
       sets.get(sessionURI) match {
         case None => {
+          // If there are no messages, just wait.
           requests += (sessionURI -> reqCtx)
           toTimers.get(sessionURI).map(_.cancel())
           toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
         }
         case Some(set) => {
+          // If there are messages, forward them immediately.
           if (set.size == 0) {
             requests += (sessionURI -> reqCtx)
             toTimers.get(sessionURI).map(_.cancel())
             toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
           } else {
+            sets -= sessionURI
             reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
           }
         }
