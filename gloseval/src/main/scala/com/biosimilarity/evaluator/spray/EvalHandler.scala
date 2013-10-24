@@ -1099,6 +1099,7 @@ trait EvalHandler {
           case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
             // Store the email
             agentMgr().put[String](emailLabel, List(capSelfCnxn), cap)
+            storeCapByEmail(email)
 
             // Generate pwmac
             val macInstance = Mac.getInstance("HmacSHA256")
