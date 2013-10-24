@@ -970,8 +970,11 @@ package usage {
     def insert(value: String) = {
       agentMgr().post(
         fromTermString("all(a(_))").get,
-        List(PortableAgentCnxn(new URI("a://b"),
-        "flat", new URI("c://d"))),
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
         value,
         (optRsrc) => println("onPost: optRsrc = " + optRsrc)
       )
@@ -979,8 +982,11 @@ package usage {
     def feed() = {
       agentMgr().feed(
         fromTermString("all(a(_))").get,
-        List(PortableAgentCnxn(new URI("a://b"),
-        "flat", new URI("c://d"))),
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
         (optRsrc) => println("onFeed: optRsrc = " + optRsrc)
       )
     }
