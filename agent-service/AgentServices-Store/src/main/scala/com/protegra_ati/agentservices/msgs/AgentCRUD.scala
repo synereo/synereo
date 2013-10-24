@@ -8,6 +8,7 @@
 
 package com.biosimilarity.evaluator.msgs.agent.crud
 
+import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
 import com.biosimilarity.lift.model.store._
 
 import java.util.UUID
@@ -243,26 +244,11 @@ case class setAliasDefaultExternalIdentityResponse(
 ) extends AgentCRUD
 
 //### Connections
-//#### addAliasConnections
-case class addAliasConnectionsRequest[Cnxn](
-  sessionURI : URI,
-  alias : String,
-  cnxns : List[Cnxn]
-) extends AgentCRUD
-//    - `Cnxn = (URI, FlatTerm, URI)`
-case class addAliasConnectionsError(
-  sessionURI : URI,
-  reason : String
-) extends AgentCRUD
-case class addAliasConnectionsResponse(
-  sessionURI : URI
-) extends AgentCRUD
-
 //#### removeAliasConnections
-case class removeAliasConnectionsRequest[Cnxn](
+case class removeAliasConnectionsRequest(
   sessionURI : URI,
   alias : String,
-  cnxns : List[Cnxn]
+  cnxns : List[PortableAgentCnxn]
 ) extends AgentCRUD
 case class removeAliasConnectionsError(
   sessionURI : URI,
@@ -281,23 +267,9 @@ case class getAliasConnectionsError(
   sessionURI : URI,
   reason : String
 ) extends AgentCRUD
-case class getAliasConnectionsResponse[Cnxn](
+case class getAliasConnectionsResponse(
   sessionURI : URI,
-  cnxns : List[Cnxn]
-) extends AgentCRUD
-
-//#### setAliasDefaultConnection
-case class setAliasDefaultConnectionRequest[Cnxn](
-  sessionURI : URI,
-  alias : String,
-  cnxn : Cnxn
-) extends AgentCRUD
-case class setAliasDefaultConnectionError(
-  sessionURI : URI,
-  reason : String
-) extends AgentCRUD
-case class setAliasDefaultConnectionResponse(
-  sessionURI : URI
+  cnxns : List[PortableAgentCnxn]
 ) extends AgentCRUD
 
 //### Labels
