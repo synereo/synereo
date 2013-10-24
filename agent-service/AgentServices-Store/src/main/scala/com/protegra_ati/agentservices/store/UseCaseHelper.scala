@@ -23,7 +23,7 @@ trait ChannelGeneration {
     (
       sessionId,
       DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Left[String,String]( sessionId ) ).getOrElse( 
-	throw new Exception( "error making evalRequestLabel" )
+        throw new Exception( "error making evalRequestLabel" )
       )
     )
   }
@@ -31,7 +31,7 @@ trait ChannelGeneration {
     (
       sessionId,
       DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()( Right[String,String]( sessionId ) ).getOrElse( 
-	throw new Exception( "error making evalRequestLabel" )
+        throw new Exception( "error making evalRequestLabel" )
       )
     )
   }
@@ -335,9 +335,9 @@ trait MessageGeneration {
     val feedLabelStr : String = labelStr
     val feedLabel =
       fromTermString(
-	feedLabelStr
+        feedLabelStr
       ).getOrElse(
-	throw new Exception( "failed to parse feed label" + feedLabelStr )
+        throw new Exception( "failed to parse feed label" + feedLabelStr )
       )
     val feedCnxn =
       //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
@@ -349,9 +349,9 @@ trait MessageGeneration {
     val scoreLabelStr : String = labelStr
     val scoreLabel =
       fromTermString(
-	scoreLabelStr
+        scoreLabelStr
       ).getOrElse(
-	throw new Exception( "failed to parse score label" + scoreLabelStr )
+        throw new Exception( "failed to parse score label" + scoreLabelStr )
       )
     val scoreCnxn =
       //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
@@ -367,9 +367,9 @@ trait MessageGeneration {
     val postLabelStr : String = labelStr
     val postLabel =
       fromTermString( 
-	postLabelStr
+        postLabelStr
       ).getOrElse(
-	throw new Exception( "failed to parse post label" + postLabelStr )
+        throw new Exception( "failed to parse post label" + postLabelStr )
       )
     val postCnxn =
       //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
@@ -498,9 +498,9 @@ object CommManagement {
     _commLink match {
       case Some( cLink ) => cLink
       case None => {
-	val cLink : StdEvaluationRequestChannel = stdLink()( flip )
-	_commLink = Some( cLink )
-	cLink
+        val cLink : StdEvaluationRequestChannel = stdLink()( flip )
+        _commLink = Some( cLink )
+        cLink
       }
     }
   }
@@ -601,7 +601,7 @@ trait ExerciseHLDSL {
 
     reset {
       for( e <- node.subscribe( erqlChan ) ) {
-	println( e )
+        println( e )
       }
     }
   }
@@ -612,22 +612,22 @@ trait ExerciseHLDSL {
   ) = {
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
       eitherExpr match {
-	case ( Left( expr@ConcreteHL.FeedExpr( label, cnxns ) ), None ) => {
-	  val ( _, ersplChan ) = erspl( sessionId ) 
-	  reset {
-	    for( e <- node.subscribe( ersplChan ) ) {
-	      val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
-	      sessionMap += ( sessionId -> rslt );
-	      ()
-	    }
-	  }
-	}
-	case ( Left( expr ), _ ) => {
-	  throw new Exception( "unexpected expression type: " + expr )
-	}
-	case ( Right( expr ), _ ) => {
-	  println( "session closed" )
-	}
+        case ( Left( expr@ConcreteHL.FeedExpr( label, cnxns ) ), None ) => {
+          val ( _, ersplChan ) = erspl( sessionId ) 
+          reset {
+            for( e <- node.subscribe( ersplChan ) ) {
+              val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
+              sessionMap += ( sessionId -> rslt );
+              ()
+            }
+          }
+        }
+        case ( Left( expr ), _ ) => {
+          throw new Exception( "unexpected expression type: " + expr )
+        }
+        case ( Right( expr ), _ ) => {
+          println( "session closed" )
+        }
       }      
     }
   }
@@ -637,22 +637,22 @@ trait ExerciseHLDSL {
   ) = {    
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
       eitherExpr match {
-	case ( Left( expr@ConcreteHL.ScoreExpr( label, cnxns, staff ) ), None ) => {
-	  val ( _, ersplChan ) = erspl( sessionId ) 
-	  reset {
-	    for( e <- node.subscribe( ersplChan ) ) {
-	      val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
-	      sessionMap += ( sessionId -> rslt );
-	      ()
-	    }
-	  }
-	}
-	case ( Left( expr ), _ ) => {
-	  throw new Exception( "unexpected expression type: " + expr )
-	}
-	case ( Right( expr ), _ ) => {
-	  println( "session closed" )
-	}
+        case ( Left( expr@ConcreteHL.ScoreExpr( label, cnxns, staff ) ), None ) => {
+          val ( _, ersplChan ) = erspl( sessionId ) 
+          reset {
+            for( e <- node.subscribe( ersplChan ) ) {
+              val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
+              sessionMap += ( sessionId -> rslt );
+              ()
+            }
+          }
+        }
+        case ( Left( expr ), _ ) => {
+          throw new Exception( "unexpected expression type: " + expr )
+        }
+        case ( Right( expr ), _ ) => {
+          println( "session closed" )
+        }
       }      
     }
   }
@@ -662,22 +662,22 @@ trait ExerciseHLDSL {
   ) = {
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
       eitherExpr match {
-	case ( Left( expr@ConcreteHL.InsertContent( label, cnxns, content ) ), None ) => {
-	  val ( _, ersplChan ) = erspl( sessionId ) 
-	  reset {
-	    for( e <- node.subscribe( ersplChan ) ) {
-	      val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
-	      sessionMap += ( sessionId -> rslt );
-	      ()
-	    }
-	  }
-	}
-	case ( Left( expr ), _ ) => {
-	  throw new Exception( "unexpected expression type: " + expr )
-	}
-	case ( Right( expr ), _ ) => {
-	  println( "session closed" )
-	}
+        case ( Left( expr@ConcreteHL.InsertContent( label, cnxns, content ) ), None ) => {
+          val ( _, ersplChan ) = erspl( sessionId ) 
+          reset {
+            for( e <- node.subscribe( ersplChan ) ) {
+              val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
+              sessionMap += ( sessionId -> rslt );
+              ()
+            }
+          }
+        }
+        case ( Left( expr ), _ ) => {
+          throw new Exception( "unexpected expression type: " + expr )
+        }
+        case ( Right( expr ), _ ) => {
+          println( "session closed" )
+        }
       }      
     }
   }
@@ -958,6 +958,31 @@ package usage {
       ) {
         agentMgr().score( erql, erspl )( filter, cnxns, staff, onScoreRslt )
       }
+    }
+  }
+  
+  object SimpleClient
+  extends EvaluationCommsService  
+  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
+  with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
+  with StorageManagement with CnxnString[String,String,String]
+  with Serializable {
+    def insert(value: String) = {
+      agentMgr().post(
+        fromTermString("all(a(_))").get,
+        List(PortableAgentCnxn(new URI("a://b"),
+        "flat", new URI("c://d"))),
+        value,
+        (optRsrc) => prinln("onPost: optRsrc = " + optRsrc)
+      )
+    }
+    def feed() = {
+      agentMgr().feed(
+        fromTermString("all(a(_))").get,
+        List(PortableAgentCnxn(new URI("a://b"),
+        "flat", new URI("c://d"))),
+        (optRsrc) => prinln("onFeed: optRsrc = " + optRsrc)
+      )
     }
   }
 }
