@@ -59,7 +59,7 @@ with Serializable {
  * CometMessage used when some data needs to be sent to a client
  * with the given id
  */
-case class CometMessage(id: String, data: String, counter: Long = 0)
+case class CometMessage(id: String, data: String)
   extends Serializable
 
 /**
@@ -131,7 +131,7 @@ class CometActor extends Actor with Serializable {
       aliveTimers -= id
     }
 
-    case CometMessage(id, data, counter) => synchronized {
+    case CometMessage(id, data) => synchronized {
       val set = sets.get(id).getOrElse({
         val newSet = new HashSet[String]
         sets += (id -> newSet)
@@ -139,10 +139,11 @@ class CometActor extends Actor with Serializable {
       })
       set += data
       val optReqCtx = requests.get(id)
+      BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
       optReqCtx.map { reqCtx =>
-        reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
         requests -= id
         sets -= id
+        reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
       }
     }
   }
