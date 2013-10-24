@@ -961,7 +961,7 @@ package usage {
     }
   }
   
-  object SimpleClient
+  object SimpleInsertFeedClient
   extends EvaluationCommsService  
   with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
@@ -973,7 +973,7 @@ package usage {
         List(PortableAgentCnxn(new URI("a://b"),
         "flat", new URI("c://d"))),
         value,
-        (optRsrc) => prinln("onPost: optRsrc = " + optRsrc)
+        (optRsrc) => println("onPost: optRsrc = " + optRsrc)
       )
     }
     def feed() = {
@@ -981,7 +981,7 @@ package usage {
         fromTermString("all(a(_))").get,
         List(PortableAgentCnxn(new URI("a://b"),
         "flat", new URI("c://d"))),
-        (optRsrc) => prinln("onFeed: optRsrc = " + optRsrc)
+        (optRsrc) => println("onFeed: optRsrc = " + optRsrc)
       )
     }
   }
