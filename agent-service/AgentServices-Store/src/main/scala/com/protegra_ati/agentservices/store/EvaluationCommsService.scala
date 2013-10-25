@@ -267,7 +267,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
         ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
     ) : Unit = {
       val ( erql, erspl ) = makePolarizedPair()
-      feed( filter, cnxns, onFeedRslt )
+      feed(erql, erspl)( filter, cnxns, onFeedRslt )
     }
     def get(
       erql : CnxnCtxtLabel[String,String,String],
