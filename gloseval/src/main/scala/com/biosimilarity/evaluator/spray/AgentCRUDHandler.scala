@@ -722,19 +722,17 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             case Bottom => Nil
           }
 
-          def biCnxnToConnectionStr( biCnxn : PortableAgentBiCnxn ) : String = {
-            compact( render(
-              ("source" -> biCnxn.writeCnxn.src.toString) ~
-              ("label" -> biCnxn.writeCnxn.label) ~
-              ("target" -> biCnxn.writeCnxn.trgt.toString)
-            ) )
+          def biCnxnToJObject( biCnxn : PortableAgentBiCnxn ) : JObject = {
+            ( "source" -> biCnxn.writeCnxn.src.toString ) ~
+            ( "label" -> biCnxn.writeCnxn.label ) ~
+            ( "target" -> biCnxn.writeCnxn.trgt.toString )
           }
 
           CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
             ( "msgType" -> "getAliasConnectionsResponse" ) ~
             ( "content" ->
               ( "sessionURI" -> sessionURIStr ) ~
-              ( "connections" -> biCnxnList.map( biCnxnToConnectionStr( _ ) ) )
+              ( "connections" -> biCnxnList.map( biCnxnToJObject( _ ) ) )
             )
           ) ) )
         }
