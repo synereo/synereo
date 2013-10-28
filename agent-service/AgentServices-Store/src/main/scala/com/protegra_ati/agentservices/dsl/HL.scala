@@ -61,6 +61,12 @@ trait AbstractHL {
     override val value : Value
   ) extends HLExpr with Query with Modification[Value]
 
+  case class InsertContentV[Value](
+    override val label : Label,
+    override val cnxns : Seq[Cnxn],
+    override val value : Value
+  ) extends HLExpr with Query with Modification[Value]
+
   case class PutContent[Value](
     override val label : Label,
     override val cnxns : Seq[Cnxn],
