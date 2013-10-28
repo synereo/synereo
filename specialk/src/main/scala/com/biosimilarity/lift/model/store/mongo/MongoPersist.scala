@@ -311,7 +311,16 @@ with StdMongoStoreConfiguration
     // and use the update() method with upsert=true
     // We should supply a query here as well instead of using +=
     val mc = clientSession.getDB( defaultDB )( collectionName )
-    mc += record
+    //mc += record
+    mc.update(
+      MongoDBObject(
+        "record" -> MongoDBObject(
+          "key" -> record.get( "record" ).asInstanceOf[MongoDBObject].get( "key" )
+        )
+      ),
+      record,
+      true
+    )
   }
 
   def exists( recordType : String )(
