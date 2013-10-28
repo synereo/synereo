@@ -328,7 +328,7 @@ with StdMongoStoreConfiguration
       com.biosimilarity.lift.lib.BasicLogService.tweet( "rcrdKey: " + rcrdKey )
       com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
       mc.update(
-        MongoDBObject( "record" -> MongoDBObject( "key" -> rcrdKey ) ),
+        MongoDBObject( "record.key" -> rcrdKey ),
         record,
         true
       )
@@ -349,7 +349,7 @@ with StdMongoStoreConfiguration
         com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
         
         mc.update(
-          MongoDBObject( "kRecord" -> MongoDBObject( "key" -> kRcrdKey ) ),
+          MongoDBObject( "kRecord.key" -> kRcrdKey ),
           record,
           true
         )
