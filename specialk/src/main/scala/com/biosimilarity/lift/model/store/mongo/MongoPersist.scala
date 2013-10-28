@@ -312,15 +312,29 @@ with StdMongoStoreConfiguration
     // We should supply a query here as well instead of using +=
     val mc = clientSession.getDB( defaultDB )( collectionName )
     //mc += record
-    mc.update(
-      MongoDBObject(
-        "record" -> MongoDBObject(
-          "key" -> record.get( "record" ).asInstanceOf[MongoDBObject].get( "key" )
+    val rcrdObj = record.get( "record" )
+    if ( rcrdObj != null ) {
+      val rcrdKey = rcrdObj.asInstanceOf[DBObject].get( "key" )
+      mc.update(
+        MongoDBObject( "record" -> MongoDBObject( "key" -> rcrdKey ) ),
+        record,
+        true
+      )
+    }
+    else {
+      val kRcrdObj = record.get( "kRecord" )
+      if ( kRcrdObj == null ) {
+        throw new Exception( "invalid record shape: " + record )
+      }
+      else {
+        val kRcrdKey = kRcrdObj.asInstanceOf[DBObject].get( "key" )
+        mc.update(
+          MongoDBObject( "kRecord" -> MongoDBObject( "key" -> kRcrdKey ) ),
+          record,
+          true
         )
-      ),
-      record,
-      true
-    )
+      }
+    }    
   }
 
   def exists( recordType : String )(
