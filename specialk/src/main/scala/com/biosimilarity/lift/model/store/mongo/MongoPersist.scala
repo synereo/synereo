@@ -304,11 +304,15 @@ with StdMongoStoreConfiguration
   def _upsertRecord( record : DBObject, clientSession : MongoClient )(
     collectionName : String
     ) : Unit = {
-    com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
-    com.biosimilarity.lift.lib.BasicLogService.tweet( "method: " + "_upsertRecord" )
-    com.biosimilarity.lift.lib.BasicLogService.tweet( "record: " + record )
-    com.biosimilarity.lift.lib.BasicLogService.tweet( "clientSession: " + clientSession )
-    com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
+    com.biosimilarity.lift.lib.BasicLogService.tweet(
+      (
+        "**********************************************************" 
+        + "\nmethod: " + "_upsertRecord"
+        + "\nrecord: " + record
+        + "\nclientSession: " + clientSession
+        + "\n**********************************************************"
+      )
+    )
     // BUGBUG: updateRecord will always insert a new record; never update an existing one
     // To update a record using upsert in MongoDB, we need to satisfy 1 of 2 conditions:
     // 1. Set record ObjectId (_id) if using += (which we NEVER do)
@@ -320,13 +324,17 @@ with StdMongoStoreConfiguration
     val rcrdObj = record.get( "record" )
     if ( rcrdObj != null ) {
       val rcrdKey = rcrdObj.asInstanceOf[DBObject].get( "key" )
-      com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
-      com.biosimilarity.lift.lib.BasicLogService.tweet( "method: " + "_upsertRecord" )
-      com.biosimilarity.lift.lib.BasicLogService.tweet( "record: " + record )
-      com.biosimilarity.lift.lib.BasicLogService.tweet( "clientSession: " + clientSession )
-      com.biosimilarity.lift.lib.BasicLogService.tweet( "----------------------------------------------------------" )
-      com.biosimilarity.lift.lib.BasicLogService.tweet( "rcrdKey: " + rcrdKey )
-      com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
+      com.biosimilarity.lift.lib.BasicLogService.tweet(
+        (
+          "**********************************************************" 
+          + "\nmethod: " + "_upsertRecord"
+          + "\nrecord: " + record
+          + "\nclientSession: " + clientSession
+          + "\n----------------------------------------------------------"
+          + "\nrcrdKey: " + rcrdKey
+          + "\n**********************************************************"
+        )
+      )
       mc.update(
         MongoDBObject( "record.key" -> rcrdKey ),
         record,
@@ -340,13 +348,17 @@ with StdMongoStoreConfiguration
       }
       else {
         val kRcrdKey = kRcrdObj.asInstanceOf[DBObject].get( "key" )
-        com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
-        com.biosimilarity.lift.lib.BasicLogService.tweet( "method: " + "_upsertRecord" )
-        com.biosimilarity.lift.lib.BasicLogService.tweet( "record: " + record )
-        com.biosimilarity.lift.lib.BasicLogService.tweet( "clientSession: " + clientSession )
-        com.biosimilarity.lift.lib.BasicLogService.tweet( "----------------------------------------------------------" )
-        com.biosimilarity.lift.lib.BasicLogService.tweet( "kRcrdKey: " + kRcrdKey )
-        com.biosimilarity.lift.lib.BasicLogService.tweet( "**********************************************************" )
+        com.biosimilarity.lift.lib.BasicLogService.tweet(
+          (
+            "**********************************************************" 
+            + "\nmethod: " + "_upsertRecord"
+            + "\nrecord: " + record
+            + "\nclientSession: " + clientSession
+            + "\n----------------------------------------------------------"
+            + "\nkRcrdKey: " + kRcrdKey
+            + "\n**********************************************************"
+          )
+        )
         
         mc.update(
           MongoDBObject( "kRecord.key" -> kRcrdKey ),
