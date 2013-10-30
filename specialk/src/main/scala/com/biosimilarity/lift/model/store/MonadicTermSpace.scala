@@ -432,16 +432,17 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                       
                       keep match {
                         case storagePolicy : RetainInStore => {
+                          //spaceLock.depart( ptn, slk )
                         }
                         case _ => {
                           BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
                           //spaceLock.depart( slk )
-                          spaceLock.depart( ptn, slk )
+                          //spaceLock.depart( ptn, slk )
                           //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
                           //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                         }
                       }
-                      
+                      spaceLock.depart( ptn, slk )
                       rk( rsrcCursor )
                     }
                     case false => {
