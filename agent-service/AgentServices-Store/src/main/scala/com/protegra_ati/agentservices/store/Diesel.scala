@@ -2120,8 +2120,40 @@ package diesel {
                     + "\nvalue: " + value
                   )
                   
-                  n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                  try {
+                    n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                  } 
+                  catch {
+                    case e : Exception => {
+                      BasicLogService.tweet(
+                        "method: evaluateExpression"
+                        + "\n ---> node.publish caused an exception <--- "
+                        + "\nthis: " + this
+                        + "\nnode: " + node
+                        + "\nexpr: " + expr
+                        + "\nhandler: " + handler
+                        + "\n-----------------------------------------"
+                        + "\nagntCnxn: " + agntCnxn
+                        + "\nfilter: " + filter
+                        + "\nvalue: " + value
+                      )
+                      BasicLogService.tweetTrace( e )
+                    }
+                  }
                 }
+
+                BasicLogService.tweet(
+                  "method: evaluateExpression"
+                  + "\n completed node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\nvalue: " + value
+                )
                 
                 handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
               }
