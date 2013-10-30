@@ -344,7 +344,18 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
       keep : RetentionPolicy,
       cursor : Boolean
     )( ptn : mTT.GetRequest )( implicit spaceLockKey : Option[Option[mTT.Resource] => Unit @suspendable] )
-    : Generator[Option[mTT.Resource],Unit,Unit] =
+    : Generator[Option[mTT.Resource],Unit,Unit] = {
+      BasicLogService.tweet(
+	(
+	  "MonadicTermStoreT : "
+	  + "\nmethod : mget "
+	  + "\nthis : " + this
+	  + "\nchannels : " + channels
+	  + "\nregistered : " + registered
+	  + "\nconsume : " + consume
+	  + "\nkeep : " + keep
+	)
+      )
       Generator {
         rk : ( Option[mTT.Resource] => Unit @suspendable ) =>
           shift {
@@ -371,10 +382,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                 
                 if ( meets.isEmpty ) {
                   val place = representative( ptn )
-                  BasicLogService.tweet( "did not find a resource, storing a continuation: " + rk )
-                  BasicLogService.tweet( "registered continuation storage: " + registered )
-                  BasicLogService.tweet( "theWaiters: " + theWaiters )
-                  BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
+                  BasicLogService.tweet(
+                    (
+                      "did not find a resource, storing a continuation: " + rk 
+                      + "\nregistered continuation storage: " + registered 
+                      + "\ntheWaiters: " + theWaiters 
+                      + "\ntheSubscriptions: " + theSubscriptions
+                    )
+                  )
                   
                   keep match {
                     case policy : RetainInCache => {
@@ -386,10 +401,14 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                     }
                   }
                   
-                  BasicLogService.tweet( "stored a continuation: " + rk )
-                  BasicLogService.tweet( "registered continuation storage: " + registered )
-                  BasicLogService.tweet( "theWaiters: " + theWaiters )
-                  BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
+                  BasicLogService.tweet(
+                    (
+                      "stored a continuation: " + rk
+                      + "\nregistered continuation storage: " + registered
+                      + "\ntheWaiters: " + theWaiters
+                      + "\ntheSubscriptions: " + theSubscriptions
+                    )
+                  )
                   
                   keep match {
                     case storagePolicy : RetainInStore => {
@@ -490,6 +509,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
               }
           }
       }
+    }
     
   }
   

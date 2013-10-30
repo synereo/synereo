@@ -598,7 +598,17 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
     consume : RetentionPolicy,
     keep : RetentionPolicy
   )( ptn : Pattern )( implicit spaceLockKey : Option[Option[Resource] => Unit @suspendable] )
-  : Generator[Option[Resource],Unit,Unit] =
+  : Generator[Option[Resource],Unit,Unit] = {
+    BasicLogService.tweet(
+      (
+	"MonadicTupleSpace : "
+	+ "\nmethod : mget "
+	+ "\nthis : " + this
+	+ "\nchannels : " + channels
+	+ "\nregistered : " + registered
+	+ "\nconsume : " + consume
+      )
+    )
     Generator {
       rk : ( Option[Resource] => Unit @suspendable ) =>
         shift {
@@ -621,10 +631,14 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
               
               if ( meets.isEmpty ) {
                 val place = representative( ptn )
-                BasicLogService.tweet( "did not find a resource, storing a continuation: " + rk )
-                BasicLogService.tweet( "registered continuation storage: " + registered )
-                BasicLogService.tweet( "theWaiters: " + theWaiters )
-                BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
+                BasicLogService.tweet(
+                  (
+                    "did not find a resource, storing a continuation: " + rk
+                    + "\nregistered continuation storage: " + registered 
+                    + "\ntheWaiters: " + theWaiters
+                    + "\ntheSubscriptions: " + theSubscriptions
+                  )
+                )
                 
                 keep match {
                   case policy : RetainInCache => {
@@ -636,22 +650,29 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                   }
                 }
                 
-                BasicLogService.tweet( "stored a continuation: " + rk )
-                BasicLogService.tweet( "registered continuation storage: " + registered )
-                BasicLogService.tweet( "theWaiters: " + theWaiters )
-                BasicLogService.tweet( "theSubscriptions: " + theSubscriptions )
+                BasicLogService.tweet(
+                  (
+                    "stored a continuation: " + rk
+                    + "\nregistered continuation storage: " + registered
+                    + "\ntheWaiters: " + theWaiters
+                    + "\ntheSubscriptions: " + theSubscriptions
+                  )
+                )
                                 
                 keep match {
                   case storagePolicy : RetainInStore => {
                   }
-                  case _ => {
-                    BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
+                  case _ => {                    
                     //spaceLock.depart( slk )
-                    spaceLock.depart( ptn, slk )
+                    //spaceLock.depart( ptn, slk )
                     //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
                     //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                   }
                 }
+                BasicLogService.tweet(
+                  "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
+                )
+                spaceLock.depart( ptn, slk )
                 
                 rk( None )
               }
@@ -694,6 +715,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
             }
         }
     }
+  }
   
   def get( ptn : Pattern ) =
     mget( theMeetingPlace, theWaiters, Cache, Cache )( ptn )
