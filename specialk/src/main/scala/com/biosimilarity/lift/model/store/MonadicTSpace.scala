@@ -658,17 +658,7 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                     + "\ntheSubscriptions: " + theSubscriptions
                   )
                 )
-                                
-                keep match {
-                  case storagePolicy : RetainInStore => {
-                  }
-                  case _ => {                    
-                    //spaceLock.depart( slk )
-                    //spaceLock.depart( ptn, slk )
-                    //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                    //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-                  }
-                }
+                                                
                 BasicLogService.tweet(
                   "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
                 )
