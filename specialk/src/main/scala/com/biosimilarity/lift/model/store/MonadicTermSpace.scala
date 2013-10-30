@@ -370,12 +370,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                   case _ => spaceLockKey
                 }
                 
-                //spaceLock.occupy( slk )
                 spaceLock.occupy( ptn, slk )
                 
-                BasicLogService.tweet( "Reader occupying spaceLock on " + this + " for mget on " + ptn + "." )
-                //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
+                BasicLogService.tweet(
+                  "Reader occupying spaceLock on " + this + " for mget on " + ptn + "."
+                )
                 
                 val map = Left[Map[mTT.GetRequest,mTT.Resource],Map[mTT.GetRequest,List[RK]]]( channels )
                 val meets = locations( map, ptn )
@@ -408,20 +407,12 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                       + "\ntheWaiters: " + theWaiters
                       + "\ntheSubscriptions: " + theSubscriptions
                     )
+                  )                                    
+                  
+                  BasicLogService.tweet(
+                    "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
                   )
-                  
-                  keep match {
-                    case storagePolicy : RetainInStore => {
-                    }
-                    case _ => {
-                      BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-                      //spaceLock.depart( slk )
-                      spaceLock.depart( ptn, slk )
-                      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-                    }
-                  }
-                  
+                  spaceLock.depart( ptn, slk )
                   rk( None )
                 }
                 else {
@@ -440,7 +431,9 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                             channels -= place
                           }
                           case _ => {
-                            BasicLogService.tweet( "policy indicates not to consume from cache: " + place )
+                            BasicLogService.tweet(
+                              "policy indicates not to consume from cache: " + place
+                            )
                           }
                         }
                         
@@ -473,18 +466,11 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                             BasicLogService.tweet( "policy indicates not to consume from cache: " + place )
                           }
                         }
-                        
-                        keep match {
-                          case storagePolicy : RetainInStore => {
-                          }
-                          case _ => {
-                            BasicLogService.tweet( "Reader departing spaceLock on " + this + " for mget on " + ptn + "." )
-                            //spaceLock.depart( slk )
-                            spaceLock.depart( ptn, slk )
-                            //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-                            //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-                          }
-                        }
+                                                
+                        BasicLogService.tweet(
+                          "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
+                        )                        
+                        spaceLock.depart( ptn, slk )
                         
                         rk( s( rsrc ) )
                         
@@ -494,8 +480,7 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                   }
                   
                 }                               
-                //}
-                //BasicLogService.tweet( "get returning" )
+
                 outerk()
               }
           }
