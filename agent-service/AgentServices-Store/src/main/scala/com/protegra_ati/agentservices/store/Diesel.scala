@@ -2273,6 +2273,9 @@ package diesel {
                                     case Some( mTT.Ground( v ) ) => {
                                       v
                                     }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                      v
+                                    }
                                   }
                                 )
                               )       
@@ -2312,6 +2315,9 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                       v
                                     }
                                   }
@@ -2357,6 +2363,9 @@ package diesel {
                                               ConcreteHL.Bottom
                                             }
                                             case Some( mTT.Ground( v ) ) => {
+                                              v
+                                            }
+                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                               v
                                             }
                                           }
@@ -2473,6 +2482,9 @@ package diesel {
                                     case Some( mTT.Ground( v ) ) => {
                                       v
                                     }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                      v
+                                    }
                                   }
                                 )
                               )       
@@ -2512,6 +2524,9 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                       v
                                     }
                                   }
@@ -2557,6 +2572,9 @@ package diesel {
                                               ConcreteHL.Bottom
                                             }
                                             case Some( mTT.Ground( v ) ) => {
+                                              v
+                                            }
+                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                               v
                                             }
                                           }
