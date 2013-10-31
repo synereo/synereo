@@ -409,10 +409,20 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                     )
                   )                                    
                   
-                  BasicLogService.tweet(
-                    "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
-                  )
-                  spaceLock.depart( ptn, slk )
+                  // This code intentionally avoids departing lock in
+                  // RetainInStore cases
+                  keep match {
+                    case storagePolicy : RetainInStore => {
+                    }
+                    case _ => {
+                      BasicLogService.tweet(
+                        "Reader departing spaceLock on "
+                        + this + " for mget on " + ptn + "."
+                      )
+                      spaceLock.depart( ptn, slk )
+                    }
+                  }
+
                   rk( None )
                 }
                 else {
@@ -442,10 +452,19 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                       
                       val rsrcCursor = asCursor( rsrcRslts.toList )
                                            
-                      BasicLogService.tweet(
-                        "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
-                      )
-                      spaceLock.depart( ptn, slk )
+                      // This code intentionally avoids departing lock in
+                      // RetainInStore cases
+                      keep match {
+                        case storagePolicy : RetainInStore => {
+                        }
+                        case _ => {
+                          BasicLogService.tweet(
+                            "Reader departing spaceLock on "
+                            + this + " for mget on " + ptn + "."
+                          )
+                          spaceLock.depart( ptn, slk )
+                        }
+                      }
                       rk( rsrcCursor )
                     }
                     case false => {
@@ -467,10 +486,19 @@ extends MonadicTermTypeScope[Namespace,Var,Tag,Value]
                           }
                         }
                                                 
-                        BasicLogService.tweet(
-                          "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
-                        )                        
-                        spaceLock.depart( ptn, slk )
+                        // This code intentionally avoids departing lock in
+                        // RetainInStore cases
+                        keep match {
+                          case storagePolicy : RetainInStore => {
+                          }
+                          case _ => {
+                            BasicLogService.tweet(
+                              "Reader departing spaceLock on "
+                              + this + " for mget on " + ptn + "."
+                            )
+                            spaceLock.depart( ptn, slk )
+                          }
+                        }
                         
                         rk( s( rsrc ) )
                         

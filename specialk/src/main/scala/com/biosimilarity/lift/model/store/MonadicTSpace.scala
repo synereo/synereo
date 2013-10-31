@@ -659,10 +659,19 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                   )
                 )
                                                 
-                BasicLogService.tweet(
-                  "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
-                )
-                spaceLock.depart( ptn, slk )
+                // This code intentionally avoids departing lock in
+                // RetainInStore cases
+                keep match {
+                  case storagePolicy : RetainInStore => {
+                  }
+                  case _ => {
+                    BasicLogService.tweet(
+                      "Reader departing spaceLock on "
+                      + this + " for mget on " + ptn + "."
+                    )
+                    spaceLock.depart( ptn, slk )
+                  }
+                }
                 
                 rk( None )
               }
@@ -685,11 +694,20 @@ with ExcludedMiddleTypes[Place,Pattern,Resource]
                     }
                   }
                                     
-                  BasicLogService.tweet(
-                    "Reader departing spaceLock on " + this + " for mget on " + ptn + "."
-                  )
-                  spaceLock.depart( ptn, slk )
-
+                  // This code intentionally avoids departing lock in
+                  // RetainInStore cases
+                  keep match {
+                    case storagePolicy : RetainInStore => {
+                    }
+                    case _ => {
+                      BasicLogService.tweet(
+                        "Reader departing spaceLock on "
+                        + this + " for mget on " + ptn + "."
+                      )
+                      spaceLock.depart( ptn, slk )
+                    }
+                  }
+                  
                   rk( s( rsrc ) )                 
                 }
               }                         
