@@ -504,10 +504,20 @@ with AgentCnxnTypeScope {
                       case oCacheV@Some( cacheV ) => {                    
                         BasicLogService.tweet( 
                           (
-                            "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-                            + "mgetting " + path + ".\n"
-                            + "on " + this + "found a result in memory cache.\n"
-                            + cacheV
+                            ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                            + "BaseAgentKVDB : "
+                            + "\nmethod : mget "
+                            + "\nthis : " + this
+                            + "\ncnxn : " + cnxn
+                            + "\nchannels : " + channels
+                            + "\nregistered : " + registered
+                            + "\nconsume : " + consume
+                            + "\nkeep : " + keep
+                            + "\ncursor : " + cursor
+                            + "\ncollName : " + collName
+                            + "\npath : " + path
+                            + "\n---------------------------------------"
+                            + "on " + this + "found a result in memory cache.\n" + cacheV
                             + "\ncleaning store"
                             + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                           )
@@ -744,6 +754,10 @@ with AgentCnxnTypeScope {
                                             )
                                             storeKQuery( xmlCollName, pd )( path, keep, rk )
                                             if ( !cursor ) {
+
+                                              BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                              spaceLock.depart( path, Some( rk ) )
+
                                               rk( oV )
                                             }
                                             else {
@@ -756,13 +770,18 @@ with AgentCnxnTypeScope {
                                                   case _ => {}
                                                 }
                                               }
+
+                                              BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                              spaceLock.depart( path, Some( rk ) )
+
                                               rk( asCursor(rsrcRslts) )
                                             }
                                           }
                                           case _ => {
+
                                             BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
-                                            //spaceLock.depart( Some( rk ) )
                                             spaceLock.depart( path, Some( rk ) )
+
                                             if ( !cursor ) {
                                               rk( oV )
                                             }
