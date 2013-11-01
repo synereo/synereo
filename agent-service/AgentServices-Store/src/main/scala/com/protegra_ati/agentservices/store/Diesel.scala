@@ -1551,6 +1551,7 @@ package diesel {
     import CnxnConversionStringScope._
 
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+    import com.protegra_ati.agentservices.store.ThreadSafeReflectiveSurface
 
     type LinkEvalRequestChannel = DSLCommLinkCtor.StdEvaluationRequestChannel
     type EvalChannel[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = Being.AgentKVDBNode[ReqBody,RspBody]
@@ -1810,11 +1811,11 @@ package diesel {
               handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
             }
           }
-          case ConcreteHL.InsertContentV( filter, cnxns, value : Any ) => {
+          case ConcreteHL.InsertContentV( filter, cnxns, value : ThreadSafeReflectiveSurface.Specimen ) => {
             
             BasicLogService.tweet(
               "method: evaluateExpression"
-              + "\nin ConcreteHL.InsertContent case "
+              + "\nin ConcreteHL.InsertContentV case "
               + "\nthis: " + this
               + "\nnode: " + node
               + "\nexpr: " + expr

@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.msgs.agent.introduction
 
-import com.biosimilarity.evaluator.distribution.ConcreteHL._
+import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
 import java.net.URI
 
 //# Message Set
@@ -13,8 +13,8 @@ trait AgentIntroduction
 case class beginIntroductionRequest(
   sessionURI : URI,
   alias : String,
-  aBiCnxn : BiCnxn,
-  bBiCnxn : BiCnxn,
+  aConnection : PortableAgentCnxn,
+  bConnection : PortableAgentCnxn,
   aMessage : String,
   bMessage : String
 ) extends AgentIntroduction
