@@ -392,9 +392,19 @@ with AgentCnxnTypeScope {
                                           consume match {
                                             case policy : Subscription => {
                                               BasicLogService.tweet(
-                                                "\n===================================================================\n"
-                                                + "Storing subscription continuation"
-                                                + "with keep : " + keep
+                                                "===================================================================\n"
+                                                + "\nStoring subscription continuation"
+                                                + "\nmethod : mget "
+                                                + "\nthis : " + this
+                                                + "\ncnxn : " + cnxn
+                                                + "\nchannels : " + channels
+                                                + "\nregistered : " + registered
+                                                + "\nconsume : " + consume
+                                                + "\nkeep : " + keep
+                                                + "\ncursor : " + cursor
+                                                + "\ncollName : " + collName
+                                                + "\npath : " + path
+                                                + "\nwith keep : " + keep
                                                 + "\n===================================================================\n"
                                               )
                                               storeKQuery( xmlCollName, pd )( path, keep, rk )
