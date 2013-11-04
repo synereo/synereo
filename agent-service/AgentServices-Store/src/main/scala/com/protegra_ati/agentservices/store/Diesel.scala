@@ -2274,7 +2274,7 @@ package diesel {
                               + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                             )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2329,7 +2329,7 @@ package diesel {
                               + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                             )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2388,7 +2388,7 @@ package diesel {
                                       + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                                     )
                                     reset {
-                                      server.put(
+                                      server.publish(
                                         erspl,
                                         DSLCommLink.mTT.Ground(
                                           optRsrc match {
@@ -2516,7 +2516,7 @@ package diesel {
                               + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                             )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2571,7 +2571,7 @@ package diesel {
                               + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                             )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2630,7 +2630,7 @@ package diesel {
                                       + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                                     )
                                     reset {
-                                      server.put(
+                                      server.publish(
                                         erspl,
                                         DSLCommLink.mTT.Ground(
                                           optRsrc match {
