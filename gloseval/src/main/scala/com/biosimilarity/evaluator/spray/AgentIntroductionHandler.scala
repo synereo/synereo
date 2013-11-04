@@ -1,14 +1,13 @@
 package com.biosimilarity.evaluator.spray
 
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.distribution.ConcreteHL._
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 import com.biosimilarity.lift.lib.BasicLogService
 import com.protegra_ati.agentservices.msgs.agent.introduction._
 import com.protegra_ati.agentservices.protocols.msgs._
 import java.util.UUID
-import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
+import org.json4s.native.JsonMethods._
 
 trait AgentIntroductionSchema extends AgentCRUDSchema {
   self : EvaluationCommsService =>
@@ -32,8 +31,8 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
 
     val birq = new BeginIntroductionRequest(
       Some( sessionId ),
-      Some( toAgentBiCnxn( msg.aBiCnxn ) ),
-      Some( toAgentBiCnxn( msg.bBiCnxn ) ),
+      Some( toAgentBiCnxn( msg.aConnection ) ),
+      Some( toAgentBiCnxn( msg.bConnection ) ),
       Some( msg.aMessage ),
       Some( msg.bMessage )
     )
@@ -49,14 +48,14 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
       ) ) )
     }
 
-    agentMgr().post[BeginIntroductionRequest]( birq.toCnxnCtxtLabel, List( aliasStorageCnxn ), birq, onPost )
+    val specimen = MessageConverter.beginIntroductionRequestToSpecimen(birq)
+    agentMgr().postV( birq.toCnxnCtxtLabel, List( aliasStorageCnxn ), specimen, onPost )
   }
 
-  private def toAgentBiCnxn( biCnxn : BiCnxn ) : acT.AgentBiCnxn = {
-    new acT.AgentBiCnxn( toAgentCnxn( biCnxn.readCnxn ), toAgentCnxn( biCnxn.writeCnxn ) )
-  }
-
-  private def toAgentCnxn( cnxn : Cnxn ) : acT.AgentCnxn = {
-    new acT.AgentCnxn( cnxn.src, cnxn.label, cnxn.trgt )
+  private def toAgentBiCnxn( cnxn : PortableAgentCnxn ) : acT.AgentBiCnxn = {
+    new acT.AgentBiCnxn(
+      new acT.AgentCnxn( cnxn.trgt, cnxn.label, cnxn.src ),
+      new acT.AgentCnxn( cnxn.src, cnxn.label, cnxn.trgt )
+    )
   }
 }
