@@ -2261,7 +2261,18 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2065 forward(" + optRsrc + ")")
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2065 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: erspl"
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
                               server.put(
                                 erspl,
@@ -2304,8 +2315,19 @@ package diesel {
                       
                       val forward : Option[mTT.Resource] => Unit =
                         {
-                          ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2106 forward(" + optRsrc + ")")
+                          ( optRsrc : Option[mTT.Resource] ) => {                            
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2106 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: erspl"
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
                               server.put(
                                 erspl,
@@ -2353,7 +2375,18 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
-                                    BasicLogService.tweet("Diesel.scala:2151 forward(" + optRsrc + ")")
+                                    BasicLogService.tweet(
+                                      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      + "\nDiesel.scala:2151 forward(" + optRsrc + ")"
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n defined in method innerLoop"
+                                      + "\n passed to and called in evaluateExpression"
+                                      + "\nerql: " + erql
+                                      + "\nserver: " + server                              
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n erspl: erspl"
+                                      + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                    )
                                     reset {
                                       server.put(
                                         erspl,
@@ -2470,7 +2503,18 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2265 forward(" + optRsrc + ")")
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2265 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: erspl"
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
                               server.put(
                                 erspl,
@@ -2514,7 +2558,18 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2306 forward(" + optRsrc + ")")
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2306 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: erspl"
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
                               server.put(
                                 erspl,
@@ -2562,7 +2617,18 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
-                                    BasicLogService.tweet("Diesel.scala:2351 forward(" + optRsrc + ")")
+                                    BasicLogService.tweet(
+                                      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      + "\nDiesel.scala:2351 forward(" + optRsrc + ")"
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n defined in method innerLoop"
+                                      + "\n passed to and called in evaluateExpression"
+                                      + "\nerql: " + erql
+                                      + "\nserver: " + server                              
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n erspl: erspl"
+                                      + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                    )
                                     reset {
                                       server.put(
                                         erspl,
