@@ -2614,94 +2614,137 @@ package usage {
 		  textToTag.getOrElse(
 		    throw new Exception( "must have textToTag to convert mongo object" )
 		  )
-		CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-		  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-		    BasicLogService.tweet( " ****************************** " )
-		    BasicLogService.tweet( " vNs: " + vNs )
-		    BasicLogService.tweet( " v: " + v )
-		    BasicLogService.tweet( " ****************************** " )
-                    val matchRslt = matchMap( key, k )
-                    BasicLogService.tweet( " ****************************** " )
-		    BasicLogService.tweet( " matchRslt : " + matchRslt )
-		    BasicLogService.tweet( " ****************************** " )
-
-                    matchRslt match {
-		      case Some( soln ) => {
-                        BasicLogService.tweet( " ****************************** " )
-		        BasicLogService.tweet( " found a solution : " + soln )
-		        BasicLogService.tweet( " ****************************** " )
-			if ( compareNameSpace( ns, kvNameSpace ) ) {
-                          BasicLogService.tweet( " ****************************** " )
-		          BasicLogService.tweet( " in data space " )
-		          BasicLogService.tweet( " ****************************** " )
-                          BasicLogService.tweet( " ****************************** " )
-		          BasicLogService.tweet( " computing cacheValue " )
-		          BasicLogService.tweet( " ****************************** " )
-                          val cacheValueRslt =
-                            asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
-                          BasicLogService.tweet( " ****************************** " )
-		          BasicLogService.tweet( " computed cacheValue: " + cacheValueRslt )
-		          BasicLogService.tweet( " ****************************** " )
-                          val groundWrapper =
-                            mTT.Ground( cacheValueRslt )
-                          val boundHMWrapper =
-                            mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
-                          val boundWrapper =
-                            mTT.asRBoundAList( boundHMWrapper )
-                          val finalRslt =
-                            emT.PlaceInstance(
-                              k,
-                              Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                boundWrapper
-                              ),
-                              // BUGBUG -- lgm : why can't the compiler determine
-                              // that this cast is not necessary?
-                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                val computedRslt =
+		  CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
+		    case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
+		      BasicLogService.tweet(
+                        (
+                          " ****************************** "
+		          + "\n vNs: " + vNs
+		          + "\n v: " + v
+		          + "\n ****************************** "
+                        )
+                      )
+                      val matchRslt = matchMap( key, k )
+                      BasicLogService.tweet(
+                        (
+                          " ****************************** "
+		          + "\n matchRslt : " + matchRslt
+		          + "\n ****************************** "
+                        )
+                      )
+                      
+                      matchRslt match {
+		        case Some( soln ) => {
+                          BasicLogService.tweet(
+                            (
+                              " ****************************** " 
+		              + "\n found a solution : " + soln 
+		              + "\n ****************************** "
                             )
-
-                          BasicLogService.tweet( " ****************************** " )
-		          BasicLogService.tweet( " placeInstance: " + finalRslt )
-		          BasicLogService.tweet( " ****************************** " )
-                          			  
-                          finalRslt
-			}
-			else {
-			  if ( compareNameSpace( ns, kvKNameSpace ) ) {
-                            BasicLogService.tweet( " ****************************** " )
-		            BasicLogService.tweet( " in continuation space " )
-		            BasicLogService.tweet( " ****************************** " )
-			    val mTT.Continuation( ks ) =
-			      asCacheK(
-				new CnxnCtxtBranch[String,String,String](
-				  "string",
-				  v :: Nil
-				)
-			      )
-			    emT.PlaceInstance(
-			      k,
-			      Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-				ks
-			      ),
-			      // BUGBUG -- lgm : why can't the compiler determine
-			      // that this cast is not necessary?
-			      theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-			    )
+                          )
+			  if ( compareNameSpace( ns, kvNameSpace ) ) {
+                            BasicLogService.tweet(
+                              (
+                                " ****************************** "
+		                + "\n in data space "
+		                + "\n ****************************** "
+                                + "\n ****************************** "
+		                + "\n computing cacheValue "
+		                + "\n ****************************** "
+                              )
+                            )
+                            val cacheValueRslt =
+                              asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                            BasicLogService.tweet(
+                              (
+                                " ****************************** "
+		                + "\n computed cacheValue: " + cacheValueRslt
+		                + "\n ****************************** "
+                              )
+                            )
+                            val groundWrapper =
+                              mTT.Ground( cacheValueRslt )
+                            val boundHMWrapper =
+                              mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                            val boundWrapper =
+                              mTT.asRBoundAList( boundHMWrapper )
+                            val finalRslt =
+                              emT.PlaceInstance(
+                                k,
+                                Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                  boundWrapper
+                                ),
+                                // BUGBUG -- lgm : why can't the compiler determine
+                                // that this cast is not necessary?
+                                theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                              )
+                            
+                            BasicLogService.tweet(
+                              (
+                                " ****************************** "
+		                + "\n placeInstance: " + finalRslt
+		                + " ****************************** "
+                              )
+                            )
+                            
+                            finalRslt
 			  }
 			  else {
-			    throw new Exception( "unexpected namespace : (" + ns + ")" )
+			    if ( compareNameSpace( ns, kvKNameSpace ) ) {
+                              BasicLogService.tweet(
+                                (
+                                  " ****************************** "
+		                  + "\n in continuation space "
+		                  + " ****************************** "
+                                )
+                              )
+			      val mTT.Continuation( ks ) =
+			        asCacheK(
+				  new CnxnCtxtBranch[String,String,String](
+				    "string",
+				    v :: Nil
+				  )
+			        )
+			      emT.PlaceInstance(
+			        k,
+			        Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
+				  ks
+			        ),
+			        // BUGBUG -- lgm : why can't the compiler determine
+			        // that this cast is not necessary?
+			        theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+			      )
+			    }
+			    else {
+			      throw new Exception( "unexpected namespace : (" + ns + ")" )
+			    }
 			  }
-			}
-		      }
-		      case None => {
-			//BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-			throw new UnificationQueryFilter( key, k, value )
+		        }
+		        case None => {
+			  //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
+			  throw new UnificationQueryFilter( key, k, value )
+		        }
 		      }
 		    }
+		    case _ => {
+		      throw new Exception( "unexpected record format : " + value )
+		    }
 		  }
-		  case _ => {
-		    throw new Exception( "unexpected record format : " + value )
-		  }
-		}		
+
+                BasicLogService.tweet(
+	          (
+	            "PersistedMonadicKVDB : "
+	            + "\nmethod : asResource "
+	            + "\nthis : " + this
+	            + "\nkey : " + key
+                    + "\nvalue : " + value
+                    + "\n-----------------------------------------"
+                    + "\nreturning : " + computedRslt
+	          )
+	        )
+
+		computedRslt
 	      }	      
 	    }
 	    override def asCacheK(
