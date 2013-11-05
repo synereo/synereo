@@ -59,6 +59,7 @@ object CometActorMapper {
   @transient
   val map = new HashMap[String, akka.actor.ActorRef]()
   def cometMessage(key: String, sessionURI: String, jsonBody: String, remove: Boolean = true): Unit = {
+    println("cometMessage: "+ List(key,sessionURI,jsonBody,""+remove) + ", map="+map)
     for (cometActor <- map.get(key)) {
       cometActor ! CometMessage(sessionURI, jsonBody)
     }
@@ -77,8 +78,7 @@ object ConfirmationEmail {
     simple.setFrom("individualagenttech@gmail.com")
     simple.setSubject("Confirm individual agent signup")
     // TODO(mike): get the URL from a config file
-    simple.setMsg("""Please click on the following link to confirm that you'd like to create a new individual agent:
-      http://64.27.3.17:6080/agentui.html?demo=false&token=""" + token)
+    simple.setMsg("""Your token is: """ + token)
     simple.addTo(email)
     simple.send()
   }
