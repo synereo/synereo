@@ -60,7 +60,7 @@ object CometActorMapper {
   val map = new HashMap[String, akka.actor.ActorRef]()
   def cometMessage(key: String, sessionURI: String, jsonBody: String, remove: Boolean = true): Unit = {
     for (cometActor <- map.get(key)) {
-      cometActor ! CometMessage(sessionURI, HttpBody(`application/json`, jsonBody))
+      cometActor ! CometMessage(sessionURI, jsonBody)
     }
     if (remove) { map -= key }
   }
