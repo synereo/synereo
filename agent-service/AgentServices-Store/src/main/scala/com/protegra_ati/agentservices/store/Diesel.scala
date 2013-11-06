@@ -1551,7 +1551,7 @@ package diesel {
     import CnxnConversionStringScope._
 
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
-    import com.protegra_ati.agentservices.store.ThreadSafeReflectiveSurface
+    import com.protegra_ati.agentservices.protocols.msgs.ProtocolMessage
 
     type LinkEvalRequestChannel = DSLCommLinkCtor.StdEvaluationRequestChannel
     type EvalChannel[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = Being.AgentKVDBNode[ReqBody,RspBody]
@@ -1811,7 +1811,7 @@ package diesel {
               handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
             }
           }
-          case ConcreteHL.InsertContentV( filter, cnxns, value : ThreadSafeReflectiveSurface.Specimen ) => {
+          case ConcreteHL.InsertContentV( filter, cnxns, value : AnyRef ) => {
             
             BasicLogService.tweet(
               "method: evaluateExpression"
@@ -2163,6 +2163,84 @@ package diesel {
                   n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
                 
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+              }
+            }
+            case ConcreteHL.InsertContent( filter, cnxns, value : ProtocolMessage ) => {
+
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.InsertContent(ProtocolMessage) case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\nvalue: " + value
+              )
+
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.publish "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\nvalue: " + value
+                  )
+
+                  n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                }
+
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+              }
+            }
+            case ConcreteHL.InsertContentV( filter, cnxns, value : AnyRef ) => {
+
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                  + "\nin ConcreteHL.InsertContentV case "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nfilter: " + filter
+                  + "\ncnxns: " + cnxns
+                  + "\nvalue: " + value
+              )
+
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                      + "\n calling node.publish "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\nvalue: " + value
+                  )
+
+                  n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                }
+
                 handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
               }
             }
