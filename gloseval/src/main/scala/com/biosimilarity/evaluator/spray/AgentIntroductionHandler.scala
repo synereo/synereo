@@ -48,8 +48,7 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
       ) ) )
     }
 
-    val specimen = MessageConverter.beginIntroductionRequestToSpecimen(birq)
-    agentMgr().postV( birq.toCnxnCtxtLabel, List( aliasStorageCnxn ), specimen, onPost )
+    agentMgr().post( birq.toCnxnCtxtLabel, List( aliasStorageCnxn ), birq, onPost )
   }
 
   private def toAgentBiCnxn( cnxn : PortableAgentCnxn ) : acT.AgentBiCnxn = {
