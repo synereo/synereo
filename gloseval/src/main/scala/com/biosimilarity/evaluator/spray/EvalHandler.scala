@@ -638,19 +638,27 @@ trait EvalHandler {
                 ("content" -> ("reason" -> "Bad password.")) 
               )))
             } else {
-              def onLabelsFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
-                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
+              def onLabelsFetch(jsonBlob: String, aliasList: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onLabelsFetch: optRsrc = " + optRsrc)
                 optRsrc match {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
                       case PostedExpr(labelList: String) => {
+                        val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
+
+                        def biCnxnToJObject(biCnxn: PortableAgentBiCnxn): JObject = {
+                          ("source" -> biCnxn.writeCnxn.src.toString) ~
+                          ("label" -> biCnxn.writeCnxn.label) ~
+                          ("target" -> biCnxn.writeCnxn.trgt.toString)
+                        }
+
                         val content = 
                           ("sessionURI" -> ("agent-session://" + cap)) ~
                           ("listOfAliases" -> parse(aliasList)) ~
                           ("defaultAlias" -> "alias") ~
                           ("listOfLabels" -> parse(labelList)) ~ // for default alias
-                          ("listOfCnxns" -> List[String]()) ~  // for default alias
+                          ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~  // for default alias
                           ("lastActiveLabel" -> "") ~
                           ("jsonBlob" -> parse(jsonBlob))
 
@@ -669,8 +677,29 @@ trait EvalHandler {
                   }
                 }
               }
+              def onConnectionsFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onConnectionsFetch: optRsrc = " + optRsrc)
+                val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
+                optRsrc match {
+                  case None => ()
+                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    v match {
+                      case PostedExpr(biCnxnList: String) => {
+                        val (erql, erspl) = agentMgr().makePolarizedPair()
+                        agentMgr().fetch( erql, erspl )(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, biCnxnList))
+                      }
+                      case Bottom => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> "Strange: found other data but not connections!?"))
+                        )))
+                      }
+                    }
+                  }
+                }
+              }
               def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
-                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onAliasesFetch: optRsrc = " + optRsrc)
                 val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
                 optRsrc match {
                   case None => ()
@@ -678,7 +707,7 @@ trait EvalHandler {
                     v match {
                       case PostedExpr(aliasList: String) => {
                         val (erql, erspl) = agentMgr().makePolarizedPair()
-                        agentMgr().fetch( erql, erspl )(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList))
+                        agentMgr().fetch( erql, erspl )(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
