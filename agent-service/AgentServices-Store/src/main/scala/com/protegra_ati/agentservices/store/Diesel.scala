@@ -2160,8 +2160,40 @@ package diesel {
                     + "\nvalue: " + value
                   )
                   
-                  n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                  try {
+                    n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                  } 
+                  catch {
+                    case e : Exception => {
+                      BasicLogService.tweet(
+                        "method: evaluateExpression"
+                        + "\n ---> node.publish caused an exception <--- "
+                        + "\nthis: " + this
+                        + "\nnode: " + node
+                        + "\nexpr: " + expr
+                        + "\nhandler: " + handler
+                        + "\n-----------------------------------------"
+                        + "\nagntCnxn: " + agntCnxn
+                        + "\nfilter: " + filter
+                        + "\nvalue: " + value
+                      )
+                      BasicLogService.tweetTrace( e )
+                    }
+                  }
                 }
+
+                BasicLogService.tweet(
+                  "method: evaluateExpression"
+                  + "\n completed node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\nvalue: " + value
+                )
                 
                 handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
               }
@@ -2347,9 +2379,20 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2065 forward(" + optRsrc + ")")
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2065 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2357,6 +2400,9 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                       v
                                     }
                                   }
@@ -2387,10 +2433,21 @@ package diesel {
                       
                       val forward : Option[mTT.Resource] => Unit =
                         {
-                          ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2106 forward(" + optRsrc + ")")
+                          ( optRsrc : Option[mTT.Resource] ) => {                            
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2106 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2398,6 +2455,9 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                       v
                                     }
                                   }
@@ -2433,9 +2493,20 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
-                                    BasicLogService.tweet("Diesel.scala:2151 forward(" + optRsrc + ")")
+                                    BasicLogService.tweet(
+                                      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      + "\nDiesel.scala:2151 forward(" + optRsrc + ")"
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n defined in method innerLoop"
+                                      + "\n passed to and called in evaluateExpression"
+                                      + "\nerql: " + erql
+                                      + "\nserver: " + server                              
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n erspl: " + erspl
+                                      + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                    )
                                     reset {
-                                      server.put(
+                                      server.publish(
                                         erspl,
                                         DSLCommLink.mTT.Ground(
                                           optRsrc match {
@@ -2443,6 +2514,9 @@ package diesel {
                                               ConcreteHL.Bottom
                                             }
                                             case Some( mTT.Ground( v ) ) => {
+                                              v
+                                            }
+                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                               v
                                             }
                                           }
@@ -2547,9 +2621,20 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2265 forward(" + optRsrc + ")")
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2265 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2557,6 +2642,9 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                       v
                                     }
                                   }
@@ -2588,9 +2676,20 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2306 forward(" + optRsrc + ")")
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2306 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
                             reset {
-                              server.put(
+                              server.publish(
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
@@ -2598,6 +2697,9 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                       v
                                     }
                                   }
@@ -2633,9 +2735,20 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
-                                    BasicLogService.tweet("Diesel.scala:2351 forward(" + optRsrc + ")")
+                                    BasicLogService.tweet(
+                                      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      + "\nDiesel.scala:2351 forward(" + optRsrc + ")"
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n defined in method innerLoop"
+                                      + "\n passed to and called in evaluateExpression"
+                                      + "\nerql: " + erql
+                                      + "\nserver: " + server                              
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n erspl: " + erspl
+                                      + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                    )
                                     reset {
-                                      server.put(
+                                      server.publish(
                                         erspl,
                                         DSLCommLink.mTT.Ground(
                                           optRsrc match {
@@ -2643,6 +2756,9 @@ package diesel {
                                               ConcreteHL.Bottom
                                             }
                                             case Some( mTT.Ground( v ) ) => {
+                                              v
+                                            }
+                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
                                               v
                                             }
                                           }
