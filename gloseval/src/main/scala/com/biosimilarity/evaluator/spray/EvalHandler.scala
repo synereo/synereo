@@ -58,12 +58,12 @@ object CompletionMapper {
 object CometActorMapper {
   @transient
   val map = new HashMap[String, akka.actor.ActorRef]()
-  def cometMessage(key: String, sessionURI: String, jsonBody: String, remove: Boolean = true): Unit = {
-    println("cometMessage: "+ List(key,sessionURI,jsonBody,""+remove) + ", map="+map)
+  val key = ""
+  def cometMessage(sessionURI: String, jsonBody: String): Unit = {
+    println("cometMessage: "+ List(sessionURI, jsonBody))
     for (cometActor <- map.get(key)) {
       cometActor ! CometMessage(sessionURI, jsonBody)
     }
-    if (remove) { map -= key }
   }
 }
 
@@ -181,35 +181,33 @@ trait EvalHandler {
     with Serializable {}
 
   // Agents
-  def addAgentExternalIdentityRequest(json: JValue, key: String): Unit = {}
-  def addAgentExternalIdentityToken(json: JValue, key: String): Unit = {}
-  def removeAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
-  def getAgentExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
-  def addAgentAliasesRequest(json: JValue, key: String): Unit = {
+  def addAgentExternalIdentityRequest(json: JValue): Unit = {}
+  def addAgentExternalIdentityToken(json: JValue): Unit = {}
+  def removeAgentExternalIdentitiesRequest(json: JValue): Unit = {}
+  def getAgentExternalIdentitiesRequest(json: JValue): Unit = {}
+  def addAgentAliasesRequest(json: JValue): Unit = {
     handler.handleaddAgentAliasesRequest(
-      key,
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
         new URI((json \ "content" \ "sessionURI").extract[String]),
         (json \ "content" \ "aliases").extract[List[String]]
       )
     )
   }
-  def removeAgentAliasesRequest(json: JValue, key: String): Unit = {}
-  def getAgentAliasesRequest(json: JValue, key: String): Unit = {}
-  def getDefaultAliasRequest(json: JValue, key: String): Unit = {}
-  def setDefaultAliasRequest(json: JValue, key: String): Unit = {}
+  def removeAgentAliasesRequest(json: JValue): Unit = {}
+  def getAgentAliasesRequest(json: JValue): Unit = {}
+  def getDefaultAliasRequest(json: JValue): Unit = {}
+  def setDefaultAliasRequest(json: JValue): Unit = {}
   // Aliases
-  def addAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
-  def removeAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
-  def getAliasExternalIdentitiesRequest(json: JValue, key: String): Unit = {}
-  def setAliasDefaultExternalIdentityRequest(json: JValue, key: String): Unit = {}
+  def addAliasExternalIdentitiesRequest(json: JValue): Unit = {}
+  def removeAliasExternalIdentitiesRequest(json: JValue): Unit = {}
+  def getAliasExternalIdentitiesRequest(json: JValue): Unit = {}
+  def setAliasDefaultExternalIdentityRequest(json: JValue): Unit = {}
   // Connections
-  def removeAliasConnectionsRequest(json: JValue, key: String): Unit = {
+  def removeAliasConnectionsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
     case class JCnxn(src: String, label: String, tgt: String)
     val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
     handler.handleremoveAliasConnectionsRequest(
-      key,
       com.biosimilarity.evaluator.msgs.agent.crud.removeAliasConnectionsRequest(
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String],
@@ -221,10 +219,9 @@ trait EvalHandler {
       )
     )
   }
-  def getAliasConnectionsRequest(json: JValue, key: String): Unit = {
+  def getAliasConnectionsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
     handler.handlegetAliasConnectionsRequest(
-      key,
       com.biosimilarity.evaluator.msgs.agent.crud.getAliasConnectionsRequest(
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String]
@@ -232,17 +229,16 @@ trait EvalHandler {
     )
   }
   // Labels
-  def addAliasLabelsRequest(json: JValue, key: String): Unit = {
+  def addAliasLabelsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
     handler.handleaddAliasLabelsRequest(
-      key,
       com.biosimilarity.evaluator.msgs.agent.crud.addAliasLabelsRequest(
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String],
         (json \ "content" \ "labels").extract[List[String]].
           map(fromTermString).
           map(_.getOrElse(
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "addAliasLabelsError") ~
               ("content" -> ("reason" -> ("Couldn't parse a label:" + 
                 compact(render(json \ "content" \ "labels"))
@@ -252,17 +248,16 @@ trait EvalHandler {
       )
     )
   }
-  def updateAliasLabelsRequest(json: JValue, key: String): Unit = {
+  def updateAliasLabelsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
     handler.handleupdateAliasLabelsRequest(
-      key,
       com.biosimilarity.evaluator.msgs.agent.crud.updateAliasLabelsRequest(
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String],
         (json \ "content" \ "labels").extract[List[String]].
           map(fromTermString).
           map(_.getOrElse(
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "updateAliasLabelsError") ~
               ("content" -> ("reason" -> ("Couldn't parse a label:" +
                 compact(render(json \ "content" \ "labels"))
@@ -272,25 +267,22 @@ trait EvalHandler {
       )
     )
   }
-  def getAliasLabelsRequest(json: JValue, key: String): Unit = {
+  def getAliasLabelsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
     handler.handlegetAliasLabelsRequest(
-      key,
       com.biosimilarity.evaluator.msgs.agent.crud.getAliasLabelsRequest(
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String]
       )
     )
   }
-  def setAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
-  def getAliasDefaultLabelRequest(json: JValue, key: String): Unit = {}
+  def setAliasDefaultLabelRequest(json: JValue): Unit = {}
+  def getAliasDefaultLabelRequest(json: JValue): Unit = {}
   // DSL
-  // def evalSubscribeRequest(JValue json, String key): Unit = {}
-  def evalSubscribeCancelRequest(json: JValue, key: String): Unit = {}
+  def evalSubscribeCancelRequest(json: JValue): Unit = {}
   // Introduction Protocol
-  def beginIntroductionRequest(json: JValue, key: String): Unit = {
+  def beginIntroductionRequest(json: JValue): Unit = {
     handler.handlebeginIntroductionRequest(
-      key,
       com.protegra_ati.agentservices.msgs.agent.introduction.beginIntroductionRequest(
         new URI((json \ "content" \ "sessionURI").extract[String]),
         (json \ "content" \ "alias").extract[String],
@@ -638,27 +630,19 @@ trait EvalHandler {
                 ("content" -> ("reason" -> "Bad password.")) 
               )))
             } else {
-              def onLabelsFetch(jsonBlob: String, aliasList: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
-                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onLabelsFetch: optRsrc = " + optRsrc)
+              def onLabelsFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
                 optRsrc match {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
                       case PostedExpr(labelList: String) => {
-                        val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
-
-                        def biCnxnToJObject(biCnxn: PortableAgentBiCnxn): JObject = {
-                          ("source" -> biCnxn.writeCnxn.src.toString) ~
-                          ("label" -> biCnxn.writeCnxn.label) ~
-                          ("target" -> biCnxn.writeCnxn.trgt.toString)
-                        }
-
                         val content = 
                           ("sessionURI" -> ("agent-session://" + cap)) ~
                           ("listOfAliases" -> parse(aliasList)) ~
                           ("defaultAlias" -> "alias") ~
                           ("listOfLabels" -> parse(labelList)) ~ // for default alias
-                          ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~  // for default alias
+                          ("listOfCnxns" -> List[String]()) ~  // for default alias
                           ("lastActiveLabel" -> "") ~
                           ("jsonBlob" -> parse(jsonBlob))
 
@@ -677,29 +661,8 @@ trait EvalHandler {
                   }
                 }
               }
-              def onConnectionsFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
-                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onConnectionsFetch: optRsrc = " + optRsrc)
-                val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
-                optRsrc match {
-                  case None => ()
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                    v match {
-                      case PostedExpr(biCnxnList: String) => {
-                        val (erql, erspl) = agentMgr().makePolarizedPair()
-                        agentMgr().fetch( erql, erspl )(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, biCnxnList))
-                      }
-                      case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> "Strange: found other data but not connections!?"))
-                        )))
-                      }
-                    }
-                  }
-                }
-              }
               def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
-                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onAliasesFetch: optRsrc = " + optRsrc)
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
                 val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
                 optRsrc match {
                   case None => ()
@@ -707,7 +670,7 @@ trait EvalHandler {
                     v match {
                       case PostedExpr(aliasList: String) => {
                         val (erql, erspl) = agentMgr().makePolarizedPair()
-                        agentMgr().fetch( erql, erspl )(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList))
+                        agentMgr().fetch( erql, erspl )(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
@@ -847,7 +810,7 @@ trait EvalHandler {
     new URI((cx \ "tgt").extract[String])
   )
 
-  def updateUserRequest(json: JValue, key: String): Unit = {
+  def updateUserRequest(json: JValue): Unit = {
     val content = (json \ "content").asInstanceOf[JObject]
     val sessionURIStr = (content \ "sessionURI").extract[String]
     val sessionURI = new URI(sessionURIStr)
@@ -871,7 +834,7 @@ trait EvalHandler {
                 optRsrc match {
                   case None => ()
                   case Some(_) => {
-                    CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+                    CometActorMapper.cometMessage(sessionURIStr, compact(render(
                       ("msgType" -> "updateUserResponse") ~
                       ("content" -> ("sessionURI" -> sessionURIStr))
                     )))
@@ -881,7 +844,7 @@ trait EvalHandler {
             )
           }
           case _ => {
-            CometActorMapper.cometMessage(key, sessionURIStr, compact(render(
+            CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "updateUserError") ~
               ("content" -> ("reason" -> ("Unrecognized resource: " + optRsrc.toString)))
             )))
@@ -958,7 +921,7 @@ trait EvalHandler {
     (label, cnxns)
   }
 
-  def evalSubscribeRequest(json: JValue, key: String) : Unit = {
+  def evalSubscribeRequest(json: JValue) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
 
     BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
@@ -982,15 +945,14 @@ trait EvalHandler {
                 ("pageOfPosts" -> List(postedStr))
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)), false)
+              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
         for (filter <- filters) {
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().feed(erql, erspl)(filter, cnxns, onFeed)
+          agentMgr().feed(filter, cnxns, onFeed)
         }
       }
       case "scoreExpr" => {
@@ -1005,7 +967,7 @@ trait EvalHandler {
                 ("pageOfPosts" -> List(postedStr))
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)), false)
+              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
@@ -1029,8 +991,7 @@ trait EvalHandler {
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
         for (filter <- filters) {
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().score(erql, erspl)(filter, cnxns, staff, onScore)
+          agentMgr().score(filter, cnxns, staff, onScore)
         }
       }
       case "insertContent" => {
@@ -1038,8 +999,7 @@ trait EvalHandler {
         val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         for (filter <- filters) {
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          agentMgr().post(
             filter,
             cnxns,
             value,
@@ -1055,7 +1015,7 @@ trait EvalHandler {
                     ("pageOfPosts" -> List[String]())
                   val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
                   BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(key, sessionURIStr, compact(render(response)))
+                  CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
                 }
               }
             }
@@ -1101,10 +1061,10 @@ trait EvalHandler {
     sessionURI
   }
 
-  def closeSessionRequest(json: JValue, key: String) : Unit = {
+  def closeSessionRequest(json: JValue) : Unit = {
     val sessionURI = (json \ "content" \ "sessionURI").extract[String]
 
-    CompletionMapper.complete(key, compact(render(
+    CometActorMapper.cometMessage(sessionURI, compact(render(
       ("msgType" -> "closeSessionResponse")~
       ("content" ->
         ("sessionURI" -> sessionURI)
