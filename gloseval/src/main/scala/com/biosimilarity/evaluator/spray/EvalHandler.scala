@@ -965,6 +965,7 @@ trait EvalHandler {
       case "feedExpr" => {
         BasicLogService.tweet("evalSubscribeRequest | feedExpr")
         val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
+          println("evalSubscribeRequest | onFeed: rsrc = " + rsrc)
           BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + rsrc)
           rsrc match {
             case None => ()
@@ -973,12 +974,14 @@ trait EvalHandler {
                 ("sessionURI" -> sessionURIStr) ~
                 ("pageOfPosts" -> List(postedStr))
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+              println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
             case _ => throw new Exception("Unrecognized resource: " + rsrc)
           }
         }
+        println("evalSubscribeRequest | feedExpr: calling feed")
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
         for (filter <- filters) {
           agentMgr().feed(filter, cnxns, onFeed)
@@ -1024,6 +1027,7 @@ trait EvalHandler {
         }
       }
       case "insertContent" => {
+        println("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
@@ -1033,8 +1037,8 @@ trait EvalHandler {
             cnxns,
             value,
             (rsrc: Option[mTT.Resource]) => {
-              println("evalSubscribeRequest | insertContent | onPost")
-              BasicLogService.tweet("evalSubscribeRequest | onPost: rsrc = " + rsrc)
+              println("evalSubscribeRequest | insertContent | onPost: rsrc = " + rsrc)
+              BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: rsrc = " + rsrc)
               rsrc match {
                 case None => ()
                 case Some(_) => {
@@ -1043,6 +1047,7 @@ trait EvalHandler {
                     ("sessionURI" -> sessionURIStr) ~
                     ("pageOfPosts" -> List[String]())
                   val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+                  println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
                   BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
                   CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
                 }
