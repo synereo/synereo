@@ -1,13 +1,15 @@
 package com.protegra_ati.agentservices.protocols
 
-import com.biosimilarity.evaluator.distribution.ConcreteHL
+import com.biosimilarity.evaluator.distribution.ConcreteHL._
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 import com.protegra_ati.agentservices.protocols.msgs._
-import java.net.URI
-import java.util.{Date, UUID}
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+import java.util.UUID
 import scala.util.continuations._
 
 class IntroductionProtocol extends Serializable {
+  val biCnxnsListLabel = "biCnxnsList(true)".toLabel
+
   def genericIntroducer(
     kvdbNode: Being.AgentKVDBNode[Nothing, Nothing], //PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     aliasCnxn: acT.AgentCnxn) {
@@ -17,7 +19,7 @@ class IntroductionProtocol extends Serializable {
       for (birq <- kvdbNode.subscribe(aliasCnxn)(new BeginIntroductionRequest().toCnxnCtxtLabel)) {
 
         birq match {
-          case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, BeginIntroductionRequest(
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(BeginIntroductionRequest(
           Some(sessionId),
           Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
           Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
@@ -42,7 +44,7 @@ class IntroductionProtocol extends Serializable {
                 // match response from A
                 // TODO: Get introduction profile from message
                 agiprsp match {
-                  case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, GetIntroductionProfileResponse(_, _)))), _)) => {
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(_, _)))), _)) => {
 
                     // create B's GetIntroductionProfileRequest message
                     val bGetIntroProfileRq = new GetIntroductionProfileRequest(
@@ -62,7 +64,7 @@ class IntroductionProtocol extends Serializable {
                         // match response from B
                         // TODO: Get introduction profile from message
                         bgiprsp match {
-                          case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, GetIntroductionProfileResponse(_, _)))), _)) => {
+                          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(_, _)))), _)) => {
 
                             // create A's IntroductionRequest message
                             // TODO: Add introduction profile to message
@@ -82,11 +84,10 @@ class IntroductionProtocol extends Serializable {
 
                                 // match response from A
                                 airsp match {
-                                  case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, IntroductionResponse(
+                                  case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionResponse(
                                   _,
                                   _,
                                   Some(aAccepted),
-                                  aCnxnName,
                                   aRejectReason,
                                   Some(aConnectId))))), _)) => {
 
@@ -108,28 +109,25 @@ class IntroductionProtocol extends Serializable {
 
                                         // match response from B
                                         birsp match {
-                                          case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, IntroductionResponse(
+                                          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionResponse(
                                           _,
                                           _,
                                           Some(bAccepted),
-                                          bCnxnName,
                                           bRejectReason,
                                           Some(bConnectId))))), _)) => {
 
                                             // check whether A and B accepted
                                             if (aAccepted && bAccepted) {
                                               // create new cnxns
-                                              // TODO: Create new cnxns properly
-                                              val aURI = new URI("cnxn://" + UUID.randomUUID().toString)
-                                              val bURI = new URI("cnxn://" + UUID.randomUUID().toString)
-                                              val abCnxn = new acT.AgentCnxn(aURI, "", bURI)
-                                              val baCnxn = new acT.AgentCnxn(bURI, "", aURI)
+                                              val cnxnLabel = UUID.randomUUID().toString
+                                              val abCnxn = new acT.AgentCnxn(aReadCnxn.src, cnxnLabel, bReadCnxn.src)
+                                              val baCnxn = new acT.AgentCnxn(bReadCnxn.src, cnxnLabel, aReadCnxn.src)
                                               val aNewBiCnxn = new acT.AgentBiCnxn(baCnxn, abCnxn)
                                               val bNewBiCnxn = new acT.AgentBiCnxn(abCnxn, baCnxn)
 
                                               // create Connect messages
-                                              val aConnect = new Connect(Some(sessionId), aConnectId, aCnxnName, Some(aNewBiCnxn))
-                                              val bConnect = new Connect(Some(sessionId), bConnectId, bCnxnName, Some(bNewBiCnxn))
+                                              val aConnect = new Connect(Some(sessionId), aConnectId, Some(aNewBiCnxn))
+                                              val bConnect = new Connect(Some(sessionId), bConnectId, Some(bNewBiCnxn))
 
                                               // send Connect messages
                                               reset { kvdbNode.put(aWriteCnxn)(aConnect.toCnxnCtxtLabel, aConnect.toGround) }
@@ -192,7 +190,7 @@ class IntroductionProtocol extends Serializable {
       for (giprq <- kvdbNode.subscribe(readCnxn)(new GetIntroductionProfileRequest().toCnxnCtxtLabel)) {
 
         giprq match {
-          case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, GetIntroductionProfileRequest(
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileRequest(
             Some(sessionId),
             Some(corrId),
             Some(rspCnxn))))), _)) => {
@@ -221,7 +219,7 @@ class IntroductionProtocol extends Serializable {
       for (irq <- kvdbNode.subscribe(readCnxn)(new IntroductionRequest().toCnxnCtxtLabel)) {
 
         irq match {
-          case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, IntroductionRequest(
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionRequest(
             Some(sessionId),
             Some(corrId),
             Some(rspCnxn),
@@ -244,11 +242,10 @@ class IntroductionProtocol extends Serializable {
                 new IntroductionResponse(Some(sessionId), introRq.correlationId.get).toCnxnCtxtLabel)) {
 
                 irsp match {
-                  case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, IntroductionResponse(
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionResponse(
                   _,
                   _,
                   Some(accepted),
-                  cnxnName,
                   rejectReason,
                   _)))), _)) => {
 
@@ -257,7 +254,6 @@ class IntroductionProtocol extends Serializable {
                       Some(sessionId),
                       corrId,
                       Some(accepted),
-                      cnxnName,
                       rejectReason,
                       Some(UUID.randomUUID.toString))
 
@@ -272,29 +268,27 @@ class IntroductionProtocol extends Serializable {
                           new Connect(Some(sessionId), introRsp.connectId.get).toCnxnCtxtLabel)) {
 
                           connect match {
-                            case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, Connect(
+                            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(Connect(
                             _,
                             _,
-                            Some(cnxnName),
-                            Some(acT.AgentBiCnxn(newReadCnxn, newWriteCnxn)))))), _)) => {
+                            Some(newBiCnxn: acT.AgentBiCnxn))))), _)) => {
 
                               // TODO: Register behaviors on new request cnxn
                               reset {
-                                // get the list of cnxns
-                                for (cnxns <- kvdbNode.get(aliasCnxn)(new Cnxns().toCnxnCtxtLabel)) {
-                                  cnxns match {
-                                    case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.InsertContent(_, _, Cnxns(
-                                    _,
-                                    cnxnList)))), _)) => {
+                                // get the list of biCnxns
+                                for (biCnxns <- kvdbNode.get(aliasCnxn)(biCnxnsListLabel)) {
+                                  biCnxns match {
+                                    case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+                                      prevBiCnxns: String))), _)) => {
 
-                                      // create new Cnxns object with the new cnxns
-                                      val cnxns = new Cnxns(Some(new Date()), (newReadCnxn, newWriteCnxn) :: cnxnList)
+                                      // add new biCnxn to the list
+                                      val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[acT.AgentBiCnxn]](prevBiCnxns)
 
-                                      // save new Cnxns object
-                                      reset { kvdbNode.put(aliasCnxn)(cnxns.toCnxnCtxtLabel, cnxns.toGround) }
+                                      // save new list of biCnxns
+                                      reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(Serializer.serialize(newBiCnxns)))) }
                                     }
                                     case _ => {
-                                      // expected Cnxns
+                                      // expected String of serialized biCnxns
                                       throw new Exception("unexpected data")
                                     }
                                   }
