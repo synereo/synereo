@@ -834,9 +834,9 @@ trait EvalHandler {
   }
 
   def extractCnxn(cx: JObject) = new PortableAgentCnxn(
-    new URI((cx \ "src").extract[String]),
+    new URI((cx \ "source").extract[String]),
     (cx \ "label").extract[String],
-    new URI((cx \ "tgt").extract[String])
+    new URI((cx \ "target").extract[String])
   )
 
   def updateUserRequest(json: JValue): Unit = {
