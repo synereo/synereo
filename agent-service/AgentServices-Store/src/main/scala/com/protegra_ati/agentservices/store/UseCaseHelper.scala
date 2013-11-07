@@ -601,7 +601,7 @@ trait ExerciseHLDSL {
 
     reset {
       for( e <- node.subscribe( erqlChan ) ) {
-        println( e )
+        BasicLogService.tweet( e )
       }
     }
   }
@@ -626,7 +626,7 @@ trait ExerciseHLDSL {
           throw new Exception( "unexpected expression type: " + expr )
         }
         case ( Right( expr ), _ ) => {
-          println( "session closed" )
+          BasicLogService.tweet( "session closed" )
         }
       }      
     }
@@ -651,7 +651,7 @@ trait ExerciseHLDSL {
           throw new Exception( "unexpected expression type: " + expr )
         }
         case ( Right( expr ), _ ) => {
-          println( "session closed" )
+          BasicLogService.tweet( "session closed" )
         }
       }      
     }
@@ -676,7 +676,7 @@ trait ExerciseHLDSL {
           throw new Exception( "unexpected expression type: " + expr )
         }
         case ( Right( expr ), _ ) => {
-          println( "session closed" )
+          BasicLogService.tweet( "session closed" )
         }
       }      
     }
@@ -703,7 +703,7 @@ trait UseCaseCapture {
     }
     catch {
       case e : Throwable => {
-        println( "warning case not captured: " + msg )
+        BasicLogService.tweet( "warning case not captured: " + msg )
       }
     }
   }
@@ -781,9 +781,9 @@ package usage {
       @transient
       onPost : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
-          println( "got response: " + optRsrc )
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
       @transient
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
@@ -939,9 +939,9 @@ package usage {
       @transient
       onScoreRslt : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
-          println( "got response: " + optRsrc )
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
       @transient
       scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
@@ -976,7 +976,7 @@ package usage {
           new URI("c://d")
         )),
         value,
-        (optRsrc) => println("onPost: optRsrc = " + optRsrc)
+        (optRsrc) => BasicLogService.tweet("onPost: optRsrc = " + optRsrc)
       )
     }
     def feed() = {
@@ -987,7 +987,7 @@ package usage {
           "flat",
           new URI("c://d")
         )),
-        (optRsrc) => println("onFeed: optRsrc = " + optRsrc)
+        (optRsrc) => BasicLogService.tweet("onFeed: optRsrc = " + optRsrc)
       )
     }
   }
