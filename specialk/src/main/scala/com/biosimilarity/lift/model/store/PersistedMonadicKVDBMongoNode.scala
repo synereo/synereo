@@ -1701,7 +1701,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                           rk( rsrcCursor )
 					}
 				      else
-					{
+					{                                          
 					  for( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
                                             val ( rslt, ersrc ) = rsltRsrcPair
 					    BasicLogService.tweet( "retrieved " + rslt.toString )
@@ -1732,7 +1732,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					    // where we need Tx.
 					    
 					    ersrc.stuff match {
-					      case Left( r ) => {
+					      case Left( r ) => {                                                
 						BasicLogService.tweet( "returning " + r )
                                                 
 						BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 5 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
@@ -1741,7 +1741,22 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 						//BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
 						//BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                                                 
-						rk( Some( r ) )
+                                                consume match {
+                                                  case policy : Subscription => {
+                                                    BasicLogService.tweet(
+                                                      "==================================================================="
+                                                      + "\nStoring subscription continuation"
+                                                      + "\nwith keep : " + keep
+                                                      + "\n===================================================================\n"
+                                                    )                                       
+                                                    storeKQuery( xmlCollName, pd )( path, rk )
+                                                    rk( Some( r ) )
+                                                  }
+                                                  case _ => {
+                                                    rk( Some( r ) )
+                                                  }
+                                                }
+						
 					      }
 					      case _ => {
 						throw new Exception(
@@ -1899,13 +1914,6 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 					
 				      }
                                       
-				      //BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 11" + this + " for mget on " + path + "." )
-				      //spaceLock.depart( Some( rk ) )
-				      //spaceLock.depart( path, Some( rk ) )
-				      //BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
-				      //BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
-				      // Need to store continuation if
-				      // this is a subscribe
 				      consume match {
 					case policy : Subscription => {
 					  storeKQuery( xmlCollName, pd )( path, rk )
