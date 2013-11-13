@@ -372,7 +372,7 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
     pulseErspl : CnxnCtxtLabel[String,String,String]
   )(
     onConnection : Option[mTT.Resource] => Unit =
-      ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+      ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
     // post to channel
     reset {

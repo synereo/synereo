@@ -3280,7 +3280,7 @@ package usage {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -3461,8 +3461,7 @@ package usage {
                       val ttt = ( x : String ) => x
                       
                       val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
-                      
+                                            
                       val oRsrc : Option[emT.PlaceInstance] =
                         for(
                           ltns <- labelToNS;
@@ -3636,7 +3635,7 @@ package usage {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -3677,8 +3676,7 @@ package usage {
           def fitsK(
             ptn : String,
             place : String
-          ) : Option[Substitution] = {
-            //println( "in fitsK on " + this )
+          ) : Option[Substitution] = {            
             if ( fits( ptn, place ) ) {
               Some( IdentitySubstitution() )
             }
@@ -3806,9 +3804,9 @@ package usage {
       val recordsFileName = ( file + rcrdsFileNameSfx + ".xml" )
       val db = <records>{acc.toList}</records>
 
-      println( "---------------------------******>>>>>>******---------------------------" )
-      println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
-      println( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
       //scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
 
@@ -3841,9 +3839,9 @@ package usage {
         )
       // get an empty queue
       val collectDQ = collectDQM.zero[String]
-      println( "---------------------------******>>>>>>******---------------------------" )
-      println( "creating entries" )
-      println( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "creating entries" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
       val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
 
@@ -3852,9 +3850,9 @@ package usage {
 
       for( i <- 1 to numOfEntries ) { collectDQ ! entryStream( i ) }
 
-      println( "---------------------------******>>>>>>******---------------------------" )
-      println( "\nentries created" )
-      println( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "\nentries created" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
     }
 
     def readEntriesFromRabbitMQ(
@@ -3875,7 +3873,7 @@ package usage {
       val fileNames = new ListBuffer[String]()      
       val lock = new Lock()
 
-      println( "reading entries" )
+      BasicLogService.tweet( "reading entries" )
       for ( entry <- collectDQM( collectDQ ) ) {
         print( "." )
         handleEntry( parse( entry ), acc )
@@ -3886,32 +3884,32 @@ package usage {
           val recordsFileName = ( file + rcrdsFileNameSfx + ".xml" )        
           val db = <records>{acc.toList}</records>
           
-          println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+          BasicLogService.tweet( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
           //scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
           fileNames += recordsFileName
 
-          println( "---------------------------******>>>>>>******---------------------------" )
-          println( "putting @ " + ( lthrd + "_" + recordsFileName ) )
-          println( "to trigger adding the data file to the kvdb node db" )
-          println( "---------------------------******>>>>>>******---------------------------" )
+          BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+          BasicLogService.tweet( "putting @ " + ( lthrd + "_" + recordsFileName ) )
+          BasicLogService.tweet( "to trigger adding the data file to the kvdb node db" )
+          BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
           reset {
             entryExchange.putS( lthrd + "_" + recordsFileName, rcrdsFileNameSfx )
 
-            println( "---------------------------******>>>>>>******---------------------------" )
-            println( "waiting @ " + ( lthrd + rcrdsFileNameSfx ) )
-            println( "to be able to continue processing json entries" )
-            println( "---------------------------******>>>>>>******---------------------------" )
+            BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+            BasicLogService.tweet( "waiting @ " + ( lthrd + rcrdsFileNameSfx ) )
+            BasicLogService.tweet( "to be able to continue processing json entries" )
+            BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
             for( rsrc <- entryExchange.getS( lthrd + rcrdsFileNameSfx ) ) {
 
-              println( "---------------------------******>>>>>>******---------------------------" )
-              println( "got " + rsrc + " @ " + lthrd + rcrdsFileNameSfx )
-              println( "---------------------------******>>>>>>******---------------------------" )
+              BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+              BasicLogService.tweet( "got " + rsrc + " @ " + lthrd + rcrdsFileNameSfx )
+              BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
               rsrc match {
                 case Some( msg ) => {
-                  println( "found the droids we were looking for. " + msg )
+                  BasicLogService.tweet( "found the droids we were looking for. " + msg )
                 }
                 case _ => {
                   throw new Exception( "unexpected communication: " + rsrc )
@@ -3924,7 +3922,7 @@ package usage {
         }
         lock.release    
       }
-      println( "\nentries read" )
+      BasicLogService.tweet( "\nentries read" )
       fileNames
     }
 
@@ -4419,7 +4417,7 @@ package usage {
         override def run() : Unit = {
           reset {
             for( rsrc <- kvdbNode.get( cnxnGlobal )( asCnxnCtxtLabel( "XandY" ) ) ) {
-              println( "received: " + rsrc )
+              BasicLogService.tweet( "received: " + rsrc )
             }
           }
         }
@@ -4486,10 +4484,10 @@ package usage {
               if ( e != None ) {
                 //val result = e.dispatch
                 //reset {_resultsQ.put(cnxnTest)(result.toLabel, result+"restored")}
-                println( "listen received - " + e )
+                BasicLogService.tweet( "listen received - " + e )
               }
               else {
-                println( "listen received - none" )
+                BasicLogService.tweet( "listen received - none" )
               }
             }
           }

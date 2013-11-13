@@ -307,11 +307,7 @@ package diesel {
                   textToTag.getOrElse(
                     throw new Exception( "must have textToTag to convert mongo object" )
                   )
-                //val ttt = ( x : String ) => x
-                
-                //val ptn = asPatternString( key )
-                //println( "ptn : " + ptn )             
-                
+                                
                 CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                   case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                     matchMap( key, k ) match {
@@ -1107,7 +1103,7 @@ package diesel {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -1297,11 +1293,7 @@ package diesel {
                         textToTag.getOrElse(
                           throw new Exception( "must have textToTag to convert mongo object" )
                         )
-                      //val ttt = ( x : String ) => x
-                      
-                      //val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
-                      
+                                            
                       CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                         case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                           matchMap( key, k ) match {
@@ -2932,7 +2924,7 @@ package diesel {
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
           }
           else {
-            println( "warning: derefing node early anyway"  )
+            BasicLogService.tweet( "warning: derefing node early anyway"  )
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
           }
         }
@@ -3166,11 +3158,11 @@ package diesel {
         else {
           arg match {
             case "-help" => {
-              println( helpMsg )
+              BasicLogService.tweet( helpMsg )
             }
             case _ => {
-              println( "unrecognized arg: " + arg )
-              println( helpMsg )
+              BasicLogService.tweet( "unrecognized arg: " + arg )
+              BasicLogService.tweet( helpMsg )
             }
           }       
         }
