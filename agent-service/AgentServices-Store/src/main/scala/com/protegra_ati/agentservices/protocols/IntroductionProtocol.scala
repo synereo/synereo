@@ -11,7 +11,7 @@ class IntroductionProtocol extends Serializable {
   val biCnxnsListLabel = "biCnxnsList(true)".toLabel
 
   def genericIntroducer(
-    kvdbNode: Being.AgentKVDBNode[Nothing, Nothing], //PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     aliasCnxn: acT.AgentCnxn) {
 
     reset {
@@ -181,7 +181,7 @@ class IntroductionProtocol extends Serializable {
   }
 
   def genericIntroduced(
-    kvdbNode: Being.AgentKVDBNode[Nothing, Nothing], //PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     readCnxn: acT.AgentCnxn,
     aliasCnxn: acT.AgentCnxn) {
 
@@ -286,6 +286,8 @@ class IntroductionProtocol extends Serializable {
 
                                       // save new list of biCnxns
                                       reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(Serializer.serialize(newBiCnxns)))) }
+
+                                      // TODO: Publish Connect message to aliasCnxn
                                     }
                                     case _ => {
                                       // expected String of serialized biCnxns
