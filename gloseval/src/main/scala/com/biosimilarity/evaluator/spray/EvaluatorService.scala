@@ -164,6 +164,8 @@ trait EvaluatorService extends HttpService
 
   @transient
   val cometActor = actorRefFactory.actorOf(Props[CometActor])        
+
+  CometActorMapper.map += (CometActorMapper.key -> cometActor)
   
   @transient
   val syncMethods = HashMap[String, (JValue, String) => Unit](
@@ -176,7 +178,7 @@ trait EvaluatorService extends HttpService
   )
   
   @transient
-  val asyncMethods = HashMap[String, (JValue, String) => Unit](
+  val asyncMethods = HashMap[String, JValue => Unit](
     // Old stuff
     ("closeSessionRequest", closeSessionRequest),
     ("updateUserRequest", updateUserRequest),
@@ -229,9 +231,7 @@ trait EvaluatorService extends HttpService
                 val msgType = (json \ "msgType").extract[String]
                 asyncMethods.get(msgType) match {
                   case Some(fn) => {
-                    var key = UUID.randomUUID.toString
-                    CometActorMapper.map += (key -> cometActor)
-                    fn(json, key)
+                    fn(json)
                     ctx.complete(StatusCodes.OK)
                   }
                   case None => syncMethods.get(msgType) match {

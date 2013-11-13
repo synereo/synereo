@@ -21,7 +21,6 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
   //### Introduction Protocol
   //#### beginIntroduction
   def handlebeginIntroductionRequest(
-    key : String,
     msg : beginIntroductionRequest
     ) : Unit = {
     BasicLogService.tweet( "Entering: handlebeginIntroductionRequest with msg : " + msg )
@@ -42,7 +41,7 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
 
       val sessionURIStr = msg.sessionURI.toString
 
-      CometActorMapper.cometMessage( key, sessionURIStr, compact( render(
+      CometActorMapper.cometMessage(sessionURIStr, compact( render(
         ( "msgType" -> "beginIntroductionResponse" ) ~
         ( "content" -> ( "sessionURI" -> sessionURIStr ) )
       ) ) )
