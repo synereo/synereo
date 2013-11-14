@@ -630,6 +630,11 @@ trait EvalHandler {
                 ("content" -> ("reason" -> "Bad password.")) 
               )))
             } else {
+              def biCnxnToJObject(biCnxn: PortableAgentBiCnxn): JObject = {
+                ("source" -> biCnxn.writeCnxn.src.toString) ~
+                ("label" -> biCnxn.writeCnxn.label) ~
+                ("target" -> biCnxn.writeCnxn.trgt.toString)
+              }
               def onLabelsFetch(jsonBlob: String, aliasList: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onLabelsFetch: optRsrc = " + optRsrc)
                 optRsrc match {
@@ -638,12 +643,6 @@ trait EvalHandler {
                     v match {
                       case PostedExpr(labelList: String) => {
                         val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
-
-                        def biCnxnToJObject(biCnxn: PortableAgentBiCnxn): JObject = {
-                          ("source" -> biCnxn.writeCnxn.src.toString) ~
-                          ("label" -> biCnxn.writeCnxn.label) ~
-                          ("target" -> biCnxn.writeCnxn.trgt.toString)
-                        }
 
                         val content = 
                           ("sessionURI" -> ("agent-session://" + cap)) ~
@@ -677,8 +676,48 @@ trait EvalHandler {
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
                       case PostedExpr(biCnxnList: String) => {
-                        val (erql, erspl) = agentMgr().makePolarizedPair()
-                        agentMgr().fetch( erql, erspl )(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, biCnxnList))
+                        val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
+                        // Get the profile of each target in the list
+                        biCnxnListObj.map((biCnxn: PortableAgentBiCnxn) => {
+                          // Construct self-connection for each target
+                          val targetURI = biCnxn match {
+                            case PortableAgentBiCnxn(read, _) => read.src
+                          }
+                          val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
+                          agentMgr().fetch(
+                            jsonBlobLabel,
+                            List(targetSelfCnxn),
+                            (optRsrc: Option[mTT.Resource]) => {
+                              optRsrc match {
+                                case None => ()
+                                case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                                  v match {
+                                    case PostedExpr(jsonBlob: String) => {
+                                      CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
+                                        ("msgType" -> "connectionProfileResponse") ~
+                                        ("content" -> (
+                                          ("sessionURI" -> ("agent-session://" + cap)) ~
+                                          ("connection" -> biCnxnToJObject(biCnxn)) ~
+                                          ("jsonBlob" -> jsonBlob)
+                                        ))
+                                      )))
+                                    }
+                                    case Bottom => {
+                                      CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
+                                        ("msgType" -> "connectionProfileError") ~
+                                        ("content" -> (
+                                          ("sessionURI" -> ("agent-session://" + cap)) ~
+                                          ("connection" -> biCnxnToJObject(biCnxn)) ~
+                                          ("reason" -> "Not found")
+                                        ))
+                                      )))
+                                    }
+                                  }
+                                }
+                              }
+                            })
+                        })
+                        agentMgr().fetch(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, biCnxnList))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
