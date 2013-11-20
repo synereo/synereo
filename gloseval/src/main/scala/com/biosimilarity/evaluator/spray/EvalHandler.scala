@@ -1057,19 +1057,29 @@ trait EvalHandler {
       }
       case "scoreExpr" => {
         BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
-        val onScore: Option[mTT.Resource] => Unit = (rsrc) => {
-          BasicLogService.tweet("evalSubscribeRequest | onScore: rsrc = " + rsrc)
-          rsrc match {
+        val onScore: Option[mTT.Resource] => Unit = (optRsrc) => {
+          BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
+          optRsrc match {
             case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
+            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
+            ))), _)) => {
+              val jsonFilter = cclToJSON(filter)
+              val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
               val content =
                 ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(postedStr))
+                ("pageOfPosts" -> List(postedStr)) ~
+                ("connection" -> (
+                  ("source" -> agentCnxn.src.toString) ~
+                  ("label" -> agentCnxn.label) ~
+                  ("target" -> agentCnxn.trgt.toString)
+                )) ~
+                ("filter" -> jsonFilter)
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
               CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
-            case _ => throw new Exception("Unrecognized resource: " + rsrc)
+            case _ => throw new Exception("Unrecognized resource: " + optRsrc)
           }
         }
         val staff = (expression \ "content" \ "staff") match {
