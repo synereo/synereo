@@ -55,6 +55,11 @@ trait AbstractHL {
     staff : Either[Seq[Cnxn],Seq[Label]]
   ) extends HLExpr with Query
 
+  case class CancelExpr(
+    override val label : Label,
+    override val cnxns : Seq[Cnxn]
+  ) extends HLExpr with Query
+
   case class InsertContent[Value](
     override val label : Label,
     override val cnxns : Seq[Cnxn],
