@@ -1028,16 +1028,17 @@ trait EvalHandler {
           optRsrc match {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn: act.AgentCnxn)
+              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
             ))), _)) => {
               val jsonFilter = cclToJSON(filter)
+              val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
               val content =
                 ("sessionURI" -> sessionURIStr) ~
                 ("pageOfPosts" -> List(postedStr)) ~
                 ("connection" -> (
-                  ("source" -> cnxn.src.toString) ~
-                  ("label" -> cnxn.label) ~
-                  ("target" -> cnxn.trgt.toString)
+                  ("source" -> agentCnxn.src.toString) ~
+                  ("label" -> agentCnxn.label) ~
+                  ("target" -> agentCnxn.trgt.toString)
                 )) ~
                 ("filter" -> jsonFilter)
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
