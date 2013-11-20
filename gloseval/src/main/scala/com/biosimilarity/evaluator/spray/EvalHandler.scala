@@ -989,6 +989,22 @@ trait EvalHandler {
     (label, cnxns)
   }
 
+  // Renders a ccl of the form "all(va('_), vb(vc(vd('_))))"
+  // as the kind of json filter we get from the UI
+  def cclToJSON(ccl: CnxnCtxtLabel[String,String,String]): String = {
+    def cclToPath(ccl: CnxnCtxtLabel[String,String,String]): String = {
+      ccl match {
+        case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right("_")))) => tag.substring(1)
+        case CnxnCtxtBranch(tag, children) => tag.substring(1) + "," + cclToPath(children(0))
+      }
+    }
+    ccl match {
+      case CnxnCtxtBranch("all", factuals) => {
+        "all(" + factuals.map("[" + cclToPath(_) + "]").mkString(",") + ")"
+      }
+    }
+  }
+
   def evalSubscribeRequest(json: JValue) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
 
@@ -1003,21 +1019,26 @@ trait EvalHandler {
     exprType match {
       case "feedExpr" => {
         BasicLogService.tweet("evalSubscribeRequest | feedExpr")
-        val onFeed: Option[mTT.Resource] => Unit = (rsrc) => {
-          println("evalSubscribeRequest | onFeed: rsrc = " + rsrc)
-          BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + rsrc)
-          rsrc match {
+        val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
+          println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
+          BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+          optRsrc match {
             case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
+            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
+            ))), _)) => {
+              val jsonFilter = cclToJSON(filter)
               val content =
                 ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(postedStr))
+                ("pageOfPosts" -> List(postedStr)) ~
+                ("connection" -> ("" + cnxn)) ~
+                ("filter" -> jsonFilter)
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
-            case _ => throw new Exception("Unrecognized resource: " + rsrc)
+            case _ => throw new Exception("Unrecognized resource: " + optRsrc)
           }
         }
         println("evalSubscribeRequest | feedExpr: calling feed")
