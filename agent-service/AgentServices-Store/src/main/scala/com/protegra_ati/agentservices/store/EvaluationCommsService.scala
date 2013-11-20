@@ -365,6 +365,30 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val ( erql, erspl ) = makePolarizedPair()
       score( erql, erspl )( filter, cnxns, staff, onScoreRslt )
     }
+    def cancel(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      connections : Seq[Cnxn],
+      onCancel : Option[mTT.Resource] => Unit
+    ) : Unit = {
+      reset {
+        node().publish( erql, CancelExpr( filter, connections ) )
+      }
+      reset {
+        for( e <- node().subscribe( erspl ) ) { onCancel( e ) }
+      }
+    }
+    def cancel(
+      filter : CnxnCtxtLabel[String,String,String],
+      connections : Seq[Cnxn],
+      onCancel : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "onCancel: optRsrc = " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      cancel( erql, erspl )( filter, connections, onCancel )
+    }
   }
 
   def ensureServersConnected(

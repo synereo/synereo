@@ -363,13 +363,17 @@ case class evalSubscribeError(
 ) extends AgentCRUD
 case class evalSubscribeResponse[Value](
   sessionURI : URI,
-  values : List[Value]
+  values : List[Value],
+  filter: CnxnCtxtLabel[String,String,String],
+  connection: PortableAgentCnxn
 ) extends AgentCRUD
 //- Can we know when we are done to send back an `evalSubscribeComplete`?
 
 //#### evalSubscribeCancel
 case class evalSubscribeCancelRequest(
-  sessionURI : URI
+  sessionURI : URI,
+  filter: Set[CnxnCtxtLabel[String,String,String]],
+  connections: List[PortableAgentCnxn]
 ) extends AgentCRUD
 case class evalSubscribeCancelError(
   sessionURI : URI,
