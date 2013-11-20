@@ -1848,7 +1848,7 @@ package diesel {
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
         node : String
       )( expr : ConcreteHL.HLExpr )(
-        handler : Option[mTT.Resource] => Unit
+        handler : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit
       ): Unit = {
         BasicLogService.tweet(
           "entering method: evaluateExpression"
@@ -1865,7 +1865,7 @@ package diesel {
               //throw new Exception( "divergence" )
               //println( "warning: divergent expression" )
               BasicLogService.tweet( "warning: divergent expression" )
-              handler( None )
+              handler( None, None, None )
             }
             case ConcreteHL.ReadExpr( filter, cnxns ) => {
               BasicLogService.tweet(
@@ -1912,7 +1912,7 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -1962,7 +1962,7 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -2012,7 +2012,7 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -2063,7 +2063,7 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -2114,7 +2114,7 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -2187,7 +2187,7 @@ package diesel {
                   + "\nvalue: " + value
                 )
                 
-                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some(filter), Some(agntCnxn) )
               }
             }
             case ConcreteHL.InsertContent( filter, cnxns, value : ProtocolMessage ) => {
@@ -2343,7 +2343,7 @@ package diesel {
                   n.put( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
                 
-                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some(filter), Some(agntCnxn) )
               }
             }
           }
@@ -2412,7 +2412,7 @@ package diesel {
                           ( optRsrc : Option[mTT.Resource] ) => {
                             BasicLogService.tweet(
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                              + "\nDiesel.scala:2065 forward(" + optRsrc + ")"
+                              + "\nDiesel.scala:2258 forward(" + optRsrc + ")"
                               + "\n------------------------------------------------------------------"
                               + "\n defined in method innerLoop"
                               + "\n passed to and called in evaluateExpression"
@@ -2467,7 +2467,7 @@ package diesel {
                           ( optRsrc : Option[mTT.Resource] ) => {                            
                             BasicLogService.tweet(
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                              + "\nDiesel.scala:2106 forward(" + optRsrc + ")"
+                              + "\nDiesel.scala:2313 forward(" + optRsrc + ")"
                               + "\n------------------------------------------------------------------"
                               + "\n defined in method innerLoop"
                               + "\n passed to and called in evaluateExpression"
@@ -2526,7 +2526,7 @@ package diesel {
                                   ( optRsrc : Option[mTT.Resource] ) => {
                                     BasicLogService.tweet(
                                       ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                                      + "\nDiesel.scala:2151 forward(" + optRsrc + ")"
+                                      + "\nDiesel.scala:2372 forward(" + optRsrc + ")"
                                       + "\n------------------------------------------------------------------"
                                       + "\n defined in method innerLoop"
                                       + "\n passed to and called in evaluateExpression"
@@ -2649,12 +2649,12 @@ package diesel {
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
-                      val forward : Option[mTT.Resource] => Unit =
+                      val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
                         {
-                          ( optRsrc : Option[mTT.Resource] ) => {
+                          ( optRsrc, optFilter, optCnxn ) => {
                             BasicLogService.tweet(
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                              + "\nDiesel.scala:2265 forward(" + optRsrc + ")"
+                              + "\nDiesel.scala:2500 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
                               + "\n------------------------------------------------------------------"
                               + "\n defined in method innerLoop"
                               + "\n passed to and called in evaluateExpression"
@@ -2673,10 +2673,10 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
-                                      v
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
                                     }
                                     case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-                                      v
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
                                     }
                                   }
                                 )
@@ -2704,12 +2704,12 @@ package diesel {
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
-                      val forward : Option[mTT.Resource] => Unit =
+                      val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
                         {
-                          ( optRsrc : Option[mTT.Resource] ) => {
+                          ( optRsrc, optFilter, optCnxn ) => {
                             BasicLogService.tweet(
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                              + "\nDiesel.scala:2306 forward(" + optRsrc + ")"
+                              + "\nDiesel.scala:2555 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
                               + "\n------------------------------------------------------------------"
                               + "\n defined in method innerLoop"
                               + "\n passed to and called in evaluateExpression"
@@ -2728,10 +2728,10 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
-                                      v
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
                                     }
                                     case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-                                      v
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
                                     }
                                   }
                                 )
@@ -2763,12 +2763,12 @@ package diesel {
                             for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                               val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                               
-                              val forward : Option[mTT.Resource] => Unit =
+                              val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
                                 {
-                                  ( optRsrc : Option[mTT.Resource] ) => {
+                                  ( optRsrc, optFilter, optCnxn ) => {
                                     BasicLogService.tweet(
                                       ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                                      + "\nDiesel.scala:2351 forward(" + optRsrc + ")"
+                                      + "\nDiesel.scala:2614 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
                                       + "\n------------------------------------------------------------------"
                                       + "\n defined in method innerLoop"
                                       + "\n passed to and called in evaluateExpression"
@@ -2787,10 +2787,10 @@ package diesel {
                                               ConcreteHL.Bottom
                                             }
                                             case Some( mTT.Ground( v ) ) => {
-                                              v
+                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
                                             }
                                             case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-                                              v
+                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
                                             }
                                           }
                                         )
