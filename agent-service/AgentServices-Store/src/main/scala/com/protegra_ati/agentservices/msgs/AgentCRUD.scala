@@ -363,7 +363,9 @@ case class evalSubscribeError(
 ) extends AgentCRUD
 case class evalSubscribeResponse[Value](
   sessionURI : URI,
-  values : List[Value]
+  values : List[Value],
+  filter: CnxnCtxtLabel[String,String,String],
+  connection: PortableAgentCnxn
 ) extends AgentCRUD
 //- Can we know when we are done to send back an `evalSubscribeComplete`?
 
