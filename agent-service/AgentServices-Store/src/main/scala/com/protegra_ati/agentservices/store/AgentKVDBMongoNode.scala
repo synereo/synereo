@@ -424,9 +424,9 @@ with AgentCnxnTypeScope {
                                           consume match {
                                             case policy : Subscription => {
                                               BasicLogService.tweet(
-                                                "\n===================================================================\n"
-                                                + "Storing subscription continuation"
-                                                + "with keep : " + keep
+                                                "==================================================================="
+                                                + "\nStoring subscription continuation"
+                                                + "\nwith keep : " + keep
                                                 + "\n===================================================================\n"
                                               )                                       
                                               for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
