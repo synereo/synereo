@@ -281,5 +281,10 @@ package usage {
          with BFactoryCommLinkConfiguration
          with Serializable {
          }    
-  }  
+  }
+  object SetupBehaviorMapFromConfigurationFile {
+    def makeMap() {
+      // For each entry in evalConfig().getMap( "BFactoryMap" ) call BFactoryServiceContext.eserve.mapBehavior
+    }
+  }
 }

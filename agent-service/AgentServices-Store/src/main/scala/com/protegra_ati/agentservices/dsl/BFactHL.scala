@@ -44,6 +44,13 @@ trait AbstractBFactHL {
     override val cnxns : Seq[Cnxn],
     override val filters : Seq[Label]
   ) extends Commence with Request with BehaviorModification with BFactHLExpr
+
+  case class CommenceInstances(
+    val behaviorDefinitionCnxn : Cnxn,
+    val behaviorDefinitionLabels : Seq[Label],
+    val cnxnsList : Seq[Seq[Cnxn]],
+    val filtersList : Seq[Seq[Label]]
+  ) extends Request with BehaviorModification with BFactHLExpr
   
   /* CommenceInstance success response */
   case class InstanceRunning(
