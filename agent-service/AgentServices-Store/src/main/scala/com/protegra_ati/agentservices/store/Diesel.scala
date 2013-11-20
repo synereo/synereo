@@ -2250,9 +2250,9 @@ package diesel {
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
-                      val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
+                      val forward : Option[mTT.Resource] => Unit =
                         {
-                          ( optRsrc, optFilter, optCnxn ) => {
+                          ( optRsrc : Option[mTT.Resource] ) => {
                             BasicLogService.tweet(
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                               + "\nDiesel.scala:2258 forward(" + optRsrc + ")"
@@ -2305,9 +2305,9 @@ package diesel {
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
-                      val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
+                      val forward : Option[mTT.Resource] => Unit =
                         {
-                          ( optRsrc, optFilter, optCnxn ) => {
+                          ( optRsrc : Option[mTT.Resource] ) => {                            
                             BasicLogService.tweet(
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                               + "\nDiesel.scala:2313 forward(" + optRsrc + ")"
@@ -2364,9 +2364,9 @@ package diesel {
                             for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                               val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                               
-                              val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
+                              val forward : Option[mTT.Resource] => Unit =
                                 {
-                                  ( optRsrc, optFilter, optCnxn ) => {
+                                  ( optRsrc : Option[mTT.Resource] ) => {
                                     BasicLogService.tweet(
                                       ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                                       + "\nDiesel.scala:2372 forward(" + optRsrc + ")"
