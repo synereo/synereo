@@ -2123,7 +2123,7 @@ package diesel {
               
               BasicLogService.tweet(
                 "method: evaluateExpression"
-                + "\nin ConcreteHL.InsertContent case "
+                + "\nin ConcreteHL.InsertContent(String) case "
                 + "\nthis: " + this
                 + "\nnode: " + node
                 + "\nexpr: " + expr
@@ -2272,7 +2272,46 @@ package diesel {
               
               BasicLogService.tweet(
                 "method: evaluateExpression"
-                + "\nin ConcreteHL.PutContent case "
+                + "\nin ConcreteHL.PutContent(String) case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\nvalue: " + value 
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.put "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\nvalue: " + value
+                  )
+                  
+                  n.put( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                }
+                
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+              }
+            }
+            case ConcreteHL.PutContent( filter, cnxns, value : ProtocolMessage ) => {
+              
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.PutContent(ProtocolMessage) case "
                 + "\nthis: " + this
                 + "\nnode: " + node
                 + "\nexpr: " + expr
