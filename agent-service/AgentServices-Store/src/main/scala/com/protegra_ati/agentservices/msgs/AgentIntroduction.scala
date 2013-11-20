@@ -25,3 +25,19 @@ case class beginIntroductionError(
 case class beginIntroductionResponse(
   sessionURI : URI
 ) extends AgentIntroduction
+
+//#### introductionConfirmation
+case class introductionConfirmationRequest(
+  sessionURI : URI,
+  alias : String,
+  introSessionId : String,
+  correlationId : String,
+  accepted : Boolean
+) extends AgentIntroduction
+case class introductionConfirmationError(
+  sessionURI : URI,
+  reason : String
+) extends AgentIntroduction
+case class introductionConfirmationResponse(
+  sessionURI : URI
+) extends AgentIntroduction
