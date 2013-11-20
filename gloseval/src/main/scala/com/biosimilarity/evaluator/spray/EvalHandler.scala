@@ -992,15 +992,15 @@ trait EvalHandler {
   // Renders a ccl of the form "all(va('_), vb(vc(vd('_))))"
   // as the kind of json filter we get from the UI
   def cclToJSON(ccl: CnxnCtxtLabel[String,String,String]): String = {
-    def cclToPath(ccl: CnxnCtxtLabel[String,String,String]): String = {
+    def cclToPath(ccl: CnxnCtxtLabel[String,String,String]): List[String] = {
       ccl match {
-        case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right("_")))) => tag.substring(1)
-        case CnxnCtxtBranch(tag, children) => tag.substring(1) + "," + cclToPath(children(0))
+        case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right("_")))) => List(tag.substring(1))
+        case CnxnCtxtBranch(tag, children) => tag.substring(1) :: cclToPath(children(0))
       }
     }
     ccl match {
       case CnxnCtxtBranch("all", factuals) => {
-        "all(" + factuals.map("[" + cclToPath(_) + "]").mkString(",") + ")"
+        "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")"
       }
     }
   }
