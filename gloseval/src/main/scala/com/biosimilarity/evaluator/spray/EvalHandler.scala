@@ -1007,6 +1007,9 @@ trait EvalHandler {
 
   def evalSubscribeRequest(json: JValue) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
+    import com.protegra_ati.agentservices.store._
+    
+    object act extends AgentCnxnTypes {}
 
     BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
     val content = (json \ "content").asInstanceOf[JObject]
@@ -1025,7 +1028,7 @@ trait EvalHandler {
           optRsrc match {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn: PortableAgentCnxn)
+              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn: act.AgentCnxn)
             ))), _)) => {
               val jsonFilter = cclToJSON(filter)
               val content =
