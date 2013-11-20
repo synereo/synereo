@@ -2226,7 +2226,7 @@ package diesel {
                   n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
 
-                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
               }
             }
             case ConcreteHL.InsertContentV( filter, cnxns, value : AnyRef ) => {
@@ -2265,7 +2265,7 @@ package diesel {
                   n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
 
-                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
               }
             }
             case ConcreteHL.PutContent( filter, cnxns, value : String ) => {
@@ -2304,7 +2304,7 @@ package diesel {
                   n.put( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
                 
-                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
               }
             }
             case ConcreteHL.PutContent( filter, cnxns, value : ProtocolMessage ) => {
