@@ -1025,13 +1025,17 @@ trait EvalHandler {
           optRsrc match {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
+              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn: PortableAgentCnxn)
             ))), _)) => {
               val jsonFilter = cclToJSON(filter)
               val content =
                 ("sessionURI" -> sessionURIStr) ~
                 ("pageOfPosts" -> List(postedStr)) ~
-                ("connection" -> ("" + cnxn)) ~
+                ("connection" -> (
+                  ("source" -> cnxn.src.toString) ~
+                  ("label" -> cnxn.label) ~
+                  ("target" -> cnxn.trgt.toString)
+                )) ~
                 ("filter" -> jsonFilter)
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
@@ -1096,10 +1100,10 @@ trait EvalHandler {
             filter,
             cnxns,
             value,
-            (rsrc: Option[mTT.Resource]) => {
-              println("evalSubscribeRequest | insertContent | onPost: rsrc = " + rsrc)
-              BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: rsrc = " + rsrc)
-              rsrc match {
+            (optRsrc: Option[mTT.Resource]) => {
+              println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+              BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+              optRsrc match {
                 case None => ()
                 case Some(_) => {
                   // evalComplete, empty seq of posts
@@ -1111,6 +1115,7 @@ trait EvalHandler {
                   BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
                   CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
                 }
+                case _ => throw new Exception("Unrecognized resource: " + optRsrc)
               }
             }
           )
