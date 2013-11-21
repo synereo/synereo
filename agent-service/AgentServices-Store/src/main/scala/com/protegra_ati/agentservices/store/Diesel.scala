@@ -1781,10 +1781,24 @@ package diesel {
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-              //reset {
+
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\n calling node.pullCnxnKRecords "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nagntCnxn: " + agntCnxn
+                + "\nfilter: " + filter
+              )
+
+              for( e <- node.pullCnxnKRecords( agntCnxn )( filter ) ) {
+                
                 BasicLogService.tweet(
                   "method: evaluateExpression"
-                  + "\n calling node.pullCnxnKRecords "
+                  + "\n returned from node.pullCnxnKRecords "
                   + "\nthis: " + this
                   + "\nnode: " + node
                   + "\nexpr: " + expr
@@ -1792,29 +1806,15 @@ package diesel {
                   + "\n-----------------------------------------"
                   + "\nagntCnxn: " + agntCnxn
                   + "\nfilter: " + filter
+                  + "\ne: " + e
                 )
-
-                for( e <- node.pullCnxnKRecords( agntCnxn )( filter ) ) {
-                  
-                  BasicLogService.tweet(
-                    "method: evaluateExpression"
-                    + "\n returned from node.pullCnxnKRecords "
-                    + "\nthis: " + this
-                    + "\nnode: " + node
-                    + "\nexpr: " + expr
-                    + "\nhandler: " + handler
-                    + "\n-----------------------------------------"
-                    + "\nagntCnxn: " + agntCnxn
-                    + "\nfilter: " + filter
-                    + "\ne: " + e
-                  )
-                  val optRsrc: Option[mTT.Resource] = None /*e.stuff match {
-                    case Left(r) => Some(r)
-                    case _ => None
-                  }*/
-                  handler( optRsrc )
+                val optRsrc: Option[mTT.Resource] = e.stuff match {
+                  case Left(r) => Some(r)
+                  case _ => None
                 }
-              //}
+
+                handler( optRsrc )
+              }
             }
           }
           case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
