@@ -369,7 +369,7 @@ case class evalSubscribeResponse[Value](
 ) extends AgentCRUD
 //- Can we know when we are done to send back an `evalSubscribeComplete`?
 
-//#### evalSubscribeCancel
+//#### evalSubscribeCancel 
 case class evalSubscribeCancelRequest(
   sessionURI : URI,
   filter: Set[CnxnCtxtLabel[String,String,String]],
