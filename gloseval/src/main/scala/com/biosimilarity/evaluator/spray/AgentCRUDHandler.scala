@@ -289,7 +289,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {              
-            case PostedExpr( previousAliasList : String ) => {
+            case PostedExpr( (previousAliasList : String, _, _) ) => {
               val newAliasList = compact( render( parse( previousAliasList ) ++ msg.aliases ) )
 
               BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasList )
@@ -347,7 +347,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( previousAliasList : List[String] ) => {
+            case PostedExpr( (previousAliasList : List[String], _, _) ) => {
               val newAliasList = previousAliasList.filterNot( msg.aliases.contains )
 
               BasicLogService.tweet(
@@ -396,7 +396,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val sessionURIStr = msg.sessionURI.toString
 
           val aliasList = v match {
-            case PostedExpr( aliasList : List[String] ) => aliasList
+            case PostedExpr( (aliasList : List[String], _, _) ) => aliasList
             case Bottom => Nil
           }
 
@@ -435,7 +435,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             val sessionURIStr = msg.sessionURI.toString
 
             v match {
-              case PostedExpr( defaultAlias : String ) => {
+              case PostedExpr( (defaultAlias : String, _, _) ) => {
                 CometActorMapper.cometMessage(sessionURIStr, compact( render(
                   ( "msgType" -> "getDefaultAliasResponse" ) ~
                   ( "content" ->
@@ -516,7 +516,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( previousExternalIdsList : List[ID] ) => {
+            case PostedExpr( (previousExternalIdsList : List[ID], _, _) ) => {
               val newExternalIdsList = previousExternalIdsList ++ msg.ids
 
               BasicLogService.tweet(
@@ -567,7 +567,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( previousExternalIdsList : List[ID] ) => {
+            case PostedExpr( ( previousExternalIdsList : List[ID] , _, _) ) => {
               val newExternalIdsList = previousExternalIdsList.filterNot( msg.ids.contains )
 
               BasicLogService.tweet(
@@ -659,7 +659,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( previousBiCnxnListStr : String ) => {
+            case PostedExpr( ( previousBiCnxnListStr : String , _, _) ) => {
               // TODO: Deserialize string
               // TODO: Filter BiCnxns based on passed in Cnxns
               // TODO: Serialize new BiCnxns list
@@ -699,7 +699,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val sessionURIStr = msg.sessionURI.toString
 
           val biCnxnList = v match {
-            case PostedExpr( biCnxnListStr : String ) => {
+            case PostedExpr( ( biCnxnListStr : String , _, _) ) => {
               Serializer.deserialize[List[PortableAgentBiCnxn]]( biCnxnListStr )
             }
             case Bottom => Nil
@@ -755,7 +755,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( previousLabelList : String ) => {
+            case PostedExpr( ( previousLabelList : String , _, _) ) => {
               val newLabelList = compact(render(parse(previousLabelList) ++ msg.labels.map(_.toString.replace("'",""))))
               BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
               agentMgr().put[String](
@@ -859,7 +859,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val sessionURIStr = msg.sessionURI.toString
 
           val labelList = v match {
-            case PostedExpr( labelList : List[CnxnCtxtLabel[String,String,String]] ) => labelList
+            case PostedExpr( ( labelList : List[CnxnCtxtLabel[String,String,String]] , _, _) ) => labelList
             case Bottom => Nil
           }
 
@@ -925,7 +925,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val sessionURIStr = msg.sessionURI.toString
 
           v match {
-            case PostedExpr( defaultLabel : CnxnCtxtLabel[String,String,String] ) => {
+            case PostedExpr( ( defaultLabel : CnxnCtxtLabel[String,String,String] , _, _) ) => {
               CometActorMapper.cometMessage(sessionURIStr, compact( render(
                 ( "msgType" -> "getAliasDefaultLabelResponse" ) ~
                 ( "content" ->
