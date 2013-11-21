@@ -358,12 +358,16 @@ trait EvalHandler {
                 )
               )))
             }
-            case PostedExpr( (PostedExpr( postedStr : String ), _, _) ) => {
-              val content = parse(postedStr)
-              val email = (content \ "email").extract[String]
-              val password = (content \ "password").extract[String]
-              val jsonBlob = compact(render(content \ "jsonBlob"))
-              secureSignup(email, password, jsonBlob, key)
+            case PostedExpr( triple ) => triple match {
+              case (PostedExpr( s ), _, _) => s match {
+                case postedStr: String => {
+                  val content = parse(postedStr)
+                  val email = (content \ "email").extract[String]
+                  val password = (content \ "password").extract[String]
+                  val jsonBlob = compact(render(content \ "jsonBlob"))
+                  secureSignup(email, password, jsonBlob, key)
+                }
+              }
             }
           }
         }
