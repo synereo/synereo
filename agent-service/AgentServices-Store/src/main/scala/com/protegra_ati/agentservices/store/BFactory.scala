@@ -1852,7 +1852,17 @@ package bfactory {
                         )
                         try {
                           val ctorm = cm.reflectConstructor( ctor.asMethod )
-                          val instance = ctorm( cnxns, filters )
+                          val instance = ctorm() //( cnxns, filters )
+                          val instanceM = m.reflect( instance )
+                          val instanceEntryPointS =
+                            clsTyp.declaration(
+                              ru.newTermName( "run" )
+                            ).asMethod
+                          val instanceEntryPointM =
+                            instanceM.reflectMethod( instanceEntryPointS )
+                          
+                          instanceEntryPointM( n, cnxns, filters )
+
                           try {
                             n.publish( agntCnxn )(
                               instanceLabel,
