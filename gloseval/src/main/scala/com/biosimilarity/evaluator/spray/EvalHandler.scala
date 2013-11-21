@@ -285,7 +285,7 @@ trait EvalHandler {
     handler.handleevalSubscribeCancelRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.evalSubscribeCancelRequest(
         new URI(sessionURIStr),
-        SumOfProducts((json \ "content" \ "filter").extract[String]),
+        new SumOfProducts()((json \ "content" \ "filter").extract[String]),
         jcnxns.map((c: JValue) => PortableAgentCnxn(
           new URI((c \ "source").extract[String]),
           (c \ "label").extract[String],
@@ -938,7 +938,7 @@ trait EvalHandler {
   
   import scala.util.parsing.combinator._
   type Path = List[String]
-  object SumOfProducts extends RegexParsers {
+  class SumOfProducts extends RegexParsers {
 
     def Node: Parser[String] = """[A-Za-z0-9]+""".r
 
@@ -996,7 +996,7 @@ trait EvalHandler {
   def extractFiltersAndCnxns(exprContent: JObject) = {
     BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
     
-    val label = SumOfProducts((exprContent \ "label").extract[String])
+    val label = new SumOfProducts()((exprContent \ "label").extract[String])
     val cnxns = (exprContent \ "cnxns") match {
       case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
     }
