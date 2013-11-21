@@ -358,16 +358,12 @@ trait EvalHandler {
                 )
               )))
             }
-            case PostedExpr( triple ) => triple match {
-              case (PostedExpr( s ), _, _) => s match {
-                case postedStr: String => {
-                  val content = parse(postedStr)
-                  val email = (content \ "email").extract[String]
-                  val password = (content \ "password").extract[String]
-                  val jsonBlob = compact(render(content \ "jsonBlob"))
-                  secureSignup(email, password, jsonBlob, key)
-                }
-              }
+            case PostedExpr( (PostedExpr( postedStr : String ), _, _) ) => {
+              val content = parse(postedStr)
+              val email = (content \ "email").extract[String]
+              val password = (content \ "password").extract[String]
+              val jsonBlob = compact(render(content \ "jsonBlob"))
+              secureSignup(email, password, jsonBlob, key)
             }
           }
         }
@@ -635,7 +631,7 @@ trait EvalHandler {
         rsrc match {
           // At this point the cap is good, but we have to verify the pw mac
           case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(pwmac: String))), _)) => {
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(pwmac: String), _, _)))), _)) => {
             BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
             val macInstance = Mac.getInstance("HmacSHA256")
             macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
@@ -910,7 +906,7 @@ trait EvalHandler {
       (optRsrc: Option[mTT.Resource]) => {
         optRsrc match {
           case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(postedStr: String))), _)) => {
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(postedStr: String), _, _)))), _)) => {
             val (erql, erspl) = agentMgr().makePolarizedPair()
             agentMgr().put(erql, erspl)(
               jsonBlobLabel,
