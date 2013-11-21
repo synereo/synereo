@@ -1781,7 +1781,7 @@ package diesel {
             for( cnxn <- cnxns ) {
               val agntCnxn : acT.AgentCnxn =
                 new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-              reset {
+              //reset {
                 BasicLogService.tweet(
                   "method: evaluateExpression"
                   + "\n calling node.pullCnxnKRecords "
@@ -1814,7 +1814,7 @@ package diesel {
                   }*/
                   handler( optRsrc )
                 }
-              }
+              //}
             }
           }
           case ConcreteHL.InsertContent( filter, cnxns, value : String ) => {
