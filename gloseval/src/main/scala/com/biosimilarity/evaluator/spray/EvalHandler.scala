@@ -203,9 +203,9 @@ trait EvalHandler {
   def getAliasExternalIdentitiesRequest(json: JValue): Unit = {}
   def setAliasDefaultExternalIdentityRequest(json: JValue): Unit = {}
   // Connections
+  case class JCnxn(source: String, label: String, target: String)
   def removeAliasConnectionsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
-    case class JCnxn(src: String, label: String, tgt: String)
     val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
     handler.handleremoveAliasConnectionsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.removeAliasConnectionsRequest(
@@ -279,7 +279,21 @@ trait EvalHandler {
   def setAliasDefaultLabelRequest(json: JValue): Unit = {}
   def getAliasDefaultLabelRequest(json: JValue): Unit = {}
   // DSL
-  def evalSubscribeCancelRequest(json: JValue): Unit = {}
+  def evalSubscribeCancelRequest(json: JValue): Unit = {
+    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
+    handler.handleevalSubscribeCancelRequest(
+      com.biosimilarity.evaluator.msgs.agent.crud.evalSubscribeCancelRequest(
+        new URI(sessionURIStr),
+        SumOfProducts((json \ "content" \ "filter").extract[String]),
+        jcnxns.map((c: JValue) => PortableAgentCnxn(
+          new URI((c \ "source").extract[String]),
+          (c \ "label").extract[String],
+          new URI((c \ "target").extract[String])
+        ))
+      )
+    )
+  }
   // Introduction Protocol
   def beginIntroductionRequest(json: JValue): Unit = {
     handler.handlebeginIntroductionRequest(
@@ -924,7 +938,7 @@ trait EvalHandler {
   
   import scala.util.parsing.combinator._
   type Path = List[String]
-  class SumOfProducts extends RegexParsers {
+  object SumOfProducts extends RegexParsers {
 
     def Node: Parser[String] = """[A-Za-z0-9]+""".r
 
@@ -982,7 +996,7 @@ trait EvalHandler {
   def extractFiltersAndCnxns(exprContent: JObject) = {
     BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
     
-    val label = new SumOfProducts()((exprContent \ "label").extract[String])
+    val label = SumOfProducts((exprContent \ "label").extract[String])
     val cnxns = (exprContent \ "cnxns") match {
       case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
     }

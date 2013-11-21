@@ -977,5 +977,22 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( 
       "Entering: handleevalSubscribeCancelRequest with msg : " + msg
     )
+    val onCancel: Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handlegetAliasDefaultLabelRequest | onFetch: got None" )
+        }
+        case _ => {
+          CometActorMapper.cometMessage(msg.sessionURI.toString, compact(render(
+            ("msgType" -> "evalSubscribeCancelResponse") ~
+            ("content" -> ("sessionURI" -> msg.sessionURI.toString))
+          )))
+        }
+      }
+    }
+    for (filter <- msg.filter) {
+      agentMgr().cancel(filter, msg.connections, onCancel)
+    }
   }
 }
