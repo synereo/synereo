@@ -1,19 +1,30 @@
 package com.protegra_ati.agentservices.protocols
 
-import com.biosimilarity.evaluator.distribution.ConcreteHL._
+import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
+import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
+import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import java.util.UUID
 import scala.util.continuations._
 
-trait IntroductionRecipient extends Serializable {
+trait IntroductionRecipientT extends Serializable {
   val biCnxnsListLabel = "biCnxnsList(true)".toLabel
+
+  private def toAgentCnxn(cnxn: PortableAgentCnxn): acT.AgentCnxn = {
+    acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
+  }
 
   def run(
     kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
-    readCnxn: acT.AgentCnxn,
-    aliasCnxn: acT.AgentCnxn) {
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+
+    if (cnxns.size != 2) throw new Exception("invalid number of cnxns supplied")
+
+    val readCnxn = toAgentCnxn(cnxns(0))
+    val aliasCnxn = toAgentCnxn(cnxns(1))
 
     reset {
       // listen for GetIntroductionProfileRequest message
@@ -154,3 +165,5 @@ trait IntroductionRecipient extends Serializable {
     }
   }
 }
+
+class IntroductionRecipient extends IntroductionRecipientT

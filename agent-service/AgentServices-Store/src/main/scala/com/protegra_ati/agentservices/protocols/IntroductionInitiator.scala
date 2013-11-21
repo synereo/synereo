@@ -1,15 +1,26 @@
 package com.protegra_ati.agentservices.protocols
 
-import com.biosimilarity.evaluator.distribution.ConcreteHL._
+import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
+import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
+import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs._
 import java.util.UUID
 import scala.util.continuations._
 
-trait IntroductionInitiator extends Serializable {
+trait IntroductionInitiatorT extends Serializable {
+  private def toAgentCnxn(cnxn: PortableAgentCnxn): acT.AgentCnxn = {
+    acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
+  }
+
   def run(
     kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
-    aliasCnxn: acT.AgentCnxn) {
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+
+    if (cnxns.size != 1) throw new Exception("invalid number of cnxns supplied")
+
+    val aliasCnxn = toAgentCnxn(cnxns(0))
 
     reset {
       // listen for BeginIntroductionRequest message
@@ -175,3 +186,5 @@ trait IntroductionInitiator extends Serializable {
     }
   }
 }
+
+class IntroductionInitiator extends IntroductionInitiatorT
