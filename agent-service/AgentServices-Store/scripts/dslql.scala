@@ -6,5 +6,6 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-import com.biosimilarity.evaluator.distribution.diesel._
-Server.run()
+com.biosimilarity.evaluator.distribution.diesel.Server.run()
+com.biosimilarity.evaluator.distribution.bfactory.Server.run()
+

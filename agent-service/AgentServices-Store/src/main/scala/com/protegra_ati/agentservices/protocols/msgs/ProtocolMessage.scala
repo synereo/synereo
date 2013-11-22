@@ -22,6 +22,6 @@ trait ProtocolMessage {
   }
 
   def toGround: mTT.Ground = {
-    mTT.Ground(ConcreteHL.InsertContent(label, Nil, this))
+    mTT.Ground(ConcreteHL.PostedExpr(this))
   }
 }

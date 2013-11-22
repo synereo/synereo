@@ -1768,6 +1768,221 @@ package bfactory {
       )( expr : ConcreteBFactHL.BFactHLExpr )(
         handler : Option[mTT.Resource] => Unit
       ): Unit = {
+        def commenceInstanceHandler( n : StdEvalChannel )(
+          bdc : ConcreteBFactHL.Cnxn,
+          bdl : ConcreteBFactHL.Label,
+          cnxns : Seq[ConcreteBFactHL.Cnxn],
+          filters : Seq[ConcreteBFactHL.Label]
+        ) = {
+          BasicLogService.tweet(
+            "method: evaluateExpression"
+            + "\nin ConcreteBFactHL.CommenceInstance case "
+            + "\nthis: " + this
+            + "\nnode: " + node
+            + "\nexpr: " + expr
+            + "\nhandler: " + handler
+            + "\n-----------------------------------------"
+            + "\nbehaviorDefinitionCnxn: " + bdc
+            + "\nbehaviorDefinitionLabel: " + bdl
+            + "\ncnxns: " + cnxns
+            + "\nfilters: " + filters                
+          )
+          
+          val agntCnxn : acT.AgentCnxn =
+            new acT.AgentCnxn( bdc.src, bdc.label.toString, bdc.trgt )
+          reset {
+            
+            BasicLogService.tweet(
+              "method: evaluateExpression"
+              + "\n calling node.fetch "
+              + "\nthis: " + this
+              + "\nnode: " + node
+              + "\nexpr: " + expr
+              + "\nhandler: " + handler
+              + "\n-----------------------------------------"
+              + "\nbehaviorDefinitionCnxn: " + agntCnxn
+              + "\nbehaviorDefinitionLabel: " + bdl
+            )
+            
+            for( e <- n.fetch( agntCnxn )( bdl ) ) {
+              
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\n returned from node.fetch "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nagntCnxn: " + agntCnxn
+                + "\nbehaviorDefinitionLabel: " + bdl
+                + "\ne: " + e
+              )
+              
+              e match {
+                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {
+                  val instanceID = UUID.randomUUID
+                  val instanceLabel =
+                    StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
+                  
+                  try {
+                    val ru = scala.reflect.runtime.universe
+                    val m = ru.runtimeMirror( getClass.getClassLoader )
+                    val clsSym = m.staticClass( behavior )
+                    val cm = m.reflectClass( clsSym )
+                    val clsTyp = clsSym.toType
+                    val ctorDecl = clsTyp.declaration( ru.nme.CONSTRUCTOR )
+                    val ctors = ctorDecl.asTerm.alternatives
+                    ctors match {
+                      case ctor :: rCtors => {
+                        BasicLogService.tweet(
+                          "method: evaluateExpression"
+                          + "\n instantiating instance "
+                          + "\nthis: " + this
+                          + "\nnode: " + node
+                          + "\nexpr: " + expr
+                          + "\nhandler: " + handler
+                          + "\n-----------------------------------------"
+                          + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                          + "\nbehaviorDefinitionLabel: " + bdl
+                          + "\nbehavior: " + behavior
+                          + "\nctor: " + ctor
+                          + "\ncnxns: " + cnxns
+                          + "\nfilters: " + filters
+                        )
+                        try {
+                          val ctorm = cm.reflectConstructor( ctor.asMethod )
+                          val instance = ctorm() //( cnxns, filters )
+                          val instanceM = m.reflect( instance )
+                          val instanceEntryPointS =
+                            clsTyp.declaration(
+                              ru.newTermName( "run" )
+                            ).asMethod
+                          val instanceEntryPointM =
+                            instanceM.reflectMethod( instanceEntryPointS )
+                          
+                          instanceEntryPointM( n, cnxns, filters )
+
+                          try {
+                            n.publish( agntCnxn )(
+                              instanceLabel,
+                              mTT.Ground(
+                                ConcreteBFactHL.WrappedBehaviorInstance(
+                                  instance
+                                )
+                              )
+                            )
+                            handler( 
+                              Some(
+                                mTT.Ground(
+                                  ConcreteBFactHL.InstanceRunning(
+                                    bdc,
+                                    instanceLabel
+                                  )
+                                )
+                              )
+                            )
+                          } 
+                          catch {
+                            case e : Exception => {
+                              BasicLogService.tweet(
+                                "method: evaluateExpression"
+                                + "\n ---> node.publish caused an exception <--- "
+                                + "\nthis: " + this
+                                + "\nnode: " + node
+                                + "\nexpr: " + expr
+                                + "\nhandler: " + handler
+                                + "\n-----------------------------------------"
+                                + "\nagntCnxn: " + agntCnxn
+                                + "\nlabel: " + instanceLabel
+                                + "\nbehavior: " + behavior
+                              )
+                              BasicLogService.tweetTrace( e )
+                              handler( 
+                                Some(
+                                  mTT.Ground(
+                                    ConcreteBFactHL.InstanceNotRunning(
+                                      bdc,
+                                      bdl,
+                                      "storing instance record failed" + e
+                                    )
+                                  )
+                                )
+                              )
+                            }
+                          }
+                        }
+                        catch {
+                          case e : Throwable => {
+                            BasicLogService.tweet(
+                              "method: evaluateExpression"
+                              + "\n failed instantiating instance "
+                              + "\nthis: " + this
+                              + "\nnode: " + node
+                              + "\nexpr: " + expr
+                              + "\nhandler: " + handler
+                              + "\n-----------------------------------------"
+                              + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                              + "\nbehaviorDefinitionLabel: " + bdl
+                              + "\nbehavior: " + behavior
+                              + "\nctor: " + ctor
+                              + "\ncnxns: " + cnxns
+                              + "\nfilters: " + filters
+                            )                                
+                            throw new Exception( "ctor invocation failed: " + ctor )
+                          }
+                        }
+                      }
+                      case _ => {
+                        BasicLogService.tweet(
+                          "method: evaluateExpression"
+                          + "\n failed in attempt to instantiate instance "
+                          + "\nthis: " + this
+                          + "\nnode: " + node
+                          + "\nexpr: " + expr
+                          + "\nhandler: " + handler
+                          + "\n-----------------------------------------"
+                          + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                          + "\nbehaviorDefinitionLabel: " + bdl
+                          + "\nbehavior: " + behavior
+                        )
+                        throw new Exception( "no ctor alternatives: " + ctors )
+                      }
+                    }
+                  }
+                  catch {
+                    case e : Throwable => {
+                      handler( 
+                        Some(
+                          mTT.Ground(
+                            ConcreteBFactHL.InstanceNotRunning(
+                              bdc,
+                              bdl,
+                              "instantiation failed" + e
+                            )
+                          )
+                        )
+                      )
+                    }
+                  }                      
+                }
+                case _ => {
+                  handler( 
+                    Some(
+                      mTT.Ground(
+                        ConcreteBFactHL.InstanceNotRunning(
+                          bdc,
+                          bdl,
+                          "unexpected behavior record format: " + e
+                        )
+                      )
+                    )
+                  )
+                }
+              }                                    
+            }
+          }
+        }
         BasicLogService.tweet(
           "entering method: evaluateExpression"
           + "\nthis: " + this
@@ -1846,203 +2061,14 @@ package bfactory {
               }
             }
             case ConcreteBFactHL.CommenceInstance( bdc, bdl, cnxns, filters ) => {
-              BasicLogService.tweet(
-                "method: evaluateExpression"
-                + "\nin ConcreteBFactHL.CommenceInstance case "
-                + "\nthis: " + this
-                + "\nnode: " + node
-                + "\nexpr: " + expr
-                + "\nhandler: " + handler
-                + "\n-----------------------------------------"
-                + "\nbehaviorDefinitionCnxn: " + bdc
-                + "\nbehaviorDefinitionLabel: " + bdl
-                + "\ncnxns: " + cnxns
-                + "\nfilters: " + filters                
-              )
-              
-              val agntCnxn : acT.AgentCnxn =
-                new acT.AgentCnxn( bdc.src, bdc.label.toString, bdc.trgt )
-              reset {
-                
-                BasicLogService.tweet(
-                  "method: evaluateExpression"
-                  + "\n calling node.fetch "
-                  + "\nthis: " + this
-                  + "\nnode: " + node
-                  + "\nexpr: " + expr
-                  + "\nhandler: " + handler
-                  + "\n-----------------------------------------"
-                  + "\nbehaviorDefinitionCnxn: " + agntCnxn
-                  + "\nbehaviorDefinitionLabel: " + bdl
-                )
-                
-                for( e <- n.fetch( agntCnxn )( bdl ) ) {
-                  
-                  BasicLogService.tweet(
-                    "method: evaluateExpression"
-                    + "\n returned from node.fetch "
-                    + "\nthis: " + this
-                    + "\nnode: " + node
-                    + "\nexpr: " + expr
-                    + "\nhandler: " + handler
-                    + "\n-----------------------------------------"
-                    + "\nagntCnxn: " + agntCnxn
-                    + "\nbehaviorDefinitionLabel: " + bdl
-                    + "\ne: " + e
-                  )
-
-                  e match {
-                    case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {
-                      val instanceID = UUID.randomUUID
-                      val instanceLabel =
-                        StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
-                      
-                      try {
-                        val ru = scala.reflect.runtime.universe
-                        val m = ru.runtimeMirror( getClass.getClassLoader )
-                        val clsSym = m.staticClass( behavior )
-                        val cm = m.reflectClass( clsSym )
-                        val clsTyp = clsSym.toType
-                        val ctorDecl = clsTyp.declaration( ru.nme.CONSTRUCTOR )
-                        val ctors = ctorDecl.asTerm.alternatives
-                        ctors match {
-                          case ctor :: rCtors => {
-                            BasicLogService.tweet(
-                              "method: evaluateExpression"
-                              + "\n instantiating instance "
-                              + "\nthis: " + this
-                              + "\nnode: " + node
-                              + "\nexpr: " + expr
-                              + "\nhandler: " + handler
-                              + "\n-----------------------------------------"
-                              + "\nbehaviorDefinitionCnxn: " + agntCnxn
-                              + "\nbehaviorDefinitionLabel: " + bdl
-                              + "\nbehavior: " + behavior
-                              + "\nctor: " + ctor
-                              + "\ncnxns: " + cnxns
-                              + "\nfilters: " + filters
-                            )
-                            try {
-                              val ctorm = cm.reflectConstructor( ctor.asMethod )
-                              val instance = ctorm( cnxns, filters )
-                              try {
-                                n.publish( agntCnxn )(
-                                  instanceLabel,
-                                  mTT.Ground(
-                                    ConcreteBFactHL.WrappedBehaviorInstance(
-                                      instance
-                                    )
-                                  )
-                                )
-                                handler( 
-                                  Some(
-                                    mTT.Ground(
-                                      ConcreteBFactHL.InstanceRunning(
-                                        bdc,
-                                        instanceLabel
-                                      )
-                                    )
-                                  )
-                                )
-                              } 
-                              catch {
-                                case e : Exception => {
-                                  BasicLogService.tweet(
-                                    "method: evaluateExpression"
-                                    + "\n ---> node.publish caused an exception <--- "
-                                    + "\nthis: " + this
-                                    + "\nnode: " + node
-                                    + "\nexpr: " + expr
-                                    + "\nhandler: " + handler
-                                    + "\n-----------------------------------------"
-                                    + "\nagntCnxn: " + agntCnxn
-                                    + "\nlabel: " + instanceLabel
-                                    + "\nbehavior: " + behavior
-                                  )
-                                  BasicLogService.tweetTrace( e )
-                                  handler( 
-                                    Some(
-                                      mTT.Ground(
-                                        ConcreteBFactHL.InstanceNotRunning(
-                                          bdc,
-                                          bdl,
-                                          "storing instance record failed" + e
-                                        )
-                                      )
-                                    )
-                                  )
-                                }
-                              }
-                            }
-                            catch {
-                              case e : Throwable => {
-                                BasicLogService.tweet(
-                                  "method: evaluateExpression"
-                                  + "\n failed instantiating instance "
-                                  + "\nthis: " + this
-                                  + "\nnode: " + node
-                                  + "\nexpr: " + expr
-                                  + "\nhandler: " + handler
-                                  + "\n-----------------------------------------"
-                                  + "\nbehaviorDefinitionCnxn: " + agntCnxn
-                                  + "\nbehaviorDefinitionLabel: " + bdl
-                                  + "\nbehavior: " + behavior
-                                  + "\nctor: " + ctor
-                                  + "\ncnxns: " + cnxns
-                                  + "\nfilters: " + filters
-                                )                                
-                                throw new Exception( "ctor invocation failed: " + ctor )
-                              }
-                            }
-                          }
-                          case _ => {
-                            BasicLogService.tweet(
-                              "method: evaluateExpression"
-                              + "\n failed in attempt to instantiate instance "
-                              + "\nthis: " + this
-                              + "\nnode: " + node
-                              + "\nexpr: " + expr
-                              + "\nhandler: " + handler
-                              + "\n-----------------------------------------"
-                              + "\nbehaviorDefinitionCnxn: " + agntCnxn
-                              + "\nbehaviorDefinitionLabel: " + bdl
-                              + "\nbehavior: " + behavior
-                            )
-                            throw new Exception( "no ctor alternatives: " + ctors )
-                          }
-                        }
-                      }
-                      catch {
-                        case e : Throwable => {
-                          handler( 
-                            Some(
-                              mTT.Ground(
-                                ConcreteBFactHL.InstanceNotRunning(
-                                  bdc,
-                                  bdl,
-                                  "instantiation failed" + e
-                                )
-                              )
-                            )
-                          )
-                        }
-                      }                      
-                    }
-                    case _ => {
-                      handler( 
-                        Some(
-                          mTT.Ground(
-                            ConcreteBFactHL.InstanceNotRunning(
-                              bdc,
-                              bdl,
-                              "unexpected behavior record format: " + e
-                            )
-                          )
-                        )
-                      )
-                    }
-                  }                                    
-                }
+              commenceInstanceHandler( n )( bdc, bdl, cnxns, filters )
+            }
+            case ConcreteBFactHL.CommenceInstances( bdc, bdls, cnxnsList, filtersList ) => {
+              val bdlsNCnxnsNFilters = bdls.zip( cnxnsList ).zip( filtersList )
+              for(
+                ( ( bdl, cnxns ), filters ) <- bdlsNCnxnsNFilters
+              ) {
+                commenceInstanceHandler( n )( bdc, bdl, cnxns, filters )
               }
             }
           }

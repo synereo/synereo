@@ -152,6 +152,52 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       post[Value]( erql, erspl )( filter, cnxns, content, onPost )
     }
 
+    def postV[Value](
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      content : Value,
+      onPost : Option[mTT.Resource] => Unit        
+    ) : Unit = {
+      reset {
+        node().publish( erql, InsertContentV( filter, cnxns, content ) )
+      }
+      reset {
+        try { 
+          for(
+            e <- try { node().subscribe( erspl ) }
+            catch {
+              case e : Throwable => {
+                BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
+                throw e
+              }
+            }
+          ) {
+            onPost( e )
+          }
+        }
+        catch {
+          case e : Throwable => {
+            BasicLogService.tweetTrace( e.asInstanceOf[Exception] )
+            throw e
+          }
+        }
+      }
+    }
+
+    def postV[Value](
+      filter : CnxnCtxtLabel[String,String,String],
+      cnxns : Seq[Cnxn],
+      content : Value,
+      onPost : Option[mTT.Resource] => Unit =
+        ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      postV[Value]( erql, erspl )( filter, cnxns, content, onPost )
+    }
+
     def put[Value](
       erql : CnxnCtxtLabel[String,String,String],
       erspl : CnxnCtxtLabel[String,String,String]

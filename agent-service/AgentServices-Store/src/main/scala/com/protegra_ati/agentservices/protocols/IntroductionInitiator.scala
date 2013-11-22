@@ -1,0 +1,177 @@
+package com.protegra_ati.agentservices.protocols
+
+import com.biosimilarity.evaluator.distribution.ConcreteHL._
+import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
+import com.protegra_ati.agentservices.protocols.msgs._
+import java.util.UUID
+import scala.util.continuations._
+
+trait IntroductionInitiator extends Serializable {
+  def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    aliasCnxn: acT.AgentCnxn) {
+
+    reset {
+      // listen for BeginIntroductionRequest message
+      for (birq <- kvdbNode.subscribe(aliasCnxn)(new BeginIntroductionRequest().toCnxnCtxtLabel)) {
+
+        birq match {
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(BeginIntroductionRequest(
+          Some(sessionId),
+          Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
+          Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
+          aMessage,
+          bMessage)))), _)) => {
+
+            // create A's GetIntroductionProfileRequest message
+            val aGetIntroProfileRq = new GetIntroductionProfileRequest(
+              Some(sessionId),
+              Some(UUID.randomUUID.toString),
+              Some(aReadCnxn))
+
+            // send A's GetIntroductionProfileRequest message
+            reset { kvdbNode.publish(aWriteCnxn)(aGetIntroProfileRq.toCnxnCtxtLabel, aGetIntroProfileRq.toGround) }
+
+            reset {
+              // listen for A's GetIntroductionProfileResponse message
+              for (agiprsp <- kvdbNode.get(
+                aReadCnxn)(
+                new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
+
+                // match response from A
+                // TODO: Get introduction profile from message
+                agiprsp match {
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(_, _)))), _)) => {
+
+                    // create B's GetIntroductionProfileRequest message
+                    val bGetIntroProfileRq = new GetIntroductionProfileRequest(
+                      Some(sessionId),
+                      Some(UUID.randomUUID.toString),
+                      Some(bReadCnxn))
+
+                    // send B's GetIntroductionProfileRequest message
+                    reset { kvdbNode.publish(bWriteCnxn)(bGetIntroProfileRq.toCnxnCtxtLabel, bGetIntroProfileRq.toGround) }
+
+                    reset {
+                      // listen for B's GetIntroductionProfileResponse message
+                      for (bgiprsp <- kvdbNode.get(
+                        bReadCnxn)(
+                        new GetIntroductionProfileResponse(Some(sessionId), bGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
+
+                        // match response from B
+                        // TODO: Get introduction profile from message
+                        bgiprsp match {
+                          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(_, _)))), _)) => {
+
+                            // create A's IntroductionRequest message
+                            // TODO: Add introduction profile to message
+                            val aIntroRq = new IntroductionRequest(
+                              Some(sessionId),
+                              Some(UUID.randomUUID.toString),
+                              Some(aReadCnxn), aMessage)
+
+                            // send A's IntroductionRequest message
+                            reset { kvdbNode.publish(aWriteCnxn)(aIntroRq.toCnxnCtxtLabel, aIntroRq.toGround) }
+
+                            reset {
+                              // listen for A's IntroductionResponse message
+                              for (airsp <- kvdbNode.get(
+                                aReadCnxn)(
+                                new IntroductionResponse(Some(sessionId), aIntroRq.correlationId.get).toCnxnCtxtLabel)) {
+
+                                // match response from A
+                                airsp match {
+                                  case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionResponse(
+                                  _,
+                                  _,
+                                  Some(aAccepted),
+                                  Some(aConnectId))))), _)) => {
+
+                                    // create B's IntroductionRequest message
+                                    // TODO: Add introduction profile to message
+                                    val bIntroRq = new IntroductionRequest(
+                                      Some(sessionId),
+                                      Some(UUID.randomUUID.toString),
+                                      Some(bReadCnxn), bMessage)
+
+                                    // send B's IntroductionRequest message
+                                    reset { kvdbNode.publish(bWriteCnxn)(bIntroRq.toCnxnCtxtLabel, bIntroRq.toGround) }
+
+                                    reset {
+                                      // listen for B's IntroductionResponse message
+                                      for (birsp <- kvdbNode.get(
+                                        bReadCnxn)(
+                                        new IntroductionResponse(Some(sessionId), bIntroRq.correlationId.get).toCnxnCtxtLabel)) {
+
+                                        // match response from B
+                                        birsp match {
+                                          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionResponse(
+                                          _,
+                                          _,
+                                          Some(bAccepted),
+                                          Some(bConnectId))))), _)) => {
+
+                                            // check whether A and B accepted
+                                            if (aAccepted && bAccepted) {
+                                              // create new cnxns
+                                              val cnxnLabel = UUID.randomUUID().toString
+                                              val abCnxn = new acT.AgentCnxn(aReadCnxn.src, cnxnLabel, bReadCnxn.src)
+                                              val baCnxn = new acT.AgentCnxn(bReadCnxn.src, cnxnLabel, aReadCnxn.src)
+                                              val aNewBiCnxn = new acT.AgentBiCnxn(baCnxn, abCnxn)
+                                              val bNewBiCnxn = new acT.AgentBiCnxn(abCnxn, baCnxn)
+
+                                              // create Connect messages
+                                              val aConnect = new Connect(Some(sessionId), aConnectId, Some(aNewBiCnxn))
+                                              val bConnect = new Connect(Some(sessionId), bConnectId, Some(bNewBiCnxn))
+
+                                              // send Connect messages
+                                              reset { kvdbNode.put(aWriteCnxn)(aConnect.toCnxnCtxtLabel, aConnect.toGround) }
+                                              reset { kvdbNode.put(bWriteCnxn)(bConnect.toCnxnCtxtLabel, bConnect.toGround) }
+                                            }
+                                          }
+                                          case None => {}
+                                          case _ => {
+                                            // expected IntroductionResponse
+                                            throw new Exception("unexpected protocol message")
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                  case None => {}
+                                  case _ => {
+                                    // expected IntroductionResponse
+                                    throw new Exception("unexpected protocol message")
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          case None => {}
+                          case _ => {
+                            // expected GetIntroductionProfileResponse
+                            throw new Exception("unexpected protocol message")
+                          }
+                        }
+                      }
+                    }
+                  }
+                  case None => {}
+                  case _ => {
+                    // expected GetIntroductionProfileResponse
+                    throw new Exception("unexpected protocol message")
+                  }
+                }
+              }
+            }
+          }
+          case None => {}
+          case e => {
+            // expected BeginIntroductionRequest
+            throw new Exception("unexpected protocol message")
+          }
+        }
+      }
+    }
+  }
+}
