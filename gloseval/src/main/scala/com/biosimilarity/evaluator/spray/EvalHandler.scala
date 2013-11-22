@@ -301,6 +301,17 @@ trait EvalHandler {
       )
     )
   }
+  def introductionConfirmationRequest(json: JValue): Unit = {
+    handler.handleintroductionConfirmationRequest(
+      com.protegra_ati.agentservices.msgs.agent.introduction.introductionConfirmationRequest(
+        new URI((json \ "content" \ "sessionURI").extract[String]),
+        (json \ "content" \ "alias").extract[String],
+        (json \ "content" \ "introSessionId").extract[String],
+        (json \ "content" \ "correlationId").extract[String],
+        (json \ "content" \ "accepted").extract[Boolean]
+      )
+    )
+  }
 
   val jsonBlobLabel = fromTermString("jsonBlob(W)").getOrElse(throw new Exception("Couldn't parse jsonBlobLabel"))
   val pwmacLabel = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacLabel"))

@@ -22,7 +22,7 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
   //#### beginIntroduction
   def handlebeginIntroductionRequest(
     msg : beginIntroductionRequest
-    ) : Unit = {
+  ) : Unit = {
     BasicLogService.tweet( "Entering: handlebeginIntroductionRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
@@ -48,6 +48,35 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
     }
 
     agentMgr().post( birq.toCnxnCtxtLabel, List( aliasStorageCnxn ), birq, onPost )
+  }
+
+  //#### introductionConfirmation
+  def handleintroductionConfirmationRequest(
+    msg : introductionConfirmationRequest
+  ) : Unit = {
+    BasicLogService.tweet( "Entering: handleintroductionConfirmationRequest with msg : " + msg )
+
+    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionId = UUID.randomUUID().toString
+
+    val ic = new IntroductionConfirmation(
+      Some( msg.introSessionId ),
+      msg.correlationId,
+      Some( msg.accepted )
+    )
+
+    val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet( "handleintroductionConfirmationRequest | onPut" )
+
+      val sessionURIStr = msg.sessionURI.toString
+
+      CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        ( "msgType" -> "introductionConfirmationResponse" ) ~
+        ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+      ) ) )
+    }
+
+    agentMgr().put( ic.toCnxnCtxtLabel, List( aliasStorageCnxn ), ic, onPut )
   }
 
   private def toAgentBiCnxn( cnxn : PortableAgentCnxn ) : acT.AgentBiCnxn = {
