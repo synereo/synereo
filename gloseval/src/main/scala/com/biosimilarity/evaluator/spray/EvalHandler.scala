@@ -301,32 +301,29 @@ trait EvalHandler {
       com.protegra_ati.agentservices.msgs.agent.introduction.beginIntroductionRequest(
         new URI((json \ "content" \ "sessionURI").extract[String]),
         (json \ "content" \ "alias").extract[String],
-        new PortableAgentBiCnxn(
-          new PortableAgentCnxn(
-            new URI((json \ "content" \ "aBiConnection" \ "readConnection" \ "src").extract[String]),
-            (json \ "content" \ "aBiConnection" \ "readConnection" \ "label").extract[String],
-            new URI((json \ "content" \ "aBiConnection" \ "readConnection" \ "trgt").extract[String])
-          ),
-          new PortableAgentCnxn(
-            new URI((json \ "content" \ "aBiConnection" \ "writeConnection" \ "src").extract[String]),
-            (json \ "content" \ "aBiConnection" \ "writeConnection" \ "label").extract[String],
-            new URI((json \ "content" \ "aBiConnection" \ "writeConnection" \ "trgt").extract[String])
-          )
+        new PortableAgentCnxn(
+          new URI((json \ "content" \ "aConnection" \ "source").extract[String]),
+          (json \ "content" \ "aConnection" \ "label").extract[String],
+          new URI((json \ "content" \ "aConnection" \ "target").extract[String])
         ),
-        new PortableAgentBiCnxn(
-          new PortableAgentCnxn(
-            new URI((json \ "content" \ "bBiConnection" \ "readConnection" \ "src").extract[String]),
-            (json \ "content" \ "bBiConnection" \ "readConnection" \ "label").extract[String],
-            new URI((json \ "content" \ "bBiConnection" \ "readConnection" \ "trgt").extract[String])
-          ),
-          new PortableAgentCnxn(
-            new URI((json \ "content" \ "bBiConnection" \ "writeConnection" \ "src").extract[String]),
-            (json \ "content" \ "bBiConnection" \ "writeConnection" \ "label").extract[String],
-            new URI((json \ "content" \ "bBiConnection" \ "writeConnection" \ "trgt").extract[String])
-          )
+        new PortableAgentCnxn(
+          new URI((json \ "content" \ "bConnection" \ "source").extract[String]),
+          (json \ "content" \ "bConnection" \ "label").extract[String],
+          new URI((json \ "content" \ "bConnection" \ "target").extract[String])
         ),
         (json \ "content" \ "aMessage").extract[String],
         (json \ "content" \ "bMessage").extract[String]
+      )
+    )
+  }
+  def introductionConfirmationRequest(json: JValue): Unit = {
+    handler.handleintroductionConfirmationRequest(
+      com.protegra_ati.agentservices.msgs.agent.introduction.introductionConfirmationRequest(
+        new URI((json \ "content" \ "sessionURI").extract[String]),
+        (json \ "content" \ "alias").extract[String],
+        (json \ "content" \ "introSessionId").extract[String],
+        (json \ "content" \ "correlationId").extract[String],
+        (json \ "content" \ "accepted").extract[Boolean]
       )
     )
   }
