@@ -981,7 +981,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       optRsrc match {
         case None => {
           // Nothing to be done
-          BasicLogService.tweet( "handlegetAliasDefaultLabelRequest | onFetch: got None" )
+          BasicLogService.tweet( "handleevalSubscribeCancelRequest | onFetch: got None" )
         }
         case _ => {
           CometActorMapper.cometMessage(msg.sessionURI.toString, compact(render(

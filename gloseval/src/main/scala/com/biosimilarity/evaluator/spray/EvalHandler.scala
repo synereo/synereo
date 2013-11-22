@@ -280,6 +280,7 @@ trait EvalHandler {
   def getAliasDefaultLabelRequest(json: JValue): Unit = {}
   // DSL
   def evalSubscribeCancelRequest(json: JValue): Unit = {
+    BasicLogService.tweet("evalSubscribeCancelRequest: json = " + compact(render(json)))
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
     val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
     handler.handleevalSubscribeCancelRequest(
