@@ -743,10 +743,10 @@ with Serializable {
   ) : Either[EvaluationRequestChannel[ReqBody,RspBody],(EvaluationRequestChannel[ReqBody,RspBody],EvaluationRequestChannel[ReqBody,RspBody])] = {
     val ( localExchange, remoteExchange ) = 
       if ( localHost.equals( remoteHost ) && ( localPort == remotePort ) ) {
-        ( "/DSLExecProtocolLocal", "/DSLExecProtocolRemote" )     
+        ( "/BFactoryExecProtocolLocal", "/BFactoryExecProtocolRemote" )     
       }
       else {
-        ( "/DSLExecProtocol", "/DSLExecProtocol" )        
+        ( "/BFactoryExecProtocol", "/BFactoryExecProtocol" )        
       }
     
     if ( returnTwist ) {

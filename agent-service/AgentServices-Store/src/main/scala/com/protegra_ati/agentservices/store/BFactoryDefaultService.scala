@@ -29,8 +29,7 @@ import java.util.UUID
 
 package bfactory {
   object BFactoryDefaultServiceContext
-  extends Serializable 
-  with UseCaseHelper {    
+  extends Serializable {    
     @transient
     lazy val eServe =
       new BFactoryCommsService

@@ -1107,7 +1107,7 @@ package bfactory {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -1454,7 +1454,7 @@ package bfactory {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -1464,11 +1464,11 @@ package bfactory {
 
   }
 
-  trait DSLEvaluatorConfiguration {
+  trait BFactoryEvaluatorConfiguration {
     self : EvalConfig =>
       def dslEvaluatorHostName() : String = {
         try {
-          evalConfig().getString( "DSLEvaluatorHost" )
+          evalConfig().getString( "BFactoryEvaluatorHost" )
         }
         catch {
           case e : Throwable => "localhost" 
@@ -1476,7 +1476,7 @@ package bfactory {
       }
     def dslEvaluatorHostPort() : Int = {
       try {
-        evalConfig().getInt( "DSLEvaluatorPort" )
+        evalConfig().getInt( "BFactoryEvaluatorPort" )
       }
       catch {
         case e : Throwable => 5672
@@ -1484,7 +1484,7 @@ package bfactory {
     }
     def dslEvaluatorHostData() : String = {
         try {
-          evalConfig().getString( "DSLEvaluatorHostData" )
+          evalConfig().getString( "BFactoryEvaluatorHostData" )
         }
         catch {
           case e : Throwable => "/bFactoryProtocol" 
@@ -1492,7 +1492,7 @@ package bfactory {
       }
     def dslEvaluatorPreferredSupplierHostName() : String = {
         try {
-          evalConfig().getString( "DSLEvaluatorPreferredSupplierHost" )
+          evalConfig().getString( "BFactoryEvaluatorPreferredSupplierHost" )
         }
         catch {
           case e : Throwable => "localhost" 
@@ -1500,7 +1500,7 @@ package bfactory {
       }
     def dslEvaluatorPreferredSupplierPort() : Int = {
       try {
-        evalConfig().getInt( "DSLEvaluatorPreferredSupplierPort" )
+        evalConfig().getInt( "BFactoryEvaluatorPreferredSupplierPort" )
       }
       catch {
         case e : Throwable => 5672
@@ -1510,7 +1510,7 @@ package bfactory {
       import scala.collection.JavaConverters._
       try {
         val rslt : java.util.List[String] =
-          evalConfig().getStringList( "DSLEvaluatorNetwork" )
+          evalConfig().getStringList( "BFactoryEvaluatorNetwork" )
         rslt.asScala.toList
       }
       catch {
@@ -1542,7 +1542,7 @@ package bfactory {
 
   object BFactoryEngineCtor extends EvalConfig
   with BFactoryCommLinkConfiguration
-  with DSLEvaluatorConfiguration
+  with BFactoryEvaluatorConfiguration
   with Serializable {
     import BFactoryEngineScope._
     import Being._
@@ -1608,7 +1608,7 @@ package bfactory {
       setup( "/bFactoryProtocol", localHost, localPort, remoteHost, remotePort )
     }
 
-    def setupDSLEvaluatorNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+    def setupBFactoryEvaluatorNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       dataLocation : String = dslEvaluatorHostData,
       localHost : String = dslEvaluatorHostName,
       localPort : Int = dslEvaluatorHostPort
@@ -1631,7 +1631,7 @@ package bfactory {
 
     def dslEvaluatorAgent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
     ): EvalChannel[ReqBody,RspBody] = {
-      setupDSLEvaluatorNode[ReqBody,RspBody]()
+      setupBFactoryEvaluatorNode[ReqBody,RspBody]()
     }
 
     object StorageLabels extends CnxnString[String,String,String] {
@@ -2688,7 +2688,7 @@ package bfactory {
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
           }
           else {
-            println( "warning: derefing node early anyway"  )
+            BasicLogService.tweet( "warning: derefing node early anyway"  )
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
           }
         }
