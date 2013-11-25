@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.protocols
 
 import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
-import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
+import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs._
 import java.util.UUID
@@ -126,10 +126,10 @@ trait IntroductionInitiatorT extends Serializable {
                                             if (aAccepted && bAccepted) {
                                               // create new cnxns
                                               val cnxnLabel = UUID.randomUUID().toString
-                                              val abCnxn = new acT.AgentCnxn(aReadCnxn.src, cnxnLabel, bReadCnxn.src)
-                                              val baCnxn = new acT.AgentCnxn(bReadCnxn.src, cnxnLabel, aReadCnxn.src)
-                                              val aNewBiCnxn = new acT.AgentBiCnxn(baCnxn, abCnxn)
-                                              val bNewBiCnxn = new acT.AgentBiCnxn(abCnxn, baCnxn)
+                                              val abCnxn = new PortableAgentCnxn(aReadCnxn.src, cnxnLabel, bReadCnxn.src)
+                                              val baCnxn = new PortableAgentCnxn(bReadCnxn.src, cnxnLabel, aReadCnxn.src)
+                                              val aNewBiCnxn = new PortableAgentBiCnxn(baCnxn, abCnxn)
+                                              val bNewBiCnxn = new PortableAgentBiCnxn(abCnxn, baCnxn)
 
                                               // create Connect messages
                                               val aConnect = new Connect(Some(sessionId), aConnectId, Some(aNewBiCnxn))

@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.protocols
 
 import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
-import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
+import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
@@ -75,7 +75,7 @@ trait IntroductionRecipientT extends Serializable {
               message)
 
             // send IntroductionNotification message
-            reset { kvdbNode.put(aliasCnxn)(introN.toCnxnCtxtLabel, introN.toGround) }
+            reset { kvdbNode.publish(aliasCnxn)(introN.toCnxnCtxtLabel, introN.toGround) }
 
             reset {
               // listen for IntroductionConfirmation message
@@ -110,23 +110,28 @@ trait IntroductionRecipientT extends Serializable {
                             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(Connect(
                             _,
                             _,
-                            Some(newBiCnxn: acT.AgentBiCnxn))))), _)) => {
+                            Some(newBiCnxn: PortableAgentBiCnxn))))), _)) => {
 
                               // TODO: Register behaviors on new request cnxn
                               reset {
                                 // get the list of biCnxns
                                 for (biCnxns <- kvdbNode.get(aliasCnxn)(biCnxnsListLabel)) {
                                   biCnxns match {
-                                    case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-                                      prevBiCnxns: String))), _)) => {
-
+                                    case Some(mTT.Ground(PostedExpr(prevBiCnxns: String))) => {
                                       // add new biCnxn to the list
-                                      val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[acT.AgentBiCnxn]](prevBiCnxns)
+                                      val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](prevBiCnxns)
+
+                                      // serialize biCnxn list
+                                      val newBiCnxnsStr = Serializer.serialize(newBiCnxns)
 
                                       // save new list of biCnxns
-                                      reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(Serializer.serialize(newBiCnxns)))) }
+                                      reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr))) }
 
-                                      // TODO: Publish Connect message to aliasCnxn
+                                      // create ConnectNotification message
+                                      val connectN = new ConnectNotification(Some(sessionId), newBiCnxn)
+
+                                      // send ConnectNotification message
+                                      reset { kvdbNode.publish(aliasCnxn)(connectN.toCnxnCtxtLabel, connectN.toGround) }
                                     }
                                     case _ => {
                                       // expected String of serialized biCnxns
