@@ -1634,7 +1634,7 @@ package bfactory {
       setupBFactoryEvaluatorNode[ReqBody,RspBody]()
     }
 
-    object StorageLabels extends CnxnString[String,String,String] {
+    object StorageLabels extends CnxnString[String,String,String] with Serializable {
       def instanceStorageLabel(
         majorVersion : String = "0", minorVersion : String = "1"
       )(
