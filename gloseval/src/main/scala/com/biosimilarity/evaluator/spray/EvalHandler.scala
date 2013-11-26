@@ -1020,8 +1020,7 @@ trait EvalHandler {
     ccl match {
       case CnxnCtxtBranch("all", uid :: factuals) => {
         val uidStr = uid match {
-          case CnxnCtxtBranch(tag, _) => tag.substring(2)
-          case CnxnCtxtLeaf(Right(v)) => v
+          case CnxnCtxtBranch(_, List(CnxnCtxtBranch(tag,_))) => tag.substring(2)
         }
         (uidStr, "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")")
       }
@@ -1075,9 +1074,9 @@ trait EvalHandler {
         println("evalSubscribeRequest | feedExpr: calling feed")
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
         val uidCCL = (try {
-          fromTermString("v" + (ec \ "uid").extract[String] + "(_)").get
+          fromTermString("vUID(v" + (ec \ "uid").extract[String] + "(_))").get
         } catch {
-          case _: Throwable => new CnxnCtxtLeaf[String,String,String](Right("_"))
+          case _: Throwable => fromTermString("vUID(UID)").get
         }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
@@ -1139,9 +1138,9 @@ trait EvalHandler {
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
         val uidCCL = (try {
-          fromTermString("v" + (ec \ "uid").extract[String] + "(_)").get
+          fromTermString("vUID(v" + (ec \ "uid").extract[String] + "(_))").get
         } catch {
-          case _: Throwable => fromTermString("_").get
+          case _: Throwable => fromTermString("vUID(UID)").get
         }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
@@ -1160,7 +1159,7 @@ trait EvalHandler {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         val value = (ec \ "value").extract[String]
-        val uidCCL = fromTermString("v" + (ec \ "uid").extract[String] + "(_)").get
+        val uidCCL = fromTermString("vUID(" + (ec \ "uid").extract[String] + "(_))").get
           .asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
