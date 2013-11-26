@@ -1073,7 +1073,7 @@ trait EvalHandler {
         val uidCCL = (try {
           fromTermString('"' + (ec \ "uid").extract[String] + '"').get
         } catch {
-          case _: Throwable => fromTermString("_").get
+          case _: Throwable => CnxnCtxtLeaf[String,String,String](Right("_"))
         }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
