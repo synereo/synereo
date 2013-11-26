@@ -1021,6 +1021,7 @@ trait EvalHandler {
       case CnxnCtxtBranch("all", uid :: factuals) => {
         val uidStr = uid match {
           case CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(uidStr: String))) => uidStr
+          case CnxnCtxtBranch(_, CnxnCtxtLeaf(Right(uidVar: String))) => uidVar
         }
         (uidStr, "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")")
       }
