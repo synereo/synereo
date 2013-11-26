@@ -940,6 +940,8 @@ trait EvalHandler {
 
     def Node: Parser[String] = """[A-Za-z0-9]+""".r
 
+    def Empty: Parser[Set[List[Path]]] = """^$""".r ^^ {(s: String) => Set[List[Path]]()}
+
     def Path: Parser[Set[List[Path]]] = "[" ~> repsep(Node, ",") <~ "]" ^^
     {
       // A path is a trivial sum of a trivial product
@@ -972,10 +974,10 @@ trait EvalHandler {
       }
     }
 
-    def SOP: Parser[Set[List[Path]]] = Path | Product | Sum
+    def SOP: Parser[Set[List[Path]]] = Empty | Path | Product | Sum
     
     def sumOfProductsToFilterSet(sop: Set[List[Path]]): Set[CnxnCtxtLabel[String, String, String]] = {
-      for (prod <- sop) yield {
+      val filterSet = for (prod <- sop) yield {
         // List(List("Greg", "Biosim", "Work"), List("Personal"))
         // => fromTermString("all(vWork(vBiosim(vGreg(_))), vPersonal(_))").get
         fromTermString("all(" + prod.map(path => {
@@ -985,6 +987,11 @@ trait EvalHandler {
           })
           l + "_" + r        
         }).mkString(",") + ")").get
+      }
+      filterSet.isEmpty match {
+        // Default to the "match everything" filter
+        case true => Set(new CnxnCtxtLeaf[String,String,String](Right("_")))
+        case false => filterSet
       }
     }
 
@@ -1063,7 +1070,19 @@ trait EvalHandler {
         }
         println("evalSubscribeRequest | feedExpr: calling feed")
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-        for (filter <- filters) {
+        val uid: Either[String,String] = 
+          try { Left('"' + (ec \ "uid").extract[String] + '"') } catch { case _ => Right("_") }
+        val uidFilters = filters.map((filter) => filter match {
+          case CnxnCtxtBranch(tag, children) => 
+            new CnxnCtxtBranch[String,String,String](
+              tag,
+              children :+ new CnxnCtxtLeaf[String,String,String](uid)
+            )
+          case leaf@CnxnCtxtLeaf(Right(_)) => leaf
+        })
+        for (filter <- uidFilters) {
+          println("evalSubscribeRequest | feedExpr: filter = " + filter)
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
           agentMgr().feed(filter, cnxns, onFeed)
         }
       }
@@ -1112,16 +1131,35 @@ trait EvalHandler {
           case _ => throw new Exception("Couldn't parse staff: " + json)
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-        for (filter <- filters) {
+        val uid: Either[String,String] = 
+          try { Left('"' + (ec \ "uid").extract[String] + '"') } catch { case _ => Right("_") }
+        val uidFilters = filters.map((filter) => filter match {
+          case CnxnCtxtBranch(tag, children) => 
+            new CnxnCtxtBranch[String,String,String](
+              tag,
+              children :+ new CnxnCtxtLeaf[String,String,String](uid)
+            )
+          case leaf@CnxnCtxtLeaf(Right(_)) => leaf
+        })
+        for (filter <- uidFilters) {
           agentMgr().score(filter, cnxns, staff, onScore)
         }
       }
       case "insertContent" => {
         println("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
-        val value = (ec \ "value").extract[String]
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-        for (filter <- filters) {
+        val value = (ec \ "value").extract[String]
+        val uid = '"' + (ec \ "uid").extract[String] + '"'
+        val uidFilters = filters.map((filter) => filter match {
+          case CnxnCtxtBranch(tag, children) => 
+            new CnxnCtxtBranch[String,String,String](
+              tag,
+              children :+ new CnxnCtxtLeaf[String,String,String](Left(uid))
+            )
+        })
+        for (filter <- uidFilters) {
+          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
           agentMgr().post(
             filter,
             cnxns,
