@@ -1019,7 +1019,10 @@ trait EvalHandler {
     }
     ccl match {
       case CnxnCtxtBranch("all", uid :: factuals) => {
-        val uidStr = uid match { case CnxnCtxtBranch(tag, _) => tag.substring(2) }
+        val uidStr = uid match {
+          case CnxnCtxtBranch(tag, _) => tag.substring(2)
+          case CnxnCtxtLeaf(Right(v)) => v
+        }
         (uidStr, "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")")
       }
     }
