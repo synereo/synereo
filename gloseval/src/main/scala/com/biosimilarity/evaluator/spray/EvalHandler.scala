@@ -1071,7 +1071,7 @@ trait EvalHandler {
         println("evalSubscribeRequest | feedExpr: calling feed")
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
         val uidCCL = (try {
-          fromTermString('"' + (ec \ "uid").extract[String] + '"').get
+          fromTermString("v" + (ec \ "uid").extract[String] + "()").get
         } catch {
           case _: Throwable => new CnxnCtxtLeaf[String,String,String](Right("_"))
         }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
@@ -1135,7 +1135,7 @@ trait EvalHandler {
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
         val uidCCL = (try {
-          fromTermString('"' + (ec \ "uid").extract[String] + '"').get
+          fromTermString("v" + (ec \ "uid").extract[String] + "()").get
         } catch {
           case _: Throwable => fromTermString("_").get
         }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
@@ -1156,7 +1156,7 @@ trait EvalHandler {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         val value = (ec \ "value").extract[String]
-        val uidCCL = fromTermString('"' + (ec \ "uid").extract[String] + '"').get
+        val uidCCL = fromTermString("v" + (ec \ "uid").extract[String] + "()").get
           .asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
