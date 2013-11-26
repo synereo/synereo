@@ -1081,6 +1081,8 @@ trait EvalHandler {
           case leaf@CnxnCtxtLeaf(Right(_)) => leaf
         })
         for (filter <- uidFilters) {
+          println("evalSubscribeRequest | feedExpr: filter = " + filter)
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
           agentMgr().feed(filter, cnxns, onFeed)
         }
       }
