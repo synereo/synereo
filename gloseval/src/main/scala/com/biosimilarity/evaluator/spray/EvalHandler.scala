@@ -1010,7 +1010,7 @@ trait EvalHandler {
 
   // Renders a ccl of the form "all(va('_), vb(vc(vd('_))))"
   // as the kind of json filter we get from the UI
-  def cclToJSON(ccl: CnxnCtxtLabel[String,String,String]): String = {
+  def cclToUI(ccl: CnxnCtxtLabel[String,String,String]): (String, String) = {
     def cclToPath(ccl: CnxnCtxtLabel[String,String,String]): List[String] = {
       ccl match {
         case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right("_")))) => List(tag.substring(1))
@@ -1018,8 +1018,9 @@ trait EvalHandler {
       }
     }
     ccl match {
-      case CnxnCtxtBranch("all", factuals) => {
-        "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")"
+      case CnxnCtxtBranch("all", uid :: factuals) => {
+        val uidStr = uid match { case CnxnCtxtBranch(tag, _) => tag.substring(2) }
+        (uidStr, "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")")
       }
     }
   }
@@ -1049,7 +1050,7 @@ trait EvalHandler {
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
               (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
             ))), _)) => {
-              val jsonFilter = cclToJSON(filter)
+              val (uid, jsonFilter) = cclToUI(filter)
               val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
               val content =
                 ("sessionURI" -> sessionURIStr) ~
@@ -1079,7 +1080,7 @@ trait EvalHandler {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
-              children :+ uidCCL
+              uidCCL +: children
             )
           case leaf@CnxnCtxtLeaf(Right(_)) => leaf
         })
@@ -1098,7 +1099,7 @@ trait EvalHandler {
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
               (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
             ))), _)) => {
-              val jsonFilter = cclToJSON(filter)
+              val (uid, jsonFilter) = cclToUI(filter)
               val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
               val content =
                 ("sessionURI" -> sessionURIStr) ~
@@ -1143,7 +1144,7 @@ trait EvalHandler {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
-              children :+ uidCCL
+              uidCCL +: children
             )
           case leaf@CnxnCtxtLeaf(Right(_)) => leaf
         })
@@ -1162,7 +1163,7 @@ trait EvalHandler {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
-              children :+ uidCCL
+              uidCCL +: children
             )
         })
         for (filter <- uidFilters) {
