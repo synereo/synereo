@@ -1156,7 +1156,7 @@ trait EvalHandler {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         val value = (ec \ "value").extract[String]
-        val uidCCL = fromTermString((ec \ "uid").extract[String]).get
+        val uidCCL = fromTermString('"' + (ec \ "uid").extract[String] + '"').get
           .asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
