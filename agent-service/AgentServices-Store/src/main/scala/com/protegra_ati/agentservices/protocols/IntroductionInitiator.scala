@@ -48,11 +48,12 @@ trait IntroductionInitiatorT extends Serializable {
               for (agiprsp <- kvdbNode.get(
                 aReadCnxn)(
                 new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
-
                 // match response from A
-                // TODO: Get introduction profile from message
                 agiprsp match {
-                  case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(_, _)))), _)) => {
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(
+                    _,
+                    _,
+                    Some(aProfileData))))), _)) => {
 
                     // create B's GetIntroductionProfileRequest message
                     val bGetIntroProfileRq = new GetIntroductionProfileRequest(
@@ -70,16 +71,19 @@ trait IntroductionInitiatorT extends Serializable {
                         new GetIntroductionProfileResponse(Some(sessionId), bGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
 
                         // match response from B
-                        // TODO: Get introduction profile from message
                         bgiprsp match {
-                          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(_, _)))), _)) => {
+                          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(
+                            _,
+                            _,
+                            Some(bProfileData))))), _)) => {
 
                             // create A's IntroductionRequest message
-                            // TODO: Add introduction profile to message
                             val aIntroRq = new IntroductionRequest(
                               Some(sessionId),
                               Some(UUID.randomUUID.toString),
-                              Some(aReadCnxn), aMessage)
+                              Some(aReadCnxn),
+                              aMessage,
+                              Some(bProfileData))
 
                             // send A's IntroductionRequest message
                             reset { kvdbNode.publish(aWriteCnxn)(aIntroRq.toCnxnCtxtLabel, aIntroRq.toGround) }
@@ -99,11 +103,12 @@ trait IntroductionInitiatorT extends Serializable {
                                   Some(aConnectId))))), _)) => {
 
                                     // create B's IntroductionRequest message
-                                    // TODO: Add introduction profile to message
                                     val bIntroRq = new IntroductionRequest(
                                       Some(sessionId),
                                       Some(UUID.randomUUID.toString),
-                                      Some(bReadCnxn), bMessage)
+                                      Some(bReadCnxn),
+                                      bMessage,
+                                      Some(aProfileData))
 
                                     // send B's IntroductionRequest message
                                     reset { kvdbNode.publish(bWriteCnxn)(bIntroRq.toCnxnCtxtLabel, bIntroRq.toGround) }

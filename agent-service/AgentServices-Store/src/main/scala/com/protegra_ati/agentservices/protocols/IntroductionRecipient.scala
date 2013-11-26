@@ -11,6 +11,7 @@ import scala.util.continuations._
 
 trait IntroductionRecipientT extends Serializable {
   val biCnxnsListLabel = "biCnxnsList(true)".toLabel
+  val profileDataLabel = "jsonBlob(W)".toLabel
 
   private def toAgentCnxn(cnxn: PortableAgentCnxn): acT.AgentCnxn = {
     acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
@@ -19,7 +20,7 @@ trait IntroductionRecipientT extends Serializable {
   def run(
     kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns: Seq[PortableAgentCnxn],
-    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+    filters: Seq[CnxnCtxtLabel[String, String, String]]): Unit = {
 
     if (cnxns.size != 2) throw new Exception("invalid number of cnxns supplied")
 
@@ -36,15 +37,28 @@ trait IntroductionRecipientT extends Serializable {
             Some(corrId),
             Some(rspCnxn))))), _)) => {
 
-            // TODO: Load introduction profile
+            // TODO: get data from aliasCnxn once it is being stored there
+            val identityCnxn = acT.AgentCnxn(aliasCnxn.src, "identity", aliasCnxn.trgt)
 
-            // create GetIntroductionProfileResponse message
-            // TODO: Set introduction profile on message
-            val getIntroProfileRsp = new GetIntroductionProfileResponse(Some(sessionId), corrId)
+            reset {
+              // get the profile data
+              for (e <- kvdbNode.read(identityCnxn)(profileDataLabel)) {
+                e match {
+                  case Some(mTT.Ground(PostedExpr(jsonBlob: String))) => {
+                    // create GetIntroductionProfileResponse message
+                    val getIntroProfileRsp = new GetIntroductionProfileResponse(Some(sessionId), corrId, Some(jsonBlob))
 
-            // send GetIntroductionProfileResponse message
-            Thread.sleep(1000)
-            reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
+                    // send GetIntroductionProfileResponse message
+                    Thread.sleep(1000)
+                    reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
+                  }
+                  case _ => {
+                    // expected String of profile data
+                    throw new Exception("unexpected profile data")
+                  }
+                }
+              }
+            }
           }
           case None => {}
           case _ => {
@@ -58,21 +72,21 @@ trait IntroductionRecipientT extends Serializable {
     reset {
       // listen for IntroductionRequest message
       for (irq <- kvdbNode.subscribe(readCnxn)(new IntroductionRequest().toCnxnCtxtLabel)) {
-
         irq match {
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionRequest(
             Some(sessionId),
             Some(corrId),
             Some(rspCnxn),
-            message)))), _)) => {
+            message,
+            Some(profileData))))), _)) => {
 
             // create IntroductionNotification message
-            // TODO: Add introduction profile to message
             val introN = new IntroductionNotification(
               Some(sessionId),
               UUID.randomUUID.toString,
               new acT.AgentBiCnxn(readCnxn, rspCnxn),
-              message)
+              message,
+              profileData)
 
             // send IntroductionNotification message
             reset { kvdbNode.publish(aliasCnxn)(introN.toCnxnCtxtLabel, introN.toGround) }
@@ -128,7 +142,7 @@ trait IntroductionRecipientT extends Serializable {
                                       reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr))) }
 
                                       // create ConnectNotification message
-                                      val connectN = new ConnectNotification(Some(sessionId), newBiCnxn)
+                                      val connectN = new ConnectNotification(Some(sessionId), newBiCnxn, profileData)
 
                                       // send ConnectNotification message
                                       reset { kvdbNode.publish(aliasCnxn)(connectN.toCnxnCtxtLabel, connectN.toGround) }
