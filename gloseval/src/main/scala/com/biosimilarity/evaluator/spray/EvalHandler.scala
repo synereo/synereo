@@ -1070,13 +1070,16 @@ trait EvalHandler {
         }
         println("evalSubscribeRequest | feedExpr: calling feed")
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-        val uid: Either[String,String] = 
-          try { Left((ec \ "uid").extract[String]) } catch { case _ => Right("_") }
+        val uidCCL = (try {
+          fromTermString('"' + (ec \ "uid").extract[String] + '"').get
+        } catch {
+          case _: Throwable => fromTermString("_").get
+        }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
-              children :+ new CnxnCtxtLeaf[String,String,String](uid)
+              children :+ uidCCL
             )
           case leaf@CnxnCtxtLeaf(Right(_)) => leaf
         })
@@ -1131,13 +1134,16 @@ trait EvalHandler {
           case _ => throw new Exception("Couldn't parse staff: " + json)
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-        val uid: Either[String,String] = 
-          try { Left((ec \ "uid").extract[String]) } catch { case _ => Right("_") }
+        val uidCCL = (try {
+          fromTermString('"' + (ec \ "uid").extract[String] + '"').get
+        } catch {
+          case _: Throwable => fromTermString("_").get
+        }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
-              children :+ new CnxnCtxtLeaf[String,String,String](uid)
+              children :+ uidCCL
             )
           case leaf@CnxnCtxtLeaf(Right(_)) => leaf
         })
@@ -1150,12 +1156,13 @@ trait EvalHandler {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         val value = (ec \ "value").extract[String]
-        val uid = (ec \ "uid").extract[String]
+        val uidCCL = fromTermString((ec \ "uid").extract[String]).get
+          .asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
-              children :+ new CnxnCtxtLeaf[String,String,String](Left(uid))
+              children :+ uidCCL
             )
         })
         for (filter <- uidFilters) {
