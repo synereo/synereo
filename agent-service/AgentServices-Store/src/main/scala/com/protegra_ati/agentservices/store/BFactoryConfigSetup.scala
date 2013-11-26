@@ -76,7 +76,7 @@ package bfactory {
     def makeMap() = {
       for(
         entry <- BFactoryDefaultServiceContext.eServe.evalConfig(
-          "eval.client.conf"
+          "eval.conf"
         ).getObject( "BFactoryMap" ).entrySet.asScala;
         eKey = entry.getKey;
         eVal = entry.getValue;
