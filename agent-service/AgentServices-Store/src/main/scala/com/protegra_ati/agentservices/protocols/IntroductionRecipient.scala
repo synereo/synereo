@@ -2,7 +2,7 @@ package com.protegra_ati.agentservices.protocols
 
 import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
-import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
+import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
@@ -11,6 +11,7 @@ import scala.util.continuations._
 
 trait IntroductionRecipientT extends Serializable {
   val biCnxnsListLabel = "biCnxnsList(true)".toLabel
+  val profileDataLabel = "jsonBlob(W)".toLabel
 
   private def toAgentCnxn(cnxn: PortableAgentCnxn): acT.AgentCnxn = {
     acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
@@ -19,7 +20,7 @@ trait IntroductionRecipientT extends Serializable {
   def run(
     kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns: Seq[PortableAgentCnxn],
-    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+    filters: Seq[CnxnCtxtLabel[String, String, String]]): Unit = {
 
     if (cnxns.size != 2) throw new Exception("invalid number of cnxns supplied")
 
@@ -36,15 +37,28 @@ trait IntroductionRecipientT extends Serializable {
             Some(corrId),
             Some(rspCnxn))))), _)) => {
 
-            // TODO: Load introduction profile
+            // TODO: get data from aliasCnxn once it is being stored there
+            val identityCnxn = acT.AgentCnxn(aliasCnxn.src, "identity", aliasCnxn.trgt)
 
-            // create GetIntroductionProfileResponse message
-            // TODO: Set introduction profile on message
-            val getIntroProfileRsp = new GetIntroductionProfileResponse(Some(sessionId), corrId)
+            reset {
+              // get the profile data
+              for (e <- kvdbNode.read(identityCnxn)(profileDataLabel)) {
+                e match {
+                  case Some(mTT.Ground(PostedExpr(jsonBlob: String))) => {
+                    // create GetIntroductionProfileResponse message
+                    val getIntroProfileRsp = new GetIntroductionProfileResponse(Some(sessionId), corrId, Some(jsonBlob))
 
-            // send GetIntroductionProfileResponse message
-            Thread.sleep(1000)
-            reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
+                    // send GetIntroductionProfileResponse message
+                    Thread.sleep(1000)
+                    reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
+                  }
+                  case _ => {
+                    // expected String of profile data
+                    throw new Exception("unexpected profile data")
+                  }
+                }
+              }
+            }
           }
           case None => {}
           case _ => {
@@ -58,24 +72,24 @@ trait IntroductionRecipientT extends Serializable {
     reset {
       // listen for IntroductionRequest message
       for (irq <- kvdbNode.subscribe(readCnxn)(new IntroductionRequest().toCnxnCtxtLabel)) {
-
         irq match {
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(IntroductionRequest(
             Some(sessionId),
             Some(corrId),
             Some(rspCnxn),
-            message)))), _)) => {
+            message,
+            Some(profileData))))), _)) => {
 
             // create IntroductionNotification message
-            // TODO: Add introduction profile to message
             val introN = new IntroductionNotification(
               Some(sessionId),
               UUID.randomUUID.toString,
               new acT.AgentBiCnxn(readCnxn, rspCnxn),
-              message)
+              message,
+              profileData)
 
             // send IntroductionNotification message
-            reset { kvdbNode.put(aliasCnxn)(introN.toCnxnCtxtLabel, introN.toGround) }
+            reset { kvdbNode.publish(aliasCnxn)(introN.toCnxnCtxtLabel, introN.toGround) }
 
             reset {
               // listen for IntroductionConfirmation message
@@ -110,23 +124,28 @@ trait IntroductionRecipientT extends Serializable {
                             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(Connect(
                             _,
                             _,
-                            Some(newBiCnxn: acT.AgentBiCnxn))))), _)) => {
+                            Some(newBiCnxn: PortableAgentBiCnxn))))), _)) => {
 
                               // TODO: Register behaviors on new request cnxn
                               reset {
                                 // get the list of biCnxns
                                 for (biCnxns <- kvdbNode.get(aliasCnxn)(biCnxnsListLabel)) {
                                   biCnxns match {
-                                    case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-                                      prevBiCnxns: String))), _)) => {
-
+                                    case Some(mTT.Ground(PostedExpr(prevBiCnxns: String))) => {
                                       // add new biCnxn to the list
-                                      val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[acT.AgentBiCnxn]](prevBiCnxns)
+                                      val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](prevBiCnxns)
+
+                                      // serialize biCnxn list
+                                      val newBiCnxnsStr = Serializer.serialize(newBiCnxns)
 
                                       // save new list of biCnxns
-                                      reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(Serializer.serialize(newBiCnxns)))) }
+                                      reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr))) }
 
-                                      // TODO: Publish Connect message to aliasCnxn
+                                      // create ConnectNotification message
+                                      val connectN = new ConnectNotification(Some(sessionId), newBiCnxn, profileData)
+
+                                      // send ConnectNotification message
+                                      reset { kvdbNode.publish(aliasCnxn)(connectN.toCnxnCtxtLabel, connectN.toGround) }
                                     }
                                     case _ => {
                                       // expected String of serialized biCnxns

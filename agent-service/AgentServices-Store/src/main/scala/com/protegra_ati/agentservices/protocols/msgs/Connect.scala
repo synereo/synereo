@@ -1,11 +1,11 @@
 package com.protegra_ati.agentservices.protocols.msgs
 
-import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
+import com.biosimilarity.evaluator.distribution.PortableAgentBiCnxn
 
 case class Connect(
     override val sessionId: Option[String],
     connectId: String,
-    biCnxn: Option[acT.AgentBiCnxn])
+    biCnxn: Option[PortableAgentBiCnxn])
   extends ProtocolMessage {
 
   def this(sessionId: Option[String], connectId: String) = this(sessionId, connectId, None)

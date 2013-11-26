@@ -6,8 +6,9 @@ case class IntroductionRequest(
     override val sessionId: Option[String],
     override val correlationId: Option[String],
     override val responseCnxn: Option[acT.AgentCnxn],
-    message: Option[String])
+    message: Option[String],
+    profileData: Option[String])
   extends ProtocolRequestMessage {
 
-  def this() = this(None, None, None, None)
+  def this() = this(None, None, None, None, None)
 }

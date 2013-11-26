@@ -6,5 +6,6 @@ case class IntroductionNotification(
     override val sessionId: Option[String],
     correlationId: String,
     initiatorBiCnxn: acT.AgentBiCnxn,
-    message: Option[String])
+    message: Option[String],
+    profileData: String)
   extends ProtocolMessage
