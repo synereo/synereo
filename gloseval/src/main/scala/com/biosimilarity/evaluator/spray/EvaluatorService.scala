@@ -210,7 +210,8 @@ trait EvaluatorService extends HttpService
     ("evalSubscribeRequest", evalSubscribeRequest),
     ("evalSubscribeCancelRequest", evalSubscribeCancelRequest),
     // Introduction Protocol
-    ("beginIntroductionRequest", beginIntroductionRequest)
+    ("beginIntroductionRequest", beginIntroductionRequest),
+    ("introductionConfirmationRequest", introductionConfirmationRequest)
   )
 
   @transient
