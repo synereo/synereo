@@ -1920,11 +1920,7 @@ package bfactory {
               )
               
               e match {
-                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {
-                  val instanceID = UUID.randomUUID
-                  val instanceLabel =
-                    StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
-                  
+                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {                                    
                   try {
                     BasicLogService.tweet(
                       "method: evaluateExpression"
@@ -1944,7 +1940,20 @@ package bfactory {
                       case Left( entryPointM ) => {
                         val t = new Thread {
                           override def run() = {
+                            val instanceID = UUID.randomUUID
+                            val instanceLabel =
+                              StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
                             entryPointM( n, cnxns, filters )
+                            handler( 
+                              Some(
+                                mTT.Ground(
+                                  ConcreteBFactHL.InstanceRunning(
+                                    bdc,
+                                    instanceLabel
+                                  )
+                                )
+                              )
+                            )
                           }
                         }
                         t.run()

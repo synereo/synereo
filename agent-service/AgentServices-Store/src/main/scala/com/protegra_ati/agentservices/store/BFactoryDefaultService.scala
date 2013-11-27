@@ -28,8 +28,28 @@ import java.util.Date
 import java.util.UUID
 
 package bfactory {
-  case class StartMeUp(
-  )
+  trait StartMeUpT {
+    def run(
+      b : Boolean, i : Int, s : String, r : Option[StartMeUp]
+    ) = {
+      println(
+        (
+          "b : " + b
+          + "\n i : " + i
+          + "\n s : " + s
+          + "\n r : " + r
+        )
+      )
+    }
+  }
+  class StartMeUp(
+  ) extends StartMeUpT {
+    override def run(
+      b : Boolean, i : Int, s : String, r : Option[StartMeUp]
+    ) = {
+      super.run( b, i , s, r )
+    }
+  }
   object BFactoryDefaultServiceContext
   extends Serializable {    
     import CnxnConversionStringScope._
