@@ -1200,6 +1200,15 @@ trait EvalHandler {
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
+            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
+              val content = 
+                ("sessionURI" -> sessionURIStr) ~
+                ("pageOfPosts" -> List[String]())
+              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+              println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+              BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+            }
             case _ => throw new Exception("Unrecognized resource: " + optRsrc)
           }
         }
