@@ -6,6 +6,23 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-com.biosimilarity.evaluator.distribution.diesel.Server.run()
-com.biosimilarity.evaluator.distribution.bfactory.Server.run()
+object DSLQuickStart {
+  def begin() = {
+    com.biosimilarity.evaluator.distribution.diesel.Server.run()
+    com.biosimilarity.evaluator.distribution.bfactory.Server.run()
+
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._  
+
+    bFactoryMgr().commenceInstance(
+      introductionRecipientCnxn,
+      introductionRecipientLabel,
+      List(newBiCnxn.readCnxn, toPortableAgentCnxn(aliasCnxn)),
+      Nil,
+      (optRsrc => ())
+    )
+  }
+}
+
+DSLQuickStart.begin()
 
