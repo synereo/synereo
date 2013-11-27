@@ -453,7 +453,7 @@ trait EvalHandler {
                                 optRsrc match {
                                   case None => ()
                                   case Some(_) => {
-                                    connectToNodeUser(
+                                    onAgentCreation(
                                       cap,
                                       aliasCnxn,
                                       Unit => {
@@ -560,10 +560,14 @@ trait EvalHandler {
     )
   }
 
-  def connectToNodeUser(
+  def onAgentCreation(
     cap: String,
     aliasCnxn: PortableAgentCnxn,
-    onSuccess: Unit => Unit = Unit => ()): Unit = {
+    onSuccess: Unit => Unit = Unit => ()
+  ): Unit = {
+    
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
 
     val aliasURI = new URI("alias://" + cap + "/alias")
     val nodeAgentCap = emailToCap(NodeUser.email)
@@ -572,9 +576,9 @@ trait EvalHandler {
     val nodeUserAliasCnxn = PortableAgentCnxn(nodeAliasURI, "alias", nodeAliasURI)
     val cnxnLabel = UUID.randomUUID().toString
     val nodeToThisCnxn = PortableAgentCnxn(nodeAliasURI, cnxnLabel, aliasURI)
-    val thisToNode = PortableAgentCnxn(aliasURI, cnxnLabel, nodeAliasURI)
-    val biCnxn = PortableAgentBiCnxn(nodeToThisCnxn, thisToNode)
-    val nodeAgentBiCnxn = PortableAgentBiCnxn(thisToNode, nodeToThisCnxn)
+    val thisToNodeCnxn = PortableAgentCnxn(aliasURI, cnxnLabel, nodeAliasURI)
+    val biCnxn = PortableAgentBiCnxn(nodeToThisCnxn, thisToNodeCnxn)
+    val nodeAgentBiCnxn = PortableAgentBiCnxn(thisToNodeCnxn, nodeToThisCnxn)
 
     agentMgr().post(
       biCnxnsListLabel,
@@ -619,6 +623,35 @@ trait EvalHandler {
             )
           }
         }
+      }
+    )
+    
+    // Launching introduction behaviors
+    bFactoryMgr().commenceInstance(
+      introductionInitiatorCnxn,
+      introductionInitiatorLabel,
+      List(aliasCnxn),
+      Nil,
+      {
+        optRsrc => println( "onCommencement one | " + optRsrc )
+      }
+    )
+    bFactoryMgr().commenceInstance(
+      introductionRecipientCnxn,
+      introductionRecipientLabel,
+      List( nodeToThisCnxn, aliasCnxn ),
+      Nil,
+      {
+        optRsrc => println( "onCommencement two | " + optRsrc )
+      }
+    )
+    bFactoryMgr().commenceInstance(
+      introductionRecipientCnxn,
+      introductionRecipientLabel,
+      List( thisToNodeCnxn, nodeUserAliasCnxn ),
+      Nil,
+      {
+        optRsrc => println( "onCommencement three | " + optRsrc )
       }
     )
   }
@@ -1395,6 +1428,7 @@ trait EvalHandler {
                                           case None => ()
                                           case Some(_) => {
                                             // Store empty bi-cnxn list on alias cnxn
+                                            launchNodeUserBehaviors( aliasCnxn )
                                             agentMgr().post(
                                               biCnxnsListLabel,
                                               List(aliasCnxn),
@@ -1419,6 +1453,22 @@ trait EvalHandler {
           }
           case _ => ()
         }
+      }
+    )
+  }
+
+  def launchNodeUserBehaviors(
+    aliasCnxn : PortableAgentCnxn
+  ) : Unit = {
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
+    bFactoryMgr().commenceInstance(
+      introductionInitiatorCnxn,
+      introductionInitiatorLabel,
+      List( aliasCnxn ),
+      Nil,
+      {
+        optRsrc => println( "onCommencement five | " + optRsrc )
       }
     )
   }
