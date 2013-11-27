@@ -1214,6 +1214,8 @@ trait EvalHandler {
         }
         println("evalSubscribeRequest | feedExpr: calling feed")
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
+        val uidCCL = (try {
+          fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
         } catch {
           case _: Throwable => fromTermString("vUID(UID)").get
         }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
@@ -1221,6 +1223,7 @@ trait EvalHandler {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
+              uidCCL +: children
             )
           case leaf@CnxnCtxtLeaf(Right(_)) => leaf
         })
@@ -1275,6 +1278,8 @@ trait EvalHandler {
           case _ => throw new Exception("Couldn't parse staff: " + json)
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
+        val uidCCL = (try {
+          fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
         } catch {
           case _: Throwable => fromTermString("vUID(UID)").get
         }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
@@ -1282,6 +1287,7 @@ trait EvalHandler {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
+              uidCCL +: children
             )
           case leaf@CnxnCtxtLeaf(Right(_)) => leaf
         })
@@ -1294,11 +1300,13 @@ trait EvalHandler {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         val value = (ec \ "value").extract[String]
+        val uidCCL = fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
           .asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
         val uidFilters = filters.map((filter) => filter match {
           case CnxnCtxtBranch(tag, children) => 
             new CnxnCtxtBranch[String,String,String](
               tag,
+              uidCCL +: children
             )
         })
         for (filter <- uidFilters) {
