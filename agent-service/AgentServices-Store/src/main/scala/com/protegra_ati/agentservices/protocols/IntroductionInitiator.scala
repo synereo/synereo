@@ -25,14 +25,13 @@ trait IntroductionInitiatorT extends Serializable {
     reset {
       // listen for BeginIntroductionRequest message
       for (birq <- kvdbNode.subscribe(aliasCnxn)(new BeginIntroductionRequest().toCnxnCtxtLabel)) {
-
         birq match {
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(BeginIntroductionRequest(
-          Some(sessionId),
-          Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
-          Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
-          aMessage,
-          bMessage)))), _)) => {
+            Some(sessionId),
+            Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
+            Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
+            aMessage,
+            bMessage)))), _)) => {
 
             // create A's GetIntroductionProfileRequest message
             val aGetIntroProfileRq = new GetIntroductionProfileRequest(
