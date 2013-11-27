@@ -28,6 +28,8 @@ import java.util.Date
 import java.util.UUID
 
 package bfactory {
+  case class StartMeUp(
+  )
   object BFactoryDefaultServiceContext
   extends Serializable {    
     import CnxnConversionStringScope._
