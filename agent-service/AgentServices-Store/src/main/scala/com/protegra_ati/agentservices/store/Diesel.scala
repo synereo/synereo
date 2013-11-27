@@ -1683,7 +1683,7 @@ package diesel {
                 
                 BasicLogService.tweet(
                   "method: evaluateExpression"
-                  + "\n calling node.fetch "
+                  + "\n calling node.read "
                   + "\nthis: " + this
                   + "\nnode: " + node
                   + "\nexpr: " + expr
@@ -1693,11 +1693,11 @@ package diesel {
                   + "\nfilter: " + filter
                 )
 
-                for( e <- node.fetch( agntCnxn )( filter ) ) {
+                for( e <- node.read( agntCnxn )( filter ) ) {
 
                   BasicLogService.tweet(
                     "method: evaluateExpression"
-                    + "\n returned from node.fetch "
+                    + "\n returned from node.read "
                     + "\nthis: " + this
                     + "\nnode: " + node
                     + "\nexpr: " + expr
@@ -1734,7 +1734,7 @@ package diesel {
               reset {
                 BasicLogService.tweet(
                   "method: evaluateExpression"
-                  + "\n calling node.subscribe "
+                  + "\n calling node.read "
                   + "\nthis: " + this
                   + "\nnode: " + node
                   + "\nexpr: " + expr
@@ -1744,11 +1744,11 @@ package diesel {
                   + "\nfilter: " + filter
                 )
 
-                for( e <- node.fetch( agntCnxn )( filter ) ) {
+                for( e <- node.read( agntCnxn )( filter ) ) {
                   
                   BasicLogService.tweet(
                     "method: evaluateExpression"
-                    + "\n returned from node.fetch "
+                    + "\n returned from node.read "
                     + "\nthis: " + this
                     + "\nnode: " + node
                     + "\nexpr: " + expr
