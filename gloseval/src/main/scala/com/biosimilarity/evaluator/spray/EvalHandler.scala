@@ -481,6 +481,85 @@ trait EvalHandler {
     )
   }
 
+  // TODO: Replace function below with behavior
+  def listenIntroductionNotification(sessionURIStr: String, aliasCnxn: PortableAgentCnxn): Unit = {
+    import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope.acT
+    import com.protegra_ati.agentservices.protocols.msgs._
+
+    val introductionNotificationLabel = fromTermString("protocolMessage(introductionNotification(sessionId(_)))").getOrElse(throw new Exception("Couldn't parse introductionNotificationLabel"))
+
+    agentMgr().feed(
+      introductionNotificationLabel,
+      List(aliasCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        BasicLogService.tweet("listenIntroductionNotification | onFeed : optRsrc = " + optRsrc)
+        optRsrc match {
+          case None => ()
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(IntroductionNotification(
+            Some(sessionId),
+            correlationId,
+            acT.AgentBiCnxn(_, writeCnxn),
+            message,
+            profileData
+          )), _, _)))), _)) => {
+            CometActorMapper.cometMessage(sessionURIStr, compact(render(
+              ("msgType" -> "introductionNotification") ~
+              ("content" ->
+                ("introSessionId" -> sessionId) ~
+                ("correlationId" -> correlationId) ~
+                ("connection" ->
+                  ("source" -> writeCnxn.src.toString) ~
+                  ("label" -> writeCnxn.label) ~
+                  ("target" -> writeCnxn.trgt.toString)
+                ) ~
+                ("message" -> message.getOrElse("")) ~
+                ("introProfile" -> profileData)
+              )
+            )))
+          }
+        }
+      }
+    )
+  }
+
+  // TODO: Replace function below with behavior
+  def listenConnectNotification(sessionURIStr: String, aliasCnxn: PortableAgentCnxn): Unit = {
+    import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope.acT
+    import com.protegra_ati.agentservices.protocols.msgs._
+
+    val connectNotificationLabel = fromTermString("protocolMessage(connectNotification(sessionId(_)))").getOrElse(throw new Exception("Couldn't parse connectNotificationLabel"))
+
+    agentMgr().feed(
+      connectNotificationLabel,
+      List(aliasCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        BasicLogService.tweet("listenConnectNotification | onFeed : optRsrc = " + optRsrc)
+        optRsrc match {
+          case None => ()
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(ConnectNotification(
+            Some(sessionId),
+            PortableAgentBiCnxn(_, writeCnxn),
+            profileData
+          )), _, _)))), _)) => {
+            CometActorMapper.cometMessage(sessionURIStr, compact(render(
+              ("msgType" -> "connectNotification") ~
+              ("content" ->
+                ("connection" ->
+                  ("source" -> writeCnxn.src.toString) ~
+                  ("label" -> writeCnxn.label) ~
+                  ("target" -> writeCnxn.trgt.toString)
+                ) ~
+                ("introProfile" -> profileData)
+              )
+            )))
+          }
+        }
+      }
+    )
+  }
+
   def connectToNodeUser(
     cap: String,
     aliasCnxn: PortableAgentCnxn,
@@ -654,6 +733,11 @@ trait EvalHandler {
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
                       case PostedExpr( (PostedExpr(labelList: String), _, _) ) => {
+                        // TODO: Replace notification block below with behavior code
+                        val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
+                        listenIntroductionNotification("agent-session://" + cap, aliasCnxn)
+                        listenConnectNotification("agent-session://" + cap, aliasCnxn)
+
                         val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
 
                         val content = 
