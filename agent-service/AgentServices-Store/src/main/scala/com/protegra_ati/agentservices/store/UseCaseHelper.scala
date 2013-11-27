@@ -967,9 +967,9 @@ package usage {
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
   with StorageManagement with CnxnString[String,String,String]
   with Serializable {
-    def insert(value: String) = {
+    def insert(value: String, filter: String = "all(a(_))") = {
       agentMgr().post(
-        fromTermString("all(a(_))").get,
+        fromTermString(filter).get,
         List(PortableAgentCnxn(
           new URI("a://b"),
           "flat",
@@ -979,9 +979,9 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onPost: optRsrc = " + optRsrc)
       )
     }
-    def feed() = {
+    def feed(filter: String = "all(a(_))") = {
       agentMgr().feed(
-        fromTermString("all(a(_))").get,
+        fromTermString(filter).get,
         List(PortableAgentCnxn(
           new URI("a://b"),
           "flat",
