@@ -77,6 +77,10 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
     }
 
     agentMgr().put( ic.toCnxnCtxtLabel, List( aliasStorageCnxn ), ic, onPut )
+
+    // removes introduction notification
+    val introductionNotificationLabel = fromTermString("protocolMessage(introductionNotification(sessionId(\"" + msg.introSessionId + "\")))").getOrElse(throw new Exception("Couldn't parse introductionNotificationLabel"))
+    agentMgr().get( introductionNotificationLabel, List ( aliasStorageCnxn ) )
   }
 
   private def toAgentBiCnxn( cnxn : PortableAgentCnxn ) : acT.AgentBiCnxn = {
