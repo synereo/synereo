@@ -192,4 +192,12 @@ trait IntroductionInitiatorT extends Serializable {
   }
 }
 
-class IntroductionInitiator extends IntroductionInitiatorT
+class IntroductionInitiator extends IntroductionInitiatorT {
+  override def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+
+    super.run(kvdbNode, cnxns, filters)
+  }
+}

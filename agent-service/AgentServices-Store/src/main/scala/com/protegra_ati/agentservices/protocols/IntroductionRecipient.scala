@@ -126,7 +126,6 @@ trait IntroductionRecipientT extends Serializable {
                             _,
                             Some(newBiCnxn: PortableAgentBiCnxn))))), _)) => {
 
-                              // TODO: Register behaviors on new request cnxn
                               reset {
                                 // get the list of biCnxns
                                 for (biCnxns <- kvdbNode.get(aliasCnxn)(biCnxnsListLabel)) {
@@ -185,4 +184,12 @@ trait IntroductionRecipientT extends Serializable {
   }
 }
 
-class IntroductionRecipient extends IntroductionRecipientT
+class IntroductionRecipient extends IntroductionRecipientT {
+  override def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+
+    super.run(kvdbNode, cnxns, filters)
+  }
+}
