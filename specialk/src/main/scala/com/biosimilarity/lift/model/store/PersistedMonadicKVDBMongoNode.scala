@@ -461,7 +461,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      + "\n"
 		      + "unBlob : " + unBlob
 		      + "\n"
-		      + "unBlob type : " + unBlob
+		      + "unBlob type : " + unBlob.getClass
 		      + "\n"
 		      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		    )
