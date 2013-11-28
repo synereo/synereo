@@ -12,15 +12,9 @@ object DSLQuickStart {
     com.biosimilarity.evaluator.distribution.bfactory.Server.run()
 
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
-    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._  
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
 
-    bFactoryMgr().commenceInstance(
-      introductionRecipientCnxn,
-      introductionRecipientLabel,
-      List(newBiCnxn.readCnxn, toPortableAgentCnxn(aliasCnxn)),
-      Nil,
-      (optRsrc => ())
-    )
+    com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
   }
 }
 
