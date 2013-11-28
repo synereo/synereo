@@ -449,23 +449,62 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      
 	      unBlob match {
 		case k : mTT.Resource => {
+                  BasicLogService.tweet(
+                    "**********************************************"
+	            +"\n method : asCacheK"
+                    +"\n k is mTT.Resource"
+                    +"\n this : " + this
+                    +"\n ccl : " + ccl
+                    +"\n----------------------------------------------"
+                    +"\n unBlob : " + unBlob
+                    +"\n**********************************************"
+	          )
 		  k.asInstanceOf[mTT.Continuation]
 		}
+                case kz : MonadicTermTypes[_,_,_,_]#Resource => {
+                  BasicLogService.tweet(
+                    "**********************************************"
+	            +"\n method : asCacheK"
+                    +"\n k is MonadicTermTypes[_,_,_,_]#Resource"
+                    +"\n this : " + this
+                    +"\n ccl : " + ccl
+                    +"\n----------------------------------------------"
+                    +"\n unBlob : " + unBlob
+                    +"\n**********************************************"
+	          )
+                  kz.asInstanceOf[mTT.Continuation]
+                }
 		case _ => {
-		  throw new Exception(
-		    (
-		      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		      + "ill-formatted continuation stack blob : " + rv
-		      + "\n" 
-		      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		      + "\n"
-		      + "unBlob : " + unBlob
-		      + "\n"
-		      + "unBlob type : " + unBlob.getClass
-		      + "\n"
-		      + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                  if ( unBlob.getClass.getName.equals( "com.biosimilarity.lift.model.store.MonadicTermTypes$Continuation" ) ) {
+                    BasicLogService.tweet(
+                      "**********************************************"
+	              +"\n method : asCacheK "
+                      +"\n last ditch effort"
+                      +"\n unblob.getClass.getName.equals(\"com.biosimilarity.lift.model.store.MonadicTermTypes$Continuation\" )"
+                      +"\n this : " + this
+                      +"\n ccl : " + ccl
+                      +"\n----------------------------------------------"
+                      +"\n unBlob : " + unBlob
+                      +"\n**********************************************"
+	            )
+                    unBlob.asInstanceOf[mTT.Continuation]
+                  }
+                  else {
+		    throw new Exception(
+		      (
+		        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		        + "ill-formatted continuation stack blob : " + rv
+		        + "\n" 
+		        + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		        + "\n"
+		        + "unBlob : " + unBlob
+		        + "\n"
+		        + "unBlob type : " + unBlob.getClass
+		        + "\n"
+		        + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		      )
 		    )
-		  )
+                  }
 		}
 	      }
 	    }
