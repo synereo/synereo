@@ -49,7 +49,6 @@ trait IntroductionRecipientT extends Serializable {
                     val getIntroProfileRsp = new GetIntroductionProfileResponse(Some(sessionId), corrId, Some(jsonBlob))
 
                     // send GetIntroductionProfileResponse message
-                    Thread.sleep(1000)
                     reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
                   }
                   case _ => {
