@@ -990,5 +990,16 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onFeed: optRsrc = " + optRsrc)
       )
     }
+    def read(filter: String = "all(a(_))") = {
+      agentMgr().read(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => BasicLogService.tweet("onRead: optRsrc = " + optRsrc)
+      )
+    }
   }
 }
