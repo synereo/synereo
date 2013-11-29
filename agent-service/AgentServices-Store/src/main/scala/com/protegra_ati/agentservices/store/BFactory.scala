@@ -1023,7 +1023,49 @@ package bfactory {
                           
                           unBlob match {
                             case rsrc : mTT.Resource => {
+                              BasicLogService.tweet(
+                                "**********************************************"
+	                        +"\n method : asCacheValue"
+                                +"\n rsrc is mTT.Resource"
+                                +"\n this : " + this
+                                +"\n ccl : " + ccl
+                                +"\n----------------------------------------------"
+                                +"\n unBlob : " + unBlob
+                                +"\n**********************************************"
+	                      )
                               getGV( rsrc ).getOrElse( ConcreteBFactHL.Noop )
+                            }
+                            case rsrcz : MonadicTermTypes[_,_,_,_]#Resource => {
+                              BasicLogService.tweet(
+                                "**********************************************"
+	                        +"\n method : asCacheValue"
+                                +"\n rsrc is MonadicTermTypes[_,_,_,_]#Resource"
+                                +"\n this : " + this
+                                +"\n ccl : " + ccl
+                                +"\n----------------------------------------------"
+                                +"\n unBlob : " + unBlob
+                                +"\n**********************************************"
+	                      )
+                              getGV( rsrcz.asInstanceOf[mTT.Resource] ).getOrElse( ConcreteBFactHL.Noop )
+                            }
+                            case _ => {
+                              if ( unBlob.getClass.getName.equals( "com.biosimilarity.lift.model.store.MonadicTermTypes$Ground" ) ) {
+                                BasicLogService.tweet(
+                                  "**********************************************"
+	                          +"\n method : asCacheValue"
+                                  +"\n last ditch effort"
+                                  +"\n unBlob.getClass.getName.equals( \"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground\" )"
+                                  +"\n this : " + this
+                                  +"\n ccl : " + ccl
+                                  +"\n----------------------------------------------"
+                                  +"\n unBlob : " + unBlob
+                                  +"\n**********************************************"
+	                        )
+                                getGV( unBlob.asInstanceOf[mTT.Resource] ).getOrElse( ConcreteBFactHL.Noop )
+                              }
+                              else {
+                                throw new Exception( "unexpected value form: " + ccl )
+                              }
                             }
                           }
                         }
