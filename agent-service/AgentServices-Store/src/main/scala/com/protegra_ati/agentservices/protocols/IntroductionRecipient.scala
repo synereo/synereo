@@ -36,7 +36,7 @@ trait IntroductionRecipientT extends Serializable {
             Some(sessionId),
             Some(corrId),
             Some(rspCnxn))))), _)) => {
-
+println("Got GetIntroductionProfileRequest: " + giprq)
             // TODO: get data from aliasCnxn once it is being stored there
             val identityCnxn = acT.AgentCnxn(aliasCnxn.src, "identity", aliasCnxn.trgt)
 
@@ -47,9 +47,10 @@ trait IntroductionRecipientT extends Serializable {
                   case Some(mTT.Ground(PostedExpr(jsonBlob: String))) => {
                     // create GetIntroductionProfileResponse message
                     val getIntroProfileRsp = new GetIntroductionProfileResponse(Some(sessionId), corrId, Some(jsonBlob))
-
+println("Got ProfileData: " + e)
                     // send GetIntroductionProfileResponse message
                     reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
+println("Sent GetIntroductionProfileResponse: " + getIntroProfileRsp)
                   }
                   case _ => {
                     // expected String of profile data
@@ -78,7 +79,7 @@ trait IntroductionRecipientT extends Serializable {
             Some(rspCnxn),
             message,
             Some(profileData))))), _)) => {
-
+println("Got IntroductionRequest: " + irq)
             // create IntroductionNotification message
             val introN = new IntroductionNotification(
               Some(sessionId),
@@ -89,7 +90,7 @@ trait IntroductionRecipientT extends Serializable {
 
             // send IntroductionNotification message
             reset { kvdbNode.publish(aliasCnxn)(introN.toCnxnCtxtLabel, introN.toGround) }
-
+println("Sent IntroductionNotification: " + introN)
             reset {
               // listen for IntroductionConfirmation message
               for (ic <- kvdbNode.get(
@@ -101,7 +102,7 @@ trait IntroductionRecipientT extends Serializable {
                   _,
                   _,
                   Some(accepted))))), _)) => {
-
+println("Got IntroductionConfirmation: " + ic)
                     // create IntroductionResponse message
                     val introRsp = new IntroductionResponse(
                       Some(sessionId),
@@ -111,7 +112,7 @@ trait IntroductionRecipientT extends Serializable {
 
                     // send IntroductionResponse message
                     reset { kvdbNode.put(rspCnxn)(introRsp.toCnxnCtxtLabel, introRsp.toGround) }
-
+println("Sent IntroductionResponse: " + introRsp)
                     if (accepted) {
                       reset {
                         // listen for Connect message
@@ -124,7 +125,7 @@ trait IntroductionRecipientT extends Serializable {
                             _,
                             _,
                             Some(newBiCnxn: PortableAgentBiCnxn))))), _)) => {
-
+println("Got Connect: " + connect)
                               reset {
                                 // get the list of biCnxns
                                 for (biCnxns <- kvdbNode.get(aliasCnxn)(biCnxnsListLabel)) {
