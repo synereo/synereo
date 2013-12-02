@@ -47,6 +47,7 @@ trait IntroductionInitiatorT extends Serializable {
               for (agiprsp <- kvdbNode.get(
                 aReadCnxn)(
                 new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
+
                 // match response from A
                 agiprsp match {
                   case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(
