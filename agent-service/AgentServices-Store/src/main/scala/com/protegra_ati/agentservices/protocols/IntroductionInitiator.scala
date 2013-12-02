@@ -25,14 +25,13 @@ trait IntroductionInitiatorT extends Serializable {
     reset {
       // listen for BeginIntroductionRequest message
       for (birq <- kvdbNode.subscribe(aliasCnxn)(new BeginIntroductionRequest().toCnxnCtxtLabel)) {
-
         birq match {
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(BeginIntroductionRequest(
-          Some(sessionId),
-          Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
-          Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
-          aMessage,
-          bMessage)))), _)) => {
+            Some(sessionId),
+            Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
+            Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
+            aMessage,
+            bMessage)))), _)) => {
 
             // create A's GetIntroductionProfileRequest message
             val aGetIntroProfileRq = new GetIntroductionProfileRequest(
@@ -48,6 +47,7 @@ trait IntroductionInitiatorT extends Serializable {
               for (agiprsp <- kvdbNode.get(
                 aReadCnxn)(
                 new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
+
                 // match response from A
                 agiprsp match {
                   case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(
@@ -192,4 +192,12 @@ trait IntroductionInitiatorT extends Serializable {
   }
 }
 
-class IntroductionInitiator extends IntroductionInitiatorT
+class IntroductionInitiator extends IntroductionInitiatorT {
+  override def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+
+    super.run(kvdbNode, cnxns, filters)
+  }
+}

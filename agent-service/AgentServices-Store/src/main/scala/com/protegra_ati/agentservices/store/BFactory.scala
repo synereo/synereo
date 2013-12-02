@@ -1023,7 +1023,49 @@ package bfactory {
                           
                           unBlob match {
                             case rsrc : mTT.Resource => {
+                              BasicLogService.tweet(
+                                "**********************************************"
+	                        +"\n method : asCacheValue"
+                                +"\n rsrc is mTT.Resource"
+                                +"\n this : " + this
+                                +"\n ccl : " + ccl
+                                +"\n----------------------------------------------"
+                                +"\n unBlob : " + unBlob
+                                +"\n**********************************************"
+	                      )
                               getGV( rsrc ).getOrElse( ConcreteBFactHL.Noop )
+                            }
+                            case rsrcz : MonadicTermTypes[_,_,_,_]#Resource => {
+                              BasicLogService.tweet(
+                                "**********************************************"
+	                        +"\n method : asCacheValue"
+                                +"\n rsrc is MonadicTermTypes[_,_,_,_]#Resource"
+                                +"\n this : " + this
+                                +"\n ccl : " + ccl
+                                +"\n----------------------------------------------"
+                                +"\n unBlob : " + unBlob
+                                +"\n**********************************************"
+	                      )
+                              getGV( rsrcz.asInstanceOf[mTT.Resource] ).getOrElse( ConcreteBFactHL.Noop )
+                            }
+                            case _ => {
+                              if ( unBlob.getClass.getName.equals( "com.biosimilarity.lift.model.store.MonadicTermTypes$Ground" ) ) {
+                                BasicLogService.tweet(
+                                  "**********************************************"
+	                          +"\n method : asCacheValue"
+                                  +"\n last ditch effort"
+                                  +"\n unBlob.getClass.getName.equals( \"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground\" )"
+                                  +"\n this : " + this
+                                  +"\n ccl : " + ccl
+                                  +"\n----------------------------------------------"
+                                  +"\n unBlob : " + unBlob
+                                  +"\n**********************************************"
+	                        )
+                                getGV( unBlob.asInstanceOf[mTT.Resource] ).getOrElse( ConcreteBFactHL.Noop )
+                              }
+                              else {
+                                throw new Exception( "unexpected value form: " + ccl )
+                              }
                             }
                           }
                         }
@@ -1781,7 +1823,8 @@ package bfactory {
       // case -- please introduce abstraction!!!
 
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-        node : EvalChannel[ReqBody,RspBody]
+        node : EvalChannel[ReqBody,RspBody],
+        dslNode : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel
       )( expr : ConcreteBFactHL.BFactHLExpr )(
         handler : Option[mTT.Resource] => Unit
       ): Unit = {
@@ -1864,11 +1907,15 @@ package bfactory {
       }
 
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-        node : String
+        node : String,
+        dslNode : String
       )( expr : ConcreteBFactHL.BFactHLExpr )(
         handler : Option[mTT.Resource] => Unit
       ): Unit = {
-        def commenceInstanceHandler( n : StdEvalChannel )(
+        def commenceInstanceHandler(
+          n : StdEvalChannel,
+          dslN : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel
+        )(
           bdc : ConcreteBFactHL.Cnxn,
           bdl : ConcreteBFactHL.Label,
           cnxns : Seq[ConcreteBFactHL.Cnxn],
@@ -1943,7 +1990,7 @@ package bfactory {
                             val instanceID = UUID.randomUUID
                             val instanceLabel =
                               StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
-                            entryPointM( n, cnxns, filters )
+                            entryPointM( dslN, cnxns, filters )
                             handler( 
                               Some(
                                 mTT.Ground(
@@ -2015,7 +2062,10 @@ package bfactory {
           + "\n-----------------------------------------"
           + "\n n: " + EvalNodeMapper.get( node )
         )
-        for ( n <- EvalNodeMapper.get( node ) ) {
+        for (
+          n <- EvalNodeMapper.get( node );
+          dslN <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( dslNode )
+        ) {
           expr match {
             case ConcreteBFactHL.Noop => {
               //throw new Exception( "divergence" )
@@ -2084,14 +2134,14 @@ package bfactory {
               }
             }
             case ConcreteBFactHL.CommenceInstance( bdc, bdl, cnxns, filters ) => {
-              commenceInstanceHandler( n )( bdc, bdl, cnxns, filters )
+              commenceInstanceHandler( n, dslN )( bdc, bdl, cnxns, filters )
             }
             case ConcreteBFactHL.CommenceInstances( bdc, bdls, cnxnsList, filtersList ) => {
               val bdlsNCnxnsNFilters = bdls.zip( cnxnsList ).zip( filtersList )
               for(
                 ( ( bdl, cnxns ), filters ) <- bdlsNCnxnsNFilters
               ) {
-                commenceInstanceHandler( n )( bdc, bdl, cnxns, filters )
+                commenceInstanceHandler( n, dslN )( bdc, bdl, cnxns, filters )
               }
             }
           }
@@ -2114,6 +2164,7 @@ package bfactory {
           client : LinkEvalRequestChannel,
           server : LinkEvalRequestChannel,
           node : StdEvalChannel,
+          dslNode : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
           BasicLogService.tweet(
@@ -2191,7 +2242,7 @@ package bfactory {
                           }
                         }
                       
-                      evaluateExpression( node )( expr )( forward )
+                      evaluateExpression( node, dslNode )( expr )( forward )
                     }             
                   }
                   case Some( boundRsrc@BFactoryCommLink.mTT.RBoundHM( Some( BFactoryCommLink.mTT.Ground( expr ) ), subst ) ) => {
@@ -2246,7 +2297,7 @@ package bfactory {
                           }
                         }
                       
-                      evaluateExpression( node )( expr )( forward )
+                      evaluateExpression( node, dslNode )( expr )( forward )
                     }             
                   }
                   case Some( rsrc ) => {
@@ -2304,7 +2355,7 @@ package bfactory {
                                     }
                                   }
                                 }                        
-                              evaluateExpression( node )( expr )( forward )
+                              evaluateExpression( node, dslNode )( expr )( forward )
                             }
                           }
                           case Some( innerRrsc ) => {
@@ -2359,8 +2410,6 @@ package bfactory {
                 }
               }
             }
-          //}          
-          //loop()
         }
 
         def innerLoop(
@@ -2368,6 +2417,7 @@ package bfactory {
           client : LinkEvalRequestChannel,
           server : LinkEvalRequestChannel,
           node : String,
+          dslNode : String,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
           BasicLogService.tweet(
@@ -2433,7 +2483,7 @@ package bfactory {
                           }
                         }
                       
-                      evaluateExpression( node )( expr )( forward )
+                      evaluateExpression( node, dslNode )( expr )( forward )
                     }             
                   }
                   case Some( boundRsrc@BFactoryCommLink.mTT.RBoundHM( Some( BFactoryCommLink.mTT.Ground( expr ) ), subst ) ) => {
@@ -2488,7 +2538,7 @@ package bfactory {
                           }
                         }
                       
-                      evaluateExpression( node )( expr )( forward )
+                      evaluateExpression( node, dslNode )( expr )( forward )
                     }             
                   }
                   case Some( rsrc ) => {
@@ -2546,7 +2596,7 @@ package bfactory {
                                     }
                                   }
                                 }                        
-                              evaluateExpression( node )( expr )( forward )
+                              evaluateExpression( node, dslNode )( expr )( forward )
                             }
                           }
                           case Some( innerRrsc ) => {
@@ -2601,13 +2651,12 @@ package bfactory {
                 }
               }
             }
-          //}          
-          //loop()
         }
 
         def messageProcessorLoop(
           erql : CnxnCtxtLabel[String,String,String],
           node : StdEvalChannel,
+          dslNode : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
           useBiLink : Option[Boolean] = None,
           flip : Boolean = false
@@ -2626,12 +2675,13 @@ package bfactory {
                 ( link, link )
               }
             }
-          innerLoop( erql, client, server, node, rspLabelCtor )
+          innerLoop( erql, client, server, node, dslNode, rspLabelCtor )
         }
 
         def lateMessageProcessorLoop(
           erql : CnxnCtxtLabel[String,String,String],
           node : String,
+          dslNode : String,
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
           useBiLink : Option[Boolean] = None,
           flip : Boolean = false
@@ -2650,7 +2700,7 @@ package bfactory {
                 ( link, link )
               }
             }
-          innerLoop( erql, client, server, node, rspLabelCtor )
+          innerLoop( erql, client, server, node, dslNode, rspLabelCtor )
         }
 
         def go( derefNodeEarly : Boolean = false ) : Unit = {
@@ -2697,6 +2747,8 @@ package bfactory {
         @transient
         val node : StdEvalChannel,        
         @transient
+        val dslNode : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel,
+        @transient
         override val erql : CnxnCtxtLabel[String,String,String],
         @transient
         override val rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
@@ -2705,14 +2757,14 @@ package bfactory {
       ) extends MsgProcessorVals(
         erql, rspLabelCtor, useBiLink, flip
       ) with MessageProcessor with Serializable {
-        def this() = { this( null, null, null, None, false ) }
+        def this() = { this( null, null, null, null, None, false ) }
         override def go( derefNodeEarly : Boolean = true ) : Unit = {
           if ( derefNodeEarly ) {
-            messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
+            messageProcessorLoop( erql, node, dslNode, rspLabelCtor, useBiLink, flip )
           }
           else {
             BasicLogService.tweet( "warning: derefing node early anyway"  )
-            messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
+            messageProcessorLoop( erql, node, dslNode, rspLabelCtor, useBiLink, flip )
           }
         }
       }
@@ -2747,6 +2799,7 @@ package bfactory {
 
       case class IndirectMsgProcessor(
         val node : String,
+        val dslNode : String,
         @transient
         override val erql : CnxnCtxtLabel[String,String,String],
         @transient
@@ -2756,15 +2809,18 @@ package bfactory {
       ) extends MsgProcessorVals(
         erql, rspLabelCtor, useBiLink, flip
       ) with MessageProcessor with Serializable {
-        def this() = { this( null, null, null, None, false ) }
+        def this() = { this( null, null, null, null, None, false ) }
         override def go( derefNodeEarly : Boolean = false ) : Unit = {
           if ( derefNodeEarly ) {            
-            for( n <- EvalNodeMapper.get( node ) ) {
-              messageProcessorLoop( erql, n, rspLabelCtor, useBiLink, flip )
+            for(
+              n <- EvalNodeMapper.get( node );
+              dslN <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( dslNode )
+            ) {
+              messageProcessorLoop( erql, n, dslN, rspLabelCtor, useBiLink, flip )
             }
           }
           else {
-            lateMessageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
+            lateMessageProcessorLoop( erql, node, dslNode, rspLabelCtor, useBiLink, flip )
           }
         }
       }
@@ -2806,11 +2862,13 @@ package bfactory {
 
       def adminLooper(
         node : StdEvalChannel,
+        dslNode : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel,
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
           node,
+          dslNode,
           BFactoryCommLinkCtor.ExchangeLabels.adminRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
             throw new Exception( "error making evalRequestLabel" )
           ),
@@ -2826,11 +2884,13 @@ package bfactory {
 
       def indirectAdminLooper(
         node : String,
+        dslNode : String,
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : IndirectMsgProcessor = {
         IndirectMsgProcessor(
           node,
+          dslNode,
           BFactoryCommLinkCtor.ExchangeLabels.adminRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
             throw new Exception( "error making evalRequestLabel" )
           ),
@@ -2846,11 +2906,13 @@ package bfactory {
 
       def evalLooper(
         node : StdEvalChannel,
+        dslNode : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel,
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : MsgProcessor = {
         MsgProcessor(
           node,
+          dslNode,
           BFactoryCommLinkCtor.ExchangeLabels.evalRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
               throw new Exception( "error making evalRequestLabel" )
             ),
@@ -2866,11 +2928,13 @@ package bfactory {
 
       def indirectEvalLooper(
         node : String,
+        dslNode : String,
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : IndirectMsgProcessor = {
         IndirectMsgProcessor(
           node,
+          dslNode,
           BFactoryCommLinkCtor.ExchangeLabels.evalRequestLabel()( Right[String,String]( "SessionId" ) ).getOrElse( 
               throw new Exception( "error making evalRequestLabel" )
             ),
@@ -2887,26 +2951,28 @@ package bfactory {
       def stdLooper(
         //node : StdEvalChannel = agent( "/bFactoryProtocol" ),
         node : StdEvalChannel = dslEvaluatorAgent( ),
+        dslNode : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel = com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.dslEvaluatorAgent( ),
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : MsgProcessorBlock = {
         MsgProcessorBlock(
           List[MsgProcessor](
-            adminLooper( node, useBiLink, flip ),
-            evalLooper( node, useBiLink, flip )
+            adminLooper( node, dslNode, useBiLink, flip ),
+            evalLooper( node, dslNode, useBiLink, flip )
           )
         )
       }
       
       def indirectStdLooper(
         node : String,
+        dslNode : String,
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : MsgProcessorBlock = {
         MsgProcessorBlock(
           List[MessageProcessor](
-            indirectAdminLooper( node, useBiLink, flip ),
-            indirectEvalLooper( node, useBiLink, flip )
+            indirectAdminLooper( node, dslNode, useBiLink, flip ),
+            indirectEvalLooper( node, dslNode, useBiLink, flip )
           )
         )
       }
@@ -2980,9 +3046,12 @@ package bfactory {
         case None => {
           val nodeId = UUID.randomUUID()
           val nodeKey = nodeId.toString
+          val dslNodeId = UUID.randomUUID()
+          val dslNodeKey = nodeId.toString
           //EvalNodeMapper += ( nodeKey -> BFactoryEngineCtor.agent( "/bFactoryProtocol" ) )
           EvalNodeMapper += ( nodeKey -> BFactoryEngineCtor.dslEvaluatorAgent( ) )
-          val mpb = e.indirectStdLooper( nodeKey )
+          com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper += ( dslNodeKey -> com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.dslEvaluatorAgent( ) )
+          val mpb = e.indirectStdLooper( nodeKey, dslNodeKey )
           _looper = Some( mpb )
           mpb
         }
