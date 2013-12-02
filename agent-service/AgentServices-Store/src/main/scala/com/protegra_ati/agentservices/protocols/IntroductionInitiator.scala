@@ -47,14 +47,14 @@ println("Sent A's GetIntroductionProfileRequest: " + aGetIntroProfileRq)
               for (agiprsp <- kvdbNode.get(
                 aReadCnxn)(
                 new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
-
+println("Got A's GetIntroductionProfileResponse: " + agiprsp)
                 // match response from A
                 agiprsp match {
                   case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(
                     _,
                     _,
                     Some(aProfileData))))), _)) => {
-println("Got A's GetIntroductionProfileResponse: " + agiprsp)
+
                     // create B's GetIntroductionProfileRequest message
                     val bGetIntroProfileRq = new GetIntroductionProfileRequest(
                       Some(sessionId),
