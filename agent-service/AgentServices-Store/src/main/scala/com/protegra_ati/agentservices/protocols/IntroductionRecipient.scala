@@ -49,6 +49,7 @@ println("Got GetIntroductionProfileRequest: " + giprq)
                     val getIntroProfileRsp = new GetIntroductionProfileResponse(Some(sessionId), corrId, Some(jsonBlob))
 println("Got ProfileData: " + e)
                     // send GetIntroductionProfileResponse message
+                    Thread.sleep(1000)
                     reset { kvdbNode.put(rspCnxn)(getIntroProfileRsp.toCnxnCtxtLabel, getIntroProfileRsp.toGround) }
 println("Sent GetIntroductionProfileResponse: " + getIntroProfileRsp)
                   }
