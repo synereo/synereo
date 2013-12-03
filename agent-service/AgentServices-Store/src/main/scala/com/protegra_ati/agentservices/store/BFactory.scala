@@ -1985,8 +1985,9 @@ package bfactory {
                     )
                     BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
                       case Left( entryPointM ) => {
-                        val t = new Thread {
-                          override def run() = {
+                        //val t = new Thread {
+                        spawn {
+                          //override def run() = {
                             val instanceID = UUID.randomUUID
                             val instanceLabel =
                               StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
@@ -2001,9 +2002,9 @@ package bfactory {
                                 )
                               )
                             )
-                          }
+                        // }
                         }
-                        t.run()
+                        //t.run()
                       }
                       case Right( e ) => {
                         handler( 
