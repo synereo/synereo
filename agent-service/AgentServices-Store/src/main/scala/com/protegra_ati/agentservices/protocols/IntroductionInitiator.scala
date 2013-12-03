@@ -25,15 +25,14 @@ trait IntroductionInitiatorT extends Serializable {
     reset {
       // listen for BeginIntroductionRequest message
       for (birq <- kvdbNode.subscribe(aliasCnxn)(new BeginIntroductionRequest().toCnxnCtxtLabel)) {
-
         birq match {
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(BeginIntroductionRequest(
-          Some(sessionId),
-          Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
-          Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
-          aMessage,
-          bMessage)))), _)) => {
-
+            Some(sessionId),
+            Some(acT.AgentBiCnxn(aReadCnxn, aWriteCnxn)),
+            Some(acT.AgentBiCnxn(bReadCnxn, bWriteCnxn)),
+            aMessage,
+            bMessage)))), _)) => {
+println("Got BeginIntroductionRequest: " + birq)
             // create A's GetIntroductionProfileRequest message
             val aGetIntroProfileRq = new GetIntroductionProfileRequest(
               Some(sessionId),
@@ -42,12 +41,13 @@ trait IntroductionInitiatorT extends Serializable {
 
             // send A's GetIntroductionProfileRequest message
             reset { kvdbNode.publish(aWriteCnxn)(aGetIntroProfileRq.toCnxnCtxtLabel, aGetIntroProfileRq.toGround) }
-
+println("Sent A's GetIntroductionProfileRequest: " + aGetIntroProfileRq)
             reset {
               // listen for A's GetIntroductionProfileResponse message
               for (agiprsp <- kvdbNode.get(
                 aReadCnxn)(
                 new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel)) {
+println("Got A's GetIntroductionProfileResponse: " + agiprsp)
                 // match response from A
                 agiprsp match {
                   case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(GetIntroductionProfileResponse(
@@ -63,7 +63,7 @@ trait IntroductionInitiatorT extends Serializable {
 
                     // send B's GetIntroductionProfileRequest message
                     reset { kvdbNode.publish(bWriteCnxn)(bGetIntroProfileRq.toCnxnCtxtLabel, bGetIntroProfileRq.toGround) }
-
+println("Sent B's GetIntroductionProfileRequest: " + bGetIntroProfileRq)
                     reset {
                       // listen for B's GetIntroductionProfileResponse message
                       for (bgiprsp <- kvdbNode.get(
@@ -84,10 +84,10 @@ trait IntroductionInitiatorT extends Serializable {
                               Some(aReadCnxn),
                               aMessage,
                               Some(bProfileData))
-
+println("Got B's GetIntroductionProfileResponse: " + bgiprsp)
                             // send A's IntroductionRequest message
                             reset { kvdbNode.publish(aWriteCnxn)(aIntroRq.toCnxnCtxtLabel, aIntroRq.toGround) }
-
+println("Sent A's IntroductionRequest: " + aIntroRq)
                             reset {
                               // listen for A's IntroductionResponse message
                               for (airsp <- kvdbNode.get(
@@ -101,7 +101,7 @@ trait IntroductionInitiatorT extends Serializable {
                                   _,
                                   Some(aAccepted),
                                   Some(aConnectId))))), _)) => {
-
+println("Got A's IntroductionResponse: " + airsp)
                                     // create B's IntroductionRequest message
                                     val bIntroRq = new IntroductionRequest(
                                       Some(sessionId),
@@ -112,7 +112,7 @@ trait IntroductionInitiatorT extends Serializable {
 
                                     // send B's IntroductionRequest message
                                     reset { kvdbNode.publish(bWriteCnxn)(bIntroRq.toCnxnCtxtLabel, bIntroRq.toGround) }
-
+println("Sent B's IntroductionRequest: " + bIntroRq)
                                     reset {
                                       // listen for B's IntroductionResponse message
                                       for (birsp <- kvdbNode.get(
@@ -126,7 +126,7 @@ trait IntroductionInitiatorT extends Serializable {
                                           _,
                                           Some(bAccepted),
                                           Some(bConnectId))))), _)) => {
-
+println("Got B's IntroductionResponse: " + birsp)
                                             // check whether A and B accepted
                                             if (aAccepted && bAccepted) {
                                               // create new cnxns
@@ -193,4 +193,12 @@ trait IntroductionInitiatorT extends Serializable {
   }
 }
 
-class IntroductionInitiator extends IntroductionInitiatorT
+class IntroductionInitiator extends IntroductionInitiatorT {
+  override def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String,String,String]]): Unit = {
+
+    super.run(kvdbNode, cnxns, filters)
+  }
+}
