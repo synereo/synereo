@@ -141,6 +141,7 @@ trait IntroductionInitiatorT extends Serializable {
                                               val bConnect = new Connect(Some(sessionId), bConnectId, Some(bNewBiCnxn))
 
                                               // send Connect messages
+                                              Thread.sleep(1000)
                                               reset { kvdbNode.put(aWriteCnxn)(aConnect.toCnxnCtxtLabel, aConnect.toGround) }
                                               reset { kvdbNode.put(bWriteCnxn)(bConnect.toCnxnCtxtLabel, bConnect.toGround) }
                                             }
