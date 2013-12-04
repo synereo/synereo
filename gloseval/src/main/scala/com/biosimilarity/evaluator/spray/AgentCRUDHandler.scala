@@ -858,8 +858,9 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
           val sessionURIStr = msg.sessionURI.toString
 
-          val labelList = v match {
-            case PostedExpr( (PostedExpr( labelList : List[CnxnCtxtLabel[String,String,String]] ), _, _) ) => labelList
+          val labelList: JArray = v match {
+            case PostedExpr( (PostedExpr( labelList : String ), _, _) ) =>
+              parse(labelList).asInstanceOf[JArray]
             case Bottom => Nil
           }
 
@@ -867,7 +868,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             ( "msgType" -> "getAliasLabelsResponse" ) ~
             ( "content" ->
               ( "sessionURI" -> sessionURIStr ) ~
-              ( "labels" -> labelList.map( _.toString ) )
+              ( "labels" -> labelList )
             )
           ) ) )
         }
