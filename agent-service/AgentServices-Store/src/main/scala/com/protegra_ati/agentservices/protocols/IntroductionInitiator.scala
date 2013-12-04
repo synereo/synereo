@@ -137,12 +137,26 @@ println("Got B's IntroductionResponse: " + birsp)
                                               val bNewBiCnxn = new PortableAgentBiCnxn(abCnxn, baCnxn)
 
                                               // create Connect messages
-                                              val aConnect = new Connect(Some(sessionId), aConnectId, Some(aNewBiCnxn))
-                                              val bConnect = new Connect(Some(sessionId), bConnectId, Some(bNewBiCnxn))
+                                              val aConnect = new Connect(Some(sessionId), aConnectId, Some(false), Some(aNewBiCnxn))
+                                              val bConnect = new Connect(Some(sessionId), bConnectId, Some(false), Some(bNewBiCnxn))
 
                                               // send Connect messages
                                               Thread.sleep(1000)
                                               reset { kvdbNode.put(aWriteCnxn)(aConnect.toCnxnCtxtLabel, aConnect.toGround) }
+                                              reset { kvdbNode.put(bWriteCnxn)(bConnect.toCnxnCtxtLabel, bConnect.toGround) }
+                                            } else if (aAccepted) {
+                                              // create Connect message
+                                              val aConnect = new Connect(Some(sessionId), aConnectId, Some(true), None)
+
+                                              // send Connect message
+                                              Thread.sleep(1000)
+                                              reset { kvdbNode.put(aWriteCnxn)(aConnect.toCnxnCtxtLabel, aConnect.toGround) }
+                                            } else if (bAccepted) {
+                                              // create Connect message
+                                              val bConnect = new Connect(Some(sessionId), bConnectId, Some(true), None)
+
+                                              // send Connect message
+                                              Thread.sleep(1000)
                                               reset { kvdbNode.put(bWriteCnxn)(bConnect.toCnxnCtxtLabel, bConnect.toGround) }
                                             }
                                           }

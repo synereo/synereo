@@ -125,31 +125,34 @@ println("Sent IntroductionResponse: " + introRsp)
                             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(Connect(
                             _,
                             _,
-                            Some(newBiCnxn: PortableAgentBiCnxn))))), _)) => {
+                            Some(cancelled),
+                            Some(newBiCnxn))))), _)) => {
 println("Got Connect: " + connect)
-                              reset {
-                                // get the list of biCnxns
-                                for (biCnxns <- kvdbNode.get(aliasCnxn)(biCnxnsListLabel)) {
-                                  biCnxns match {
-                                    case Some(mTT.Ground(PostedExpr(prevBiCnxns: String))) => {
-                                      // add new biCnxn to the list
-                                      val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](prevBiCnxns)
+                              if (!cancelled) {
+                                reset {
+                                  // get the list of biCnxns
+                                  for (biCnxns <- kvdbNode.get(aliasCnxn)(biCnxnsListLabel)) {
+                                    biCnxns match {
+                                      case Some(mTT.Ground(PostedExpr(prevBiCnxns: String))) => {
+                                        // add new biCnxn to the list
+                                        val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](prevBiCnxns)
 
-                                      // serialize biCnxn list
-                                      val newBiCnxnsStr = Serializer.serialize(newBiCnxns)
+                                        // serialize biCnxn list
+                                        val newBiCnxnsStr = Serializer.serialize(newBiCnxns)
 
-                                      // save new list of biCnxns
-                                      reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr))) }
+                                        // save new list of biCnxns
+                                        reset { kvdbNode.put(aliasCnxn)(biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr))) }
 
-                                      // create ConnectNotification message
-                                      val connectN = new ConnectNotification(Some(sessionId), newBiCnxn, profileData)
+                                        // create ConnectNotification message
+                                        val connectN = new ConnectNotification(Some(sessionId), newBiCnxn, profileData)
 
-                                      // send ConnectNotification message
-                                      reset { kvdbNode.publish(aliasCnxn)(connectN.toCnxnCtxtLabel, connectN.toGround) }
-                                    }
-                                    case _ => {
-                                      // expected String of serialized biCnxns
-                                      throw new Exception("unexpected data")
+                                        // send ConnectNotification message
+                                        reset { kvdbNode.publish(aliasCnxn)(connectN.toCnxnCtxtLabel, connectN.toGround) }
+                                      }
+                                      case _ => {
+                                        // expected String of serialized biCnxns
+                                        throw new Exception("unexpected data")
+                                      }
                                     }
                                   }
                                 }
