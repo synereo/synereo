@@ -1,11 +1,11 @@
 package com.protegra_ati.agentservices.protocols.msgs
 
-import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
+import com.biosimilarity.evaluator.distribution.PortableAgentBiCnxn
 
 case class IntroductionNotification(
     override val sessionId: Option[String],
     correlationId: String,
-    initiatorBiCnxn: acT.AgentBiCnxn,
+    initiatorBiCnxn: PortableAgentBiCnxn,
     message: Option[String],
     profileData: String)
   extends ProtocolMessage

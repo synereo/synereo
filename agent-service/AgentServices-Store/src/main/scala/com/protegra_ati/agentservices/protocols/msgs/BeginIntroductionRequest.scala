@@ -1,11 +1,11 @@
 package com.protegra_ati.agentservices.protocols.msgs
 
-import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
+import com.biosimilarity.evaluator.distribution.PortableAgentBiCnxn
 
 case class BeginIntroductionRequest(
     override val sessionId: Option[String],
-    aBiCnxn: Option[acT.AgentBiCnxn],
-    bBiCnxn: Option[acT.AgentBiCnxn],
+    aBiCnxn: Option[PortableAgentBiCnxn],
+    bBiCnxn: Option[PortableAgentBiCnxn],
     aMessage: Option[String],
     bMessage: Option[String])
   extends ProtocolRequestMessage {
