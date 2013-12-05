@@ -1,6 +1,6 @@
 package com.protegra_ati.agentservices.protocols
 
-import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.distribution.{PortableAgentCnxn, PortableAgentBiCnxn}
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs._
@@ -12,105 +12,80 @@ trait IntroductionInitiatorT extends Serializable {
     cnxns: Seq[PortableAgentCnxn],
     filters: Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
-
     if (cnxns.size != 1) throw new Exception("invalid number of cnxns supplied")
 
     val protocolMgr = new ProtocolManager(node)
     val aliasCnxn = cnxns(0)
 
+    listenBeginIntroductionRequest(protocolMgr, aliasCnxn)
+  }
+
+  private def listenBeginIntroductionRequest(protocolMgr: ProtocolManager, aliasCnxn: PortableAgentCnxn): Unit = {
     // listen for BeginIntroductionRequest message
-    protocolMgr.subscribeMessage(aliasCnxn, new BeginIntroductionRequest().toCnxnCtxtLabel, {
-      case BeginIntroductionRequest(
-        Some(sessionId),
-        Some(PortableAgentBiCnxn(aReadCnxn, aWriteCnxn)),
-        Some(PortableAgentBiCnxn(bReadCnxn, bWriteCnxn)),
-        aMessage,
-        bMessage
-      ) =>
-        // create A's GetIntroductionProfileRequest message
-        val aGetIntroProfileRq = new GetIntroductionProfileRequest(
-          Some(sessionId),
-          Some(UUID.randomUUID.toString),
-          Some(aReadCnxn)
-        )
+    val beginIntroRqLabel = BeginIntroductionRequest.toLabel()
+    protocolMgr.subscribeMessage(aliasCnxn, beginIntroRqLabel, {
+      case BeginIntroductionRequest(sessionId, PortableAgentBiCnxn(aReadCnxn, aWriteCnxn), PortableAgentBiCnxn(bReadCnxn, bWriteCnxn), aMessage, bMessage) =>
+        val aGetIntroProfileRq = GetIntroductionProfileRequest(sessionId, UUID.randomUUID.toString, aReadCnxn)
 
         // send A's GetIntroductionProfileRequest message
-        protocolMgr.publishMessage(aWriteCnxn, aGetIntroProfileRq.toCnxnCtxtLabel, aGetIntroProfileRq)
+        protocolMgr.publishMessage(aWriteCnxn, aGetIntroProfileRq)
 
         // listen for A's GetIntroductionProfileResponse message
-        protocolMgr.getMessage(aReadCnxn, new GetIntroductionProfileResponse(Some(sessionId), aGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel, {
-          case GetIntroductionProfileResponse(_, _, Some(aProfileData)) =>
-            // create B's GetIntroductionProfileRequest message
-            val bGetIntroProfileRq = new GetIntroductionProfileRequest(
-              Some(sessionId),
-              Some(UUID.randomUUID.toString),
-              Some(bReadCnxn)
-            )
+        val aGetIntroProfileRspLabel = GetIntroductionProfileResponse.toLabel(sessionId, aGetIntroProfileRq.correlationId)
+        protocolMgr.getMessage(aReadCnxn, aGetIntroProfileRspLabel, {
+          case GetIntroductionProfileResponse(_, _, aProfileData) =>
+            val bGetIntroProfileRq = GetIntroductionProfileRequest(sessionId, UUID.randomUUID.toString, bReadCnxn)
 
             // send B's GetIntroductionProfileRequest message
-            protocolMgr.publishMessage(bWriteCnxn, bGetIntroProfileRq.toCnxnCtxtLabel, bGetIntroProfileRq)
+            protocolMgr.publishMessage(bWriteCnxn, bGetIntroProfileRq)
 
             // listen for B's GetIntroductionProfileResponse message
-            protocolMgr.getMessage(bReadCnxn, new GetIntroductionProfileResponse(Some(sessionId), bGetIntroProfileRq.correlationId.get).toCnxnCtxtLabel, {
-              case GetIntroductionProfileResponse(_, _, Some(bProfileData)) =>
-                // create A's IntroductionRequest message
-                val aIntroRq = new IntroductionRequest(
-                  Some(sessionId),
-                  Some(UUID.randomUUID.toString),
-                  Some(aReadCnxn),
-                  aMessage,
-                  Some(bProfileData)
-                )
+            val bGetIntroProfileRspLabel = GetIntroductionProfileResponse.toLabel(sessionId, bGetIntroProfileRq.correlationId)
+            protocolMgr.getMessage(bReadCnxn, bGetIntroProfileRspLabel, {
+              case GetIntroductionProfileResponse(_, _, bProfileData) =>
+                val aIntroRq = IntroductionRequest(sessionId, UUID.randomUUID.toString, aReadCnxn, aMessage, bProfileData)
 
                 // send A's IntroductionRequest message
-                protocolMgr.publishMessage(aWriteCnxn, aIntroRq.toCnxnCtxtLabel, aIntroRq)
+                protocolMgr.publishMessage(aWriteCnxn, aIntroRq)
 
                 // listen for A's IntroductionResponse message
-                protocolMgr.getMessage(aReadCnxn, new IntroductionResponse(Some(sessionId), aIntroRq.correlationId.get).toCnxnCtxtLabel, {
-                  case IntroductionResponse(_, _, Some(aAccepted), Some(aConnectId)) =>
-                    // create B's IntroductionRequest message
-                    val bIntroRq = new IntroductionRequest(
-                      Some(sessionId),
-                      Some(UUID.randomUUID.toString),
-                      Some(bReadCnxn),
-                      bMessage,
-                      Some(aProfileData)
-                    )
+                val aIntroRspLabel = IntroductionResponse.toLabel(sessionId, aIntroRq.correlationId)
+                protocolMgr.getMessage(aReadCnxn, aIntroRspLabel, {
+                  case IntroductionResponse(_, _, aAccepted, aConnectCorrelationId) =>
+                    val bIntroRq = IntroductionRequest(sessionId, UUID.randomUUID.toString, bReadCnxn, bMessage, aProfileData)
 
                     // send B's IntroductionRequest message
-                    protocolMgr.publishMessage(bWriteCnxn, bIntroRq.toCnxnCtxtLabel, bIntroRq)
+                    protocolMgr.publishMessage(bWriteCnxn, bIntroRq)
 
                     // listen for B's IntroductionResponse message
-                    protocolMgr.getMessage(bReadCnxn, new IntroductionResponse(Some(sessionId), bIntroRq.correlationId.get).toCnxnCtxtLabel, {
-                      case IntroductionResponse(_, _, Some(bAccepted), Some(bConnectId)) =>
+                    val bIntroRspLabel = IntroductionResponse.toLabel(sessionId, bIntroRq.correlationId)
+                    protocolMgr.getMessage(bReadCnxn, bIntroRspLabel, {
+                      case IntroductionResponse(_, _, bAccepted, bConnectCorrelationId) =>
                         // check whether A and B accepted
                         if (aAccepted && bAccepted) {
                           // create new cnxns
                           val cnxnLabel = UUID.randomUUID().toString
-                          val abCnxn = new PortableAgentCnxn(aReadCnxn.src, cnxnLabel, bReadCnxn.src)
-                          val baCnxn = new PortableAgentCnxn(bReadCnxn.src, cnxnLabel, aReadCnxn.src)
-                          val aNewBiCnxn = new PortableAgentBiCnxn(baCnxn, abCnxn)
-                          val bNewBiCnxn = new PortableAgentBiCnxn(abCnxn, baCnxn)
+                          val abCnxn = PortableAgentCnxn(aReadCnxn.src, cnxnLabel, bReadCnxn.src)
+                          val baCnxn = PortableAgentCnxn(bReadCnxn.src, cnxnLabel, aReadCnxn.src)
+                          val aNewBiCnxn = PortableAgentBiCnxn(baCnxn, abCnxn)
+                          val bNewBiCnxn = PortableAgentBiCnxn(abCnxn, baCnxn)
 
-                          // create Connect messages
-                          val aConnect = new Connect(Some(sessionId), aConnectId, Some(false), Some(aNewBiCnxn))
-                          val bConnect = new Connect(Some(sessionId), bConnectId, Some(false), Some(bNewBiCnxn))
+                          val aConnect = Connect(sessionId, aConnectCorrelationId.get, false, Some(aNewBiCnxn))
+                          val bConnect = Connect(sessionId, bConnectCorrelationId.get, false, Some(bNewBiCnxn))
 
                           // send Connect messages
-                          protocolMgr.putMessage(aWriteCnxn, aConnect.toCnxnCtxtLabel, aConnect)
-                          protocolMgr.putMessage(bWriteCnxn, bConnect.toCnxnCtxtLabel, bConnect)
+                          protocolMgr.putMessage(aWriteCnxn, aConnect)
+                          protocolMgr.putMessage(bWriteCnxn, bConnect)
                         } else if (aAccepted) {
-                          // create Connect message
-                          val aConnect = new Connect(Some(sessionId), aConnectId, Some(true), None)
+                          val aConnect = Connect(sessionId, aConnectCorrelationId.get, true, None)
 
                           // send Connect message
-                          protocolMgr.putMessage(aWriteCnxn, aConnect.toCnxnCtxtLabel, aConnect)
+                          protocolMgr.putMessage(aWriteCnxn, aConnect)
                         } else if (bAccepted) {
-                          // create Connect message
-                          val bConnect = new Connect(Some(sessionId), bConnectId, Some(true), None)
+                          val bConnect = Connect(sessionId, bConnectCorrelationId.get, true, None)
 
                           // send Connect message
-                          protocolMgr.putMessage(bWriteCnxn, bConnect.toCnxnCtxtLabel, bConnect)
+                          protocolMgr.putMessage(bWriteCnxn, bConnect)
                         }
                     })
                 })
@@ -126,7 +101,6 @@ class IntroductionInitiator extends IntroductionInitiatorT {
     cnxns: Seq[PortableAgentCnxn],
     filters: Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
-
     super.run(kvdbNode, cnxns, filters)
   }
 }

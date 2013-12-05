@@ -14,13 +14,13 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
 
   def putMessage(
     cnxn: PortableAgentCnxn,
-    filter: CnxnCtxtLabel[String, String, String],
     message: ProtocolMessage
   ): Unit = {
     //TODO: Remove this once race condition is resolved
     Thread.sleep(1000)
     reset {
       val agentCnxn = toAgentCnxn(cnxn)
+      val filter = message.toLabel
 
       node.put(agentCnxn)(filter, mTT.Ground(PostedExpr(message)))
     }
@@ -28,11 +28,11 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
 
   def publishMessage(
     cnxn: PortableAgentCnxn,
-    filter: CnxnCtxtLabel[String, String, String],
     message: ProtocolMessage
   ): Unit = {
     reset {
       val agentCnxn = toAgentCnxn(cnxn)
+      val filter = message.toLabel
 
       node.publish(agentCnxn)(filter, mTT.Ground(PostedExpr(message)))
     }

@@ -1,17 +1,27 @@
 package com.protegra_ati.agentservices.protocols.msgs
 
 import com.biosimilarity.evaluator.distribution.PortableAgentBiCnxn
+import com.biosimilarity.lift.model.store.CnxnCtxtLabel
+import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
 case class BeginIntroductionRequest(
-    override val sessionId: Option[String],
-    aBiCnxn: Option[PortableAgentBiCnxn],
-    bBiCnxn: Option[PortableAgentBiCnxn],
-    aMessage: Option[String],
-    bMessage: Option[String])
-  extends ProtocolRequestMessage {
+  sessionId: String,
+  aBiCnxn: PortableAgentBiCnxn,
+  bBiCnxn: PortableAgentBiCnxn,
+  aMessage: Option[String],
+  bMessage: Option[String]
+) extends ProtocolMessage {
+  override def toLabel: CnxnCtxtLabel[String, String, String] = {
+    BeginIntroductionRequest.toLabel(sessionId)
+  }
+}
 
-  def this() = this(None, None, None, None, None)
+object BeginIntroductionRequest {
+  def toLabel(): CnxnCtxtLabel[String, String, String] = {
+    "protocolMessage(beginIntroductionRequest(sessionId(_)))".toLabel
+  }
 
-  override val correlationId = None
-  override val responseCnxn = None
+  def toLabel(sessionId: String): CnxnCtxtLabel[String, String, String] = {
+    s"""protocolMessage(beginIntroductionRequest(sessionId(\"$sessionId\")))""".toLabel
+  }
 }
