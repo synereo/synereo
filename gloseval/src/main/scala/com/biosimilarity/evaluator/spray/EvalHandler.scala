@@ -483,13 +483,12 @@ trait EvalHandler {
 
   // TODO: Replace function below with behavior
   def listenIntroductionNotification(sessionURIStr: String, aliasCnxn: PortableAgentCnxn): Unit = {
-    import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope.acT
-    import com.protegra_ati.agentservices.protocols.msgs._
+    import com.protegra_ati.agentservices.protocols.msgs.IntroductionNotification
 
-    val introductionNotificationLabel = fromTermString("protocolMessage(introductionNotification(sessionId(_)))").getOrElse(throw new Exception("Couldn't parse introductionNotificationLabel"))
+    val introNotificationLabel = IntroductionNotification.toLabel()
 
     agentMgr().read(
-      introductionNotificationLabel,
+      introNotificationLabel,
       List(aliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
         BasicLogService.tweet("listenIntroductionNotification | onRead : optRsrc = " + optRsrc)
@@ -497,9 +496,9 @@ trait EvalHandler {
           case None => ()
           case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(IntroductionNotification(
-            Some(sessionId),
+            sessionId,
             correlationId,
-            acT.AgentBiCnxn(_, writeCnxn),
+            PortableAgentBiCnxn(_, writeCnxn),
             message,
             profileData
           )), _, _)))), _)) => {
@@ -525,13 +524,11 @@ trait EvalHandler {
 
   // TODO: Replace function below with behavior
   def listenConnectNotification(sessionURIStr: String, aliasCnxn: PortableAgentCnxn): Unit = {
-    import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope.acT
-    import com.protegra_ati.agentservices.protocols.msgs._
-
-    val connectNotificationLabel = fromTermString("protocolMessage(connectNotification(sessionId(_)))").getOrElse(throw new Exception("Couldn't parse connectNotificationLabel"))
-
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
+    import com.protegra_ati.agentservices.protocols.msgs.ConnectNotification
+
+    val connectNotificationLabel = ConnectNotification.toLabel()
 
     agentMgr().feed(
       connectNotificationLabel,
@@ -542,7 +539,7 @@ trait EvalHandler {
           case None => ()
           case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(ConnectNotification(
-            Some(sessionId),
+            sessionId,
             PortableAgentBiCnxn(readCnxn, writeCnxn),
             profileData
           )), _, _)))), _)) => {

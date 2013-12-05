@@ -1,7 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 import com.biosimilarity.lift.lib.BasicLogService
 import com.protegra_ati.agentservices.msgs.agent.introduction._
 import com.protegra_ati.agentservices.protocols.msgs._
@@ -29,9 +28,9 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
     val sessionId = UUID.randomUUID().toString
 
     val birq = new BeginIntroductionRequest(
-      Some( sessionId ),
-      Some( toAgentBiCnxn( msg.aConnection ) ),
-      Some( toAgentBiCnxn( msg.bConnection ) ),
+      sessionId,
+      toBiCnxn( msg.aConnection ),
+      toBiCnxn( msg.bConnection ),
       Some( msg.aMessage ),
       Some( msg.bMessage )
     )
@@ -47,7 +46,7 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
       ) ) )
     }
 
-    agentMgr().post( birq.toCnxnCtxtLabel, List( aliasStorageCnxn ), birq, onPost )
+    agentMgr().post( birq.toLabel, List( aliasStorageCnxn ), birq, onPost )
   }
 
   //#### introductionConfirmation
@@ -57,13 +56,7 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
     BasicLogService.tweet( "Entering: handleintroductionConfirmationRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
-    val sessionId = UUID.randomUUID().toString
-
-    val ic = new IntroductionConfirmation(
-      Some( msg.introSessionId ),
-      msg.correlationId,
-      Some( msg.accepted )
-    )
+    val introConfirmation = new IntroductionConfirmation( msg.introSessionId, msg.correlationId, msg.accepted )
 
     val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet( "handleintroductionConfirmationRequest | onPut" )
@@ -76,17 +69,14 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
       ) ) )
     }
 
-    agentMgr().put( ic.toCnxnCtxtLabel, List( aliasStorageCnxn ), ic, onPut )
+    agentMgr().put( introConfirmation.toLabel, List( aliasStorageCnxn ), introConfirmation, onPut )
 
     // removes introduction notification
-    val introductionNotificationLabel = fromTermString("protocolMessage(introductionNotification(sessionId(\"" + msg.introSessionId + "\")))").getOrElse(throw new Exception("Couldn't parse introductionNotificationLabel"))
-    agentMgr().get( introductionNotificationLabel, List ( aliasStorageCnxn ) )
+    val introNotificationLabel = IntroductionNotification.toLabel(msg.introSessionId)
+    agentMgr().get( introNotificationLabel, List ( aliasStorageCnxn ) )
   }
 
-  private def toAgentBiCnxn( cnxn : PortableAgentCnxn ) : acT.AgentBiCnxn = {
-    new acT.AgentBiCnxn(
-      new acT.AgentCnxn( cnxn.trgt, cnxn.label, cnxn.src ),
-      new acT.AgentCnxn( cnxn.src, cnxn.label, cnxn.trgt )
-    )
+  private def toBiCnxn( cnxn : PortableAgentCnxn ) : PortableAgentBiCnxn = {
+    PortableAgentBiCnxn( PortableAgentCnxn( cnxn.trgt, cnxn.label, cnxn.src ), cnxn )
   }
 }
