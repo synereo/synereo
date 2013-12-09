@@ -7,14 +7,19 @@
 // ------------------------------------------------------------------------
 
 object DSLQuickStart {
-  def begin() = {
+  def begin( makeMap : Boolean = false ) = {
     com.biosimilarity.evaluator.distribution.diesel.Server.run()
     com.biosimilarity.evaluator.distribution.bfactory.Server.run()
 
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
 
-    com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
+    if ( makeMap ) {
+      com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
+    }
+  }
+  def beginWithMap( ) = {
+    begin( true )
   }
 }
 
