@@ -998,7 +998,10 @@ package usage {
           "flat",
           new URI("c://d")
         )),
-        (optRsrc) => BasicLogService.tweet("onRead: optRsrc = " + optRsrc)
+        (optRsrc) => {
+          println("onRead: optRsrc = " + optRsrc)
+          BasicLogService.tweet("onRead: optRsrc = " + optRsrc)
+        }
       )
     }
     def get(filter: String = "all(a(_))") = {
