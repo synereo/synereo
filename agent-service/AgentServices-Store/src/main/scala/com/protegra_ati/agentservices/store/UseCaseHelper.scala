@@ -1036,6 +1036,7 @@ package usage {
           new URI("c://d")
         )),
         (optRsrc) => {
+          println("onGet: optRsrc = " + optRsrc)
           BasicLogService.tweet("onGet: optRsrc = " + optRsrc)
           agentMgr().put(
             fromTermString(filter).get,

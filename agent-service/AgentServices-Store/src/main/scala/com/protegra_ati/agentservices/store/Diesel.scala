@@ -1605,11 +1605,13 @@ package diesel {
       dataLocation : String = dslEvaluatorHostData,
       localHost : String = dslEvaluatorHostName,
       localPort : Int = dslEvaluatorHostPort
-    ) : EvalChannel[ReqBody, RspBody] = {      
+    )(
+      configFileNameOpt : Option[String] = Some( "eval.conf" )
+    ): EvalChannel[ReqBody, RspBody] = {      
       ptToMany(
         new URI( "agent", null, localHost, localPort, dataLocation, null, null ),
         List[URI]( )
-      )
+      )( configFileNameOpt )
     }
 
     def agent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
@@ -1623,8 +1625,9 @@ package diesel {
     }    
 
     def dslEvaluatorAgent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      configFileNameOpt : Option[String] = Some( "eval.conf" )
     ): EvalChannel[ReqBody,RspBody] = {
-      setupDSLEvaluatorNode[ReqBody,RspBody]()
+      setupDSLEvaluatorNode[ReqBody,RspBody]()( configFileNameOpt )
     }
 
     class DieselEngine(
