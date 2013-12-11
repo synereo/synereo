@@ -6,5 +6,17 @@
 // Description: 
 // ------------------------------------------------------------------------
 
-import com.biosimilarity.evaluator.distribution.diesel._
-Server.run()
+object DSLQuickStart {
+  def begin() = {
+    com.biosimilarity.evaluator.distribution.diesel.Server.run()
+    com.biosimilarity.evaluator.distribution.bfactory.Server.run()
+
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
+    import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
+
+    com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
+  }
+}
+
+DSLQuickStart.begin()
+

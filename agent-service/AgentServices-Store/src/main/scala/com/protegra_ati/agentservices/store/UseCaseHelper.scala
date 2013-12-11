@@ -10,18 +10,20 @@ package com.biosimilarity.evaluator.distribution
 
 import com.protegra_ati.agentservices.store._
 import com.biosimilarity.lift.model.store._
+import com.biosimilarity.lift.lib._
 
 import scala.util.continuations._ 
 import scala.collection.mutable.HashMap
 
 import java.util.UUID
+import java.net.URI
 
 trait ChannelGeneration {
   def erql( sessionId : String = UUID.randomUUID().toString ) : ( String, CnxnCtxtLabel[String,String,String] ) = {
     (
       sessionId,
       DSLCommLinkCtor.ExchangeLabels.evalRequestLabel()( Left[String,String]( sessionId ) ).getOrElse( 
-	throw new Exception( "error making evalRequestLabel" )
+        throw new Exception( "error making evalRequestLabel" )
       )
     )
   }
@@ -29,7 +31,7 @@ trait ChannelGeneration {
     (
       sessionId,
       DSLCommLinkCtor.ExchangeLabels.evalResponseLabel()( Right[String,String]( sessionId ) ).getOrElse( 
-	throw new Exception( "error making evalRequestLabel" )
+        throw new Exception( "error making evalRequestLabel" )
       )
     )
   }
@@ -74,6 +76,7 @@ trait FuzzyTerms {
   def randomGroundTerm(
     truncate : Int = 5,
     prefix : String = "aString",
+    @transient
     rndm : scala.util.Random = new scala.util.Random()
   ) : String = {
     val termType = rndm.nextInt( 3 )
@@ -93,6 +96,7 @@ trait FuzzyTerms {
     truncate : Int = 10,
     streamPrefix : Int = 1000
   ) : String = {
+    @transient
     val rndm = new scala.util.Random()
     if ( maxBredth > 0 ) {        
       val bredth = rndm.nextInt( maxBredth ) + 1
@@ -166,8 +170,11 @@ trait FuzzyTermStreams {
   def labelTuple(
     l : Int,
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     optlss : Option[Stream[String]] = None,
+    @transient
     labelStrStream : Stream[String] = mkRandomLabelStringStream()    
   ) : List[String] = {
     val lss : Stream[String] = 
@@ -185,7 +192,9 @@ trait FuzzyTermStreams {
   def mkRandomLabelStringTupleStream(
     maxLabels : Int = 10,
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[List[String]] = {    
     val numLabels : Int = rndm.nextInt( maxLabels ) + 2
@@ -217,7 +226,9 @@ trait FuzzyTermStreams {
     mkRandomLabelTupleStream()
   }
   def mkSelfCnxnStream(
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + 2
@@ -238,7 +249,9 @@ trait FuzzyTermStreams {
     mkSelfCnxnStream()
   }
   def mkRandomCnxnStream(
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream()
   ) : Stream[PortableAgentCnxn] /* Stream[ConcreteHL.PortableAgentCnxn] */ = {
     val pos1 : Int = rndm.nextInt( Int.MaxValue / 1000000 ) + 2
@@ -264,7 +277,9 @@ trait FuzzyTermStreams {
   def mkRandomCnxnTupleStream(
     maxCnxns : Int = 10,    
     lssMaxPos : Int = ( Int.MaxValue / 100000000 ),
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrStrm : Stream[String] = mkRandomLabelStringStream( "label", 0 )
   ) : Stream[List[PortableAgentCnxn]] /* Stream[List[ConcreteHL.PortableAgentCnxn]] */ = {    
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 2
@@ -320,9 +335,9 @@ trait MessageGeneration {
     val feedLabelStr : String = labelStr
     val feedLabel =
       fromTermString(
-	feedLabelStr
+        feedLabelStr
       ).getOrElse(
-	throw new Exception( "failed to parse feed label" + feedLabelStr )
+        throw new Exception( "failed to parse feed label" + feedLabelStr )
       )
     val feedCnxn =
       //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
@@ -334,9 +349,9 @@ trait MessageGeneration {
     val scoreLabelStr : String = labelStr
     val scoreLabel =
       fromTermString(
-	scoreLabelStr
+        scoreLabelStr
       ).getOrElse(
-	throw new Exception( "failed to parse score label" + scoreLabelStr )
+        throw new Exception( "failed to parse score label" + scoreLabelStr )
       )
     val scoreCnxn =
       //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
@@ -352,9 +367,9 @@ trait MessageGeneration {
     val postLabelStr : String = labelStr
     val postLabel =
       fromTermString( 
-	postLabelStr
+        postLabelStr
       ).getOrElse(
-	throw new Exception( "failed to parse post label" + postLabelStr )
+        throw new Exception( "failed to parse post label" + postLabelStr )
       )
     val postCnxn =
       //ConcreteHL.PortableAgentCnxn("Jerry.Seinfeld".toURI, "", "Jerry.Seinfeld".toURI) 
@@ -374,7 +389,9 @@ trait FuzzyMessageStreams {
             import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   def mkFeedExprStream(
     maxCnxns : Int = 10,
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream()
   ) : Stream[ConcreteHL.FeedExpr] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
@@ -397,7 +414,9 @@ trait FuzzyMessageStreams {
   }
   def mkScoreExprStream(
     maxCnxns : Int = 10,
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream()
   ) : Stream[ConcreteHL.ScoreExpr] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
@@ -440,8 +459,11 @@ trait FuzzyMessageStreams {
   }
   def mkPostExprStream(
     maxCnxns : Int = 10,
+    @transient
     rndm : scala.util.Random = new scala.util.Random(),
+    @transient
     labelStrm : Stream[CnxnCtxtLabel[String,String,String]] = mkRandomLabelStream(),    
+    @transient
     uuidStrm : Stream[UUID] = uuidStream()
   ) : Stream[ConcreteHL.InsertContent[String]] = {
     val numCnxns : Int = rndm.nextInt( maxCnxns ) + 1
@@ -476,9 +498,9 @@ object CommManagement {
     _commLink match {
       case Some( cLink ) => cLink
       case None => {
-	val cLink : StdEvaluationRequestChannel = stdLink()( flip )
-	_commLink = Some( cLink )
-	cLink
+        val cLink : StdEvaluationRequestChannel = stdLink()( flip )
+        _commLink = Some( cLink )
+        cLink
       }
     }
   }
@@ -579,7 +601,7 @@ trait ExerciseHLDSL {
 
     reset {
       for( e <- node.subscribe( erqlChan ) ) {
-	println( e )
+        BasicLogService.tweet( e )
       }
     }
   }
@@ -590,22 +612,22 @@ trait ExerciseHLDSL {
   ) = {
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
       eitherExpr match {
-	case ( Left( expr@ConcreteHL.FeedExpr( label, cnxns ) ), None ) => {
-	  val ( _, ersplChan ) = erspl( sessionId ) 
-	  reset {
-	    for( e <- node.subscribe( ersplChan ) ) {
-	      val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
-	      sessionMap += ( sessionId -> rslt );
-	      ()
-	    }
-	  }
-	}
-	case ( Left( expr ), _ ) => {
-	  throw new Exception( "unexpected expression type: " + expr )
-	}
-	case ( Right( expr ), _ ) => {
-	  println( "session closed" )
-	}
+        case ( Left( expr@ConcreteHL.FeedExpr( label, cnxns ) ), None ) => {
+          val ( _, ersplChan ) = erspl( sessionId ) 
+          reset {
+            for( e <- node.subscribe( ersplChan ) ) {
+              val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
+              sessionMap += ( sessionId -> rslt );
+              ()
+            }
+          }
+        }
+        case ( Left( expr ), _ ) => {
+          throw new Exception( "unexpected expression type: " + expr )
+        }
+        case ( Right( expr ), _ ) => {
+          BasicLogService.tweet( "session closed" )
+        }
       }      
     }
   }
@@ -615,22 +637,22 @@ trait ExerciseHLDSL {
   ) = {    
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
       eitherExpr match {
-	case ( Left( expr@ConcreteHL.ScoreExpr( label, cnxns, staff ) ), None ) => {
-	  val ( _, ersplChan ) = erspl( sessionId ) 
-	  reset {
-	    for( e <- node.subscribe( ersplChan ) ) {
-	      val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
-	      sessionMap += ( sessionId -> rslt );
-	      ()
-	    }
-	  }
-	}
-	case ( Left( expr ), _ ) => {
-	  throw new Exception( "unexpected expression type: " + expr )
-	}
-	case ( Right( expr ), _ ) => {
-	  println( "session closed" )
-	}
+        case ( Left( expr@ConcreteHL.ScoreExpr( label, cnxns, staff ) ), None ) => {
+          val ( _, ersplChan ) = erspl( sessionId ) 
+          reset {
+            for( e <- node.subscribe( ersplChan ) ) {
+              val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
+              sessionMap += ( sessionId -> rslt );
+              ()
+            }
+          }
+        }
+        case ( Left( expr ), _ ) => {
+          throw new Exception( "unexpected expression type: " + expr )
+        }
+        case ( Right( expr ), _ ) => {
+          BasicLogService.tweet( "session closed" )
+        }
       }      
     }
   }
@@ -640,22 +662,22 @@ trait ExerciseHLDSL {
   ) = {
     for( eitherExpr <- sessionMap.get( sessionId ) ) {
       eitherExpr match {
-	case ( Left( expr@ConcreteHL.InsertContent( label, cnxns, content ) ), None ) => {
-	  val ( _, ersplChan ) = erspl( sessionId ) 
-	  reset {
-	    for( e <- node.subscribe( ersplChan ) ) {
-	      val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
-	      sessionMap += ( sessionId -> rslt );
-	      ()
-	    }
-	  }
-	}
-	case ( Left( expr ), _ ) => {
-	  throw new Exception( "unexpected expression type: " + expr )
-	}
-	case ( Right( expr ), _ ) => {
-	  println( "session closed" )
-	}
+        case ( Left( expr@ConcreteHL.InsertContent( label, cnxns, content ) ), None ) => {
+          val ( _, ersplChan ) = erspl( sessionId ) 
+          reset {
+            for( e <- node.subscribe( ersplChan ) ) {
+              val rslt = ( Right[ConcreteHL.HLExpr,ConcreteHL.HLExpr]( expr ), None )
+              sessionMap += ( sessionId -> rslt );
+              ()
+            }
+          }
+        }
+        case ( Left( expr ), _ ) => {
+          throw new Exception( "unexpected expression type: " + expr )
+        }
+        case ( Right( expr ), _ ) => {
+          BasicLogService.tweet( "session closed" )
+        }
       }      
     }
   }
@@ -681,7 +703,7 @@ trait UseCaseCapture {
     }
     catch {
       case e : Throwable => {
-        println( "warning case not captured: " + msg )
+        BasicLogService.tweet( "warning case not captured: " + msg )
       }
     }
   }
@@ -717,6 +739,13 @@ package usage {
      with CnxnString[String,String,String]
      with Serializable
 
+  object AgentURIGenerator {
+    import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+    def mkAgentURI() : URI = {
+      UUID.randomUUID.toString.toURI
+    }
+  }
+
   object StreamBasedClient
   extends EvaluationCommsService  
   with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
@@ -749,13 +778,16 @@ package usage {
     def doSomeInserts(      
       maxPosts : Int = 1000,
       minPosts : Int = 1,
+      @transient
       onPost : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
-          println( "got response: " + optRsrc )
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
+      @transient
       postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream(),
+      @transient
       rndm : scala.util.Random = new scala.util.Random()      
     ) : Unit = {
       val numPosts =
@@ -768,17 +800,126 @@ package usage {
       ) {
         agentMgr().post[String]( erql, erspl )( filter, cnxns, content, onPost )
       }
+    }    
+    def pickANumber( min : Int, max : Int ) : Int = {
+      scala.math.min( (new scala.util.Random()).nextInt( max ) + 1, min )
+    }
+    def doSomeNestedInserts(            
+      maxPosts : Int = 1000,
+      minPosts : Int = 1,
+      nestingLevel : Int = 2
+    ) : Unit = {      
+      if ( nestingLevel > 0 ) {
+        @transient
+        val postExprStrm : Stream[ConcreteHL.InsertContent[String]] = mkPostExprStream()        
+        val numPosts = pickANumber( maxPosts, minPosts )
+        val sessionID = UUID.randomUUID
+        val erql = agentMgr().erql( sessionID )
+        val erspl = agentMgr().erspl( sessionID )
+        val concretePostExprStrm = postExprStrm.take( maxPosts + 2 )
+        val newLabelStrm = mkRandomLabelStream()
+        val concreteLabelStrm = newLabelStrm.take( maxPosts + 2 )
+        val newLabelPostExprPairStrm = concretePostExprStrm.zip( concreteLabelStrm )
+        
+        def onPost(
+          nLvl : Int
+        ) : Option[DSLCommLink.mTT.Resource] => Unit = {
+          ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+            if ( nLvl > 0 ) {
+              println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+              println( "got response: " + optRsrc )
+              println( "calling doSomeNestedInserts recursively" )
+              for(
+                ( ConcreteHL.InsertContent( filter, cnxns, content : String ), newFilter ) <- newLabelPostExprPairStrm.take( numPosts )
+              ) {
+                agentMgr().post[String]( erql, erspl )(
+                  newFilter, cnxns, content,
+                  onPost( nLvl - 1 )
+                )
+              }
+              println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+            }
+          }          
+        }
+        onPost( nestingLevel )( None )
+      }
+    }
+
+    def doOneNestedInsert(
+    ) : Unit = {      
+      val theCnxn = 
+        PortableAgentCnxn(
+          AgentURIGenerator.mkAgentURI,
+          "true",
+          AgentURIGenerator.mkAgentURI
+        )
+      val theLocationLabel = 
+        fromTermString(
+          "location( space( Here ), time( Now ) )"
+        ).getOrElse(
+          throw new Exception( "unable to parse label string : " + "location( space( Here ), time( Now ) )" )
+        )
+      val theOtherLocationLabel = 
+        fromTermString(
+          "centers( head( Center ), heart( Center ), hands( Center ) )"
+        ).getOrElse(
+          throw new Exception( "unable to parse label string : " + "location( space( Here ), time( Now ) )" )
+        )
+      val theLocationValueOne = "Alan Watts"
+      val theLocationValueTwo = "Ram Das"
+
+      val theFirstInsertContentExpr = 
+        ConcreteHL.InsertContent[String](
+          theLocationLabel,
+          List( theCnxn ),
+          theLocationValueOne
+        )
+      val theSecondInsertContentExpr = 
+        ConcreteHL.InsertContent[String](
+          theOtherLocationLabel,
+          List( theCnxn ),
+          theLocationValueTwo
+        )
+
+      val ( erql, erspl ) = agentMgr().makePolarizedPair()
+
+      val onPost2 : Option[DSLCommLink.mTT.Resource] => Unit = 
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 2 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 2 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+        }
+
+      val onPost1 : Option[DSLCommLink.mTT.Resource] => Unit = 
+        ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 1 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 1 completed! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 2 initiated! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          val ( erqlNew, ersplNew ) = agentMgr().makePolarizedPair()
+          agentMgr().post[String]( erqlNew, ersplNew )(
+            theSecondInsertContentExpr.label, theSecondInsertContentExpr.cnxns, theSecondInsertContentExpr.value, onPost2
+          )
+        }
+      
+      BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !post 1 initiated! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+      agentMgr().post[String]( erql, erspl )(
+        theFirstInsertContentExpr.label, theFirstInsertContentExpr.cnxns, theFirstInsertContentExpr.value, onPost1
+      )
     }
     def doSomeFeeds(      
       maxFeeds : Int = 1000,
       minFeeds : Int = 1,
+      @transient
       onFeedRslt : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
           println( "got response: " + optRsrc )
           println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?feed? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
+      @transient
       feedExprStrm : Stream[ConcreteHL.FeedExpr] = mkFeedExprStream(),
+      @transient
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numFeedExprs =
@@ -795,13 +936,16 @@ package usage {
     def doSomeScores(      
       maxScores : Int = 1000,
       minScores : Int = 1,
+      @transient
       onScoreRslt : Option[DSLCommLink.mTT.Resource] => Unit =
         ( optRsrc : Option[DSLCommLink.mTT.Resource] ) => {
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
-          println( "got response: " + optRsrc )
-          println( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
+          BasicLogService.tweet( "got response: " + optRsrc )
+          BasicLogService.tweet( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ?score? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" )
         },
+      @transient
       scoreExprStrm : Stream[ConcreteHL.ScoreExpr] = mkScoreExprStream(),
+      @transient
       rndm : scala.util.Random = new scala.util.Random()
     ) : Unit = {
       val numScoreExprs =
@@ -814,6 +958,48 @@ package usage {
       ) {
         agentMgr().score( erql, erspl )( filter, cnxns, staff, onScoreRslt )
       }
+    }
+  }
+  
+  object SimpleInsertFeedClient
+  extends EvaluationCommsService  
+  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
+  with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
+  with StorageManagement with CnxnString[String,String,String]
+  with Serializable {
+    def insert(value: String, filter: String = "all(a(_))") = {
+      agentMgr().post(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        value,
+        (optRsrc) => BasicLogService.tweet("onPost: optRsrc = " + optRsrc)
+      )
+    }
+    def feed(filter: String = "all(a(_))") = {
+      agentMgr().feed(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => BasicLogService.tweet("onFeed: optRsrc = " + optRsrc)
+      )
+    }
+    def read(filter: String = "all(a(_))") = {
+      agentMgr().read(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => BasicLogService.tweet("onRead: optRsrc = " + optRsrc)
+      )
     }
   }
 }

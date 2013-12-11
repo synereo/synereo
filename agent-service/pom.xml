@@ -11,32 +11,8 @@
 
     <modules>
         <module>AgentServices-Store</module>
-        <module>PlatformAgentLauncher</module>
         <module>../GLoSEval</module>
     </modules>
-
-    <distributionManagement>
-        <repository>
-            <id>protegraRepo</id>
-            <url>ftp://ftp.protegra.com</url>
-        </repository>
-        <snapshotRepository>
-            <id>protegraRepo</id>
-            <url>ftp://ftp.protegra.com</url>
-            <uniqueVersion>true</uniqueVersion>
-        </snapshotRepository>
-    </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>protegraRepo</id>
-            <url>ftp://ftp.protegra.com</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-    </repositories>
 
     <pluginRepositories>
         <pluginRepository>

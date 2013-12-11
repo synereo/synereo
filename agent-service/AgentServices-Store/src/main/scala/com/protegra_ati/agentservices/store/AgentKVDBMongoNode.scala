@@ -71,7 +71,7 @@ with AgentCnxnTypeScope {
       override val name : Moniker      
     ) extends BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode](
       name
-    ) {
+    ) {      
       def mget( cnxn : acT.AgentCnxn )(
         persist : Option[PersistenceManifest],
         ask : dAT.AskNum,
@@ -114,70 +114,75 @@ with AgentCnxnTypeScope {
 
           keep match {
             case policy: RetainInStore => {
-            } // Need to store the
-            // continuation on the tail of
-            // the continuation entry
-            val oKQry = kquery(xmlCollName, path)
-            oKQry match {
-              case None => {
-                throw new Exception(
-                  "failed to compile a continuation query"
-                )
-              }
-              case Some(kqry) => {
-                val krslts = executeWithResults(xmlCollName, kqry)
-
-                // This is the easy case!
-                // There are no locations
-                // matching the pattern with
-                // stored continuations
-                krslts match {
-                  case Nil => {
-                    putKInStore(
-                      persist,
-                      path,
-                      mTT.Continuation( List( rk ) ),
-                      collName,
-                      false
-                    )
-                  }
-                  case _ => {
-                    // A more subtle
-                    // case. Do we store
-                    // the continutation on
-                    // each match?
-                    // Answer: Yes!
-                    for ( krslt <- itergen[DBObject](krslts) ) {
-                      BasicLogService.tweet("retrieved " + krslt.toString)
-                      val ekrsrc = pd.asResource(path, krslt)
-
-                      ekrsrc.stuff match {
-                        case Right(ks) => {
-                          BasicLogService.tweet("removing from store " + krslt)
-                          removeFromStore(
-                            persist,
-                            krslt,
-                            collName
-                          )
-                          putKInStore(
-                            persist,
-                            path,
-                            mTT.Continuation(ks ++ List(rk)),
-                            collName,
-                            false
-                          )
-                        }
-                        case _ => {
-                          throw new Exception(
-                            "Non-continuation resource stored in kRecord" + ekrsrc
-                          )
+              // Need to store the
+              // continuation on the tail of
+              // the continuation entry
+              val oKQry = kquery(xmlCollName, path)
+              oKQry match {
+                case None => {
+                  throw new Exception(
+                    "failed to compile a continuation query"
+                  )
+                }
+                case Some(kqry) => {
+		  val pm = persist.getOrElse( throw new Exception( "storeKQuery needs persistence manifest" ) )
+		  val tPath = Right[mTT.GetRequest,mTT.GetRequest]( path )
+                  //val krslts = executeWithResults(xmlCollName, kqry)
+		  val krslts = executeWithResults( pm, xmlCollName, tPath )
+                  
+                  // This is the easy case!
+                  // There are no locations
+                  // matching the pattern with
+                  // stored continuations
+                  krslts match {
+                    case Nil => {
+                      putKInStore(
+                        persist,
+                        path,
+                        mTT.Continuation( List( rk ) ),
+                        collName,
+                        false
+                      )
+                    }
+                    case _ => {
+                      // A more subtle
+                      // case. Do we store
+                      // the continutation on
+                      // each match?
+                      // Answer: Yes!
+                      for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](krslts) ) {
+		        val ( krslt, ekrsrc ) = rsltRsrcPair
+                        BasicLogService.tweet("retrieved " + krslt.toString)
+                        //val ekrsrc = pd.asResource(path, krslt)
+                        
+                        ekrsrc.stuff match {
+                          case Right(ks) => {
+                            BasicLogService.tweet("removing from store " + krslt)
+                            removeFromStore(
+                              persist,
+                              krslt,
+                              collName
+                            )
+                            putKInStore(
+                              persist,
+                              path,
+                              mTT.Continuation(ks ++ List(rk)),
+                              collName,
+                              false
+                            )
+                          }
+                          case _ => {
+                            throw new Exception(
+                              "Non-continuation resource stored in kRecord" + ekrsrc
+                            )
+                          }
                         }
                       }
                     }
                   }
                 }
               }
-            }
+            } 
             case _ => {
               BasicLogService.tweet("policy indicates not to store kQuery: " + path)
             }
@@ -282,7 +287,7 @@ with AgentCnxnTypeScope {
 
                                     rk(oV)
                                   }
-                                  case Some(qry) => {
+                                  case Some(qry) => {				    
                                     BasicLogService.tweet( 
                                       (
                                         "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
@@ -294,7 +299,9 @@ with AgentCnxnTypeScope {
                                       )
                                     )                                    
                                     
-                                    val rslts = executeWithResults(xmlCollName, qry)
+                                    //val rslts = executeWithResults(xmlCollName, qry)
+				    val tPath = Left[mTT.GetRequest,mTT.GetRequest]( path )
+				    val rslts = executeWithResults( pd, xmlCollName, tPath )
                                     
                                     rslts match {
                                       case Nil => {
@@ -354,8 +361,9 @@ with AgentCnxnTypeScope {
                                         if ( cursor ) {
                                           var rsrcRslts: List[ mTT.Resource ] = Nil
                                           
-                                          for ( rslt <- itergen[DBObject](rslts) ) {
-                                            BasicLogService.tweet("retrieved " + rslt.toString)
+                                          for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+                                            val ( rslt, ersrc ) = rsltRsrcPair
+					    BasicLogService.tweet("retrieved " + rslt.toString)
                                             
                                              consume match {
                                                case policy : RetainInStore => {
@@ -371,7 +379,7 @@ with AgentCnxnTypeScope {
                                                }
                                             }
                                             
-                                            val ersrc: emT.PlaceInstance = pd.asResource(path, rslt)
+                                            //val ersrc: emT.PlaceInstance = pd.asResource(path, rslt)
                                             ersrc.stuff match {
                                               case Left( r ) => rsrcRslts = r :: rsrcRslts
                                               case _ => {}
@@ -385,9 +393,19 @@ with AgentCnxnTypeScope {
                                           consume match {
                                             case policy : Subscription => {
                                               BasicLogService.tweet(
-                                                "\n===================================================================\n"
-                                                + "Storing subscription continuation"
-                                                + "with keep : " + keep
+                                                "===================================================================\n"
+                                                + "\nStoring subscription continuation"
+                                                + "\nmethod : mget "
+                                                + "\nthis : " + this
+                                                + "\ncnxn : " + cnxn
+                                                + "\nchannels : " + channels
+                                                + "\nregistered : " + registered
+                                                + "\nconsume : " + consume
+                                                + "\nkeep : " + keep
+                                                + "\ncursor : " + cursor
+                                                + "\ncollName : " + collName
+                                                + "\npath : " + path
+                                                + "\nwith keep : " + keep
                                                 + "\n===================================================================\n"
                                               )
                                               storeKQuery( xmlCollName, pd )( path, keep, rk )
@@ -406,13 +424,13 @@ with AgentCnxnTypeScope {
                                           consume match {
                                             case policy : Subscription => {
                                               BasicLogService.tweet(
-                                                "\n===================================================================\n"
-                                                + "Storing subscription continuation"
-                                                + "with keep : " + keep
+                                                "==================================================================="
+                                                + "\nStoring subscription continuation"
+                                                + "\nwith keep : " + keep
                                                 + "\n===================================================================\n"
                                               )                                       
-                                              for ( rslt <- itergen[DBObject](rslts) ) {
-                                                
+                                              for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+                                                val ( rslt, ersrc ) = rsltRsrcPair
                                                 BasicLogService.tweet("retrieved " + rslt.toString)
                                             
                                                 consume match {
@@ -432,8 +450,9 @@ with AgentCnxnTypeScope {
 
                                               storeKQuery( xmlCollName, pd )( path, keep, rk )
 
-                                              for ( rslt <- itergen[DBObject](rslts) ) {
-                                                val ersrc = pd.asResource(path, rslt)
+                                              for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+						val ( rslt, ersrc ) = rsltRsrcPair
+                                                //val ersrc = pd.asResource(path, rslt)
                                                 BasicLogService.tweet("returning " + ersrc)                                             
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
@@ -445,8 +464,8 @@ with AgentCnxnTypeScope {
                                               BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
                                               //spaceLock.depart( Some( rk ) )
                                               spaceLock.depart( path, Some( rk ) )
-                                              for ( rslt <- itergen[DBObject](rslts) ) {
-                                            
+                                              for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
+						val ( rslt, ersrc ) = rsltRsrcPair
                                                 BasicLogService.tweet("retrieved " + rslt.toString)
                                                 
                                                 consume match {
@@ -463,7 +482,7 @@ with AgentCnxnTypeScope {
                                                   }
                                                 }
                                                 
-                                                val ersrc = pd.asResource(path, rslt)
+                                                //val ersrc = pd.asResource(path, rslt)
                                                 BasicLogService.tweet("returning " + ersrc)                                             
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
@@ -496,10 +515,20 @@ with AgentCnxnTypeScope {
                       case oCacheV@Some( cacheV ) => {                    
                         BasicLogService.tweet( 
                           (
-                            "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-                            + "mgetting " + path + ".\n"
-                            + "on " + this + "found a result in memory cache.\n"
-                            + cacheV
+                            ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                            + "BaseAgentKVDB : "
+                            + "\nmethod : mget "
+                            + "\nthis : " + this
+                            + "\ncnxn : " + cnxn
+                            + "\nchannels : " + channels
+                            + "\nregistered : " + registered
+                            + "\nconsume : " + consume
+                            + "\nkeep : " + keep
+                            + "\ncursor : " + cursor
+                            + "\ncollName : " + collName
+                            + "\npath : " + path
+                            + "\n---------------------------------------"
+                            + "on " + this + "found a result in memory cache.\n" + cacheV
                             + "\ncleaning store"
                             + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                           )
@@ -615,7 +644,10 @@ with AgentCnxnTypeScope {
                                     }
                                   }
                                   case Some( qry ) => {
-                                    executeWithResults( xmlCollName, qry ) match {
+				    val tPath = Left[mTT.GetRequest,mTT.GetRequest]( path )
+				    val ewrRslts = executeWithResults( pd, xmlCollName, tPath )
+                                    //executeWithResults( xmlCollName, qry ) match {
+				    ewrRslts match {
                                       case Nil => {
                                         BasicLogService.tweet( 
                                           (
@@ -696,7 +728,8 @@ with AgentCnxnTypeScope {
                                         // do in the case that
                                         // what's in store doesn't
                                         // match what's in cache?
-                                        for( rslt <- itergen[DBObject]( rslts ) ) {
+                                        for( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)]( rslts ) ) {
+					  val ( rslt, ersrc ) = rsltRsrcPair
                                           BasicLogService.tweet( "retrieved " + rslt.toString )                                     
                                           
                                           consume match {
@@ -732,6 +765,10 @@ with AgentCnxnTypeScope {
                                             )
                                             storeKQuery( xmlCollName, pd )( path, keep, rk )
                                             if ( !cursor ) {
+
+                                              BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                              spaceLock.depart( path, Some( rk ) )
+
                                               rk( oV )
                                             }
                                             else {
@@ -744,13 +781,18 @@ with AgentCnxnTypeScope {
                                                   case _ => {}
                                                 }
                                               }
+
+                                              BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
+                                              spaceLock.depart( path, Some( rk ) )
+
                                               rk( asCursor(rsrcRslts) )
                                             }
                                           }
                                           case _ => {
+
                                             BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 10" + this + " for mget on " + path + "." )
-                                            //spaceLock.depart( Some( rk ) )
                                             spaceLock.depart( path, Some( rk ) )
+
                                             if ( !cursor ) {
                                               rk( oV )
                                             }
@@ -2465,11 +2507,7 @@ package mongo.usage {
                   textToTag.getOrElse(
                     throw new Exception( "must have textToTag to convert mongo object" )
                   )
-                //val ttt = ( x : String ) => x
-                
-                //val ptn = asPatternString( key )
-                //println( "ptn : " + ptn )             
-                
+                                
                 CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                   case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                     matchMap( key, k ) match {
@@ -3265,7 +3303,7 @@ package mongo.usage {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -3455,11 +3493,7 @@ package mongo.usage {
                         textToTag.getOrElse(
                           throw new Exception( "must have textToTag to convert mongo object" )
                         )
-                      //val ttt = ( x : String ) => x
-                      
-                      //val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
-                      
+                                            
                       CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                         case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                           matchMap( key, k ) match {
@@ -3612,7 +3646,7 @@ package mongo.usage {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -3654,7 +3688,6 @@ package mongo.usage {
             ptn : String,
             place : String
           ) : Option[Substitution] = {
-            //println( "in fitsK on " + this )
             if ( fits( ptn, place ) ) {
               Some( IdentitySubstitution() )
             }
@@ -3782,9 +3815,9 @@ package mongo.usage {
       val recordsFileName = ( file + rcrdsFileNameSfx + ".xml" )
       val db = <records>{acc.toList}</records>
 
-      println( "---------------------------******>>>>>>******---------------------------" )
-      println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
-      println( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
       //scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
 
@@ -3817,9 +3850,9 @@ package mongo.usage {
         )
       // get an empty queue
       val collectDQ = collectDQM.zero[String]    
-      println( "---------------------------******>>>>>>******---------------------------" )
-      println( "creating entries" )
-      println( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "creating entries" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
       val entry = """ { "putval" : { "values":[558815,43649779],"dstypes":["derive","derive"],"dsnames":["rx","tx"],"time":1334349094.633,"interval":10.000,"host":"server-75530.localdomain","plugin":"interface","plugin_instance":"eth0","type":"if_octets","type_instance":"" } } """
 
@@ -3828,9 +3861,9 @@ package mongo.usage {
 
       for( i <- 1 to numOfEntries ) { collectDQ ! entryStream( i ) }
 
-      println( "---------------------------******>>>>>>******---------------------------" )
-      println( "\nentries created" )
-      println( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+      BasicLogService.tweet( "\nentries created" )
+      BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
     }
 
     def readEntriesFromRabbitMQ(
@@ -3851,7 +3884,7 @@ package mongo.usage {
       val fileNames = new ListBuffer[String]()      
       val lock = new Lock()
       
-      println( "reading entries" )
+      BasicLogService.tweet( "reading entries" )
       for ( entry <- collectDQM( collectDQ ) ) {
         print( "." )
         handleEntry( parse( entry ), acc )
@@ -3862,32 +3895,32 @@ package mongo.usage {
           val recordsFileName = ( file + rcrdsFileNameSfx + ".xml" )        
           val db = <records>{acc.toList}</records>
           
-          println( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
+          BasicLogService.tweet( "\nsaving a chunk of records ( " + dbChunk + " ) to " + recordsFileName )
           //scala.xml.XML.saveFull( recordsFileName, db, "UTF-8", true, null )
           fileNames += recordsFileName
 
-          println( "---------------------------******>>>>>>******---------------------------" )
-          println( "putting @ " + ( lthrd + "_" + recordsFileName ) )
-          println( "to trigger adding the data file to the kvdb node db" )
-          println( "---------------------------******>>>>>>******---------------------------" )
+          BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+          BasicLogService.tweet( "putting @ " + ( lthrd + "_" + recordsFileName ) )
+          BasicLogService.tweet( "to trigger adding the data file to the kvdb node db" )
+          BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
           reset {
             entryExchange.putS( lthrd + "_" + recordsFileName, rcrdsFileNameSfx )
 
-            println( "---------------------------******>>>>>>******---------------------------" )
-            println( "waiting @ " + ( lthrd + rcrdsFileNameSfx ) )
-            println( "to be able to continue processing json entries" )
-            println( "---------------------------******>>>>>>******---------------------------" )
+            BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+            BasicLogService.tweet( "waiting @ " + ( lthrd + rcrdsFileNameSfx ) )
+            BasicLogService.tweet( "to be able to continue processing json entries" )
+            BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
             
             for( rsrc <- entryExchange.getS( lthrd + rcrdsFileNameSfx ) ) {
 
-              println( "---------------------------******>>>>>>******---------------------------" )
-              println( "got " + rsrc + " @ " + lthrd + rcrdsFileNameSfx )
-              println( "---------------------------******>>>>>>******---------------------------" )
+              BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
+              BasicLogService.tweet( "got " + rsrc + " @ " + lthrd + rcrdsFileNameSfx )
+              BasicLogService.tweet( "---------------------------******>>>>>>******---------------------------" )
 
               rsrc match {
                 case Some( msg ) => {
-                  println( "found the droids we were looking for. " + msg )
+                  BasicLogService.tweet( "found the droids we were looking for. " + msg )
                 }
                 case _ => {
                   throw new Exception( "unexpected communication: " + rsrc )
@@ -3900,7 +3933,7 @@ package mongo.usage {
         }
         lock.release    
       }      
-      println( "\nentries read" )      
+      BasicLogService.tweet( "\nentries read" )      
       fileNames
     }
 
@@ -4396,7 +4429,7 @@ package mongo.usage {
         override def run() : Unit = {
           reset {
             for( rsrc <- kvdbNode.get( cnxnGlobal )( asCnxnCtxtLabel( "XandY" ) ) ) {
-              println( "received: " + rsrc )
+              BasicLogService.tweet( "received: " + rsrc )
             }
           }
         }
@@ -4463,10 +4496,10 @@ package mongo.usage {
               if ( e != None ) {
                 //val result = e.dispatch
                 //reset {_resultsQ.put(cnxnTest)(result.toLabel, result+"restored")}
-                println( "listen received - " + e )
+                BasicLogService.tweet( "listen received - " + e )
               }
               else {
-                println( "listen received - none" )
+                BasicLogService.tweet( "listen received - none" )
               }
             }
           }

@@ -59,6 +59,8 @@ trait AgentCnxnTypes extends Serializable {
     }    
   }
 
+  case class AgentBiCnxn( readCnxn : AgentCnxn, writeCnxn : AgentCnxn )
+
   def protoAgentCnxn : AgentCnxn = {
     AgentCnxn(
       "proto".toURI,

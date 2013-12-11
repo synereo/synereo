@@ -1,0 +1,126 @@
+// -*- mode: Javascript;-*- 
+// Filename:    prolog.peg 
+// Authors:     luciusmeredith                                                    
+// Creation:    Tue Oct  8 20:02:07 2013 
+// Copyright:   Not supplied 
+// Description: 
+// ------------------------------------------------------------------------
+
+/*
+ * A start on a PEG.js prolog term parser
+ */
+
+start
+  = predicate:predicate { return predicate; }
+
+predicate
+  = atom:atom { return atom; }
+  / functor "(" (term ["," term]*) ")"
+
+atom
+  = lident:lident { return lident; }
+  / "'" ident "'"
+
+functor
+  = lident:lident { return lident; }
+
+term
+  = atom:atom { return atom; }
+  / literal:literal { return literal; }
+  / v:var { return v; }
+  / functor "(" [term]+ ")"
+  / lyst:lyst { return lyst; }
+
+var
+  = uident:uident { return uident; }
+  / wild:wild { return wild; }
+
+lyst 
+  = "[" "]" { return []; }
+  / "[" extension:extension "]" { return extension; }
+  / "[" extension:extension "|" lyst:lyst "]" { return extension + lyst; }
+  / "[" extension:extension "|" v:var "]" { return extension + [v]; }
+
+extension
+  = term:term tail:["," term]* {
+       var result = term;
+       for (var i = 0; i < tail.length; i++) {
+        result.push(tail[i]);
+       }
+       return result;
+    }
+
+lident
+  = [a-z]([a-z] / [A-Z] / [0-9])*
+
+uident
+  = [A-Z]([a-z] / [A-Z] / [0-9])*
+
+ident
+  = ([a-z] / [A-Z] / [0-9])+
+
+wild
+  = "_"
+
+literal
+  = string
+  / number
+  / boolean
+
+string "string"
+  = '"' '"' { return "";    }
+  / '"' chars:chars '"' { return chars; }
+
+chars
+  = chars:char+ { return chars.join(""); }
+
+char
+  = [^"\\\0-\x1F\x7f]
+  / '\\"'  { return '"';  }
+  / "\\\\" { return "\\"; }
+  / "\\/"  { return "/";  }
+  / "\\b"  { return "\b"; }
+  / "\\f"  { return "\f"; }
+  / "\\n"  { return "\n"; }
+  / "\\r"  { return "\r"; }
+  / "\\t"  { return "\t"; }
+  / "\\u" digits:(hexDigit hexDigit hexDigit hexDigit) {
+      return String.fromCharCode(parseInt("0x" + digits));
+    }
+
+boolean
+  = "true" { return true; }
+  / "false" { return false; }
+
+number "number"
+  = parts:(int frac exp) { return parseFloat(parts); }
+  / parts:(int frac) { return parseFloat(parts); }
+  / parts:(int exp) { return parseFloat(parts); }
+  / parts:(int) { return parseFloat(parts); }
+
+int
+  = digit19 digits
+  / digit
+  / "-" digit19 digits
+  / "-" digit
+
+frac
+  = "." digits
+
+exp
+  = e digits
+
+digits
+  = digit+
+
+e
+  = [eE] [+-]?
+
+digit
+  = [0-9]
+
+digit19
+  = [1-9]
+
+hexDigit
+  = [0-9a-fA-F]
