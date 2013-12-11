@@ -783,10 +783,10 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
     valToTag : java.lang.Object => Tag,
     strToVar : String => Var
   )(
-    cc : ScalaObject with Product with Serializable,
-    vars : List[(String,String)]
+    cc : Product with Serializable, // heuristic for checking CaseClassness
+    vars : List[(String,Option[String])]
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {    
-    val varMap = new HashMap[String,String]()
+    val varMap = new HashMap[String,Option[String]]()
     for( ( fld, v ) <- vars ) { varMap += ( fld -> v ) }
     val varFlds = varMap.keys
 
@@ -808,7 +808,7 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
           BasicLogService.tweet( cc + " is an option" )
 	  cc match {
 	    case Some(
-	      thing : ScalaObject with Product with Serializable
+	      thing : Product with Serializable
 	    ) => {
 	      //println( cc + " is Some( <case class instance> )" )
               BasicLogService.tweet( cc + " is Some( <case class instance> )" )
@@ -843,45 +843,69 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
           BasicLogService.tweet( cc + " is a plain old case class" )
 	  //println( "iterating through fields" )
           BasicLogService.tweet( "iterating through fields" )
-	  val facts =
-	    (
-	      for(
-		m <- caseClassAccessors( cc )
-	      ) yield {
-		varMap.get( m.getName ) match {
-		  case Some( v ) => {
-		    //println( cc + "'s field, " + m.getName + " is in
-                    //the list of vars" )
-                    BasicLogService.tweet( cc + "'s field, " + m.getName + " is in the list of vars" )
-		    new CnxnCtxtLeaf[Namespace,Var,Tag](
-		      Right( strToVar( v ) )
-		    )
+          val facts =
+            ( List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]( ) /: caseClassAccessors( cc ) )(
+              {
+                ( acc, m ) => {
+                  varMap.get( m.getName ) match {
+		    case Some( Some( v ) ) => {
+		      //println( cc + "'s field, " + m.getName + " is in
+                      //the list of vars" )
+                      BasicLogService.tweet(
+                        (
+                          cc + "'s field, " + m.getName
+                          + " is in the list of vars with supplied values" 
+                          + "\nand the value is " + v
+                        )
+                      )
+		      acc ++ List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
+                        new CnxnCtxtLeaf[Namespace,Var,Tag]( Right( strToVar( v ) ) )
+		      )
+		    }
+                    case Some( None ) => {
+		      //println( cc + "'s field, " + m.getName + " is in
+                      //the list of vars" )
+                      BasicLogService.tweet( cc + "'s field, " + m.getName + " is in the list of vars to be excluded" )		    
+                      acc
+		    }
+		    case None => {
+		      //println( cc + "'s field, " + m.getName + " is
+                      //not in the list of vars" )
+                      BasicLogService.tweet(
+                        (
+                          cc + "'s field, " + m.getName + " is not in the list of vars to be specially processed"
+                        )
+                      )
+		      val faccess = m.isAccessible
+		      m.setAccessible( true )
+		      val fval = m.get( cc )
+		      m.setAccessible( faccess )
+		      
+		      //println( "recursing on the value, " + fval + ",
+                      //of " + cc + "'s field, " + m.getName + " is not
+                      //in the list of vars" )
+                      BasicLogService.tweet(
+                        (
+                          "recursing on the value, " + fval + ", of " + cc
+                          + "'s field, " + m.getName
+                          + "(not in the list of vars to be specially processed)"
+                        )
+                      )
+                      acc ++ List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
+		        new CnxnCtxtBranch[Namespace,Var,Tag](
+		          labelToNS( nameStrCleansing( m.getName ) ),
+		          //List( fromCC( m.invoke( cc ) ) )
+		          fval match {
+			    case fvs : List[_] => fvs.map( ( x ) => fromCC( x.asInstanceOf[AnyRef] ) )
+			    case _ => List( fromCC( fval ) )
+		          }
+		        )
+                      )
+		    }
 		  }
-		  case None => {
-		    //println( cc + "'s field, " + m.getName + " is
-                    //not in the list of vars" )
-                    BasicLogService.tweet( cc + "'s field, " + m.getName + " is not in the list of vars" )
-		    val faccess = m.isAccessible
-		    m.setAccessible( true )
-		    val fval = m.get( cc )
-		    m.setAccessible( faccess )
-		    
-		    //println( "recursing on the value, " + fval + ",
-                    //of " + cc + "'s field, " + m.getName + " is not
-                    //in the list of vars" )
-                    BasicLogService.tweet( "recursing on the value, " + fval + ", of " + cc + "'s field, " + m.getName + " is not in the list of vars" )
-		    new CnxnCtxtBranch[Namespace,Var,Tag](
-		      labelToNS( nameStrCleansing( m.getName ) ),
-		      //List( fromCC( m.invoke( cc ) ) )
-		      fval match {
-			case fvs : List[_] => fvs.map( ( x ) => fromCC( x.asInstanceOf[AnyRef] ) )
-			case _ => List( fromCC( fval ) )
-		      }
-		    )
-		  }
-		}		
-	      }
-	    ).toList
+                }
+              }
+            ).toList
 	  
 	  new CnxnCtxtBranch[Namespace,Var,Tag] (
 	    labelToNS( caseClassNameSpace( cc ) ),
@@ -890,7 +914,7 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
 	}
       }
     }
-    fromCC( cc )
+    fromCC( cc.asInstanceOf[AnyRef] )
   }
 
   def fromCaseClass [Namespace,Var,Tag] (
@@ -914,8 +938,8 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
   }
 
   def partialCaseClassDerivative(
-    cc : ScalaObject with Product with Serializable,
-    vars : List[(String,String)]
+    cc : Product with Serializable,
+    vars : List[(String,Option[String])]
   ) : CnxnCtxtLabel[String,String,String] with Factual = {    
     partialCaseClassDerivative [String,String,String] (
       ( m :java.lang.reflect.Method ) => true 
@@ -1214,8 +1238,8 @@ object CnxnConversionStringScope
   }
 
   implicit def partialCaseClassDerivative(
-    cc : ScalaObject with Product with Serializable,
-    vars : List[(String,String)]
+    cc : Product with Serializable,
+    vars : List[(String,Option[String])]
   ) : CnxnCtxtLabel[String,String,String] with Factual = {        
     cnxnConversions.partialCaseClassDerivative( ( m : java.lang.reflect.Method ) => true )( l2ns, v2t, s2v )( cc, vars )
   }
