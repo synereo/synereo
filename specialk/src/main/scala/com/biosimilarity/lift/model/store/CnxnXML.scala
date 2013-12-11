@@ -784,7 +784,9 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
     strToVar : String => Var
   )(
     cc : Product with Serializable, // heuristic for checking CaseClassness
-    vars : List[(String,Option[String])]
+    vars : List[(String,Option[String])],
+    recurse : Boolean = false,
+    varRoot : String = "X"
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {    
     val varMap = new HashMap[String,Option[String]]()
     for( ( fld, v ) <- vars ) { varMap += ( fld -> v ) }
@@ -793,25 +795,17 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
     def fromCC(
       cc : java.lang.Object
     ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-      //println( "in fromCC with " + cc )
-      //BasicLogService.tweet( "in fromCC with " + cc )
       if ( isGroundValueType( cc.asInstanceOf[AnyRef] ) ) {	
-	//println( cc + " is a ground value" )
-        //BasicLogService.tweet( cc + " is a ground value" )
 	new CnxnCtxtLeaf[Namespace,Var,Tag](
 	  Left( valToTag( cc ) )
 	)
       }
       else {
 	if ( cc.isInstanceOf[Option[_]] ) {
-	  //println( cc + " is an option" )
-          //BasicLogService.tweet( cc + " is an option" )
 	  cc match {
 	    case Some(
 	      thing : Product with Serializable
 	    ) => {
-	      //println( cc + " is Some( <case class instance> )" )
-              //BasicLogService.tweet( cc + " is Some( <case class instance> )" )
 	      new CnxnCtxtBranch[Namespace,Var,Tag](
 		labelToNS( "some" ),
 		List(
@@ -822,90 +816,60 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
 	    case Some(
 	      thingElse : AnyRef
 	    ) => {
-	      //println( cc + " is Some( <some other kind of instance>
-              //)" )
-              //BasicLogService.tweet( cc + " is Some( <some other kind of instance> )" )
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( valToTag( thingElse ) )
 	      )
 	    }
 	    case None => {
-	      //println( cc + " is None" )
-              //BasicLogService.tweet( cc + " is None" )
 	      new CnxnCtxtLeaf[Namespace,Var,Tag](
 		Left( valToTag( "none" ) )
 	      )
 	    }
 	  }	  
 	}
-	else {	  	  
-	  //println( cc + " is a plain old case class" )
-          //BasicLogService.tweet( cc + " is a plain old case class" )
-	  //println( "iterating through fields" )
-          //BasicLogService.tweet( "iterating through fields" )
+	else {
+          val ccAccs = caseClassAccessors( cc )
           val facts =
-            ( List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]( ) /: caseClassAccessors( cc ) )(
+            ( List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual]( ) /: ( 0 to ccAccs.length - 1 ).toList )(
               {
-                ( acc, m ) => {
+                ( acc, n ) => {
+                  val m = ccAccs( n )
                   varMap.get( m.getName ) match {
 		    case Some( Some( v ) ) => {
-		      //println( cc + "'s field, " + m.getName + " is in
-                      //the list of vars" )
-                      // BasicLogService.tweet(
-//                         (
-//                           cc + "'s field, " + m.getName
-//                           + " is in the list of vars with supplied values" 
-//                           + "\nand the value is " + v
-//                         )
-//                       )
 		      acc ++ List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
                         new CnxnCtxtBranch[Namespace,Var,Tag](
 		          labelToNS( nameStrCleansing( m.getName ) ),
                           List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
-                            new CnxnCtxtLeaf[Namespace,Var,Tag]( Right( strToVar( v ) ) )
+                            new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( valToTag( v ) ) )
                           )
                         )
 		      )
 		    }
-                    case Some( None ) => {
-		      //println( cc + "'s field, " + m.getName + " is in
-                      //the list of vars" )
-                      //BasicLogService.tweet( cc + "'s field, " + m.getName + " is in the list of vars to be excluded" )		    
-                      acc
-		    }
+                    case Some( None ) => acc
 		    case None => {
-		      //println( cc + "'s field, " + m.getName + " is
-                      //not in the list of vars" )
-                      // BasicLogService.tweet(
-//                         (
-//                           cc + "'s field, " + m.getName + " is not in the list of vars to be specially processed"
-//                         )
-//                       )
-		      val faccess = m.isAccessible
-		      m.setAccessible( true )
-		      val fval = m.get( cc )
-		      m.setAccessible( faccess )
-		      
-		      //println( "recursing on the value, " + fval + ",
-                      //of " + cc + "'s field, " + m.getName + " is not
-                      //in the list of vars" )
-                      // BasicLogService.tweet(
-//                         (
-//                           "recursing on the value, " + fval + ", of " + cc
-//                           + "'s field, " + m.getName
-//                           + "(not in the list of vars to be specially processed)"
-//                         )
-//                       )
                       acc ++ List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
 		        new CnxnCtxtBranch[Namespace,Var,Tag](
 		          labelToNS( nameStrCleansing( m.getName ) ),
-		          //List( fromCC( m.invoke( cc ) ) )
-		          fval match {
-			    case fvs : List[_] => fvs.map( ( x ) => fromCC( x.asInstanceOf[AnyRef] ) )
-			    case _ => List( fromCC( fval ) )
-		          }
+                          if ( recurse ) {
+                            val faccess = m.isAccessible
+		            m.setAccessible( true )
+		            val fval = m.get( cc )
+		            m.setAccessible( faccess )
+
+		            fval match {
+			      case fvs : List[_] => fvs.map( ( x ) => fromCC( x.asInstanceOf[AnyRef] ) )
+			      case _ => List( fromCC( fval ) )
+		            }
+                          }
+                          else {
+                            List[CnxnCtxtLabel[Namespace,Var,Tag] with Factual](
+                              new CnxnCtxtLeaf[Namespace,Var,Tag](
+                                Right( strToVar( varRoot + n ) )
+                              )
+                            )
+                          }
 		        )
-                      )
+                      )		      
 		    }
 		  }
                 }
