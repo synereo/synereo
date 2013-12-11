@@ -307,11 +307,7 @@ package diesel {
                   textToTag.getOrElse(
                     throw new Exception( "must have textToTag to convert mongo object" )
                   )
-                //val ttt = ( x : String ) => x
-                
-                //val ptn = asPatternString( key )
-                //println( "ptn : " + ptn )             
-                
+                                
                 CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                   case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                     matchMap( key, k ) match {
@@ -1003,7 +999,7 @@ package diesel {
                             }
                             case None => {
                               BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                              throw new Exception( "matchMap failure " + key + " " + k )
+                              throw new UnificationQueryFilter( key, k, value )
                             }
                           }                                             
                         }
@@ -1107,7 +1103,7 @@ package diesel {
               }
             }
           spawn {
-            println( "initiating dispatch on " + node )
+            BasicLogService.tweet( "initiating dispatch on " + node )
             node.dispatchDMsgs()
           }
           node
@@ -1297,11 +1293,7 @@ package diesel {
                         textToTag.getOrElse(
                           throw new Exception( "must have textToTag to convert mongo object" )
                         )
-                      //val ttt = ( x : String ) => x
-                      
-                      //val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
-                      
+                                            
                       CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                         case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                           matchMap( key, k ) match {
@@ -1464,6 +1456,61 @@ package diesel {
 
   }
 
+  trait DSLEvaluatorConfiguration {
+    self : EvalConfig =>
+      def dslEvaluatorHostName() : String = {
+        try {
+          evalConfig().getString( "DSLEvaluatorHost" )
+        }
+        catch {
+          case e : Throwable => "localhost" 
+        }
+      }
+    def dslEvaluatorHostPort() : Int = {
+      try {
+        evalConfig().getInt( "DSLEvaluatorPort" )
+      }
+      catch {
+        case e : Throwable => 5672
+      }
+    }
+    def dslEvaluatorHostData() : String = {
+        try {
+          evalConfig().getString( "DSLEvaluatorHostData" )
+        }
+        catch {
+          case e : Throwable => "/dieselProtocol" 
+        }
+      }
+    def dslEvaluatorPreferredSupplierHostName() : String = {
+        try {
+          evalConfig().getString( "DSLEvaluatorPreferredSupplierHost" )
+        }
+        catch {
+          case e : Throwable => "localhost" 
+        }
+      }
+    def dslEvaluatorPreferredSupplierPort() : Int = {
+      try {
+        evalConfig().getInt( "DSLEvaluatorPreferredSupplierPort" )
+      }
+      catch {
+        case e : Throwable => 5672
+      }
+    }
+    def dslEvaluatorNetwork() : List[String] = {
+      import scala.collection.JavaConverters._
+      try {
+        val rslt : java.util.List[String] =
+          evalConfig().getStringList( "DSLEvaluatorNetwork" )
+        rslt.asScala.toList
+      }
+      catch {
+        case e : Throwable => List[String]( )
+      }
+    }
+  }
+
   object DieselConfigurationDefaults extends Serializable {
     val localHost : String = "localhost"
     val localPort : Int = 5672
@@ -1487,6 +1534,7 @@ package diesel {
 
   object DieselEngineCtor extends EvalConfig
   with DSLCommLinkConfiguration
+  with DSLEvaluatorConfiguration
   with Serializable {
     import DieselEngineScope._
     import Being._
@@ -1495,6 +1543,7 @@ package diesel {
     import CnxnConversionStringScope._
 
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+    import com.protegra_ati.agentservices.protocols.msgs.ProtocolMessage
 
     type LinkEvalRequestChannel = DSLCommLinkCtor.StdEvaluationRequestChannel
     type EvalChannel[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = Being.AgentKVDBNode[ReqBody,RspBody]
@@ -1503,9 +1552,11 @@ package diesel {
     type ChannelBundle = ( LinkEvalRequestChannel, LinkEvalRequestChannel, StdEvalChannel )
 
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
-      dataLocation : String,
-      localHost : String, localPort : Int,
-      remoteHost : String, remotePort : Int
+      dataLocation : String = dslEvaluatorHostData,
+      localHost : String = dslEvaluatorHostName,
+      localPort : Int = dslEvaluatorHostPort,
+      remoteHost : String = dslEvaluatorPreferredSupplierHostName,
+      remotePort : Int = dslEvaluatorPreferredSupplierPort
     )(
       implicit returnTwist : Boolean
     ) : Either[EvalChannel[ReqBody,RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])] = {
@@ -1539,7 +1590,7 @@ package diesel {
           )
         )
       }
-    }
+    }    
 
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       localHost : String, localPort : Int,
@@ -1548,6 +1599,19 @@ package diesel {
       implicit returnTwist : Boolean
     ) : Either[EvalChannel[ReqBody,RspBody],(EvalChannel[ReqBody, RspBody],EvalChannel[ReqBody, RspBody])] = {
       setup( "/dieselProtocol", localHost, localPort, remoteHost, remotePort )
+    }
+
+    def setupDSLEvaluatorNode[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      dataLocation : String = dslEvaluatorHostData,
+      localHost : String = dslEvaluatorHostName,
+      localPort : Int = dslEvaluatorHostPort
+    )(
+      configFileNameOpt : Option[String] = Some( "eval.conf" )
+    ) : EvalChannel[ReqBody, RspBody] = {      
+      ptToMany(
+        new URI( "agent", null, localHost, localPort, dataLocation, null, null ),
+        List[URI]( )
+      )( configFileNameOpt )
     }
 
     def agent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( 
@@ -1559,6 +1623,12 @@ package diesel {
         )( true )
       client
     }    
+
+    def dslEvaluatorAgent[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+      configFileNameOpt : Option[String] = Some( "eval.conf" )
+    ): EvalChannel[ReqBody,RspBody] = {
+      setupDSLEvaluatorNode[ReqBody,RspBody]()( configFileNameOpt )
+    }
 
     class DieselEngine(
       override val configFileName : Option[String],
@@ -1573,6 +1643,9 @@ package diesel {
         val fileNameRoot = fileName.split( '/' ).last
         new acT.AgentCnxn( fileNameRoot.toURI, "", fileNameRoot.toURI )
       } 
+
+      // BUGBUG : lgm -- this code is not in sync with the weak map
+      // case -- please introduce abstraction!!!
 
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
         node : EvalChannel[ReqBody,RspBody]
@@ -1664,7 +1737,7 @@ package diesel {
               reset {
                 BasicLogService.tweet(
                   "method: evaluateExpression"
-                  + "\n calling node.subscribe "
+                  + "\n calling node.read "
                   + "\nthis: " + this
                   + "\nnode: " + node
                   + "\nexpr: " + expr
@@ -1674,11 +1747,11 @@ package diesel {
                   + "\nfilter: " + filter
                 )
 
-                for( e <- node.subscribe( agntCnxn )( filter ) ) {
+                for( e <- node.read( agntCnxn )( filter ) ) {
                   
                   BasicLogService.tweet(
                     "method: evaluateExpression"
-                    + "\n returned from node.subscribe "
+                    + "\n returned from node.read "
                     + "\nthis: " + this
                     + "\nnode: " + node
                     + "\nexpr: " + expr
@@ -1691,6 +1764,59 @@ package diesel {
 
                   handler( e )
                 }
+              }
+            }
+          }
+          case ConcreteHL.CancelExpr( filter, cnxns ) => {
+            
+            BasicLogService.tweet(
+              "method: evaluateExpression"
+              + "\nin ConcreteHL.CancelExpr case "
+              + "\nthis: " + this
+              + "\nnode: " + node
+              + "\nexpr: " + expr
+              + "\nhandler: " + handler
+              + "\n-----------------------------------------"
+              + "\nfilter: " + filter
+              + "\ncnxns: " + cnxns
+            )
+
+            for( cnxn <- cnxns ) {
+              val agntCnxn : acT.AgentCnxn =
+                new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\n calling node.pullCnxnKRecords "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nagntCnxn: " + agntCnxn
+                + "\nfilter: " + filter
+              )
+
+              for( e <- node.pullCnxnKRecords( agntCnxn )( filter ) ) {
+                
+                BasicLogService.tweet(
+                  "method: evaluateExpression"
+                  + "\n returned from node.pullCnxnKRecords "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\ne: " + e
+                )
+                val optRsrc: Option[mTT.Resource] = e.stuff match {
+                  case Left(r) => Some(r)
+                  case _ => None
+                }
+
+                handler( optRsrc )
               }
             }
           }
@@ -1733,13 +1859,52 @@ package diesel {
               handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
             }
           }
+          case ConcreteHL.InsertContentV( filter, cnxns, value : AnyRef ) => {
+            
+            BasicLogService.tweet(
+              "method: evaluateExpression"
+              + "\nin ConcreteHL.InsertContentV case "
+              + "\nthis: " + this
+              + "\nnode: " + node
+              + "\nexpr: " + expr
+              + "\nhandler: " + handler
+              + "\n-----------------------------------------"
+              + "\nfilter: " + filter
+              + "\ncnxns: " + cnxns
+              + "\nvalue: " + value
+            )
+              
+            for( cnxn <- cnxns ) {
+              val agntCnxn : acT.AgentCnxn =
+                new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+              reset {
+                
+                BasicLogService.tweet(
+                  "method: evaluateExpression"                  
+                  + "\n calling node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\nvalue: " + value
+                )
+
+                node.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+              }
+
+              handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+            }
+          }
         }
       }
 
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
         node : String
       )( expr : ConcreteHL.HLExpr )(
-        handler : Option[mTT.Resource] => Unit
+        handler : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit
       ): Unit = {
         BasicLogService.tweet(
           "entering method: evaluateExpression"
@@ -1756,7 +1921,7 @@ package diesel {
               //throw new Exception( "divergence" )
               //println( "warning: divergent expression" )
               BasicLogService.tweet( "warning: divergent expression" )
-              handler( None )
+              handler( None, None, None )
             }
             case ConcreteHL.ReadExpr( filter, cnxns ) => {
               BasicLogService.tweet(
@@ -1803,7 +1968,7 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -1853,7 +2018,7 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -1903,7 +2068,58 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
+                  }
+                }
+              }
+            }
+
+            case ConcreteHL.GetExpr( filter, cnxns ) => {
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.GetExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.get "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.get( agntCnxn )( filter ) ) {
+                    
+                    BasicLogService.tweet(
+                      "method: evaluateExpression"
+                      + "\n returned from node.get "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
                 }
               }
@@ -1954,8 +2170,59 @@ package diesel {
                       + "\ne: " + e
                     )
                     
-                    handler( e )
+                    handler( e, Some(filter), Some(agntCnxn) )
                   }
+                }
+              }
+            }
+            case ConcreteHL.CancelExpr( filter, cnxns ) => {
+
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.CancelExpr case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+              )
+
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                BasicLogService.tweet(
+                  "method: evaluateExpression"
+                  + "\n calling node.pullCnxnKRecords "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                )
+
+                for( e <- n.pullCnxnKRecords( agntCnxn )( filter ) ) {
+
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n returned from node.pullCnxnKRecords "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\ne: " + e
+                  )
+                  val optRsrc: Option[mTT.Resource] = e.stuff match {
+                    case Left(r) => Some(r)
+                    case _ => None
+                  }
+                  handler( optRsrc, None, None )
                 }
               }
             }
@@ -1963,7 +2230,7 @@ package diesel {
               
               BasicLogService.tweet(
                 "method: evaluateExpression"
-                + "\nin ConcreteHL.FeedExpr case "
+                + "\nin ConcreteHL.InsertContent(String) case "
                 + "\nthis: " + this
                 + "\nnode: " + node
                 + "\nexpr: " + expr
@@ -1992,10 +2259,198 @@ package diesel {
                     + "\nvalue: " + value
                   )
                   
+                  try {
+                    n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                  } 
+                  catch {
+                    case e : Exception => {
+                      BasicLogService.tweet(
+                        "method: evaluateExpression"
+                        + "\n ---> node.publish caused an exception <--- "
+                        + "\nthis: " + this
+                        + "\nnode: " + node
+                        + "\nexpr: " + expr
+                        + "\nhandler: " + handler
+                        + "\n-----------------------------------------"
+                        + "\nagntCnxn: " + agntCnxn
+                        + "\nfilter: " + filter
+                        + "\nvalue: " + value
+                      )
+                      BasicLogService.tweetTrace( e )
+                    }
+                  }
+                }
+
+                BasicLogService.tweet(
+                  "method: evaluateExpression"
+                  + "\n completed node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\nvalue: " + value
+                )
+                
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some(filter), Some(agntCnxn) )
+              }
+            }
+            case ConcreteHL.InsertContent( filter, cnxns, value : ProtocolMessage ) => {
+
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.InsertContent(ProtocolMessage) case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\nvalue: " + value
+              )
+
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.publish "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\nvalue: " + value
+                  )
+
                   n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
                 }
+
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
+              }
+            }
+            case ConcreteHL.InsertContentV( filter, cnxns, value : AnyRef ) => {
+
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                  + "\nin ConcreteHL.InsertContentV case "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nexpr: " + expr
+                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nfilter: " + filter
+                  + "\ncnxns: " + cnxns
+                  + "\nvalue: " + value
+              )
+
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                      + "\n calling node.publish "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\nvalue: " + value
+                  )
+
+                  n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                }
+
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
+              }
+            }
+            case ConcreteHL.PutContent( filter, cnxns, value : String ) => {
+              
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.PutContent(String) case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\nvalue: " + value 
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.put "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\nvalue: " + value
+                  )
+                  
+                  n.put( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                }
                 
-                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ) )
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
+              }
+            }
+            case ConcreteHL.PutContent( filter, cnxns, value : ProtocolMessage ) => {
+              
+              BasicLogService.tweet(
+                "method: evaluateExpression"
+                + "\nin ConcreteHL.PutContent(ProtocolMessage) case "
+                + "\nthis: " + this
+                + "\nnode: " + node
+                + "\nexpr: " + expr
+                + "\nhandler: " + handler
+                + "\n-----------------------------------------"
+                + "\nfilter: " + filter
+                + "\ncnxns: " + cnxns
+                + "\nvalue: " + value 
+              )
+              
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n calling node.put "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+                    + "\nexpr: " + expr
+                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\nvalue: " + value
+                  )
+                  
+                  n.put( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( value ) ) )
+                }
+                
+                handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some(filter), Some(agntCnxn) )
               }
             }
           }
@@ -2062,11 +2517,35 @@ package diesel {
                       val forward : Option[mTT.Resource] => Unit =
                         {
                           ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2065 forward(" + optRsrc + ")")
-                            for( mTT.Ground( v ) <- optRsrc ) {                              
-                              reset {
-                                server.put( erspl, DSLCommLink.mTT.Ground( v ) )                                
-                              }
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2258 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
+                            reset {
+                              server.publish(
+                                erspl,
+                                DSLCommLink.mTT.Ground(
+                                  optRsrc match {
+                                    case None => {                                
+                                      ConcreteHL.Bottom
+                                    }
+                                    case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                      v
+                                    }
+                                  }
+                                )
+                              )       
                             }
                           }
                         }
@@ -2092,13 +2571,36 @@ package diesel {
                       
                       val forward : Option[mTT.Resource] => Unit =
                         {
-                          ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2096 forward(" + optRsrc + ")")
-                            for( mTT.Ground( v ) <- optRsrc ) {                              
-                              reset {
-                                server.put( erspl, DSLCommLink.mTT.Ground( v ) )
-                              }
-                              //loop()
+                          ( optRsrc : Option[mTT.Resource] ) => {                            
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2313 forward(" + optRsrc + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
+                            reset {
+                              server.publish(
+                                erspl,
+                                DSLCommLink.mTT.Ground(
+                                  optRsrc match {
+                                    case None => {                                
+                                      ConcreteHL.Bottom
+                                    }
+                                    case Some( mTT.Ground( v ) ) => {
+                                      v
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                      v
+                                    }
+                                  }
+                                )
+                              )       
                             }
                           }
                         }
@@ -2129,12 +2631,35 @@ package diesel {
                               val forward : Option[mTT.Resource] => Unit =
                                 {
                                   ( optRsrc : Option[mTT.Resource] ) => {
-                                    BasicLogService.tweet("Diesel.scala:2132 forward(" + optRsrc + ")")
-                                    for( mTT.Ground( v ) <- optRsrc ) {                                      
-                                      reset {
-                                        server.put( erspl, DSLCommLink.mTT.Ground( v ) )
-                                      }
-                                      //loop()
+                                    BasicLogService.tweet(
+                                      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      + "\nDiesel.scala:2372 forward(" + optRsrc + ")"
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n defined in method innerLoop"
+                                      + "\n passed to and called in evaluateExpression"
+                                      + "\nerql: " + erql
+                                      + "\nserver: " + server                              
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n erspl: " + erspl
+                                      + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                    )
+                                    reset {
+                                      server.publish(
+                                        erspl,
+                                        DSLCommLink.mTT.Ground(
+                                          optRsrc match {
+                                            case None => {                                
+                                              ConcreteHL.Bottom
+                                            }
+                                            case Some( mTT.Ground( v ) ) => {
+                                              v
+                                            }
+                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                              v
+                                            }
+                                          }
+                                        )
+                                      )       
                                     }
                                   }
                                 }                        
@@ -2231,14 +2756,38 @@ package diesel {
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
-                      val forward : Option[mTT.Resource] => Unit =
+                      val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
                         {
-                          ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2237 forward(" + optRsrc + ")")
-                            for( mTT.Ground( v ) <- optRsrc ) {                              
-                              reset {
-                                server.put( erspl, DSLCommLink.mTT.Ground( v ) )                                
-                              }
+                          ( optRsrc, optFilter, optCnxn ) => {
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2500 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
+                            reset {
+                              server.publish(
+                                erspl,
+                                DSLCommLink.mTT.Ground(
+                                  optRsrc match {
+                                    case None => {                                
+                                      ConcreteHL.Bottom
+                                    }
+                                    case Some( mTT.Ground( v ) ) => {
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                    }
+                                  }
+                                )
+                              )       
                             }
                           }
                         }
@@ -2262,15 +2811,38 @@ package diesel {
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
-                      val forward : Option[mTT.Resource] => Unit =
+                      val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
                         {
-                          ( optRsrc : Option[mTT.Resource] ) => {
-                            BasicLogService.tweet("Diesel.scala:2268 forward(" + optRsrc + ")")
-                            for( mTT.Ground( v ) <- optRsrc ) {                              
-                              reset {
-                                server.put( erspl, DSLCommLink.mTT.Ground( v ) )
-                              }
-                              //loop()
+                          ( optRsrc, optFilter, optCnxn ) => {
+                            BasicLogService.tweet(
+                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                              + "\nDiesel.scala:2555 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                              + "\n------------------------------------------------------------------"
+                              + "\n defined in method innerLoop"
+                              + "\n passed to and called in evaluateExpression"
+                              + "\nerql: " + erql
+                              + "\nserver: " + server                              
+                              + "\n------------------------------------------------------------------"
+                              + "\n erspl: " + erspl
+                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                            )
+                            reset {
+                              server.publish(
+                                erspl,
+                                DSLCommLink.mTT.Ground(
+                                  optRsrc match {
+                                    case None => {                                
+                                      ConcreteHL.Bottom
+                                    }
+                                    case Some( mTT.Ground( v ) ) => {
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                    }
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                    }
+                                  }
+                                )
+                              )       
                             }
                           }
                         }
@@ -2298,15 +2870,38 @@ package diesel {
                             for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                               val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                               
-                              val forward : Option[mTT.Resource] => Unit =
+                              val forward : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit =
                                 {
-                                  ( optRsrc : Option[mTT.Resource] ) => {
-                                    BasicLogService.tweet("Diesel.scala:2304 forward(" + optRsrc + ")")
-                                    for( mTT.Ground( v ) <- optRsrc ) {                                      
-                                      reset {
-                                        server.put( erspl, DSLCommLink.mTT.Ground( v ) )
-                                      }
-                                      //loop()
+                                  ( optRsrc, optFilter, optCnxn ) => {
+                                    BasicLogService.tweet(
+                                      ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      + "\nDiesel.scala:2614 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n defined in method innerLoop"
+                                      + "\n passed to and called in evaluateExpression"
+                                      + "\nerql: " + erql
+                                      + "\nserver: " + server                              
+                                      + "\n------------------------------------------------------------------"
+                                      + "\n erspl: " + erspl
+                                      + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                    )
+                                    reset {
+                                      server.publish(
+                                        erspl,
+                                        DSLCommLink.mTT.Ground(
+                                          optRsrc match {
+                                            case None => {                                
+                                              ConcreteHL.Bottom
+                                            }
+                                            case Some( mTT.Ground( v ) ) => {
+                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                            }
+                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                            }
+                                          }
+                                        )
+                                      )       
                                     }
                                   }
                                 }                        
@@ -2475,7 +3070,7 @@ package diesel {
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
           }
           else {
-            println( "warning: derefing node early anyway"  )
+            BasicLogService.tweet( "warning: derefing node early anyway"  )
             messageProcessorLoop( erql, node, rspLabelCtor, useBiLink, flip )
           }
         }
@@ -2649,7 +3244,8 @@ package diesel {
       }
 
       def stdLooper(
-        node : StdEvalChannel = agent( "/dieselProtocol" ),
+        //node : StdEvalChannel = agent( "/dieselProtocol" ),
+        node : StdEvalChannel = dslEvaluatorAgent( ),
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
       ) : MsgProcessorBlock = {
@@ -2708,11 +3304,11 @@ package diesel {
         else {
           arg match {
             case "-help" => {
-              println( helpMsg )
+              BasicLogService.tweet( helpMsg )
             }
             case _ => {
-              println( "unrecognized arg: " + arg )
-              println( helpMsg )
+              BasicLogService.tweet( "unrecognized arg: " + arg )
+              BasicLogService.tweet( helpMsg )
             }
           }       
         }
@@ -2743,7 +3339,8 @@ package diesel {
         case None => {
           val nodeId = UUID.randomUUID()
           val nodeKey = nodeId.toString
-          EvalNodeMapper += ( nodeKey -> DieselEngineCtor.agent( "/dieselProtocol" ) )
+          //EvalNodeMapper += ( nodeKey -> DieselEngineCtor.agent( "/dieselProtocol" ) )
+          EvalNodeMapper += ( nodeKey -> DieselEngineCtor.dslEvaluatorAgent( ) )
           val mpb = e.indirectStdLooper( nodeKey )
           _looper = Some( mpb )
           mpb
