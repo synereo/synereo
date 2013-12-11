@@ -961,7 +961,7 @@ package usage {
     }
   }
   
-  object SimpleInsertFeedClient
+  object SimpleVerbClient
   extends EvaluationCommsService  
   with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
@@ -998,7 +998,57 @@ package usage {
           "flat",
           new URI("c://d")
         )),
-        (optRsrc) => BasicLogService.tweet("onRead: optRsrc = " + optRsrc)
+        (optRsrc) => {
+          println("onRead: optRsrc = " + optRsrc)
+          BasicLogService.tweet("onRead: optRsrc = " + optRsrc)
+        }
+      )
+    }
+    def get(filter: String = "all(a(_))") = {
+      agentMgr().get(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => BasicLogService.tweet("onGet: optRsrc = " + optRsrc)
+      )
+    }
+    def put(value: String, filter: String = "all(a(_))") = {
+      agentMgr().put(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        value,
+        (optRsrc) => BasicLogService.tweet("onPut: optRsrc = " + optRsrc)
+      )
+    }
+    def getPut(value: String, filter: String = "all(a(_))") = {
+      agentMgr().get(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => {
+          println("onGet: optRsrc = " + optRsrc)
+          BasicLogService.tweet("onGet: optRsrc = " + optRsrc)
+          agentMgr().put(
+            fromTermString(filter).get,
+            List(PortableAgentCnxn(
+              new URI("a://b"),
+              "flat",
+              new URI("c://d")
+            )),
+            value,
+            (optRsrc) => BasicLogService.tweet("onPut: optRsrc = " + optRsrc)
+          )
+        }
       )
     }
   }

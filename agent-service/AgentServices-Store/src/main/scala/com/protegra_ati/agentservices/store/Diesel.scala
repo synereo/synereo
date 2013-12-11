@@ -1607,7 +1607,7 @@ package diesel {
       localPort : Int = dslEvaluatorHostPort
     )(
       configFileNameOpt : Option[String] = Some( "eval.conf" )
-    ) : EvalChannel[ReqBody, RspBody] = {      
+    ): EvalChannel[ReqBody, RspBody] = {      
       ptToMany(
         new URI( "agent", null, localHost, localPort, dataLocation, null, null ),
         List[URI]( )
