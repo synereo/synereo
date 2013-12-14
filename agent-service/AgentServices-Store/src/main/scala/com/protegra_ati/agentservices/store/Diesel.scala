@@ -1635,6 +1635,8 @@ package diesel {
       val cnxnGlobal : acT.AgentCnxn = new acT.AgentCnxn("Global".toURI, "", "Global".toURI),
       val version : String = "0.0.1"
     ) extends DieselManufactureConfiguration with Serializable {        
+      import com.protegra_ati.agentservices.store.util._
+
       override def configurationDefaults : ConfigurationDefaults = {
         DieselConfigurationDefaults.asInstanceOf[ConfigurationDefaults]
       }      
@@ -2451,6 +2453,18 @@ package diesel {
                 }
                 
                 handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some(filter), Some(agntCnxn) )
+              }
+            }
+            case runProcRq@ConcreteHL.RunProcessRequest( cmd, wkDir, env ) => {
+              try {
+                val runProcRsp = ProcessRunner.run( runProcRq )
+                handler( Some( mTT.Ground( runProcRsp ) ), None, None )
+              }
+              catch {
+                case e : Throwable => {
+                  val runProcRsp = ConcreteHL.RunProcessResponse( -1, Nil, Nil )
+                  handler( Some( mTT.Ground( runProcRsp ) ), None, None )
+                }
               }
             }
           }

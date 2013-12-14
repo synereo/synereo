@@ -389,6 +389,31 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       val ( erql, erspl ) = makePolarizedPair()
       cancel( erql, erspl )( filter, connections, onCancel )
     }
+    def runProcess(
+      erql : CnxnCtxtLabel[String,String,String],
+      erspl : CnxnCtxtLabel[String,String,String]
+    )(
+      cmd : String,
+      wkDir : Option[String],
+      env : Seq[( String, String )],
+      onExecution : Option[mTT.Resource] => Unit
+    ) : Unit = {
+      reset {
+        node().publish( erql, RunProcessRequest( cmd, wkDir, env ) )
+      }
+      reset {
+        for( e <- node().subscribe( erspl ) ) { onExecution( e ) }
+      }
+    }
+    def runProcess(
+      cmd : String,
+      wkDir : Option[String],
+      env : Seq[( String, String )],
+      onExecution : Option[mTT.Resource] => Unit
+    ) : Unit = {
+      val ( erql, erspl ) = makePolarizedPair()
+      runProcess( erql, erspl )( cmd, wkDir, env, onExecution )
+    }
   }
 
   def ensureServersConnected(

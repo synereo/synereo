@@ -17,11 +17,11 @@ trait SystemManagement {
     command : String,
     workingDir : Option[String],
     environmentVars : Seq[( String, String )]
-  )
+  ) extends HLExpr with SystemRequest
 
   case class RunProcessResponse(
     exitCode : Int,
     stdOut : Seq[String],
     stdErr : Seq[String]
-  )
+  ) extends HLExpr with SystemResponse
 }
