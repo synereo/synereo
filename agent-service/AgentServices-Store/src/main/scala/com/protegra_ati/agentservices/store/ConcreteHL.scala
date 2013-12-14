@@ -22,7 +22,10 @@ case class PortableAgentCnxn(
 
 case class PortableAgentBiCnxn( readCnxn : PortableAgentCnxn, writeCnxn : PortableAgentCnxn )
   
-object ConcreteHL extends AbstractHL with Serializable {  
+object ConcreteHL
+     extends AbstractHL
+     with SystemManagement
+     with Serializable {  
   type Label = CnxnCtxtLabel[String,String,String]  
   type Substitution = Option[List[(String,Label)]]  
 

@@ -86,7 +86,7 @@ trait AbstractHL {
 
   case class PostedExpr[Value](
     override val value : Value
-  ) extends HLExpr with Result[Value]
+  ) extends HLExpr with Result[Value]  
 }
 
 package usage {

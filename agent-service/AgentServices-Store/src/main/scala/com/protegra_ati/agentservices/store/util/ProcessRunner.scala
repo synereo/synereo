@@ -1,12 +1,13 @@
 package com.protegra_ati.agentservices.store.util
 
-import com.biosimilarity.evaluator.msgs.{RunProcessRequest, RunProcessResponse}
+//import com.biosimilarity.evaluator.msgs.{RunProcessRequest, RunProcessResponse}
 import java.io.File
 import scala.collection.mutable
 import scala.sys.process._
 
 object ProcessRunner {
-  def run( request : RunProcessRequest ) : RunProcessResponse = {
+  import com.biosimilarity.evaluator.distribution._
+  def run( request : ConcreteHL.RunProcessRequest ) : ConcreteHL.RunProcessResponse = {
     val cwd = request.workingDir.map( new File( _ ) )
 
     val p = Process( request.command, cwd, request.environmentVars : _* )
@@ -18,6 +19,6 @@ object ProcessRunner {
 
     val exitCode = p ! logger
 
-    RunProcessResponse( exitCode, stdOutBuffer.toList, stdErrBuffer.toList )
+    ConcreteHL.RunProcessResponse( exitCode, stdOutBuffer.toList, stdErrBuffer.toList )
   }
 }
