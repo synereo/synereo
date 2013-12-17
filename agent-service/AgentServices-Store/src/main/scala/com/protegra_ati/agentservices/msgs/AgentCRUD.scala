@@ -372,7 +372,7 @@ case class evalSubscribeResponse[Value](
 //#### evalSubscribeCancel 
 case class evalSubscribeCancelRequest(
   sessionURI : URI,
-  filter: Set[CnxnCtxtLabel[String,String,String]],
+  filter: Set[CnxnCtxtLabel[String,String,String] with Factual],
   connections: List[PortableAgentCnxn]
 ) extends AgentCRUD
 case class evalSubscribeCancelError(
