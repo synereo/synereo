@@ -1061,6 +1061,9 @@ with AgentCnxnTypeScope {
        *                     Aggregation management API
        * -------------------------------------------------------------------- */
       
+      @transient
+      lazy val cnxnPartitionLock = new scala.concurrent.Lock()
+
       def cnxnMatch(
         cnxn1 : acT.AgentCnxn,
         cnxn2 : acT.AgentCnxn
@@ -1150,40 +1153,44 @@ with AgentCnxnTypeScope {
       def getPartition(
         cnxn : acT.AgentCnxn
       ) : HashAgentKVDBNode[ReqBody,RspBody] = {
-        cnxnPartition.get( cnxn ) match {
-          // BUGBUG -- LGM : this is a workaround until we have
-          // invitation and introduction protocols for PlatformAgents
-          case None => {
-            searchCnxnPartition( cnxn ) match {
-              case None => {
-                BasicLogService.tweet(
-                  (
-                    "No matching space for "
-                    + cnxn
-                    + "\n"
-                    + "Creating a new one"
+        cnxnPartitionLock.acquire()
+        val space = 
+          cnxnPartition.get( cnxn ) match {
+            // BUGBUG -- LGM : this is a workaround until we have
+            // invitation and introduction protocols for PlatformAgents
+            case None => {
+              searchCnxnPartition( cnxn ) match {
+                case None => {
+                  BasicLogService.tweet(
+                    (
+                      "No matching space for "
+                      + cnxn
+                      + "\n"
+                      + "Creating a new one"
+                    )
                   )
-                )
-                val npmgj = makeSpace( cnxn )
-                //spawn { npmgj.dispatchDMsgs() }
-                cnxnPartition += ( cnxn -> npmgj )
-                npmgj
-              }
-              case Some( npmgj ) => {
-                BasicLogService.tweet(
-                  "Found cnxn matching through search " + cnxn + "\n"
-                )
-                npmgj
+                  val npmgj = makeSpace( cnxn )
+                  //spawn { npmgj.dispatchDMsgs() }
+                  cnxnPartition += ( cnxn -> npmgj )
+                  npmgj
+                }
+                case Some( npmgj ) => {
+                  BasicLogService.tweet(
+                    "Found cnxn matching through search " + cnxn + "\n"
+                  )
+                  npmgj
+                }
               }
             }
+            case Some( npmgj ) => {
+              BasicLogService.tweet(
+                "Found matching space for " + cnxn
+              )
+              npmgj
+            }
           }
-          case Some( npmgj ) => {
-            BasicLogService.tweet(
-              "Found matching space for " + cnxn
-            )
-            npmgj
-          }
-        }
+        cnxnPartitionLock.release()
+        space
       }
       
       def getLocalPartition(
