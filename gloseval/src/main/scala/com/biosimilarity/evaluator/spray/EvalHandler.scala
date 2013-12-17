@@ -44,6 +44,9 @@ import java.util.UUID
 
 import java.net.URI
 
+// Mask the json4s symbol2jvalue implicit so we can use the PrologDSL
+object symbol2jvalue {}
+
 object CompletionMapper {
   @transient
   val map = new HashMap[String, RequestContext]()
@@ -1104,7 +1107,7 @@ trait EvalHandler {
 
     def SOP: Parser[Set[List[Path]]] = Empty | Path | Product | Sum
     
-    def sumOfProductsToFilterSet(sop: Set[List[Path]]): Set[CnxnCtxtLabel[String, String, String]] = {
+    def sumOfProductsToFilterSet(sop: Set[List[Path]]): Set[CnxnCtxtLabel[String, String, String] with Factual] = {
       val filterSet = for (prod <- sop) yield {
         // List(List("Greg", "Biosim", "Work"), List("Personal"))
         // => fromTermString("all(vWork(vBiosim(vGreg(_))), vPersonal(_))").get
@@ -1114,7 +1117,7 @@ trait EvalHandler {
             (l2 + "v" + tag + "(", ")" + r2)
           })
           l + "_" + r        
-        }).mkString(",") + ")").get
+        }).mkString(",") + ")").get.asInstanceOf[CnxnCtxtLabel[String, String, String] with Factual]
       }
       filterSet.isEmpty match {
         // Default to the "match everything" filter
@@ -1136,29 +1139,43 @@ trait EvalHandler {
     (label, cnxns)
   }
 
-  // Renders a ccl of the form "all(va('_), vb(vc(vd('_))))"
-  // as the kind of json filter we get from the UI
-  def cclToUI(ccl: CnxnCtxtLabel[String,String,String]): (String, String) = {
+  def extractMetadata(ccl: CnxnCtxtLabel[String,String,String]):
+    (CnxnCtxtLabel[String,String,String] with Factual, String, Either[String, String], String) = 
+  {
     def cclToPath(ccl: CnxnCtxtLabel[String,String,String]): List[String] = {
       ccl match {
         case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right("_")))) => List(tag.substring(1))
         case CnxnCtxtBranch(tag, children) => tag.substring(1) :: cclToPath(children(0))
       }
     }
+    // Assume ccl is of the form user(all(...), uid(...), "new"|"old", nil(_))
     ccl match {
-      case CnxnCtxtBranch("all", uid :: factuals) => {
-        val uidStr = uid match {
-          case CnxnCtxtBranch(_, List(CnxnCtxtLeaf(Left(uidStr: String)))) => uidStr
-          case CnxnCtxtBranch(_, List(CnxnCtxtLeaf(Right(uidVar: String)))) => uidVar
-        }
-        (uidStr, "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")")
-      }
+      case CnxnCtxtBranch("user", filter :: uid :: age) => 
+        (
+          filter,
+          filter match {
+            case CnxnCtxtBranch("all", factuals) => {
+              "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")"
+            }
+          },
+          uid match {
+            case CnxnCtxtBranch("uid", factuals) => factuals(0) match {
+              case CnxnCtxtLeaf(tag) => tag
+            }
+          },
+          age match {
+            case CnxnCtxtLeaf(tag) => tag match {
+              case Left(ageStr: String) => ageStr
+            }
+          }
+        )
     }
   }
 
   def evalSubscribeRequest(json: JValue) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
     import com.protegra_ati.agentservices.store._
+    import com.biosimilarity.evaluator.prolog.PrologDSL._
     
     object act extends AgentCnxnTypes {}
 
@@ -1179,9 +1196,9 @@ trait EvalHandler {
           optRsrc match {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
-            ))), _)) => {
-              val (uid, jsonFilter) = cclToUI(filter)
+              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn: Cnxn)
+            ))), bindings)) => {
+              val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
               val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
               val content =
                 ("sessionURI" -> sessionURIStr) ~
@@ -1195,6 +1212,21 @@ trait EvalHandler {
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+              if (age == "new") {
+                println("evalSubscribeRequest | onFeed | republishing in history")
+                BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history")
+                agentMgr().post(
+                  'user(
+                    cclFilter,
+                    'uid(bindings.get("UID").toString),
+                    "old",
+                    'nil("_")
+                  ),
+                  List(cnxn),
+                  postedStr,
+                  (optRsrc) => ()
+                )
+              }
               CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
             case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
@@ -1211,23 +1243,16 @@ trait EvalHandler {
         }
         println("evalSubscribeRequest | feedExpr: calling feed")
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-        val uidCCL = (try {
-          fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
+        val uid = try {
+          'uid((ec \ "uid").extract[String])
         } catch {
-          case _: Throwable => fromTermString("vUID(UID)").get
-        }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
-        val uidFilters = filters.map((filter) => filter match {
-          case CnxnCtxtBranch(tag, children) => 
-            new CnxnCtxtBranch[String,String,String](
-              tag,
-              uidCCL +: children
-            )
-          case leaf@CnxnCtxtLeaf(Right(_)) => leaf
-        })
-        for (filter <- uidFilters) {
+          case _: Throwable => 'uid("UID")
+        }
+        for (filter <- filters) {
           println("evalSubscribeRequest | feedExpr: filter = " + filter)
           BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
-          agentMgr().feed(filter, cnxns, onFeed)
+          agentMgr().feed('user(filter, uid, "new", 'nil("_")), cnxns, onFeed)
+          agentMgr().read('user(filter, uid, "old", 'nil("_")), cnxns, onFeed)
         }
       }
       case "scoreExpr" => {
@@ -1239,7 +1264,7 @@ trait EvalHandler {
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
               (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
             ))), _)) => {
-              val (uid, jsonFilter) = cclToUI(filter)
+              val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
               val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
               val content =
                 ("sessionURI" -> sessionURIStr) ~
@@ -1275,21 +1300,15 @@ trait EvalHandler {
           case _ => throw new Exception("Couldn't parse staff: " + json)
         }
         BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-        val uidCCL = (try {
-          fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
+        val uid = try {
+          'uid((ec \ "uid").extract[String])
         } catch {
-          case _: Throwable => fromTermString("vUID(UID)").get
-        }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
-        val uidFilters = filters.map((filter) => filter match {
-          case CnxnCtxtBranch(tag, children) => 
-            new CnxnCtxtBranch[String,String,String](
-              tag,
-              uidCCL +: children
-            )
-          case leaf@CnxnCtxtLeaf(Right(_)) => leaf
-        })
-        for (filter <- uidFilters) {
-          agentMgr().score(filter, cnxns, staff, onScore)
+          case _: Throwable => 'uid("UID")
+        }
+        for (filter <- filters) {
+          agentMgr().score('user(filter, uid, "new", "_"), cnxns, staff, onScore)
+          // TODO(mike): Make a read version of score.  For now, score ignores the staff so it doesn't matter.
+          agentMgr().read('user(filter, uid, "new", "_"), cnxns, onScore)
         }
       }
       case "insertContent" => {
@@ -1297,19 +1316,12 @@ trait EvalHandler {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         val value = (ec \ "value").extract[String]
-        val uidCCL = fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
-          .asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
-        val uidFilters = filters.map((filter) => filter match {
-          case CnxnCtxtBranch(tag, children) => 
-            new CnxnCtxtBranch[String,String,String](
-              tag,
-              uidCCL +: children
-            )
-        })
-        for (filter <- uidFilters) {
+        val uid = 'uid((ec \ "uid").extract[String])
+        
+        for (filter <- filters) {
           BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
           agentMgr().post(
-            filter,
+            'user(filter, uid, "new", 'nil("_")),
             cnxns,
             value,
             (optRsrc: Option[mTT.Resource]) => {
