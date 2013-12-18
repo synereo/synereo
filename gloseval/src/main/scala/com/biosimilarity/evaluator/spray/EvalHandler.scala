@@ -1148,7 +1148,7 @@ trait EvalHandler {
         case CnxnCtxtBranch(tag, children) => tag.substring(1) :: cclToPath(children(0))
       }
     }
-    // Assume ccl is of the form user(all(...), uid(...), "new"|"old", nil(_))
+    // Assume ccl is of the form user(all(...), uid(...), new(_)|old(_), nil(_))
     ccl match {
       case CnxnCtxtBranch("user", filter :: uid :: age) => 
         (
@@ -1160,13 +1160,11 @@ trait EvalHandler {
           },
           uid match {
             case CnxnCtxtBranch("uid", factuals) => factuals(0) match {
-              case CnxnCtxtLeaf(tag) => tag
+              case CnxnCtxtLeaf(tag: Either[String, String]) => tag
             }
           },
           age match {
-            case CnxnCtxtLeaf(tag) => tag match {
-              case Left(ageStr: String) => ageStr
-            }
+            case CnxnCtxtBranch(ageStr: String, _) => ageStr
           }
         )
     }
@@ -1219,7 +1217,7 @@ trait EvalHandler {
                   'user(
                     cclFilter,
                     'uid(bindings.get("UID").toString),
-                    "old",
+                    'old("_"),
                     'nil("_")
                   ),
                   List(cnxn),
@@ -1251,8 +1249,8 @@ trait EvalHandler {
         for (filter <- filters) {
           println("evalSubscribeRequest | feedExpr: filter = " + filter)
           BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
-          agentMgr().feed('user(filter, uid, "new", 'nil("_")), cnxns, onFeed)
-          agentMgr().read('user(filter, uid, "old", 'nil("_")), cnxns, onFeed)
+          agentMgr().feed('user(filter, uid, 'new("_"), 'nil("_")), cnxns, onFeed)
+          agentMgr().read('user(filter, uid, 'old("_"), 'nil("_")), cnxns, onFeed)
         }
       }
       case "scoreExpr" => {
@@ -1306,9 +1304,9 @@ trait EvalHandler {
           case _: Throwable => 'uid("UID")
         }
         for (filter <- filters) {
-          agentMgr().score('user(filter, uid, "new", "_"), cnxns, staff, onScore)
+          agentMgr().score('user(filter, uid, 'new("_"), 'nil("_")), cnxns, staff, onScore)
           // TODO(mike): Make a read version of score.  For now, score ignores the staff so it doesn't matter.
-          agentMgr().read('user(filter, uid, "new", "_"), cnxns, onScore)
+          agentMgr().read('user(filter, uid, 'old("_"), 'nil("_")), cnxns, onScore)
         }
       }
       case "insertContent" => {
@@ -1321,7 +1319,7 @@ trait EvalHandler {
         for (filter <- filters) {
           BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
           agentMgr().post(
-            'user(filter, uid, "new", 'nil("_")),
+            'user(filter, uid, 'new("_"), 'nil("_")),
             cnxns,
             value,
             (optRsrc: Option[mTT.Resource]) => {

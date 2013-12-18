@@ -13,6 +13,7 @@ import com.protegra_ati.agentservices.store._
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.evaluator.msgs.agent.crud._
+import com.biosimilarity.evaluator.prolog.PrologDSL._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 
@@ -993,7 +994,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
     for (filter <- msg.filter) {
-      agentMgr().cancel(filter, msg.connections, onCancel)
+      agentMgr().cancel('user(filter,"_","_","_"), msg.connections, onCancel)
     }
   }
 }
