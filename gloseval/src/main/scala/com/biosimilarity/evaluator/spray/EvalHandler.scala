@@ -1150,7 +1150,7 @@ trait EvalHandler {
     }
     // Assume ccl is of the form user(all(...), uid(...), new(_)|old(_), nil(_))
     ccl match {
-      case CnxnCtxtBranch("user", filter :: uid :: age) => 
+      case CnxnCtxtBranch("user", filter :: uid :: age :: _) => 
         (
           filter,
           filter match {
