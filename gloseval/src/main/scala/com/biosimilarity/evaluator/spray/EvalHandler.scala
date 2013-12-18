@@ -1193,8 +1193,10 @@ trait EvalHandler {
           BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
           optRsrc match {
             case None => ()
+            //   Some(RBoundHM(Some(Ground(PostedExpr(
             case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn: Cnxn)
+            //(PostedExpr(note),              user(all(va('_)), uid('UID), new('_), nil('_)),AgentCnxn(test://test1,flat,test://test2))))),Some(Map())))
+              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
             ))), bindings)) => {
               val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
               val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
@@ -1220,7 +1222,7 @@ trait EvalHandler {
                     'old("_"),
                     'nil("_")
                   ),
-                  List(cnxn),
+                  List(cnxn.asInstanceOf[Cnxn]),
                   postedStr,
                   (optRsrc) => ()
                 )
