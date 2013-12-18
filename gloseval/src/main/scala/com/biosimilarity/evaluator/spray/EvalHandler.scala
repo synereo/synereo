@@ -1213,8 +1213,8 @@ trait EvalHandler {
               println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               if (age == "new") {
-                println("evalSubscribeRequest | onFeed | republishing in history")
-                BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history")
+                println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                 agentMgr().post(
                   'user(
                     cclFilter,
