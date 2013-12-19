@@ -1351,7 +1351,7 @@ trait EvalHandler {
         BasicLogService.tweet("evalSubscribeRequest | insertContent")
         BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
         val value = (ec \ "value").extract[String]
-        val uid = 'uid((ec \ "uid").extract[String])
+        val uid = 'uid(Ground((ec \ "uid").extract[String]))
         
         for (filter <- filters) {
           BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
