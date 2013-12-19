@@ -1208,7 +1208,7 @@ trait EvalHandler {
                   'old("_"),
                   'nil("_")
                 ),
-                List(cnxn.asInstanceOf[Cnxn]),
+                List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
                 postedStr,
                 (optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
               )
