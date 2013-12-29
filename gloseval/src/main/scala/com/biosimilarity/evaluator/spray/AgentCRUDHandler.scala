@@ -994,7 +994,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
     for (filter <- msg.filter) {
-      agentMgr().cancel('user(filter,'uid("UID"),'new("_"),'nil("_")), msg.connections, onCancel)
+      agentMgr().cancel('user('p1(filter),'p2('uid("UID")),'p3('new("_")),'p4('nil("_"))), msg.connections, onCancel)
     }
   }
 }

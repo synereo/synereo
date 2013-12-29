@@ -1148,9 +1148,12 @@ trait EvalHandler {
         case CnxnCtxtBranch(tag, children) => tag.substring(1) :: cclToPath(children(0))
       }
     }
-    // Assume ccl is of the form user(all(...), uid(...), new(_)|old(_), nil(_))
+    // Assume ccl is of the form user(p1(all(...)), p2(uid(...)), p3(new(_)|old(_)), p4(nil(_)))
     ccl match {
-      case CnxnCtxtBranch("user", filter :: uid :: age :: _) => 
+      case CnxnCtxtBranch("user", 
+        CnxnCtxtBranch("p1", filter :: Nil) :: 
+        CnxnCtxtBranch("p2", uid :: Nil) ::
+        CnxnCtxtBranch("p3", age :: Nil) :: _) => 
         (
           filter,
           filter match {
@@ -1202,11 +1205,11 @@ trait EvalHandler {
               BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
               agentMgr().post(
                 'user(
-                  cclFilter,
+                  'p1(cclFilter),
                   // TODO(mike): temporary workaround until bindings bug is fixed.
-                  'uid((parse(postedStr) \ "uid").extract[String]),
-                  'old("_"),
-                  'nil("_")
+                  'p2('uid((parse(postedStr) \ "uid").extract[String])),
+                  'p3('old("_")),
+                  'p4('nil("_"))
                 ),
                 List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
                 postedStr,
@@ -1287,8 +1290,8 @@ trait EvalHandler {
         for (filter <- filters) {
           println("evalSubscribeRequest | feedExpr: filter = " + filter)
           BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
-          agentMgr().feed('user(filter, uid, 'new("_"), 'nil("_")), cnxns, onFeed)
-          agentMgr().read('user(filter, uid, 'old("_"), 'nil("_")), cnxns, onRead)
+          agentMgr().feed('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, onFeed)
+          agentMgr().read('user('p1(filter), 'p2(uid), 'p3('old("_")), 'p4('nil("_"))), cnxns, onRead)
         }
       }
       case "scoreExpr" => {
@@ -1342,7 +1345,7 @@ trait EvalHandler {
           case _: Throwable => 'uid("UID")
         }
         for (filter <- filters) {
-          agentMgr().score('user(filter, uid, 'new("_"), 'nil("_")), cnxns, staff, onScore)
+          agentMgr().score('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, staff, onScore)
           // TODO(mike): Make a read version of score, implement history for score.
         }
       }
@@ -1356,7 +1359,7 @@ trait EvalHandler {
         for (filter <- filters) {
           BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
           agentMgr().post(
-            'user(filter, uid, 'new("_"), 'nil("_")),
+            'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
             cnxns,
             value,
             (optRsrc: Option[mTT.Resource]) => {
