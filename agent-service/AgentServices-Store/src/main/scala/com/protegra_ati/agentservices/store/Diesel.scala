@@ -2241,7 +2241,9 @@ package diesel {
               }
             }
             case ConcreteHL.ScoreExpr( filter, cnxns, staff ) => {
-              
+              // TODO(mike): handle the staff logic
+              // if staff is a list of connections, use it instead of cnxns
+              // if staff is a list of filters, use them instead of filter
               BasicLogService.tweet(
                 "method: evaluateExpression"
                 + "\nin ConcreteHL.ScoreExpr case "
