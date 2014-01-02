@@ -321,14 +321,18 @@ with PrologMgr {
 	
 	val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
 	
+        BasicLogService.tweet( ">>>**********************************************<<<" )
+        BasicLogService.tweet( "method: matchMap" )
 	for( v <- varSet ) {
 	  //println( "mapping free var : " + v )
+          BasicLogService.tweet( "v : " + v )
 	  try {
 	    val sV =
 	      v + "" match {
 		case "_" => "_"
 		case _ => "X" + v
 	      }
+            BasicLogService.tweet( "sV : " + sV )
 	    val soln : Solution[Object] = solution.on( sV )
 	    hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
 	  }
@@ -336,8 +340,13 @@ with PrologMgr {
 	    case e : org.prolog4j.UnknownVariableException => {
 //	      println( "warning: variable not bound: " + v )
 	    }
+            case e : Throwable => {
+              if ( e.getMessage.equals( "" ) ) {
+              }
+            }
 	  }
 	}
+        BasicLogService.tweet( ">>>**********************************************<<<" )
 	
 	Some( hmSoln )
       }

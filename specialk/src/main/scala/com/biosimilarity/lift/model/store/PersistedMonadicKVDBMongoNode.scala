@@ -1776,7 +1776,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                                 
 						BasicLogService.tweet( "Reader departing spaceLock PMKVDBNode Version 5 " + this + " on a PersistedMonadicKVDBNode for mget on " + path + "." )
 						//spaceLock.depart( Some( rk ) )
-						spaceLock.depart( path, Some( rk ) )
+						
 						//BasicLogService.tweet( "spaceLock reading room: " + spaceLock.readingRoom )
 						//BasicLogService.tweet( "spaceLock writing room: " + spaceLock.writingRoom )
                                                 
@@ -1789,9 +1789,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                                       + "\n===================================================================\n"
                                                     )                                       
                                                     storeKQuery( xmlCollName, pd )( path, rk )
+                                                    spaceLock.depart( path, Some( rk ) )
                                                     rk( Some( r ) )
                                                   }
                                                   case _ => {
+                                                    spaceLock.depart( path, Some( rk ) )
                                                     rk( Some( r ) )
                                                   }
                                                 }
