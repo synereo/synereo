@@ -250,12 +250,18 @@ trait EvaluationCommsService extends CnxnString[String, String, String]{
       filter : CnxnCtxtLabel[String,String,String],
       cnxns : Seq[Cnxn],
       onReadRslt : Option[mTT.Resource] => Unit
-    ) : Unit = {
+    ) : Unit = {      
       reset {
-        node().publish( erql, ReadExpr( filter, cnxns ) )
-      }
-      reset {
-        for( e <- node().subscribe( erspl ) ) { onReadRslt( e ) }
+        for( e <- node().subscribe( erspl ) ) {
+          e match {
+            case None => {
+              node().publish( erql, ReadExpr( filter, cnxns ) )
+            }
+            case _ => {
+              onReadRslt( e )
+            }
+          }          
+        }
       }
     }
     def read(
