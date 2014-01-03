@@ -344,9 +344,9 @@ trait EvalHandler {
     val tokenUri = new URI("token://" + token)
     val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
     
-    val (erql, erspl) = agentMgr().makePolarizedPair()
+    //val (erql, erspl) = agentMgr().makePolarizedPair()
     // TODO(mike): remove the token after it's been used
-    agentMgr().read(erql, erspl)(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
+    agentMgr().read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
         case None => ()
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
@@ -692,9 +692,9 @@ trait EvalHandler {
       val capURI = new URI("agent://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
-      val (erql, erspl) = agentMgr().makePolarizedPair()
+      //val (erql, erspl) = agentMgr().makePolarizedPair()
       // See if the email is already there
-      agentMgr().read( erql, erspl )(
+      agentMgr().read(
         jsonBlobLabel,
         List(capSelfCnxn),
         (optRsrc: Option[mTT.Resource]) => {
@@ -959,9 +959,9 @@ trait EvalHandler {
         // don't need mac of cap; need to verify email is on our network
         val emailURI = new URI("emailhash://" + cap)
         val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
-        val (erql, erspl) = agentMgr().makePolarizedPair()
-        BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
-        agentMgr().read(erql, erspl)(
+        //val (erql, erspl) = agentMgr().makePolarizedPair()
+        //BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
+        agentMgr().read(
           emailLabel,
           List(emailSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
