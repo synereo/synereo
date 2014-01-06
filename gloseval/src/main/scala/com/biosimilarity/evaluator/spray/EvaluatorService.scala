@@ -287,7 +287,7 @@ trait EvaluatorService extends HttpService
         }
       }
     } ~
-    pathPrefix("static" / PathElement) { dir =>
-      getFromResourceDirectory(dir)
+    pathPrefix("static" / PathElement) { path =>
+      getFromFile(path)
     }
 }
