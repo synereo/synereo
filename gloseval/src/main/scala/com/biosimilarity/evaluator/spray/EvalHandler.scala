@@ -1542,11 +1542,32 @@ trait EvalHandler {
       }
     )
   }
-  /*
-  def dump() : Unit = {
-    agentMgr().runProcess(
-      ""
-    )
+  
+  def backupRequest(json: JValue) : Unit = {
+    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    agentMgr().runProcess("mongodump", None, List(), (optRsrc) => {
+      println("backupRequest: optRsrc = " + optRsrc)
+      BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
+      CometActorMapper.cometMessage(sessionURI, compact(render(
+        ("msgType" -> "backupResponse")~
+        ("content" ->
+          ("sessionURI" -> sessionURI)
+        )
+      )))
+    })
   }
-  */
+
+  def restoreRequest(json: JValue) : Unit = {
+    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    agentMgr().runProcess("mongorestore", None, List(), (optRsrc) => {
+      println("restoreRequest: optRsrc = " + optRsrc)
+      BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
+      CometActorMapper.cometMessage(sessionURI, compact(render(
+        ("msgType" -> "restoreResponse")~
+        ("content" ->
+          ("sessionURI" -> sessionURI)
+        )
+      )))
+    })
+  }
 }
