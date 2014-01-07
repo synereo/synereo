@@ -1116,7 +1116,7 @@ trait EvalHandler {
             val (l2, r2) = acc
             (l2 + "v" + tag + "(", ")" + r2)
           })
-          l + "_" + r        
+          l + "VAR" + UUID.randomUUID.toString.substring(0,8) + r
         }).mkString(",") + ")").get.asInstanceOf[CnxnCtxtLabel[String, String, String] with Factual]
       }
       filterSet.isEmpty match {
