@@ -1144,7 +1144,7 @@ trait EvalHandler {
   {
     def cclToPath(ccl: CnxnCtxtLabel[String,String,String]): List[String] = {
       ccl match {
-        case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right("_")))) => List(tag.substring(1))
+        case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right(_)))) => List(tag.substring(1))
         case CnxnCtxtBranch(tag, children) => tag.substring(1) :: cclToPath(children(0))
       }
     }
