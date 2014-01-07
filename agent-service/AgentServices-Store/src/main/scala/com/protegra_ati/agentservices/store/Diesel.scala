@@ -2910,10 +2910,10 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
-                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None,None)))
                                     }
-                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings.map(_.toList))))
                                     }
                                   }
                                 )
@@ -2965,10 +2965,10 @@ package diesel {
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
-                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None,None)))
                                     }
-                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                    case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings.map(_.toList))))
                                     }
                                   }
                                 )
@@ -3024,10 +3024,10 @@ package diesel {
                                               ConcreteHL.Bottom
                                             }
                                             case Some( mTT.Ground( v ) ) => {
-                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None,None)))
                                             }
-                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get))
+                                            case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings.map(_.toList))))
                                             }
                                           }
                                         )
