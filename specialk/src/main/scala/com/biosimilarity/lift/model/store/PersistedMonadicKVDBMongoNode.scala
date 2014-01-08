@@ -1789,7 +1789,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                                                       + "\n===================================================================\n"
                                                     )                                       
                                                     storeKQuery( xmlCollName, pd )( path, rk )
-                                                    spaceLock.depart( path, Some( rk ) )
+                                                    //spaceLock.depart( path, Some( rk ) )
                                                     rk( Some( r ) )
                                                   }
                                                   case _ => {
