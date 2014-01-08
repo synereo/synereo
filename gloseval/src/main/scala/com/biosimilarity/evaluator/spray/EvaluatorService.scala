@@ -292,5 +292,8 @@ trait EvaluatorService extends HttpService
     } ~
     pathPrefix("static" / PathElement) { path =>
       getFromFile(path)
+    } ~
+    pathPrefix( "agentui" ) {
+      getFromDirectory( "./agentui" )
     }
 }
