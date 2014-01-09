@@ -335,10 +335,11 @@ with StdMongoStoreConfiguration
           + "\n**********************************************************"
         )
       )
-      mc.update(
+      //mc.update(
+      mc.insert(
         MongoDBObject( "record.key" -> rcrdKey ),
-        record,
-        true
+        record//,
+        //true
       )
     }
     else {
@@ -360,10 +361,11 @@ with StdMongoStoreConfiguration
           )
         )
         
-        mc.update(
+        //mc.update(
+        mc.insert(
           MongoDBObject( "kRecord.key" -> kRcrdKey ),
-          record,
-          true
+          record//,
+          //true
         )
       }
     }    
