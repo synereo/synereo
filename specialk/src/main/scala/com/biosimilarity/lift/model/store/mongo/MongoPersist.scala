@@ -292,17 +292,18 @@ with StdMongoStoreConfiguration
   }
 
   def insertUpdateRecord(
-    record : DBObject, collectionName : String
+    record : DBObject, collectionName : String,
+    useUpsert : Boolean = true
   ) : Unit = {
     wrapAction[DBObject,Unit](
       ( clientSession : MongoClient, record : DBObject ) => {
-        _upsertRecord( record, clientSession )( collectionName )
+        _upsertRecord( record, clientSession )( collectionName, useUpsert )
       }
     )( record )
   }
 
   def _upsertRecord( record : DBObject, clientSession : MongoClient )(
-    collectionName : String
+    collectionName : String, useUpsert : Boolean = true
     ) : Unit = {
     com.biosimilarity.lift.lib.BasicLogService.tweet(
       (
@@ -335,12 +336,16 @@ with StdMongoStoreConfiguration
           + "\n**********************************************************"
         )
       )
-      //mc.update(
-      mc.insert(
-        MongoDBObject( "record.key" -> rcrdKey ),
-        record//,
-        //true
-      )
+      if ( useUpsert ) {
+        mc.update(
+          MongoDBObject( "record.key" -> rcrdKey ),
+          record,
+          true
+        )
+      }
+      else {
+        mc.insert( record )
+      }      
     }
     else {
       val kRcrdObj = record.get( "kRecord" )
@@ -360,13 +365,18 @@ with StdMongoStoreConfiguration
             + "\n**********************************************************"
           )
         )
+
+        if ( useUpsert ) {
+          mc.update(
+            MongoDBObject( "kRecord.key" -> kRcrdKey ),
+            record,
+            true
+          )
+        }
+        else {
+          mc.insert( record )
+        }
         
-        //mc.update(
-        mc.insert(
-          MongoDBObject( "kRecord.key" -> kRcrdKey ),
-          record//,
-          //true
-        )
       }
     }    
   }

@@ -102,14 +102,15 @@ trait MongoCnxnStorage[Namespace,Var,Tag]
   )(
     implicit nameSpaceToString : Namespace => String,
     varToString : Var => String,
-    tagToString : Tag => String
+    tagToString : Tag => String,
+    useUpsert : Boolean = true
   ) : Unit =
   {    
     insertUpdateRecord(
       CnxnMongoObjectifier.toMongoObject( cnxn )(
 	nameSpaceToString, varToString, tagToString
       ),
-      xmlCollStr
+      xmlCollStr, useUpsert
     )
   }
 

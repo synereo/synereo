@@ -975,7 +975,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  wtr : Option[mTT.GetRequest],
 	  rsrc : mTT.Resource,
 	  collName : Option[String],
-	  spawnDBCall : Boolean
+	  spawnDBCall : Boolean,
+          useUpsert : Boolean = true
 	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
           BasicLogService.tweet(
 	    (
@@ -1009,7 +1010,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      )
 		    )
 		    store( sus )( rcrd )(
-		      nameSpaceToString, varToString, tagToString
+		      nameSpaceToString, varToString, tagToString, useUpsert
 		    )
 		  }
 		}
@@ -1038,7 +1039,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  ptn : mTT.GetRequest,
 	  rsrc : mTT.Resource,
 	  collName : Option[String],
-	  spawnDBCall : Boolean
+	  spawnDBCall : Boolean,
+          useUpsert : Boolean = true
 	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
 	  persist match {
 	    case None => {
@@ -1061,7 +1063,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		      )
 		    )
 		    store( sus )( rcrd )(
-		      nameSpaceToString, varToString, tagToString
+		      nameSpaceToString, varToString, tagToString, useUpsert
 		    )
 		    for( ( sky, stbl ) <- syncTable ) {
 		      stbl( sky ) = stbl( sky ) - 1
@@ -1182,7 +1184,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			  mTT.Continuation( ks ),
 			  collName,
 			  //true
-			  false
+			  false,
+                          consume
 			)
 		      }
 		      ekrsrc
@@ -1342,7 +1345,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	                    )
 	                  )
 			  putInStore(
-			    persist, channels, ptn, None, rsrc, collName, false //true
+			    persist, channels, ptn, None, rsrc, collName, 
+                            false, //true
+                            consume
 			  )
 			}
 		      }
@@ -1350,7 +1355,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  }
 		  case None => {
 		    putInStore(
-		      persist, channels, ptn, None, rsrc, collName, false //true
+		      persist, channels, ptn, None, rsrc, collName,
+                      false, //true
+                      consume
 		    )
 		  }
 		}
@@ -1431,7 +1438,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    }
 		    case Right( Nil ) => {
 		      putInStore(
-			persist, channels, ptn, None, rsrc, collName, false //true
+			persist, channels, ptn, None, rsrc, collName,
+                        false, //true
+                        consume
 		      )
 
 		      BasicLogService.tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
@@ -1445,7 +1454,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      }
 	      case None => {
 		putInStore(
-		  persist, channels, ptn, None, rsrc, collName, false //true
+		  persist, channels, ptn, None, rsrc, collName,
+                  false, //true
+                  consume
 		)
 
 		BasicLogService.tweet( "Writer departing spaceLock on a PersistedMonadicKVDBNode for mput on " + ptn + "." )
@@ -1505,6 +1516,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    val stbl = new HashMap[UUID,Int]()
 	    val skey = getUUID		      
 		
+            val doUpsert =
+              consume match { 
+                case CacheAndStoreSubscription => false
+                case _ => true
+              }
 	    // This is the easy case!
 	    // There are no locations
 	    // matching the pattern with
@@ -1517,8 +1533,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		  path,
 		  mTT.Continuation( List( rk ) ),
 		  Some( xmlCollName ),
-		  false
-		  //true
+                  //true
+		  false,
+                  doUpsert
 		)( Some( ( skey, stbl ) ) )
 		
 		while ( stbl( skey ) > 0 ){}
@@ -1567,7 +1584,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 			path,
 			mTT.Continuation( ks ++ List( rk ) ),
 			Some( xmlCollName ),
-			false //true
+			false, //true
+                        doUpsert
 		      )( Some( ( skey, stbl ) ) )
 		    }
 		    case _ => {
