@@ -979,6 +979,7 @@ trait EvalHandler {
                     )))
                   }
                   case PostedExpr( (PostedExpr(cap: String), _, _, _) ) => {
+                    BasicLogService.tweet("secureLogin | Logging in with cap = " + cap);
                     login(cap)
                   }
                 }
@@ -1121,7 +1122,7 @@ trait EvalHandler {
       }
       filterSet.isEmpty match {
         // Default to the "match everything" filter
-        case true => Set(new CnxnCtxtLeaf[String,String,String](Right("_")))
+        case true => sumOfProductsToFilterSet(Set(List(List())))
         case false => filterSet
       }
     }
