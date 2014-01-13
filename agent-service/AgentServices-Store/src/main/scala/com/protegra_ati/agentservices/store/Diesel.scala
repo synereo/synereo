@@ -2906,14 +2906,45 @@ package diesel {
                                 erspl,
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
-                                    case None => {                                
+                                    case None => {
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2500 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nNone branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2500 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nGround branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
                                       ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None,None)))
                                     }
                                     case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2500 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nRBoundHM branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
                                       ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings.map(_.toList))))
+                                    }
+                                    case Some( mTT.RBoundAList( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2500 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nRBoundAList branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings)))
                                     }
                                   }
                                 )
@@ -2962,13 +2993,44 @@ package diesel {
                                 DSLCommLink.mTT.Ground(
                                   optRsrc match {
                                     case None => {                                
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2555 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nNone branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
                                       ConcreteHL.Bottom
                                     }
                                     case Some( mTT.Ground( v ) ) => {
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2555 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nGround branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
                                       ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None,None)))
                                     }
                                     case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2555 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nRBoundHM branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
                                       ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings.map(_.toList))))
+                                    }
+                                    case Some( mTT.RBoundAList( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                      BasicLogService.tweet(
+                                        ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                        + "\nDiesel.scala:2555 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                        + "\n------------------------------------------------------------------"
+                                        + "\nRBoundAList branch"
+                                        + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                      )
+                                      ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings)))
                                     }
                                   }
                                 )
@@ -3021,13 +3083,44 @@ package diesel {
                                         DSLCommLink.mTT.Ground(
                                           optRsrc match {
                                             case None => {                                
+                                              BasicLogService.tweet(
+                                                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                                + "\nDiesel.scala:2614 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                                + "\n------------------------------------------------------------------"
+                                                + "\nNone branch"
+                                                + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                              )
                                               ConcreteHL.Bottom
                                             }
                                             case Some( mTT.Ground( v ) ) => {
+                                              BasicLogService.tweet(
+                                                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                                + "\nDiesel.scala:2614 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                                + "\n------------------------------------------------------------------"
+                                                + "\nGround branch"
+                                                + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                              )
                                               ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None,None)))
                                             }
                                             case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                              BasicLogService.tweet(
+                                                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                                + "\nDiesel.scala:2614 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                                + "\n------------------------------------------------------------------"
+                                                + "\nRBoundHM branch"
+                                                + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                              )
                                               ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings.map(_.toList))))
+                                            }
+                                            case Some( mTT.RBoundAList( Some( mTT.Ground( v ) ), bindings ) ) => {
+                                              BasicLogService.tweet(
+                                                ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                                + "\nDiesel.scala:2614 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
+                                                + "\n------------------------------------------------------------------"
+                                                + "\nRBoundHM branch"
+                                                + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                              )
+                                              ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings)))
                                             }
                                           }
                                         )
