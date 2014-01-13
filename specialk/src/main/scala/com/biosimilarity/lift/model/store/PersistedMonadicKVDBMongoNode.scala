@@ -2726,6 +2726,8 @@ package usage {
                             BasicLogService.tweet(
                               (
                                 " ****************************** "
+                                + "\nPersistentMonadicKVDB : "
+                                + "\n method : mkCache"
 		                + "\n computed cacheValue: " + cacheValueRslt
 		                + "\n ****************************** "
                               )
@@ -2736,6 +2738,18 @@ package usage {
                               mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
                             val boundWrapper =
                               mTT.asRBoundAList( boundHMWrapper )
+
+                            BasicLogService.tweet(
+                              (
+                                " ****************************************** "
+                                + "\nPersistentMonadicKVDB : "
+                                + "\n method : mkCache"
+		                + "\n ------------------------------------------ "
+                                + "\n boundWrapper: " + boundWrapper
+		                + " ****************************** "
+                              )
+                            )
+
                             val finalRslt =
                               emT.PlaceInstance(
                                 k,
@@ -2750,6 +2764,9 @@ package usage {
                             BasicLogService.tweet(
                               (
                                 " ****************************** "
+                                + "\nPersistedMonadicKVDB : "
+                                + "\n method : mkCache"
+		                + "\n ------------------------------------------ "                                
 		                + "\n placeInstance: " + finalRslt
 		                + " ****************************** "
                               )
