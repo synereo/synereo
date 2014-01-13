@@ -1158,23 +1158,23 @@ trait EvalHandler {
       case CnxnCtxtBranch("user", 
         CnxnCtxtBranch("p1", filter :: Nil) :: 
         CnxnCtxtBranch("p2", uid :: Nil) ::
-        CnxnCtxtBranch("p3", age :: Nil) :: _) => 
-        (
-          filter,
-          filter match {
-            case CnxnCtxtBranch("all", factuals) => {
-              "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")"
-            }
-          },
-          uid match {
-            case CnxnCtxtBranch("uid", factuals) => factuals(0) match {
-              case CnxnCtxtLeaf(tag: Either[String, String]) => tag
-            }
-          },
-          age match {
-            case CnxnCtxtBranch(ageStr: String, _) => ageStr
+        CnxnCtxtBranch("p3", age :: Nil) :: _
+      ) => (
+        filter,
+        filter match {
+          case CnxnCtxtBranch("all", factuals) => {
+            "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")"
           }
-        )
+        },
+        uid match {
+          case CnxnCtxtBranch("uid", factuals) => factuals(0) match {
+            case CnxnCtxtLeaf(tag: Either[String, String]) => tag
+          }
+        },
+        age match {
+          case CnxnCtxtBranch(ageStr: String, _) => ageStr
+        }
+      )
     }
   }
 
@@ -1302,8 +1302,16 @@ trait EvalHandler {
           for (filter <- filters) {
             println("evalSubscribeRequest | feedExpr: filter = " + filter)
             BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
-            agentMgr().feed('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, onFeed)
-            agentMgr().read('user('p1(filter), 'p2(uid), 'p3('old("_")), 'p4('nil("_"))), cnxns, onRead)
+            agentMgr().feed(
+              'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), 
+              cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
+              onFeed
+            )
+            agentMgr().read(
+              'user('p1(filter), 'p2(uid), 'p3('old("_")), 'p4('nil("_"))), 
+              cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
+              onRead
+            )
           }
         }
         case "scoreExpr" => {
@@ -1357,7 +1365,12 @@ trait EvalHandler {
             case _: Throwable => 'uid("UID")
           }
           for (filter <- filters) {
-            agentMgr().score('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, staff, onScore)
+            agentMgr().score(
+              'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), 
+              cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
+              staff, 
+              onScore
+            )
             // TODO(mike): Make a read version of score, implement history for score.
           }
         }
