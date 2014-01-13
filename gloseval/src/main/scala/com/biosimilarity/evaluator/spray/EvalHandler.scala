@@ -1187,7 +1187,14 @@ trait EvalHandler {
     
     val expression = (content \ "expression")
     val ec = (expression \ "content").asInstanceOf[JObject]
-    val (filters, cnxns) = extractFiltersAndCnxns(ec)
+    val (filters, cnxns) = try {
+      extractFiltersAndCnxns(ec)
+    } catch {
+      val response = (msgType -> "evalSubscribeError") ~
+        (content -> (
+          "reason" -> ("Invalid label.")
+        ))
+    }
     val exprType = (expression \ "msgType").extract[String]
     exprType match {
       case "feedExpr" => {
