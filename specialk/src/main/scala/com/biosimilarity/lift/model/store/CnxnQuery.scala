@@ -334,7 +334,7 @@ with PrologMgr {
 	      }
             BasicLogService.tweet( "sV : " + sV )
 	    val soln : Solution[Object] = solution.on( sV )
-            BasicLogService.tweet( "mapping " + v + " -> " + soln )
+            BasicLogService.tweet( "mapping " + v + " -> " + soln.get )
 	    hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
 	  }
 	  catch {
