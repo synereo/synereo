@@ -1130,14 +1130,18 @@ trait EvalHandler {
     def apply(s: String) = sumOfProductsToFilterSet(parseAll(SOP, s).get)
   }
 
-  def extractFiltersAndCnxns(exprContent: JObject) = {
+  def extractFiltersAndCnxns(exprContent: JObject): 
+      Option[(Set[CnxnCtxtLabel[String, String, String] with Factual], List[PortableAgentCnxn])] = {
     BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
-    
-    val label = new SumOfProducts()((exprContent \ "label").extract[String])
-    val cnxns = (exprContent \ "cnxns") match {
-      case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
+    try {
+      val labelSet = new SumOfProducts()((exprContent \ "label").extract[String])
+      val cnxns = (exprContent \ "cnxns") match {
+        case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
+      }
+      Some((labelSet, cnxns))
+    } catch {
+      case _: Throwable => None
     }
-    (label, cnxns)
   }
 
   def extractMetadata(ccl: CnxnCtxtLabel[String,String,String]):
@@ -1187,212 +1191,213 @@ trait EvalHandler {
     
     val expression = (content \ "expression")
     val ec = (expression \ "content").asInstanceOf[JObject]
-    val (filters, cnxns) = try {
-      extractFiltersAndCnxns(ec)
-    } catch {
-      val response = (msgType -> "evalSubscribeError") ~
-        (content -> (
-          "reason" -> ("Invalid label.")
-        ))
-    }
-    val exprType = (expression \ "msgType").extract[String]
-    exprType match {
-      case "feedExpr" => {
-        BasicLogService.tweet("evalSubscribeRequest | feedExpr")
-        val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
-          println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
-          BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
-          optRsrc match {
-            case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
-            ))), _)) => {
-              val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
-              val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-              println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
-              BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
-              agentMgr().post(
-                'user(
-                  'p1(cclFilter),
-                  // TODO(mike): temporary workaround until bindings bug is fixed.
-                  'p2('uid((parse(postedStr) \ "uid").extract[String])),
-                  'p3('old("_")),
-                  'p4('nil("_"))
-                ),
-                List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
-                postedStr,
-                (optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
-              )
-
-              val content =
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(postedStr)) ~
-                ("connection" -> (
-                  ("source" -> agentCnxn.src.toString) ~
-                  ("label" -> agentCnxn.label) ~
-                  ("target" -> agentCnxn.trgt.toString)
-                )) ~
-                ("filter" -> jsonFilter)
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
-              val content = 
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List[String]())
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case _ => throw new Exception("Unrecognized resource: " + optRsrc)
-          }
-        }
-        // TODO(mike): Workaround until bindings bug is fixed
-        val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
-          println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
-          BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
-          optRsrc match {
-            case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
-            ))), _)) => {
-              val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
-              val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-              val content =
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(postedStr)) ~
-                ("connection" -> (
-                  ("source" -> agentCnxn.src.toString) ~
-                  ("label" -> agentCnxn.label) ~
-                  ("target" -> agentCnxn.trgt.toString)
-                )) ~
-                ("filter" -> jsonFilter)
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-              BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
-              val content = 
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List[String]())
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-              BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case _ => throw new Exception("Unrecognized resource: " + optRsrc)
-          }
-        }
-        
-        println("evalSubscribeRequest | feedExpr: calling feed")
-        BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-        val uid = try {
-          'uid((ec \ "uid").extract[String])
-        } catch {
-          case _: Throwable => 'uid("UID")
-        }
-        for (filter <- filters) {
-          println("evalSubscribeRequest | feedExpr: filter = " + filter)
-          BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
-          agentMgr().feed('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, onFeed)
-          agentMgr().read('user('p1(filter), 'p2(uid), 'p3('old("_")), 'p4('nil("_"))), cnxns, onRead)
-        }
-      }
-      case "scoreExpr" => {
-        BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
-        val onScore: Option[mTT.Resource] => Unit = (optRsrc) => {
-          BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
-          optRsrc match {
-            case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
-            ))), _)) => {
-              val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
-              val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-              val content =
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(postedStr)) ~
-                ("connection" -> (
-                  ("source" -> agentCnxn.src.toString) ~
-                  ("label" -> agentCnxn.label) ~
-                  ("target" -> agentCnxn.trgt.toString)
-                )) ~
-                ("filter" -> jsonFilter)
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case _ => throw new Exception("Unrecognized resource: " + optRsrc)
-          }
-        }
-        val staff = (expression \ "content" \ "staff") match {
-          case JObject(List((which: String, vals@JArray(_)))) => {
-            // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
-            which match {
-              case "a" => vals match {
-                case JArray(arr: List[JObject]) => Left(arr.map(extractCnxn _))
-              }
-              case "b" => Right(
-                vals.extract[List[String]].map((t: String) => 
-                  fromTermString(t).getOrElse(throw new Exception("Couldn't parse staff: " + json))
+    val optFiltersAndCnxns = extractFiltersAndCnxns(ec)
+    if (optFiltersAndCnxns == None) {
+      CometActorMapper.cometMessage(
+        sessionURIStr, 
+        """{"msgType":"evalSubscribeError","content":{"reason":"Invalid label."}}"""
+      )
+    } else {
+      val (filters, cnxns) = optFiltersAndCnxns.get
+      val exprType = (expression \ "msgType").extract[String]
+      exprType match {
+        case "feedExpr" => {
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr")
+          val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
+            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
+            BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+            optRsrc match {
+              case None => ()
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
+              ))), _)) => {
+                val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
+                val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
+                println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                agentMgr().post(
+                  'user(
+                    'p1(cclFilter),
+                    // TODO(mike): temporary workaround until bindings bug is fixed.
+                    'p2('uid((parse(postedStr) \ "uid").extract[String])),
+                    'p3('old("_")),
+                    'p4('nil("_"))
+                  ),
+                  List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
+                  postedStr,
+                  (optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
                 )
-              )
-              case _ => throw new Exception("Couldn't parse staff: " + json)
+
+                val content =
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List(postedStr)) ~
+                  ("connection" -> (
+                    ("source" -> agentCnxn.src.toString) ~
+                    ("label" -> agentCnxn.label) ~
+                    ("target" -> agentCnxn.trgt.toString)
+                  )) ~
+                  ("filter" -> jsonFilter)
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
+                val content = 
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List[String]())
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case _ => throw new Exception("Unrecognized resource: " + optRsrc)
             }
           }
-          case _ => throw new Exception("Couldn't parse staff: " + json)
+          // TODO(mike): Workaround until bindings bug is fixed
+          val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
+            println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
+            BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
+            optRsrc match {
+              case None => ()
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
+              ))), _)) => {
+                val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
+                val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
+                val content =
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List(postedStr)) ~
+                  ("connection" -> (
+                    ("source" -> agentCnxn.src.toString) ~
+                    ("label" -> agentCnxn.label) ~
+                    ("target" -> agentCnxn.trgt.toString)
+                  )) ~
+                  ("filter" -> jsonFilter)
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
+                val content = 
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List[String]())
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+            }
+          }
+
+          println("evalSubscribeRequest | feedExpr: calling feed")
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
+          val uid = try {
+            'uid((ec \ "uid").extract[String])
+          } catch {
+            case _: Throwable => 'uid("UID")
+          }
+          for (filter <- filters) {
+            println("evalSubscribeRequest | feedExpr: filter = " + filter)
+            BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
+            agentMgr().feed('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, onFeed)
+            agentMgr().read('user('p1(filter), 'p2(uid), 'p3('old("_")), 'p4('nil("_"))), cnxns, onRead)
+          }
         }
-        BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-        val uid = try {
-          'uid((ec \ "uid").extract[String])
-        } catch {
-          case _: Throwable => 'uid("UID")
-        }
-        for (filter <- filters) {
-          agentMgr().score('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, staff, onScore)
-          // TODO(mike): Make a read version of score, implement history for score.
-        }
-      }
-      case "insertContent" => {
-        println("evalSubscribeRequest | insertContent")
-        BasicLogService.tweet("evalSubscribeRequest | insertContent")
-        BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-        val value = (ec \ "value").extract[String]
-        val uid = 'uid(Ground((ec \ "uid").extract[String]))
-        
-        for (filter <- filters) {
-          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
-          agentMgr().post(
-            'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
-            cnxns,
-            value,
-            (optRsrc: Option[mTT.Resource]) => {
-              println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
-              BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
-              optRsrc match {
-                case None => ()
-                case Some(_) => {
-                  // evalComplete, empty seq of posts
-                  val content =
-                    ("sessionURI" -> sessionURIStr) ~
-                    ("pageOfPosts" -> List[String]())
-                  val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-                  println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                  BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+        case "scoreExpr" => {
+          BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
+          val onScore: Option[mTT.Resource] => Unit = (optRsrc) => {
+            BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
+            optRsrc match {
+              case None => ()
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
+              ))), _)) => {
+                val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
+                val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
+                val content =
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List(postedStr)) ~
+                  ("connection" -> (
+                    ("source" -> agentCnxn.src.toString) ~
+                    ("label" -> agentCnxn.label) ~
+                    ("target" -> agentCnxn.trgt.toString)
+                  )) ~
+                  ("filter" -> jsonFilter)
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+            }
+          }
+          val staff = (expression \ "content" \ "staff") match {
+            case JObject(List((which: String, vals@JArray(_)))) => {
+              // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
+              which match {
+                case "a" => vals match {
+                  case JArray(arr: List[JObject]) => Left(arr.map(extractCnxn _))
                 }
-                case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+                case "b" => Right(
+                  vals.extract[List[String]].map((t: String) => 
+                    fromTermString(t).getOrElse(throw new Exception("Couldn't parse staff: " + json))
+                  )
+                )
+                case _ => throw new Exception("Couldn't parse staff: " + json)
               }
             }
-          )
+            case _ => throw new Exception("Couldn't parse staff: " + json)
+          }
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
+          val uid = try {
+            'uid((ec \ "uid").extract[String])
+          } catch {
+            case _: Throwable => 'uid("UID")
+          }
+          for (filter <- filters) {
+            agentMgr().score('user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), cnxns, staff, onScore)
+            // TODO(mike): Make a read version of score, implement history for score.
+          }
         }
-      }
-      case _ => {
-        throw new Exception("Unrecognized request: " + compact(render(json)))
+        case "insertContent" => {
+          println("evalSubscribeRequest | insertContent")
+          BasicLogService.tweet("evalSubscribeRequest | insertContent")
+          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
+          val value = (ec \ "value").extract[String]
+          val uid = 'uid(Ground((ec \ "uid").extract[String]))
+
+          for (filter <- filters) {
+            BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
+            agentMgr().post(
+              'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
+              cnxns,
+              value,
+              (optRsrc: Option[mTT.Resource]) => {
+                println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+                BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(_) => {
+                    // evalComplete, empty seq of posts
+                    val content =
+                      ("sessionURI" -> sessionURIStr) ~
+                      ("pageOfPosts" -> List[String]())
+                    val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+                    println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                    BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                    CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+                  }
+                  case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+                }
+              }
+            )
+          }
+        }
+        case _ => {
+          throw new Exception("Unrecognized request: " + compact(render(json)))
+        }
       }
     }
   }  
