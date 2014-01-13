@@ -2450,9 +2450,11 @@ package mongo.usage {
                               asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
                           BasicLogService.tweet(
                             (
-                              " ****************************** "
+                              " ****************************************** "
+                              + "\n method : mkCache"
+                              + "\n ------------------------------------------ "
 		              + "\n computed cacheValue: " + cacheValueRslt
-		              + "\n ****************************** "
+		              + "\n ****************************************** "
                             )
                           )
                           val groundWrapper =
@@ -2461,6 +2463,17 @@ package mongo.usage {
                             mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
                           val boundWrapper =
                             mTT.asRBoundAList( boundHMWrapper )
+
+                          BasicLogService.tweet(
+                            (
+                              " ****************************************** "
+                              + "\n method : mkCache"
+		              + "\n ------------------------------------------ "
+                              + "\n boundWrapper: " + boundWrapper
+		              + " ****************************** "
+                            )
+                          )
+
                           val finalRslt =
                             emT.PlaceInstance(
                               k,
@@ -2471,10 +2484,13 @@ package mongo.usage {
                               // that this cast is not necessary?
                               theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
                             )
+                          
                           BasicLogService.tweet(
                             (
-                              " ****************************** "
-		              + "\n placeInstance: " + finalRslt
+                              " ****************************************** "
+                              + "\n method : mkCache"
+		              + "\n ------------------------------------------ "
+                              + "\n placeInstance: " + finalRslt
 		              + " ****************************** "
                             )
                           )
