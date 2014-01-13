@@ -323,13 +323,11 @@ with AgentCnxnTypeScope {
                                             "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                             + "mgetting " + path + ".\n"
                                             + "on " + this + " from db " /* + pd.db */ + "\n"
-                                            + "from coll " + xmlCollName + "\n"
+                                            + "from coll " + xmlCollName + "\n"                                            
                                             + "with query: ... " 
                                             + "\n had "
                                             + rslts.length
                                             + " matching resources."
-                                            + "\n-----------------------------------------------------------------"
-                                            + "\nstoring continuation query"
                                             + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
                                           )
                                         )
@@ -347,7 +345,23 @@ with AgentCnxnTypeScope {
                                           
                                           for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
                                             val ( rslt, ersrc ) = rsltRsrcPair
-					    BasicLogService.tweet("retrieved " + rslt.toString)
+					    BasicLogService.tweet(
+                                              ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                              + "\nBaseAgentKVDB : "
+                                              + "\nmethod : mget "
+                                              + "\nthis : " + this
+                                              + "\ncnxn : " + cnxn
+                                              + "\nchannels : " + channels
+                                              + "\nregistered : " + registered
+                                              + "\nconsume : " + consume
+                                              + "\nkeep : " + keep
+                                              + "\ncursor : " + cursor
+                                              + "\ncollName : " + collName
+                                              + "\npath : " + path
+                                              + "\n-----------------------------------------------------------------"
+                                              + "\nretrieved : " + rslt.toString
+                                              + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                            )
                                             
                                              consume match {
                                                case policy : RetainInStore => {
@@ -413,7 +427,23 @@ with AgentCnxnTypeScope {
                                               )                                       
                                               for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
                                                 val ( rslt, ersrc ) = rsltRsrcPair
-                                                BasicLogService.tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet(
+                                                  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                  + "\nBaseAgentKVDB : "
+                                                  + "\nmethod : mget "
+                                                  + "\nthis : " + this
+                                                  + "\ncnxn : " + cnxn
+                                                  + "\nchannels : " + channels
+                                                  + "\nregistered : " + registered
+                                                  + "\nconsume : " + consume
+                                                  + "\nkeep : " + keep
+                                                  + "\ncursor : " + cursor
+                                                  + "\ncollName : " + collName
+                                                  + "\npath : " + path
+                                                  + "\n-----------------------------------------------------------------"
+                                                  + "\nretrieved : " + rslt.toString                                     
+                                                  + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                )
                                             
                                                 consume match {
                                                   case policy : RetainInStore => {
@@ -434,7 +464,23 @@ with AgentCnxnTypeScope {
 
                                               for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
 						val ( rslt, ersrc ) = rsltRsrcPair
-                                                BasicLogService.tweet("returning " + ersrc)                                             
+                                                BasicLogService.tweet(
+                                                  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                  + "\nBaseAgentKVDB : "
+                                                  + "\nmethod : mget "
+                                                  + "\nthis : " + this
+                                                  + "\ncnxn : " + cnxn
+                                                  + "\nchannels : " + channels
+                                                  + "\nregistered : " + registered
+                                                  + "\nconsume : " + consume
+                                                  + "\nkeep : " + keep
+                                                  + "\ncursor : " + cursor
+                                                  + "\ncollName : " + collName
+                                                  + "\npath : " + path
+                                                  + "\n-----------------------------------------------------------------"
+                                                  + "\nreturning " + ersrc
+                                                  + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                )
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
                                                   case _ => {}
@@ -446,7 +492,23 @@ with AgentCnxnTypeScope {
                                               spaceLock.depart( path, Some( rk ) )
                                               for ( rsltRsrcPair <- itergen[(DBObject,emT.PlaceInstance)](rslts) ) {
 						val ( rslt, ersrc ) = rsltRsrcPair
-                                                BasicLogService.tweet("retrieved " + rslt.toString)
+                                                BasicLogService.tweet(
+                                                  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                  + "\nBaseAgentKVDB : "
+                                                  + "\nmethod : mget "
+                                                  + "\nthis : " + this
+                                                  + "\ncnxn : " + cnxn
+                                                  + "\nchannels : " + channels
+                                                  + "\nregistered : " + registered
+                                                  + "\nconsume : " + consume
+                                                  + "\nkeep : " + keep
+                                                  + "\ncursor : " + cursor
+                                                  + "\ncollName : " + collName
+                                                  + "\npath : " + path
+                                                  + "\n-----------------------------------------------------------------"
+                                                  + "\nretrieved : " + rslt.toString
+                                                  + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                )
                                                 
                                                 consume match {
                                                   case policy : RetainInStore => {
@@ -462,7 +524,23 @@ with AgentCnxnTypeScope {
                                                   }
                                                 }
                                                 
-                                                BasicLogService.tweet("returning " + ersrc)                                             
+                                                BasicLogService.tweet(
+                                                  ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                  + "\nBaseAgentKVDB : "
+                                                  + "\nmethod : mget "
+                                                  + "\nthis : " + this
+                                                  + "\ncnxn : " + cnxn
+                                                  + "\nchannels : " + channels
+                                                  + "\nregistered : " + registered
+                                                  + "\nconsume : " + consume
+                                                  + "\nkeep : " + keep
+                                                  + "\ncursor : " + cursor
+                                                  + "\ncollName : " + collName
+                                                  + "\npath : " + path
+                                                  + "\n-----------------------------------------------------------------"
+                                                  + "\nreturning " + ersrc
+                                                  + "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
+                                                )
                                                 ersrc.stuff match {
                                                   case Left( r ) => rk( Some( r ) )
                                                   case _ => {}
