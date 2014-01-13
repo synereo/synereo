@@ -334,14 +334,17 @@ with PrologMgr {
 	      }
             BasicLogService.tweet( "sV : " + sV )
 	    val soln : Solution[Object] = solution.on( sV )
+            BasicLogService.tweet( "mapping " + v + " -> " + soln )
 	    hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
 	  }
 	  catch {
-	    case e : org.prolog4j.UnknownVariableException => {
+	    case eUnknownVar : org.prolog4j.UnknownVariableException => {
 //	      println( "warning: variable not bound: " + v )
-	    }
+	      BasicLogService.tweet( "warning: variable not bound: " + v )
+            }
             case e : Throwable => {
               if ( e.getMessage.equals( "" ) ) {
+                BasicLogService.tweet( "warning: ignoring exception " + e )
               }
             }
 	  }
