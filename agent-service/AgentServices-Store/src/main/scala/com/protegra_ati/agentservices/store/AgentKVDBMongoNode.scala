@@ -2446,22 +2446,40 @@ package mongo.usage {
                     matchMap( key, k ) match {
                       case Some( soln ) => {
                         if ( compareNameSpace( ns, kvNameSpace ) ) {
-                          emT.PlaceInstance(
-                            k,
-                            Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                              mTT.Ground(
-                                asCacheValue(
-                                  new CnxnCtxtBranch[String,String,String](
-                                    "string",
-                                    v :: Nil
-                                  )
-                                )
-                              )
-                            ),
-                            // BUGBUG -- lgm : why can't the compiler determine
-                            // that this cast is not necessary?
-                            theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                          val cacheValueRslt =
+                              asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                          BasicLogService.tweet(
+                            (
+                              " ****************************** "
+		              + "\n computed cacheValue: " + cacheValueRslt
+		              + "\n ****************************** "
+                            )
                           )
+                          val groundWrapper =
+                            mTT.Ground( cacheValueRslt )
+                          val boundHMWrapper =
+                            mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                          val boundWrapper =
+                            mTT.asRBoundAList( boundHMWrapper )
+                          val finalRslt =
+                            emT.PlaceInstance(
+                              k,
+                              Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                boundWrapper
+                              ),
+                              // BUGBUG -- lgm : why can't the compiler determine
+                              // that this cast is not necessary?
+                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                            )
+                          BasicLogService.tweet(
+                            (
+                              " ****************************** "
+		              + "\n placeInstance: " + finalRslt
+		              + " ****************************** "
+                            )
+                          )
+                            
+                          finalRslt
                         }
                         else {
                           if ( compareNameSpace( ns, kvKNameSpace ) ) {
@@ -2489,7 +2507,8 @@ package mongo.usage {
                       }
                       case None => {
                         BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                        throw new Exception( "matchMap failure " + key + " " + k )
+                        //throw new Exception( "matchMap failure " + key + " " + k )
+                        throw new UnificationQueryFilter( key, k, value )
                       }
                     }                                           
                   }
