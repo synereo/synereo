@@ -2506,6 +2506,15 @@ package mongo.usage {
                 key : mTT.GetRequest, // must have the pattern to determine bindings
                 value : DBObject
               ) : emT.PlaceInstance = {
+                BasicLogService.tweet(
+	          (
+	            "AgentKVDB : "
+	            + "\nmethod : asResource "
+	            + "\nthis : " + this
+	            + "\nkey : " + key
+                    + "\nvalue : " + value
+	          )
+	        )
                 val ltns =
                   labelToNS.getOrElse(
                     throw new Exception( "must have labelToNS to convert mongo object" )
@@ -2880,22 +2889,59 @@ package mongo.usage {
                           matchMap( key, k ) match {
                             case Some( soln ) => {
                               if ( compareNameSpace( ns, kvNameSpace ) ) {
-                                emT.PlaceInstance(
-                                  k,
-                                  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                    mTT.Ground(
-                                      asCacheValue(
-                                        new CnxnCtxtBranch[String,String,String](
-                                          "string",
-                                          v :: Nil
-                                        )
-                                      )
-                                    )
-                                  ),
-                                  // BUGBUG -- lgm : why can't the compiler determine
-                                  // that this cast is not necessary?
-                                  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                val cacheValueRslt =
+                                  asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+                                    + "\n ------------------------------------------ "
+		                    + "\n computed cacheValue: " + cacheValueRslt
+		                    + "\n ****************************************** "
+                                  )
                                 )
+                                val groundWrapper =
+                                  mTT.Ground( cacheValueRslt )
+                                val boundHMWrapper =
+                                  mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                                val boundWrapper =
+                                  mTT.asRBoundAList( boundHMWrapper )
+                                
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+		                    + "\n ------------------------------------------ "
+                                    + "\n boundWrapper: " + boundWrapper
+		                    + " ****************************** "
+                                  )
+                                )
+                                
+                                val finalRslt =
+                                  emT.PlaceInstance(
+                                    k,
+                                    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                      boundWrapper
+                                    ),
+                                    // BUGBUG -- lgm : why can't the compiler determine
+                                    // that this cast is not necessary?
+                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                  )
+                                
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+		                    + "\n ------------------------------------------ "
+                                    + "\n placeInstance: " + finalRslt
+		                    + " ****************************** "
+                                  )
+                                )
+                                
+                                finalRslt
                               }
                               else {
                                 if ( compareNameSpace( ns, kvKNameSpace ) ) {
@@ -2922,8 +2968,8 @@ package mongo.usage {
                               }
                             }
                             case None => {
-                              BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                              throw new Exception( "matchMap failure " + key + " " + k )
+                              //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              throw new UnificationQueryFilter( key, k, value )
                             }
                           }                                             
                         }
@@ -3205,22 +3251,59 @@ package mongo.usage {
                           matchMap( key, k ) match {
                             case Some( soln ) => {
                               if ( compareNameSpace( ns, kvNameSpace ) ) {
-                                emT.PlaceInstance(
-                                  k,
-                                  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                    mTT.Ground(
-                                      asCacheValue(
-                                        new CnxnCtxtBranch[String,String,String](
-                                          "string",
-                                          v :: Nil
-                                        )
-                                      )
-                                    )
-                                  ),
-                                  // BUGBUG -- lgm : why can't the compiler determine
-                                  // that this cast is not necessary?
-                                  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                val cacheValueRslt =
+                                  asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+                                    + "\n ------------------------------------------ "
+		                    + "\n computed cacheValue: " + cacheValueRslt
+		                    + "\n ****************************************** "
+                                  )
                                 )
+                                val groundWrapper =
+                                  mTT.Ground( cacheValueRslt )
+                                val boundHMWrapper =
+                                  mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                                val boundWrapper =
+                                  mTT.asRBoundAList( boundHMWrapper )
+                                
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+		                    + "\n ------------------------------------------ "
+                                    + "\n boundWrapper: " + boundWrapper
+		                    + " ****************************** "
+                                  )
+                                )
+                                
+                                val finalRslt =
+                                  emT.PlaceInstance(
+                                    k,
+                                    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                      boundWrapper
+                                    ),
+                                    // BUGBUG -- lgm : why can't the compiler determine
+                                    // that this cast is not necessary?
+                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                  )
+                                
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+		                    + "\n ------------------------------------------ "
+                                    + "\n placeInstance: " + finalRslt
+		                    + " ****************************** "
+                                  )
+                                )
+                                
+                                finalRslt
                               }
                               else {
                                 if ( compareNameSpace( ns, kvKNameSpace ) ) {
@@ -3247,8 +3330,8 @@ package mongo.usage {
                               }
                             }
                             case None => {
-                              BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                              throw new Exception( "matchMap failure " + key + " " + k )
+                              //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              throw new UnificationQueryFilter( key, k, value )
                             }
                           }                                             
                         }
@@ -3548,22 +3631,59 @@ package mongo.usage {
                           matchMap( key, k ) match {
                             case Some( soln ) => {
                               if ( compareNameSpace( ns, kvNameSpace ) ) {
-                                emT.PlaceInstance(
-                                  k,
-                                  Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                    mTT.Ground(
-                                      asCacheValue(
-                                        new CnxnCtxtBranch[String,String,String](
-                                          "string",
-                                          v :: Nil
-                                        )
-                                      )
-                                    )
-                                  ),
-                                  // BUGBUG -- lgm : why can't the compiler determine
-                                  // that this cast is not necessary?
-                                  theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                val cacheValueRslt =
+                                  asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+                                    + "\n ------------------------------------------ "
+		                    + "\n computed cacheValue: " + cacheValueRslt
+		                    + "\n ****************************************** "
+                                  )
                                 )
+                                val groundWrapper =
+                                  mTT.Ground( cacheValueRslt )
+                                val boundHMWrapper =
+                                  mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
+                                val boundWrapper =
+                                  mTT.asRBoundAList( boundHMWrapper )
+                                
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+		                    + "\n ------------------------------------------ "
+                                    + "\n boundWrapper: " + boundWrapper
+		                    + " ****************************** "
+                                  )
+                                )
+                                
+                                val finalRslt =
+                                  emT.PlaceInstance(
+                                    k,
+                                    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
+                                      boundWrapper
+                                    ),
+                                    // BUGBUG -- lgm : why can't the compiler determine
+                                    // that this cast is not necessary?
+                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
+                                  )
+                                
+                                BasicLogService.tweet(
+                                  (
+                                    " ****************************************** "
+                                    + "\nBaseAgentKVDB : "
+                                    + "\n method : mkCache"
+		                    + "\n ------------------------------------------ "
+                                    + "\n placeInstance: " + finalRslt
+		                    + " ****************************** "
+                                  )
+                                )
+                                
+                                finalRslt
                               }
                               else {
                                 if ( compareNameSpace( ns, kvKNameSpace ) ) {
@@ -3590,8 +3710,8 @@ package mongo.usage {
                               }
                             }
                             case None => {
-                              BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                              throw new Exception( "matchMap failure " + key + " " + k )
+                              //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
+                              throw new UnificationQueryFilter( key, k, value )
                             }
                           }                                             
                         }
