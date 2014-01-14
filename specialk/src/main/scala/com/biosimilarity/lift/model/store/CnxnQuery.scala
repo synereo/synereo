@@ -414,12 +414,14 @@ with PrologMgr {
                     + "\n>>>**********************************************<<<"
                   )                
                 )
-                val atom = eRTMsg.split( " " ).toList.last
-                new CnxnCtxtLeaf[Namespace,Var,Tag](
-                  // BUGBUG -- lgm : this is an even uglier hack --
-                  // provide a conversion function api, please
-	          Right[Tag,Var]( atom.asInstanceOf[Var] )
-	        )
+                val atomStr = eRTMsg.split( " " ).toList.last
+                val atom =
+                  new CnxnCtxtLeaf[Namespace,Var,Tag](
+                    // BUGBUG -- lgm : this is an even uglier hack --
+                    // provide a conversion function api, please
+	            Right[Tag,Var]( atomStr.asInstanceOf[Var] )
+	          )
+                hmSoln += ( v -> atom )
               }
               else {
                 BasicLogService.tweet(
