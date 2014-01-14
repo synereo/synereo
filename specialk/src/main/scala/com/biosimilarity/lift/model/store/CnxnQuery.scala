@@ -328,6 +328,8 @@ with PrologMgr {
             + "\nmethod: matchMap"
             + "\nclabel1: " + clabel1
             + "\nclabel2: " + clabel2
+            + "\n----------------------------------------------------"
+            + "\nsolution.isSuccess: " + true
             + "\n>>>**********************************************<<<"
           )
         )
@@ -411,11 +413,22 @@ with PrologMgr {
             }
 	  }
 	}
-        BasicLogService.tweet( ">>>**********************************************<<<" )
 	
 	Some( hmSoln )
       }
       else {
+        BasicLogService.tweet(
+          (
+            ">>>**********************************************<<<"
+            + "\nCnxnUnificationTermQuery"
+            + "\nmethod: matchMap"
+            + "\nclabel1: " + clabel1
+            + "\nclabel2: " + clabel2
+            + "\n----------------------------------------------------"
+            + "\nsolution.isSuccess: " + false
+            + "\n>>>**********************************************<<<"
+          )
+        )
 	None
       }
     }
