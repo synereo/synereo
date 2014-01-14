@@ -321,31 +321,93 @@ with PrologMgr {
 	
 	val hmSoln = new LinkedHashMap[Var,CnxnCtxtLabel[Namespace,Var,Tag]]()
 	
-        BasicLogService.tweet( ">>>**********************************************<<<" )
-        BasicLogService.tweet( "method: matchMap" )
+        BasicLogService.tweet(
+          (
+            ">>>**********************************************<<<"
+            + "\nCnxnUnificationTermQuery"
+            + "\nmethod: matchMap"
+            + "\nclabel1: " + clabel1
+            + "\nclabel2: " + clabel2
+            + "\n>>>**********************************************<<<"
+          )
+        )
+          
 	for( v <- varSet ) {
 	  //println( "mapping free var : " + v )
-          BasicLogService.tweet( "v : " + v )
+          BasicLogService.tweet(
+            (
+              ">>>**********************************************<<<"
+              + "\nCnxnUnificationTermQuery"
+              + "\nmethod: matchMap"
+              + "\nclabel1: " + clabel1
+              + "\nclabel2: " + clabel2
+              + "\n----------------------------------------------------"
+              + "\nv : " + v
+              + "\n>>>**********************************************<<<"
+            )            
+          )
 	  try {
 	    val sV =
 	      v + "" match {
 		case "_" => "_"
 		case _ => "X" + v
 	      }
-            BasicLogService.tweet( "sV : " + sV )
+            BasicLogService.tweet(
+              (
+                ">>>**********************************************<<<"
+                + "\nCnxnUnificationTermQuery"
+                + "\nmethod: matchMap"
+                + "\nclabel1: " + clabel1
+                + "\nclabel2: " + clabel2
+                + "\n----------------------------------------------------"
+                + "\nsV : " + sV
+                + "\n>>>**********************************************<<<"
+              )            
+            )
 	    val soln : Solution[Object] = solution.on( sV )
-            BasicLogService.tweet( "mapping " + v + " -> " + soln.get )
+            BasicLogService.tweet(
+              (
+                ">>>**********************************************<<<"
+                + "\nCnxnUnificationTermQuery"
+                + "\nmethod: matchMap"
+                + "\nclabel1: " + clabel1
+                + "\nclabel2: " + clabel2
+                + "\n----------------------------------------------------"
+                + "\nmapping " + v + " -> " + soln.get
+                + "\n>>>**********************************************<<<"
+              )              
+            )
 	    hmSoln += ( v -> asCnxnCtxtLabel( soln.get ) )
 	  }
 	  catch {
 	    case eUnknownVar : org.prolog4j.UnknownVariableException => {
 //	      println( "warning: variable not bound: " + v )
-	      BasicLogService.tweet( "warning: variable not bound: " + v )
+	      BasicLogService.tweet(
+                (
+                  ">>>**********************************************<<<"
+                  + "\nCnxnUnificationTermQuery"
+                  + "\nmethod: matchMap -- exception"
+                  + "\nclabel1: " + clabel1
+                  + "\nclabel2: " + clabel2
+                  + "\n----------------------------------------------------"
+                  + "\nwarning: variable not bound: " + v
+                  + "\n>>>**********************************************<<<"
+                )                
+              )
             }
             case e : Throwable => {
-              if ( e.getMessage.equals( "" ) ) {
-                BasicLogService.tweet( "warning: ignoring exception " + e )
-              }
+              BasicLogService.tweet(
+                (
+                  ">>>**********************************************<<<"
+                  + "\nCnxnUnificationTermQuery"
+                  + "\nmethod: matchMap -- exception"
+                  + "\nclabel1: " + clabel1
+                  + "\nclabel2: " + clabel2
+                  + "\n----------------------------------------------------"
+                  + "\nwarning: ignoring exception " + e
+                  + "\n>>>**********************************************<<<"
+                )                
+              )
             }
 	  }
 	}
