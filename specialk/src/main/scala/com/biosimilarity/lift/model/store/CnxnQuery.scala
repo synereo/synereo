@@ -397,6 +397,45 @@ with PrologMgr {
                 )                
               )
             }
+            // BUGBUG -- lgm : this is a hack to get around a problem
+            // in prolog4j
+            case eRT : java.lang.RuntimeException => {
+              val eRTMsg = eRT.getMessage
+              if ( eRTMsg.contains( "No suitable converter found for " ) ) {
+                BasicLogService.tweet(
+                  (
+                    ">>>**********************************************<<<"
+                    + "\nCnxnUnificationTermQuery"
+                    + "\nmethod: matchMap -- exception"
+                    + "\nclabel1: " + clabel1
+                    + "\nclabel2: " + clabel2
+                    + "\n----------------------------------------------------"
+                    + "\nwarning: converting an atom by catching no converter exception " + eRT
+                    + "\n>>>**********************************************<<<"
+                  )                
+                )
+                val atom = eRTMsg.split( " " ).toList.last
+                new CnxnCtxtLeaf[Namespace,Var,Tag](
+                  // BUGBUG -- lgm : this is an even uglier hack --
+                  // provide a conversion function api, please
+	          Right[Tag,Var]( atom.asInstanceOf[Var] )
+	        )
+              }
+              else {
+                BasicLogService.tweet(
+                  (
+                    ">>>**********************************************<<<"
+                    + "\nCnxnUnificationTermQuery"
+                    + "\nmethod: matchMap -- exception"
+                    + "\nclabel1: " + clabel1
+                    + "\nclabel2: " + clabel2
+                    + "\n----------------------------------------------------"
+                    + "\nwarning: ignoring exception " + eRT
+                    + "\n>>>**********************************************<<<"
+                  )                
+                )
+              }
+            }
             case e : Throwable => {
               BasicLogService.tweet(
                 (
