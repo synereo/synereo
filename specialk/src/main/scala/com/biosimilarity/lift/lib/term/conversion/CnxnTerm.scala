@@ -258,7 +258,7 @@ trait CnxnZipperComposition[L,V,T] {
 
 trait CnxnSubstitution[L,V,T] {
   def substitute( term : CnxnCtxtLabel[L,V,T] )(
-    bindings : Map[V,CnxnCtxtLabel[L,V,T] with Factual]
+    bindings : scala.collection.Map[V,CnxnCtxtLabel[L,V,T] with Factual]
   ) : CnxnCtxtLabel[L,V,T] with Factual = {
     term match {
       case tLeaf@CnxnCtxtLeaf( Left( _ ) ) => {
