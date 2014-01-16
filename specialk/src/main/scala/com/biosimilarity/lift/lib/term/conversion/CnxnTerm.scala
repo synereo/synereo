@@ -256,6 +256,24 @@ trait CnxnZipperComposition[L,V,T] {
   }
 }
 
+trait CnxnSubstitution[L,V,T] {
+  def substitute( term : CnxnCtxtLabel[L,V,T] )(
+    bindings : Map[V,CnxnCtxtLabel[L,V,T] with Factual]
+  ) : CnxnCtxtLabel[L,V,T] with Factual = {
+    term match {
+      case tLeaf@CnxnCtxtLeaf( Left( _ ) ) => {
+        tLeaf
+      }
+      case vLeaf@CnxnCtxtLeaf( Right( v : V ) ) => {
+        bindings.get( v ).getOrElse( vLeaf )
+      }
+      case CnxnCtxtBranch( fnctr : L, actls : List[CnxnCtxtLabel[L,V,T] with Factual] ) => {
+        new CnxnCtxtBranch( fnctr, actls.map( substitute( _ )( bindings ) ) )
+      }
+    }
+  }
+}
+
 class TermToCnxnCtxtLabel[N,X,T](
   val text2ns : String => N, val text2v : String => X, val text2t : String => T,
   val ns2str : N => String, val v2str : X => String, val t2str : T => String,
