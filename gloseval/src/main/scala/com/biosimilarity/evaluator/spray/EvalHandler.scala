@@ -873,7 +873,7 @@ trait EvalHandler {
                 }
               }
               def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
-                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onAliasesFetch: optRsrc = " + optRsrc)
+                BasicLogService.tweet("secureLogin | login | onPwmacFetch | onAliasesFetch: optRsrc = " + optRsrc)
                 val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
                 optRsrc match {
                   case None => ()
@@ -1178,6 +1178,17 @@ trait EvalHandler {
     }
   }
 
+  def subst(
+    ccl: CnxnCtxtLabel[String, String, String] with Factual,
+    bindings: Map[String, CnxnCtxtLabel[String, String, String] with Factual]
+  ) : CnxnCtxtLabel[String, String, String] with Factual = {
+    import com.biosimilarity.lift.lib.term.conversion._
+    import com.biosimilarity.lift.model.store._
+    import com.biosimilarity.lift.lib._
+    object CCLSubst extends CnxnSubstitution[String,String,String] with CnxnString[String,String,String]
+    CCLSubst.substitute(ccl)(bindings)
+  }
+
   def evalSubscribeRequest(json: JValue) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
     import com.protegra_ati.agentservices.store._
@@ -1208,16 +1219,26 @@ trait EvalHandler {
             BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
             optRsrc match {
               case None => ()
-              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
-              ))), _)) => {
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((
+                PostedExpr(postedStr: String),
+                filter: CnxnCtxtLabel[String,String,String],
+                cnxn,
+                bindings: mTT.RBoundAList
+              )))), _)) => {
                 val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
                 println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                 BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+
+                val originalFilter = subst(
+                  cclFilter,
+                  Map(bindings.assoc.get.asInstanceOf[
+                    List[(String, CnxnCtxtLabel[String,String,String] with Factual)]
+                  ]:_*)
+                )
                 agentMgr().post(
                   'user(
-                    'p1(cclFilter),
+                    'p1(originalFilter),
                     // TODO(mike): temporary workaround until bindings bug is fixed.
                     'p2('uid((parse(postedStr) \ "uid").extract[String])),
                     'p3('old("_")),
