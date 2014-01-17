@@ -1219,12 +1219,31 @@ trait EvalHandler {
             BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
             optRsrc match {
               case None => ()
-              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((
-                PostedExpr(postedStr: String),
-                filter: CnxnCtxtLabel[String,String,String],
-                cnxn,
-                bindings: mTT.RBoundAList
-              )))), _)) => {
+              // Some(RBoundHM(Some(Ground(PostedExpr((
+              //   PostedExpr({"uid":"gTBv9pElPHhLUyf3Ft4z364TqVQmSqPm","type":"TEXT","created":"2014-01-17 13:15:10","modified":"2014-01-17 13:15:10","labels":[{"text":"kid"}],"connections":[],"text":"bar"}),
+              //   user(p1(all(vdad('VAR1d218270))), p2(uid('UID)), p3(new('_)), p4(nil('_))),
+              //   AgentCnxn(agent-session://ad2ed3f560c896d121dac513213f3f79abb5,alias,agent-session://ad2ed3f560c896d121dac513213f3f79abb5),
+              //   RBoundAList(None,Some(List((VAR1d218270,'XVAR8ceac5f3), (UID,gTBv9pElPHhLUyf3Ft4z364TqVQmSqPm), (VAR8ceac5f3,'XVAR8ceac5f3))))
+              // )))),Some(Map())))
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(tuple))), _)) => {
+                val (postedStr, filter, cnxn, bindings) = tuple match {
+                  case (a, b, c, d) => (
+                    a match {
+                      case PostedExpr(postedStr: String) => postedStr
+                      case _ => throw new Exception("Expected PostedExpr(postedStr: String)")
+                    },
+                    b match {
+                      case filter: CnxnCtxtLabel[String,String,String] with Factual => filter
+                      case _ => throw new Exception("Expected CnxnCtxtLabel[String,String,String] with Factual")
+                    },
+                    c,
+                    d match {
+                      case bindings: mTT.RBoundAList => bindings
+                      case _ => throw new Exception("Expected RBoundAList")
+                    }
+                  )
+                  case _ => throw new Exception("Wrong number of elements")
+                }
                 val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
                 println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
