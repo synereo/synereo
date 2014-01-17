@@ -1237,10 +1237,7 @@ trait EvalHandler {
                       case _ => throw new Exception("Expected CnxnCtxtLabel[String,String,String] with Factual")
                     },
                     c,
-                    d match {
-                      case bindings: mTT.RBoundAList => bindings
-                      case _ => throw new Exception("Expected RBoundAList")
-                    }
+                    d.asInstanceOf[mTT.RBoundAList]
                   )
                   case _ => throw new Exception("Wrong number of elements")
                 }
