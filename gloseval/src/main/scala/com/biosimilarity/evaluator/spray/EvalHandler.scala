@@ -1219,12 +1219,6 @@ trait EvalHandler {
             BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
             optRsrc match {
               case None => ()
-              // Some(RBoundHM(Some(Ground(PostedExpr((
-              //   PostedExpr({"uid":"gTBv9pElPHhLUyf3Ft4z364TqVQmSqPm","type":"TEXT","created":"2014-01-17 13:15:10","modified":"2014-01-17 13:15:10","labels":[{"text":"kid"}],"connections":[],"text":"bar"}),
-              //   user(p1(all(vdad('VAR1d218270))), p2(uid('UID)), p3(new('_)), p4(nil('_))),
-              //   AgentCnxn(agent-session://ad2ed3f560c896d121dac513213f3f79abb5,alias,agent-session://ad2ed3f560c896d121dac513213f3f79abb5),
-              //   RBoundAList(None,Some(List((VAR1d218270,'XVAR8ceac5f3), (UID,gTBv9pElPHhLUyf3Ft4z364TqVQmSqPm), (VAR8ceac5f3,'XVAR8ceac5f3))))
-              // )))),Some(Map())))
               case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(tuple))), _)) => {
                 val (postedStr, filter, cnxn, bindings) = tuple match {
                   case (a, b, c, d) => (
@@ -1245,13 +1239,19 @@ trait EvalHandler {
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
                 println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                 BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
-
+                val arr = parse(postedStr).asInstanceOf[JArray].arr
+                val json = compact(render(arr(0)))
+                val originalFilter = fromTermString(arr(1).asInstanceOf[JString].s).get.asInstanceOf[
+                  CnxnCtxtLabel[String,String,String] with Factual
+                ]
+                /*
                 val originalFilter = subst(
                   cclFilter,
                   Map(bindings.assoc.get.asInstanceOf[
                     List[(String, CnxnCtxtLabel[String,String,String] with Factual)]
                   ]:_*)
                 )
+                */
                 agentMgr().post(
                   'user(
                     'p1(originalFilter),
@@ -1362,9 +1362,10 @@ trait EvalHandler {
               ))), _)) => {
                 val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
+                val json = compact(render(parse(postedStr).asInstanceOf[JArray].arr(0)))
                 val content =
                   ("sessionURI" -> sessionURIStr) ~
-                  ("pageOfPosts" -> List(postedStr)) ~
+                  ("pageOfPosts" -> List(json)) ~
                   ("connection" -> (
                     ("source" -> agentCnxn.src.toString) ~
                     ("label" -> agentCnxn.label) ~
@@ -1423,7 +1424,7 @@ trait EvalHandler {
             agentMgr().post(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
               cnxns,
-              value,
+              "[" + value + ", " + filter.toString.replace("'", "") + "]",
               (optRsrc: Option[mTT.Resource]) => {
                 println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
                 BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
