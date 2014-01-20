@@ -1310,11 +1310,13 @@ trait EvalHandler {
               case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
                 (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
               ))), _)) => {
+                val arr = parse(postedStr).asInstanceOf[JArray].arr
+                val json = compact(render(arr(0)))
                 val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
                 val content =
                   ("sessionURI" -> sessionURIStr) ~
-                  ("pageOfPosts" -> List(postedStr)) ~
+                  ("pageOfPosts" -> List(json)) ~
                   ("connection" -> (
                     ("source" -> agentCnxn.src.toString) ~
                     ("label" -> agentCnxn.label) ~
