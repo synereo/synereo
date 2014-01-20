@@ -1435,7 +1435,7 @@ trait EvalHandler {
             agentMgr().post(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
               cnxns,
-              "[" + value + ", \"" + compact(render(JString(toTermString(filter)))) + "\"]",
+              "[" + value + ", " + compact(render(JString(toTermString(filter)))) + "]",
               (optRsrc: Option[mTT.Resource]) => {
                 println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
                 BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
