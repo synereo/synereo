@@ -1151,6 +1151,7 @@ trait EvalHandler {
       ccl match {
         case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right(_)))) => List(tag.substring(1))
         case CnxnCtxtBranch(tag, children) => tag.substring(1) :: cclToPath(children(0))
+        case CnxnCtxtLeaf(Right(_)) => List()
       }
     }
     // Assume ccl is of the form user(p1(all(...)), p2(uid(...)), p3(new(_)|old(_)), p4(nil(_)))
