@@ -1271,13 +1271,13 @@ trait EvalHandler {
                     'p4('nil("_"))
                   ),
                   List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
-                  json,
+                  postedStr,
                   (optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
                 )
 
                 val content =
                   ("sessionURI" -> sessionURIStr) ~
-                  ("pageOfPosts" -> List(postedStr)) ~
+                  ("pageOfPosts" -> List(json)) ~
                   ("connection" -> (
                     ("source" -> agentCnxn.src.toString) ~
                     ("label" -> agentCnxn.label) ~
