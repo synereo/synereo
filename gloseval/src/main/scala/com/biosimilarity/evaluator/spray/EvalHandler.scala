@@ -1188,6 +1188,16 @@ trait EvalHandler {
     object CCLSubst extends CnxnSubstitution[String,String,String] with CnxnString[String,String,String]
     CCLSubst.substitute(ccl)(bindings)
   }
+  
+  def toTermString(ccl: CnxnCtxtLabel[String, String, String] with Factual): String = {
+    ccl match {
+      case CnxnCtxtBranch(functor, factuals) => {
+        functor + "(" + factuals.map(toTermString).mkString(",") + ")"
+      }
+      case CnxnCtxtLeaf(Left(s)) => compact(render(JString(s)))
+      case CnxnCtxtLeaf(Right(s)) => s
+    }
+  }
 
   def evalSubscribeRequest(json: JValue) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
@@ -1256,7 +1266,7 @@ trait EvalHandler {
                   'user(
                     'p1(originalFilter),
                     // TODO(mike): temporary workaround until bindings bug is fixed.
-                    'p2('uid((parse(postedStr) \ "uid").extract[String])),
+                    'p2('uid((arr(0) \ "uid").extract[String])),
                     'p3('old("_")),
                     'p4('nil("_"))
                   ),
@@ -1362,7 +1372,8 @@ trait EvalHandler {
               ))), _)) => {
                 val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-                val json = compact(render(parse(postedStr).asInstanceOf[JArray].arr(0)))
+                val arr = parse(postedStr).asInstanceOf[JArray].arr
+                val json = compact(render(arr(0)))
                 val content =
                   ("sessionURI" -> sessionURIStr) ~
                   ("pageOfPosts" -> List(json)) ~
@@ -1424,7 +1435,7 @@ trait EvalHandler {
             agentMgr().post(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
               cnxns,
-              "[" + value + ", " + filter.toString.replace("'", "") + "]",
+              "[" + value + ", \"" + compact(render(JString(toTermString(filter)))) + "\"]",
               (optRsrc: Option[mTT.Resource]) => {
                 println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
                 BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
