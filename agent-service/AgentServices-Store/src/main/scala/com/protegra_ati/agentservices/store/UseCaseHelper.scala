@@ -979,7 +979,7 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onPost: optRsrc = " + optRsrc)
       )
     }
-    def feed(filter: String = "all(a(_))") = {
+    def feedS(filter: String = "all(a(_))") = {
       agentMgr().feed(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -990,7 +990,7 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onFeed: optRsrc = " + optRsrc)
       )
     }
-    def read(filter: String = "all(a(_))") = {
+    def readS(filter: String = "all(a(_))") = {
       agentMgr().read(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1004,7 +1004,7 @@ package usage {
         }
       )
     }
-    def get(filter: String = "all(a(_))") = {
+    def getS(filter: String = "all(a(_))") = {
       agentMgr().get(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1015,7 +1015,7 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onGet: optRsrc = " + optRsrc)
       )
     }
-    def put(value: String, filter: String = "all(a(_))") = {
+    def putS(value: String, filter: String = "all(a(_))") = {
       agentMgr().put(
         fromTermString(filter).get,
         List(PortableAgentCnxn(

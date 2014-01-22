@@ -2743,6 +2743,86 @@ package diesel {
           }
         }
       }
+
+      // type Rsrc = mTT.Resource
+
+//       def post[Value](
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         content : Value,
+//         onPost : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().post[Value]( filter, cnxns, content, onPost )
+//       }
+//       def postV[Value](
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         content : Value,
+//         onPost : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().postV[Value]( filter, cnxns, content, onPost )
+//       }
+//       def put[Value](
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         content : Value,
+//         onPut : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().put[Value]( filter, cnxns, content, onPut )
+//       }
+//       def read(
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         onReadRslt : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) },
+//         sequenceSubscription : Boolean = false
+//       ) : Unit = {
+//         agentMgr().read( filter, cnxns, onReadRslt, sequenceSubscription )
+//       }
+//       def fetch(
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         onFetchRslt : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().fetch( filter, cnxns, onFetchRslt )
+//       }
+//       def feed(
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         onFeedRslt : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().fetch( filter, cnxns, onFeedRslt )
+//       }
+//       def get(
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         onGetRslt : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().get( filter, cnxns, onGetRslt )
+//       }
+//       def score(
+//         filter : CnxnCtxtLabel[String,String,String],
+//         cnxns : Seq[Cnxn],
+//         staff : Either[Seq[Cnxn],Seq[Label]],
+//         onScoreRslt : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().score( filter, cnxns, staff, onScoreRslt )
+//       }
+//       def cancel(
+//         filter : CnxnCtxtLabel[String,String,String],
+//         connections : Seq[Cnxn],
+//         onCancel : Option[Rsrc] => Unit =
+//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "onCancel: optRsrc = " + optRsrc ) }
+//       ) : Unit = {
+//         agentMgr().cancel( filter, connections, onCancel )
+//       }
       
       trait MessageProcessorElements {
         self : Serializable =>
