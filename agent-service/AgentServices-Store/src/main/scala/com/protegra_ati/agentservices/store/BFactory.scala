@@ -2115,7 +2115,7 @@ package bfactory {
               )
               
               e match {
-                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {                                    
+                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {    
                   try {
                     BasicLogService.tweet(
                       "method: evaluateExpression"
@@ -2133,9 +2133,7 @@ package bfactory {
                     )
                     BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
                       case Left( entryPointM ) => {
-                        //val t = new Thread {
                         spawn {
-                          //override def run() = {
                             val instanceID = UUID.randomUUID
                             val instanceLabel =
                               StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
@@ -2150,9 +2148,7 @@ package bfactory {
                                 )
                               )
                             )
-                        // }
                         }
-                        //t.run()
                       }
                       case Right( e ) => {
                         handler( 
@@ -2184,7 +2180,73 @@ package bfactory {
                       )
                     }
                   }                      
-                }
+                };
+                case Some( mTT.RBoundAList( Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ))), _ ) ) => {           
+                  try {
+                    BasicLogService.tweet(
+                      "method: evaluateExpression"
+                      + "\n instantiating instance & finding entry point"
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                      + "\nbehaviorDefinitionLabel: " + bdl
+                      + "\nbehavior: " + behavior
+                      + "\ncnxns: " + cnxns
+                      + "\nfilters: " + filters
+                    )
+                    BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
+                      case Left( entryPointM ) => {
+                        spawn {
+                            val instanceID = UUID.randomUUID
+                            val instanceLabel =
+                              StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
+                            entryPointM( dslN, cnxns, filters )
+                            handler( 
+                              Some(
+                                mTT.Ground(
+                                  ConcreteBFactHL.InstanceRunning(
+                                    bdc,
+                                    instanceLabel
+                                  )
+                                )
+                              )
+                            )
+                        }
+                      }
+                      case Right( e ) => {
+                        handler( 
+                          Some(
+                            mTT.Ground(
+                              ConcreteBFactHL.InstanceNotRunning(
+                                bdc,
+                                bdl,
+                                "instantiation failed" + e
+                              )
+                            )
+                          )
+                        )
+                      }
+                    }
+                  }
+                  catch {
+                    case e : Throwable => {
+                      handler( 
+                        Some(
+                          mTT.Ground(
+                            ConcreteBFactHL.InstanceNotRunning(
+                              bdc,
+                              bdl,
+                              "instantiation failed" + e
+                            )
+                          )
+                        )
+                      )
+                    }
+                  }                      
+                };
                 case _ => {
                   handler( 
                     Some(
