@@ -112,3 +112,13 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
     }
   }
 }
+
+package usage {
+  object ProtocolManagerHarness {
+    //def reproLabel() : Label
+    //def reproCnxn() : PortableAgentCnxn
+    // def protocolMgr( node : ??? ) : ProtocolManager = {
+//     }
+    //def repro() : Unit
+  }
+}
