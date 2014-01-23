@@ -115,10 +115,30 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
 
 package usage {
   object ProtocolManagerHarness {
-    //def reproLabel() : Label
-    //def reproCnxn() : PortableAgentCnxn
-    // def protocolMgr( node : ??? ) : ProtocolManager = {
-//     }
-    //def repro() : Unit
+    import java.util.UUID
+    def reproLabel() : Option[CnxnCtxtLabel[String,String,String]] = None
+    def reproCnxn() : Option[PortableAgentCnxn] = None
+    def reproNode() : String = {
+      val dslNodeId = UUID.randomUUID()
+      val dslNodeKey = dslNodeId.toString      
+      com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper += ( dslNodeKey -> com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.dslEvaluatorAgent( ) )
+      dslNodeKey
+    }
+    def protocolMgr( nodeKey : String ) : Option[ProtocolManager] = {
+      for(
+        node <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( nodeKey ) ) yield {
+          new ProtocolManager( node ) 
+        }
+    }
+    def repro() = {
+      val rpnKey = reproNode()
+      for(
+        pm <- protocolMgr( rpnKey );
+        label <- reproLabel();
+        cnxn <- reproCnxn()
+      ) {
+        pm.subscribeMessage( cnxn, label, { e : ProtocolMessage => println( e ) } )
+      }
+    }
   }
 }
