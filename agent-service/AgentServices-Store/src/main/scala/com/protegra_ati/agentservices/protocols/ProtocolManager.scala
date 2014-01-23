@@ -114,9 +114,17 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
 }
 
 package usage {
+  import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
+  import com.protegra_ati.agentservices.protocols.msgs._
+  import java.net.URI
+
   object ProtocolManagerHarness {
-    //def reproLabel() : Label
-    //def reproCnxn() : PortableAgentCnxn
+    def reproLabel() = BeginIntroductionRequest.toLabel()
+    def reproCnxn() = PortableAgentCnxn(
+      new URI("agent://e6eca9b84dd49d91e45c9e23cd74d2d98bb1"),
+      "alias",
+      new URI("agent://e6eca9b84dd49d91e45c9e23cd74d2d98bb1")
+    )
     // def protocolMgr( node : ??? ) : ProtocolManager = {
 //     }
     //def repro() : Unit
