@@ -7,7 +7,8 @@ import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs.ProtocolMessage
 import scala.util.continuations._
 
-class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]) {
+class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]) extends Serializable {
+  def this() = { this( null.asInstanceOf[Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]] ) }
   private def toAgentCnxn(cnxn: PortableAgentCnxn): acT.AgentCnxn = {
     acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
   }
@@ -17,7 +18,7 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
     message: ProtocolMessage
   ): Unit = {
     //TODO: Remove this once race condition is resolved
-    Thread.sleep(1000)
+    //Thread.sleep(1000)
     reset {
       val agentCnxn = toAgentCnxn(cnxn)
       val filter = message.toLabel
@@ -118,7 +119,7 @@ package usage {
   import com.protegra_ati.agentservices.protocols.msgs._
   import java.net.URI
 
-  object ProtocolManagerHarness {
+  object ProtocolManagerHarness extends Serializable {
     import java.util.UUID
     def reproLabel() : Option[CnxnCtxtLabel[String,String,String]] = {
       Some( BeginIntroductionRequest.toLabel() )
