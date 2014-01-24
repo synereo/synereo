@@ -17,8 +17,6 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
     cnxn: PortableAgentCnxn,
     message: ProtocolMessage
   ): Unit = {
-    //TODO: Remove this once race condition is resolved
-    //Thread.sleep(1000)
     reset {
       val agentCnxn = toAgentCnxn(cnxn)
       val filter = message.toLabel
