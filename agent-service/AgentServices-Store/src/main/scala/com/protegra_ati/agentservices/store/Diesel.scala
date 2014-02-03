@@ -2743,86 +2743,497 @@ package diesel {
           }
         }
       }
+      
+      def mkNodeEvaluator( node : String ) : EvaluationService = {
+        new EvaluationService {
+          type Rsrc = mTT.Resource
+          implicit def tplToRsrc(
+            tpl : (Option[Rsrc], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn])
+          ) : Rsrc = {
+            val ( optRsrc, optFilter, optCnxn ) = tpl
+            mTT.Ground(
+              optRsrc match {
+                case None => {                                                
+                  ConcreteHL.Bottom
+                }
+                case Some( mTT.Ground( v ) ) => {                
+                  ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None,None)))
+                }
+                case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), bindings ) ) => {                
+                  ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings.map(_.toList))))
+                }
+                case Some( mTT.RBoundAList( Some( mTT.Ground( v ) ), bindings ) ) => {                
+                  ConcreteHL.PostedExpr((v, optFilter.get, optCnxn.get, mTT.RBoundAList(None, bindings)))
+                }
+              }
+            )
+          }
+          def post[Value](
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            content : Value,
+            onPost : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: post"
+                    + "\n calling node.publish "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\ncontent: " + content
+                  )
+                  
+                  try {
+                    n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( content ) ) )
+                  } 
+                  catch {
+                    case e : Exception => {
+                      BasicLogService.tweet(
+                        "method: post"
+                        + "\n ---> node.publish caused an exception <--- "
+                        + "\nthis: " + this
+                        + "\nnode: " + node
+//                        + "\nexpr: " + expr
+//                        + "\nhandler: " + handler
+                        + "\n-----------------------------------------"
+                        + "\nagntCnxn: " + agntCnxn
+                        + "\nfilter: " + filter
+                        + "\ncontent: " + content
+                      )
+                      BasicLogService.tweetTrace( e )
+                    }
+                  }
+                }
 
-      // type Rsrc = mTT.Resource
+                BasicLogService.tweet(
+                  "method: post"
+                  + "\n completed node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+//                  + "\nexpr: " + expr
+//                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\ncontent: " + content
+                )
+                
+                onPost(
+                  Some(
+                    tplToRsrc(
+                      ( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
+                    )
+                  )
+                )
+              }
+            }
+          }
+          def postV[Value](
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            content : Value,
+            onPost : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: post"
+                    + "\n calling node.publish "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\ncontent: " + content
+                  )
+                  
+                  try {
+                    n.publish( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( content ) ) )
+                  } 
+                  catch {
+                    case e : Exception => {
+                      BasicLogService.tweet(
+                        "method: post"
+                        + "\n ---> node.publish caused an exception <--- "
+                        + "\nthis: " + this
+                        + "\nnode: " + node
+//                        + "\nexpr: " + expr
+//                        + "\nhandler: " + handler
+                        + "\n-----------------------------------------"
+                        + "\nagntCnxn: " + agntCnxn
+                        + "\nfilter: " + filter
+                        + "\ncontent: " + content
+                      )
+                      BasicLogService.tweetTrace( e )
+                    }
+                  }
+                }
 
-//       def post[Value](
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         content : Value,
-//         onPost : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().post[Value]( filter, cnxns, content, onPost )
-//       }
-//       def postV[Value](
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         content : Value,
-//         onPost : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().postV[Value]( filter, cnxns, content, onPost )
-//       }
-//       def put[Value](
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         content : Value,
-//         onPut : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().put[Value]( filter, cnxns, content, onPut )
-//       }
-//       def read(
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         onReadRslt : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) },
-//         sequenceSubscription : Boolean = false
-//       ) : Unit = {
-//         agentMgr().read( filter, cnxns, onReadRslt, sequenceSubscription )
-//       }
-//       def fetch(
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         onFetchRslt : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().fetch( filter, cnxns, onFetchRslt )
-//       }
-//       def feed(
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         onFeedRslt : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().fetch( filter, cnxns, onFeedRslt )
-//       }
-//       def get(
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         onGetRslt : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().get( filter, cnxns, onGetRslt )
-//       }
-//       def score(
-//         filter : CnxnCtxtLabel[String,String,String],
-//         cnxns : Seq[Cnxn],
-//         staff : Either[Seq[Cnxn],Seq[Label]],
-//         onScoreRslt : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().score( filter, cnxns, staff, onScoreRslt )
-//       }
-//       def cancel(
-//         filter : CnxnCtxtLabel[String,String,String],
-//         connections : Seq[Cnxn],
-//         onCancel : Option[Rsrc] => Unit =
-//           ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "onCancel: optRsrc = " + optRsrc ) }
-//       ) : Unit = {
-//         agentMgr().cancel( filter, connections, onCancel )
-//       }
+                BasicLogService.tweet(
+                  "method: post"
+                  + "\n completed node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+//                  + "\nexpr: " + expr
+//                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                  + "\ncontent: " + content
+                )
+                
+                onPost(
+                  Some(
+                    tplToRsrc(
+                      ( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
+                    )
+                  )
+                )
+              }
+            }
+          }
+          def put[Value](
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            content : Value,
+            onPut : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: put"
+                    + "\n calling node.put "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\ncontent: " + content
+                  )
+                  
+                  n.put( agntCnxn )( filter, mTT.Ground( ConcreteHL.PostedExpr( content ) ) )
+                }
+                
+                onPut(
+                  Some(
+                    tplToRsrc(
+                      ( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some( filter ), Some( agntCnxn ) )
+                    )
+                  )
+                )
+              }
+            }
+          }
+          def read(
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            onReadRslt : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) },
+            sequenceSubscription : Boolean = false
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: read"
+                    + "\n calling node.read "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.read( agntCnxn )( filter ) ) {
+                    
+                    BasicLogService.tweet(
+                      "method: read"
+                      + "\n returned from node.read "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+//                      + "\nexpr: " + expr
+//                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                      
+                    onReadRslt(
+                      Some( tplToRsrc( ( e, Some( filter ), Some( agntCnxn ) ) ) )
+                    )
+                  }
+                }
+              }
+            }
+          }
+          def fetch(
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            onFetchRslt : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: fetch"
+                    + "\n calling node.fetch "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.fetch( agntCnxn )( filter ) ) {
+                    
+                    BasicLogService.tweet(
+                      "method: evaluateExpression"
+                      + "\n returned from node.fetch "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+//                      + "\nexpr: " + expr
+//                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    onFetchRslt(
+                      Some( tplToRsrc( ( e, Some( filter ), Some( agntCnxn ) ) ) )
+                    )
+                  }
+                }
+              }
+            }
+          }
+          def feed(
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            onFeedRslt : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: feed"
+                    + "\n calling node.subscribe "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.subscribe( agntCnxn )( filter ) ) {
+                    
+                    BasicLogService.tweet(
+                      "method: feed"
+                      + "\n returned from node.subscribe "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+//                      + "\nexpr: " + expr
+//                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    onFeedRslt(
+                      Some( tplToRsrc( ( e, Some( filter ), Some( agntCnxn ) ) ) )
+                    )
+                  }
+                }
+              }
+            }
+          }
+          def get(
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            onGetRslt : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  
+                  BasicLogService.tweet(
+                    "method: get"
+                    + "\n calling node.get "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.get( agntCnxn )( filter ) ) {
+                    
+                    BasicLogService.tweet(
+                      "method: get"
+                      + "\n returned from node.get "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+//                      + "\nexpr: " + expr
+//                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    onGetRslt(
+                      Some( tplToRsrc( ( e, Some( filter ), Some( agntCnxn ) ) ) )
+                    )
+                  }
+                }
+              }
+            }
+          }
+          def score(
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            staff : Either[Seq[ConcreteHL.Cnxn],Seq[CnxnCtxtLabel[String,String,String]]],
+            onScoreRslt : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                reset {
+                  BasicLogService.tweet(
+                    "method: score"
+                    + "\n calling node.subscribe "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                  )
+                  
+                  for( e <- n.subscribe( agntCnxn )( filter ) ) {
+                    
+                    BasicLogService.tweet(
+                      "method: score"
+                      + "\n returned from node.subscribe "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+//                      + "\nexpr: " + expr
+//                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nfilter: " + filter
+                      + "\ne: " + e
+                    )
+                    
+                    onScoreRslt(
+                      Some( tplToRsrc( ( e, Some( filter ), Some( agntCnxn ) ) ) )
+                    )
+                  }
+                }
+              }
+            }
+          }
+          def cancel(
+            filter : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteHL.Cnxn],
+            onCancel : Option[Rsrc] => Unit =
+              ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "onCancel: optRsrc = " + optRsrc ) }
+          ) : Unit = {
+            for ( n <- EvalNodeMapper.get( node ) ) {
+              for( cnxn <- cnxns ) {
+                val agntCnxn : acT.AgentCnxn =
+                  new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+                BasicLogService.tweet(
+                  "method: evaluateExpression"
+                  + "\n calling node.pullCnxnKRecords "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+//                  + "\nexpr: " + expr
+//                  + "\nhandler: " + handler
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nfilter: " + filter
+                )
+
+                for( e <- n.pullCnxnKRecords( agntCnxn )( filter ) ) {
+
+                  BasicLogService.tweet(
+                    "method: evaluateExpression"
+                    + "\n returned from node.pullCnxnKRecords "
+                    + "\nthis: " + this
+                    + "\nnode: " + node
+//                    + "\nexpr: " + expr
+//                    + "\nhandler: " + handler
+                    + "\n-----------------------------------------"
+                    + "\nagntCnxn: " + agntCnxn
+                    + "\nfilter: " + filter
+                    + "\ne: " + e
+                  )
+                  val optRsrc: Option[mTT.Resource] = e.stuff match {
+                    case Left(r) => Some(r)
+                    case _ => None
+                  }
+                  onCancel(
+                    Some( tplToRsrc( ( optRsrc, Some( filter ), Some( agntCnxn ) ) ) )
+                  )
+                }
+              }
+            }
+          }
+        }
+      }
       
       trait MessageProcessorElements {
         self : Serializable =>
