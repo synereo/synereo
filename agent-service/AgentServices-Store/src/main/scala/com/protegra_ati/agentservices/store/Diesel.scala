@@ -3232,6 +3232,33 @@ package diesel {
               }
             }
           }
+          def runProcess(
+            cmd : String,
+            wkDir : Option[String],
+            env : Seq[( String, String )],
+            onExecution : Option[Rsrc] => Unit
+          ) : Unit = {
+            {
+              try {
+                val runProcRsp = ProcessRunner.run( ConcreteHL.RunProcessRequest( cmd, wkDir, env ) )
+                onExecution(
+                  Some(
+                    tplToRsrc( ( Some( mTT.Ground( runProcRsp ) ), None, None ) )
+                  )
+                )
+              }
+              catch {
+                case e : Throwable => {
+                  val runProcRsp = ConcreteHL.RunProcessResponse( -1, Nil, Nil )
+                  onExecution(
+                    Some(
+                      tplToRsrc( ( Some( mTT.Ground( runProcRsp ) ), None, None )  )
+                    )
+                  )
+                }
+              }
+            }
+          }
         }
       }
       

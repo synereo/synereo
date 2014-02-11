@@ -578,6 +578,14 @@ with CnxnString[String, String, String]{
   ) : Unit = {
     agentMgr().cancel( filter, connections, onCancel )
   }
+  def runProcess(
+    cmd : String,
+    wkDir : Option[String],
+    env : Seq[( String, String )],
+    onExecution : Option[Rsrc] => Unit
+  ) : Unit = {
+    agentMgr().runProcess( cmd, wkDir, env, onExecution )
+  }
 }
 
 package usage {
