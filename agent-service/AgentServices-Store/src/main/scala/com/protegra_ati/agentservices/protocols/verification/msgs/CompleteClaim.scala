@@ -1,7 +1,7 @@
 // -*- mode: Scala;-*- 
-// Filename:    OpenClaim.scala 
+// Filename:    CompleteClaim.scala 
 // Authors:     lgm                                                    
-// Creation:    Mon Jan 27 10:08:30 2014 
+// Creation:    Thu Feb 13 04:37:28 2014 
 // Copyright:   Not supplied 
 // Description: 
 // ------------------------------------------------------------------------
@@ -12,23 +12,25 @@ import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
-case class OpenClaim(
+case class CompleteClaim(
   override val sessionId : String,
   override val correlationId : String,
   verifier : PortableAgentCnxn,
-  claim : CnxnCtxtLabel[String,String,String]
+  claim : CnxnCtxtLabel[String,String,String],
+  data : CnxnCtxtLabel[String,String,String]
 ) extends VerificationMessage( sessionId, correlationId ) {
   override def toLabel : CnxnCtxtLabel[String,String,String] = {
-    OpenClaim.toLabel( sessionId )
+    CompleteClaim.toLabel( sessionId )
   }
 }
 
-object OpenClaim {
+object CompleteClaim {
   def toLabel(): CnxnCtxtLabel[String, String, String] = {
-    "protocolMessage(openClaim(sessionId(_)))".toLabel
+    "protocolMessage(completeClaim(sessionId(_)))".toLabel
   }
 
   def toLabel(sessionId: String): CnxnCtxtLabel[String, String, String] = {
-    s"""protocolMessage(openClaim(sessionId(\"$sessionId\")))""".toLabel
+    s"""protocolMessage(completeClaim(sessionId(\"$sessionId\")))""".toLabel
   }
 }
+
