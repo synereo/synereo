@@ -28,47 +28,48 @@ trait RelyingPartyBehaviorT extends Serializable {
   ): Unit = {
     doVerification( node, cnxns )
   }
-  implicit def toAgentCnxn( cnxn : PortableAgentCnxn ) : acT.AgentCnxn = {
-    acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
-  }
   def doVerification(
     node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns: Seq[PortableAgentCnxn]
   ): Unit = {
-    val ( rp2GLoS, _ ) :: agntCnxns =
+    val ( rp2GLoSRd, rp2GLoSWr, _ ) :: agntCnxns =
       cnxns.map(
         {
           ( cnxn : PortableAgentCnxn ) => {
             (
               acT.AgentCnxn( cnxn.src, cnxn.label, cnxn.trgt ),
+              acT.AgentCnxn( cnxn.trgt, cnxn.label, cnxn.src ),
               cnxn
             )
           }
         }
       )
-    for( ( cnxn, pacCnxn ) <- agntCnxns ) {
+    for( ( cnxnRd, cnxnWr, pacCnxnRd ) <- agntCnxns ) {
       reset {
-        for( eOpenClaim <- node.subscribe( cnxn )( OpenClaim.toLabel ) ) {
+        for( eOpenClaim <- node.subscribe( cnxnRd )( OpenClaim.toLabel ) ) {
           rsrc2V[VerificationMessage]( eOpenClaim ) match {
             case Left( OpenClaim( sidOC, cidOC, vrfrOC, clmOC ) ) => { 
-              val agntVrfr =
+              val agntVrfrWr =
                 acT.AgentCnxn( vrfrOC.src, vrfrOC.label, vrfrOC.trgt )
-              node.publish( agntVrfr )( 
+              val agntVrfrRd =
+                acT.AgentCnxn( vrfrOC.trgt, vrfrOC.label, vrfrOC.src )
+
+              node.publish( agntVrfrWr )( 
                 Verify.toLabel( sidOC ),
-                mTT.Ground( PostedExpr( Verify( sidOC, cidOC, pacCnxn, clmOC ) ) )
+                mTT.Ground( PostedExpr( Verify( sidOC, cidOC, pacCnxnRd, clmOC ) ) )
               )
-              for( eVerification <- node.subscribe( agntVrfr )( Verification.toLabel ) ) {
+              for( eVerification <- node.subscribe( agntVrfrRd )( Verification.toLabel ) ) {
                 rsrc2V[VerificationMessage]( eVerification ) match {
-                  case Left( Verification( sidV, cidV, clmntV, clmV, witV ) ) => {                     
+                  case Left( Verification( sidV, cidV, clmntV, clmV, witV ) ) => { 
                     if (
                       sidV.equals( sidOC ) && cidV.equals( cidOC )
                       && clmV.equals( clmOC )
                     ) {
-                      node.publish( cnxn )( // BUGBUG : lgm -- needs to be the dual cnxn
+                      node.publish( cnxnWr )( 
                         CloseClaim.toLabel( sidOC ),
                         CloseClaim( sidV, cidV, clmntV, clmV, witV )
                       )
-                      node.publish( rp2GLoS )(
+                      node.publish( rp2GLoSWr )(
                         VerificationNotification.toLabel( sidOC ),
                         VerificationNotification(
                           sidV, cidV, clmntV, clmV, witV
@@ -76,13 +77,13 @@ trait RelyingPartyBehaviorT extends Serializable {
                       )
                     }
                     else {
-                      node.publish( cnxn )(
+                      node.publish( cnxnWr )(
                         CloseClaim.toLabel( sidOC ),
                         CloseClaim(
                           sidV, cidV, clmntV, clmV,
                           "protocolError(\"unexpected verification message data\")".toLabel )
                       )
-                      node.publish( rp2GLoS )(
+                      node.publish( rp2GLoSWr )(
                         VerificationNotification.toLabel( sidOC ),
                         VerificationNotification(
                           sidV, cidV, clmntV, clmV,
@@ -90,6 +91,19 @@ trait RelyingPartyBehaviorT extends Serializable {
                         )
                       )
                     }
+                  }
+                  case Right( true ) => {
+                    BasicLogService.tweet( "waiting for claim initiation" )
+                  }
+                  case _ => {
+                    BasicLogService.tweet( "unexpected protocol message : " + eOpenClaim )
+                    node.publish( rp2GLoSWr )(
+                      VerificationNotification.toLabel(),
+                      VerificationNotification(
+                        sidOC, cidOC, pacCnxnRd, clmOC, 
+                        "protocolError(\"unexpected verify message data\")".toLabel
+                      )
+                    )
                   }
                 }
               }
@@ -99,10 +113,11 @@ trait RelyingPartyBehaviorT extends Serializable {
             }
             case _ => {
               BasicLogService.tweet( "unexpected protocol message : " + eOpenClaim )
-              node.publish( rp2GLoS )(
+              node.publish( rp2GLoSWr )(
                 VerificationNotification.toLabel(),
                 VerificationNotification(
-                  null, null, null, null, null
+                  null, null, null, null, 
+                  "protocolError(\"unexpected verify message data\")".toLabel
                 )
               )
             }
