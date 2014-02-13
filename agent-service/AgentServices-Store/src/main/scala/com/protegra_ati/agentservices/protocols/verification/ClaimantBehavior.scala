@@ -34,63 +34,87 @@ trait ClaimantBehaviorT extends Serializable {
   ): Unit = {    
     cnxns match {
       case clmnt2GLoS :: Nil => {
-        val agntClmnt2GLoS =
+        val agntClmnt2GLoSRd =
           acT.AgentCnxn( clmnt2GLoS.src, clmnt2GLoS.label, clmnt2GLoS.trgt )
+        val agntClmnt2GLoSWr =
+          acT.AgentCnxn( clmnt2GLoS.trgt, clmnt2GLoS.label, clmnt2GLoS.src )
         reset {
-          for( eInitiateClaim <- node.subscribe( agntClmnt2GLoS )( InitiateClaim.toLabel ) ) {
+          for( eInitiateClaim <- node.subscribe( agntClmnt2GLoSRd )( InitiateClaim.toLabel ) ) {
             rsrc2V[VerificationMessage]( eInitiateClaim ) match {
               case Left( InitiateClaim( sidIC, cidIC, vrfrIC, rpIC, clmIC ) ) => { 
-                val agntVrfr =
+                val agntVrfrWr =
                   acT.AgentCnxn( vrfrIC.src, vrfrIC.label, vrfrIC.trgt )
-                node.publish( agntVrfr )( 
+                val agntVrfrRd =
+                  acT.AgentCnxn( vrfrIC.trgt, vrfrIC.label, vrfrIC.src )
+                node.publish( agntVrfrWr )( 
                   AllowVerification.toLabel( sidIC ), 
                   AllowVerification( sidIC, cidIC, rpIC, clmIC )
                 )
-                for( eAllowV <- node.subscribe( agntVrfr )( AckAllowVerification.toLabel( sidIC ) ) ) {
+                for( eAllowV <- node.subscribe( agntVrfrRd )( AckAllowVerification.toLabel( sidIC ) ) ) {
                   rsrc2V[VerificationMessage]( eInitiateClaim ) match {
                     case Left( AckAllowVerification( sidAAV, cidAAV, rpAAV, clmAAV ) ) => { 
                       if (
                         sidAAV.equals( sidIC ) && cidAAV.equals( cidIC )
                         && rpAAV.equals( rpIC ) && clmAAV.equals( clmIC )
                       ) {
-                        val agntRP =
+                        val agntRPWr =
                           acT.AgentCnxn( rpIC.src, rpIC.label, rpIC.trgt )
+                        val agntRPRd =
+                          acT.AgentCnxn( rpIC.trgt, rpIC.label, rpIC.src )
                         reset {
-                          node.publish( agntRP )( 
+                          node.publish( agntRPWr )( 
                             OpenClaim.toLabel( sidIC ), 
-                            OpenClaim( sidIC, cidIC, rpIC, clmIC )
+                            OpenClaim( sidIC, cidIC, vrfrIC, clmIC )
                           )            
                         }
-                        for( eCloseClaim <- node.subscribe( agntRP )( CloseClaim.toLabel( sidIC ) ) ) {
+                        for( eCloseClaim <- node.subscribe( agntRPRd )( CloseClaim.toLabel( sidIC ) ) ) {
                           rsrc2V[VerificationMessage]( eCloseClaim ) match {
-                            case Left( CloseClaim( sidCC, cidCC, vrfrCC, clmCC, dataCC ) ) => {                               
+                            case Left( CloseClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
                               if (
                                 sidCC.equals( sidIC ) && cidCC.equals( cidIC )
                                 && vrfrCC.equals( vrfrIC ) && clmCC.equals( clmIC )
                               ) {
-                                  node.publish( agntClmnt2GLoS )(
+                                  node.publish( agntClmnt2GLoSWr )(
                                     CompleteClaim.toLabel( sidIC ),
-                                    CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, dataCC )
+                                    CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC )
                                   )
                               }
                               else {
                                 BasicLogService.tweet( "close doesn't match open : " + eCloseClaim )
-                                node.publish( agntClmnt2GLoS )(
+                                node.publish( agntClmnt2GLoSWr )(
                                   CompleteClaim.toLabel( sidIC ),
                                   CompleteClaim(
                                     sidIC, cidIC, vrfrIC, clmIC,
                                     "protocolError(\"relying party close claim does not match open claim\")".toLabel
                                   )
                                 )
-                                //throw new Exception( "close doesn't match open : " + eCloseClaim )
                               }
+                            }
+                            case Right( true ) => {
+                              BasicLogService.tweet( "waiting for close claim" )
+                            }
+                            case _ => {
+                              // BUGBUG : lgm -- protect against strange and
+                              // wondrous toString implementations (i.e. injection
+                              // attack ) for eInitiateClaim
+                              BasicLogService.tweet( "unexpected protocol message : " + eCloseClaim )
+                              node.publish( agntClmnt2GLoSWr )(
+                                VerificationNotification.toLabel( sidIC ),
+                                VerificationNotification(
+                                  sidIC, cidIC, clmnt2GLoS, clmIC,
+                                  (
+                                    "protocolError(\"unexpected protocol message\","
+                                    + "\"" + eCloseClaim + "\"" + ")"
+                                  ).toLabel
+                                )
+                              )
                             }
                           }
                         }
                       }
                       else {
                         BasicLogService.tweet( "ack doesn't match : " + eAllowV )
-                        node.publish( agntClmnt2GLoS )(
+                        node.publish( agntClmnt2GLoSWr )(
                           CompleteClaim.toLabel( sidIC ),
                           CompleteClaim(
                             sidIC, cidIC, vrfrIC, clmIC,
@@ -104,7 +128,16 @@ trait ClaimantBehaviorT extends Serializable {
                     }
                     case _ => {
                       BasicLogService.tweet( "unexpected protocol message : " + eAllowV )
-                      throw new Exception( "unexpected protocol message : " + eAllowV )
+                      node.publish( agntClmnt2GLoSWr )(
+                        VerificationNotification.toLabel( sidIC ),
+                        VerificationNotification(
+                          sidIC, cidIC, clmnt2GLoS, clmIC,
+                          (
+                            "protocolError(\"unexpected protocol message\","
+                             + "\"" + eAllowV + "\"" + ")"
+                          ).toLabel
+                        )
+                      )
                     }
                   }
                 }
@@ -113,16 +146,28 @@ trait ClaimantBehaviorT extends Serializable {
                 BasicLogService.tweet( "waiting for claim initiation" )
               }
               case _ => {
+                // BUGBUG : lgm -- protect against strange and
+                // wondrous toString implementations (i.e. injection
+                // attack ) for eInitiateClaim
                 BasicLogService.tweet( "unexpected protocol message : " + eInitiateClaim )
-                throw new Exception( "unexpected protocol message : " + eInitiateClaim )
+                node.publish( agntClmnt2GLoSWr )(
+                  VerificationNotification.toLabel(),
+                  VerificationNotification(
+                    null, null, null, null,
+                    (
+                      "protocolError(\"unexpected protocol message\","
+                      + "\"" + eInitiateClaim + "\"" + ")"
+                    ).toLabel
+                  )
+                )
               }
             }
           }
         }
       }
       case _ => {
-        BasicLogService.tweet( "wrong number of cnxns : " + cnxns )
-        throw new Exception( "wrong number of cnxns : " + cnxns )
+        BasicLogService.tweet( "one cnxn expected : " + cnxns )
+        throw new Exception( "one cnxn expected : " + cnxns )
       }
     }
   }

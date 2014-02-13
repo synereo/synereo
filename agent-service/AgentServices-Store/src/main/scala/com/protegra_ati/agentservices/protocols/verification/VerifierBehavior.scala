@@ -28,9 +28,7 @@ trait VerifierBehaviorT extends Serializable {
   ): Unit = {
     doVerification( node, cnxns )
   }
-  implicit def toAgentCnxn( cnxn : PortableAgentCnxn ) : acT.AgentCnxn = {
-    acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
-  }
+
   def doVerification(
     node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns: Seq[PortableAgentCnxn]

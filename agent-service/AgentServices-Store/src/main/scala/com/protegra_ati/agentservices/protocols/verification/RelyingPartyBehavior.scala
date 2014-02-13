@@ -99,7 +99,12 @@ trait RelyingPartyBehaviorT extends Serializable {
             }
             case _ => {
               BasicLogService.tweet( "unexpected protocol message : " + eOpenClaim )
-              throw new Exception( "unexpected protocol message : " + eOpenClaim )
+              node.publish( rp2GLoS )(
+                VerificationNotification.toLabel(),
+                VerificationNotification(
+                  null, null, null, null, null
+                )
+              )
             }
           }
         }
