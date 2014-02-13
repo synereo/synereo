@@ -26,6 +26,7 @@ trait VerifierBehaviorT extends Serializable {
     cnxns : Seq[PortableAgentCnxn],
     filters : Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
+    // BUGBUG : lgm -- move defensive check on args to run method
     doVerification( node, cnxns )
   }
 
@@ -33,31 +34,41 @@ trait VerifierBehaviorT extends Serializable {
     node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns: Seq[PortableAgentCnxn]
   ): Unit = {
-    val vrfr2GLoS :: agntCnxns =
+    val vrfr2GLoSWr :: agntCnxn :: rAgntCnxns =
       cnxns.map( { cnxn : PortableAgentCnxn => acT.AgentCnxn( cnxn.src, cnxn.label, cnxn.trgt ) } )
-    for( cnxn <- agntCnxns ) {
+    val agntCnxns = agntCnxn :: rAgntCnxns
+
+    for( cnxnRd <- agntCnxns ) {
+      val cnxnWr = acT.AgentCnxn( cnxnRd.src, cnxnRd.label, cnxnRd.trgt )
       reset {
-        for( eAllowV <- node.subscribe( cnxn )( AllowVerification.toLabel ) ) {
+        for( eAllowV <- node.subscribe( cnxnRd )( AllowVerification.toLabel ) ) {
           rsrc2V[VerificationMessage]( eAllowV ) match {
             case Left( AllowVerification( sidAV, cidAV, rpAV, clmAV ) ) => { 
-              val agntRP =
+              val agntRPRd =
                 acT.AgentCnxn( rpAV.src, rpAV.label, rpAV.trgt )
-              node.publish( cnxn )( // BUGBUG : lgm -- needs to be the dual cnxn
+              val agntRPWr =
+                acT.AgentCnxn( rpAV.trgt, rpAV.label, rpAV.src )
+
+              node.publish( cnxnWr )( 
                 AckAllowVerification.toLabel( sidAV ),
                 mTT.Ground( PostedExpr( AckAllowVerification( sidAV, cidAV, rpAV, clmAV ) ) )
               )
-              for( eVerify <- node.subscribe( agntRP )( Verify.toLabel ) ) {
+              for( eVerify <- node.subscribe( agntRPRd )( Verify.toLabel ) ) {
                 rsrc2V[VerificationMessage]( eVerify ) match {
-                  case Left( Verify( sidV, cidV, clmntV, clmV ) ) => {                     
+                  case Left( Verify( sidV, cidV, clmntV, clmV ) ) => { 
                     if (
                       sidV.equals( sidAV ) && cidV.equals( cidAV )
-                      && clmV.equals( clmAV )
+                      && clmV.equals( clmAV ) // BUGBUG : lgm -- this is only a first
+                                              // approximation. We can
+                                              // use the full weight
+                                              // of prolog here to
+                                              // prove the claim.
                     ) {
-                      node.publish( cnxn )(
+                      node.publish( agntRPWr )(
                         Verification.toLabel( sidAV ),
                         Verification( sidV, cidV, clmntV, clmV, "claimVerified( true )".toLabel )
                       )
-                      node.publish( vrfr2GLoS )(
+                      node.publish( vrfr2GLoSWr )(
                         VerificationNotification.toLabel( sidAV ),
                         VerificationNotification(
                           sidV, cidV, clmntV, clmV,
@@ -66,13 +77,14 @@ trait VerifierBehaviorT extends Serializable {
                       )
                     }
                     else {
-                      node.publish( cnxn )(
+                      node.publish( agntRPWr )(
                         Verification.toLabel( sidAV ),
                         Verification(
                           sidV, cidV, clmntV, clmV,
-                          "protocolError(\"unexpected verify message data\")".toLabel )
+                          "protocolError(\"unexpected verify message data\")".toLabel 
+                        )
                       )
-                      node.publish( vrfr2GLoS )(
+                      node.publish( vrfr2GLoSWr )(
                         VerificationNotification.toLabel( sidAV ),
                         VerificationNotification(
                           sidV, cidV, clmntV, clmV,
@@ -80,6 +92,24 @@ trait VerifierBehaviorT extends Serializable {
                         )
                       )
                     }
+                  }
+                  case Right( true ) => {
+                    BasicLogService.tweet( "waiting for verify request" )
+                  }
+                  case _ => {
+                    val paCnxnRd =
+                      PortableAgentCnxn( cnxnRd.src, cnxnRd.label, cnxnRd.trgt )
+                    BasicLogService.tweet( "unexpected protocol message : " + eVerify )
+                    node.publish( vrfr2GLoSWr )(
+                      VerificationNotification.toLabel(),
+                      VerificationNotification(
+                        sidAV, cidAV, paCnxnRd, clmAV,
+                        (
+                          "protocolError(\"unexpected protocol message\","
+                          + "\"" + eVerify + "\"" + ")"
+                        ).toLabel
+                      )
+                    )
                   }
                 }
               }
@@ -89,7 +119,16 @@ trait VerifierBehaviorT extends Serializable {
             }
             case _ => {
               BasicLogService.tweet( "unexpected protocol message : " + eAllowV )
-              throw new Exception( "unexpected protocol message : " + eAllowV )
+              node.publish( vrfr2GLoSWr )(
+                VerificationNotification.toLabel(),
+                VerificationNotification(
+                  null, null, null, null,
+                  (
+                    "protocolError(\"unexpected protocol message\","
+                    + "\"" + eAllowV + "\"" + ")"
+                  ).toLabel
+                )
+              )
             }
           }
         }
