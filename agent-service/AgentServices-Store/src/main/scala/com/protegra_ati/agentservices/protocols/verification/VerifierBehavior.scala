@@ -26,7 +26,7 @@ trait VerifierBehaviorT extends Serializable {
     cnxns : Seq[PortableAgentCnxn],
     filters : Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
-    
+    doVerification( node, cnxns )
   }
   implicit def toAgentCnxn( cnxn : PortableAgentCnxn ) : acT.AgentCnxn = {
     acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)

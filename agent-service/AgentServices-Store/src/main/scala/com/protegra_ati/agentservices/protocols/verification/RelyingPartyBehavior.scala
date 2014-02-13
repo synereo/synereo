@@ -10,19 +10,23 @@ package com.protegra_ati.agentservices.protocols
 
 import com.biosimilarity.evaluator.distribution.{PortableAgentCnxn, PortableAgentBiCnxn}
 import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
-import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.protegra_ati.agentservices.protocols.msgs._
+import com.biosimilarity.lift.model.store.CnxnCtxtLabel
+import com.biosimilarity.lift.lib._
 import scala.util.continuations._
 import java.util.UUID
 
 trait RelyingPartyBehaviorT extends Serializable {
+  import com.biosimilarity.evaluator.distribution.utilities.DieselValueTrampoline._
+  import com.protegra_ati.agentservices.store.extensions.StringExtensions._
+
   def run(
     node : Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns : Seq[PortableAgentCnxn],
     filters : Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
-    
+    doVerification( node, cnxns )
   }
   implicit def toAgentCnxn( cnxn : PortableAgentCnxn ) : acT.AgentCnxn = {
     acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
@@ -31,33 +35,71 @@ trait RelyingPartyBehaviorT extends Serializable {
     node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns: Seq[PortableAgentCnxn]
   ): Unit = {
-    val agntCnxns =
-      cnxns.map( { cnxn : PortableAgentCnxn => acT.AgentCnxn( cnxn.src, cnxn.label, cnxn.trgt ) } )
-    for( cnxn <- agntCnxns ) {
+    val ( rp2GLoS, _ ) :: agntCnxns =
+      cnxns.map(
+        {
+          ( cnxn : PortableAgentCnxn ) => {
+            (
+              acT.AgentCnxn( cnxn.src, cnxn.label, cnxn.trgt ),
+              cnxn
+            )
+          }
+        }
+      )
+    for( ( cnxn, pacCnxn ) <- agntCnxns ) {
       reset {
-        for( eAllowV <- node.subscribe( cnxn )( AllowVerification.toLabel ) ) {
-          eAllowV match {
-            case Some( mTT.Ground( PostedExpr( AllowVerification( sidAV, cidAV, rpAV, clmAV ) ) ) ) => {
-              node.publish( cnxn )(
-                AckAllowVerification.toLabel( sidAV ),
-                mTT.Ground( PostedExpr( AckAllowVerification( sidAV, cidAV, rpAV, clmAV ) ) )
+        for( eOpenClaim <- node.subscribe( cnxn )( OpenClaim.toLabel ) ) {
+          rsrc2V[VerificationMessage]( eOpenClaim ) match {
+            case Left( OpenClaim( sidOC, cidOC, vrfrOC, clmOC ) ) => { 
+              val agntVrfr =
+                acT.AgentCnxn( vrfrOC.src, vrfrOC.label, vrfrOC.trgt )
+              node.publish( agntVrfr )( 
+                Verify.toLabel( sidOC ),
+                mTT.Ground( PostedExpr( Verify( sidOC, cidOC, pacCnxn, clmOC ) ) )
               )
-              for( eV <- node.subscribe( rpAV )( Verify.toLabel ) ) {
-                eV match {
-                  case Some( mTT.Ground( PostedExpr( Verify( sidV, cidV, clmntV, clmV ) ) ) ) => {
-                    // check that cmlntV.src equals cnxn.src
-                    // check that clmV equals clmAV
-                  }
-                  case Some( mTT.RBoundHM( Some( mTT.Ground( PostedExpr( Verify( sidV, cidV, clmntV, clmV ) ) ) ), _ ) ) => {
-                  }
-                  case Some( mTT.RBoundAList( Some( mTT.Ground( PostedExpr( Verify( sidV, cidV, clmntV, clmV ) ) ) ), _ ) ) => {
+              for( eVerification <- node.subscribe( agntVrfr )( Verification.toLabel ) ) {
+                rsrc2V[VerificationMessage]( eVerification ) match {
+                  case Left( Verification( sidV, cidV, clmntV, clmV, witV ) ) => {                     
+                    if (
+                      sidV.equals( sidOC ) && cidV.equals( cidOC )
+                      && clmV.equals( clmOC )
+                    ) {
+                      node.publish( cnxn )( // BUGBUG : lgm -- needs to be the dual cnxn
+                        CloseClaim.toLabel( sidOC ),
+                        CloseClaim( sidV, cidV, clmntV, clmV, witV )
+                      )
+                      node.publish( rp2GLoS )(
+                        VerificationNotification.toLabel( sidOC ),
+                        VerificationNotification(
+                          sidV, cidV, clmntV, clmV, witV
+                        )
+                      )
+                    }
+                    else {
+                      node.publish( cnxn )(
+                        CloseClaim.toLabel( sidOC ),
+                        CloseClaim(
+                          sidV, cidV, clmntV, clmV,
+                          "protocolError(\"unexpected verification message data\")".toLabel )
+                      )
+                      node.publish( rp2GLoS )(
+                        VerificationNotification.toLabel( sidOC ),
+                        VerificationNotification(
+                          sidV, cidV, clmntV, clmV,
+                          "protocolError(\"unexpected verify message data\")".toLabel
+                        )
+                      )
+                    }
                   }
                 }
               }
             }
-            case Some( mTT.RBoundHM( Some( mTT.Ground( PostedExpr( AllowVerification( sidAV, cidAV, rpAV, clmAV ) ) ) ), _ ) ) => {
+            case Right( true ) => {
+              BasicLogService.tweet( "waiting for claim initiation" )
             }
-            case Some( mTT.RBoundAList( Some( mTT.Ground( PostedExpr( AllowVerification( sidAV, cidAV, rpAV, clmAV ) ) ) ), _ ) ) => {
+            case _ => {
+              BasicLogService.tweet( "unexpected protocol message : " + eOpenClaim )
+              throw new Exception( "unexpected protocol message : " + eOpenClaim )
             }
           }
         }
