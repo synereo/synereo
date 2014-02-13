@@ -26,7 +26,7 @@ trait ClaimantBehaviorT extends Serializable {
     cnxns : Seq[PortableAgentCnxn],
     filters : Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
-    
+    doVerification( node, cnxns )
   }  
   def doVerification(
     node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
@@ -79,7 +79,7 @@ trait ClaimantBehaviorT extends Serializable {
                                   CompleteClaim.toLabel( sidIC ),
                                   CompleteClaim(
                                     sidIC, cidIC, vrfrIC, clmIC,
-                                    "protocol error: relying party close claim".toLabel
+                                    "protocolError(\"relying party close claim does not match open claim\")".toLabel
                                   )
                                 )
                                 //throw new Exception( "close doesn't match open : " + eCloseClaim )
@@ -94,7 +94,7 @@ trait ClaimantBehaviorT extends Serializable {
                           CompleteClaim.toLabel( sidIC ),
                           CompleteClaim(
                             sidIC, cidIC, vrfrIC, clmIC,
-                            "protocol error: verifier acknowledgment".toLabel
+                            "protocolError(\"verifier acknowledgment does not match allow verification\")".toLabel
                           )
                         )
                       }
