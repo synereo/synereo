@@ -46,16 +46,6 @@ package usage {
     def relyingPartyToGLoS : PortableAgentCnxn
     def waitForSignalToInitiateClaim(
       continuation : () => Unit
-    ) : Unit
-  }    
-
-  case class GLoSStub(
-    override val claimantToGLoS : PortableAgentCnxn,
-    override val verifierToGLoS : PortableAgentCnxn,
-    override val relyingPartyToGLoS : PortableAgentCnxn
-  ) extends GLoSStubT {
-    override def waitForSignalToInitiateClaim(
-      continuation : () => Unit
     ) : Unit = {     
       println( "Please state your claim: " )
       val ln = readLine() // Note: this is blocking.
@@ -63,7 +53,13 @@ package usage {
       continuation()
       println( "your claim, " + claim + ", has been submitted" )
      }
-  }
+  }    
+
+  case class GLoSStub(
+    override val claimantToGLoS : PortableAgentCnxn,
+    override val verifierToGLoS : PortableAgentCnxn,
+    override val relyingPartyToGLoS : PortableAgentCnxn
+  ) extends GLoSStubT 
 
   object VerificationDriver
    extends NodeStreams
