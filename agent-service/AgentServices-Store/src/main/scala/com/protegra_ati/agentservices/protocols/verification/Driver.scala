@@ -17,10 +17,20 @@ import com.biosimilarity.lift.lib._
 import scala.util.continuations._
 import java.util.UUID
 
-package usage {
+package usage {  
   import com.biosimilarity.evaluator.distribution.NodeStreams
   import com.biosimilarity.evaluator.distribution.FuzzyStreams
-  object VerificationDriver extends NodeStreams with FuzzyStreams {
+  import com.biosimilarity.evaluator.distribution.FuzzyTerms
+  import com.biosimilarity.evaluator.distribution.FuzzyTermStreams
+  import com.biosimilarity.lift.model.store.CnxnString
+  object VerificationDriver
+   extends NodeStreams
+     with FuzzyStreams
+     with FuzzyTerms
+     with FuzzyTermStreams
+     with CnxnString[String,String,String] 
+     with Serializable
+  {
     def nextClaimant() : ClaimantBehavior = {
       ClaimantBehavior()
     }
@@ -39,6 +49,32 @@ package usage {
     def relyingPartyStrm() : Stream[RelyingPartyBehavior] = {
       tStream( nextRelyingParty() )( { rp => nextRelyingParty() } )
     }    
+    
+    def connect(
+      selfCnxn1 : PortableAgentCnxn,
+      selfCnxn2 : PortableAgentCnxn
+    )(
+      useSrc : Boolean = true
+    ): PortableAgentCnxn = {
+      val cnxnLabel = UUID.randomUUID().toString
+      if ( useSrc ) {
+        PortableAgentCnxn( selfCnxn1.src, cnxnLabel, selfCnxn2.src )
+      } 
+      else {
+        PortableAgentCnxn( selfCnxn1.trgt, cnxnLabel, selfCnxn2.trgt )
+      }
+    }
+
+    def verificationEnsembleCnxnStrm(
+    ) : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)] = {
+      val ( cCnxnStrm, vCnxnStrm, rCnxnStrm ) =
+        ( mkSelfCnxnStream(), mkSelfCnxnStream(), mkSelfCnxnStream() );
+      for(
+        ( c, ( v, r ) ) <- cCnxnStrm.zip( vCnxnStrm.zip( rCnxnStrm ) )
+      ) yield {
+        ( c, v, r, connect( c, v )( true ), connect( c, r )( true ), connect( v, r )( true ) )
+      }        
+    }
     def verificationEnsembleStrm(
     ) : Stream[(ClaimantBehavior,VerifierBehavior,RelyingPartyBehavior)] = {
       for(
