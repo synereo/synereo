@@ -18,24 +18,8 @@ import scala.util.continuations._
 import java.util.UUID
 
 package usage {
+  import com.biosimilarity.evaluator.distribution.NodeStreams
   import com.biosimilarity.evaluator.distribution.FuzzyStreams
-  object VerificationDriver extends FuzzyStreams {
-    import com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper
-    import com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor
-    import com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel
-    def nextNode(
-    ) : ( String, StdEvalChannel ) = {
-      val keyNodePair@( dslNodeKey, dslNode ) =
-        ( UUID.randomUUID( ).toString -> DieselEngineCtor.dslEvaluatorAgent[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( ) )
-      EvalNodeMapper += keyNodePair
-      keyNodePair
-    }
-    def nodeStream(
-    ) : Stream[StdEvalChannel] = {
-      val ( _, node ) = nextNode
-      tStream( node )(
-        { node => { val ( _, node ) = nextNode; node } }
-      )
-    }    
+  object VerificationDriver extends NodeStreams with FuzzyStreams {
   }
 }
