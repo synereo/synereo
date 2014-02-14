@@ -51,7 +51,7 @@ package usage {
       val ln = readLine() // Note: this is blocking.
       val claim = ln.toLabel
       continuation()
-      println( "your claim, " + claim + ", has been submitted" )
+      println( "your claim, " + claim + ", has been submitted." )
      }
   }    
 
