@@ -127,3 +127,6 @@ trait RelyingPartyBehaviorT extends Serializable {
     }
   }
 }
+
+case class RelyingPartyBehavior(
+) extends RelyingPartyBehaviorT

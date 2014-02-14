@@ -172,3 +172,6 @@ trait ClaimantBehaviorT extends Serializable {
     }
   }
 }
+
+case class ClaimantBehavior(
+) extends ClaimantBehaviorT 

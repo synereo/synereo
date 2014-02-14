@@ -136,3 +136,8 @@ trait VerifierBehaviorT extends Serializable {
     }
   }
 }
+
+case class VerifierBehavior(
+) extends VerifierBehaviorT
+
+
