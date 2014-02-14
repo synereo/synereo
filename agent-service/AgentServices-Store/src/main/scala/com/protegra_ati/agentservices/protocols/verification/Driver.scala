@@ -264,6 +264,24 @@ package usage {
                   List[CnxnCtxtLabel[String, String, String]]( )
                 )
               }
+              spawn {
+                glosStub.waitForVerifierVerificationNotification(
+                  node,
+                  { vmsg => println( "Got verifier verification notification!" ) }
+                )
+              }
+              spawn {
+                glosStub.waitForRelyingPartyVerificationNotification(
+                  node,
+                  { vmsg => println( "Got relying party verification notification!" ) }
+                )
+              }
+              spawn {
+                glosStub.waitForCompleteClaim(
+                  node,
+                  { vmsg => println( "Got claimant close claim!" ) }
+                )
+              }
             }
           )
         }                
