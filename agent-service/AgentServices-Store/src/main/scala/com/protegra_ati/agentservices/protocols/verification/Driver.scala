@@ -52,8 +52,8 @@ package usage {
       println( "Please state your claim: " )
       val ln = readLine() // Note: this is blocking.
       val claim = ln.toLabel
-      continuation( claim )
       println( "your claim, " + claim + ", has been submitted." )
+      continuation( claim )      
      }
     def waitForVerifierVerificationNotification(
       node : StdEvalChannel,      
@@ -69,11 +69,23 @@ package usage {
         ) {
           rsrc2V[VerificationMessage]( eVNote ) match {
             case Left( vmsg@VerificationNotification( sidVN, cidVN, clmntVN, clmVN, witVN ) ) => { 
-              BasicLogService.tweet( "received verification notification " + eVNote )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived verification notification " + eVNote
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               continuation( vmsg )
             }
             case Right( true ) => {
-              BasicLogService.tweet( "waiting for claim initiation" )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nwaiting for verifier verification notification"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet( "unexpected protocol message : " + eVNote )
@@ -96,11 +108,23 @@ package usage {
         ) {
           rsrc2V[VerificationMessage]( eVNote ) match {
             case Left( vmsg@VerificationNotification( sidVN, cidVN, clmntVN, clmVN, witVN ) ) => { 
-              BasicLogService.tweet( "received verification notification " + eVNote )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived verification notification " + eVNote
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               continuation( vmsg )
             }
             case Right( true ) => {
-              BasicLogService.tweet( "waiting for claim initiation" )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "waiting for relying party verification notification"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet( "unexpected protocol message : " + eVNote )
@@ -123,11 +147,23 @@ package usage {
         ) {
           rsrc2V[VerificationMessage]( eCompleteClaim ) match {
             case Left( vmsg@CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
-              BasicLogService.tweet( "received verification notification " + eCompleteClaim )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived complete claim " + eCompleteClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               continuation( vmsg )
             }
             case Right( true ) => {
-              BasicLogService.tweet( "waiting for claim initiation" )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nwaiting for complete claim"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet( "unexpected protocol message : " + eCompleteClaim )
@@ -186,11 +222,30 @@ package usage {
         PortableAgentCnxn( selfCnxn1.trgt, cnxnLabel, selfCnxn2.trgt )
       }
     }
+    
+    def getSelfCnxnStream(
+    ) : Stream[PortableAgentCnxn] = {
+      val lblStrm =
+        for(
+          s <- mkRandomLabelStringStream( "l", 0 )
+          if !(
+            s.contains( "\"" ) 
+            || s.contains( "true" )
+            || s.contains( "false" )
+          )
+        ) yield {
+          s
+        }
+      mkSelfCnxnStream(
+        new scala.util.Random(),
+        lblStrm
+      )
+    }
 
     def verificationEnsembleCnxnStrm(
     ) : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)] = {
       val ( cCnxnStrm, vCnxnStrm, rCnxnStrm ) =
-        ( mkSelfCnxnStream(), mkSelfCnxnStream(), mkSelfCnxnStream() );
+        ( getSelfCnxnStream(), getSelfCnxnStream(), getSelfCnxnStream() );
       for(
         ( c, ( v, r ) ) <- cCnxnStrm.zip( vCnxnStrm.zip( rCnxnStrm ) )
       ) yield {
@@ -230,7 +285,7 @@ package usage {
           glosStub.waitForSignalToInitiateClaim(
             ( claim : CnxnCtxtLabel[String,String,String] ) => {
               reset {
-                node.publish( agntCWr )(
+                node.publish( agntCRd )(
                   InitiateClaim.toLabel( sid ),
                   InitiateClaim( sid, cid, c2v, c2r, claim )
                 )
@@ -296,7 +351,7 @@ package usage {
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
     ): Stream[() => Unit] = {      
       val ( c2GLoSCnxnStrm, v2GLoSCnxnStrm, r2GLoSCnxnStrm ) =
-        ( mkSelfCnxnStream(), mkSelfCnxnStream(), mkSelfCnxnStream() );
+        ( getSelfCnxnStream(), getSelfCnxnStream(), getSelfCnxnStream() );
       val theGLoSCnxnStrm =
         for(
           ( c, ( v, r ) ) <- c2GLoSCnxnStrm.zip( v2GLoSCnxnStrm.zip( r2GLoSCnxnStrm ) )
