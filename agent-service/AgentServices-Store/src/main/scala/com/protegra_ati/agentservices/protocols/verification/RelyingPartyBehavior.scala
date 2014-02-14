@@ -56,7 +56,7 @@ trait RelyingPartyBehaviorT extends Serializable {
 
               node.publish( agntVrfrWr )( 
                 Verify.toLabel( sidOC ),
-                mTT.Ground( PostedExpr( Verify( sidOC, cidOC, pacCnxnRd, clmOC ) ) )
+                Verify( sidOC, cidOC, pacCnxnRd, clmOC )
               )
               for( eVerification <- node.subscribe( agntVrfrRd )( Verification.toLabel ) ) {
                 rsrc2V[VerificationMessage]( eVerification ) match {

@@ -51,7 +51,7 @@ trait VerifierBehaviorT extends Serializable {
 
               node.publish( cnxnWr )( 
                 AckAllowVerification.toLabel( sidAV ),
-                mTT.Ground( PostedExpr( AckAllowVerification( sidAV, cidAV, rpAV, clmAV ) ) )
+                AckAllowVerification( sidAV, cidAV, rpAV, clmAV )
               )
               for( eVerify <- node.subscribe( agntRPRd )( Verify.toLabel ) ) {
                 rsrc2V[VerificationMessage]( eVerify ) match {

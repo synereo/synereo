@@ -23,6 +23,8 @@ package usage {
   import com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor
   import com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel
 
+  import com.biosimilarity.evaluator.distribution.utilities.DieselValueTrampoline._
+
   import com.biosimilarity.evaluator.distribution.NodeStreams
   import com.biosimilarity.evaluator.distribution.FuzzyStreams
   import com.biosimilarity.evaluator.distribution.FuzzyTerms
@@ -45,14 +47,95 @@ package usage {
     def verifierToGLoS : PortableAgentCnxn
     def relyingPartyToGLoS : PortableAgentCnxn
     def waitForSignalToInitiateClaim(
-      continuation : () => Unit
+      continuation : CnxnCtxtLabel[String,String,String] => Unit
     ) : Unit = {     
       println( "Please state your claim: " )
       val ln = readLine() // Note: this is blocking.
       val claim = ln.toLabel
-      continuation()
+      continuation( claim )
       println( "your claim, " + claim + ", has been submitted." )
      }
+    def waitForVerifierVerificationNotification(
+      node : StdEvalChannel,      
+      continuation : VerificationMessage => Unit
+    ) : Unit = {
+      val vrfr2GLoSRd =
+        acT.AgentCnxn( verifierToGLoS.src, verifierToGLoS.label, verifierToGLoS.trgt )
+      reset {
+        for(
+          eVNote <- node.subscribe(
+            vrfr2GLoSRd
+          )( VerificationNotification.toLabel() )
+        ) {
+          rsrc2V[VerificationMessage]( eVNote ) match {
+            case Left( vmsg@VerificationNotification( sidVN, cidVN, clmntVN, clmVN, witVN ) ) => { 
+              BasicLogService.tweet( "received verification notification " + eVNote )
+              continuation( vmsg )
+            }
+            case Right( true ) => {
+              BasicLogService.tweet( "waiting for claim initiation" )
+            }
+            case _ => {
+              BasicLogService.tweet( "unexpected protocol message : " + eVNote )
+            }
+          }
+        }
+      }
+    }
+    def waitForRelyingPartyVerificationNotification(
+      node : StdEvalChannel,
+      continuation : VerificationMessage => Unit
+    ) : Unit = {
+      val rp2GLoSRd =
+        acT.AgentCnxn( relyingPartyToGLoS.src, relyingPartyToGLoS.label, relyingPartyToGLoS.trgt )
+      reset {
+        for(
+          eVNote <- node.subscribe(
+            rp2GLoSRd
+          )( VerificationNotification.toLabel() )
+        ) {
+          rsrc2V[VerificationMessage]( eVNote ) match {
+            case Left( vmsg@VerificationNotification( sidVN, cidVN, clmntVN, clmVN, witVN ) ) => { 
+              BasicLogService.tweet( "received verification notification " + eVNote )
+              continuation( vmsg )
+            }
+            case Right( true ) => {
+              BasicLogService.tweet( "waiting for claim initiation" )
+            }
+            case _ => {
+              BasicLogService.tweet( "unexpected protocol message : " + eVNote )
+            }
+          }
+        }
+      }
+    }
+    def waitForCompleteClaim(
+      node : StdEvalChannel,
+      continuation : VerificationMessage => Unit
+    ) : Unit = {
+      val clmnt2GLoSRd =
+        acT.AgentCnxn( claimantToGLoS.src, claimantToGLoS.label, claimantToGLoS.trgt )
+      reset {
+        for(
+          eCompleteClaim <- node.subscribe(
+            clmnt2GLoSRd
+          )( CloseClaim.toLabel() )
+        ) {
+          rsrc2V[VerificationMessage]( eCompleteClaim ) match {
+            case Left( vmsg@CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
+              BasicLogService.tweet( "received verification notification " + eCompleteClaim )
+              continuation( vmsg )
+            }
+            case Right( true ) => {
+              BasicLogService.tweet( "waiting for claim initiation" )
+            }
+            case _ => {
+              BasicLogService.tweet( "unexpected protocol message : " + eCompleteClaim )
+            }
+          }
+        }
+      }
+    }
   }    
 
   case class GLoSStub(
@@ -69,7 +152,7 @@ package usage {
      with CnxnString[String,String,String] 
      with FJTaskRunnersX
      with Serializable
-  {
+  {    
     def nextClaimant() : ClaimantBehavior = {
       ClaimantBehavior()
     }
@@ -135,9 +218,23 @@ package usage {
       for(
         ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
       ) yield {
+        val agntCRd = 
+          acT.AgentCnxn( c.src, c.label, c.trgt )
+        val agntCWr = 
+          acT.AgentCnxn( c.trgt, c.label, c.src )
+
+        val sid = UUID.randomUUID.toString
+        val cid = UUID.randomUUID.toString
+
         () => {
           glosStub.waitForSignalToInitiateClaim(
-            () => {
+            ( claim : CnxnCtxtLabel[String,String,String] ) => {
+              reset {
+                node.publish( agntCWr )(
+                  InitiateClaim.toLabel( sid ),
+                  InitiateClaim( sid, cid, c2v, c2r, claim )
+                )
+              }
               spawn { 
                 clmntBhvr.run(
                   node,
