@@ -121,7 +121,7 @@ package usage {
               BasicLogService.tweet(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                  + "waiting for relying party verification notification"
+                  + "\nwaiting for relying party verification notification"
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
