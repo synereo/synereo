@@ -287,5 +287,84 @@ package usage {
         }                
       }
     }
+    def verificationEnsembleTestStrm(
+      node : StdEvalChannel,
+      clmntBhvr : ClaimantBehavior,
+      vrfrBhvr : VerifierBehavior,
+      rpBhvr : RelyingPartyBehavior
+    )(
+      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+    ): Stream[() => Unit] = {      
+      val ( c2GLoSCnxnStrm, v2GLoSCnxnStrm, r2GLoSCnxnStrm ) =
+        ( mkSelfCnxnStream(), mkSelfCnxnStream(), mkSelfCnxnStream() );
+      val theGLoSCnxnStrm =
+        for(
+          ( c, ( v, r ) ) <- c2GLoSCnxnStrm.zip( v2GLoSCnxnStrm.zip( r2GLoSCnxnStrm ) )
+        ) yield {
+          ( c, v, r )
+        }       
+      theGLoSCnxnStrm.flatMap(
+        {
+          trpl => {
+            verificationEnsembleTestStrm(
+              node,
+              GLoSStub( trpl._1, trpl._2, trpl._3 ),
+              clmntBhvr, vrfrBhvr, rpBhvr
+            )(
+              cnxnStrm
+            )
+          }
+        }
+      )
+    }
+    def verificationEnsembleTestStrm(
+      clmntBhvr : ClaimantBehavior,
+      vrfrBhvr : VerifierBehavior,
+      rpBhvr : RelyingPartyBehavior
+    )(
+      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+    ): Stream[() => Unit] = {      
+      val ndStrm = dslNodeStream
+      ndStrm.flatMap(
+        {
+          node => {
+            verificationEnsembleTestStrm(
+              node, clmntBhvr, vrfrBhvr, rpBhvr
+            )( cnxnStrm )
+          }
+        }
+      )
+    }
+    def verificationEnsembleTestStrm(
+      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+    ): Stream[() => Unit] = {      
+      val veStrm = verificationEnsembleStrm
+      veStrm.flatMap(
+        {
+          trpl => {
+            verificationEnsembleTestStrm(
+              trpl._1, trpl._2, trpl._3
+            )(
+              cnxnStrm
+            )
+          }
+        }
+      )
+    }
+    def verificationEnsembleTestStrm(
+    ): Stream[() => Unit] = {      
+      verificationEnsembleTestStrm(
+        verificationEnsembleCnxnStrm()
+      )
+    }
+    def testProtocol( 
+      numOfTests : Int = 1
+    ) : Unit = {
+      val testStrm = verificationEnsembleTestStrm.take( numOfTests )
+      for( i <- 1 to numOfTests ) {
+        val test = testStrm( i - 1 )
+        test()
+      }
+    }
   }
 }
