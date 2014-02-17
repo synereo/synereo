@@ -261,6 +261,120 @@ package usage {
       }
     }
 
+    def claimantTestStrm(
+      node : StdEvalChannel,
+      glosStub : GLoSStub,
+      clmntBhvr : ClaimantBehavior
+    )(
+      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+    ): Stream[() => Unit] = {      
+      for(
+        ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
+      ) yield {
+        val agntCRd = 
+          acT.AgentCnxn(
+            glosStub.claimantToGLoS.src,
+            glosStub.claimantToGLoS.label,
+            glosStub.claimantToGLoS.trgt
+          )
+
+        val sid = UUID.randomUUID.toString
+        val cid = UUID.randomUUID.toString
+
+        () => {
+          spawn { 
+            clmntBhvr.run(
+              node,
+              List[PortableAgentCnxn](
+                glosStub.claimantToGLoS
+              ),
+              List[CnxnCtxtLabel[String, String, String]]( )
+            )
+          }
+          glosStub.waitForSignalToInitiateClaim(
+            ( claim : CnxnCtxtLabel[String,String,String] ) => {
+              reset {
+                node.publish( agntCRd )(
+                  InitiateClaim.toLabel( sid ),
+                  InitiateClaim( sid, cid, c2v, c2r, claim )
+                )
+              }              
+            }
+          )
+        }
+      }
+    }
+
+    def claimantTestStrm(
+      node : StdEvalChannel,
+      clmntBhvr : ClaimantBehavior
+    )(
+      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+    ): Stream[() => Unit] = {      
+      val ( c2GLoSCnxnStrm, v2GLoSCnxnStrm, r2GLoSCnxnStrm ) =
+        ( getSelfCnxnStream(), getSelfCnxnStream(), getSelfCnxnStream() );
+      val theGLoSCnxnStrm =
+        for(
+          ( c, ( v, r ) ) <- c2GLoSCnxnStrm.zip( v2GLoSCnxnStrm.zip( r2GLoSCnxnStrm ) )
+        ) yield {
+          ( c, v, r )
+        }       
+      theGLoSCnxnStrm.flatMap(
+        {
+          trpl => {
+            claimantTestStrm(
+              node,
+              GLoSStub( trpl._1, trpl._2, trpl._3 ),
+              clmntBhvr
+            )(
+              cnxnStrm
+            )
+          }
+        }
+      )
+    }
+
+    def claimantTestStrm(
+      clmntBhvr : ClaimantBehavior
+    )(
+      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+    ): Stream[() => Unit] = {      
+      val ndStrm = dslNodeStream
+      ndStrm.flatMap(
+        {
+          node => {
+            claimantTestStrm(
+              node, clmntBhvr
+            )( cnxnStrm )
+          }
+        }
+      )
+    }
+
+    def claimantTestStrm(
+      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+    ): Stream[() => Unit] = {      
+      val cStrm = claimantStrm
+      cStrm.flatMap(
+        {
+          clmnt => {
+            claimantTestStrm(
+              clmnt
+            )(
+              cnxnStrm
+            )
+          }
+        }
+      )
+    }
+
+    def claimantTestStrm(
+    ) : Stream[() => Unit] = {      
+      claimantTestStrm(
+        verificationEnsembleCnxnStrm()
+      )
+    }
+
     def verificationEnsembleTestStrm(
       node : StdEvalChannel,
       glosStub : GLoSStub,

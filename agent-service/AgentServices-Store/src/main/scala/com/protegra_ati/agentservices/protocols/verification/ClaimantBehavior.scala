@@ -42,42 +42,107 @@ trait ClaimantBehaviorT extends Serializable {
           for( eInitiateClaim <- node.subscribe( agntClmnt2GLoSRd )( InitiateClaim.toLabel ) ) {
             rsrc2V[VerificationMessage]( eInitiateClaim ) match {
               case Left( InitiateClaim( sidIC, cidIC, vrfrIC, rpIC, clmIC ) ) => { 
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\nreceived initiate claim request: " + eInitiateClaim
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
+
                 val agntVrfrWr =
                   acT.AgentCnxn( vrfrIC.src, vrfrIC.label, vrfrIC.trgt )
                 val agntVrfrRd =
                   acT.AgentCnxn( vrfrIC.trgt, vrfrIC.label, vrfrIC.src )
+
+                val avReq = AllowVerification( sidIC, cidIC, rpIC, clmIC )
+
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\npublishing AllowVerification request: " + avReq
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
+
                 node.publish( agntVrfrWr )( 
                   AllowVerification.toLabel( sidIC ), 
-                  AllowVerification( sidIC, cidIC, rpIC, clmIC )
+                  avReq
                 )
                 for( eAllowV <- node.subscribe( agntVrfrRd )( AckAllowVerification.toLabel( sidIC ) ) ) {
                   rsrc2V[VerificationMessage]( eInitiateClaim ) match {
                     case Left( AckAllowVerification( sidAAV, cidAAV, rpAAV, clmAAV ) ) => { 
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nreceived allow verification acknowledgment: " + eAllowV
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
                       if (
                         sidAAV.equals( sidIC ) && cidAAV.equals( cidIC )
                         && rpAAV.equals( rpIC ) && clmAAV.equals( clmIC )
                       ) {
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\nallow verification acknowledgment matches request" 
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
                         val agntRPWr =
                           acT.AgentCnxn( rpIC.src, rpIC.label, rpIC.trgt )
                         val agntRPRd =
                           acT.AgentCnxn( rpIC.trgt, rpIC.label, rpIC.src )
+
+                        val ocReq = OpenClaim( sidIC, cidIC, vrfrIC, clmIC )
+
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\npublishing open claim request" + ocReq
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+
                         reset {
                           node.publish( agntRPWr )( 
                             OpenClaim.toLabel( sidIC ), 
-                            OpenClaim( sidIC, cidIC, vrfrIC, clmIC )
+                            ocReq
                           )            
                         }
                         for( eCloseClaim <- node.subscribe( agntRPRd )( CloseClaim.toLabel( sidIC ) ) ) {
                           rsrc2V[VerificationMessage]( eCloseClaim ) match {
                             case Left( CloseClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
+                              BasicLogService.tweet(
+                                (
+                                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  + "\nreceived close claim message" + eCloseClaim
+                                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                )
+                              )
                               if (
                                 sidCC.equals( sidIC ) && cidCC.equals( cidIC )
                                 && vrfrCC.equals( vrfrIC ) && clmCC.equals( clmIC )
                               ) {
-                                  node.publish( agntClmnt2GLoSWr )(
-                                    CompleteClaim.toLabel( sidIC ),
-                                    CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC )
+                                BasicLogService.tweet(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\nclose claim message matches open claim request"
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                   )
+                                )
+                                BasicLogService.tweet(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\npublishing complete claim message"
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  )
+                                )
+                                node.publish( agntClmnt2GLoSWr )(
+                                  CompleteClaim.toLabel( sidIC ),
+                                  CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC )
+                                )
                               }
                               else {
                                 BasicLogService.tweet( "close doesn't match open : " + eCloseClaim )
