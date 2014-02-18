@@ -77,7 +77,7 @@ package usage {
     ) : SimulationContext = {
       val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
       val agntRPRd = 
-        acT.AgentCnxn( c2r.src, c2r.label, c2r.trgt )
+        acT.AgentCnxn( c2r.trgt, c2r.label, c2r.src )
       
       val witness =
         new CnxnCtxtBranch[String,String,String](
@@ -165,7 +165,11 @@ package usage {
               )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eVNote )
+              BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eVNote
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
             }
           }
         }
@@ -176,12 +180,22 @@ package usage {
       continuation : VerificationMessage => Unit
     ) : Unit = {
       val clmnt2GLoSRd =
-        acT.AgentCnxn( claimantToGLoS.src, claimantToGLoS.label, claimantToGLoS.trgt )
+        acT.AgentCnxn( claimantToGLoS.trgt, claimantToGLoS.label, claimantToGLoS.src )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for complete claim on: " 
+          + "cnxn: " + clmnt2GLoSRd
+          + "label: " + CompleteClaim.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
       reset {
         for(
           eCompleteClaim <- node.subscribe(
             clmnt2GLoSRd
-          )( CloseClaim.toLabel() )
+          )( CompleteClaim.toLabel() )
         ) {
           rsrc2V[VerificationMessage]( eCompleteClaim ) match {
             case Left( vmsg@CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
@@ -204,7 +218,13 @@ package usage {
               )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eCompleteClaim )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nunexpected protocol message : " + eCompleteClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
           }
         }
