@@ -17,7 +17,7 @@ import com.biosimilarity.lift.lib._
 import scala.util.continuations._
 import java.util.UUID
 
-trait RelyingPartyBehaviorT extends Serializable {
+trait RelyingPartyBehaviorT extends ProtocolBehaviorT with Serializable {
   import com.biosimilarity.evaluator.distribution.utilities.DieselValueTrampoline._
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 

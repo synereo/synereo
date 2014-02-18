@@ -93,12 +93,24 @@ package usage {
       }
       simCtxt
     }
+
     def waitForVerifierVerificationNotification(
       node : StdEvalChannel,      
       continuation : VerificationMessage => Unit
     ) : Unit = {
       val vrfr2GLoSRd =
         acT.AgentCnxn( verifierToGLoS.src, verifierToGLoS.label, verifierToGLoS.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for verification notification on: " 
+          + "cnxn: " + vrfr2GLoSRd
+          + "label: " + VerificationNotification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )      
+
       reset {
         for(
           eVNote <- node.subscribe(
@@ -126,7 +138,11 @@ package usage {
               )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eVNote )
+              BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eVNote
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
             }
           }
         }
@@ -138,6 +154,17 @@ package usage {
     ) : Unit = {
       val rp2GLoSRd =
         acT.AgentCnxn( relyingPartyToGLoS.src, relyingPartyToGLoS.label, relyingPartyToGLoS.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for verification notification on: " 
+          + "cnxn: " + rp2GLoSRd
+          + "label: " + VerificationNotification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
+
       reset {
         for(
           eVNote <- node.subscribe(
@@ -175,6 +202,7 @@ package usage {
         }
       }
     }
+
     def waitForCompleteClaim(
       node : StdEvalChannel,
       continuation : VerificationMessage => Unit
@@ -333,121 +361,125 @@ package usage {
       }
     }
 
-    def claimantTestStrm(
-      node : StdEvalChannel,
-      glosStub : GLoSStub,
-      clmntBhvr : ClaimantBehavior
-    )(
-      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => SimulationContext] = {      
-      for(
-        ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
-      ) yield {
-        val agntCRd = 
-          acT.AgentCnxn(
-            glosStub.claimantToGLoS.src,
-            glosStub.claimantToGLoS.label,
-            glosStub.claimantToGLoS.trgt
-          )
-
-        val sid = UUID.randomUUID.toString
-        val cid = UUID.randomUUID.toString
-
-        () => {          
-          glosStub.waitForSignalToInitiateClaim(
-            ( claim : CnxnCtxtLabel[String,String,String] ) => {
-              spawn { 
-                clmntBhvr.run(
-                  node,
-                  List[PortableAgentCnxn](
-                    glosStub.claimantToGLoS
-                  ),
-                  List[CnxnCtxtLabel[String, String, String]]( )
-                )
+    trait BehaviorTestStream[Behavior <: ProtocolBehaviorT] {
+      def behaviorToGLoS : PortableAgentCnxn
+      def behaviorStream : Stream[Behavior]
+      def behaviorTestStrm(
+        node : StdEvalChannel,
+        glosStub : GLoSStub,
+        clmntBhvr : Behavior
+      )(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {      
+        for(
+          ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
+        ) yield {
+          val agntCRd = 
+            acT.AgentCnxn(
+              behaviorToGLoS.src,
+              behaviorToGLoS.label,
+              behaviorToGLoS.trgt
+            )
+          
+          val sid = UUID.randomUUID.toString
+          val cid = UUID.randomUUID.toString
+          
+          () => {          
+            glosStub.waitForSignalToInitiateClaim(
+              ( claim : CnxnCtxtLabel[String,String,String] ) => {
+                spawn { 
+                  clmntBhvr.run(
+                    node,
+                    List[PortableAgentCnxn](
+                      behaviorToGLoS
+                    ),
+                    List[CnxnCtxtLabel[String, String, String]]( )
+                  )
+                }
+                reset {
+                  node.publish( agntCRd )(
+                    InitiateClaim.toLabel( sid ),
+                    InitiateClaim( sid, cid, c2v, c2r, claim )
+                  )
+                }
+                SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
               }
-              reset {
-                node.publish( agntCRd )(
-                  InitiateClaim.toLabel( sid ),
-                  InitiateClaim( sid, cid, c2v, c2r, claim )
-                )
-              }
-              SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
-            }
-          )          
+            )          
+          }
         }
       }
-    }
-
-    def claimantTestStrm(
-      node : StdEvalChannel,
-      clmntBhvr : ClaimantBehavior
-    )(
-      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => SimulationContext] = {      
-      val ( c2GLoSCnxnStrm, v2GLoSCnxnStrm, r2GLoSCnxnStrm ) =
-        ( getSelfCnxnStream(), getSelfCnxnStream(), getSelfCnxnStream() );
-      val theGLoSCnxnStrm =
-        for(
-          ( c, ( v, r ) ) <- c2GLoSCnxnStrm.zip( v2GLoSCnxnStrm.zip( r2GLoSCnxnStrm ) )
-        ) yield {
-          ( c, v, r )
-        }       
-      theGLoSCnxnStrm.flatMap(
-        {
-          trpl => {
-            claimantTestStrm(
-              node,
-              GLoSStub( trpl._1, trpl._2, trpl._3 ),
-              clmntBhvr
-            )(
-              cnxnStrm
-            )
+      
+      def behaviorTestStrm(
+        node : StdEvalChannel,
+        clmntBhvr : Behavior
+      )(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {      
+        val ( c2GLoSCnxnStrm, v2GLoSCnxnStrm, r2GLoSCnxnStrm ) =
+          ( getSelfCnxnStream(), getSelfCnxnStream(), getSelfCnxnStream() );
+        val theGLoSCnxnStrm =
+          for(
+            ( c, ( v, r ) ) <- c2GLoSCnxnStrm.zip( v2GLoSCnxnStrm.zip( r2GLoSCnxnStrm ) )
+          ) yield {
+            ( c, v, r )
+          }       
+        theGLoSCnxnStrm.flatMap(
+          {
+            trpl => {
+              behaviorTestStrm(
+                node,
+                GLoSStub( trpl._1, trpl._2, trpl._3 ),
+                clmntBhvr
+              )(
+                cnxnStrm
+              )
+            }
           }
-        }
-      )
-    }
-
-    def claimantTestStrm(
-      clmntBhvr : ClaimantBehavior
-    )(
-      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => SimulationContext] = {      
-      val ndStrm = dslNodeStream
-      ndStrm.flatMap(
-        {
-          node => {
-            claimantTestStrm(
-              node, clmntBhvr
-            )( cnxnStrm )
+        )
+      }
+      
+      def behaviorTestStrm(
+        clmntBhvr : Behavior
+      )(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {      
+        val ndStrm = dslNodeStream
+        ndStrm.flatMap(
+          {
+            node => {
+              behaviorTestStrm(
+                node, clmntBhvr
+              )( cnxnStrm )
+            }
           }
-        }
-      )
-    }
-
-    def claimantTestStrm(
-      cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => SimulationContext] = {      
-      val cStrm = claimantStrm
-      cStrm.flatMap(
-        {
-          clmnt => {
-            claimantTestStrm(
-              clmnt
-            )(
-              cnxnStrm
-            )
+        )
+      }
+      
+      def behaviorTestStrm(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {      
+        val cStrm = behaviorStream
+        cStrm.flatMap(
+          {
+            clmnt => {
+              behaviorTestStrm(
+                clmnt
+              )(
+                cnxnStrm
+              )
+            }
           }
-        }
-      )
+        )
+      }
+      
+      def behaviorTestStrm(
+      ) : Stream[() => SimulationContext] = {      
+        behaviorTestStrm(
+          verificationEnsembleCnxnStrm()
+        )
+      }
     }
-
-    def claimantTestStrm(
-    ) : Stream[() => SimulationContext] = {      
-      claimantTestStrm(
-        verificationEnsembleCnxnStrm()
-      )
-    }
-
+    
     def verificationEnsembleTestStrm(
       node : StdEvalChannel,
       glosStub : GLoSStub,
