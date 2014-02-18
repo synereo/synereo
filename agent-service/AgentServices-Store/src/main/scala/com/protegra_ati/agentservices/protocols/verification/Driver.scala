@@ -13,6 +13,9 @@ import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
+import com.biosimilarity.lift.model.store.CnxnCtxtBranch
+import com.biosimilarity.lift.model.store.CnxnCtxtLeaf
+import com.biosimilarity.lift.model.store.Factual
 import com.biosimilarity.lift.lib._
 import scala.util.continuations._
 import java.util.UUID
@@ -57,7 +60,7 @@ package usage {
      }
     def simulateVerifierAckAllowVerificationStep(
       simCtxt : SimulationContext
-    ) : Unit = {
+    ) : SimulationContext = {
       val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
       val agntVrfrRd = 
         acT.AgentCnxn( c2v.src, c2v.label, c2v.trgt )
@@ -67,6 +70,28 @@ package usage {
           AckAllowVerification( sid, cid, c2r, clm )
         )
       }
+      simCtxt
+    }
+    def simulateRelyingPartyCloseClaimStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntRPRd = 
+        acT.AgentCnxn( c2r.src, c2r.label, c2r.trgt )
+      
+      val witness =
+        new CnxnCtxtBranch[String,String,String](
+          "verified",
+          clm.asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual] :: Nil
+        )
+
+      reset {
+        node.publish( agntRPRd )(
+          CloseClaim.toLabel( sid ),
+          CloseClaim( sid, cid, c2v, clm, witness )
+        )
+      }
+      simCtxt
     }
     def waitForVerifierVerificationNotification(
       node : StdEvalChannel,      
