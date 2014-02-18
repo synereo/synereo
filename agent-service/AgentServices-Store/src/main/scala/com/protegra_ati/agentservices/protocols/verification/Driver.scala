@@ -33,7 +33,7 @@ package usage {
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
   import com.biosimilarity.lift.model.store.CnxnString
-  import scala.concurrent.FJTaskRunnersX
+  import scala.concurrent.FJTaskRunnersX  
 
   trait GLoSStubT
     extends NodeStreams
@@ -47,14 +47,27 @@ package usage {
     def verifierToGLoS : PortableAgentCnxn
     def relyingPartyToGLoS : PortableAgentCnxn
     def waitForSignalToInitiateClaim(
-      continuation : CnxnCtxtLabel[String,String,String] => Unit
-    ) : Unit = {     
+      continuation : CnxnCtxtLabel[String,String,String] => SimulationContext
+    ) : SimulationContext = {     
       println( "Please state your claim: " )
       val ln = readLine() // Note: this is blocking.
       val claim = ln.toLabel
       println( "your claim, " + claim + ", has been submitted." )
       continuation( claim )      
      }
+    def simulateVerifierAckAllowVerificationStep(
+      simCtxt : SimulationContext
+    ) : Unit = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntVrfrRd = 
+        acT.AgentCnxn( c2v.src, c2v.label, c2v.trgt )
+      reset {
+        node.publish( agntVrfrRd )(
+          AckAllowVerification.toLabel( sid ),
+          AckAllowVerification( sid, cid, c2r, clm )
+        )
+      }
+    }
     def waitForVerifierVerificationNotification(
       node : StdEvalChannel,      
       continuation : VerificationMessage => Unit
@@ -180,6 +193,20 @@ package usage {
     override val relyingPartyToGLoS : PortableAgentCnxn
   ) extends GLoSStubT 
 
+  case class SimulationContext(
+    node : StdEvalChannel,
+    glosStub : GLoSStub,
+    sid : String,
+    cid : String,
+    c : PortableAgentCnxn,
+    v : PortableAgentCnxn,
+    r : PortableAgentCnxn,
+    c2v : PortableAgentCnxn,
+    c2r : PortableAgentCnxn,
+    v2r : PortableAgentCnxn,
+    claim : CnxnCtxtLabel[String,String,String]
+  )
+
   object VerificationDriver
    extends NodeStreams
      with FuzzyStreams
@@ -267,7 +294,7 @@ package usage {
       clmntBhvr : ClaimantBehavior
     )(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       for(
         ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
       ) yield {
@@ -281,26 +308,27 @@ package usage {
         val sid = UUID.randomUUID.toString
         val cid = UUID.randomUUID.toString
 
-        () => {
-          spawn { 
-            clmntBhvr.run(
-              node,
-              List[PortableAgentCnxn](
-                glosStub.claimantToGLoS
-              ),
-              List[CnxnCtxtLabel[String, String, String]]( )
-            )
-          }
+        () => {          
           glosStub.waitForSignalToInitiateClaim(
             ( claim : CnxnCtxtLabel[String,String,String] ) => {
+              spawn { 
+                clmntBhvr.run(
+                  node,
+                  List[PortableAgentCnxn](
+                    glosStub.claimantToGLoS
+                  ),
+                  List[CnxnCtxtLabel[String, String, String]]( )
+                )
+              }
               reset {
                 node.publish( agntCRd )(
                   InitiateClaim.toLabel( sid ),
                   InitiateClaim( sid, cid, c2v, c2r, claim )
                 )
-              }              
+              }
+              SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
             }
-          )
+          )          
         }
       }
     }
@@ -310,7 +338,7 @@ package usage {
       clmntBhvr : ClaimantBehavior
     )(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       val ( c2GLoSCnxnStrm, v2GLoSCnxnStrm, r2GLoSCnxnStrm ) =
         ( getSelfCnxnStream(), getSelfCnxnStream(), getSelfCnxnStream() );
       val theGLoSCnxnStrm =
@@ -338,7 +366,7 @@ package usage {
       clmntBhvr : ClaimantBehavior
     )(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       val ndStrm = dslNodeStream
       ndStrm.flatMap(
         {
@@ -353,7 +381,7 @@ package usage {
 
     def claimantTestStrm(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       val cStrm = claimantStrm
       cStrm.flatMap(
         {
@@ -369,7 +397,7 @@ package usage {
     }
 
     def claimantTestStrm(
-    ) : Stream[() => Unit] = {      
+    ) : Stream[() => SimulationContext] = {      
       claimantTestStrm(
         verificationEnsembleCnxnStrm()
       )
@@ -451,8 +479,10 @@ package usage {
                   { vmsg => println( "Got claimant close claim!" ) }
                 )
               }
+              SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
             }
-          )
+          );
+          ()
         }                
       }
     }
