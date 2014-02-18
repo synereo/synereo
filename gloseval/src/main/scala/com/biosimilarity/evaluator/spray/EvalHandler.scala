@@ -44,6 +44,9 @@ import java.util.UUID
 
 import java.net.URI
 
+// Mask the json4s symbol2jvalue implicit so we can use the PrologDSL
+object symbol2jvalue {}
+
 object CompletionMapper {
   @transient
   val map = new HashMap[String, RequestContext]()
@@ -368,9 +371,9 @@ trait EvalHandler {
     val tokenUri = new URI("token://" + token)
     val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
     
-    val (erql, erspl) = agentMgr().makePolarizedPair()
+    //val (erql, erspl) = agentMgr().makePolarizedPair()
     // TODO(mike): remove the token after it's been used
-    agentMgr().read(erql, erspl)(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
+    agentMgr().read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
         case None => ()
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
@@ -383,7 +386,7 @@ trait EvalHandler {
                 )
               )))
             }
-            case PostedExpr( (PostedExpr( postedStr : String ), _, _) ) => {
+            case PostedExpr( (PostedExpr( postedStr : String ), _, _, _) ) => {
               val content = parse(postedStr)
               val email = (content \ "email").extract[String]
               val password = (content \ "password").extract[String]
@@ -541,7 +544,7 @@ trait EvalHandler {
             PortableAgentBiCnxn(_, writeCnxn),
             message,
             profileData
-          )), _, _)))), _)) => {
+          )), _, _, _)))), _)) => {
             CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "introductionNotification") ~
               ("content" ->
@@ -582,7 +585,7 @@ trait EvalHandler {
             sessionId,
             PortableAgentBiCnxn(readCnxn, writeCnxn),
             profileData
-          )), _, _)))), _)) => {
+          )), _, _, _)))), _)) => {
             // Launching introduction behavior
             bFactoryMgr().commenceInstance(
               introductionRecipientCnxn,
@@ -648,7 +651,7 @@ trait EvalHandler {
                   case None => ()
                   case Some(mTT.RBoundHM(Some( mTT.Ground(v)), _)) => {
                     val newBiCnxnList = v match {
-                      case PostedExpr( (PostedExpr(previousBiCnxnListStr: String), _, _) ) => {
+                      case PostedExpr( (PostedExpr(previousBiCnxnListStr: String), _, _, _) ) => {
                         nodeAgentBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
                       }
                       case Bottom => List(nodeAgentBiCnxn)
@@ -728,9 +731,9 @@ trait EvalHandler {
       val capURI = new URI("agent://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
-      val (erql, erspl) = agentMgr().makePolarizedPair()
+      //val (erql, erspl) = agentMgr().makePolarizedPair()
       // See if the email is already there
-      agentMgr().read( erql, erspl )(
+      agentMgr().read(
         jsonBlobLabel,
         List(capSelfCnxn),
         (optRsrc: Option[mTT.Resource]) => {
@@ -791,7 +794,7 @@ trait EvalHandler {
         rsrc match {
           // At this point the cap is good, but we have to verify the pw mac
           case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(pwmac: String), _, _)))), _)) => {
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(pwmac: String), _, _, _)))), _)) => {
             BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
             val macInstance = Mac.getInstance("HmacSHA256")
             macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
@@ -815,7 +818,7 @@ trait EvalHandler {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
-                      case PostedExpr( (PostedExpr(labelList: String), _, _) ) => {
+                      case PostedExpr( (PostedExpr(labelList: String), _, _, _) ) => {
                         // TODO: Replace notification block below with behavior code
                         val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
                         listenIntroductionNotification("agent-session://" + cap, aliasCnxn)
@@ -854,7 +857,7 @@ trait EvalHandler {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
-                      case PostedExpr( (PostedExpr(biCnxnList: String), _, _) ) => {
+                      case PostedExpr( (PostedExpr(biCnxnList: String), _, _, _) ) => {
                         val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
                         // Get the profile of each target in the list
                         biCnxnListObj.map((biCnxn: PortableAgentBiCnxn) => {
@@ -871,7 +874,7 @@ trait EvalHandler {
                                 case None => ()
                                 case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                                   v match {
-                                    case PostedExpr( (PostedExpr(jsonBlob: String), _, _) ) => {
+                                    case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
                                       CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
                                         ("msgType" -> "connectionProfileResponse") ~
                                         ("content" -> (
@@ -914,7 +917,7 @@ trait EvalHandler {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
-                      case PostedExpr((PostedExpr(defaultAlias: String), _, _) ) => {
+                      case PostedExpr((PostedExpr(defaultAlias: String), _, _, _) ) => {
                         val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
                         agentMgr().fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList, defaultAlias))
                       }
@@ -934,7 +937,7 @@ trait EvalHandler {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
-                      case PostedExpr((PostedExpr(aliasList: String), _, _) ) => {
+                      case PostedExpr( (PostedExpr(aliasList: String), _, _, _) ) => {
                         agentMgr().fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch(jsonBlob, aliasList))
                       }
                       case Bottom => {
@@ -953,7 +956,7 @@ trait EvalHandler {
                   case None => ()
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
-                      case PostedExpr( (PostedExpr(jsonBlob: String), _, _) ) => {
+                      case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
                         val (erql, erspl) = agentMgr().makePolarizedPair()
                         agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
                       }
@@ -1013,9 +1016,9 @@ trait EvalHandler {
         // don't need mac of cap; need to verify email is on our network
         val emailURI = new URI("emailhash://" + cap)
         val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
-        val (erql, erspl) = agentMgr().makePolarizedPair()
-        BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
-        agentMgr().read(erql, erspl)(
+        //val (erql, erspl) = agentMgr().makePolarizedPair()
+        //BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
+        agentMgr().read(
           emailLabel,
           List(emailSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
@@ -1032,7 +1035,8 @@ trait EvalHandler {
                       )
                     )))
                   }
-                  case PostedExpr( (PostedExpr(cap: String), _, _) ) => {
+                  case PostedExpr( (PostedExpr(cap: String), _, _, _) ) => {
+                    BasicLogService.tweet("secureLogin | Logging in with cap = " + cap);
                     login(cap)
                   }
                 }
@@ -1089,7 +1093,7 @@ trait EvalHandler {
       (optRsrc: Option[mTT.Resource]) => {
         optRsrc match {
           case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(postedStr: String), _, _)))), _)) => {
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(postedStr: String), _, _, _)))), _)) => {
             val (erql, erspl) = agentMgr().makePolarizedPair()
             agentMgr().put(erql, erspl)(
               jsonBlobLabel,
@@ -1161,7 +1165,7 @@ trait EvalHandler {
 
     def SOP: Parser[Set[List[Path]]] = Empty | Path | Product | Sum
     
-    def sumOfProductsToFilterSet(sop: Set[List[Path]]): Set[CnxnCtxtLabel[String, String, String]] = {
+    def sumOfProductsToFilterSet(sop: Set[List[Path]]): Set[CnxnCtxtLabel[String, String, String] with Factual] = {
       val filterSet = for (prod <- sop) yield {
         // List(List("Greg", "Biosim", "Work"), List("Personal"))
         // => fromTermString("all(vWork(vBiosim(vGreg(_))), vPersonal(_))").get
@@ -1170,12 +1174,12 @@ trait EvalHandler {
             val (l2, r2) = acc
             (l2 + "v" + tag + "(", ")" + r2)
           })
-          l + "_" + r        
-        }).mkString(",") + ")").get
+          l + "VAR" + UUID.randomUUID.toString.substring(0,8) + r
+        }).mkString(",") + ")").get.asInstanceOf[CnxnCtxtLabel[String, String, String] with Factual]
       }
       filterSet.isEmpty match {
         // Default to the "match everything" filter
-        case true => Set(new CnxnCtxtLeaf[String,String,String](Right("_")))
+        case true => sumOfProductsToFilterSet(Set(List(List())))
         case false => filterSet
       }
     }
@@ -1183,39 +1187,80 @@ trait EvalHandler {
     def apply(s: String) = sumOfProductsToFilterSet(parseAll(SOP, s).get)
   }
 
-  def extractFiltersAndCnxns(exprContent: JObject) = {
+  def extractFiltersAndCnxns(exprContent: JObject): 
+      Option[(Set[CnxnCtxtLabel[String, String, String] with Factual], List[PortableAgentCnxn])] = {
     BasicLogService.tweet("Extracting from " + compact(render(exprContent)))
-    
-    val label = new SumOfProducts()((exprContent \ "label").extract[String])
-    val cnxns = (exprContent \ "cnxns") match {
-      case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
+    try {
+      val labelSet = new SumOfProducts()((exprContent \ "label").extract[String])
+      val cnxns = (exprContent \ "cnxns") match {
+        case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
+      }
+      Some((labelSet, cnxns))
+    } catch {
+      case _: Throwable => None
     }
-    (label, cnxns)
   }
 
-  // Renders a ccl of the form "all(va('_), vb(vc(vd('_))))"
-  // as the kind of json filter we get from the UI
-  def cclToUI(ccl: CnxnCtxtLabel[String,String,String]): (String, String) = {
+  def extractMetadata(ccl: CnxnCtxtLabel[String,String,String]):
+    (CnxnCtxtLabel[String,String,String] with Factual, String, Either[String, String], String) = 
+  {
     def cclToPath(ccl: CnxnCtxtLabel[String,String,String]): List[String] = {
       ccl match {
-        case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right("_")))) => List(tag.substring(1))
+        case CnxnCtxtBranch(tag, List(CnxnCtxtLeaf(Right(_)))) => List(tag.substring(1))
         case CnxnCtxtBranch(tag, children) => tag.substring(1) :: cclToPath(children(0))
+        case CnxnCtxtLeaf(Right(_)) => List()
       }
     }
+    // Assume ccl is of the form user(p1(all(...)), p2(uid(...)), p3(new(_)|old(_)), p4(nil(_)))
     ccl match {
-      case CnxnCtxtBranch("all", uid :: factuals) => {
-        val uidStr = uid match {
-          case CnxnCtxtBranch(_, List(CnxnCtxtLeaf(Left(uidStr: String)))) => uidStr
-          case CnxnCtxtBranch(_, List(CnxnCtxtLeaf(Right(uidVar: String)))) => uidVar
+      case CnxnCtxtBranch("user", 
+        CnxnCtxtBranch("p1", filter :: Nil) :: 
+        CnxnCtxtBranch("p2", uid :: Nil) ::
+        CnxnCtxtBranch("p3", age :: Nil) :: _
+      ) => (
+        filter,
+        filter match {
+          case CnxnCtxtBranch("all", factuals) => {
+            "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")"
+          }
+        },
+        uid match {
+          case CnxnCtxtBranch("uid", factuals) => factuals(0) match {
+            case CnxnCtxtLeaf(tag: Either[String, String]) => tag
+          }
+        },
+        age match {
+          case CnxnCtxtBranch(ageStr: String, _) => ageStr
         }
-        (uidStr, "all(" + factuals.map("[" + cclToPath(_).reverse.mkString(",") + "]").mkString(",") + ")")
+      )
+    }
+  }
+
+  def subst(
+    ccl: CnxnCtxtLabel[String, String, String] with Factual,
+    bindings: Map[String, CnxnCtxtLabel[String, String, String] with Factual]
+  ) : CnxnCtxtLabel[String, String, String] with Factual = {
+    import com.biosimilarity.lift.lib.term.conversion._
+    import com.biosimilarity.lift.model.store._
+    import com.biosimilarity.lift.lib._
+    object CCLSubst extends CnxnSubstitution[String,String,String] with CnxnString[String,String,String]
+    CCLSubst.substitute(ccl)(bindings)
+  }
+  
+  def toTermString(ccl: CnxnCtxtLabel[String, String, String] with Factual): String = {
+    ccl match {
+      case CnxnCtxtBranch(functor, factuals) => {
+        functor + "(" + factuals.map(toTermString).mkString(",") + ")"
       }
+      case CnxnCtxtLeaf(Left(s)) => compact(render(JString(s)))
+      case CnxnCtxtLeaf(Right(s)) => s
     }
   }
 
   def evalSubscribeRequest(json: JValue) : Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
     import com.protegra_ati.agentservices.store._
+    import com.biosimilarity.evaluator.prolog.PrologDSL._
     
     object act extends AgentCnxnTypes {}
 
@@ -1225,173 +1270,256 @@ trait EvalHandler {
     
     val expression = (content \ "expression")
     val ec = (expression \ "content").asInstanceOf[JObject]
-    val (filters, cnxns) = extractFiltersAndCnxns(ec)
-    val exprType = (expression \ "msgType").extract[String]
-    exprType match {
-      case "feedExpr" => {
-        BasicLogService.tweet("evalSubscribeRequest | feedExpr")
-        val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
-          println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
-          BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
-          optRsrc match {
-            case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
-            ))), _)) => {
-              val (uid, jsonFilter) = cclToUI(filter)
-              val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-              val content =
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(postedStr)) ~
-                ("connection" -> (
-                  ("source" -> agentCnxn.src.toString) ~
-                  ("label" -> agentCnxn.label) ~
-                  ("target" -> agentCnxn.trgt.toString)
-                )) ~
-                ("filter" -> jsonFilter)
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
-              val content = 
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List[String]())
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case _ => throw new Exception("Unrecognized resource: " + optRsrc)
-          }
-        }
-        println("evalSubscribeRequest | feedExpr: calling feed")
-        BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-        val uidCCL = (try {
-          fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
-        } catch {
-          case _: Throwable => fromTermString("vUID(UID)").get
-        }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
-        val uidFilters = filters.map((filter) => filter match {
-          case CnxnCtxtBranch(tag, children) => 
-            new CnxnCtxtBranch[String,String,String](
-              tag,
-              uidCCL +: children
-            )
-          case leaf@CnxnCtxtLeaf(Right(_)) => leaf
-        })
-        for (filter <- uidFilters) {
-          println("evalSubscribeRequest | feedExpr: filter = " + filter)
-          BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
-          agentMgr().feed(filter, cnxns, onFeed)
-        }
-      }
-      case "scoreExpr" => {
-        BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
-        val onScore: Option[mTT.Resource] => Unit = (optRsrc) => {
-          BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
-          optRsrc match {
-            case None => ()
-            case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
-              (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn)
-            ))), _)) => {
-              val (uid, jsonFilter) = cclToUI(filter)
-              val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-              val content =
-                ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(postedStr)) ~
-                ("connection" -> (
-                  ("source" -> agentCnxn.src.toString) ~
-                  ("label" -> agentCnxn.label) ~
-                  ("target" -> agentCnxn.trgt.toString)
-                )) ~
-                ("filter" -> jsonFilter)
-              val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
-            }
-            case _ => throw new Exception("Unrecognized resource: " + optRsrc)
-          }
-        }
-        val staff = (expression \ "content" \ "staff") match {
-          case JObject(List((which: String, vals@JArray(_)))) => {
-            // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
-            which match {
-              case "a" => vals match {
-                case JArray(arr: List[JObject]) => Left(arr.map(extractCnxn _))
-              }
-              case "b" => Right(
-                vals.extract[List[String]].map((t: String) => 
-                  fromTermString(t).getOrElse(throw new Exception("Couldn't parse staff: " + json))
-                )
-              )
-              case _ => throw new Exception("Couldn't parse staff: " + json)
-            }
-          }
-          case _ => throw new Exception("Couldn't parse staff: " + json)
-        }
-        BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-        val uidCCL = (try {
-          fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
-        } catch {
-          case _: Throwable => fromTermString("vUID(UID)").get
-        }).asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
-        val uidFilters = filters.map((filter) => filter match {
-          case CnxnCtxtBranch(tag, children) => 
-            new CnxnCtxtBranch[String,String,String](
-              tag,
-              uidCCL +: children
-            )
-          case leaf@CnxnCtxtLeaf(Right(_)) => leaf
-        })
-        for (filter <- uidFilters) {
-          agentMgr().score(filter, cnxns, staff, onScore)
-        }
-      }
-      case "insertContent" => {
-        println("evalSubscribeRequest | insertContent")
-        BasicLogService.tweet("evalSubscribeRequest | insertContent")
-        BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
-        val value = (ec \ "value").extract[String]
-        val uidCCL = fromTermString("vUID(\"" + (ec \ "uid").extract[String] + "\")").get
-          .asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual]
-        val uidFilters = filters.map((filter) => filter match {
-          case CnxnCtxtBranch(tag, children) => 
-            new CnxnCtxtBranch[String,String,String](
-              tag,
-              uidCCL +: children
-            )
-        })
-        for (filter <- uidFilters) {
-          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
-          agentMgr().post(
-            filter,
-            cnxns,
-            value,
-            (optRsrc: Option[mTT.Resource]) => {
-              println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
-              BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
-              optRsrc match {
-                case None => ()
-                case Some(_) => {
-                  // evalComplete, empty seq of posts
-                  val content =
-                    ("sessionURI" -> sessionURIStr) ~
-                    ("pageOfPosts" -> List[String]())
-                  val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-                  println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                  BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+    val optFiltersAndCnxns = extractFiltersAndCnxns(ec)
+    if (optFiltersAndCnxns == None) {
+      CometActorMapper.cometMessage(
+        sessionURIStr, 
+        """{"msgType":"evalSubscribeError","content":{"reason":"Invalid label."}}"""
+      )
+    } else {
+      val (filters, cnxns) = optFiltersAndCnxns.get
+      val exprType = (expression \ "msgType").extract[String]
+      exprType match {
+        case "feedExpr" => {
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr")
+          val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
+            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
+            BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+            optRsrc match {
+              case None => ()
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(tuple))), _)) => {
+                val (postedStr, filter, cnxn, bindings) = tuple match {
+                  case (a, b, c, d) => (
+                    a match {
+                      case PostedExpr(postedStr: String) => postedStr
+                      case _ => throw new Exception("Expected PostedExpr(postedStr: String)")
+                    },
+                    b match {
+                      case filter: CnxnCtxtLabel[String,String,String] with Factual => filter
+                      case _ => throw new Exception("Expected CnxnCtxtLabel[String,String,String] with Factual")
+                    },
+                    c,
+                    d.asInstanceOf[mTT.RBoundAList]
+                  )
+                  case _ => throw new Exception("Wrong number of elements")
                 }
-                case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+                val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
+                val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
+                println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                val arr = parse(postedStr).asInstanceOf[JArray].arr
+                val json = compact(render(arr(0)))
+                val originalFilter = fromTermString(arr(1).asInstanceOf[JString].s).get.asInstanceOf[
+                  CnxnCtxtLabel[String,String,String] with Factual
+                ]
+                /*
+                val originalFilter = subst(
+                  cclFilter,
+                  Map(bindings.assoc.get.asInstanceOf[
+                    List[(String, CnxnCtxtLabel[String,String,String] with Factual)]
+                  ]:_*)
+                )
+                */
+                agentMgr().post(
+                  'user(
+                    'p1(originalFilter),
+                    // TODO(mike): temporary workaround until bindings bug is fixed.
+                    'p2('uid((arr(0) \ "uid").extract[String])),
+                    'p3('old("_")),
+                    'p4('nil("_"))
+                  ),
+                  List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
+                  postedStr,
+                  (optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
+                )
+
+                val content =
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List(json)) ~
+                  ("connection" -> (
+                    ("source" -> agentCnxn.src.toString) ~
+                    ("label" -> agentCnxn.label) ~
+                    ("target" -> agentCnxn.trgt.toString)
+                  )) ~
+                  ("filter" -> jsonFilter)
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
+                val content = 
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List[String]())
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+            }
+          }
+          // TODO(mike): Workaround until bindings bug is fixed
+          val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
+            println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
+            BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
+            optRsrc match {
+              case None => ()
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
+              ))), _)) => {
+                val arr = parse(postedStr).asInstanceOf[JArray].arr
+                val json = compact(render(arr(0)))
+                val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
+                val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
+                val content =
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List(json)) ~
+                  ("connection" -> (
+                    ("source" -> agentCnxn.src.toString) ~
+                    ("label" -> agentCnxn.label) ~
+                    ("target" -> agentCnxn.trgt.toString)
+                  )) ~
+                  ("filter" -> jsonFilter)
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
+                val content = 
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List[String]())
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+            }
+          }
+
+          println("evalSubscribeRequest | feedExpr: calling feed")
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
+          val uid = try {
+            'uid((ec \ "uid").extract[String])
+          } catch {
+            case _: Throwable => 'uid("UID")
+          }
+          for (filter <- filters) {
+            println("evalSubscribeRequest | feedExpr: filter = " + filter)
+            BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
+            agentMgr().feed(
+              'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), 
+              cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
+              onFeed
+            )
+            agentMgr().read(
+              'user('p1(filter), 'p2(uid), 'p3('old("_")), 'p4('nil("_"))), 
+              cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
+              onRead
+            )
+          }
+        }
+        case "scoreExpr" => {
+          BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
+          val onScore: Option[mTT.Resource] => Unit = (optRsrc) => {
+            BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
+            optRsrc match {
+              case None => ()
+              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
+              ))), _)) => {
+                val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
+                val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
+                val arr = parse(postedStr).asInstanceOf[JArray].arr
+                val json = compact(render(arr(0)))
+                val content =
+                  ("sessionURI" -> sessionURIStr) ~
+                  ("pageOfPosts" -> List(json)) ~
+                  ("connection" -> (
+                    ("source" -> agentCnxn.src.toString) ~
+                    ("label" -> agentCnxn.label) ~
+                    ("target" -> agentCnxn.trgt.toString)
+                  )) ~
+                  ("filter" -> jsonFilter)
+                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+                BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
+                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+              case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+            }
+          }
+          val staff = (expression \ "content" \ "staff") match {
+            case JObject(List((which: String, vals@JArray(_)))) => {
+              // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
+              which match {
+                case "a" => vals match {
+                  case JArray(arr: List[JObject]) => Left(arr.map(extractCnxn _))
+                }
+                case "b" => Right(
+                  vals.extract[List[String]].map((t: String) => 
+                    fromTermString(t).getOrElse(throw new Exception("Couldn't parse staff: " + json))
+                  )
+                )
+                case _ => throw new Exception("Couldn't parse staff: " + json)
               }
             }
-          )
+            case _ => throw new Exception("Couldn't parse staff: " + json)
+          }
+          BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
+          val uid = try {
+            'uid((ec \ "uid").extract[String])
+          } catch {
+            case _: Throwable => 'uid("UID")
+          }
+          for (filter <- filters) {
+            agentMgr().score(
+              'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), 
+              cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
+              staff, 
+              onScore
+            )
+            // TODO(mike): Make a read version of score, implement history for score.
+          }
         }
-      }
-      case _ => {
-        throw new Exception("Unrecognized request: " + compact(render(json)))
+        case "insertContent" => {
+          println("evalSubscribeRequest | insertContent")
+          BasicLogService.tweet("evalSubscribeRequest | insertContent")
+          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
+          val value = (ec \ "value").extract[String]
+          val uid = 'uid(Ground((ec \ "uid").extract[String]))
+
+          for (filter <- filters) {
+            BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
+            agentMgr().post(
+              'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
+              cnxns,
+              "[" + value + ", " + compact(render(JString(toTermString(filter)))) + "]",
+              (optRsrc: Option[mTT.Resource]) => {
+                println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+                BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+                optRsrc match {
+                  case None => ()
+                  case Some(_) => {
+                    // evalComplete, empty seq of posts
+                    val content =
+                      ("sessionURI" -> sessionURIStr) ~
+                      ("pageOfPosts" -> List[String]())
+                    val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+                    println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                    BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                    CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+                  }
+                  case _ => throw new Exception("Unrecognized resource: " + optRsrc)
+                }
+              }
+            )
+          }
+        }
+        case _ => {
+          throw new Exception("Unrecognized request: " + compact(render(json)))
+        }
       }
     }
   }  
@@ -1556,5 +1684,33 @@ trait EvalHandler {
         optRsrc => println( "onCommencement five | " + optRsrc )
       }
     )
+  }
+  
+  def backupRequest(json: JValue) : Unit = {
+    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    agentMgr().runProcess("mongodump", None, List(), (optRsrc) => {
+      println("backupRequest: optRsrc = " + optRsrc)
+      BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
+      CometActorMapper.cometMessage(sessionURI, compact(render(
+        ("msgType" -> "backupResponse")~
+        ("content" ->
+          ("sessionURI" -> sessionURI)
+        )
+      )))
+    })
+  }
+
+  def restoreRequest(json: JValue) : Unit = {
+    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    agentMgr().runProcess("mongorestore", None, List(), (optRsrc) => {
+      println("restoreRequest: optRsrc = " + optRsrc)
+      BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
+      CometActorMapper.cometMessage(sessionURI, compact(render(
+        ("msgType" -> "restoreResponse")~
+        ("content" ->
+          ("sessionURI" -> sessionURI)
+        )
+      )))
+    })
   }
 }

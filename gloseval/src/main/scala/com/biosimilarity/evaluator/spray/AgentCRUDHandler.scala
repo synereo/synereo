@@ -13,6 +13,7 @@ import com.protegra_ati.agentservices.store._
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.evaluator.msgs.agent.crud._
+import com.biosimilarity.evaluator.prolog.PrologDSL._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 
@@ -335,7 +336,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
 
         val prevAliasList = v match {
-          case PostedExpr( ( PostedExpr( prevAliasListStr : String ), _, _ ) ) =>
+          case PostedExpr( ( PostedExpr( prevAliasListStr : String ), _, _, _ ) ) =>
             Serializer.deserialize[List[String]]( prevAliasListStr )
           case Bottom => Nil
         }
@@ -370,7 +371,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         val sessionURIStr = msg.sessionURI.toString
 
         val aliasList = v match {
-          case PostedExpr( ( PostedExpr( aliasListStr : String ), _, _ ) ) =>
+          case PostedExpr( ( PostedExpr( aliasListStr : String ), _, _, _ ) ) =>
             Serializer.deserialize[List[String]]( aliasListStr )
           case Bottom => Nil
         }
@@ -406,7 +407,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         val sessionURIStr = msg.sessionURI.toString
 
         v match {
-          case PostedExpr( ( PostedExpr( defaultAlias : String ), _, _ ) ) =>
+          case PostedExpr( ( PostedExpr( defaultAlias : String ), _, _, _ ) ) =>
             CometActorMapper.cometMessage( sessionURIStr, compact( render(
               ( "msgType" -> "getDefaultAliasResponse" ) ~
               ( "content" ->
@@ -485,7 +486,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( (PostedExpr( previousExternalIdsList : List[ID] ), _, _) ) => {
+            case PostedExpr( (PostedExpr( previousExternalIdsList : List[ID] ), _, _, _) ) => {
               val newExternalIdsList = previousExternalIdsList ++ msg.ids
 
               BasicLogService.tweet(
@@ -536,7 +537,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( (PostedExpr( previousExternalIdsList : List[ID] ), _, _) ) => {
+            case PostedExpr( (PostedExpr( previousExternalIdsList : List[ID] ), _, _, _) ) => {
               val newExternalIdsList = previousExternalIdsList.filterNot( msg.ids.contains )
 
               BasicLogService.tweet(
@@ -628,7 +629,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( (PostedExpr( previousBiCnxnListStr : String ), _, _) ) => {
+            case PostedExpr( (PostedExpr( previousBiCnxnListStr : String ), _, _, _) ) => {
               // TODO: Deserialize string
               // TODO: Filter BiCnxns based on passed in Cnxns
               // TODO: Serialize new BiCnxns list
@@ -668,7 +669,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val sessionURIStr = msg.sessionURI.toString
 
           val biCnxnList = v match {
-            case PostedExpr( (PostedExpr( biCnxnListStr : String ), _, _) ) => {
+            case PostedExpr( (PostedExpr( biCnxnListStr : String ), _, _, _) ) => {
               Serializer.deserialize[List[PortableAgentBiCnxn]]( biCnxnListStr )
             }
             case Bottom => Nil
@@ -724,7 +725,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           }
 
           v match {
-            case PostedExpr( (PostedExpr( previousLabelList : String ), _, _) ) => {
+            case PostedExpr( (PostedExpr( previousLabelList : String ), _, _, _) ) => {
               val newLabelList = compact(render(parse(previousLabelList) ++ msg.labels.map(_.toString.replace("'",""))))
               BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )
               agentMgr().put[String](
@@ -828,7 +829,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val sessionURIStr = msg.sessionURI.toString
 
           val labelList: JArray = v match {
-            case PostedExpr( (PostedExpr( labelList : String ), _, _) ) =>
+            case PostedExpr( (PostedExpr( labelList : String ), _, _, _) ) =>
               parse(labelList).asInstanceOf[JArray]
             case Bottom => Nil
           }
@@ -895,7 +896,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           val sessionURIStr = msg.sessionURI.toString
 
           v match {
-            case PostedExpr( (PostedExpr( defaultLabel : CnxnCtxtLabel[String,String,String] ), _, _) ) => {
+            case PostedExpr( (PostedExpr( defaultLabel : CnxnCtxtLabel[String,String,String] ), _, _, _) ) => {
               CometActorMapper.cometMessage(sessionURIStr, compact( render(
                 ( "msgType" -> "getAliasDefaultLabelResponse" ) ~
                 ( "content" ->
@@ -962,7 +963,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
     for (filter <- msg.filter) {
-      agentMgr().cancel(filter, msg.connections, onCancel)
+      agentMgr().cancel('user('p1(filter),'p2('uid("UID")),'p3('new("_")),'p4('nil("_"))), msg.connections, onCancel)
     }
   }
 }

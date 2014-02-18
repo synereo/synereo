@@ -1,5 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
+import com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer
 import spray.can.server.SprayCanHttpServerApp
 import akka.actor.Props
 
@@ -7,6 +8,11 @@ import akka.actor.Props
 object Boot extends App
  with SprayCanHttpServerApp
  with Serializable {
+
+  BFactoryMapInitializer.makeMap()
+
+  //TODO: Remove sleep below once race condition is fixed
+  Thread.sleep(3000)
 
    // create and start our service actor
    @transient

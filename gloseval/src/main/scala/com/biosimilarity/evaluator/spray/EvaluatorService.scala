@@ -211,7 +211,10 @@ trait EvaluatorService extends HttpService
     ("evalSubscribeCancelRequest", evalSubscribeCancelRequest),
     // Introduction Protocol
     ("beginIntroductionRequest", beginIntroductionRequest),
-    ("introductionConfirmationRequest", introductionConfirmationRequest)
+    ("introductionConfirmationRequest", introductionConfirmationRequest),
+    // Database dump/restore
+    ("backupRequest", backupRequest),
+    ("restoreRequest", restoreRequest)
   )
 
   @transient
@@ -287,7 +290,10 @@ trait EvaluatorService extends HttpService
         }
       }
     } ~
-    pathPrefix("static" / PathElement) { dir =>
-      getFromResourceDirectory(dir)
+    pathPrefix("static" / PathElement) { path =>
+      getFromFile(path)
+    } ~
+    pathPrefix( "agentui" ) {
+      getFromDirectory( "./agentui" )
     }
 }
