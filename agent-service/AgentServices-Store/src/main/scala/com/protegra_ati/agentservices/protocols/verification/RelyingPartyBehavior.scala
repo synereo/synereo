@@ -68,9 +68,9 @@ trait RelyingPartyBehaviorT extends ProtocolBehaviorT with Serializable {
                 )
               )
 
-              val agntVrfrWr =
-                acT.AgentCnxn( vrfrOC.src, vrfrOC.label, vrfrOC.trgt )
               val agntVrfrRd =
+                acT.AgentCnxn( vrfrOC.src, vrfrOC.label, vrfrOC.trgt )
+              val agntVrfrWr =
                 acT.AgentCnxn( vrfrOC.trgt, vrfrOC.label, vrfrOC.src )
               val verifyRq = 
                 Verify( sidOC, cidOC, pacCnxnRd, clmOC )
