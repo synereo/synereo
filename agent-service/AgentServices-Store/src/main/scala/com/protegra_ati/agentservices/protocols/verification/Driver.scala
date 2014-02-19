@@ -229,11 +229,29 @@ package usage {
     }
   }    
 
+  object RunParameters extends Serializable {
+    def claimantRunArgs(
+      simCtxt : SimulationContext
+    ) : ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) = {
+      ( List[PortableAgentCnxn]( simCtxt.glosStub.claimantToGLoS ), Nil )
+    }
+    def verifierRunArgs(
+      simCtxt : SimulationContext
+    ) : ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) = {
+      ( List[PortableAgentCnxn]( simCtxt.glosStub.verifierToGLoS, simCtxt.c2v ), Nil )
+    }
+    def relyingPartyRunArgs(
+      simCtxt : SimulationContext
+    ) : ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) = {
+      ( List[PortableAgentCnxn]( simCtxt.glosStub.relyingPartyToGLoS, simCtxt.c2r ), Nil )
+    }
+  }
+
   case class GLoSStub(
     override val claimantToGLoS : PortableAgentCnxn,
     override val verifierToGLoS : PortableAgentCnxn,
     override val relyingPartyToGLoS : PortableAgentCnxn
-  ) extends GLoSStubT 
+  ) extends GLoSStubT  
 
   case class SimulationContext(
     node : StdEvalChannel,
@@ -476,7 +494,8 @@ package usage {
 
     trait BehaviorTestStreamT[Behavior <: ProtocolBehaviorT] {
       def behaviorStream : Stream[Behavior]
-      def behaviorToGLoSIndex : Int            
+      def behaviorToGLoSIndex : Int
+      def behaviorRunArgsFn : SimulationContext => ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] )
 
       val _behaviorToGLoS : HashMap[Int,Stream[List[PortableAgentCnxn]]] = 
         new HashMap[Int,Stream[List[PortableAgentCnxn]]]()
@@ -525,24 +544,21 @@ package usage {
               ( claim : CnxnCtxtLabel[String,String,String] ) => {
                 val simCtxt =
                   SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
+                val ( cnxns, filters ) = behaviorRunArgsFn( simCtxt )
+
                 BasicLogService.tweet(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                     + "\ninvoking run on " + bhvr
                     + "\nnode: " + node
-                    + "\ncnxns: " + List[PortableAgentCnxn]( glosStub.claimantToGLoS )
+                    + "\ncnxns: " + cnxns
+                    + "\nfilters: " + filters
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   )
                 )
-                spawn { 
-                  bhvr.run(
-                    node,
-                    List[PortableAgentCnxn](
-                      glosStub.claimantToGLoS
-                    ),
-                    List[CnxnCtxtLabel[String, String, String]]( )
-                  )
-                }                
+                
+                spawn { bhvr.run( node, cnxns, filters ) }
+
                 simCtxt
               }
             )          
@@ -622,17 +638,23 @@ package usage {
 
     case class ClaimantTestStream( 
       override val behaviorToGLoSIndex : Int = 1,
-      override val behaviorStream : Stream[ClaimantBehavior] = claimantStrm
+      override val behaviorStream : Stream[ClaimantBehavior] = claimantStrm,
+      override val behaviorRunArgsFn : SimulationContext => ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) =
+        RunParameters.claimantRunArgs
     ) extends BehaviorTestStreamT[ClaimantBehavior]
 
     case class VerifierTestStream( 
       override val behaviorToGLoSIndex : Int = 2,
-      override val behaviorStream : Stream[VerifierBehavior] = verifierStrm
+      override val behaviorStream : Stream[VerifierBehavior] = verifierStrm,
+      override val behaviorRunArgsFn : SimulationContext => ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) =
+        RunParameters.verifierRunArgs
     ) extends BehaviorTestStreamT[VerifierBehavior]
 
     case class RelyingPartyTestStream( 
       override val behaviorToGLoSIndex : Int = 3,
-      override val behaviorStream : Stream[RelyingPartyBehavior] = relyingPartyStrm
+      override val behaviorStream : Stream[RelyingPartyBehavior] = relyingPartyStrm,
+      override val behaviorRunArgsFn : SimulationContext => ( List[PortableAgentCnxn], List[CnxnCtxtLabel[String,String,String]] ) =
+        RunParameters.relyingPartyRunArgs
     ) extends BehaviorTestStreamT[RelyingPartyBehavior]
     
     def verificationEnsembleTestStrm(
@@ -877,10 +899,53 @@ package usage {
           val ln = readLine() // Note: this is blocking.
           if ( ln.contains( "y" ) ) {            
             // Now run the test
+            val simCtxt2 =
+              VerificationDriver.simulateClaimantAllowVerificationStep(
+                simCtxt1
+              )
+            if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+            println( "Proceed to next step? " )
+            val ln = readLine() // Note: this is blocking.
+            if ( ln.contains( "y" ) ) {            
+              // Now run the test
+              val simCtxt3 =
+                VerificationDriver.simulateRelyingPartyVerifyStep(
+                  simCtxt2
+                )
+              if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+              println( "Proceed to next step? " )
+              val ln = readLine() // Note: this is blocking.
+              if ( ln.contains( "y" ) ) {            
+                gs.waitForVerifierVerificationNotification(
+                  simCtxt3.node,
+                  { vmsg => println( "witnessed claim: " + vmsg ) }
+                )
+                gs.waitForRelyingPartyVerificationNotification(
+                  simCtxt3.node,
+                  { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+                )
+              }
+            }
           }
         }
         else {
           // Just run the test
+          val simCtxt2 =
+            VerificationDriver.simulateClaimantAllowVerificationStep(
+              simCtxt1
+            )
+          val simCtxt3 =
+            VerificationDriver.simulateRelyingPartyVerifyStep(
+              simCtxt2
+            )          
+          gs.waitForVerifierVerificationNotification(
+            simCtxt3.node,
+            { vmsg => println( "witnessed claim: " + vmsg ) }
+          )
+          gs.waitForRelyingPartyVerificationNotification(
+            simCtxt3.node,
+            { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+          )
         }
       }
     }
