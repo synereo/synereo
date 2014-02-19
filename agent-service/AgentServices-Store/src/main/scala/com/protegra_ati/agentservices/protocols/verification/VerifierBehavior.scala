@@ -40,22 +40,74 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
 
     for( cnxnRd <- agntCnxns ) {
       val cnxnWr = acT.AgentCnxn( cnxnRd.src, cnxnRd.label, cnxnRd.trgt )
+      BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\nwaiting for allow verification request on: " 
+            + "\ncnxn: " + cnxnRd
+            + "\nlabel: " + AllowVerification.toLabel
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+      )    
       reset {
         for( eAllowV <- node.subscribe( cnxnRd )( AllowVerification.toLabel ) ) {
           rsrc2V[VerificationMessage]( eAllowV ) match {
             case Left( AllowVerification( sidAV, cidAV, rpAV, clmAV ) ) => { 
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived allow verification request: " + eAllowV
+                  + "\ncnxn: " + cnxnRd
+                  + "\nlabel: " + AllowVerification.toLabel
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+
               val agntRPRd =
                 acT.AgentCnxn( rpAV.src, rpAV.label, rpAV.trgt )
               val agntRPWr =
                 acT.AgentCnxn( rpAV.trgt, rpAV.label, rpAV.src )
+              val acknowledgment =
+                AckAllowVerification( sidAV, cidAV, rpAV, clmAV )
+
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\npublishing AllowVerification acknowledgment: " + acknowledgment
+                  + "\n on cnxn: " + cnxnWr
+                  + "\n label: " + AllowVerification.toLabel( sidAV )
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
 
               node.publish( cnxnWr )( 
                 AckAllowVerification.toLabel( sidAV ),
-                AckAllowVerification( sidAV, cidAV, rpAV, clmAV )
+                acknowledgment
               )
+
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nwaiting for verification request on: " 
+                  + "\ncnxn: " + agntRPRd
+                  + "\nlabel: " + Verify.toLabel
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )    
+
               for( eVerify <- node.subscribe( agntRPRd )( Verify.toLabel ) ) {
                 rsrc2V[VerificationMessage]( eVerify ) match {
                   case Left( Verify( sidV, cidV, clmntV, clmV ) ) => { 
+                    BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nreceived verification request: " + eVerify
+                        + "\ncnxn: " + agntRPRd
+                        + "\nlabel: " + Verify.toLabel
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
+
                     if (
                       sidV.equals( sidAV ) && cidV.equals( cidAV )
                       && clmV.equals( clmAV ) // BUGBUG : lgm -- this is only a first
@@ -64,44 +116,107 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                                               // of prolog here to
                                               // prove the claim.
                     ) {
-                      node.publish( agntRPWr )(
-                        Verification.toLabel( sidAV ),
+                      val verification = 
                         Verification( sidV, cidV, clmntV, clmV, "claimVerified( true )".toLabel )
-                      )
-                      node.publish( vrfr2GLoSWr )(
-                        VerificationNotification.toLabel( sidAV ),
+                      val notification =
                         VerificationNotification(
                           sidV, cidV, clmntV, clmV,
                           "claimVerified( true )".toLabel
                         )
+                      
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nverification request matches permission parameters" 
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\npublishing Verification testimony: " + verification
+                          + "\n on cnxn: " + agntRPWr
+                          + "\n label: " + Verification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+
+                      node.publish( agntRPWr )(
+                        Verification.toLabel( sidAV ),
+                        verification
+                      )
+
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\npublishing VerificationNotification: " + notification
+                          + "\n on cnxn: " + agntRPWr
+                          + "\n label: " + VerificationNotification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+
+                      node.publish( vrfr2GLoSWr )(
+                        VerificationNotification.toLabel( sidAV ),
+                        notification
                       )
                     }
                     else {
-                      node.publish( agntRPWr )(
-                        Verification.toLabel( sidAV ),
+                      val verification =
                         Verification(
                           sidV, cidV, clmntV, clmV,
                           "protocolError(\"unexpected verify message data\")".toLabel 
                         )
-                      )
-                      node.publish( vrfr2GLoSWr )(
-                        VerificationNotification.toLabel( sidAV ),
+                      val notification =
                         VerificationNotification(
                           sidV, cidV, clmntV, clmV,
                           "protocolError(\"unexpected verify message data\")".toLabel
                         )
+
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\npublishing Verification disengagement: " + verification
+                          + "\n on cnxn: " + agntRPWr
+                          + "\n label: " + Verification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+                      node.publish( agntRPWr )(
+                        Verification.toLabel( sidAV ),
+                        verification
+                      )
+                      
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\npublishing VerificationNotification: " + notification
+                          + "\n on cnxn: " + agntRPWr
+                          + "\n label: " + VerificationNotification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+
+                      node.publish( vrfr2GLoSWr )(
+                        VerificationNotification.toLabel( sidAV ),
+                        notification
                       )
                     }
                   }
                   case Right( true ) => {
-                    BasicLogService.tweet( "waiting for verify request" )
+                    BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nwaiting for verify request"
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
                   }
                   case _ => {
                     val paCnxnRd =
                       PortableAgentCnxn( cnxnRd.src, cnxnRd.label, cnxnRd.trgt )
-                    BasicLogService.tweet( "unexpected protocol message : " + eVerify )
-                    node.publish( vrfr2GLoSWr )(
-                      VerificationNotification.toLabel(),
+                    val notification =
                       VerificationNotification(
                         sidAV, cidAV, paCnxnRd, clmAV,
                         (
@@ -109,6 +224,28 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                           + "\"" + eVerify + "\"" + ")"
                         ).toLabel
                       )
+
+                    BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nunexpected protocol message : " + eVerify
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
+
+                    BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\npublishing VerificationNotification: " + notification
+                        + "\n on cnxn: " + agntRPWr
+                        + "\n label: " + VerificationNotification.toLabel
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
+
+                    node.publish( vrfr2GLoSWr )(
+                      VerificationNotification.toLabel(),
+                      notification
                     )
                   }
                 }
