@@ -316,15 +316,9 @@ package usage {
      with FJTaskRunnersX
      with Serializable
   {    
-    def nextClaimant() : ClaimantBehavior = {
-      ClaimantBehavior()
-    }
-    def nextVerifier() : VerifierBehavior = {
-      VerifierBehavior()
-    }
-    def nextRelyingParty() : RelyingPartyBehavior = {
-      RelyingPartyBehavior()
-    }
+    def nextClaimant() : ClaimantBehavior = ClaimantBehavior()
+    def nextVerifier() : VerifierBehavior = VerifierBehavior()
+    def nextRelyingParty() : RelyingPartyBehavior = RelyingPartyBehavior()
     def claimantStrm() : Stream[ClaimantBehavior] = {
       tStream( nextClaimant() )( { clmnt => nextClaimant() } )
     }
@@ -726,7 +720,9 @@ package usage {
 
   object ClaimantDriver {
     def drive(
-      numOfTests : Int = 1
+      numOfTests : Int = 1,
+      promptBeforeTakingNextStep : Boolean = false,
+      sleepBeforePrompt : Boolean = true
     ) = {
       val cts = VerificationDriver.ClaimantTestStream()
       val tStrm = cts.behaviorTestStrm
@@ -736,30 +732,38 @@ package usage {
         val simCtxt1 = t()
         val gs = simCtxt1.glosStub
         
-        Thread.sleep( 2000 )
-        println( "Proceed to next step? " )
-        val ln = readLine() // Note: this is blocking.
-        if ( ln.contains( "y" ) ) {
-          println( "simulating acknowledgment of allow verification request" )
-
-          val simCtxt2 =
-            gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
-
-          Thread.sleep( 1500 )
+        if ( promptBeforeTakingNextStep ) {
+          if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
           println( "Proceed to next step? " )
           val ln = readLine() // Note: this is blocking.
           if ( ln.contains( "y" ) ) {
-            println( "simulating close claim" )
-            gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
-            
-            Thread.sleep( 1500 )
+            println( "simulating acknowledgment of allow verification request" )
+
+            val simCtxt2 =
+              gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+
+            if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
             println( "Proceed to next step? " )
             val ln = readLine() // Note: this is blocking.
             if ( ln.contains( "y" ) ) {
-              println( "simulating complete claim" )
-              gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
+              println( "simulating close claim" )
+              gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+              
+              if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+              println( "Proceed to next step? " )
+              val ln = readLine() // Note: this is blocking.
+              if ( ln.contains( "y" ) ) {
+                println( "simulating complete claim" )
+                gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
+              }
             }
           }
+        }
+        else {
+          val simCtxt2 =
+            gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+          gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+          gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
         }
       }
     }
