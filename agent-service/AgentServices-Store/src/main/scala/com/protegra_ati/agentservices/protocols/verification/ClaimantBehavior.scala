@@ -38,6 +38,17 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
           acT.AgentCnxn( clmnt2GLoS.src, clmnt2GLoS.label, clmnt2GLoS.trgt )
         val agntClmnt2GLoSWr =
           acT.AgentCnxn( clmnt2GLoS.trgt, clmnt2GLoS.label, clmnt2GLoS.src )
+
+        BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\nwaiting for initiate claim on: " 
+            + "\ncnxn: " + agntClmnt2GLoSRd
+            + "\nlabel: " + InitiateClaim.toLabel
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )    
+  
         reset {
           for( eInitiateClaim <- node.subscribe( agntClmnt2GLoSRd )( InitiateClaim.toLabel ) ) {
             rsrc2V[VerificationMessage]( eInitiateClaim ) match {
@@ -46,6 +57,8 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                     + "\nreceived initiate claim request: " + eInitiateClaim
+                    + "\ncnxn: " + agntClmnt2GLoSRd
+                    + "\nlabel: " + InitiateClaim.toLabel
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   )
                 )
@@ -61,6 +74,8 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                     + "\npublishing AllowVerification request: " + avReq
+                    + "\n on cnxn: " + agntVrfrWr
+                    + "\n label: " + AllowVerification.toLabel( sidIC )
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   )
                 )
@@ -69,6 +84,16 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                   AllowVerification.toLabel( sidIC ), 
                   avReq
                 )
+
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\nwaiting for allow verification acknowledgment on: " 
+                    + "\ncnxn: " + agntVrfrRd
+                    + "\nlabel: " + AckAllowVerification.toLabel( sidIC )
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )    
                 for( eAllowV <- node.subscribe( agntVrfrRd )( AckAllowVerification.toLabel( sidIC ) ) ) {
                   rsrc2V[VerificationMessage]( eAllowV ) match {
                     case Left( AckAllowVerification( sidAAV, cidAAV, rpAAV, clmAAV ) ) => { 
@@ -76,6 +101,8 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                           + "\nreceived allow verification acknowledgment: " + eAllowV
+                          + "\ncnxn: " + agntVrfrRd
+                          + "\nlabel: " + AckAllowVerification.toLabel( sidIC )
                           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         )
                       )
@@ -101,6 +128,8 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                           (
                             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                             + "\npublishing open claim request" + ocReq
+                            + "\ncnxn: " + agntRPRd
+                            + "\nlabel: " + OpenClaim.toLabel( sidIC )
                             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                           )
                         )
@@ -111,6 +140,17 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                             ocReq
                           )            
                         }
+
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\nwaiting for close claim on: " 
+                            + "\ncnxn: " + agntRPRd
+                            + "\nlabel: " + CloseClaim.toLabel( sidIC )
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )    
+
                         for( eCloseClaim <- node.subscribe( agntRPRd )( CloseClaim.toLabel( sidIC ) ) ) {
                           rsrc2V[VerificationMessage]( eCloseClaim ) match {
                             case Left( CloseClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
@@ -136,6 +176,8 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                                   (
                                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                     + "\npublishing complete claim message"
+                                    + "\ncnxn: " + agntClmnt2GLoSWr
+                                    + "\nlabel: " + CompleteClaim.toLabel( sidIC )
                                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                   )
                                 )

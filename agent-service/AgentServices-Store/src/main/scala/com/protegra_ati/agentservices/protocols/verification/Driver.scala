@@ -18,6 +18,7 @@ import com.biosimilarity.lift.model.store.CnxnCtxtLeaf
 import com.biosimilarity.lift.model.store.Factual
 import com.biosimilarity.lift.lib._
 import scala.util.continuations._
+import scala.collection.mutable.HashMap
 import java.util.UUID
 
 package usage {  
@@ -49,6 +50,7 @@ package usage {
     def claimantToGLoS : PortableAgentCnxn
     def verifierToGLoS : PortableAgentCnxn
     def relyingPartyToGLoS : PortableAgentCnxn
+
     def waitForSignalToInitiateClaim(
       continuation : CnxnCtxtLabel[String,String,String] => SimulationContext
     ) : SimulationContext = {     
@@ -58,12 +60,24 @@ package usage {
       println( "your claim, " + claim + ", has been submitted." )
       continuation( claim )      
      }
+
     def simulateVerifierAckAllowVerificationStep(
       simCtxt : SimulationContext
     ) : SimulationContext = {
       val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
       val agntVrfrRd = 
         acT.AgentCnxn( c2v.src, c2v.label, c2v.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "cnxn: " + agntVrfrRd
+          + "label: " + AckAllowVerification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )  
+
       reset {
         node.publish( agntVrfrRd )(
           AckAllowVerification.toLabel( sid ),
@@ -72,6 +86,7 @@ package usage {
       }
       simCtxt
     }
+
     def simulateRelyingPartyCloseClaimStep(
       simCtxt : SimulationContext
     ) : SimulationContext = {
@@ -84,6 +99,16 @@ package usage {
           "verified",
           clm.asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual] :: Nil
         )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "cnxn: " + agntRPRd
+          + "label: " + CloseClaim.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         node.publish( agntRPRd )(
@@ -148,6 +173,7 @@ package usage {
         }
       }
     }
+
     def waitForRelyingPartyVerificationNotification(
       node : StdEvalChannel,
       continuation : VerificationMessage => Unit
@@ -219,6 +245,7 @@ package usage {
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )
+
       reset {
         for(
           eCompleteClaim <- node.subscribe(
@@ -376,14 +403,25 @@ package usage {
       def behaviorStream : Stream[Behavior]
       def behaviorToGLoSIndex : Int      
 
+      val _behaviorToGLoS : HashMap[Int,Stream[List[PortableAgentCnxn]]] = 
+        new HashMap[Int,Stream[List[PortableAgentCnxn]]]()
+
       def behaviorToGLoS(
         numberOfCnxns : Int = 3
       ) : Stream[List[PortableAgentCnxn]] = {
-        for(
-          strm <- getSelfCnxnStreamStream;
-          cstrm = strm.take( numberOfCnxns )
-        ) yield {
-          cstrm.toList
+        _behaviorToGLoS.get( numberOfCnxns ) match {
+          case None => {
+            val strm = 
+              for(
+                strm <- getSelfCnxnStreamStream;
+                cstrm = strm.take( numberOfCnxns )
+              ) yield {
+                cstrm.toList
+              }
+            _behaviorToGLoS += ( numberOfCnxns -> strm )
+            strm 
+          }
+          case Some( strm ) => strm 
         }
       }
 
@@ -393,16 +431,16 @@ package usage {
         bhvr : Behavior
       )(
         cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-      ): Stream[() => SimulationContext] = {      
-        val b2GLoSStrm =
-          behaviorToGLoS().map( 
-            { cnxns => cnxns( behaviorToGLoSIndex ) }
-          )
+      ): Stream[() => SimulationContext] = {              
         for(
-          ( ( c, v, r, c2v, c2r, v2r ), b2GLoS ) <- cnxnStrm.zip( b2GLoSStrm )
+          ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
         ) yield {
           val agntCRd = 
-            acT.AgentCnxn( b2GLoS.src, b2GLoS.label, b2GLoS.trgt )
+            acT.AgentCnxn(
+              glosStub.claimantToGLoS.src,
+              glosStub.claimantToGLoS.label,
+              glosStub.claimantToGLoS.trgt
+            )
           
           val sid = UUID.randomUUID.toString
           val cid = UUID.randomUUID.toString
@@ -414,7 +452,7 @@ package usage {
                   bhvr.run(
                     node,
                     List[PortableAgentCnxn](
-                      b2GLoS
+                      glosStub.claimantToGLoS
                     ),
                     List[CnxnCtxtLabel[String, String, String]]( )
                   )
@@ -697,7 +735,8 @@ package usage {
         val t = ctStrm( i - 1 )
         val simCtxt1 = t()
         val gs = simCtxt1.glosStub
-
+        
+        Thread.sleep( 2000 )
         println( "Proceed to next step? " )
         val ln = readLine() // Note: this is blocking.
         if ( ln.contains( "y" ) ) {
@@ -706,12 +745,14 @@ package usage {
           val simCtxt2 =
             gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
 
+          Thread.sleep( 1500 )
           println( "Proceed to next step? " )
           val ln = readLine() // Note: this is blocking.
           if ( ln.contains( "y" ) ) {
             println( "simulating close claim" )
             gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
             
+            Thread.sleep( 1500 )
             println( "Proceed to next step? " )
             val ln = readLine() // Note: this is blocking.
             if ( ln.contains( "y" ) ) {
