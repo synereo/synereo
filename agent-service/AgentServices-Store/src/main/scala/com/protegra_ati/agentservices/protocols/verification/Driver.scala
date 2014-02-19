@@ -13,8 +13,12 @@ import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
 import com.biosimilarity.evaluator.distribution.ConcreteHL.PostedExpr
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.biosimilarity.lift.model.store.CnxnCtxtLabel
+import com.biosimilarity.lift.model.store.CnxnCtxtBranch
+import com.biosimilarity.lift.model.store.CnxnCtxtLeaf
+import com.biosimilarity.lift.model.store.Factual
 import com.biosimilarity.lift.lib._
 import scala.util.continuations._
+import scala.collection.mutable.HashMap
 import java.util.UUID
 
 package usage {  
@@ -33,7 +37,7 @@ package usage {
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
   import com.biosimilarity.lift.model.store.CnxnString
-  import scala.concurrent.FJTaskRunnersX
+  import scala.concurrent.FJTaskRunnersX  
 
   trait GLoSStubT
     extends NodeStreams
@@ -46,21 +50,92 @@ package usage {
     def claimantToGLoS : PortableAgentCnxn
     def verifierToGLoS : PortableAgentCnxn
     def relyingPartyToGLoS : PortableAgentCnxn
+
     def waitForSignalToInitiateClaim(
-      continuation : CnxnCtxtLabel[String,String,String] => Unit
-    ) : Unit = {     
+      continuation : CnxnCtxtLabel[String,String,String] => SimulationContext
+    ) : SimulationContext = {     
       println( "Please state your claim: " )
       val ln = readLine() // Note: this is blocking.
       val claim = ln.toLabel
       println( "your claim, " + claim + ", has been submitted." )
       continuation( claim )      
      }
+
+    def simulateVerifierAckAllowVerificationStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntVrfrRd = 
+        acT.AgentCnxn( c2v.src, c2v.label, c2v.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "cnxn: " + agntVrfrRd
+          + "label: " + AckAllowVerification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )  
+
+      reset {
+        node.publish( agntVrfrRd )(
+          AckAllowVerification.toLabel( sid ),
+          AckAllowVerification( sid, cid, c2r, clm )
+        )
+      }
+      simCtxt
+    }
+
+    def simulateRelyingPartyCloseClaimStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntRPRd = 
+        acT.AgentCnxn( c2r.trgt, c2r.label, c2r.src )
+      
+      val witness =
+        new CnxnCtxtBranch[String,String,String](
+          "verified",
+          clm.asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual] :: Nil
+        )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "cnxn: " + agntRPRd
+          + "label: " + CloseClaim.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
+
+      reset {
+        node.publish( agntRPRd )(
+          CloseClaim.toLabel( sid ),
+          CloseClaim( sid, cid, c2v, clm, witness )
+        )
+      }
+      simCtxt
+    }
+
     def waitForVerifierVerificationNotification(
       node : StdEvalChannel,      
       continuation : VerificationMessage => Unit
     ) : Unit = {
       val vrfr2GLoSRd =
         acT.AgentCnxn( verifierToGLoS.src, verifierToGLoS.label, verifierToGLoS.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for verification notification on: " 
+          + "cnxn: " + vrfr2GLoSRd
+          + "label: " + VerificationNotification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )      
+
       reset {
         for(
           eVNote <- node.subscribe(
@@ -88,18 +163,34 @@ package usage {
               )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eVNote )
+              BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eVNote
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
             }
           }
         }
       }
     }
+
     def waitForRelyingPartyVerificationNotification(
       node : StdEvalChannel,
       continuation : VerificationMessage => Unit
     ) : Unit = {
       val rp2GLoSRd =
         acT.AgentCnxn( relyingPartyToGLoS.src, relyingPartyToGLoS.label, relyingPartyToGLoS.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for verification notification on: " 
+          + "cnxn: " + rp2GLoSRd
+          + "label: " + VerificationNotification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
+
       reset {
         for(
           eVNote <- node.subscribe(
@@ -127,23 +218,39 @@ package usage {
               )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eVNote )
+              BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eVNote
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
             }
           }
         }
       }
     }
+
     def waitForCompleteClaim(
       node : StdEvalChannel,
       continuation : VerificationMessage => Unit
     ) : Unit = {
       val clmnt2GLoSRd =
-        acT.AgentCnxn( claimantToGLoS.src, claimantToGLoS.label, claimantToGLoS.trgt )
+        acT.AgentCnxn( claimantToGLoS.trgt, claimantToGLoS.label, claimantToGLoS.src )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for complete claim on: " 
+          + "cnxn: " + clmnt2GLoSRd
+          + "label: " + CompleteClaim.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
+
       reset {
         for(
           eCompleteClaim <- node.subscribe(
             clmnt2GLoSRd
-          )( CloseClaim.toLabel() )
+          )( CompleteClaim.toLabel() )
         ) {
           rsrc2V[VerificationMessage]( eCompleteClaim ) match {
             case Left( vmsg@CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
@@ -166,7 +273,13 @@ package usage {
               )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eCompleteClaim )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nunexpected protocol message : " + eCompleteClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
           }
         }
@@ -180,6 +293,20 @@ package usage {
     override val relyingPartyToGLoS : PortableAgentCnxn
   ) extends GLoSStubT 
 
+  case class SimulationContext(
+    node : StdEvalChannel,
+    glosStub : GLoSStub,
+    sid : String,
+    cid : String,
+    c : PortableAgentCnxn,
+    v : PortableAgentCnxn,
+    r : PortableAgentCnxn,
+    c2v : PortableAgentCnxn,
+    c2r : PortableAgentCnxn,
+    v2r : PortableAgentCnxn,
+    claim : CnxnCtxtLabel[String,String,String]
+  )
+
   object VerificationDriver
    extends NodeStreams
      with FuzzyStreams
@@ -189,15 +316,9 @@ package usage {
      with FJTaskRunnersX
      with Serializable
   {    
-    def nextClaimant() : ClaimantBehavior = {
-      ClaimantBehavior()
-    }
-    def nextVerifier() : VerifierBehavior = {
-      VerifierBehavior()
-    }
-    def nextRelyingParty() : RelyingPartyBehavior = {
-      RelyingPartyBehavior()
-    }
+    def nextClaimant() : ClaimantBehavior = ClaimantBehavior()
+    def nextVerifier() : VerifierBehavior = VerifierBehavior()
+    def nextRelyingParty() : RelyingPartyBehavior = RelyingPartyBehavior()
     def claimantStrm() : Stream[ClaimantBehavior] = {
       tStream( nextClaimant() )( { clmnt => nextClaimant() } )
     }
@@ -242,6 +363,17 @@ package usage {
       )
     }
 
+    def getSelfCnxnStreamStream(
+    ) : Stream[Stream[PortableAgentCnxn]] = {
+      tStream[Stream[PortableAgentCnxn]](
+        getSelfCnxnStream()
+      )(
+        ( seed : Stream[PortableAgentCnxn] ) => {
+          getSelfCnxnStream()
+        }
+      )
+    }
+
     def verificationEnsembleCnxnStrm(
     ) : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)] = {
       val ( cCnxnStrm, vCnxnStrm, rCnxnStrm ) =
@@ -261,6 +393,162 @@ package usage {
       }
     }
 
+    trait BehaviorTestStreamT[Behavior <: ProtocolBehaviorT] {
+      def behaviorStream : Stream[Behavior]
+      def behaviorToGLoSIndex : Int      
+
+      val _behaviorToGLoS : HashMap[Int,Stream[List[PortableAgentCnxn]]] = 
+        new HashMap[Int,Stream[List[PortableAgentCnxn]]]()
+
+      def behaviorToGLoS(
+        numberOfCnxns : Int = 3
+      ) : Stream[List[PortableAgentCnxn]] = {
+        _behaviorToGLoS.get( numberOfCnxns ) match {
+          case None => {
+            val strm = 
+              for(
+                strm <- getSelfCnxnStreamStream;
+                cstrm = strm.take( numberOfCnxns )
+              ) yield {
+                cstrm.toList
+              }
+            _behaviorToGLoS += ( numberOfCnxns -> strm )
+            strm 
+          }
+          case Some( strm ) => strm 
+        }
+      }
+
+      def behaviorTestStrm(
+        node : StdEvalChannel,
+        glosStub : GLoSStub,
+        bhvr : Behavior
+      )(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {              
+        for(
+          ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
+        ) yield {
+          val agntCRd = 
+            acT.AgentCnxn(
+              glosStub.claimantToGLoS.src,
+              glosStub.claimantToGLoS.label,
+              glosStub.claimantToGLoS.trgt
+            )
+          
+          val sid = UUID.randomUUID.toString
+          val cid = UUID.randomUUID.toString
+          
+          () => {          
+            glosStub.waitForSignalToInitiateClaim(
+              ( claim : CnxnCtxtLabel[String,String,String] ) => {
+                spawn { 
+                  bhvr.run(
+                    node,
+                    List[PortableAgentCnxn](
+                      glosStub.claimantToGLoS
+                    ),
+                    List[CnxnCtxtLabel[String, String, String]]( )
+                  )
+                }
+                reset {
+                  node.publish( agntCRd )(
+                    InitiateClaim.toLabel( sid ),
+                    InitiateClaim( sid, cid, c2v, c2r, claim )
+                  )
+                }
+                SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
+              }
+            )          
+          }
+        }
+      }
+      
+      def behaviorTestStrm(
+        node : StdEvalChannel,
+        bhvr : Behavior
+      )(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {                     
+        behaviorToGLoS().flatMap(
+          {
+            trpl => {
+              trpl match {
+                case c :: v :: r :: Nil => {
+                  behaviorTestStrm(
+                    node,
+                    GLoSStub( c, v, r ),
+                    bhvr
+                  )(
+                    cnxnStrm
+                  )
+                }
+                case _ => {
+                  throw new Exception( "unexpected cnxn stream structure: " + trpl )
+                }
+              }              
+            }
+          }
+        )
+      }
+      
+      def behaviorTestStrm(
+        bhvr : Behavior
+      )(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {      
+        val ndStrm = dslNodeStream
+        ndStrm.flatMap(
+          {
+            node => {
+              behaviorTestStrm(
+                node, bhvr
+              )( cnxnStrm )
+            }
+          }
+        )
+      }
+      
+      def behaviorTestStrm(
+        cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
+      ): Stream[() => SimulationContext] = {      
+        val cStrm = behaviorStream
+        cStrm.flatMap(
+          {
+            clmnt => {
+              behaviorTestStrm(
+                clmnt
+              )(
+                cnxnStrm
+              )
+            }
+          }
+        )
+      }
+      
+      def behaviorTestStrm(
+      ) : Stream[() => SimulationContext] = {      
+        behaviorTestStrm(
+          verificationEnsembleCnxnStrm()
+        )
+      }
+    }
+
+    case class ClaimantTestStream( 
+      override val behaviorToGLoSIndex : Int = 1,
+      override val behaviorStream : Stream[ClaimantBehavior] = claimantStrm
+    ) extends BehaviorTestStreamT[ClaimantBehavior]
+
+    case class VerifierTestStream( 
+      override val behaviorToGLoSIndex : Int = 2,
+      override val behaviorStream : Stream[VerifierBehavior] = verifierStrm
+    ) extends BehaviorTestStreamT[VerifierBehavior]
+
+    case class RelyingPartyTestStream( 
+      override val behaviorToGLoSIndex : Int = 3,
+      override val behaviorStream : Stream[RelyingPartyBehavior] = relyingPartyStrm
+    ) extends BehaviorTestStreamT[RelyingPartyBehavior]
+    
     def verificationEnsembleTestStrm(
       node : StdEvalChannel,
       glosStub : GLoSStub,
@@ -337,11 +625,14 @@ package usage {
                   { vmsg => println( "Got claimant close claim!" ) }
                 )
               }
+              SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
             }
-          )
+          );
+          ()
         }                
       }
     }
+
     def verificationEnsembleTestStrm(
       node : StdEvalChannel,
       clmntBhvr : ClaimantBehavior,
@@ -372,6 +663,7 @@ package usage {
         }
       )
     }
+
     def verificationEnsembleTestStrm(
       clmntBhvr : ClaimantBehavior,
       vrfrBhvr : VerifierBehavior,
@@ -390,6 +682,7 @@ package usage {
         }
       )
     }
+
     def verificationEnsembleTestStrm(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
     ): Stream[() => Unit] = {      
@@ -406,12 +699,14 @@ package usage {
         }
       )
     }
+
     def verificationEnsembleTestStrm(
     ): Stream[() => Unit] = {      
       verificationEnsembleTestStrm(
         verificationEnsembleCnxnStrm()
       )
     }
+
     def testProtocol( 
       numOfTests : Int = 1
     ) : Unit = {
@@ -419,6 +714,57 @@ package usage {
       for( i <- 1 to numOfTests ) {
         val test = testStrm( i - 1 )
         test()
+      }
+    }
+  }
+
+  object ClaimantDriver {
+    def drive(
+      numOfTests : Int = 1,
+      promptBeforeTakingNextStep : Boolean = false,
+      sleepBeforePrompt : Boolean = true
+    ) = {
+      val cts = VerificationDriver.ClaimantTestStream()
+      val tStrm = cts.behaviorTestStrm
+      val ctStrm = tStrm.take( numOfTests )
+      for( i <- ( 1 to numOfTests ) ) {
+        val t = ctStrm( i - 1 )
+        val simCtxt1 = t()
+        val gs = simCtxt1.glosStub
+        
+        if ( promptBeforeTakingNextStep ) {
+          if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+          println( "Proceed to next step? " )
+          val ln = readLine() // Note: this is blocking.
+          if ( ln.contains( "y" ) ) {
+            println( "simulating acknowledgment of allow verification request" )
+
+            val simCtxt2 =
+              gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+
+            if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+            println( "Proceed to next step? " )
+            val ln = readLine() // Note: this is blocking.
+            if ( ln.contains( "y" ) ) {
+              println( "simulating close claim" )
+              gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+              
+              if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+              println( "Proceed to next step? " )
+              val ln = readLine() // Note: this is blocking.
+              if ( ln.contains( "y" ) ) {
+                println( "simulating complete claim" )
+                gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
+              }
+            }
+          }
+        }
+        else {
+          val simCtxt2 =
+            gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+          gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+          gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
+        }
       }
     }
   }

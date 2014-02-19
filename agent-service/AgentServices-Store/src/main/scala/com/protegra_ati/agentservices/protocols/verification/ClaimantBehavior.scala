@@ -17,7 +17,7 @@ import com.biosimilarity.lift.lib._
 import scala.util.continuations._
 import java.util.UUID
 
-trait ClaimantBehaviorT extends Serializable {
+trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
   import com.biosimilarity.evaluator.distribution.utilities.DieselValueTrampoline._
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
@@ -38,49 +38,162 @@ trait ClaimantBehaviorT extends Serializable {
           acT.AgentCnxn( clmnt2GLoS.src, clmnt2GLoS.label, clmnt2GLoS.trgt )
         val agntClmnt2GLoSWr =
           acT.AgentCnxn( clmnt2GLoS.trgt, clmnt2GLoS.label, clmnt2GLoS.src )
+
+        BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\nwaiting for initiate claim on: " 
+            + "\ncnxn: " + agntClmnt2GLoSRd
+            + "\nlabel: " + InitiateClaim.toLabel
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )    
+  
         reset {
           for( eInitiateClaim <- node.subscribe( agntClmnt2GLoSRd )( InitiateClaim.toLabel ) ) {
             rsrc2V[VerificationMessage]( eInitiateClaim ) match {
               case Left( InitiateClaim( sidIC, cidIC, vrfrIC, rpIC, clmIC ) ) => { 
-                val agntVrfrWr =
-                  acT.AgentCnxn( vrfrIC.src, vrfrIC.label, vrfrIC.trgt )
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\nreceived initiate claim request: " + eInitiateClaim
+                    + "\ncnxn: " + agntClmnt2GLoSRd
+                    + "\nlabel: " + InitiateClaim.toLabel
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
+
                 val agntVrfrRd =
+                  acT.AgentCnxn( vrfrIC.src, vrfrIC.label, vrfrIC.trgt )
+                val agntVrfrWr =
                   acT.AgentCnxn( vrfrIC.trgt, vrfrIC.label, vrfrIC.src )
+
+                val avReq = AllowVerification( sidIC, cidIC, rpIC, clmIC )
+
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\npublishing AllowVerification request: " + avReq
+                    + "\n on cnxn: " + agntVrfrWr
+                    + "\n label: " + AllowVerification.toLabel( sidIC )
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
+
                 node.publish( agntVrfrWr )( 
                   AllowVerification.toLabel( sidIC ), 
-                  AllowVerification( sidIC, cidIC, rpIC, clmIC )
+                  avReq
                 )
+
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\nwaiting for allow verification acknowledgment on: " 
+                    + "\ncnxn: " + agntVrfrRd
+                    + "\nlabel: " + AckAllowVerification.toLabel( sidIC )
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )    
                 for( eAllowV <- node.subscribe( agntVrfrRd )( AckAllowVerification.toLabel( sidIC ) ) ) {
-                  rsrc2V[VerificationMessage]( eInitiateClaim ) match {
+                  rsrc2V[VerificationMessage]( eAllowV ) match {
                     case Left( AckAllowVerification( sidAAV, cidAAV, rpAAV, clmAAV ) ) => { 
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nreceived allow verification acknowledgment: " + eAllowV
+                          + "\ncnxn: " + agntVrfrRd
+                          + "\nlabel: " + AckAllowVerification.toLabel( sidIC )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
                       if (
                         sidAAV.equals( sidIC ) && cidAAV.equals( cidIC )
                         && rpAAV.equals( rpIC ) && clmAAV.equals( clmIC )
                       ) {
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\nallow verification acknowledgment matches request" 
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
                         val agntRPWr =
                           acT.AgentCnxn( rpIC.src, rpIC.label, rpIC.trgt )
                         val agntRPRd =
                           acT.AgentCnxn( rpIC.trgt, rpIC.label, rpIC.src )
+
+                        val ocReq = OpenClaim( sidIC, cidIC, vrfrIC, clmIC )
+
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\npublishing open claim request" + ocReq
+                            + "\ncnxn: " + agntRPRd
+                            + "\nlabel: " + OpenClaim.toLabel( sidIC )
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+
                         reset {
                           node.publish( agntRPWr )( 
                             OpenClaim.toLabel( sidIC ), 
-                            OpenClaim( sidIC, cidIC, vrfrIC, clmIC )
+                            ocReq
                           )            
                         }
+
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\nwaiting for close claim on: " 
+                            + "\ncnxn: " + agntRPRd
+                            + "\nlabel: " + CloseClaim.toLabel( sidIC )
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )    
+
                         for( eCloseClaim <- node.subscribe( agntRPRd )( CloseClaim.toLabel( sidIC ) ) ) {
                           rsrc2V[VerificationMessage]( eCloseClaim ) match {
                             case Left( CloseClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
+                              BasicLogService.tweet(
+                                (
+                                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  + "\nreceived close claim message" + eCloseClaim
+                                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                )
+                              )
                               if (
                                 sidCC.equals( sidIC ) && cidCC.equals( cidIC )
                                 && vrfrCC.equals( vrfrIC ) && clmCC.equals( clmIC )
                               ) {
-                                  node.publish( agntClmnt2GLoSWr )(
-                                    CompleteClaim.toLabel( sidIC ),
-                                    CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC )
+                                BasicLogService.tweet(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\nclose claim message matches open claim request"
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                   )
+                                )
+                                BasicLogService.tweet(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\npublishing complete claim message"
+                                    + "\ncnxn: " + agntClmnt2GLoSWr
+                                    + "\nlabel: " + CompleteClaim.toLabel( sidIC )
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  )
+                                )
+                                node.publish( agntClmnt2GLoSWr )(
+                                  CompleteClaim.toLabel( sidIC ),
+                                  CompleteClaim( sidCC, cidCC, vrfrCC, clmCC, witCC )
+                                )
                               }
                               else {
-                                BasicLogService.tweet( "close doesn't match open : " + eCloseClaim )
+                                BasicLogService.tweet(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\nclose doesn't match open : " + eCloseClaim
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  )
+                                )
                                 node.publish( agntClmnt2GLoSWr )(
                                   CompleteClaim.toLabel( sidIC ),
                                   CompleteClaim(
@@ -91,20 +204,33 @@ trait ClaimantBehaviorT extends Serializable {
                               }
                             }
                             case Right( true ) => {
-                              BasicLogService.tweet( "waiting for close claim" )
+                              BasicLogService.tweet(
+                                (
+                                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  + "\nwaiting for close claim"
+                                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                )
+                              )
                             }
                             case _ => {
                               // BUGBUG : lgm -- protect against strange and
                               // wondrous toString implementations (i.e. injection
                               // attack ) for eInitiateClaim
-                              BasicLogService.tweet( "unexpected protocol message : " + eCloseClaim )
+                              BasicLogService.tweet(
+                                (
+                                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  + "\nwhile waiting for close claim"
+                                  + "\nunexpected protocol message : " + eCloseClaim
+                                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                )
+                              )
                               node.publish( agntClmnt2GLoSWr )(
                                 VerificationNotification.toLabel( sidIC ),
                                 VerificationNotification(
                                   sidIC, cidIC, clmnt2GLoS, clmIC,
                                   (
                                     "protocolError(\"unexpected protocol message\","
-                                    + "\"" + eCloseClaim + "\"" + ")"
+                                    + "\"" + eCloseClaim + "\"" + " while waiting for close claim " + ")"
                                   ).toLabel
                                 )
                               )
@@ -113,7 +239,13 @@ trait ClaimantBehaviorT extends Serializable {
                         }
                       }
                       else {
-                        BasicLogService.tweet( "ack doesn't match : " + eAllowV )
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\nack doesn't match : " + eAllowV
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
                         node.publish( agntClmnt2GLoSWr )(
                           CompleteClaim.toLabel( sidIC ),
                           CompleteClaim(
@@ -124,17 +256,30 @@ trait ClaimantBehaviorT extends Serializable {
                       }
                     }
                     case Right( true ) => {
-                      BasicLogService.tweet( "waiting for allow claim ack" )
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nwaiting for allow claim ack"
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
                     }
                     case _ => {
-                      BasicLogService.tweet( "unexpected protocol message : " + eAllowV )
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nwhile waiting for acknowledgment of allow verification"
+                          + "\nunexpected protocol message : " + eAllowV
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
                       node.publish( agntClmnt2GLoSWr )(
                         VerificationNotification.toLabel( sidIC ),
                         VerificationNotification(
                           sidIC, cidIC, clmnt2GLoS, clmIC,
                           (
                             "protocolError(\"unexpected protocol message\","
-                             + "\"" + eAllowV + "\"" + ")"
+                             + "\"" + eAllowV + "\"" + " while waiting for allow verification acknowledgment " + ")"
                           ).toLabel
                         )
                       )
@@ -143,20 +288,34 @@ trait ClaimantBehaviorT extends Serializable {
                 }
               }
               case Right( true ) => {
-                BasicLogService.tweet( "waiting for claim initiation" )
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\nwaiting for claim initiation"
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
+                BasicLogService.tweet(  )
               }
               case _ => {
                 // BUGBUG : lgm -- protect against strange and
                 // wondrous toString implementations (i.e. injection
                 // attack ) for eInitiateClaim
-                BasicLogService.tweet( "unexpected protocol message : " + eInitiateClaim )
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\nwhile waiting for initiate claim"
+                    + "\nreceived unexpected protocol message : " + eInitiateClaim
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
                 node.publish( agntClmnt2GLoSWr )(
                   VerificationNotification.toLabel(),
                   VerificationNotification(
                     null, null, null, null,
                     (
                       "protocolError(\"unexpected protocol message\","
-                      + "\"" + eInitiateClaim + "\"" + ")"
+                      + "\"" + eInitiateClaim + "\"" + " while waiting for InitiateClaim" + ")"
                     ).toLabel
                   )
                 )
@@ -166,7 +325,13 @@ trait ClaimantBehaviorT extends Serializable {
         }
       }
       case _ => {
-        BasicLogService.tweet( "one cnxn expected : " + cnxns )
+        BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\none cnxn expected : " + cnxns
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )
         throw new Exception( "one cnxn expected : " + cnxns )
       }
     }
