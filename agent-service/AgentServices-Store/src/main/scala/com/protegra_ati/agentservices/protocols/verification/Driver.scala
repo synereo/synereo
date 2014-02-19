@@ -71,7 +71,7 @@ package usage {
       BasicLogService.tweet(
         (
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          + "\nwaiting for verification notification on: " 
+          + "\nwaiting for verification notification from verifier on: " 
           + "cnxn: " + vrfr2GLoSRd
           + "label: " + VerificationNotification.toLabel
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -99,7 +99,7 @@ package usage {
               BasicLogService.tweet(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                  + "\nwaiting for verifier verification notification"
+                  + "\nstill waiting for verifier verification notification"
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
@@ -126,7 +126,7 @@ package usage {
       BasicLogService.tweet(
         (
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          + "\nwaiting for verification notification on: " 
+          + "\nwaiting for verification notification from relying party on: " 
           + "cnxn: " + rp2GLoSRd
           + "label: " + VerificationNotification.toLabel
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -144,7 +144,7 @@ package usage {
               BasicLogService.tweet(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                  + "\nreceived verification notification " + eVNote
+                  + "\nreceived relying party verification notification " + eVNote
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
@@ -154,7 +154,7 @@ package usage {
               BasicLogService.tweet(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                  + "\nwaiting for relying party verification notification"
+                  + "\nstill waiting for relying party verification notification"
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
@@ -209,7 +209,7 @@ package usage {
               BasicLogService.tweet(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                  + "\nwaiting for complete claim"
+                  + "\nstill waiting for complete claim"
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
@@ -339,7 +339,7 @@ package usage {
               BasicLogService.tweet(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                  + "\nwaiting for verifier allow verification acknowledgment"
+                  + "\nstill waiting for verifier allow verification acknowledgment"
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
@@ -981,10 +981,12 @@ package usage {
                   simCtxt3.node,
                   { vmsg => println( "witnessed claim: " + vmsg ) }
                 )
-                gs.waitForRelyingPartyVerificationNotification(
-                  simCtxt3.node,
-                  { vmsg => println( "witnessed verification of claim: " + vmsg ) }
-                )
+                // This is not part of the immediate environment of
+                // the verifier.
+                // gs.waitForRelyingPartyVerificationNotification(
+                //    simCtxt3.node,
+                //    { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+                // )
               }
             }
           }
@@ -1006,10 +1008,12 @@ package usage {
             simCtxt3.node,
             { vmsg => println( "witnessed claim: " + vmsg ) }
           )
-          gs.waitForRelyingPartyVerificationNotification(
-            simCtxt3.node,
-            { vmsg => println( "witnessed verification of claim: " + vmsg ) }
-          )
+          // This is not part of the immediate environment of
+          // the verifier.
+          // gs.waitForRelyingPartyVerificationNotification(
+          //    simCtxt3.node,
+          //    { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+          // )
         }
       }
     }

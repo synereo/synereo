@@ -208,7 +208,7 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                     BasicLogService.tweet(
                       (
                         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                        + "\nwaiting for verify request"
+                        + "\nstill waiting for verify request"
                         + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                       )
                     )
@@ -252,7 +252,13 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
               }
             }
             case Right( true ) => {
-              BasicLogService.tweet( "waiting for claim initiation" )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for claim initiation"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet( "unexpected protocol message : " + eAllowV )
