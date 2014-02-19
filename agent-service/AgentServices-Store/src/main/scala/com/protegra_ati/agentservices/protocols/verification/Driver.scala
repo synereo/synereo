@@ -298,6 +298,38 @@ package usage {
         }
       }
 
+    def simulateClaimantOpenClaimStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext =
+      {
+        val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+        val agntCRd = 
+          acT.AgentCnxn(
+            c2r.src,
+            c2r.label,
+            c2r.trgt
+          )
+        
+        BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\npublishing open claim on: " 
+            + "\ncnxn: " + agntCRd
+            + "\nlabel: " + OpenClaim.toLabel( sid )
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )
+          
+        reset {
+          node.publish( agntCRd )(
+            OpenClaim.toLabel( sid ),
+            OpenClaim( sid, cid, v2r, clm )
+          )
+        }
+
+        simCtxt
+      }
+
     def simulateWaitForVerifierAllowVerificationAcknowledgment(
       simCtxt : SimulationContext
     ) : Unit = {
@@ -391,7 +423,7 @@ package usage {
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           + "\npublishing verify request on: " 
           + "\ncnxn: " + agntRPRd
-          + "\nlabel: " + AllowVerification.toLabel( sid )
+          + "\nlabel: " + Verify.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )  
@@ -399,6 +431,34 @@ package usage {
         node.publish( agntRPRd )(
           Verify.toLabel( sid ),
           Verify( sid, cid, c2r, clm )
+        )
+      }
+      simCtxt
+    }
+
+    def simulateVerifierVerificationStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntRPRd = 
+        acT.AgentCnxn( v2r.src, v2r.label, v2r.trgt )
+
+      val witness = "claimVerified( true )".toLabel
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing verification testimony on: " 
+          + "\ncnxn: " + agntRPRd
+          + "\nlabel: " + Verification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )  
+
+      reset {
+        node.publish( agntRPRd )(
+          Verification.toLabel( sid ),
+          Verification( sid, cid, c2r, clm, witness )
         )
       }
       simCtxt
@@ -884,7 +944,15 @@ package usage {
     }
   }
 
-  object ClaimantDriver {
+  trait SinglePartyDriverT {
+    def drive(
+      numOfTests : Int = 1,
+      promptBeforeTakingNextStep : Boolean = false,
+      sleepBeforePrompt : Boolean = true
+    ) : Unit
+  }
+
+  object ClaimantDriver extends SinglePartyDriverT with Serializable {
     def drive(
       numOfTests : Int = 1,
       promptBeforeTakingNextStep : Boolean = false,
@@ -937,7 +1005,7 @@ package usage {
     }
   }
 
-  object VerifierDriver {
+  object VerifierDriver extends SinglePartyDriverT with Serializable {
     def drive(
       numOfTests : Int = 1,
       promptBeforeTakingNextStep : Boolean = false,
@@ -1014,6 +1082,59 @@ package usage {
           //    simCtxt3.node,
           //    { vmsg => println( "witnessed verification of claim: " + vmsg ) }
           // )
+        }
+      }
+    }
+  }
+  
+  object RelyingPartyDriver extends SinglePartyDriverT with Serializable {
+    def drive(
+      numOfTests : Int = 1,
+      promptBeforeTakingNextStep : Boolean = false,
+      sleepBeforePrompt : Boolean = true
+    ) = {
+      val cts = VerificationDriver.RelyingPartyTestStream()
+      val tStrm = cts.behaviorTestStrm
+      val ctStrm = tStrm.take( numOfTests )
+      for( i <- ( 1 to numOfTests ) ) {
+        val t = ctStrm( i - 1 )
+        val simCtxt1 = t()
+        val gs = simCtxt1.glosStub
+        
+        if ( promptBeforeTakingNextStep ) {
+          if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+          println( "Proceed to next step? " )
+          val ln = readLine() // Note: this is blocking.
+          if ( ln.contains( "y" ) ) {            
+            // Now run the test
+            val simCtxt2 =
+              VerificationDriver.simulateClaimantOpenClaimStep(
+                simCtxt1
+              )
+            if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+            println( "Proceed to next step? " )
+            val ln = readLine() // Note: this is blocking.
+            if ( ln.contains( "y" ) ) {            
+              // Now run the test
+              val simCtxt3 =
+                VerificationDriver.simulateVerifierVerificationStep(
+                  simCtxt2
+                )              
+              simCtxt3
+            }
+          }
+        }
+        else {
+          // Just run the test
+          val simCtxt2 =
+            VerificationDriver.simulateClaimantOpenClaimStep(
+              simCtxt1
+            )
+          val simCtxt3 =
+            VerificationDriver.simulateVerifierVerificationStep(
+              simCtxt2
+            )          
+          simCtxt3
         }
       }
     }
