@@ -59,65 +59,7 @@ package usage {
       val claim = ln.toLabel
       println( "your claim, " + claim + ", has been submitted." )
       continuation( claim )      
-     }
-
-    def simulateVerifierAckAllowVerificationStep(
-      simCtxt : SimulationContext
-    ) : SimulationContext = {
-      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
-      val agntVrfrRd = 
-        acT.AgentCnxn( c2v.src, c2v.label, c2v.trgt )
-
-      BasicLogService.tweet(
-        (
-          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          + "\npublishing allow verification acknowledgment on: " 
-          + "cnxn: " + agntVrfrRd
-          + "label: " + AckAllowVerification.toLabel( sid )
-          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-        )
-      )  
-
-      reset {
-        node.publish( agntVrfrRd )(
-          AckAllowVerification.toLabel( sid ),
-          AckAllowVerification( sid, cid, c2r, clm )
-        )
-      }
-      simCtxt
-    }
-
-    def simulateRelyingPartyCloseClaimStep(
-      simCtxt : SimulationContext
-    ) : SimulationContext = {
-      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
-      val agntRPRd = 
-        acT.AgentCnxn( c2r.trgt, c2r.label, c2r.src )
-      
-      val witness =
-        new CnxnCtxtBranch[String,String,String](
-          "verified",
-          clm.asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual] :: Nil
-        )
-
-      BasicLogService.tweet(
-        (
-          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          + "\npublishing allow verification acknowledgment on: " 
-          + "cnxn: " + agntRPRd
-          + "label: " + CloseClaim.toLabel( sid )
-          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-        )
-      )
-
-      reset {
-        node.publish( agntRPRd )(
-          CloseClaim.toLabel( sid ),
-          CloseClaim( sid, cid, c2v, clm, witness )
-        )
-      }
-      simCtxt
-    }
+     }    
 
     def waitForVerifierVerificationNotification(
       node : StdEvalChannel,      
@@ -307,8 +249,69 @@ package usage {
     claim : CnxnCtxtLabel[String,String,String]
   )
 
+  trait VerificationDriverT {
+    def simulateVerifierAckAllowVerificationStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntVrfrRd = 
+        acT.AgentCnxn( c2v.src, c2v.label, c2v.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "cnxn: " + agntVrfrRd
+          + "label: " + AckAllowVerification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )  
+
+      reset {
+        node.publish( agntVrfrRd )(
+          AckAllowVerification.toLabel( sid ),
+          AckAllowVerification( sid, cid, c2r, clm )
+        )
+      }
+      simCtxt
+    }
+
+    def simulateRelyingPartyCloseClaimStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntRPRd = 
+        acT.AgentCnxn( c2r.trgt, c2r.label, c2r.src )
+      
+      val witness =
+        new CnxnCtxtBranch[String,String,String](
+          "verified",
+          clm.asInstanceOf[CnxnCtxtLabel[String,String,String] with Factual] :: Nil
+        )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "cnxn: " + agntRPRd
+          + "label: " + CloseClaim.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
+
+      reset {
+        node.publish( agntRPRd )(
+          CloseClaim.toLabel( sid ),
+          CloseClaim( sid, cid, c2v, clm, witness )
+        )
+      }
+      simCtxt
+    }
+  }
+
   object VerificationDriver
-   extends NodeStreams
+   extends VerificationDriverT
+     with NodeStreams
      with FuzzyStreams
      with FuzzyTerms
      with FuzzyTermStreams
@@ -740,14 +743,14 @@ package usage {
             println( "simulating acknowledgment of allow verification request" )
 
             val simCtxt2 =
-              gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+              VerificationDriver.simulateVerifierAckAllowVerificationStep( simCtxt1 )
 
             if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
             println( "Proceed to next step? " )
             val ln = readLine() // Note: this is blocking.
             if ( ln.contains( "y" ) ) {
               println( "simulating close claim" )
-              gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+              VerificationDriver.simulateRelyingPartyCloseClaimStep( simCtxt2 )
               
               if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
               println( "Proceed to next step? " )
@@ -761,8 +764,8 @@ package usage {
         }
         else {
           val simCtxt2 =
-            gs.simulateVerifierAckAllowVerificationStep( simCtxt1 )
-          gs.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+            VerificationDriver.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+          VerificationDriver.simulateRelyingPartyCloseClaimStep( simCtxt2 )
           gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
         }
       }
