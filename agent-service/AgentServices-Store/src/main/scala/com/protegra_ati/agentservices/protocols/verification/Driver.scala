@@ -298,6 +298,64 @@ package usage {
         }
       }
 
+    def simulateWaitForVerifierAllowVerificationAcknowledgment(
+      simCtxt : SimulationContext
+    ) : Unit = {
+      val agntClmntRd =
+        acT.AgentCnxn(
+          simCtxt.c2v.src,
+          simCtxt.c2v.label,
+          simCtxt.c2v.trgt
+        )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for allow verification acknowledgment on: " 
+          + "cnxn: " + agntClmntRd
+          + "label: " + AckAllowVerification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )      
+
+      reset {
+        for(
+          eAckAllowV <- simCtxt.node.subscribe(
+            agntClmntRd
+          )( AckAllowVerification.toLabel() )
+        ) {
+          rsrc2V[VerificationMessage]( eAckAllowV ) match {
+            case Left( vmsg@AckAllowVerification( sidAAV, cidAAV, rpAAV, clmAAV ) ) => { 
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived allow verification acknowledgment " + eAckAllowV
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+              //continuation( vmsg )
+            }
+            case Right( true ) => {
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nwaiting for verifier allow verification acknowledgment"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+            }
+            case _ => {
+              BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eAckAllowV
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
+            }
+          }
+        }
+      }
+    }
+
     def simulateClaimantAllowVerificationStep(
       simCtxt : SimulationContext
     ) : SimulationContext = {
@@ -308,15 +366,15 @@ package usage {
         (
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           + "\npublishing allow verification on: " 
-          + "cnxn: " + agntVrfrRd
-          + "label: " + AllowVerification.toLabel( sid )
+          + "\ncnxn: " + agntVrfrRd
+          + "\nlabel: " + AllowVerification.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )  
       reset {
         node.publish( agntVrfrRd )(
           AllowVerification.toLabel( sid ),
-          AllowVerification( sid, cid, c2r, clm )
+          AllowVerification( sid, cid, v2r, clm )
         )
       }
       simCtxt
@@ -331,9 +389,9 @@ package usage {
       BasicLogService.tweet(
         (
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          + "\npublishing allow verify request on: " 
-          + "cnxn: " + agntRPRd
-          + "label: " + AllowVerification.toLabel( sid )
+          + "\npublishing verify request on: " 
+          + "\ncnxn: " + agntRPRd
+          + "\nlabel: " + AllowVerification.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )  
@@ -357,8 +415,8 @@ package usage {
         (
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           + "\npublishing allow verification acknowledgment on: " 
-          + "cnxn: " + agntVrfrRd
-          + "label: " + AckAllowVerification.toLabel( sid )
+          + "\ncnxn: " + agntVrfrRd
+          + "\nlabel: " + AckAllowVerification.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )  
@@ -389,8 +447,8 @@ package usage {
         (
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           + "\npublishing allow verification acknowledgment on: " 
-          + "cnxn: " + agntRPRd
-          + "label: " + CloseClaim.toLabel( sid )
+          + "\ncnxn: " + agntRPRd
+          + "\nlabel: " + CloseClaim.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )
@@ -903,6 +961,9 @@ package usage {
               VerificationDriver.simulateClaimantAllowVerificationStep(
                 simCtxt1
               )
+            VerificationDriver.simulateWaitForVerifierAllowVerificationAcknowledgment(
+              simCtxt2
+            )
             if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
             println( "Proceed to next step? " )
             val ln = readLine() // Note: this is blocking.
@@ -934,6 +995,9 @@ package usage {
             VerificationDriver.simulateClaimantAllowVerificationStep(
               simCtxt1
             )
+          VerificationDriver.simulateWaitForVerifierAllowVerificationAcknowledgment(
+            simCtxt2
+          )            
           val simCtxt3 =
             VerificationDriver.simulateRelyingPartyVerifyStep(
               simCtxt2
