@@ -250,6 +250,84 @@ package usage {
   )
 
   trait VerificationDriverT {
+    def simulateInitiateClaimStep(
+      simCtxt : SimulationContext
+    ) : Unit =
+      {
+        val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+        val agntCRd = 
+          acT.AgentCnxn(
+            glosStub.claimantToGLoS.src,
+            glosStub.claimantToGLoS.label,
+            glosStub.claimantToGLoS.trgt
+          )
+        
+        BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\npublishing initiate claim on: " 
+            + "\ncnxn: " + agntCRd
+            + "\nlabel: " + InitiateClaim.toLabel( sid )
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )
+          
+        reset {
+          node.publish( agntCRd )(
+            InitiateClaim.toLabel( sid ),
+            InitiateClaim( sid, cid, c2v, c2r, clm )
+          )
+        }
+      }
+
+    def simulateClaimantAllowVerificationStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntVrfrRd = 
+        acT.AgentCnxn( c2v.src, c2v.label, c2v.trgt )
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification on: " 
+          + "cnxn: " + agntVrfrRd
+          + "label: " + AllowVerification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )  
+      reset {
+        node.publish( agntVrfrRd )(
+          AllowVerification.toLabel( sid ),
+          AllowVerification( sid, cid, c2r, clm )
+        )
+      }
+      simCtxt
+    }
+
+    def simulateRelyingPartyVerifyStep(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntRPRd = 
+        acT.AgentCnxn( v2r.src, v2r.label, v2r.trgt )
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verify request on: " 
+          + "cnxn: " + agntRPRd
+          + "label: " + AllowVerification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )  
+      reset {
+        node.publish( agntRPRd )(
+          Verify.toLabel( sid ),
+          Verify( sid, cid, c2r, clm )
+        )
+      }
+      simCtxt
+    }
+
     def simulateVerifierAckAllowVerificationStep(
       simCtxt : SimulationContext
     ) : SimulationContext = {
@@ -398,7 +476,7 @@ package usage {
 
     trait BehaviorTestStreamT[Behavior <: ProtocolBehaviorT] {
       def behaviorStream : Stream[Behavior]
-      def behaviorToGLoSIndex : Int      
+      def behaviorToGLoSIndex : Int            
 
       val _behaviorToGLoS : HashMap[Int,Stream[List[PortableAgentCnxn]]] = 
         new HashMap[Int,Stream[List[PortableAgentCnxn]]]()
@@ -445,6 +523,17 @@ package usage {
           () => {          
             glosStub.waitForSignalToInitiateClaim(
               ( claim : CnxnCtxtLabel[String,String,String] ) => {
+                val simCtxt =
+                  SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
+                BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\ninvoking run on " + bhvr
+                    + "\nnode: " + node
+                    + "\ncnxns: " + List[PortableAgentCnxn]( glosStub.claimantToGLoS )
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
                 spawn { 
                   bhvr.run(
                     node,
@@ -453,14 +542,8 @@ package usage {
                     ),
                     List[CnxnCtxtLabel[String, String, String]]( )
                   )
-                }
-                reset {
-                  node.publish( agntCRd )(
-                    InitiateClaim.toLabel( sid ),
-                    InitiateClaim( sid, cid, c2v, c2r, claim )
-                  )
-                }
-                SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
+                }                
+                simCtxt
               }
             )          
           }
@@ -735,6 +818,8 @@ package usage {
         val simCtxt1 = t()
         val gs = simCtxt1.glosStub
         
+        VerificationDriver.simulateInitiateClaimStep( simCtxt1 )
+
         if ( promptBeforeTakingNextStep ) {
           if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
           println( "Proceed to next step? " )
@@ -767,6 +852,35 @@ package usage {
             VerificationDriver.simulateVerifierAckAllowVerificationStep( simCtxt1 )
           VerificationDriver.simulateRelyingPartyCloseClaimStep( simCtxt2 )
           gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
+        }
+      }
+    }
+  }
+
+  object VerifierDriver {
+    def drive(
+      numOfTests : Int = 1,
+      promptBeforeTakingNextStep : Boolean = false,
+      sleepBeforePrompt : Boolean = true
+    ) = {
+      val cts = VerificationDriver.VerifierTestStream()
+      val tStrm = cts.behaviorTestStrm
+      val ctStrm = tStrm.take( numOfTests )
+      for( i <- ( 1 to numOfTests ) ) {
+        val t = ctStrm( i - 1 )
+        val simCtxt1 = t()
+        val gs = simCtxt1.glosStub
+        
+        if ( promptBeforeTakingNextStep ) {
+          if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+          println( "Proceed to next step? " )
+          val ln = readLine() // Note: this is blocking.
+          if ( ln.contains( "y" ) ) {            
+            // Now run the test
+          }
+        }
+        else {
+          // Just run the test
         }
       }
     }
