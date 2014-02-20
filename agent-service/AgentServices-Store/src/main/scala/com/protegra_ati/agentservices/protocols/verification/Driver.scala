@@ -609,7 +609,7 @@ package usage {
     )(
       useSrc : Boolean = true
     ): PortableAgentCnxn = {
-      val cnxnLabel = UUID.randomUUID().toString
+      val cnxnLabel = UUID.randomUUID().toString.split( "-" )( 0 )
       if ( useSrc ) {
         PortableAgentCnxn( selfCnxn1.src, cnxnLabel, selfCnxn2.src )
       } 
@@ -629,7 +629,7 @@ package usage {
             || s.contains( "false" )
           )
         ) yield {
-          s
+          s.split( "-" )( 0 )
         }
       mkSelfCnxnStream(
         new scala.util.Random(),
@@ -888,7 +888,7 @@ package usage {
                   BasicLogService.tweet(
                     (
                       "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                      + "\ninvoking run on " + bhvr
+                      + "\ntest protocol -- invoking run on " + bhvr
                       + "\nnode: " + node
                       + "\ncnxns: " + cnxns
                       + "\nfilters: " + filters
@@ -912,9 +912,18 @@ package usage {
     ) : Unit = {
       val testStrm = verificationProtocolTestStream.take( numOfTests )
       for( i <- 1 to numOfTests ) {
+        BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\ntest protocol -- running test number " + i + " out of " + numOfTests + " tests"
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )
+
         val test = testStrm( i - 1 )
         val simCtxt1 = test()
         val gs = simCtxt1.glosStub
+
         VerificationDriver.simulateInitiateClaimStep( simCtxt1 )
       }
     }

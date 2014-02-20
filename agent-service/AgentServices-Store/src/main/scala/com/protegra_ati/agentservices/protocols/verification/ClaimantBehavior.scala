@@ -42,7 +42,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
         BasicLogService.tweet(
           (
             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-            + "\nwaiting for initiate claim on: " 
+            + "\nclaimant -- waiting for initiate claim on: " 
             + "\ncnxn: " + agntClmnt2GLoSRd
             + "\nlabel: " + InitiateClaim.toLabel
             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -56,7 +56,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                 BasicLogService.tweet(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                    + "\nreceived initiate claim request: " + eInitiateClaim
+                    + "\nclaimant -- received initiate claim request: " + eInitiateClaim
                     + "\ncnxn: " + agntClmnt2GLoSRd
                     + "\nlabel: " + InitiateClaim.toLabel
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -73,14 +73,14 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                 BasicLogService.tweet(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                    + "\npublishing AllowVerification request: " + avReq
+                    + "\nclaimant -- publishing AllowVerification request: " + avReq
                     + "\n on cnxn: " + agntVrfrWr
                     + "\n label: " + AllowVerification.toLabel( sidIC )
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   )
                 )
 
-                node.publish( agntVrfrWr )( 
+                node.publish( agntVrfrRd )( 
                   AllowVerification.toLabel( sidIC ), 
                   avReq
                 )
@@ -88,7 +88,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                 BasicLogService.tweet(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                    + "\nwaiting for allow verification acknowledgment on: " 
+                    + "\nclaimant -- waiting for allow verification acknowledgment on: " 
                     + "\ncnxn: " + agntVrfrRd
                     + "\nlabel: " + AckAllowVerification.toLabel( sidIC )
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -100,7 +100,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                       BasicLogService.tweet(
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                          + "\nreceived allow verification acknowledgment: " + eAllowV
+                          + "\nclaimant -- received allow verification acknowledgment: " + eAllowV
                           + "\ncnxn: " + agntVrfrRd
                           + "\nlabel: " + AckAllowVerification.toLabel( sidIC )
                           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -113,7 +113,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                         BasicLogService.tweet(
                           (
                             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                            + "\nallow verification acknowledgment matches request" 
+                            + "\nclaimant -- allow verification acknowledgment matches request" 
                             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                           )
                         )
@@ -122,12 +122,12 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                         val agntRPRd =
                           acT.AgentCnxn( rpIC.trgt, rpIC.label, rpIC.src )
 
-                        val ocReq = OpenClaim( sidIC, cidIC, vrfrIC, clmIC )
+                        val ocReq = OpenClaim( sidIC, cidIC, rpIC, clmIC )
 
                         BasicLogService.tweet(
                           (
                             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                            + "\npublishing open claim request" + ocReq
+                            + "\nclaimant -- publishing open claim request" + ocReq
                             + "\ncnxn: " + agntRPRd
                             + "\nlabel: " + OpenClaim.toLabel( sidIC )
                             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -144,7 +144,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                         BasicLogService.tweet(
                           (
                             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                            + "\nwaiting for close claim on: " 
+                            + "\nclaimant -- waiting for close claim on: " 
                             + "\ncnxn: " + agntRPRd
                             + "\nlabel: " + CloseClaim.toLabel( sidIC )
                             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -157,25 +157,25 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                               BasicLogService.tweet(
                                 (
                                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                                  + "\nreceived close claim message" + eCloseClaim
+                                  + "\nclaimant -- received close claim message" + eCloseClaim
                                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                 )
                               )
                               if (
                                 sidCC.equals( sidIC ) && cidCC.equals( cidIC )
-                                && vrfrCC.equals( vrfrIC ) && clmCC.equals( clmIC )
+                                && vrfrCC.equals( rpIC ) && clmCC.equals( clmIC )
                               ) {
                                 BasicLogService.tweet(
                                   (
                                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                                    + "\nclose claim message matches open claim request"
+                                    + "\nclaimant -- close claim message matches open claim request"
                                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                   )
                                 )
                                 BasicLogService.tweet(
                                   (
                                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                                    + "\npublishing complete claim message"
+                                    + "\nclaimant -- publishing complete claim message"
                                     + "\ncnxn: " + agntClmnt2GLoSWr
                                     + "\nlabel: " + CompleteClaim.toLabel( sidIC )
                                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -190,7 +190,15 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                                 BasicLogService.tweet(
                                   (
                                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                                    + "\nclose doesn't match open : " + eCloseClaim
+                                    + "\nclaimant -- close doesn't match open : " + eCloseClaim
+                                    + "\nsidIC : " + sidIC + " sidCC : " + sidCC
+                                    + "\nsidCC.equals( sidIC ) : " + sidCC.equals( sidIC )
+                                    + "\ncidIC : " + cidIC + " cidCC : " + cidCC
+                                    + "\ncidCC.equals( cidIC ) : " + cidCC.equals( cidIC )
+                                    + "\nrpIC : " + rpIC + " vrfrCC : " + vrfrCC
+                                    + "\nvrfrCC.equals( vrfrIC ) : " + vrfrCC.equals( vrfrIC )
+                                    + "\nclmIC : " + clmIC + "clmCC : " + clmCC
+                                    + "\nclmCC.equals( clmIC ) : " + clmCC.equals( clmIC )
                                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                   )
                                 )
@@ -207,7 +215,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                               BasicLogService.tweet(
                                 (
                                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                                  + "\nstill waiting for close claim"
+                                  + "\nclaimant -- still waiting for close claim"
                                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                 )
                               )
@@ -219,7 +227,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                               BasicLogService.tweet(
                                 (
                                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                                  + "\nwhile waiting for close claim"
+                                  + "\nclaimant -- while waiting for close claim"
                                   + "\nunexpected protocol message : " + eCloseClaim
                                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                 )
@@ -242,7 +250,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                         BasicLogService.tweet(
                           (
                             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                            + "\nack doesn't match : " + eAllowV
+                            + "\nclaimant -- ack doesn't match : " + eAllowV
                             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                           )
                         )
@@ -259,7 +267,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                       BasicLogService.tweet(
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                          + "\nstill waiting for allow claim ack"
+                          + "\nclaimant -- still waiting for allow claim ack"
                           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         )
                       )
@@ -268,7 +276,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                       BasicLogService.tweet(
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                          + "\nwhile waiting for acknowledgment of allow verification"
+                          + "\nclaimant -- while waiting for acknowledgment of allow verification"
                           + "\nunexpected protocol message : " + eAllowV
                           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         )
@@ -291,7 +299,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                 BasicLogService.tweet(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                    + "\nstill waiting for claim initiation"
+                    + "\nclaimant -- still waiting for claim initiation"
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   )
                 )
@@ -304,7 +312,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                 BasicLogService.tweet(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                    + "\nwhile waiting for initiate claim"
+                    + "\nclaimant -- while waiting for initiate claim"
                     + "\nreceived unexpected protocol message : " + eInitiateClaim
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   )
@@ -328,7 +336,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
         BasicLogService.tweet(
           (
             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-            + "\none cnxn expected : " + cnxns
+            + "\nclaimant -- one cnxn expected : " + cnxns
             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           )
         )
