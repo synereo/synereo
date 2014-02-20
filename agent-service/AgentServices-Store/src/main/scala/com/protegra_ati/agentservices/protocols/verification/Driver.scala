@@ -840,7 +840,7 @@ package usage {
       rpBhvr : RelyingPartyBehavior
     )(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       for(
         ( c, v, r, c2v, c2r, v2r ) <- cnxnStrm
       ) yield {
@@ -910,8 +910,7 @@ package usage {
               }
               SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, claim )
             }
-          );
-          ()
+          )
         }                
       }
     }
@@ -923,7 +922,7 @@ package usage {
       rpBhvr : RelyingPartyBehavior
     )(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       val ( c2GLoSCnxnStrm, v2GLoSCnxnStrm, r2GLoSCnxnStrm ) =
         ( getSelfCnxnStream(), getSelfCnxnStream(), getSelfCnxnStream() );
       val theGLoSCnxnStrm =
@@ -953,7 +952,7 @@ package usage {
       rpBhvr : RelyingPartyBehavior
     )(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       val ndStrm = dslNodeStream
       ndStrm.flatMap(
         {
@@ -968,7 +967,7 @@ package usage {
 
     def verificationEnsembleTestStrm(
       cnxnStrm : Stream[(PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn,PortableAgentCnxn)]
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       val veStrm = verificationEnsembleStrm
       veStrm.flatMap(
         {
@@ -984,7 +983,7 @@ package usage {
     }
 
     def verificationEnsembleTestStrm(
-    ): Stream[() => Unit] = {      
+    ): Stream[() => SimulationContext] = {      
       verificationEnsembleTestStrm(
         verificationEnsembleCnxnStrm()
       )
@@ -996,7 +995,9 @@ package usage {
       val testStrm = verificationEnsembleTestStrm.take( numOfTests )
       for( i <- 1 to numOfTests ) {
         val test = testStrm( i - 1 )
-        test()
+        val simCtxt1 = test()
+        val gs = simCtxt1.glosStub
+        VerificationDriver.simulateInitiateClaimStep( simCtxt1 )
       }
     }
   }
