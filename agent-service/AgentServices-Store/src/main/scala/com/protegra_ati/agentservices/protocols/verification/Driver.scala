@@ -521,6 +521,63 @@ package usage {
       }
       simCtxt
     }
+
+    def simulateWaitForCloseClaim(
+      simCtxt : SimulationContext
+    ) : SimulationContext = {
+      val SimulationContext( node, glosStub, sid, cid, c, v, r, c2v, c2r, v2r, clm ) = simCtxt
+      val agntClmntRd =
+        acT.AgentCnxn( c2r.src, c2r.label, c2r.trgt )
+
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for close claim on: " 
+          + "cnxn: " + agntClmntRd
+          + "label: " + CloseClaim.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )      
+
+      reset {
+        for(
+          eCloseClaim <- simCtxt.node.subscribe(
+            agntClmntRd
+          )( CloseClaim.toLabel( sid ) )
+        ) {
+          rsrc2V[VerificationMessage]( eCloseClaim ) match {
+            case Left( vmsg@CloseClaim( sidCC, cidCC, vrfrCC, clmCC, witCC ) ) => { 
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived close claim " + eCloseClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+              //continuation( vmsg )
+            }
+            case Right( true ) => {
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for close claim"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+            }
+            case _ => {
+              BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eCloseClaim
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
+            }
+          }
+        }
+      }
+
+      simCtxt
+    }
   }
 
   object VerificationDriver
@@ -1120,7 +1177,20 @@ package usage {
                 VerificationDriver.simulateVerifierVerificationStep(
                   simCtxt2
                 )              
-              simCtxt3
+              if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+              println( "Proceed to next step? " )
+              val ln = readLine() // Note: this is blocking.
+              if ( ln.contains( "y" ) ) {            
+                val simCtxt4 =
+                  VerificationDriver.simulateWaitForCloseClaim(
+                    simCtxt3
+                  )
+                simCtxt4.glosStub.waitForRelyingPartyVerificationNotification(
+                  simCtxt4.node,
+                  { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+                )
+                simCtxt4
+              }
             }
           }
         }
@@ -1134,7 +1204,15 @@ package usage {
             VerificationDriver.simulateVerifierVerificationStep(
               simCtxt2
             )          
-          simCtxt3
+          val simCtxt4 =
+            VerificationDriver.simulateWaitForCloseClaim(
+              simCtxt3
+            )
+          simCtxt4.glosStub.waitForRelyingPartyVerificationNotification(
+            simCtxt4.node,
+            { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+          )
+          simCtxt4
         }
       }
     }
