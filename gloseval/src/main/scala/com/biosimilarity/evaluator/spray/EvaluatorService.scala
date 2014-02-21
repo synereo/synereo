@@ -214,16 +214,13 @@ trait EvaluatorService extends HttpService
     ("introductionConfirmationRequest", introductionConfirmationRequest),
     // Database dump/restore
     ("backupRequest", backupRequest),
-    ("restoreRequest", restoreRequest)
+    ("restoreRequest", restoreRequest),
+    // Verifier protocol
+    ("initiateVerification", initiateVerification)
   )
 
   @transient
   val myRoute = 
-    path("signup") {
-      get {
-        _.redirect("http://64.27.3.17:6080/agentui.html", MovedPermanently)
-      }
-    } ~
     path("api") {
       post {
         decodeRequest(NoEncoding) {

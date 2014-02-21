@@ -443,84 +443,82 @@ trait EvalHandler {
 
     BasicLogService.tweet("secureSignup posting pwmac")
     val (erql, erspl) = agentMgr().makePolarizedPair()
+
+    val createUserResponse: Unit => Unit = Unit => {
+      CompletionMapper.complete(key, compact(render(
+        ("msgType" -> "createUserResponse") ~
+          ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac)))
+      )))
+    }
+    
+    val onPost4 = ( aliasCnxn: PortableAgentCnxn ) => ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
+      optRsrc match {
+        case None => ()
+        case Some(_) => {
+          onAgentCreation(
+            cap,
+            aliasCnxn,
+            createUserResponse
+          )
+        }
+      }
+    }    
+    
+    val onPost3 = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet("secureSignup onPost3: optRsrc = " + optRsrc)
+      optRsrc match {
+        case None => ()
+        case Some(_) => {
+          val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
+          val (erql, erspl) = agentMgr().makePolarizedPair()
+          agentMgr().post(erql, erspl)(
+            labelListLabel,
+            List(aliasCnxn),
+            """[]""",
+            onPost4(aliasCnxn)
+          )
+        }
+      }
+    }    
+    
+    val onPost2 = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
+      optRsrc match {
+        case None => ()
+        case Some(_) => {
+          val (erql, erspl) = agentMgr().makePolarizedPair()
+          agentMgr().post(erql, erspl)(
+            aliasListLabel,
+            List(capSelfCnxn),
+            """["alias"]""",
+            onPost3
+          )
+        }
+      }
+    }
+    
+    val onPost1 = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet("secureSignup onPost1: optRsrc = " + optRsrc)
+      optRsrc match {
+        case None => ()
+        case Some(_) => {
+          val (erql, erspl) = agentMgr().makePolarizedPair()
+          agentMgr().post(erql, erspl)(
+            jsonBlobLabel,
+            List(capSelfCnxn),
+            jsonBlob,
+            onPost2
+          )
+        }
+      }
+    }
+    
     agentMgr().post(erql, erspl)(
       pwmacLabel,
       List(capSelfCnxn),
       pwmac,
-      ( optRsrc : Option[mTT.Resource] ) => {
-        BasicLogService.tweet("secureSignup onPost1: optRsrc = " + optRsrc)
-        optRsrc match {
-          case None => ()
-          case Some(_) => {
-            val (erql, erspl) = agentMgr().makePolarizedPair()
-            agentMgr().post(erql, erspl)(
-              jsonBlobLabel,
-              List(capSelfCnxn),
-              jsonBlob,
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(_) => {
-                    val (erql, erspl) = agentMgr().makePolarizedPair()
-                    agentMgr().post(erql, erspl)(
-                      aliasListLabel,
-                      List(capSelfCnxn),
-                      """["alias"]""",
-                      ( optRsrc : Option[mTT.Resource] ) => {
-                        BasicLogService.tweet("secureSignup onPost3: optRsrc = " + optRsrc)
-                        optRsrc match {
-                          case None => ()
-                          case Some(_) => {
-                            agentMgr().post(
-                              defaultAliasLabel,
-                              List(capSelfCnxn),
-                              "alias",
-                              ( optRsrc : Option[mTT.Resource] ) => {
-                                BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
-                                optRsrc match {
-                                  case None => ()
-                                  case Some(_) => {
-                                    val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
-                                    val (erql, erspl) = agentMgr().makePolarizedPair()
-                                    agentMgr().post(erql, erspl)(
-                                      labelListLabel,
-                                      List(aliasCnxn),
-                                      """[]""",
-                                      ( optRsrc : Option[mTT.Resource] ) => {
-                                        BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
-                                        optRsrc match {
-                                          case None => ()
-                                          case Some(_) => {
-                                            onAgentCreation(
-                                              cap,
-                                              aliasCnxn,
-                                              Unit => {
-                                                CompletionMapper.complete(key, compact(render(
-                                                  ("msgType" -> "createUserResponse") ~
-                                                    ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac)))
-                                                )))
-                                              }
-                                            )
-                                          }
-                                        }
-                                      }
-                                    )
-                                  }
-                                }
-                              }
-                            )
-                          }
-                        }
-                      }
-                    )
-                  }
-                }
-              }
-            )
-          }
-        }
-      }
+      onPost1
     )
   }
 
@@ -596,7 +594,11 @@ trait EvalHandler {
                 optRsrc => println( "onCommencement six | " + optRsrc )
               }
             )
-
+            VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
+              aliasCnxn.src,
+              writeCnxn.trgt,
+              agentMgr().feed _
+            )
             CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "connectNotification") ~
               ("content" ->
@@ -706,6 +708,12 @@ trait EvalHandler {
       {
         optRsrc => println( "onCommencement three | " + optRsrc )
       }
+    )
+    VerificationBehaviors().launchClaimantBehavior(aliasURI, agentMgr().feed _)
+    VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
+      aliasURI,
+      nodeAliasURI,
+      agentMgr().feed _
     )
   }
 
@@ -1581,7 +1589,7 @@ trait EvalHandler {
 
         // Check if agent for email exists. If it doesn't, create the agent.
         optRsrc match {
-          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) =>
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
             // Store the email
             agentMgr().put[String](emailLabel, List(capSelfCnxn), cap)
             storeCapByEmail(email)
@@ -1664,6 +1672,7 @@ trait EvalHandler {
                 }
               }
             )
+          }
           case _ => ()
         }
       }
@@ -1684,6 +1693,8 @@ trait EvalHandler {
         optRsrc => println( "onCommencement five | " + optRsrc )
       }
     )
+    
+    VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
   }
   
   def backupRequest(json: JValue) : Unit = {
@@ -1712,5 +1723,10 @@ trait EvalHandler {
         )
       )))
     })
+  }
+
+  def initiateVerification(json: JValue): Unit = {
+    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    
   }
 }
