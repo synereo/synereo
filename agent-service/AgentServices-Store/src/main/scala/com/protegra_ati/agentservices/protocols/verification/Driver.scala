@@ -928,221 +928,221 @@ package usage {
       }
     }
   }
-
-  trait SinglePartyDriverT {
-    def drive(
-      numOfTests : Int = 1,
-      promptBeforeTakingNextStep : Boolean = false,
-      sleepBeforePrompt : Boolean = true
-    ) : Unit
-  }
-
-  object ClaimantDriver extends SinglePartyDriverT with Serializable {
-    def drive(
-      numOfTests : Int = 1,
-      promptBeforeTakingNextStep : Boolean = false,
-      sleepBeforePrompt : Boolean = true
-    ) = {
-      val cts = VerificationDriver.ClaimantTestStream()
-      val tStrm = cts.behaviorTestStrm
-      val ctStrm = tStrm.take( numOfTests )
-      for( i <- ( 1 to numOfTests ) ) {
-        val t = ctStrm( i - 1 )
-        val simCtxt1 = t()
-        val gs = simCtxt1.glosStub
-        
-        VerificationDriver.simulateInitiateClaimStep( simCtxt1 )
-
-        if ( promptBeforeTakingNextStep ) {
-          if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-          println( "Proceed to next step? " )
-          val ln = readLine() // Note: this is blocking.
-          if ( ln.contains( "y" ) ) {
-            println( "simulating acknowledgment of allow verification request" )
-
-            val simCtxt2 =
-              VerificationDriver.simulateVerifierAckAllowVerificationStep( simCtxt1 )
-
-            if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-            println( "Proceed to next step? " )
-            val ln = readLine() // Note: this is blocking.
-            if ( ln.contains( "y" ) ) {
-              println( "simulating close claim" )
-              VerificationDriver.simulateRelyingPartyCloseClaimStep( simCtxt2 )
-              
-              if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-              println( "Proceed to next step? " )
-              val ln = readLine() // Note: this is blocking.
-              if ( ln.contains( "y" ) ) {
-                println( "simulating complete claim" )
-                gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
-              }
-            }
-          }
-        }
-        else {
-          val simCtxt2 =
-            VerificationDriver.simulateVerifierAckAllowVerificationStep( simCtxt1 )
-          VerificationDriver.simulateRelyingPartyCloseClaimStep( simCtxt2 )
-          gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
-        }
-      }
-    }
-  }
-
-  object VerifierDriver extends SinglePartyDriverT with Serializable {
-    def drive(
-      numOfTests : Int = 1,
-      promptBeforeTakingNextStep : Boolean = false,
-      sleepBeforePrompt : Boolean = true
-    ) = {
-      val cts = VerificationDriver.VerifierTestStream()
-      val tStrm = cts.behaviorTestStrm
-      val ctStrm = tStrm.take( numOfTests )
-      for( i <- ( 1 to numOfTests ) ) {
-        val t = ctStrm( i - 1 )
-        val simCtxt1 = t()
-        val gs = simCtxt1.glosStub
-        
-        if ( promptBeforeTakingNextStep ) {
-          if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-          println( "Proceed to next step? " )
-          val ln = readLine() // Note: this is blocking.
-          if ( ln.contains( "y" ) ) {            
-            // Now run the test
-            val simCtxt2 =
-              VerificationDriver.simulateClaimantAllowVerificationStep(
-                simCtxt1
-              )
-            VerificationDriver.simulateWaitForVerifierAllowVerificationAcknowledgment(
-              simCtxt2
-            )
-            if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-            println( "Proceed to next step? " )
-            val ln = readLine() // Note: this is blocking.
-            if ( ln.contains( "y" ) ) {            
-              // Now run the test
-              val simCtxt3 =
-                VerificationDriver.simulateRelyingPartyVerifyStep(
-                  simCtxt2
-                )
-              if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-              println( "Proceed to next step? " )
-              val ln = readLine() // Note: this is blocking.
-              if ( ln.contains( "y" ) ) {            
-                gs.waitForVerifierVerificationNotification(
-                  simCtxt3.node,
-                  { vmsg => println( "witnessed claim: " + vmsg ) }
-                )
-                // This is not part of the immediate environment of
-                // the verifier.
-                // gs.waitForRelyingPartyVerificationNotification(
-                //    simCtxt3.node,
-                //    { vmsg => println( "witnessed verification of claim: " + vmsg ) }
-                // )
-              }
-            }
-          }
-        }
-        else {
-          // Just run the test
-          val simCtxt2 =
-            VerificationDriver.simulateClaimantAllowVerificationStep(
-              simCtxt1
-            )
-          VerificationDriver.simulateWaitForVerifierAllowVerificationAcknowledgment(
-            simCtxt2
-          )            
-          val simCtxt3 =
-            VerificationDriver.simulateRelyingPartyVerifyStep(
-              simCtxt2
-            )          
-          gs.waitForVerifierVerificationNotification(
-            simCtxt3.node,
-            { vmsg => println( "witnessed claim: " + vmsg ) }
-          )
-          // This is not part of the immediate environment of
-          // the verifier.
-          // gs.waitForRelyingPartyVerificationNotification(
-          //    simCtxt3.node,
-          //    { vmsg => println( "witnessed verification of claim: " + vmsg ) }
-          // )
-        }
-      }
-    }
-  }
   
-  object RelyingPartyDriver extends SinglePartyDriverT with Serializable {
-    def drive(
-      numOfTests : Int = 1,
-      promptBeforeTakingNextStep : Boolean = false,
-      sleepBeforePrompt : Boolean = true
-    ) = {
-      val cts = VerificationDriver.RelyingPartyTestStream()
-      val tStrm = cts.behaviorTestStrm
-      val ctStrm = tStrm.take( numOfTests )
-      for( i <- ( 1 to numOfTests ) ) {
-        val t = ctStrm( i - 1 )
-        val simCtxt1 = t()
-        val gs = simCtxt1.glosStub
+  // trait SinglePartyDriverT {
+//     def drive(
+//       numOfTests : Int = 1,
+//       promptBeforeTakingNextStep : Boolean = false,
+//       sleepBeforePrompt : Boolean = true
+//     ) : Unit
+//   }
+
+//   object ClaimantDriver extends SinglePartyDriverT with Serializable {
+//     def drive(
+//       numOfTests : Int = 1,
+//       promptBeforeTakingNextStep : Boolean = false,
+//       sleepBeforePrompt : Boolean = true
+//     ) = {
+//       val cts = VerificationDriver.ClaimantTestStream()
+//       val tStrm = cts.behaviorTestStrm
+//       val ctStrm = tStrm.take( numOfTests )
+//       for( i <- ( 1 to numOfTests ) ) {
+//         val t = ctStrm( i - 1 )
+//         val simCtxt1 = t()
+//         val gs = simCtxt1.glosStub
         
-        if ( promptBeforeTakingNextStep ) {
-          if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-          println( "Proceed to next step? " )
-          val ln = readLine() // Note: this is blocking.
-          if ( ln.contains( "y" ) ) {            
-            // Now run the test
-            val simCtxt2 =
-              VerificationDriver.simulateClaimantOpenClaimStep(
-                simCtxt1
-              )
-            if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-            println( "Proceed to next step? " )
-            val ln = readLine() // Note: this is blocking.
-            if ( ln.contains( "y" ) ) {            
-              // Now run the test
-              val simCtxt3 =
-                VerificationDriver.simulateVerifierVerificationStep(
-                  simCtxt2
-                )              
-              if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
-              println( "Proceed to next step? " )
-              val ln = readLine() // Note: this is blocking.
-              if ( ln.contains( "y" ) ) {            
-                val simCtxt4 =
-                  VerificationDriver.simulateWaitForCloseClaim(
-                    simCtxt3
-                  )
-                simCtxt4.glosStub.waitForRelyingPartyVerificationNotification(
-                  simCtxt4.node,
-                  { vmsg => println( "witnessed verification of claim: " + vmsg ) }
-                )
-                simCtxt4
-              }
-            }
-          }
-        }
-        else {
-          // Just run the test
-          val simCtxt2 =
-            VerificationDriver.simulateClaimantOpenClaimStep(
-              simCtxt1
-            )
-          val simCtxt3 =
-            VerificationDriver.simulateVerifierVerificationStep(
-              simCtxt2
-            )          
-          val simCtxt4 =
-            VerificationDriver.simulateWaitForCloseClaim(
-              simCtxt3
-            )
-          simCtxt4.glosStub.waitForRelyingPartyVerificationNotification(
-            simCtxt4.node,
-            { vmsg => println( "witnessed verification of claim: " + vmsg ) }
-          )
-          simCtxt4
-        }
-      }
-    }
-  }
+//         VerificationDriver.simulateInitiateClaimStep( simCtxt1 )
+
+//         if ( promptBeforeTakingNextStep ) {
+//           if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//           println( "Proceed to next step? " )
+//           val ln = readLine() // Note: this is blocking.
+//           if ( ln.contains( "y" ) ) {
+//             println( "simulating acknowledgment of allow verification request" )
+
+//             val simCtxt2 =
+//               VerificationDriver.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+
+//             if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//             println( "Proceed to next step? " )
+//             val ln = readLine() // Note: this is blocking.
+//             if ( ln.contains( "y" ) ) {
+//               println( "simulating close claim" )
+//               VerificationDriver.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+              
+//               if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//               println( "Proceed to next step? " )
+//               val ln = readLine() // Note: this is blocking.
+//               if ( ln.contains( "y" ) ) {
+//                 println( "simulating complete claim" )
+//                 gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
+//               }
+//             }
+//           }
+//         }
+//         else {
+//           val simCtxt2 =
+//             VerificationDriver.simulateVerifierAckAllowVerificationStep( simCtxt1 )
+//           VerificationDriver.simulateRelyingPartyCloseClaimStep( simCtxt2 )
+//           gs.waitForCompleteClaim( simCtxt2.node, { vmsg => println( "Done." ) } )
+//         }
+//       }
+//     }
+//   }
+
+//   object VerifierDriver extends SinglePartyDriverT with Serializable {
+//     def drive(
+//       numOfTests : Int = 1,
+//       promptBeforeTakingNextStep : Boolean = false,
+//       sleepBeforePrompt : Boolean = true
+//     ) = {
+//       val cts = VerificationDriver.VerifierTestStream()
+//       val tStrm = cts.behaviorTestStrm
+//       val ctStrm = tStrm.take( numOfTests )
+//       for( i <- ( 1 to numOfTests ) ) {
+//         val t = ctStrm( i - 1 )
+//         val simCtxt1 = t()
+//         val gs = simCtxt1.glosStub
+        
+//         if ( promptBeforeTakingNextStep ) {
+//           if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//           println( "Proceed to next step? " )
+//           val ln = readLine() // Note: this is blocking.
+//           if ( ln.contains( "y" ) ) {            
+//             // Now run the test
+//             val simCtxt2 =
+//               VerificationDriver.simulateClaimantAllowVerificationStep(
+//                 simCtxt1
+//               )
+//             VerificationDriver.simulateWaitForVerifierAllowVerificationAcknowledgment(
+//               simCtxt2
+//             )
+//             if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//             println( "Proceed to next step? " )
+//             val ln = readLine() // Note: this is blocking.
+//             if ( ln.contains( "y" ) ) {            
+//               // Now run the test
+//               val simCtxt3 =
+//                 VerificationDriver.simulateRelyingPartyVerifyStep(
+//                   simCtxt2
+//                 )
+//               if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//               println( "Proceed to next step? " )
+//               val ln = readLine() // Note: this is blocking.
+//               if ( ln.contains( "y" ) ) {            
+//                 gs.waitForVerifierVerificationNotification(
+//                   simCtxt3.node,
+//                   { vmsg => println( "witnessed claim: " + vmsg ) }
+//                 )
+//                 // This is not part of the immediate environment of
+//                 // the verifier.
+//                 // gs.waitForRelyingPartyVerificationNotification(
+//                 //    simCtxt3.node,
+//                 //    { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+//                 // )
+//               }
+//             }
+//           }
+//         }
+//         else {
+//           // Just run the test
+//           val simCtxt2 =
+//             VerificationDriver.simulateClaimantAllowVerificationStep(
+//               simCtxt1
+//             )
+//           VerificationDriver.simulateWaitForVerifierAllowVerificationAcknowledgment(
+//             simCtxt2
+//           )            
+//           val simCtxt3 =
+//             VerificationDriver.simulateRelyingPartyVerifyStep(
+//               simCtxt2
+//             )          
+//           gs.waitForVerifierVerificationNotification(
+//             simCtxt3.node,
+//             { vmsg => println( "witnessed claim: " + vmsg ) }
+//           )
+//           // This is not part of the immediate environment of
+//           // the verifier.
+//           // gs.waitForRelyingPartyVerificationNotification(
+//           //    simCtxt3.node,
+//           //    { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+//           // )
+//         }
+//       }
+//     }
+//   }
+  
+//   object RelyingPartyDriver extends SinglePartyDriverT with Serializable {
+//     def drive(
+//       numOfTests : Int = 1,
+//       promptBeforeTakingNextStep : Boolean = false,
+//       sleepBeforePrompt : Boolean = true
+//     ) = {
+//       val cts = VerificationDriver.RelyingPartyTestStream()
+//       val tStrm = cts.behaviorTestStrm
+//       val ctStrm = tStrm.take( numOfTests )
+//       for( i <- ( 1 to numOfTests ) ) {
+//         val t = ctStrm( i - 1 )
+//         val simCtxt1 = t()
+//         val gs = simCtxt1.glosStub
+        
+//         if ( promptBeforeTakingNextStep ) {
+//           if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//           println( "Proceed to next step? " )
+//           val ln = readLine() // Note: this is blocking.
+//           if ( ln.contains( "y" ) ) {            
+//             // Now run the test
+//             val simCtxt2 =
+//               VerificationDriver.simulateClaimantOpenClaimStep(
+//                 simCtxt1
+//               )
+//             if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//             println( "Proceed to next step? " )
+//             val ln = readLine() // Note: this is blocking.
+//             if ( ln.contains( "y" ) ) {            
+//               // Now run the test
+//               val simCtxt3 =
+//                 VerificationDriver.simulateVerifierVerificationStep(
+//                   simCtxt2
+//                 )              
+//               if ( sleepBeforePrompt ) { Thread.sleep( 2500 ) }
+//               println( "Proceed to next step? " )
+//               val ln = readLine() // Note: this is blocking.
+//               if ( ln.contains( "y" ) ) {            
+//                 val simCtxt4 =
+//                   VerificationDriver.simulateWaitForCloseClaim(
+//                     simCtxt3
+//                   )
+//                 simCtxt4.glosStub.waitForRelyingPartyVerificationNotification(
+//                   simCtxt4.node,
+//                   { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+//                 )
+//                 simCtxt4
+//               }
+//             }
+//           }
+//         }
+//         else {
+//           // Just run the test
+//           val simCtxt2 =
+//             VerificationDriver.simulateClaimantOpenClaimStep(
+//               simCtxt1
+//             )
+//           val simCtxt3 =
+//             VerificationDriver.simulateVerifierVerificationStep(
+//               simCtxt2
+//             )          
+//           val simCtxt4 =
+//             VerificationDriver.simulateWaitForCloseClaim(
+//               simCtxt3
+//             )
+//           simCtxt4.glosStub.waitForRelyingPartyVerificationNotification(
+//             simCtxt4.node,
+//             { vmsg => println( "witnessed verification of claim: " + vmsg ) }
+//           )
+//           simCtxt4
+//         }
+//       }
+//     }
+//   }
 }
