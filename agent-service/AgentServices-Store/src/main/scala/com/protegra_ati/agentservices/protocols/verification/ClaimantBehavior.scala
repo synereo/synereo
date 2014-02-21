@@ -207,7 +207,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                               BasicLogService.tweet(
                                 (
                                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                                  + "\nwaiting for close claim"
+                                  + "\nstill waiting for close claim"
                                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                 )
                               )
@@ -259,7 +259,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                       BasicLogService.tweet(
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                          + "\nwaiting for allow claim ack"
+                          + "\nstill waiting for allow claim ack"
                           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         )
                       )
@@ -291,7 +291,7 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
                 BasicLogService.tweet(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                    + "\nwaiting for claim initiation"
+                    + "\nstill waiting for claim initiation"
                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   )
                 )

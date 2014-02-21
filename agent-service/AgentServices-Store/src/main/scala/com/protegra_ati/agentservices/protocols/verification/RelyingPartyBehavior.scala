@@ -45,35 +45,120 @@ trait RelyingPartyBehaviorT extends ProtocolBehaviorT with Serializable {
         }
       )
     for( ( cnxnRd, cnxnWr, pacCnxnRd ) <- agntCnxns ) {
+      BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for open claim request on: " 
+          + "\ncnxn: " + cnxnRd
+          + "\nlabel: " + OpenClaim.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )    
       reset {
         for( eOpenClaim <- node.subscribe( cnxnRd )( OpenClaim.toLabel ) ) {
           rsrc2V[VerificationMessage]( eOpenClaim ) match {
             case Left( OpenClaim( sidOC, cidOC, vrfrOC, clmOC ) ) => { 
-              val agntVrfrWr =
-                acT.AgentCnxn( vrfrOC.src, vrfrOC.label, vrfrOC.trgt )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived open claim request: " + eOpenClaim
+                  + "\ncnxn: " + cnxnRd
+                  + "\nlabel: " + OpenClaim.toLabel
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+
               val agntVrfrRd =
+                acT.AgentCnxn( vrfrOC.src, vrfrOC.label, vrfrOC.trgt )
+              val agntVrfrWr =
                 acT.AgentCnxn( vrfrOC.trgt, vrfrOC.label, vrfrOC.src )
+              val verifyRq = 
+                Verify( sidOC, cidOC, pacCnxnRd, clmOC )
+
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\npublishing verify request: " + verifyRq
+                  + "\n on cnxn: " + agntVrfrWr
+                  + "\n label: " + Verify.toLabel( sidOC )
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
 
               node.publish( agntVrfrWr )( 
                 Verify.toLabel( sidOC ),
-                Verify( sidOC, cidOC, pacCnxnRd, clmOC )
+                verifyRq
               )
+
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nwaiting for verification testimony on: " 
+                  + "\ncnxn: " + agntVrfrRd
+                  + "\nlabel: " + Verification.toLabel
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )    
+
               for( eVerification <- node.subscribe( agntVrfrRd )( Verification.toLabel ) ) {
                 rsrc2V[VerificationMessage]( eVerification ) match {
                   case Left( Verification( sidV, cidV, clmntV, clmV, witV ) ) => { 
+                    BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nreceived verification testimony: " + eVerification
+                        + "\ncnxn: " + agntVrfrRd
+                        + "\nlabel: " + Verification.toLabel
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
                     if (
                       sidV.equals( sidOC ) && cidV.equals( cidOC )
                       && clmV.equals( clmOC )
                     ) {
-                      node.publish( cnxnWr )( 
-                        CloseClaim.toLabel( sidOC ),
+                      val closeClaim =
                         CloseClaim( sidV, cidV, clmntV, clmV, witV )
-                      )
-                      node.publish( rp2GLoSWr )(
-                        VerificationNotification.toLabel( sidOC ),
+                      val notification =
                         VerificationNotification(
                           sidV, cidV, clmntV, clmV, witV
                         )
+                    
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nverification testimony matches request parameters" 
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\npublishing close claim: " + closeClaim
+                          + "\n on cnxn: " + cnxnWr
+                          + "\n label: " + closeClaim
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+
+                      node.publish( cnxnWr )( 
+                        CloseClaim.toLabel( sidOC ),
+                        closeClaim
+                      )
+                      
+                      BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\npublishing VerificationNotification: " + notification
+                          + "\n on cnxn: " + rp2GLoSWr
+                          + "\n label: " + VerificationNotification.toLabel( sidOC )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+
+                      node.publish( rp2GLoSWr )(
+                        VerificationNotification.toLabel( sidOC ),
+                        notification
                       )
                     }
                     else {
@@ -93,10 +178,22 @@ trait RelyingPartyBehaviorT extends ProtocolBehaviorT with Serializable {
                     }
                   }
                   case Right( true ) => {
-                    BasicLogService.tweet( "waiting for claim initiation" )
+                    BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nstill waiting for verification from verifier"
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
                   }
                   case _ => {
-                    BasicLogService.tweet( "unexpected protocol message : " + eOpenClaim )
+                    BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nunexpected protocol message : " + eVerification
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
                     node.publish( rp2GLoSWr )(
                       VerificationNotification.toLabel(),
                       VerificationNotification(
@@ -109,10 +206,22 @@ trait RelyingPartyBehaviorT extends ProtocolBehaviorT with Serializable {
               }
             }
             case Right( true ) => {
-              BasicLogService.tweet( "waiting for claim initiation" )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for open claim request from relying party"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eOpenClaim )
+              BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nunexpected protocol message : " + eOpenClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               node.publish( rp2GLoSWr )(
                 VerificationNotification.toLabel(),
                 VerificationNotification(
