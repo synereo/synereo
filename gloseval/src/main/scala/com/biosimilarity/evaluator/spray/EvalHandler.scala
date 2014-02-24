@@ -471,9 +471,9 @@ trait EvalHandler {
         case Some(_) => {
           val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
           agentMgr().post(
-            defaultAliasLabel,
+            labelListLabel,
             List(aliasCnxn),
-            """alias""",
+            """[]""",
             onPost5(aliasCnxn)
           )
         }
@@ -481,16 +481,15 @@ trait EvalHandler {
     }
     
     val onPost3 = ( optRsrc : Option[mTT.Resource] ) => {
-      BasicLogService.tweet("secureSignup onPost3: optRsrc = " + optRsrc)
+      BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
         case Some(_) => {
-          val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
           agentMgr().post(
-            labelListLabel,
-            List(aliasCnxn),
-            """[]""",
-            onPost4(aliasCnxn)
+            defaultAliasLabel,
+            List(capSelfCnxn),
+            """alias""",
+            onPost4
           )
         }
       }
