@@ -280,7 +280,18 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
   }
 }
 
-case class VerifierBehavior(
-) extends VerifierBehaviorT
+class VerifierBehavior(
+) extends VerifierBehaviorT {
+  override def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String, String, String]]
+  ): Unit = {
+    super.run(kvdbNode, cnxns, filters)
+  }
+}
 
-
+object VerifierBehavior {
+  def apply( ) : VerifierBehavior = new VerifierBehavior()
+  def unapply( cb : VerifierBehavior ) = Some( () )
+}

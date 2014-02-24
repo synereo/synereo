@@ -346,5 +346,18 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
   }
 }
 
-case class ClaimantBehavior(
-) extends ClaimantBehaviorT 
+class ClaimantBehavior(
+) extends ClaimantBehaviorT {
+  override def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String, String, String]]
+  ): Unit = {
+    super.run(kvdbNode, cnxns, filters)
+  }
+}
+
+object ClaimantBehavior {
+  def apply( ) : ClaimantBehavior = new ClaimantBehavior()
+  def unapply( cb : ClaimantBehavior ) = Some( () )
+}

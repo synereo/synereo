@@ -237,5 +237,18 @@ trait RelyingPartyBehaviorT extends ProtocolBehaviorT with Serializable {
   }
 }
 
-case class RelyingPartyBehavior(
-) extends RelyingPartyBehaviorT
+class RelyingPartyBehavior(
+) extends RelyingPartyBehaviorT {
+  override def run(
+    kvdbNode: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
+    cnxns: Seq[PortableAgentCnxn],
+    filters: Seq[CnxnCtxtLabel[String, String, String]]
+  ): Unit = {
+    super.run(kvdbNode, cnxns, filters)
+  }
+}
+
+object RelyingPartyBehavior {
+  def apply( ) : RelyingPartyBehavior = new RelyingPartyBehavior()
+  def unapply( cb : RelyingPartyBehavior ) = Some( () )
+}
