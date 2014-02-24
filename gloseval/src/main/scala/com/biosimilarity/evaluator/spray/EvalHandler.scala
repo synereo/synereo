@@ -442,7 +442,6 @@ trait EvalHandler {
     val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
     BasicLogService.tweet("secureSignup posting pwmac")
-    val (erql, erspl) = agentMgr().makePolarizedPair()
 
     val createUserResponse: Unit => Unit = Unit => {
       CompletionMapper.complete(key, compact(render(
@@ -451,7 +450,7 @@ trait EvalHandler {
       )))
     }
     
-    val onPost4 = ( aliasCnxn: PortableAgentCnxn ) => ( optRsrc : Option[mTT.Resource] ) => {
+    val onPost5 = ( aliasCnxn: PortableAgentCnxn ) => ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
@@ -465,14 +464,29 @@ trait EvalHandler {
       }
     }    
     
+    val onPost4 = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet("secureSignup onPost3: optRsrc = " + optRsrc)
+      optRsrc match {
+        case None => ()
+        case Some(_) => {
+          val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
+          agentMgr().post(
+            defaultAliasLabel,
+            List(aliasCnxn),
+            """alias""",
+            onPost5(aliasCnxn)
+          )
+        }
+      }
+    }
+    
     val onPost3 = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("secureSignup onPost3: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
         case Some(_) => {
           val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          agentMgr().post(
             labelListLabel,
             List(aliasCnxn),
             """[]""",
@@ -480,15 +494,14 @@ trait EvalHandler {
           )
         }
       }
-    }    
+    }
     
     val onPost2 = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
         case Some(_) => {
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          agentMgr().post(
             aliasListLabel,
             List(capSelfCnxn),
             """["alias"]""",
@@ -503,8 +516,7 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          agentMgr().post(
             jsonBlobLabel,
             List(capSelfCnxn),
             jsonBlob,
@@ -514,7 +526,7 @@ trait EvalHandler {
       }
     }
     
-    agentMgr().post(erql, erspl)(
+    agentMgr().post(
       pwmacLabel,
       List(capSelfCnxn),
       pwmac,
