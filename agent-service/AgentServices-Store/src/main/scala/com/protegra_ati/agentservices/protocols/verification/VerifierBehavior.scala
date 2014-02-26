@@ -48,12 +48,30 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
             + "\nlabel: " + AllowVerification.toLabel
             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           )
-      )    
+      )
+      println(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\nverifier -- waiting for allow verification request on: " 
+            + "\ncnxn: " + cnxnRd
+            + "\nlabel: " + AllowVerification.toLabel
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+      )
       reset {
         for( eAllowV <- node.subscribe( cnxnRd )( AllowVerification.toLabel ) ) {
           rsrc2V[VerificationMessage]( eAllowV ) match {
             case Left( AllowVerification( sidAV, cidAV, rpAV, clmAV ) ) => { 
               BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nverifier -- received allow verification request: " + eAllowV
+                  + "\ncnxn: " + cnxnRd
+                  + "\nlabel: " + AllowVerification.toLabel
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+              println(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   + "\nverifier -- received allow verification request: " + eAllowV
@@ -79,6 +97,15 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nverifier -- publishing AllowVerification acknowledgment: " + acknowledgment
+                  + "\n on cnxn: " + cnxnWr
+                  + "\n label: " + AllowVerification.toLabel( sidAV )
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
 
               node.publish( cnxnWr )( 
                 AckAllowVerification.toLabel( sidAV ),
@@ -93,12 +120,30 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                   + "\nlabel: " + Verify.toLabel
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
-              )    
+              )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nverifier -- waiting for verify request on: " 
+                  + "\ncnxn: " + agntRPWr
+                  + "\nlabel: " + Verify.toLabel
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
 
               for( eVerify <- node.subscribe( agntRPWr )( Verify.toLabel ) ) {
                 rsrc2V[VerificationMessage]( eVerify ) match {
                   case Left( Verify( sidV, cidV, clmntV, clmV ) ) => { 
                     BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nverifier -- received verification request: " + eVerify
+                        + "\ncnxn: " + agntRPRd
+                        + "\nlabel: " + Verify.toLabel
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
+                    println(
                       (
                         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         + "\nverifier -- received verification request: " + eVerify
@@ -131,8 +176,24 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         )
                       )
+                      println(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nverifier -- verification request matches permission parameters" 
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
 
                       BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nverifier -- publishing Verification testimony: " + verification
+                          + "\n on cnxn: " + agntRPWr
+                          + "\n label: " + Verification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+                      println(
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                           + "\nverifier -- publishing Verification testimony: " + verification
@@ -148,6 +209,15 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                       )
 
                       BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nverifier -- publishing VerificationNotification: " + notification
+                          + "\n on cnxn: " + agntRPRd
+                          + "\n label: " + VerificationNotification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+                      println(
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                           + "\nverifier -- publishing VerificationNotification: " + notification
@@ -183,12 +253,30 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         )
                       )
+                      println(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nverifier -- publishing Verification disengagement: " + verification
+                          + "\n on cnxn: " + agntRPWr
+                          + "\n label: " + Verification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
                       node.publish( agntRPWr )(
                         Verification.toLabel( sidAV ),
                         verification
                       )
                       
                       BasicLogService.tweet(
+                        (
+                          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          + "\nverifier -- publishing VerificationNotification: " + notification
+                          + "\n on cnxn: " + agntRPWr
+                          + "\n label: " + VerificationNotification.toLabel( sidAV )
+                          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        )
+                      )
+                      println(
                         (
                           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                           + "\nverifier -- publishing VerificationNotification: " + notification
@@ -206,6 +294,13 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                   }
                   case Right( true ) => {
                     BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nverifier -- still waiting for verify request"
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
+                    println(
                       (
                         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         + "\nverifier -- still waiting for verify request"
@@ -232,8 +327,24 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                         + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                       )
                     )
+                    println(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nverifier -- unexpected protocol message : " + eVerify
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
 
                     BasicLogService.tweet(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nverifier -- publishing VerificationNotification: " + notification
+                        + "\n on cnxn: " + agntRPWr
+                        + "\n label: " + VerificationNotification.toLabel
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
+                    )
+                    println(
                       (
                         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                         + "\nverifier -- publishing VerificationNotification: " + notification
@@ -259,9 +370,18 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nverifier -- still waiting for claim initiation"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
-              BasicLogService.tweet( "unexpected protocol message : " + eAllowV )
+              BasicLogService.tweet( "unexpected protocol message : "
+                      + eAllowV )
+              println( "unexpected protocol message : " + eAllowV )
               node.publish( vrfr2GLoSWr )(
                 VerificationNotification.toLabel(),
                 VerificationNotification(

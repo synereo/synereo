@@ -76,7 +76,16 @@ package usage {
           + "label: " + VerificationNotification.toLabel
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
-      )      
+      )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for verification notification from verifier on: " 
+          + "cnxn: " + vrfr2GLoSRd
+          + "label: " + VerificationNotification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         for(
@@ -93,6 +102,13 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived verification notification " + eVNote
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               continuation( vmsg )
             }
             case Right( true ) => {
@@ -103,9 +119,21 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for verifier verification notification"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eVNote
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
+              println(
                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 + "\nunexpected protocol message : " + eVNote
                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -132,6 +160,15 @@ package usage {
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for verification notification from relying party on: " 
+          + "cnxn: " + rp2GLoSRd
+          + "label: " + VerificationNotification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         for(
@@ -148,6 +185,13 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived relying party verification notification " + eVNote
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               continuation( vmsg )
             }
             case Right( true ) => {
@@ -158,9 +202,21 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for relying party verification notification"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eVNote
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
+              println(
                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 + "\nunexpected protocol message : " + eVNote
                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -187,6 +243,15 @@ package usage {
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
       )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for complete claim on: " 
+          + "cnxn: " + clmnt2GLoSRd
+          + "label: " + CompleteClaim.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         for(
@@ -203,6 +268,13 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived complete claim " + eCompleteClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               continuation( vmsg )
             }
             case Right( true ) => {
@@ -213,9 +285,23 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for complete claim"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nunexpected protocol message : " + eCompleteClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
+              println(
                 (
                   "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                   + "\nunexpected protocol message : " + eCompleteClaim
@@ -289,6 +375,15 @@ package usage {
             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           )
         )
+        println(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\npublishing initiate claim on: " 
+            + "\ncnxn: " + agntCRd
+            + "\nlabel: " + InitiateClaim.toLabel( sid )
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )
           
         reset {
           node.publish( agntCRd )(
@@ -311,6 +406,15 @@ package usage {
           )
         
         BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\npublishing open claim on: " 
+            + "\ncnxn: " + agntCRd
+            + "\nlabel: " + OpenClaim.toLabel( sid )
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )
+        println(
           (
             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
             + "\npublishing open claim on: " 
@@ -348,7 +452,16 @@ package usage {
           + "label: " + AckAllowVerification.toLabel
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
-      )      
+      )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for allow verification acknowledgment on: " 
+          + "cnxn: " + agntClmntRd
+          + "label: " + AckAllowVerification.toLabel
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         for(
@@ -365,6 +478,13 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived allow verification acknowledgment " + eAckAllowV
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               //continuation( vmsg )
             }
             case Right( true ) => {
@@ -375,9 +495,21 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for verifier allow verification acknowledgment"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eAckAllowV
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
+              println(
                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 + "\nunexpected protocol message : " + eAckAllowV
                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -402,7 +534,16 @@ package usage {
           + "\nlabel: " + AllowVerification.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
-      )  
+      )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification on: " 
+          + "\ncnxn: " + agntVrfrRd
+          + "\nlabel: " + AllowVerification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
       reset {
         node.publish( agntVrfrRd )(
           AllowVerification.toLabel( sid ),
@@ -426,7 +567,16 @@ package usage {
           + "\nlabel: " + Verify.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
-      )  
+      )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing verify request on: " 
+          + "\ncnxn: " + agntRPRd
+          + "\nlabel: " + Verify.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
       reset {
         node.publish( agntRPRd )(
           Verify.toLabel( sid ),
@@ -453,7 +603,16 @@ package usage {
           + "\nlabel: " + Verification.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
-      )  
+      )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing verification testimony on: " 
+          + "\ncnxn: " + agntRPRd
+          + "\nlabel: " + Verification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         node.publish( agntRPRd )(
@@ -479,7 +638,16 @@ package usage {
           + "\nlabel: " + AckAllowVerification.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
-      )  
+      )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "\ncnxn: " + agntVrfrRd
+          + "\nlabel: " + AckAllowVerification.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         node.publish( agntVrfrRd )(
@@ -504,6 +672,15 @@ package usage {
         )
 
       BasicLogService.tweet(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\npublishing allow verification acknowledgment on: " 
+          + "\ncnxn: " + agntRPRd
+          + "\nlabel: " + CloseClaim.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
+      println(
         (
           "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           + "\npublishing allow verification acknowledgment on: " 
@@ -537,7 +714,16 @@ package usage {
           + "label: " + CloseClaim.toLabel( sid )
           + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
         )
-      )      
+      )
+      println(
+        (
+          "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          + "\nwaiting for close claim on: " 
+          + "cnxn: " + agntClmntRd
+          + "label: " + CloseClaim.toLabel( sid )
+          + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        )
+      )
 
       reset {
         for(
@@ -554,6 +740,13 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nreceived close claim " + eCloseClaim
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
               //continuation( vmsg )
             }
             case Right( true ) => {
@@ -564,9 +757,21 @@ package usage {
                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 )
               )
+              println(
+                (
+                  "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  + "\nstill waiting for close claim"
+                  + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                )
+              )
             }
             case _ => {
               BasicLogService.tweet(
+                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                + "\nunexpected protocol message : " + eCloseClaim
+                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+              )
+              println(
                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                 + "\nunexpected protocol message : " + eCloseClaim
                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
@@ -722,6 +927,16 @@ package usage {
                 val ( cnxns, filters ) = behaviorRunArgsFn( simCtxt )
 
                 BasicLogService.tweet(
+                  (
+                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    + "\ninvoking run on " + bhvr
+                    + "\nnode: " + node
+                    + "\ncnxns: " + cnxns
+                    + "\nfilters: " + filters
+                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                  )
+                )
+                println(
                   (
                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                     + "\ninvoking run on " + bhvr
@@ -895,6 +1110,16 @@ package usage {
                       + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                     )
                   )
+                  println(
+                    (
+                      "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      + "\ntest protocol -- invoking run on " + bhvr
+                      + "\nnode: " + node
+                      + "\ncnxns: " + cnxns
+                      + "\nfilters: " + filters
+                      + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    )
+                  )
 
                   spawn { bhvr.run( node, cnxns, filters ) }
                 }
@@ -913,6 +1138,13 @@ package usage {
       val testStrm = verificationProtocolTestStream.take( numOfTests )
       for( i <- 1 to numOfTests ) {
         BasicLogService.tweet(
+          (
+            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+            + "\ntest protocol -- running test number " + i + " out of " + numOfTests + " tests"
+            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+          )
+        )
+        println(
           (
             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
             + "\ntest protocol -- running test number " + i + " out of " + numOfTests + " tests"
