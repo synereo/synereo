@@ -9,6 +9,7 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.store._
+import com.protegra_ati.agentservices.protocols.msgs._
 
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
@@ -161,6 +162,18 @@ trait AgentCRUDSchema {
       null
     )    
   }
+
+  def aliasFromSession(
+    sessionURI: URI
+  ) : URI = {
+    new URI(
+      "alias",
+      sessionURI.getHost(),
+      "/alias",
+      null
+    )    
+  }
+
   def identityAliasFromAgent(
     agentURI : URI
   ) : PortableAgentCnxn = {
@@ -965,5 +978,31 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     for (filter <- msg.filter) {
       agentMgr().cancel('user('p1(filter),'p2('uid("UID")),'p3('new("_")),'p4('nil("_"))), msg.connections, onCancel)
     }
+  }
+  
+  def handleinitiateClaim(ic: InitiateClaim): Unit = {
+    val sessionId = ic.sessionId
+    val selfURI = aliasFromSession(new URI(sessionId))
+    val pacSelfToGlos = PortableAgentCnxn(selfURI, "verificationProtocol", new URI("ui://gloseval"))
+    agentMgr().post(
+      InitiateClaim.toLabel,
+      List(pacSelfToGlos),
+      ic,
+      (optRsrc) => {
+        println("initiateClaim: optRsrc = " + optRsrc)
+        BasicLogService.tweet("initiateClaim: optRsrc = " + optRsrc)
+        optRsrc match {
+          case None => ()
+          case _ => {
+            CometActorMapper.cometMessage(sessionId, compact(render(
+              ("msgType" -> "initiateClaimResponse")~
+              ("content" ->
+                ("sessionURI" -> sessionId)
+              )
+            )))
+          }
+        }
+      }
+    )
   }
 }

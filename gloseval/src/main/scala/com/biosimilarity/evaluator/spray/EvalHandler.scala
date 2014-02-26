@@ -9,6 +9,7 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.store._
+import com.protegra_ati.agentservices.protocols.msgs._
 
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
@@ -720,7 +721,10 @@ trait EvalHandler {
         optRsrc => println( "onCommencement three | " + optRsrc )
       }
     )
-    VerificationBehaviors().launchClaimantBehavior(aliasURI, agentMgr().feed _)
+    VerificationBehaviors().launchClaimantBehavior(
+      aliasURI,
+      agentMgr().feed _
+    )
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
       aliasURI,
       nodeAliasURI,
@@ -1736,8 +1740,31 @@ trait EvalHandler {
     })
   }
 
-  def initiateVerification(json: JValue): Unit = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    
+  def initiateClaim(json: JValue): Unit = {
+    val sessionId = (json \ "content" \ "sessionURI").extract[String]
+    val correlationId = (json \ "content" \ "correlationId").extract[String]
+    val jvVerifier = json \ "content" \ "verifier"
+    val pacVerifier = PortableAgentCnxn(
+      new URI((jvVerifier \ "source").extract[String]),
+      (jvVerifier \ "label").extract[String],
+      new URI((jvVerifier \ "target").extract[String])
+    )
+    val jvRelyingParty = json \ "content" \ "relyingParty"
+    val pacRelyingParty = PortableAgentCnxn(
+      new URI((jvRelyingParty \ "source").extract[String]),
+      (jvRelyingParty \ "label").extract[String],
+      new URI((jvRelyingParty \ "target").extract[String])
+    )
+    val claim = fromTermString((json \ "content" \ "sessionURI").extract[String]).get
+
+    handler.handleinitiateClaim(
+      InitiateClaim(
+        sessionId,
+        correlationId,
+        pacVerifier,
+        pacRelyingParty,
+        claim
+      )
+    )
   }
 }

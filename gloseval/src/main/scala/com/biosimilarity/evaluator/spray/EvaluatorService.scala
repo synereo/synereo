@@ -216,7 +216,7 @@ trait EvaluatorService extends HttpService
     ("backupRequest", backupRequest),
     ("restoreRequest", restoreRequest),
     // Verifier protocol
-    ("initiateVerification", initiateVerification)
+    ("initiateClaim", initiateClaim)
   )
 
   @transient
