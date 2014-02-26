@@ -1755,7 +1755,7 @@ trait EvalHandler {
       (jvRelyingParty \ "label").extract[String],
       new URI((jvRelyingParty \ "target").extract[String])
     )
-    val claim = fromTermString((json \ "content" \ "sessionURI").extract[String]).get
+    val claim = fromTermString((json \ "content" \ "claim").extract[String]).get
 
     handler.handleinitiateClaim(
       InitiateClaim(
