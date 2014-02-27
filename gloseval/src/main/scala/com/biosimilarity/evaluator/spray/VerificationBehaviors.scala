@@ -58,6 +58,12 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       }
     }
 
+    try {
+      throw new Exception("Trace")
+    } catch {
+      case e: Exception => println(e.toString())
+    }
+
     val pacSelfToGlos = PortableAgentCnxn(selfURI, "verificationProtocol", new URI("ui://gloseval"))
     val pacGlosToSelf = PortableAgentCnxn(new URI("ui://gloseval"), "verificationProtocol", selfURI)
     feed(
