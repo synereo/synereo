@@ -1662,9 +1662,10 @@ trait EvalHandler {
                                               """[]""",
                                               ( optRsrc : Option[mTT.Resource] ) => {
                                                 BasicLogService.tweet("createNodeUser | onPost5: optRsrc = " + optRsrc)
+                                                println("createNodeUser | onPost5: optRsrc = " + optRsrc)
                                                 optRsrc match {
                                                   case None => ()
-                                                  case Some(_) =>
+                                                  case Some(x) =>
                                                     launchNodeUserBehaviors( aliasCnxn )
                                                     // Store empty bi-cnxn list on alias cnxn
                                                     agentMgr().post(
@@ -1699,6 +1700,10 @@ trait EvalHandler {
   ) : Unit = {
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
+    
+    println("About to commenceInstance for introduction initiator")
+    BasicLogService.tweet("About to commenceInstance for introduction initiator")
+    
     bFactoryMgr().commenceInstance(
       introductionInitiatorCnxn,
       introductionInitiatorLabel,
@@ -1709,6 +1714,9 @@ trait EvalHandler {
       }
     )
     
+    println("About to commenceInstance for claimant")
+    BasicLogService.tweet("About to commenceInstance for claimant")
+
     VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
   }
   
