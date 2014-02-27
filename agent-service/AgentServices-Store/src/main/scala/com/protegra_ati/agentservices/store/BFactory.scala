@@ -2118,7 +2118,21 @@ package bfactory {
                 case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {    
                   try {
                     BasicLogService.tweet(
-                      "method: evaluateExpression"
+                      "method: evaluateExpression | Ground"
+                      + "\n instantiating instance & finding entry point"
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                      + "\nbehaviorDefinitionLabel: " + bdl
+                      + "\nbehavior: " + behavior
+                      + "\ncnxns: " + cnxns
+                      + "\nfilters: " + filters
+                    )
+                    println(
+                      "method: evaluateExpression | Ground"
                       + "\n instantiating instance & finding entry point"
                       + "\nthis: " + this
                       + "\nnode: " + node
@@ -2184,7 +2198,21 @@ package bfactory {
                 case Some( mTT.RBoundAList( Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ))), _ ) ) => {           
                   try {
                     BasicLogService.tweet(
-                      "method: evaluateExpression"
+                      "method: evaluateExpression | RBoundAList"
+                      + "\n instantiating instance & finding entry point"
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                      + "\nbehaviorDefinitionLabel: " + bdl
+                      + "\nbehavior: " + behavior
+                      + "\ncnxns: " + cnxns
+                      + "\nfilters: " + filters
+                    )
+                    println(
+                      "method: evaluateExpression | RBoundAList"
                       + "\n instantiating instance & finding entry point"
                       + "\nthis: " + this
                       + "\nnode: " + node
