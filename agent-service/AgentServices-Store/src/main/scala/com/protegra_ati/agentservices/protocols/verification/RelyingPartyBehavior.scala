@@ -26,6 +26,26 @@ trait RelyingPartyBehaviorT extends ProtocolBehaviorT with Serializable {
     cnxns : Seq[PortableAgentCnxn],
     filters : Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
+    BasicLogService.tweet(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nrelying party -- behavior instantiated and run method invoked " 
+        + "\nnode: " + node
+        + "\ncnxns: " + cnxns
+        + "\nfilters: " + filters
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
+    println(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nrelying party -- behavior instantiated and run method invoked " 
+        + "\nnode: " + node
+        + "\ncnxns: " + cnxns
+        + "\nfilters: " + filters
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
     doVerification( node, cnxns )
   }
   def doVerification(

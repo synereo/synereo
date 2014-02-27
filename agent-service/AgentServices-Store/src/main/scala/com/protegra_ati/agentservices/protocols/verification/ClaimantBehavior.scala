@@ -26,6 +26,26 @@ trait ClaimantBehaviorT extends ProtocolBehaviorT with Serializable {
     cnxns : Seq[PortableAgentCnxn],
     filters : Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
+    BasicLogService.tweet(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nclaimant -- behavior instantiated and run method invoked " 
+        + "\nnode: " + node
+        + "\ncnxns: " + cnxns
+        + "\nfilters: " + filters
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
+    println(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nclaimant -- behavior instantiated and run method invoked " 
+        + "\nnode: " + node
+        + "\ncnxns: " + cnxns
+        + "\nfilters: " + filters
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
     doVerification( node, cnxns )
   }  
   def doVerification(

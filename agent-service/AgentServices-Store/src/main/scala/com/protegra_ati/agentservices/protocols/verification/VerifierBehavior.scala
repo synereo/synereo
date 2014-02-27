@@ -27,6 +27,26 @@ trait VerifierBehaviorT extends ProtocolBehaviorT with Serializable {
     filters : Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
     // BUGBUG : lgm -- move defensive check on args to run method
+    BasicLogService.tweet(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nverifier -- behavior instantiated and run method invoked " 
+        + "\nnode: " + node
+        + "\ncnxns: " + cnxns
+        + "\nfilters: " + filters
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
+    println(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nverifier -- behavior instantiated and run method invoked " 
+        + "\nnode: " + node
+        + "\ncnxns: " + cnxns
+        + "\nfilters: " + filters
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
     doVerification( node, cnxns )
   }
 
