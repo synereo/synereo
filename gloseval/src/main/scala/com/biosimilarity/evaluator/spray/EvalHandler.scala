@@ -721,6 +721,7 @@ trait EvalHandler {
         optRsrc => println( "onCommencement three | " + optRsrc )
       }
     )
+    println("onAgentCreation: about to launch claimant behavior")
     VerificationBehaviors().launchClaimantBehavior(
       aliasURI,
       agentMgr().feed _
