@@ -560,6 +560,9 @@ trait EvalHandler {
               )
             )))
           }
+          case _ => {
+            throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+          }
         }
       }
     )
@@ -608,6 +611,9 @@ trait EvalHandler {
                 ("introProfile" -> profileData)
               )
             )))
+          }
+          case _ => {
+            throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
           }
         }
       }
@@ -670,6 +676,9 @@ trait EvalHandler {
                         }
                       }
                     )
+                  }
+                  case _ => {
+                    throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
                   }
                 }
               }
@@ -848,6 +857,12 @@ trait EvalHandler {
                       }
                     }
                   }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
+                  }
                 }
               }
               def onConnectionsFetch(jsonBlob: String, aliasList: String, defaultAlias: String): Option[mTT.Resource] => Unit = (optRsrc) => {
@@ -894,7 +909,19 @@ trait EvalHandler {
                                         ))
                                       )))
                                     }
+                                    case _ => {
+                                      CompletionMapper.complete(key, compact(render(
+                                        ("msgType" -> "initializeSessionError") ~
+                                        ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                                      )))
+                                    }
                                   }
+                                }
+                                case _ => {
+                                  CompletionMapper.complete(key, compact(render(
+                                    ("msgType" -> "initializeSessionError") ~
+                                    ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                                  )))
                                 }
                               }
                             })
@@ -907,7 +934,19 @@ trait EvalHandler {
                           ("content" -> ("reason" -> "Strange: found other data but not connections!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
+                  }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -927,7 +966,19 @@ trait EvalHandler {
                             ("content" -> ("reason" -> "Strange: found other data but not default alias!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
+                  }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -946,7 +997,19 @@ trait EvalHandler {
                           ("content" -> ("reason" -> "Strange: found pwmac and jsonBlob but not aliases!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
+                  }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -966,10 +1029,19 @@ trait EvalHandler {
                           ("content" -> ("reason" -> "Strange: found pwmac but not jsonBlob!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
                   }
                   case _ => {
-                    throw new Exception("Unrecognized resource: " + optRsrc)
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -979,7 +1051,10 @@ trait EvalHandler {
             }
           }
           case _ => {
-            BasicLogService.tweet("Unrecognized resource: " + rsrc)
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "initializeSessionError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource: rsrc = " + rsrc)))
+            )))
           }
         }
       }
@@ -1039,10 +1114,19 @@ trait EvalHandler {
                     BasicLogService.tweet("secureLogin | Logging in with cap = " + cap);
                     login(cap)
                   }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
+                  }
                 }
               }
               case _ => {
-                throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+                CompletionMapper.complete(key, compact(render(
+                  ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                )))
               }
             }
           }
