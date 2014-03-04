@@ -740,6 +740,11 @@ trait EvalHandler {
       nodeAliasURI,
       agentMgr().feed _
     )
+    VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
+      nodeAliasURI,
+      aliasURI,
+      agentMgr().feed _
+    )
   }
 
   def createUserRequest(json : JValue, key : String): Unit = {
