@@ -93,7 +93,6 @@ package usage {
     def mkNRunReq(
       client : String,
       emailAddr : String,
-      sessionURI : String,
       correlationId : String = UUID.randomUUID.toString,
       clm : String = "claim( This )",
       onProc : RunProcessResponse => Unit = { reqStr => println( reqStr ) }
@@ -101,11 +100,16 @@ package usage {
       mkReq(
         client,
         emailAddr,
-        sessionURI,
         correlationId,
         clm,
         {
-          ( req : String ) => runcURLReq( req, { ( procRsp : RunProcessResponse ) => println( procRsp ) } )
+          ( req : String ) => {
+            runcURLReq(
+              req,
+              { ( procRsp : RunProcessResponse ) => println( procRsp )
+             }
+            )
+          }
         }
       )
     }
@@ -113,11 +117,12 @@ package usage {
     def mkReq(
       client : String,
       emailAddr : String,
-      sessionURI : String,
       correlationId : String = UUID.randomUUID.toString,
       clm : String = "claim( This )",
       onReqCtor : String => Unit = { reqStr => println( reqStr ) }
     ) : Unit = {
+      val auid =
+        
       getAliasCnxns(
         emailAddr,
         {
@@ -126,7 +131,7 @@ package usage {
             val reqStr =
               mkReq( 
                 client,
-                sessionURI,
+                EvalAndAgentCRUDHandlerService.emailToCap( emailAddr ).toURI.toString,
                 correlationId,
                 vrfr,
                 rp, 
