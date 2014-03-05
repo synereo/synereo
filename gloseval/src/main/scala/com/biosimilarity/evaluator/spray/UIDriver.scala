@@ -49,7 +49,7 @@ package usage {
               case Bottom => Nil
             }
             
-            aliasCnxnK( biCnxnList.map( _.readCnxn ) )
+            aliasCnxnK( biCnxnList.map( _.writeCnxn ) )
           }
         }
       }
@@ -151,7 +151,8 @@ package usage {
       rp : PortableAgentCnxn,
       clm : CnxnCtxtLabel[String,String,String]
     ) : String = {
-      s"""curl http://${client}:9876/api -d '{"msgType":"initiateClaim","content": {"sessionURI":"${sessionURI}","correlationId":"${correlationId}","verifier": {"source":"${vrfr.src}","label":"${vrfr.label}","target":"${vrfr.trgt}"},"relyingParty": {"source":"${rp.src}","label":"${rp.label}","target":"${rp.trgt}"},"claim":"${clm}"}}'"""
+      val cleanClm = clm.toString.replace( "'", "" )
+      s"""curl http://${client}:9876/api -d '{"msgType":"initiateClaim","content": {"sessionURI":"${sessionURI}","correlationId":"${correlationId}","verifier": {"source":"${vrfr.src}","label":"${vrfr.label}","target":"${vrfr.trgt}"},"relyingParty": {"source":"${rp.src}","label":"${rp.label}","target":"${rp.trgt}"},"claim":"${cleanClm}"}}'"""
     }
 
     def mkReq(

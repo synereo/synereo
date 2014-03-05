@@ -243,9 +243,9 @@ trait EvaluatorService extends HttpService
                     }
                     case None => msgType match {
                       case "sessionPing" => {
-                        println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                        println( "in sessionPing " )
-                        println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                        // println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+                        // println( "in sessionPing " )
+                        // println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
                         val sessionURI = sessionPing(json)
                         (cometActor ! SessionPing(sessionURI, ctx))
                       }
