@@ -152,7 +152,7 @@ package usage {
       clm : CnxnCtxtLabel[String,String,String]
     ) : String = {
       val cleanClm = clm.toString.replace( "'", "" )
-      s"""curl http://${client}:9876/api -d '{"msgType":"initiateClaim","content": {"sessionURI":"${sessionURI}","correlationId":"${correlationId}","verifier": {"source":"${vrfr.src}","label":"${vrfr.label}","target":"${vrfr.trgt}"},"relyingParty": {"source":"${rp.src}","label":"${rp.label}","target":"${rp.trgt}"},"claim":"${cleanClm}"}}'"""
+      s"""curl http://${client}:9876/api -d '{"msgType":"initiateClaim","content": {"sessionURI":"${sessionURI}","correlationId":"${correlationId}","verifier": {"source":"${vrfr.src}","label":"claimantToSelf","target":"${vrfr.trgt}"},"relyingParty": {"source":"${rp.src}","label":"claimantToSelf","target":"${rp.trgt}"},"claim":"${cleanClm}"}}'"""
     }
 
     def mkReq(

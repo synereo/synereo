@@ -110,9 +110,14 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
     }
 
     val pacSelfToGlos = PortableAgentCnxn(selfURI, "verificationProtocol", new URI("ui://gloseval"))
-    val claimantToSelfCnxnTitle = UUID.randomUUID.toString.substring(0,8)
+
+    //val claimantToSelfCnxnTitle = UUID.randomUUID.toString.substring(0,8)
+    // BUGBUG : lgm -- find a better way to do this
+    val claimantToSelfCnxnTitle = "claimantToSelf"
+
     val pacClaimantToSelf = PortableAgentCnxn(claimantURI, claimantToSelfCnxnTitle, selfURI)
     val pacSelfToClaimant = PortableAgentCnxn(selfURI, claimantToSelfCnxnTitle, claimantURI)
+
     // TODO(mike): create two different subscriptions, one for relying party and one for verifier
     feed(
       VerificationNotification.toLabel(),
