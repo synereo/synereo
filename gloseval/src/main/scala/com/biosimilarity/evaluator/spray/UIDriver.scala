@@ -23,6 +23,7 @@ package usage {
     import ConcreteHL._
     import com.biosimilarity.lift.model.store._
     import java.util.UUID
+
     def getAliasCnxns(
       emailAddr : String,
       aliasCnxnK : List[PortableAgentCnxn] => Unit
