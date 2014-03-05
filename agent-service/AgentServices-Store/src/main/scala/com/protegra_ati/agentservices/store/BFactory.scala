@@ -2427,7 +2427,7 @@ package bfactory {
                   + "\nnode: " + node
                   + "\n-----------------------------------------"
                   + "\ne: " + e
-                )
+                )                
                 e match {
                   case Some( boundRsrc@BFactoryCommLink.mTT.RBoundAList( Some( BFactoryCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
@@ -2442,6 +2442,7 @@ package bfactory {
                       + "\n-----------------------------------------"
                       + "\ne: " + e
                     )
+                    
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2497,6 +2498,7 @@ package bfactory {
                       + "\n-----------------------------------------"
                       + "\ne: " + e
                     )
+                    
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2554,6 +2556,7 @@ package bfactory {
                           + "\n-----------------------------------------"
                           + "\ne: " + e
                         )
+                        
                         innerOptRsrc match {
                           case Some( BFactoryCommLink.mTT.Ground( expr ) ) => {
                             for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
@@ -2668,11 +2671,31 @@ package bfactory {
             + "\nnode: " + node            
             + "\nrspLabelCtor: " + rspLabelCtor
           )
+          println(
+            "entering method: innerLoop"
+            + "\nthis: " + this
+            + "\nerql: " + erql
+            + "\nclient: " + client
+            + "\nserver: " + server
+            + "\nnode: " + node            
+            + "\nrspLabelCtor: " + rspLabelCtor
+          )
             reset { 
               for( e <- client.subscribe( erql ) ) {
                 e match {
                   case Some( boundRsrc@BFactoryCommLink.mTT.RBoundAList( Some( BFactoryCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
+                      "method: innerLoop"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
+                    println(
                       "method: innerLoop"
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
@@ -2738,6 +2761,18 @@ package bfactory {
                       + "\n-----------------------------------------"
                       + "\ne: " + e
                     )
+                    println(
+                      "method: innerLoop"
+                      + "\n case rsrc type: BFactoryCommLink.mTT.RBoundHM"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2784,6 +2819,18 @@ package bfactory {
                     rsrc match {
                       case boundRsrc@BFactoryCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
                         BasicLogService.tweet(
+                          "method: innerLoop"
+                          + "\n case rsrc type: BFactoryCommLink.mTT.RBoundHM"
+                          + "\n completed client.subscribe "
+                          + "\nthis: " + this
+                          + "\nerql: " + erql
+                          + "\nclient: " + client
+                          + "\nserver: " + server
+                          + "\nnode: " + node
+                          + "\n-----------------------------------------"
+                          + "\ne: " + e
+                        )
+                        println(
                           "method: innerLoop"
                           + "\n case rsrc type: BFactoryCommLink.mTT.RBoundHM"
                           + "\n completed client.subscribe "
