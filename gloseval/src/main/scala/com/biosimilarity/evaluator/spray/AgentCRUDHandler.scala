@@ -9,6 +9,7 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.store._
+import com.protegra_ati.agentservices.protocols.msgs._
 
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
@@ -161,6 +162,18 @@ trait AgentCRUDSchema {
       null
     )    
   }
+
+  def aliasFromSession(
+    sessionURI: URI
+  ) : URI = {
+    new URI(
+      "alias",
+      sessionURI.getHost(),
+      "/alias",
+      null
+    )    
+  }
+
   def identityAliasFromAgent(
     agentURI : URI
   ) : PortableAgentCnxn = {
@@ -267,40 +280,52 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
   ) : Unit = {
     BasicLogService.tweet( "Entering: handleaddAgentAliasesRequest with msg: " + msg )
 
+    val sessionURIStr = msg.sessionURI.toString
     val aliasStorageCnxn = identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
 
-    val onGet : Option[mTT.Resource] => Unit = {
-      case None =>
-        // Nothing to be done
-        BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet: got None" )
-      case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) =>
-        BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet: got " + v )
+    val onGet : Option[mTT.Resource] => Unit = (optRsrc) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet: got None" )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet: got " + v )
 
-        val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
-          BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut" )
+          val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+            BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut" )
 
-          val sessionURIStr = msg.sessionURI.toString
+            CometActorMapper.cometMessage( sessionURIStr, compact( render(
+              ( "msgType" -> "addAgentAliasesResponse" ) ~
+              ( "content" ->
+                ( "sessionURI" -> sessionURIStr )
+              )
+            ) ) )
+          }
 
+          val prevAliasList = v match {
+            case PostedExpr( ( PostedExpr( prevAliasListStr : String ), _, _ ) ) =>
+              Serializer.deserialize[List[String]]( prevAliasListStr )
+            case Bottom => Nil
+          }
+
+          val newAliasList = prevAliasList ++ msg.aliases
+          val newAliasListStr = Serializer.serialize( newAliasList )
+
+          BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasListStr )
+
+          agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+        }
+        case _ => {
           CometActorMapper.cometMessage( sessionURIStr, compact( render(
-            ( "msgType" -> "addAgentAliasesResponse" ) ~
-            ( "content" ->
-              ( "sessionURI" -> sessionURIStr )
-            )
+            ( "msgType" -> "addAgentAliasesError" ) ~
+            ( "content" -> (
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            ) )
           ) ) )
         }
-
-        val prevAliasList = v match {
-          case PostedExpr( ( PostedExpr( prevAliasListStr : String ), _, _ ) ) =>
-            Serializer.deserialize[List[String]]( prevAliasListStr )
-          case Bottom => Nil
-        }
-
-        val newAliasList = prevAliasList ++ msg.aliases
-        val newAliasListStr = Serializer.serialize( newAliasList )
-
-        BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasListStr )
-
-        agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+      }
     }
       
     agentMgr().get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
@@ -314,39 +339,51 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handleremoveAgentAliasesRequest with msg: " + msg )
 
     val aliasStorageCnxn = identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
+    val sessionURIStr = msg.sessionURI.toString
 
-    val onGet : Option[mTT.Resource] => Unit = {
-      case None =>
-        // Nothing to be done
-        BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet: got None" )
-      case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) =>
-        BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet: got " + v )
+    val onGet : Option[mTT.Resource] => Unit = (optRsrc) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet: got None" )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet: got " + v )
 
-        val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
-          BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet | onPut" )
+          val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+            BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet | onPut" )
 
-          val sessionURIStr = msg.sessionURI.toString
+            CometActorMapper.cometMessage( sessionURIStr, compact( render(
+              ( "msgType" -> "removeAgentAliasesResponse" ) ~
+              ( "content" ->
+                ( "sessionURI" -> sessionURIStr )
+              )
+            ) ) )
+          }
 
+          val prevAliasList = v match {
+            case PostedExpr( ( PostedExpr( prevAliasListStr : String ), _, _, _ ) ) =>
+              Serializer.deserialize[List[String]]( prevAliasListStr )
+            case Bottom => Nil
+          }
+
+          val newAliasList = prevAliasList.filterNot( msg.aliases.contains )
+          val newAliasListStr = Serializer.serialize( newAliasList )
+
+          BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasListStr )
+
+          agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+        }
+        case _ => {
           CometActorMapper.cometMessage( sessionURIStr, compact( render(
-            ( "msgType" -> "removeAgentAliasesResponse" ) ~
-            ( "content" ->
-              ( "sessionURI" -> sessionURIStr )
-            )
+            ( "msgType" -> "removeAgentAliasesError" ) ~
+            ( "content" -> (
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            ) )
           ) ) )
         }
-
-        val prevAliasList = v match {
-          case PostedExpr( ( PostedExpr( prevAliasListStr : String ), _, _, _ ) ) =>
-            Serializer.deserialize[List[String]]( prevAliasListStr )
-          case Bottom => Nil
-        }
-
-        val newAliasList = prevAliasList.filterNot( msg.aliases.contains )
-        val newAliasListStr = Serializer.serialize( newAliasList )
-
-        BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasListStr )
-
-        agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+      }
     }
 
     agentMgr().get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
@@ -360,29 +397,41 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handlegetAgentAliasesRequest with msg: " + msg )
 
     val aliasStorageCnxn = identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
+    val sessionURIStr = msg.sessionURI.toString
 
-    val onFetch : Option[mTT.Resource] => Unit = {
-      case None =>
-        // Nothing to be done
-        BasicLogService.tweet( "handlegetAgentAliasesRequest | onFetch: got None" )
-      case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) =>
-        BasicLogService.tweet( "handlegetAgentAliasesRequest | onFetch: got " + v )
-
-        val sessionURIStr = msg.sessionURI.toString
-
-        val aliasList = v match {
-          case PostedExpr( ( PostedExpr( aliasListStr : String ), _, _, _ ) ) =>
-            Serializer.deserialize[List[String]]( aliasListStr )
-          case Bottom => Nil
+    val onFetch : Option[mTT.Resource] => Unit = (optRsrc) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handlegetAgentAliasesRequest | onFetch: got None" )
         }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet( "handlegetAgentAliasesRequest | onFetch: got " + v )
 
-        CometActorMapper.cometMessage( sessionURIStr, compact( render(
-          ( "msgType" -> "getAgentAliasesResponse" ) ~
-          ( "content" ->
-            ( "sessionURI" -> sessionURIStr ) ~
-            ( "aliases" -> aliasList )
-          )
-        ) ) )
+          val aliasList = v match {
+            case PostedExpr( ( PostedExpr( aliasListStr : String ), _, _, _ ) ) =>
+              Serializer.deserialize[List[String]]( aliasListStr )
+            case Bottom => Nil
+          }
+
+          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+            ( "msgType" -> "getAgentAliasesResponse" ) ~
+            ( "content" ->
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "aliases" -> aliasList )
+            )
+          ) ) )
+        }
+        case _ => {
+          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+            ( "msgType" -> "getAgentAliasesError" ) ~
+            ( "content" -> (
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            ) )
+          ) ) )
+        }
+      }
     }
     
     agentMgr().fetch( aliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
@@ -396,34 +445,57 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handlegetDefaultAliasRequest with msg: " + msg )
 
     val aliasStorageCnxn = identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
+    val sessionURIStr = msg.sessionURI.toString
 
-    val onFetch : Option[mTT.Resource] => Unit = {
-      case None =>
-        // Nothing to be done
-        BasicLogService.tweet( "handlegetDefaultAliasRequest | onFetch: got None" )
-      case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) =>
-        BasicLogService.tweet( "handlegetDefaultAliasRequest | onFetch: got " + v )
-
-        val sessionURIStr = msg.sessionURI.toString
-
-        v match {
-          case PostedExpr( ( PostedExpr( defaultAlias : String ), _, _, _ ) ) =>
-            CometActorMapper.cometMessage( sessionURIStr, compact( render(
-              ( "msgType" -> "getDefaultAliasResponse" ) ~
-              ( "content" ->
-                ( "sessionURI" -> sessionURIStr ) ~
-                ( "alias" -> defaultAlias )
-              )
-            ) ) )
-          case Bottom =>
-            CometActorMapper.cometMessage( sessionURIStr, compact( render(
-              ( "msgType" -> "getDefaultAliasError" ) ~
-              ( "content" ->
-                ( "sessionURI" -> sessionURIStr ) ~
-                ( "reason" -> "No default alias exists" )
-              )
-            ) ) )
+    val onFetch : Option[mTT.Resource] => Unit = (optRsrc) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handlegetDefaultAliasRequest | onFetch: got None" )
         }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          BasicLogService.tweet( "handlegetDefaultAliasRequest | onFetch: got " + v )
+
+          v match {
+            case PostedExpr( ( PostedExpr( defaultAlias : String ), _, _, _ ) ) => {
+              CometActorMapper.cometMessage( sessionURIStr, compact( render(
+                ( "msgType" -> "getDefaultAliasResponse" ) ~
+                ( "content" ->
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "alias" -> defaultAlias )
+                )
+              ) ) )
+            }
+            case Bottom => {
+              CometActorMapper.cometMessage( sessionURIStr, compact( render(
+                ( "msgType" -> "getDefaultAliasError" ) ~
+                ( "content" ->
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> "No default alias exists" )
+                )
+              ) ) )
+            }
+            case _ => {
+              CometActorMapper.cometMessage( sessionURIStr, compact( render(
+                ( "msgType" -> "getDefaultAliasError" ) ~
+                ( "content" -> (
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+                ) )
+              ) ) )
+            }
+          }
+        }
+        case _ => {
+          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+            ( "msgType" -> "getDefaultAliasError" ) ~
+            ( "content" -> (
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            ) )
+          ) ) )
+        }
+      }
     }
 
     agentMgr().fetch( defaultAliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
@@ -464,6 +536,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handleaddAliasExternalIdentitiesRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionURIStr = msg.sessionURI.toString
 
     val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
       optRsrc match {
@@ -476,8 +549,6 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
           val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
             BasicLogService.tweet( "handleaddAliasExternalIdentitiesRequest | onGet | onPut" )
-
-            val sessionURIStr = msg.sessionURI.toString
 
             CometActorMapper.cometMessage(sessionURIStr, compact( render(
               ( "msgType" -> "addAliasExternalIdentitiesResponse" ) ~
@@ -498,7 +569,25 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             case Bottom => {
               agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), msg.ids, onPut )
             }
+            case _ => {
+              CometActorMapper.cometMessage( sessionURIStr, compact( render(
+                ( "msgType" -> "addAliasExternalIdentitiesError" ) ~
+                ( "content" -> (
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+                ) )
+              ) ) )
+            }
           }
+        }
+        case _ => {
+          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+            ( "msgType" -> "addAliasExternalIdentitiesError" ) ~
+            ( "content" -> (
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            ) )
+          ) ) )
         }
       }
     }
@@ -515,6 +604,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handleremoveAliasExternalIdentitiesRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionURIStr = msg.sessionURI.toString
 
     val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
       optRsrc match {
@@ -524,8 +614,6 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
           BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet: got " + v )
-
-          val sessionURIStr = msg.sessionURI.toString
 
           val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
             BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet | onPut" )
@@ -557,7 +645,25 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
                 )
               ) ) )
             }
+            case _ => {
+              CometActorMapper.cometMessage( sessionURIStr, compact( render(
+                ( "msgType" -> "removeAliasExternalIdentitiesError" ) ~
+                ( "content" -> (
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+                ) )
+              ) ) )
+            }
           }
+        }
+        case _ => {
+          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+            ( "msgType" -> "removeAliasExternalIdentitiesError" ) ~
+            ( "content" -> (
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            ) )
+          ) ) )
         }
       }
     }
@@ -605,6 +711,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handleremoveAliasConnectionsRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionURIStr = msg.sessionURI.toString
 
     val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
       optRsrc match {
@@ -614,8 +721,6 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
           BasicLogService.tweet( "handleremoveAliasConnectionsRequest | onGet: got " + v )
-
-          val sessionURIStr = msg.sessionURI.toString
 
           val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
             BasicLogService.tweet( "handleremoveAliasConnectionsRequest | onGet | onPut" )
@@ -641,7 +746,25 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
               agentMgr().put( biCnxnsStorageLocation, List( aliasStorageCnxn ), newBiCnxnListStr, onPut )
             }
+            case _ => {
+              CometActorMapper.cometMessage(sessionURIStr, compact( render(
+                ( "msgType" -> "removeAliasConnectionsError" ) ~
+                ( "content" -> 
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+                )
+              ) ) )
+            }
           }
+        }
+        case _ => {
+          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+            ( "msgType" -> "removeAliasConnectionsError" ) ~
+            ( "content" -> 
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            )
+          ) ) )
         }
       }
     }
@@ -656,8 +779,9 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handlegetAliasConnectionsRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionURIStr = msg.sessionURI.toString
 
-    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => try {
       optRsrc match {
         case None => {
           // Nothing to be done
@@ -666,13 +790,12 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
           BasicLogService.tweet( "handlegetAliasConnectionsRequest | onFetch: got " + v )
 
-          val sessionURIStr = msg.sessionURI.toString
-
           val biCnxnList = v match {
             case PostedExpr( (PostedExpr( biCnxnListStr : String ), _, _, _) ) => {
               Serializer.deserialize[List[PortableAgentBiCnxn]]( biCnxnListStr )
             }
             case Bottom => Nil
+            case _ => throw new Exception("Unrecognized resource!")
           }
 
           def biCnxnToJObject( biCnxn : PortableAgentBiCnxn ) : JObject = {
@@ -689,6 +812,25 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             )
           ) ) )
         }
+        case _ => {
+          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+            ( "msgType" -> "getAliasConnectionsError" ) ~
+            ( "content" -> 
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            )
+          ) ) )
+        }
+      }
+    } catch {
+      case e: Exception => {
+        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          ( "msgType" -> "getAliasConnectionsError" ) ~
+          ( "content" -> 
+            ( "sessionURI" -> sessionURIStr ) ~
+            ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+          )
+        ) ) )
       }
     }
 
@@ -743,12 +885,24 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
                 onPut
               )
             }
+            case _ => {
+              CometActorMapper.cometMessage(sessionURIStr, compact( render(
+                ( "msgType" -> "addAliasLabelsError" ) ~
+                ( "content" -> 
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+                )
+              ) ) )
+            }
           }
         }        
-        case wonky => {
+        case _ => {
           CometActorMapper.cometMessage(sessionURIStr, compact( render(
-            ( "msgType" -> "addAliasLabelsError" ) ~ 
-            ( "content" -> ( "reason" -> ("Got wonky response: " + wonky) ) )
+            ( "msgType" -> "addAliasLabelsError" ) ~
+            ( "content" -> 
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            )
           ) ) )
         }
       }
@@ -766,8 +920,9 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet(
       "Entering: handleupdateAliasLabelsRequest with msg : " + msg
     )
-    val aliasStorageCnxn =
-      getAliasCnxn( msg.sessionURI, msg.alias )
+    val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionURIStr = msg.sessionURI.toString
+    
     val onGet : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
       optRsrc match {
         case None => {
@@ -784,7 +939,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             ( optRsrc : Option[mTT.Resource] ) => {
               BasicLogService.tweet("handleupdateAliasLabelsRequest | onGet | onPut")
               CometActorMapper.cometMessage(
-                msg.sessionURI.toString,
+                sessionURIStr,
                 compact(
                   render(
                     ( "msgType" -> "updateAliasLabelsResponse" ) ~ ( "content" -> ( "sessionURI" -> msg.sessionURI.toString ) )
@@ -802,6 +957,15 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             onPut
           )
         }
+        case _ => {
+          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+            ( "msgType" -> "updateAliasLabelsError" ) ~
+            ( "content" -> 
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            )
+          ) ) )
+        }
       }
     }
 
@@ -816,8 +980,9 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handlegetAliasLabelsRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionURIStr = msg.sessionURI.toString
 
-    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => try {
       optRsrc match {
         case None => {
           // Nothing to be done
@@ -826,12 +991,11 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
           BasicLogService.tweet( "handlegetAliasLabelsRequest | onFetch: got " + v )
 
-          val sessionURIStr = msg.sessionURI.toString
-
           val labelList: JArray = v match {
             case PostedExpr( (PostedExpr( labelList : String ), _, _, _) ) =>
               parse(labelList).asInstanceOf[JArray]
             case Bottom => Nil
+            case _ => throw new Exception("Unrecognized resource")
           }
 
           CometActorMapper.cometMessage(sessionURIStr, compact( render(
@@ -842,6 +1006,25 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
             )
           ) ) )
         }
+        case _ => {
+          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+            ( "msgType" -> "getAliasLabelsError" ) ~
+            ( "content" -> 
+              ( "sessionURI" -> sessionURIStr ) ~
+              ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+            )
+          ) ) )
+        }
+      }
+    } catch {
+      case e: Exception => {
+        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          ( "msgType" -> "getAliasLabelsError" ) ~
+          ( "content" -> 
+            ( "sessionURI" -> sessionURIStr ) ~
+            ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+          )
+        ) ) )
       }
     }
 
@@ -883,8 +1066,9 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     BasicLogService.tweet( "Entering: handlegetAliasDefaultLabelRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
+    val sessionURIStr = msg.sessionURI.toString
 
-    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+    val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => try {
       optRsrc match {
         case None => {
           // Nothing to be done
@@ -892,8 +1076,6 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         }
         case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
           BasicLogService.tweet( "handlegetAliasDefaultLabelRequest | onFetch: got " + v )
-
-          val sessionURIStr = msg.sessionURI.toString
 
           v match {
             case PostedExpr( (PostedExpr( defaultLabel : CnxnCtxtLabel[String,String,String] ), _, _, _) ) => {
@@ -914,8 +1096,28 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
                 )
               ) ) )
             }
+            case _ => {
+              CometActorMapper.cometMessage(sessionURIStr, compact( render(
+                ( "msgType" -> "getAliasDefaultLabelError" ) ~
+                ( "content" -> 
+                  ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+                )
+              ) ) )
+            }
           }
         }
+        case _ => throw new Exception("Unrecognized resource")
+      }
+    } catch {
+      case e: Exception => {
+        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          ( "msgType" -> "getAliasDefaultLabelError" ) ~
+          ( "content" -> 
+            ( "sessionURI" -> sessionURIStr ) ~
+            ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+          )
+        ) ) )
       }
     }
 
@@ -965,5 +1167,31 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     for (filter <- msg.filter) {
       agentMgr().cancel('user('p1(filter),'p2('uid("UID")),'p3('new("_")),'p4('nil("_"))), msg.connections, onCancel)
     }
+  }
+  
+  def handleinitiateClaim(ic: InitiateClaim): Unit = {
+    val sessionId = ic.sessionId
+    val selfURI = aliasFromSession(new URI(sessionId))
+    val pacSelfToGlos = PortableAgentCnxn(selfURI, "verificationProtocol", new URI("ui://gloseval"))
+    agentMgr().post(
+      InitiateClaim.toLabel,
+      List(pacSelfToGlos),
+      ic,
+      (optRsrc) => {
+        println("initiateClaim: optRsrc = " + optRsrc)
+        BasicLogService.tweet("initiateClaim: optRsrc = " + optRsrc)
+        optRsrc match {
+          case None => ()
+          case _ => {
+            CometActorMapper.cometMessage(sessionId, compact(render(
+              ("msgType" -> "initiateClaimResponse")~
+              ("content" ->
+                ("sessionURI" -> sessionId)
+              )
+            )))
+          }
+        }
+      }
+    )
   }
 }

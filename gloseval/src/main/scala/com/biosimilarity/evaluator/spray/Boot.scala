@@ -9,8 +9,6 @@ object Boot extends App
  with SprayCanHttpServerApp
  with Serializable {
 
-  BFactoryMapInitializer.makeMap()
-
   //TODO: Remove sleep below once race condition is fixed
   Thread.sleep(3000)
 

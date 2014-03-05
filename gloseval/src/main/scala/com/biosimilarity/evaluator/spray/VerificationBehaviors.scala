@@ -43,7 +43,7 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
           CometActorMapper.cometMessage(sessionId, compact(render(
             ("msgType" -> "completeClaim") ~
               ("content" -> (
-                ("sessionId" -> sessionId) ~
+                ("sessionURI" -> sessionId) ~
                 ("correlationId" -> correlationId) ~
                 ("verifier" -> (
                   ("src" -> verifier.src.toString) ~
@@ -58,13 +58,11 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       }
     }
 
-    // ClaimantBehavior.run(node, List("claimant to glos"), List()) where Claimant is this user
-    val glosURI = new URI("ui://" + UUID.randomUUID.toString)
-    val selfToGlosCnxnTitle = UUID.randomUUID.toString.substring(0,8)
-    val pacSelfToGlos = PortableAgentCnxn(selfURI, selfToGlosCnxnTitle, glosURI)
+    val pacSelfToGlos = PortableAgentCnxn(selfURI, "verificationProtocol", new URI("ui://gloseval"))
+    val pacGlosToSelf = PortableAgentCnxn(new URI("ui://gloseval"), "verificationProtocol", selfURI)
     feed(
       CompleteClaim.toLabel(),
-      List(pacSelfToGlos),
+      List(pacGlosToSelf),
       doCompleteClaim
     )
     bFactoryMgr().commenceInstance(
@@ -96,7 +94,7 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
           CometActorMapper.cometMessage(sessionId, compact(render(
             ("msgType" -> "verificationNotification") ~
               ("content" -> (
-                ("sessionId" -> sessionId) ~
+                ("sessionURI" -> sessionId) ~
                 ("correlationId" -> correlationId) ~
                 ("claimaint" -> (
                   ("src" -> claimant.src.toString) ~
@@ -111,16 +109,14 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       }
     }
 
-    // RelyingPartyBehavior.run(node, List("rp to glos", "claimant to rp"), List()) where rp is this user & claimant is ATI
-    val glosURI = new URI("ui://" + UUID.randomUUID.toString)
-    val selfToGlosCnxnTitle = UUID.randomUUID.toString.substring(0,8)
-    val pacSelfToGlos = PortableAgentCnxn(selfURI, selfToGlosCnxnTitle, glosURI)
+    val pacSelfToGlos = PortableAgentCnxn(selfURI, "verificationProtocol", new URI("ui://gloseval"))
     val claimantToSelfCnxnTitle = UUID.randomUUID.toString.substring(0,8)
     val pacClaimantToSelf = PortableAgentCnxn(claimantURI, claimantToSelfCnxnTitle, selfURI)
+    val pacSelfToClaimant = PortableAgentCnxn(selfURI, claimantToSelfCnxnTitle, claimantURI)
     // TODO(mike): create two different subscriptions, one for relying party and one for verifier
     feed(
       VerificationNotification.toLabel(),
-      List(pacClaimantToSelf),
+      List(pacSelfToClaimant),
       doVerificationNotification
     )
     bFactoryMgr().commenceInstance(

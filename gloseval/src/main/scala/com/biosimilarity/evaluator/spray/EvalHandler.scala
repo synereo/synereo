@@ -9,6 +9,7 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.store._
+import com.protegra_ati.agentservices.protocols.msgs._
 
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
@@ -442,7 +443,6 @@ trait EvalHandler {
     val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
     BasicLogService.tweet("secureSignup posting pwmac")
-    val (erql, erspl) = agentMgr().makePolarizedPair()
 
     val createUserResponse: Unit => Unit = Unit => {
       CompletionMapper.complete(key, compact(render(
@@ -451,7 +451,7 @@ trait EvalHandler {
       )))
     }
     
-    val onPost4 = ( aliasCnxn: PortableAgentCnxn ) => ( optRsrc : Option[mTT.Resource] ) => {
+    val onPost5 = ( aliasCnxn: PortableAgentCnxn ) => ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
@@ -465,30 +465,43 @@ trait EvalHandler {
       }
     }    
     
-    val onPost3 = ( optRsrc : Option[mTT.Resource] ) => {
+    val onPost4 = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("secureSignup onPost3: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
         case Some(_) => {
           val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          agentMgr().post(
             labelListLabel,
             List(aliasCnxn),
             """[]""",
-            onPost4(aliasCnxn)
+            onPost5(aliasCnxn)
           )
         }
       }
-    }    
+    }
+    
+    val onPost3 = ( optRsrc : Option[mTT.Resource] ) => {
+      BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
+      optRsrc match {
+        case None => ()
+        case Some(_) => {
+          agentMgr().post(
+            defaultAliasLabel,
+            List(capSelfCnxn),
+            """alias""",
+            onPost4
+          )
+        }
+      }
+    }
     
     val onPost2 = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("secureSignup onPost2: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
         case Some(_) => {
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          agentMgr().post(
             aliasListLabel,
             List(capSelfCnxn),
             """["alias"]""",
@@ -503,8 +516,7 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          agentMgr().post(
             jsonBlobLabel,
             List(capSelfCnxn),
             jsonBlob,
@@ -514,7 +526,7 @@ trait EvalHandler {
       }
     }
     
-    agentMgr().post(erql, erspl)(
+    agentMgr().post(
       pwmacLabel,
       List(capSelfCnxn),
       pwmac,
@@ -557,6 +569,9 @@ trait EvalHandler {
                 ("introProfile" -> profileData)
               )
             )))
+          }
+          case _ => {
+            throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
           }
         }
       }
@@ -610,6 +625,9 @@ trait EvalHandler {
                 ("introProfile" -> profileData)
               )
             )))
+          }
+          case _ => {
+            throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
           }
         }
       }
@@ -673,6 +691,9 @@ trait EvalHandler {
                       }
                     )
                   }
+                  case _ => {
+                    throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+                  }
                 }
               }
             )
@@ -709,10 +730,19 @@ trait EvalHandler {
         optRsrc => println( "onCommencement three | " + optRsrc )
       }
     )
-    VerificationBehaviors().launchClaimantBehavior(aliasURI, agentMgr().feed _)
+    println("onAgentCreation: about to launch claimant behavior")
+    VerificationBehaviors().launchClaimantBehavior(
+      aliasURI,
+      agentMgr().feed _
+    )
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
       aliasURI,
       nodeAliasURI,
+      agentMgr().feed _
+    )
+    VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
+      nodeAliasURI,
+      aliasURI,
       agentMgr().feed _
     )
   }
@@ -856,6 +886,12 @@ trait EvalHandler {
                       }
                     }
                   }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
+                  }
                 }
               }
               def onConnectionsFetch(jsonBlob: String, aliasList: String, defaultAlias: String): Option[mTT.Resource] => Unit = (optRsrc) => {
@@ -902,7 +938,19 @@ trait EvalHandler {
                                         ))
                                       )))
                                     }
+                                    case _ => {
+                                      CompletionMapper.complete(key, compact(render(
+                                        ("msgType" -> "initializeSessionError") ~
+                                        ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                                      )))
+                                    }
                                   }
+                                }
+                                case _ => {
+                                  CompletionMapper.complete(key, compact(render(
+                                    ("msgType" -> "initializeSessionError") ~
+                                    ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                                  )))
                                 }
                               }
                             })
@@ -915,7 +963,19 @@ trait EvalHandler {
                           ("content" -> ("reason" -> "Strange: found other data but not connections!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
+                  }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -935,7 +995,19 @@ trait EvalHandler {
                             ("content" -> ("reason" -> "Strange: found other data but not default alias!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
+                  }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -954,7 +1026,19 @@ trait EvalHandler {
                           ("content" -> ("reason" -> "Strange: found pwmac and jsonBlob but not aliases!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
+                  }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -974,10 +1058,19 @@ trait EvalHandler {
                           ("content" -> ("reason" -> "Strange: found pwmac but not jsonBlob!?"))
                         )))
                       }
+                      case _ => {
+                        CompletionMapper.complete(key, compact(render(
+                          ("msgType" -> "initializeSessionError") ~
+                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                        )))
+                      }
                     }
                   }
                   case _ => {
-                    throw new Exception("Unrecognized resource: " + optRsrc)
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
                   }
                 }
               }
@@ -987,7 +1080,10 @@ trait EvalHandler {
             }
           }
           case _ => {
-            BasicLogService.tweet("Unrecognized resource: " + rsrc)
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "initializeSessionError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource: rsrc = " + rsrc)))
+            )))
           }
         }
       }
@@ -1047,10 +1143,19 @@ trait EvalHandler {
                     BasicLogService.tweet("secureLogin | Logging in with cap = " + cap);
                     login(cap)
                   }
+                  case _ => {
+                    CompletionMapper.complete(key, compact(render(
+                      ("msgType" -> "initializeSessionError") ~
+                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                    )))
+                  }
                 }
               }
               case _ => {
-                throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+                CompletionMapper.complete(key, compact(render(
+                  ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                )))
               }
             }
           }
@@ -1647,9 +1752,10 @@ trait EvalHandler {
                                               """[]""",
                                               ( optRsrc : Option[mTT.Resource] ) => {
                                                 BasicLogService.tweet("createNodeUser | onPost5: optRsrc = " + optRsrc)
+                                                println("createNodeUser | onPost5: optRsrc = " + optRsrc)
                                                 optRsrc match {
                                                   case None => ()
-                                                  case Some(_) =>
+                                                  case Some(x) =>
                                                     launchNodeUserBehaviors( aliasCnxn )
                                                     // Store empty bi-cnxn list on alias cnxn
                                                     agentMgr().post(
@@ -1684,6 +1790,10 @@ trait EvalHandler {
   ) : Unit = {
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
+    
+    println("About to commenceInstance for introduction initiator")
+    BasicLogService.tweet("About to commenceInstance for introduction initiator")
+    
     bFactoryMgr().commenceInstance(
       introductionInitiatorCnxn,
       introductionInitiatorLabel,
@@ -1694,6 +1804,9 @@ trait EvalHandler {
       }
     )
     
+    println("About to commenceInstance for claimant")
+    BasicLogService.tweet("About to commenceInstance for claimant")
+
     VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
   }
   
@@ -1725,8 +1838,31 @@ trait EvalHandler {
     })
   }
 
-  def initiateVerification(json: JValue): Unit = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    
+  def initiateClaim(json: JValue): Unit = {
+    val sessionId = (json \ "content" \ "sessionURI").extract[String]
+    val correlationId = (json \ "content" \ "correlationId").extract[String]
+    val jvVerifier = json \ "content" \ "verifier"
+    val pacVerifier = PortableAgentCnxn(
+      new URI((jvVerifier \ "source").extract[String]),
+      (jvVerifier \ "label").extract[String],
+      new URI((jvVerifier \ "target").extract[String])
+    )
+    val jvRelyingParty = json \ "content" \ "relyingParty"
+    val pacRelyingParty = PortableAgentCnxn(
+      new URI((jvRelyingParty \ "source").extract[String]),
+      (jvRelyingParty \ "label").extract[String],
+      new URI((jvRelyingParty \ "target").extract[String])
+    )
+    val claim = fromTermString((json \ "content" \ "claim").extract[String]).get
+
+    handler.handleinitiateClaim(
+      InitiateClaim(
+        sessionId,
+        correlationId,
+        pacVerifier,
+        pacRelyingParty,
+        claim
+      )
+    )
   }
 }
