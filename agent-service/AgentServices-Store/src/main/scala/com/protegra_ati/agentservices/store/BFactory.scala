@@ -3122,88 +3122,87 @@ package bfactory {
           )
         )
       }
-    }
-
-    def mkNodeEvaluator(
-      node : String,
-      dslNode : String
-    ) : BehaviorService = {
-      new BehaviorService {
-        type Rsrc = mTT.Resource
-        def commenceInstanceHandler(
-          n : StdEvalChannel,
-          dslN : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel
-        )(
-          bdc : ConcreteBFactHL.Cnxn,
-          bdl : ConcreteBFactHL.Label,
-          cnxns : Seq[ConcreteBFactHL.Cnxn],
-          filters : Seq[ConcreteBFactHL.Label],
-          handler : Option[Rsrc] => Unit
-        ) = {
-          BasicLogService.tweet(
-            "method: commenceInstanceHandler"
-            + "\nin ConcreteBFactHL.CommenceInstance case "
-            + "\nthis: " + this
-            + "\nn: " + n
-            + "\ndslN: " + dslN
-            + "\n-----------------------------------------"
-            + "\nbehaviorDefinitionCnxn: " + bdc
-            + "\nbehaviorDefinitionLabel: " + bdl
-            + "\ncnxns: " + cnxns
-            + "\nfilters: " + filters                
-            + "\nhandler: " + handler
-          )
-          
-          val agntCnxn : acT.AgentCnxn =
-            new acT.AgentCnxn( bdc.src, bdc.label.toString, bdc.trgt )
-          reset {
-            
+      
+      def mkNodeEvaluator(
+        node : String,
+        dslNode : String
+      ) : BehaviorService = {
+        new BehaviorService with Serializable {
+          type Rsrc = mTT.Resource
+          def commenceInstanceHandler(
+            n : StdEvalChannel,
+            dslN : com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel
+          )(
+            bdc : ConcreteBFactHL.Cnxn,
+            bdl : ConcreteBFactHL.Label,
+            cnxns : Seq[ConcreteBFactHL.Cnxn],
+            filters : Seq[ConcreteBFactHL.Label],
+            handler : Option[Rsrc] => Unit
+          ) = {
             BasicLogService.tweet(
               "method: commenceInstanceHandler"
-              + "\n calling node.fetch "
+              + "\nin ConcreteBFactHL.CommenceInstance case "
               + "\nthis: " + this
               + "\nn: " + n
               + "\ndslN: " + dslN
               + "\n-----------------------------------------"
-              + "\nbehaviorDefinitionCnxn: " + agntCnxn
+              + "\nbehaviorDefinitionCnxn: " + bdc
               + "\nbehaviorDefinitionLabel: " + bdl
+              + "\ncnxns: " + cnxns
+              + "\nfilters: " + filters                
+              + "\nhandler: " + handler
             )
             
-            for( e <- n.fetch( agntCnxn )( bdl ) ) {
+            val agntCnxn : acT.AgentCnxn =
+              new acT.AgentCnxn( bdc.src, bdc.label.toString, bdc.trgt )
+            reset {
               
               BasicLogService.tweet(
                 "method: commenceInstanceHandler"
-                + "\n returned from node.fetch "
+                + "\n calling node.fetch "
                 + "\nthis: " + this
                 + "\nn: " + n
                 + "\ndslN: " + dslN
                 + "\n-----------------------------------------"
-                + "\nagntCnxn: " + agntCnxn
+                + "\nbehaviorDefinitionCnxn: " + agntCnxn
                 + "\nbehaviorDefinitionLabel: " + bdl
-                + "\ne: " + e
-                + "\nhandler: " + handler
               )
               
-              e match {
-                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {                                    
-                  try {
-                    BasicLogService.tweet(
-                      "method: commenceInstanceHandler"
-                      + "\n instantiating instance & finding entry point"
-                      + "\nthis: " + this
-                      + "\nn: " + n
-                      + "\ndslN: " + dslN
-                      + "\n-----------------------------------------"
-                      + "\nbehaviorDefinitionCnxn: " + agntCnxn
-                      + "\nbehaviorDefinitionLabel: " + bdl
-                      + "\nbehavior: " + behavior
-                      + "\ncnxns: " + cnxns
-                      + "\nfilters: " + filters
-                      + "\nhandler: " + handler
-                    )
-                    BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
-                      case Left( entryPointM ) => {
-                        spawn {
+              for( e <- n.fetch( agntCnxn )( bdl ) ) {
+                
+                BasicLogService.tweet(
+                  "method: commenceInstanceHandler"
+                  + "\n returned from node.fetch "
+                  + "\nthis: " + this
+                  + "\nn: " + n
+                  + "\ndslN: " + dslN
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nbehaviorDefinitionLabel: " + bdl
+                  + "\ne: " + e
+                  + "\nhandler: " + handler
+                )
+                
+                e match {
+                  case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {                                    
+                    try {
+                      BasicLogService.tweet(
+                        "method: commenceInstanceHandler"
+                        + "\n instantiating instance & finding entry point"
+                        + "\nthis: " + this
+                        + "\nn: " + n
+                        + "\ndslN: " + dslN
+                        + "\n-----------------------------------------"
+                        + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                        + "\nbehaviorDefinitionLabel: " + bdl
+                        + "\nbehavior: " + behavior
+                        + "\ncnxns: " + cnxns
+                        + "\nfilters: " + filters
+                        + "\nhandler: " + handler
+                      )
+                      BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
+                        case Left( entryPointM ) => {
+                          spawn {
                             val instanceID = UUID.randomUUID
                             val instanceLabel =
                               StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
@@ -3218,10 +3217,26 @@ package bfactory {
                                 )
                               )
                             )
-
+                            
+                          }
+                        }
+                        case Right( e ) => {
+                          handler( 
+                            Some(
+                              mTT.Ground(
+                                ConcreteBFactHL.InstanceNotRunning(
+                                  bdc,
+                                  bdl,
+                                  "instantiation failed" + e
+                                )
+                              )
+                            )
+                          )
                         }
                       }
-                      case Right( e ) => {
+                    }
+                    catch {
+                      case e : Throwable => {
                         handler( 
                           Some(
                             mTT.Ground(
@@ -3234,137 +3249,122 @@ package bfactory {
                           )
                         )
                       }
-                    }
+                    }                      
                   }
-                  catch {
-                    case e : Throwable => {
-                      handler( 
-                        Some(
-                          mTT.Ground(
-                            ConcreteBFactHL.InstanceNotRunning(
-                              bdc,
-                              bdl,
-                              "instantiation failed" + e
-                            )
+                  case _ => {
+                    handler( 
+                      Some(
+                        mTT.Ground(
+                          ConcreteBFactHL.InstanceNotRunning(
+                            bdc,
+                            bdl,
+                            "unexpected behavior record format: " + e
                           )
                         )
                       )
-                    }
-                  }                      
-                }
-                case _ => {
-                  handler( 
-                    Some(
-                      mTT.Ground(
-                        ConcreteBFactHL.InstanceNotRunning(
-                          bdc,
-                          bdl,
-                          "unexpected behavior record format: " + e
-                        )
-                      )
                     )
-                  )
-                }
-              }                                    
+                  }
+                }                                    
+              }
             }
           }
-        }
-        def mapBehavior[Value](
-          cnxn : ConcreteBFactHL.Cnxn,
-          label : CnxnCtxtLabel[String,String,String],
-          behavior : String,
-          onMap : Option[Rsrc] => Unit        
-        ) : Unit = {
-          for (
-            n <- EvalNodeMapper.get( node );
-            dslN <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( dslNode )
-          ) {
-            BasicLogService.tweet(
-              "method: mapBehavior"
-              + "\nin ConcreteBFactHL.MapBehavior case "
-              + "\nthis: " + this
-              + "\nnode: " + node
-              + "\nonMap: " + onMap
-              + "\n-----------------------------------------"
-              + "\ncnxn: " + cnxn
-              + "\nlabel: " + label
-              + "\nbehavior: " + behavior
-            )
-              
-            val agntCnxn : acT.AgentCnxn =
-              new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
-            reset {
-              
+          def mapBehavior[Value](
+            cnxn : ConcreteBFactHL.Cnxn,
+            label : CnxnCtxtLabel[String,String,String],
+            behavior : String,
+            onMap : Option[Rsrc] => Unit        
+          ) : Unit = {
+            for (
+              n <- EvalNodeMapper.get( node );
+              dslN <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( dslNode )
+            ) {
               BasicLogService.tweet(
                 "method: mapBehavior"
-                + "\n calling node.publish "
+                + "\nin ConcreteBFactHL.MapBehavior case "
                 + "\nthis: " + this
                 + "\nnode: " + node
                 + "\nonMap: " + onMap
                 + "\n-----------------------------------------"
-                + "\nagntCnxn: " + agntCnxn
+                + "\ncnxn: " + cnxn
                 + "\nlabel: " + label
                 + "\nbehavior: " + behavior
               )
               
-              try {
-                n.publish( agntCnxn )( label, mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) )
-                onMap( 
-                  Some(
-                    mTT.Ground(
-                      ConcreteBFactHL.Noop
+              val agntCnxn : acT.AgentCnxn =
+                new acT.AgentCnxn( cnxn.src, cnxn.label.toString, cnxn.trgt )
+              reset {
+                
+                BasicLogService.tweet(
+                  "method: mapBehavior"
+                  + "\n calling node.publish "
+                  + "\nthis: " + this
+                  + "\nnode: " + node
+                  + "\nonMap: " + onMap
+                  + "\n-----------------------------------------"
+                  + "\nagntCnxn: " + agntCnxn
+                  + "\nlabel: " + label
+                  + "\nbehavior: " + behavior
+                )
+                
+                try {
+                  n.publish( agntCnxn )( label, mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) )
+                  onMap( 
+                    Some(
+                      mTT.Ground(
+                        ConcreteBFactHL.Noop
+                      )
                     )
                   )
-                )
-              } 
-              catch {
-                case e : Exception => {
-                  BasicLogService.tweet(
-                    "method: mapBehavior"
-                    + "\n ---> node.publish caused an exception <--- "
-                    + "\nthis: " + this
-                    + "\nnode: " + node
-                    + "\nonMap: " + onMap
-                    + "\n-----------------------------------------"
-                    + "\nagntCnxn: " + agntCnxn
-                    + "\nlabel: " + label
-                    + "\nbehavior: " + behavior
-                  )
-                  BasicLogService.tweetTrace( e )
+                } 
+                catch {
+                  case e : Exception => {
+                    BasicLogService.tweet(
+                      "method: mapBehavior"
+                      + "\n ---> node.publish caused an exception <--- "
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nonMap: " + onMap
+                      + "\n-----------------------------------------"
+                      + "\nagntCnxn: " + agntCnxn
+                      + "\nlabel: " + label
+                      + "\nbehavior: " + behavior
+                    )
+                    BasicLogService.tweetTrace( e )
+                  }
                 }
               }
             }
           }
-        }
-        def commenceInstance(
-          behaviorDefinitionCnxn : ConcreteBFactHL.Cnxn,
-          behaviorDefinitionLabel : CnxnCtxtLabel[String,String,String],
-          cnxns : Seq[ConcreteBFactHL.Cnxn],
-          filters : Seq[CnxnCtxtLabel[String,String,String]],
-          onCommencement : Option[Rsrc] => Unit
-        ) : Unit = {
-          for (
-            n <- EvalNodeMapper.get( node );
-            dslN <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( dslNode )
-          ) {
-            commenceInstanceHandler( n, dslN )(
-              behaviorDefinitionCnxn,
-              behaviorDefinitionLabel,
-              cnxns,
-              filters,
-              onCommencement
-            )
+          def commenceInstance(
+            behaviorDefinitionCnxn : ConcreteBFactHL.Cnxn,
+            behaviorDefinitionLabel : CnxnCtxtLabel[String,String,String],
+            cnxns : Seq[ConcreteBFactHL.Cnxn],
+            filters : Seq[CnxnCtxtLabel[String,String,String]],
+            onCommencement : Option[Rsrc] => Unit
+          ) : Unit = {
+            for (
+              n <- EvalNodeMapper.get( node );
+              dslN <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( dslNode )
+            ) {
+              commenceInstanceHandler( n, dslN )(
+                behaviorDefinitionCnxn,
+                behaviorDefinitionLabel,
+                cnxns,
+                filters,
+                onCommencement
+              )
+            }
+          }
+          def completeInstance(
+            behaviorInstanceCnxn : ConcreteBFactHL.Cnxn,
+            behaviorInstanceLabel : CnxnCtxtLabel[String,String,String],
+            onCompletion : Option[Rsrc] => Unit
+          ) : Unit = {
+            throw new Exception( "method: completeInstance -- not yet implemented" )
           }
         }
-        def completeInstance(
-          behaviorInstanceCnxn : ConcreteBFactHL.Cnxn,
-          behaviorInstanceLabel : CnxnCtxtLabel[String,String,String],
-          onCompletion : Option[Rsrc] => Unit
-        ) : Unit = {
-          throw new Exception( "method: completeInstance -- not yet implemented" )
-        }
       }
-    }
+    }    
   }
 
   object CommsLinkMapper extends MapProxy[String,BFactoryCommLinkCtor.StdEvaluationRequestChannel] {
@@ -3442,6 +3442,28 @@ package bfactory {
           val mpb = e.indirectStdLooper( nodeKey, dslNodeKey )
           _looper = Some( mpb )
           mpb
+        }
+      }
+    }
+
+    @transient
+    var _localService : Option[BehaviorService] = None
+    def localService(
+      e : BFactoryEngineCtor.BFactoryEngine = engine( None )
+    ) : BehaviorService = {
+      _localService match {
+        case Some( ls ) => ls
+        case None => {
+          val nodeId = UUID.randomUUID()
+          val nodeKey = nodeId.toString
+          val dslNodeId = UUID.randomUUID()
+          val dslNodeKey = nodeId.toString
+          //EvalNodeMapper += ( nodeKey -> BFactoryEngineCtor.agent( "/bFactoryProtocol" ) )
+          EvalNodeMapper += ( nodeKey -> BFactoryEngineCtor.dslEvaluatorAgent( ) )
+          com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper += ( dslNodeKey -> com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.dslEvaluatorAgent( ) )
+          val ls = e.mkNodeEvaluator( nodeKey, dslNodeKey )
+          _localService = Some( ls )
+          ls
         }
       }
     }

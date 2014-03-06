@@ -2745,7 +2745,7 @@ package diesel {
       }
       
       def mkNodeEvaluator( node : String ) : EvaluationService = {
-        new EvaluationService {
+        new EvaluationService with Serializable {
           type Rsrc = mTT.Resource
           implicit def tplToRsrc(
             tpl : (Option[Rsrc], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn])
@@ -4242,6 +4242,25 @@ package diesel {
           val mpb = e.indirectStdLooper( nodeKey )
           _looper = Some( mpb )
           mpb
+        }
+      }
+    }
+
+    @transient
+    var _localService : Option[EvaluationService] = None
+    def localService(
+      e : DieselEngineCtor.DieselEngine = engine( None )
+    ) : EvaluationService = {
+      _localService match {
+        case Some( ls ) => ls
+        case None => {
+          val nodeId = UUID.randomUUID()
+          val nodeKey = nodeId.toString
+          //EvalNodeMapper += ( nodeKey -> DieselEngineCtor.agent( "/dieselProtocol" ) )
+          EvalNodeMapper += ( nodeKey -> DieselEngineCtor.dslEvaluatorAgent( ) )
+          val ls = e.mkNodeEvaluator( nodeKey )
+          _localService = Some( ls )
+          ls
         }
       }
     }
