@@ -23,5 +23,5 @@ object DSLQuickStart {
   }
 }
 
-DSLQuickStart.begin()
+DSLQuickStart.begin( true )
 

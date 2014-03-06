@@ -7,7 +7,8 @@ import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs.ProtocolMessage
 import scala.util.continuations._
 
-class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]) {
+class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]) extends Serializable {
+  def this() = { this( null.asInstanceOf[Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]] ) }
   private def toAgentCnxn(cnxn: PortableAgentCnxn): acT.AgentCnxn = {
     acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
   }
@@ -16,8 +17,6 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
     cnxn: PortableAgentCnxn,
     message: ProtocolMessage
   ): Unit = {
-    //TODO: Remove this once race condition is resolved
-    Thread.sleep(1000)
     reset {
       val agentCnxn = toAgentCnxn(cnxn)
       val filter = message.toLabel
@@ -109,6 +108,50 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
       val agentCnxn = toAgentCnxn(cnxn)
 
       for (e <- node.read(agentCnxn)(filter)) { onResult(e) }
+    }
+  }
+}
+
+package usage {
+  import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
+  import com.protegra_ati.agentservices.protocols.msgs._
+  import java.net.URI
+
+  object ProtocolManagerHarness extends Serializable {
+    import java.util.UUID
+    def reproLabel() : Option[CnxnCtxtLabel[String,String,String]] = {
+      Some( BeginIntroductionRequest.toLabel() )
+    }
+    def reproCnxn() : Option[PortableAgentCnxn] = {
+      Some(
+        PortableAgentCnxn(
+          new URI("agent://e6eca9b84dd49d91e45c9e23cd74d2d98bb1"),
+          "alias",
+          new URI("agent://e6eca9b84dd49d91e45c9e23cd74d2d98bb1")
+        )
+      )
+    }
+    def reproNode() : String = {
+      val dslNodeId = UUID.randomUUID()
+      val dslNodeKey = dslNodeId.toString      
+      com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper += ( dslNodeKey -> com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.dslEvaluatorAgent( ) )
+      dslNodeKey
+    }
+    def protocolMgr( nodeKey : String ) : Option[ProtocolManager] = {
+      for(
+        node <- com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper.get( nodeKey ) ) yield {
+          new ProtocolManager( node ) 
+        }
+    }
+    def repro() = {
+      val rpnKey = reproNode()
+      for(
+        pm <- protocolMgr( rpnKey );
+        label <- reproLabel();
+        cnxn <- reproCnxn()
+      ) {
+        pm.subscribeMessage( cnxn, label, { e : ProtocolMessage => println( e ) } )
+      }
     }
   }
 }

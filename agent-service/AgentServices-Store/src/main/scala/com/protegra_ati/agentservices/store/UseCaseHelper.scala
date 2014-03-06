@@ -683,6 +683,28 @@ trait ExerciseHLDSL {
   }
 }
 
+trait NodeStreams {
+  self : FuzzyStreams =>
+  import com.biosimilarity.evaluator.distribution.diesel.DieselEngineScope._
+  import com.biosimilarity.evaluator.distribution.diesel.EvalNodeMapper
+  import com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor
+  import com.biosimilarity.evaluator.distribution.diesel.DieselEngineCtor.StdEvalChannel
+  def nextDSLNode(
+  ) : ( String, StdEvalChannel ) = {
+    val keyNodePair =
+      ( UUID.randomUUID( ).toString -> DieselEngineCtor.dslEvaluatorAgent[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( ) );
+    EvalNodeMapper += keyNodePair
+    keyNodePair
+  }
+  def dslNodeStream(
+  ) : Stream[StdEvalChannel] = {
+    val ( _, node ) = nextDSLNode
+    tStream( node )(
+      { node => { val ( _, node ) = nextDSLNode; node } }
+    )
+  }    
+}
+
 trait UseCaseCapture {
   import org.json4s._
   import org.json4s.jackson.Serialization

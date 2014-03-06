@@ -2115,10 +2115,24 @@ package bfactory {
               )
               
               e match {
-                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {                                    
+                case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {    
                   try {
                     BasicLogService.tweet(
-                      "method: evaluateExpression"
+                      "method: evaluateExpression | Ground"
+                      + "\n instantiating instance & finding entry point"
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                      + "\nbehaviorDefinitionLabel: " + bdl
+                      + "\nbehavior: " + behavior
+                      + "\ncnxns: " + cnxns
+                      + "\nfilters: " + filters
+                    )
+                    println(
+                      "method: evaluateExpression | Ground"
                       + "\n instantiating instance & finding entry point"
                       + "\nthis: " + this
                       + "\nnode: " + node
@@ -2134,21 +2148,20 @@ package bfactory {
                     BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
                       case Left( entryPointM ) => {
                         spawn {
-                            val instanceID = UUID.randomUUID
-                            val instanceLabel =
-                              StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
-                            entryPointM( dslN, cnxns, filters )
-                            handler( 
-                              Some(
-                                mTT.Ground(
-                                  ConcreteBFactHL.InstanceRunning(
-                                    bdc,
-                                    instanceLabel
-                                  )
+                          val instanceID = UUID.randomUUID
+                          val instanceLabel =
+                            StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
+                          entryPointM( dslN, cnxns, filters )
+                          handler( 
+                            Some(
+                              mTT.Ground(
+                                ConcreteBFactHL.InstanceRunning(
+                                  bdc,
+                                  instanceLabel
                                 )
                               )
                             )
-
+                          )
                         }
                       }
                       case Right( e ) => {
@@ -2181,7 +2194,87 @@ package bfactory {
                       )
                     }
                   }                      
-                }
+                };
+                case Some( mTT.RBoundAList( Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ))), _ ) ) => {           
+                  try {
+                    BasicLogService.tweet(
+                      "method: evaluateExpression | RBoundAList"
+                      + "\n instantiating instance & finding entry point"
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                      + "\nbehaviorDefinitionLabel: " + bdl
+                      + "\nbehavior: " + behavior
+                      + "\ncnxns: " + cnxns
+                      + "\nfilters: " + filters
+                    )
+                    println(
+                      "method: evaluateExpression | RBoundAList"
+                      + "\n instantiating instance & finding entry point"
+                      + "\nthis: " + this
+                      + "\nnode: " + node
+                      + "\nexpr: " + expr
+                      + "\nhandler: " + handler
+                      + "\n-----------------------------------------"
+                      + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                      + "\nbehaviorDefinitionLabel: " + bdl
+                      + "\nbehavior: " + behavior
+                      + "\ncnxns: " + cnxns
+                      + "\nfilters: " + filters
+                    )
+                    BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
+                      case Left( entryPointM ) => {
+                        spawn {
+                            val instanceID = UUID.randomUUID
+                            val instanceLabel =
+                              StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
+                            entryPointM( dslN, cnxns, filters )
+                            handler( 
+                              Some(
+                                mTT.Ground(
+                                  ConcreteBFactHL.InstanceRunning(
+                                    bdc,
+                                    instanceLabel
+                                  )
+                                )
+                              )
+                            )
+                        }
+                      }
+                      case Right( e ) => {
+                        handler( 
+                          Some(
+                            mTT.Ground(
+                              ConcreteBFactHL.InstanceNotRunning(
+                                bdc,
+                                bdl,
+                                "instantiation failed" + e
+                              )
+                            )
+                          )
+                        )
+                      }
+                    }
+                  }
+                  catch {
+                    case e : Throwable => {
+                      handler( 
+                        Some(
+                          mTT.Ground(
+                            ConcreteBFactHL.InstanceNotRunning(
+                              bdc,
+                              bdl,
+                              "instantiation failed" + e
+                            )
+                          )
+                        )
+                      )
+                    }
+                  }                      
+                };
                 case _ => {
                   handler( 
                     Some(
@@ -2334,7 +2427,7 @@ package bfactory {
                   + "\nnode: " + node
                   + "\n-----------------------------------------"
                   + "\ne: " + e
-                )
+                )                
                 e match {
                   case Some( boundRsrc@BFactoryCommLink.mTT.RBoundAList( Some( BFactoryCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
@@ -2349,6 +2442,7 @@ package bfactory {
                       + "\n-----------------------------------------"
                       + "\ne: " + e
                     )
+                    
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2404,6 +2498,7 @@ package bfactory {
                       + "\n-----------------------------------------"
                       + "\ne: " + e
                     )
+                    
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2461,6 +2556,7 @@ package bfactory {
                           + "\n-----------------------------------------"
                           + "\ne: " + e
                         )
+                        
                         innerOptRsrc match {
                           case Some( BFactoryCommLink.mTT.Ground( expr ) ) => {
                             for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
@@ -2575,11 +2671,31 @@ package bfactory {
             + "\nnode: " + node            
             + "\nrspLabelCtor: " + rspLabelCtor
           )
+          println(
+            "entering method: innerLoop"
+            + "\nthis: " + this
+            + "\nerql: " + erql
+            + "\nclient: " + client
+            + "\nserver: " + server
+            + "\nnode: " + node            
+            + "\nrspLabelCtor: " + rspLabelCtor
+          )
             reset { 
               for( e <- client.subscribe( erql ) ) {
                 e match {
                   case Some( boundRsrc@BFactoryCommLink.mTT.RBoundAList( Some( BFactoryCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
+                      "method: innerLoop"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
+                    println(
                       "method: innerLoop"
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
@@ -2645,6 +2761,18 @@ package bfactory {
                       + "\n-----------------------------------------"
                       + "\ne: " + e
                     )
+                    println(
+                      "method: innerLoop"
+                      + "\n case rsrc type: BFactoryCommLink.mTT.RBoundHM"
+                      + "\n completed client.subscribe "
+                      + "\nthis: " + this
+                      + "\nerql: " + erql
+                      + "\nclient: " + client
+                      + "\nserver: " + server
+                      + "\nnode: " + node
+                      + "\n-----------------------------------------"
+                      + "\ne: " + e
+                    )
                     for( map <- boundRsrc.sbst; CnxnCtxtLeaf( Left( sessionId ) ) <- map.get( "SessionId" ) ) {
                       val erspl : CnxnCtxtLabel[String,String,String] = rspLabelCtor( sessionId )
                       
@@ -2691,6 +2819,18 @@ package bfactory {
                     rsrc match {
                       case boundRsrc@BFactoryCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
                         BasicLogService.tweet(
+                          "method: innerLoop"
+                          + "\n case rsrc type: BFactoryCommLink.mTT.RBoundHM"
+                          + "\n completed client.subscribe "
+                          + "\nthis: " + this
+                          + "\nerql: " + erql
+                          + "\nclient: " + client
+                          + "\nserver: " + server
+                          + "\nnode: " + node
+                          + "\n-----------------------------------------"
+                          + "\ne: " + e
+                        )
+                        println(
                           "method: innerLoop"
                           + "\n case rsrc type: BFactoryCommLink.mTT.RBoundHM"
                           + "\n completed client.subscribe "

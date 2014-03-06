@@ -10,7 +10,7 @@ import java.util.UUID
 
 trait IntroductionRecipientT extends Serializable {
   private val biCnxnsListLabel = "biCnxnsList(true)".toLabel
-  private val profileDataLabel = "jsonBlob(W)".toLabel
+  private val profileDataLabel = "jsonBlob(true)".toLabel
 
   def run(
     node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
@@ -37,7 +37,7 @@ trait IntroductionRecipientT extends Serializable {
 
         // get the profile data
         protocolMgr.read(identityCnxn, profileDataLabel, {
-          case Some(mTT.Ground(PostedExpr(jsonBlob: String))) =>
+          case Some(mTT.RBoundAList(Some(mTT.Ground(PostedExpr(jsonBlob: String))), _)) =>
             val getIntroProfileRsp = GetIntroductionProfileResponse(sessionId, correlationId, jsonBlob)
 
             // send GetIntroductionProfileResponse message
@@ -72,7 +72,7 @@ trait IntroductionRecipientT extends Serializable {
               case Connect(_, _, false, Some(newBiCnxn)) =>
                 // get the list of biCnxns
                 protocolMgr.get(aliasCnxn, biCnxnsListLabel, {
-                  case Some(mTT.Ground(PostedExpr(prevBiCnxns: String))) =>
+                  case Some(mTT.RBoundAList(Some(mTT.Ground(PostedExpr(prevBiCnxns: String))), _)) =>
                     // add new biCnxn to the list
                     val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](prevBiCnxns)
 

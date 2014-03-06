@@ -89,5 +89,16 @@ package bfactory {
       storageLabels.fromTermString(
         "behaviors( introduction( recipient( true ), Cnxn ) )"
       ).getOrElse( throw new Exception( "unable to parse label" ) )
+      
+    @transient
+    lazy val verifierProtocolCnxn = new PortableAgentCnxn(
+      "verifierProtocol".toURI,
+      "verifierProtocol",
+      "verifierProtocol".toURI
+    )
+    
+    @transient lazy val claimantLabel = storageLabels.fromTermString("claimant(true)").get
+    @transient lazy val verifierLabel = storageLabels.fromTermString("verifier(true)").get
+    @transient lazy val relyingPartyLabel = storageLabels.fromTermString("relyingParty(true)").get
   }  
 }
