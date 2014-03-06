@@ -29,7 +29,8 @@ import java.util.UUID
 
 
 
-trait BFactoryCommsService extends CnxnString[String, String, String]{
+trait BFactoryCommsService extends BehaviorService
+with CnxnString[String, String, String]{
   self : EvalConfig with BFactoryCommLinkConfiguration =>
 
   import BFactoryCommLink._   
@@ -38,6 +39,8 @@ trait BFactoryCommsService extends CnxnString[String, String, String]{
   import BFactoryCommLinkCtor._
   import diesel.ConcreteHumanEngagement._
   import ConcreteBFactHL._
+
+  type Rsrc = mTT.Resource
   
   var _clientServerPair : Option[
     (
@@ -267,6 +270,41 @@ trait BFactoryCommsService extends CnxnString[String, String, String]{
         bFactMgr
       }
     }    
+  }
+
+  def mapBehavior[Value](
+    cnxn : Cnxn,
+    label : CnxnCtxtLabel[String,String,String],
+    behavior : String,
+    onMap : Option[Rsrc] => Unit        
+  ) : Unit = {
+    bFactoryMgr().mapBehavior[Value]( cnxn, label, behavior, onMap )
+  }
+  def commenceInstance(
+    behaviorDefinitionCnxn : Cnxn,
+    behaviorDefinitionLabel : CnxnCtxtLabel[String,String,String],
+    cnxns : Seq[Cnxn],
+    filters : Seq[CnxnCtxtLabel[String,String,String]],
+    onCommencement : Option[Rsrc] => Unit
+  ) : Unit = {
+    bFactoryMgr().commenceInstance(
+      behaviorDefinitionCnxn,
+      behaviorDefinitionLabel,
+      cnxns,
+      filters,
+      onCommencement
+    )
+  }
+  def completeInstance(
+    behaviorInstanceCnxn : Cnxn,
+    behaviorInstanceLabel : CnxnCtxtLabel[String,String,String],
+    onCompletion : Option[Rsrc] => Unit
+  ) : Unit = {
+    bFactoryMgr().completeInstance(
+      behaviorInstanceCnxn,
+      behaviorInstanceLabel,
+      onCompletion
+    )
   }
 }
 
