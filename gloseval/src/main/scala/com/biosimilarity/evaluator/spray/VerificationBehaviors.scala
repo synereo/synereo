@@ -26,7 +26,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
 
   def launchClaimantBehavior(
     selfURI: URI,
-    feed: (CnxnCtxtLabel[String,String,String], Seq[ConcreteHL.Cnxn], Option[mTT.Resource] => Unit) => Unit
+    feed: (CnxnCtxtLabel[String,String,String], Seq[ConcreteHL.Cnxn], Option[mTT.Resource] => Unit) => Unit,
+    fail: String => Unit = (s: String) => BasicLogService.tweet(s)
   ): Unit = {
     val doCompleteClaim = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("doCompleteClaim: optRsrc = " + optRsrc)
@@ -55,6 +56,7 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
               ))
           )))
         }
+        case _ => fail("launchClaimantBehavior -- Unrecognized resource: " + optRsrc)
       }
     }
 
@@ -77,7 +79,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
   def launchVerificationAndRelyingPartyBehaviors(
     selfURI: URI,
     claimantURI: URI,
-    feed: (CnxnCtxtLabel[String,String,String], Seq[ConcreteHL.Cnxn], Option[mTT.Resource] => Unit) => Unit
+    feed: (CnxnCtxtLabel[String,String,String], Seq[ConcreteHL.Cnxn], Option[mTT.Resource] => Unit) => Unit,
+    fail: String => Unit = (s: String) => BasicLogService.tweet(s)
   ): Unit = {
     val doVerificationNotification = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("doVerificationNotification: optRsrc = " + optRsrc)
@@ -106,6 +109,7 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
               ))
           )))
         }
+        case _ => fail("launchVerificationAndRelyingPartyBehaviors -- Unrecognized resource: " + optRsrc)
       }
     }
 
