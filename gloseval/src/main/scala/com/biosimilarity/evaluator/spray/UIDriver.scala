@@ -26,7 +26,8 @@ package usage {
 
     def getAliasCnxns(
       emailAddr : String,
-      aliasCnxnK : List[PortableAgentCnxn] => Unit
+      aliasCnxnK : List[PortableAgentCnxn] => Unit,
+      fail: String => Unit = println _
     ) : Unit = {
       val auid =
         EvalAndAgentCRUDHandlerService.emailToCap( emailAddr )
@@ -51,6 +52,7 @@ package usage {
             
             aliasCnxnK( biCnxnList.map( _.writeCnxn ) )
           }
+          case _ => fail("getAliasCnxns -- Unrecognized resource: " + optRsrc)
         }
       }
 
