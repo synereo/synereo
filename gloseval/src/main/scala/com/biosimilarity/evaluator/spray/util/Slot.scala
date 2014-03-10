@@ -21,8 +21,9 @@ object Slot extends Serializable {
     import com.biosimilarity.evaluator.distribution.DSLCommLink.mTT
     import com.biosimilarity.evaluator.distribution.ConcreteHL._
     
-    case class Fetcher() extends MonadT[U, String] with MFilter[U] {
-      def flatMap[B](succeed: String => Unit): Unit = {
+    case class Fetcher() extends MonadT[U, String] {
+      private val fetcher = this
+      def map[B](succeed: String => B): Unit = {
         EvalHandlerService.agentMgr().fetch(
           label,
           List(pac),
@@ -41,12 +42,23 @@ object Slot extends Serializable {
           }
         )
       }
-      def map[B](succeed: String => B): Unit = flatMap((x: String) => { succeed(x); () })
-      def foreach[B](succeed: String => B): Unit = map(succeed)
+      def unit[B](b: B): Unit = ()
+      def flatten[B](mmb: Unit): Unit = ()
+      def withFilter(filter: String => Boolean): MonadT[U, String] = new MonadT[U, String] {
+        def map[B](succeed: String => B): Unit = fetcher.map((str: String) => {
+          if (filter(str)) { succeed(str) }
+          ()
+        })
+        def unit[B](b: B): Unit = ()
+        def flatten[B](mmb: Unit): Unit = ()
+        def withFilter(filter: String => Boolean): MonadT[U, String] 
+          = fetcher.withFilter(filter)
+      }
     }
 
     case class Putter(value: String) extends MonadT[U, Unit] {
-      def flatMap[B](succeed: Unit => Unit): Unit = {
+      private val putter = this
+      def map[B](succeed: Unit => B): Unit = {
         EvalHandlerService.agentMgr().put(
           label,
           List(pac),
@@ -60,8 +72,19 @@ object Slot extends Serializable {
           }
         )
       }
-      def map[B](succeed: Unit => B): Unit = flatMap((x: Unit) => { succeed(); () })
-      def foreach[B](succeed: Unit => B): Unit = map(succeed)
+      def unit[B](b: B): Unit = ()
+      def flatten[B](mmb: Unit): Unit = ()
+      
+      def withFilter(filter: Unit => Boolean): MonadT[U, Unit] = new MonadT[U, Unit] {
+        def map[B](succeed: Unit => B): Unit = putter.flatMap((u: Unit) => {
+          if (filter()) { succeed() }
+          ()
+        })
+        def unit[B](b: B): Unit = ()
+        def flatten[B](mmb: Unit): Unit = ()
+        def withFilter(filter: Unit => Boolean): MonadT[U, Unit] 
+          = putter.withFilter(filter)
+      }
     }
 
     def fetch() = Fetcher()
@@ -74,14 +97,16 @@ object Slot extends Serializable {
     onPut: String => Unit
   ) extends SlotT[M, String] {
     def fetch() = new MonadT[M, String] {
-      def flatMap[B](f: String => M[B]): M[B] = target.fetch().flatMap((a: String) => { onFetch(a); f(a) })
-      def map[B](f: String => B): M[B] = target.fetch().map((a: String) => { onFetch(a); f(a) })
-      def foreach[B](f: String => B): Unit = target.fetch().foreach((a: String) => { onFetch(a); f(a) })
+      val t = target.fetch()
+      def map[B](f: String => B): M[B] = t.map((a: String) => { onFetch(a); f(a) })
+      def flatten[B](mmb: M[M[B]]): M[B] = t.flatten(mmb)
+      def unit[B](b: B): M[B] = t.unit(b)
     }
     def put(value: String) = new MonadT[M, Unit] {
-      def flatMap[B](f: Unit => M[B]): M[B] = target.put(value).flatMap((x: Unit) => { onPut(value); f(value) })
-      def map[B](f: Unit => B): M[B] = target.put(value).map((x: Unit) => { onPut(value); f(value) })
-      def foreach[B](f: Unit => B): Unit = target.put(value).foreach((x: Unit) => { onPut(value); f(value) })
+      val t = target.put(value)
+      def map[B](f: Unit => B): M[B] = t.map((x: Unit) => { onPut(value); f(value) })
+      def flatten[B](mmb: M[M[B]]): M[B] = t.flatten(mmb)
+      def unit[B](b: B): M[B] = t.unit(b)
     }
   }
   
@@ -90,6 +115,7 @@ object Slot extends Serializable {
     import java.io._
     
     def fetch() = new MonadT[M, A] {
+      val t = target.fetch()
       def deserialize(s: String): A = {
         val data : Array[Byte] = Base64Coder.decode(s)
         val ois : ObjectInputStream = new ObjectInputStream( new ByteArrayInputStream(  data ) )
@@ -97,12 +123,13 @@ object Slot extends Serializable {
         ois.close()
         o.asInstanceOf[A]
       }
-      def flatMap[B](f: A => M[B]): M[B] = target.fetch().flatMap(f compose deserialize)
-      def map[B](f: A => B): M[B] = target.fetch().map(f compose deserialize)
-      def foreach[B](f: A => B): Unit = target.fetch().foreach(f compose deserialize)
+      def map[B](f: A => B): M[B] = t.map(f compose deserialize)
+      def unit[B](b: B) = t.unit(b)
+      def flatten[B](mmb: M[M[B]]) = t.flatten(mmb)
     }
     
     def put(value: A) = new MonadT[M, Unit] {
+      val t = target.put(serialize(value))
       def serialize[T <: java.io.Serializable](t: T): String = {
         val baos : ByteArrayOutputStream = new ByteArrayOutputStream()
         val oos : ObjectOutputStream = new ObjectOutputStream( baos )
@@ -110,9 +137,9 @@ object Slot extends Serializable {
         oos.close()
         new String( Base64Coder.encode( baos.toByteArray() ) )
       }
-      def flatMap[B](f: Unit => M[B]): M[B] = target.put(serialize(value)).flatMap(f)
-      def map[B](f: Unit => B): M[B] = target.put(serialize(value)).map(f)
-      def foreach[B](f: Unit => B): Unit = target.put(serialize(value)).foreach(f)
+      def map[B](f: Unit => B): M[B] = t.map(f)
+      def unit[B](b: B) = t.unit(b)
+      def flatten[B](mmb: M[M[B]]) = t.flatten(mmb)
     }
   }
 }
