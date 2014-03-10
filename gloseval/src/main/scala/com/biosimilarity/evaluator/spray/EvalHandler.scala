@@ -900,42 +900,48 @@ trait EvalHandler {
                 ("source" -> biCnxn.writeCnxn.src.toString) ~
                 ("label" -> biCnxn.writeCnxn.label) ~
                 ("target" -> biCnxn.writeCnxn.trgt.toString)
-              }
+              }              
               def onLabelsFetch(jsonBlob: String, aliasList: String, defaultAlias: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onLabelsFetch: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                    v match {
-                      case PostedExpr( (PostedExpr(labelList: String), _, _, _) ) => {
-                        // TODO: Replace notification block below with behavior code
-                        val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
-                        listenIntroductionNotification("agent-session://" + cap, aliasCnxn)
-                        listenConnectNotification("agent-session://" + cap, aliasCnxn)
-
-                        val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
-
-                        val content = 
-                          ("sessionURI" -> ("agent-session://" + cap)) ~
-                          ("listOfAliases" -> parse(aliasList)) ~
-                          ("defaultAlias" -> defaultAlias) ~
-                          ("listOfLabels" -> parse(labelList)) ~ // for default alias
-                          ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~  // for default alias
-                          ("lastActiveLabel" -> "") ~
-                          ("jsonBlob" -> parse(jsonBlob))
-
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionResponse") ~
-                          ("content" -> content) 
-                        )))
-                      }
-                      case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> "Strange: found other data but not labels!?"))
-                        )))
-                      }
+                def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+                  v match {
+                    case PostedExpr( (PostedExpr(labelList: String), _, _, _) ) => {
+                      // TODO: Replace notification block below with behavior code
+                      val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+                      listenIntroductionNotification("agent-session://" + cap, aliasCnxn)
+                      listenConnectNotification("agent-session://" + cap, aliasCnxn)
+                      
+                      val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
+                      
+                      val content = 
+                        ("sessionURI" -> ("agent-session://" + cap)) ~
+                      ("listOfAliases" -> parse(aliasList)) ~
+                      ("defaultAlias" -> defaultAlias) ~
+                      ("listOfLabels" -> parse(labelList)) ~ // for default alias
+                      ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~  // for default alias
+                      ("lastActiveLabel" -> "") ~
+                      ("jsonBlob" -> parse(jsonBlob))
+                      
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionResponse") ~
+                        ("content" -> content) 
+                      )))
                     }
+                    case Bottom => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> "Strange: found other data but not labels!?"))
+                      )))
+                    }
+                  }
+                }
+                optRsrc match {
+                  case None => ();
+                  case Some(mTT.Ground(v)) => {
+                    handleRsp( v ) 
+                  }
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    handleRsp( v ) 
                   }
                   case _ => {
                     CompletionMapper.complete(key, compact(render(
@@ -948,83 +954,89 @@ trait EvalHandler {
               def onConnectionsFetch(jsonBlob: String, aliasList: String, defaultAlias: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onConnectionsFetch: optRsrc = " + optRsrc)
                 val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
-                optRsrc match {
-                  case None => ()
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                    v match {
-                      case PostedExpr( (PostedExpr(biCnxnList: String), _, _, _) ) => {
-                        val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
-                        // Get the profile of each target in the list
-                        biCnxnListObj.map((biCnxn: PortableAgentBiCnxn) => {
-                          // Construct self-connection for each target
-                          val targetURI = biCnxn match {
-                            case PortableAgentBiCnxn(read, _) => read.src
+                def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+                  v match {
+                    case PostedExpr( (PostedExpr(biCnxnList: String), _, _, _) ) => {
+                      val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
+                      // Get the profile of each target in the list
+                      biCnxnListObj.map((biCnxn: PortableAgentBiCnxn) => {
+                        // Construct self-connection for each target
+                        val targetURI = biCnxn match {
+                          case PortableAgentBiCnxn(read, _) => read.src
+                        }
+                        val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
+                        def handleFetchRsp(
+                          optRsrc : Option[mTT.Resource],
+                          v : ConcreteHL.HLExpr
+                        ) : Unit = {
+                          v match {
+                            case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
+                              CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
+                                ("msgType" -> "connectionProfileResponse") ~
+                                ("content" -> (
+                                  ("sessionURI" -> ("agent-session://" + cap)) ~
+                                  ("connection" -> biCnxnToJObject(biCnxn)) ~
+                                  ("jsonBlob" -> jsonBlob)
+                                ))
+                              )))
+                            }
+                            case Bottom => {
+                              CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
+                                ("msgType" -> "connectionProfileError") ~
+                                ("content" -> (
+                                  ("sessionURI" -> ("agent-session://" + cap)) ~
+                                  ("connection" -> biCnxnToJObject(biCnxn)) ~
+                                  ("reason" -> "Not found")
+                                ))
+                              )))
+                            }
+                            case _ => {
+                              CompletionMapper.complete(key, compact(render(
+                                ("msgType" -> "initializeSessionError") ~
+                                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                              )))
+                            }
                           }
-                          val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
-                          //agentMgr().fetch(
-                          fetch(
-                            jsonBlobLabel,
-                            List(targetSelfCnxn),
-                            (optRsrc: Option[mTT.Resource]) => {
-                              optRsrc match {
-                                case None => ()
-                                case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                                  v match {
-                                    case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
-                                      CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
-                                        ("msgType" -> "connectionProfileResponse") ~
-                                        ("content" -> (
-                                          ("sessionURI" -> ("agent-session://" + cap)) ~
-                                          ("connection" -> biCnxnToJObject(biCnxn)) ~
-                                          ("jsonBlob" -> jsonBlob)
-                                        ))
-                                      )))
-                                    }
-                                    case Bottom => {
-                                      CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
-                                        ("msgType" -> "connectionProfileError") ~
-                                        ("content" -> (
-                                          ("sessionURI" -> ("agent-session://" + cap)) ~
-                                          ("connection" -> biCnxnToJObject(biCnxn)) ~
-                                          ("reason" -> "Not found")
-                                        ))
-                                      )))
-                                    }
-                                    case _ => {
-                                      CompletionMapper.complete(key, compact(render(
-                                        ("msgType" -> "initializeSessionError") ~
-                                        ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                                      )))
-                                    }
-                                  }
+                        }
+
+                        fetch(
+                          jsonBlobLabel,
+                          List(targetSelfCnxn),
+                          (optRsrc: Option[mTT.Resource]) => {
+                            optRsrc match {
+                              case None => ()
+                                case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                                  handleFetchRsp( optRsrc, v )
                                 }
-                                case _ => {
-                                  CompletionMapper.complete(key, compact(render(
-                                    ("msgType" -> "initializeSessionError") ~
-                                    ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                                  )))
-                                }
+                              case _ => {
+                                CompletionMapper.complete(key, compact(render(
+                                  ("msgType" -> "initializeSessionError") ~
+                                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                                )))
                               }
-                            })
-                        })
-                        //agentMgr().fetch(labelListLabel,
-                          //List(aliasCnxn), onLabelsFetch(jsonBlob,
-                          //aliasList, defaultAlias, biCnxnList))
-                          fetch(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, defaultAlias, biCnxnList))
-                      }
-                      case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> "Strange: found other data but not connections!?"))
-                        )))
-                      }
-                      case _ => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                        )))
-                      }
+                            }
+                          })
+                      })
+                      fetch(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, defaultAlias, biCnxnList))
                     }
+                    case Bottom => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> "Strange: found other data but not connections!?"))
+                      )))
+                    }
+                    case _ => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                      )))
+                    }
+                  }
+                }
+                optRsrc match {
+                  case None => ();
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    handleRsp( v )
                   }
                   case _ => {
                     CompletionMapper.complete(key, compact(render(
@@ -1036,31 +1048,30 @@ trait EvalHandler {
               }
               def onDefaultAliasFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onDefaultAliasFetch: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                    v match {
-                      case PostedExpr((PostedExpr(defaultAlias: String), _, _, _) ) => {
-                        val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
-                        //agentMgr().fetch(biCnxnsListLabel,
-                        //List(aliasCnxn),
-                        //onConnectionsFetch(jsonBlob, aliasList,
-                        //defaultAlias))
-                        fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList, defaultAlias))
-                      }
-                      case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                            ("content" -> ("reason" -> "Strange: found other data but not default alias!?"))
-                        )))
-                      }
-                      case _ => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                        )))
-                      }
+                def handleRsp( optRsrc : Option[mTT.Resource], v : ConcreteHL.HLExpr ) : Unit = {
+                  v match {
+                    case PostedExpr((PostedExpr(defaultAlias: String), _, _, _) ) => {
+                      val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+                      fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList, defaultAlias))
                     }
+                    case Bottom => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> "Strange: found other data but not default alias!?"))
+                      )))
+                    }
+                    case _ => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                      )))
+                    }
+                  }
+                }
+                optRsrc match {
+                  case None => ();
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    handleRsp( optRsrc, v )
                   }
                   case _ => {
                     CompletionMapper.complete(key, compact(render(
@@ -1072,29 +1083,32 @@ trait EvalHandler {
               }
               def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onAliasesFetch: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                    v match {
-                      case PostedExpr( (PostedExpr(aliasList: String), _, _, _) ) => {
-                        //agentMgr().fetch(defaultAliasLabel,
-                        //List(capSelfCnxn),
-                        //onDefaultAliasFetch(jsonBlob, aliasList))
-                        fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch(jsonBlob, aliasList))
-                      }
-                      case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> "Strange: found pwmac and jsonBlob but not aliases!?"))
-                        )))
-                      }
-                      case _ => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                        )))
-                      }
+                def handleRsp( optRsrc : Option[mTT.Resource], v : ConcreteHL.HLExpr ) : Unit = {
+                  v match {
+                    case PostedExpr( (PostedExpr(aliasList: String), _, _, _) ) => {
+                      //agentMgr().fetch(defaultAliasLabel,
+                      //List(capSelfCnxn),
+                      //onDefaultAliasFetch(jsonBlob, aliasList))
+                      fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch(jsonBlob, aliasList))
                     }
+                    case Bottom => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> "Strange: found pwmac and jsonBlob but not aliases!?"))
+                      )))
+                    }
+                    case _ => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                      )))
+                    }
+                  }
+                }
+                optRsrc match {
+                  case None => ();
+                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    handleRsp( optRsrc, v )
                   }
                   case _ => {
                     CompletionMapper.complete(key, compact(render(
@@ -1106,28 +1120,31 @@ trait EvalHandler {
               }
               val onJSONBlobFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
                 BasicLogService.tweet("secureLogin | login | onPwmacFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                    v match {
-                      case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
-                        //val (erql, erspl) = agentMgr().makePolarizedPair()
-                        //agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
-                        fetch(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
-                      }
-                      case Bottom => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> "Strange: found pwmac but not jsonBlob!?"))
-                        )))
-                      }
-                      case _ => {
-                        CompletionMapper.complete(key, compact(render(
-                          ("msgType" -> "initializeSessionError") ~
-                          ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                        )))
-                      }
+                def handleRsp( optRsrc : Option[mTT.Resource], v : ConcreteHL.HLExpr ) : Unit = {
+                  v match {
+                    case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
+                      //val (erql, erspl) = agentMgr().makePolarizedPair()
+                      //agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
+                      fetch(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
                     }
+                    case Bottom => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> "Strange: found pwmac but not jsonBlob!?"))
+                      )))
+                    }
+                    case _ => {
+                      CompletionMapper.complete(key, compact(render(
+                        ("msgType" -> "initializeSessionError") ~
+                        ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                      )))
+                    }
+                  }
+                }
+                optRsrc match {
+                  case None => ();
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                    handleRsp( optRsrc, v )
                   }
                   case _ => {
                     CompletionMapper.complete(key, compact(render(
