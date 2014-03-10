@@ -31,7 +31,7 @@ import java.util.UUID
 
 trait BFactoryCommsService extends BehaviorService
 with CnxnString[String, String, String]{
-  self : EvalConfig with BFactoryCommLinkConfiguration =>
+  self : EvalConfig with BFactoryCommLinkConfiguration with AccordionConfiguration =>
 
   import BFactoryCommLink._   
   import Being._
@@ -272,13 +272,27 @@ with CnxnString[String, String, String]{
     }    
   }
 
+  import com.biosimilarity.evaluator.distribution.bfactory.Server._
+
   def mapBehavior[Value](
     cnxn : Cnxn,
     label : CnxnCtxtLabel[String,String,String],
     behavior : String,
     onMap : Option[Rsrc] => Unit        
   ) : Unit = {
-    bFactoryMgr().mapBehavior[Value]( cnxn, label, behavior, onMap )
+    deploymentMode() match {
+      case Distributed => {
+        bFactoryMgr().mapBehavior[Value]( cnxn, label, behavior, onMap )
+      }
+      case Colocated => {        
+        localService().mapBehavior[Value](
+          cnxn, label, behavior,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.BehaviorService#Rsrc] ) => {
+            onMap( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
   def commenceInstance(
     behaviorDefinitionCnxn : Cnxn,
@@ -287,24 +301,52 @@ with CnxnString[String, String, String]{
     filters : Seq[CnxnCtxtLabel[String,String,String]],
     onCommencement : Option[Rsrc] => Unit
   ) : Unit = {
-    bFactoryMgr().commenceInstance(
-      behaviorDefinitionCnxn,
-      behaviorDefinitionLabel,
-      cnxns,
-      filters,
-      onCommencement
-    )
+    deploymentMode() match {
+      case Distributed => {
+        bFactoryMgr().commenceInstance(
+          behaviorDefinitionCnxn,
+          behaviorDefinitionLabel,
+          cnxns,
+          filters,
+          onCommencement
+        )
+      }
+      case Colocated => {
+        localService().commenceInstance(
+          behaviorDefinitionCnxn,
+          behaviorDefinitionLabel,
+          cnxns,
+          filters,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.BehaviorService#Rsrc] ) => {
+            onCommencement( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
   def completeInstance(
     behaviorInstanceCnxn : Cnxn,
     behaviorInstanceLabel : CnxnCtxtLabel[String,String,String],
     onCompletion : Option[Rsrc] => Unit
   ) : Unit = {
-    bFactoryMgr().completeInstance(
-      behaviorInstanceCnxn,
-      behaviorInstanceLabel,
-      onCompletion
-    )
+    deploymentMode() match {
+      case Distributed => {
+        bFactoryMgr().completeInstance(
+          behaviorInstanceCnxn,
+          behaviorInstanceLabel,
+          onCompletion
+        )
+      }
+      case Colocated => {
+        localService().completeInstance(
+          behaviorInstanceCnxn,
+          behaviorInstanceLabel,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.BehaviorService#Rsrc] ) => {
+            onCompletion( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
 }
 
@@ -317,6 +359,7 @@ package usage {
       new BFactoryCommsService
          with EvalConfig
          with BFactoryCommLinkConfiguration
+         with AccordionConfiguration
          with Serializable {
          }    
   }

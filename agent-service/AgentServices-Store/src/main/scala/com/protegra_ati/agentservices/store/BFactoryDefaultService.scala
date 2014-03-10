@@ -62,6 +62,7 @@ package bfactory {
       new BFactoryCommsService
          with EvalConfig
          with BFactoryCommLinkConfiguration
+         with AccordionConfiguration
          with Serializable {
          }    
     @transient

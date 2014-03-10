@@ -746,6 +746,7 @@ package usage {
      with ChannelGeneration
      with EvalConfig
      with DSLCommLinkConfiguration
+     with AccordionConfiguration
      with CnxnString[String,String,String]
      with StorageManagement
      with Serializable
@@ -770,7 +771,8 @@ package usage {
 
   object StreamBasedClient
   extends EvaluationCommsService  
-  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
+  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration
+  with AccordionConfiguration
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
   with StorageManagement with CnxnString[String,String,String]
   with Serializable {
@@ -985,7 +987,8 @@ package usage {
   
   object SimpleVerbClient
   extends EvaluationCommsService  
-  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration     
+  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration
+  with AccordionConfiguration
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
   with StorageManagement with CnxnString[String,String,String]
   with Serializable {

@@ -159,7 +159,6 @@ package diesel {
              with WireTap
              with Serializable {                       
         type AgentCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse] = AgentKVDB[ReqBody,RspBody]
-        //type AgentNode[Rq <: PersistedKVDBNodeRequest, Rs <: PersistedKVDBNodeResponse] = AgentKVDBNode[Rq,Rs]
 
         override def tap [A] ( fact : A ) : Unit = {
           BasicLogService.reportage( fact )
@@ -285,7 +284,6 @@ package diesel {
                     }
                   }
                   case _ => {
-                    //asPatternString( ccl )
                     throw new Exception( "unexpected value form: " + ccl )
                   }
                 }
@@ -686,10 +684,6 @@ package diesel {
                         textToTag.getOrElse(
                           throw new Exception( "must have textToTag to convert mongo object" )
                         )
-                      //val ttt = ( x : String ) => x
-                      
-                      //val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
                       
                       CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                         case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
@@ -3028,8 +3022,6 @@ package diesel {
                       + "\n returned from node.fetch "
                       + "\nthis: " + this
                       + "\nnode: " + node
-//                      + "\nexpr: " + expr
-//                      + "\nhandler: " + handler
                       + "\n-----------------------------------------"
                       + "\nagntCnxn: " + agntCnxn
                       + "\nfilter: " + filter
@@ -3061,8 +3053,6 @@ package diesel {
                     + "\n calling node.subscribe "
                     + "\nthis: " + this
                     + "\nnode: " + node
-//                    + "\nexpr: " + expr
-//                    + "\nhandler: " + handler
                     + "\n-----------------------------------------"
                     + "\nagntCnxn: " + agntCnxn
                     + "\nfilter: " + filter
@@ -3075,8 +3065,6 @@ package diesel {
                       + "\n returned from node.subscribe "
                       + "\nthis: " + this
                       + "\nnode: " + node
-//                      + "\nexpr: " + expr
-//                      + "\nhandler: " + handler
                       + "\n-----------------------------------------"
                       + "\nagntCnxn: " + agntCnxn
                       + "\nfilter: " + filter
@@ -3108,8 +3096,6 @@ package diesel {
                     + "\n calling node.get "
                     + "\nthis: " + this
                     + "\nnode: " + node
-//                    + "\nexpr: " + expr
-//                    + "\nhandler: " + handler
                     + "\n-----------------------------------------"
                     + "\nagntCnxn: " + agntCnxn
                     + "\nfilter: " + filter
@@ -3122,8 +3108,6 @@ package diesel {
                       + "\n returned from node.get "
                       + "\nthis: " + this
                       + "\nnode: " + node
-//                      + "\nexpr: " + expr
-//                      + "\nhandler: " + handler
                       + "\n-----------------------------------------"
                       + "\nagntCnxn: " + agntCnxn
                       + "\nfilter: " + filter
@@ -3155,8 +3139,6 @@ package diesel {
                     + "\n calling node.subscribe "
                     + "\nthis: " + this
                     + "\nnode: " + node
-//                    + "\nexpr: " + expr
-//                    + "\nhandler: " + handler
                     + "\n-----------------------------------------"
                     + "\nagntCnxn: " + agntCnxn
                     + "\nfilter: " + filter
@@ -3169,8 +3151,6 @@ package diesel {
                       + "\n returned from node.subscribe "
                       + "\nthis: " + this
                       + "\nnode: " + node
-//                      + "\nexpr: " + expr
-//                      + "\nhandler: " + handler
                       + "\n-----------------------------------------"
                       + "\nagntCnxn: " + agntCnxn
                       + "\nfilter: " + filter
@@ -3200,8 +3180,6 @@ package diesel {
                   + "\n calling node.pullCnxnKRecords "
                   + "\nthis: " + this
                   + "\nnode: " + node
-//                  + "\nexpr: " + expr
-//                  + "\nhandler: " + handler
                   + "\n-----------------------------------------"
                   + "\nagntCnxn: " + agntCnxn
                   + "\nfilter: " + filter
@@ -3214,8 +3192,6 @@ package diesel {
                     + "\n returned from node.pullCnxnKRecords "
                     + "\nthis: " + this
                     + "\nnode: " + node
-//                    + "\nexpr: " + expr
-//                    + "\nhandler: " + handler
                     + "\n-----------------------------------------"
                     + "\nagntCnxn: " + agntCnxn
                     + "\nfilter: " + filter
@@ -3523,8 +3499,6 @@ package diesel {
                 }
               }
             }
-          //}          
-          //loop()
         }
 
         def innerLoop(
@@ -3858,8 +3832,6 @@ package diesel {
                 }
               }
             }
-          //}          
-          //loop()
         }
 
         def messageProcessorLoop(
@@ -3974,34 +3946,6 @@ package diesel {
         }
       }
 
-/*
-      object MsgProcessor extends Serializable {
-        def apply(
-          node : StdEvalChannel,
-          erql : CnxnCtxtLabel[String,String,String],
-          rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
-          useBiLink : Option[Boolean] = None,
-          flip : Boolean = false
-        ) : MsgProcessor = {
-          new MsgProcessor( node, erql, rspLabelCtor, useBiLink, flip )
-        }
-        def unapply(
-          mp : MsgProcessor
-        ) : Option[
-             (
-               StdEvalChannel,
-               CnxnCtxtLabel[String,String,String],               
-               String =>CnxnCtxtLabel[String,String,String],
-               Option[Boolean],
-               Boolean
-             )
-        ]
-        = {
-          Some( ( mp.node, mp.erql, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
-        }
-      }
- */
-
       case class IndirectMsgProcessor(
         val node : String,
         @transient
@@ -4025,34 +3969,6 @@ package diesel {
           }
         }
       }
-
-/*
-      object IndirectMsgProcessor extends Serializable {
-        def apply(
-          node : String,
-          erql : CnxnCtxtLabel[String,String,String],
-          rspLabelCtor : String => CnxnCtxtLabel[String,String,String],
-          useBiLink : Option[Boolean] = None,
-          flip : Boolean = false
-        ) : IndirectMsgProcessor = {
-          new IndirectMsgProcessor( node, erql, rspLabelCtor, useBiLink, flip )
-        }
-        def unapply(
-          mp : IndirectMsgProcessor
-        ) : Option[
-             (
-               String,
-               CnxnCtxtLabel[String,String,String],
-               String =>CnxnCtxtLabel[String,String,String],
-               Option[Boolean],
-               Boolean
-             )
-        ]
-        = {
-          Some( ( mp.node, mp.erql, mp.rspLabelCtor, mp.useBiLink, mp.flip ) )
-        }
-      }
-*/
 
       case class MsgProcessorBlock(
         @transient
@@ -4142,7 +4058,6 @@ package diesel {
       }
 
       def stdLooper(
-        //node : StdEvalChannel = agent( "/dieselProtocol" ),
         node : StdEvalChannel = dslEvaluatorAgent( ),
         useBiLink : Option[Boolean] = None,
         flip : Boolean = false
@@ -4249,7 +4164,7 @@ package diesel {
     @transient
     var _localService : Option[EvaluationService] = None
     def localService(
-      e : DieselEngineCtor.DieselEngine = engine( None )
+      e : DieselEngineCtor.DieselEngine = engine( Some( "eval.conf" ) )
     ) : EvaluationService = {
       _localService match {
         case Some( ls ) => ls

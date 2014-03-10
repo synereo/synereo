@@ -3589,7 +3589,7 @@ package bfactory {
     @transient
     var _localService : Option[BehaviorService] = None
     def localService(
-      e : BFactoryEngineCtor.BFactoryEngine = engine( None )
+      e : BFactoryEngineCtor.BFactoryEngine = engine( Some( "eval.conf" ) )
     ) : BehaviorService = {
       _localService match {
         case Some( ls ) => ls
@@ -3620,9 +3620,6 @@ package bfactory {
       println( "******************** Version " + version + " ********************" )
       println( "*******************************************************" )
       
-      //e.evalLoop()
-      //e.adminLoop()
-      //e.stdLooper().go()      
       looper( e ).go()
     }
 

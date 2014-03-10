@@ -31,7 +31,7 @@ import java.util.UUID
 
 trait EvaluationCommsService extends EvaluationService
 with CnxnString[String, String, String]{
-  self : EvalConfig with DSLCommLinkConfiguration =>
+  self : EvalConfig with DSLCommLinkConfiguration with AccordionConfiguration =>
 
   import DSLCommLink._   
   import Being._
@@ -501,6 +501,8 @@ with CnxnString[String, String, String]{
     }    
   }
 
+  import com.biosimilarity.evaluator.distribution.diesel.Server._
+
   def post[Value](
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
@@ -508,8 +510,21 @@ with CnxnString[String, String, String]{
     onPost : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
-    agentMgr().post[Value]( filter, cnxns, content, onPost )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().post[Value]( filter, cnxns, content, onPost )
+      }
+      case Colocated => {
+        localService().post[Value](
+          filter, cnxns, content,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onPost( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }
   }
+
   def postV[Value](
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
@@ -517,8 +532,21 @@ with CnxnString[String, String, String]{
     onPost : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
-    agentMgr().postV[Value]( filter, cnxns, content, onPost )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().postV[Value]( filter, cnxns, content, onPost )
+      }
+      case Colocated => {
+        localService().postV[Value](
+          filter, cnxns, content,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onPost( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
   def put[Value](
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
@@ -526,8 +554,21 @@ with CnxnString[String, String, String]{
     onPut : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
-    agentMgr().put[Value]( filter, cnxns, content, onPut )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().put[Value]( filter, cnxns, content, onPut )
+      }
+      case Colocated => {
+        localService().put[Value](
+          filter, cnxns, content,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onPut( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
   def read(
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
@@ -535,32 +576,85 @@ with CnxnString[String, String, String]{
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) },
     sequenceSubscription : Boolean = false
   ) : Unit = {
-    agentMgr().read( filter, cnxns, onReadRslt, sequenceSubscription )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().read( filter, cnxns, onReadRslt, sequenceSubscription )
+      }
+      case Colocated => {
+        localService().read(
+          filter, cnxns,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onReadRslt( optRsrc.asInstanceOf[Option[Rsrc]] )
+          },
+          sequenceSubscription
+        )
+      }
+    }    
   }
+
   def fetch(
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
     onFetchRslt : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
-    agentMgr().fetch( filter, cnxns, onFetchRslt )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().fetch( filter, cnxns, onFetchRslt )
+      }
+      case Colocated => {
+        localService().fetch(
+          filter, cnxns,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onFetchRslt( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
   def feed(
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
     onFeedRslt : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
-    agentMgr().fetch( filter, cnxns, onFeedRslt )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().fetch( filter, cnxns, onFeedRslt )
+      }
+      case Colocated => {
+        localService().fetch(
+          filter, cnxns,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onFeedRslt( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
   def get(
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
     onGetRslt : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
-    agentMgr().get( filter, cnxns, onGetRslt )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().get( filter, cnxns, onGetRslt )
+      }
+      case Colocated => {
+        localService().get(
+          filter, cnxns,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onGetRslt( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
   def score(
     filter : CnxnCtxtLabel[String,String,String],
     cnxns : Seq[Cnxn],
@@ -568,24 +662,63 @@ with CnxnString[String, String, String]{
     onScoreRslt : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
-    agentMgr().score( filter, cnxns, staff, onScoreRslt )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().score( filter, cnxns, staff, onScoreRslt )
+      }
+      case Colocated => {
+        localService().score(
+          filter, cnxns, staff,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onScoreRslt( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
   def cancel(
     filter : CnxnCtxtLabel[String,String,String],
     connections : Seq[Cnxn],
     onCancel : Option[Rsrc] => Unit =
       ( optRsrc : Option[Rsrc] ) => { BasicLogService.tweet( "onCancel: optRsrc = " + optRsrc ) }
   ) : Unit = {
-    agentMgr().cancel( filter, connections, onCancel )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().cancel( filter, connections, onCancel )
+      }
+      case Colocated => {
+        localService().cancel(
+          filter, connections,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onCancel( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
   def runProcess(
     cmd : String,
     wkDir : Option[String],
     env : Seq[( String, String )],
     onExecution : Option[Rsrc] => Unit
   ) : Unit = {
-    agentMgr().runProcess( cmd, wkDir, env, onExecution )
+    deploymentMode() match {
+      case Distributed => {
+        agentMgr().runProcess( cmd, wkDir, env, onExecution )
+      }
+      case Colocated => {
+        localService().runProcess(
+          cmd, wkDir, env,
+          ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
+            onExecution( optRsrc.asInstanceOf[Option[Rsrc]] )
+          }
+        )
+      }
+    }    
   }
+
 }
 
 package usage {
@@ -597,6 +730,7 @@ package usage {
       new EvaluationCommsService
          with EvalConfig
          with DSLCommLinkConfiguration
+         with AccordionConfiguration
          with Serializable {
          }    
   }  
