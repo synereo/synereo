@@ -1004,10 +1004,13 @@ trait EvalHandler {
                           List(targetSelfCnxn),
                           (optRsrc: Option[mTT.Resource]) => {
                             optRsrc match {
-                              case None => ()
-                                case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                                  handleFetchRsp( optRsrc, v )
-                                }
+                              case None => ();
+                              case Some(mTT.Ground(v)) => {
+                                handleFetchRsp( optRsrc, v )
+                              }
+                              case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                                handleFetchRsp( optRsrc, v )
+                              }
                               case _ => {
                                 CompletionMapper.complete(key, compact(render(
                                   ("msgType" -> "initializeSessionError") ~
@@ -1035,6 +1038,9 @@ trait EvalHandler {
                 }
                 optRsrc match {
                   case None => ();
+                  case Some(mTT.Ground(v)) => {
+                    handleRsp( v )
+                  }                  
                   case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     handleRsp( v )
                   }
@@ -1070,6 +1076,9 @@ trait EvalHandler {
                 }
                 optRsrc match {
                   case None => ();
+                  case Some(mTT.Ground(v)) => {
+                    handleRsp( optRsrc, v )
+                  }                  
                   case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     handleRsp( optRsrc, v )
                   }
@@ -1107,7 +1116,10 @@ trait EvalHandler {
                 }
                 optRsrc match {
                   case None => ();
-                  case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                  case Some(mTT.Ground(v)) => {
+                    handleRsp( optRsrc, v )
+                  }                  
+                  case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     handleRsp( optRsrc, v )
                   }
                   case _ => {
@@ -1143,6 +1155,9 @@ trait EvalHandler {
                 }
                 optRsrc match {
                   case None => ();
+                  case Some(mTT.Ground(v)) => {
+                    handleRsp( optRsrc, v )
+                  }                  
                   case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     handleRsp( optRsrc, v )
                   }
