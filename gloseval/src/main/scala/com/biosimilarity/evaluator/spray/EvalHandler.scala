@@ -720,7 +720,10 @@ trait EvalHandler {
                     )
                 }
                 optRsrc match {
-                  case None => ()
+                  case None => ();
+                  case Some( mTT.Ground(v)) => {
+                    handleRsp( v )
+                  }
                   case Some(mTT.RBoundHM(Some( mTT.Ground(v)), _)) => {
                     handleRsp( v )
                   }
