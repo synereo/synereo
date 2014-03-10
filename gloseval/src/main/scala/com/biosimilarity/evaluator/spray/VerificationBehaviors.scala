@@ -31,22 +31,12 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
   ): Unit = {
     val doCompleteClaim = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("doCompleteClaim: optRsrc = " + optRsrc)
-      optRsrc match {
-        case None => ();
-        // colocated
-        case Some(mTT.Ground(Bottom)) => ();
-        // distributed
-        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
-        // either colocated or distributed
-        case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(CompleteClaim(
-          sessionId,
-          correlationId,
-          verifier,
-          claim,
-          data
-        )), _, _, _)))), _)) => {
-          CometActorMapper.cometMessage(sessionId, compact(render(
-            ("msgType" -> "completeClaim") ~
+
+      def handleCompleteClaim( v : ConcreteHL.HLExpr ) : Unit = {
+        v match {
+          case PostedExpr((PostedExpr(CompleteClaim( sessionId, correlationId, verifier, claim, data )), _, _, _)) => {
+            CometActorMapper.cometMessage(sessionId, compact(render(
+              ("msgType" -> "completeClaim") ~
               ("content" -> (
                 ("sessionURI" -> sessionId) ~
                 ("correlationId" -> correlationId) ~
@@ -58,7 +48,27 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
                 ("claim" -> claim.toString.replace("'", "")) ~
                 ("data" -> data.toString.replace("'",""))
               ))
-          )))
+            )))
+          }
+          case _ => {
+            fail("launchClaimantBehavior -- Unrecognized response: " + v)
+          }
+        }        
+      }
+
+      optRsrc match {
+        case None => ();
+        // colocated
+        case Some(mTT.Ground(Bottom)) => ();
+        // distributed
+        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
+        // colocated
+        case Some(mTT.Ground( v )) => {
+          handleCompleteClaim( v )
+        }
+        // distributed
+        case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
+          handleCompleteClaim( v )
         }
         case _ => fail("launchClaimantBehavior -- Unrecognized resource: " + optRsrc)
       }
@@ -89,22 +99,12 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
   ): Unit = {
     val doVerificationNotification = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("doVerificationNotification: optRsrc = " + optRsrc)
-      optRsrc match {
-        case None => ();
-        // colocated
-        case Some(mTT.Ground(Bottom)) => ();
-        // distributed
-        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
-        // either colocated or distributed
-        case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(VerificationNotification(
-          sessionId,
-          correlationId,
-          claimant,
-          claim,
-          witness
-        )), _, _, _)))), _)) => {
-          CometActorMapper.cometMessage(sessionId, compact(render(
-            ("msgType" -> "verificationNotification") ~
+      
+      def handleVerificationNotification( v : ConcreteHL.HLExpr ) : Unit = {
+        v match {
+          case PostedExpr((PostedExpr(VerificationNotification( sessionId, correlationId, claimant, claim, witness )), _, _, _)) => {
+            CometActorMapper.cometMessage(sessionId, compact(render(
+              ("msgType" -> "verificationNotification") ~
               ("content" -> (
                 ("sessionURI" -> sessionId) ~
                 ("correlationId" -> correlationId) ~
@@ -116,7 +116,23 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
                 ("claim" -> claim.toString.replace("'", "")) ~
                 ("witness" -> witness.toString.replace("'", ""))
               ))
-          )))
+            )))
+          }
+          case _ => {
+            fail("launchVerificationAndRelyingPartyBehaviors -- Unrecognized response: " + v)
+          }
+        }        
+      }
+
+      optRsrc match {
+        case None => ();
+        // colocated
+        case Some(mTT.Ground(Bottom)) => ();
+        // distributed
+        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
+        // either colocated or distributed
+        case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
+          handleVerificationNotification( v )
         }
         case _ => fail("launchVerificationAndRelyingPartyBehaviors -- Unrecognized resource: " + optRsrc)
       }
