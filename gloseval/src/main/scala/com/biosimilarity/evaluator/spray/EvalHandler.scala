@@ -137,8 +137,9 @@ trait EvalHandler {
           // AES_hash(K)
           val aesHashK = toHex(aes.doFinal(bytes))
         
-          val (erql, erspl) = agentMgr().makePolarizedPair()
-          agentMgr().post(erql, erspl)(
+          //val (erql, erspl) = agentMgr().makePolarizedPair()
+          //agentMgr().post(erql, erspl)(
+          post(
             userPWDBLabel,
             List(agentIdCnxn),
             // TODO(mike): do proper context-aware interpolation
@@ -179,6 +180,7 @@ trait EvalHandler {
   @transient
   object handler extends EvalConfig
     with DSLCommLinkConfiguration
+    with AccordionConfiguration
     with EvaluationCommsService
     with AgentCRUDHandler
     with AgentIntroductionHandler
@@ -374,7 +376,8 @@ trait EvalHandler {
     
     //val (erql, erspl) = agentMgr().makePolarizedPair()
     // TODO(mike): remove the token after it's been used
-    agentMgr().read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
+    //agentMgr().read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
+    read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
         case None => ()
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
@@ -415,7 +418,8 @@ trait EvalHandler {
     val emailURI = new URI("emailhash://" + cap)
     val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
       PortableAgentCnxn(emailURI, "emailhash", emailURI)
-    agentMgr().put[String](
+    //agentMgr().put[String](
+    put[String](
       emailLabel,
       List(emailSelfCnxn),
       cap
@@ -471,7 +475,8 @@ trait EvalHandler {
         case None => ()
         case Some(_) => {
           val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
-          agentMgr().post(
+          //agentMgr().post(
+          post(
             labelListLabel,
             List(aliasCnxn),
             """[]""",
@@ -486,7 +491,8 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          agentMgr().post(
+          //agentMgr().post(
+          post(
             defaultAliasLabel,
             List(capSelfCnxn),
             """alias""",
@@ -501,7 +507,8 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          agentMgr().post(
+          //agentMgr().post(
+          post(
             aliasListLabel,
             List(capSelfCnxn),
             """["alias"]""",
@@ -516,7 +523,8 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          agentMgr().post(
+          //agentMgr().post(
+          post(
             jsonBlobLabel,
             List(capSelfCnxn),
             jsonBlob,
@@ -526,7 +534,8 @@ trait EvalHandler {
       }
     }
     
-    agentMgr().post(
+    //agentMgr().post(
+    post(
       pwmacLabel,
       List(capSelfCnxn),
       pwmac,
@@ -540,7 +549,8 @@ trait EvalHandler {
 
     val introNotificationLabel = IntroductionNotification.toLabel()
 
-    agentMgr().read(
+    //agentMgr().read(
+    read(
       introNotificationLabel,
       List(aliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
@@ -586,7 +596,8 @@ trait EvalHandler {
 
     val connectNotificationLabel = ConnectNotification.toLabel()
 
-    agentMgr().feed(
+    //agentMgr().feed(
+    feed(
       connectNotificationLabel,
       List(aliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
@@ -600,7 +611,8 @@ trait EvalHandler {
             profileData
           )), _, _, _)))), _)) => {
             // Launching introduction behavior
-            bFactoryMgr().commenceInstance(
+            //bFactoryMgr().commenceInstance(
+            commenceInstance(
               introductionRecipientCnxn,
               introductionRecipientLabel,
               List(readCnxn, aliasCnxn),
@@ -612,7 +624,8 @@ trait EvalHandler {
             VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
               aliasCnxn.src,
               writeCnxn.trgt,
-              agentMgr().feed _
+              //agentMgr().feed _
+              feed _
             )
             CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "connectNotification") ~
@@ -653,7 +666,8 @@ trait EvalHandler {
     val biCnxn = PortableAgentBiCnxn(nodeToThisCnxn, thisToNodeCnxn)
     val nodeAgentBiCnxn = PortableAgentBiCnxn(thisToNodeCnxn, nodeToThisCnxn)
 
-    agentMgr().post(
+    //agentMgr().post(
+    post(
       biCnxnsListLabel,
       List(aliasCnxn),
       Serializer.serialize(List(biCnxn)),
@@ -662,7 +676,8 @@ trait EvalHandler {
         optRsrc match {
           case None => ()
           case Some(_) => {
-            agentMgr().get(
+            //agentMgr().get(
+            get(
               biCnxnsListLabel,
               List(nodeUserAliasCnxn),
               (optRsrc: Option[mTT.Resource]) => {
@@ -676,7 +691,8 @@ trait EvalHandler {
                       }
                       case Bottom => List(nodeAgentBiCnxn)
                     }
-                    agentMgr().put(
+                    //agentMgr().put(
+                    put(
                       biCnxnsListLabel,
                       List(nodeUserAliasCnxn),
                       Serializer.serialize(newBiCnxnList),
@@ -703,7 +719,8 @@ trait EvalHandler {
     )
     
     // Launching introduction behaviors
-    bFactoryMgr().commenceInstance(
+    //bFactoryMgr().commenceInstance(
+    commenceInstance(
       introductionInitiatorCnxn,
       introductionInitiatorLabel,
       List(aliasCnxn),
@@ -712,7 +729,8 @@ trait EvalHandler {
         optRsrc => println( "onCommencement one | " + optRsrc )
       }
     )
-    bFactoryMgr().commenceInstance(
+    //bFactoryMgr().commenceInstance(
+    commenceInstance(
       introductionRecipientCnxn,
       introductionRecipientLabel,
       List( nodeToThisCnxn, aliasCnxn ),
@@ -721,7 +739,8 @@ trait EvalHandler {
         optRsrc => println( "onCommencement two | " + optRsrc )
       }
     )
-    bFactoryMgr().commenceInstance(
+    //bFactoryMgr().commenceInstance(
+    commenceInstance(
       introductionRecipientCnxn,
       introductionRecipientLabel,
       List( thisToNodeCnxn, nodeUserAliasCnxn ),
@@ -733,17 +752,20 @@ trait EvalHandler {
     println("onAgentCreation: about to launch claimant behavior")
     VerificationBehaviors().launchClaimantBehavior(
       aliasURI,
-      agentMgr().feed _
+      //agentMgr().feed _
+      feed _
     )
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
       aliasURI,
       nodeAliasURI,
-      agentMgr().feed _
+      //agentMgr().feed _
+      feed _
     )
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
       nodeAliasURI,
       aliasURI,
-      agentMgr().feed _
+      //agentMgr().feed _
+      feed _
     )
   }
 
@@ -771,7 +793,8 @@ trait EvalHandler {
 
       //val (erql, erspl) = agentMgr().makePolarizedPair()
       // See if the email is already there
-      agentMgr().read(
+      //agentMgr().read(
+      read(
         jsonBlobLabel,
         List(capSelfCnxn),
         (optRsrc: Option[mTT.Resource]) => {
@@ -780,8 +803,9 @@ trait EvalHandler {
             case None => ()
             case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
               // No such email exists, create it
-              val (erql, erspl) = agentMgr().makePolarizedPair()
-              agentMgr().post[String](erql, erspl)(
+              //val (erql, erspl) = agentMgr().makePolarizedPair()
+              //agentMgr().post[String](erql, erspl)(
+              post[String](
                 tokenLabel,
                 List(tokenCnxn),
                 // email, password, and jsonBlob
@@ -910,7 +934,8 @@ trait EvalHandler {
                             case PortableAgentBiCnxn(read, _) => read.src
                           }
                           val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
-                          agentMgr().fetch(
+                          //agentMgr().fetch(
+                          fetch(
                             jsonBlobLabel,
                             List(targetSelfCnxn),
                             (optRsrc: Option[mTT.Resource]) => {
@@ -955,7 +980,10 @@ trait EvalHandler {
                               }
                             })
                         })
-                        agentMgr().fetch(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, defaultAlias, biCnxnList))
+                        //agentMgr().fetch(labelListLabel,
+                          //List(aliasCnxn), onLabelsFetch(jsonBlob,
+                          //aliasList, defaultAlias, biCnxnList))
+                          fetch(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, defaultAlias, biCnxnList))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
@@ -987,7 +1015,11 @@ trait EvalHandler {
                     v match {
                       case PostedExpr((PostedExpr(defaultAlias: String), _, _, _) ) => {
                         val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
-                        agentMgr().fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList, defaultAlias))
+                        //agentMgr().fetch(biCnxnsListLabel,
+                        //List(aliasCnxn),
+                        //onConnectionsFetch(jsonBlob, aliasList,
+                        //defaultAlias))
+                        fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList, defaultAlias))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
@@ -1018,7 +1050,10 @@ trait EvalHandler {
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
                       case PostedExpr( (PostedExpr(aliasList: String), _, _, _) ) => {
-                        agentMgr().fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch(jsonBlob, aliasList))
+                        //agentMgr().fetch(defaultAliasLabel,
+                        //List(capSelfCnxn),
+                        //onDefaultAliasFetch(jsonBlob, aliasList))
+                        fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch(jsonBlob, aliasList))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
@@ -1049,8 +1084,9 @@ trait EvalHandler {
                   case Some(rbnd@mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
                     v match {
                       case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
-                        val (erql, erspl) = agentMgr().makePolarizedPair()
-                        agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
+                        //val (erql, erspl) = agentMgr().makePolarizedPair()
+                        //agentMgr().fetch( erql, erspl )(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
+                        fetch(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
                       }
                       case Bottom => {
                         CompletionMapper.complete(key, compact(render(
@@ -1074,8 +1110,9 @@ trait EvalHandler {
                   }
                 }
               }
-              val (erql, erspl) = agentMgr().makePolarizedPair()
-              agentMgr().fetch( erql, erspl )(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
+              //val (erql, erspl) = agentMgr().makePolarizedPair()
+              //agentMgr().fetch( erql, erspl )(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
+              fetch(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
               ()
             }
           }
@@ -1087,9 +1124,10 @@ trait EvalHandler {
           }
         }
       }
-      val (erql, erspl) = agentMgr().makePolarizedPair()
-      BasicLogService.tweet("secureLogin | login: fetching with eqrl, erspl = " + erql + ", " + erspl)
-      agentMgr().fetch( erql, erspl )(pwmacLabel, List(capSelfCnxn), onPwmacFetch)
+      //val (erql, erspl) = agentMgr().makePolarizedPair()
+      //BasicLogService.tweet("secureLogin | login: fetching with eqrl, erspl = " + erql + ", " + erspl)
+      //agentMgr().fetch( erql, erspl )(pwmacLabel, List(capSelfCnxn), onPwmacFetch)
+      fetch(pwmacLabel, List(capSelfCnxn), onPwmacFetch)
     }
     
     // identType is either "cap" or "email"
@@ -1122,7 +1160,8 @@ trait EvalHandler {
         val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
         //val (erql, erspl) = agentMgr().makePolarizedPair()
         //BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
-        agentMgr().read(
+        //agentMgr().read(
+        read(
           emailLabel,
           List(emailSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
@@ -1199,16 +1238,18 @@ trait EvalHandler {
     val agentURIStr = sessionURIStr.replaceFirst("agent-session", "agent")
     val agentURI = new URI(agentURIStr)
     val agentIdCnxn = PortableAgentCnxn(agentURI, "identity", agentURI)
-    val (erql, erspl) = agentMgr().makePolarizedPair()
-    agentMgr().get(erql, erspl)(
+    //val (erql, erspl) = agentMgr().makePolarizedPair()
+    //agentMgr().get(erql, erspl)(
+    get(
       jsonBlobLabel,
       List(agentIdCnxn),
       (optRsrc: Option[mTT.Resource]) => {
         optRsrc match {
           case None => ()
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(postedStr: String), _, _, _)))), _)) => {
-            val (erql, erspl) = agentMgr().makePolarizedPair()
-            agentMgr().put(erql, erspl)(
+            //val (erql, erspl) = agentMgr().makePolarizedPair()
+            //agentMgr().put(erql, erspl)(
+            put(
               jsonBlobLabel,
               List(agentIdCnxn),
               compact(render(json \ "content" \ "jsonBlob")),
@@ -1433,7 +1474,8 @@ trait EvalHandler {
                   ]:_*)
                 )
                 */
-                agentMgr().post(
+                //agentMgr().post(
+                post(
                   'user(
                     'p1(originalFilter),
                     // TODO(mike): temporary workaround until bindings bug is fixed.
@@ -1522,12 +1564,14 @@ trait EvalHandler {
           for (filter <- filters) {
             println("evalSubscribeRequest | feedExpr: filter = " + filter)
             BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
-            agentMgr().feed(
+            //agentMgr().feed(
+            feed(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), 
               cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
               onFeed
             )
-            agentMgr().read(
+            //agentMgr().read(
+            read(
               'user('p1(filter), 'p2(uid), 'p3('old("_")), 'p4('nil("_"))), 
               cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
               onRead
@@ -1587,7 +1631,8 @@ trait EvalHandler {
             case _: Throwable => 'uid("UID")
           }
           for (filter <- filters) {
-            agentMgr().score(
+            //agentMgr().score(
+            score(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), 
               cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)), 
               staff, 
@@ -1605,7 +1650,8 @@ trait EvalHandler {
 
           for (filter <- filters) {
             BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)
-            agentMgr().post(
+            //agentMgr().post(
+            post(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
               cnxns,
               "[" + value + ", " + compact(render(JString(toTermString(filter)))) + "]",
@@ -1653,14 +1699,15 @@ trait EvalHandler {
     onConnection : Option[mTT.Resource] => Unit =
       ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
   ) : Unit = {
-    val pulseErql = agentMgr().adminErql( sessionId )
-    val pulseErspl = agentMgr().adminErspl( sessionId )
-    ensureServersConnected(
-      pulseErql,
-      pulseErspl
-    )(
-      onConnection
-    )
+    // val pulseErql = agentMgr().adminErql( sessionId )
+//     val pulseErspl = agentMgr().adminErspl( sessionId )
+//     ensureServersConnected(
+//       pulseErql,
+//       pulseErspl
+//     )(
+//       onConnection
+//     )
+    throw new Exception( "connect servers not implemented" )
   }
 
   def sessionPing(json: JValue) : String = {
@@ -1686,7 +1733,8 @@ trait EvalHandler {
     val capURI = new URI("agent://" + cap)
     val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
-    agentMgr().read(
+    //agentMgr().read(
+    read(
       jsonBlobLabel,
       List(capSelfCnxn),
       (optRsrc: Option[mTT.Resource]) => {
@@ -1696,7 +1744,9 @@ trait EvalHandler {
         optRsrc match {
           case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
             // Store the email
-            agentMgr().put[String](emailLabel, List(capSelfCnxn), cap)
+            //agentMgr().put[String](emailLabel, List(capSelfCnxn),
+            //cap)
+            put[String](emailLabel, List(capSelfCnxn), cap)
             storeCapByEmail(email)
 
             // Generate pwmac
@@ -1705,7 +1755,8 @@ trait EvalHandler {
             val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
 
             // Store pwmac
-            agentMgr().post(
+            //agentMgr().post(
+            post(
               pwmacLabel,
               List(capSelfCnxn),
               pwmac,
@@ -1715,7 +1766,8 @@ trait EvalHandler {
                   case None => ()
                   case Some(_) =>
                     // Store jsonBlob
-                    agentMgr().post(
+                    //agentMgr().post(
+                    post(
                       jsonBlobLabel,
                       List(capSelfCnxn),
                       jsonBlob,
@@ -1725,7 +1777,8 @@ trait EvalHandler {
                           case None => ()
                           case Some(_) =>
                             // Store alias list containing just the default alias
-                            agentMgr().post(
+                            //agentMgr().post(
+                            post(
                               aliasListLabel,
                               List(capSelfCnxn),
                               """["alias"]""",
@@ -1735,7 +1788,8 @@ trait EvalHandler {
                                   case None => ()
                                   case Some(_) =>
                                     // Store default alias
-                                    agentMgr().post(
+                                    //agentMgr().post(
+                                    post(
                                       defaultAliasLabel,
                                       List(capSelfCnxn),
                                       "alias",
@@ -1746,7 +1800,8 @@ trait EvalHandler {
                                           case Some(_) =>
                                             val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
                                             // Store empty label list on alias cnxn
-                                            agentMgr().post(
+                                            //agentMgr().post(
+                                          post(
                                               labelListLabel,
                                               List(aliasCnxn),
                                               """[]""",
@@ -1758,7 +1813,8 @@ trait EvalHandler {
                                                   case Some(x) =>
                                                     launchNodeUserBehaviors( aliasCnxn )
                                                     // Store empty bi-cnxn list on alias cnxn
-                                                    agentMgr().post(
+                                                    //agentMgr().post(
+                                                  post(
                                                       biCnxnsListLabel,
                                                       List(aliasCnxn),
                                                       ""
@@ -1794,7 +1850,8 @@ trait EvalHandler {
     println("About to commenceInstance for introduction initiator")
     BasicLogService.tweet("About to commenceInstance for introduction initiator")
     
-    bFactoryMgr().commenceInstance(
+    //bFactoryMgr().commenceInstance(
+    commenceInstance(
       introductionInitiatorCnxn,
       introductionInitiatorLabel,
       List( aliasCnxn ),
@@ -1807,12 +1864,14 @@ trait EvalHandler {
     println("About to commenceInstance for claimant")
     BasicLogService.tweet("About to commenceInstance for claimant")
 
-    VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
+    //VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
+    VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, feed _)
   }
   
   def backupRequest(json: JValue) : Unit = {
     val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    agentMgr().runProcess("mongodump", None, List(), (optRsrc) => {
+    //agentMgr().runProcess("mongodump", None, List(), (optRsrc) => {
+    runProcess("mongodump", None, List(), (optRsrc) => {
       println("backupRequest: optRsrc = " + optRsrc)
       BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
       CometActorMapper.cometMessage(sessionURI, compact(render(
@@ -1826,7 +1885,9 @@ trait EvalHandler {
 
   def restoreRequest(json: JValue) : Unit = {
     val sessionURI = (json \ "content" \ "sessionURI").extract[String]
-    agentMgr().runProcess("mongorestore", None, List(), (optRsrc) => {
+    //agentMgr().runProcess("mongorestore", None, List(), (optRsrc) =>
+    //{
+    runProcess("mongorestore", None, List(), (optRsrc) => {
       println("restoreRequest: optRsrc = " + optRsrc)
       BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
       CometActorMapper.cometMessage(sessionURI, compact(render(

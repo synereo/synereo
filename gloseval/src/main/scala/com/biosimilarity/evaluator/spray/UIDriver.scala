@@ -54,7 +54,8 @@ package usage {
         }
       }
 
-      EvalAndAgentCRUDHandlerService.agentMgr().fetch(
+      //EvalAndAgentCRUDHandlerService.agentMgr().fetch(
+      EvalAndAgentCRUDHandlerService.fetch(
         EvalAndAgentCRUDHandlerService.biCnxnsStorageLocation,
         List( aliasCnxn ),
         onFetch

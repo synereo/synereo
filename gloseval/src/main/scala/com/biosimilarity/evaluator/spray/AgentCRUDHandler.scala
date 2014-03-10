@@ -314,7 +314,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
           BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasListStr )
 
-          agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+          //agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+          put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
         }
         case _ => {
           CometActorMapper.cometMessage( sessionURIStr, compact( render(
@@ -328,7 +329,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
       
-    agentMgr().get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
+    //agentMgr().get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
+    get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
   }
 
   
@@ -372,7 +374,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
           BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasListStr )
 
-          agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+          //agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+          put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
         }
         case _ => {
           CometActorMapper.cometMessage( sessionURIStr, compact( render(
@@ -386,7 +389,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
 
-    agentMgr().get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
+    //agentMgr().get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
+    get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
   }
   
   
@@ -434,7 +438,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
     
-    agentMgr().fetch( aliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
+    //agentMgr().fetch( aliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
+    fetch( aliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
   }
   
   
@@ -498,7 +503,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
 
-    agentMgr().fetch( defaultAliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
+    //agentMgr().fetch( defaultAliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
+    fetch( defaultAliasStorageLocation(), List( aliasStorageCnxn ), onFetch )
   }
   
   
@@ -523,7 +529,8 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       ) ) )
     }
 
-    agentMgr().put[String]( defaultAliasStorageLocation(), List( aliasStorageCnxn ), msg.alias, onPut )
+    //agentMgr().put[String]( defaultAliasStorageLocation(), List( aliasStorageCnxn ), msg.alias, onPut )
+    put[String]( defaultAliasStorageLocation(), List( aliasStorageCnxn ), msg.alias, onPut )
   }
   
   
@@ -564,10 +571,12 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
                 "handleaddAliasExternalIdentitiesRequest | onGet | onPut | updating externalIdsList with " + newExternalIdsList
               )
 
-              agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), newExternalIdsList, onPut )
+              //agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), newExternalIdsList, onPut )
+              put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), newExternalIdsList, onPut )
             }
             case Bottom => {
-              agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), msg.ids, onPut )
+              //agentMgr().put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), msg.ids, onPut )
+              put[List[ID]]( externalIdsStorageLocation, List( aliasStorageCnxn ), msg.ids, onPut )
             }
             case _ => {
               CometActorMapper.cometMessage( sessionURIStr, compact( render(

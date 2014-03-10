@@ -50,6 +50,7 @@ extends EvalHandler
 with EvaluationCommsService
 with EvalConfig
 with DSLCommLinkConfiguration
+with AccordionConfiguration
 with Serializable {
 }
 
@@ -59,6 +60,7 @@ with AgentCRUDHandler
 with EvaluationCommsService
 with EvalConfig
 with DSLCommLinkConfiguration
+with AccordionConfiguration
 with Serializable {
 }
 

@@ -65,7 +65,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       List(pacGlosToSelf),
       doCompleteClaim
     )
-    bFactoryMgr().commenceInstance(
+    //bFactoryMgr().commenceInstance(
+    commenceInstance(
       verifierProtocolCnxn,
       claimantLabel,
       List(pacSelfToGlos),
@@ -124,14 +125,16 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       List(pacSelfToClaimant),
       doVerificationNotification
     )
-    bFactoryMgr().commenceInstance(
+    //bFactoryMgr().commenceInstance(
+    commenceInstance(
       verifierProtocolCnxn,
       relyingPartyLabel,
       List(pacSelfToGlos, pacClaimantToSelf),
       Nil,
       optRsrc => println( "onCommencement relyingParty: optRsrc = " + optRsrc )
     )
-    bFactoryMgr().commenceInstance(
+    //bFactoryMgr().commenceInstance(
+    commenceInstance(
       verifierProtocolCnxn,
       verifierLabel,
       List(pacSelfToGlos, pacClaimantToSelf),
