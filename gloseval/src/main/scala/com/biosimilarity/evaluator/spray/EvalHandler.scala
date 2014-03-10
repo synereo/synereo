@@ -377,27 +377,33 @@ trait EvalHandler {
     //val (erql, erspl) = agentMgr().makePolarizedPair()
     // TODO(mike): remove the token after it's been used
     //agentMgr().read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
+    def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+      v match {
+        case Bottom => {
+          CompletionMapper.complete(key, compact(render(
+            ("msgType" -> "createUserError")~
+            ("content" ->
+             ("reason", "No such token.")
+           )
+          )))
+        }
+        case PostedExpr( (PostedExpr( postedStr : String ), _, _, _) ) => {
+          val content = parse(postedStr)
+          val email = (content \ "email").extract[String]
+          val password = (content \ "password").extract[String]
+          val jsonBlob = compact(render(content \ "jsonBlob"))
+          secureSignup(email, password, jsonBlob, key)
+        }
+      }
+    }
     read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
       rsrc match {
-        case None => ()
+        case None => ();
+        case Some(mTT.Ground( v )) => {
+          handleRsp( v )
+        }
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
-          v match {
-            case Bottom => {
-              CompletionMapper.complete(key, compact(render(
-                ("msgType" -> "createUserError")~
-                ("content" ->
-                  ("reason", "No such token.")
-                )
-              )))
-            }
-            case PostedExpr( (PostedExpr( postedStr : String ), _, _, _) ) => {
-              val content = parse(postedStr)
-              val email = (content \ "email").extract[String]
-              val password = (content \ "password").extract[String]
-              val jsonBlob = compact(render(content \ "jsonBlob"))
-              secureSignup(email, password, jsonBlob, key)
-            }
-          }
+          handleRsp( v )
         }
         case _ => throw new Exception("Unrecognized resource: " + rsrc)
       }
@@ -556,8 +562,12 @@ trait EvalHandler {
       (optRsrc: Option[mTT.Resource]) => {
         BasicLogService.tweet("listenIntroductionNotification | onRead : optRsrc = " + optRsrc)
         optRsrc match {
-          case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
+          case None => ();
+          // colocated
+          case Some(mTT.Ground(Bottom)) => ();
+          // distributed
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();          
+          // either colocated or distributed
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(IntroductionNotification(
             sessionId,
             correlationId,
@@ -603,8 +613,12 @@ trait EvalHandler {
       (optRsrc: Option[mTT.Resource]) => {
         BasicLogService.tweet("listenConnectNotification | onFeed : optRsrc = " + optRsrc)
         optRsrc match {
-          case None => ()
-          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
+          case None => ();
+          // colocated
+          case Some(mTT.Ground(Bottom)) => ();
+          // distributed
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
+          // either colocated or distributed
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(ConnectNotification(
             sessionId,
             PortableAgentBiCnxn(readCnxn, writeCnxn),
@@ -682,10 +696,8 @@ trait EvalHandler {
               List(nodeUserAliasCnxn),
               (optRsrc: Option[mTT.Resource]) => {
                 BasicLogService.tweet("connectToNodeUser | onGet : optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(mTT.RBoundHM(Some( mTT.Ground(v)), _)) => {
-                    val newBiCnxnList = v match {
+                def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+                  val newBiCnxnList = v match {
                       case PostedExpr( (PostedExpr(previousBiCnxnListStr: String), _, _, _) ) => {
                         nodeAgentBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
                       }
@@ -706,6 +718,11 @@ trait EvalHandler {
                         }
                       }
                     )
+                }
+                optRsrc match {
+                  case None => ()
+                  case Some(mTT.RBoundHM(Some( mTT.Ground(v)), _)) => {
+                    handleRsp( v )
                   }
                   case _ => {
                     throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
@@ -794,37 +811,43 @@ trait EvalHandler {
       //val (erql, erspl) = agentMgr().makePolarizedPair()
       // See if the email is already there
       //agentMgr().read(
+      def handleRsp( ) : Unit = {
+        // No such email exists, create it
+        //val (erql, erspl) = agentMgr().makePolarizedPair()
+        post[String](
+          tokenLabel,
+          List(tokenCnxn),
+          // email, password, and jsonBlob
+          compact(render(json \ "content")),
+          (optRsrc: Option[mTT.Resource]) => {
+            BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
+            optRsrc match {
+              case None => ();
+              case Some(_) => {
+                ConfirmationEmail.confirm(email, token)
+                // Notify user to check her email
+                CompletionMapper.complete(key, compact(render(
+                  ("msgType" -> "createUserWaiting") ~
+                  ("content" -> List()) // List() is rendered as "{}" 
+                )))
+              }
+            }
+          }
+        )
+      }
+
       read(
         jsonBlobLabel,
         List(capSelfCnxn),
         (optRsrc: Option[mTT.Resource]) => {
-          BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)
+          BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)          
           optRsrc match {
-            case None => ()
+            case None => ();
+            case Some(mTT.Ground(Bottom)) => {
+              handleRsp( )
+            }
             case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-              // No such email exists, create it
-              //val (erql, erspl) = agentMgr().makePolarizedPair()
-              //agentMgr().post[String](erql, erspl)(
-              post[String](
-                tokenLabel,
-                List(tokenCnxn),
-                // email, password, and jsonBlob
-                compact(render(json \ "content")),
-                (optRsrc: Option[mTT.Resource]) => {
-                  BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
-                  optRsrc match {
-                    case None => ()
-                    case Some(_) => {
-                      ConfirmationEmail.confirm(email, token)
-                      // Notify user to check her email
-                      CompletionMapper.complete(key, compact(render(
-                        ("msgType" -> "createUserWaiting") ~
-                        ("content" -> List()) // List() is rendered as "{}" 
-                      )))
-                    }
-                  }
-                }
-              )
+              handleRsp( )
             }
             case _ => {
               CompletionMapper.complete(key, compact(render(
@@ -853,9 +876,10 @@ trait EvalHandler {
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
       val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
         BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
+        println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
         rsrc match {
           // At this point the cap is good, but we have to verify the pw mac
-          case None => ()
+          case None => ();
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(pwmac: String), _, _, _)))), _)) => {
             BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
             val macInstance = Mac.getInstance("HmacSHA256")
@@ -1159,36 +1183,42 @@ trait EvalHandler {
         val emailURI = new URI("emailhash://" + cap)
         val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
         //val (erql, erspl) = agentMgr().makePolarizedPair()
-        //BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)
-        //agentMgr().read(
+        //BasicLogService.tweet("secureSignup | email branch: erql, erspl = " + erql + ", " + erspl)        
+        def handleRsp( optRsrc : Option[mTT.Resource], v : ConcreteHL.HLExpr ) : Unit = {
+          v match {
+            case Bottom => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError")~
+                ("content" -> 
+                 ("reason" -> "No such email.")
+               )
+              )))
+            }
+            case PostedExpr( (PostedExpr(cap: String), _, _, _) ) => {
+              BasicLogService.tweet("secureLogin | Logging in with cap = " + cap);
+              login(cap)
+            }
+            case _ => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+              )))
+            }
+          }
+        }
+
         read(
           emailLabel,
           List(emailSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
             BasicLogService.tweet("secureLogin | email case | anonymous onFetch: optRsrc = " + optRsrc)
             optRsrc match {
-              case None => ()
+              case None => ();
+              case Some(mTT.Ground(v)) => {
+                handleRsp( optRsrc, v )
+              }
               case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                v match {
-                  case Bottom => {
-                    CompletionMapper.complete(key, compact(render(
-                      ("msgType" -> "initializeSessionError")~
-                      ("content" -> 
-                        ("reason" -> "No such email.")
-                      )
-                    )))
-                  }
-                  case PostedExpr( (PostedExpr(cap: String), _, _, _) ) => {
-                    BasicLogService.tweet("secureLogin | Logging in with cap = " + cap);
-                    login(cap)
-                  }
-                  case _ => {
-                    CompletionMapper.complete(key, compact(render(
-                      ("msgType" -> "initializeSessionError") ~
-                      ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                    )))
-                  }
-                }
+                handleRsp( optRsrc, v )
               }
               case _ => {
                 CompletionMapper.complete(key, compact(render(
@@ -1244,8 +1274,9 @@ trait EvalHandler {
       jsonBlobLabel,
       List(agentIdCnxn),
       (optRsrc: Option[mTT.Resource]) => {
+        println( "updateUserRequest | onGet | optRsrc: " + optRsrc )
         optRsrc match {
-          case None => ()
+          case None => ();
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(postedStr: String), _, _, _)))), _)) => {
             //val (erql, erspl) = agentMgr().makePolarizedPair()
             //agentMgr().put(erql, erspl)(
@@ -1436,11 +1467,11 @@ trait EvalHandler {
       exprType match {
         case "feedExpr" => {
           BasicLogService.tweet("evalSubscribeRequest | feedExpr")
-          val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
-            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
+          val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {            
             BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
             optRsrc match {
-              case None => ()
+              case None => ();
               case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(tuple))), _)) => {
                 val (postedStr, filter, cnxn, bindings) = tuple match {
                   case (a, b, c, d) => (
@@ -1515,40 +1546,53 @@ trait EvalHandler {
             }
           }
           // TODO(mike): Workaround until bindings bug is fixed
-          val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
-            println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
-            BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
-            optRsrc match {
-              case None => ()
-              case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
+          def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+            v match {
+              case PostedExpr(
                 (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)
-              ))), _)) => {
+              ) => {
                 val arr = parse(postedStr).asInstanceOf[JArray].arr
                 val json = compact(render(arr(0)))
                 val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
                 val content =
                   ("sessionURI" -> sessionURIStr) ~
-                  ("pageOfPosts" -> List(json)) ~
-                  ("connection" -> (
-                    ("source" -> agentCnxn.src.toString) ~
-                    ("label" -> agentCnxn.label) ~
-                    ("target" -> agentCnxn.trgt.toString)
-                  )) ~
-                  ("filter" -> jsonFilter)
+                ("pageOfPosts" -> List(json)) ~
+                ("connection" -> (
+                  ("source" -> agentCnxn.src.toString) ~
+                  ("label" -> agentCnxn.label) ~
+                  ("target" -> agentCnxn.trgt.toString)
+                )) ~
+                ("filter" -> jsonFilter)
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                 println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
               }
-              case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)),_)) => {
+              case Bottom => {
                 val content = 
                   ("sessionURI" -> sessionURIStr) ~
-                  ("pageOfPosts" -> List[String]())
+                ("pageOfPosts" -> List[String]())
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                 println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              }
+            }
+          }
+          
+          val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
+            println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
+            BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
+            optRsrc match {
+              case None => ();
+              // colocated
+              case Some(mTT.Ground( v )) => {
+                handleRsp( v )
+              }
+              // either colocated or distributed
+              case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
+                handleRsp( v )
               }
               case _ => throw new Exception("Unrecognized resource: " + optRsrc)
             }
@@ -1582,6 +1626,7 @@ trait EvalHandler {
           BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
           val onScore: Option[mTT.Resource] => Unit = (optRsrc) => {
             BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
+            println("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
             optRsrc match {
               case None => ()
               case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(
@@ -1733,62 +1778,47 @@ trait EvalHandler {
     val capURI = new URI("agent://" + cap)
     val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
-    //agentMgr().read(
-    read(
-      jsonBlobLabel,
-      List(capSelfCnxn),
-      (optRsrc: Option[mTT.Resource]) => {
-        BasicLogService.tweet("createNodeUser | onRead: optRsrc = " + optRsrc)
-
-        // Check if agent for email exists. If it doesn't, create the agent.
-        optRsrc match {
-          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-            // Store the email
-            //agentMgr().put[String](emailLabel, List(capSelfCnxn),
-            //cap)
-            put[String](emailLabel, List(capSelfCnxn), cap)
-            storeCapByEmail(email)
-
-            // Generate pwmac
-            val macInstance = Mac.getInstance("HmacSHA256")
-            macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
-            val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
-
-            // Store pwmac
-            //agentMgr().post(
-            post(
-              pwmacLabel,
-              List(capSelfCnxn),
-              pwmac,
-              ( optRsrc : Option[mTT.Resource] ) => {
-                BasicLogService.tweet("createNodeUser | onPost1: optRsrc = " + optRsrc)
-                optRsrc match {
-                  case None => ()
-                  case Some(_) =>
-                    // Store jsonBlob
-                    //agentMgr().post(
-                    post(
-                      jsonBlobLabel,
-                      List(capSelfCnxn),
-                      jsonBlob,
-                      ( optRsrc : Option[mTT.Resource] ) => {
-                        BasicLogService.tweet("createNodeUser | onPost2: optRsrc = " + optRsrc)
-                        optRsrc match {
-                          case None => ()
-                          case Some(_) =>
-                            // Store alias list containing just the default alias
-                            //agentMgr().post(
-                            post(
-                              aliasListLabel,
-                              List(capSelfCnxn),
-                              """["alias"]""",
-                              ( optRsrc : Option[mTT.Resource] ) => {
-                                BasicLogService.tweet("createNodeUser | onPost3: optRsrc = " + optRsrc)
-                                optRsrc match {
-                                  case None => ()
+    def handleRsp() : Unit = {
+      // Store the email
+      put[String](emailLabel, List(capSelfCnxn), cap)
+      storeCapByEmail(email)
+      
+      // Generate pwmac
+      val macInstance = Mac.getInstance("HmacSHA256")
+      macInstance.init(new SecretKeySpec("pAss#4$#".getBytes("utf-8"), "HmacSHA256"))
+      val pwmac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+      
+      // Store pwmac
+      post(
+        pwmacLabel,
+        List(capSelfCnxn),
+        pwmac,
+        ( optRsrc : Option[mTT.Resource] ) => {
+          BasicLogService.tweet("createNodeUser | onPost1: optRsrc = " + optRsrc)
+          optRsrc match {
+            case None => ()
+              case Some(_) =>
+                // Store jsonBlob
+                post(
+                  jsonBlobLabel,
+                  List(capSelfCnxn),
+                  jsonBlob,
+                  ( optRsrc : Option[mTT.Resource] ) => {
+                    BasicLogService.tweet("createNodeUser | onPost2: optRsrc = " + optRsrc)
+                    optRsrc match {
+                      case None => ()
+                        case Some(_) =>
+                          // Store alias list containing just the default alias
+                          post(
+                            aliasListLabel,
+                            List(capSelfCnxn),
+                            """["alias"]""",
+                            ( optRsrc : Option[mTT.Resource] ) => {
+                              BasicLogService.tweet("createNodeUser | onPost3: optRsrc = " + optRsrc)
+                              optRsrc match {
+                                case None => ()
                                   case Some(_) =>
                                     // Store default alias
-                                    //agentMgr().post(
                                     post(
                                       defaultAliasLabel,
                                       List(capSelfCnxn),
@@ -1797,43 +1827,58 @@ trait EvalHandler {
                                         BasicLogService.tweet("createNodeUser | onPost4: optRsrc = " + optRsrc)
                                         optRsrc match {
                                           case None => ()
-                                          case Some(_) =>
-                                            val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
-                                            // Store empty label list on alias cnxn
-                                            //agentMgr().post(
+                                            case Some(_) =>
+                                              val aliasCnxn = PortableAgentCnxn(capURI, "alias", capURI)
+                                          // Store empty label list on alias cnxn
                                           post(
-                                              labelListLabel,
-                                              List(aliasCnxn),
-                                              """[]""",
-                                              ( optRsrc : Option[mTT.Resource] ) => {
-                                                BasicLogService.tweet("createNodeUser | onPost5: optRsrc = " + optRsrc)
-                                                println("createNodeUser | onPost5: optRsrc = " + optRsrc)
-                                                optRsrc match {
-                                                  case None => ()
+                                            labelListLabel,
+                                            List(aliasCnxn),
+                                            """[]""",
+                                            ( optRsrc : Option[mTT.Resource] ) => {
+                                              BasicLogService.tweet("createNodeUser | onPost5: optRsrc = " + optRsrc)
+                                              println("createNodeUser | onPost5: optRsrc = " + optRsrc)
+                                              optRsrc match {
+                                                case None => ()
                                                   case Some(x) =>
                                                     launchNodeUserBehaviors( aliasCnxn )
-                                                    // Store empty bi-cnxn list on alias cnxn
-                                                    //agentMgr().post(
-                                                  post(
-                                                      biCnxnsListLabel,
-                                                      List(aliasCnxn),
-                                                      ""
-                                                    )
-                                                }
+                                                // Store empty bi-cnxn list on alias cnxn
+                                                post(
+                                                  biCnxnsListLabel,
+                                                  List(aliasCnxn),
+                                                  ""
+                                                )
                                               }
-                                            )
+                                            }
+                                          )
                                         }
                                       }
                                     )
-                                }
                               }
-                            )
-                        }
-                      }
-                    )
-                }
-              }
-            )
+                            }
+                          )
+                    }
+                  }
+                )
+          }
+        }
+      )
+    }
+
+    read(
+      jsonBlobLabel,
+      List(capSelfCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        BasicLogService.tweet("createNodeUser | onRead: optRsrc = " + optRsrc)
+
+        // Check if agent for email exists. If it doesn't, create the agent.
+        optRsrc match {
+          // colocated
+          case Some(mTT.Ground(Bottom)) => {
+            handleRsp()
+          }
+          // distributed
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
+            handleRsp()
           }
           case _ => ()
         }

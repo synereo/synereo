@@ -46,7 +46,8 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
       ) ) )
     }
 
-    agentMgr().post( birq.toLabel, List( aliasStorageCnxn ), birq, onPost )
+    //agentMgr().post( birq.toLabel, List( aliasStorageCnxn ), birq, onPost )
+    post( birq.toLabel, List( aliasStorageCnxn ), birq, onPost )
   }
 
   //#### introductionConfirmation
@@ -69,11 +70,13 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
       ) ) )
     }
 
-    agentMgr().put( introConfirmation.toLabel, List( aliasStorageCnxn ), introConfirmation, onPut )
+    //agentMgr().put( introConfirmation.toLabel, List( aliasStorageCnxn ), introConfirmation, onPut )
+    put( introConfirmation.toLabel, List( aliasStorageCnxn ), introConfirmation, onPut )
 
     // removes introduction notification
     val introNotificationLabel = IntroductionNotification.toLabel(msg.introSessionId)
-    agentMgr().get( introNotificationLabel, List ( aliasStorageCnxn ) )
+    //agentMgr().get( introNotificationLabel, List ( aliasStorageCnxn ) )
+    get( introNotificationLabel, List ( aliasStorageCnxn ) )
   }
 
   private def toBiCnxn( cnxn : PortableAgentCnxn ) : PortableAgentBiCnxn = {

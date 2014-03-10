@@ -32,8 +32,12 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
     val doCompleteClaim = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("doCompleteClaim: optRsrc = " + optRsrc)
       optRsrc match {
-        case None => ()
-        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
+        case None => ();
+        // colocated
+        case Some(mTT.Ground(Bottom)) => ();
+        // distributed
+        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
+        // either colocated or distributed
         case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(CompleteClaim(
           sessionId,
           correlationId,
@@ -86,8 +90,12 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
     val doVerificationNotification = ( optRsrc : Option[mTT.Resource] ) => {
       BasicLogService.tweet("doVerificationNotification: optRsrc = " + optRsrc)
       optRsrc match {
-        case None => ()
-        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
+        case None => ();
+        // colocated
+        case Some(mTT.Ground(Bottom)) => ();
+        // distributed
+        case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
+        // either colocated or distributed
         case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(VerificationNotification(
           sessionId,
           correlationId,
