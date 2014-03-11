@@ -34,29 +34,37 @@ package usage {
       val aliasCnxn =
         PortableAgentCnxn( auid.toURI, "alias", auid.toURI )
 
+      def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+        BasicLogService.tweet( "getAliasCnxns | onFetch: got " + v )
+        
+        val biCnxnList = v match {
+          case PostedExpr( (PostedExpr( biCnxnListStr : String ), _, _, _) ) => {
+            Serializer.deserialize[List[PortableAgentBiCnxn]]( biCnxnListStr )
+          }
+          case Bottom => Nil
+        }
+        
+        aliasCnxnK( biCnxnList.map( _.writeCnxn ) )
+      }
+      
       val onFetch : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
         optRsrc match {
           case None => {
             // Nothing to be done
             BasicLogService.tweet( "getAliasCnxns | onFetch: got None" )
           }
+          case Some( mTT.Ground( v ) ) => {
+            handleRsp( v )
+          }
           case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
-            BasicLogService.tweet( "getAliasCnxns | onFetch: got " + v )
-            
-            val biCnxnList = v match {
-              case PostedExpr( (PostedExpr( biCnxnListStr : String ), _, _, _) ) => {
-                Serializer.deserialize[List[PortableAgentBiCnxn]]( biCnxnListStr )
-              }
-              case Bottom => Nil
-            }
-            
-            aliasCnxnK( biCnxnList.map( _.writeCnxn ) )
+            handleRsp( v )
           }
           case _ => fail("getAliasCnxns -- Unrecognized resource: " + optRsrc)
         }
       }
 
-      EvalAndAgentCRUDHandlerService.agentMgr().fetch(
+      //EvalAndAgentCRUDHandlerService.agentMgr().fetch(
+      EvalAndAgentCRUDHandlerService.fetch(
         EvalAndAgentCRUDHandlerService.biCnxnsStorageLocation,
         List( aliasCnxn ),
         onFetch

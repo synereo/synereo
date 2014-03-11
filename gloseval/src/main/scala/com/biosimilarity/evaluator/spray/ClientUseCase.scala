@@ -48,6 +48,7 @@ package usage {
      with ChannelGeneration
      with EvalConfig
      with DSLCommLinkConfiguration
+     with AccordionConfiguration
      with Serializable
   {
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
