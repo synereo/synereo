@@ -26,6 +26,11 @@ object StateMonad {
     def apply( s : S ) : ( S, V ) = f( s )
   }
   
+  // Note: if the type ctor we are interpreting categorically has
+  // multiple functorial interpretations, this implementation makes it
+  // possible to provide evidence of functoriality distinct from
+  // monadicity, which would create problems in the evidence for
+  // comprehensionality below
   implicit def stateFunctor[S]() =
     new Functor[({type λ[α] = State[S,α]})#λ] {
       def map[V, P >: V, U]( f : P => U ) : State[S,P] => State[S, U] = {
