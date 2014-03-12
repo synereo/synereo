@@ -45,3 +45,12 @@ object MonadicEvidence {
   }
 }
 
+object MonadPlusEvidence {
+  import MonadicEvidence._
+  
+  trait MonadPlus[M[_]] extends Monad[M] {
+    def zero[A] : M[A]
+    def plus[A]( ma1 : M[A], ma2 : M[A] ) : M[A]
+  }
+}
+
