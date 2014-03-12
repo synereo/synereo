@@ -38,8 +38,8 @@ object KMonad {
         )
     }
 
-  trait DeliKT[A,R] {
-    def shift( h : K[A,K[R,R]] ) : K[A,R] = {
+  trait DelimitedK[R] {
+    def shift[A]( h : K[A,K[R,R]] ) : K[A,R] = {
       new K[A,R](
         ( k : A => R ) => {
           h(
@@ -59,4 +59,11 @@ object KMonad {
       )
     }
   }
+
+  implicit def DKMonad[R]() : Monad[({type L[A] = K[A,R]})#L] with DelimitedK[R] =
+    new Monad[({type L[A] = K[A,R]})#L] with DelimitedK[R] {      
+      val kmonad = KMonad[R]()
+      def apply[A]( data : A ) = kmonad( data )
+      def flatten[A]( m : K[K[A,R],R] ) : K[A,R] = kmonad.flatten( m )
+    }
 }
