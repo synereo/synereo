@@ -10,19 +10,17 @@ package com.biosimilarity.lift.lib.monad
 
 object ListMonad {
   import MonadicEvidence._
+  import MonadPlusEvidence._
+  import FilteredMonadEvidence._
   
-  implicit def listFunctor() : Functor[List] =
-    new Functor[List] {
-      def fmap[V, P >: V, U]( f : P => U ) : List[P] => List[U] = {
-	( listP : List[P] ) => {
-	  listP.map( f )
-	}
-      }
-    }
-
-  implicit def listMonad() =  new Monad[List]{      
+  implicit def listMonad() = new Monad[List] with FilteredMonad[List] with MonadPlus[List] {      
     def apply[V]( data : V ) = List( data )
     def flatten[V]( llv : List[List[V]] ) : List[V] =
       llv.flatMap( ( v ) => v )
+    def filter[A]( la : List[A] )( pred : A => Boolean ) : List[A] =
+      la.filter( pred )
+    def zero[A] = List[A]( )
+    def plus[A]( ma1 : List[A] )( ma2 : List[A] ) : List[A] =
+      ma1 ++ ma2
   }
 }
