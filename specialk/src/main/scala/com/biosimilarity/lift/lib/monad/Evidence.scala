@@ -80,3 +80,30 @@ object FilteredMonadEvidence {
   }
 }
 
+object ParametricMonadicEvidence {
+  trait PMonad[C[_,_,_]] {
+    def apply[S,T]( s : S ) : C[S,T,T]    
+    def flatten [S,T,U,V] ( mms : C[C[S,V,U],U,T] ) : C[S,V,T]
+    def strength [S1,S2,T,U] ( s : S1, ms : C[S2,T,U] ) : C[( S1, S2 ),T,U]
+
+    final def fmap [S1,P >: S1,S2,T,U] ( f : P => S2 ) : C[P,T,U] => C[S2,T,U] = {
+      ( mp : C[P,T,U] ) => bind( mp )( ( p : P ) => apply[S2,T]( f( p ) ) )
+    }
+      
+    final def bind [S1,P >: S1,S2,T,U,V] (
+      ms : C[P,U,T]
+    )(
+      f : P => C[S2,V,U]
+    ) : C[S2,V,T] = {
+      flatten( fmap( f )( ms ) )
+    }    
+  }
+
+  implicit def pmonadToComprehension[M[C[_,_,_]] <: PMonad[C],C[_,_,_],S,T,U](
+    cv : C[S,T,U]
+  )( implicit pmonad : M[C] ) = new {
+    def map[W]( f : S => W ) = pmonad.fmap( f )( cv )
+    def foreach( f : S => Unit ) = pmonad.fmap( f )( cv )
+    def flatMap[P >: S,V,W]( f : P => C[W,V,T]) = pmonad.bind( cv )( f )
+  }
+}
