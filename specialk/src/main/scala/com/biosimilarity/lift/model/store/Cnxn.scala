@@ -138,6 +138,16 @@ extends CnxnLabel[Either[Namespace,Var],Either[Tag,Var]] {
       }
     )
   }
+
+  def show : String = {
+    this match {
+      case leaf : CnxnCtxtLeaf[Namespace,Var,Tag] =>
+        leaf.showLeaf
+      case branch : CnxnCtxtBranch[Namespace,Var,Tag] =>
+        branch.showBranch
+      case _ => throw new Exception( "unexpected CCL type" )
+    }
+  }
 }
 
 class CnxnCtxtLeaf[Namespace,Var,Tag]( val tag : Either[Tag,Var] )
@@ -151,6 +161,13 @@ with Factual {
       //case Left( t ) => "<" + t + ">"
       case Left( t ) => "" + t + ""
       case Right( v ) => "'" + v
+    }
+  }
+  def showLeaf : String = {
+    tag match {
+      case Left( t : String ) => "\"" + t + "\""
+      case Left( t : AnyRef ) => t + ""
+      case Right( v ) => v + ""
     }
   }
 }
@@ -189,6 +206,22 @@ extends CnxnCtxtLabel[Namespace,Var,Tag] {
 	    {
 	      ( acc, lbl ) => {
 		acc + ", " + lbl
+	      }
+	    }
+	  )
+	}
+	case Nil => ""
+      }
+    nameSpace + "(" + lblStr + ")"
+  }
+  def showBranch : String = {
+    val lblStr =
+      labels match {
+	case albl :: rlbls => {
+	  ( albl.show /: rlbls )( 
+	    {
+	      ( acc, lbl ) => {
+		acc + ", " + lbl.show
 	      }
 	    }
 	  )

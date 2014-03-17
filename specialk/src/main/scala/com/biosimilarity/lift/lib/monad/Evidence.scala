@@ -20,7 +20,14 @@ object MonadicEvidence {
   // claimant to produce definitions for apply and flatten which can
   // be used to provide canonical definitions for fmap (hence
   // demonstrating C is also a Functor) and bind. When we can produce
-  // such evidence we say C enjoys monadicity, or C is monadic.
+  // such evidence we say C enjoys monadicity, or C is monadic. 
+
+  // With type lambdas we can transform a parametric type with
+  // multiple parameters, say C[X,Y], into a type parametric in only
+  // one. For example, ({type L[Y] = C[X,Y]})#L, where X is provided
+  // by some outer scope. If, in this case we can establish the
+  // monadicity of the curried type, then we say that C is monadic in Y.
+
   trait Monad[C[_]] extends Functor[C] {      
     def apply[S]( data : S ) : C[S]      
     def flatten[S]( m : C[C[S]]) : C[S]    
