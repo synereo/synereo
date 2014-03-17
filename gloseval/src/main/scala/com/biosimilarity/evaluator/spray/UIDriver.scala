@@ -161,7 +161,7 @@ package usage {
       rp : PortableAgentCnxn,
       clm : CnxnCtxtLabel[String,String,String]
     ) : String = {
-      val cleanClm = clm.toString.replace( "'", "" )
+      val cleanClm = clm.show
       s"""curl http://${client}:9876/api -d '{"msgType":"initiateClaim","content": {"sessionURI":"${sessionURI}","correlationId":"${correlationId}","verifier": {"source":"${vrfr.src}","label":"claimantToSelf","target":"${vrfr.trgt}"},"relyingParty": {"source":"${rp.src}","label":"claimantToSelf","target":"${rp.trgt}"},"claim":"${cleanClm}"}}'"""
     }
 

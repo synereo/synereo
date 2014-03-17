@@ -936,7 +936,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       
       v match {
         case PostedExpr( (PostedExpr( previousLabelList : String ), _, _, _) ) => {
-          val newLabelList = compact(render(parse(previousLabelList) ++ msg.labels.map(_.toString.replace("'",""))))
+          val newLabelList = compact(render(parse(previousLabelList) ++ msg.labels.map(_.show)))
           BasicLogService.tweet("handleaddAliasLabelsRequest | onGet | onPut | updating labelList with " + newLabelList )          
           put[String](
             labelsStorageLocation,
@@ -949,7 +949,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           put[String](
             labelsStorageLocation,
             List( aliasStorageCnxn ),
-            compact(render(msg.labels.map(_.toString.replace("'","")))),
+            compact(render(msg.labels.map(_.show))),
             onPut
           )
         }
@@ -1024,14 +1024,14 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       BasicLogService.tweet(
         ( 
           "handleupdateAliasLabelsRequest | onGet | onPut | updating labelList with "
-          +  compact(render(msg.labels.map(_.toString.replace("'",""))))
+          +  compact(render(msg.labels.map(_.show)))
         )
       )
       //agentMgr().put[String](
       put[String](
         labelsStorageLocation,
         List( aliasStorageCnxn ),
-        compact(render(msg.labels.map(_.toString.replace("'","")))),
+        compact(render(msg.labels.map(_.show))),
         onPut
       )
     }

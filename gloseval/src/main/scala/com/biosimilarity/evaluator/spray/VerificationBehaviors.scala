@@ -45,8 +45,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
                   ("label" -> verifier.label) ~
                   ("tgt" -> verifier.trgt.toString)
                 )) ~
-                ("claim" -> claim.toString.replace("'", "")) ~
-                ("data" -> data.toString.replace("'",""))
+                ("claim" -> claim.show) ~
+                ("data" -> data.show)
               ))
             )))
           }
@@ -113,8 +113,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
                   ("label" -> claimant.label) ~
                   ("tgt" -> claimant.trgt.toString)
                 )) ~
-                ("claim" -> claim.toString.replace("'", "")) ~
-                ("witness" -> witness.toString.replace("'", ""))
+                ("claim" -> claim.show) ~
+                ("witness" -> witness.show)
               ))
             )))
           }
