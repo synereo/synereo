@@ -158,7 +158,7 @@ package usage {
     case class Application[+V](
       operation : LambdaExpr[V],
       actual : LambdaExpr[V]
-    )
+    ) extends LambdaExpr[V]
 
     trait Box[+V,+S] { def s : S }
     case class Value[+V,+S]( s : S ) extends LambdaExpr[V] with Box[V,S]
@@ -435,89 +435,95 @@ package usage {
     }
   }
 
-//   object CCExercise {
-//     import MonadicEvidence._
-//     import CCMonad._
-//     import LambdaCalculus._
-//     import CPS._
+  object CCExercise {
+    import MonadicEvidence._
+    import CCMonad._
+    import LambdaCalculus._
+    import CPS._
 
-//     implicit val translator = new CallByValue{ }
+    implicit val translator = new CallByValue{ }
 
-//     // 1 + (reset (10 + (shift f . (f (f 100)))))
-//     // Expect 121
-//     def calculation1(
-//       implicit witness : Monad[({type L[A] = CC[A,Int]})#L] with DelimitedCC[Int]
-//     ) : AnyRef = {
-//       val lexpr =
-//         Summation(
-//           Value( 1 ),
-//           Reset( 
-//             Summation(
-//               Value( Shift ),
-//               10 + ( 
-//                 "f",
-//                 Application(
-//                   Mention( "f" ),
-//                   Application(
-//                     Mention( "f" ),
-//                     Value( 100 )
-//                   )
-//                 )
-//               )
-//             )
-//           )
-//         )
+    // 1 + (reset (10 + (shift f . (f (f 100)))))
+    // Expect 121
+    def calculation1(
+      env : Environment[String]
+    )(
+      implicit mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef]
+    ) : CC[Box[String,AnyRef],AnyRef] = {
+      val lexpr : LambdaExpr[String] =
+        Summation[String](
+          Value[String,AnyRef]( 1.asInstanceOf[AnyRef] ),
+          Reset[String]( 
+            Summation[String](
+              Value[String,AnyRef]( 10.asInstanceOf[AnyRef] ),
+              Shift[String]( 
+                "f",
+                Application[String](
+                  Mention[String]( "f" ),
+                  Application[String](
+                    Mention[String]( "f" ),
+                    Value[String,AnyRef]( 100.asInstanceOf[AnyRef] )
+                  )
+                )
+              )
+            )
+          )
+        )
 
-//       translator.meaning( lexpr )
-//     }
+      translator.meaning[String]( lexpr )( env )( mc )
+    }
 
-//     def calculation2(
-//       implicit witness : Monad[({type L[A] = CC[A,Int]})#L] with DelimitedCC[Int]
-//     ) : AnyRef = {
-//       val lexpr =
-//         Summation(
-//           Value( 1 ),
-//           Reset( 
-//             Summation(
-//               Value( 10 ),
-//               Shift( 
-//                 "f",
-//                 Value( 100 )
-//               )
-//             )
-//           )
-//         )
+    def calculation2(
+      env : Environment[String]
+    )(
+      implicit mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef]
+    ) : CC[Box[String,AnyRef],AnyRef] = {
+      val lexpr =
+        Summation[String](
+          Value[String,AnyRef]( 1.asInstanceOf[AnyRef] ),
+          Reset[String]( 
+            Summation[String](
+              Value[String,AnyRef]( 10.asInstanceOf[AnyRef] ),
+              Shift[String]( 
+                "f",
+                Value[String,AnyRef]( 100.asInstanceOf[AnyRef] )
+              )
+            )
+          )
+        )
 
-//       translator.meaning( lexpr )
-//     }
+      translator.meaning( lexpr )( env )( mc )
+    }
 
-//     def calculation3(
-//       implicit witness : Monad[({type L[A] = CC[A,Int]})#L] with DelimitedCC[Int]
-//     ) : AnyRef = {
-//       val lexpr =
-//         Summation(
-//           Value( 1 ),
-//           Reset( 
-//             Summation(
-//               Value( 10 ),
-//               Shift( 
-//                 "f",
-//                 Summation(
-//                   Application(
-//                     Mention( "f" ),
-//                     Value( 100 )
-//                   ),
-//                   Application(
-//                     Mention( "f" ),
-//                     Value( 1000 )
-//                   )
-//                 )
-//               )
-//             )
-//           )
-//         )
+    def calculation3(
+      env : Environment[String]
+    )(
+      implicit mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef]
+    ) : CC[Box[String,AnyRef],AnyRef] = {
+      val lexpr =
+        Summation[String](
+          Value[String,AnyRef]( 1.asInstanceOf[AnyRef] ),
+          Reset[String]( 
+            Summation[String](
+              Value[String,AnyRef]( 10.asInstanceOf[AnyRef] ),
+              Shift[String]( 
+                "f",
+                Summation[String](
+                  Application[String](
+                    Mention[String]( "f" ),
+                    Value[String,AnyRef]( 100.asInstanceOf[AnyRef] )
+                  ),
+                  Application[String](
+                    Mention[String]( "f" ),
+                    Value[String,AnyRef]( 1000.asInstanceOf[AnyRef] )
+                  )
+                )
+              )
+            )
+          )
+        )
 
-//       translator.meaning( lexpr )
-//     }
-//   }
+      translator.meaning( lexpr )( env )( mc )
+    }
+  }
 }
