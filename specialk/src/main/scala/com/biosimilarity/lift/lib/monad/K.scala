@@ -204,85 +204,90 @@ package usage {
     }
   }
 
-//   object CPS {
-//     import LambdaCalculus._
-//     import MonadicEvidence._
-//     import CCMonad._
-//     import scala.collection.immutable.MapProxy
-//     import scala.collection.immutable.HashMap
-//     import scala.collection.immutable.Map
+  object CPS {
+    import LambdaCalculus._
+    import MonadicEvidence._
+    import CCMonad._
+    import scala.collection.immutable.MapProxy
+    import scala.collection.immutable.HashMap
+    import scala.collection.immutable.Map
 
-//     type Target[V] = Box[V,AnyRef]    
-//     type Environment[V] = Map[V,Box[V,AnyRef]]
+    type Target[V] = Box[V,AnyRef]    
+    type Environment[V] = Map[V,Box[V,AnyRef]]
     
-//     trait CallByValue {
-//       def meaning[V](
-//         lambdaExpr : LambdaExpr[V]
-//       )( env : Environment[V] )( mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() ) : Box[V,AnyRef] = {
-//         lambdaExpr match {
-//           case mention : Mention[V] =>
-//             innerMeaning[V]( mention )( env )( mc )
-//           case abstraction : Abstraction[V] =>
-//             innerMeaning[V]( abstraction )( env )( mc )
-//           case application : Application[V] =>
-//             innerMeaning[V]( application )( env )( mc )
-//         }        
-//       }
+    trait CallByValue {
+      def meaning[V](
+        lambdaExpr : LambdaExpr[V]
+      )( env : Environment[V] )( 
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]()
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        lambdaExpr match {
+          case mention : Mention[V] =>
+            innerMeaning[V]( mention )( env )( mc )
+          case abstraction : Abstraction[V] =>
+            innerMeaning[V]( abstraction )( env )( mc )
+          case application : Application[V] =>
+            innerMeaning[V]( application )( env )( mc )
+        }        
+      }
 
-//       def innerMeaning[V](
-//         m : Mention[V]
-//       )( env : Environment[V] )( mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() ) : Box[V,AnyRef] = {
-//         env.get( m.v ) match {
-//           case Some( a ) => Value( mc( a ) )
-//           case None => throw new Exception( "unbound variable: " + m.v )
-//         }
-//       }
+      def innerMeaning[V](
+        m : Mention[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        env.get( m.v ) match {
+          case Some( a ) => mc( a )
+          case None => throw new Exception( "unbound variable: " + m.v )
+        }
+      }
 
-//       def innerMeaning[V](
-//         abs : Abstraction[V]
-//       )( env : Environment[V] )( mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() ) : Box[V,AnyRef] = {
-//         Value(
-//           mc(
-//             ( v : Box[V,AnyRef] => Box[V,AnyRef] ) => {
-//               meaning[V]( abs.body )(
-//                 ( env + ( abs.formal -> Value( v ) ) )
-//               )( mc )
-//             }
-//           )
-//         )
-//       }      
+      def innerMeaning[V](
+        abs : Abstraction[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]()
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        mc(
+          Value(
+            ( v : Box[V,AnyRef] ) => {
+              meaning[V]( abs.body )(
+                ( env + ( abs.formal -> Value( v ) ) )
+              )( mc )
+            }
+          )
+        )
+      }      
       
-//       def innerMeaning[V](
-//         app : Application[V]
-//       )( env : Environment[V] )( mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() ) : Box[V,AnyRef] = {
-//         Value(
-//           mc.bind[Box[V,AnyRef],Box[V,AnyRef],Box[V,AnyRef]](
-//             mc( meaning[V]( app.operation )( env )( mc ) )
-//           )(
-//             ( boxK : Box[V,AnyRef] ) => {
-//               mc.bind[Box[V,AnyRef],Box[V,AnyRef],Box[V,AnyRef]](
-//                 mc( meaning[V]( app.actual )( env )( mc ) )
-//               )(
-//                 ( v : Box[V,AnyRef] ) => {
-//                   for( k <- monadToComprehension( boxK ) ) yield {
-//                     k match {
-//                       case op : Function1[_,_] =>
-//                         op( v )
-//                       case _ => throw new Exception( "attempt to apply non-function: " + k )
-//                     }
-//                   }
-//                 }
-//               )
-//             }
-//           )
-//         )
-//       }
+      def innerMeaning[V](
+        app : Application[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        //throw new Exception( "not implemented yet " )
+        mc.bind(
+          meaning[V]( app.operation )( env )( mc )
+        )(
+          ( boxK : Box[V,AnyRef] ) => {
+            mc.bind(
+              meaning[V]( app.actual )( env )( mc )
+            )(
+              ( v : Box[V,AnyRef] ) => {
+                boxK match {
+                  case Value( op : Function1[Box[V,AnyRef],CC[Box[V,AnyRef],AnyRef]] ) =>
+                    op( v )
+                  case _ => throw new Exception( "attempt to apply non-function: " + boxK )
+                }
+              }
+            )
+          }
+        )
+      }
 
-//       implicit def cpsTranslator() : CallByValue = {
+      // implicit def cpsTranslator() : CallByValue = {
 //         new CallByValue { }
 //       }
-//     }
-//   }
+    }
+  }
 // object CPS {
 //     import LambdaCalculus._
 //     import MonadicEvidence._
