@@ -228,6 +228,10 @@ package usage {
             innerMeaning[V]( abstraction )( env )( mc )
           case application : Application[V] =>
             innerMeaning[V]( application )( env )( mc )
+          case v : Box[V,AnyRef] =>
+            innerMeaning[V]( v )( env )( mc )
+          case summation : Summation[V] =>
+            innerMeaning[V]( summation )( env )( mc )
         }        
       }
 
@@ -263,7 +267,6 @@ package usage {
       )( env : Environment[V] )(
         mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
       ) : CC[Box[V,AnyRef],AnyRef] = {
-        //throw new Exception( "not implemented yet " )
         mc.bind(
           meaning[V]( app.operation )( env )( mc )
         )(
@@ -277,6 +280,46 @@ package usage {
                     op( v )
                   case _ => throw new Exception( "attempt to apply non-function: " + boxK )
                 }
+              }
+            )
+          }
+        )
+      }
+
+      def innerMeaning[V](
+         v : Box[V,AnyRef]
+       )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+         mc( v )
+       }
+
+      def innerMeaning[V](
+        sum : Summation[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        mc.bind(
+          meaning[V]( sum.l )( env )( mc )
+        )(
+          ( v : Box[V,AnyRef] ) => {
+            mc.bind(
+              meaning[V]( sum.r )( env )( mc )
+            )(
+              ( w : Box[V,AnyRef] ) => {
+                ( v, w ) match {
+                  case ( Value( a ), Value( b ) ) => {
+                    if ( ( a, b ).isInstanceOf[(Int,Int)] ) {
+                      val s = a.asInstanceOf[Int] + b.asInstanceOf[Int]
+                      mc( Value( s.asInstanceOf[AnyRef] ) )
+                    }
+                    else {
+                      throw new Exception( "attempt to add non-numeric : " + a + ", " + b )
+                    }                    
+                  }
+                  case _ =>
+                    throw new Exception( "attempt to add non-values : " + v + ", " + w )
+                }                
               }
             )
           }
