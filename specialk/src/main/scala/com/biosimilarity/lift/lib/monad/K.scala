@@ -13,7 +13,7 @@ object CCMonad {
 
   // This version is from Wadler's Composable Continuations paper.
   
-  case class CC[A,R]( k : ( A => R ) => R ) {
+  case class CC[+A,R]( k : ( A => R ) => R ) {
     def apply( f : A => R ) : R = k( f )
   }  
 
@@ -232,6 +232,16 @@ package usage {
             innerMeaning[V]( v )( env )( mc )
           case summation : Summation[V] =>
             innerMeaning[V]( summation )( env )( mc )
+          case condition : Condition[V] =>
+            innerMeaning[V]( condition )( env )( mc )
+          case binding : Binding[V] =>
+            innerMeaning[V]( binding )( env )( mc )
+          case rbinding : RBinding[V] =>
+            innerMeaning[V]( rbinding )( env )( mc )
+          case shift : Shift[V] =>
+            innerMeaning[V]( shift )( env )( mc )
+          case reset : Reset[V] =>
+            innerMeaning[V]( reset )( env )( mc )
         }        
       }
 
@@ -326,187 +336,104 @@ package usage {
         )
       }
 
+      def innerMeaning[V](
+        cond : Condition[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        mc.bind(
+          meaning[V]( cond.test )( env )( mc )
+        )(
+          ( v : Box[V,AnyRef] ) => {
+            v match {
+              case Value( b ) => {
+                if ( b.isInstanceOf[Boolean] ) {
+                  if ( b.asInstanceOf[Boolean] ) {
+                    meaning[V]( cond.tbranch )( env )( mc )
+                  }
+                  else {
+                    meaning[V]( cond.fbranch )( env )( mc )
+                  }
+                }
+                else {
+                  throw new Exception( "attempting to test non-boolean : " + v )
+                }
+              }
+              case _ => {
+                throw new Exception( "attempting to test non-value : " + v )
+              }
+            }
+          }
+        )
+      }      
+
+      def innerMeaning[V](
+        binding : Binding[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        mc.bind(
+          meaning[V]( binding.actual )( env )( mc )
+        )(
+          ( v : Box[V,AnyRef] ) => {            
+            val nenv : Environment[V] =
+              env + ( binding.formal -> Value( v ) )
+            meaning[V]( binding.body )( nenv )( mc )
+          }
+        )
+      }
+
+      def innerMeaning[V](
+        binding : RBinding[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        lazy val k : Box[V,AnyRef] => CC[Box[V,AnyRef],AnyRef] =
+          ( v : Box[V,AnyRef] ) => {    
+            val nenv : Environment[V] =
+              (
+                ( env + ( binding.fnFormal -> Value( k ) ) )
+                + ( binding.valueFormal -> Value( v ) )
+              )
+            meaning[V]( binding.actual )( nenv )( mc )
+          }        
+        val nenv =
+          env + ( binding.fnFormal -> Value( k ) )
+        meaning[V]( binding.body )( nenv )( mc )
+      }
+
+      def innerMeaning[V](
+        shift : Shift[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {        
+
+        val h : CC[Box[V,AnyRef],CC[AnyRef,AnyRef]] =
+          CC(
+            ( k : Box[V,AnyRef] => CC[AnyRef,AnyRef] ) => {
+              meaning[V]( shift.body )(
+                ( env + ( shift.fnFormal -> Value( k ) ) )
+              )( mc ).asInstanceOf[CC[AnyRef,AnyRef]]
+            }
+          )
+        mc.shift( h )
+      }
+
+      def innerMeaning[V](
+        reset : Reset[V]
+      )( env : Environment[V] )(
+        mc : Monad[({type L[A] = CC[A,AnyRef]})#L] with DelimitedCC[AnyRef] = DCCMonad[AnyRef]() 
+      ) : CC[Box[V,AnyRef],AnyRef] = {
+        mc.reset(
+          meaning[V]( reset.body )( env )( mc ).asInstanceOf[CC[AnyRef,AnyRef]]
+        ).asInstanceOf[CC[Box[V,AnyRef],AnyRef]]
+      }
+
       // implicit def cpsTranslator() : CallByValue = {
 //         new CallByValue { }
 //       }
     }
   }
-// object CPS {
-//     import LambdaCalculus._
-//     import MonadicEvidence._
-//     import CCMonad._
-//     import scala.collection.immutable.MapProxy
-//     import scala.collection.immutable.HashMap
-//     import scala.collection.immutable.Map
-
-//     type Target[V,R,S] = CC[Box[V,S],R]    
-//     type Environment[V,S] = Map[V,Box[V,S]]
-    
-// //     trait CallByValue {
-// //       // This is where things get interesting!
-// //       // If this is a translator, then we require that the
-// //       // syntax of CPS be monadic in V. If this is a compiler, then we
-// //       // require that the target interpretation of CPS be monadic
-// //       // in V. 
-// //       def meaning[V,R,S](
-// //         lambdaExpr : LambdaExpr[V]
-// //       )( env : Environment[V] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         lambdaExpr match {
-// //           case mention : Mention[V] =>
-// //             innerMeaning[V,R,S]( mention )( env )( mc )
-// //           case abstraction : Abstraction[V] =>
-// //             innerMeaning[V,R,S]( abstraction )( env )( mc )
-// //           case application : Application[V] =>
-// //             innerMeaning[V,R,S]( application )( env )( mc )
-// //           case v : Value[V] =>
-// //             innerMeaning[V,R,S]( v )( env )( mc )
-// //           case summation : Summation[V] =>
-// //             innerMeaning[V,R,S]( summation )( env )( mc )
-// //           case condition : Condition[V] =>
-// //             innerMeaning[V,R,S]( condition )( env )( mc )
-// //           case binding : Binding[V] =>
-// //             innerMeaning[V,R,S]( binding )( env )( mc )
-// //           case rbinding : RBinding[V] =>
-// //             innerMeaning[V,R,S]( rbinding )( env )( mc )
-// //           case shift : Shift[V] =>
-// //             innerMeaning[V,R,S]( shift )( env )( mc )
-// //           case reset : Reset[V] =>
-// //             innerMeaning[V,R,S]( reset )( env )( mc )
-// //         }        
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         m : Mention[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         env.get( m.v ) match {
-// //           case Some( a ) => mc( a )          
-// //           case None => throw new Exception( "unbound variable: " + m.v )
-// //         }
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         abs : Abstraction[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc(
-// //           ( v : Box[V,S] => Box[V,S] ) => {
-// //             meaning[V,R,S]( abs.body )(
-// //               ( env + ( abs.formal -> v ) )
-// //             )( mc )
-// //           }
-// //         )
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         app : Application[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc.bind(
-// //           meaning[V,R,S]( app.operation )( env )( mc ) 
-// //         )(
-// //           ( k ) => {
-// //             val mAct = mc( meaning[V,R,S]( app.actual )( env )( mc ) )
-// //             val mApp = mc.bind( mAct )( ( v ) => mAct( v ) )                
-// //             mApp( k )
-// //           }
-// //         )
-// //       }
-      
-// //       def innerMeaning[V,R,S](
-// //         v : Value[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc( v.n )
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         sum : Summation[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc.bind(
-// //           meaning[V,R,S]( sum.l )( env )( mc )
-// //         )(
-// //           ( v ) => {
-// //             mc.bind(
-// //               meaning[V,R,S]( sum.r )( env )( mc )
-// //             )(
-// //               ( w ) => {
-// //                 mc( v + w )
-// //               }
-// //             )
-// //           }
-// //         )
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         cond : Condition[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc.bind(
-// //           meaning[V,R,S]( cond.test )( env )( mc )
-// //         )(
-// //           ( v ) => {
-// //             if ( v ) {
-// //               meaning[V,R,S]( cond.tbranch )( env )( mc )
-// //             }
-// //             else {
-// //               meaning[V,R,S]( cond.fbranch )( env )( mc )
-// //             }
-// //           }
-// //         )
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         binding : Binding[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc.bind(
-// //           meaning[V,R,S]( binding.actual )( env )( mc )
-// //         )(
-// //           ( v ) => {            
-// //             val nenv : Environment[V,S] =
-// //               env + ( binding.formal -> v )
-// //             meaning[V,R,S]( binding.body )( nenv )( mc )
-// //           }
-// //         )
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         binding : RBinding[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         lazy val k =
-// //           ( v ) => {    
-// //             val nenv : Environment[V,S] =
-// //               (
-// //                 ( env + ( binding.fnFormal -> k ) )
-// //                 + ( binding.valueFormal -> v )
-// //               )
-// //             meaning[V,R,S]( binding.actual )( nenv )( mc )
-// //           }        
-// //         val nenv =
-// //           env + ( binding.fnFormal -> k )
-// //         meaning[V,R,S]( binding.body )( nenv )( mc )
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         shift : Shift[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc.shift(
-// //           ( k ) => {
-// //             val nenv : Environment[V,S] =
-// //               env + ( shift.fnFormal -> k )
-// //             meaning[V,R,S]( shift.body )( nenv )( mc )
-// //           }
-// //         )
-// //       }
-
-// //       def innerMeaning[V,R,S](
-// //         reset : Reset[V]
-// //       )( env : Environment[V,S] )( mc : Monad[({type L[A] = CC[A,R]})#L] with DelimitedCC[R] = DCCMonad[R]() ) : Target[V,R,S] = {
-// //         mc.reset(
-// //           meaning[V,R,S]( reset.body )( env )( mc )
-// //         )
-// //       }
-// //     }
-
-// //     implicit def cpsTranslator() : CallByValue = {
-// //       new CallByValue { }
-// //     }
-// //   }
 
 //   object CCExercise {
 //     import MonadicEvidence._
