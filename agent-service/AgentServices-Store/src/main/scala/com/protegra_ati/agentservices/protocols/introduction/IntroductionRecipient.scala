@@ -17,13 +17,46 @@ trait IntroductionRecipientT extends Serializable {
     cnxns: Seq[PortableAgentCnxn],
     filters: Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
+    println(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nIntroductionInitiator -- entering run method " 
+        + "\nnode: " + node
+        + "\ncnxns: " + cnxns
+        + "\nfilters " + filters
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
     if (cnxns.size != 2) throw new Exception("invalid number of cnxns supplied")
 
     val protocolMgr = new ProtocolManager(node)
     val readCnxn = cnxns(0)
     val aliasCnxn = cnxns(1)
 
+    println(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nIntroductionInitiator -- invoking listenGetIntroductionProfileRequest " 
+        + "\nnode: " + protocolMgr.node
+        + "\nreadCnxn: " + readCnxn
+        + "\naliasCnxn: " + aliasCnxn        
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
+
     listenGetIntroductionProfileRequest(protocolMgr, readCnxn, aliasCnxn)
+
+    println(
+      (
+        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+        + "\nIntroductionInitiator -- invoking listenIntroductionRequest " 
+        + "\nnode: " + protocolMgr.node
+        + "\nreadCnxn: " + readCnxn
+        + "\naliasCnxn: " + aliasCnxn        
+        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+      )
+    )
+
     listenIntroductionRequest(protocolMgr, readCnxn, aliasCnxn)
   }
 
