@@ -91,7 +91,8 @@ package bfactory {
         classStr = mapCfg.getString( "class" )
       ) {      
         BasicLogService.tweet( "mapping " + "(" + cnxn + " , " + labelStr + ")" + " -> " + classStr )
-        BFactoryDefaultServiceContext.eServe.bFactoryMgr().mapBehavior(
+        //BFactoryDefaultServiceContext.eServe.bFactoryMgr().mapBehavior(
+        BFactoryDefaultServiceContext.eServe.mapBehavior(
           cnxn,
           LabelReader( labelStr ),
           classStr,
