@@ -275,43 +275,51 @@ trait IntroductionRecipientT extends Serializable {
                       + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                     )
                   )
+
+                  try {
                   
-                  // add new biCnxn to the list
-                  val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](prevBiCnxns)
-                  
-                  // serialize biCnxn list
-                  val newBiCnxnsStr = Serializer.serialize(newBiCnxns)
-                  
-                  println(
-                    (
-                      "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                      + "\nIntroductionRecipient -- updating biCnxns list " 
-                      + "\nnode: " + protocolMgr.node
-                      + "\ncnxn: " + aliasCnxn
-                      + "\nbiCnxnsListLabel: " + biCnxnsListLabel
-                      + "\nnewBiCnxns: " + newBiCnxns
-                      + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    // add new biCnxn to the list
+                    val newBiCnxns = newBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](prevBiCnxns)
+                    
+                    // serialize biCnxn list
+                    val newBiCnxnsStr = Serializer.serialize(newBiCnxns)
+                    
+                    println(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nIntroductionRecipient -- updating biCnxns list " 
+                        + "\nnode: " + protocolMgr.node
+                        + "\ncnxn: " + aliasCnxn
+                        + "\nbiCnxnsListLabel: " + biCnxnsListLabel
+                        + "\nnewBiCnxns: " + newBiCnxns
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
                     )
-                  )
-                  
-                  // save new list of biCnxns
-                  protocolMgr.put(aliasCnxn, biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr)))
-                  
-                  val connectN = ConnectNotification(sessionId, newBiCnxn, profileData)
-                  
-                  println(
-                    (
-                      "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                      + "\nIntroductionRecipient -- sending ConnectNotification " 
-                      + "\nnode: " + protocolMgr.node
-                      + "\ncnxn: " + aliasCnxn
-                      + "\nconnectNLabel: " + connectN.toLabel
-                      + "\nConnectionNotification: " + connectN
-                      + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                    
+                    // save new list of biCnxns
+                    protocolMgr.put(aliasCnxn, biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr)))
+                    
+                    val connectN = ConnectNotification(sessionId, newBiCnxn, profileData)
+                    
+                    println(
+                      (
+                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                        + "\nIntroductionRecipient -- sending ConnectNotification " 
+                        + "\nnode: " + protocolMgr.node
+                        + "\ncnxn: " + aliasCnxn
+                        + "\nconnectNLabel: " + connectN.toLabel
+                        + "\nConnectionNotification: " + connectN
+                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                      )
                     )
-                  )
-                  // send ConnectNotification message
-                  protocolMgr.publishMessage(aliasCnxn, connectN)
+                    // send ConnectNotification message
+                    protocolMgr.publishMessage(aliasCnxn, connectN)
+                  }
+                  catch {
+                    case e : Throwable => {
+                      println( e )
+                    }
+                  }
                 }
                 // get the list of biCnxns
                 protocolMgr.get(aliasCnxn, biCnxnsListLabel, {

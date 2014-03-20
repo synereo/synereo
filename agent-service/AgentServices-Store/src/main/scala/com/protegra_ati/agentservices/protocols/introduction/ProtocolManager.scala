@@ -125,7 +125,20 @@ class ProtocolManager(val node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Pe
     reset {
       val agentCnxn = toAgentCnxn(cnxn)
 
-      for (e <- node.get(agentCnxn)(filter)) { onResult(e) }
+      for (e <- node.get(agentCnxn)(filter)) {
+        // println(
+//           (
+//             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//             + "\nProtocolMgr -- get | get returned " 
+//             + "\nnode: " + node
+//             + "\ncnxn: " + cnxn
+//             + "\nfilter: " + filter
+//             + "\ne: " + e
+//             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//           )
+//         )
+        onResult(e)
+      }
     }
   }
 

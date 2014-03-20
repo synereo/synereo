@@ -3307,6 +3307,74 @@ package bfactory {
                 + "\nbehaviorDefinitionCnxn: " + agntCnxn
                 + "\nbehaviorDefinitionLabel: " + bdl
               )
+
+              def handleRsrc( optRsrc : Option[Rsrc], behavior : String ) : Unit = {
+                try {
+                  BasicLogService.tweet(
+                    "method: commenceInstanceHandler"
+                    + "\n instantiating instance & finding entry point"
+                    + "\nthis: " + this
+                    + "\nn: " + n
+                    + "\ndslN: " + dslN
+                    + "\n-----------------------------------------"
+                    + "\nbehaviorDefinitionCnxn: " + agntCnxn
+                    + "\nbehaviorDefinitionLabel: " + bdl
+                    + "\nbehavior: " + behavior
+                    + "\ncnxns: " + cnxns
+                    + "\nfilters: " + filters
+                    + "\nhandler: " + handler
+                  )
+                  BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
+                    case Left( entryPointM ) => {
+                      spawn {
+                        val instanceID = UUID.randomUUID
+                        val instanceLabel =
+                          StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
+                        entryPointM( dslN, cnxns, filters )
+                        handler( 
+                          Some(
+                            mTT.Ground(
+                              ConcreteBFactHL.InstanceRunning(
+                                bdc,
+                                instanceLabel
+                              )
+                            )
+                          )
+                        )
+                        
+                      }
+                    }
+                    case Right( e ) => {
+                      handler( 
+                        Some(
+                          mTT.Ground(
+                            ConcreteBFactHL.InstanceNotRunning(
+                              bdc,
+                              bdl,
+                              "instantiation failed" + e
+                            )
+                          )
+                        )
+                      )
+                    }
+                  }
+                }
+                catch {
+                  case e : Throwable => {
+                    handler( 
+                      Some(
+                        mTT.Ground(
+                          ConcreteBFactHL.InstanceNotRunning(
+                            bdc,
+                            bdl,
+                            "instantiation failed" + e
+                          )
+                        )
+                      )
+                    )
+                  }
+                }                      
+              }
               
               for( e <- n.fetch( agntCnxn )( bdl ) ) {
                 
@@ -3324,72 +3392,11 @@ package bfactory {
                 )
                 
                 e match {
-                  case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {                                    
-                    try {
-                      BasicLogService.tweet(
-                        "method: commenceInstanceHandler"
-                        + "\n instantiating instance & finding entry point"
-                        + "\nthis: " + this
-                        + "\nn: " + n
-                        + "\ndslN: " + dslN
-                        + "\n-----------------------------------------"
-                        + "\nbehaviorDefinitionCnxn: " + agntCnxn
-                        + "\nbehaviorDefinitionLabel: " + bdl
-                        + "\nbehavior: " + behavior
-                        + "\ncnxns: " + cnxns
-                        + "\nfilters: " + filters
-                        + "\nhandler: " + handler
-                      )
-                      BFactoryMirror.instanceEntryPoint( behavior, "run" ) match {
-                        case Left( entryPointM ) => {
-                          spawn {
-                            val instanceID = UUID.randomUUID
-                            val instanceLabel =
-                              StorageLabels.instanceStorageLabel()( Left[String,String]( instanceID.toString ) )
-                            entryPointM( dslN, cnxns, filters )
-                            handler( 
-                              Some(
-                                mTT.Ground(
-                                  ConcreteBFactHL.InstanceRunning(
-                                    bdc,
-                                    instanceLabel
-                                  )
-                                )
-                              )
-                            )
-                            
-                          }
-                        }
-                        case Right( e ) => {
-                          handler( 
-                            Some(
-                              mTT.Ground(
-                                ConcreteBFactHL.InstanceNotRunning(
-                                  bdc,
-                                  bdl,
-                                  "instantiation failed" + e
-                                )
-                              )
-                            )
-                          )
-                        }
-                      }
-                    }
-                    catch {
-                      case e : Throwable => {
-                        handler( 
-                          Some(
-                            mTT.Ground(
-                              ConcreteBFactHL.InstanceNotRunning(
-                                bdc,
-                                bdl,
-                                "instantiation failed" + e
-                              )
-                            )
-                          )
-                        )
-                      }
-                    }                      
+                  case Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ) ) ) => {
+                    handleRsrc( e, behavior )
+                  }
+                  case Some( mTT.RBoundAList( Some( mTT.Ground( ConcreteBFactHL.WrappedBehaviorIdentifier( behavior ))), _ ) ) => {           
+                    handleRsrc( e, behavior )
                   }
                   case _ => {
                     handler( 
