@@ -12,6 +12,8 @@ object Boot extends App
   //TODO: Remove sleep below once race condition is fixed
   Thread.sleep(3000)
 
+   com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
+
    // create and start our service actor
    @transient
    val service = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")   
