@@ -7,7 +7,7 @@ import com.biosimilarity.lift.model.store.CnxnCtxtLabel
 import com.protegra_ati.agentservices.protocols.msgs.ProtocolMessage
 import scala.util.continuations._
 
-class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]) extends Serializable {
+class ProtocolManager(val node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]) extends Serializable {
   def this() = { this( null.asInstanceOf[Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse]] ) }
   private def toAgentCnxn(cnxn: PortableAgentCnxn): acT.AgentCnxn = {
     acT.AgentCnxn(cnxn.src, cnxn.label, cnxn.trgt)
@@ -47,6 +47,10 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
 
       for (e <- node.get(agentCnxn)(filter)) {
         e match {
+          // colocated 
+          case Some(mTT.Ground(PostedExpr(message: ProtocolMessage))) =>
+            onResult(message)
+          // distributed
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(message: ProtocolMessage))), _)) =>
             onResult(message)
           case None =>
@@ -66,6 +70,10 @@ class ProtocolManager(node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Persis
 
       for (e <- node.subscribe(agentCnxn)(filter)) {
         e match {
+          // colocated 
+          case Some(mTT.Ground(PostedExpr(message: ProtocolMessage))) =>
+            onResult(message)
+          // distributed
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(message: ProtocolMessage))), _)) =>
             onResult(message)
           case None =>
