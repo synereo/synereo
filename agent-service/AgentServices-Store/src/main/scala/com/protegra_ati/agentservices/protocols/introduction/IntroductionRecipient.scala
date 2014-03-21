@@ -17,16 +17,16 @@ trait IntroductionRecipientT extends Serializable {
     cnxns: Seq[PortableAgentCnxn],
     filters: Seq[CnxnCtxtLabel[String, String, String]]
   ): Unit = {
-    println(
-      (
-        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-        + "\nIntroductionInitiator -- entering run method " 
-        + "\nnode: " + node
-        + "\ncnxns: " + cnxns
-        + "\nfilters " + filters
-        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-      )
-    )
+    // println(
+//       (
+//         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//         + "\nIntroductionInitiator -- entering run method " 
+//         + "\nnode: " + node
+//         + "\ncnxns: " + cnxns
+//         + "\nfilters " + filters
+//         + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//       )
+//     )
     if (cnxns.size != 2) throw new Exception("invalid number of cnxns supplied")
 
     val protocolMgr = new ProtocolManager(node)
@@ -46,16 +46,16 @@ trait IntroductionRecipientT extends Serializable {
 
     listenGetIntroductionProfileRequest(protocolMgr, readCnxn, aliasCnxn)
 
-    println(
-      (
-        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-        + "\nIntroductionInitiator -- invoking listenIntroductionRequest " 
-        + "\nnode: " + protocolMgr.node
-        + "\nreadCnxn: " + readCnxn
-        + "\naliasCnxn: " + aliasCnxn        
-        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-      )
-    )
+    // println(
+//       (
+//         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//         + "\nIntroductionInitiator -- invoking listenIntroductionRequest " 
+//         + "\nnode: " + protocolMgr.node
+//         + "\nreadCnxn: " + readCnxn
+//         + "\naliasCnxn: " + aliasCnxn        
+//         + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//       )
+//     )
 
     listenIntroductionRequest(protocolMgr, readCnxn, aliasCnxn)
   }
@@ -77,17 +77,17 @@ trait IntroductionRecipientT extends Serializable {
     protocolMgr.subscribeMessage(readCnxn, getIntroProfileRqLabel, {
       case gIPR@GetIntroductionProfileRequest(sessionId, correlationId, rspCnxn) => {
         // TODO: get data from aliasCnxn once it is being stored there
-        println(
-          (
-            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-            + "\nIntroductionRecipient -- received GetIntroductionProfileRequest " 
-            + "\nnode: " + protocolMgr.node
-            + "\ncnxn: " + readCnxn
-            + "\ngetIntroProfileRqLabel: " + getIntroProfileRqLabel
-            + "\nGetIntroductionProfileRequest: " + gIPR
-            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          )
-        )
+        // println(
+//           (
+//             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//             + "\nIntroductionRecipient -- received GetIntroductionProfileRequest " 
+//             + "\nnode: " + protocolMgr.node
+//             + "\ncnxn: " + readCnxn
+//             + "\ngetIntroProfileRqLabel: " + getIntroProfileRqLabel
+//             + "\nGetIntroductionProfileRequest: " + gIPR
+//             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//           )
+//         )
         val identityCnxn = PortableAgentCnxn(aliasCnxn.src, "identity", aliasCnxn.trgt)
 
         println(
@@ -104,17 +104,17 @@ trait IntroductionRecipientT extends Serializable {
         // get the profile data
         protocolMgr.read(identityCnxn, profileDataLabel, {
           case Some(mTT.RBoundAList(Some(mTT.Ground(PostedExpr(jsonBlob: String))), _)) => {
-            println(
-              (
-                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                + "\nIntroductionRecipient -- read profileData " 
-                + "\nnode: " + protocolMgr.node
-                + "\ncnxn: " + identityCnxn
-                + "\nprofileDataLabel: " + profileDataLabel
-                + "\nprofileData: " + jsonBlob
-                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-              )
-            )
+            // println(
+//               (
+//                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                 + "\nIntroductionRecipient -- read profileData " 
+//                 + "\nnode: " + protocolMgr.node
+//                 + "\ncnxn: " + identityCnxn
+//                 + "\nprofileDataLabel: " + profileDataLabel
+//                 + "\nprofileData: " + jsonBlob
+//                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//               )
+//             )
             val getIntroProfileRsp = GetIntroductionProfileResponse(sessionId, correlationId, jsonBlob)
             println(
               (
@@ -140,16 +140,16 @@ trait IntroductionRecipientT extends Serializable {
   private def listenIntroductionRequest(protocolMgr: ProtocolManager, readCnxn: PortableAgentCnxn, aliasCnxn: PortableAgentCnxn): Unit = {
     // listen for IntroductionRequest message
     val introRqLabel = IntroductionRequest.toLabel()
-    println(
-      (
-        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-        + "\nIntroductionRecipient -- waiting for IntroductionRequest " 
-        + "\nnode: " + protocolMgr.node
-        + "\ncnxn: " + readCnxn
-        + "\ngetIntroProfileRqLabel: " + introRqLabel
-        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-      )
-    )
+    // println(
+//       (
+//         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//         + "\nIntroductionRecipient -- waiting for IntroductionRequest " 
+//         + "\nnode: " + protocolMgr.node
+//         + "\ncnxn: " + readCnxn
+//         + "\ngetIntroProfileRqLabel: " + introRqLabel
+//         + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//       )
+//     )
 
     protocolMgr.subscribeMessage(readCnxn, introRqLabel, {
       case ir@IntroductionRequest(sessionId, correlationId, rspCnxn, message, profileData) => {
@@ -166,17 +166,17 @@ trait IntroductionRecipientT extends Serializable {
         )
 
         val introN = IntroductionNotification(sessionId, UUID.randomUUID.toString, PortableAgentBiCnxn(readCnxn, rspCnxn), message, profileData)
-        println(
-          (
-            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-            + "\nIntroductionRecipient -- sending IntroductionNotification " 
-            + "\nnode: " + protocolMgr.node
-            + "\ncnxn: " + aliasCnxn
-            + "\nintroNLabel: " + introN.toLabel
-            + "\nIntroductionNotification: " + introN
-            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          )
-        )
+        // println(
+//           (
+//             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//             + "\nIntroductionRecipient -- sending IntroductionNotification " 
+//             + "\nnode: " + protocolMgr.node
+//             + "\ncnxn: " + aliasCnxn
+//             + "\nintroNLabel: " + introN.toLabel
+//             + "\nIntroductionNotification: " + introN
+//             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//           )
+//         )
         
         // send IntroductionNotification message
         protocolMgr.publishMessage(aliasCnxn, introN)
@@ -196,18 +196,18 @@ trait IntroductionRecipientT extends Serializable {
         
         protocolMgr.getMessage(aliasCnxn, introConfirmationLabel, {
           case ic@IntroductionConfirmation(_, _, true) => {
-            println(
-              (
-                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                + "\nIntroductionRecipient -- received IntroductionConfirmation " 
-                + "\nIntroduction confirmed " 
-                + "\nnode: " + protocolMgr.node
-                + "\ncnxn: " + aliasCnxn
-                + "\nintroRqLabel: " + introConfirmationLabel
-                + "\nIntroductionRequest: " + ic
-                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-              )
-            )
+            // println(
+//               (
+//                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                 + "\nIntroductionRecipient -- received IntroductionConfirmation " 
+//                 + "\nIntroduction confirmed " 
+//                 + "\nnode: " + protocolMgr.node
+//                 + "\ncnxn: " + aliasCnxn
+//                 + "\nintroRqLabel: " + introConfirmationLabel
+//                 + "\nIntroductionRequest: " + ic
+//                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//               )
+//             )
 
             val introRsp = IntroductionResponse(sessionId, correlationId, true, Some(UUID.randomUUID.toString))
             println(
@@ -227,16 +227,16 @@ trait IntroductionRecipientT extends Serializable {
             
             // listen for Connect message
             val connectLabel = Connect.toLabel(sessionId, introRsp.connectCorrelationId.get)
-            println(
-              (
-                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                + "\nIntroductionRecipient -- waiting for Connect " 
-                + "\nnode: " + protocolMgr.node
-                + "\ncnxn: " + readCnxn
-                + "\nconnectLabel: " + connectLabel
-                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-              )
-            )
+            // println(
+//               (
+//                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                 + "\nIntroductionRecipient -- waiting for Connect " 
+//                 + "\nnode: " + protocolMgr.node
+//                 + "\ncnxn: " + readCnxn
+//                 + "\nconnectLabel: " + connectLabel
+//                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//               )
+//             )
             
             protocolMgr.getMessage(readCnxn, connectLabel, {
               case c@Connect(_, _, false, Some(newBiCnxn)) => {
@@ -252,16 +252,16 @@ trait IntroductionRecipientT extends Serializable {
                   )
                 )
 
-                println(
-                  (
-                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                    + "\nIntroductionRecipient -- retrieving list of biCnxns " 
-                    + "\nnode: " + protocolMgr.node
-                    + "\ncnxn: " + aliasCnxn
-                    + "\nbiCnxnsListLabel: " + biCnxnsListLabel
-                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                  )
-                )
+                // println(
+//                   (
+//                     "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                     + "\nIntroductionRecipient -- retrieving list of biCnxns " 
+//                     + "\nnode: " + protocolMgr.node
+//                     + "\ncnxn: " + aliasCnxn
+//                     + "\nbiCnxnsListLabel: " + biCnxnsListLabel
+//                     + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                   )
+//                 )
 
                 def handleBiCnxnsList( prevBiCnxns : String ) : Unit = {
                   println(
@@ -284,17 +284,17 @@ trait IntroductionRecipientT extends Serializable {
                     // serialize biCnxn list
                     val newBiCnxnsStr = Serializer.serialize(newBiCnxns)
                     
-                    println(
-                      (
-                        "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                        + "\nIntroductionRecipient -- updating biCnxns list " 
-                        + "\nnode: " + protocolMgr.node
-                        + "\ncnxn: " + aliasCnxn
-                        + "\nbiCnxnsListLabel: " + biCnxnsListLabel
-                        + "\nnewBiCnxns: " + newBiCnxns
-                        + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                      )
-                    )
+                    // println(
+//                       (
+//                         "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                         + "\nIntroductionRecipient -- updating biCnxns list " 
+//                         + "\nnode: " + protocolMgr.node
+//                         + "\ncnxn: " + aliasCnxn
+//                         + "\nbiCnxnsListLabel: " + biCnxnsListLabel
+//                         + "\nnewBiCnxns: " + newBiCnxns
+//                         + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                       )
+//                     )
                     
                     // save new list of biCnxns
                     protocolMgr.put(aliasCnxn, biCnxnsListLabel, mTT.Ground(PostedExpr(newBiCnxnsStr)))
@@ -349,17 +349,17 @@ trait IntroductionRecipientT extends Serializable {
               )
             )
             val introRsp = IntroductionResponse(sessionId, correlationId, false, None)
-            println(
-              (
-                "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-                + "\nIntroductionRecipient -- sending IntroductionResponse " 
-                + "\nnode: " + protocolMgr.node
-                + "\ncnxn: " + rspCnxn
-                + "\nintroRspLabel: " + introRsp.toLabel
-                + "\nIntroductionResponse: " + introRsp
-                + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-              )
-            )
+            // println(
+//               (
+//                 "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//                 + "\nIntroductionRecipient -- sending IntroductionResponse " 
+//                 + "\nnode: " + protocolMgr.node
+//                 + "\ncnxn: " + rspCnxn
+//                 + "\nintroRspLabel: " + introRsp.toLabel
+//                 + "\nIntroductionResponse: " + introRsp
+//                 + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//               )
+//             )
             
             // send IntroductionResponse message
             protocolMgr.putMessage(rspCnxn, introRsp)

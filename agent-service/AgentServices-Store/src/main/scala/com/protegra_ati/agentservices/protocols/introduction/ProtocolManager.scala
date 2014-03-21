@@ -80,17 +80,17 @@ class ProtocolManager(val node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Pe
       val agentCnxn = toAgentCnxn(cnxn)
 
       for (e <- node.subscribe(agentCnxn)(filter)) {
-        println(
-          (
-            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-            + "\nProtocolMgr -- subscribeMessage | subscribe returned " 
-            + "\nnode: " + node
-            + "\ncnxn: " + cnxn
-            + "\nfilter: " + filter
-            + "\ne: " + e
-            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
-          )
-        )
+        // println(
+//           (
+//             "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//             + "\nProtocolMgr -- subscribeMessage | subscribe returned " 
+//             + "\nnode: " + node
+//             + "\ncnxn: " + cnxn
+//             + "\nfilter: " + filter
+//             + "\ne: " + e
+//             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+//           )
+//         )
         e match {
           // colocated 
           case Some(mTT.Ground(PostedExpr(message: ProtocolMessage))) =>
