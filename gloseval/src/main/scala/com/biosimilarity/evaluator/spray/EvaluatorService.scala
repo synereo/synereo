@@ -93,6 +93,9 @@ class CometActor extends Actor with Serializable {
   val clientTimeout = 7 seconds       // long-poll requests are closed after this much time, clients reconnect after this
   val rescheduleDuration = 5 seconds  // reschedule time for alive client which hasnt polled since last message
 
+  @transient
+  lazy val cometMapLock = new scala.concurrent.Lock()
+
   def receive = {
     case SessionPing(sessionURI, reqCtx) => synchronized {
       aliveTimers.get(sessionURI).map(_.cancel())
@@ -134,6 +137,7 @@ class CometActor extends Actor with Serializable {
     }
 
     case CometMessage(id, data) => synchronized {
+      cometMapLock.acquire()
       val set = sets.get(id).getOrElse({
         val newSet = new HashSet[String]
         sets += (id -> newSet)
@@ -147,6 +151,7 @@ class CometActor extends Actor with Serializable {
         sets -= id
         reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
       }
+      cometMapLock.release()
     }
   }
 }
