@@ -129,9 +129,9 @@ class CometActor extends Actor with Serializable {
 //       requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
 //         List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
 //       )))))
-      println( "In PollTimeout checking for a req to match id = " + id ) 
+      //println( "In PollTimeout checking for a req to match id = " + id ) 
       for( req <- requests.get( id ) ) {
-        println( "In PollTimeout about to call complete with sessionPong; req = " + req ) 
+        //println( "In PollTimeout about to call complete with sessionPong; req = " + req ) 
         req.complete(HttpResponse(entity=compact(render(
           List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
         ))))
@@ -158,8 +158,8 @@ class CometActor extends Actor with Serializable {
       })
       set += data
       val optReqCtx = requests.get(id)
-      //BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
-      println("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
+      BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
+      //println("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
       optReqCtx.map { reqCtx =>
         requests -= id
         sets -= id
@@ -285,8 +285,8 @@ trait EvaluatorService extends HttpService
                   printWriter.flush()
 
                   val stackTrace : String = writer.toString()
-                  println( "Malformed request: \n" + stackTrace )
-                  //BasicLogService.tweet( "Malformed request: \n" + stackTrace )
+                  //println( "Malformed request: \n" + stackTrace )
+                  BasicLogService.tweet( "Malformed request: \n" + stackTrace )
                   ctx.complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
                 }
               }
@@ -301,7 +301,7 @@ trait EvaluatorService extends HttpService
       get {
         parameters('whoAmI) { 
           ( whoAmI : String ) => {          
-            // println(
+//             println(
 //               (
 //                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
 //                 + "in admin/connectServers2 "
