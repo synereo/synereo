@@ -98,7 +98,7 @@ class CometActor extends Actor with Serializable {
 
   def receive = {
     case SessionPing(sessionURI, reqCtx) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       aliveTimers.get(sessionURI).map(_.cancel())
       aliveTimers += (sessionURI -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(sessionURI)))
 
@@ -121,29 +121,29 @@ class CometActor extends Actor with Serializable {
           }
         }
       }
-      cometMapLock.release()
+      //cometMapLock.release()
     }
     
     case PollTimeout(id) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
         List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
       )))))
       requests -= id
       toTimers -= id
-      cometMapLock.release()
+      //cometMapLock.release()
     }
     
     case ClientGc(id) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       requests -= id
       toTimers -= id
       aliveTimers -= id
-      cometMapLock.release()
+      //cometMapLock.release()
     }
 
     case CometMessage(id, data) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       val set = sets.get(id).getOrElse({
         val newSet = new HashSet[String]
         sets += (id -> newSet)
@@ -159,7 +159,7 @@ class CometActor extends Actor with Serializable {
         //println("calling reqCtx.complete on " + reqCtx)
         reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
       }
-      cometMapLock.release()
+      //cometMapLock.release()
     }
   }
 }
