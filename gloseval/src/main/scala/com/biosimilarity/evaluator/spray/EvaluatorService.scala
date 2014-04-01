@@ -145,8 +145,8 @@ class CometActor extends Actor with Serializable {
       })
       set += data
       val optReqCtx = requests.get(id)
-      BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
-      //println("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
+      //BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
+      println("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
       optReqCtx.map { reqCtx =>
         requests -= id
         sets -= id
@@ -250,9 +250,13 @@ trait EvaluatorService extends HttpService
                     }
                     case None => msgType match {
                       case "sessionPing" => {
-                        // println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-                        // println( "in sessionPing " )
-                        // println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+//                         println(
+//                           (
+//                             " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " 
+//                             + "in sessionPing "
+//                             + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+//                           )
+//                         )
                         val sessionURI = sessionPing(json)
                         (cometActor ! SessionPing(sessionURI, ctx))
                       }
@@ -268,8 +272,8 @@ trait EvaluatorService extends HttpService
                   printWriter.flush()
 
                   val stackTrace : String = writer.toString()
-                  //println( "Malformed request: \n" + stackTrace )
-                  BasicLogService.tweet( "Malformed request: \n" + stackTrace )
+                  println( "Malformed request: \n" + stackTrace )
+                  //BasicLogService.tweet( "Malformed request: \n" + stackTrace )
                   ctx.complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
                 }
               }

@@ -625,8 +625,8 @@ trait EvalHandler {
             List(readCnxn, aliasCnxn),
             Nil,
             {
-              //optRsrc => println( "onCommencement six | " + optRsrc )
-              optRsrc => BasicLogService.tweet( "onCommencement six | " + optRsrc )
+              optRsrc => println( "onCommencement six | " + optRsrc )
+              //optRsrc => BasicLogService.tweet( "onCommencement six | " + optRsrc )
             }
           )
           VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
@@ -764,8 +764,8 @@ trait EvalHandler {
       List(aliasCnxn),
       Nil,
       {
-        //optRsrc => println( "onCommencement one | " + optRsrc )
-        optRsrc => BasicLogService.tweet( "onCommencement one | " + optRsrc )
+        optRsrc => println( "onCommencement one | " + optRsrc )
+        //optRsrc => BasicLogService.tweet( "onCommencement one | " + optRsrc )
       }
     )
     //bFactoryMgr().commenceInstance(
@@ -775,8 +775,8 @@ trait EvalHandler {
       List( nodeToThisCnxn, aliasCnxn ),
       Nil,
       {
-        //optRsrc => println( "onCommencement two | " + optRsrc )
-        optRsrc => BasicLogService.tweet( "onCommencement two | " + optRsrc )
+        optRsrc => println( "onCommencement two | " + optRsrc )
+        //optRsrc => BasicLogService.tweet( "onCommencement two | " + optRsrc )
       }
     )
     //bFactoryMgr().commenceInstance(
@@ -786,12 +786,12 @@ trait EvalHandler {
       List( thisToNodeCnxn, nodeUserAliasCnxn ),
       Nil,
       {
-        //optRsrc => println( "onCommencement three | " + optRsrc )
-        optRsrc => BasicLogService.tweet( "onCommencement three | " + optRsrc )
+        optRsrc => println( "onCommencement three | " + optRsrc )
+        //optRsrc => BasicLogService.tweet( "onCommencement three | " + optRsrc )
       }
     )
-    //println("onAgentCreation: about to launch claimant behavior")
-    BasicLogService.tweet("onAgentCreation: about to launch claimant behavior")
+    println("onAgentCreation: about to launch claimant behavior")
+    //BasicLogService.tweet("onAgentCreation: about to launch claimant behavior")
     VerificationBehaviors().launchClaimantBehavior(
       aliasURI,
       //agentMgr().feed _
@@ -900,8 +900,8 @@ trait EvalHandler {
       val capURI = new URI("agent://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
       val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
-        BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
-        //println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
+        println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
+        //BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)        
         def handlePWMACRsp( pwmac : String ) : Unit = {
           BasicLogService.tweet ("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
           val macInstance = Mac.getInstance("HmacSHA256")
@@ -1338,8 +1338,8 @@ trait EvalHandler {
       jsonBlobLabel,
       List(agentIdCnxn),
       (optRsrc: Option[mTT.Resource]) => {
-        //println( "updateUserRequest | onGet | optRsrc: " + optRsrc )
-        BasicLogService.tweet( "updateUserRequest | onGet | optRsrc: " + optRsrc )
+        println( "updateUserRequest | onGet | optRsrc: " + optRsrc )
+        //BasicLogService.tweet( "updateUserRequest | onGet | optRsrc: " + optRsrc )
         def handlePostedStr( postedStr : String ) : Unit = {
           put(
             jsonBlobLabel,
@@ -1537,8 +1537,8 @@ trait EvalHandler {
         case "feedExpr" => {
           BasicLogService.tweet("evalSubscribeRequest | feedExpr")
           val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {            
-            BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
-            //println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
+            //BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
 
             def handleTuple( v : ConcreteHL.HLExpr ) : Unit = {
               v match {
@@ -1560,8 +1560,8 @@ trait EvalHandler {
                   }
                   val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                   val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-                  //println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
-                  BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                  println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                  //BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   val arr = parse(postedStr).asInstanceOf[JArray].arr
                   val json = compact(render(arr(0)))
                   val originalFilter = fromTermString(arr(1).asInstanceOf[JString].s).get.asInstanceOf[
@@ -1577,8 +1577,8 @@ trait EvalHandler {
                     ),
                     List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
                     postedStr,
-                    //(optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
-                    (optRsrc) => { BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
+                    (optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
+                    //(optRsrc) => { BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
                   )
                   
                   val content =
@@ -1591,8 +1591,8 @@ trait EvalHandler {
                   )) ~
                   ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-                  BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                  println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                  //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
                 }
               }                            
@@ -1603,8 +1603,8 @@ trait EvalHandler {
                 ("sessionURI" -> sessionURIStr) ~
               ("pageOfPosts" -> List[String]())
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+              println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+              //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
             }
             
@@ -1645,8 +1645,8 @@ trait EvalHandler {
                 )) ~
                 ("filter" -> jsonFilter)
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                //BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
               }
               case Bottom => {
@@ -1654,16 +1654,16 @@ trait EvalHandler {
                   ("sessionURI" -> sessionURIStr) ~
                 ("pageOfPosts" -> List[String]())
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+                //BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
               }
             }
           }
           
           val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
-            //println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
-            BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
+            println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
+            //BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
             optRsrc match {
               case None => ();
               // colocated
@@ -1678,16 +1678,16 @@ trait EvalHandler {
             }
           }
 
-          //println("evalSubscribeRequest | feedExpr: calling feed")
-          BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
+          println("evalSubscribeRequest | feedExpr: calling feed")
+          //BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
           val uid = try {
             'uid((ec \ "uid").extract[String])
           } catch {
             case _: Throwable => 'uid("UID")
           }
           for (filter <- filters) {
-            //println("evalSubscribeRequest | feedExpr: filter = " + filter)
-            BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
+            println("evalSubscribeRequest | feedExpr: filter = " + filter)
+            //BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
             //agentMgr().feed(
             feed(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))), 
@@ -1705,8 +1705,8 @@ trait EvalHandler {
         case "scoreExpr" => {
           BasicLogService.tweet("evalSubscribeRequest | scoreExpr")
           val onScore: Option[mTT.Resource] => Unit = (optRsrc) => {
-            BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
-            //println("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
+            //BasicLogService.tweet("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
+            println("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
             def handlePostedExpr( v : ConcreteHL.HLExpr ) : Unit = {
               v match {
                 case PostedExpr((PostedExpr(postedStr: String),  filter: CnxnCtxtLabel[String,String,String], cnxn, bindings)) => {
@@ -1778,9 +1778,10 @@ trait EvalHandler {
           }
         }
         case "insertContent" => {
-          //println("evalSubscribeRequest | insertContent")
-          BasicLogService.tweet("evalSubscribeRequest | insertContent")
-          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
+          println("evalSubscribeRequest | insertContent")
+          //BasicLogService.tweet("evalSubscribeRequest | insertContent")
+          println("evalSubscribeRequest | insertContent: calling post")
+          //BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
           val value = (ec \ "value").extract[String]
           val uid = 'uid(Ground((ec \ "uid").extract[String]))
 
@@ -1792,8 +1793,8 @@ trait EvalHandler {
               cnxns,
               "[" + value + ", " + compact(render(JString(toTermString(filter)))) + "]",
               (optRsrc: Option[mTT.Resource]) => {
-                //println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
-                BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+                println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
+                //BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
                 optRsrc match {
                   case None => ()
                   case Some(_) => {
@@ -1802,8 +1803,8 @@ trait EvalHandler {
                       ("sessionURI" -> sessionURIStr) ~
                       ("pageOfPosts" -> List[String]())
                     val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-                    //println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                    BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                    println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+                    //BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
                     CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
                   }
                   case _ => throw new Exception("Unrecognized resource: " + optRsrc)
@@ -1834,8 +1835,8 @@ trait EvalHandler {
 
   def connectServers( sessionId : UUID )(
     onConnection : Option[mTT.Resource] => Unit =
-      //( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-      ( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
+      ( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
+      //( optRsrc : Option[mTT.Resource] ) => { BasicLogService.tweet( "got response: " + optRsrc ) }
   ) : Unit = {
     // val pulseErql = agentMgr().adminErql( sessionId )
 //     val pulseErspl = agentMgr().adminErspl( sessionId )
@@ -1928,8 +1929,8 @@ trait EvalHandler {
                                             List(aliasCnxn),
                                             """[]""",
                                             ( optRsrc : Option[mTT.Resource] ) => {
-                                              BasicLogService.tweet("createNodeUser | onPost5: optRsrc = " + optRsrc)
-                                              //println("createNodeUser | onPost5: optRsrc = " + optRsrc)
+                                              //BasicLogService.tweet("createNodeUser | onPost5: optRsrc = " + optRsrc)
+                                              println("createNodeUser | onPost5: optRsrc = " + optRsrc)
                                               optRsrc match {
                                                 case None => ()
                                                   case Some(x) =>
@@ -1985,8 +1986,8 @@ trait EvalHandler {
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
     
-    //println("About to commenceInstance for introduction initiator")
-    BasicLogService.tweet("About to commenceInstance for introduction initiator")
+    println("About to commenceInstance for introduction initiator")
+    //BasicLogService.tweet("About to commenceInstance for introduction initiator")
     
     //bFactoryMgr().commenceInstance(
     commenceInstance(
@@ -1995,13 +1996,13 @@ trait EvalHandler {
       List( aliasCnxn ),
       Nil,
       {
-        //optRsrc => println( "onCommencement five | " + optRsrc )
-        optRsrc => BasicLogService.tweet( "onCommencement five | " + optRsrc )
+        optRsrc => println( "onCommencement five | " + optRsrc )
+        //optRsrc => BasicLogService.tweet( "onCommencement five | " + optRsrc )
       }
     )
     
-    //println("About to commenceInstance for claimant")
-    BasicLogService.tweet("About to commenceInstance for claimant")
+    println("About to commenceInstance for claimant")
+    //BasicLogService.tweet("About to commenceInstance for claimant")
 
     //VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
     VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, feed _)
@@ -2011,8 +2012,8 @@ trait EvalHandler {
     val sessionURI = (json \ "content" \ "sessionURI").extract[String]
     //agentMgr().runProcess("mongodump", None, List(), (optRsrc) => {
     runProcess("mongodump", None, List(), (optRsrc) => {
-      //println("backupRequest: optRsrc = " + optRsrc)
-      BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
+      println("backupRequest: optRsrc = " + optRsrc)
+      //BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
       CometActorMapper.cometMessage(sessionURI, compact(render(
         ("msgType" -> "backupResponse")~
         ("content" ->
@@ -2027,8 +2028,8 @@ trait EvalHandler {
     //agentMgr().runProcess("mongorestore", None, List(), (optRsrc) =>
     //{
     runProcess("mongorestore", None, List(), (optRsrc) => {
-      //println("restoreRequest: optRsrc = " + optRsrc)
-      BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
+      println("restoreRequest: optRsrc = " + optRsrc)
+      //BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
       CometActorMapper.cometMessage(sessionURI, compact(render(
         ("msgType" -> "restoreResponse")~
         ("content" ->
