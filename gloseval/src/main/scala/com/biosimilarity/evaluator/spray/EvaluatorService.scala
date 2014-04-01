@@ -98,6 +98,7 @@ class CometActor extends Actor with Serializable {
 
   def receive = {
     case SessionPing(sessionURI, reqCtx) => synchronized {
+      cometMapLock.acquire()
       aliveTimers.get(sessionURI).map(_.cancel())
       aliveTimers += (sessionURI -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(sessionURI)))
 
@@ -120,20 +121,25 @@ class CometActor extends Actor with Serializable {
           }
         }
       }
+      cometMapLock.release()
     }
     
     case PollTimeout(id) => synchronized {
+      cometMapLock.acquire()
       requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
         List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
       )))))
       requests -= id
       toTimers -= id
+      cometMapLock.release()
     }
     
     case ClientGc(id) => synchronized {
+      cometMapLock.acquire()
       requests -= id
       toTimers -= id
       aliveTimers -= id
+      cometMapLock.release()
     }
 
     case CometMessage(id, data) => synchronized {
