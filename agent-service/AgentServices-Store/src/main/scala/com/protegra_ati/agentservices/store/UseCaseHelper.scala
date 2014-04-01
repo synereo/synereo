@@ -992,7 +992,7 @@ package usage {
   with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
   with StorageManagement with CnxnString[String,String,String]
   with Serializable {
-    def insert(value: String, filter: String = "all(a(_))") = {
+    def insertAM(value: String, filter: String = "all(a(_))") = {
       agentMgr().post(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1004,7 +1004,7 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onPost: optRsrc = " + optRsrc)
       )
     }
-    def feedS(filter: String = "all(a(_))") = {
+    def feedSAM(filter: String = "all(a(_))") = {
       agentMgr().feed(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1015,7 +1015,7 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onFeed: optRsrc = " + optRsrc)
       )
     }
-    def readS(filter: String = "all(a(_))") = {
+    def readSAM(filter: String = "all(a(_))") = {
       agentMgr().read(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1029,7 +1029,7 @@ package usage {
         }
       )
     }
-    def getS(filter: String = "all(a(_))") = {
+    def getSAM(filter: String = "all(a(_))") = {
       agentMgr().get(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1040,7 +1040,7 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onGet: optRsrc = " + optRsrc)
       )
     }
-    def putS(value: String, filter: String = "all(a(_))") = {
+    def putSAM(value: String, filter: String = "all(a(_))") = {
       agentMgr().put(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1052,7 +1052,7 @@ package usage {
         (optRsrc) => BasicLogService.tweet("onPut: optRsrc = " + optRsrc)
       )
     }
-    def getPut(value: String, filter: String = "all(a(_))") = {
+    def getPutAM(value: String, filter: String = "all(a(_))") = {
       agentMgr().get(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1072,6 +1072,92 @@ package usage {
             )),
             value,
             (optRsrc) => BasicLogService.tweet("onPut: optRsrc = " + optRsrc)
+          )
+        }
+      )
+    }
+    
+    // Non-agentMgr calls
+    def insert(value: String, filter: String = "all(a(_))") = {
+      post(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        value,
+        (optRsrc) => println("onPost: optRsrc = " + optRsrc)
+      )
+    }
+    def feedS(filter: String = "all(a(_))") = {
+      feed(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => println("onFeed: optRsrc = " + optRsrc)
+      )
+    }
+    def readS(filter: String = "all(a(_))") = {
+      read(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => {
+          println("onRead: optRsrc = " + optRsrc)
+          println("onRead: optRsrc = " + optRsrc)
+        }
+      )
+    }
+    def getS(filter: String = "all(a(_))") = {
+      get(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => println("onGet: optRsrc = " + optRsrc)
+      )
+    }
+    def putS(value: String, filter: String = "all(a(_))") = {
+      put(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        value,
+        (optRsrc) => println("onPut: optRsrc = " + optRsrc)
+      )
+    }
+    def getPut(value: String, filter: String = "all(a(_))") = {
+      get(
+        fromTermString(filter).get,
+        List(PortableAgentCnxn(
+          new URI("a://b"),
+          "flat",
+          new URI("c://d")
+        )),
+        (optRsrc) => {
+          println("onGet: optRsrc = " + optRsrc)
+          BasicLogService.tweet("onGet: optRsrc = " + optRsrc)
+          agentMgr().put(
+            fromTermString(filter).get,
+            List(PortableAgentCnxn(
+              new URI("a://b"),
+              "flat",
+              new URI("c://d")
+            )),
+            value,
+            (optRsrc) => println("onPut: optRsrc = " + optRsrc)
           )
         }
       )

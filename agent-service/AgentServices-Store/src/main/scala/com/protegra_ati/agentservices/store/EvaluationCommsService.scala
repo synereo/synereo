@@ -621,10 +621,10 @@ with CnxnString[String, String, String]{
   ) : Unit = {
     deploymentMode() match {
       case Distributed => {
-        agentMgr().fetch( filter, cnxns, onFeedRslt )
+        agentMgr().feed( filter, cnxns, onFeedRslt )
       }
       case Colocated => {
-        localService().fetch(
+        localService().feed(
           filter, cnxns,
           ( optRsrc : Option[com.biosimilarity.evaluator.distribution.EvaluationService#Rsrc] ) => {
             onFeedRslt( optRsrc.asInstanceOf[Option[Rsrc]] )
