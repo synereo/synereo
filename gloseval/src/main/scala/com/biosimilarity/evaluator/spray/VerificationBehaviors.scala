@@ -87,7 +87,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       claimantLabel,
       List(pacSelfToGlos),
       Nil,
-      optRsrc => println( "onCommencement claimant: optRsrc = " + optRsrc )
+      //optRsrc => println( "onCommencement claimant: optRsrc = " + optRsrc )
+      optRsrc => BasicLogService.tweet( "onCommencement claimant: optRsrc = " + optRsrc )
     )
   }
 
@@ -159,7 +160,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       relyingPartyLabel,
       List(pacSelfToGlos, pacClaimantToSelf),
       Nil,
-      optRsrc => println( "onCommencement relyingParty: optRsrc = " + optRsrc )
+      //optRsrc => println( "onCommencement relyingParty: optRsrc = " + optRsrc )
+      optRsrc => BasicLogService.tweet( "onCommencement relyingParty: optRsrc = " + optRsrc )
     )
     //bFactoryMgr().commenceInstance(
     commenceInstance(
@@ -167,7 +169,8 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       verifierLabel,
       List(pacSelfToGlos, pacClaimantToSelf),
       Nil,
-      optRsrc => println( "onCommencement verifier: optRsrc = " + optRsrc )
+      //optRsrc => println( "onCommencement verifier: optRsrc = " + optRsrc )
+      optRsrc => BasicLogService.tweet( "onCommencement verifier: optRsrc = " + optRsrc )
     )
   }
 }

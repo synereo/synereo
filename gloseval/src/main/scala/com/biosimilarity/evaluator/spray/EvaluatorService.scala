@@ -146,9 +146,11 @@ class CometActor extends Actor with Serializable {
       set += data
       val optReqCtx = requests.get(id)
       BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
+      //println("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
       optReqCtx.map { reqCtx =>
         requests -= id
         sets -= id
+        //println("calling reqCtx.complete on " + reqCtx)
         reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
       }
       cometMapLock.release()
@@ -266,7 +268,8 @@ trait EvaluatorService extends HttpService
                   printWriter.flush()
 
                   val stackTrace : String = writer.toString()
-                  println( "Malformed request: \n" + stackTrace )
+                  //println( "Malformed request: \n" + stackTrace )
+                  BasicLogService.tweet( "Malformed request: \n" + stackTrace )
                   ctx.complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
                 }
               }
@@ -281,9 +284,20 @@ trait EvaluatorService extends HttpService
       get {
         parameters('whoAmI) { 
           ( whoAmI : String ) => {          
-            println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
-            println( "in admin/connectServers2 " )
-            println( " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " )
+            // println(
+//               (
+//                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+//                 + "in admin/connectServers2 "
+//                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+//               )
+//             )
+            BasicLogService.tweet(
+              (
+                " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                + "in admin/connectServers2 "
+                + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+              )
+            )
           
             connectServers( "evaluator-service", UUID.randomUUID )        
           
