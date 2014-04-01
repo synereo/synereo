@@ -901,6 +901,7 @@ trait EvalHandler {
     def login(cap: String): Unit = {
       val capURI = new URI("agent://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
+      val sessionURI = "agent-session://" + cap + "/" + UUID.randomUUID.toString.substring(0,8)
       val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
         //println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
         BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)        
@@ -935,7 +936,7 @@ trait EvalHandler {
                     val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
                     
                     val content = 
-                      ("sessionURI" -> ("agent-session://" + cap + "/" + UUID.randomUUID.toString.substring(0,8))) ~
+                      ("sessionURI" -> sessionURI) ~
                       ("listOfAliases" -> parse(aliasList)) ~
                       ("defaultAlias" -> defaultAlias) ~
                       ("listOfLabels" -> parse(labelList)) ~ // for default alias
@@ -992,7 +993,7 @@ trait EvalHandler {
                       ) : Unit = {
                         v match {
                           case PostedExpr( (PostedExpr(jsonBlob: String), _, _, _) ) => {
-                            CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
+                            CometActorMapper.cometMessage(sessionURI, compact(render(
                               ("msgType" -> "connectionProfileResponse") ~
                               ("content" -> (
                                 ("sessionURI" -> ("agent-session://" + cap)) ~
@@ -1002,7 +1003,7 @@ trait EvalHandler {
                             )))
                           }
                           case Bottom => {
-                            CometActorMapper.cometMessage(("agent-session://" + cap), compact(render(
+                            CometActorMapper.cometMessage(sessionURI, compact(render(
                               ("msgType" -> "connectionProfileError") ~
                               ("content" -> (
                                 ("sessionURI" -> ("agent-session://" + cap)) ~
@@ -1585,13 +1586,13 @@ trait EvalHandler {
                   
                   val content =
                     ("sessionURI" -> sessionURIStr) ~
-                  ("pageOfPosts" -> List(json)) ~
-                  ("connection" -> (
-                    ("source" -> agentCnxn.src.toString) ~
-                    ("label" -> agentCnxn.label) ~
-                    ("target" -> agentCnxn.trgt.toString)
-                  )) ~
-                  ("filter" -> jsonFilter)
+                    ("pageOfPosts" -> List(json)) ~
+                    ("connection" -> (
+                      ("source" -> agentCnxn.src.toString) ~
+                      ("label" -> agentCnxn.label) ~
+                      ("target" -> agentCnxn.trgt.toString)
+                    )) ~
+                    ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                   //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
@@ -1603,7 +1604,7 @@ trait EvalHandler {
             def handleBottom() : Unit = {
               val content = 
                 ("sessionURI" -> sessionURIStr) ~
-              ("pageOfPosts" -> List[String]())
+                ("pageOfPosts" -> List[String]())
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
@@ -1639,13 +1640,13 @@ trait EvalHandler {
                 val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
                 val content =
                   ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List(json)) ~
-                ("connection" -> (
-                  ("source" -> agentCnxn.src.toString) ~
-                  ("label" -> agentCnxn.label) ~
-                  ("target" -> agentCnxn.trgt.toString)
-                )) ~
-                ("filter" -> jsonFilter)
+                  ("pageOfPosts" -> List(json)) ~
+                  ("connection" -> (
+                    ("source" -> agentCnxn.src.toString) ~
+                    ("label" -> agentCnxn.label) ~
+                    ("target" -> agentCnxn.trgt.toString)
+                  )) ~
+                  ("filter" -> jsonFilter)
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                 //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
@@ -1654,7 +1655,7 @@ trait EvalHandler {
               case Bottom => {
                 val content = 
                   ("sessionURI" -> sessionURIStr) ~
-                ("pageOfPosts" -> List[String]())
+                  ("pageOfPosts" -> List[String]())
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                 //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
