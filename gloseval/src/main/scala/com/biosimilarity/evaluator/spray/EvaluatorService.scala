@@ -126,9 +126,16 @@ class CometActor extends Actor with Serializable {
     
     case PollTimeout(id) => synchronized {
       //cometMapLock.acquire()
-      requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
-        List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
-      )))))
+//       requests.get(id).map(_.complete(HttpResponse(entity=compact(render(
+//         List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
+//       )))))
+      println( "In PollTimeout checking for a req to match id = " + id ) 
+      for( req <- requests.get( id ) ) {
+        println( "In PollTimeout about to call complete with sessionPong; req = " + req ) 
+        req.complete(HttpResponse(entity=compact(render(
+          List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))
+        ))))
+      }
       requests -= id
       toTimers -= id
       //cometMapLock.release()
