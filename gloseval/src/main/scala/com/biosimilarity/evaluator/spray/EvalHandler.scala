@@ -445,6 +445,7 @@ trait EvalHandler {
     val cap = if (email == "") UUID.randomUUID.toString else storeCapByEmail(email)
     BasicLogService.tweet("secureSignup email="+email+", password="+password+", cap="+cap)
     val macInstance = Mac.getInstance("HmacSHA256")
+    // TODO: Pull secrets out into config file
     macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
     val mac = macInstance.doFinal(cap.getBytes("utf-8")).slice(0,5).map("%02x" format _).mkString
     val capAndMac = cap + mac
@@ -565,10 +566,10 @@ trait EvalHandler {
              ("introSessionId" -> sessionId) ~
              ("correlationId" -> correlationId) ~
              ("connection" ->
-              ("source" -> writeCnxn.src.toString) ~
-              ("label" -> writeCnxn.label) ~
-              ("target" -> writeCnxn.trgt.toString)
-            ) ~
+               ("source" -> writeCnxn.src.toString) ~
+               ("label" -> writeCnxn.label) ~
+               ("target" -> writeCnxn.trgt.toString)
+             ) ~
              ("message" -> message.getOrElse("")) ~
              ("introProfile" -> profileData)
            )
@@ -843,6 +844,7 @@ trait EvalHandler {
           tokenLabel,
           List(tokenCnxn),
           // email, password, and jsonBlob
+          // TODO: defer asking for password until after confirmaing email
           compact(render(json \ "content")),
           (optRsrc: Option[mTT.Resource]) => {
             BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
@@ -933,13 +935,13 @@ trait EvalHandler {
                     val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
                     
                     val content = 
-                      ("sessionURI" -> ("agent-session://" + cap)) ~
-                    ("listOfAliases" -> parse(aliasList)) ~
-                    ("defaultAlias" -> defaultAlias) ~
-                    ("listOfLabels" -> parse(labelList)) ~ // for default alias
-                    ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~  // for default alias
-                    ("lastActiveLabel" -> "") ~
-                    ("jsonBlob" -> parse(jsonBlob))
+                      ("sessionURI" -> ("agent-session://" + cap + "/" + UUID.randomUUID.toString.substring(0,8))) ~
+                      ("listOfAliases" -> parse(aliasList)) ~
+                      ("defaultAlias" -> defaultAlias) ~
+                      ("listOfLabels" -> parse(labelList)) ~ // for default alias
+                      ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~  // for default alias
+                      ("lastActiveLabel" -> "") ~
+                      ("jsonBlob" -> parse(jsonBlob))
                     
                     CompletionMapper.complete(key, compact(render(
                       ("msgType" -> "initializeSessionResponse") ~
