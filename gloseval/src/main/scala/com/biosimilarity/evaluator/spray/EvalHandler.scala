@@ -930,8 +930,8 @@ trait EvalHandler {
                   case PostedExpr( (PostedExpr(labelList: String), _, _, _) ) => {
                     // TODO: Replace notification block below with behavior code
                     val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
-                    listenIntroductionNotification("agent-session://" + cap, aliasCnxn)
-                    listenConnectNotification("agent-session://" + cap, aliasCnxn)
+                    listenIntroductionNotification(sessionURI, aliasCnxn)
+                    listenConnectNotification(sessionURI, aliasCnxn)
                     
                     val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
                     
@@ -996,7 +996,7 @@ trait EvalHandler {
                             CometActorMapper.cometMessage(sessionURI, compact(render(
                               ("msgType" -> "connectionProfileResponse") ~
                               ("content" -> (
-                                ("sessionURI" -> ("agent-session://" + cap)) ~
+                                ("sessionURI" -> sessionURI) ~
                                 ("connection" -> biCnxnToJObject(biCnxn)) ~
                                 ("jsonBlob" -> jsonBlob)
                               ))
@@ -1006,7 +1006,7 @@ trait EvalHandler {
                             CometActorMapper.cometMessage(sessionURI, compact(render(
                               ("msgType" -> "connectionProfileError") ~
                               ("content" -> (
-                                ("sessionURI" -> ("agent-session://" + cap)) ~
+                                ("sessionURI" -> sessionURI) ~
                                 ("connection" -> biCnxnToJObject(biCnxn)) ~
                                 ("reason" -> "Not found")
                               ))
