@@ -51,6 +51,7 @@ with EvaluationCommsService
 with EvalConfig
 with DSLCommLinkConfiguration
 with AccordionConfiguration
+with BlockChainAPI
 with Serializable {
 }
 
@@ -61,6 +62,7 @@ with EvaluationCommsService
 with EvalConfig
 with DSLCommLinkConfiguration
 with AccordionConfiguration
+with BlockChainAPI
 with Serializable {
 }
 

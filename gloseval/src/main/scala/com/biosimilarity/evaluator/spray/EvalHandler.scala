@@ -91,7 +91,7 @@ object ConfirmationEmail {
 }
 
 trait EvalHandler {
-  self : EvaluationCommsService =>
+  self : EvaluationCommsService with BlockChainAPI =>
  
   import DSLCommLink.mTT
   import ConcreteHL._
@@ -364,6 +364,9 @@ trait EvalHandler {
     )
   }
 
+  // ----------------------------------------------------------------------------------------------------------
+  // Agent signon schema
+  // ----------------------------------------------------------------------------------------------------------
   val jsonBlobLabel = fromTermString("jsonBlob(W)").getOrElse(throw new Exception("Couldn't parse jsonBlobLabel"))
   val pwmacLabel = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacLabel"))
   val emailLabel = fromTermString("email(Y)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
@@ -372,6 +375,7 @@ trait EvalHandler {
   val defaultAliasLabel = fromTermString("defaultAlias(true)").getOrElse(throw new Exception("Couldn't parse defaultAlias"))
   val labelListLabel = fromTermString("labelList(true)").getOrElse(throw new Exception("Couldn't parse labelListLabel"))
   val biCnxnsListLabel = fromTermString("biCnxnsList(true)").getOrElse(throw new Exception( "Couldn't parse biCnxnsListLabel"))
+  val btcWalletLabel = fromTermString("btc(W)").getOrElse( throw new Exception( "Couldn't parse btc(W)." ))  
 
   def confirmEmailToken(json: JValue, key: String): Unit = {
     val token = (json \ "content" \ "token").extract[String]
@@ -436,6 +440,14 @@ trait EvalHandler {
       cap
     )
     cap
+  }
+
+  def createBTCWallet(
+    capSelfCnxn : PortableAgentCnxn,
+    email: String,
+    password: String
+  ) : Unit = {
+    
   }
   
   def secureSignup(
