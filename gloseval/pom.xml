@@ -19,6 +19,7 @@
         <scala.version>2.10.0</scala.version>
         <scala.versionsuffix>2.10</scala.versionsuffix>
         <io.spray.version>1.1-M7</io.spray.version>
+        <!--io.spray.version>1.1.0</io.spray.version-->
 
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -49,10 +50,15 @@
             <url>http://repo.spray.io/</url>
         </repository>
         <repository>
-            <id>basex</id>
-            <name>BaseX Maven Repository</name>
-            <url>http://files.basex.org/maven</url>
-          </repository>
+          <id>basex</id>
+          <name>BaseX Maven Repository</name>
+          <url>http://files.basex.org/maven</url>
+        </repository>
+<!--         <repository> -->
+<!--           <id>bbc</id> -->
+<!--           <name>bigbeeconsultants</name> -->
+<!--           <url>http://repo.bigbeeconsultants.co.uk/repo</url> -->
+<!--         </repository> -->
     </repositories>
 
     <pluginRepositories>
@@ -106,16 +112,41 @@
         </dependency>
         <dependency>
             <groupId>io.spray</groupId>
+            <artifactId>spray-client</artifactId>
+            <version>${io.spray.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.spray</groupId>
+            <artifactId>spray-json_2.10</artifactId>
+            <version>1.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.spray</groupId>
             <artifactId>spray-testkit</artifactId>
             <version>${io.spray.version}</version>
         </dependency>
         
+        <!-- akka -->
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_${scala.versionsuffix}</artifactId>
             <version>2.1.0</version>
         </dependency>
+
+        <!-- dispatch -->
+        <!-- <dependency> -->
+<!--           <groupId>net.databinder</groupId> -->
+<!--           <artifactId>dispatch-http_2.10</artifactId> -->
+<!--           <version>0.8.10</version> -->
+<!--         </dependency> -->
+
+<!--         <dependency> -->
+<!--           <groupId>uk.co.bigbeeconsultants</groupId> -->
+<!--           <artifactId>bee-client_2.10</artifactId> -->
+<!--           <version>0.27.0</version> -->
+<!--         </dependency> -->
         
+        <!-- testing -->
         <dependency>
             <groupId>org.specs2</groupId>
             <artifactId>specs2_${scala.versionsuffix}</artifactId>
@@ -123,6 +154,7 @@
             <scope>test</scope>
         </dependency>
         
+        <!-- json4s -->
         <dependency>
             <groupId>org.json4s</groupId>
             <artifactId>json4s-native_${scala.versionsuffix}</artifactId>
@@ -134,12 +166,14 @@
             <version>3.2.7</version>
         </dependency>
 
+        <!-- scalaz -->
         <dependency>
             <groupId>org.scalaz</groupId>
             <artifactId>scalaz-core_${scala.versionsuffix}</artifactId>
             <version>6.0.4</version>
         </dependency>
         
+        <!-- specialK -->
         <dependency>
             <groupId>com.biosimilarity.lift</groupId>
             <artifactId>specialK</artifactId>

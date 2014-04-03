@@ -179,6 +179,8 @@ trait EvalHandler {
     (salt, md.digest)
   }
 
+  // Why is this here in an enclosing scope of EvaluationCommsService?
+  // Also why not use the EvalHandlerService?
   @transient
   object handler extends EvalConfig
     with DSLCommLinkConfiguration
@@ -394,7 +396,8 @@ trait EvalHandler {
           val email = (content \ "email").extract[String]
           val password = (content \ "password").extract[String]
           val jsonBlob = compact(render(content \ "jsonBlob"))
-          secureSignup(email, password, jsonBlob, key)
+          val createBTCWallet = (content \ "createBTCWallet").extract[Boolean]
+          secureSignup(email, password, jsonBlob, key, createBTCWallet)
         }
       }
     }
@@ -439,11 +442,12 @@ trait EvalHandler {
     email: String,
     password: String,
     jsonBlob: String,
-    key: String
+    key: String,
+    createBTCWallet : Boolean = false
   ) : Unit = {
     import DSLCommLink.mTT
     val cap = if (email == "") UUID.randomUUID.toString else storeCapByEmail(email)
-    BasicLogService.tweet("secureSignup email="+email+", password="+password+", cap="+cap)
+    BasicLogService.tweet("secureSignup email="+email+",password="+password+", cap="+cap+", createBTCWallet="+createBTCWallet)
     val macInstance = Mac.getInstance("HmacSHA256")
     // TODO: Pull secrets out into config file
     macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
@@ -458,6 +462,9 @@ trait EvalHandler {
     BasicLogService.tweet("secureSignup posting pwmac")
 
     val createUserResponse: Unit => Unit = Unit => {
+      // Make the call to BTC wallet creation
+      // emailToCap( email )@splicious.com 
+      // will be used for the BlockChain call
       CompletionMapper.complete(key, compact(render(
         ("msgType" -> "createUserResponse") ~
           ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac)))
@@ -468,7 +475,7 @@ trait EvalHandler {
       BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
-        case Some(_) => {
+        case Some(_) => {          
           onAgentCreation(
             cap,
             aliasCnxn,
@@ -500,7 +507,6 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          //agentMgr().post(
           post(
             defaultAliasLabel,
             List(capSelfCnxn),
@@ -516,7 +522,6 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          //agentMgr().post(
           post(
             aliasListLabel,
             List(capSelfCnxn),
@@ -532,7 +537,6 @@ trait EvalHandler {
       optRsrc match {
         case None => ()
         case Some(_) => {
-          //agentMgr().post(
           post(
             jsonBlobLabel,
             List(capSelfCnxn),
@@ -543,7 +547,6 @@ trait EvalHandler {
       }
     }
     
-    //agentMgr().post(
     post(
       pwmacLabel,
       List(capSelfCnxn),
@@ -699,7 +702,6 @@ trait EvalHandler {
     val biCnxn = PortableAgentBiCnxn(nodeToThisCnxn, thisToNodeCnxn)
     val nodeAgentBiCnxn = PortableAgentBiCnxn(thisToNodeCnxn, nodeToThisCnxn)
 
-    //agentMgr().post(
     post(
       biCnxnsListLabel,
       List(aliasCnxn),
@@ -709,7 +711,6 @@ trait EvalHandler {
         optRsrc match {
           case None => ()
           case Some(_) => {
-            //agentMgr().get(
             get(
               biCnxnsListLabel,
               List(nodeUserAliasCnxn),
@@ -722,7 +723,6 @@ trait EvalHandler {
                       }
                       case Bottom => List(nodeAgentBiCnxn)
                     }
-                    //agentMgr().put(
                     put(
                       biCnxnsListLabel,
                       List(nodeUserAliasCnxn),
@@ -758,7 +758,6 @@ trait EvalHandler {
     )
     
     // Launching introduction behaviors
-    //bFactoryMgr().commenceInstance(
     commenceInstance(
       introductionInitiatorCnxn,
       introductionInitiatorLabel,
@@ -769,7 +768,6 @@ trait EvalHandler {
         optRsrc => BasicLogService.tweet( "onCommencement one | " + optRsrc )
       }
     )
-    //bFactoryMgr().commenceInstance(
     commenceInstance(
       introductionRecipientCnxn,
       introductionRecipientLabel,
@@ -780,7 +778,6 @@ trait EvalHandler {
         optRsrc => BasicLogService.tweet( "onCommencement two | " + optRsrc )
       }
     )
-    //bFactoryMgr().commenceInstance(
     commenceInstance(
       introductionRecipientCnxn,
       introductionRecipientLabel,
@@ -795,19 +792,16 @@ trait EvalHandler {
     BasicLogService.tweet("onAgentCreation: about to launch claimant behavior")
     VerificationBehaviors().launchClaimantBehavior(
       aliasURI,
-      //agentMgr().feed _
       feed _
     )
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
       aliasURI,
       nodeAliasURI,
-      //agentMgr().feed _
       feed _
     )
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(
       nodeAliasURI,
       aliasURI,
-      //agentMgr().feed _
       feed _
     )
   }
@@ -822,7 +816,8 @@ trait EvalHandler {
         "",
         (json \ "content" \ "password").extract[String],
         compact(render(json \ "content" \ "jsonBlob")), 
-        key
+        key,
+        false
       )
     } else {
       // Email provided; send a confirmation email
