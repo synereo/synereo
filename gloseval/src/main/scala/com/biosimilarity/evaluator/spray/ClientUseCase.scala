@@ -49,7 +49,7 @@ package usage {
      with EvalConfig
      with DSLCommLinkConfiguration
      with AccordionConfiguration
-     with BlockChainAPI
+     with DownStreamHttpCommsT
      with Serializable
   {
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._

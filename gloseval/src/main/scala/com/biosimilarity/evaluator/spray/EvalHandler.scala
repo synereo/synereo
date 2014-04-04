@@ -91,10 +91,11 @@ object ConfirmationEmail {
 }
 
 trait EvalHandler {
-  self : EvaluationCommsService with BlockChainAPI =>
+  self : EvaluationCommsService with DownStreamHttpCommsT =>
  
   import DSLCommLink.mTT
   import ConcreteHL._
+  import BlockChainAPI._
   
   @transient
   implicit val formats = DefaultFormats
@@ -111,7 +112,7 @@ trait EvalHandler {
 
   def createAgentRequest(json: JValue, key: String): Unit = {
     try {
-      var authType = (json \ "content" \ "authType").extract[String].toLowerCase
+      val authType = (json \ "content" \ "authType").extract[String].toLowerCase
       if (authType != "password") {
         createAgentError(key, "Only password authentication is currently supported.")
       } else {
@@ -375,7 +376,9 @@ trait EvalHandler {
   val defaultAliasLabel = fromTermString("defaultAlias(true)").getOrElse(throw new Exception("Couldn't parse defaultAlias"))
   val labelListLabel = fromTermString("labelList(true)").getOrElse(throw new Exception("Couldn't parse labelListLabel"))
   val biCnxnsListLabel = fromTermString("biCnxnsList(true)").getOrElse(throw new Exception( "Couldn't parse biCnxnsListLabel"))
-  val btcWalletLabel = fromTermString("btc(W)").getOrElse( throw new Exception( "Couldn't parse btc(W)." ))  
+  val btcWalletLabel = fromTermString("btc(walletRequest(W))").getOrElse( throw new Exception( "Couldn't parse btc(W)." ))  
+  val btcWalletJSONLabel =
+    fromTermString("btc(walletData(W))").getOrElse( throw new Exception( "Couldn't parse btc( WalletRequest( W ) )." ))
 
   def confirmEmailToken(json: JValue, key: String): Unit = {
     val token = (json \ "content" \ "token").extract[String]
@@ -433,7 +436,6 @@ trait EvalHandler {
     val emailURI = new URI("emailhash://" + cap)
     val emailSelfCnxn = //new ConcreteHL.PortableAgentCnxn(emailURI, emailURI.toString, emailURI)
       PortableAgentCnxn(emailURI, "emailhash", emailURI)
-    //agentMgr().put[String](
     put[String](
       emailLabel,
       List(emailSelfCnxn),
@@ -442,12 +444,200 @@ trait EvalHandler {
     cap
   }
 
-  def createBTCWallet(
-    capSelfCnxn : PortableAgentCnxn,
+  def doCreateBTCWallet(
+    aliasCnxn : PortableAgentCnxn,
     email: String,
-    password: String
+    password: String,
+    uri : String = "https://blockchain.info/api/v2/create_wallet"
   ) : Unit = {
+    val spliciousBTCWalletCap = 
+      emailToCap( email )
+    val spliciousEmail =
+      spliciousBTCWalletCap + "@splicious.net"
+    val spliciousSaltedPwd =
+      emailToCap( spliciousBTCWalletCap + password + "@splicious.net" )
+    val cwd = CreateWalletData(
+      spliciousSaltedPwd,
+      createWalletAPICode,
+      "splicious",
+      spliciousEmail
+    )
+    val cw = CreateWallet( cwd, new java.net.URL( uri ) )
+    ask(
+      aliasCnxn,
+      btcWalletLabel,
+      cw,
+      ( optRsrc : Option[mTT.Resource] ) => println( "blockchain response: " + optRsrc )
+    )
     
+    def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+      v match {
+        case Bottom => {
+          println(
+            (
+              "*********************************************************************************"
+              + "\nwaiting for btc json data"
+              + "\naliasCnxn: " + aliasCnxn
+              + "\nbtcWalletLabel: " + btcWalletLabel
+              + "\n*********************************************************************************"
+            )
+          )
+          BasicLogService.tweet(
+            (
+              "*********************************************************************************"
+              + "\nwaiting for btc json data"
+              + "\naliasCnxn: " + aliasCnxn
+              + "\nbtcWalletLabel: " + btcWalletLabel
+              + "\n*********************************************************************************"
+            )
+          )          
+        }
+        case PostedExpr( (PostedExpr( btcWalletJsonStr : String ), _, _, _ ) ) => {
+          println(
+            (
+              "*********************************************************************************"
+              + "\nreceived btc json data"
+              + "\naliasCnxn: " + aliasCnxn
+              + "\nbtcWalletLabel: " + btcWalletLabel
+              + "\nbtcWalletJSONStr: " + btcWalletJsonStr
+              + "\nbtcWalletJSONStrFixed: " + btcWalletJsonStr.replace( "\\/", "/" ).replace( "https:","https%3a" )
+              + "\n*********************************************************************************"
+            )
+          )
+          BasicLogService.tweet(
+            (
+              "*********************************************************************************"
+              + "\nreceived btc json data"
+              + "\naliasCnxn: " + aliasCnxn
+              + "\nbtcWalletLabel: " + btcWalletLabel
+              + "\nbtcWalletJSONStr: " + btcWalletJsonStr
+              + "\nbtcWalletJSONStrFixed: " + btcWalletJsonStr.replace( "\\/", "/" )
+              + "\n*********************************************************************************"
+            )
+          )
+//           val btcWalletJsonStrFixed = btcWalletJsonStr.replace( "\\/", "/" ).replace( "https:","https%3a" )
+          //           BUGBUG : LGM -- The string is failing to parse; so, we'll
+          //           try it another way
+//           val btcWalletJson = parse( btcWalletJsonStrFixed )
+//           val btcGuid = ( btcWalletJson \ "guid" ).extract[String]
+//           val btcAddress = ( btcWalletJson \ "address" ).extract[String]
+//           val btcLink = ( btcWalletJson \ "link" ).extract[String]
+          try {
+            val btcWalletJSONPairs =
+              btcWalletJsonStr.replace( "{", "" ).replace( "}", "" ).replace( "https:", "https_" ).split( "," ).map( _.split( ":" ) )
+            val btcGuid = btcWalletJSONPairs( 0 )( 1 )
+            val btcAddress = btcWalletJSONPairs( 1 )( 1 )
+            val btcLink = btcWalletJSONPairs( 2 )( 1 ).replace( "https_", "https:" )
+
+            val btcWalletTermStr = 
+              s"""btc( wallet( guid( ${btcGuid} ), address( ${btcAddress} ), link( ${btcLink} ) ) )"""
+
+            println(
+              (
+                "*********************************************************************************"
+                + "\nreceived btc json data"
+                + "\naliasCnxn: " + aliasCnxn
+                + "\nbtcWalletLabel: " + btcWalletLabel
+                + "\nbtcWalletTermStr: " + btcWalletTermStr
+                + "\n*********************************************************************************"
+              )
+            )
+            BasicLogService.tweet(
+              (
+                "*********************************************************************************"
+                + "\nreceived btc json data"
+                + "\naliasCnxn: " + aliasCnxn
+                + "\nbtcWalletLabel: " + btcWalletLabel
+                + "\nbtcWalletTermStr: " + btcWalletTermStr
+                + "\n*********************************************************************************"
+              )
+            )
+
+            val btcWalletTerm =
+              fromTermString(
+                btcWalletTermStr
+              ).getOrElse( throw new Exception( "Couldn't parse ${btcWalletTermStr}." ) )
+
+            println(
+              (
+                "*********************************************************************************"
+                + "\nposting blockchain btc wallet data"
+                + "\naliasCnxn: " + aliasCnxn
+                + "\nbtcWalletLabel: " + btcWalletLabel
+                + "\nbtcWalletTermStr: " + btcWalletTermStr
+                + "\n*********************************************************************************"
+              )
+            )
+            BasicLogService.tweet(
+              (
+                "*********************************************************************************"
+                + "\nposting blockchain btc wallet data"
+                + "\naliasCnxn: " + aliasCnxn
+                + "\nbtcWalletLabel: " + btcWalletLabel
+                + "\nbtcWalletTermStr: " + btcWalletTermStr
+                + "\n*********************************************************************************"
+              )
+            )
+
+            post(
+              btcWalletTerm,
+              List( aliasCnxn ),
+              btcWalletJsonStr,
+              ( optRsrc : Option[mTT.Resource] ) => println( "blockchain data stored: " + optRsrc )
+            )
+          }
+          catch {
+            case e : Throwable => {
+              e.printStackTrace
+            }
+          }
+        }
+        case _ => {
+          println(
+            (
+              "*********************************************************************************"
+              + "\nunexpected btc json data format" + v
+              + "\naliasCnxn: " + aliasCnxn
+              + "\nbtcWalletLabel: " + btcWalletLabel
+              + "\n*********************************************************************************"
+            )
+          )
+          BasicLogService.tweet(
+            (
+              "*********************************************************************************"
+              + "\nunexpected btc json data format" + v
+              + "\naliasCnxn: " + aliasCnxn
+              + "\nbtcWalletLabel: " + btcWalletLabel
+              + "\n*********************************************************************************"
+            )
+          )
+          throw new Exception( "unexpected btc json data format" + v )
+        }
+      }
+    }
+
+    def onWalletData(optRsrc: Option[mTT.Resource]) : Unit = {
+      optRsrc match {
+        case None => ();
+        case Some(mTT.Ground( v )) => {
+          handleRsp( v )
+        }
+        case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
+          handleRsp( v )
+        }
+      }
+    }
+    
+    println(
+      (
+        "*********************************************************************************"
+        + "\ngetting Blockchain wallet data "
+        + "\naliasCnxn: " + aliasCnxn
+        + "\nbtcWalletLabel: " + btcWalletLabel
+        + "\n*********************************************************************************"
+      )
+    )
+    get( btcWalletLabel, List( aliasCnxn ), onWalletData )
   }
   
   def secureSignup(
@@ -474,9 +664,6 @@ trait EvalHandler {
     BasicLogService.tweet("secureSignup posting pwmac")
 
     val createUserResponse: Unit => Unit = Unit => {
-      // Make the call to BTC wallet creation
-      // emailToCap( email )@splicious.com 
-      // will be used for the BlockChain call
       CompletionMapper.complete(key, compact(render(
         ("msgType" -> "createUserResponse") ~
           ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac)))
@@ -487,7 +674,12 @@ trait EvalHandler {
       BasicLogService.tweet("secureSignup onPost4: optRsrc = " + optRsrc)
       optRsrc match {
         case None => ()
-        case Some(_) => {          
+        case Some(_) => { 
+          // Make the call to BTC wallet creation
+          // emailToCap( email )@splicious.com 
+          // will be used for the BlockChain call
+          doCreateBTCWallet( aliasCnxn, email, password )
+      
           onAgentCreation(
             cap,
             aliasCnxn,

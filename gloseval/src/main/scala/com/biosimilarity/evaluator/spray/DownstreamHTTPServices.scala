@@ -34,51 +34,57 @@ import scala.util.Success
 
 import java.net.URL
 
-case class MyObj(str:String, i:Int)
-
-object DownStreamHttpComms extends EvaluationCommsService
-     with EvalConfig
-     with DSLCommLinkConfiguration
-     with AccordionConfiguration
-     with Serializable
+trait DownStreamHttpCommsT
 {
+  self : EvaluationCommsService => 
   import DSLCommLink.mTT
-  import ConcreteHL._
-  //implicit val myObjFormat = jsonFormat2(MyObj)
+  import ConcreteHL._  
+  import BlockChainAPI._
   
-  def ask(
+  def ask[Data <: BlockChainData](
     rspCnxn : PortableAgentCnxn,
     rspLabel : CnxnCtxtLabel[String,String,String],
-    rqURL : URL,
+    rq : BlockChainCall[Data],
     onPost : Option[mTT.Resource] => Unit = {
       ( optRsrc : Option[mTT.Resource] ) => BasicLogService.tweet( "post response: " + optRsrc )
     }
   ) {
     import concurrent.ExecutionContext.Implicits._
 
-    //val obj = MyObj("hello", 1)   
-    //val req = Post("/some/url", obj) ~> addHeader("X-Foo", "bar")
-    val req = Get( rqURL.getPath ) 
-    val host = rqURL.getHost
-    val port = rqURL.getPort
+    val req = Post( rq.url.getPath, FormData( toMap( rq.data ) ) ) 
+    val host = rq.url.getHost
+    val port = 
+      if ( rq.url.getPort < 0 ) { 80 } else { rq.url.getPort }
 
     implicit val system = ActorSystem()
     val ioBridge = IOExtension(system).ioBridge()
     val httpClient = system.actorOf(Props(new HttpClient(ioBridge)))
 
     val conduit = system.actorOf(
-      //props = Props(new HttpConduit(httpClient, "localhost", 8080)),
-      //props = Props(new HttpConduit(httpClient, "ip.jsontest.com", 80)),
       props = Props(new HttpConduit(httpClient, host, port)),
       name = "http-conduit"
     )
 
     val pipeline = HttpConduit.sendReceive(conduit)
     val response: Future[HttpResponse] = pipeline(req)
+
     response onComplete{
       case Failure(ex) => ex.printStackTrace()
       case Success(resp) => {
-        post( rspLabel, List( rspCnxn ), resp, onPost )
+        val blockChainData = resp.entity.asString
+        //println( "HTTP response to " + rq.url + rq.data + " is " + resp.toString )
+        println( "Blockchain data" +  " is " + blockChainData )
+        println(
+          (
+            "*********************************************************************************"
+            + "\nputting Blockchain wallet data "
+            + "\nrspCnxn: " + rspCnxn
+            + "\nrpsLabel: " + rspLabel
+            + "\nblockChainData: " + blockChainData
+            + "\n*********************************************************************************"
+          )
+        )
+        put( rspLabel, List( rspCnxn ), blockChainData, onPost )
       }
     }
   }
