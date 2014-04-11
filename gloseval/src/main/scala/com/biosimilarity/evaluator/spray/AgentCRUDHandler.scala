@@ -1230,7 +1230,6 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     }
 
-    //agentMgr().fetch( defaultLabelStorageLocation, List( aliasStorageCnxn ), onFetch )
     fetch( defaultLabelStorageLocation, List( aliasStorageCnxn ), onFetch )
   }
   
@@ -1284,7 +1283,6 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     val sessionId = ic.sessionId
     val selfURI = aliasFromSession(new URI(sessionId))
     val pacSelfToGlos = PortableAgentCnxn(selfURI, "verificationProtocol", new URI("ui://gloseval"))
-    //agentMgr().post(
     post(
       InitiateClaim.toLabel,
       List(pacSelfToGlos),

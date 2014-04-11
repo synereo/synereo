@@ -234,6 +234,7 @@ trait EvaluatorService extends HttpService
     ("restoreRequest", restoreRequest),
     // Verifier protocol
     ("initiateClaim", initiateClaim)
+    // BTC
   )
 
   @transient
@@ -260,13 +261,6 @@ trait EvaluatorService extends HttpService
                     }
                     case None => msgType match {
                       case "sessionPing" => {
-//                         println(
-//                           (
-//                             " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " 
-//                             + "in sessionPing "
-//                             + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-//                           )
-//                         )
                         val sessionURI = sessionPing(json)
                         (cometActor ! SessionPing(sessionURI, ctx))
                       }
@@ -325,5 +319,25 @@ trait EvaluatorService extends HttpService
     } ~
     pathPrefix( "agentui" ) {
       getFromDirectory( "./agentui" )
+    } ~
+    pathPrefix( "splicious" ) {
+      getFromDirectory( "./agentui" )
+    } ~
+    pathPrefix( "splicious/btc" ) {
+      get {
+        parameters('whoAmI) { 
+          ( whoAmI : String ) => {          
+            BasicLogService.tweet(
+              (
+                " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                + "in splicious/btc "
+                + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+              )
+            )
+                    
+            (cometActor ! SessionPing("", _))
+          }
+        }
+      }
     }
 }

@@ -77,7 +77,7 @@ trait DownStreamHttpCommsT
         println(
           (
             "*********************************************************************************"
-            + "\nputting Blockchain wallet data "
+            + "\nputting Blockchain response data "
             + "\nrspCnxn: " + rspCnxn
             + "\nrpsLabel: " + rspLabel
             + "\nblockChainData: " + blockChainData

@@ -404,7 +404,14 @@ trait EvalHandler {
           val password = (content \ "password").extract[String]
           val jsonBlob = compact(render(content \ "jsonBlob"))
           val createBTCWallet = (content \ "createBTCWallet").extract[Boolean]
-          secureSignup(email, password, jsonBlob, key, createBTCWallet)
+          val btcWalletAddress = 
+            if ( !createBTCWallet ) {
+              Some( (content \ "btcWalletAddress").extract[String] )
+            }
+            else {
+              None
+            }
+          secureSignup(email, password, jsonBlob, key, btcWalletAddress)
         }
       }
     }
@@ -645,11 +652,12 @@ trait EvalHandler {
     password: String,
     jsonBlob: String,
     key: String,
-    createBTCWallet : Boolean = false
+    //createBTCWallet : Boolean = false,
+    btcWalletAddress : Option[String] = None
   ) : Unit = {
     import DSLCommLink.mTT
     val cap = if (email == "") UUID.randomUUID.toString else storeCapByEmail(email)
-    BasicLogService.tweet("secureSignup email="+email+",password="+password+", cap="+cap+", createBTCWallet="+createBTCWallet)
+    BasicLogService.tweet("secureSignup email="+email+",password="+password+", cap="+cap+", btcWalletAddress="+btcWalletAddress)
     val macInstance = Mac.getInstance("HmacSHA256")
     // TODO: Pull secrets out into config file
     macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
@@ -678,7 +686,11 @@ trait EvalHandler {
           // Make the call to BTC wallet creation
           // emailToCap( email )@splicious.com 
           // will be used for the BlockChain call
-          doCreateBTCWallet( aliasCnxn, email, password )
+          btcWalletAddress match {
+            case None => doCreateBTCWallet( aliasCnxn, email, password )
+            case Some( addr ) => {
+            }
+          }
       
           onAgentCreation(
             cap,
@@ -1021,7 +1033,8 @@ trait EvalHandler {
         (json \ "content" \ "password").extract[String],
         compact(render(json \ "content" \ "jsonBlob")), 
         key,
-        false
+        //false
+        None
       )
     } else {
       // Email provided; send a confirmation email
