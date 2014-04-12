@@ -21,12 +21,16 @@ trait BlockChainResponse
 trait BlockChainCB
 
 case class supportRequest(
+  sessionId : String,
+  correlationId : String,
   splix : Double,
   from : PortableAgentCnxn,
   to : PortableAgentCnxn
 ) extends BTCMessage with UserRequest
 
 case class receivingAddressResponse(
+  sessionId : String,
+  correlationId : String,
   inputAddress : String,
   callbackURL : String,
   feePercent : Int,
@@ -34,5 +38,7 @@ case class receivingAddressResponse(
 ) extends BTCMessage with BlockChainResponse
 
 case class paymentNotification(
+  sessionId : String,
+  correlationId : String,  
   callbackURL : String
 ) extends BTCMessage with BlockChainCB

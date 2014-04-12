@@ -539,6 +539,9 @@ trait EvalHandler {
             val btcWalletTermStr = 
               s"""btc( wallet( guid( ${btcGuid} ), address( ${btcAddress} ), link( ${btcLink} ) ) )"""
 
+            val btcWalletAddressTermStr = 
+              s"""btc( walletAddress( ${btcAddress} ) )"""
+
             println(
               (
                 "*********************************************************************************"
@@ -563,6 +566,11 @@ trait EvalHandler {
             val btcWalletTerm =
               fromTermString(
                 btcWalletTermStr
+              ).getOrElse( throw new Exception( "Couldn't parse ${btcWalletTermStr}." ) )
+
+            val btcWalletAddressTerm =
+              fromTermString(
+                btcWalletAddressTermStr
               ).getOrElse( throw new Exception( "Couldn't parse ${btcWalletTermStr}." ) )
 
             println(
@@ -591,6 +599,13 @@ trait EvalHandler {
               List( aliasCnxn ),
               btcWalletJsonStr,
               ( optRsrc : Option[mTT.Resource] ) => println( "blockchain data stored: " + optRsrc )
+            )
+
+            post(
+              btcWalletAddressTerm,
+              List( aliasCnxn ),
+              btcAddress,
+              ( optRsrc : Option[mTT.Resource] ) => println( "blockchain address stored: " + optRsrc )
             )
           }
           catch {
