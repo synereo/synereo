@@ -90,7 +90,26 @@ object ConfirmationEmail {
   }
 }
 
-trait EvalHandler {
+trait CapUtilities {
+  // Compute the mac of an email address
+  def emailToCap(email: String): String = {
+    val macInstance = Mac.getInstance("HmacSHA256")
+    macInstance.init(new SecretKeySpec("emailmac".getBytes("utf-8"), "HmacSHA256"))
+    macInstance.doFinal(email.getBytes("utf-8")).map("%02x" format _).mkString.substring(0,36)
+  }
+  def splEmail( email : String ) : String = {
+    val spliciousBTCWalletCap = 
+      emailToCap( email )
+    spliciousBTCWalletCap + "@splicious.net"
+  }
+  def pw( email : String, password : String ) : String = {
+    val spliciousEmail = splEmail( email )
+    val spliciousBTCWalletCap = spliciousEmail.split( "@" )( 0 )
+    emailToCap( spliciousBTCWalletCap + password + "@splicious.net" )
+  }
+}
+
+trait EvalHandler extends CapUtilities {
   self : EvaluationCommsService with DownStreamHttpCommsT =>
  
   import DSLCommLink.mTT
@@ -385,9 +404,6 @@ trait EvalHandler {
     val tokenUri = new URI("token://" + token)
     val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
     
-    //val (erql, erspl) = agentMgr().makePolarizedPair()
-    // TODO(mike): remove the token after it's been used
-    //agentMgr().read(tokenLabel, List(tokenCnxn), (rsrc: Option[mTT.Resource]) => {
     def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
       v match {
         case Bottom => {
@@ -429,13 +445,6 @@ trait EvalHandler {
     })
   }
   
-  // Compute the mac of an email address
-  def emailToCap(email: String): String = {
-    val macInstance = Mac.getInstance("HmacSHA256")
-    macInstance.init(new SecretKeySpec("emailmac".getBytes("utf-8"), "HmacSHA256"))
-    macInstance.doFinal(email.getBytes("utf-8")).map("%02x" format _).mkString.substring(0,36)
-  }
-
   // Given an email, mac it, then create Cnxn(mac, "emailhash", mac) and post "email(X): mac"
   // to show we know about the email.  Return the mac
   def storeCapByEmail(email: String): String = {
@@ -457,12 +466,9 @@ trait EvalHandler {
     password: String,
     uri : String = "https://blockchain.info/api/v2/create_wallet"
   ) : Unit = {
-    val spliciousBTCWalletCap = 
-      emailToCap( email )
-    val spliciousEmail =
-      spliciousBTCWalletCap + "@splicious.net"
-    val spliciousSaltedPwd =
-      emailToCap( spliciousBTCWalletCap + password + "@splicious.net" )
+    val spliciousEmail = splEmail( email )
+    //val spliciousSaltedPwd = pw( email, password )
+    val spliciousSaltedPwd = pw( email, "" )
     val cwd = CreateWalletData(
       spliciousSaltedPwd,
       createWalletAPICode,
@@ -541,6 +547,11 @@ trait EvalHandler {
 
             val btcWalletAddressTermStr = 
               s"""btc( walletAddress( ${btcAddress} ) )"""
+            
+            val cwrsp = 
+              CreateWalletResponse(
+                btcGuid, btcAddress, btcLink
+              )
 
             println(
               (
@@ -594,18 +605,18 @@ trait EvalHandler {
               )
             )
 
+//             post(
+//               btcWalletTerm,
+//               List( aliasCnxn ),
+//               btcWalletJsonStr,
+//               ( optRsrc : Option[mTT.Resource] ) => println( "blockchain data stored: " + optRsrc )
+//             )
+
             post(
               btcWalletTerm,
               List( aliasCnxn ),
-              btcWalletJsonStr,
-              ( optRsrc : Option[mTT.Resource] ) => println( "blockchain data stored: " + optRsrc )
-            )
-
-            post(
-              btcWalletAddressTerm,
-              List( aliasCnxn ),
-              btcAddress,
-              ( optRsrc : Option[mTT.Resource] ) => println( "blockchain address stored: " + optRsrc )
+              cwrsp,
+              ( optRsrc : Option[mTT.Resource] ) => println( "blockchain data reformated and stored: " + optRsrc )
             )
           }
           catch {

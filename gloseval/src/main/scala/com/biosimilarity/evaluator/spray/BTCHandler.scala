@@ -69,7 +69,7 @@ trait BTCHandlerSchema {
   import ConcreteHL._
 }
 
-trait BTCHandler extends BTCHandlerSchema {
+trait BTCHandler extends BTCHandlerSchema with CapUtilities {
   self : EvaluationCommsService with DownStreamHttpCommsT =>
  
   import DSLCommLink.mTT
@@ -77,6 +77,21 @@ trait BTCHandler extends BTCHandlerSchema {
   import BlockChainAPI._
 
   def btcReceivePaymentCallbackURL() : URL
+
+  def dispatchRsp(
+    optRsrc : Option[mTT.Resource],
+    handleRsp : ConcreteHL.HLExpr => Unit
+  ) : Unit = {      
+    optRsrc match {
+      case None => ();
+      case Some(mTT.Ground( v )) => {
+        handleRsp( v )
+      }
+      case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
+        handleRsp( v )
+      }
+    }
+  }
   
   def handleSupportRequest(
     msg : supportRequest
@@ -85,71 +100,93 @@ trait BTCHandler extends BTCHandlerSchema {
     BTCPaymentSessions += ( msg.sessionId -> BTCPaymentPending )
 
     val btcWalletQry =
-      fromTermString( s"""btc( walletAddress( Address ) )""" ).get    
+      //fromTermString( s"""btc( walletAddress( Address ) )""" ).get    
+      fromTermString(
+        s"""btc( wallet( guid( _ ), address( _ ), link( _ ) ) )"""
+      ).get
 
-    def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+    val btcReceivingAddressQry =
+      //fromTermString( s"""btc( walletAddress( Address ) )""" ).get    
+      fromTermString(
+        s"""btc( receivingAddress( sessionId( ${msg.sessionId} ) ) )"""
+      ).get
+
+    val btcOutGoingPaymentQry =
+      //fromTermString( s"""btc( walletAddress( Address ) )""" ).get    
+      fromTermString(
+        s"""btc( payment( sessionId( ${msg.sessionId} ) ) )"""
+      ).get
+    
+    def handleReceivingAddressRsp( guid : String )( v : ConcreteHL.HLExpr ) : Unit = {
       v match {
         case Bottom => {
           println(
             (
               "*********************************************************************************"
-              + "\nwaiting for btc json data"
+              + "\nwaiting for btc receiving address json data"
               + "\nmsg.to: " + msg.to
-              + "\nbtcWalletQry: " + btcWalletQry
+              + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
               + "\n*********************************************************************************"
             )
           )
           BasicLogService.tweet(
             (
               "*********************************************************************************"
-              + "\nwaiting for btc json data"
+              + "\nwaiting for btc receiving address json data"
               + "\nmsg.to: " + msg.to
-              + "\nbtcWalletQry: " + btcWalletQry
+              + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
               + "\n*********************************************************************************"
             )
           )          
         }
-        case PostedExpr( (PostedExpr( btcWalletAddress : String ), _, _, _ ) ) => {
+        case PostedExpr( (PostedExpr( receivingAddrRsp : ReceivingAddressResponse ), _, _, _ ) ) => {
           println(
             (
               "*********************************************************************************"
-              + "\nreceived btc json data"
+              + "\nreceived btc receiving address json data"
               + "\nmsg.to: " + msg.to
-              + "\nbtcWalletQry: " + btcWalletQry
-              + "\nbtcWalletAddress: " + btcWalletAddress
+              + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
+              + "\nbtcWalletAddress: " + receivingAddrRsp
               + "\n*********************************************************************************"
             )
           )
           BasicLogService.tweet(
             (
               "*********************************************************************************"
-              + "\nreceived btc json data"
+              + "\nreceived btc receiving address json data"
               + "\nmsg.to: " + msg.to
-              + "\nbtcWalletQry: " + btcWalletQry
-              + "\nbtcWalletAddress: " + btcWalletAddress
+              + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
+              + "\nbtcWalletAddress: " + receivingAddrRsp
               + "\n*********************************************************************************"
             )
           )
 
-          // create a receiving address for the recipient    
-          val crad =
-            CreateReceivingAddressData(
-              btcWalletAddress,
-              btcReceivePaymentCallbackURL().toString
+          // issue payment from the supporter
+          val mopd =
+            MakeOutgoingPaymentData(
+              pw( msg.from.toString, "" ), // BUGBUG : lgm -- this
+                                           // should be the email, or
+                                           // we should store and
+                                           // retrieve it
+              receivingAddrRsp.input_address,
+              msg.splix,
+              "", // BUGBUG : lgm -- need to get this from store
+              "a little support"
             )
-          val cra = CreateReceivingAddress( crad )
-
-          val btcReceivingAddressQry =
-            fromTermString( s"""btc( receivingAddress( Address ) )""" ).get
+          val mop =
+            MakeOutgoingPayment(
+              mopd,
+              guid
+            )
 
           ask(
-            msg.to,
-            btcReceivingAddressQry,
-            cra,
+            msg.from,
+            btcOutGoingPaymentQry,
+            mop,
             ( optRsrc : Option[mTT.Resource] ) => println( "blockchain response: " + optRsrc )
           )
-    
-          // issue payment from the supporter
+
+          // wait for response and notify ui
         }
         case _ => {
           println(
@@ -174,20 +211,108 @@ trait BTCHandler extends BTCHandlerSchema {
         }
       }
     }
-    
-    def onRead( optRsrc : Option[mTT.Resource] ) : Unit = {      
-      optRsrc match {
-        case None => ();
-        case Some(mTT.Ground( v )) => {
-          handleRsp( v )
+
+    def handleWalletRsp( v : ConcreteHL.HLExpr ) : Unit = {
+      v match {
+        case Bottom => {
+          println(
+            (
+              "*********************************************************************************"
+              + "\nwaiting for btc json data"
+              + "\nmsg.to: " + msg.to
+              + "\nbtcWalletQry: " + btcWalletQry
+              + "\n*********************************************************************************"
+            )
+          )
+          BasicLogService.tweet(
+            (
+              "*********************************************************************************"
+              + "\nwaiting for btc json data"
+              + "\nmsg.to: " + msg.to
+              + "\nbtcWalletQry: " + btcWalletQry
+              + "\n*********************************************************************************"
+            )
+          )          
         }
-        case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
-          handleRsp( v )
+        case PostedExpr( (PostedExpr( cwrsp : CreateWalletResponse ), _, _, _ ) ) => {
+          println(
+            (
+              "*********************************************************************************"
+              + "\nreceived btc json data"
+              + "\nmsg.to: " + msg.to
+              + "\nbtcWalletQry: " + btcWalletQry
+              + "\nCreateWalletResponse: " + cwrsp
+              + "\n*********************************************************************************"
+            )
+          )
+          BasicLogService.tweet(
+            (
+              "*********************************************************************************"
+              + "\nreceived btc json data"
+              + "\nmsg.to: " + msg.to
+              + "\nbtcWalletQry: " + btcWalletQry
+              + "\nCreateWalletResponse: " + cwrsp
+              + "\n*********************************************************************************"
+            )
+          )
+
+          // create a receiving address for the recipient    
+          val crad =
+            CreateReceivingAddressData(
+              cwrsp.address,
+              btcReceivePaymentCallbackURL().toString
+            )
+          val cra = CreateReceivingAddress( crad )
+
+          val btcReceivingAddressQry =
+            fromTermString( s"""btc( receivingAddress( Address ) )""" ).get
+
+          ask(
+            msg.to,
+            btcReceivingAddressQry,
+            cra,
+            ( optRsrc : Option[mTT.Resource] ) => println( "blockchain response: " + optRsrc )
+          )
+    
+          get(
+            btcReceivingAddressQry,
+            List( msg.to ), 
+            ( optRsrc : Option[mTT.Resource] ) => {
+              dispatchRsp( optRsrc, (handleReceivingAddressRsp( cwrsp.guid ) _) )
+            }
+          )
+        }
+        case _ => {
+          println(
+            (
+              "*********************************************************************************"
+              + "\nunexpected btc json data format" + v
+              + "\nmsg.to: " + msg.to
+              + "\nbtcWalletQry: " + btcWalletQry
+              + "\n*********************************************************************************"
+            )
+          )
+          BasicLogService.tweet(
+            (
+              "*********************************************************************************"
+              + "\nunexpected btc json data format" + v
+              + "\nmsg.to: " + msg.to
+              + "\nbtcWalletQry: " + btcWalletQry
+              + "\n*********************************************************************************"
+            )
+          )
+          throw new Exception( "unexpected btc json data format" + v )
         }
       }
-    }    
+    }            
 
-    read( btcWalletQry, List( msg.to ), onRead )
+    read(
+      btcWalletQry,
+      List( msg.to ),
+      ( optRsrc : Option[mTT.Resource] ) => {
+        dispatchRsp( optRsrc, handleWalletRsp )
+      }
+    )
   }
   
   def handleReceivingAddressResponse(

@@ -57,6 +57,41 @@ trait BlockChainAPIT {
       )
     }
   }
+
+  case class MakeOutgoingPaymentData( 
+    main_password : String,
+    to : String,
+    amount : Double,
+    from : String,
+    note : String
+  ) extends BlockChainData {
+    override def toString() : String = {            
+      (
+        "main_password" + "=" + main_password
+        + "&"
+        + "to" + "=" + to
+        + "&"
+        + "amount" + "=" + amount
+        + "&"
+        + "from" + "=" + from
+        + "&"
+        + "note" + "=" + note
+      )
+    }
+  }
+
+  case class CreateWalletResponse(
+    guid : String,
+    address : String,
+    link : String
+  ) extends BlockChainData
+
+  case class ReceivingAddressResponse(
+    fee_percent : Double,
+    destination : String,
+    input_address : String,
+    callback_url : String
+  ) extends BlockChainData
   
   private def getCCParams(cc: AnyRef) =
     (Map[String, String]() /: cc.getClass.getDeclaredFields)(
@@ -76,6 +111,13 @@ trait BlockChainAPIT {
     override val data : CreateReceivingAddressData,
     override val url : java.net.URL = new java.net.URL( "https://blockchain.info/api/receive" )
   ) extends BlockChainCall[CreateReceivingAddressData] {    
+  }
+
+  case class MakeOutgoingPayment( 
+    override val data : MakeOutgoingPaymentData,
+    guid : String    
+  ) extends BlockChainCall[MakeOutgoingPaymentData] {    
+    override def url : java.net.URL = new java.net.URL( s"""https://blockchain.info/merchant/${guid}/payment""" )
   }
 }
 
