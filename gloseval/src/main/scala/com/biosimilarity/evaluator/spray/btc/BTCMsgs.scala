@@ -20,7 +20,7 @@ trait UserRequest
 trait BlockChainResponse
 trait BlockChainCB
 
-case class supportRequest(
+case class issueSupportRequest(
   sessionId : String,
   correlationId : String,
   splix : Double,

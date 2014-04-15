@@ -94,7 +94,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
   }
   
   def handleSupportRequest(
-    msg : supportRequest
+    msg : issueSupportRequest
   ) : Unit = {
     // set up a handler for the callback on payment receipt
     BTCPaymentSessions += ( msg.sessionId -> BTCPaymentPending )
