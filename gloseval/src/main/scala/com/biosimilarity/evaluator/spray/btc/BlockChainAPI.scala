@@ -26,6 +26,7 @@ trait BlockChainAPIT {
   case class CreateWalletData( 
     password : String,
     api_code : String,
+    priv : String,
     label : String,
     email : String
   ) extends BlockChainData {
@@ -34,6 +35,8 @@ trait BlockChainAPIT {
         "password" + "=" + password
         + "&"
         + "api_code" + "=" + api_code
+        + "&"
+        + "priv" + "=" + priv
         + "&"
         + "label" + "=" + label
         + "&"
@@ -99,7 +102,8 @@ trait BlockChainAPIT {
     )
   def toMap( cwd : BlockChainData ) : Map[String,String] = getCCParams( cwd )
 
-  implicit val simpleCreateWalletFormat : RootJsonFormat[CreateWalletData] = jsonFormat4( CreateWalletData )
+  @transient
+  implicit val simpleCreateWalletFormat : RootJsonFormat[CreateWalletData] = jsonFormat5( CreateWalletData )
 
   case class CreateWallet( 
     override val data : CreateWalletData,

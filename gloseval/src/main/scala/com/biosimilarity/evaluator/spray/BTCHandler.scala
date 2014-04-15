@@ -53,9 +53,9 @@ import java.net.URI
 import java.net.URL
 
 trait BTCPaymentStatus
-case object BTCPaymentPending extends BTCPaymentStatus
-case object BTCPaymentComplete extends BTCPaymentStatus
-case object BTCPaymentFailed extends BTCPaymentStatus
+case object BTCPaymentPending extends BTCPaymentStatus with Serializable
+case object BTCPaymentComplete extends BTCPaymentStatus with Serializable
+case object BTCPaymentFailed extends BTCPaymentStatus with Serializable
 
 object BTCPaymentSessions extends MapProxy[String,BTCPaymentStatus] with Serializable {
   @transient

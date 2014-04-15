@@ -48,9 +48,9 @@ import java.util.UUID
 import java.net.URI
 
 // Mask the json4s symbol2jvalue implicit so we can use the PrologDSL
-object symbol2jvalue {}
+object symbol2jvalue extends Serializable {}
 
-object CompletionMapper {
+object CompletionMapper extends Serializable {
   @transient
   val map = new HashMap[String, RequestContext]()
   def complete(key: String, message: String): Unit = {
@@ -61,7 +61,7 @@ object CompletionMapper {
   }
 }
 
-object CometActorMapper {
+object CometActorMapper extends Serializable {
   @transient
   val map = new HashMap[String, akka.actor.ActorRef]()
   val key = ""
@@ -73,7 +73,7 @@ object CometActorMapper {
   }
 }
 
-object ConfirmationEmail {
+object ConfirmationEmail extends Serializable {
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
     val simple = new SimpleEmail()
@@ -145,7 +145,7 @@ trait ECDSAUtilities {
   }
 }
 
-trait EvalHandler extends CapUtilities {
+trait EvalHandler extends CapUtilities with ECDSAUtilities {
   self : EvaluationCommsService with DownStreamHttpCommsT =>
  
   import DSLCommLink.mTT
@@ -434,6 +434,8 @@ trait EvalHandler extends CapUtilities {
   val btcWalletLabel = fromTermString("btc(walletRequest(W))").getOrElse( throw new Exception( "Couldn't parse btc(W)." ))  
   val btcWalletJSONLabel =
     fromTermString("btc(walletData(W))").getOrElse( throw new Exception( "Couldn't parse btc( WalletRequest( W ) )." ))
+  val btcWIFKeyLongTermStorage =
+    fromTermString("btc(wifKey(W))").getOrElse( throw new Exception( "Couldn't parse btc( wifKey( W ) )." ))
 
   def confirmEmailToken(json: JValue, key: String): Unit = {
     val token = (json \ "content" \ "token").extract[String]
@@ -505,9 +507,23 @@ trait EvalHandler extends CapUtilities {
     val spliciousEmail = splEmail( email )
     //val spliciousSaltedPwd = pw( email, password )
     val spliciousSaltedPwd = pw( email, "" )
+    val macInstance = Mac.getInstance("HmacSHA256")
+    macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
+    val mac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+    val btcWIFKey = generateWIFKey
+    val encryptedWIFKey = generateWIFKey
+
+    post(
+      btcWIFKeyLongTermStorage,
+      List( aliasCnxn ),
+      encryptedWIFKey,
+      ( optRsrc : Option[mTT.Resource] ) => println( "WIFKey encrypted and stored: " + optRsrc )
+    )
+
     val cwd = CreateWalletData(
       spliciousSaltedPwd,
       createWalletAPICode,
+      btcWIFKey,
       "splicious",
       spliciousEmail
     )
