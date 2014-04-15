@@ -39,6 +39,8 @@ import com.typesafe.config._
 import javax.crypto._
 import javax.crypto.spec.SecretKeySpec
 import java.security._
+import java.security.KeyPair
+import java.security.PrivateKey
 
 import java.util.Date
 import java.util.UUID
@@ -106,6 +108,29 @@ trait CapUtilities {
     val spliciousEmail = splEmail( email )
     val spliciousBTCWalletCap = spliciousEmail.split( "@" )( 0 )
     emailToCap( spliciousBTCWalletCap + password + "@splicious.net" )
+  }
+}
+
+trait ECDSAUtilities {  
+  import java.security.KeyPairGenerator;
+  import java.security.PublicKey;
+  import java.security.SecureRandom;
+  import java.security.Signature;
+
+  def generateKeyPair() : KeyPair = {
+    val keyGen : KeyPairGenerator = KeyPairGenerator.getInstance("EC");
+    val random : SecureRandom = SecureRandom.getInstance("SHA1PRNG");
+    
+    keyGen.initialize(256, random);
+    
+    //pair : KeyPair = keyGen.generateKeyPair()
+    //priv : PrivateKey = pair.getPrivate()
+    //pub : PublicKey = pair.getPublic()
+    keyGen.generateKeyPair()
+  }
+  def generateWIFKey( pKey : PrivateKey ) : String = {
+    // TODO - Mike, can you take this one?
+    throw new Exception( "not yet implemented" )
   }
 }
 

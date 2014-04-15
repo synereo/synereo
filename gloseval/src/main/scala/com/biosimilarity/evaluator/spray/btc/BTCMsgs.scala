@@ -24,8 +24,7 @@ case class supportRequest(
   sessionId : String,
   correlationId : String,
   splix : Double,
-  from : PortableAgentCnxn,
-  to : PortableAgentCnxn
+  cnxn : PortableAgentCnxn
 ) extends BTCMessage with UserRequest
 
 case class receivingAddressResponse(

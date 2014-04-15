@@ -124,7 +124,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nwaiting for btc receiving address json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
               + "\n*********************************************************************************"
             )
@@ -133,7 +133,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nwaiting for btc receiving address json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
               + "\n*********************************************************************************"
             )
@@ -144,7 +144,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nreceived btc receiving address json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
               + "\nbtcWalletAddress: " + receivingAddrRsp
               + "\n*********************************************************************************"
@@ -154,7 +154,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nreceived btc receiving address json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcReceivingAddressQry: " + btcReceivingAddressQry
               + "\nbtcWalletAddress: " + receivingAddrRsp
               + "\n*********************************************************************************"
@@ -164,7 +164,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
           // issue payment from the supporter
           val mopd =
             MakeOutgoingPaymentData(
-              pw( msg.from.toString, "" ), // BUGBUG : lgm -- this
+              pw( msg.cnxn.toString, "" ), // BUGBUG : lgm -- this
                                            // should be the email, or
                                            // we should store and
                                            // retrieve it
@@ -180,7 +180,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             )
 
           ask(
-            msg.from,
+            msg.cnxn,
             btcOutGoingPaymentQry,
             mop,
             ( optRsrc : Option[mTT.Resource] ) => println( "blockchain response: " + optRsrc )
@@ -193,7 +193,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nunexpected btc json data format" + v
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\n*********************************************************************************"
             )
@@ -202,7 +202,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nunexpected btc json data format" + v
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\n*********************************************************************************"
             )
@@ -219,7 +219,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nwaiting for btc json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\n*********************************************************************************"
             )
@@ -228,7 +228,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nwaiting for btc json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\n*********************************************************************************"
             )
@@ -239,7 +239,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nreceived btc json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\nCreateWalletResponse: " + cwrsp
               + "\n*********************************************************************************"
@@ -249,7 +249,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nreceived btc json data"
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\nCreateWalletResponse: " + cwrsp
               + "\n*********************************************************************************"
@@ -268,7 +268,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             fromTermString( s"""btc( receivingAddress( Address ) )""" ).get
 
           ask(
-            msg.to,
+            msg.cnxn,
             btcReceivingAddressQry,
             cra,
             ( optRsrc : Option[mTT.Resource] ) => println( "blockchain response: " + optRsrc )
@@ -276,7 +276,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
     
           get(
             btcReceivingAddressQry,
-            List( msg.to ), 
+            List( msg.cnxn ), 
             ( optRsrc : Option[mTT.Resource] ) => {
               dispatchRsp( optRsrc, (handleReceivingAddressRsp( cwrsp.guid ) _) )
             }
@@ -287,7 +287,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nunexpected btc json data format" + v
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\n*********************************************************************************"
             )
@@ -296,7 +296,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
             (
               "*********************************************************************************"
               + "\nunexpected btc json data format" + v
-              + "\nmsg.to: " + msg.to
+              + "\nmsg.cnxn: " + msg.cnxn
               + "\nbtcWalletQry: " + btcWalletQry
               + "\n*********************************************************************************"
             )
@@ -308,7 +308,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
 
     read(
       btcWalletQry,
-      List( msg.to ),
+      List( msg.cnxn ),
       ( optRsrc : Option[mTT.Resource] ) => {
         dispatchRsp( optRsrc, handleWalletRsp )
       }
