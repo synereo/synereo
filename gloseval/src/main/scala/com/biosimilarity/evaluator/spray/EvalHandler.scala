@@ -112,25 +112,36 @@ trait CapUtilities {
 }
 
 trait ECDSAUtilities {  
-  import java.security.KeyPairGenerator;
-  import java.security.PublicKey;
-  import java.security.SecureRandom;
-  import java.security.Signature;
 
-  def generateKeyPair() : KeyPair = {
-    val keyGen : KeyPairGenerator = KeyPairGenerator.getInstance("EC");
-    val random : SecureRandom = SecureRandom.getInstance("SHA1PRNG");
+  def generateWIFKey( ) : String = {
+    import java.security.SecureRandom
+    import java.security.MessageDigest
+    import scala.math.BigInt
     
-    keyGen.initialize(256, random);
-    
-    //pair : KeyPair = keyGen.generateKeyPair()
-    //priv : PrivateKey = pair.getPrivate()
-    //pub : PublicKey = pair.getPublic()
-    keyGen.generateKeyPair()
-  }
-  def generateWIFKey( pKey : PrivateKey ) : String = {
-    // TODO - Mike, can you take this one?
-    throw new Exception( "not yet implemented" )
+    // Disable this implicit conversion so I can treat a string like an array
+    val string2jvalue = None;
+
+    val bytes = new Array[Byte](33)
+    val random = SecureRandom.getInstance("SHA1PRNG", "SUN")
+    do {
+      random.nextBytes(bytes)
+    } while (bytes(1) == 255 && bytes(2) == 255 && bytes(3) == 255 && bytes(4) == 255)
+    bytes(0) = -128
+    val sha256 = MessageDigest.getInstance("SHA-256");
+    val digest1 = sha256.digest(bytes)
+    val digest2 = sha256.digest(digest1)
+    val result = new Array[Byte](37)
+    bytes.copyToArray(result)
+    digest2.copyToArray(result, 33, 4)
+    val table = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    var big = BigInt.apply(result.map("%02x".format(_)).mkString, 16)
+    var out = ""
+    do {
+      val (b, r) = big /% 58
+      out = table(r.intValue) + out
+      big = b
+    } while (big > 0)
+    out
   }
 }
 
