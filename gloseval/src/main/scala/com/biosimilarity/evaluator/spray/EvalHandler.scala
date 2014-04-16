@@ -37,10 +37,8 @@ import scala.collection.mutable.HashMap
 import com.typesafe.config._
 
 import javax.crypto._
-import javax.crypto.spec.SecretKeySpec
+import javax.crypto.spec._
 import java.security._
-import java.security.KeyPair
-import java.security.PrivateKey
 
 import java.util.Date
 import java.util.UUID
@@ -71,6 +69,11 @@ object CometActorMapper extends Serializable {
       cometActor ! CometMessage(sessionURI, jsonBody)
     }
   }
+}
+
+object btcKeyMapper extends Serializable {
+  @transient
+  val map = new HashMap[String, String]()
 }
 
 object ConfirmationEmail extends Serializable {
@@ -111,11 +114,75 @@ trait CapUtilities {
   }
 }
 
-trait ECDSAUtilities {  
+trait BTCCryptoUtilities {  
+  import java.security.SecureRandom
+  import java.security.MessageDigest
+
+  def hexStringToByteArray(s : String) = {
+    val len = s.length();
+    var data = new Array[Byte](len / 2)
+    var i = 0
+
+    while (i < len) {
+      val b = (Character.digit(s.charAt(i), 16) << 4) +
+              (Character.digit(s.charAt(i+1), 16))
+
+      data(i / 2) = b.asInstanceOf[Byte]
+
+      i+=2
+    }
+
+    data
+  }
+
+  def generateRandomHex(): String = {
+    val result = new Array[Byte](32)
+    val random = SecureRandom.getInstance("SHA1PRNG", "SUN")
+    random.nextBytes(result)
+    result.map("%02x".format(_)).mkString
+  }
+
+  def hashSaltedPasswordTwiceWithSHA256(password: String, salt: Array[Byte]): Array[Byte] = {
+    // Hash the salted pw twice with sha256
+    val sha256 = MessageDigest.getInstance("SHA-256");
+    sha256.digest(sha256.digest(password.getBytes("UTF-8") ++ salt))
+  }
+
+  def saltedPasswordHelper(password: String, salt: Array[Byte], data: Array[Byte], mode: Int): Array[Byte] = {
+    val hash = hashSaltedPasswordTwiceWithSHA256(password, salt)
+    
+    // Create a keyspec from the hash
+    val keySpec = new SecretKeySpec(hash, "AES")
+
+    // Use a zero IV; 
+    val iv = Array[Byte](0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0)
+    val ivSpec = new IvParameterSpec(iv)
+
+    // Encrypt or decrypt the data with the pw-derived key
+    val aes = Cipher.getInstance("AES/CBC/PKCS5Padding");
+    aes.init(mode, keySpec, ivSpec);
+    aes.doFinal(data);
+  }
+
+  def encryptWithSaltedPassword(password: String, data: Array[Byte]): Array[Byte] = {
+    // Generate random 4 bytes of salt
+    val random = SecureRandom.getInstance("SHA1PRNG", "SUN")
+    val salt = new Array[Byte](4)
+    random.nextBytes(salt)
+    salt ++ saltedPasswordHelper(password, salt, data, Cipher.ENCRYPT_MODE)
+  }
+
+  def decryptWithSaltedPassword(password: String, data: Array[Byte]): Array[Byte] = {
+    // Separate salt from encrypted data
+    val salt = data.dropRight(4)
+    val encrypted = data.drop(data.length - 4)
+    
+    saltedPasswordHelper(password, salt, encrypted, Cipher.DECRYPT_MODE)
+  }
+
+
 
   def generateWIFKey( ) : String = {
-    import java.security.SecureRandom
-    import java.security.MessageDigest
     import scala.math.BigInt
     
     // Disable this implicit conversion so I can treat a string like an array
@@ -145,7 +212,7 @@ trait ECDSAUtilities {
   }
 }
 
-trait EvalHandler extends CapUtilities with ECDSAUtilities {
+trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   self : EvaluationCommsService with DownStreamHttpCommsT =>
  
   import DSLCommLink.mTT
@@ -507,17 +574,18 @@ trait EvalHandler extends CapUtilities with ECDSAUtilities {
     val spliciousEmail = splEmail( email )
     //val spliciousSaltedPwd = pw( email, password )
     val spliciousSaltedPwd = pw( email, "" )
-    val macInstance = Mac.getInstance("HmacSHA256")
-    macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
-    val mac = macInstance.doFinal(password.getBytes("utf-8")).map("%02x" format _).mkString
+    
+    // Generate wallet key
     val btcWIFKey = generateWIFKey
-    val encryptedWIFKey = generateWIFKey
+    println("doCreateBTCWallet: Generated " + btcWIFKey)
+    
+    val encryptedWIFKey = encryptWithSaltedPassword(password, btcWIFKey.getBytes("UTF-8")).map("%02x".format(_)).mkString
 
     post(
       btcWIFKeyLongTermStorage,
       List( aliasCnxn ),
       encryptedWIFKey,
-      ( optRsrc : Option[mTT.Resource] ) => println( "WIFKey encrypted and stored: " + optRsrc )
+      ( optRsrc : Option[mTT.Resource] ) => println( "WIFKey encrypted and stored: " + optRsrc + ", " + encryptedWIFKey )
     )
 
     val cwd = CreateWalletData(
@@ -710,6 +778,7 @@ trait EvalHandler extends CapUtilities with ECDSAUtilities {
         case Some(mTT.RBoundHM(Some(mTT.Ground( v )), _)) => {
           handleRsp( v )
         }
+        case _ => throw new Exception("Unexpected resource: " + optRsrc)
       }
     }
     
@@ -1187,11 +1256,14 @@ trait EvalHandler extends CapUtilities with ECDSAUtilities {
     key: String
   ) : Unit = {
     import DSLCommLink.mTT
+
+    val sessionToken = generateRandomHex()
     
     def login(cap: String): Unit = {
       val capURI = new URI("agent://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
-      val sessionURI = "agent-session://" + cap + "/" + UUID.randomUUID.toString.substring(0,8)
+      val sessionURI = "agent-session://" + cap + "/" + sessionToken
+      
       val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
         //println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
         BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)        
@@ -1222,7 +1294,47 @@ trait EvalHandler extends CapUtilities with ECDSAUtilities {
                     val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
                     listenIntroductionNotification(sessionURI, aliasCnxn)
                     listenConnectNotification(sessionURI, aliasCnxn)
-                    
+
+                    // Fetch the encrypted wallet, decrypt it with the password and
+                    // store it in memory under the sessionToken
+                    fetch(
+                      btcWIFKeyLongTermStorage,
+                      List( aliasCnxn ),
+                      ( optRsrc : Option[mTT.Resource] ) => {
+                        // Unpack encrypted key from resource
+                        def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+                          v match {
+                            case Bottom => {
+                              CompletionMapper.complete(key, compact(render(
+                                ("msgType" -> "initializeSessionError") ~
+                                ("content" -> ("reason" -> "Failed to load BTC WIF key.")) 
+                              )))
+                            }
+                            case PostedExpr( (PostedExpr( encryptedKey : String ), _, _, _) ) => {
+                              val btcWIFKey = decryptWithSaltedPassword(password, hexStringToByteArray(encryptedKey)).map(_.toChar).mkString
+                              btcKeyMapper.map += ((sessionToken, btcWIFKey))
+                              println("onLabelsFetch / fetch btc wif key: Added " + (sessionToken, btcWIFKey) + "to in-memory map")
+                            }
+                          }
+                        }
+                        optRsrc match {
+                          case None => ();
+                          case Some(mTT.Ground(v)) => {
+                            handleRsp( v ) 
+                          }
+                          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                            handleRsp( v ) 
+                          }
+                          case _ => {
+                            CompletionMapper.complete(key, compact(render(
+                              ("msgType" -> "initializeSessionError") ~
+                              ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
+                            )))
+                          }
+                        }
+                      }
+                    )
+
                     val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
                     
                     val content = 
