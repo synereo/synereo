@@ -69,7 +69,7 @@ trait BTCHandlerSchema {
   import ConcreteHL._
 
   def btcReceivePaymentCallbackURL( token : String ) : URL = {
-    throw new Exception( "Not yet implemented" )
+    new URL( "http://splicious/btc/" + token )
   }
 
   def btcPaymentSessionToken() : String = UUID.randomUUID.toString.substring(0,8)
