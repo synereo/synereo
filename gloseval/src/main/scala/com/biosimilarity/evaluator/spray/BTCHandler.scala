@@ -67,21 +67,15 @@ trait BTCHandlerSchema {
  
   import DSLCommLink.mTT
   import ConcreteHL._
-}
-
-trait BTCHandler extends BTCHandlerSchema with CapUtilities {
-  self : EvaluationCommsService with DownStreamHttpCommsT =>
- 
-  import DSLCommLink.mTT
-  import ConcreteHL._
-  import BlockChainAPI._
 
   def btcReceivePaymentCallbackURL( token : String ) : URL = {
     throw new Exception( "Not yet implemented" )
   }
 
-  def btcStoreURI( token : String ) = new URI("btc://" + token)
-  def btcStoreCnxn( tokenUri : URI ) = PortableAgentCnxn(tokenUri, "token", tokenUri)
+  def btcPaymentSessionToken() : String = UUID.randomUUID.toString.substring(0,8)
+  def btcStoreURI( token : String ) : URI = new URI("btc://" + token)
+  def btcStoreCnxn( tokenUri : URI ) : PortableAgentCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
+  def btcStoreCnxn( token : String ) : PortableAgentCnxn = btcStoreCnxn( btcStoreURI( token ) )
 
   def mkBTCPaymentSessionQuery() : CnxnCtxtLabel[String,String,String] =
     fromTermString(
@@ -102,7 +96,15 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
   ) : CnxnCtxtLabel[String,String,String] =
     fromTermString(
         s"""btc( payment( sessionId( ${sessionId} ) ) )"""
-      ).get
+      ).get  
+}
+
+trait BTCHandler extends BTCHandlerSchema with CapUtilities {
+  self : EvaluationCommsService with DownStreamHttpCommsT =>
+ 
+  import DSLCommLink.mTT
+  import ConcreteHL._
+  import BlockChainAPI._
 
   def dispatchRsp(
     optRsrc : Option[mTT.Resource],
@@ -123,8 +125,8 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
     msg : issueSupportRequest
   ) : Unit = {
     // set up a handler for the callback on payment receipt
-    val token = UUID.randomUUID.toString.substring(0,8)
-    val btcSCnxn = btcStoreCnxn( btcStoreURI( token ) ) 
+    val token = btcPaymentSessionToken
+    val btcSCnxn = btcStoreCnxn( token ) 
     val btcPaymentSessionQry = mkBTCPaymentSessionQuery
     post(
       btcPaymentSessionQry,
