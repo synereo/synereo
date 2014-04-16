@@ -76,7 +76,33 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
   import ConcreteHL._
   import BlockChainAPI._
 
-  def btcReceivePaymentCallbackURL() : URL
+  def btcReceivePaymentCallbackURL( token : String ) : URL = {
+    throw new Exception( "Not yet implemented" )
+  }
+
+  def btcStoreURI( token : String ) = new URI("btc://" + token)
+  def btcStoreCnxn( tokenUri : URI ) = PortableAgentCnxn(tokenUri, "token", tokenUri)
+
+  def mkBTCPaymentSessionQuery() : CnxnCtxtLabel[String,String,String] =
+    fromTermString(
+        s"""btc( payment( session( _ ) ) )"""
+      ).get
+  def mkBTCWalletQuery() : CnxnCtxtLabel[String,String,String] =
+    fromTermString(
+        s"""btc( wallet( guid( _ ), address( _ ), link( _ ) ) )"""
+      ).get
+  def mkBTCReceivingAddressQry(
+    sessionId : String
+  ) : CnxnCtxtLabel[String,String,String] =
+    fromTermString(
+        s"""btc( receivingAddress( sessionId( ${sessionId} ) ) )"""
+      ).get
+  def mkBTCOutgoingPaymentQry(
+    sessionId : String
+  ) : CnxnCtxtLabel[String,String,String] =
+    fromTermString(
+        s"""btc( payment( sessionId( ${sessionId} ) ) )"""
+      ).get
 
   def dispatchRsp(
     optRsrc : Option[mTT.Resource],
@@ -97,25 +123,32 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
     msg : issueSupportRequest
   ) : Unit = {
     // set up a handler for the callback on payment receipt
-    BTCPaymentSessions += ( msg.sessionId -> BTCPaymentPending )
+    val token = UUID.randomUUID.toString.substring(0,8)
+    val btcSCnxn = btcStoreCnxn( btcStoreURI( token ) ) 
+    val btcPaymentSessionQry = mkBTCPaymentSessionQuery
+    post(
+      btcPaymentSessionQry,
+      List( btcSCnxn ),
+      msg.sessionId,
+      ( optRsrc : Option[mTT.Resource] ) => println( "support session stored: " + optRsrc )
+    )
 
-    val btcWalletQry =
-      //fromTermString( s"""btc( walletAddress( Address ) )""" ).get    
-      fromTermString(
-        s"""btc( wallet( guid( _ ), address( _ ), link( _ ) ) )"""
-      ).get
+    val btcWalletQry = mkBTCWalletQuery
 
     val btcReceivingAddressQry =
-      //fromTermString( s"""btc( walletAddress( Address ) )""" ).get    
-      fromTermString(
-        s"""btc( receivingAddress( sessionId( ${msg.sessionId} ) ) )"""
-      ).get
+      mkBTCReceivingAddressQry( msg.sessionId )
 
     val btcOutGoingPaymentQry =
-      //fromTermString( s"""btc( walletAddress( Address ) )""" ).get    
-      fromTermString(
-        s"""btc( payment( sessionId( ${msg.sessionId} ) ) )"""
-      ).get
+      mkBTCOutgoingPaymentQry( msg.sessionId )
+
+    val paymentRecipientCapURI = msg.cnxn.trgt
+    val paymentProviderCapURI = msg.cnxn.src
+
+    // BUGBUG : lgm -- how to get the actual alias of both parties?
+    val paymentRecipient =
+      PortableAgentCnxn( paymentRecipientCapURI, "alias", paymentRecipientCapURI )
+    val paymentProvider =
+      PortableAgentCnxn( paymentProviderCapURI, "alias", paymentProviderCapURI )
     
     def handleReceivingAddressRsp( guid : String )( v : ConcreteHL.HLExpr ) : Unit = {
       v match {
@@ -260,7 +293,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
           val crad =
             CreateReceivingAddressData(
               cwrsp.address,
-              btcReceivePaymentCallbackURL().toString
+              btcReceivePaymentCallbackURL( token ).toString
             )
           val cra = CreateReceivingAddress( crad )
 
@@ -321,7 +354,12 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
   }
 
   def handlePaymentNotification(
-    msg : receivingAddressResponse
+    msg : paymentNotification
+  ) : Unit = {
+  }
+
+  def handleBTCResponse(
+    token : String
   ) : Unit = {
   }
 }

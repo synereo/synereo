@@ -325,8 +325,8 @@ trait EvaluatorService extends HttpService
     } ~
     pathPrefix( "splicious/btc" ) {
       get {
-        parameters('whoAmI) { 
-          ( whoAmI : String ) => {          
+        parameters('btcToken) { 
+          ( btcToken : String ) => {          
             BasicLogService.tweet(
               (
                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
@@ -334,8 +334,11 @@ trait EvaluatorService extends HttpService
                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
               )
             )
+
+            handleBTCResponse( btcToken )
                     
             (cometActor ! SessionPing("", _))
+            
           }
         }
       }
