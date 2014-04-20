@@ -53,7 +53,8 @@ class ProtocolManager(val node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, Pe
             + "\nnode: " + node
             + "\ncnxn: " + cnxn
             + "\nfilter: " + filter
-            + "\ne: " + e
+            //+ "\ne: " + e
+            + "\ne: " + "..."
             + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
           )
         )
