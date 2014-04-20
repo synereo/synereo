@@ -148,15 +148,55 @@ class CometActor extends Actor with Serializable {
 
     case CometMessage(id, data) => synchronized {
       cometMapLock.acquire()
+      val dataPrintRep =
+        if ( data.toString.length > 140 ) {
+          data.toString.substring( 0, Math.min( 140, data.toString.length ) ) + "...}"
+        } else {
+          data.toString
+        }
+
       val set = sets.get(id).getOrElse({
+        println(
+          (
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            +"\nCometMessage id miss: id = " + id
+            + ", data = " + dataPrintRep
+            + ", sets = " + sets
+            + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+          )
+        )
         val newSet = new HashSet[String]
         sets += (id -> newSet)
         newSet
-      })
+      })      
       set += data
+
+      val setsPrintRep =
+        if ( sets.toString.length > 140 ) {
+          sets.toString.substring( 0, Math.min( 140, sets.toString.length ) ) + "...}"
+        } else {
+          sets.toString
+        }
       val optReqCtx = requests.get(id)
       BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
       //println("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
+      optReqCtx match {
+        case None => {
+          println(
+            (
+              "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+              +"\nCometMessage optReqCtx miss: id = " + id
+              + ", data = " + dataPrintRep
+              + ", sets = " + setsPrintRep
+              + ", optReqCtx = " + optReqCtx
+              + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            )
+          )
+        }
+        case Some( _ ) => {
+          // nothing to do
+        }
+      }
       optReqCtx.map { reqCtx =>
         requests -= id
         sets -= id

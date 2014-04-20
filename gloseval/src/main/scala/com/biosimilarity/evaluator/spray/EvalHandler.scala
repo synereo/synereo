@@ -927,6 +927,15 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
       v match {
         case PostedExpr((PostedExpr(IntroductionNotification( sessionId, correlationId, PortableAgentBiCnxn(_, writeCnxn), message, profileData ) ), _, _, _)) => {
+          println(
+            (
+              "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+              +"\n Forwarding IntroductionNotification" 
+              + "\nsessionId = " + sessionId
+              + "\ninvoking comet actor with comet message"
+              + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            )
+          )
           CometActorMapper.cometMessage(sessionURIStr, compact(render(
             ("msgType" -> "introductionNotification") ~
             ("content" ->
@@ -948,11 +957,28 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       }
     }
 
-    read(
+    // BUGBUG : lgm -- need to cancel the subscription when the user
+    // refreshes the page. Can we just cancel all subscriptions to the
+    // IntroductionNofication on this cnxn at the top of the method
+    // and then reissue one for this session?
+    cancel(
       introNotificationLabel,
       List(aliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
-        BasicLogService.tweet("listenIntroductionNotification | onRead : optRsrc = " + optRsrc)
+        println(
+          s"""[listenIntroductionNotification | onCancel \n| cnxn : ${aliasCnxn}; \n| optRsrc = ...]""" 
+        )
+        BasicLogService.tweet("listenIntroductionNotification | onCancel : optRsrc = " + optRsrc)
+      }
+    )
+    feed(
+      introNotificationLabel,
+      List(aliasCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        println(
+          s"""[listenIntroductionNotification | onFeed \n| cnxn : ${aliasCnxn}; \n| optRsrc = ...]""" 
+        )
+        BasicLogService.tweet("listenIntroductionNotification | onFeed : optRsrc = " + optRsrc)
         optRsrc match {
           case None => ();
           // colocated
@@ -968,6 +994,14 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             handleRsp( v )
           }
           case _ => {
+            println(
+              (
+                "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+                +"\nIntroductionNotification -- error : unrecognized resource" 
+                + "\noptRsrc = " + optRsrc
+                + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+              )
+            )
             throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
           }
         }
