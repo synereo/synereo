@@ -18,7 +18,7 @@ case class PortableAgentCnxn(
   val src : URI,
   val label : String,
   val trgt : URI
-) //extends Cnxn[URI,String,URI]
+) extends Cnxn[URI,String,URI]
 
 case class PortableAgentBiCnxn( readCnxn : PortableAgentCnxn, writeCnxn : PortableAgentCnxn )
   

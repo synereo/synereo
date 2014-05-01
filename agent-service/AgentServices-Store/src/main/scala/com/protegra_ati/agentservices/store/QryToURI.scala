@@ -24,10 +24,10 @@ import java.net.URI
 case class URICnxn (
   val root : URI,
   val path : String
-) {
-  def src : URI = root
-  def label : String = path
-  def trgt : URI = root
+) extends Cnxn[URI,String,URI] {
+  override def src : URI = root
+  override def label : String = path
+  override def trgt : URI = root
 }
 
 trait LabelToPathT {
