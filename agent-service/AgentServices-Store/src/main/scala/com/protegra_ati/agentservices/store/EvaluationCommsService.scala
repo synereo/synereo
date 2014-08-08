@@ -501,6 +501,10 @@ with CnxnString[String, String, String]{
     }    
   }
 
+  // -----------------------------------------------------------------------
+  // This is where the server is imported! The server is where
+  // localService is defined.
+  // -----------------------------------------------------------------------
   import com.biosimilarity.evaluator.distribution.diesel.Server._
 
   def post[Value](

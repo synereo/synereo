@@ -1815,6 +1815,11 @@ package diesel {
     type StdEvalChannel = EvalChannel[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
 
     type ChannelBundle = ( LinkEvalRequestChannel, LinkEvalRequestChannel, StdEvalChannel )
+      
+    trait NodeClient {
+      def nodeName : String 
+      def nodeChannel : Option[DieselEngineCtor.StdEvalChannel]
+    }
 
     def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
       dataLocation : String = dslEvaluatorHostData,
@@ -2736,11 +2741,15 @@ package diesel {
             }
           }
         }
-      }
+      }      
       
-      def mkNodeEvaluator( node : String ) : EvaluationService = {
-        new EvaluationService with Serializable {
+      def mkNodeEvaluator( node : String ) : EvaluationService with NodeClient = {
+        new EvaluationService with NodeClient with Serializable {
           type Rsrc = mTT.Resource
+          override def nodeName : String = node
+          override def nodeChannel : Option[DieselEngineCtor.StdEvalChannel] = {
+            EvalNodeMapper.get( nodeName )          
+          }
           implicit def tplToRsrc(
             tpl : (Option[Rsrc], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn])
           ) : Rsrc = {
@@ -4162,10 +4171,10 @@ package diesel {
     }
 
     @transient
-    var _localService : Option[EvaluationService] = None
+    var _localService : Option[EvaluationService with DieselEngineCtor.NodeClient] = None
     def localService(
       e : DieselEngineCtor.DieselEngine = engine( Some( "eval.conf" ) )
-    ) : EvaluationService = {
+    ) : EvaluationService with DieselEngineCtor.NodeClient = {
       _localService match {
         case Some( ls ) => ls
         case None => {
