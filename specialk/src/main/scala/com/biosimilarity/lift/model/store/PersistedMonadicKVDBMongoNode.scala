@@ -69,7 +69,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
   @transient
   val Scribbler = new
-  com.biosimilarity.lift.model.store.scribble.Scribble[mTT.Resource] {
+  com.biosimilarity.lift.model.store.scribble.Scribble[mTT.Resource]
+  with Serializable {
   }
   //type PersistedKVDBNodeRequest = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeRequest
   //type PersistedKVDBNodeResponse = MonadicKVDBNodeScope[Namespace,Var,Tag,Value]#KVDBNodeResponse
