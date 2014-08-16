@@ -108,7 +108,7 @@ extends MonadicGenerators with PrologMgr {
     }
   } 
 
-  object RBound {
+  object RBound extends Serializable {
     def apply(
       rsrc : Option[Resource], soln : Option[Solution[Object]]
     ) : RBound = {
@@ -169,6 +169,7 @@ extends MonadicGenerators with PrologMgr {
        extends CnxnUnificationTermQuery[Namespace,Var,Tag]
        with CnxnConversions[Namespace,Var,Tag]
        with UUIDOps
+       with Serializable
   implicit def cnxnTool : CnxnUnificationTermQuery[Namespace,Var,Tag] = {
     theCnxnTool
   }

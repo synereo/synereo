@@ -266,7 +266,7 @@ extends CnxnConcreteToAbstractSyntax[Namespace,Var,Tag] {
   case class Identity[T]( ) extends Function1[T,T] {
     override def apply( t : T ) = t
   }
-  object idS extends Identity[String]
+  object idS extends Identity[String] with Serializable
   object CnxnStrZipr
   extends CnxnNavigation[String,String,String]
   with CnxnMutation[String,String,String]
@@ -1154,7 +1154,7 @@ trait CnxnConversionScope[Namespace,Var,Tag] {
 }
 
 object CnxnConversionStringScope
-   extends CnxnConversionScope[String,String,String]
+   extends CnxnConversionScope[String,String,String] with Serializable
 {
   override type CnxnConversionType =
     CnxnXML[String,String,String]
@@ -1166,6 +1166,7 @@ object CnxnConversionStringScope
       with CnxnCtxtInjector[String,String,String]
       with Blobify 
       with UUIDOps
+      with Serializable
   override def protoCnxnConversions = theCnxnConversions
 
   def l2ns( s : String ) = {

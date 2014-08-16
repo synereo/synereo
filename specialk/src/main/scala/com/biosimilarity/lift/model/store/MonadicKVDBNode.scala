@@ -147,7 +147,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     }
   }
 
-  object BaseMonadicKVDB {
+  object BaseMonadicKVDB extends Serializable {
     def apply [ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse, Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]]( name : Moniker ) : BaseMonadicKVDB[ReqBody,RspBody,Node] = {
       new BaseMonadicKVDB[ReqBody,RspBody,Node]( name )
     }
@@ -629,7 +629,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
     } 
   }
 
-  object BaseMonadicKVDBNode {
+  object BaseMonadicKVDBNode extends Serializable {
     def apply [ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse,Node[Rq <: ReqBody, Rs <: RspBody] <: BaseMonadicKVDBNode[Rq,Rs,Node]] ( cache : BaseMonadicKVDB[ReqBody,RspBody,Node], acquaintances : List[Moniker] ) : BaseMonadicKVDBNode[ReqBody,RspBody,Node] = {
       new BaseMonadicKVDBNode[ReqBody,RspBody,Node]( cache, acquaintances )
     }
@@ -654,6 +654,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
   object KVDBNodeFactory
     extends AMQPURIOps
     with ThreadPoolRunnersX
+       with Serializable
     //with FJTaskRunnersX
   {
     def ptToPt[ReqBody <: KVDBNodeRequest, RspBody <: KVDBNodeResponse]( here : URI, there : URI ) : MonadicKVDBNode[ReqBody,RspBody] = {
@@ -694,6 +695,7 @@ package usage {
   object MonadicKVDBNet
        extends MonadicKVDBNodeScope[String,String,String,Double]
        with UUIDOps
+       with Serializable
   {
     import SpecialKURIDefaults._
     import identityConversions._
@@ -744,7 +746,7 @@ package usage {
     override def protoRsrcMsgs : RsrcMsgTypes = MonadicDRsrcMsgs
   }
   
-  object MolecularUseCase {
+  object MolecularUseCase extends Serializable {
     import MonadicKVDBNet._
     import KVDBNodeFactory._
 
@@ -787,7 +789,7 @@ package usage {
       }
     }
 
-    object KinaseSpecifications {
+    object KinaseSpecifications extends Serializable {
       import scala.math._
       
       trait Kinase {

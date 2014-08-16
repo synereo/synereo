@@ -123,7 +123,7 @@ class KeyKUnifySpaceLock[Namespace,Var,Tag,RK](
        }
      }
 
-object KeyKUnifySpaceLock {
+object KeyKUnifySpaceLock extends Serializable {
   import scala.reflect.runtime.universe._
   def apply [Namespace,Var,Tag,RK] (
     locker : HashMap[ModeSpaceLock[RK,CnxnCtxtLabel[Namespace,Var,Tag]]#ModeType,Int],
@@ -151,9 +151,9 @@ package unify.space.lock.usage {
   import fuzzer._  
   object TheFuzz extends FuzzyTermStreams
     with CnxnString[String,String,String]
-    with FuzzyTerms with FuzzyStreams {
+    with FuzzyTerms with FuzzyStreams with Serializable {
   }
-  object ExerciseSpaceLock {
+  object ExerciseSpaceLock extends Serializable {
     import TheFuzz._
     type RK = Option[CnxnCtxtLabel[String,String,String]] => Unit @suspendable  
     case class Warlock( 

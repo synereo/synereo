@@ -25,7 +25,7 @@ trait RetentionPolicy extends Serializable
 trait RetainInCache extends RetentionPolicy
 trait RetainInStore extends RetentionPolicy
 trait Subscription extends RetentionPolicy
-case object DoNotRetain extends RetentionPolicy 
+case object DoNotRetain extends RetentionPolicy
 case object Cache extends RetainInCache 
 case object Store extends RetainInStore 
 case object CacheAndStore extends RetainInCache with RetainInStore
@@ -187,7 +187,7 @@ class SpaceLock[RK](
   }
 }
 
-object SpaceLock {
+object SpaceLock extends Serializable {
   def apply [RK] (
     readingRoom : HashMap[RK,Boolean],
     writingRoom : Buffer[Int],
@@ -1084,6 +1084,7 @@ object MonadicRegexTSpace
        extends MonadicTupleSpace[String,String,String]
        with WireTap
        with ConfigurationTrampoline
+       with Serializable
 {
 
   override type Substitution = IdentitySubstitution

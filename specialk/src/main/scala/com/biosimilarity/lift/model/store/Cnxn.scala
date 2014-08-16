@@ -47,7 +47,7 @@ with Factual {
   override def self = List( Left( tag ) )
 }
 
-object CnxnLeaf {
+object CnxnLeaf extends Serializable {
   def unapply[Namespace,Tag](
     cnxnLeaf : CnxnLeaf[Namespace,Tag]
   ) : Option[( Tag )] = {
@@ -81,7 +81,7 @@ with Factual {
   }
 }
 
-object CnxnBranch {
+object CnxnBranch extends Serializable {
   def unapply[Namespace,Tag](
     cnxnBranch : CnxnBranch[Namespace,Tag]
   ) : Option[( Namespace, List[CnxnLabel[Namespace,Tag]] )] = {
@@ -172,7 +172,7 @@ with Factual {
   }
 }
 
-object CnxnCtxtLeaf {
+object CnxnCtxtLeaf extends Serializable {
   def unapply[Namespace,Var,Tag](
     cnxnCtxtLeaf : CnxnCtxtLeaf[Namespace,Var,Tag]
   ) : Option[( Either[Tag,Var] )] = {
@@ -272,7 +272,7 @@ with Factual {
 //   }
 // }
 
-object CnxnCtxtBranch {
+object CnxnCtxtBranch extends Serializable {
   def unapply[Namespace,Var,Tag](
     cnxnCtxtBranch : CnxnCtxtBranch[Namespace,Var,Tag]
   ) : Option[
@@ -335,7 +335,7 @@ class CCnxn[Src,+Label,Trgt](
   override val trgt : Trgt
 ) extends Cnxn[Src,Label,Trgt]
 
-object CCnxn {
+object CCnxn extends Serializable {
   def apply[Src,Label,Trgt](
     src : Src, lbl : Label, trgt : Trgt 
   ) : CCnxn[Src,Label,Trgt] = {

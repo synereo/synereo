@@ -527,7 +527,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}    	
       }
 
-      object XMLDBManifest {
+      object XMLDBManifest extends Serializable {
 	def unapply(
 	  ed : XMLDBManifest
 	) : Option[( Database )] = {
@@ -1721,7 +1721,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}	
       }
 
-      object BasePersistedMonadicKVDB {
+      object BasePersistedMonadicKVDB extends Serializable {
 	def apply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] ( 
 	  name : Moniker
 	) : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode] = {
@@ -2123,7 +2123,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		 
       }
 
-      object BasePersistedMonadicKVDBNode {
+      object BasePersistedMonadicKVDBNode extends Serializable {
 	def apply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] ( 
 	  cache : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode],
 	  acquaintances : List[Moniker]

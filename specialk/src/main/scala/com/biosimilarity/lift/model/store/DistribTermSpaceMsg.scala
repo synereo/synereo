@@ -143,6 +143,7 @@ package usage {
   object MonadicStringDMsgs
        extends DTSMSH[String,String,String,String]
        with UUIDOps
+       with Serializable
   {
     import identityConversions._
     

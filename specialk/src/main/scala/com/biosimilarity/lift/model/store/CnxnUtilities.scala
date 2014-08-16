@@ -17,6 +17,7 @@ extends CnxnXQuery[String,String,String]
  with CnxnCtxtInjector[String,String,String]
  with Blobify
  with UUIDOps
+ with Serializable
 {
   val leavesOfConstance =
     List( "a", "b", "c", "d", "e" ).map( new CnxnLeaf[String,String]( _ ) )

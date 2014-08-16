@@ -18,6 +18,7 @@ extends CnxnUnificationTermQuery[String,String,String]
 with CnxnCtxtInjector[String,String,String]
 with CnxnConversions[String,String,String]
 with UUIDOps
+with Serializable
 {
   def prover = getProver()
 

@@ -490,7 +490,7 @@ trait JSONIfy[Namespace,Var,Tag] {
     }
   }
 
-  object CCLStringConversions {
+  object CCLStringConversions extends Serializable {
     implicit def toConverter( s : String ) : CCLStringConversionsWrapper =
       CCLStringConversionsWrapper( s )
     def apply( s : String ) : CCLStringConversionsWrapper =
@@ -516,7 +516,7 @@ trait JSONIfy[Namespace,Var,Tag] {
   }
 
   object CCLConversions
-       extends CnxnStringDefaults[Namespace,Var,Tag] {
+       extends CnxnStringDefaults[Namespace,Var,Tag] with Serializable {
     implicit def toConverter(
       ccl : CnxnCtxtLabel[Namespace,Var,Tag]
     ) : CCLConversionsWrapper =
@@ -533,8 +533,8 @@ trait JSONIfy[Namespace,Var,Tag] {
 }
 
 package usage {
-  object MyCnxnMongoQuery extends JSONIfy[String,String,String] {    
-    object MyCCLConversions {
+  object MyCnxnMongoQuery extends JSONIfy[String,String,String] with Serializable {    
+    object MyCCLConversions extends Serializable {
       implicit def toConverter(
 	ccl : CnxnCtxtLabel[String,String,String]
       ) : CCLConversionsWrapper =
@@ -549,7 +549,7 @@ package usage {
 	)
     }
   }
-  object MyCnxnMongoData {
+  object MyCnxnMongoData extends Serializable {
     import MyCnxnMongoQuery._
     val ccl1 : CnxnCtxtLabel[String,String,String] =
       CCLStringConversions( "t1( a( 1 ), b( \"a string is born\" ), c( true ) )" ).toCCL()

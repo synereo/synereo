@@ -218,7 +218,7 @@ extends DTSMsgScope[Namespace,Var,Tag,Value]
     }
   }
 
-  object SMAJATwistedPair {
+  object SMAJATwistedPair extends Serializable {
     def apply (
       srcURI : Moniker, trgtURI : Moniker
     ) : SMAJATwistedPair = {

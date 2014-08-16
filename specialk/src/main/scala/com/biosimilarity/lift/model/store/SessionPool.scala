@@ -70,7 +70,7 @@ trait SessionURIConversionsT {
   }
 }
 
-object SessionURIConversions extends SessionURIConversionsT 
+object SessionURIConversions extends SessionURIConversionsT with Serializable
 
 trait SessionMapAbstractionsT[ClientSession <: {def close() : Unit}] {
   import scala.collection.JavaConversions._
@@ -130,7 +130,7 @@ trait SessionMapAbstractionsT[ClientSession <: {def close() : Unit}] {
     user : String, pwd : String
   ) : PoolableClientSessionFactory 
 
-  object PoolableClientSessionFactory {
+  object PoolableClientSessionFactory extends Serializable {
     def apply(
       host : String, port : Int,
       user : String, pwd : String

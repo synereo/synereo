@@ -617,8 +617,8 @@ package usage {
   import java.util.UUID
   object CnxnCtxtLabelMatcher
     extends CnxnUnificationTermQuery[String,String,String]
-    with CnxnConversions[String,String,String] with UUIDOps
-  object LabelStream {
+    with CnxnConversions[String,String,String] with UUIDOps with Serializable
+  object LabelStream extends Serializable {
     def tStream[T]( seed : T )( fresh : T => T ) : Stream[T] = {
       lazy val loopStrm : Stream[T] =
 	( List( seed ) ).toStream append ( loopStrm map fresh );

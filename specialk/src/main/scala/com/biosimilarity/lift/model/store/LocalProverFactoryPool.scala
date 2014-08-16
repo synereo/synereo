@@ -2,7 +2,7 @@ package com.biosimilarity.lift.model.store
 
 import org.prolog4j.{ProverFactory, Prover}
 
-object LocalProverFactoryPool {
+object LocalProverFactoryPool extends Serializable {
   import org.apache.commons.pool.BasePoolableObjectFactory
   import org.apache.commons.pool.impl.GenericObjectPool
 

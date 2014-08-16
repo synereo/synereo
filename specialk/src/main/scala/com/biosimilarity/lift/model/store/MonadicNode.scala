@@ -393,7 +393,7 @@ class MonadicJSONFramedMsgDispatcher[ReqBody,RspBody](
   }
 }
 
-object MonadicJSONFramedMsgDispatcher {
+object MonadicJSONFramedMsgDispatcher extends Serializable {
   def apply [ReqBody,RspBody] (
     individuality : Individual[ReqBody,RspBody,MonadicJSONFramedMsgDispatcher],
     acquaintances : List[Moniker]
@@ -417,10 +417,10 @@ object MonadicJSONFramedMsgDispatcher {
 
 package usage {
   import com.biosimilarity.lift.lib.amqp.utilities._
-  object MsgStreamFactory extends AMQPTestUtility[String] {
+  object MsgStreamFactory extends AMQPTestUtility[String] with Serializable {
     override def msgStreamPayload( idx : Int ) : String = { "Msg" + idx }  
   }
-  object FramedMsgDispatcherUseCase {
+  object FramedMsgDispatcherUseCase extends Serializable {
     trait UseCaseProtocol extends MsgStreamFactory.Message
     trait UseCaseRequest extends UseCaseProtocol
     trait UseCaseResponse extends UseCaseProtocol

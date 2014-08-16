@@ -2001,7 +2001,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	}	
       }
 
-      object BasePersistedMonadicKVDB {
+      object BasePersistedMonadicKVDB extends Serializable {
 	def apply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] ( 
 	  name : Moniker
 	) : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode] = {
@@ -2415,7 +2415,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		 
       }
 
-      object BasePersistedMonadicKVDBNode {
+      object BasePersistedMonadicKVDBNode extends Serializable {
 	def apply [ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse,KVDBNode[Rq <: ReqBody, Rs <: RspBody] <: BasePersistedMonadicKVDBNode[Rq,Rs,KVDBNode]] ( 
 	  cache : BasePersistedMonadicKVDB[ReqBody,RspBody,KVDBNode],
 	  acquaintances : List[Moniker]
@@ -3460,7 +3460,7 @@ package usage {
     import scala.util.continuations._
     import scala.concurrent.{Channel=>Chan, _}
 
-    object ExerciseMongo {
+    object ExerciseMongo extends Serializable {
       import PersistedMonadicKVDBMongoNet._   
       import Being._
       import PersistedMongoMolecularUseCase._
@@ -3518,7 +3518,7 @@ package usage {
     }
 
     object TermTest
-    extends CnxnString[String,String,String] {
+    extends CnxnString[String,String,String] with Serializable {
       import PersistedMonadicKVDBMongoNet._   
       import Being._
       import ExerciseMongo._
@@ -3552,7 +3552,7 @@ package usage {
       }      
     }
     
-    object MongoDetails {
+    object MongoDetails extends Serializable {
       import ExerciseMongo._
       import com.biosimilarity.lift.model.store.mongo._
       val clntSess1 = node1.cache.client

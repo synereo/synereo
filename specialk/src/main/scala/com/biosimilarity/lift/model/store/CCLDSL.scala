@@ -14,7 +14,7 @@ import com.biosimilarity.lift.lib.moniker._
 import scala.collection.SeqProxy
 import java.net.URI
 
-object CCLDSL {    
+object CCLDSL extends Serializable {    
   trait StdCnxnCtxtLabel {
     self : CnxnCtxtLabel[Symbol,Symbol,Any] =>
   }
@@ -65,5 +65,6 @@ object CCLDSLCXQ extends CnxnXQuery[Symbol,Symbol,Any]
  with CnxnCtxtInjector[Symbol,Symbol,Any]
  with UUIDOps
  with Blobify
- with CnxnXML[Symbol,Symbol,Any] {
+ with CnxnXML[Symbol,Symbol,Any] 
+ with Serializable {
  }
