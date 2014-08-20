@@ -149,7 +149,9 @@ with MapProxy[String,ReflectiveSurfaceT#Specimen]
   }
 }
 
-object ExternalConditions extends ExternalConditionsT
+object ExternalConditions extends ExternalConditionsT {
+  toolBox()
+}
 
 package external.conditions.usage {
   trait Looky[N] {
