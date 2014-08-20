@@ -21,6 +21,8 @@ import net.liftweb.amqp._
 import scala.util.continuations._ 
 import scala.concurrent.{Channel => Chan, _}
 //import scala.concurrent.cpsops._
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 import scala.xml._
 import scala.collection.mutable.Map
 import scala.collection.mutable.MapProxy

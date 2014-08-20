@@ -37,7 +37,9 @@ package usage {
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 
   import com.biosimilarity.lift.model.store.CnxnString
-  import scala.concurrent.FJTaskRunnersX  
+  //import scala.concurrent.FJTaskRunnersX  
+  import com.biosimilarity.lift.lib.concurrent._
+  import com.biosimilarity.lift.lib.concurrent.cpsops._
 
   trait GLoSStubT
     extends NodeStreams

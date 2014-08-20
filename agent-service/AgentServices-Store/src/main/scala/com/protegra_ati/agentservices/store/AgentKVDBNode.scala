@@ -24,6 +24,8 @@ import net.liftweb.amqp._
 import scala.util.continuations._ 
 import scala.concurrent.{Channel => Chan, _}
 //import scala.concurrent.cpsops._
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 import scala.xml._
 import scala.collection.mutable.Map
 import scala.collection.mutable.MapProxy
@@ -2545,8 +2547,10 @@ package usage {
                       }
                       case "Base64" => {
                         val data : Array[Byte] = Base64Coder.decode( rv )
-                        val ois : ObjectInputStream =
-                          new ObjectInputStream( new ByteArrayInputStream(  data ) )
+//                         val ois : ObjectInputStream =
+//                           new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                        val ois : DefensiveObjectInputStream =
+		                new DefensiveObjectInputStream( new ByteArrayInputStream(  data ) )
                         val o : java.lang.Object = ois.readObject();
                         ois.close()
                         o
@@ -2872,8 +2876,10 @@ package usage {
                             }
                             case "Base64" => {
                               val data : Array[Byte] = Base64Coder.decode( rv )
-                              val ois : ObjectInputStream =
-                                new ObjectInputStream( new ByteArrayInputStream(  data ) )
+//                               val ois : ObjectInputStream =
+//                                 new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                              val ois : DefensiveObjectInputStream =
+		                new DefensiveObjectInputStream( new ByteArrayInputStream(  data ) )
                               val o : java.lang.Object = ois.readObject();
                               ois.close()
                               o
@@ -3211,8 +3217,10 @@ package usage {
                             }
                             case "Base64" => {
                               val data : Array[Byte] = Base64Coder.decode( rv )
-                              val ois : ObjectInputStream =
-                                new ObjectInputStream( new ByteArrayInputStream(  data ) )
+//                               val ois : ObjectInputStream =
+//                                 new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                              val ois : DefensiveObjectInputStream =
+		                new DefensiveObjectInputStream( new ByteArrayInputStream(  data ) )
                               val o : java.lang.Object = ois.readObject();
                               ois.close()
                               o
@@ -3566,8 +3574,10 @@ package usage {
                             }
                             case "Base64" => {
                               val data : Array[Byte] = Base64Coder.decode( rv )
-                              val ois : ObjectInputStream =
-                                new ObjectInputStream( new ByteArrayInputStream(  data ) )
+//                               val ois : ObjectInputStream =
+//                                 new ObjectInputStream( new ByteArrayInputStream(  data ) )
+                              val ois : DefensiveObjectInputStream =
+		                new DefensiveObjectInputStream( new ByteArrayInputStream(  data ) )
                               val o : java.lang.Object = ois.readObject();
                               ois.close()
                               o

@@ -1,5 +1,8 @@
 package com.protegra_ati.agentservices.protocols
 
+import scala.concurrent.{Channel => Chan, _}
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 import com.biosimilarity.evaluator.distribution.FuzzyStreams
 
 object NodeSupply extends FuzzyStreams with Serializable {
@@ -39,7 +42,8 @@ object TestRace extends Serializable {
   import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   import java.util.UUID
   import java.net.URI
-  import scala.concurrent.ops._
+  //import scala.concurrent.ops._  
+  import com.biosimilarity.lift.lib.concurrent.FJTR._
   import scala.util.continuations._
 
   private def dispatchMessage( e : Option[mTT.Resource] ) : Int = {
