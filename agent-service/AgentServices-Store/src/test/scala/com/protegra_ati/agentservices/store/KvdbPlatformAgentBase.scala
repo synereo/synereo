@@ -23,7 +23,9 @@ import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT.
 import com.protegra_ati.agentservices.store.mongo.usage._
 
 
-import scala.concurrent.ops._
+//import scala.concurrent.ops._
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 import com.biosimilarity.lift.lib.moniker._
 import actors.threadpool.LinkedBlockingQueue
 import org.specs2.specification.Scope

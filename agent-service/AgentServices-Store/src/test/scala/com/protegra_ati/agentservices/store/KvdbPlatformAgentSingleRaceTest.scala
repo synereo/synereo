@@ -29,7 +29,11 @@ import com.protegra_ati.agentservices.store.mongo.usage._
 
 
 
-import scala.concurrent.ops._
+//import scala.concurrent.ops._
+import com.biosimilarity.lift.lib.concurrent._
+//import com.biosimilarity.lift.lib.concurrent.cpsops._
+import com.biosimilarity.lift.lib.concurrent.FJTR._
+
 import util.Results
 
 class KvdbPlatformAgentSingleRaceTest extends KvdbPlatformAgentBaseRace
