@@ -1078,7 +1078,12 @@ package usage {
     }
     
     // Non-agentMgr calls
-    def insert(value: String, filter: String = "all(a(_))") = {
+    def insert(
+      value: String,
+      filter: String = "all(a(_))",
+      onPost : Option[Rsrc] => Unit = 
+        ( optRsrc ) => println( "onPost: optRsrc = " + optRsrc )
+    ) = {
       post(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1087,10 +1092,14 @@ package usage {
           new URI("c://d")
         )),
         value,
-        (optRsrc) => println("onPost: optRsrc = " + optRsrc)
+        onPost
       )
     }
-    def feedS(filter: String = "all(a(_))") = {
+    def feedS(
+      filter : String = "all(a(_))",
+      onFeed : Option[Rsrc] => Unit =
+        ( optRsrc ) => println( "onFeed: optRsrc = " + optRsrc )
+    ) = {
       feed(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1098,10 +1107,13 @@ package usage {
           "flat",
           new URI("c://d")
         )),
-        (optRsrc) => println("onFeed: optRsrc = " + optRsrc)
+        onFeed
       )
     }
-    def readS(filter: String = "all(a(_))") = {
+    def readS(
+      filter : String = "all(a(_))",
+      onRead : Option[Rsrc] => Unit = ( optRsrc ) => println( "onRead: optRsrc = " + optRsrc )
+    ) = {
       read(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1109,13 +1121,14 @@ package usage {
           "flat",
           new URI("c://d")
         )),
-        (optRsrc) => {
-          println("onRead: optRsrc = " + optRsrc)
-          println("onRead: optRsrc = " + optRsrc)
-        }
+        onRead
       )
     }
-    def getS(filter: String = "all(a(_))") = {
+    def getS(
+      filter : String = "all(a(_))",
+      onGet : Option[Rsrc] => Unit =
+        (optRsrc) => println( "onGet: optRsrc = " + optRsrc )
+    ) = {
       get(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1123,10 +1136,15 @@ package usage {
           "flat",
           new URI("c://d")
         )),
-        (optRsrc) => println("onGet: optRsrc = " + optRsrc)
+        onGet
       )
     }
-    def putS(value: String, filter: String = "all(a(_))") = {
+    def putS(
+      value : String,
+      filter: String = "all(a(_))",
+      onPut : Option[Rsrc] => Unit =
+        (optRsrc) => println( "onPut: optRsrc = " + optRsrc )
+    ) = {
       put(
         fromTermString(filter).get,
         List(PortableAgentCnxn(
@@ -1135,7 +1153,7 @@ package usage {
           new URI("c://d")
         )),
         value,
-        (optRsrc) => println("onPut: optRsrc = " + optRsrc)
+        onPut
       )
     }
     def getPut(value: String, filter: String = "all(a(_))") = {
