@@ -94,6 +94,8 @@ with CnxnString[String, String, String]{
     }    
   }
 
+  val nodeLock = new scala.concurrent.Lock()
+
   def node(
     flip : Boolean = false
   ) : Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
@@ -111,21 +113,33 @@ with CnxnString[String, String, String]{
 //       }
 //     }
 
+    
     val nn = nodeName()
 
     DSLCommsLinkNodeMapper.get( nn ) match {
       case Some( n ) => n
       case None => {
-        val node : Being.PersistedMonadicKVDBNode[
+        nodeLock.acquire()
+        val rslt : Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
-        ] =
-          DSLCommLinkCtor.stdLink(
-            serverHostName, serverPort,
-            clientHostName, clientPort
-          )( flip )
-
-        DSLCommsLinkNodeMapper += ( nn -> node )
-        node 
+        ] = DSLCommsLinkNodeMapper.get( nn ) match {
+          case Some( n ) => n
+          case None => {
+            val node : Being.PersistedMonadicKVDBNode[
+              PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
+            ] =
+              DSLCommLinkCtor.stdLink(
+                serverHostName, serverPort,
+                clientHostName, clientPort
+              )( flip )
+            
+            DSLCommsLinkNodeMapper += ( nn -> node )
+            node
+          }
+        }
+        
+        nodeLock.release()
+        rslt
       }
     }
     
