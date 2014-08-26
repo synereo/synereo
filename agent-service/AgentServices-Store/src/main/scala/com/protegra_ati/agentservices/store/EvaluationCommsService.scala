@@ -20,6 +20,7 @@ import org.json4s.JsonDSL._
 import scala.concurrent.duration._
 import scala.util.continuations._ 
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.MapProxy
 
 import com.typesafe.config._
 
@@ -27,7 +28,12 @@ import java.net.URI
 import java.util.Date
 import java.util.UUID
 
-
+object DSLCommsLinkNodeMapper
+ extends MapProxy[String,DSLCommLink.Being.PersistedMonadicKVDBNode[DSLCommLink.PersistedKVDBNodeRequest,DSLCommLink.PersistedKVDBNodeResponse]] {
+  @transient
+  override val self =
+    new HashMap[String,DSLCommLink.Being.PersistedMonadicKVDBNode[DSLCommLink.PersistedKVDBNodeRequest,DSLCommLink.PersistedKVDBNodeResponse]]()
+}
 
 trait EvaluationCommsService extends EvaluationService
 with CnxnString[String, String, String]{
@@ -52,6 +58,19 @@ with CnxnString[String, String, String]{
   var _node : Option[
     Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]
   ] = None 
+
+  var _nodeName : Option[String] = None 
+
+  def nodeName() : String = {
+    _nodeName match {
+      case Some( nn ) => nn
+      case None => {
+        val nn = UUID.randomUUID.toString
+        _nodeName = Some( nn )
+        nn
+      }
+    }
+  }
 
   def link() : (
     Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse],
@@ -78,20 +97,38 @@ with CnxnString[String, String, String]{
   def node(
     flip : Boolean = false
   ) : Being.PersistedMonadicKVDBNode[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse] = {
-    _node match {
-      case Some( n ) => n
-      case None => {        
-        val n : Being.PersistedMonadicKVDBNode[
-          PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
-        ] = DSLCommLinkCtor.stdLink(
-          serverHostName, serverPort,
-          clientHostName, clientPort
-        )( flip )
+//     _node match {
+//       case Some( n ) => n
+//       case None => {        
+//         val n : Being.PersistedMonadicKVDBNode[
+//           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
+//         ] = DSLCommLinkCtor.stdLink(
+//           serverHostName, serverPort,
+//           clientHostName, clientPort
+//         )( flip )        
+//         _node = Some( n )
+//         n
+//       }
+//     }
 
-        _node = Some( n )
-        n
+    val nn = nodeName()
+
+    DSLCommsLinkNodeMapper.get( nn ) match {
+      case Some( n ) => n
+      case None => {
+        val node : Being.PersistedMonadicKVDBNode[
+          PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
+        ] =
+          DSLCommLinkCtor.stdLink(
+            serverHostName, serverPort,
+            clientHostName, clientPort
+          )( flip )
+
+        DSLCommsLinkNodeMapper += ( nn -> node )
+        node 
       }
-    }    
+    }
+    
   }
 
   trait AgentManager {
