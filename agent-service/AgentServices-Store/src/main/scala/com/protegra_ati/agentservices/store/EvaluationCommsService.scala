@@ -94,6 +94,7 @@ with CnxnString[String, String, String]{
     }    
   }
 
+  @transient
   val nodeLock = new scala.concurrent.Lock()
 
   def node(
