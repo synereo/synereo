@@ -13,16 +13,17 @@
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <!--specialk.version>1.1.8.0</specialk.version-->
-        <specialk.version>1.1.8.1</specialk.version>
+        <specialk.version>1.1.8.1-NR</specialk.version>
         <!-- scala.version>2.10.0</scala.version -->
-        <!--scala.version>2.10.2</scala.version-->
-        <scala.version>2.11.0</scala.version>
+        <scala.version>2.10.2</scala.version>
+        <!-- scala.version>2.11.0</scala.version -->
         <!--scala.versionsuffix>2.10</scala.versionsuffix-->
-        <scala.versionsuffix>2.11</scala.versionsuffix>
+        <!-- scala.versionsuffix>2.11</scala.versionsuffix -->
+        <scala.versionsuffix>2.10</scala.versionsuffix>
         <!-- casbah.version>2.5.1</casbah.version-->
         <!--casbah.version>2.6.2</casbah.version-->
-        <!--casbah.version>2.6.4</casbah.version-->
-        <casbah.version>2.7.3</casbah.version>
+        <casbah.version>2.6.4</casbah.version>
+        <!-- casbah.version>2.7.3</casbah.version -->
         <scala.test.specs2.version>1.14</scala.test.specs2.version>
         <!-- Common plugin settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -99,21 +100,23 @@
           <groupId>org.scala-lang</groupId>
           <artifactId>scala-reflect</artifactId>
           <version>${scala.version}</version>
-        </dependency>            
-        <dependency>
-          <groupId>org.scala-lang.plugins</groupId>
-          <!-- artifactId>scala-continuations-library_2.11</artifactId -->
-          <artifactId>scala-continuations-library_2.11</artifactId>
-          <!-- version>1.0.2</version -->
-          <version>1.0.1</version>
         </dependency>
         <dependency>
           <groupId>org.scala-lang.plugins</groupId>
           <!-- artifactId>scala-continuations-library_2.11</artifactId -->
-          <artifactId>scala-continuations-plugin_2.11.0</artifactId>
+          <!-- artifactId>scala-continuations-library_2.11</artifactId -->
+          <artifactId>continuations</artifactId>
           <!-- version>1.0.2</version -->
-          <version>1.0.1</version>
+          <!-- version>1.0.1</version -->
+          <version>2.10.2</version>
         </dependency>
+        <!--dependency -->
+        <!-- groupId>org.scala-lang.plugins</groupId -->
+        <!-- artifactId>scala-continuations-library_2.11</artifactId -->
+        <!-- artifactId>scala-continuations-plugin_2.11.0</artifactId -->
+        <!-- version>1.0.2</version -->
+        <!-- version>1.0.1</version -->
+        <!-- /dependency-->
         <dependency>
             <groupId>com.biosimilarity.lift</groupId>
             <artifactId>specialK</artifactId>
@@ -172,20 +175,20 @@
 
         <dependency>
           <groupId>org.json4s</groupId>
-          <!--artifactId>json4s-jackson_2.10</artifactId-->
-          <artifactId>json4s-jackson_2.11</artifactId>
+          <artifactId>json4s-jackson_2.10</artifactId>
+          <!-- artifactId>json4s-jackson_2.11</artifactId -->
           <!-- version>3.2.4</version -->
-          <!--version>3.2.7</version-->
-          <version>3.2.10</version>
+          <version>3.2.7</version>
+          <!--version>3.2.10</version-->
         </dependency>
 
         <dependency>
             <groupId>org.json4s</groupId>
-            <!--artifactId>json4s-native_2.10</artifactId-->
-            <artifactId>json4s-native_2.11</artifactId>
+            <artifactId>json4s-native_2.10</artifactId>
+            <!--artifactId>json4s-native_2.11</artifactId-->
             <!-- version>3.2.4</version -->
-            <!--version>3.2.7</version-->
-            <version>3.2.10</version>
+            <version>3.2.7</version>
+            <!-- version>3.2.10</version -->
         </dependency>
 
         <dependency>
@@ -368,11 +371,12 @@
                     <compilerPlugins>
                         <compilerPlugin>
                             <groupId>org.scala-lang.plugins</groupId>
-                            <!-- artifactId>continuations</artifactId -->
-                            <artifactId>scala-continuations-plugin_2.11.0</artifactId>
+                            <artifactId>continuations</artifactId>
+                            <!--artifactId>scala-continuations-plugin_2.11.0</artifactId-->
                             <!-- version>${scala.version}</version -->
                             <!--                            <version>2.10.0-SNAPSHOT</version>-->
-                            <version>1.0.1</version>
+                            <!-- version>1.0.1</version -->
+                            <version>2.10.2</version>
                         </compilerPlugin>
                     </compilerPlugins>
                     <launchers>
