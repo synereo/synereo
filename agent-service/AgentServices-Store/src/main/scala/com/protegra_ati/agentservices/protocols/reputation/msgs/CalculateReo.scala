@@ -15,21 +15,19 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 case class CalculateReo(
   override val sessionId : String,
   override val correlationId : String,
-  publisher : PortableAgentCnxn,  
-  consumer : PortableAgentCnxn,  
-  content : CnxnCtxtLabel[String, String]
+  p2c : PortableAgentCnxn
 ) extends ReputationMessage( sessionId, correlationId ) {
-  override def toLabel : CnxnCtxtLabel[String, String] = {
+  override def toLabel : CnxnCtxtLabel[String, String, String] = {
     CalculateReo.toLabel( sessionId )
   }
 }
 
 object CalculateReo {
-  def toLabel(): CnxnCtxtLabel[String, String] = {
+  def toLabel(): CnxnCtxtLabel[String, String, String] = {
     "protocolMessage(calculateReo(sessionId(_)))".toLabel
   }
 
-  def toLabel(sessionId: String): CnxnCtxtLabel[String, String] = {
+  def toLabel(sessionId: String): CnxnCtxtLabel[String, String, String] = {
     s"""protocolMessage(calculateReo(sessionId(\"$sessionId\")))""".toLabel
   }
 }

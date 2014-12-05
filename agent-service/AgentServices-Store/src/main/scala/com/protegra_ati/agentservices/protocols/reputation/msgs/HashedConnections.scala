@@ -15,21 +15,19 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 case class HashedConnections(
   override val sessionId : String,
   override val correlationId : String,
-  publisher : PortableAgentCnxn,  
-  consumer : PortableAgentCnxn,  
-  content : CnxnCtxtLabel[String]
+  connections: Seq[PortableAgentCnxn]
 ) extends ReputationMessage( sessionId, correlationId ) {
-  override def toLabel : CnxnCtxtLabel[String] = {
+  override def toLabel : CnxnCtxtLabel[String, String, String] = {
     HashedConnections.toLabel( sessionId )
   }
 }
 
 object HashedConnections {
-  def toLabel(): CnxnCtxtLabel[String] = {
+  def toLabel(): CnxnCtxtLabel[String, String, String] = {
     "protocolMessage(hashedConnections(sessionId(_)))".toLabel
   }
 
-  def toLabel(sessionId: String): CnxnCtxtLabel[String] = {
+  def toLabel(sessionId: String): CnxnCtxtLabel[String, String, String] = {
     s"""protocolMessage(hashedConnections(sessionId(\"$sessionId\")))""".toLabel
   }
 }

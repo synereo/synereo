@@ -15,11 +15,11 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 case class PublishWithReo(
   override val sessionId : String,
   override val correlationId : String,
-  publisher : PortableAgentCnxn,  
-  consumer : PortableAgentCnxn,  
-  content : CnxnCtxtLabel[String,String,String]
+  p2c : PortableAgentCnxn,
+  content : CnxnCtxtLabel[String, String, String],
+  reo: Int
 ) extends ReputationMessage( sessionId, correlationId ) {
-  override def toLabel : CnxnCtxtLabel[String,String,String] = {
+  override def toLabel : CnxnCtxtLabel[String, String, String] = {
     PublishWithReo.toLabel( sessionId )
   }
 }
