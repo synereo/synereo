@@ -48,6 +48,7 @@ trait ContentRecipientBehaviorT extends ProtocolBehaviorT with Serializable {
     )
     receiveContent( node, cnxns )
   }  
+  def provideHashedConnections() : Seq[PortableAgentCnxn] 
   def receiveContent(
     node: Being.AgentKVDBNode[PersistedKVDBNodeRequest, PersistedKVDBNodeResponse],
     cnxns: Seq[PortableAgentCnxn]
@@ -104,6 +105,82 @@ trait ContentRecipientBehaviorT extends ProtocolBehaviorT with Serializable {
                       + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                     )
                   )
+
+                  val agntP2CPC = acT.AgentCnxn( p2cPC.src, p2cPC.label, p2cPC.trgt )
+
+                  val calulateReoRequest = CalculateReo( sidPC, cidPC, p2cPC )
+                  node.publish( agntP2CPC )( 
+                    CalculateReo.toLabel( sidPC ), 
+                    calulateReoRequest
+                  )
+                  for( eHashedConnections <- node.subscribe( agntCnxn )( HashedConnections.toLabel ) ) {
+                    rsrc2V[ReputationMessage]( eHashedConnections ) match
+                    {
+                      case Left( HashedConnections( sidPC, cidPC, seqOfCnxnsPC ) ) => {
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\ncontentRecipient -- received HashedConnections request: " + eHashedConnections
+                            + "\ncnxn: " + agntCnxn
+                            + "\nlabel: " + HashedConnections.toLabel
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+                        println(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\ncontentRecipient -- received HashedConnections request: " + eHashedConnections
+                            + "\ncnxn: " + agntCnxn
+                            + "\nlabel: " + HashedConnections.toLabel
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+                        val hashedConnections : Seq[PortableAgentCnxn] = provideHashedConnections()
+                        val hashedConnectionsData = HashedConnections( sidPC, cidPC, hashedConnections )
+                        node.publish( agntP2CPC )( 
+                          HashedConnections.toLabel( sidPC ), 
+                          hashedConnectionsData
+                        )
+                      }
+                      case Right( true ) => {
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\ncontentRecipient -- still waiting for HashedConnections request"
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+                        println(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\ncontentRecipient -- still waiting for HashedConnections request"
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+                      }
+                      case _ => {
+                        // BUGBUG : lgm -- protect against strange and
+                        // wondrous toString implementations (i.e. injection
+                        // attack ) for eInitiateClaim
+                        BasicLogService.tweet(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\ncontentRecipient -- while waiting for HashedConnections request"
+                            + "\nreceived unexpected protocol message : " + eHashedConnections
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+                        println(
+                          (
+                            "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                            + "\ncontentRecipient -- while waiting for HashedConnections request"
+                            + "\nreceived unexpected protocol message : " + eHashedConnections
+                            + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                          )
+                        )
+                      }
+                    }
+                  }
                 }
                 case Right( true ) => {
                   BasicLogService.tweet(
@@ -177,6 +254,8 @@ class ContentRecipientBehavior(
   ): Unit = {
     super.run(kvdbNode, cnxns, filters)
   }
+  def provideHashedConnections() : Seq[PortableAgentCnxn] =
+    List[PortableAgentCnxn]( )
 }
 
 object ContentRecipientBehavior {
