@@ -170,6 +170,24 @@ trait ContentRecipientBehaviorT extends ProtocolBehaviorT with Serializable {
                                 IntersectionResult.toLabel( sidPC ), 
                                 intersectionConnectionsData
                               )
+                              val reoScore : Int = 1000; // placeholder for actual calculation
+                              if ( reoScore != reoPC ) {
+                                BasicLogService.tweet(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\nInvalid reo!!"
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  )
+                                )
+                                println(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\nInvalid reo!!"
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  )
+                                )
+                              }
+                              // reo is good, continue to publish
                             }
                             case Right( true ) => {
                               BasicLogService.tweet(
