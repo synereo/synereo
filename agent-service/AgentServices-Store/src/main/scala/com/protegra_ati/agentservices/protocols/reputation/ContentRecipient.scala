@@ -166,6 +166,28 @@ trait ContentRecipientBehaviorT extends ProtocolBehaviorT with Serializable {
                                   + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
                                 )
                               )
+                              if ( intersectionConnections != intersectCnxnsPC ) {
+                                BasicLogService.tweet(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\ncontentRecipient -- received IntersectionResult request: " + eIntersectionResult
+                                    + "\ncnxn: " + agntCnxn
+                                    + "\nlabel: " + IntersectionResult.toLabel
+                                    + "\nInvalid connection intersection"
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  )
+                                )
+                                println(
+                                  (
+                                    "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                    + "\ncontentRecipient -- received IntersectionResult request: " + eIntersectionResult
+                                    + "\ncnxn: " + agntCnxn
+                                    + "\nlabel: " + IntersectionResult.toLabel
+                                    + "\nInvalid connection intersection"
+                                    + "\n||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+                                  )
+                                )
+                              }
                               node.publish( agntP2CPC )( 
                                 IntersectionResult.toLabel( sidPC ), 
                                 intersectionConnectionsData
