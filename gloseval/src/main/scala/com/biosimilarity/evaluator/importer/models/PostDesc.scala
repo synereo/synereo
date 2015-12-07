@@ -1,5 +1,6 @@
-package com.biosimilarity.evaluator.spray.models
+package com.biosimilarity.evaluator.importer.models
 
+import java.util.UUID
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -7,11 +8,19 @@ import org.json4s.jackson.Serialization.write
 
 
 /**
- * Container for Contacts in LivelyGig.
- * @param channels
+ * Describes a Post in LivelyGig.
+ * @param content
+ * @param contentType
+ * @param labels
+ * @param src
+ * @param targets
  */
-case class ContactDesc(
-  channels: List[ChannelDesc]
+case class PostDesc(
+  content: String,
+  contentType: String,
+  labels: List[String],
+  src: String,
+  trgts: List[String]
 ) {
 
   /**
@@ -23,7 +32,7 @@ case class ContactDesc(
   implicit val formats = DefaultFormats
 }
 
-object ContactDesc {
+object PostDesc {
 
   implicit val formats = DefaultFormats
 
@@ -32,6 +41,7 @@ object ContactDesc {
    * @param json
    * @return
    */
-  def fromJson(json: String) = parse(json).extract[ContactDesc]
+  def fromJson(json: String) = parse(json).extract[PostDesc]
 
 }
+

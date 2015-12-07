@@ -232,6 +232,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     bytes.map("%02X" format _).mkString
   }
 
+  /**
+   * Creates an agent.
+   * @param json input JSON for agent
+   * @param key this is used to identify a return request (optional)
+   */
   def createAgentRequest(json: JValue, key: String): Unit = {
     try {
       val authType = (json \ "content" \ "authType").extract[String].toLowerCase

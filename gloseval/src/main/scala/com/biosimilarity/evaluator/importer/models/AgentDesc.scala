@@ -1,4 +1,4 @@
-package com.biosimilarity.evaluator.spray.models
+package com.biosimilarity.evaluator.importer.models
 
 import java.util.UUID
 import org.json4s._
@@ -20,7 +20,7 @@ import org.json4s.jackson.Serialization.write
  * @param bindings
  */
 case class AgentDesc(
-  id: String,
+  id: String, // TODO: agent URI will take this over once it is created
   loginId: String,
   pwd: String,
   firstName: String,

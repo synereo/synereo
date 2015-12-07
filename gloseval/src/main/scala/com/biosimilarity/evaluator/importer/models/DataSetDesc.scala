@@ -1,4 +1,4 @@
-package com.biosimilarity.evaluator.spray.models
+package com.biosimilarity.evaluator.importer.models
 
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -10,7 +10,7 @@ import org.json4s.jackson.Serialization.write
  * Describes a LivelyGig dataset.
  * @param agents
  * @param labels
- * @param connections
+ * @param cnxns
  */
 case class DataSetDesc(
   agents: List[AgentDesc],
