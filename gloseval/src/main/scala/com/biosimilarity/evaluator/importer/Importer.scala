@@ -7,6 +7,7 @@ import com.biosimilarity.evaluator.importer.utils.mailinator.Mailinator
 import com.biosimilarity.evaluator.spray.{BTCHandler, DownStreamHttpCommsT, EvalHandler}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
+import org.joda.time.DateTime
 import scala.collection.JavaConversions._
 import scala.util.Random
 
@@ -29,22 +30,39 @@ with DownStreamHttpCommsT
 with BTCHandler
 with Serializable {
 
-  private val GLOSEVAL_HOST = "http://52.35.10.219:9876/api"
+  private var GLOSEVAL_HOST = "http://52.35.39.85:9876/api"
   private val GLOSEVAL_SENDER = "splicious.ftw@gmail.com"
   private val MAILINATOR_KEY = "efa3a1b773db4f0c9492686d24bed415"
 
 
   private def glosevalPost(msgType: String, data: RequestContent): String = {
-    Http(GLOSEVAL_HOST).postData(write(ApiRequest(msgType, data))).header("Content-Type", "application/json").asString.body
+    val requestBody = write(ApiRequest(msgType, data))
+    println(s"REQUEST: ${msgType}")
+    println(s"REQUEST BODY: ${requestBody}")
+
+    val response = Http(GLOSEVAL_HOST).postData(requestBody).header("Content-Type", "application/json").asString.body
+
+    println(s"RESPONSE BODY: ${response}")
+    response
   }
 
-  private def createEmailUser(loginId: String) = s"livelygig_$loginId"
+  private def createEmailUser(loginId: String) = s"livelygig-$loginId"
 
   private def createEmailAddress(loginId: String) = s"${createEmailUser(loginId)}@mailinator.com"
 
   private def makeAliasURI(alias: String) = s"alias://$alias/alias"
 
-  private def threadSleep = println("Sleeping for 15s"); Thread.sleep(15000L)
+  private def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
+
+  private def threadSleep(seconds: Int) = {
+    println(s"Sleeping for $seconds seconds")
+    def time = new DateTime().getMillis
+    var now = time
+    val future = now + (seconds.toLong*1000)
+    while(time < future) {
+      now = time
+    }
+  }
 
   private val sessionsByAgent = scala.collection.mutable.Map[String, InitializeSessionResponse]() // loginId:agentURI
   private val agentsBySession = scala.collection.mutable.Map[String, AgentDesc]() // sessionURI:agent
@@ -55,9 +73,12 @@ with Serializable {
 
   def fromFiles(
     dataJsonFile: String = "/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/sample-data-demo.json",
-    configJsonFile: String = "/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/livelygig-system-labels.json"
+    configJsonFile: String = "/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/livelygig-system-labels.json",
+    host: String = GLOSEVAL_HOST
   ) {
     println("Beginning import procedure")
+    GLOSEVAL_HOST = host
+
     //val configJson = scala.io.Source.fromFile(configJsonFile).getLines.map(_.trim).mkString
     //val config = parse(configJson).extract[ConfigDesc]
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
@@ -65,11 +86,13 @@ with Serializable {
     val agents = dataset.agents
 
 
-    println("Importing agents")
+    /*println("Importing agents")
     agents.foreach { agent =>
       println(glosevalPost("createUserRequest", CreateUserRequest(createEmailAddress(agent.loginId), agent.pwd, Map("name" -> agent.firstName), true)))
     }
     println("Agents import complete")
+
+    threadSleep(45)
 
     println("Confirming agent emails")
     agents.foreach { agent =>
@@ -79,7 +102,7 @@ with Serializable {
           val token = part.getBody.replace("Your token is: ", "").trim.stripLineEnd
           println(s"Found token for ${agent.loginId}: $token. Confirming....")
           println(glosevalPost("confirmEmailToken", ConfirmEmailRequest(token)))
-          threadSleep
+          threadSleep(15)
         }
       } catch {
         case e: Exception => println(s"Skipping agent ${agent.loginId} because ${e.getMessage}")
@@ -87,21 +110,27 @@ with Serializable {
     }
     println("Agent emails confirmation complete")
 
+    threadSleep(30)*/
+
     println("Initializing agent sessions")
-    agents.slice(10, agents.size).foreach { agent =>
-      val session = parse(glosevalPost("initializeSessionRequest", InitializeSessionRequest(s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"))).extract[ApiResponse[InitializeSessionResponse]].content
+    agents.foreach { agent =>
+      val json = glosevalPost("initializeSessionRequest", InitializeSessionRequest(s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"))
+      val session = parse(json).extract[ApiResponse[InitializeSessionResponse]].content
       sessionsByAgent.put(agent.loginId, session)
       agentsBySession.put(session.sessionURI, agent)
       sessionsById.put(agent.id, session)
-      threadSleep
+      threadSleep(15)
     }
     println("Agent session initialization complete")
 
+    threadSleep(30)
+
     println("Adding labels for agents")
     agentsBySession.foreach { case (session, agent) =>
-      println(glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session, "alias", List(agent.id))))
+      val json = glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session, "alias", List(makeAliasLabel(agent.id, "#5C9BCC"))))
+      println(json)
       aliasesById.put(agent.id, s"alias://${agent.id}/alias")
-      threadSleep
+      threadSleep(15)
     }
     println("Agent labels complete")
 
@@ -112,8 +141,8 @@ with Serializable {
       val sourceURI = sessionsById(sourceId).sessionURI
       val targetId = connection.trgt.replace("agent://","")
       val targetAlias = aliasesById(targetId)
-      println(glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias), Connection(targetAlias, sourceAlias))))
-      threadSleep
+      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias), Connection(targetAlias, sourceAlias)))
+      threadSleep(15)
     }
     println("Random introduction connections complete")
 
