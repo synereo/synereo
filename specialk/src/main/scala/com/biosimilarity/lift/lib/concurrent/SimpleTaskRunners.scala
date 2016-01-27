@@ -1,6 +1,7 @@
 // $Id$
 
-package scala.concurrent
+//package scala.concurrent
+package com.biosimilarity.lift.lib.concurrent
 
 import scala.collection.mutable.Queue
 

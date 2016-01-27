@@ -9,7 +9,9 @@
 package com.biosimilarity.lift.model.store.design
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 
 import scala.util.continuations._ 
 

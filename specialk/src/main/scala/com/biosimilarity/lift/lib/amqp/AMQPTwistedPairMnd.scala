@@ -18,7 +18,9 @@ import net.liftweb.amqp._
 import scala.util.continuations._
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 
 import _root_.com.rabbitmq.client.{ Channel => RabbitChan, _}
 

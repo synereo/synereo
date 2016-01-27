@@ -1,4 +1,5 @@
-package scala.concurrent
+//package scala.concurrent
+package com.biosimilarity.lift.lib.concurrent
 
 import java.util.concurrent.{Executors, ExecutorService, TimeUnit}
 import scala.util.continuations._

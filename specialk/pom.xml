@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
-  <version>1.1.8.0</version>
+  <version>1.1.8.5</version>
   <packaging>jar</packaging>
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
@@ -16,7 +16,8 @@
     <!-- scala.version>2.9.0-1</scala.version -->
     <!-- scala.version>2.9.2</scala.version -->
     <!-- scala.version>2.10.0</scala.version -->
-    <scala.version>2.10.2</scala.version>
+    <!--scala.version>2.10.2</scala.version-->
+    <scala.version>2.10.5</scala.version>
     <!-- Common plugin settings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
@@ -125,7 +126,7 @@
     <dependency>
       <groupId>org.json4s</groupId>
       <artifactId>json4s-jackson_2.10</artifactId>
-      <version>3.2.4</version>
+      <version>3.2.7</version>
     </dependency>
     <dependency>
 	<groupId>biz.source_code</groupId>

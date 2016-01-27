@@ -20,7 +20,9 @@ import com.biosimilarity.lift.lib._
 import com.biosimilarity.lift.lib.moniker._
 
 import scala.concurrent.{Channel => Chan, _}
-import scala.concurrent.cpsops._
+//import scala.concurrent.cpsops._
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 import scala.util.continuations._ 
 import scala.util.parsing.combinator._
 import scala.xml._

@@ -114,7 +114,9 @@ extends ContinuationM[X,Y,Z]( ) {
 
 package usage {
   import scala.concurrent.{Channel => Chan, _}
-  import scala.concurrent.cpsops._
+  //import scala.concurrent.cpsops._
+  import com.biosimilarity.lift.lib.concurrent._
+  import com.biosimilarity.lift.lib.concurrent.cpsops._
   import scala.collection.immutable.Stream
 
   object TryDelC {
