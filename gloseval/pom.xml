@@ -13,10 +13,12 @@
         <maven.compiler.source>1.5</maven.compiler.source>
         <maven.compiler.target>1.5</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <specialk.version>1.1.8.0</specialk.version>
-        <agentservices-store.version>1.9.2-SNAPSHOT</agentservices-store.version>
+        <!-- specialk.version>1.1.8.0</specialk.version -->
+        <specialk.version>1.1.8.5</specialk.version>
+        <!-- agentservices-store.version>1.9.2-SNAPSHOT</agentservices-store.version -->
+        <agentservices-store.version>1.9.5</agentservices-store.version>
         <!-- scala.version>2.10.0</scala.version -->
-        <scala.version>2.10.0</scala.version>
+        <scala.version>2.10.2</scala.version>
         <scala.versionsuffix>2.10</scala.versionsuffix>
         <io.spray.version>1.1-M7</io.spray.version>
         <!--io.spray.version>1.1.0</io.spray.version-->
@@ -102,18 +104,24 @@
         <!-- io.spray -->
         <dependency>
             <groupId>io.spray</groupId>
+            <!--artifactId>spray-can</artifactId-->
             <artifactId>spray-can</artifactId>
             <version>${io.spray.version}</version>
+            <!-- version>1.1.0</version -->
         </dependency>
         <dependency>
             <groupId>io.spray</groupId>
+            <!--artifactId>spray-routing</artifactId-->
             <artifactId>spray-routing</artifactId>
             <version>${io.spray.version}</version>
+            <!-- version>1.1.0</version -->
         </dependency>
         <dependency>
             <groupId>io.spray</groupId>
+            <!--artifactId>spray-client</artifactId-->
             <artifactId>spray-client</artifactId>
             <version>${io.spray.version}</version>
+            <!--version>1.1.0</version-->
         </dependency>
         <dependency>
             <groupId>io.spray</groupId>
@@ -122,8 +130,10 @@
         </dependency>
         <dependency>
             <groupId>io.spray</groupId>
+            <!--artifactId>spray-testkit</artifactId-->
             <artifactId>spray-testkit</artifactId>
             <version>${io.spray.version}</version>
+            <!--version>1.1.0</version-->
         </dependency>
         
         <!-- akka -->

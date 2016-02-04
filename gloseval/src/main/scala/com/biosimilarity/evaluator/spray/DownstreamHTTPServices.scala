@@ -49,7 +49,8 @@ trait DownStreamHttpCommsT
       ( optRsrc : Option[mTT.Resource] ) => BasicLogService.tweet( "post response: " + optRsrc )
     }
   ) {
-    import concurrent.ExecutionContext.Implicits._
+    //import concurrent.ExecutionContext.Implicits._
+    import scala.concurrent.ExecutionContext.Implicits._
 
     val req = Post( rq.url.getPath, FormData( toMap( rq.data ) ) ) 
     val host = rq.url.getHost

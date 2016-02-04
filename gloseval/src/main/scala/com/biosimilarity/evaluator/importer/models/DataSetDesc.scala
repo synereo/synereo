@@ -22,9 +22,8 @@ case class DataSetDesc(
    * Serializes to JSON.
    * @return JSON String.
    */
-  def toJson = write(this)
-
   implicit val formats = DefaultFormats
+  def toJson = write(this)  
 }
 
 object DataSetDesc {

@@ -1,6 +1,8 @@
 package com.biosimilarity.evaluator.spray
 
-import scala.concurrent.FJTaskRunnersX
+//import scala.concurrent.FJTaskRunnersX
+import com.biosimilarity.lift.lib.concurrent._
+import com.biosimilarity.lift.lib.concurrent.cpsops._
 
 trait VerificationBehaviorsT extends FJTaskRunnersX {
   import com.protegra_ati.agentservices.protocols._

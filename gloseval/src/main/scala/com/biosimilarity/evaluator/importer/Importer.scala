@@ -1,3 +1,11 @@
+// -*- mode: Scala;-*- 
+// Filename:    Importer.scala 
+// Authors:     lgm                                                    
+// Creation:    Tue Jan 19 16:49:16 2016 
+// Copyright:   Not supplied 
+// Description: 
+// ------------------------------------------------------------------------
+
 package com.biosimilarity.evaluator.importer
 
 import com.biosimilarity.evaluator.distribution.{AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
@@ -10,6 +18,7 @@ import org.json4s.jackson.Serialization.write
 import org.joda.time.DateTime
 import scala.collection.JavaConversions._
 import scala.util.Random
+import scala.collection.mutable.HashMap
 
 import scalaj.http.Http
 
@@ -21,19 +30,20 @@ import scalaj.http.Http
  * @note Second run `mvn scala:console`.
  * @note Finally, import this object and execute `Importer.fromFiles()`. You may need to set the file paths in the parameters.
  */
-object Importer extends EvalHandler
-with EvaluationCommsService
-with EvalConfig
-with DSLCommLinkConfiguration
-with AccordionConfiguration
-with DownStreamHttpCommsT
-with BTCHandler
+object Importer extends EvalConfig
+with ImporterConfig
 with Serializable {
 
-  private var GLOSEVAL_HOST = "http://52.35.39.85:9876/api"
-  private val GLOSEVAL_SENDER = "splicious.ftw@gmail.com"
-  private val MAILINATOR_KEY = "efa3a1b773db4f0c9492686d24bed415"
+  import org.json4s.jackson.Serialization
 
+  implicit val formats = org.json4s.DefaultFormats
+
+  //private var GLOSEVAL_HOST = "http://52.35.39.85:9876/api"
+  private var GLOSEVAL_HOST = serviceHostURI()
+  //private val GLOSEVAL_SENDER = "splicious.ftw@gmail.com"
+  private val GLOSEVAL_SENDER = serviceEmailSenderAddress()
+  //private val MAILINATOR_KEY = "efa3a1b773db4f0c9492686d24bed415"
+  private val MAILINATOR_KEY = serviceMailinatorKey()
 
   private def glosevalPost(msgType: String, data: RequestContent): String = {
     val requestBody = write(ApiRequest(msgType, data))
@@ -69,12 +79,104 @@ with Serializable {
   private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]() // sessionURI:agent
   private val aliasesById = scala.collection.mutable.Map[String, String]() // agentId:aliasUri
 
+  def makeAgent( agent : AgentDesc ) : Unit = {
+    val blobMap = new HashMap[String,String]()
+    val agentName = s"{agent.firstName}" + " " + s"{agent.lastName}"
+    blobMap += ( "name" -> agentName )
+    val json =
+      // glosevalPost(
+//         "initializeSessionRequest",
+//         InitializeSessionRequest(
+//           s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"
+//         )
+//       )
+      glosevalPost(
+        "createUserRequest",
+        // InitializeSessionRequest(
+//           s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"
+//         )
+        CreateUserRequest(
+          s"{createEmailAddress(agent.loginId)}",
+          s"{agent.pwd}",
+          blobMap,
+          true
+        )
+      )
 
+    val session = parse(json).extract[ApiResponse[InitializeSessionResponse]].content
+    
+    sessionsByAgent.put(agent.loginId, session)
+    agentsBySession.put(session.sessionURI, agent)
+    sessionsById.put(agent.id, session)
+  }
+
+  // paginated agent creation
+  def makeAgents( dataset : DataSetDesc, chunkSize : Int = 4 ) : Unit = {
+    println("Initializing agent sessions")
+    val agents = dataset.agents
+
+    val numOfAgents = agents.length
+    val numOfChunks = numOfAgents / chunkSize    
+    val leftOvers = ( numOfAgents % chunkSize )
+
+    for( i <- ( 1 to numOfChunks ) ) {
+      for( j <- ( 1 to chunkSize ) ) {
+        makeAgent( agents( ( i - 1 ) * chunkSize + ( j - 1 ) ) )        
+        threadSleep(15)
+      }      
+      
+      threadSleep(30)
+    }
+    if ( leftOvers > 0 ) {
+      for ( j <- ( 1 to leftOvers ) ) {
+        makeAgent( agents( numOfChunks * chunkSize + ( j - 1 ) ) )        
+        threadSleep(15)
+      }
+      threadSleep(30)
+    }
+
+    println("Agent session initialization complete")
+        
+  }
+
+  def makeLabels( agentSessions : scala.collection.mutable.Map[String, AgentDesc] ) : Unit = {
+    println("Adding labels for agents")
+    agentsBySession.foreach { case (session, agent) =>
+      val json = glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session, "alias", List(makeAliasLabel(agent.id, "#5C9BCC"))))
+      println(json)
+      aliasesById.put(agent.id, s"alias://${agent.id}/alias")
+      threadSleep(15)
+    }
+    println("Agent labels complete")
+  }
+
+  def makeCnxns( dataset : DataSetDesc, chunkSize : Int = 4 ) : Unit = {
+    println("Creating connection introductions")
+    dataset.cnxns.foreach { connection =>
+      val sourceId = connection.src.replace("agent://","")
+      val sourceAlias = aliasesById(sourceId)
+      val sourceURI = sessionsById(sourceId).sessionURI
+      val targetId = connection.trgt.replace("agent://","")
+      val targetAlias = aliasesById(targetId)
+      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias), Connection(targetAlias, sourceAlias)))
+      threadSleep(15)
+    }
+    println("Random introduction connections complete")
+  }
+
+  def parseData(
+    dataJsonFile : String = serviceDemoDataFile(),
+    configJsonFile : String = serviceSystemLabelsFile()
+  ) = {
+    val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
+    parse(dataJson).extract[DataSetDesc]
+  }
 
   def fromFiles(
-    dataJsonFile: String = "/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/sample-data-demo.json",
-    configJsonFile: String = "/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/livelygig-system-labels.json",
-    host: String = GLOSEVAL_HOST
+    dataJsonFile : String = serviceDemoDataFile(),
+    configJsonFile : String = serviceSystemLabelsFile(),
+    host : String = GLOSEVAL_HOST,
+    chunkSize : Int = 4
   ) {
     println("Beginning import procedure")
     GLOSEVAL_HOST = host
@@ -112,39 +214,11 @@ with Serializable {
 
     threadSleep(30)*/
 
-    println("Initializing agent sessions")
-    agents.foreach { agent =>
-      val json = glosevalPost("initializeSessionRequest", InitializeSessionRequest(s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"))
-      val session = parse(json).extract[ApiResponse[InitializeSessionResponse]].content
-      sessionsByAgent.put(agent.loginId, session)
-      agentsBySession.put(session.sessionURI, agent)
-      sessionsById.put(agent.id, session)
-      threadSleep(15)
-    }
-    println("Agent session initialization complete")
+    makeAgents( dataset )
 
-    threadSleep(30)
+    makeLabels( agentsBySession )
 
-    println("Adding labels for agents")
-    agentsBySession.foreach { case (session, agent) =>
-      val json = glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session, "alias", List(makeAliasLabel(agent.id, "#5C9BCC"))))
-      println(json)
-      aliasesById.put(agent.id, s"alias://${agent.id}/alias")
-      threadSleep(15)
-    }
-    println("Agent labels complete")
-
-    println("Creating connection introductions")
-    dataset.cnxns.foreach { connection =>
-      val sourceId = connection.src.replace("agent://","")
-      val sourceAlias = aliasesById(sourceId)
-      val sourceURI = sessionsById(sourceId).sessionURI
-      val targetId = connection.trgt.replace("agent://","")
-      val targetAlias = aliasesById(targetId)
-      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias), Connection(targetAlias, sourceAlias)))
-      threadSleep(15)
-    }
-    println("Random introduction connections complete")
+    makeCnxns( dataset )
 
     // iterate and create connection confirmations
     /*dataset.cnxns.foreach { connection =>

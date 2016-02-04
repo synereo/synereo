@@ -6,8 +6,8 @@ name := "GLoSEval"
 
 version       := "0.1"
 
-//scalaVersion  := "2.10.2"
-scalaVersion  := "2.10.0"
+scalaVersion  := "2.10.2"
+//scalaVersion  := "2.10.0"
 //scalaVersion  := "2.9.2"
 
 autoCompilerPlugins := true
@@ -29,6 +29,8 @@ resolvers ++= Seq(
 // Change for remote install
 publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
 
+ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+
 libraryDependencies ++= Seq(
   "io.spray"               %   "spray-can"          % "1.1-M7",
   "io.spray"               %   "spray-routing"      % "1.1-M7",
@@ -37,32 +39,39 @@ libraryDependencies ++= Seq(
 //  "com.typesafe.akka"      %  "akka-actor"         % "2.0.5",
   "org.specs2"             %%  "specs2"             % "1.13" % "test",
 //  "org.specs2"             %   "specs2_2.9.2"       % "1.12.4.1",
-  "org.json4s"             %   "json4s-native_2.10" % "3.1.0",
-  "org.json4s"             %   "json4s-jackson_2.10" % "3.1.0",
+//  "org.json4s"             %   "json4s-native_2.10" % "3.1.0",
+  "org.json4s"             %%   "json4s-native" % "3.1.0",
+//  "org.json4s"             %   "json4s-jackson_2.10" % "3.1.0",
+  "org.json4s"             %%   "json4s-jackson" % "3.1.0",
 //  "org.json4s"             %   "json4s-native_2.9.2" % "3.1.0",
 //  "org.json4s"             %   "json4s-jackson_2.9.2" % "3.1.0",
   "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
-  "org.scala-lang"         %   "scala-actors"       % "2.10.0",
-  "org.scala-lang"         %   "scala-reflect"      % "2.10.0",
-  "com.biosimilarity.lift" %   "specialK"           % "1.1.8.0",
-  "com.protegra-ati"       %   "agentservices-store-ia" % "1.9.2-SNAPSHOT",
+//  "org.scala-lang"         %   "scala-actors"       % "2.10.0",
+  "org.scala-lang"         %   "scala-actors"       % "2.10.2",
+//  "org.scala-lang"         %   "scala-reflect"      % "2.10.0",
+  "org.scala-lang"         %   "scala-reflect"      % "2.10.2",
+//  "com.biosimilarity.lift" %   "specialK"           % "1.1.8.0",
+  "com.biosimilarity.lift" %   "specialK"           % "1.1.8.5",
+//  "com.protegra-ati"       %   "agentservices-store-ia" % "1.9.2-SNAPSHOT",
+  "com.protegra-ati"       %   "agentservices-store-ia" % "1.9.5",
   "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
   "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
   "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",
   "com.thoughtworks.xstream" % "xstream"            % "1.4.2",
 //  "org.mongodb"            %   "casbah_2.10"       % "2.6.2",
-  "org.mongodb"            %   "casbah_2.10"       % "2.5.1",
+//  "org.mongodb"            %   "casbah_2.10"       % "2.5.1",
+  "org.mongodb"            %%   "casbah"       % "2.5.1",
 //  "org.mongodb"            %   "casbah_2.9.2"       % "2.5.1",
   "org.basex"              %   "basex-api"          % "7.5",
   "biz.source_code"        %   "base64coder"        % "2010-09-21",
-  //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.2")
-  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
+  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.2")
+  //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
   //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.2")
 )    
     
 // Just a touch to retrigger build
 
-seq(Revolver.settings: _*)
+//seq(Revolver.settings: _*)
 
 sbtassembly.Plugin.assemblySettings
 
@@ -79,4 +88,4 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   }
 }
 
-net.virtualvoid.sbt.graph.Plugin.graphSettings
+//net.virtualvoid.sbt.graph.Plugin.graphSettings
