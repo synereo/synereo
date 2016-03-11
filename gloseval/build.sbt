@@ -6,7 +6,7 @@ name := "GLoSEval"
 
 version       := "0.1"
 
-scalaVersion  := "2.10.2"
+scalaVersion  := "2.10.3"
 //scalaVersion  := "2.10.0"
 //scalaVersion  := "2.9.2"
 
@@ -32,10 +32,10 @@ publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 libraryDependencies ++= Seq(
-  "io.spray"               %   "spray-can"          % "1.1-M7",
-  "io.spray"               %   "spray-routing"      % "1.1-M7",
-  "io.spray"               %   "spray-testkit"      % "1.1-M7",
-  "com.typesafe.akka"      %%  "akka-actor"         % "2.1.0",
+  "io.spray"               %   "spray-can"          % "1.1.2",
+  "io.spray"               %   "spray-routing"      % "1.1.2",
+  "io.spray"               %   "spray-testkit"      % "1.1.2",
+  "com.typesafe.akka"      %%  "akka-actor"         % "2.2.5",
 //  "com.typesafe.akka"      %  "akka-actor"         % "2.0.5",
   "org.specs2"             %%  "specs2"             % "1.13" % "test",
 //  "org.specs2"             %   "specs2_2.9.2"       % "1.12.4.1",
@@ -62,9 +62,9 @@ libraryDependencies ++= Seq(
 //  "org.mongodb"            %   "casbah_2.10"       % "2.5.1",
   "org.mongodb"            %%   "casbah"       % "2.5.1",
 //  "org.mongodb"            %   "casbah_2.9.2"       % "2.5.1",
-  "org.basex"              %   "basex-api"          % "7.5",
+//  "org.basex"              %   "basex-api"          % "7.5",
   "biz.source_code"        %   "base64coder"        % "2010-09-21",
-  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.2")
+  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.3")
   //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
   //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.2")
 )    

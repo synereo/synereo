@@ -9,7 +9,7 @@ import com.biosimilarity.lift.lib._
 
 import akka.actor._
 import spray.routing._
-import directives.CompletionMagnet
+//import directives.CompletionMagnet
 import spray.http._
 import spray.http.StatusCodes._
 import MediaTypes._
@@ -214,7 +214,7 @@ case class EvalException(sessionURI: String) extends Exception with Serializable
 case class CloseSessionException(sessionURI: String, message: String) extends Exception with Serializable
 
 // this trait defines our service behavior independently from the service actor
-trait EvaluatorService extends HttpService
+trait EvaluatorService extends HttpService with CORSSupport
 {  
   import DSLCommLink.mTT
   import EvalHandlerService._
@@ -278,7 +278,7 @@ trait EvaluatorService extends HttpService
   )
 
   @transient
-  val myRoute = 
+  val myRoute = cors {
     path("api") {
       post {
         decodeRequest(NoEncoding) {
@@ -310,14 +310,14 @@ trait EvaluatorService extends HttpService
                 }
               } catch {
                 case th: Throwable => {
-                  val writer : java.io.StringWriter = new java.io.StringWriter()
-                  val printWriter : java.io.PrintWriter = new java.io.PrintWriter( writer )
-                  th.printStackTrace( printWriter )
+                  val writer: java.io.StringWriter = new java.io.StringWriter()
+                  val printWriter: java.io.PrintWriter = new java.io.PrintWriter(writer)
+                  th.printStackTrace(printWriter)
                   printWriter.flush()
 
-                  val stackTrace : String = writer.toString()
+                  val stackTrace: String = writer.toString()
                   //println( "Malformed request: \n" + stackTrace )
-                  BasicLogService.tweet( "Malformed request: \n" + stackTrace )
+                  BasicLogService.tweet("Malformed request: \n" + stackTrace)
                   ctx.complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
                 }
               }
@@ -326,61 +326,63 @@ trait EvaluatorService extends HttpService
         } // decodeRequest
       } // post
     } ~
-    path( "admin/connectServers" ) { // allow administrators to make
-                                     // sure servers are connected
-      // BUGBUG : lgm -- make this secure!!!
-      get {
-        parameters('whoAmI) { 
-          ( whoAmI : String ) => {          
-//             println(
-//               (
-//                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-//                 + "in admin/connectServers2 "
-//                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-//               )
-//             )
-            BasicLogService.tweet(
-              (
-                " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                + "in admin/connectServers2 "
-                + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+      path("admin/connectServers") {
+        // allow administrators to make
+        // sure servers are connected
+        // BUGBUG : lgm -- make this secure!!!
+        get {
+          parameters('whoAmI) {
+            (whoAmI: String) => {
+              //             println(
+              //               (
+              //                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+              //                 + "in admin/connectServers2 "
+              //                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+              //               )
+              //             )
+              BasicLogService.tweet(
+                (
+                  " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                    + "in admin/connectServers2 "
+                    + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                  )
               )
-            )
-          
-            connectServers( "evaluator-service", UUID.randomUUID )        
-          
-            (cometActor ! SessionPing("", _))
-          }
-        }
-      }
-    } ~
-    pathPrefix("static" / PathElement) { path =>
-      getFromFile(path)
-    } ~
-    pathPrefix( "agentui" ) {
-      getFromDirectory( "./agentui" )
-    } ~
-    pathPrefix( "splicious" ) {
-      getFromDirectory( "./agentui" )
-    } ~
-    pathPrefix( "splicious/btc" ) {
-      get {
-        parameters('btcToken) { 
-          ( btcToken : String ) => {          
-            BasicLogService.tweet(
-              (
-                " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                + "in splicious/btc "
-                + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-              )
-            )
 
-            handleBTCResponse( btcToken )
-                    
-            (cometActor ! SessionPing("", _))
-            
+              connectServers("evaluator-service", UUID.randomUUID)
+
+              (cometActor ! SessionPing("", _))
+            }
+          }
+        }
+      } ~
+      pathPrefix("static" / Segment) { path =>
+        getFromFile(path)
+      } ~
+      pathPrefix("agentui") {
+        getFromDirectory("./agentui")
+      } ~
+      pathPrefix("splicious") {
+        getFromDirectory("./agentui")
+      } ~
+      pathPrefix("splicious/btc") {
+        get {
+          parameters('btcToken) {
+            (btcToken: String) => {
+              BasicLogService.tweet(
+                (
+                  " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                    + "in splicious/btc "
+                    + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                  )
+              )
+
+              handleBTCResponse(btcToken)
+
+              (cometActor ! SessionPing("", _))
+
+            }
           }
         }
       }
-    }
+  }
 }

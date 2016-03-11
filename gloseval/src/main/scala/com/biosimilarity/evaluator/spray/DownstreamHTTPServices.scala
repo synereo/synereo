@@ -8,38 +8,30 @@
 
 package com.biosimilarity.evaluator.spray
 
-import com.protegra_ati.agentservices.store._
-
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.msgs._
-import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.model.store._
 
-import spray.httpx.RequestBuilding._
-import spray.http._
-import HttpMethods._
-import HttpHeaders._
-import MediaTypes._
-import spray.json._
-import DefaultJsonProtocol._
-import spray.httpx.SprayJsonSupport._
+//import spray.httpx.RequestBuilding._
 import akka.actor.ActorSystem
-import spray.io.IOExtension
-import akka.actor.Props
-import spray.can.client.HttpClient
-import spray.client.HttpConduit
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
+import spray.http._
+//import spray.io.IOExtension
 
-import java.net.URL
+//@@GS
+//import spray.can.client.HttpClient
+//import spray.client.HttpConduit
+import akka.io.IO
+import spray.can.Http
+import spray.client.pipelining._
+
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 trait DownStreamHttpCommsT
 {
   self : EvaluationCommsService => 
-  import DSLCommLink.mTT
-  import ConcreteHL._  
   import BlockChainAPI._
+  import DSLCommLink.mTT
   
   def ask[Data <: BlockChainData](
     rspCnxn : PortableAgentCnxn,
@@ -50,24 +42,39 @@ trait DownStreamHttpCommsT
     }
   ) {
     //import concurrent.ExecutionContext.Implicits._
-    import scala.concurrent.ExecutionContext.Implicits._
+    //import scala.concurrent.ExecutionContext.Implicits._
 
-    val req = Post( rq.url.getPath, FormData( toMap( rq.data ) ) ) 
+    val req = Post( rq.url.getPath, FormData( toMap( rq.data ) ) )
+    /*
     val host = rq.url.getHost
     val port = 
       if ( rq.url.getPort < 0 ) { 80 } else { rq.url.getPort }
+    */
 
     implicit val system = ActorSystem()
-    val ioBridge = IOExtension(system).ioBridge()
-    val httpClient = system.actorOf(Props(new HttpClient(ioBridge)))
+    //@@GS
+    //val ioBridge = IOExtension(system).ioBridge()
+    //val httpClient = system.actorOf(Props(new HttpClient(ioBridge)))
 
-    val conduit = system.actorOf(
-      props = Props(new HttpConduit(httpClient, host, port)),
-      name = "http-conduit"
-    )
+    //val conduit = system.actorOf(
+    //  props = Props(new HttpConduit(httpClient, host, port)),
+    //  name = "http-conduit"
+    //)
 
-    val pipeline = HttpConduit.sendReceive(conduit)
-    val response: Future[HttpResponse] = pipeline(req)
+    //val pipeline = HttpConduit.sendReceive(conduit)
+
+    import system.dispatcher  // execution context - @@GS wtf ???
+
+    val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
+/*
+    val pipeline : Future[SendReceive] =
+      for (
+        Http.HostConnectorInfo(connector, _) <-
+            IO(Http) ? Http.HostConnectorSetup(host, port )
+      ) yield sendReceive(connector)
+*/
+
+    val response: Future[HttpResponse] = pipeline(req) //.flatMap(_(req))
 
     response onComplete{
       case Failure(ex) => ex.printStackTrace()

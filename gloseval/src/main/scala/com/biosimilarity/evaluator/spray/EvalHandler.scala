@@ -18,7 +18,7 @@ import com.biosimilarity.lift.lib._
 
 import akka.actor._
 import spray.routing._
-import directives.CompletionMagnet
+//import directives.CompletionMagnet
 import spray.http._
 import spray.http.StatusCodes._
 import MediaTypes._
@@ -234,6 +234,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   /**
    * Creates an agent.
+ *
    * @param json input JSON for agent
    * @param key this is used to identify a return request (optional)
    */
@@ -1380,7 +1381,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
                     val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
                     
-                    val content = 
+                    val content: JsonAST.JObject =
                       ("sessionURI" -> sessionURI) ~
                       ("listOfAliases" -> parse(aliasList)) ~
                       ("defaultAlias" -> defaultAlias) ~

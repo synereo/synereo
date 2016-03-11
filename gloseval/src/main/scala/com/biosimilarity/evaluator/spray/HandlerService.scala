@@ -17,7 +17,7 @@ import com.biosimilarity.lift.lib._
 
 import akka.actor._
 import spray.routing._
-import directives.CompletionMagnet
+//import directives.CompletionMagnet
 import spray.http._
 import spray.http.StatusCodes._
 import MediaTypes._
