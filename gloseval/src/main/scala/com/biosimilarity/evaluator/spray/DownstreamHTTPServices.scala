@@ -44,12 +44,14 @@ trait DownStreamHttpCommsT
     //import concurrent.ExecutionContext.Implicits._
     //import scala.concurrent.ExecutionContext.Implicits._
 
-    val req = Post( rq.url.getPath, FormData( toMap( rq.data ) ) )
+    //val req = Post( rq.url.getPath, FormData( toMap( rq.data ) ) )
     /*
     val host = rq.url.getHost
     val port = 
       if ( rq.url.getPort < 0 ) { 80 } else { rq.url.getPort }
     */
+    //@@GS - not defaulting the port to 80 when < 0 ...
+    val req = Post( rq.url.toString , FormData( toMap( rq.data ) ) )
 
     implicit val system = ActorSystem()
     //@@GS
@@ -63,7 +65,7 @@ trait DownStreamHttpCommsT
 
     //val pipeline = HttpConduit.sendReceive(conduit)
 
-    import system.dispatcher  // execution context - @@GS wtf ???
+    import system.dispatcher  // execution context - @@GS ???
 
     val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
 /*
