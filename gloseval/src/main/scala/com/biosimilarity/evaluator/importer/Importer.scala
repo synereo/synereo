@@ -8,11 +8,12 @@
 
 package com.biosimilarity.evaluator.importer
 
-import com.biosimilarity.evaluator.distribution.{AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
+import com.biosimilarity.evaluator.distribution.{ AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService }
 import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.importer.utils.mailinator.Mailinator
-import com.biosimilarity.evaluator.spray.{BTCHandler, DownStreamHttpCommsT, EvalHandler}
+import com.biosimilarity.evaluator.spray.{ BTCHandler, DownStreamHttpCommsT, EvalHandler }
+import org.json4s.JsonAST.JValue
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 import org.joda.time.DateTime
@@ -31,8 +32,8 @@ import scalaj.http.Http
  * @note Finally, import this object and execute `Importer.fromFiles()`. You may need to set the file paths in the parameters.
  */
 object Importer extends EvalConfig
-with ImporterConfig
-with Serializable {
+  with ImporterConfig
+  with Serializable {
 
   import org.json4s.jackson.Serialization
 
@@ -56,22 +57,21 @@ with Serializable {
     response
   }
 
-  private def createEmailUser(loginId: String) = s"livelygig-$loginId"
 
-  private def createEmailAddress(loginId: String) = s"${createEmailUser(loginId)}@mailinator.com"
-
-  private def makeAliasURI(alias: String) = s"alias://$alias/alias"
-
-  private def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
+  //private def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
+  private def makeAliasLabel(label: String, color: String) = "leaf(text(\"" + label +"\"),display(color(\"" + color + "\"),image(\"\")))"
 
   private def threadSleep(seconds: Int) = {
     println(s"Sleeping for $seconds seconds")
+    Thread.sleep(seconds.toLong * 1000)
+    /*
     def time = new DateTime().getMillis
     var now = time
-    val future = now + (seconds.toLong*1000)
-    while(time < future) {
+    val future = now + (seconds.toLong * 1000)
+    while (time < future) {
       now = time
     }
+    */
   }
 
   private val sessionsByAgent = scala.collection.mutable.Map[String, InitializeSessionResponse]() // loginId:agentURI
@@ -79,84 +79,89 @@ with Serializable {
   private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]() // sessionURI:agent
   private val aliasesById = scala.collection.mutable.Map[String, String]() // agentId:aliasUri
 
-  def makeAgent( agent : AgentDesc ) : Unit = {
-    val blobMap = new HashMap[String,String]()
-    val agentName = s"{agent.firstName}" + " " + s"{agent.lastName}"
-    blobMap += ( "name" -> agentName )
-    val json =
-      // glosevalPost(
-//         "initializeSessionRequest",
-//         InitializeSessionRequest(
-//           s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"
-//         )
-//       )
-      glosevalPost(
-        "createUserRequest",
-        // InitializeSessionRequest(
-//           s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"
-//         )
-        CreateUserRequest(
-          s"{createEmailAddress(agent.loginId)}",
-          s"{agent.pwd}",
-          blobMap,
-          true
-        )
-      )
+  def makeAgent(agent: AgentDesc): Unit = {
+    val blobMap = new HashMap[String, String]()
+    val agentName = agent.firstName + " " + agent.lastName
+    blobMap += ("name" -> agentName)
 
-    val session = parse(json).extract[ApiResponse[InitializeSessionResponse]].content
-    
+    val jstmp = glosevalPost(
+      "createUserRequest",
+      CreateUserRequest(
+        "",
+        agent.pwd,
+        blobMap,
+        true))
+
+    threadSleep(30)
+
+    val agentURI = (parse(jstmp) \ "content" \ "agentURI").extract[String]
+
+    val json =
+       glosevalPost(
+             "initializeSessionRequest",
+             InitializeSessionRequest( agentURI + "?password=" + agent.pwd)
+       )
+
+
+    val jsession : JValue = ( parse(json) \ "content" )
+    val uri = (jsession \ "sessionURI").extract[String]
+    val alias = (jsession \ "defaultAlias").extract[String]
+
+    val session = InitializeSessionResponse(uri, alias, jsession)
+
     sessionsByAgent.put(agent.loginId, session)
     agentsBySession.put(session.sessionURI, agent)
     sessionsById.put(agent.id, session)
   }
 
   // paginated agent creation
-  def makeAgents( dataset : DataSetDesc, chunkSize : Int = 4 ) : Unit = {
+  def makeAgents(dataset: DataSetDesc, chunkSize: Int = 4): Unit = {
     println("Initializing agent sessions")
     val agents = dataset.agents
 
     val numOfAgents = agents.length
-    val numOfChunks = numOfAgents / chunkSize    
-    val leftOvers = ( numOfAgents % chunkSize )
+    val numOfChunks = numOfAgents / chunkSize
+    val leftOvers = (numOfAgents % chunkSize)
 
-    for( i <- ( 1 to numOfChunks ) ) {
-      for( j <- ( 1 to chunkSize ) ) {
-        makeAgent( agents( ( i - 1 ) * chunkSize + ( j - 1 ) ) )        
+    for (i <- (1 to numOfChunks)) {
+      for (j <- (1 to chunkSize)) {
+        makeAgent(agents((i - 1) * chunkSize + (j - 1)))
         threadSleep(15)
-      }      
-      
+      }
+
       threadSleep(30)
     }
-    if ( leftOvers > 0 ) {
-      for ( j <- ( 1 to leftOvers ) ) {
-        makeAgent( agents( numOfChunks * chunkSize + ( j - 1 ) ) )        
+    if (leftOvers > 0) {
+      for (j <- (1 to leftOvers)) {
+        makeAgent(agents(numOfChunks * chunkSize + (j - 1)))
         threadSleep(15)
       }
       threadSleep(30)
     }
 
     println("Agent session initialization complete")
-        
+
   }
 
-  def makeLabels( agentSessions : scala.collection.mutable.Map[String, AgentDesc] ) : Unit = {
+  def makeLabels(): Unit = {
     println("Adding labels for agents")
-    agentsBySession.foreach { case (session, agent) =>
-      val json = glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session, "alias", List(makeAliasLabel(agent.id, "#5C9BCC"))))
-      println(json)
-      aliasesById.put(agent.id, s"alias://${agent.id}/alias")
-      threadSleep(15)
+    agentsBySession.foreach {
+      case (session, agent) =>
+        val json = glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session, "alias", List(makeAliasLabel(agent.id, "#5C9BCC"))))
+        println(json)
+        aliasesById.put(agent.id, s"alias://${agent.id}/alias")
+        threadSleep(15)
     }
     println("Agent labels complete")
   }
 
-  def makeCnxns( dataset : DataSetDesc, chunkSize : Int = 4 ) : Unit = {
+  def makeCnxns(dataset: DataSetDesc, chunkSize: Int = 4): Unit = {
     println("Creating connection introductions")
     dataset.cnxns.foreach { connection =>
-      val sourceId = connection.src.replace("agent://","")
+      val sourceId = connection.src.replace("agent://", "")
       val sourceAlias = aliasesById(sourceId)
       val sourceURI = sessionsById(sourceId).sessionURI
-      val targetId = connection.trgt.replace("agent://","")
+      val targetId = connection.trgt.replace("agent://", "")
       val targetAlias = aliasesById(targetId)
       glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias), Connection(targetAlias, sourceAlias)))
       threadSleep(15)
@@ -165,19 +170,17 @@ with Serializable {
   }
 
   def parseData(
-    dataJsonFile : String = serviceDemoDataFile(),
-    configJsonFile : String = serviceSystemLabelsFile()
-  ) = {
+    dataJsonFile: String = serviceDemoDataFile(),
+    configJsonFile: String = serviceSystemLabelsFile()) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
   }
 
   def fromFiles(
-    dataJsonFile : String = serviceDemoDataFile(),
-    configJsonFile : String = serviceSystemLabelsFile(),
-    host : String = GLOSEVAL_HOST,
-    chunkSize : Int = 4
-  ) {
+    dataJsonFile: String = serviceDemoDataFile(),
+    configJsonFile: String = serviceSystemLabelsFile(),
+    host: String = GLOSEVAL_HOST,
+    chunkSize: Int = 4) {
     println("Beginning import procedure")
     GLOSEVAL_HOST = host
 
@@ -186,7 +189,6 @@ with Serializable {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
     val agents = dataset.agents
-
 
     /*println("Importing agents")
     agents.foreach { agent =>
@@ -214,11 +216,11 @@ with Serializable {
 
     threadSleep(30)*/
 
-    makeAgents( dataset )
+    makeAgents(dataset)
 
-    makeLabels( agentsBySession )
+    makeLabels()
 
-    makeCnxns( dataset )
+    makeCnxns(dataset)
 
     // iterate and create connection confirmations
     /*dataset.cnxns.foreach { connection =>

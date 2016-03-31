@@ -374,13 +374,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   // Labels
   def addAliasLabelsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val lbls = (json \ "content" \ "labels").extract[List[String]]
     handler.handleaddAliasLabelsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAliasLabelsRequest(
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String],
-        (json \ "content" \ "labels").extract[List[String]].
-          map(fromTermString).
-          map(_.getOrElse(
+          lbls.map(fromTermString)
+            .map(_.getOrElse(
             CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "addAliasLabelsError") ~
                 ("content" -> ("reason" -> ("Couldn't parse a label:" +
@@ -724,12 +724,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def secureSignup(
-    email: String,
-    password: String,
-    jsonBlob: String,
-    key: String,
-    //createBTCWallet : Boolean = false,
-    btcWalletAddress: Option[String] = None): Unit = {
+      email: String,
+      password: String,
+      jsonBlob: String,
+      key: String,
+      //createBTCWallet : Boolean = false,
+      btcWalletAddress: Option[String] = None
+    ): Unit = {
     import DSLCommLink.mTT
     val cap = if (email == "") UUID.randomUUID.toString else storeCapByEmail(email)
     BasicLogService.tweet("secureSignup email=" + email + ",password=" + password + ", cap=" + cap + ", btcWalletAddress=" + btcWalletAddress)
@@ -747,9 +748,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     BasicLogService.tweet("secureSignup posting pwmac")
 
     val createUserResponse: Unit => Unit = Unit => {
+      val uri = "agent://cap/" + capAndMac
       CompletionMapper.complete(key, compact(render(
         ("msgType" -> "createUserResponse") ~
-          ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac))))))
+          ("content" -> ("agentURI" -> uri)))))
     }
 
     val onPost5 = (aliasCnxn: PortableAgentCnxn) => (optRsrc: Option[mTT.Resource]) => {
@@ -1096,6 +1098,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       aliasURI,
       feed _)
   }
+
 
   def createUserRequest(json: JValue, key: String): Unit = {
     import DSLCommLink.mTT
@@ -1601,6 +1604,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     json: JValue,
     key: String): Unit = {
     val agentURI = (json \ "content" \ "agentURI").extract[String]
+    initializeSessionFromURI(agentURI, key)
+  }
+
+
+
+  def initializeSessionFromURI( agentURI: String,  key: String): Unit = {
+
     val uri = new URI(agentURI)
 
     if (uri.getScheme() != "agent") {
@@ -1610,11 +1620,15 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val identInfo = uri.getPath.substring(1) // drop leading slash
     // TODO: get a proper library to do this
     val queryMap = new HashMap[String, String]
-    uri.getRawQuery.split("&").map((x: String) => {
-      val pair = x.split("=")
-      queryMap += ((pair(0), pair(1)))
-    })
-    var password = queryMap.get("password").getOrElse("")
+    val qry = uri.getRawQuery
+    if (qry != null) {
+      qry.split("&").map((x: String) => {
+        val pair = x.split("=")
+        queryMap += ((pair(0), pair(1)))
+      })
+    }
+    //@@GS - password should not be required here ...
+    var password = queryMap.getOrElse("password", "")
     secureLogin(identType, identInfo, password, key)
   }
 

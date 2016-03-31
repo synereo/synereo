@@ -51,7 +51,8 @@ trait DownStreamHttpCommsT
       if ( rq.url.getPort < 0 ) { 80 } else { rq.url.getPort }
     */
     //@@GS - not defaulting the port to 80 when < 0 ...
-    val req = Post( rq.url.toString , FormData( toMap( rq.data ) ) )
+    val curl = rq.url.toString
+    val req = Post( curl , FormData( toMap( rq.data ) ) )
 
     implicit val system = ActorSystem()
     //@@GS
