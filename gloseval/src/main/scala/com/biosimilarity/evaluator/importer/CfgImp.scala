@@ -26,6 +26,7 @@ trait ImporterConfig {
     var _serviceHost : Option[String] = None 
     var _servicePort : Option[Int] = None
     var _serviceEmailSenderAddress : Option[String] = None
+    var _serviceMailinatorHost : Option[String] = None
     var _serviceMailinatorKey : Option[String] = None
     var _serviceUserChunkSize : Option[String] = None
     var _serviceDemoDataFile : Option[String] = None
@@ -65,6 +66,17 @@ trait ImporterConfig {
           val semsa = evalConfig().getString( "ImporterServiceEmailSenderAddress" )
           _serviceEmailSenderAddress = Some( semsa )
           semsa
+        }
+      }
+    }
+
+  def serviceMailinatorHost() = {
+      _serviceMailinatorHost match {
+        case Some( smh ) => smh
+        case None => {
+          val smh = evalConfig().getString( "ImporterServiceMailinatorHost" )
+          _serviceMailinatorHost = Some( smh )
+          smh
         }
       }
     }
