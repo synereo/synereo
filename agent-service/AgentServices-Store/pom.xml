@@ -376,7 +376,6 @@
                     <jvmArgs>
                         <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
                         <jvmArg>-Xmx1024m</jvmArg>
-                        <jvmArg>­Xss1024</jvmArg>
                         <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
                     </jvmArgs>
                     <args>
