@@ -492,6 +492,25 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>copy-dependencies</id>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>copy-dependencies</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                <overWriteReleases>false</overWriteReleases>
+                <overWriteSnapshots>false</overWriteSnapshots>
+                <overWriteIfNewer>true</overWriteIfNewer>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
           <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-source-plugin</artifactId>
@@ -523,14 +542,15 @@
 	  <scalaVersion>${scala.version}</scalaVersion>
           <charset>${project.build.sourceEncoding}</charset>
 	  <displayCmd>true</displayCmd>
-          <jvmArgs>	    
-	    <!-- jvmArg>-Xnoagent</jvmArg -->
-	    <!-- jvmArg>-Djava.compiler=NONE</jvmArg -->
-	    <jvmArg>-Xmx4096m</jvmArg>
-	    <jvmArg>-XX:MaxPermSize=512m</jvmArg>
-	    <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
-            <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
-          </jvmArgs>
+        <jvmArgs>
+	      <!-- jvmArg>-Xnoagent</jvmArg -->
+	      <!-- jvmArg>-Djava.compiler=NONE</jvmArg -->
+	      <jvmArg>-Xmx4096m</jvmArg>
+	      <jvmArg>-XX:MaxPermSize=512m</jvmArg>
+          <jvmArg>-Xss1024</jvmArg>
+          <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
+          <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
+        </jvmArgs>
 	  <args>	    
 	    <!-- arg>-deprecation</arg -->
 	    <!-- arg>-unchecked</arg -->
