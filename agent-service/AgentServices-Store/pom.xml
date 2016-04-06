@@ -3,7 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.protegra-ati</groupId>
     <artifactId>agentservices-store-ia</artifactId>
-    <version>1.9.3-NR-SNAPSHOT</version>
+    <!--version>1.9.3-NR-SNAPSHOT</version-->
+    <version>1.9.5</version>
     <name>${project.artifactId}</name>
     <description>Agent class library</description>
     <inceptionYear>2010</inceptionYear>
@@ -334,6 +335,25 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.2</version>
                 <executions>
@@ -356,6 +376,7 @@
                     <jvmArgs>
                         <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
                         <jvmArg>-Xmx1024m</jvmArg>
+                        <jvmArg>­Xss1024</jvmArg>
                         <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
                     </jvmArgs>
                     <args>
