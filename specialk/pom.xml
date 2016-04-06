@@ -547,7 +547,6 @@
 	      <!-- jvmArg>-Djava.compiler=NONE</jvmArg -->
 	      <jvmArg>-Xmx4096m</jvmArg>
 	      <jvmArg>-XX:MaxPermSize=512m</jvmArg>
-          <jvmArg>-Xss1024</jvmArg>
           <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
           <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
         </jvmArgs>
