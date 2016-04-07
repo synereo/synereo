@@ -2,8 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-  
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.biosimilarity.lift</groupId>
   <artifactId>specialK</artifactId>
@@ -12,11 +10,6 @@
   <name>specialK Project</name>
   <inceptionYear>2010</inceptionYear>
   <properties>
-    <!-- scala.version>2.8.1</scala.version -->
-    <!-- scala.version>2.9.0-1</scala.version -->
-    <!-- scala.version>2.9.2</scala.version -->
-    <!-- scala.version>2.10.0</scala.version -->
-    <!--scala.version>2.10.2</scala.version-->
     <scala.version>2.10.5</scala.version>
     <!-- Common plugin settings -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,7 +25,7 @@
       <uniqueVersion>true</uniqueVersion>
       <id>biosimilarity</id>
       <name>biosimrepo</name>
-      <url>file:///Users/lgm/work/src/projex/biosimilarity/biosimrepomirror</url>
+      <url>file:///Users/n/.m2/repository</url>
       <layout>default</layout>
     </repository>
   </distributionManagement>
@@ -112,8 +105,6 @@
       <groupId>org.mongodb</groupId>
       <artifactId>casbah_2.10</artifactId>
       <!-- artifactId>casbah_${scala.version}</artifactId -->
-      <!-- version>2.5.1</version -->
-      <!--version>2.6.2</version-->
       <version>2.6.4</version>
       <type>pom</type>
       <exclusions>
