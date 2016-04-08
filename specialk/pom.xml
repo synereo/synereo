@@ -18,6 +18,7 @@
     <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
     <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
     <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
+    <!--agentservices-store.version>1.9.5</agentservices-store.version-->
   </properties>
 
   <distributionManagement>
@@ -96,6 +97,13 @@
   </pluginRepositories>
 
   <dependencies>
+
+    <!--dependency>
+      <groupId>com.protegra-ati</groupId>
+      <artifactId>agentservices-store-ia</artifactId>
+      <version>${agentservices-store.version}</version>
+    </dependency-->
+
     <dependency>
       <groupId>com.google.zxing</groupId>
       <artifactId>core</artifactId>
@@ -537,8 +545,7 @@
 	      <!-- jvmArg>-Xnoagent</jvmArg -->
 	      <!-- jvmArg>-Djava.compiler=NONE</jvmArg -->
 	      <jvmArg>-Xmx4096m</jvmArg>
-	      <jvmArg>-XX:MaxPermSize=512m</jvmArg>
-          <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
+	      <jvmArg>-Djava.library.path=$HGDB_ROOT/native</jvmArg>
           <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
         </jvmArgs>
 	  <args>	    
