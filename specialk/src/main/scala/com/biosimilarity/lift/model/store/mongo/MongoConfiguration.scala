@@ -1,23 +1,16 @@
-// -*- mode: Scala;-*- 
-// Filename:    MongoConfiguration.scala 
-// Authors:     lgm                                                    
-// Creation:    Sat Feb 23 02:19:17 2013 
-// Copyright:   Not supplied 
-// Description: 
-// ------------------------------------------------------------------------
-
 package com.biosimilarity.lift.model.store.mongo
 
 import com.biosimilarity.lift.model.store.URIFromConfigurationT
-import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.MongoDefaults
-
 import java.net.URI
 
 trait MongoConfigInfoT
 extends MongoStoreConfiguration
-with URIFromConfigurationT {  
-  override def configFileName: Option[String] = None
+with URIFromConfigurationT {
+  //override def configFileName: Option[String] = None
+  override def configFileName: Option[String] = {
+      Option ("eval.conf")
+  }
   override def configurationDefaults: ConfigurationDefaults =
     MongoDefaults.asInstanceOf[ConfigurationDefaults]
   override def defaultSchemeFromConfiguration : String = 
@@ -34,7 +27,11 @@ object MongoConfigInfo extends MongoConfigInfoT
 
 trait MongoConfigInfoFactoryT {
   def createMongoConfigInfo() : MongoConfigInfoT = {
-    new MongoConfigInfoT { }
+    var mConfigInfoT = new MongoConfigInfoT { }
+//    println(s"-##-MongoConfiguration.MongoConfigInfoFactory: mConfigInfoT: "
+//      + mConfigInfoT.confEnv
+//      +mConfigInfoT.configFileName)
+    return mConfigInfoT
   }
 }
 
