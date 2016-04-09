@@ -390,6 +390,8 @@
                         <arg>-encoding</arg>
                         <arg>utf8</arg>
                         <arg>-P:continuations:enable</arg>
+                        <arg>-Xmax-classfile-name</arg>
+                        <arg>244</arg>
                     </args>
                     <recompileMode>incremental</recompileMode>
                     <useZincServer>true</useZincServer>
