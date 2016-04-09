@@ -537,7 +537,9 @@
 	    <!-- <arg>-Xplugin:/Users/lgm/.m2/repository/org/scala-tools/sxr/sxr_2.9.0/0.2.7/sxr_2.9.0-0.2.7.jar</arg> -->
 <!-- 	    <arg>-P:sxr:base-directory:${basedir}/src</arg> -->
 	    <arg>-P:continuations:enable</arg>
-          </args>
+        <arg>-Xmax-classfile-name</arg>
+        <arg>204</arg>
+      </args>
 	  <compilerPlugins>
       	    <compilerPlugin>	      
       	      <groupId>org.scala-lang.plugins</groupId>
