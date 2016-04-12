@@ -72,8 +72,7 @@ case class SessionPing(sessionURI: String, reqCtx: RequestContext) extends Seria
 case class PollTimeout(id: String) extends Serializable
 
 /**
- * ClientGc sent to deregister a client when it hasnt responded
- * in a long time
+ * ClientGc sent to deregister a client when it hasnt pinged in a long time
  */
 case class ClientGc(id: String) extends Serializable
 
@@ -87,43 +86,44 @@ class CometActor extends Actor with Serializable {
   @transient
   val sets = new HashMap[String, HashSet[String]] // sets of async return messages
 
-  val gcTime = 1 minute // if client doesnt respond within this time, its garbage collected
-  val clientTimeout = 7 seconds // long-poll requests are closed after this much time, clients reconnect after this
-  val rescheduleDuration = 5 seconds // reschedule time for alive client which hasnt polled since last message
+  val gcTime = 1 minute // if client doesnt poll within this time, its garbage collected
+  val clientTimeout = 7 seconds // poll requests are closed after this much time, clients repoll (ping) after this
 
-  @transient
-  lazy val cometMapLock = new scala.concurrent.Lock()
+  //@@GS - testing theory: all methods of cometActor are synchronized => cometMapLock is redundant
+  //@transient
+  //lazy val cometMapLock = new scala.concurrent.Lock()
 
   def receive = {
-    case SessionPing(sessionURI, reqCtx) => synchronized {
-      cometMapLock.acquire()
-      aliveTimers.get(sessionURI).map(_.cancel())
-      aliveTimers += (sessionURI -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(sessionURI)))
+    case SessionPing(id, reqCtx) => synchronized {
+      //cometMapLock.acquire()
+      aliveTimers.get(id).map(_.cancel())
+      aliveTimers += (id -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(id)))
 
-      sets.get(sessionURI) match {
+      def _wait() {
+        requests += (id -> reqCtx)
+        toTimers.get(id).map(_.cancel())
+        toTimers += (id -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(id)))
+      }
+
+      sets.get(id) match {
         case None => {
-          // If there are no messages, just wait.
-          requests += (sessionURI -> reqCtx)
-          toTimers.get(sessionURI).map(_.cancel())
-          toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
+          _wait()
         }
         case Some(set) => {
           // If there are messages, forward them immediately.
           if (set.size == 0) {
-            requests += (sessionURI -> reqCtx)
-            toTimers.get(sessionURI).map(_.cancel())
-            toTimers += (sessionURI -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(sessionURI)))
+            _wait()
           } else {
-            sets -= sessionURI
+            sets -= id
             reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
           }
         }
       }
-      cometMapLock.release()
+      //cometMapLock.release()
     }
 
     case PollTimeout(id) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       //println( "In PollTimeout checking for a req to match id = " + id ) 
       for (req <- requests.get(id)) {
         //println( "In PollTimeout about to call complete with sessionPong; req = " + req ) 
@@ -132,20 +132,20 @@ class CometActor extends Actor with Serializable {
       }
       requests -= id
       toTimers -= id
-      cometMapLock.release()
+      //cometMapLock.release()
     }
 
     case ClientGc(id) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       requests -= id
       toTimers -= id
       aliveTimers -= id
-      cometMapLock.release()
+      //cometMapLock.release()
     }
 
     case CometMessage(id, data) => synchronized {
-      cometMapLock.acquire()
-      val dataPrintRep =
+      //cometMapLock.acquire()
+      def dataPrintRep() =
         if (data.toString.length > 140) {
           data.toString.substring(0, Math.min(140, data.toString.length)) + "...}"
         } else {
@@ -157,7 +157,7 @@ class CometActor extends Actor with Serializable {
           (
             "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
             + "\nCometMessage id miss: id = " + id
-            + ", data = " + dataPrintRep
+            + ", data = " + dataPrintRep()
             + ", sets = " + sets
             + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"))
         val newSet = new HashSet[String]
@@ -166,7 +166,7 @@ class CometActor extends Actor with Serializable {
       })
       set += data
 
-      val setsPrintRep =
+      def setsPrintRep() =
         if (sets.toString.length > 140) {
           sets.toString.substring(0, Math.min(140, sets.toString.length)) + "...}"
         } else {
@@ -181,22 +181,18 @@ class CometActor extends Actor with Serializable {
             (
               "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
               + "\nCometMessage optReqCtx miss: id = " + id
-              + ", data = " + dataPrintRep
-              + ", sets = " + setsPrintRep
-              + ", optReqCtx = " + optReqCtx
+              + ", data = " + dataPrintRep()
+              + ", sets = " + setsPrintRep()
               + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"))
         }
-        case Some(_) => {
-          // nothing to do
+        case Some(reqCtx) => {
+          requests -= id
+          sets -= id
+          //println("calling reqCtx.complete on " + reqCtx)
+          reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
         }
       }
-      optReqCtx.map { reqCtx =>
-        requests -= id
-        sets -= id
-        //println("calling reqCtx.complete on " + reqCtx)
-        reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
-      }
-      cometMapLock.release()
+      //cometMapLock.release()
     }
   }
 }

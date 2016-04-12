@@ -7,5 +7,7 @@ case class BeginIntroductionRequest(
   sessionURI: String,
   alias: String,
   aConnection: Connection,
-  bConnection: Connection
+  bConnection: Connection,
+  aMessage: String,
+  bMessage: String
 ) extends RequestContent
