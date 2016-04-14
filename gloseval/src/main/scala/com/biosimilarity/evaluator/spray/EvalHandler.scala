@@ -313,10 +313,20 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     with Serializable {}
 
   // Agents
-  def addAgentExternalIdentityRequest(json: JValue): Unit = {}
+  def addAgentExternalIdentityRequest(json: JValue): Unit = {
+    val idtyp = (json \ "content" \ "idType").extract[String]
+    val idval = (json \ "content" \ "idValue").extract[String]
+    var id = ID()
+    handler.handleaddAgentExternalIdentityRequest(
+      com.biosimilarity.evaluator.msgs.agent.crud.addAgentExternalIdentityRequest(
+        new URI(),
+        (json \ "content" \ "aliases").extract[List[String]]))
+  }
   def addAgentExternalIdentityToken(json: JValue): Unit = {}
   def removeAgentExternalIdentitiesRequest(json: JValue): Unit = {}
-  def getAgentExternalIdentitiesRequest(json: JValue): Unit = {}
+  def getAgentExternalIdentitiesRequest(json: JValue): Unit = {
+
+  }
   def addAgentAliasesRequest(json: JValue): Unit = {
     handler.handleaddAgentAliasesRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(

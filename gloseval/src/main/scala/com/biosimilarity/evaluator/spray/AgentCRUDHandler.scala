@@ -8,52 +8,25 @@
 
 package com.biosimilarity.evaluator.spray
 
-import com.protegra_ati.agentservices.store._
 import com.protegra_ati.agentservices.protocols.msgs._
 
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.evaluator.msgs.agent.crud._
 import com.biosimilarity.evaluator.prolog.PrologDSL._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 
-import akka.actor._
-import spray.routing._
-//import directives.CompletionMagnet
 import spray.http._
-import spray.http.StatusCodes._
-import MediaTypes._
-
-import spray.httpx.encoding._
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
-
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.continuations._ 
-import scala.collection.mutable.HashMap
-
-import com.typesafe.config._
-
-import javax.crypto._
-import javax.crypto.spec.SecretKeySpec
-import java.security._
-
-
-import java.util.Date
-import java.util.UUID
 
 import java.net.URI
 
 trait AgentCRUDSchema {
   self : EvaluationCommsService =>
  
-  import DSLCommLink.mTT
-  import ConcreteHL._
-
   var _aliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
   def aliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
     _aliasStorageLocation match {
@@ -232,19 +205,100 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       "Entering: handleinitializeSessionRequest with msg : " + msg
     )
   }
-  
+
+  //@@GS thought bubble
+  // note this does _not_ currently include 'ANY'
+  trait IDType
+  trait SocialIDType extends IDType
+
+  case object ID_EMAIL extends IDType {
+    override def toString = "Email"
+  }
+  case object ID_SMS extends IDType {
+    override def toString = "SMS"
+  }
+  case object ID_FACEBOOK extends SocialIDType {
+    override def toString = "Facebook"
+  }
+  case object ID_GITHUB extends SocialIDType {
+    override def toString = "GitHub"
+  }
+
+  // ETC. ETC.
+
+  case class ID (idType: IDType, idValue: String )
+
   //### External identities
   //#### addAgentExternalIdentity
-  def handleaddAgentExternalIdentityRequest[ID](
+  def handleaddAgentExternalIdentityRequest(
+     //    - We only support adding one identity per message because of need for confirmation
     msg : addAgentExternalIdentityRequest[ID]
   ) : Unit = {
-    BasicLogService.tweet(
-      "Entering: handleaddAgentExternalIdentityRequest with msg : " + msg
-    )
+    BasicLogService.tweet( "Entering: handleaddAgentExternalIdentityRequest with msg : " + msg )
+
+    val sessionURIStr = msg.sessionURI.toString
+    val aliasStorageCnxn = identityAliasFromAgent( agentFromSession( msg.sessionURI ) )
+
+    def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
+      BasicLogService.tweet( "handleaddAgentExternalIdentityRequest | onGet: got " + v )
+
+      val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
+        BasicLogService.tweet( "handleaddAgentExternalIdentityRequest | onGet | onPut" )
+
+        CometActorMapper.cometMessage(
+          sessionURIStr,
+          compact(
+            render(
+              ( "msgType" -> "addAgentExternalIdentityResponse" ) ~
+                ( "content" -> ( "sessionURI" -> sessionURIStr ) )
+            )
+          )
+        )
+      }
+
+      val prevAliasList = v match {
+        case PostedExpr( ( PostedExpr( prevAliasListStr : String ), _, _ ) ) =>
+          Serializer.deserialize[List[String]]( prevAliasListStr )
+        case Bottom => Nil
+      }
+
+      val newAliasList = prevAliasList ++ msg.aliases
+      val newAliasListStr = Serializer.serialize( newAliasList )
+
+      BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut | updating aliasList with " + newAliasListStr )
+
+      //agentMgr().put[String]( aliasStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+      put[String]( externalIdsStorageLocation(), List( aliasStorageCnxn ), newAliasListStr, onPut )
+    }
+
+    val onGet : Option[mTT.Resource] => Unit = (optRsrc) => {
+      optRsrc match {
+        case None => {
+          // Nothing to be done
+          BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet: got None" )
+        }
+        case Some( mTT.Ground( v ) ) => {
+          handleRsp( v )
+        }
+        case Some( mTT.RBoundHM( Some( mTT.Ground( v ) ), _ ) ) => {
+          handleRsp( v )
+        }
+        case _ => {
+          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+            ( "msgType" -> "addAgentAliasesError" ) ~
+              ( "content" -> (
+                ( "sessionURI" -> sessionURIStr ) ~
+                  ( "reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))
+                ) )
+          ) ) )
+        }
+      }
+    }
+
+    //agentMgr().get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
+    get( aliasStorageLocation(), List( aliasStorageCnxn ), onGet )
   }
-  //    - `ID(idType: IDType, idValue: String)`
-  //        - `IDType = Email`
-  //    - We only support adding one identity per message because of need for confirmation
+
   def handleaddAgentExternalIdentityToken(
     msg : addAgentExternalIdentityToken
   ) : Unit = {
@@ -563,27 +617,27 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
     //agentMgr().put[String]( defaultAliasStorageLocation(), List( aliasStorageCnxn ), msg.alias, onPut )
     put[String]( defaultAliasStorageLocation(), List( aliasStorageCnxn ), msg.alias, onPut )
   }
-  
-  
+
+
   //## Methods on Aliases
   //### External identities
   //#### addAliasExternalIdentities
-  def handleaddAliasExternalIdentitiesRequest[ID](
+  def handleaddAliasExternalIdentityRequest[ID](
     msg : addAliasExternalIdentitiesRequest[ID]
   ) : Unit = {
-    BasicLogService.tweet( "Entering: handleaddAliasExternalIdentitiesRequest with msg : " + msg )
+    BasicLogService.tweet( "Entering: handleaddAliasExternalIdentityRequest with msg : " + msg )
 
     val aliasStorageCnxn = getAliasCnxn( msg.sessionURI, msg.alias )
     val sessionURIStr = msg.sessionURI.toString
 
     def handleRsp( optRsrc : Option[mTT.Resource], v : ConcreteHL.HLExpr ) : Unit = {
-      BasicLogService.tweet( "handleaddAliasExternalIdentitiesRequest | onGet: got " + v )
+      BasicLogService.tweet( "handleaddAliasExternalIdentityRequest | onGet: got " + v )
 
       val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
-        BasicLogService.tweet( "handleaddAliasExternalIdentitiesRequest | onGet | onPut" )
+        BasicLogService.tweet( "handleaddAliasExternalIdentityRequest | onGet | onPut" )
         
         CometActorMapper.cometMessage(sessionURIStr, compact( render(
-          ( "msgType" -> "addAliasExternalIdentitiesResponse" ) ~
+          ( "msgType" -> "addAliasExternalIdentityResponse" ) ~
           ( "content" -> ( "sessionURI" -> sessionURIStr ) )
         ) ) )
       }
