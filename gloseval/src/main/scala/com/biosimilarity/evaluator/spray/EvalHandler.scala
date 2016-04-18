@@ -95,6 +95,12 @@ object ConfirmationEmail extends Serializable {
   }
 }
 
+object RegexUtilities {
+  implicit class Regex(sc: StringContext) {
+    def r = new scala.util.matching.Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
+  }
+}
+
 trait CapUtilities {
   // Compute the mac of an email address
   def emailToCap(email: String): String = {
@@ -1213,80 +1219,95 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     import DSLCommLink.mTT
     val email = (json \ "content" \ "email").extract[String].toLowerCase
 
-    if (email == "") {
-      // No email, sign up immediately with a random cap
-      secureSignup(
-        "",
-        (json \ "content" \ "password").extract[String],
-        compact(render(json \ "content" \ "jsonBlob")), 
-        key,
-        //false
-        None
-      )
-    } else {
-      // Email provided; send a confirmation email
-      val token = UUID.randomUUID.toString.substring(0,8)
-      val tokenUri = new URI("token://" + token)
-      val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
+    import RegexUtilities._
+    val requireEmailConfirmation =
+      email match {
+        case r"noConfirm:(.*)${remail}" => {
+          Left( remail )
+        }
+        case r"" => {
+          Left( "" )
+        }
+        case _ => Right( email )
+      }      
 
-      val cap = emailToCap(email)
-      val capURI = new URI("agent://" + cap)
-      val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
-
-      //val (erql, erspl) = agentMgr().makePolarizedPair()
-      // See if the email is already there
-      //agentMgr().read(
-      def handleRsp( ) : Unit = {
-        // No such email exists, create it
+    requireEmailConfirmation match {
+      case Left( email ) => {
+        // No email, sign up immediately with a random cap
+        secureSignup(
+          email,
+          (json \ "content" \ "password").extract[String],
+          compact(render(json \ "content" \ "jsonBlob")), 
+          key,
+          //false
+          None
+        )
+      }
+      case Right( email ) => {
+        // Email provided; send a confirmation email
+        val token = UUID.randomUUID.toString.substring(0,8)
+        val tokenUri = new URI("token://" + token)
+        val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
+        
+        val cap = emailToCap(email)
+        val capURI = new URI("agent://" + cap)
+        val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
+        
         //val (erql, erspl) = agentMgr().makePolarizedPair()
-        post[String](
-          tokenLabel,
-          List(tokenCnxn),
-          // email, password, and jsonBlob
-          // TODO: defer asking for password until after confirmaing email
-          compact(render(json \ "content")),
+        // See if the email is already there
+        //agentMgr().read
+        def handleRsp( ) : Unit = {
+          // No such email exists, create it
+          //val (erql, erspl) = agentMgr().makePolarizedPair()
+          post[String](
+            tokenLabel,
+            List(tokenCnxn),
+            // email, password, and jsonBlob
+            // TODO: defer asking for password until after confirmaing email
+            compact(render(json \ "content")),
+            (optRsrc: Option[mTT.Resource]) => {
+              BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
+              optRsrc match {
+                case None => ();
+                case Some(_) => {                
+                  ConfirmationEmail.confirm(email, token)
+                  // Notify user to check her email
+                  CompletionMapper.complete(key, compact(render(
+                    ("msgType" -> "createUserWaiting") ~
+                    ("content" -> List()) // List() is rendered as "{}" 
+                  )))
+                }
+              }
+            }
+          )
+        }
+        
+        read(
+          jsonBlobLabel,
+          List(capSelfCnxn),
           (optRsrc: Option[mTT.Resource]) => {
-            BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
+            BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)          
             optRsrc match {
               case None => ();
-              case Some(_) => {
-                ConfirmationEmail.confirm(email, token)
-                // Notify user to check her email
+              case Some(mTT.Ground(Bottom)) => {
+                handleRsp( )
+              }
+              case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
+                handleRsp( )
+              }
+              case _ => {
                 CompletionMapper.complete(key, compact(render(
-                  ("msgType" -> "createUserWaiting") ~
-                  ("content" -> List()) // List() is rendered as "{}" 
+                  ("msgType" -> "createUserError") ~
+                  ("content" ->
+                   ("reason" -> "Email is already registered.")
+                 )
                 )))
               }
             }
           }
         )
       }
-
-      read(
-        jsonBlobLabel,
-        List(capSelfCnxn),
-        (optRsrc: Option[mTT.Resource]) => {
-          BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)          
-          optRsrc match {
-            case None => ();
-            case Some(mTT.Ground(Bottom)) => {
-              handleRsp( )
-            }
-            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-              handleRsp( )
-            }
-            case _ => {
-              CompletionMapper.complete(key, compact(render(
-                ("msgType" -> "createUserError") ~
-                ("content" ->
-                  ("reason" -> "Email is already registered.")
-                )
-              )))
-            }
-          }
-        }
-      )
-    }
+    }    
   }
 
   def secureLogin(
