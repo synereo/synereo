@@ -104,7 +104,7 @@ trait ImporterConfig {
       }
     }
 
-  //"/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/livelygig-system-labels.json"
+  /*
     def serviceSystemLabelsFile() = {
       _serviceSystemLabelsFile match {
         case Some( sslf ) => sslf
@@ -115,5 +115,6 @@ trait ImporterConfig {
         }
       }
     }
+    */
 }
 

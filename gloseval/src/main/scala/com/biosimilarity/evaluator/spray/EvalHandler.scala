@@ -15,6 +15,8 @@ import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.evaluator.spray.agent.{ExternalIdentity, ExternalIdType}
+
 
 import akka.actor._
 import spray.routing._
@@ -316,11 +318,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def addAgentExternalIdentityRequest(json: JValue): Unit = {
     val idtyp = (json \ "content" \ "idType").extract[String]
     val idval = (json \ "content" \ "idValue").extract[String]
-    var id = ID()
+    val uri = new URI((json \ "content" \ "sessionURI").extract[String])
+    val id = ExternalIdentity(ExternalIdType.fromString(idtyp), idval)
     handler.handleaddAgentExternalIdentityRequest(
-      com.biosimilarity.evaluator.msgs.agent.crud.addAgentExternalIdentityRequest(
-        new URI(),
-        (json \ "content" \ "aliases").extract[List[String]]))
+      com.biosimilarity.evaluator.msgs.agent.crud.addAgentExternalIdentityRequest(uri, id)
+    )
   }
   def addAgentExternalIdentityToken(json: JValue): Unit = {}
   def removeAgentExternalIdentitiesRequest(json: JValue): Unit = {}
@@ -356,7 +358,14 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         (json \ "content" \ "alias").extract[String]))
   }
   // Aliases
-  def addAliasExternalIdentitiesRequest(json: JValue): Unit = {}
+  def addAliasExternalIdentitiesRequest(json: JValue): Unit = {
+    handler.handleaddAliasExternalIdentitiesRequest(
+      com.biosimilarity.evaluator.msgs.agent.crud.addAliasExternalIdentitiesRequest(
+        new URI((json \ "content" \ "sessionURI").extract[String]),
+        (json \ "content" \ "alias").extract[String],
+        (json \ "content" \ "ids").extract[List[ExternalIdentity]]))
+  }
+
   def removeAliasExternalIdentitiesRequest(json: JValue): Unit = {}
   def getAliasExternalIdentitiesRequest(json: JValue): Unit = {}
   def setAliasDefaultExternalIdentityRequest(json: JValue): Unit = {}
@@ -738,7 +747,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       password: String,
       jsonBlob: String,
       key: String,
-      //createBTCWallet : Boolean = false,
       btcWalletAddress: Option[String] = None
     ): Unit = {
     import DSLCommLink.mTT
@@ -1112,19 +1120,24 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   def createUserRequest(json: JValue, key: String): Unit = {
     import DSLCommLink.mTT
-    val email = (json \ "content" \ "email").extract[String].toLowerCase
+    var email = (json \ "content" \ "email").extract[String].toLowerCase
+    var confirm = email != ""
 
-    if (email == "") {
-      // No email, sign up immediately with a random cap
+    if (email.startsWith("noconfirm:")) {
+      confirm = false
+      email = email.substring(10)
+    }
+
+    if (!confirm) {
+      // sign up immediately with a random cap
       secureSignup(
-        "",
+        email,
         (json \ "content" \ "password").extract[String],
         compact(render(json \ "content" \ "jsonBlob")),
         key,
-        //false
         None)
     } else {
-      // Email provided; send a confirmation email
+      // send a confirmation email
       val token = UUID.randomUUID.toString.substring(0, 8)
       val tokenUri = new URI("token://" + token)
       val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)

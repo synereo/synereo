@@ -245,12 +245,14 @@ trait EvaluatorService extends HttpService with CORSSupport {
     // Connections
     ("removeAliasConnectionsRequest", removeAliasConnectionsRequest),
     ("getAliasConnectionsRequest", getAliasConnectionsRequest),
-    // Labels
+    // Alias Labels
     ("addAliasLabelsRequest", addAliasLabelsRequest),
     ("updateAliasLabelsRequest", updateAliasLabelsRequest),
     ("getAliasLabelsRequest", getAliasLabelsRequest),
     ("setAliasDefaultLabelRequest", setAliasDefaultLabelRequest),
     ("getAliasDefaultLabelRequest", getAliasDefaultLabelRequest),
+    // System Labels
+    //("addSystemLabelsRequest", addSystemLabelsRequest),
     // DSL
     ("evalSubscribeRequest", evalSubscribeRequest),
     ("evalSubscribeCancelRequest", evalSubscribeCancelRequest),

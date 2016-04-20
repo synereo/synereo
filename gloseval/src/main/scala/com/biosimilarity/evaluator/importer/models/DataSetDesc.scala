@@ -14,8 +14,9 @@ import org.json4s.jackson.Serialization.write
  */
 case class DataSetDesc(
   agents: List[AgentDesc],
-  labels: List[LabelDesc],
-  cnxns: List[ConnectionDesc]
+  labels: List[SystemLabelDesc],
+  cnxns: List[ConnectionDesc],
+  posts: List[PostDesc]
 ) {
 
   /**

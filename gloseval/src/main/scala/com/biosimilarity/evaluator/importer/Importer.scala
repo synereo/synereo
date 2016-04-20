@@ -32,17 +32,19 @@ import scalaj.http.{ HttpOptions, Http }
  * @note First run `mvn clean compile` in the terminal.
  * @note Second run `mvn scala:console`.
  * @note Finally, import this object and execute `Importer.fromFiles()`. You may need to set the file paths in the parameters.
+  * @note - it may also be required to reset mongo db with ' mongo records --eval "db.dropDatabase()" '
  */
 object Importer extends EvalConfig
   with ImporterConfig
   with Serializable {
+  import scala.collection.JavaConverters._
 
   import org.json4s.jackson.Serialization
-
   implicit val formats = org.json4s.DefaultFormats
 
   private var GLOSEVAL_HOST = serviceHostURI()
   private val GLOSEVAL_SENDER = serviceEmailSenderAddress()
+  //private val MAILINATOR_HOST = serviceMailinatorHost()
   private val MAILINATOR_KEY = serviceMailinatorKey()
 
   private val agentsById = scala.collection.mutable.Map[String, String]() // loginId:agentURI
@@ -56,7 +58,7 @@ object Importer extends EvalConfig
     println(s"REQUEST BODY: ${requestBody}")
 
     val req = Http(GLOSEVAL_HOST)
-      .timeout(1000, 15000)
+      .timeout(1000, 30000)
       .header("Content-Type", "application/json")
       .postData(requestBody)
     val response = req.asString.body
@@ -65,21 +67,20 @@ object Importer extends EvalConfig
     response
   }
 
+  def confirmationToken( inbox : String ): String = {
+    val msgs = Mailinator.getInboxMessages( MAILINATOR_KEY, inbox ).asScala
+    // BUGBUG -- LGM: filter
+    val confirmationEmail =  Mailinator.getEmail( MAILINATOR_KEY, msgs( 0 ).getId )
+    //println( "email: " + confirmationEmail )
+    val confirmationEmailBody = confirmationEmail.getEmailParts.asScala.toList( 0 ).getBody
+    //println( "email body" + confirmationEmailBody )
+    confirmationEmailBody.split( "Your token is: " )( 1 ).substring( 0, 8 )
+  }
+
+  def createEmailUser(loginId: String) = s"livelygig-${UUID.randomUUID}-$loginId"
+
   //private def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
   private def makeAliasLabel(label: String, color: String) = "leaf(text(\"" + label + "\"),display(color(\"" + color + "\"),image(\"\")))"
-
-  private def threadSleep(seconds: Int) = {
-    println(s"not Sleeping for $seconds seconds")
-    //Thread.sleep(seconds.toLong * 1000)
-    /*
-    def time = new DateTime().getMillis
-    var now = time
-    val future = now + (seconds.toLong * 1000)
-    while (time < future) {
-      now = time
-    }
-    */
-  }
 
   /* not used here - just an example of a per session thread approach
   //@@GS - should be actor based but will have to do for now.
@@ -169,12 +170,23 @@ object Importer extends EvalConfig
     val jstmp = glosevalPost(
       "createUserRequest",
       CreateUserRequest(
-        "",
+        "noConfirm:" + agent.loginId,
         agent.pwd,
         blobMap,
         true))
 
-    //threadSleep(30)
+    /*
+    val token = confirmationToken( createEmailUser( agent.loginId ) )
+
+    val json2 =
+      glosevalPost(
+        "confirmEmailToken",
+        ConfirmEmailRequest(
+          token
+        )
+      )
+    */
+
 
     val agentURI = (parse(jstmp) \ "content" \ "agentURI").extract[String]
     val agentId = agentURI.replace("agent://", "")
@@ -199,47 +211,45 @@ object Importer extends EvalConfig
 
   }
 
-  def makeCnxns(cnxns : Seq[ConnectionDesc]): Unit = synchronized {
-    println("Creating connection introductions")
-    cnxns.foreach { connection =>
-      try {
-        val sourceId = connection.src.replace("agent://","")
-        val sourceAlias = aliasesById(sourceId)
-        val sourceURI = sessionsById(sourceId).sessionURI
-        val targetId = connection.trgt.replace("agent://","")
-        val targetAlias = aliasesById(targetId)
-        //val alias = sourceAlias + "-" + targetAlias
-        val lbl: String = connection.label match {
-          case Some(LabelDesc(_, value, _)) => value
-          case None => UUID.randomUUID.toString()
-        }
-        val aMessage = ""
-        val bMessage = ""
-        glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
-      } catch {
-        case ex: Throwable => println("exception while creating connection: " + ex)
-      }
+  def makeLabel(label : SystemLabelDesc): Unit = {
+    /*
+    try {
+    } catch {
+      case ex: Throwable => println("exception while creating connection: " + ex)
     }
-    println("Random introduction connections complete")
+    */
   }
 
-  def parseData(
-    dataJsonFile: String = serviceDemoDataFile(),
-    configJsonFile: String = serviceSystemLabelsFile()) = {
+  def makeCnxn(connection : ConnectionDesc): Unit = {
+    try {
+      val sourceId = connection.src.replace("agent://","")
+      val sourceAlias = aliasesById(sourceId)
+      val sourceURI = sessionsById(sourceId).sessionURI
+      val targetId = connection.trgt.replace("agent://","")
+      val targetAlias = aliasesById(targetId)
+      //val alias = sourceAlias + "-" + targetAlias
+      val lbl: String = connection.label match {
+        case Some(LabelDesc(_, value, _)) => value
+        case None => UUID.randomUUID.toString()
+      }
+      val aMessage = ""
+      val bMessage = ""
+      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
+    } catch {
+      case ex: Throwable => println("exception while creating connection: " + ex)
+    }
+  }
+
+  def parseData( dataJsonFile: String = serviceDemoDataFile() ) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
   }
 
   def fromFiles(
     dataJsonFile: String = serviceDemoDataFile(),
-    configJsonFile: String = serviceSystemLabelsFile(),
-    host: String = GLOSEVAL_HOST,
-    chunkSize: Int = 4) {
+    host: String = GLOSEVAL_HOST ) {
     println("Beginning import procedure")
     GLOSEVAL_HOST = host
-
-    //val configJson = scala.io.Source.fromFile(configJsonFile).getLines.map(_.trim).mkString
-    //val config = parse(configJson).extract[ConfigDesc]
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
@@ -247,15 +257,17 @@ object Importer extends EvalConfig
     val thrd = longPoll()
     thrd.start()
 
-    dataset.agents.foreach(makeAgent)
+    dataset.agents.foreach( makeAgent )
 
-    makeCnxns(dataset.cnxns)
+    dataset.labels.foreach( makeLabel )
+
+    dataset.cnxns.foreach( makeCnxn )
 
     // need to fix this
     // wait ten seconds for long poll receipts
     thrd.interrupt()
 
-    thrd.join(10000)
+    thrd.join(10000)  // something wrong here - this sometimes fails to terminate ????
 
     // iterate and create connection confirmations
     /*dataset.cnxns.foreach { connection =>
