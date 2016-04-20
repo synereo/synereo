@@ -19,6 +19,7 @@ import org.joda.time.DateTime
 import scala.collection.JavaConversions._
 import scala.util.Random
 import scala.collection.mutable.HashMap
+import java.util.UUID
 
 import scalaj.http.Http
 
@@ -33,7 +34,7 @@ import scalaj.http.Http
 object Importer extends EvalConfig
 with ImporterConfig
 with Serializable {
-
+  import scala.collection.JavaConverters._
   import org.json4s.jackson.Serialization
 
   implicit val formats = org.json4s.DefaultFormats
@@ -42,6 +43,7 @@ with Serializable {
   private var GLOSEVAL_HOST = serviceHostURI()
   //private val GLOSEVAL_SENDER = "splicious.ftw@gmail.com"
   private val GLOSEVAL_SENDER = serviceEmailSenderAddress()
+  private val MAILINATOR_HOST = serviceMailinatorHost()
   //private val MAILINATOR_KEY = "efa3a1b773db4f0c9492686d24bed415"
   private val MAILINATOR_KEY = serviceMailinatorKey()
 
@@ -56,13 +58,26 @@ with Serializable {
     response
   }
 
-  private def createEmailUser(loginId: String) = s"livelygig-$loginId"
+  def confirmationToken( inbox : String ): String = {
+    val msgs =
+      Mailinator.getInboxMessages( MAILINATOR_KEY, inbox ).asScala
+    //println( "msgs: " + msgs )
+    // BUGBUG -- LGM: filter
+    val confirmationEmail =
+      Mailinator.getEmail( MAILINATOR_KEY, msgs( 0 ).getId )
+    //println( "email: " + confirmationEmail )
+    val confirmationEmailBody = confirmationEmail.getEmailParts.asScala.toList( 0 ).getBody
+    //println( "email body" + confirmationEmailBody )
+    confirmationEmailBody.split( "Your token is: " )( 1 ).substring( 0, 8 )
+  }
 
-  private def createEmailAddress(loginId: String) = s"${createEmailUser(loginId)}@mailinator.com"
+  def createEmailUser(loginId: String) = s"livelygig-${UUID.randomUUID}-$loginId"
 
-  private def makeAliasURI(alias: String) = s"alias://$alias/alias"
+  def createEmailAddress(loginId: String) = s"${createEmailUser(loginId)}@mailinator.com"
 
-  private def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
+  def makeAliasURI(alias: String) = s"alias://$alias/alias"
+
+  def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
 
   private def threadSleep(seconds: Int) = {
     println(s"Sleeping for $seconds seconds")
@@ -81,33 +96,41 @@ with Serializable {
 
   def makeAgent( agent : AgentDesc ) : Unit = {
     val blobMap = new HashMap[String,String]()
-    val agentName = s"{agent.firstName}" + " " + s"{agent.lastName}"
+    val agentName = s"${agent.firstName}" + " " + s"${agent.lastName}"
     blobMap += ( "name" -> agentName )
     val json =
-      // glosevalPost(
-//         "initializeSessionRequest",
-//         InitializeSessionRequest(
-//           s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"
-//         )
-//       )
       glosevalPost(
         "createUserRequest",
-        // InitializeSessionRequest(
-//           s"agent://email/${createEmailAddress(agent.loginId)}?password=${agent.pwd}"
-//         )
         CreateUserRequest(
-          s"{createEmailAddress(agent.loginId)}",
-          s"{agent.pwd}",
+          s"${createEmailAddress( agent.loginId )}",
+          s"${agent.pwd}",
           blobMap,
           true
         )
       )
 
-    val session = parse(json).extract[ApiResponse[InitializeSessionResponse]].content
+    //val emailWaiting = parse(json).extract[ApiResponse[CreateUserWaiting]].content
+    //val emailWaiting = parse(json).extract[ApiResponse[CreateUserWaiting]]
+    //println( "createUserWaiting: " + emailWaiting )        
+
+    val token = confirmationToken( createEmailUser( agent.loginId ) )
     
-    sessionsByAgent.put(agent.loginId, session)
-    agentsBySession.put(session.sessionURI, agent)
-    sessionsById.put(agent.id, session)
+    val json2 =
+      glosevalPost(
+        "confirmEmailToken",
+        ConfirmEmailRequest(
+          token
+        )
+      )
+
+    val cur1 = parse(json)//.extract[ApiResponse[CreateUserResponse]]
+    println( "createUserResponse: " + cur1 )
+
+    // sessionsByAgent.put(agent.loginId, session)
+//     agentsBySession.put(session.sessionURI, agent)
+//     sessionsById.put(agent.id, session)
+
+    
   }
 
   // paginated agent creation
