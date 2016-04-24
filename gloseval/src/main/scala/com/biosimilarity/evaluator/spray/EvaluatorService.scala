@@ -317,7 +317,11 @@ trait EvaluatorService extends HttpService with CORSSupport {
             } // jsonStr
           } // decodeRequest
         } // post
-      } ~
+      }
+    }
+}
+
+/*
         path("admin/connectServers") {
           // allow administrators to make
           // sure servers are connected
@@ -346,15 +350,16 @@ trait EvaluatorService extends HttpService with CORSSupport {
             }
           }
         } ~
-        pathPrefix("static" / Segment) { path =>
-          getFromFile(path)
-        } ~
+       pathPrefix("static" / Segment) { path =>
+         getFromFile(path)
+       } ~
         pathPrefix("agentui") {
           getFromDirectory("./agentui")
         } ~
         pathPrefix("splicious") {
           getFromDirectory("./agentui")
         } ~
+
         pathPrefix("splicious/btc") {
           get {
             parameters('btcToken) {
@@ -374,5 +379,4 @@ trait EvaluatorService extends HttpService with CORSSupport {
             }
           }
         }
-    }
-}
+  */

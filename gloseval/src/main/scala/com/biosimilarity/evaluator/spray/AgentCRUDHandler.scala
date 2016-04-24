@@ -28,9 +28,11 @@ import java.net.URI
 
 trait AgentCRUDSchema {
   self : EvaluationCommsService =>
- 
-  var _aliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def aliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+
+  type CCL = CnxnCtxtLabel[String,String,String]
+
+  var _aliasStorageLocation : Option[CCL] = None
+  def aliasStorageLocation() : CCL = {
     _aliasStorageLocation match {
       case Some( asl ) => asl
       case None => {
@@ -43,8 +45,8 @@ trait AgentCRUDSchema {
     }
   }
 
-  var _defaultAliasStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def defaultAliasStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+  var _defaultAliasStorageLocation : Option[CCL] = None
+  def defaultAliasStorageLocation() : CCL = {
     _defaultAliasStorageLocation match {
       case Some( dasl ) => dasl
       case None => {
@@ -57,8 +59,8 @@ trait AgentCRUDSchema {
     }
   }
 
-  var _externalIdsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def externalIdsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+  var _externalIdsStorageLocation : Option[CCL] = None
+  def externalIdsStorageLocation() : CCL = {
     _externalIdsStorageLocation match {
       case Some( csl ) => csl
       case None => {
@@ -71,8 +73,8 @@ trait AgentCRUDSchema {
     }
   }
 
-  var _defaultExternalIdStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def defaultExternalIdStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+  var _defaultExternalIdStorageLocation : Option[CCL] = None
+  def defaultExternalIdStorageLocation() : CCL = {
     _defaultExternalIdStorageLocation match {
       case Some( csl ) => csl
       case None => {
@@ -85,8 +87,8 @@ trait AgentCRUDSchema {
     }
   }
   
-  var _labelsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def labelsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+  var _labelsStorageLocation : Option[CCL] = None
+  def labelsStorageLocation() : CCL = {
     _labelsStorageLocation match {
       case Some( lsl ) => lsl
       case None => {
@@ -99,8 +101,8 @@ trait AgentCRUDSchema {
     }
   }
 
-  var _defaultLabelStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def defaultLabelStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+  var _defaultLabelStorageLocation : Option[CCL] = None
+  def defaultLabelStorageLocation() : CCL = {
     _defaultLabelStorageLocation match {
       case Some( dlsl ) => dlsl
       case None => {
@@ -113,8 +115,8 @@ trait AgentCRUDSchema {
     }
   }
 
-  var _biCnxnsStorageLocation : Option[CnxnCtxtLabel[String,String,String]] = None
-  def biCnxnsStorageLocation() : CnxnCtxtLabel[String,String,String] = {
+  var _biCnxnsStorageLocation : Option[CCL] = None
+  def biCnxnsStorageLocation() : CCL = {
     _biCnxnsStorageLocation match {
       case Some( csl ) => csl
       case None => {

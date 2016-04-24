@@ -58,7 +58,7 @@ object Importer extends EvalConfig
     println(s"REQUEST BODY: ${requestBody}")
 
     val req = Http(GLOSEVAL_HOST)
-      .timeout(1000, 30000)
+      .timeout(1000, 15000)
       .header("Content-Type", "application/json")
       .postData(requestBody)
     val response = req.asString.body
@@ -142,9 +142,15 @@ object Importer extends EvalConfig
                     val typ = (v \ "msgType").extract[String]
                     typ match {
                       case "sessionPong" => tmp.remove(session)
+                      case "connectionProfileResponse" => {}
+                      case "addAliasLabelsResponse" => {}
+                      case "beginIntroductionResponse" => {}
+//                        println("beginIntroductionResponse : " + (v \ "content"))
+//                        println("WARNING - handler not provided for server sent message type : " + typ)
+//                      }
                       case _ => {
-                        println("WARNING - handler not provided for server sent message type : " + typ)
                         //println("contents : " + (v \ "content"))
+                        println("WARNING - handler not provided for server sent message type : " + typ)
                       }
                     }
 
@@ -156,6 +162,7 @@ object Importer extends EvalConfig
                 }
             }
           }
+          println("longpoll sleeping")
           Thread.sleep(10000)
         }
       }
@@ -207,6 +214,7 @@ object Importer extends EvalConfig
     sessionsById.put(agent.id, session)
 
     glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
+
     aliasesById.put(agent.id, s"alias://${agentId}/alias")
 
   }
@@ -254,8 +262,8 @@ object Importer extends EvalConfig
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
 
-    val thrd = longPoll()
-    thrd.start()
+    //val thrd = longPoll()
+    //thrd.start()
 
     dataset.agents.foreach( makeAgent )
 
@@ -265,9 +273,9 @@ object Importer extends EvalConfig
 
     // need to fix this
     // wait ten seconds for long poll receipts
-    thrd.interrupt()
+    //thrd.interrupt()
 
-    thrd.join(10000)  // something wrong here - this sometimes fails to terminate ????
+    //thrd.join(10000)  // something wrong here - this sometimes fails to terminate ????
 
     // iterate and create connection confirmations
     /*dataset.cnxns.foreach { connection =>
