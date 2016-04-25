@@ -756,15 +756,15 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
 
   //#### getAliasExternalIdentities
-  def handlegetAliasExternalIdentitiesRequestByType( msg : getAliasExternalIdentitiesRequestByType[ExternalIdType]) : Unit = {
+  def handlegetAliasExternalIdentitiesRequestByType( msg : getAliasExternalIdentitiesRequest[ExternalIdType]) : Unit = {
     BasicLogService.tweet( "Entering: handlegetAliasExternalIdentitiesRequestByType with msg : " + msg )
   }
   //    - One value of `IDType` is `ANY`
 
   //#### getAliasExternalIdentities
-  def handlegetAliasExternalIdentitiesRequest( msg : getAliasExternalIdentitiesRequest ) : Unit = {
-    BasicLogService.tweet( "Entering: handlegetAliasExternalIdentitiesRequest with msg : " + msg )
-  }
+  //def handlegetAliasExternalIdentitiesRequest( msg : getAliasExternalIdentitiesRequest ) : Unit = {
+  //  BasicLogService.tweet( "Entering: handlegetAliasExternalIdentitiesRequest with msg : " + msg )
+  //}
 
   //#### setAliasDefaultExternalIdentity
   def handlesetAliasDefaultExternalIdentityRequest(

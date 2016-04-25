@@ -58,7 +58,7 @@ object Importer extends EvalConfig
     println(s"REQUEST BODY: ${requestBody}")
 
     val req = Http(GLOSEVAL_HOST)
-      .timeout(1000, 15000)
+      .timeout(1000, 30000)
       .header("Content-Type", "application/json")
       .postData(requestBody)
     val response = req.asString.body
