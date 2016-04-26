@@ -1225,6 +1225,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case r"noConfirm:(.*)${remail}" => {
           Left( remail )
         }
+        case r"noconfirm:(.*)${remail}" => {
+          Left( remail )
+        }
         case r"" => {
           Left( "" )
         }
