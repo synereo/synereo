@@ -15,6 +15,8 @@ import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.evaluator.spray.agent.{ExternalIdentity, ExternalIdType}
+
 
 import akka.actor._
 import spray.routing._
@@ -325,10 +327,20 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     with Serializable {}
 
   // Agents
-  def addAgentExternalIdentityRequest(json: JValue): Unit = {}
+  def addAgentExternalIdentityRequest(json: JValue): Unit = {
+    val idtyp = (json \ "content" \ "idType").extract[String]
+    val idval = (json \ "content" \ "idValue").extract[String]
+    val uri = new URI((json \ "content" \ "sessionURI").extract[String])
+    val id = ExternalIdentity(ExternalIdType.fromString(idtyp), idval)
+    handler.handleaddAgentExternalIdentityRequest(
+      com.biosimilarity.evaluator.msgs.agent.crud.addAgentExternalIdentityRequest(uri, id)
+    )
+  }
   def addAgentExternalIdentityToken(json: JValue): Unit = {}
   def removeAgentExternalIdentitiesRequest(json: JValue): Unit = {}
-  def getAgentExternalIdentitiesRequest(json: JValue): Unit = {}
+  def getAgentExternalIdentitiesRequest(json: JValue): Unit = {
+
+  }
   def addAgentAliasesRequest(json: JValue): Unit = {
     handler.handleaddAgentAliasesRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
@@ -368,7 +380,14 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     )
   }
   // Aliases
-  def addAliasExternalIdentitiesRequest(json: JValue): Unit = {}
+  def addAliasExternalIdentitiesRequest(json: JValue): Unit = {
+    handler.handleaddAliasExternalIdentitiesRequest(
+      com.biosimilarity.evaluator.msgs.agent.crud.addAliasExternalIdentitiesRequest(
+        new URI((json \ "content" \ "sessionURI").extract[String]),
+        (json \ "content" \ "alias").extract[String],
+        (json \ "content" \ "ids").extract[List[ExternalIdentity]]))
+  }
+
   def removeAliasExternalIdentitiesRequest(json: JValue): Unit = {}
   def getAliasExternalIdentitiesRequest(json: JValue): Unit = {}
   def setAliasDefaultExternalIdentityRequest(json: JValue): Unit = {}
@@ -401,13 +420,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   // Labels
   def addAliasLabelsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val lbls = (json \ "content" \ "labels").extract[List[String]]
     handler.handleaddAliasLabelsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAliasLabelsRequest(
         new URI(sessionURIStr),
         (json \ "content" \ "alias").extract[String],
-        (json \ "content" \ "labels").extract[List[String]].
-          map(fromTermString).
-          map(_.getOrElse(
+          lbls.map(fromTermString)
+            .map(_.getOrElse(
             CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "addAliasLabelsError") ~
               ("content" -> ("reason" -> ("Couldn't parse a label:" + 
@@ -807,13 +826,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
   
   def secureSignup(
-    email: String,
-    password: String,
-    jsonBlob: String,
-    key: String,
-    //createBTCWallet : Boolean = false,
-    btcWalletAddress : Option[String] = None
-  ) : Unit = {
+      email: String,
+      password: String,
+      jsonBlob: String,
+      key: String,
+      btcWalletAddress: Option[String] = None
+    ): Unit = {
+
     import DSLCommLink.mTT
     val cap = if (email == "") UUID.randomUUID.toString else storeCapByEmail(email)
     BasicLogService.tweet("secureSignup email="+email+",password="+password+", cap="+cap+", btcWalletAddress="+btcWalletAddress)
@@ -831,10 +850,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     BasicLogService.tweet("secureSignup posting pwmac")
 
     val createUserResponse: Unit => Unit = Unit => {
+      val uri = "agent://cap/" + capAndMac
       CompletionMapper.complete(key, compact(render(
         ("msgType" -> "createUserResponse") ~
-          ("content" -> ("agentURI" -> ("agent://cap/" + capAndMac)))
-      )))
+          ("content" -> ("agentURI" -> uri)))))
     }
     
     val onPost5 = ( aliasCnxn: PortableAgentCnxn ) => ( optRsrc : Option[mTT.Resource] ) => {
@@ -1217,97 +1236,88 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   def createUserRequest(json : JValue, key : String): Unit = {
     import DSLCommLink.mTT
-    val email = (json \ "content" \ "email").extract[String].toLowerCase
+    var email = (json \ "content" \ "email").extract[String].toLowerCase
+    var confirm = email != ""
 
-    import RegexUtilities._
-    val requireEmailConfirmation =
-      email match {
-        case r"noConfirm:(.*)${remail}" => {
-          Left( remail )
-        }
-        case r"" => {
-          Left( "" )
-        }
-        case _ => Right( email )
-      }      
+    if (email.startsWith("noconfirm:")) {
+      confirm = false
+      email = email.substring(10)
+    }
 
-    requireEmailConfirmation match {
-      case Left( email ) => {
-        // No email, sign up immediately with a random cap
-        secureSignup(
-          email,
-          (json \ "content" \ "password").extract[String],
-          compact(render(json \ "content" \ "jsonBlob")), 
-          key,
-          //false
-          None
-        )
-      }
-      case Right( email ) => {
-        // Email provided; send a confirmation email
-        val token = UUID.randomUUID.toString.substring(0,8)
-        val tokenUri = new URI("token://" + token)
-        val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
-        
-        val cap = emailToCap(email)
-        val capURI = new URI("agent://" + cap)
-        val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
-        
+    if (!confirm) {
+      secureSignup(
+        email,
+        (json \ "content" \ "password").extract[String],
+        compact(render(json \ "content" \ "jsonBlob")),
+        key,
+        //false
+        None
+      )
+    }
+    else {
+      // send a confirmation email
+      val token = UUID.randomUUID.toString.substring(0,8)
+      val tokenUri = new URI("token://" + token)
+      val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
+
+      val cap = emailToCap(email)
+      val capURI = new URI("agent://" + cap)
+      val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
+
+      //val (erql, erspl) = agentMgr().makePolarizedPair()
+      // See if the email is already there
+      //agentMgr().read
+      def handleRsp( ) : Unit = {
+        // No such email exists, create it
         //val (erql, erspl) = agentMgr().makePolarizedPair()
-        // See if the email is already there
-        //agentMgr().read
-        def handleRsp( ) : Unit = {
-          // No such email exists, create it
-          //val (erql, erspl) = agentMgr().makePolarizedPair()
-          post[String](
-            tokenLabel,
-            List(tokenCnxn),
-            // email, password, and jsonBlob
-            // TODO: defer asking for password until after confirmaing email
-            compact(render(json \ "content")),
-            (optRsrc: Option[mTT.Resource]) => {
-              BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
-              optRsrc match {
-                case None => ();
-                case Some(_) => {                
-                  ConfirmationEmail.confirm(email, token)
-                  // Notify user to check her email
-                  CompletionMapper.complete(key, compact(render(
-                    ("msgType" -> "createUserWaiting") ~
-                    ("content" -> List()) // List() is rendered as "{}" 
-                  )))
-                }
-              }
-            }
-          )
-        }
-        
-        read(
-          jsonBlobLabel,
-          List(capSelfCnxn),
+        post[String](
+          tokenLabel,
+          List(tokenCnxn),
+          // email, password, and jsonBlob
+          // TODO: defer asking for password until after confirmaing email
+          compact(render(json \ "content")),
           (optRsrc: Option[mTT.Resource]) => {
-            BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)          
+            BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
             optRsrc match {
               case None => ();
-              case Some(mTT.Ground(Bottom)) => {
-                handleRsp( )
-              }
-              case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-                handleRsp( )
-              }
-              case _ => {
+              case Some(_) => {
+                ConfirmationEmail.confirm(email, token)
+                // Notify user to check her email
                 CompletionMapper.complete(key, compact(render(
-                  ("msgType" -> "createUserError") ~
-                  ("content" ->
-                   ("reason" -> "Email is already registered.")
-                 )
+                  ("msgType" -> "createUserWaiting") ~
+                  ("content" -> List()) // List() is rendered as "{}"
                 )))
               }
             }
           }
         )
       }
-    }    
+
+      read(
+        jsonBlobLabel,
+        List(capSelfCnxn),
+        (optRsrc: Option[mTT.Resource]) => {
+          BasicLogService.tweet("createUserRequest | email case | anonymous onFetch: optRsrc = " + optRsrc)
+          optRsrc match {
+            case None => ();
+            case Some(mTT.Ground(Bottom)) => {
+              handleRsp( )
+            }
+            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
+              handleRsp( )
+            }
+            case _ => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "createUserError") ~
+                ("content" ->
+                 ("reason" -> "Email is already registered.")
+               )
+              )))
+            }
+          }
+        }
+      )
+    }
   }
 
   def secureLogin(
@@ -1771,6 +1781,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     key : String
   ): Unit = {
     val agentURI = (json \ "content" \ "agentURI").extract[String]
+    initializeSessionFromURI(agentURI, key)
+  }
+
+
+
+  def initializeSessionFromURI( agentURI: String,  key: String): Unit = {
+
     val uri = new URI(agentURI)
 
     if (uri.getScheme() != "agent") {
@@ -1780,11 +1797,15 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val identInfo = uri.getPath.substring(1) // drop leading slash
     // TODO: get a proper library to do this
     val queryMap = new HashMap[String, String]
-    uri.getRawQuery.split("&").map((x: String) => {
-      val pair = x.split("=")
-      queryMap += ((pair(0), pair(1)))
-    })
-    var password = queryMap.get("password").getOrElse("")
+    val qry = uri.getRawQuery
+    if (qry != null) {
+      qry.split("&").map((x: String) => {
+        val pair = x.split("=")
+        queryMap += ((pair(0), pair(1)))
+      })
+    }
+    //@@GS - password should not be required here ...
+    var password = queryMap.getOrElse("password", "")
     secureLogin(identType, identInfo, password, key)
   }
 

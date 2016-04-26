@@ -25,12 +25,12 @@ trait ImporterConfig {
   self : EvalConfig =>
     var _serviceHost : Option[String] = None 
     var _servicePort : Option[Int] = None
-    var _serviceEmailSenderAddress : Option[String] = None
-    var _serviceMailinatorHost : Option[String] = None
-    var _serviceMailinatorKey : Option[String] = None
-    var _serviceUserChunkSize : Option[String] = None
+    //var _serviceEmailSenderAddress : Option[String] = None
+    //var _serviceMailinatorHost : Option[String] = None
+    //var _serviceMailinatorKey : Option[String] = None
+    //var _serviceUserChunkSize : Option[String] = None
     var _serviceDemoDataFile : Option[String] = None
-    var _serviceSystemLabelsFile : Option[String] = None
+    //var _serviceSystemLabelsFile : Option[String] = None
 
     def serviceHost() = {
       _serviceHost match {
@@ -59,6 +59,7 @@ trait ImporterConfig {
     }
 
   //private val GLOSEVAL_SENDER = "splicious.ftw@gmail.com"
+    /*
     def serviceEmailSenderAddress() = {
       _serviceEmailSenderAddress match {
         case Some( semsa ) => semsa
@@ -103,20 +104,18 @@ trait ImporterConfig {
         }
       }
     }
+*/
 
-  //"/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/sample-data-demo.json"
     def serviceDemoDataFile() = {
       _serviceDemoDataFile match {
         case Some( sddf ) => sddf
         case None => {
-          val sddf = evalConfig().getString( "ImporterServiceDemoDataFile" ) 
-          _serviceUserChunkSize = Some( sddf )
-          sddf
+          evalConfig().getString( "ImporterServiceDemoDataFile" )
         }
       }
     }
 
-  //"/Users/justin/Projects/LivelyGig/Product/jvm/src/main/resources/livelygig-system-labels.json"
+  /*
     def serviceSystemLabelsFile() = {
       _serviceSystemLabelsFile match {
         case Some( sslf ) => sslf
@@ -127,5 +126,6 @@ trait ImporterConfig {
         }
       }
     }
+    */
 }
 
