@@ -23,8 +23,8 @@
         <!-- scala.versionsuffix>2.11</scala.versionsuffix -->
         <scala.versionsuffix>2.10</scala.versionsuffix>
         <!-- casbah.version>2.5.1</casbah.version-->
-        <!--casbah.version>2.6.2</casbah.version-->
-        <casbah.version>2.8.2</casbah.version>
+        <casbah.version>2.6.4</casbah.version>
+        <!--casbah.version>2.8.2</casbah.version-->
         <!-- casbah.version>2.7.3</casbah.version -->
         <scala.test.specs2.version>1.14</scala.test.specs2.version>
         <!-- Common plugin settings -->
