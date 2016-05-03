@@ -10,21 +10,23 @@ package com.biosimilarity.evaluator.importer
 
 import java.util.UUID
 
-import com.biosimilarity.evaluator.distribution.{ AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService }
+import com.biosimilarity.evaluator.distribution.{AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
 import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.importer.utils.mailinator.Mailinator
-import com.biosimilarity.evaluator.spray.{ BTCHandler, DownStreamHttpCommsT, EvalHandler }
+import com.biosimilarity.evaluator.spray.{BTCHandler, DownStreamHttpCommsT, EvalHandler}
 import org.json4s.JsonAST.JValue
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 import org.joda.time.DateTime
+
 import scala.collection.JavaConversions._
 import scala.util.Random
 import scala.collection.mutable.HashMap
 import java.util.UUID
 
-import scalaj.http.{ HttpOptions, Http }
+import scala.collection.mutable
+import scalaj.http.{Http, HttpOptions}
 
 /**
  * Iterates through a sample data file, parses it, and imports the data
@@ -59,7 +61,7 @@ object Importer extends EvalConfig
     println(s"REQUEST BODY: ${requestBody}")
 
     val req = Http(GLOSEVAL_HOST)
-      .timeout(1000, 30000)
+      .timeout(1000, 60000)
       .header("Content-Type", "application/json")
       .postData(requestBody)
     val response = req.asString.body
@@ -165,9 +167,10 @@ object Importer extends EvalConfig
   }
 
   def makeAgent(agent: AgentDesc): Unit = {
-    val blobMap = new HashMap[String, String]()
+    val blobMap = new mutable.HashMap[String, String]()
     val agentName = agent.firstName + " " + agent.lastName
-    blobMap += ("name" -> agentName)
+    blobMap.put("name", agentName)
+    if (agent.profilePic.nonEmpty) blobMap.put("imgSrc", agent.profilePic)
     var eml = agent.loginId
     if (!eml.contains("@")) eml = eml + "@livelygig.com"
 
@@ -177,7 +180,7 @@ object Importer extends EvalConfig
         "noConfirm:" + eml,
         agent.pwd,
         blobMap,
-        true))
+        createBTCWallet = false))
 
     val jsv = parse( json1 )
 
@@ -204,7 +207,9 @@ object Importer extends EvalConfig
     agentsBySession.put(session.sessionURI, agent)
     sessionsById.put(agent.id, session)
 
-    glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
+    glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C0000"))))
+
+    //glosevalPost("updateUserRequest", UpdateUserRequest(session.sessionURI, blobMap))
 
     aliasesById.put(agent.id, s"alias://${agentId}/alias")
 
@@ -253,20 +258,22 @@ object Importer extends EvalConfig
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
 
-    //val thrd = longPoll()
-    //thrd.start()
+    val thrd = longPoll()
+    thrd.start()
 
-    dataset.agents.foreach( makeAgent )
+    try {
+      dataset.agents.foreach(makeAgent)
 
-    dataset.labels.foreach( makeLabel )
+      dataset.labels.foreach(makeLabel)
 
-    dataset.cnxns.foreach( makeCnxn )
+      dataset.cnxns.foreach(makeCnxn)
+    } finally {
+      // need to fix this
+      // wait ten seconds for long poll receipts
+      thrd.interrupt()
 
-    // need to fix this
-    // wait ten seconds for long poll receipts
-    //thrd.interrupt()
-
-    //thrd.join(10000)  // something wrong here - this sometimes fails to terminate ????
+      thrd.join(10000)
+    }
 
   }
 

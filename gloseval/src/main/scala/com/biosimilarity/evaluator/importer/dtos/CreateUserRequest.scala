@@ -11,3 +11,8 @@ case class CreateUserRequest(
   jsonBlob: scala.collection.Map[String,String],
   createBTCWallet: Boolean
 ) extends RequestContent
+
+case class UpdateUserRequest(
+  sessionURI: String,
+  jsonBlob: scala.collection.Map[String,String]
+) extends RequestContent

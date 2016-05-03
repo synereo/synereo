@@ -317,7 +317,11 @@ trait EvaluatorService extends HttpService with CORSSupport {
             } // jsonStr
           } // decodeRequest
         } // post
+      } ~
+      pathPrefix("agentui") {
+        getFromDirectory("./agentui")
       }
+
     }
 }
 
