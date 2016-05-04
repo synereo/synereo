@@ -179,7 +179,7 @@ object Importer extends EvalConfig
       CreateUserRequest(
         "noConfirm:" + eml,
         agent.pwd,
-        blobMap,
+        blobMap.toMap,
         createBTCWallet = false))
 
     val jsv = parse( json1 )
@@ -258,8 +258,8 @@ object Importer extends EvalConfig
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
 
-    val thrd = longPoll()
-    thrd.start()
+    //val thrd = longPoll()
+    //thrd.start()
 
     try {
       dataset.agents.foreach(makeAgent)
@@ -270,11 +270,11 @@ object Importer extends EvalConfig
     } finally {
       // need to fix this
       // wait ten seconds for long poll receipts
-      thrd.interrupt()
+      //thrd.interrupt()
 
-      thrd.join(10000)
+      //thrd.join(10000)
     }
-
+    Thread.sleep(10000)  // wtf??
   }
 
 }

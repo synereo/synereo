@@ -45,6 +45,7 @@ import java.util.UUID
 
 import java.net.URI
 
+@SerialVersionUID(1000L)
 object EvalHandlerService
 extends EvalHandler
 with EvaluationCommsService
