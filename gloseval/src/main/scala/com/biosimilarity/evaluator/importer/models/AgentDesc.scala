@@ -20,15 +20,13 @@ import org.json4s.jackson.Serialization.write
  * @param bindings
  */
 case class AgentDesc(
-  id: String, // TODO: agent URI will take this over once it is created
-  loginId: String,
+  id: String,
+  email: String,
   pwd: String,
-  firstName: String,
-  lastName: String,
-  profilePic: String,
-  contacts: ContactDesc,
-  initialPosts: List[PostDesc],
-  bindings: Option[List[String]]
+  jsonBlob: String
+  //contacts: ContactDesc,
+  //initialPosts: List[PostDesc],
+  //bindings: Option[List[String]]
 ) {
 
   /**

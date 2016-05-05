@@ -8,11 +8,10 @@ import scala.collection.Map
 case class CreateUserRequest(
   email: String,
   password: String,
-  jsonBlob: scala.collection.immutable.Map[String,String],
-  createBTCWallet: Boolean
+  jsonBlob: String
 ) extends RequestContent
 
 case class UpdateUserRequest(
   sessionURI: String,
-  jsonBlob: scala.collection.immutable.Map[String,String]
+  jsonBlob: String
 ) extends RequestContent

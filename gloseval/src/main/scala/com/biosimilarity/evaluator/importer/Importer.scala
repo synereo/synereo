@@ -70,15 +70,9 @@ object Importer extends EvalConfig
     response
   }
 
-  //def createEmailUser(loginId: String) = s"livelygig-${UUID.randomUUID}-$loginId"
-
-  //def createEmailAddress(loginId: String) = s"${createEmailUser(loginId)}@mailinator.com"
-
   def makeAliasURI(alias: String) = s"alias://$alias/alias"
 
-  //private def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
   private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
-  //private def makeAliasLabel(label: String, color: String) = "leaf(text(\"" + label + "\"),display(color(\"" + color + "\"),image(\"\")))"
 
   /* not used here - just an example of a per session thread approach
   //@@GS - should be actor based but will have to do for now.
@@ -168,11 +162,7 @@ object Importer extends EvalConfig
   }
 
   def makeAgent(agent: AgentDesc): Unit = {
-    val blobMap = new mutable.HashMap[String, String]()
-    val agentName = agent.firstName + " " + agent.lastName
-    blobMap.put("name", agentName)
-    if (agent.profilePic.nonEmpty) blobMap.put("imgSrc", agent.profilePic)
-    var eml = agent.loginId
+    var eml = agent.email
     if (!eml.contains("@")) eml = eml + "@livelygig.com"
 
     val json1 = glosevalPost(
@@ -180,8 +170,9 @@ object Importer extends EvalConfig
       CreateUserRequest(
         "noConfirm:" + eml,
         agent.pwd,
-        blobMap.toMap,
-        createBTCWallet = false))
+        agent.jsonBlob
+      )
+    )
 
     val jsv = parse( json1 )
 
@@ -210,8 +201,6 @@ object Importer extends EvalConfig
 
     //@@GS - what exactly is this intended to achieve??
     glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
-
-    //glosevalPost("updateUserRequest", UpdateUserRequest(session.sessionURI, blobMap))
 
     aliasesById.put(agent.id, s"alias://${agentId}/alias")
 
@@ -266,9 +255,16 @@ object Importer extends EvalConfig
     //try {
       dataset.agents.foreach(makeAgent)
 
-      dataset.labels.foreach(makeLabel)
+      dataset.labels match {
+        case Some(lbls) => lbls.foreach (makeLabel)
+        case None => ()
+      }
 
-      dataset.cnxns.foreach(makeCnxn)
+      dataset.cnxns match {
+        case Some(cnxns) => cnxns.foreach(makeCnxn)
+        case None => ()
+      }
+
     //} finally {
       // need to fix this
       // wait ten seconds for long poll receipts
