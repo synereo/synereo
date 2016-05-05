@@ -70,14 +70,15 @@ object Importer extends EvalConfig
     response
   }
 
-  def createEmailUser(loginId: String) = s"livelygig-${UUID.randomUUID}-$loginId"
+  //def createEmailUser(loginId: String) = s"livelygig-${UUID.randomUUID}-$loginId"
 
   //def createEmailAddress(loginId: String) = s"${createEmailUser(loginId)}@mailinator.com"
 
   def makeAliasURI(alias: String) = s"alias://$alias/alias"
 
   //private def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
-  private def makeAliasLabel(label: String, color: String) = "leaf(text(\"" + label + "\"),display(color(\"" + color + "\"),image(\"\")))"
+  private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
+  //private def makeAliasLabel(label: String, color: String) = "leaf(text(\"" + label + "\"),display(color(\"" + color + "\"),image(\"\")))"
 
   /* not used here - just an example of a per session thread approach
   //@@GS - should be actor based but will have to do for now.
@@ -207,7 +208,8 @@ object Importer extends EvalConfig
     agentsBySession.put(session.sessionURI, agent)
     sessionsById.put(agent.id, session)
 
-    glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C0000"))))
+    //@@GS - what exactly is this intended to achieve??
+    glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
 
     //glosevalPost("updateUserRequest", UpdateUserRequest(session.sessionURI, blobMap))
 
@@ -231,10 +233,9 @@ object Importer extends EvalConfig
       val sourceURI = sessionsById(sourceId).sessionURI
       val targetId = connection.trgt.replace("agent://","")
       val targetAlias = aliasesById(targetId)
-      //val alias = sourceAlias + "-" + targetAlias
       val lbl: String = connection.label match {
         case Some(LabelDesc(_, value, _)) => value
-        case None => UUID.randomUUID.toString()
+        case None => "cnxn" //UUID.randomUUID.toString()
       }
       val aMessage = ""
       val bMessage = ""
@@ -252,6 +253,7 @@ object Importer extends EvalConfig
   def fromFiles(
     dataJsonFile: String = serviceDemoDataFile(),
     host: String = GLOSEVAL_HOST ) {
+
     println("Beginning import procedure")
     GLOSEVAL_HOST = host
 
@@ -261,20 +263,19 @@ object Importer extends EvalConfig
     //val thrd = longPoll()
     //thrd.start()
 
-    try {
+    //try {
       dataset.agents.foreach(makeAgent)
 
       dataset.labels.foreach(makeLabel)
 
       dataset.cnxns.foreach(makeCnxn)
-    } finally {
+    //} finally {
       // need to fix this
       // wait ten seconds for long poll receipts
       //thrd.interrupt()
 
       //thrd.join(10000)
-    }
-    Thread.sleep(10000)  // wtf??
+    //}
   }
 
 }

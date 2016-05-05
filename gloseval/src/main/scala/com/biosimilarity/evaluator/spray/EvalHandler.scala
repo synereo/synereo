@@ -1166,88 +1166,23 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(nodeAliasURI, aliasURI, feed _)
   }
 
-  /*
   def createUserRequest(json: JValue, key: String): Unit = {
-    import DSLCommLink.mTT
-    var email = (json \ "content" \ "email").extract[String].toLowerCase
-    var confirm = email != ""
+    import DSLCommLink.mTT  // @@GS - why do we import this all over the place??
+    val eml = (json \ "content" \ "email").extract[String].toLowerCase
+    val prfx = "noconfirm:"
+    val testprfx = "testtoken:"
+    val noconfirm = eml.startsWith(prfx)
+    val testtoken = eml.startsWith(testprfx)
+    val email = if (noconfirm) eml.substring(prfx.length) else 
+                if (testtoken) eml.substring(testprfx.length) else
+                eml
 
-    if (email.startsWith("noconfirm:")) {
-      confirm = false
-      email = email.substring(10)
-    }
-
-    val cap = emailToCap(email)
-    val capURI = new URI("agent://" + cap)
-    val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
-
-    def handleRsp(): Unit = {
-      val token = UUID.randomUUID.toString.substring(0, 8)
-      val tokenUri = new URI("token://" + token)
-      val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
-
-      post[String](
-        tokenLabel,
-        List(tokenCnxn),
-        compact(render(json \ "content")),
-        (optRsrc: Option[mTT.Resource]) => {
-          BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
-          optRsrc match {
-            case None => ();
-            case Some(_) => {
-              if (!confirm) {
-                processEmailToken(token, key)
-              } else {
-                ConfirmationEmail.confirm(email, token)
-                // Notify user to check her email
-                CompletionMapper.complete(key, compact(render(
-                  ("msgType" -> "createUserWaiting") ~
-                    ("content" -> List()) // List() is rendered as "{}"
-                )))
-              }
-            }
-          }
-        })
-    }
-
-    read(
-      jsonBlobLabel,
-      List(capSelfCnxn),
-      (optRsrc: Option[mTT.Resource]) => {
-        BasicLogService.tweet("createUserRequest | anonymous onFetch: optRsrc = " + optRsrc)
-        optRsrc match {
-          case None => ();
-          case Some(mTT.Ground(Bottom)) => {
-            handleRsp()
-          }
-          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-            handleRsp()
-          }
-          case _ => {
-            CompletionMapper.complete(key, compact(render(
-              ("msgType" -> "createUserError") ~
-                ("content" ->
-                  ("reason" -> "Email is already registered.")))))
-          }
-        }
-      })
-  }
-*/
-
-  def createUserRequest(json: JValue, key: String): Unit = {
-    import DSLCommLink.mTT
-    val (email, confirm) = {
-      val eml = (json \ "content" \ "email").extract[String].toLowerCase
-      val confirm = eml != "" && !eml.startsWith("noconfirm:")
-      val email = if (eml.startsWith("noconfirm:")) eml.substring(10) else eml
-      (email, confirm)
-    }
-
-    if (!confirm) {
+    if (noconfirm) {
       val pwd = (json \ "content" \ "password").extract[String]
       val blob = (json \ "content" \ "jsonBlob").extract[JObject]
       upsertUser(email, pwd, blob, key)
-    } else {
+    } 
+    else {
       val cap = emailToCap(email)
       val capURI = new URI("agent://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
@@ -1266,7 +1201,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             optRsrc match {
               case None => ();
               case Some(_) => {
-                if (!confirm) {
+                if (testtoken) {
                   processEmailToken(token, key)
                 } else {
                   ConfirmationEmail.confirm(email, token)
@@ -2326,7 +2261,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   }
 
-  def _createUser(email: String, password: String, jsonBlob: String, onComplete: PortableAgentCnxn => Unit): Unit = {
+  private def _createUser(email: String, password: String, jsonBlob: String, onComplete: PortableAgentCnxn => Unit): Unit = {
     val cap = storeCapByEmail(email)
     val capSelfCnxn = getCapSelfCnxn(cap)
     val capURI = capSelfCnxn.src
