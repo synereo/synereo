@@ -234,16 +234,43 @@ object Importer extends EvalConfig
     }
   }
 
+  def makePost(post : PostDesc): Unit = {
+    try {
+      var cnxns : List[Connection] = Nil
+
+      val sourceId = post.src
+      val sourceAlias = aliasesById(sourceId)
+      val sourceURI = sessionsById(sourceId).sessionURI
+
+      val agentURI = "agent://" + sourceAlias.replace("alias://","").replace("/alias","")
+      cnxns = Connection(agentURI, agentURI, "alias") :: cnxns
+
+      post.trgts.foreach(trgt => {
+        val lbl = UUID.randomUUID.toString()
+        val trgtAlias = aliasesById(trgt)
+        cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
+      })
+
+      val uid = UUID.randomUUID.toString()
+      val lbl = post.label // maybe later: .labels.mkString("[",",","]")
+      val cont = EvalSubscribeContent(cnxns, lbl, post.value, uid)
+
+      glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceURI, EvalSubscribeExpression("insertContent", cont)))
+    } catch {
+      case ex: Throwable => println("exception while creating post: " + ex)
+    }
+  }
+
   def parseData( dataJsonFile: String = serviceDemoDataFile() ) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
   }
 
-  def fromFiles(
-    dataJsonFile: String = serviceDemoDataFile(),
-    host: String = GLOSEVAL_HOST ) {
+  def fromFile(
+                   dataJsonFile: String,
+                   host: String = GLOSEVAL_HOST ) : Unit = {
 
-    println("Beginning import procedure")
+    println("Importing file : " +  dataJsonFile)
     GLOSEVAL_HOST = host
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
@@ -265,6 +292,10 @@ object Importer extends EvalConfig
         case None => ()
       }
 
+    dataset.posts match {
+      case Some(posts) => posts.foreach(makePost)
+      case None => ()
+    }
     //} finally {
       // need to fix this
       // wait ten seconds for long poll receipts
@@ -273,5 +304,13 @@ object Importer extends EvalConfig
       //thrd.join(10000)
     //}
   }
+
+  def fromFiles(
+                 dataJsonFile: String = serviceDemoDataFile(),
+                 host: String = GLOSEVAL_HOST ): Unit = {
+    fromFile(dataJsonFile, host)
+    //fromFile("src/main/resources/test-posts.json", host)
+  }
+
 
 }
