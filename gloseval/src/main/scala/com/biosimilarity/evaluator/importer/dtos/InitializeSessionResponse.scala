@@ -7,6 +7,7 @@ import org.json4s.JsonAST.JValue
  */
 case class InitializeSessionResponse(
   sessionURI: String
+  ,agentURI: String
   ,defaultAlias: String
   ,jsonBlob: JValue  //Map[String, String]
 ) extends RequestContent

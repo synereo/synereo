@@ -10,23 +10,16 @@ package com.biosimilarity.evaluator.importer
 
 import java.util.UUID
 
-import com.biosimilarity.evaluator.distribution.{AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
+import com.biosimilarity.evaluator.distribution.EvalConfig
 import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
-import com.biosimilarity.evaluator.importer.utils.mailinator.Mailinator
-import com.biosimilarity.evaluator.spray.{BTCHandler, DownStreamHttpCommsT, EvalHandler}
+import com.biosimilarity.evaluator.spray.NodeUser
 import org.json4s.JsonAST.JValue
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import org.joda.time.DateTime
-
-import scala.collection.JavaConversions._
-import scala.util.Random
-import scala.collection.mutable.HashMap
 import java.util.UUID
 
-import scala.collection.mutable
-import scalaj.http.{Http, HttpOptions}
+import scalaj.http.Http
 
 /**
  * Iterates through a sample data file, parses it, and imports the data
@@ -40,9 +33,7 @@ import scalaj.http.{Http, HttpOptions}
 object Importer extends EvalConfig
   with ImporterConfig
   with Serializable {
-  import scala.collection.JavaConverters._
 
-  import org.json4s.jackson.Serialization
   implicit val formats = org.json4s.DefaultFormats
 
   private var GLOSEVAL_HOST = serviceHostURI()
@@ -161,9 +152,8 @@ object Importer extends EvalConfig
     })
   }
 
-  def makeAgent(agent: AgentDesc): Unit = {
-    var eml = agent.email
-    if (!eml.contains("@")) eml = eml + "@livelygig.com"
+  def createAgent(agent: AgentDesc) : Option[String] = {
+    val eml = agent.email + (if (agent.email.contains("@")) "" else "@livelygig.com")
 
     val json1 = glosevalPost(
       "createUserRequest",
@@ -174,36 +164,57 @@ object Importer extends EvalConfig
       )
     )
 
-    val jsv = parse( json1 )
+    val jsv = parse(json1)
 
-    val tmsg = (jsv \ "msgType" ).extract[String]
+    val tmsg = (jsv \ "msgType").extract[String]
     if (tmsg == "createUserError") {
-      println( "create user failed, reason : " + (jsv \ "content" \ "reason").extract[String] )
-      return
+      println("create user failed, reason : " + (jsv \ "content" \ "reason").extract[String])
+      None
     }
-    val agentURI = ( jsv \ "content" \ "agentURI").extract[String]
-    val agentId = agentURI.replace("agent://", "")
-    agentsById.put(agent.id, agentId)
+    else {
+      val agentURI = (jsv \ "content" \ "agentURI").extract[String]
+      Some(agentURI)
+    }
+  }
 
+  def createSession( agentURI : String, pwd : String) : InitializeSessionResponse = {
     val json =
       glosevalPost(
         "initializeSessionRequest",
-        InitializeSessionRequest(agentURI + "?password=" + agent.pwd))
+        InitializeSessionRequest(agentURI + "?password=" + pwd))
 
     val jsession: JValue = (parse(json) \ "content")
     val uri = (jsession \ "sessionURI").extract[String]
     val alias = (jsession \ "defaultAlias").extract[String]
 
-    val session = InitializeSessionResponse(uri, alias, jsession)
+    InitializeSessionResponse(uri, agentURI, alias, jsession)
+  }
 
-    agentsBySession.put(session.sessionURI, agent)
-    sessionsById.put(agent.id, session)
+  def makeAgent(agent: AgentDesc): Unit = {
+    createAgent(agent) match {
+      case None => ()
+      case Some(agentURI) =>
+        val agentId = agentURI.replace("agent://", "")
+        agentsById.put(agent.id, agentId)
+        val session = createSession(agentURI, agent.pwd)
+        agentsBySession.put(session.sessionURI, agent)
+        sessionsById.put(agent.id, session)
 
-    //@@GS - what exactly is this intended to achieve??
-    glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
+        //@@GS - what exactly is this intended to achieve??
+        glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
 
-    aliasesById.put(agent.id, s"alias://${agentId}/alias")
+        aliasesById.put(agent.id, s"alias://${agentId}/alias")
+    }
+  }
 
+  def openAdminSession() = {
+    val admin = AgentDesc("", NodeUser.email, NodeUser.password, "{}" )
+    val sess =
+      createAgent(admin) match {
+        case None => throw new Exception("Unable to open admin session")
+        case Some(uri) => createSession(uri, NodeUser.password)
+      }
+    sess
   }
 
   def makeLabel(label : SystemLabelDesc): Unit = {
@@ -215,11 +226,10 @@ object Importer extends EvalConfig
     */
   }
 
-  def makeCnxn(connection : ConnectionDesc): Unit = {
+  def makeCnxn(adminURI : String, connection : ConnectionDesc): Unit = {
     try {
       val sourceId = connection.src.replace("agent://","")
       val sourceAlias = aliasesById(sourceId)
-      val sourceURI = sessionsById(sourceId).sessionURI
       val targetId = connection.trgt.replace("agent://","")
       val targetAlias = aliasesById(targetId)
       val lbl: String = connection.label match {
@@ -228,7 +238,7 @@ object Importer extends EvalConfig
       }
       val aMessage = ""
       val bMessage = ""
-      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
+      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
     } catch {
       case ex: Throwable => println("exception while creating connection: " + ex)
     }
@@ -275,11 +285,12 @@ object Importer extends EvalConfig
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
+    val adminSession = openAdminSession()
 
-    //val thrd = longPoll()
-    //thrd.start()
+    val thrd = longPoll()
+    thrd.start()
 
-    //try {
+    try {
       dataset.agents.foreach(makeAgent)
 
       dataset.labels match {
@@ -288,21 +299,21 @@ object Importer extends EvalConfig
       }
 
       dataset.cnxns match {
-        case Some(cnxns) => cnxns.foreach(makeCnxn)
+        case Some(cnxns) => cnxns.foreach(cnxn => makeCnxn(adminSession.sessionURI, cnxn))
         case None => ()
       }
 
-    dataset.posts match {
-      case Some(posts) => posts.foreach(makePost)
-      case None => ()
-    }
-    //} finally {
+      dataset.posts match {
+        case Some(posts) => posts.foreach(makePost)
+        case None => ()
+      }
+    } finally {
       // need to fix this
       // wait ten seconds for long poll receipts
-      //thrd.interrupt()
+      thrd.interrupt()
 
-      //thrd.join(10000)
-    //}
+      thrd.join(10000)
+    }
   }
 
   def fromFiles(

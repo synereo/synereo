@@ -39,3 +39,18 @@ object DataSetDesc {
   def fromJson(json: String) = parse(json).extract[DataSetDesc]
 
 }
+
+trait Process[T]
+case class Zero[T]() extends Process[T]
+case class InputGuarded[T](u : Name[T], v : Name[T], p : Process[T]) extends Process[T]
+case class Output[T](u : Name[T], p : Process[T]) extends Process[T]
+case class Par[T](l : Process[T], r : Process[T]) extends Process[T]
+case class Deref[T](u : Name[T]) extends Process[T]
+
+trait Name[U]
+case class Refer[U](p : Process[U]) extends Name[U]
+
+trait ReflectiveProcess
+case class Reflect( p : Process[Name[ReflectiveProcess]] ) extends ReflectiveProcess
+
+
