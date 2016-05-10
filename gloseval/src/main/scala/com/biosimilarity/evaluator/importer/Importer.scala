@@ -42,9 +42,7 @@ object Importer extends EvalConfig
   //private val MAILINATOR_KEY = serviceMailinatorKey()
 
   private val agentsById = scala.collection.mutable.Map[String, String]() // loginId:agentURI
-  private val agentsBySession = scala.collection.mutable.Map[String, AgentDesc]() // sessionURI:agent
   private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]() // sessionURI:agent
-  private val aliasesById = scala.collection.mutable.Map[String, String]() // agentId:aliasUri
 
   private def glosevalPost(msgType: String, data: RequestContent): String = {
     val requestBody = write(ApiRequest(msgType, data))
@@ -61,7 +59,7 @@ object Importer extends EvalConfig
     response
   }
 
-  def makeAliasURI(alias: String) = s"alias://$alias/alias"
+  def makeAliasURI(alias: String) = s"alias://${alias}/alias"
 
   private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
 
@@ -113,24 +111,28 @@ object Importer extends EvalConfig
     new Thread(new Runnable() {
       override def run() {
         while (!Thread.interrupted()) {
-          val tmp = agentsBySession.clone()
+          val tmp = sessionsById.clone()
           while (tmp.nonEmpty) {
             tmp.foreach {
-              case (session, _) =>
+              case (id, sess) =>
                 try {
                   println("Sending Ping")
+                  val session = sess.sessionURI
                   val js = glosevalPost("sessionPing", SessionPingRequest(session))
                   val arr = parse(js).extract[List[JValue]]
                   arr.foreach(v => {
                     val typ = (v \ "msgType").extract[String]
                     typ match {
-                      case "sessionPong" => tmp.remove(session)
-                      case "connectionProfileResponse" => {}
+                      case "sessionPong" => tmp.remove(id)
+                      case "connectionProfileResponse" => {
+                        //println("connectionProfileResponse : " + (v \ "content"))
+
+                      }
                       case "addAliasLabelsResponse" => {}
-                      case "beginIntroductionResponse" => {}
-//                        println("beginIntroductionResponse : " + (v \ "content"))
+                      case "beginIntroductionResponse" => {
+                        println("beginIntroductionResponse : " + (v \ "content"))
 //                        println("WARNING - handler not provided for server sent message type : " + typ)
-//                      }
+                      }
                       case _ => {
                         //println("contents : " + (v \ "content"))
                         println("WARNING - handler not provided for server sent message type : " + typ)
@@ -194,27 +196,15 @@ object Importer extends EvalConfig
     createAgent(agent) match {
       case None => ()
       case Some(agentURI) =>
-        val agentId = agentURI.replace("agent://", "")
-        agentsById.put(agent.id, agentId)
+        val agentCap = agentURI.replace("agent://cap/", "").slice(0,36)
+        agentsById.put(agent.id, agentCap)
         val session = createSession(agentURI, agent.pwd)
-        agentsBySession.put(session.sessionURI, agent)
         sessionsById.put(agent.id, session)
 
         //@@GS - what exactly is this intended to achieve??
-        glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
+        //glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
 
-        aliasesById.put(agent.id, s"alias://${agentId}/alias")
     }
-  }
-
-  def openAdminSession() = {
-    val admin = AgentDesc("", NodeUser.email, NodeUser.password, "{}" )
-    val sess =
-      createAgent(admin) match {
-        case None => throw new Exception("Unable to open admin session")
-        case Some(uri) => createSession(uri, NodeUser.password)
-      }
-    sess
   }
 
   def makeLabel(label : SystemLabelDesc): Unit = {
@@ -228,17 +218,12 @@ object Importer extends EvalConfig
 
   def makeCnxn(adminURI : String, connection : ConnectionDesc): Unit = {
     try {
-      val sourceId = connection.src.replace("agent://","")
-      val sourceAlias = aliasesById(sourceId)
-      val targetId = connection.trgt.replace("agent://","")
-      val targetAlias = aliasesById(targetId)
-      val lbl: String = connection.label match {
-        case Some(LabelDesc(_, value, _)) => value
-        case None => "cnxn" //UUID.randomUUID.toString()
-      }
-      val aMessage = ""
-      val bMessage = ""
-      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
+      val sourceId = agentsById(connection.src.replace("agent://", ""))
+      val sourceURI = makeAliasURI(sourceId)
+      val targetId = agentsById(connection.trgt.replace("agent://", ""))
+      val targetURI = makeAliasURI(targetId)
+      //glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
+      glosevalPost("establishConnectionRequest", EstablishConnectionRequest(adminURI, sourceURI, targetURI))
     } catch {
       case ex: Throwable => println("exception while creating connection: " + ex)
     }
@@ -248,16 +233,15 @@ object Importer extends EvalConfig
     try {
       var cnxns : List[Connection] = Nil
 
-      val sourceId = post.src
-      val sourceAlias = aliasesById(sourceId)
-      val sourceURI = sessionsById(sourceId).sessionURI
+      val sourceId = agentsById(post.src)
+      val sourceAlias = makeAliasURI(sourceId)
+      val sourceSession = sessionsById(sourceId).sessionURI
 
-      val agentURI = "agent://" + sourceAlias.replace("alias://","").replace("/alias","")
-      cnxns = Connection(agentURI, agentURI, "alias") :: cnxns
+      cnxns = Connection(sourceAlias, sourceAlias, "alias") :: cnxns
 
       post.trgts.foreach(trgt => {
         val lbl = UUID.randomUUID.toString()
-        val trgtAlias = aliasesById(trgt)
+        val trgtAlias = makeAliasURI(agentsById(trgt))
         cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
       })
 
@@ -265,7 +249,7 @@ object Importer extends EvalConfig
       val lbl = post.label // maybe later: .labels.mkString("[",",","]")
       val cont = EvalSubscribeContent(cnxns, lbl, post.value, uid)
 
-      glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceURI, EvalSubscribeExpression("insertContent", cont)))
+      glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
     } catch {
       case ex: Throwable => println("exception while creating post: " + ex)
     }
@@ -276,51 +260,70 @@ object Importer extends EvalConfig
     parse(dataJson).extract[DataSetDesc]
   }
 
-  def fromFile(
-                   dataJsonFile: String,
-                   host: String = GLOSEVAL_HOST ) : Unit = {
+  def getAgentURI(email: String, password: String) = {
+    val json = glosevalPost("getAgentRequest", GetUserRequest(email, password))
+    val jsv = parse(json)
+
+    val tmsg = (jsv \ "msgType").extract[String]
+    if (tmsg == "getAgentError") {
+      println("create user failed, reason : " + (jsv \ "content" \ "reason").extract[String])
+      None
+    }
+    else {
+      val agentURI = (jsv \ "content" \ "agentURI").extract[String]
+      Some(agentURI)
+    }
+  }
+
+  def fromFile(dataJsonFile: String, host: String = GLOSEVAL_HOST ) : Unit = {
 
     println("Importing file : " +  dataJsonFile)
     GLOSEVAL_HOST = host
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
-    val adminSession = openAdminSession()
 
-    val thrd = longPoll()
-    thrd.start()
+    getAgentURI(NodeUser.email, NodeUser.password) match {
+      case Some(uri) => {
+        val adminId = uri.replace("agent://", "")
+        val adminSession = createSession(uri, NodeUser.password)
+        sessionsById.put(adminId, adminSession)  // longpoll on adminSession
+        println("using admin session URI : " + adminSession.sessionURI)
+        val thrd = longPoll()
+        thrd.start()
 
-    try {
-      dataset.agents.foreach(makeAgent)
+        try {
+          dataset.agents.foreach(makeAgent)
 
-      dataset.labels match {
-        case Some(lbls) => lbls.foreach (makeLabel)
-        case None => ()
+          dataset.labels match {
+            case Some(lbls) => () // lbls.foreach (makeLabel)
+            case None => ()
+          }
+
+          dataset.cnxns match {
+            case Some(cnxns) => cnxns.foreach(cnxn => makeCnxn(adminSession.sessionURI, cnxn))
+            case None => ()
+          }
+
+          dataset.posts match {
+            case Some(posts) => () // posts.foreach(makePost)
+            case None => ()
+          }
+        } finally {
+          // need to fix this
+          // wait ten seconds for long poll receipts
+          thrd.interrupt()
+
+          thrd.join(20000)
+        }
       }
-
-      dataset.cnxns match {
-        case Some(cnxns) => cnxns.foreach(cnxn => makeCnxn(adminSession.sessionURI, cnxn))
-        case None => ()
-      }
-
-      dataset.posts match {
-        case Some(posts) => posts.foreach(makePost)
-        case None => ()
-      }
-    } finally {
-      // need to fix this
-      // wait ten seconds for long poll receipts
-      thrd.interrupt()
-
-      thrd.join(10000)
+      case _ => throw new Exception("Unable to open admin session")
     }
   }
 
-  def fromFiles(
-                 dataJsonFile: String = serviceDemoDataFile(),
-                 host: String = GLOSEVAL_HOST ): Unit = {
-    fromFile(dataJsonFile, host)
-    //fromFile("src/main/resources/test-posts.json", host)
+  def fromFiles( dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST ): Unit = {
+    //fromFile(dataJsonFile, host)
+    fromFile("src/main/resources/test-posts.json", host)
   }
 
 

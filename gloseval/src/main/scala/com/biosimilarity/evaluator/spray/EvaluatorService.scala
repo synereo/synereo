@@ -1,14 +1,14 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.store._
-
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
-
 import akka.actor._
 import spray.routing._
+
+import scala.collection.mutable
 //import directives.CompletionMagnet
 import spray.http._
 import spray.http.StatusCodes._
@@ -90,12 +90,12 @@ class CometActor extends Actor with Serializable {
   val clientTimeout = 7 seconds // poll requests are closed after this much time, clients repoll (ping) after this
 
   //@@GS - testing theory: all methods of cometActor are synchronized => cometMapLock is redundant
-  //@transient
-  //lazy val cometMapLock = new scala.concurrent.Lock()
+  @transient
+  lazy val cometMapLock = new scala.concurrent.Lock()
 
   def receive = {
     case SessionPing(id, reqCtx) => synchronized {
-      //cometMapLock.acquire()
+      cometMapLock.acquire()
       aliveTimers.get(id).map(_.cancel())
       aliveTimers += (id -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(id)))
 
@@ -119,11 +119,11 @@ class CometActor extends Actor with Serializable {
           }
         }
       }
-      //cometMapLock.release()
+      cometMapLock.release()
     }
 
     case PollTimeout(id) => synchronized {
-      //cometMapLock.acquire()
+      cometMapLock.acquire()
       //println( "In PollTimeout checking for a req to match id = " + id ) 
       for (req <- requests.get(id)) {
         //println( "In PollTimeout about to call complete with sessionPong; req = " + req ) 
@@ -132,15 +132,15 @@ class CometActor extends Actor with Serializable {
       }
       requests -= id
       toTimers -= id
-      //cometMapLock.release()
+      cometMapLock.release()
     }
 
     case ClientGc(id) => synchronized {
-      //cometMapLock.acquire()
+      cometMapLock.acquire()
       requests -= id
       toTimers -= id
       aliveTimers -= id
-      //cometMapLock.release()
+      cometMapLock.release()
     }
 
     case CometMessage(id, data) => synchronized {
@@ -152,15 +152,14 @@ class CometActor extends Actor with Serializable {
           data.toString
         }
 
-      val set = sets.get(id).getOrElse({
+      val set = sets.getOrElse(id, {
         println(
           (
             "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-            + "\nCometMessage id miss: id = " + id
-            + ", data = " + dataPrintRep()
-            + ", sets = " + sets
-            + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"))
-        val newSet = new HashSet[String]
+              + "\nCometMessage id miss: id = " + id
+              + ", data = " + dataPrintRep()
+              + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"))
+        val newSet = new mutable.HashSet[String]
         sets += (id -> newSet)
         newSet
       })
@@ -213,17 +212,19 @@ trait EvaluatorService extends HttpService with CORSSupport {
   CometActorMapper.map += (CometActorMapper.key -> cometActor)
 
   @transient
-  val syncMethods = HashMap[String, (JValue, String) => Unit](
+  val syncMethods = HashMap[String, (JObject, String) => Unit](
     // Old stuff
     ("createUserRequest", createUserRequest),
     ("confirmEmailToken", confirmEmailToken),
     // New API
     ("createAgentRequest", createAgentRequest),
-    ("initializeSessionRequest", initializeSessionRequest)
+    ("initializeSessionRequest", initializeSessionRequest),
+    // gary goofing about
+      ("getAgentRequest", getAgentRequest)
   )
 
   @transient
-  val asyncMethods = HashMap[String, JValue => Unit](
+  val asyncMethods = HashMap[String, JObject => Unit](
     // Old stuff
     ("closeSessionRequest", closeSessionRequest),
     ("updateUserRequest", updateUserRequest),
@@ -259,6 +260,7 @@ trait EvaluatorService extends HttpService with CORSSupport {
     // Introduction Protocol
     ("beginIntroductionRequest", beginIntroductionRequest),
     ("introductionConfirmationRequest", introductionConfirmationRequest),
+    ("establishConnectionRequest", establishConnectionRequest),
     // Database dump/restore
     ("backupRequest", backupRequest),
     ("restoreRequest", restoreRequest),
@@ -278,20 +280,21 @@ trait EvaluatorService extends HttpService with CORSSupport {
                   BasicLogService.tweet("json: " + jsonStr)
                   val json = parse(jsonStr)
                   val msgType = (json \ "msgType").extract[String]
+                  val content = (json \ "content").extract[JObject]
                   asyncMethods.get(msgType) match {
                     case Some(fn) => {
-                      fn(json)
+                      fn(content)
                       ctx.complete(StatusCodes.OK)
                     }
                     case None => syncMethods.get(msgType) match {
                       case Some(fn) => {
-                        var key = UUID.randomUUID.toString
+                        val key = UUID.randomUUID.toString
                         CompletionMapper.map += (key -> ctx)
-                        fn(json, key)
+                        fn(content, key)
                       }
                       case None => msgType match {
                         case "sessionPing" => {
-                          val sessionURI = sessionPing(json)
+                          val sessionURI = (content \ "sessionURI").extract[String]
                           (cometActor ! SessionPing(sessionURI, ctx))
                         }
                         case _ => {

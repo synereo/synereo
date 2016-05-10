@@ -6,6 +6,11 @@ case class CreateUserRequest(
   jsonBlob: String
 ) extends RequestContent
 
+case class GetUserRequest(
+  email: String,
+  password: String
+) extends RequestContent
+
 case class UpdateUserRequest(
   sessionURI: String,
   jsonBlob: String

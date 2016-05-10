@@ -264,19 +264,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     bytes.map("%02X" format _).mkString
   }
 
-  /**
-   * Creates an agent.
-   *
-   * @param json input JSON for agent
-   * @param key this is used to identify a return request (optional)
-   */
-  def createAgentRequest(json: JValue, key: String): Unit = {
+  def createAgentRequest(json: JObject, key: String): Unit = {
     try {
-      val authType = (json \ "content" \ "authType").extract[String].toLowerCase
+      val authType = (json \ "authType").extract[String].toLowerCase
       if (authType != "password") {
         createAgentError(key, "Only password authentication is currently supported.")
       } else {
-        val authValue = (json \ "content" \ "authValue").extract[String]
+        val authValue = (json \ "authValue").extract[String]
         val (salt, hash) = saltAndHash(authValue)
 
         // TODO(mike): explicitly manage randomness pool
@@ -347,10 +341,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     with Serializable {}
 
   // Agents
-  def addAgentExternalIdentityRequest(json: JValue): Unit = {
-    val idtyp = (json \ "content" \ "idType").extract[String]
-    val idval = (json \ "content" \ "idValue").extract[String]
-    val uri = new URI((json \ "content" \ "sessionURI").extract[String])
+  def addAgentExternalIdentityRequest(json: JObject): Unit = {
+    val idtyp = (json \ "idType").extract[String]
+    val idval = (json \ "idValue").extract[String]
+    val uri = new URI((json \ "sessionURI").extract[String])
     val id = ExternalIdentity(ExternalIdType.fromString(idtyp), idval)
     handler.handleaddAgentExternalIdentityRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentExternalIdentityRequest(uri, id))
@@ -363,38 +357,38 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def addAgentAliasesRequest(json: JValue): Unit = {
     handler.handleaddAgentAliasesRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String]),
-        (json \ "content" \ "aliases").extract[List[String]]))
+        new URI((json \ "sessionURI").extract[String]),
+        (json \ "aliases").extract[List[String]]))
   }
   def removeAgentAliasesRequest(json: JValue): Unit = {
     handler.handleremoveAgentAliasesRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.removeAgentAliasesRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String]),
-        (json \ "content" \ "aliases").extract[List[String]]))
+        new URI((json \ "sessionURI").extract[String]),
+        (json \ "aliases").extract[List[String]]))
   }
   def getAgentAliasesRequest(json: JValue): Unit = {
     handler.handlegetAgentAliasesRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.getAgentAliasesRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String])))
+        new URI((json \ "sessionURI").extract[String])))
   }
   def getDefaultAliasRequest(json: JValue): Unit = {
     handler.handlegetDefaultAliasRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.getDefaultAliasRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String])))
+        new URI((json \ "sessionURI").extract[String])))
   }
   def setDefaultAliasRequest(json: JValue): Unit = {
     handler.handlesetDefaultAliasRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.setDefaultAliasRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String]),
-        (json \ "content" \ "alias").extract[String]))
+        new URI((json \ "sessionURI").extract[String]),
+        (json \  "alias").extract[String]))
   }
   // Aliases
   def addAliasExternalIdentitiesRequest(json: JValue): Unit = {
     handler.handleaddAliasExternalIdentitiesRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAliasExternalIdentitiesRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String]),
-        (json \ "content" \ "alias").extract[String],
-        (json \ "content" \ "ids").extract[List[ExternalIdentity]]))
+        new URI((json  \ "sessionURI").extract[String]),
+        (json \ "alias").extract[String],
+        (json \ "ids").extract[List[ExternalIdentity]]))
   }
 
   def removeAliasExternalIdentitiesRequest(json: JValue): Unit = {}
@@ -403,71 +397,71 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   // Connections
   case class JCnxn(source: String, label: String, target: String)
   def removeAliasConnectionsRequest(json: JValue): Unit = {
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
-    val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
+    val sessionURIStr = (json \ "sessionURI").extract[String]
+    val jcnxns = (json \ "connections").asInstanceOf[JArray].arr
     handler.handleremoveAliasConnectionsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.removeAliasConnectionsRequest(
         new URI(sessionURIStr),
-        (json \ "content" \ "alias").extract[String],
+        (json \ "alias").extract[String],
         jcnxns.map((c: JValue) => PortableAgentCnxn(
           new URI((c \ "source").extract[String]),
           (c \ "label").extract[String],
           new URI((c \ "target").extract[String])))))
   }
   def getAliasConnectionsRequest(json: JValue): Unit = {
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURIStr = (json \ "sessionURI").extract[String]
     handler.handlegetAliasConnectionsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.getAliasConnectionsRequest(
         new URI(sessionURIStr),
-        (json \ "content" \ "alias").extract[String]))
+        (json \ "alias").extract[String]))
   }
   // Labels
   def addAliasLabelsRequest(json: JValue): Unit = {
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
-    val lbls = (json \ "content" \ "labels").extract[List[String]]
+    val sessionURIStr = (json \ "sessionURI").extract[String]
+    val lbls = (json \ "labels").extract[List[String]]
     handler.handleaddAliasLabelsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAliasLabelsRequest(
         new URI(sessionURIStr),
-        (json \ "content" \ "alias").extract[String],
+        (json \ "alias").extract[String],
         lbls.map(fromTermString)
           .map(_.getOrElse(
             CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "addAliasLabelsError") ~
                 ("content" -> ("reason" -> ("Couldn't parse a label:" +
-                  compact(render(json \ "content" \ "labels")))))))))).asInstanceOf[List[CnxnCtxtLabel[String, String, String]]]))
+                  compact(render(json \ "labels")))))))))).asInstanceOf[List[CnxnCtxtLabel[String, String, String]]]))
   }
   def updateAliasLabelsRequest(json: JValue): Unit = {
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURIStr = (json \ "sessionURI").extract[String]
     handler.handleupdateAliasLabelsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.updateAliasLabelsRequest(
         new URI(sessionURIStr),
-        (json \ "content" \ "alias").extract[String],
-        (json \ "content" \ "labels").extract[List[String]].
+        (json \ "alias").extract[String],
+        (json \ "labels").extract[List[String]].
           map(fromTermString).
           map(_.getOrElse(
             CometActorMapper.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "updateAliasLabelsError") ~
                 ("content" -> ("reason" -> ("Couldn't parse a label:" +
-                  compact(render(json \ "content" \ "labels")))))))))).asInstanceOf[List[CnxnCtxtLabel[String, String, String]]]))
+                  compact(render(json \ "labels")))))))))).asInstanceOf[List[CnxnCtxtLabel[String, String, String]]]))
   }
   def getAliasLabelsRequest(json: JValue): Unit = {
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURIStr = (json \ "sessionURI").extract[String]
     handler.handlegetAliasLabelsRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.getAliasLabelsRequest(
         new URI(sessionURIStr),
-        (json \ "content" \ "alias").extract[String]))
+        (json \ "alias").extract[String]))
   }
   def setAliasDefaultLabelRequest(json: JValue): Unit = {}
   def getAliasDefaultLabelRequest(json: JValue): Unit = {}
   // DSL
   def evalSubscribeCancelRequest(json: JValue): Unit = {
     BasicLogService.tweet("evalSubscribeCancelRequest: json = " + compact(render(json)))
-    val sessionURIStr = (json \ "content" \ "sessionURI").extract[String]
-    val jcnxns = (json \ "content" \ "connections").asInstanceOf[JArray].arr
+    val sessionURIStr = (json \ "sessionURI").extract[String]
+    val jcnxns = (json \ "connections").asInstanceOf[JArray].arr
     handler.handleevalSubscribeCancelRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.evalSubscribeCancelRequest(
         new URI(sessionURIStr),
-        new SumOfProducts()((json \ "content" \ "filter").extract[String]),
+        new SumOfProducts()((json \ "filter").extract[String]),
         jcnxns.map((c: JValue) => PortableAgentCnxn(
           new URI((c \ "source").extract[String]),
           (c \ "label").extract[String],
@@ -477,27 +471,34 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def beginIntroductionRequest(json: JValue): Unit = {
     handler.handlebeginIntroductionRequest(
       com.protegra_ati.agentservices.msgs.agent.introduction.beginIntroductionRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String]),
-        (json \ "content" \ "alias").extract[String],
+        new URI((json \ "sessionURI").extract[String]),
+        (json \ "alias").extract[String],
         new PortableAgentCnxn(
-          new URI((json \ "content" \ "aConnection" \ "source").extract[String]),
-          (json \ "content" \ "aConnection" \ "label").extract[String],
-          new URI((json \ "content" \ "aConnection" \ "target").extract[String])),
+          new URI((json \ "aConnection" \ "source").extract[String]),
+          (json \ "aConnection" \ "label").extract[String],
+          new URI((json \ "aConnection" \ "target").extract[String])),
         new PortableAgentCnxn(
-          new URI((json \ "content" \ "bConnection" \ "source").extract[String]),
-          (json \ "content" \ "bConnection" \ "label").extract[String],
-          new URI((json \ "content" \ "bConnection" \ "target").extract[String])),
-        (json \ "content" \ "aMessage").extract[String],
-        (json \ "content" \ "bMessage").extract[String]))
+          new URI((json \ "bConnection" \ "source").extract[String]),
+          (json \ "bConnection" \ "label").extract[String],
+          new URI((json \ "bConnection" \ "target").extract[String])),
+        (json \ "aMessage").extract[String],
+        (json \ "bMessage").extract[String]))
+  }
+  def establishConnectionRequest(json: JValue): Unit = {
+    val sessionURI = (json \ "sessionURI").extract[String]
+    val aURI = new URI((json \ "aURI").extract[String])
+    val bURI = new URI((json \ "bURI").extract[String])
+    establishConnection(sessionURI,aURI,bURI)
+
   }
   def introductionConfirmationRequest(json: JValue): Unit = {
     handler.handleintroductionConfirmationRequest(
       com.protegra_ati.agentservices.msgs.agent.introduction.introductionConfirmationRequest(
-        new URI((json \ "content" \ "sessionURI").extract[String]),
-        (json \ "content" \ "alias").extract[String],
-        (json \ "content" \ "introSessionId").extract[String],
-        (json \ "content" \ "correlationId").extract[String],
-        (json \ "content" \ "accepted").extract[Boolean]))
+        new URI((json \ "sessionURI").extract[String]),
+        (json \ "alias").extract[String],
+        (json \ "introSessionId").extract[String],
+        (json \ "correlationId").extract[String],
+        (json \ "accepted").extract[Boolean]))
   }
 
   // ----------------------------------------------------------------------------------------------------------
@@ -520,7 +521,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 */
 
   def confirmEmailToken(json: JValue, key: String): Unit = {
-    val token = (json \ "content" \ "token").extract[String]
+    val token = (json \ "token").extract[String]
     processEmailToken(token, key)
   }
 
@@ -1061,10 +1062,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       })
   }
 
-  def onAgentCreation(
-    cap: String,
-    aliasCnxn: PortableAgentCnxn,
-    onSuccess: Unit => Unit = Unit => ()): Unit = {
+  def onAgentCreation(cap: String, aliasCnxn: PortableAgentCnxn,  onSuccess: Unit => Unit = Unit => ()): Unit = {
 
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
@@ -1072,7 +1070,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val aliasURI = new URI("alias://" + cap + "/alias")
     val nodeAgentCap = emailToCap(NodeUser.email)
     val nodeAliasURI = new URI("alias://" + nodeAgentCap + "/alias")
-    val nodeUserAliasCnxn = PortableAgentCnxn(nodeAliasURI, "alias", nodeAliasURI)
+    val nodeAliasCnxn = PortableAgentCnxn(nodeAliasURI, "alias", nodeAliasURI)
     val cnxnLabel = UUID.randomUUID().toString
     val nodeToThisCnxn = PortableAgentCnxn(nodeAliasURI, cnxnLabel, aliasURI)
     val thisToNodeCnxn = PortableAgentCnxn(aliasURI, cnxnLabel, nodeAliasURI)
@@ -1090,7 +1088,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           case Some(_) => {
             get(
               biCnxnsListLabel,
-              List(nodeUserAliasCnxn),
+              List(nodeAliasCnxn),
               (optRsrc: Option[mTT.Resource]) => {
                 BasicLogService.tweet("connectToNodeUser | onGet : optRsrc = " + optRsrc)
                 def handleRsp(v: ConcreteHL.HLExpr): Unit = {
@@ -1102,7 +1100,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   }
                   put(
                     biCnxnsListLabel,
-                    List(nodeUserAliasCnxn),
+                    List(nodeAliasCnxn),
                     Serializer.serialize(newBiCnxnList),
                     (optRsrc: Option[mTT.Resource]) => {
                       BasicLogService.tweet("connectToNodeUser | onPut : optRsrc = " + optRsrc)
@@ -1153,7 +1151,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     commenceInstance(
       introductionRecipientCnxn,
       introductionRecipientLabel,
-      List(thisToNodeCnxn, nodeUserAliasCnxn),
+      List(thisToNodeCnxn, nodeAliasCnxn),
       Nil,
       {
         //optRsrc => println( "onCommencement three | " + optRsrc )
@@ -1166,9 +1164,109 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(nodeAliasURI, aliasURI, feed _)
   }
 
+
+  def establishConnection(sessionURI : String, aURI : URI, bURI : URI) = {
+    val aAliasCnxn = PortableAgentCnxn(aURI,"alias",aURI)
+    val bAliasCnxn = PortableAgentCnxn(bURI,"alias",bURI)
+    val cnxnLabel = UUID.randomUUID().toString
+    val aCnxn = PortableAgentCnxn(aURI, cnxnLabel, bURI)
+    val bCnxn = PortableAgentCnxn(bURI, cnxnLabel, aURI)
+    val aBiCnxn = PortableAgentBiCnxn(bCnxn, aCnxn)
+    val bBiCnxn = PortableAgentBiCnxn(aCnxn, bCnxn)
+
+    def doPut(cnxnList: List[PortableAgentBiCnxn]) = {
+      put(
+        biCnxnsListLabel,
+        List(aAliasCnxn),
+        Serializer.serialize(cnxnList),
+        (optRsrc: Option[mTT.Resource]) => {
+          BasicLogService.tweet("establishConnection | onPost : optRsrc = " + optRsrc)
+          optRsrc match {
+            case None => ()
+            case Some(_) => {
+              get(
+                biCnxnsListLabel,
+                List(bAliasCnxn),
+                (optRsrc: Option[mTT.Resource]) => {
+                  BasicLogService.tweet("estabishConnection | get : optRsrc = " + optRsrc)
+                  def handleRsp(v: ConcreteHL.HLExpr): Unit = {
+                    val newBiCnxnList = v match {
+                      case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
+                        bBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
+                      }
+                      case Bottom => List(bBiCnxn)
+                    }
+                    put(
+                      biCnxnsListLabel,
+                      List(bAliasCnxn),
+                      Serializer.serialize(newBiCnxnList),
+                      (optRsrc: Option[mTT.Resource]) => {
+                        BasicLogService.tweet("establishConnection | onPut : optRsrc = " + optRsrc)
+                        optRsrc match {
+                          case None => ()
+                          case Some(_) => {
+                            CometActorMapper.cometMessage(sessionURI, compact(render(
+                              ("msgType" -> "establishConnectionResponse") ~
+                                ("content" ->
+                                  ("sessionURI" -> sessionURI)))))
+                          }
+                        }
+                      })
+                  }
+                  optRsrc match {
+                    case None => ();
+                    case Some(mTT.Ground(v)) => {
+                      handleRsp(v)
+                    }
+                    case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                      handleRsp(v)
+                    }
+                    case _ => {
+                      throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+                    }
+                  }
+                })
+            }
+          }
+        })
+    }
+    get(
+      biCnxnsListLabel,
+      List(aAliasCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        def handleRsp(v: ConcreteHL.HLExpr): Unit = {
+          val newBiCnxnList = v match {
+            case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
+              aBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
+            }
+            case Bottom => {
+              println("failed to find bicnxns")
+              List(aBiCnxn)
+
+            }
+          }
+          doPut(newBiCnxnList)
+        }
+        optRsrc match {
+          case None => ();
+          case Some(mTT.Ground(v)) => {
+            handleRsp(v)
+          }
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+            handleRsp(v)
+          }
+          case _ => {
+            throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+          }
+        }
+
+      }
+    )
+  }
+
   def createUserRequest(json: JValue, key: String): Unit = {
     import DSLCommLink.mTT  // @@GS - why do we import this all over the place??
-    val eml = (json \ "content" \ "email").extract[String].toLowerCase
+    val eml = (json \ "email").extract[String].toLowerCase
     val prfx = "noconfirm:"
     val testprfx = "testtoken:"
     val noconfirm = eml.startsWith(prfx)
@@ -1178,9 +1276,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 eml
 
     if (noconfirm) {
-      val pwd = (json \ "content" \ "password").extract[String]
-      //val blob = (json \ "content" \ "jsonBlob").extract[JObject]
-      val blob = (parse((json \ "content" \ "jsonBlob").extract[String])).extract[JObject]
+      val pwd = (json \ "password").extract[String]
+      //val blob = (json \ "jsonBlob").extract[JObject]
+      val blob = (parse((json \ "jsonBlob").extract[String])).extract[JObject]
       upsertUser(email, pwd, blob, key)
     } 
     else {
@@ -1262,7 +1360,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           BasicLogService.tweet("secureLogin | login | onPwmacFetch: pwmac = " + pwmac)
           val hex = getPwMac(password)
           BasicLogService.tweet("secureLogin | login | onPwmacFetch: hex = " + hex)
-          if (hex != pwmac.toString) {
+          if (hex != pwmac) {
             BasicLogService.tweet("secureLogin | login | onPwmacFetch: Password mismatch.")
             CompletionMapper.complete(key, compact(render(
               ("msgType" -> "initializeSessionError") ~
@@ -1657,15 +1755,17 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def initializeSessionRequest(
     json: JValue,
     key: String): Unit = {
-    val agentURI = (json \ "content" \ "agentURI").extract[String]
+    val agentURI = (json \ "agentURI").extract[String]
     val uri = new URI(agentURI)
 
-    if (uri.getScheme() != "agent") {
+    if (uri.getScheme != "agent") {
       throw InitializeSessionException(agentURI, "Unrecognized scheme")
     }
-    val identType = uri.getHost()
-    val identInfo = uri.getPath.substring(1) // drop leading slash
-    // TODO: get a proper library to do this
+    val (identType, identInfo) = {
+      val pth = uri.getPath
+      if (pth == "") ("cap", uri.getHost )
+      else (uri.getHost, pth.substring(1) )
+    }
     val queryMap = new HashMap[String, String]
     val qry = uri.getRawQuery
     if (qry != null) {
@@ -1687,7 +1787,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val content = (json \ "content")
     val sessionURIStr = (content \ "sessionURI").extract[String]
     val sessionURI = new URI(sessionURIStr)
-    val cap = sessionURI.getHost()
+    val cap = sessionURI.getHost
     val agentURIStr = "agent://" + cap
     val agentURI = new URI(agentURIStr)
     val cnxn = PortableAgentCnxn(agentURI, "identity", agentURI)
@@ -2075,7 +2175,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               case _ => throw new Exception("Unrecognized resource: " + optRsrc)
             }
           }
-          val staff = (expression \ "content" \ "staff") match {
+          val staff = (expression \ "staff") match {
             case JObject(List((which: String, vals @ JArray(_)))) => {
               // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
               which match {
@@ -2175,14 +2275,14 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def sessionPing(json: JValue): String = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURI = (json \ "sessionURI").extract[String]
     // TODO: check sessionURI validity
 
     sessionURI
   }
 
   def closeSessionRequest(json: JValue): Unit = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURI = (json \ "sessionURI").extract[String]
 
     CometActorMapper.cometMessage(sessionURI, compact(render(
       ("msgType" -> "closeSessionResponse") ~
@@ -2203,7 +2303,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       (optRsrc: Option[mTT.Resource]) => {
         BasicLogService.tweet("createNodeUser | onRead: optRsrc = " + optRsrc)
 
-        // Check if agent for email exists. If it doesn't, create the agent.
         optRsrc match {
           // colocated
           case Some(mTT.Ground(Bottom)) => {
@@ -2218,6 +2317,45 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       })
   }
 
+  private def _agentURI(email: String, password: String, cont: Option[String] => Unit) : Unit = {
+    val cap = emailToCap(email)
+    val capSelfCnxn = getCapSelfCnxn(cap)
+    val capAndMac = getCapAndMac(cap)
+    val uri = "agent://cap/" + capAndMac
+
+    read(
+      jsonBlobLabel,
+      List(capSelfCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        optRsrc match {
+          case None => ()  // error?
+          case Some(mTT.Ground(Bottom)) => cont(None)
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => cont(None)
+          case _ => cont(Some(uri))
+        }
+      })
+
+  }
+
+  def getAgentRequest(jsv : JObject, key: String) : Unit = {
+
+    val email = (jsv \ "email").extract[String]
+    val pwd = (jsv \ "password").extract[String]
+
+    _agentURI(email, pwd, {
+      case Some(uri) => {
+        CompletionMapper.complete(key, compact(render(
+          ("msgType" -> "getAgentResponse") ~
+            ("content" -> ("agentURI" -> uri)))))
+      }
+      case None => {
+        CompletionMapper.complete(key, compact(render(
+          ("msgType" -> "getAgentError") ~
+            ("content" -> ("reason" -> "not found")))))
+      }
+    })
+  }
+
   def upsertUser(email: String, password: String, jsv: JObject, key: String): Unit = {
     val cap = emailToCap(email)
     val capSelfCnxn = getCapSelfCnxn(cap)
@@ -2227,40 +2365,21 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val createUserResponse: Unit => Unit = Unit => {
       CompletionMapper.complete(key, compact(render(
         ("msgType" -> "createUserResponse") ~
-          ("content" -> ("agentURI" -> uri )))))
+          ("content" -> ("agentURI" -> uri)))))
     }
 
-    def handleRsp(): Unit = {
-      val jsonBlob = compact(render(jsv))
-      _createUser(email, password, jsonBlob, cnxn => onAgentCreation(cap, cnxn, createUserResponse))
-    }
-
-    read(
-      jsonBlobLabel,
-      List(capSelfCnxn),
-      (optRsrc: Option[mTT.Resource]) => {
-        optRsrc match {
-          case None => ();
-          case Some(mTT.Ground(Bottom)) => {
-            handleRsp()
-          }
-          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-            handleRsp()
-          }
-          case _ => {
-            _updateUserReq( capSelfCnxn, jsv )
-            createUserResponse()
-            /*
-            CompletionMapper.complete(key, compact(render(
-              ("msgType" -> "createUserError") ~
-                ("content" ->
-                  ("reason" -> "Email is already registered.")))))
-                  */
-          }
-        }
-      })
-
+    _agentURI(email, password, {
+      case None => {
+        val jsonBlob = compact(render(jsv))
+        _createUser(email, password, jsonBlob, cnxn => onAgentCreation(cap, cnxn, createUserResponse))
+      }
+      case Some(_) => {
+        _updateUserReq(capSelfCnxn, jsv)
+        createUserResponse()
+      }
+    })
   }
+
 
   private def _createUser(email: String, password: String, jsonBlob: String, onComplete: PortableAgentCnxn => Unit): Unit = {
     val cap = storeCapByEmail(email)
@@ -2356,7 +2475,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def backupRequest(json: JValue): Unit = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURI = (json \ "sessionURI").extract[String]
     //agentMgr().runProcess("mongodump", None, List(), (optRsrc) => {
     runProcess("mongodump", None, List(), (optRsrc) => {
       //println("backupRequest: optRsrc = " + optRsrc)
@@ -2369,7 +2488,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def restoreRequest(json: JValue): Unit = {
-    val sessionURI = (json \ "content" \ "sessionURI").extract[String]
+    val sessionURI = (json \ "sessionURI").extract[String]
     //agentMgr().runProcess("mongorestore", None, List(), (optRsrc) =>
     //{
     runProcess("mongorestore", None, List(), (optRsrc) => {
@@ -2383,19 +2502,19 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def initiateClaim(json: JValue): Unit = {
-    val sessionId = (json \ "content" \ "sessionURI").extract[String]
-    val correlationId = (json \ "content" \ "correlationId").extract[String]
-    val jvVerifier = json \ "content" \ "verifier"
+    val sessionId = (json \ "sessionURI").extract[String]
+    val correlationId = (json \ "correlationId").extract[String]
+    val jvVerifier = json \ "verifier"
     val pacVerifier = PortableAgentCnxn(
       new URI((jvVerifier \ "source").extract[String]),
       (jvVerifier \ "label").extract[String],
       new URI((jvVerifier \ "target").extract[String]))
-    val jvRelyingParty = json \ "content" \ "relyingParty"
+    val jvRelyingParty = json \ "relyingParty"
     val pacRelyingParty = PortableAgentCnxn(
       new URI((jvRelyingParty \ "source").extract[String]),
       (jvRelyingParty \ "label").extract[String],
       new URI((jvRelyingParty \ "target").extract[String]))
-    val claim = fromTermString((json \ "content" \ "claim").extract[String]).get
+    val claim = fromTermString((json \ "claim").extract[String]).get
 
     handler.handleinitiateClaim(
       InitiateClaim(
