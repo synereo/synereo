@@ -235,7 +235,7 @@ object Importer extends EvalConfig
 
       val sourceId = agentsById(post.src)
       val sourceAlias = makeAliasURI(sourceId)
-      val sourceSession = sessionsById(sourceId).sessionURI
+      val sourceSession = sessionsById(post.src).sessionURI
 
       cnxns = Connection(sourceAlias, sourceAlias, "alias") :: cnxns
 
@@ -245,7 +245,11 @@ object Importer extends EvalConfig
         cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
       })
 
-      val uid = UUID.randomUUID.toString()
+      val uid =
+        post.uid match {
+          case Some(s) => s
+          case None => UUID.randomUUID.toString()
+        }
       val lbl = post.label // maybe later: .labels.mkString("[",",","]")
       val cont = EvalSubscribeContent(cnxns, lbl, post.value, uid)
 
@@ -306,7 +310,7 @@ object Importer extends EvalConfig
           }
 
           dataset.posts match {
-            case Some(posts) => () // posts.foreach(makePost)
+            case Some(posts) => posts.foreach(makePost)
             case None => ()
           }
         } finally {
@@ -322,8 +326,8 @@ object Importer extends EvalConfig
   }
 
   def fromFiles( dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST ): Unit = {
-    //fromFile(dataJsonFile, host)
-    fromFile("src/main/resources/test-posts.json", host)
+    fromFile(dataJsonFile, host)
+    //fromFile("src/main/resources/test-posts.json", host)
   }
 
 

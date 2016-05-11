@@ -1956,7 +1956,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def evalSubscribeRequest(json: JValue): Unit = {
+  def evalSubscribeRequest(json: JObject): Unit = {
     import com.biosimilarity.evaluator.distribution.portable.v0_1._
     import com.protegra_ati.agentservices.store._
     import com.biosimilarity.evaluator.prolog.PrologDSL._
@@ -1964,10 +1964,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     object act extends AgentCnxnTypes {}
 
     BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
-    val content = (json \ "content").asInstanceOf[JObject]
-    val sessionURIStr = (content \ "sessionURI").extract[String]
+    val sessionURIStr = (json \ "sessionURI").extract[String]
 
-    val expression = (content \ "expression")
+    val expression = (json \ "expression")
     val ec = (expression \ "content").asInstanceOf[JObject]
     val optFiltersAndCnxns = extractFiltersAndCnxns(ec)
     if (optFiltersAndCnxns == None) {

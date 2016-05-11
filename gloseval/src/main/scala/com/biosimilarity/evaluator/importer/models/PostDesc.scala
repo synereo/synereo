@@ -11,6 +11,7 @@ case class PostDesc(
   src: String,
   trgts: List[String],
   value: String,
+  uid: Option[String],
   label: String
   //maybe  labels: List[String]
 ) {

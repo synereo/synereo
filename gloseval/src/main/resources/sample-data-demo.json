@@ -1758,71 +1758,82 @@
         "trgt": "agent://89cbeaaf-bb58-48a4-8bdf-2917d6ae110d"
     }],
     "posts": [{
-            "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["eb0c7fee-e815-4590-97cc-7be8251f68b6"],
-            "value": "{\"text\" : \"hi buyerProfile\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"8ecf4d27-e2d1-442f-b2d6-9a2fc00a222f\", \"versionedPostPredecessorId\" : \"\" }"
-        }, {
-            "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["eb0c7fee-e815-4590-97cc-7be8251f68b6"],
-            "value": "{\"text\" : \"hi buyerProfile revised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"41bf63e9-d0ff-416a-b039-bd7c15bb295e\", \"versionedPostPredecessorId\" : \"8ecf4d27-e2d1-442f-b2d6-9a2fc00a222f\" }"
-        }, {
-            "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["49607b66-5642-4f96-ab5b-864f44697ea8"],
-            "value": "{\"text\" : \"hi contract\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"35e60447-747e-496a-afde-65ca182db1c8\", \"versionedPostPredecessorId\" : \"\" }"
-        }, {
-            "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["49607b66-5642-4f96-ab5b-864f44697ea8"],
-            "value": "{\"text\" : \"hi contractRevised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"9c0c40db-b3eb-42d0-a391-c2a97c457736\", \"versionedPostPredecessorId\" : \"35e60447-747e-496a-afde-65ca182db1c8\" }"
-        }, {
-            "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["4b0f0e1b-136c-469e-8de3-a69d7e34da5d"],
-            "value": "{\"text\" : \"hi message\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"7c8f5431-ba4f-4941-9aaa-9d7feec7ca52\", \"versionedPostPredecessorId\" : \"\" }"
-        }, {
-            "src": "c1835ecc-f9ea-4449-af7b-2fcea845763c",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["4fcd333e-0d33-45b1-9ffa-d536a2b05180"],
-            "value": "{\"text\" : \"hi moderatorProfile\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"84e56476-5be4-45ae-95b4-dba6c683c0fb\", \"versionedPostPredecessorId\" : \"\" }"
-        }, {
-            "src": "c1835ecc-f9ea-4449-af7b-2fcea845763c",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["4fcd333e-0d33-45b1-9ffa-d536a2b05180"],
-            "value": "{\"text\" : \"hi moderatorProfile revised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"89768527-8ca5-49af-9a55-658462dfb366\", \"versionedPostPredecessorId\" : \"84e56476-5be4-45ae-95b4-dba6c683c0fb\" }"
-        }, {
-            "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["4b4a042b-03b4-4e38-8676-f6fef430ae2f"],
-            "value": "{\"text\" : \"hi offering\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"b6df0958-f7a7-408d-97c8-d3b0158489dc\", \"versionedPostPredecessorId\" : \"\" }"
-        }, {
-            "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["4b4a042b-03b4-4e38-8676-f6fef430ae2f"],
-            "value": "{\"text\" : \"hi offering reviesed\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"000170d4-855d-4757-8a55-5ec2c994b76a\", \"versionedPostPredecessorId\" : \"b6df0958-f7a7-408d-97c8-d3b0158489dc\" }"
-        }, {
-            "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["3b5d7868-38ff-4404-9ea9-13cd2541924a"],
-            "value": "{\"text\" : \"New project to refactor C# classes …\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"dba62260-f2ec-4bfc-86fb-49c180c3987e\", \"versionedPostPredecessorId\" : \"\" }"
-        }, {
-            "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["3b5d7868-38ff-4404-9ea9-13cd2541924a"],
-            "value": "{\"text\" : \"New revised project to refactor C# classes …\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"dbf62260-f2ec-4bfc-86fb-49c180c3987f\", \"versionedPostPredecessorId\" : \"dba62260-f2ec-4bfc-86fb-49c180c3987e\" }"
-        }, {
-            "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["574d0bd0-c372-4f1b-830e-f4df44ca11b7"],
-            "value": "{\"text\" : \"hi sellerProfile\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"23e47ef8-a07d-4784-8baf-0bb8cf785d1a\", \"versionedPostPredecessorId\" : \"\" }"
-        }, {
-            "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
-            "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
-            "labels": ["574d0bd0-c372-4f1b-830e-f4df44ca11b7"],
-            "value": "{\"text\" : \"hi sellerProfile revised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"3759419c-5cf5-4588-96d8-2db808fc8795\", \"versionedPostPredecessorId\" : \"23e47ef8-a07d-4784-8baf-0bb8cf785d1a\" }"
-        }
-
-    ]
+    "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[eb0c7fee-e815-4590-97cc-7be8251f68b6])",
+    "uid": "6bbef5b3-b3e4-4260-bb10-1445b4901b79",
+    "value": "{\"uid\" : \"6bbef5b3-b3e4-4260-bb10-1445b4901b79\", \"text\" : \"hi buyerProfile\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"8ecf4d27-e2d1-442f-b2d6-9a2fc00a222f\", \"versionedPostPredecessorId\" : \"\" }"
+}, {
+    "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[eb0c7fee-e815-4590-97cc-7be8251f68b6])",
+    "uid": "b64902d7-55a6-49a6-831f-c3dbd323465f",
+    "value": "{\"uid\" : \"b64902d7-55a6-49a6-831f-c3dbd323465f\", \"text\" : \"hi buyerProfile revised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"41bf63e9-d0ff-416a-b039-bd7c15bb295e\", \"versionedPostPredecessorId\" : \"8ecf4d27-e2d1-442f-b2d6-9a2fc00a222f\" }"
+}, {
+    "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[49607b66-5642-4f96-ab5b-864f44697ea8])",
+    "uid": "28c0a8d9-eb2a-41e2-90fe-068aa7f7b58c",
+    "value": "{\"uid\" : \"28c0a8d9-eb2a-41e2-90fe-068aa7f7b58c\", \"text\" : \"hi contract\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"35e60447-747e-496a-afde-65ca182db1c8\", \"versionedPostPredecessorId\" : \"\" }"
+}, {
+    "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[49607b66-5642-4f96-ab5b-864f44697ea8])",
+    "uid": "cb99a392-3330-4044-b4f1-f318e6f3d4b9",
+    "value": "{\"uid\" : \"cb99a392-3330-4044-b4f1-f318e6f3d4b9\", \"text\" : \"hi contractRevised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"9c0c40db-b3eb-42d0-a391-c2a97c457736\", \"versionedPostPredecessorId\" : \"35e60447-747e-496a-afde-65ca182db1c8\" }"
+}, {
+    "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[4b0f0e1b-136c-469e-8de3-a69d7e34da5d])",
+    "uid": "d809dd7b-6d26-4fb1-9d14-9abce0e7ace1",
+    "value": "{\"uid\" : \"d809dd7b-6d26-4fb1-9d14-9abce0e7ace1\", \"text\" : \"hi message\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"7c8f5431-ba4f-4941-9aaa-9d7feec7ca52\", \"versionedPostPredecessorId\" : \"\" }"
+}, {
+    "src": "c1835ecc-f9ea-4449-af7b-2fcea845763c",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[4fcd333e-0d33-45b1-9ffa-d536a2b05180])",
+    "uid": "2f3598bf-71d8-4a86-ab2c-0ed9fe6640bb",
+    "value": "{\"uid\" : \"2f3598bf-71d8-4a86-ab2c-0ed9fe6640bb\", \"text\" : \"hi moderatorProfile\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"84e56476-5be4-45ae-95b4-dba6c683c0fb\", \"versionedPostPredecessorId\" : \"\" }"
+}, {
+    "src": "c1835ecc-f9ea-4449-af7b-2fcea845763c",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[4fcd333e-0d33-45b1-9ffa-d536a2b05180])",
+    "uid": "56fcf886-9c16-44ee-9a77-efb77699235e",
+    "value": "{\"uid\" : \"56fcf886-9c16-44ee-9a77-efb77699235e\", \"text\" : \"hi moderatorProfile revised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"89768527-8ca5-49af-9a55-658462dfb366\", \"versionedPostPredecessorId\" : \"84e56476-5be4-45ae-95b4-dba6c683c0fb\" }"
+}, {
+    "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[4b4a042b-03b4-4e38-8676-f6fef430ae2f])",
+    "uid": "151b9195-5f58-4331-a83b-98d4ed6b1926",
+    "value": "{\"uid\" : \"151b9195-5f58-4331-a83b-98d4ed6b1926\", \"text\" : \"hi offering\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"b6df0958-f7a7-408d-97c8-d3b0158489dc\", \"versionedPostPredecessorId\" : \"\" }"
+}, {
+    "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[4b4a042b-03b4-4e38-8676-f6fef430ae2f])",
+    "uid": "2864d41d-3196-4075-a938-1834fb672321",
+    "value": "{\"uid\" : \"2864d41d-3196-4075-a938-1834fb672321\", \"text\" : \"hi offering reviesed\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"000170d4-855d-4757-8a55-5ec2c994b76a\", \"versionedPostPredecessorId\" : \"b6df0958-f7a7-408d-97c8-d3b0158489dc\" }"
+}, {
+    "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[3b5d7868-38ff-4404-9ea9-13cd2541924a])",
+    "uid": "1cd53fda-1715-480f-8f34-ba120e2fbcc6",
+    "value": "{\"uid\" : \"1cd53fda-1715-480f-8f34-ba120e2fbcc6\", \"text\" : \"New project to refactor C# classes …\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"dba62260-f2ec-4bfc-86fb-49c180c3987e\", \"versionedPostPredecessorId\" : \"\" }"
+}, {
+    "src": "89cbeaaf-bb58-48a4-8bdf-2917d6ae110d",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[3b5d7868-38ff-4404-9ea9-13cd2541924a])",
+    "uid": "80ed0252-ebb6-4e2a-a648-e0de71222247",
+    "value": "{\"uid\" : \"80ed0252-ebb6-4e2a-a648-e0de71222247\", \"text\" : \"New revised project to refactor C# classes …\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"dbf62260-f2ec-4bfc-86fb-49c180c3987f\", \"versionedPostPredecessorId\" : \"dba62260-f2ec-4bfc-86fb-49c180c3987e\" }"
+}, {
+    "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[574d0bd0-c372-4f1b-830e-f4df44ca11b7])",
+    "uid": "2776d18b-2bd1-48d6-9f35-e133e4c0287f",
+    "value": "{\"uid\" : \"2776d18b-2bd1-48d6-9f35-e133e4c0287f\", \"text\" : \"hi sellerProfile\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"23e47ef8-a07d-4784-8baf-0bb8cf785d1a\", \"versionedPostPredecessorId\" : \"\" }"
+}, {
+    "src": "8ce7d7d3-4c83-48a5-b3b5-1eb0400f0408",
+    "trgts": ["eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"],
+    "label": "each([Bitcoin],[Ethereum],[574d0bd0-c372-4f1b-830e-f4df44ca11b7])",
+    "uid": "622fa125-de3d-4402-a026-556267a06041",
+    "value": "{\"uid\" : \"622fa125-de3d-4402-a026-556267a06041\", \"text\" : \"hi sellerProfile revised\", \"type\" : \"TEXT\", \"contentType\" : \"message\", \"created\" : \"2002-05-30T09:30:10Z\", \"versionedPostId\" : \"3759419c-5cf5-4588-96d8-2db808fc8795\", \"versionedPostPredecessorId\" : \"23e47ef8-a07d-4784-8baf-0bb8cf785d1a\" }"
+}]
 }
