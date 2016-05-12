@@ -33,6 +33,12 @@
 
   <repositories>
     <repository>
+      <id>codehaus-mule-repo</id>
+      <name>codehaus-mule-repo</name>
+      <url>https://repository-master.mulesoft.org/nexus/content/groups/public/</url>
+      <layout>default</layout>
+    </repository>
+    <repository>
       <id>scala-tools.releases</id>
       <name>Scala-Tools Dependencies Repository for Releases</name>
       <url>http://scala-tools.org/repo-releases</url>
@@ -48,11 +54,12 @@
       <name>Scales XML Repository</name>
       <url>http://scala-scales.googlecode.com/svn/repo</url>
     </repository>
-    <repository>
+    <!-- This repo is no longer supported and reached end of life -->
+    <!--repository> 
       <id>repository.codehaus.org</id>
       <name>Codehaus</name>
       <url>http://repository.codehaus.org/com/thoughtworks</url>
-    </repository>
+    </repository-->
     <repository>
       <id>repository.gwt.rewraps</id>
       <name>gwt-maven-rewraps</name>
