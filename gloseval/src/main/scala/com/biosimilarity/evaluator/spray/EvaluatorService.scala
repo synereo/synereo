@@ -78,24 +78,24 @@ case class ClientGc(id: String) extends Serializable
 
 class CometActor extends Actor with Serializable {
   @transient
-  val aliveTimers = new HashMap[String, Cancellable] // list of timers that keep track of alive clients
+  val aliveTimers = new mutable.HashMap[String, Cancellable] // list of timers that keep track of alive clients
   @transient
-  val toTimers = new HashMap[String, Cancellable] // list of timeout timers for clients
+  val toTimers = new mutable.HashMap[String, Cancellable] // list of timeout timers for clients
   @transient
-  val requests = new HashMap[String, RequestContext] // list of long-poll RequestContexts
+  val requests = new mutable.HashMap[String, RequestContext] // list of long-poll RequestContexts
   @transient
-  val sets = new HashMap[String, HashSet[String]] // sets of async return messages
+  val sets = new mutable.HashMap[String, HashSet[String]] // sets of async return messages
 
   val gcTime = 1 minute // if client doesnt poll within this time, its garbage collected
   val clientTimeout = 7 seconds // poll requests are closed after this much time, clients repoll (ping) after this
 
   //@@GS - testing theory: all methods of cometActor are synchronized => cometMapLock is redundant
-  @transient
-  lazy val cometMapLock = new scala.concurrent.Lock()
+  //@transient
+  //lazy val cometMapLock = new scala.concurrent.Lock()
 
   def receive = {
     case SessionPing(id, reqCtx) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       aliveTimers.get(id).map(_.cancel())
       aliveTimers += (id -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(id)))
 
@@ -119,11 +119,11 @@ class CometActor extends Actor with Serializable {
           }
         }
       }
-      cometMapLock.release()
+      //cometMapLock.release()
     }
 
     case PollTimeout(id) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       //println( "In PollTimeout checking for a req to match id = " + id ) 
       for (req <- requests.get(id)) {
         //println( "In PollTimeout about to call complete with sessionPong; req = " + req ) 
@@ -132,15 +132,15 @@ class CometActor extends Actor with Serializable {
       }
       requests -= id
       toTimers -= id
-      cometMapLock.release()
+      //cometMapLock.release()
     }
 
     case ClientGc(id) => synchronized {
-      cometMapLock.acquire()
+      //cometMapLock.acquire()
       requests -= id
       toTimers -= id
       aliveTimers -= id
-      cometMapLock.release()
+      //cometMapLock.release()
     }
 
     case CometMessage(id, data) => synchronized {
@@ -264,6 +264,7 @@ trait EvaluatorService extends HttpService with CORSSupport {
     // Database dump/restore
     ("backupRequest", backupRequest),
     ("restoreRequest", restoreRequest),
+    ("resetDatabaseRequest", resetDatabaseRequest),
     // Verifier protocol
     ("initiateClaim", initiateClaim) // BTC
     )
@@ -320,6 +321,34 @@ trait EvaluatorService extends HttpService with CORSSupport {
             } // jsonStr
           } // decodeRequest
         } // post
+      } ~
+      path("""admin/connectServers""") {
+        // allow administrators to make
+        // sure servers are connected
+        // BUGBUG : lgm -- make this secure!!!
+        get {
+          parameters('whoAmI) {
+            (whoAmI: String) =>
+            {
+              //             println(
+              //               (
+              //                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+              //                 + "in admin/connectServers2 "
+              //                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+              //               )
+              //             )
+              BasicLogService.tweet(
+                (
+                  " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                    + "in admin/connectServers2 "
+                    + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "))
+
+              connectServers("evaluator-service", UUID.randomUUID)
+
+              (cometActor ! SessionPing("", _))
+            }
+          }
+        }
       } ~
       pathPrefix("agentui") {
         getFromDirectory("./agentui")

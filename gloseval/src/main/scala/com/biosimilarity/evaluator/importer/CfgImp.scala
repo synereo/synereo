@@ -30,6 +30,7 @@ trait ImporterConfig {
     //var _serviceMailinatorKey : Option[String] = None
     //var _serviceUserChunkSize : Option[String] = None
     var _serviceDemoDataFile : Option[String] = None
+    var _mongodbPath : Option[String] = None
     //var _serviceSystemLabelsFile : Option[String] = None
 
     def serviceHost() = {
@@ -106,14 +107,23 @@ trait ImporterConfig {
     }
 */
 
-    def serviceDemoDataFile() = {
-      _serviceDemoDataFile match {
-        case Some( sddf ) => sddf
-        case None => {
-          evalConfig().getString( "ImporterServiceDemoDataFile" )
-        }
+  def serviceDemoDataFile() = {
+    _serviceDemoDataFile match {
+      case Some( sddf ) => sddf
+      case None => {
+        evalConfig().getString( "ImporterServiceDemoDataFile" )
       }
     }
+  }
+
+  def mongodbPath() = {
+    _mongodbPath match {
+      case Some( sddf ) => sddf
+      case None => {
+        evalConfig().getString( "MongodbPath" )
+      }
+    }
+  }
 
   /*
     def serviceSystemLabelsFile() = {

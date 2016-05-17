@@ -8,14 +8,18 @@
 
 package com.biosimilarity.evaluator.spray
 
+import java.io.File
+
 import com.protegra_ati.agentservices.store._
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
-import com.biosimilarity.evaluator.spray.agent.{ ExternalIdType, ExternalIdentity }
+import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
+
+import scala.collection.mutable
 //import com.biosimilarity.evaluator.distribution.portable.v0_1.createUserResponse
 import spray.routing._
 //import directives.CompletionMagnet
@@ -488,7 +492,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val sessionURI = (json \ "sessionURI").extract[String]
     val aURI = new URI((json \ "aURI").extract[String])
     val bURI = new URI((json \ "bURI").extract[String])
-    establishConnection(sessionURI,aURI,bURI)
+    val label = (json \ "label").extract[String]
+    establishConnection(sessionURI, aURI, bURI, label)
 
   }
   def introductionConfirmationRequest(json: JValue): Unit = {
@@ -1165,10 +1170,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
 
-  def establishConnection(sessionURI : String, aURI : URI, bURI : URI) = {
+  def establishConnection(sessionURI : String, aURI : URI, bURI : URI, cnxnLabel : String) = {
     val aAliasCnxn = PortableAgentCnxn(aURI,"alias",aURI)
     val bAliasCnxn = PortableAgentCnxn(bURI,"alias",bURI)
-    val cnxnLabel = UUID.randomUUID().toString
     val aCnxn = PortableAgentCnxn(aURI, cnxnLabel, bURI)
     val bCnxn = PortableAgentCnxn(bURI, cnxnLabel, aURI)
     val aBiCnxn = PortableAgentBiCnxn(bCnxn, aCnxn)
@@ -1207,8 +1211,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                           case Some(_) => {
                             CometActorMapper.cometMessage(sessionURI, compact(render(
                               ("msgType" -> "establishConnectionResponse") ~
-                                ("content" ->
-                                  ("sessionURI" -> sessionURI)))))
+                              ("content" ->
+                                ("sessionURI" -> sessionURI) ~
+                                ("label" -> cnxnLabel )))))
                           }
                         }
                       })
@@ -1963,7 +1968,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     object act extends AgentCnxnTypes {}
 
-    BasicLogService.tweet("evalSubscribeRequest: json = " + compact(render(json)));
+    val cjs = pretty(render(json))
+    println("evalSubscribeRequest: json = " + cjs)
     val sessionURIStr = (json \ "sessionURI").extract[String]
 
     val expression = (json \ "expression")
@@ -2475,30 +2481,92 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   def backupRequest(json: JValue): Unit = {
     val sessionURI = (json \ "sessionURI").extract[String]
-    //agentMgr().runProcess("mongodump", None, List(), (optRsrc) => {
-    runProcess("mongodump", None, List(), (optRsrc) => {
-      //println("backupRequest: optRsrc = " + optRsrc)
-      BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
-      CometActorMapper.cometMessage(sessionURI, compact(render(
-        ("msgType" -> "backupResponse") ~
-          ("content" ->
-            ("sessionURI" -> sessionURI)))))
+    val mongoPath = (json \ "mongodbPath").extract[String]
+    val tgt = (json \ "outputDir").extract[Option[String]] match {
+      case Some(str) => " --out "+str
+      case _ => ""
+    }
+    temp_runProcess(mongoPath+"/mongodump"+tgt, None, List(), {
+      case Some(optRsrc) => {
+        //println("backupRequest: optRsrc = " + optRsrc)
+        BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
+        CometActorMapper.cometMessage(sessionURI, compact(render(
+          ("msgType" -> "backupResponse") ~
+            ("content" ->
+              ("sessionURI" -> sessionURI)))))
+      }
+      case _ => throw new Exception("Unable to backup")
     })
   }
 
   def restoreRequest(json: JValue): Unit = {
     val sessionURI = (json \ "sessionURI").extract[String]
-    //agentMgr().runProcess("mongorestore", None, List(), (optRsrc) =>
+    val mongoPath = (json \ "mongodbPath").extract[String]
+
+    val src = (json \ "inputDir").extract[Option[String]] match {
+      case Some(str) => str
+      case _ => ""
+    }
     //{
-    runProcess("mongorestore", None, List(), (optRsrc) => {
-      //println("restoreRequest: optRsrc = " + optRsrc)
-      BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
-      CometActorMapper.cometMessage(sessionURI, compact(render(
-        ("msgType" -> "restoreResponse") ~
-          ("content" ->
-            ("sessionURI" -> sessionURI)))))
+    temp_runProcess(mongoPath+"/mongorestore "+src, None, List(), {
+      case Some(optRsrc) =>
+      {
+        //println("restoreRequest: optRsrc = " + optRsrc)
+        BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
+        CometActorMapper.cometMessage(sessionURI, compact(render(
+          ("msgType" -> "restoreResponse") ~
+            ("content" ->
+              ("sessionURI" -> sessionURI)))))
+      }
+      case _ => throw new Exception("Unable to restore")
     })
   }
+
+  def resetDatabaseRequest(json: JValue): Unit = {
+    val sessionURI = (json \ "sessionURI").extract[String]
+    val mongoPath = (json \ "mongodbPath").extract[String]
+    //{
+    temp_runProcess(mongoPath+"/mongo records --eval \"db.dropDatabase()\" ", None, List(), {
+      case Some(optRsrc) =>
+      {
+        BasicLogService.tweet("resetDatabaseRequest: optRsrc = " + optRsrc)
+        createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
+
+        CometActorMapper.cometMessage(sessionURI, compact(render(
+          ("msgType" -> "resetDatabaseResponse") ~
+            ("content" ->
+              ("sessionURI" -> sessionURI)))))
+      }
+      case _ => throw new Exception("Unable to reset")
+    })
+  }
+
+  // until runProcess is fixed
+  def temp_runProcess(
+                       cmd : String,
+                       wkDir : Option[String],
+                       env : Seq[( String, String )],
+                       onExecution : Option[Rsrc] => Unit
+                     ) : Unit = {
+    import scala.sys.process._
+
+    val cwd = wkDir.map(new File(_))
+
+    val p = Process(cmd, cwd, env: _*)
+
+    val stdOutBuffer = new mutable.ListBuffer[String]
+    val stdErrBuffer = new mutable.ListBuffer[String]
+
+    val logger = ProcessLogger(stdOutBuffer += _, stdErrBuffer += _)
+
+    val exitCode = p ! logger
+
+    onExecution(Some(mTT.Ground(RunProcessResponse(exitCode, stdOutBuffer.toList, stdErrBuffer.toList))))
+
+  }
+
+
+
 
   def initiateClaim(json: JValue): Unit = {
     val sessionId = (json \ "sessionURI").extract[String]
