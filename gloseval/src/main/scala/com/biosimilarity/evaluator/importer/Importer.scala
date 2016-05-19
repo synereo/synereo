@@ -30,7 +30,7 @@ import scalaj.http.Http
  * @note First run `mvn clean compile` in the terminal.
  * @note Second run `mvn scala:console`.
  * @note Finally, import this object and execute `Importer.fromFiles()`. You may need to set the file paths in the parameters.
-  * @note - it may also be required to reset mongo db with ' '
+  * @note - it may also be required to reset mongo db with 'mongo records --eval "db.dropDatabase()" '
  */
 object Importer extends EvalConfig
   with ImporterConfig
@@ -46,6 +46,10 @@ object Importer extends EvalConfig
   private val agentsById = scala.collection.mutable.Map[String, String]() // loginId:agentURI
   private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]() // sessionURI:agent
   private val cnxnLabels = scala.collection.mutable.Map[String, String]() // src+trgt:label
+
+  private val labels = scala.collection.mutable.Map[String, LabelDesc]() // id
+
+  private def resolveLabel(id : String) : LabelDesc = labels(id)
 
   private def glosevalPost(msgType: String, data: RequestContent): String = {
     println(s"REQUEST: ${msgType}")
@@ -228,20 +232,27 @@ object Importer extends EvalConfig
         agentsById.put(agent.id, agentCap)
         val session = createSession(agentURI, agent.pwd)
         sessionsById.put(agent.id, session)
-
-        //@@GS - what exactly is this intended to achieve??
-        //glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", List(makeAliasLabel(agentId, "#5C9BCC"))))
+        val ptn = "uid\\([^\\)]*\\),"r
+        val lbls : List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
+            case None => Nil
+            case Some(l) => l.map( lbl => LabelDesc.extractFrom(lbl).toTermString( resolveLabel ))
+          } ).map(s => ptn.replaceFirstIn(s, "") )
+        glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", lbls))
 
     }
   }
 
-  def makeLabel(label : SystemLabelDesc): Unit = {
-    /*
+  def makeLabel(label : LabelDesc): Unit = {
     try {
+      label match {
+        case smpl : SimpleLabelDesc => smpl.id.foreach(s => labels.put(s, smpl))
+        case cmplx : ComplexLabelDesc => cmplx.id.foreach(s => labels.put(s, cmplx))
+        case ref : LabelRef => () //labels(ref.label)  // throw if not present??
+      }
+
     } catch {
-      case ex: Throwable => println("exception while creating connection: " + ex)
+      case ex: Throwable => println("exception while creating label: " + ex)
     }
-    */
   }
 
   def makeCnxn(adminURI : String, connection : ConnectionDesc): Unit = {
@@ -252,10 +263,12 @@ object Importer extends EvalConfig
       val targetURI = makeAliasURI(targetId)
       val cnxnLabel = UUID.randomUUID().toString
 
-      //glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
-      glosevalPost("establishConnectionRequest", EstablishConnectionRequest(adminURI, sourceURI, targetURI, cnxnLabel))
-      cnxnLabels.put(sourceId + targetId, cnxnLabel)
-      cnxnLabels.put(targetId + sourceId, cnxnLabel)
+      if (!cnxnLabels.contains(sourceId + targetId)) {
+        //glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
+        glosevalPost("establishConnectionRequest", EstablishConnectionRequest(adminURI, sourceURI, targetURI, cnxnLabel))
+        cnxnLabels.put(sourceId + targetId, cnxnLabel)
+        cnxnLabels.put(targetId + sourceId, cnxnLabel)
+      }
     } catch {
       case ex: Throwable => println("exception while creating connection: " + ex)
     }
@@ -269,8 +282,8 @@ object Importer extends EvalConfig
       val sourceAlias = makeAliasURI(sourceId)
       val sourceSession = sessionsById(post.src).sessionURI
 
-      //val selfcnxn = Connection("agent://"+sourceId, "agent://"+sourceId, "alias")
-      val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
+      val selfcnxn = Connection("agent://"+sourceId, "agent://"+sourceId, "alias")
+      //val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
 
       post.trgts.foreach(trgt => {
         val targetId = agentsById(trgt)
@@ -360,12 +373,12 @@ object Importer extends EvalConfig
         //thrd.start()
 
         try {
-          dataset.agents.foreach(makeAgent)
-
           dataset.labels match {
-            case Some(lbls) => () // lbls.foreach (makeLabel)
+            case Some(lbls) => lbls.foreach( l => makeLabel( LabelDesc.extractFrom(l) ) )
             case None => ()
           }
+
+          dataset.agents.foreach(makeAgent)
 
           dataset.cnxns match {
             case Some(cnxns) => cnxns.foreach(cnxn => makeCnxn(adminSession.sessionURI, cnxn))
@@ -429,7 +442,8 @@ object Importer extends EvalConfig
             makeCnxn(adminURI, cnxn)
           }
           case "label" => {
-            val lbl = (el \ "content").extract[SystemLabelDesc]
+            val jo = (el \ "content").extract[JObject]
+            val lbl = LabelDesc.extractFrom(jo)
             makeLabel(lbl)
           }
           case "post" => {
@@ -452,7 +466,8 @@ object Importer extends EvalConfig
 
 
   def fromFiles( dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST ): Unit = {
-    fromFile(dataJsonFile, host)
+    //fromFile(dataJsonFile, host)
+    fromFile("src/main/resources/sample-data-test_2.json", host)
     //runTestFile("src/test/resources/test-posts.json", host)
   }
 
