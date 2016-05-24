@@ -20,7 +20,6 @@ object Boot extends App
    @transient
    val service = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")   
 
-   //IO(Http) ! Http.Bind(listener = service, interface = "0.0.0.0", port = 9876)
-   IO(Http) ! Http.Bind(listener = service, interface = "127.0.0.1", port = 9876)
+   IO(Http) ! Http.Bind(listener = service, interface = "0.0.0.0", port = 9876)
 
 }

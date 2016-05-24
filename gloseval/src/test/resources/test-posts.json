@@ -17,6 +17,12 @@
         "pwd": "livelygig",
         "jsonBlob": "{\"name\" : \"Mukul Nori\", \"imgSrc\" : \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAw9pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDIxIDc5LjE1NDkxMSwgMjAxMy8xMC8yOS0xMTo0NzoxNiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RDEzQUFCNUMwMjlFMTFFNkE2QkRGOENGOTgzOTk0OEMiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RDEzQUFCNUIwMjlFMTFFNkE2QkRGOENGOTgzOTk0OEMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIFdpbmRvd3MiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0iMzdFQ0EyRkZCRDQyNkZGNDI3Mzg3ODFGN0IzRjQzODYiIHN0UmVmOmRvY3VtZW50SUQ9IjM3RUNBMkZGQkQ0MjZGRjQyNzM4NzgxRjdCM0Y0Mzg2Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+IRPYLwAAAAZQTFRF5n8j////rMEQjAAAAFNJREFUeNqk0ssKACAIRNHr//90EFImY/SwXYcZXIiVwzfRnyAHVAorUiOEKkyNLLI0nq5Bkao33KQYk8g/sYDkzDSUBAJl94QTT2RX9H5sTYABANFGAcZAvppzAAAAAElFTkSuQmCC\"}"
     }},
+    {"type": "label", "content" : {
+        "value": "Ethereum"
+    }},
+    {"type": "label", "content" : {
+        "value": "Bitcoin"
+    }},
     {"type": "cnxn", "content": {
         "src": "Pam",
         "trgt": "Ed"
@@ -31,7 +37,8 @@
     }},
     {"type": "post", "content": {
         "src": "Pam",
-        "trgts": ["Ed"],
-        "text": "New project to refactor c# classes"
+        "trgts": ["Ed","Mukul"],
+        "labels": ["Ethereum","Bitcoin"],
+        "messagePostContent": { "$type":"shared.models.MessagePostContent", "subject": "New Project", "text": "New project to refactor c# classes" }
     }}
 ]

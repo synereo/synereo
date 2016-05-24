@@ -232,27 +232,53 @@ object Importer extends EvalConfig
         agentsById.put(agent.id, agentCap)
         val session = createSession(agentURI, agent.pwd)
         sessionsById.put(agent.id, session)
-        val ptn = "uid\\([^\\)]*\\),"r
+
         val lbls : List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
             case None => Nil
-            case Some(l) => l.map( lbl => LabelDesc.extractFrom(lbl).toTermString( resolveLabel ))
-          } ).map(s => ptn.replaceFirstIn(s, "") )
+            case Some(l) => l.map( lbl => makeLabel( LabelDesc.extractFrom(lbl) ).toTermString( resolveLabel ))
+          } )
         glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", lbls))
 
     }
   }
 
-  def makeLabel(label : LabelDesc): Unit = {
-    try {
-      label match {
-        case smpl : SimpleLabelDesc => smpl.id.foreach(s => labels.put(s, smpl))
-        case cmplx : ComplexLabelDesc => cmplx.id.foreach(s => labels.put(s, cmplx))
-        case ref : LabelRef => () //labels(ref.label)  // throw if not present??
-      }
+  def makeLabel(label : LabelDesc): LabelDesc = {
 
-    } catch {
-      case ex: Throwable => println("exception while creating label: " + ex)
+    def matchFunctor(name : String, lbl : LabelDesc) : Boolean = {
+      lbl match {
+        case ComplexLabelDesc(_,fnctr, _) => name == fnctr
+        case SimpleLabelDesc(_,_,Some(fnctr)) => name == fnctr
+        case _ => false
+      }
     }
+
+    def reorderComponents(lbl : LabelDesc) : LabelDesc = {
+      lbl match {
+        case ComplexLabelDesc(id,"leaf",lbls) => {
+          val (tp, r) = lbls.partition( matchFunctor("text", _) )
+          if (tp.length > 1) throw new Exception("label must contain at most one text field")
+          val (dp, r2) = r.partition( matchFunctor("display", _))
+          if (dp.length > 1) throw new Exception("label must contain at most one display field")
+          val lbls2 = tp ++ dp ++ r2
+          ComplexLabelDesc(id,"leaf",lbls2)
+        }
+        case _ => lbl
+      }
+    }
+
+    label match {
+      case smpl : SimpleLabelDesc => {
+        smpl.id.foreach(s => labels.put(s, smpl))
+        smpl
+      }
+      case cmplx : ComplexLabelDesc => {
+        val rslt = reorderComponents(cmplx)
+        cmplx.id.foreach(s => labels.put(s, rslt))
+        rslt
+      }
+      case ref : LabelRef => ref //labels(ref.label)  // throw if not present??
+    }
+
   }
 
   def makeCnxn(adminURI : String, connection : ConnectionDesc): Unit = {
@@ -292,6 +318,7 @@ object Importer extends EvalConfig
         cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
       })
 
+
       val cont = EvalSubscribeContent(selfcnxn :: cnxns, post.label, post.value, post.uid)
 
       glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
@@ -323,10 +350,10 @@ object Importer extends EvalConfig
           case Some(s) => s
           case None => UUID.randomUUID.toString().replace("-","").toUpperCase
         }
-      val lbls : List[String] = Nil  //post.label // maybe later: .labels.mkString("[",",","]")
-      val tm = DateTime.now.toIsoDateTimeString.replace("T"," ")
+      //val lbls : List[String] = Nil  //post.label // maybe later: .labels.mkString("[",",","]")
+      val tm = DateTime.now.toIsoDateTimeString //.replace("T"," ")
 
-      val v = PostContent(uid, "TEXT", tm, tm, lbls, cnxns, post.text).toJson
+      val v = PostContent("shared.models.MessagePost", uid, tm, tm, post.messagePostContent).toJson
       val cont = EvalSubscribeContent(selfcnxn :: cnxns, "", v, uid)
 
       glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
