@@ -1787,8 +1787,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     (cx \ "label").extract[String],
     new URI((cx \ "target").extract[String]))
 
-  def updateUserRequest(json: JValue): Unit = {
-    val content = (json \ "content")
+  def updateUserRequest(content: JObject): Unit = {
     val sessionURIStr = (content \ "sessionURI").extract[String]
     val sessionURI = new URI(sessionURIStr)
     val cap = sessionURI.getHost
@@ -1967,8 +1966,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     object act extends AgentCnxnTypes {}
 
-    val cjs = pretty(render(json))
-    println("evalSubscribeRequest: json = " + cjs)
+    //val cjs = pretty(render(json))
+    //println("evalSubscribeRequest: json = " + cjs)
     val sessionURIStr = (json \ "sessionURI").extract[String]
 
     val expression = (json \ "expression")
@@ -2033,7 +2032,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("target" -> agentCnxn.trgt.toString))) ~
                         ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  println("evalSubscribeRequest | onFeed: response = " + pretty(render(response)))
+                  //println("evalSubscribeRequest | onFeed: response = " + pretty(render(response)))
                   //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
                 }
