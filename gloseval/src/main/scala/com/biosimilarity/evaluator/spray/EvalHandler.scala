@@ -1282,8 +1282,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     if (noconfirm) {
       val pwd = (json \ "password").extract[String]
-      //val blob = (json \ "jsonBlob").extract[JObject]
-      val blob = (parse((json \ "jsonBlob").extract[String])).extract[JObject]
+      val blob = (json \ "jsonBlob").extract[JObject]
       upsertUser(email, pwd, blob, key)
     } 
     else {
