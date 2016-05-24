@@ -1298,7 +1298,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         post[String](
           tokenLabel,
           List(tokenCnxn),
-          compact(render(json \ "content")),
+          compact(render(json)),
           (optRsrc: Option[mTT.Resource]) => {
             BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
             optRsrc match {
