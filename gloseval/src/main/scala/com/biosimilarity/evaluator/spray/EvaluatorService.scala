@@ -86,8 +86,9 @@ class CometActor extends Actor with Serializable {
   @transient
   val sets = new mutable.HashMap[String, HashSet[String]] // sets of async return messages
 
-  val gcTime = 1 minute // if client doesnt poll within this time, its garbage collected
+  val gcTime = 3 minutes // if client doesnt poll within this time, its garbage collected
   val clientTimeout = 7 seconds // poll requests are closed after this much time, clients repoll (ping) after this
+
 
   //@@GS - testing theory: all methods of cometActor are synchronized => cometMapLock is redundant
   //@transient
@@ -198,6 +199,7 @@ class CometActor extends Actor with Serializable {
 
 case class MalformedRequestException() extends Exception with Serializable
 case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
+case class SessionException(message: String) extends Exception with Serializable
 case class EvalException(sessionURI: String) extends Exception with Serializable
 case class CloseSessionException(sessionURI: String, message: String) extends Exception with Serializable
 
@@ -278,12 +280,20 @@ trait EvaluatorService extends HttpService with CORSSupport {
             entity(as[String]) { jsonStr =>
               (ctx) => {
                 try {
-                  BasicLogService.tweet("json: " + jsonStr)
+                  //BasicLogService.tweet("json: " + jsonStr)
                   val json = parse(jsonStr)
                   val msgType = (json \ "msgType").extract[String]
                   val content = (json \ "content").extract[JObject]
                   asyncMethods.get(msgType) match {
                     case Some(fn) => {
+                      /*
+                      (content \ "sessionURI").extract[Option[String]] match {
+                        case Some(sessionURI) => {
+                          //if (!actor.checkSessionAlive(sessionURI)) throw new SessionException("Session no longer valid")
+                        }
+                        case None => throw new SessionException("Async message missing session info")
+                      }
+                      */
                       fn(content)
                       ctx.complete(StatusCodes.OK)
                     }
@@ -358,6 +368,8 @@ trait EvaluatorService extends HttpService with CORSSupport {
 }
 
 /*
+<<<<<<< HEAD
+=======
         path("admin/connectServers") {
           // allow administrators to make
           // sure servers are connected
@@ -386,6 +398,7 @@ trait EvaluatorService extends HttpService with CORSSupport {
             }
           }
         } ~
+>>>>>>> origin/1.0
        pathPrefix("static" / Segment) { path =>
          getFromFile(path)
        } ~

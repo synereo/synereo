@@ -43,13 +43,15 @@ object Importer extends EvalConfig
   //private val MAILINATOR_HOST = serviceMailinatorHost()
   //private val MAILINATOR_KEY = serviceMailinatorKey()
 
-  private val agentsById = scala.collection.mutable.Map[String, String]() // loginId:agentURI
-  private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]() // sessionURI:agent
+  private val agentsById = scala.collection.mutable.Map[String, String]()
+  // loginId:agentURI
+  private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]()
+  // sessionURI:agent
   private val cnxnLabels = scala.collection.mutable.Map[String, String]() // src+trgt:label
 
   private val labels = scala.collection.mutable.Map[String, LabelDesc]() // id
 
-  private def resolveLabel(id : String) : LabelDesc = labels(id)
+  private def resolveLabel(id: String): LabelDesc = labels(id)
 
   private def glosevalPost(msgType: String, data: RequestContent): String = {
     println(s"REQUEST: ${msgType}")
@@ -57,6 +59,7 @@ object Importer extends EvalConfig
     glosevalPost(requestBody)
 
   }
+
   private def glosevalPost(requestBody: String): String = {
     println(s"REQUEST BODY: ${requestBody}")
 
@@ -165,7 +168,7 @@ object Importer extends EvalConfig
     })
   }
 
-  def expect(msgType : String, session : String): Option[JValue] = {
+  def expect(msgType: String, session: String): Option[JValue] = {
     println("Sending Ping")
     val js = glosevalPost("sessionPing", SessionPingRequest(session))
     var rslt: Option[JValue] = None
@@ -186,7 +189,7 @@ object Importer extends EvalConfig
     rslt
   }
 
-  def createAgent(agent: AgentDesc) : Option[String] = {
+  def createAgent(agent: AgentDesc): Option[String] = {
     val eml = agent.email + (if (agent.email.contains("@")) "" else "@livelygig.com")
 
     val json1 = glosevalPost(
@@ -211,7 +214,7 @@ object Importer extends EvalConfig
     }
   }
 
-  def createSession( agentURI : String, pwd : String) : InitializeSessionResponse = {
+  def createSession(agentURI: String, pwd: String): InitializeSessionResponse = {
     val json =
       glosevalPost(
         "initializeSessionRequest",
@@ -228,34 +231,60 @@ object Importer extends EvalConfig
     createAgent(agent) match {
       case None => ()
       case Some(agentURI) =>
-        val agentCap = agentURI.replace("agent://cap/", "").slice(0,36)
+        val agentCap = agentURI.replace("agent://cap/", "").slice(0, 36)
         agentsById.put(agent.id, agentCap)
         val session = createSession(agentURI, agent.pwd)
         sessionsById.put(agent.id, session)
-        val ptn = "uid\\([^\\)]*\\),"r
-        val lbls : List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
-            case None => Nil
-            case Some(l) => l.map( lbl => LabelDesc.extractFrom(lbl).toTermString( resolveLabel ))
-          } ).map(s => ptn.replaceFirstIn(s, "") )
+
+        val lbls: List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
+          case None => Nil
+          case Some(l) => l.map(lbl => makeLabel(LabelDesc.extractFrom(lbl)).toTermString(resolveLabel))
+        })
         glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", lbls))
 
     }
   }
 
-  def makeLabel(label : LabelDesc): Unit = {
-    try {
-      label match {
-        case smpl : SimpleLabelDesc => smpl.id.foreach(s => labels.put(s, smpl))
-        case cmplx : ComplexLabelDesc => cmplx.id.foreach(s => labels.put(s, cmplx))
-        case ref : LabelRef => () //labels(ref.label)  // throw if not present??
-      }
+  def makeLabel(label: LabelDesc): LabelDesc = {
 
-    } catch {
-      case ex: Throwable => println("exception while creating label: " + ex)
+    def matchFunctor(name: String, lbl: LabelDesc): Boolean = {
+      lbl match {
+        case ComplexLabelDesc(_, fnctr, _) => name == fnctr
+        case SimpleLabelDesc(_, _, Some(fnctr)) => name == fnctr
+        case _ => false
+      }
     }
+
+    def reorderComponents(lbl: LabelDesc): LabelDesc = {
+      lbl match {
+        case ComplexLabelDesc(id, "leaf", lbls) => {
+          val (tp, r) = lbls.partition(matchFunctor("text", _))
+          if (tp.length > 1) throw new Exception("label must contain at most one text field")
+          val (dp, r2) = r.partition(matchFunctor("display", _))
+          if (dp.length > 1) throw new Exception("label must contain at most one display field")
+          val lbls2 = tp ++ dp ++ r2
+          ComplexLabelDesc(id, "leaf", lbls2)
+        }
+        case _ => lbl
+      }
+    }
+
+    label match {
+      case smpl: SimpleLabelDesc => {
+        smpl.id.foreach(s => labels.put(s, smpl))
+        smpl
+      }
+      case cmplx: ComplexLabelDesc => {
+        val rslt = reorderComponents(cmplx)
+        cmplx.id.foreach(s => labels.put(s, rslt))
+        rslt
+      }
+      case ref: LabelRef => ref //labels(ref.label)  // throw if not present??
+    }
+
   }
 
-  def makeCnxn(adminURI : String, connection : ConnectionDesc): Unit = {
+  def makeCnxn(adminURI: String, connection: ConnectionDesc): Unit = {
     try {
       val sourceId = agentsById(connection.src.replace("agent://", ""))
       val sourceURI = makeAliasURI(sourceId)
@@ -274,15 +303,15 @@ object Importer extends EvalConfig
     }
   }
 
-  def makePost(post : PostDesc): Unit = {
+  def makePost(post: PostDesc): Unit = {
     try {
-      var cnxns : List[Connection] = Nil
+      var cnxns: List[Connection] = Nil
 
       val sourceId = agentsById(post.src)
       val sourceAlias = makeAliasURI(sourceId)
       val sourceSession = sessionsById(post.src).sessionURI
 
-      val selfcnxn = Connection("agent://"+sourceId, "agent://"+sourceId, "alias")
+      val selfcnxn = Connection("agent://" + sourceId, "agent://" + sourceId, "alias")
       //val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
 
       post.trgts.foreach(trgt => {
@@ -300,9 +329,9 @@ object Importer extends EvalConfig
     }
   }
 
-  def makeTestPost(post : TestPostDesc): Unit = {
+  def makeTestPost(post: TestPostDesc): Unit = {
     try {
-      var cnxns : List[Connection] = Nil
+      var cnxns: List[Connection] = Nil
 
       val sourceId = agentsById(post.src)
       val sourceAlias = makeAliasURI(sourceId)
@@ -321,12 +350,12 @@ object Importer extends EvalConfig
       val uid =
         post.uid match {
           case Some(s) => s
-          case None => UUID.randomUUID.toString().replace("-","").toUpperCase
+          case None => UUID.randomUUID.toString().replace("-", "").toUpperCase
         }
-      val lbls : List[String] = Nil  //post.label // maybe later: .labels.mkString("[",",","]")
-      val tm = DateTime.now.toIsoDateTimeString.replace("T"," ")
+      //val lbls : List[String] = Nil  //post.label // maybe later: .labels.mkString("[",",","]")
+      val tm = DateTime.now.toIsoDateTimeString //.replace("T"," ")
 
-      val v = PostContent(uid, "TEXT", tm, tm, lbls, cnxns, post.text).toJson
+      val v = PostContent("shared.models.MessagePost", uid, tm, tm, post.messagePostContent).toJson
       val cont = EvalSubscribeContent(selfcnxn :: cnxns, "", v, uid)
 
       glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
@@ -335,7 +364,7 @@ object Importer extends EvalConfig
     }
   }
 
-  def parseData( dataJsonFile: String = serviceDemoDataFile() ) = {
+  def parseData(dataJsonFile: String = serviceDemoDataFile()) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
   }
@@ -355,9 +384,9 @@ object Importer extends EvalConfig
     }
   }
 
-  def fromFile(dataJsonFile: String, host: String = GLOSEVAL_HOST ) : Unit = {
+  def fromFile(dataJsonFile: String, host: String = GLOSEVAL_HOST): Unit = {
 
-    println("Importing file : " +  dataJsonFile)
+    println("Importing file : " + dataJsonFile)
     GLOSEVAL_HOST = host
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
@@ -367,14 +396,14 @@ object Importer extends EvalConfig
       case Some(uri) => {
         val adminId = uri.replace("agent://", "")
         val adminSession = createSession(uri, NodeUser.password)
-        sessionsById.put(adminId, adminSession)  // longpoll on adminSession
+        sessionsById.put(adminId, adminSession) // longpoll on adminSession
         println("using admin session URI : " + adminSession.sessionURI)
         //val thrd = longPoll()
         //thrd.start()
 
         try {
           dataset.labels match {
-            case Some(lbls) => lbls.foreach( l => makeLabel( LabelDesc.extractFrom(l) ) )
+            case Some(lbls) => lbls.foreach(l => makeLabel(LabelDesc.extractFrom(l)))
             case None => ()
           }
 
@@ -401,9 +430,9 @@ object Importer extends EvalConfig
     }
   }
 
-  def runTestFile(dataJsonFile: String, host: String = GLOSEVAL_HOST ) : Unit = {
+  def runTestFile(dataJsonFile: String, host: String = GLOSEVAL_HOST): Unit = {
 
-    println("testing file : " +  dataJsonFile)
+    println("testing file : " + dataJsonFile)
     GLOSEVAL_HOST = host
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
@@ -415,7 +444,7 @@ object Importer extends EvalConfig
       }
     val adminId = adminURI.replace("agent://", "")
     val adminSession = createSession(adminURI, NodeUser.password)
-    sessionsById.put(adminId, adminSession)  // longpoll on adminSession
+    sessionsById.put(adminId, adminSession) // longpoll on adminSession
     println("using admin session URI : " + adminSession.sessionURI)
     //val thrd = longPoll()
     //thrd.start()
@@ -426,7 +455,7 @@ object Importer extends EvalConfig
       try {
         typ match {
           case "reset" => {
-            val isok = glosevalPost("resetDatabaseRequest", ResetDatabaseRequest(adminSession.sessionURI, mongodbPath() ) )
+            val isok = glosevalPost("resetDatabaseRequest", ResetDatabaseRequest(adminSession.sessionURI, mongodbPath()))
             if (isok != "OK") throw new Exception("Unable to reset database")
             expect("resetDatabaseResponse", adminSession.sessionURI) match {
               case Some(_) => ()
@@ -460,16 +489,12 @@ object Importer extends EvalConfig
         //thrd.join(20000)
       }
     })
-
   }
 
-
-
-  def fromFiles( dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST ): Unit = {
-    //fromFile(dataJsonFile, host)
-    fromFile("src/main/resources/sample-data-test_2.json", host)
+  def fromFiles(dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST): Unit = {
+    fromFile(dataJsonFile, host)
+    //fromFile("src/main/resources/sample-data-test_2.json", host)
     //runTestFile("src/test/resources/test-posts.json", host)
   }
-
 
 }

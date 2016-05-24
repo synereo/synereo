@@ -2034,8 +2034,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("target" -> agentCnxn.trgt.toString))) ~
                         ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-                  BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                  println("evalSubscribeRequest | onFeed: response = " + pretty(render(response)))
+                  //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
                 }
               }
