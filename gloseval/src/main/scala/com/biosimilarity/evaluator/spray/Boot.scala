@@ -4,7 +4,6 @@ import akka.io.IO
 import spray.can.Http
 import akka.actor.{ActorSystem, Props}
 
-
 object Boot extends App
  with Serializable {
 
@@ -21,5 +20,4 @@ object Boot extends App
    val service = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")   
 
    IO(Http) ! Http.Bind(listener = service, interface = "0.0.0.0", port = 9876)
-
 }

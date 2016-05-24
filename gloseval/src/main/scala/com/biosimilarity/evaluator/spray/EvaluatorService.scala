@@ -286,13 +286,14 @@ trait EvaluatorService extends HttpService with CORSSupport {
                   val content = (json \ "content").extract[JObject]
                   asyncMethods.get(msgType) match {
                     case Some(fn) => {
+                      /*
                       (content \ "sessionURI").extract[Option[String]] match {
                         case Some(sessionURI) => {
                           //if (!actor.checkSessionAlive(sessionURI)) throw new SessionException("Session no longer valid")
                         }
                         case None => throw new SessionException("Async message missing session info")
                       }
-
+                      */
                       fn(content)
                       ctx.complete(StatusCodes.OK)
                     }
@@ -367,6 +368,37 @@ trait EvaluatorService extends HttpService with CORSSupport {
 }
 
 /*
+<<<<<<< HEAD
+=======
+        path("admin/connectServers") {
+          // allow administrators to make
+          // sure servers are connected
+          // BUGBUG : lgm -- make this secure!!!
+          get {
+            parameters('whoAmI) {
+              (whoAmI: String) =>
+                {
+                  //             println(
+                  //               (
+                  //                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                  //                 + "in admin/connectServers2 "
+                  //                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                  //               )
+                  //             )
+                  BasicLogService.tweet(
+                    (
+                      " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
+                      + "in admin/connectServers2 "
+                      + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "))
+
+                  connectServers("evaluator-service", UUID.randomUUID)
+
+                  (cometActor ! SessionPing("", _))
+                }
+            }
+          }
+        } ~
+>>>>>>> origin/1.0
        pathPrefix("static" / Segment) { path =>
          getFromFile(path)
        } ~

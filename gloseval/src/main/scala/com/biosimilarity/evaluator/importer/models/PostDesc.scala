@@ -42,4 +42,3 @@ object TestPostDesc {
   def fromJson(json: String) = parse(json).extract[PostDesc]
 
 }
-
