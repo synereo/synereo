@@ -1,13 +1,17 @@
 package com.biosimilarity.evaluator.importer.dtos
 
-import scala.collection.Map
-
-/**
- * Transfer object for createUserRequest.
- */
 case class CreateUserRequest(
   email: String,
   password: String,
-  jsonBlob: scala.collection.Map[String,String],
-  createBTCWallet: Boolean
+  jsonBlob: String
+) extends RequestContent
+
+case class GetUserRequest(
+  email: String,
+  password: String
+) extends RequestContent
+
+case class UpdateUserRequest(
+  sessionURI: String,
+  jsonBlob: String
 ) extends RequestContent

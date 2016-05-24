@@ -8,18 +8,18 @@
 
 package com.biosimilarity.evaluator.importer
 
-import com.biosimilarity.evaluator.distribution.{AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
+import java.util.UUID
+
+import com.biosimilarity.evaluator.distribution.EvalConfig
 import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
-import com.biosimilarity.evaluator.importer.utils.mailinator.Mailinator
-import com.biosimilarity.evaluator.spray.{BTCHandler, DownStreamHttpCommsT, EvalHandler}
+import com.biosimilarity.evaluator.spray.NodeUser
+import org.json4s.JsonAST.{JArray, JValue, JObject}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import org.joda.time.DateTime
-import scala.collection.JavaConversions._
-import scala.util.Random
-import scala.collection.mutable.HashMap
 import java.util.UUID
+
+import spray.http.DateTime
 
 import scalaj.http.Http
 
@@ -30,244 +30,446 @@ import scalaj.http.Http
  * @note First run `mvn clean compile` in the terminal.
  * @note Second run `mvn scala:console`.
  * @note Finally, import this object and execute `Importer.fromFiles()`. You may need to set the file paths in the parameters.
+  * @note - it may also be required to reset mongo db with 'mongo records --eval "db.dropDatabase()" '
  */
 object Importer extends EvalConfig
-with ImporterConfig
-with Serializable {
-  import scala.collection.JavaConverters._
-  import org.json4s.jackson.Serialization
+  with ImporterConfig
+  with Serializable {
 
   implicit val formats = org.json4s.DefaultFormats
 
-  //private var GLOSEVAL_HOST = "http://52.35.39.85:9876/api"
   private var GLOSEVAL_HOST = serviceHostURI()
-  //private val GLOSEVAL_SENDER = "splicious.ftw@gmail.com"
-  private val GLOSEVAL_SENDER = serviceEmailSenderAddress()
-  private val MAILINATOR_HOST = serviceMailinatorHost()
-  //private val MAILINATOR_KEY = "efa3a1b773db4f0c9492686d24bed415"
-  private val MAILINATOR_KEY = serviceMailinatorKey()
+  //private val GLOSEVAL_SENDER = serviceEmailSenderAddress()
+  //private val MAILINATOR_HOST = serviceMailinatorHost()
+  //private val MAILINATOR_KEY = serviceMailinatorKey()
+
+  private val agentsById = scala.collection.mutable.Map[String, String]() // loginId:agentURI
+  private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]() // sessionURI:agent
+  private val cnxnLabels = scala.collection.mutable.Map[String, String]() // src+trgt:label
+
+  private val labels = scala.collection.mutable.Map[String, LabelDesc]() // id
+
+  private def resolveLabel(id : String) : LabelDesc = labels(id)
 
   private def glosevalPost(msgType: String, data: RequestContent): String = {
-    val requestBody = write(ApiRequest(msgType, data))
     println(s"REQUEST: ${msgType}")
+    val requestBody = write(ApiRequest(msgType, data))
+    glosevalPost(requestBody)
+
+  }
+  private def glosevalPost(requestBody: String): String = {
     println(s"REQUEST BODY: ${requestBody}")
 
-    val response = Http(GLOSEVAL_HOST).postData(requestBody).header("Content-Type", "application/json").asString.body
+    val req = Http(GLOSEVAL_HOST)
+      .timeout(1000, 60000)
+      .header("Content-Type", "application/json")
+      .postData(requestBody)
+    val response = req.asString.body
 
     println(s"RESPONSE BODY: ${response}")
+    if (response.startsWith("Malformed request")) throw new Exception(response)
     response
   }
 
-  def confirmationToken( inbox : String ): String = {
-    val msgs =
-      Mailinator.getInboxMessages( MAILINATOR_KEY, inbox ).asScala
-    //println( "msgs: " + msgs )
-    // BUGBUG -- LGM: filter
-    val confirmationEmail =
-      Mailinator.getEmail( MAILINATOR_KEY, msgs( 0 ).getId )
-    //println( "email: " + confirmationEmail )
-    val confirmationEmailBody = confirmationEmail.getEmailParts.asScala.toList( 0 ).getBody
-    //println( "email body" + confirmationEmailBody )
-    confirmationEmailBody.split( "Your token is: " )( 1 ).substring( 0, 8 )
+  def makeAliasURI(alias: String) = s"alias://${alias}/alias"
+
+  private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
+
+  /* not used here - just an example of a per session thread approach
+  //@@GS - should be actor based but will have to do for now.
+  // requires all other methods to be synchronized where appropriate
+  def longPollSession(session : String  ) : Thread = {
+    println("initiating long-polling for session: " + session)
+    new Thread(new Runnable() {
+      override def run() {
+        while (!Thread.interrupted()) {  // call thrd.interrupt() when session closes
+          try {
+            val requestBody =  s"{ \"msgType\": \"sessionPing\", \"content\" : {\"sessionURI\": \"${session}\" } }"
+            println("Sending Ping ")
+            val req = Http(GLOSEVAL_HOST)
+                        .timeout(1000,10000)   // connTimeout, readTimeut - wait 10 seconds for response
+                                               //  needs to be greater than gloseval clientTimeOut setting - currently 7 seconds
+                        .header("Content-Type", "application/json")
+                        .postData(requestBody)
+            val js = req.asString.body
+            println("PING RESPONSE: " + js)
+            val arr = parse(js).extract[List[JValue]]
+            arr.foreach( v => {
+              val typ = ( v \ "msgType").extract[String]
+              var cont = ( v \ "content").extract[JValue]
+              typ match {
+                case "sessionPong" => Thread.sleep(10000)  // loop after 10 seconds
+                  // .. dispatch to handlers ...
+                case _ => println("WARNING - handler not provided for server sent message type : " + typ)
+              }
+
+            })
+          } catch {
+            case ex : Throwable => {
+              println("exception during SessionPing : " + ex)
+            }
+          }
+
+        }
+      }
+    })
+  }
+  */
+
+  //@@GS - should be actor based but will have to do for now.
+  // requires all other methods to be synchronized where appropriate
+  def longPoll(): Thread = {
+    println("initiating long-polling")
+    new Thread(new Runnable() {
+      override def run() {
+        while (!Thread.interrupted()) {
+          val tmp = sessionsById.clone()
+          while (tmp.nonEmpty) {
+            tmp.foreach {
+              case (id, sess) =>
+                try {
+                  println("Sending Ping")
+                  val session = sess.sessionURI
+                  val js = glosevalPost("sessionPing", SessionPingRequest(session))
+                  val arr = parse(js).extract[List[JValue]]
+                  arr.foreach(v => {
+                    val typ = (v \ "msgType").extract[String]
+                    typ match {
+                      case "sessionPong" => tmp.remove(id)
+                      case "connectionProfileResponse" => {
+                        //println("connectionProfileResponse : " + (v \ "content"))
+
+                      }
+                      case "addAliasLabelsResponse" => {}
+                      case "beginIntroductionResponse" => {
+                        //println("beginIntroductionResponse : " + (v \ "content"))
+                      }
+                      case _ => {
+                        //println("contents : " + (v \ "content"))
+                        println("WARNING - handler not provided for server sent message type : " + typ)
+                      }
+                    }
+
+                  })
+                } catch {
+                  case ex: Throwable => {
+                    println("exception during SessionPing : " + ex)
+                  }
+                }
+            }
+          }
+          println("longpoll sleeping")
+          Thread.sleep(10000)
+        }
+      }
+    })
   }
 
-  def createEmailUser(loginId: String) = s"livelygig-${UUID.randomUUID}-$loginId"
+  def expect(msgType : String, session : String): Option[JValue] = {
+    println("Sending Ping")
+    val js = glosevalPost("sessionPing", SessionPingRequest(session))
+    var rslt: Option[JValue] = None
+    var done = false
+    while (!done) {
+      val arr = parse(js).extract[List[JValue]]
+      arr.foreach(v => {
+        val typ = (v \ "msgType").extract[String]
+        typ match {
+          case "sessionPong" => done = true
+          case msgType => {
+            done = true
+            rslt = Some(v)
+          }
+        }
+      })
+    }
+    rslt
+  }
 
-  def createEmailAddress(loginId: String) = s"${createEmailUser(loginId)}@mailinator.com"
+  def createAgent(agent: AgentDesc) : Option[String] = {
+    val eml = agent.email + (if (agent.email.contains("@")) "" else "@livelygig.com")
 
-  def makeAliasURI(alias: String) = s"alias://$alias/alias"
+    val json1 = glosevalPost(
+      "createUserRequest",
+      CreateUserRequest(
+        "noConfirm:" + eml,
+        agent.pwd,
+        agent.jsonBlob
+      )
+    )
 
-  def makeAliasLabel(label: String, color: String) = s""" "leaf(text("${label}"),display(color("${color}"),image("")))" """.trim
+    val jsv = parse(json1)
 
-  private def threadSleep(seconds: Int) = {
-    println(s"Sleeping for $seconds seconds")
-    def time = new DateTime().getMillis
-    var now = time
-    val future = now + (seconds.toLong*1000)
-    while(time < future) {
-      now = time
+    val tmsg = (jsv \ "msgType").extract[String]
+    if (tmsg == "createUserError") {
+      println("create user failed, reason : " + (jsv \ "content" \ "reason").extract[String])
+      None
+    }
+    else {
+      val agentURI = (jsv \ "content" \ "agentURI").extract[String]
+      Some(agentURI)
     }
   }
 
-  private val sessionsByAgent = scala.collection.mutable.Map[String, InitializeSessionResponse]() // loginId:agentURI
-  private val agentsBySession = scala.collection.mutable.Map[String, AgentDesc]() // sessionURI:agent
-  private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]() // sessionURI:agent
-  private val aliasesById = scala.collection.mutable.Map[String, String]() // agentId:aliasUri
-
-  def makeAgent( agent : AgentDesc ) : Unit = {
-    val blobMap = new HashMap[String,String]()
-    val agentName = s"${agent.firstName}" + " " + s"${agent.lastName}"
-    blobMap += ( "name" -> agentName )
+  def createSession( agentURI : String, pwd : String) : InitializeSessionResponse = {
     val json =
       glosevalPost(
-        "createUserRequest",
-        CreateUserRequest(
-          s"${createEmailAddress( agent.loginId )}",
-          s"${agent.pwd}",
-          blobMap,
-          true
-        )
-      )
+        "initializeSessionRequest",
+        InitializeSessionRequest(agentURI + "?password=" + pwd))
 
-    //val emailWaiting = parse(json).extract[ApiResponse[CreateUserWaiting]].content
-    //val emailWaiting = parse(json).extract[ApiResponse[CreateUserWaiting]]
-    //println( "createUserWaiting: " + emailWaiting )        
+    val jsession: JValue = (parse(json) \ "content")
+    val uri = (jsession \ "sessionURI").extract[String]
+    val alias = (jsession \ "defaultAlias").extract[String]
 
-    val token = confirmationToken( createEmailUser( agent.loginId ) )
-    
-    val json2 =
-      glosevalPost(
-        "confirmEmailToken",
-        ConfirmEmailRequest(
-          token
-        )
-      )
-
-    val cur1 = parse(json)//.extract[ApiResponse[CreateUserResponse]]
-    println( "createUserResponse: " + cur1 )
-
-    // sessionsByAgent.put(agent.loginId, session)
-//     agentsBySession.put(session.sessionURI, agent)
-//     sessionsById.put(agent.id, session)
-
-    
+    InitializeSessionResponse(uri, agentURI, alias, jsession)
   }
 
-  // paginated agent creation
-  def makeAgents( dataset : DataSetDesc, chunkSize : Int = 4 ) : Unit = {
-    println("Initializing agent sessions")
-    val agents = dataset.agents
+  def makeAgent(agent: AgentDesc): Unit = {
+    createAgent(agent) match {
+      case None => ()
+      case Some(agentURI) =>
+        val agentCap = agentURI.replace("agent://cap/", "").slice(0,36)
+        agentsById.put(agent.id, agentCap)
+        val session = createSession(agentURI, agent.pwd)
+        sessionsById.put(agent.id, session)
+        val ptn = "uid\\([^\\)]*\\),"r
+        val lbls : List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
+            case None => Nil
+            case Some(l) => l.map( lbl => LabelDesc.extractFrom(lbl).toTermString( resolveLabel ))
+          } ).map(s => ptn.replaceFirstIn(s, "") )
+        glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", lbls))
 
-    val numOfAgents = agents.length
-    val numOfChunks = numOfAgents / chunkSize    
-    val leftOvers = ( numOfAgents % chunkSize )
-
-    for( i <- ( 1 to numOfChunks ) ) {
-      for( j <- ( 1 to chunkSize ) ) {
-        makeAgent( agents( ( i - 1 ) * chunkSize + ( j - 1 ) ) )        
-        threadSleep(15)
-      }      
-      
-      threadSleep(30)
     }
-    if ( leftOvers > 0 ) {
-      for ( j <- ( 1 to leftOvers ) ) {
-        makeAgent( agents( numOfChunks * chunkSize + ( j - 1 ) ) )        
-        threadSleep(15)
+  }
+
+  def makeLabel(label : LabelDesc): Unit = {
+    try {
+      label match {
+        case smpl : SimpleLabelDesc => smpl.id.foreach(s => labels.put(s, smpl))
+        case cmplx : ComplexLabelDesc => cmplx.id.foreach(s => labels.put(s, cmplx))
+        case ref : LabelRef => () //labels(ref.label)  // throw if not present??
       }
-      threadSleep(30)
-    }
 
-    println("Agent session initialization complete")
-        
+    } catch {
+      case ex: Throwable => println("exception while creating label: " + ex)
+    }
   }
 
-  def makeLabels( agentSessions : scala.collection.mutable.Map[String, AgentDesc] ) : Unit = {
-    println("Adding labels for agents")
-    agentsBySession.foreach { case (session, agent) =>
-      val json = glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session, "alias", List(makeAliasLabel(agent.id, "#5C9BCC"))))
-      println(json)
-      aliasesById.put(agent.id, s"alias://${agent.id}/alias")
-      threadSleep(15)
+  def makeCnxn(adminURI : String, connection : ConnectionDesc): Unit = {
+    try {
+      val sourceId = agentsById(connection.src.replace("agent://", ""))
+      val sourceURI = makeAliasURI(sourceId)
+      val targetId = agentsById(connection.trgt.replace("agent://", ""))
+      val targetURI = makeAliasURI(targetId)
+      val cnxnLabel = UUID.randomUUID().toString
+
+      if (!cnxnLabels.contains(sourceId + targetId)) {
+        //glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
+        glosevalPost("establishConnectionRequest", EstablishConnectionRequest(adminURI, sourceURI, targetURI, cnxnLabel))
+        cnxnLabels.put(sourceId + targetId, cnxnLabel)
+        cnxnLabels.put(targetId + sourceId, cnxnLabel)
+      }
+    } catch {
+      case ex: Throwable => println("exception while creating connection: " + ex)
     }
-    println("Agent labels complete")
   }
 
-  def makeCnxns( dataset : DataSetDesc, chunkSize : Int = 4 ) : Unit = {
-    println("Creating connection introductions")
-    dataset.cnxns.foreach { connection =>
-      val sourceId = connection.src.replace("agent://","")
-      val sourceAlias = aliasesById(sourceId)
-      val sourceURI = sessionsById(sourceId).sessionURI
-      val targetId = connection.trgt.replace("agent://","")
-      val targetAlias = aliasesById(targetId)
-      glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(sourceURI, "alias", Connection(sourceAlias, targetAlias), Connection(targetAlias, sourceAlias)))
-      threadSleep(15)
+  def makePost(post : PostDesc): Unit = {
+    try {
+      var cnxns : List[Connection] = Nil
+
+      val sourceId = agentsById(post.src)
+      val sourceAlias = makeAliasURI(sourceId)
+      val sourceSession = sessionsById(post.src).sessionURI
+
+      val selfcnxn = Connection("agent://"+sourceId, "agent://"+sourceId, "alias")
+      //val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
+
+      post.trgts.foreach(trgt => {
+        val targetId = agentsById(trgt)
+        val lbl = cnxnLabels(sourceId + targetId)
+        val trgtAlias = makeAliasURI(agentsById(trgt))
+        cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
+      })
+
+      val cont = EvalSubscribeContent(selfcnxn :: cnxns, post.label, post.value, post.uid)
+
+      glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
+    } catch {
+      case ex: Throwable => println("exception while creating post: " + ex)
     }
-    println("Random introduction connections complete")
   }
 
-  def parseData(
-    dataJsonFile : String = serviceDemoDataFile(),
-    configJsonFile : String = serviceSystemLabelsFile()
-  ) = {
+  def makeTestPost(post : TestPostDesc): Unit = {
+    try {
+      var cnxns : List[Connection] = Nil
+
+      val sourceId = agentsById(post.src)
+      val sourceAlias = makeAliasURI(sourceId)
+      val sourceSession = sessionsById(post.src).sessionURI
+
+      //val selfcnxn = Connection("agent://"+sourceId, "agent://"+sourceId, "alias")
+      val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
+
+      post.trgts.foreach(trgt => {
+        val targetId = agentsById(trgt)
+        val lbl = cnxnLabels(sourceId + targetId)
+        val trgtAlias = makeAliasURI(agentsById(trgt))
+        cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
+      })
+
+      val uid =
+        post.uid match {
+          case Some(s) => s
+          case None => UUID.randomUUID.toString().replace("-","").toUpperCase
+        }
+      val lbls : List[String] = Nil  //post.label // maybe later: .labels.mkString("[",",","]")
+      val tm = DateTime.now.toIsoDateTimeString.replace("T"," ")
+
+      val v = PostContent(uid, "TEXT", tm, tm, lbls, cnxns, post.text).toJson
+      val cont = EvalSubscribeContent(selfcnxn :: cnxns, "", v, uid)
+
+      glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
+    } catch {
+      case ex: Throwable => println("exception while creating post: " + ex)
+    }
+  }
+
+  def parseData( dataJsonFile: String = serviceDemoDataFile() ) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
   }
 
-  def fromFiles(
-    dataJsonFile : String = serviceDemoDataFile(),
-    configJsonFile : String = serviceSystemLabelsFile(),
-    host : String = GLOSEVAL_HOST,
-    chunkSize : Int = 4
-  ) {
-    println("Beginning import procedure")
+  def getAgentURI(email: String, password: String) = {
+    val json = glosevalPost("getAgentRequest", GetUserRequest(email, password))
+    val jsv = parse(json)
+
+    val tmsg = (jsv \ "msgType").extract[String]
+    if (tmsg == "getAgentError") {
+      println("create user failed, reason : " + (jsv \ "content" \ "reason").extract[String])
+      None
+    }
+    else {
+      val agentURI = (jsv \ "content" \ "agentURI").extract[String]
+      Some(agentURI)
+    }
+  }
+
+  def fromFile(dataJsonFile: String, host: String = GLOSEVAL_HOST ) : Unit = {
+
+    println("Importing file : " +  dataJsonFile)
     GLOSEVAL_HOST = host
 
-    //val configJson = scala.io.Source.fromFile(configJsonFile).getLines.map(_.trim).mkString
-    //val config = parse(configJson).extract[ConfigDesc]
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
-    val agents = dataset.agents
 
+    getAgentURI(NodeUser.email, NodeUser.password) match {
+      case Some(uri) => {
+        val adminId = uri.replace("agent://", "")
+        val adminSession = createSession(uri, NodeUser.password)
+        sessionsById.put(adminId, adminSession)  // longpoll on adminSession
+        println("using admin session URI : " + adminSession.sessionURI)
+        //val thrd = longPoll()
+        //thrd.start()
 
-    /*println("Importing agents")
-    agents.foreach { agent =>
-      println(glosevalPost("createUserRequest", CreateUserRequest(createEmailAddress(agent.loginId), agent.pwd, Map("name" -> agent.firstName), true)))
-    }
-    println("Agents import complete")
+        try {
+          dataset.labels match {
+            case Some(lbls) => lbls.foreach( l => makeLabel( LabelDesc.extractFrom(l) ) )
+            case None => ()
+          }
 
-    threadSleep(45)
+          dataset.agents.foreach(makeAgent)
 
-    println("Confirming agent emails")
-    agents.foreach { agent =>
-      try {
-        val emailConfirmId = Mailinator.getInboxMessages(MAILINATOR_KEY, createEmailUser(agent.loginId)).toList.filter(m => m.getFrom == GLOSEVAL_SENDER).sortBy(_.getSeconds_ago).head.getId
-        Mailinator.getEmail(MAILINATOR_KEY, emailConfirmId).getEmailParts.toList.filter(p => p.getBody.contains("token is")).foreach { part =>
-          val token = part.getBody.replace("Your token is: ", "").trim.stripLineEnd
-          println(s"Found token for ${agent.loginId}: $token. Confirming....")
-          println(glosevalPost("confirmEmailToken", ConfirmEmailRequest(token)))
-          threadSleep(15)
+          dataset.cnxns match {
+            case Some(cnxns) => cnxns.foreach(cnxn => makeCnxn(adminSession.sessionURI, cnxn))
+            case None => ()
+          }
+
+          dataset.posts match {
+            case Some(posts) => posts.foreach(makePost)
+            case None => ()
+          }
+        } finally {
+          // need to fix this
+          // wait ten seconds for long poll receipts
+          //thrd.interrupt()
+
+          //thrd.join(20000)
         }
-      } catch {
-        case e: Exception => println(s"Skipping agent ${agent.loginId} because ${e.getMessage}")
       }
+      case _ => throw new Exception("Unable to open admin session")
     }
-    println("Agent emails confirmation complete")
+  }
 
-    threadSleep(30)*/
+  def runTestFile(dataJsonFile: String, host: String = GLOSEVAL_HOST ) : Unit = {
 
-    makeAgents( dataset )
+    println("testing file : " +  dataJsonFile)
+    GLOSEVAL_HOST = host
 
-    makeLabels( agentsBySession )
+    val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
+    val tests = parse(dataJson).extract[List[JObject]]
+    val adminURI =
+      getAgentURI(NodeUser.email, NodeUser.password) match {
+        case Some(uri) => uri
+        case _ => throw new Exception("unable to open admin session")
+      }
+    val adminId = adminURI.replace("agent://", "")
+    val adminSession = createSession(adminURI, NodeUser.password)
+    sessionsById.put(adminId, adminSession)  // longpoll on adminSession
+    println("using admin session URI : " + adminSession.sessionURI)
+    //val thrd = longPoll()
+    //thrd.start()
 
-    makeCnxns( dataset )
+    tests.foreach(el => {
+      val typ = (el \ "type").extract[String]
 
-    // iterate and create connection confirmations
-    /*dataset.cnxns.foreach { connection =>
-      val sessionId = connection.src+":::"+connection.trgt
-      
-      val jConnection: JValue =
-        ("content" ->
-          ("sessionURI" -> sessionId) ~
-          ("alias" -> "someURI") ~ // TODO: this is actually the agent URI that comes back from API
-          ("introSessionId" -> "someURI") ~ // TODO: this is the session URI
-          ("correlationId" -> "someURI") ~ // TODO: correlationId comes back when calling `beginIntroductionRequest`
-          ("accepted" -> true)
-        )
-      introductionConfirmationRequest(jConnection)
+      try {
+        typ match {
+          case "reset" => {
+            val isok = glosevalPost("resetDatabaseRequest", ResetDatabaseRequest(adminSession.sessionURI, mongodbPath() ) )
+            if (isok != "OK") throw new Exception("Unable to reset database")
+            expect("resetDatabaseResponse", adminSession.sessionURI) match {
+              case Some(_) => ()
+              case _ => throw new Exception("Unable to reset database")
+            }
+          }
+          case "agent" => {
+            val agent = (el \ "content").extract[AgentDesc]
+            makeAgent(agent)
+          }
+          case "cnxn" => {
+            val cnxn = (el \ "content").extract[ConnectionDesc]
+            makeCnxn(adminURI, cnxn)
+          }
+          case "label" => {
+            val jo = (el \ "content").extract[JObject]
+            val lbl = LabelDesc.extractFrom(jo)
+            makeLabel(lbl)
+          }
+          case "post" => {
+            val post = (el \ "content").extract[TestPostDesc]
+            makeTestPost(post)
+          }
+          case _ => throw new Exception("Unknown test element")
+        }
+      } finally {
+        // need to fix this
+        // wait ten seconds for long poll receipts
+        //thrd.interrupt()
 
-      val jConnection: JValue =
-        ("content" ->
-          ("sessionURI" -> sessionId) ~
-            ("alias" -> "someURI") ~ // TODO: this is actually the agent URI that comes back from API
-            ("introSessionId" -> "someURI") ~ // TODO: this is the session URI
-            ("correlationId" -> "someURI") ~ // TODO: correlationId comes back when calling `beginIntroductionRequest`
-            ("accepted" -> true)
-          )
-      introductionConfirmationRequest(jConnection)
-    }*/
+        //thrd.join(20000)
+      }
+    })
 
   }
+
+
+
+  def fromFiles( dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST ): Unit = {
+    //fromFile(dataJsonFile, host)
+    fromFile("src/main/resources/sample-data-test_2.json", host)
+    //runTestFile("src/test/resources/test-posts.json", host)
+  }
+
 
 }

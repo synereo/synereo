@@ -7,5 +7,5 @@ import com.biosimilarity.lift.model.store._
 trait AgentT {
   def aliases: List[AliasT]
   def defaultAlias: AliasT
-  def externalIdentities: List[AliasT]
+  def externalIdentities: List[ExternalIdentity]
 }
