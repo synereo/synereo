@@ -24,21 +24,3 @@ object PostDesc {
 
 }
 
-case class TestPostDesc(
-                     src: String,
-                     trgts: List[String],
-                     messagePostContent: JObject,
-                     uid: Option[String],
-                     labels: Option[List[String]]
-                   ) {
-
-  implicit val formats = DefaultFormats
-  def toJson = write(this)
-}
-
-object TestPostDesc {
-
-  implicit val formats = DefaultFormats
-  def fromJson(json: String) = parse(json).extract[PostDesc]
-
-}
