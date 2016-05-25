@@ -38,7 +38,8 @@
     {"type": "post", "content": {
         "src": "Pam",
         "trgts": ["Ed","Mukul"],
-        "labels": ["Ethereum","Bitcoin"],
-        "messagePostContent": { "$type":"shared.models.MessagePostContent", "subject": "New Project", "text": "New project to refactor c# classes" }
+        "label": "",
+        "uid": "0c778b40-4799-4557-9050-fd7a4b77c23e",
+        "value": "{\"$type\":\"shared.models.MessagePost\", \"uid\" : \"0c778b40-4799-4557-9050-fd7a4b77c23e\", \"created\" : \"2002-05-30T09:30:10Z\", \"modified\" : \"2002-05-30T09:30:10Z\", \"projectPostContent\": {\"$type\":\"shared.models.ProjectPostContent\", \"versionedPostId\" : \"35e60447-747e-496a-afde-65ca182db1c8\", \"versionedPostPredecessorId\" : \"\", \"jobPostType\" : \"Project-Hourly\", \"summary\" : \"Help test Bitcoin as payment for my travel-related business\", \"description\" : \"This project can be a huge project but same time can easily fail, so please PM with your skills, I will provide you the project details and if you consider it’s a good idea we can start work right away\", \"message\" : \"hi\", \"postedDate\" : \"hi\", \"broadcastDate\" : \"2002-05-30T09:30:10Z\", \"jobStartDate\" : \"2002-05-30T09:30:10Z\", \"jobEndDate\" : \"2002-05-30T09:30:10Z\", \"currency\" : \"USD\", \"workLocation\" : \"United States\", \"isPayoutInPieces\" : \"false\", \"skills\" : \"\", \"posterId\" : \"eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee\", \"versionNumber\" : \"1\", \"allowFormatting\" : \"true\", \"canForward\" : \"true\", \"referents\" : \"\", \"contractType\" : \"contest\", \"budget\" : \"2350.3\"}}"
     }}
 ]

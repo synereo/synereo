@@ -191,13 +191,13 @@ object Importer extends EvalConfig
 
   def createAgent(agent: AgentDesc): Option[String] = {
     val eml = agent.email + (if (agent.email.contains("@")) "" else "@livelygig.com")
-
+    val jsonBlob = parse(agent.jsonBlob).extract[JObject]
     val json1 = glosevalPost(
       "createUserRequest",
       CreateUserRequest(
         "noConfirm:" + eml,
         agent.pwd,
-        agent.jsonBlob
+        jsonBlob
       )
     )
 
@@ -329,41 +329,6 @@ object Importer extends EvalConfig
     }
   }
 
-  def makeTestPost(post: TestPostDesc): Unit = {
-    try {
-      var cnxns: List[Connection] = Nil
-
-      val sourceId = agentsById(post.src)
-      val sourceAlias = makeAliasURI(sourceId)
-      val sourceSession = sessionsById(post.src).sessionURI
-
-      //val selfcnxn = Connection("agent://"+sourceId, "agent://"+sourceId, "alias")
-      val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
-
-      post.trgts.foreach(trgt => {
-        val targetId = agentsById(trgt)
-        val lbl = cnxnLabels(sourceId + targetId)
-        val trgtAlias = makeAliasURI(agentsById(trgt))
-        cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
-      })
-
-      val uid =
-        post.uid match {
-          case Some(s) => s
-          case None => UUID.randomUUID.toString().replace("-", "").toUpperCase
-        }
-      //val lbls : List[String] = Nil  //post.label // maybe later: .labels.mkString("[",",","]")
-      val tm = DateTime.now.toIsoDateTimeString //.replace("T"," ")
-
-      val v = PostContent("shared.models.MessagePost", uid, tm, tm, post.messagePostContent).toJson
-      val cont = EvalSubscribeContent(selfcnxn :: cnxns, "", v, uid)
-
-      glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
-    } catch {
-      case ex: Throwable => println("exception while creating post: " + ex)
-    }
-  }
-
   def parseData(dataJsonFile: String = serviceDemoDataFile()) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
@@ -476,8 +441,8 @@ object Importer extends EvalConfig
             makeLabel(lbl)
           }
           case "post" => {
-            val post = (el \ "content").extract[TestPostDesc]
-            makeTestPost(post)
+            val post = (el \ "content").extract[PostDesc]
+            makePost(post)
           }
           case _ => throw new Exception("Unknown test element")
         }

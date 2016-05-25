@@ -1,9 +1,11 @@
 package com.biosimilarity.evaluator.importer.dtos
 
+import org.json4s.JObject
+
 case class CreateUserRequest(
   email: String,
   password: String,
-  jsonBlob: String
+  jsonBlob: JObject
 ) extends RequestContent
 
 case class GetUserRequest(
@@ -13,5 +15,5 @@ case class GetUserRequest(
 
 case class UpdateUserRequest(
   sessionURI: String,
-  jsonBlob: String
+  jsonBlob: JObject
 ) extends RequestContent

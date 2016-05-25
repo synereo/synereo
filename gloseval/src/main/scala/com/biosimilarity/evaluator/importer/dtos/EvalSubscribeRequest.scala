@@ -18,14 +18,3 @@ case class EvalSubscribeContent(
   value: String,
   uid: String)
 
-case class PostContent(
-  `$type`: String,
-  uid: String,
-  created: String,
-  modified: String,
-  //connections: List[Connection],
-  messagePostContent: JObject) {
-
-  implicit val formats = DefaultFormats
-  def toJson = write(this)
-}
