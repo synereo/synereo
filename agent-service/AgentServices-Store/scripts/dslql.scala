@@ -22,6 +22,9 @@ object DSLQuickStart {
     begin( true )
   }
 }
-
-DSLQuickStart.begin( true )
-
+//Fixed the issue for Java 1.8
+try {
+  DSLQuickStart.begin( true )
+} catch {
+  case e : Throwable => DSLQuickStart.begin( true )
+}
