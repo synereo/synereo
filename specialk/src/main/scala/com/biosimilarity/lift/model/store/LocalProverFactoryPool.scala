@@ -7,11 +7,21 @@ object LocalProverFactoryPool extends Serializable {
   import org.apache.commons.pool.impl.GenericObjectPool
 
   @transient
-  lazy val _prover = ProverFactory.getProver()
+  lazy val _prover = try {
+    ProverFactory.getProver()
+  }
+  catch {
+    case e : NullPointerException => ProverFactory.getProver()
+  }
 
   case class LocalProverFactory() extends BasePoolableObjectFactory[Prover] {
     override def makeObject() : Prover = synchronized {
-      ProverFactory.getProver()
+      try {
+        ProverFactory.getProver()
+      }
+      catch {
+        case e : NullPointerException => ProverFactory.getProver()
+      }
     }
   }
 
