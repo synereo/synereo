@@ -459,7 +459,9 @@ object Importer extends EvalConfig
   def fromFiles(dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST): Unit = {
     fromFile(dataJsonFile, host)
     //fromFile("src/main/resources/sample-data-test_2.json", host)
-    //runTestFile("src/test/resources/test-posts.json", host)
   }
 
+  def runTestFiles(host: String = GLOSEVAL_HOST): Unit = {
+    runTestFile("src/test/resources/test-posts.json", host)
+  }
 }

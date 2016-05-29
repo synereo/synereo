@@ -1966,8 +1966,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     object act extends AgentCnxnTypes {}
 
-    //val cjs = pretty(render(json))
-    //println("evalSubscribeRequest: json = " + cjs)
+    val cjs = pretty(render(json))
+    println("evalSubscribeRequest: json = " + cjs)
     val sessionURIStr = (json \ "sessionURI").extract[String]
 
     val expression = (json \ "expression")
@@ -1984,8 +1984,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case "feedExpr" => {
           BasicLogService.tweet("evalSubscribeRequest | feedExpr")
           val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
-            BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
-            //println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
+            //BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
 
             def handleTuple(v: ConcreteHL.HLExpr): Unit = {
               v match {
@@ -2006,8 +2006,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   }
                   val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                   val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-                  //println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
-                  BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                  println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                  //BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   val arr = parse(postedStr).asInstanceOf[JArray].arr
                   val json = compact(render(arr(0)))
                   val originalFilter = fromTermString(arr(1).asInstanceOf[JString].s).get.asInstanceOf[CnxnCtxtLabel[String, String, String] with Factual]
