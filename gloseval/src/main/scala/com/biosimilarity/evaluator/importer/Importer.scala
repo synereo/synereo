@@ -236,7 +236,8 @@ object Importer extends EvalConfig
         val session = createSession(agentURI, agent.pwd)
         sessionsById.put(agent.id, session)
 
-        val lbls: List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
+        //val lbls: List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
+        val lbls: List[String] = (agent.aliasLabels match {
           case None => Nil
           case Some(l) => l.map(lbl => makeLabel(LabelDesc.extractFrom(lbl)).toTermString(resolveLabel))
         })
