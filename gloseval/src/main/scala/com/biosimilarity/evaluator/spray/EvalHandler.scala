@@ -2564,8 +2564,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
 
-
-
   def initiateClaim(json: JValue): Unit = {
     val sessionId = (json \ "sessionURI").extract[String]
     val correlationId = (json \ "correlationId").extract[String]
@@ -2589,4 +2587,43 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         pacRelyingParty,
         claim))
   }
+
+  import com.biosimilarity.evaluator.omniRPC.OmniClient
+
+  def omniGetBalance(json: JObject) : Unit = {
+    val addr = (json \ "address").extract[String]
+    val bal = OmniClient.getBalance(addr)
+    val ssn = (json \ "sessionURI").extract[String]
+
+    CometActorMapper.cometMessage(
+      ssn,
+      compact(
+        render(
+          ("msgType" -> "omniGetBalanceResponse") ~
+            ("content" -> ("balance" -> bal) )
+        )
+      )
+    )
+  }
+
+  def omniTransfer(json: JObject) : Unit = {
+    val fromaddr = (json \ "from").extract[String]
+    val toaddr = (json \ "to").extract[String]
+    val amt = (json \ "amount").extract[BigDecimal]
+    val txn = OmniClient.transfer(fromaddr,toaddr,amt)
+    val ssn = (json \ "sessionURI").extract[String]
+
+    CometActorMapper.cometMessage(
+      ssn,
+      compact(
+        render(
+          ("msgType" -> "omniTransferResponse") ~
+            ("content" -> ("txnid" -> txn) )
+        )
+      )
+    )
+
+  }
+
+
 }

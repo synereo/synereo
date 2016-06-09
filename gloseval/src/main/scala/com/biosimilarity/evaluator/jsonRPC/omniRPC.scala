@@ -45,7 +45,7 @@ object OmniClient extends EvalConfig
   private val OMNI_URI = OmniConfig.read("OmniRPCURI")
 
   private def omniCall(method: String, params: JValue* ): JValue = {
-    println(s"REQUEST: ${method}")
+    println(s"omniCall: ${method}")
     val id = UUID.randomUUID().toString
 
     val requestBody = write(jsonRequest(method, params, id))
@@ -68,6 +68,20 @@ object OmniClient extends EvalConfig
       case Some(err) => throw new Exception("Omni returned error: "+err)
     }
   }
+
+  /*  not currently used
+  private def omniNotify(method: String, params: JValue* ) : Unit = {
+    println(s"omniNotify: ${method}")
+
+    val requestBody = write(jsonNotify(method, params))
+
+    val req = Http(OMNI_URI)
+      .timeout(1000, 60000)
+      .auth(RPC_USER, RPC_PWD)
+      .header("Content-Type", "application/json")
+      .postData(requestBody)
+  }
+  */
 
   def getBalance(addr: String) : JObject = {
     omniCall("omni_getbalance", JString(addr), JInt(AMP_PROP_ID)).extract[JObject]

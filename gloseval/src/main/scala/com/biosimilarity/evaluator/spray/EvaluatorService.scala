@@ -268,7 +268,10 @@ trait EvaluatorService extends HttpService with CORSSupport {
     ("restoreRequest", restoreRequest),
     ("resetDatabaseRequest", resetDatabaseRequest),
     // Verifier protocol
-    ("initiateClaim", initiateClaim) // BTC
+    ("initiateClaim", initiateClaim),
+    // omni interfact
+    ("omniGetBalance", omniGetBalance),
+    ("omniTransfer", omniTransfer)
     )
 
   @transient
