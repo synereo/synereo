@@ -132,9 +132,8 @@ trait CapUtilities {
   }
 
   def getCapSelfCnxn(cap: String): PortableAgentCnxn = {
-    val capURI = new URI("agent://" + cap)
-    val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
-    capSelfCnxn
+    val capURI = capToAgentURI(cap)
+    PortableAgentCnxn(capURI, "identity", capURI)
   }
 
   //def splEmail(email: String): String = {
@@ -148,6 +147,31 @@ trait CapUtilities {
     //val spliciousEmail = splEmail(email)
     //val spliciousBTCWalletCap = spliciousEmail.split("@")(0)
     //emailToCap(spliciousBTCWalletCap + password + "@splicious.net")
+  }
+
+  def capToAgent(cap : String) : String = {
+    "agent://" + cap
+  }
+
+  def capToAgentURI(cap : String) : URI = {
+    new URI(capToAgent(cap))
+  }
+
+  def capToSession(cap : String) : String = {
+    def generateRandomHex(): String = {
+      val result = new Array[Byte](32)
+      val random = SecureRandom.getInstance("SHA1PRNG", "SUN")
+      random.nextBytes(result)
+      result.map("%02x".format(_)).mkString
+    }
+    val sessionToken = generateRandomHex()
+    "agent-session://" + cap + "/" + sessionToken
+  }
+
+  def capFromSession(session : String) : String = {
+    val sessionURI = new URI(session)
+    sessionURI.getHost
+
   }
 
 }
@@ -171,13 +195,6 @@ trait BTCCryptoUtilities {
     }
 
     data
-  }
-
-  def generateRandomHex(): String = {
-    val result = new Array[Byte](32)
-    val random = SecureRandom.getInstance("SHA1PRNG", "SUN")
-    random.nextBytes(result)
-    result.map("%02x".format(_)).mkString
   }
 
   def hashSaltedPasswordTwiceWithSHA256(password: String, salt: Array[Byte]): Array[Byte] = {
@@ -355,9 +372,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
   def addAgentExternalIdentityToken(json: JValue): Unit = {}
   def removeAgentExternalIdentitiesRequest(json: JValue): Unit = {}
-  def getAgentExternalIdentitiesRequest(json: JValue): Unit = {
+  def getAgentExternalIdentitiesRequest(json: JValue): Unit = {}
 
-  }
   def addAgentAliasesRequest(json: JValue): Unit = {
     handler.handleaddAgentAliasesRequest(
       com.biosimilarity.evaluator.msgs.agent.crud.addAgentAliasesRequest(
@@ -398,8 +414,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def removeAliasExternalIdentitiesRequest(json: JValue): Unit = {}
   def getAliasExternalIdentitiesRequest(json: JValue): Unit = {}
   def setAliasDefaultExternalIdentityRequest(json: JValue): Unit = {}
-  // Connections
-  case class JCnxn(source: String, label: String, target: String)
+
   def removeAliasConnectionsRequest(json: JValue): Unit = {
     val sessionURIStr = (json \ "sessionURI").extract[String]
     val jcnxns = (json \ "connections").asInstanceOf[JArray].arr
@@ -517,6 +532,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   val defaultAliasLabel = fromTermString("defaultAlias(true)").getOrElse(throw new Exception("Couldn't parse defaultAlias"))
   val labelListLabel = fromTermString("labelList(true)").getOrElse(throw new Exception("Couldn't parse labelListLabel"))
   val biCnxnsListLabel = fromTermString("biCnxnsList(true)").getOrElse(throw new Exception("Couldn't parse biCnxnsListLabel"))
+  val ampWalletLabel = fromTermString("amp(walletRequest(W))").getOrElse(throw new Exception("Couldn't parse ampWalletLabel."))
   /*
   val btcWalletLabel = fromTermString("btc(walletRequest(W))").getOrElse(throw new Exception("Couldn't parse btc(W)."))
   val btcWalletJSONLabel =
@@ -1350,13 +1366,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     key: String): Unit = {
     import DSLCommLink.mTT
 
-    val sessionToken = generateRandomHex()
-
     def login(cap: String): Unit = {
-      val capURI = new URI("agent://" + cap)
-      val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
-      val sessionURI = "agent-session://" + cap + "/" + sessionToken
-
+      val capURI = capToAgentURI(cap)
+      val capSelfCnxn = getCapSelfCnxn(cap)
+      val sessionURI = capToSession(cap)
       val onPwmacFetch: Option[mTT.Resource] => Unit = (rsrc) => {
         //println("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
         BasicLogService.tweet("secureLogin | login | onPwmacFetch: rsrc = " + rsrc)
@@ -2387,7 +2400,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   private def _createUser(email: String, password: String, jsonBlob: String, onComplete: PortableAgentCnxn => Unit): Unit = {
     val cap = storeCapByEmail(email)
     val capSelfCnxn = getCapSelfCnxn(cap)
-    val capURI = capSelfCnxn.src
+    val capURI = capToAgentURI(cap)
 
     // Store the email
     put(emailLabel, List(capSelfCnxn), cap)
@@ -2564,8 +2577,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
 
-
-
   def initiateClaim(json: JValue): Unit = {
     val sessionId = (json \ "sessionURI").extract[String]
     val correlationId = (json \ "correlationId").extract[String]
@@ -2589,4 +2600,123 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         pacRelyingParty,
         claim))
   }
+
+  import com.biosimilarity.evaluator.omniRPC.OmniClient
+
+  private def readLabelFromCnxn(lbl : CnxnCtxtLabel[String,String,String],
+                                cnxn : PortableAgentCnxn, handleRsp : Option[ConcreteHL.HLExpr] => Unit ) : Unit = {
+
+    read(lbl, List(cnxn), (optRsrc: Option[mTT.Resource]) => {
+        optRsrc match {
+          case Some(mTT.Ground(v)) => handleRsp(Some(v))
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => handleRsp(Some(v))
+          case _ => handleRsp(None) // throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+        }
+      })
+  }
+
+  def sendCometMessage(ssn : String, msg : JValue) : Unit = {
+    CometActorMapper.cometMessage(
+      ssn,
+      compact(
+        render( msg ) ) )
+  }
+
+  def omniGetBalance(json: JObject) : Unit = {
+    val ssn = (json \ "sessionURI").extract[String]
+    val cap = capFromSession(ssn)
+    val cnxn = getCapSelfCnxn(cap)
+
+    def handleRsp(v: Option[ConcreteHL.HLExpr]): Unit = {
+      v match {
+        case Some(Bottom) => {
+          sendCometMessage( ssn,
+                ("msgType" -> "omniError") ~
+                  ("content" ->
+                    ("reason" -> "No wallet found.")))
+        }
+        case Some(PostedExpr((PostedExpr(addr: String), _, _, _))) => {
+          val bal = OmniClient.getBalance(addr)
+
+          sendCometMessage(ssn,
+            ("msgType" -> "omniGetBalanceResponse") ~
+              ("content" -> ("balance" -> bal))
+          )
+        }
+        case _ => {
+          sendCometMessage( ssn,
+              ("msgType" -> "omniError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource"))))
+
+        }
+      }
+    }
+
+    readLabelFromCnxn(ampWalletLabel, cnxn, handleRsp)
+  }
+
+  def omniTransfer(json: JObject) : Unit = {
+    val tocap = (json \ "target").extract[String]
+    val amt = (json \ "amount").extract[BigDecimal]
+    val ssn = (json \ "sessionURI").extract[String]
+    val cap = capFromSession(ssn)
+    val cnxn = getCapSelfCnxn(cap)
+    val tgtcnxn = getCapSelfCnxn(tocap)
+
+    def handleTgtRsp(v: Option[ConcreteHL.HLExpr], fromaddr : String): Unit = {
+      v match {
+        case Some(Bottom) => {
+          sendCometMessage(ssn,
+                ("msgType" -> "omniError") ~
+                  ("content" ->
+                    ("reason" -> "No wallet found.")))
+        }
+        case Some(PostedExpr((PostedExpr(tgtaddr: String), _, _, _))) => {
+          val txn = OmniClient.transfer(fromaddr,tgtaddr,amt)
+
+          sendCometMessage(ssn,
+                ("msgType" -> "omniTransferResponse") ~
+                  ("content" -> ("txnid" -> txn) )
+              )
+        }
+        case _ => {
+          sendCometMessage(ssn,
+              ("msgType" -> "omniError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource"))))
+
+        }
+      }
+    }
+
+    def handleRsp(v: Option[ConcreteHL.HLExpr]): Unit = {
+      v match {
+        case Some(Bottom) => {
+          sendCometMessage(ssn,
+                ("msgType" -> "omniError") ~
+                  ("content" ->
+                    ("reason" -> "No wallet found.")))
+        }
+        case Some(PostedExpr((PostedExpr(fromaddr: String), _, _, _))) => {
+          val bal = OmniClient.getBalance(fromaddr).extract[Int]   // BigDecimal??
+          if (bal < amt) {
+            sendCometMessage(ssn,
+                  ("msgType" -> "omniError") ~
+                    ("content" -> ("reason" -> "Insufficient funds")))
+          }
+          else {
+            readLabelFromCnxn(ampWalletLabel, tgtcnxn, (v => handleTgtRsp(v,fromaddr)))
+          }
+        }
+        case _ => {
+          sendCometMessage(ssn,
+              ("msgType" -> "omniError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource"))))
+
+        }
+      }
+    }
+    readLabelFromCnxn(ampWalletLabel, cnxn, handleRsp)
+  }
+
+
 }

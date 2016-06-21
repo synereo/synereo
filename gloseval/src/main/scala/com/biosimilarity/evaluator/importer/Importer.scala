@@ -237,7 +237,8 @@ object Importer extends EvalConfig
         sessionsById.put(agent.id, session)
 
         /*   something wrong with git ...
-        val lbls: List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
+        //val lbls: List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
+        val lbls: List[String] = (agent.aliasLabels match {
           case None => Nil
           case Some(l) => l.map(lbl => makeLabel(LabelDesc.extractFrom(lbl)).toTermString(resolveLabel))
         })
