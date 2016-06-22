@@ -95,6 +95,8 @@ object OmniClient extends EvalConfig
   def runTests() : Unit = {
     val rsp = pretty( omniCall("omni_getinfo") )
     println(rsp)
+    val rsp2 = pretty( omniCall("getnewaddress") )
+    println(rsp2)
   }
 
 }
