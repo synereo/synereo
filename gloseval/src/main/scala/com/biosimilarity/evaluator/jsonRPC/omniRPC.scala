@@ -4,17 +4,11 @@ import java.io.File
 import java.util.UUID
 
 import com.biosimilarity.evaluator.distribution.EvalConfig
-import com.biosimilarity.evaluator.importer.Importer._
-import com.biosimilarity.evaluator.importer.ImporterConfig
-import com.biosimilarity.evaluator.importer.dtos.{ApiRequest, InitializeSessionResponse, RequestContent}
-import com.biosimilarity.evaluator.importer.models.LabelDesc
 import com.typesafe.config.ConfigFactory
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import foundation.omni.rpc.OmniClient
-import foundation.omni.json.conversion._
 
 import scala.math.BigDecimal
 import scalaj.http.Http
@@ -95,6 +89,8 @@ object OmniClient extends EvalConfig
   def runTests() : Unit = {
     val rsp = pretty( omniCall("omni_getinfo") )
     println(rsp)
+    val rsp2 = pretty( omniCall("getnewaddress") )
+    println(rsp2)
   }
 
 }
