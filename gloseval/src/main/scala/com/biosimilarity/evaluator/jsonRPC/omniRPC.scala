@@ -85,11 +85,15 @@ object OmniClient extends EvalConfig
     omniCall("omni_send", JString(fromaddress), JString(toaddress), JInt(AMP_PROP_ID), JString(amount.toString())).extract[String]
   }
 
+  def getNewAddress() : String = {
+    omniCall("getnewaddress").extract[String]
+  }
+
 
   def runTests() : Unit = {
     val rsp = pretty( omniCall("omni_getinfo") )
     println(rsp)
-    val rsp2 = pretty( omniCall("getnewaddress") )
+    val rsp2 = pretty( getNewAddress() )
     println(rsp2)
   }
 

@@ -1089,6 +1089,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext.eServe._
 
     val aliasURI = new URI("alias://" + cap + "/alias")
+    val selfCnxn = getCapSelfCnxn(cap)
     val nodeAgentCap = emailToCap(NodeUser.email)
     val nodeAliasURI = new URI("alias://" + nodeAgentCap + "/alias")
     val nodeAliasCnxn = PortableAgentCnxn(nodeAliasURI, "alias", nodeAliasURI)
@@ -1179,6 +1180,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         optRsrc => BasicLogService.tweet("onCommencement three | " + optRsrc)
       })
     //println("onAgentCreation: about to launch claimant behavior")
+
+    createOmniWallet(selfCnxn, optRsrc => println("omniwallet creation | " + optRsrc))
+
     BasicLogService.tweet("onAgentCreation: about to launch claimant behavior")
     VerificationBehaviors().launchClaimantBehavior(aliasURI, feed _)
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(aliasURI, nodeAliasURI, feed _)
@@ -2603,17 +2607,47 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   import com.biosimilarity.evaluator.omniRPC.OmniClient
 
-  private def readLabelFromCnxn(lbl : CnxnCtxtLabel[String,String,String],
+  private def readFromCnxnLabel(lbl : CnxnCtxtLabel[String,String,String],
                                 cnxn : PortableAgentCnxn, handleRsp : Option[ConcreteHL.HLExpr] => Unit ) : Unit = {
 
     read(lbl, List(cnxn), (optRsrc: Option[mTT.Resource]) => {
+      optRsrc match {
+        case Some(mTT.Ground(v)) => handleRsp(Some(v))
+        case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => handleRsp(Some(v))
+        case _ => handleRsp(None) // throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+      }
+    })
+  }
+
+  private def postToCnxnLabel[T](lbl : CnxnCtxtLabel[String,String,String],
+                                 cnxn : PortableAgentCnxn,
+                                 value : T,
+                                 handleRsp : Option[ConcreteHL.HLExpr] => Unit ) : Unit = {
+
+    post(lbl, List(cnxn), value, (optRsrc: Option[mTT.Resource]) => {
+      optRsrc match {
+        case Some(mTT.Ground(v)) => handleRsp(Some(v))
+        case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => handleRsp(Some(v))
+        case _ => handleRsp(None) // throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+      }
+    })
+  }
+
+  def checkCnxnLabelExists(lbl : CnxnCtxtLabel[String,String,String], cnxn : PortableAgentCnxn, handleRsp : Boolean => Unit) = {
+    read(
+      lbl,
+      List(cnxn),
+      (optRsrc: Option[mTT.Resource]) => {
         optRsrc match {
-          case Some(mTT.Ground(v)) => handleRsp(Some(v))
-          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => handleRsp(Some(v))
-          case _ => handleRsp(None) // throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
+          case None => ();  // what does this mean???
+          case Some(mTT.Ground(Bottom)) => handleRsp(false)
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => handleRsp(false)
+          case _ => handleRsp(true)
         }
       })
   }
+
+
 
   def sendCometMessage(ssn : String, msg : JValue) : Unit = {
     CometActorMapper.cometMessage(
@@ -2651,8 +2685,15 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         }
       }
     }
+    readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
+  }
 
-    readLabelFromCnxn(ampWalletLabel, cnxn, handleRsp)
+  def createOmniWallet(cnxn : PortableAgentCnxn, handleRsp : Option[ConcreteHL.HLExpr] => Unit ) : Unit = {
+    checkCnxnLabelExists(ampWalletLabel, cnxn, b => {
+      if (b) throw new Exception("Wallet already exists")
+      val addr = OmniClient.getNewAddress()
+      postToCnxnLabel(ampWalletLabel, cnxn, addr, handleRsp)
+    })
   }
 
   def omniTransfer(json: JObject) : Unit = {
@@ -2704,7 +2745,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("content" -> ("reason" -> "Insufficient funds")))
           }
           else {
-            readLabelFromCnxn(ampWalletLabel, tgtcnxn, (v => handleTgtRsp(v,fromaddr)))
+            readFromCnxnLabel(ampWalletLabel, tgtcnxn, (v => handleTgtRsp(v,fromaddr)))
           }
         }
         case _ => {
@@ -2715,7 +2756,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         }
       }
     }
-    readLabelFromCnxn(ampWalletLabel, cnxn, handleRsp)
+    readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
   }
 
 
