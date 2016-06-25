@@ -2708,22 +2708,22 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       v match {
         case Some(Bottom) => {
           sendCometMessage(ssn,
-                ("msgType" -> "omniError") ~
-                  ("content" ->
-                    ("reason" -> "No wallet found.")))
+            ("msgType" -> "omniError") ~
+              ("content" ->
+                ("reason" -> "No wallet found.")))
         }
         case Some(PostedExpr((PostedExpr(tgtaddr: String), _, _, _))) => {
           val txn = OmniClient.transfer(fromaddr,tgtaddr,amt)
 
           sendCometMessage(ssn,
-                ("msgType" -> "omniTransferResponse") ~
-                  ("content" -> ("txnid" -> txn) )
-              )
+            ("msgType" -> "omniTransferResponse") ~
+              ("content" -> ("txnid" -> txn) )
+          )
         }
         case _ => {
           sendCometMessage(ssn,
-              ("msgType" -> "omniError") ~
-                ("content" -> ("reason" -> ("Unrecognized resource"))))
+            ("msgType" -> "omniError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource"))))
 
         }
       }
@@ -2733,16 +2733,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       v match {
         case Some(Bottom) => {
           sendCometMessage(ssn,
-                ("msgType" -> "omniError") ~
-                  ("content" ->
-                    ("reason" -> "No wallet found.")))
+            ("msgType" -> "omniError") ~
+              ("content" ->
+                ("reason" -> "No wallet found.")))
         }
         case Some(PostedExpr((PostedExpr(fromaddr: String), _, _, _))) => {
           val bal = OmniClient.getBalance(fromaddr).extract[BigDecimal]
           if (bal < amt) {
             sendCometMessage(ssn,
-                  ("msgType" -> "omniError") ~
-                    ("content" -> ("reason" -> "Insufficient funds")))
+              ("msgType" -> "omniError") ~
+                ("content" -> ("reason" -> "Insufficient funds")))
           }
           else {
             readFromCnxnLabel(ampWalletLabel, tgtcnxn, (v => handleTgtRsp(v,fromaddr)))
@@ -2750,8 +2750,37 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         }
         case _ => {
           sendCometMessage(ssn,
-              ("msgType" -> "omniError") ~
-                ("content" -> ("reason" -> ("Unrecognized resource"))))
+            ("msgType" -> "omniError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource"))))
+
+        }
+      }
+    }
+    readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
+  }
+
+  def omniGetAmpWalletAddress(json: JObject) : Unit = {
+    val ssn = (json \ "sessionURI").extract[String]
+    val cap = capFromSession(ssn)
+    val cnxn = getCapSelfCnxn(cap)
+
+    def handleRsp(v: Option[ConcreteHL.HLExpr]): Unit = {
+      v match {
+        case Some(Bottom) => {
+          sendCometMessage(ssn,
+            ("msgType" -> "omniError") ~
+              ("content" ->
+                ("reason" -> "No wallet found.")))
+        }
+        case Some(PostedExpr((PostedExpr(addr: String), _, _, _))) => {
+          sendCometMessage(ssn,
+            ("msgType" -> "getAmpWalletAddressResponse") ~
+              ("content" -> ("address" -> addr)))
+        }
+        case _ => {
+          sendCometMessage(ssn,
+            ("msgType" -> "omniError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource"))))
 
         }
       }

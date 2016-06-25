@@ -271,7 +271,9 @@ trait EvaluatorService extends HttpService with CORSSupport {
     ("initiateClaim", initiateClaim),
     // omni interfact
     ("omniGetBalance", omniGetBalance),
-    ("omniTransfer", omniTransfer)
+    ("omniTransfer", omniTransfer),
+    ("getAmpWalletAddress", omniGetAmpWalletAddress)
+
     )
 
   @transient
