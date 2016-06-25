@@ -179,10 +179,11 @@ object Importer extends EvalConfig
         val typ = (v \ "msgType").extract[String]
         typ match {
           case "sessionPong" => done = true
-          case msgType => {
+          case `msgType` => {
             done = true
-            rslt = Some(v)
+            rslt = Some(v \ "content")
           }
+          case _ => ()
         }
       })
     }
@@ -439,6 +440,13 @@ object Importer extends EvalConfig
           case "agent" => {
             val agent = (el \ "content").extract[AgentDesc]
             makeAgent(agent)
+            val session = sessionsById(agent.id).sessionURI
+            val isok = glosevalPost("{ \"msgType\": \"getAmpWalletAddress\", \"content\": {\"sessionURI\": \"" +session+ "\" } }")
+            if (isok != "OK") throw new Exception("Unable to call getAmpWalletAddress")
+            expect("getAmpWalletAddressResponse", session) match {
+              case Some(js) => println( pretty(js))
+              case _ => throw new Exception("Unable to get wallet address")
+            }
           }
           case "cnxn" => {
             val cnxn = (el \ "content").extract[ConnectionDesc]
