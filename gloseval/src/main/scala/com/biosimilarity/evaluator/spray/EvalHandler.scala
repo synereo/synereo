@@ -2674,7 +2674,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
           sendCometMessage(ssn,
             ("msgType" -> "omniGetBalanceResponse") ~
-              ("content" -> ("balance" -> bal))
+              ("content" -> bal.toJson )
           )
         }
         case _ => {
@@ -2738,7 +2738,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 ("reason" -> "No wallet found.")))
         }
         case Some(PostedExpr((PostedExpr(fromaddr: String), _, _, _))) => {
-          val bal = OmniClient.getBalance(fromaddr).extract[BigDecimal]
+          val bal = OmniClient.getBalance(fromaddr).balance
           if (bal < amt) {
             sendCometMessage(ssn,
               ("msgType" -> "omniError") ~
