@@ -27,6 +27,12 @@ case class Err( code: Int, message: String, data: Option[JValue]) extends err
 //case class jsonResponse( Result: JValue, Error: JValue, id: String) extends response
 
 
+case class omniBalance( balance : BigDecimal, reserved : BigDecimal ) {
+  def toJson() = {
+    "{\"balance\": " + balance + ", \"reserved\": " + reserved + "}"
+  }
+}
+
 object OmniClient extends EvalConfig
   //with OmniConfig
   with Serializable {
@@ -37,6 +43,7 @@ object OmniClient extends EvalConfig
   private val RPC_PWD = OmniConfig.read("OmniRPCPass")
   private val AMP_PROP_ID = 39
   private val OMNI_URI = OmniConfig.read("OmniRPCURI")
+  private val testAmpAddress = "mfiScEupUknzvkCwDbEEPcjCTiRw17k42X"
 
   private def omniCall(method: String, params: JValue* ): JValue = {
     println(s"omniCall: ${method}")
@@ -56,10 +63,10 @@ object OmniClient extends EvalConfig
     // verify id matches??
     val jsrsp = parse(response).extract[JObject]
     if (id != (jsrsp \ "id").extract[String]) throw new Exception("Invalid response")
-    val erropt = (jsrsp \ "error").extract[Option[String]]
+    val erropt = (jsrsp \ "error").extract[Option[JObject]]
     erropt match {
       case None => (jsrsp \ "result" )
-      case Some(err) => throw new Exception("Omni returned error: "+err)
+      case Some(jo) => throw new Exception("Omni returned error: "+(jo \ "message").extract[String])
     }
   }
 
@@ -77,8 +84,11 @@ object OmniClient extends EvalConfig
   }
   */
 
-  def getBalance(addr: String) : JObject = {
-    omniCall("omni_getbalance", JString(addr), JInt(AMP_PROP_ID)).extract[JObject]
+  def getBalance(addr: String) : omniBalance = {
+    val rslt = omniCall("omni_getbalance", JString(addr), JInt(AMP_PROP_ID))
+    val bal = BigDecimal( (rslt \ "balance").extract[String] )
+    val rsv = BigDecimal( (rslt \ "reserved").extract[String] )
+    omniBalance(bal,rsv)
   }
 
   def transfer(fromaddress: String, toaddress: String, amount: BigDecimal) : String = {
@@ -89,12 +99,30 @@ object OmniClient extends EvalConfig
     omniCall("getnewaddress").extract[String]
   }
 
+  def dumpPrivKey(addr : String) : String = {
+    omniCall("dumpprivkey", JString(addr)).extract[String]
+  }
+
 
   def runTests() : Unit = {
     val rsp = pretty( omniCall("omni_getinfo") )
     println(rsp)
-    val rsp2 = pretty( getNewAddress() )
-    println(rsp2)
+
+    val tgt = getNewAddress()
+    println( "Private Key : "+ dumpPrivKey(tgt) )
+
+    val tgtbal = getBalance(tgt)
+
+    val orgbal = getBalance(testAmpAddress)
+    println( "Private Key : "+ dumpPrivKey(testAmpAddress) )
+    //println( orgbal )
+
+    val txn = transfer(testAmpAddress, tgt, orgbal.balance - orgbal.reserved )
+
+    val newbal = getBalance(testAmpAddress)
+    println( newbal )
+
+    //println(rsp2)
   }
 
 }

@@ -33,6 +33,7 @@ trait CORSSupport {
     }
   }
 
+
   override def timeoutRoute = complete {
     HttpResponse(
       StatusCodes.InternalServerError,
