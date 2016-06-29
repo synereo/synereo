@@ -1397,53 +1397,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               def handleRsp(v: ConcreteHL.HLExpr): Unit = {
                 v match {
                   case PostedExpr((PostedExpr(labelList: String), _, _, _)) => {
-                    // TODO: Replace notification block below with behavior code
                     val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
                     listenIntroductionNotification(sessionURI, aliasCnxn)
                     listenConnectNotification(sessionURI, aliasCnxn)
-
-                    // Fetch the encrypted wallet, decrypt it with the password and
-                    // store it in memory under the sessionToken
-                    //                     fetch(
-                    //                       btcWIFKeyLongTermStorage,
-                    //                       List( aliasCnxn ),
-                    //                       ( optRsrc : Option[mTT.Resource] ) => {
-                    // Unpack encrypted key from resource
-                    //                         def handleRsp( v : ConcreteHL.HLExpr ) : Unit = {
-                    //                           v match {
-                    // BUGBUG : lgm -- there's a race
-                    //                             case Bottom => {
-                    //                               CompletionMapper.complete(key, compact(render(
-                    //                                 ("msgType" -> "initializeSessionError") ~
-                    //                                 ("content" -> ("reason" -> "Failed to load BTC WIF key.")) 
-                    //                               )))
-                    //                             }
-                    //                             case PostedExpr( (PostedExpr( encryptedKey : String ), _, _, _) ) => {
-                    // BUGBUG : lgm -- fix the padding and
-                    // uncomment these lines
-                    //val btcWIFKey = decryptWithSaltedPassword(password, hexStringToByteArray(encryptedKey)).map(_.toChar).mkString
-                    //btcKeyMapper.map += ((sessionToken, btcWIFKey))
-                    /* println("onLabelsFetch / fetch btc wifkey: Added " + */ /*(sessionToken,btcWIFKey) + */ /* "to in-memory map") */
-                    //                             }
-                    //                           }
-                    //                         }
-                    //                         optRsrc match {
-                    //                           case None => ();
-                    //                           case Some(mTT.Ground(v)) => {
-                    //                             handleRsp( v ) 
-                    //                           }
-                    //                           case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                    //                             handleRsp( v ) 
-                    //                           }
-                    //                           case _ => {
-                    //                             CompletionMapper.complete(key, compact(render(
-                    //                               ("msgType" -> "initializeSessionError") ~
-                    //                               ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))
-                    //                             )))
-                    //                           }
-                    //                         }
-                    //                       }
-                    //                     )
 
                     val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
 
@@ -2759,18 +2715,22 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
   }
 
-  def omniGetAmpWalletAddress(json: JObject) : Unit = {
-    val ssn = (json \ "sessionURI").extract[String]
+  def omniGetAmpWalletAddress(json: JObject) : Unit = { omniGetAmpWalletAddress(json, false) }
+  def omniGetAmpWalletAddress(json: JObject, recursed: Boolean) : Unit = {
+      val ssn = (json \ "sessionURI").extract[String]
     val cap = capFromSession(ssn)
     val cnxn = getCapSelfCnxn(cap)
 
     def handleRsp(v: Option[ConcreteHL.HLExpr]): Unit = {
       v match {
         case Some(Bottom) => {
-          sendCometMessage(ssn,
-            ("msgType" -> "omniError") ~
-              ("content" ->
-                ("reason" -> "No wallet found.")))
+          if (!recursed) createOmniWallet(cnxn, _ => omniGetAmpWalletAddress(json, true))
+          else {
+            sendCometMessage(ssn,
+              ("msgType" -> "omniError") ~
+                ("content" ->
+                  ("reason" -> "No wallet found and unable to create one.")))
+          }
         }
         case Some(PostedExpr((PostedExpr(addr: String), _, _, _))) => {
           sendCometMessage(ssn,
