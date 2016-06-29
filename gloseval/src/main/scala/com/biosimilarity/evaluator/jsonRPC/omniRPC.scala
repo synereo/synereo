@@ -53,7 +53,7 @@ object OmniClient extends EvalConfig
 
     val req = Http(OMNI_URI)
       .timeout(1000, 60000)
-      .auth(RPC_USER, "dud")
+      .auth(RPC_USER, RPC_PWD)
       .header("Content-Type", "application/json")
       .postData(requestBody)
     val response = req.asString.body
