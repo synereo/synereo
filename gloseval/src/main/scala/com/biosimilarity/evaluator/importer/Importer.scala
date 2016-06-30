@@ -17,7 +17,10 @@ import com.biosimilarity.evaluator.spray.NodeUser
 import org.json4s.JsonAST.{JArray, JValue, JObject}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
+import org.json4s.JsonDSL._
 import java.util.UUID
+
+import com.biosimilarity.evaluator.omniRPC.OmniClient
 
 import spray.http.DateTime
 
@@ -56,6 +59,14 @@ object Importer extends EvalConfig
   private def glosevalPost(msgType: String, data: RequestContent): String = {
     println(s"REQUEST: ${msgType}")
     val requestBody = write(ApiRequest(msgType, data))
+    glosevalPost(requestBody)
+
+  }
+
+
+  private def glosevalPost(msgType: String, data: JValue): String = {
+    println(s"REQUEST: ${msgType}")
+    val requestBody = write( ("msgType" -> msgType) ~ ("content" -> data) )
     glosevalPost(requestBody)
 
   }
@@ -423,6 +434,7 @@ object Importer extends EvalConfig
     println("using admin session URI : " + adminSession.sessionURI)
     //val thrd = longPoll()
     //thrd.start()
+    var testOmni = true
 
     tests.foreach(el => {
       val typ = (el \ "type").extract[String]
@@ -440,12 +452,37 @@ object Importer extends EvalConfig
           case "agent" => {
             val agent = (el \ "content").extract[AgentDesc]
             makeAgent(agent)
-            val session = sessionsById(agent.id).sessionURI
-            val isok = glosevalPost("{ \"msgType\": \"getAmpWalletAddress\", \"content\": {\"sessionURI\": \"" +session+ "\" } }")
-            if (isok != "OK") throw new Exception("Unable to call getAmpWalletAddress")
-            expect("getAmpWalletAddressResponse", session) match {
-              case Some(js) => println( pretty(js))
-              case _ => throw new Exception("Unable to get wallet address")
+            if (testOmni) {
+              val session = sessionsById(agent.id).sessionURI
+              val isok = glosevalPost("getAmpWalletAddress", ("sessionURI" -> session))
+              if (isok != "OK") throw new Exception("Unable to call getAmpWalletAddress")
+              expect("getAmpWalletAddressResponse", session) match {
+                case Some(js) => {
+                  println(pretty(js))
+                  val oldaddr = (js \ "address").extract[String]
+                  val isok2 = glosevalPost("setAmpWalletAddress", ("sessionURI" -> session) ~ ("address" -> OmniClient.testAmpAddress))
+                  if (isok2 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
+                  expect("setAmpWalletAddressResponse", session) match {
+                    case Some(js) => {
+                      println(pretty(js))
+                      val newaddr = (js \ "newaddress").extract[String]
+                      if (newaddr != OmniClient.testAmpAddress) throw new Exception("setAmpWalletAddressResponse invalid")
+                      val isok3 = glosevalPost("setAmpWalletAddress", ("sessionURI" -> session) ~ ("address" -> oldaddr))
+                      if (isok3 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
+                      expect("setAmpWalletAddressResponse", session) match {
+                        case Some(js) => {
+                          val addr = (js \ "newaddress").extract[String]
+                          if (addr != oldaddr) throw new Exception("setAmpWalletAddressResponse invalid")
+                        }
+                        case _ => throw new Exception("Unable to set wallet address")
+                      }
+                    }
+                    case _ => throw new Exception("Unable to set wallet address")
+                  }
+                }
+                case _ => throw new Exception("Unable to get wallet address")
+              }
+              testOmni = false  // once is enough ...
             }
           }
           case "cnxn" => {
@@ -470,6 +507,9 @@ object Importer extends EvalConfig
 
         //thrd.join(20000)
       }
+
+      OmniClient.runTests()
+
     })
   }
 

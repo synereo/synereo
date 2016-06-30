@@ -2748,5 +2748,53 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
   }
 
+  def omniSetAmpWalletAddress(json: JObject) : Unit = {
+    val ssn = (json \ "sessionURI").extract[String]
+    val cap = capFromSession(ssn)
+    val cnxn = getCapSelfCnxn(cap)
+    val newaddr = (json \ "address").extract[String]
+
+    def doPost(oldaddr : Option[String]) = {
+      postToCnxnLabel(ampWalletLabel, cnxn, newaddr, {
+        case Some(_) => {
+          sendCometMessage(ssn,
+            ("msgType" -> "setAmpWalletAddressResponse") ~
+              ("content" -> ("newaddress" -> newaddr)))
+        }
+        case None => {
+          sendCometMessage(ssn,
+            ("msgType" -> "omniError") ~
+              ("content" -> ("reason" -> ("Unidentified error whilst posting"))))
+
+        }
+      })
+    }
+
+    def checkBalance(oldaddr : String) = {
+      val bal = OmniClient.getBalance(oldaddr)
+      if (bal.balance > 0) {
+        sendCometMessage(ssn,
+          ("msgType" -> "setAmpWalletAddressError") ~
+            ("content" -> ("reason" -> ("Existing account has a non-zero balance.  Please transfer funds out first"))))
+      }
+      else doPost(Some(oldaddr))
+    }
+
+    def handleRsp(v: Option[ConcreteHL.HLExpr]): Unit = {
+      v match {
+        case Some(Bottom) => doPost(None)
+        case Some(PostedExpr((PostedExpr(oldaddr: String), _, _, _))) => checkBalance(oldaddr)
+        case _ => {
+          sendCometMessage(ssn,
+            ("msgType" -> "omniError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource"))))
+
+        }
+      }
+    }
+    readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
+
+  }
+
 
 }
