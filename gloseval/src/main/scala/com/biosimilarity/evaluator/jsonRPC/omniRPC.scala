@@ -43,7 +43,8 @@ object OmniClient extends EvalConfig
   private val RPC_PWD = OmniConfig.read("OmniRPCPass")
   private val AMP_PROP_ID = 39
   private val OMNI_URI = OmniConfig.read("OmniRPCURI")
-  private val testAmpAddress = "mfiScEupUknzvkCwDbEEPcjCTiRw17k42X"
+
+  val testAmpAddress = "mfiScEupUknzvkCwDbEEPcjCTiRw17k42X"
 
   private def omniCall(method: String, params: JValue* ): JValue = {
     println(s"omniCall: ${method}")
@@ -121,6 +122,9 @@ object OmniClient extends EvalConfig
 
     val newbal = getBalance(testAmpAddress)
     println( newbal )
+
+
+
 
     //println(rsp2)
   }
