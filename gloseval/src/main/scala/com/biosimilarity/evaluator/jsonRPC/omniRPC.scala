@@ -42,9 +42,19 @@ object OmniClient extends EvalConfig
   private val RPC_USER = OmniConfig.read("OmniRPCUser")
   private val RPC_PWD = OmniConfig.read("OmniRPCPass")
   private val AMP_PROP_ID = 39
-  private val OMNI_URI = OmniConfig.read("OmniRPCURI")
-
+  val OMNI_URI = OmniConfig.read("OmniRPCURI")
   val testAmpAddress = "mfiScEupUknzvkCwDbEEPcjCTiRw17k42X"
+
+  def omniError(reason : String ) : JObject = {
+    ("msgType" -> "omniError") ~ ("content" -> ("reason" -> reason) )
+  }
+
+  def isOmniError(jo : JValue) : Boolean = {
+    (jo \ "msgType").extract[Option[String]] match {
+      case Some(s) => s == "omniError"
+      case None => false
+    }
+  }
 
   private def omniCall(method: String, params: JValue* ): JValue = {
     println(s"omniCall: ${method}")
@@ -60,14 +70,18 @@ object OmniClient extends EvalConfig
     val response = req.asString.body
 
     println(s"omni RESPONSE BODY: ${response}")
-    //if (response.startsWith("Malformed request")) throw new Exception(response)
-    // verify id matches??
-    val jsrsp = parse(response).extract[JObject]
-    if (id != (jsrsp \ "id").extract[String]) throw new Exception("Invalid response")
-    val erropt = (jsrsp \ "error").extract[Option[JObject]]
-    erropt match {
-      case None => (jsrsp \ "result" )
-      case Some(jo) => throw new Exception("Omni returned error: "+(jo \ "message").extract[String])
+    if (response.startsWith("Malformed request")) omniError(response)
+    else {
+      // verify id matches??
+      val jsrsp = parse(response).extract[JObject]
+      if (id != (jsrsp \ "id").extract[String]) omniError("Invalid response")
+      else {
+        val erropt = (jsrsp \ "error").extract[Option[JObject]]
+        erropt match {
+          case None => (jsrsp \ "result")
+          case Some(jo) => omniError((jo \ "message").extract[String])
+        }
+      }
     }
   }
 
@@ -92,6 +106,18 @@ object OmniClient extends EvalConfig
     omniBalance(bal,rsv)
   }
 
+  def getBalanceResponse(addr: String) : JValue = {
+    val rslt = omniCall("omni_getbalance", JString(addr), JInt(AMP_PROP_ID))
+    if (isOmniError(rslt)) rslt
+    else {
+      val bal = BigDecimal((rslt \ "balance").extract[String])
+      val rsv = BigDecimal((rslt \ "reserved").extract[String])
+      ("msgType" -> "omniGetBalanceResponse") ~
+        ("content" -> omniBalance(bal, rsv).toJson)
+    }
+  }
+
+
   def transfer(fromaddress: String, toaddress: String, amount: BigDecimal) : String = {
     omniCall("omni_send", JString(fromaddress), JString(toaddress), JInt(AMP_PROP_ID), JString(amount.toString())).extract[String]
   }
@@ -102,6 +128,17 @@ object OmniClient extends EvalConfig
 
   def dumpPrivKey(addr : String) : String = {
     omniCall("dumpprivkey", JString(addr)).extract[String]
+  }
+
+  def canConnect() : Boolean = {
+    try {
+      pretty( omniCall("omni_getinfo") )
+      true
+    }
+    catch {
+      case _ => false
+    }
+
   }
 
 
@@ -122,9 +159,6 @@ object OmniClient extends EvalConfig
 
     val newbal = getBalance(testAmpAddress)
     println( newbal )
-
-
-
 
     //println(rsp2)
   }

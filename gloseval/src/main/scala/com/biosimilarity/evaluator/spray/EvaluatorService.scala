@@ -1,37 +1,22 @@
 package com.biosimilarity.evaluator.spray
 
-import com.protegra_ati.agentservices.store._
-import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.msgs._
-import com.biosimilarity.lift.model.store._
-import com.biosimilarity.lift.lib._
 import akka.actor._
+import com.biosimilarity.lift.lib._
 import spray.routing._
 
 import scala.collection.mutable
-//import directives.CompletionMagnet
-import spray.http._
-import spray.http.StatusCodes._
-import MediaTypes._
+import java.util.UUID
 
-import spray.httpx.encoding._
-
+import com.biosimilarity.evaluator.omniRPC.{OmniClient, OmniConfig}
+import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import org.json4s.JsonDSL._
+import spray.http._
+import spray.httpx.encoding._
 
-import scala.concurrent.duration._
+import scala.collection.mutable.{HashMap, HashSet}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.continuations._
-import scala.collection.mutable.{ HashMap, MultiMap, HashSet }
-
-import com.typesafe.config._
-
-import javax.crypto._
-import javax.crypto.spec.SecretKeySpec
-
-import java.util.Date
-import java.util.UUID
+import scala.concurrent.duration._
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -42,6 +27,8 @@ class EvaluatorServiceActor extends Actor
 
   // create well-known node user
   createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
+
+  if (OmniConfig.read(OmniClient.OMNI_URI,"miss") != "miss" && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
@@ -205,7 +192,6 @@ case class CloseSessionException(sessionURI: String, message: String) extends Ex
 
 // this trait defines our service behavior independently from the service actor
 trait EvaluatorService extends HttpService with CORSSupport {
-  import DSLCommLink.mTT
   import EvalHandlerService._
 
   @transient
