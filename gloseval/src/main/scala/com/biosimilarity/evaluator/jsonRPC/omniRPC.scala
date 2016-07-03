@@ -42,7 +42,7 @@ object OmniClient extends EvalConfig
   private val RPC_USER = OmniConfig.read("OmniRPCUser")
   private val RPC_PWD = OmniConfig.read("OmniRPCPass")
   private val AMP_PROP_ID = 39
-  val OMNI_URI = OmniConfig.read("OmniRPCURI")
+  private val OMNI_URI = OmniConfig.read("OmniRPCURI")
   val testAmpAddress = "mfiScEupUknzvkCwDbEEPcjCTiRw17k42X"
 
   def omniError(reason : String ) : JObject = {
@@ -67,7 +67,15 @@ object OmniClient extends EvalConfig
       .auth(RPC_USER, RPC_PWD)
       .header("Content-Type", "application/json")
       .postData(requestBody)
-    val response = req.asString.body
+
+    var response = ""
+    try {
+      response = req.asString.body
+    } catch {
+      case (e) => {
+        return omniError("Unable to connect to Omni server")
+      }
+    }
 
     println(s"omni RESPONSE BODY: ${response}")
     if (response.startsWith("Malformed request")) omniError(response)
@@ -131,14 +139,7 @@ object OmniClient extends EvalConfig
   }
 
   def canConnect() : Boolean = {
-    try {
-      pretty( omniCall("omni_getinfo") )
-      true
-    }
-    catch {
-      case _ => false
-    }
-
+    !isOmniError( omniCall("omni_getinfo") )
   }
 
 
@@ -177,6 +178,10 @@ object OmniConfig {
   def read(prm : String, dflt : String ) : String = {
     try { config.getString(prm) }
     catch { case _ => dflt }
+  }
+
+  def isOmniRequired() : Boolean = {
+    read("OmniRPCURI", "miss") != "miss"
   }
 
 }

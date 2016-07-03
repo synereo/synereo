@@ -28,7 +28,7 @@ class EvaluatorServiceActor extends Actor
   // create well-known node user
   createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
 
-  if (OmniConfig.read(OmniClient.OMNI_URI,"miss") != "miss" && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
+
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
