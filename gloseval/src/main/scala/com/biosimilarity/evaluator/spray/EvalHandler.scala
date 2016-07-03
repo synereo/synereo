@@ -18,6 +18,9 @@ import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
+import com.biosimilarity.evaluator.omniRPC.{OmniClient, OmniConfig}
+
+
 
 import scala.collection.mutable
 //import com.biosimilarity.evaluator.distribution.portable.v0_1.createUserResponse
@@ -1186,10 +1189,12 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(aliasURI, nodeAliasURI, feed _)
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(nodeAliasURI, aliasURI, feed _)
 
-    try {
-      omniCreateWallet(selfCnxn, optRsrc => BasicLogService.tweet("omniwallet created: " + optRsrc))
-    } catch {
-      case e => BasicLogService.tweet( "error creating omni account: " + e.getMessage )
+    if (OmniConfig.isOmniRequired()) {
+      try {
+        omniCreateWallet(selfCnxn, optRsrc => BasicLogService.tweet("omniwallet created: " + optRsrc))
+      } catch {
+        case e => BasicLogService.tweet("error creating omni account: " + e.getMessage)
+      }
     }
 
   }
@@ -2565,8 +2570,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         pacRelyingParty,
         claim))
   }
-
-  import com.biosimilarity.evaluator.omniRPC.OmniClient
 
   private def readFromCnxnLabel(lbl : CnxnCtxtLabel[String,String,String],
                                 cnxn : PortableAgentCnxn, handleRsp : Option[ConcreteHL.HLExpr] => Unit ) : Unit = {

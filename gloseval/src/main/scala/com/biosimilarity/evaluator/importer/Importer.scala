@@ -20,7 +20,7 @@ import org.json4s.jackson.Serialization.write
 import org.json4s.JsonDSL._
 import java.util.UUID
 
-import com.biosimilarity.evaluator.omniRPC.OmniClient
+import com.biosimilarity.evaluator.omniRPC.{OmniClient, OmniConfig}
 
 import spray.http.DateTime
 
@@ -434,7 +434,7 @@ object Importer extends EvalConfig
     println("using admin session URI : " + adminSession.sessionURI)
     //val thrd = longPoll()
     //thrd.start()
-    var testOmni = true
+    var testOmni = OmniConfig.isOmniRequired()
 
     tests.foreach(el => {
       val typ = (el \ "type").extract[String]
@@ -508,7 +508,7 @@ object Importer extends EvalConfig
         //thrd.join(20000)
       }
 
-      OmniClient.runTests()
+      if (testOmni) OmniClient.runTests()
 
     })
   }
