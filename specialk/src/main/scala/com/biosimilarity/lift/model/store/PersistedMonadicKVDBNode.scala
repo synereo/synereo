@@ -136,6 +136,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  throw new Exception( "shouldn't be calling this version of asCacheK" )
 	}
 
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : Elem
+	) : Option[mTT.GetRequest]
+
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
 	  value : Elem
@@ -250,6 +255,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
 	  for( pd <- persistenceManifest )
 	  yield { pd.asStoreKRecord( key, value ) }
+	}
+
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : Elem
+	) : Option[mTT.GetRequest] = {
+	  for(
+            pd <- persistenceManifest;
+            rslt <- pd.asIndirection( key, value )
+          )
+	  yield { rslt }
 	}
 	
 	def asResource(
@@ -2358,7 +2374,14 @@ package usage {
 		}
 	      }
 	      
-	      override def asResource(
+              override def asIndirection(
+		key : mTT.GetRequest, // must have the pattern to determine bindings
+		value : Elem
+	      ) : Option[mTT.GetRequest] = {
+                ???
+              }
+
+              override def asResource(
 		key : mTT.GetRequest, // must have the pattern to determine bindings
 		value : Elem
 	      ) : emT.PlaceInstance = {

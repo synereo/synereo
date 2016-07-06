@@ -165,6 +165,13 @@ package services {
 		  ) : Value = {
 		    throw new Exception( "Not implemented in this service" )
 		  }
+
+                  override def asIndirection(
+		    key : mTT.GetRequest, // must have the pattern to determine bindings
+		    value : Elem
+		  ) : Option[mTT.GetRequest] = {
+		    throw new Exception( "Not implemented in this service" )
+		  }
 		  
 		  override def asResource(
 		    key : mTT.GetRequest, // must have the pattern to determine bindings

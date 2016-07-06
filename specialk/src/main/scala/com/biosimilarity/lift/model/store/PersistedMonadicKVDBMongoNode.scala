@@ -160,6 +160,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  throw new Exception( "shouldn't be calling this version of asCacheK" )
 	}
 
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : DBObject
+	) : mTT.GetRequest
+
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
 	  value : DBObject
@@ -275,6 +280,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  for( pd <- persistenceManifest )
 	  yield { pd.asStoreKRecord( key, value ) }
 	}
+        
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : DBObject
+	) : Option[mTT.GetRequest] = {
+          for( pd <- persistenceManifest )
+	  yield { pd.asIndirection( key, value )} 
+        }
 	
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -804,23 +817,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	
 	implicit val SyncTable : Option[( UUID, HashMap[UUID,Int] )] = None
 
-        def executeWithResults(
+        def createMongoQuery(
           pd : PersistenceManifest,
           xmlCollName : String,
           tPath : Either[mTT.GetRequest,mTT.GetRequest]
-        ) : List[( DBObject, emT.PlaceInstance )] = {
-          // BUGBUG : lgm -- this is not very performant!
-          // The better approach is to find a way to inline the
-          // asResource code
-          BasicLogService.tweet(
-	    (
-	      "PersistedMonadicKVDBMongoNode : "
-	      + "\nmethod : executeWithResults "
-	      + "\nthis : " + this
-              + "\ncollName : " + xmlCollName
-	      + "\ntPath : " + tPath
-	    )
-	  )
+        ) : Option[( MongoClient, String ) => List[DBObject]] = {
           val mongoPD : MongoDBManifest = 
             pd match {
               case mngoPM : MongoDBManifest => mngoPM
@@ -853,6 +854,90 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               }
             }
 
+          for(
+            qry <- qFn( xmlCollName, path )
+          ) yield {
+              BasicLogService.tweet(
+	        (
+	          "PersistedMonadicKVDBMongoNode : "
+	          + "\nmethod : executeWithResults "
+	          + "\nthis : " + this
+                  + "\ncollName : " + xmlCollName
+	          + "\ntPath : " + tPath
+                  + "\n------------------------------------------------"
+                  + "\ncompiled query : \n" + qry
+                  + "\ncompiled query string : \n" + qry.toString
+	        )
+	      )              
+
+            // Returning a function!
+            ( clientSession : MongoClient, collectionName : String ) => {
+              val mc = clientSession.getDB( defaultDB )( collectionName )
+              BasicLogService.tweet(
+	        (
+	          "PersistedMonadicKVDBMongoNode : "
+	          + "\nmethod : executeWithResults "
+                  + "\nlocal function: qryClntSessFn"
+	          + "\nthis : " + this
+                  + "\nclientSession : " + clientSession
+                  + "\ncollectionName : " + collectionName
+                  + "\n------------------------------------------------"
+	        )
+	      )
+              mc.find( qry ).toList
+            }
+          }
+        }
+
+        def executeWithResults(
+          pd : PersistenceManifest,
+          xmlCollName : String,
+          tPath : Either[mTT.GetRequest,mTT.GetRequest]
+        ) : List[( DBObject, emT.PlaceInstance )] = {
+          // Reader beware - 
+          // The aim of this function is to return the list of
+          // values/continuations associated with tPath.
+          // The option of that value is calculated in pairs, below
+          // The initial query is not sufficient to give the full
+          // semantics of unification. So, once get the candidates
+          // into memory we unify with the key.
+
+          // We have split the records essentially into the
+          // unification bit and a flat key to the value bit
+          
+          // The unification occurs in asIndirection and will throw
+          // and exception if the unification fails which will be
+          // caught by the catch case in the loop that maps over the
+          // return values from the initial query checking for
+          // unification between the key in tPath and the key in the
+          // record
+          
+          // If the the unification succeeds we can then bounce
+          // over to the actual value/continuation
+
+          BasicLogService.tweet(
+	    (
+	      "PersistedMonadicKVDBMongoNode : "
+	      + "\nmethod : executeWithResults "
+	      + "\nthis : " + this
+              + "\ncollName : " + xmlCollName
+	      + "\ntPath : " + tPath
+	    )
+	  )
+
+          val ltns =
+	    labelToNS.getOrElse(
+	      throw new Exception( "must have labelToNS to convert mongo object" )
+	    )
+	  val ttv =
+	    textToVar.getOrElse(
+	      throw new Exception( "must have textToVar to convert mongo object" )
+	    )
+	  val ttt =
+	    textToTag.getOrElse(
+	      throw new Exception( "must have textToTag to convert mongo object" )
+	    )
+
           def loop(
             acc : List[( DBObject, emT.PlaceInstance )],
             rawQryRslts : List[DBObject]
@@ -861,12 +946,34 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               case Nil => acc              
               case e :: qryRslts => {
                 try {
-                  val ersrc = pd.asResource( path, e )
-                  val pair = ( e, ersrc )
-                    loop(
-                      acc ++ List[( DBObject, emT.PlaceInstance )]( pair ),
-                      qryRslts
-                    )
+                  val path =
+                    tPath match {
+                      case Left( p ) => p
+                      case Right( p ) => p
+                    }
+                  val flatKey = pd.asIndirection( path, e )
+                  // Do a query here!
+                  val answer =
+                    for(
+                      qryClntSessFn <- createMongoQuery(
+                        pd, xmlCollName, Left[mTT.GetRequest,mTT.GetRequest]( flatKey )
+                      )
+                    ) yield {
+                      
+                      val actlBlob = wrapAction( qryClntSessFn )( xmlCollName )
+                      // BUGBUG - LGM : may have to use fromMongoObject
+                      val ersrc =
+                        pd.asResource(
+                          CnxnMongoObjectifier.fromMongoObject( actlBlob.head )( ltns, ttv, ttt ),
+                          e
+                        )
+
+                      loop(
+                        acc ++ List[( DBObject, emT.PlaceInstance )]( ( e, ersrc ) ),
+                        qryRslts
+                      )
+                    }                  
+                  answer.getOrElse( List[( DBObject, emT.PlaceInstance )]() )
                 }
                 catch {
                   case e : UnificationQueryFilter[Namespace,Var,Tag] => {
@@ -886,38 +993,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
           val pairs : Option[List[( DBObject, emT.PlaceInstance )]] = 
             for(
-              qry <- qFn( xmlCollName, path )
+              qryClntSessFn <- createMongoQuery( pd, xmlCollName, tPath )
             ) yield {
-              BasicLogService.tweet(
-	        (
-	          "PersistedMonadicKVDBMongoNode : "
-	          + "\nmethod : executeWithResults "
-	          + "\nthis : " + this
-                  + "\ncollName : " + xmlCollName
-	          + "\ntPath : " + tPath
-                  + "\n------------------------------------------------"
-                  + "\ncompiled query : \n" + qry
-                  + "\ncompiled query string : \n" + qry.toString
-	        )
-	      )              
-              val qryClntSessFn : ( MongoClient, String ) => List[DBObject] = {
-                ( clientSession : MongoClient, collectionName : String ) => {
-                  val mc = clientSession.getDB( defaultDB )( collectionName )
-                  BasicLogService.tweet(
-	            (
-	              "PersistedMonadicKVDBMongoNode : "
-	              + "\nmethod : executeWithResults "
-                      + "\nlocal function: qryClntSessFn"
-	              + "\nthis : " + this
-                      + "\nclientSession : " + clientSession
-                      + "\ncollectionName : " + collectionName
-                      + "\n------------------------------------------------"
-	            )
-	          )
-                  mc.find( qry ).toList
-                }
-              }
-              //val qryRslts = executeWithResults( xmlCollName, qry )
+              
               val qryRslts = wrapAction( qryClntSessFn )( xmlCollName )
 
               BasicLogService.tweet(
@@ -935,29 +1013,6 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                 List[( DBObject, emT.PlaceInstance )]( ),
                 qryRslts
               )
-              // ( List[( DBObject, emT.PlaceInstance )]( ) /: qryRslts )(
-//                 {
-//                   ( acc, e ) => {
-//                     try {
-//                       val ersrc = pd.asResource( path, e )
-//                       val pair = ( e, ersrc )
-//                       acc ++ List[( DBObject, emT.PlaceInstance )]( pair )
-//                     }
-//                     catch {
-//                       case e : UnificationQueryFilter[Namespace,Var,Tag] => {
-//                         BasicLogService.tweet( "filtering refuted pattern: " + e.ptn + "; key: " + e.key )
-//                         acc
-//                       }
-//                       case t : Throwable => {
-//                         val errors : java.io.StringWriter = new java.io.StringWriter()
-//                         t.printStackTrace( new java.io.PrintWriter( errors ) )
-//                         BasicLogService.tweet( "unhandled exception : " + errors.toString( ) )
-//                         throw( t )
-//                       }
-//                     }
-//                   }
-//                 }
-//               )
               
             }
           BasicLogService.tweet(
@@ -971,6 +1026,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               + "\npairs : " + pairs
 	    )
 	  )
+
           pairs.getOrElse( List[( DBObject, emT.PlaceInstance )]( ) )
         }
 	def putInStore(
@@ -2649,6 +2705,14 @@ package usage {
 		  }
 		}
 	      }
+
+              override def asIndirection(
+		key : mTT.GetRequest, // must have the pattern to determine bindings
+		value : DBObject
+	      ) : mTT.GetRequest = {
+                // TBD
+                ???
+              }
 	      
 	      override def asResource(
 		key : mTT.GetRequest, // must have the pattern to determine bindings
