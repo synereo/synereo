@@ -69,11 +69,9 @@ object CompletionMapper extends Serializable {
 object CometActorMapper extends Serializable {
   @transient
   val map = new HashMap[String, akka.actor.ActorRef]()
-  val key = ""
   def cometMessage(sessionURI: String, jsonBody: String): Unit = {
-    //println("cometMessage: "+ List(sessionURI, jsonBody))
-    for (cometActor <- map.get(key)) {
-      cometActor ! CometMessage(sessionURI, jsonBody)
+    for (cometActor <- map.get(sessionURI)) {
+      cometActor ! CometMessage(jsonBody)
     }
   }
 }
@@ -1377,7 +1375,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     identType: String,
     identInfo: String,
     password: String,
-    key: String): Unit = {
+    key: String,
+    onSuccess: String => Unit): Unit = {
     import DSLCommLink.mTT
 
     def login(cap: String): Unit = {
@@ -1421,6 +1420,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~ // for default alias
                         ("lastActiveLabel" -> "") ~
                         ("jsonBlob" -> parse(jsonBlob))
+
+                    onSuccess(sessionURI)  // register sessionURI
 
                     CompletionMapper.complete(key, compact(render(
                       ("msgType" -> "initializeSessionResponse") ~
@@ -1739,9 +1740,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def initializeSessionRequest(
-    json: JValue,
-    key: String): Unit = {
+  def initializeSessionRequest(json: JValue, key: String, onSuccess: String => Unit ): Unit = {
     val agentURI = (json \ "agentURI").extract[String]
     val uri = new URI(agentURI)
 
@@ -1762,7 +1761,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       })
     }
     val password = queryMap.getOrElse("password", "")
-    secureLogin(identType, identInfo, password, key)
+    secureLogin(identType, identInfo, password, key, onSuccess)
   }
 
   def extractCnxn(cx: JObject) = new PortableAgentCnxn(

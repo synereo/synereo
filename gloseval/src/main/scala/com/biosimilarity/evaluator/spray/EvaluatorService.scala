@@ -7,7 +7,6 @@ import spray.routing._
 import scala.collection.mutable
 import java.util.UUID
 
-import com.biosimilarity.evaluator.omniRPC.{OmniClient, OmniConfig}
 import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -18,33 +17,12 @@ import scala.collection.mutable.{HashMap, HashSet}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-// we don't implement our route structure directly in the service actor because
-// we want to be able to test it independently, without having to spin up an actor
-class EvaluatorServiceActor extends Actor
-  with EvaluatorService
-  with Serializable {
-  import EvalHandlerService._
-
-  // create well-known node user
-  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
-
-
-
-  // the HttpService trait defines only one abstract member, which
-  // connects the services environment to the enclosing actor or test
-  def actorRefFactory = context
-
-  // this actor only runs our route, but you could add
-  // other things here, like request stream processing
-  // or timeout handling
-  def receive = runRoute(myRoute)
-}
 
 /**
  * CometMessage used when some data needs to be sent to a client
  * with the given id
  */
-case class CometMessage(id: String, data: String)
+case class CometMessage(data: String)
   extends Serializable
 
 /**
@@ -56,132 +34,100 @@ case class SessionPing(sessionURI: String, reqCtx: RequestContext) extends Seria
 /**
  * PollTimeout sent when a long-poll requests times out
  */
-case class PollTimeout(id: String) extends Serializable
+case class PollTimeout() extends Serializable
+case class setSessionId(id : String) extends Serializable
+
 
 /**
  * ClientGc sent to deregister a client when it hasnt pinged in a long time
  */
-case class ClientGc(id: String) extends Serializable
+case class ClientGc() extends Serializable
 
 class CometActor extends Actor with Serializable {
   @transient
-  val aliveTimers = new mutable.HashMap[String, Cancellable] // list of timers that keep track of alive clients
+  var aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, ClientGc())
   @transient
-  val toTimers = new mutable.HashMap[String, Cancellable] // list of timeout timers for clients
+  var optReq : Option[(RequestContext, Cancellable)] = None
   @transient
-  val requests = new mutable.HashMap[String, RequestContext] // list of long-poll RequestContexts
-  @transient
-  val sets = new mutable.HashMap[String, HashSet[String]] // sets of async return messages
+  var msgs = List[String]() // sets of async return messages
+  var sessionId : String = ""
 
   val gcTime = 3 minutes // if client doesnt poll within this time, its garbage collected
-  val clientTimeout = 7 seconds // poll requests are closed after this much time, clients repoll (ping) after this
+  val clientTimeout = 7 seconds // ping requests are ponged after this much time, clients reping after this
 
-
-  //@@GS - testing theory: all methods of cometActor are synchronized => cometMapLock is redundant
-  //@transient
-  //lazy val cometMapLock = new scala.concurrent.Lock()
+  def resetAliveTimer() = {
+    aliveTimer.cancel()
+    aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, ClientGc())
+  }
 
   def receive = {
-    case SessionPing(id, reqCtx) => synchronized {
-      //cometMapLock.acquire()
-      aliveTimers.get(id).map(_.cancel())
-      aliveTimers += (id -> context.system.scheduler.scheduleOnce(gcTime, self, ClientGc(id)))
-
-      def _wait() {
-        requests += (id -> reqCtx)
-        toTimers.get(id).map(_.cancel())
-        toTimers += (id -> context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout(id)))
-      }
-
-      sets.get(id) match {
-        case None => {
-          _wait()
+    case setSessionId(id) => {
+      sessionId = id
+      resetAliveTimer()
+    }
+    case SessionPing(id, reqCtx) => {
+      resetAliveTimer()
+      for ( (_,tmr) <- optReq) tmr.cancel()
+      msgs match {
+        case Nil => {
+          optReq = Some(reqCtx,context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout()))
         }
-        case Some(set) => {
-          // If there are messages, forward them immediately.
-          if (set.size == 0) {
-            _wait()
-          } else {
-            sets -= id
-            reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
-          }
+        case _ => {
+          reqCtx.complete(HttpResponse(entity = "[" + msgs.reverse.mkString(",") + "]"))
+          msgs = Nil
         }
       }
-      //cometMapLock.release()
     }
 
-    case PollTimeout(id) => synchronized {
-      //cometMapLock.acquire()
-      //println( "In PollTimeout checking for a req to match id = " + id ) 
-      for (req <- requests.get(id)) {
-        //println( "In PollTimeout about to call complete with sessionPong; req = " + req ) 
-        req.complete(HttpResponse(entity = compact(render(
-          List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> id)))))))
+    case PollTimeout() => {
+      optReq match {
+        case Some((req,_)) => {
+          req.complete(HttpResponse(entity = compact(render(
+            List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> sessionId)))))))
+          optReq = None
+        }
+        case None => ()
       }
-      requests -= id
-      toTimers -= id
-      //cometMapLock.release()
     }
 
-    case ClientGc(id) => synchronized {
-      //cometMapLock.acquire()
-      requests -= id
-      toTimers -= id
-      aliveTimers -= id
-      //cometMapLock.release()
+    case ClientGc() => {
+      context.stop(self)
+      if (sessionId != "") CometActorMapper.map -= sessionId
     }
 
-    case CometMessage(id, data) => synchronized {
-      //cometMapLock.acquire()
-      def dataPrintRep() =
-        if (data.toString.length > 140) {
-          data.toString.substring(0, Math.min(140, data.toString.length)) + "...}"
-        } else {
-          data.toString
-        }
-
-      val set = sets.getOrElse(id, {
-        println(
-          (
-            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-              + "\nCometMessage id miss: id = " + id
-              + ", data = " + dataPrintRep()
-              + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"))
-        val newSet = new mutable.HashSet[String]
-        sets += (id -> newSet)
-        newSet
-      })
-      set += data
-
-      def setsPrintRep() =
-        if (sets.toString.length > 140) {
-          sets.toString.substring(0, Math.min(140, sets.toString.length)) + "...}"
-        } else {
-          sets.toString
-        }
-      val optReqCtx = requests.get(id)
-      BasicLogService.tweet("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
-      //println("CometMessage: id = " + id + ", data = " + data + ", sets = " + sets + ", optReqCtx = " + optReqCtx)
-      optReqCtx match {
-        case None => {
-          println(
-            (
-              "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-              + "\nCometMessage optReqCtx miss: id = " + id
-              + ", data = " + dataPrintRep()
-              + ", sets = " + setsPrintRep()
-              + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"))
-        }
-        case Some(reqCtx) => {
-          requests -= id
-          sets -= id
-          //println("calling reqCtx.complete on " + reqCtx)
-          reqCtx.complete(HttpResponse(entity = "[" + set.toList.mkString(",") + "]"))
+    case CometMessage(data) => {
+      msgs = data :: msgs
+      optReq match {
+        case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
+        case Some((reqCtx,tmr)) => {
+          reqCtx.complete(HttpResponse(entity = "[" + msgs.reverse.mkString(",") + "]"))
+          optReq = None
+          msgs = Nil
+          tmr.cancel()
         }
       }
-      //cometMapLock.release()
     }
   }
+}
+
+
+// we don't implement our route structure directly in the service actor because
+// we want to be able to test it independently, without having to spin up an actor
+class EvaluatorServiceActor extends Actor
+  with EvaluatorService
+  with Serializable {
+  import EvalHandlerService._
+
+  // create well-known node user
+  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
+
+  // this actor only runs our route, but you could add
+  // other things here, like request stream processing
+  // or timeout handling
+  def receive = runRoute(myRoute)
+
+  def actorRefFactory = context
+
 }
 
 case class MalformedRequestException() extends Exception with Serializable
@@ -190,14 +136,18 @@ case class SessionException(message: String) extends Exception with Serializable
 case class EvalException(sessionURI: String) extends Exception with Serializable
 case class CloseSessionException(sessionURI: String, message: String) extends Exception with Serializable
 
-// this trait defines our service behavior independently from the service actor
-trait EvaluatorService extends HttpService with CORSSupport {
+trait EvaluatorService extends HttpService
+  with CORSSupport {
   import EvalHandlerService._
 
-  @transient
-  val cometActor = actorRefFactory.actorOf(Props[CometActor])
+  def createNewSession(json: JObject, key: String) : Unit = {
+    initializeSessionRequest(json, key, ssn => {
+      val actor = actorRefFactory.actorOf(Props[CometActor])
+      actor ! setSessionId(ssn)
+      CometActorMapper.map += (ssn -> actor)
+    })
 
-  CometActorMapper.map += (CometActorMapper.key -> cometActor)
+  }
 
   @transient
   val syncMethods = HashMap[String, (JObject, String) => Unit](
@@ -206,7 +156,7 @@ trait EvaluatorService extends HttpService with CORSSupport {
     ("confirmEmailToken", confirmEmailToken),
     // New API
     ("createAgentRequest", createAgentRequest),
-    ("initializeSessionRequest", initializeSessionRequest),
+    ("initializeSessionRequest", createNewSession),
     // gary goofing about
       ("getAgentRequest", getAgentRequest)
   )
@@ -276,37 +226,36 @@ trait EvaluatorService extends HttpService with CORSSupport {
                   val json = parse(jsonStr)
                   val msgType = (json \ "msgType").extract[String]
                   val content = (json \ "content").extract[JObject]
-                  asyncMethods.get(msgType) match {
+                  syncMethods.get(msgType) match {
                     case Some(fn) => {
-                      /*
-                      (content \ "sessionURI").extract[Option[String]] match {
-                        case Some(sessionURI) => {
-                          //if (!actor.checkSessionAlive(sessionURI)) throw new SessionException("Session no longer valid")
-                        }
-                        case None => throw new SessionException("Async message missing session info")
-                      }
-                      */
-                      fn(content)
-                      ctx.complete(StatusCodes.OK)
+                      val key = UUID.randomUUID.toString
+                      CompletionMapper.map += (key -> ctx)
+                      fn(content, key)
                     }
-                    case None => syncMethods.get(msgType) match {
-                      case Some(fn) => {
-                        val key = UUID.randomUUID.toString
-                        CompletionMapper.map += (key -> ctx)
-                        fn(content, key)
-                      }
-                      case None => msgType match {
-                        case "sessionPing" => {
-                          val sessionURI = (content \ "sessionURI").extract[String]
-                          (cometActor ! SessionPing(sessionURI, ctx))
-                        }
-                        case _ => {
-                          ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
+                    case None => (content \ "sessionURI").extract[Option[String]] match {
+                      case Some(sessionURI) => {
+                        CometActorMapper.map.get(sessionURI) match {
+                          case None => ctx.complete(StatusCodes.Forbidden)
+                          case Some(cometActor) => msgType match {
+                            case "sessionPing" => cometActor ! SessionPing(sessionURI, ctx)
+                            case _ => {
+                              asyncMethods.get(msgType) match {
+                                case Some(fn) => {
+                                  fn(content)
+                                  ctx.complete(StatusCodes.OK)
+                                }
+                                case _ => {
+                                  ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
+                                }
+                              }
+                            }
+                          }
                         }
                       }
                     }
                   }
-                } catch {
+                }
+                catch {
                   case th: Throwable => {
                     val writer: java.io.StringWriter = new java.io.StringWriter()
                     val printWriter: java.io.PrintWriter = new java.io.PrintWriter(writer)
@@ -324,34 +273,6 @@ trait EvaluatorService extends HttpService with CORSSupport {
           } // decodeRequest
         } // post
       } ~
-      path("""admin/connectServers""") {
-        // allow administrators to make
-        // sure servers are connected
-        // BUGBUG : lgm -- make this secure!!!
-        get {
-          parameters('whoAmI) {
-            (whoAmI: String) =>
-            {
-              //             println(
-              //               (
-              //                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-              //                 + "in admin/connectServers2 "
-              //                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-              //               )
-              //             )
-              BasicLogService.tweet(
-                (
-                  " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                    + "in admin/connectServers2 "
-                    + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "))
-
-              connectServers("evaluator-service", UUID.randomUUID)
-
-              (cometActor ! SessionPing("", _))
-            }
-          }
-        }
-      } ~
       pathPrefix("agentui") {
         getFromDirectory("./agentui")
       }
@@ -360,8 +281,6 @@ trait EvaluatorService extends HttpService with CORSSupport {
 }
 
 /*
-<<<<<<< HEAD
-=======
         path("admin/connectServers") {
           // allow administrators to make
           // sure servers are connected
@@ -390,17 +309,6 @@ trait EvaluatorService extends HttpService with CORSSupport {
             }
           }
         } ~
->>>>>>> origin/1.0
-       pathPrefix("static" / Segment) { path =>
-         getFromFile(path)
-       } ~
-        pathPrefix("agentui") {
-          getFromDirectory("./agentui")
-        } ~
-        pathPrefix("splicious") {
-          getFromDirectory("./agentui")
-        } ~
-
         pathPrefix("splicious/btc") {
           get {
             parameters('btcToken) {

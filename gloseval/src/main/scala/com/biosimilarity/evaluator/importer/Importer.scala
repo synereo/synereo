@@ -248,15 +248,6 @@ object Importer extends EvalConfig
         val session = createSession(agentURI, agent.pwd)
         sessionsById.put(agent.id, session)
 
-        /*   something wrong with git ...
-        //val lbls: List[String] = makeAliasLabel("alias", "#5C9BCC") :: (agent.aliasLabels match {
-        val lbls: List[String] = (agent.aliasLabels match {
-          case None => Nil
-          case Some(l) => l.map(lbl => makeLabel(LabelDesc.extractFrom(lbl)).toTermString(resolveLabel))
-        })
-        glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", lbls))
-        */
-
         agent.aliasLabels match {
           case None =>()
           case Some(l) =>
@@ -305,7 +296,7 @@ object Importer extends EvalConfig
 
   }
 
-  def makeCnxn(adminURI: String, connection: ConnectionDesc): Unit = {
+  def makeCnxn(sessionId: String, connection: ConnectionDesc): Unit = {
     try {
       val sourceId = agentsById(connection.src.replace("agent://", ""))
       val sourceURI = makeAliasURI(sourceId)
@@ -315,7 +306,7 @@ object Importer extends EvalConfig
 
       if (!cnxnLabels.contains(sourceId + targetId)) {
         //glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
-        glosevalPost("establishConnectionRequest", EstablishConnectionRequest(adminURI, sourceURI, targetURI, cnxnLabel))
+        glosevalPost("establishConnectionRequest", EstablishConnectionRequest(sessionId, sourceURI, targetURI, cnxnLabel))
         cnxnLabels.put(sourceId + targetId, cnxnLabel)
         cnxnLabels.put(targetId + sourceId, cnxnLabel)
       }
@@ -487,7 +478,7 @@ object Importer extends EvalConfig
           }
           case "cnxn" => {
             val cnxn = (el \ "content").extract[ConnectionDesc]
-            makeCnxn(adminURI, cnxn)
+            makeCnxn(adminSession.sessionURI, cnxn)
           }
           case "label" => {
             val jo = (el \ "content").extract[JObject]
