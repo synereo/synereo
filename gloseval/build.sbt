@@ -6,7 +6,7 @@ name := "GLoSEval"
 
 version       := "0.1"
 
-scalaVersion  := "2.10.3"
+scalaVersion  := "2.10.5"
 //scalaVersion  := "2.10.0"
 //scalaVersion  := "2.9.2"
 
