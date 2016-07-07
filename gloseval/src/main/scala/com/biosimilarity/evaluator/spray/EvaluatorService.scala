@@ -143,11 +143,7 @@ class EvaluatorServiceActor extends Actor
 
 }
 
-case class MalformedRequestException() extends Exception with Serializable
 case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
-case class SessionException(message: String) extends Exception with Serializable
-case class EvalException(sessionURI: String) extends Exception with Serializable
-case class CloseSessionException(sessionURI: String, message: String) extends Exception with Serializable
 
 trait EvaluatorService extends HttpService
   with CORSSupport {
