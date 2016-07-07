@@ -8,21 +8,17 @@
 
 package com.biosimilarity.evaluator.importer
 
-import java.util.UUID
-
-import com.biosimilarity.evaluator.distribution.EvalConfig
+import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.spray.NodeUser
-import org.json4s.JsonAST.{JArray, JValue, JObject}
+import org.json4s.JsonAST.{JValue, JObject}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 import org.json4s.JsonDSL._
 import java.util.UUID
 
-import com.biosimilarity.evaluator.omniRPC.{OmniClient, OmniConfig}
-
-import spray.http.DateTime
+import com.biosimilarity.evaluator.omniRPC.OmniClient
 
 import scalaj.http.Http
 
@@ -425,7 +421,7 @@ object Importer extends EvalConfig
     println("using admin session URI : " + adminSession.sessionURI)
     //val thrd = longPoll()
     //thrd.start()
-    var testOmni = OmniConfig.isOmniRequired()
+    var testOmni = EvalConfConfig.isOmniRequired()
 
     tests.foreach(el => {
       val typ = (el \ "type").extract[String]

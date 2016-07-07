@@ -18,7 +18,7 @@ import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
-import com.biosimilarity.evaluator.omniRPC.{OmniClient, OmniConfig}
+import com.biosimilarity.evaluator.omniRPC.OmniClient
 
 
 
@@ -1187,16 +1187,14 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(aliasURI, nodeAliasURI, feed _)
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(nodeAliasURI, aliasURI, feed _)
 
-    if (OmniConfig.isOmniRequired()) {
+    if (EvalConfConfig.isOmniRequired()) {
       try {
         omniCreateWallet(selfCnxn, optRsrc => BasicLogService.tweet("omniwallet created: " + optRsrc))
       } catch {
         case e => BasicLogService.tweet("error creating omni account: " + e.getMessage)
       }
     }
-
   }
-
 
   def establishConnection(sessionURI : String, aURI : URI, bURI : URI, cnxnLabel : String) = {
     val aAliasCnxn = PortableAgentCnxn(aURI,"alias",aURI)

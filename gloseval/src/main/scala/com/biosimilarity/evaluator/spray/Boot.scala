@@ -3,7 +3,8 @@ package com.biosimilarity.evaluator.spray
 import akka.io.IO
 import spray.can.Http
 import akka.actor.{ ActorSystem, Props }
-import com.biosimilarity.evaluator.omniRPC.{ OmniClient, OmniConfig }
+import com.biosimilarity.evaluator.omniRPC.OmniClient
+import com.biosimilarity.evaluator.distribution.EvalConfConfig
 
 object Boot extends App
   with Serializable {
@@ -22,6 +23,6 @@ object Boot extends App
 
   IO(Http) ! Http.Bind(listener = service, interface = "0.0.0.0", port = 9876)
 
-  if (OmniConfig.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
+  if (EvalConfConfig.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
 
 }
