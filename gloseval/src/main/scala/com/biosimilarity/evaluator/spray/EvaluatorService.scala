@@ -2,9 +2,9 @@ package com.biosimilarity.evaluator.spray
 
 import akka.actor._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.evaluator.distribution._
 import spray.routing._
 
-import scala.collection.mutable
 import java.util.UUID
 
 import org.json4s.JsonDSL._
@@ -13,7 +13,7 @@ import org.json4s.native.JsonMethods._
 import spray.http._
 import spray.httpx.encoding._
 
-import scala.collection.mutable.{HashMap, HashSet}
+import scala.collection.mutable.HashMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -44,6 +44,8 @@ case class setSessionId(id : String) extends Serializable
 case class ClientGc() extends Serializable
 
 class CometActor extends Actor with Serializable {
+  val gcTime = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes // if client doesnt poll within this time, its garbage collected
+  val clientTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds // ping requests are ponged after this much time, clients need to re-ping after this
   @transient
   var aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, ClientGc())
   @transient
@@ -52,8 +54,6 @@ class CometActor extends Actor with Serializable {
   var msgs = List[String]() // sets of async return messages
   var sessionId : String = ""
 
-  val gcTime = 3 minutes // if client doesnt poll within this time, its garbage collected
-  val clientTimeout = 7 seconds // ping requests are ponged after this much time, clients reping after this
 
   def resetAliveTimer() = {
     aliveTimer.cancel()

@@ -1,10 +1,8 @@
 package com.biosimilarity.evaluator.omniRPC
 
-import java.io.File
 import java.util.UUID
 
-import com.biosimilarity.evaluator.distribution.EvalConfig
-import com.typesafe.config.ConfigFactory
+import com.biosimilarity.evaluator.distribution._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -39,10 +37,10 @@ object OmniClient extends EvalConfig
 
   implicit val formats = org.json4s.DefaultFormats
 
-  private val RPC_USER = OmniConfig.read("OmniRPCUser")
-  private val RPC_PWD = OmniConfig.read("OmniRPCPass")
+  private val RPC_USER = EvalConfConfig.read("OmniRPCUser")
+  private val RPC_PWD = EvalConfConfig.read("OmniRPCPass")
   private val AMP_PROP_ID = 39
-  private val OMNI_URI = OmniConfig.read("OmniRPCURI")
+  private val OMNI_URI = EvalConfConfig.read("OmniRPCURI")
   val testAmpAddress = "mfiScEupUknzvkCwDbEEPcjCTiRw17k42X"
 
   def omniError(reason : String ) : JObject = {
@@ -159,6 +157,7 @@ object OmniClient extends EvalConfig
     val txn = transfer(testAmpAddress, tgt, orgbal.balance - orgbal.reserved )
 
     val newbal = getBalance(testAmpAddress)
+
     println( newbal )
 
     //println(rsp2)
@@ -166,23 +165,4 @@ object OmniClient extends EvalConfig
 
 }
 
-object OmniConfig {
-
-  val config = ConfigFactory.load(ConfigFactory.parseFile(new File("eval.conf")))
-
-  def read(prm : String ) : String = {
-    try { config.getString(prm) }
-    catch { case _ => throw new Exception("Missing or empty value for: " +prm + " in eval.conf file.") }
-  }
-
-  def read(prm : String, dflt : String ) : String = {
-    try { config.getString(prm) }
-    catch { case _ => dflt }
-  }
-
-  def isOmniRequired() : Boolean = {
-    read("OmniRPCURI", "miss") != "miss"
-  }
-
-}
 
