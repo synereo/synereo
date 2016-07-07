@@ -1,4 +1,7 @@
-sudo: false
+  sudo: false
+  language: scala
+  scala:
+   - 2.10.5
 
 cache:
   directories:
@@ -10,10 +13,6 @@ jdk:
   - oraclejdk7
 #  - openjdk8
 
-language: scala
-
-scala:
-   - 2.10.5
 
 # blocklist
 branches:
