@@ -102,6 +102,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  rsrc : mTT.Resource
 	) : CnxnCtxtLeaf[Namespace,Var,String] with Factual
 	
+	def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,String] with Factual
+	
 	def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
@@ -241,6 +245,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  yield { pd.asStoreValue( rsrc ) }
 	}
 	
+        def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+	  for( pd <- persistenceManifest )
+	  yield { pd.asStoreIndirection( key ) }
+	}
+
 	def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
@@ -357,6 +368,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    nameSpace,
 	    List( asStoreKey( key ), asStoreValue( value ) )
 	  )
+	}
+
+	override def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
+	  ???
 	}
 
 	override def asStoreRecord(
@@ -717,12 +734,21 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      val dbAccessExpr =
 		() => {
 		  for(
-		    rcrd <- asStoreRecord( ptn, rsrc );
+                    indrctRcrd <- asStoreIndirection( ptn );                    
+                    rcrd <- asStoreRecord( indrctRcrd.asInstanceOf[mTT.GetRequest], rsrc );
 		    sus <- collName
 		  ) {
 		    BasicLogService.tweet(
 		      (
-			"storing to db : " + pd.db
+			"storing indirectionRecord to db : " //+ pd.db
+			+ " pair : " + indrctRcrd
+			+ " in coll : " + sus
+		      )
+		    )
+                    store( sus )( indrctRcrd )
+                    BasicLogService.tweet(
+		      (
+			"storing flatKeyRecord to db : " //+ pd.db
 			+ " pair : " + rcrd
 			+ " in coll : " + sus
 		      )

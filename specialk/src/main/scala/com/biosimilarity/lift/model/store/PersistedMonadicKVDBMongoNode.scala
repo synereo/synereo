@@ -119,6 +119,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  rsrc : mTT.Resource
 	) : CnxnCtxtLeaf[Namespace,Var,Tag] with Factual
 	
+        // How is a key-value record represented in the store?
+	def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual
+
 	// How is a key-value record represented in the store?
 	def asStoreRecord(
 	  key : mTT.GetRequest,
@@ -265,6 +270,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  yield { pd.asStoreValue( rsrc ) }
 	}
 	
+        def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
+	  for( pd <- persistenceManifest )
+	  yield { pd.asStoreIndirection( key ) }
+	}
+
 	def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
@@ -390,6 +402,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      )
 	    )
 	  )
+	}
+
+        override def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+	  ???
 	}
 
 	override def asStoreRecord(
@@ -1060,19 +1078,30 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      val dbAccessExpr =
 		() => {
 		  for(
-		    rcrd <- asStoreRecord( ptn, rsrc );
+                    indrctRcrd <- asStoreIndirection( ptn );
+                    rcrd <- asStoreRecord( indrctRcrd, rsrc );
 		    sus <- collName
 		  ) {
 		    BasicLogService.tweet(
 		      (
-			"storing to db : " //+ pd.db
+			"storing indirectionRecord to db : " //+ pd.db
+			+ " pair : " + indrctRcrd
+			+ " in coll : " + sus
+		      )
+		    )
+                    store( sus )( indrctRcrd )(
+		      nameSpaceToString, varToString, tagToString, useUpsert
+		    )                    
+                    BasicLogService.tweet(
+		      (
+			"storing flatKeyRecord to db : " //+ pd.db
 			+ " pair : " + rcrd
 			+ " in coll : " + sus
 		      )
 		    )
 		    store( sus )( rcrd )(
 		      nameSpaceToString, varToString, tagToString, useUpsert
-		    )
+                    )                    
 		  }
 		}
 
