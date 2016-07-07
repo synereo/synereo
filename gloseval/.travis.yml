@@ -1,0 +1,31 @@
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.sbt
+    - $HOME/.ivy2
+
+jdk:
+  - oraclejdk7
+#  - openjdk8
+
+language: scala
+
+scala:
+   - 2.10.5
+
+# blocklist
+branches:
+  except:
+
+# safelist
+branches:
+  only:
+    - 1.0
+    
+script:
+   - mvn -e -fn -DskipTests=true install prepare-package
+notifications:
+  email:
+    - ns68751+tci@gmail.com
