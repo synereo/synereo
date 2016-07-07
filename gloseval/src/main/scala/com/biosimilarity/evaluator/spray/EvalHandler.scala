@@ -2266,11 +2266,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   def closeSessionRequest(json: JValue): Unit = {
     val sessionURI = (json \ "sessionURI").extract[String]
-
-    CometActorMapper.cometMessage(sessionURI, compact(render(
-      ("msgType" -> "closeSessionResponse") ~
-        ("content" ->
-          ("sessionURI" -> sessionURI)))))
+    for (actor <- CometActorMapper.map.get(sessionURI)) {
+      CometActorMapper.cometMessage(sessionURI, compact(render(
+        ("msgType" -> "closeSessionResponse") ~
+          ("content" ->
+            ("sessionURI" -> sessionURI)))))
+      actor ! CloseSession()
+    }
   }
 
   def createNodeUser(email: String, password: String, jsonBlob: String): Unit = {

@@ -29,73 +29,86 @@ case class CometMessage(data: String)
  * Poll used when a client wants to register/long-poll with the
  * server
  */
-case class SessionPing(sessionURI: String, reqCtx: RequestContext) extends Serializable
+case class SessionPing(reqCtx: RequestContext) extends Serializable
 
 /**
  * PollTimeout sent when a long-poll requests times out
  */
 case class PollTimeout() extends Serializable
-case class setSessionId(id : String) extends Serializable
+case class SetSessionId(id : String) extends Serializable
+case class KeepAlive() extends Serializable
+case class RunFunction(fn : JObject => Unit, content : JObject) extends Serializable
 
 
 /**
  * ClientGc sent to deregister a client when it hasnt pinged in a long time
  */
-case class ClientGc() extends Serializable
+case class CloseSession() extends Serializable
 
 class CometActor extends Actor with Serializable {
   val gcTime = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes // if client doesnt poll within this time, its garbage collected
   val clientTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds // ping requests are ponged after this much time, clients need to re-ping after this
   @transient
-  var aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, ClientGc())
+  var aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession())
   @transient
   var optReq : Option[(RequestContext, Cancellable)] = None
   @transient
   var msgs = List[String]() // sets of async return messages
-  var sessionId : String = ""
+  var sessionId : Option[String] = None
 
+  override def postStop() = {
+    sessionId = None
+  }
 
   def resetAliveTimer() = {
     aliveTimer.cancel()
-    aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, ClientGc())
+    aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession())
   }
 
   def receive = {
-    case setSessionId(id) => {
-      sessionId = id
+    case SetSessionId(id) => {
+      sessionId = Some(id)
       resetAliveTimer()
     }
-    case SessionPing(id, reqCtx) => {
+    case KeepAlive() => {
       resetAliveTimer()
-      for ( (_,tmr) <- optReq) tmr.cancel()
-      msgs match {
-        case Nil => {
-          optReq = Some(reqCtx,context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout()))
-        }
-        case _ => {
-          reqCtx.complete(HttpResponse(entity = "[" + msgs.reverse.mkString(",") + "]"))
-          msgs = Nil
+    }
+    case SessionPing(reqCtx) => {
+      for (ssn <- sessionId) {
+        resetAliveTimer()
+        for ((_, tmr) <- optReq) tmr.cancel()
+        msgs match {
+          case Nil => {
+            optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout()))
+          }
+          case _ => {
+            reqCtx.complete(HttpResponse(entity = "[" + msgs.reverse.mkString(",") + "]"))
+            msgs = Nil
+          }
         }
       }
     }
-
     case PollTimeout() => {
-      optReq match {
-        case Some((req,_)) => {
-          req.complete(HttpResponse(entity = compact(render(
-            List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> sessionId)))))))
-          optReq = None
+      for (ssn <- sessionId) {
+        optReq match {
+          case Some((req, _)) => {
+            req.complete(HttpResponse(entity = compact(render(
+              List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> ssn)))))))
+            optReq = None
+          }
+          case None => ()
         }
-        case None => ()
       }
     }
-
-    case ClientGc() => {
+    case CloseSession() => {
       context.stop(self)
-      if (sessionId != "") CometActorMapper.map -= sessionId
+      for (ssn <- sessionId) CometActorMapper.map -= ssn
     }
-
+    case RunFunction(fn,content) => {
+      fn(content)
+    }
     case CometMessage(data) => {
+      resetAliveTimer()
       msgs = data :: msgs
       optReq match {
         case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
@@ -143,7 +156,7 @@ trait EvaluatorService extends HttpService
   def createNewSession(json: JObject, key: String) : Unit = {
     initializeSessionRequest(json, key, ssn => {
       val actor = actorRefFactory.actorOf(Props[CometActor])
-      actor ! setSessionId(ssn)
+      actor ! SetSessionId(ssn)
       CometActorMapper.map += (ssn -> actor)
     })
 
@@ -237,11 +250,12 @@ trait EvaluatorService extends HttpService
                         CometActorMapper.map.get(sessionURI) match {
                           case None => ctx.complete(StatusCodes.Forbidden)
                           case Some(cometActor) => msgType match {
-                            case "sessionPing" => cometActor ! SessionPing(sessionURI, ctx)
+                            case "sessionPing" => cometActor ! SessionPing(ctx)
                             case _ => {
+                              cometActor ! KeepAlive()
                               asyncMethods.get(msgType) match {
                                 case Some(fn) => {
-                                  fn(content)
+                                  cometActor ! RunFunction(fn,content)  // run function in actor thread
                                   ctx.complete(StatusCodes.OK)
                                 }
                                 case _ => {
