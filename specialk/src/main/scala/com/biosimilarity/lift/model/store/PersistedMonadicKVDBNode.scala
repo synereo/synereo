@@ -88,6 +88,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def labelToNS : Option[String => Namespace]
 	def textToVar : Option[String => Var]
 	def textToTag : Option[String => Tag]        
+        def textToValue : Option[String => Value]        
 	
 	def kvNameSpace : Namespace
 	def kvKNameSpace : Namespace
@@ -211,6 +212,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  for( pd <- persistenceManifest; ttt <- pd.textToTag ) 
 	  yield {
 	    ttt
+	  }
+	}
+        def textToValue : Option[String => Value] = {
+	  for( pd <- persistenceManifest; ttvl <- pd.textToValue ) 
+	  yield {
+	    ttvl
 	  }
 	}
 	
@@ -373,7 +380,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	override def asStoreIndirection(
 	  key : mTT.GetRequest
 	) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
-	  ???
+          val theUUID = UUID.randomUUID().toString.replace( "-", "" )
+	  val ttvl =
+	    textToValue.getOrElse(
+	      throw new Exception( "must have textToValue to convert mongo object" )
+	    )
+	  asStoreEntry(
+            key,
+            mTT.Ground( ttvl( theUUID ) )
+          )( kvNameSpace )
 	}
 
 	override def asStoreRecord(
@@ -2293,7 +2308,8 @@ package usage {
 	      override val storeUnitStr : String,
 	      @transient override val labelToNS : Option[String => String],
 	      @transient override val textToVar : Option[String => String],
-	      @transient override val textToTag : Option[String => String]
+	      @transient override val textToTag : Option[String => String],
+              @transient override val textToValue : Option[String => Double] = Some( ( x : String ) => x.toDouble )
 	    )
 	    extends XMLDBManifest( database ) {
 	      override def valueStorageType : String = {
@@ -2404,6 +2420,7 @@ package usage {
 		key : mTT.GetRequest, // must have the pattern to determine bindings
 		value : Elem
 	      ) : Option[mTT.GetRequest] = {
+                // BaseX is dead. Long live BaseX!
                 ???
               }
 

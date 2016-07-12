@@ -131,7 +131,9 @@ package services {
 		  override val storeUnitStr : String,
 		  @transient override val labelToNS : Option[String => Namespace],
 		  @transient override val textToVar : Option[String => Var],
-		  @transient override val textToTag : Option[String => Tag]
+		  @transient override val textToTag : Option[String => Tag],
+                  @transient override val textToValue : Option[String => Value] =
+                    Some( ( x : String ) => throw new Exception( " you fool! you should have supplied this!" ) )
 		)
 		extends XMLDBManifest( database ) {
 		  override def valueStorageType : String = {

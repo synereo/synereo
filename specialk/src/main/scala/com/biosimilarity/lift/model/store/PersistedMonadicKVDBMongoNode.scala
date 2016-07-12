@@ -103,6 +103,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def labelToNS : Option[String => Namespace]
 	def textToVar : Option[String => Var]
 	def textToTag : Option[String => Tag]        
+        def textToValue : Option[String => Value]
 	
 	def kvNameSpace : Namespace
 	def kvKNameSpace : Namespace
@@ -236,6 +237,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  for( pd <- persistenceManifest; ttt <- pd.textToTag ) 
 	  yield {
 	    ttt
+	  }
+	}
+        def textToValue : Option[String => Value] = {
+	  for( pd <- persistenceManifest; ttvl <- pd.textToValue ) 
+	  yield {
+	    ttvl
 	  }
 	}
 	
@@ -407,7 +414,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
         override def asStoreIndirection(
 	  key : mTT.GetRequest
 	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-	  ???
+	  val theUUID = UUID.randomUUID().toString.replace( "-", "" )
+          val ttvl =
+	    textToValue.getOrElse(
+	      throw new Exception( "must have textToValue to convert mongo object" )
+	    )
+	  asStoreEntry( key, mTT.Ground( ttvl( theUUID ) ) )( kvNameSpace )
 	}
 
 	override def asStoreRecord(
@@ -721,7 +733,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                with CnxnNSVarSTagStringDefaults[Namespace,Var,Tag]
 	       with Serializable 
       {	 		
-	import LogConfiguration._ 
+	import LogConfiguration._         
 	override def tmpDirStr : String = {
 	  val tds = 
 	    try {
@@ -2624,11 +2636,14 @@ package usage {
       object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT with Serializable {	  
 	def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDB[ReqBody,RspBody] = {
 	  new PersistedMonadicKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+            // BUGBUG : LGM - maybe we should go change the call sites
+            // instead of defaulting the textToValue argument
 	    class StringMongoDBManifest(
 	      override val storeUnitStr : String,
 	      @transient override val labelToNS : Option[String => String],
 	      @transient override val textToVar : Option[String => String],
-	      @transient override val textToTag : Option[String => String]
+	      @transient override val textToTag : Option[String => String],
+              @transient override val textToValue : Option[String => Double] = Some( ( x : String ) => x.toDouble )
 	    )
 	    extends MongoDBManifest( ) {
 	      override def valueStorageType : String = {
@@ -2740,7 +2755,17 @@ package usage {
 		value : DBObject
 	      ) : mTT.GetRequest = {
                 // TBD
-                ???
+                key match {
+                  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {
+                    new CnxnCtxtBranch( kNs, fk :: Nil )
+                  }
+                  case _ => {
+                    // Should never get here because it is
+                    // unreasonable to have retrieved a DBObject
+                    // with the key if the key is malformed
+                    throw new Exception( "unexpected record structure:	" + key )
+                  }
+                }
               }
 	      
 	      override def asResource(
