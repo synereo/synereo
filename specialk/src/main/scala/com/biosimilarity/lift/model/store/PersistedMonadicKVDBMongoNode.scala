@@ -429,7 +429,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  //asStoreEntry( key, value )( kvNameSpace )
           key match {
             case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {
-              asStoreEntry( asStoreKey( fk ), value )( kvNameSpace )
+              val ttt =
+	        textToTag.getOrElse(
+	          throw new Exception( "must have textToTag to convert mongo object" )
+	        )
+              val flatKey = ttt( asCacheValue( fk ) + "" )
+              asStoreEntry( asStoreKey( new CnxnCtxtLeaf( Left( ( flatKey ) ) ) ), value )( kvNameSpace )
             }
             case _ => {
               throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )

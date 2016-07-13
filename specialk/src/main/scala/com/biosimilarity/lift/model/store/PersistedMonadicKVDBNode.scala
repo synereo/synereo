@@ -397,7 +397,16 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
           key match {
             case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {              
-              asStoreEntry( asStoreKey( fk ).asInstanceOf[mTT.GetRequest], value )( kvNameSpace )
+              // BUGBUG : lgm - how to avoid this cast???              
+              val ttt =
+	        textToTag.getOrElse(
+	          throw new Exception( "must have textToTag to convert mongo object" )
+	        )
+              val flatKey = ttt( asCacheValue( fk.asInstanceOf[CnxnCtxtLabel[Namespace,Var,String]] ) + "" )
+              asStoreEntry(                
+                asStoreKey( new CnxnCtxtLeaf( Left( flatKey ) ) ).asInstanceOf[mTT.GetRequest],
+                value
+              )( kvNameSpace )
             }
             case _ => {
               throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
