@@ -400,11 +400,20 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               // BUGBUG : lgm - how to avoid this cast???              
               val ttt =
 	        textToTag.getOrElse(
-	          throw new Exception( "must have textToTag to convert mongo object" )
+	          throw new Exception( "must have textToTag to convert flatKey: " + fk )
 	        )
+              val ltns =
+                labelToNS.getOrElse(
+                  throw new Exception( "must have labelToNS to convert flatKey: " + fk )
+                )
               val flatKey = ttt( asCacheValue( fk.asInstanceOf[CnxnCtxtLabel[Namespace,Var,String]] ) + "" )
               asStoreEntry(                
-                asStoreKey( new CnxnCtxtLeaf( Left( flatKey ) ) ).asInstanceOf[mTT.GetRequest],
+                asStoreKey(
+                  new CnxnCtxtBranch[Namespace,Var,Tag](
+                    ltns( "flatKey" ),
+                    ( new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( ( flatKey ) ) ) ) :: Nil
+                  )
+                ).asInstanceOf[mTT.GetRequest],
                 value
               )( kvNameSpace )
             }
@@ -2426,6 +2435,16 @@ package usage {
 		      }
 		    }
 		  }
+                  case CnxnCtxtLeaf( Left( rv ) ) => {
+                    val unBlob =
+		      fromXQSafeJSONBlob( rv )
+		    
+		    unBlob match {
+		      case rsrc : mTT.Resource => {
+			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+		      }
+		    }
+                  }
 		  case _ => {
 		    //asPatternString( ccl )
 		    throw new Exception( "unexpected value form: " + ccl )

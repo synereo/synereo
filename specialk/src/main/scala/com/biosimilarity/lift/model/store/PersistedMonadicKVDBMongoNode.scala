@@ -428,13 +428,25 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
 	  //asStoreEntry( key, value )( kvNameSpace )
           key match {
-            case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {
+            case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {              
               val ttt =
 	        textToTag.getOrElse(
-	          throw new Exception( "must have textToTag to convert mongo object" )
+	          throw new Exception( "must have textToTag to convert flatKey: " + fk )
 	        )
+              val ltns =
+                labelToNS.getOrElse(
+                  throw new Exception( "must have labelToNS to convert flatKey: " + fk )
+                )
               val flatKey = ttt( asCacheValue( fk ) + "" )
-              asStoreEntry( asStoreKey( new CnxnCtxtLeaf( Left( ( flatKey ) ) ) ), value )( kvNameSpace )
+              asStoreEntry(
+                asStoreKey(
+                  new CnxnCtxtBranch[Namespace,Var,Tag](
+                    ltns( "flatKey" ),
+                    ( new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( ( flatKey ) ) ) ) :: Nil
+                  )
+                ),
+                value
+              )( kvNameSpace )
             }
             case _ => {
               throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
@@ -2756,6 +2768,16 @@ package usage {
 		      }
 		    }
 		  }
+                  case CnxnCtxtLeaf( Left( rv ) ) => {
+                    val unBlob =
+		      fromXQSafeJSONBlob( rv )
+		    
+		    unBlob match {
+		      case rsrc : mTT.Resource => {
+			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+		      }
+		    }
+                  }
 		  case _ => {
 		    //asPatternString( ccl )
 		    throw new Exception( "unexpected value form: " + ccl )
