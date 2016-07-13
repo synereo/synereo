@@ -395,7 +395,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
 	) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
-	  asStoreEntry( key, value )( kvNameSpace )
+          key match {
+            case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {              
+              asStoreEntry( asStoreKey( fk ).asInstanceOf[mTT.GetRequest], value )( kvNameSpace )
+            }
+            case _ => {
+              throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
+            }
+          }          
+	  
 	}
 
 	override def asStoreKRecord(
