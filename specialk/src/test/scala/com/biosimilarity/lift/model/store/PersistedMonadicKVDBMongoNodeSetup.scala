@@ -76,7 +76,8 @@ object PersistedMonadicKVDBMongoNodeSetup
           class StringMongoDBManifest(override val storeUnitStr: String,
                                       @transient override val labelToNS: Option[String => String],
                                       @transient override val textToVar: Option[String => String],
-                                      @transient override val textToTag: Option[String => String])
+                                      @transient override val textToTag: Option[String => String],
+                                      @transient override val textToValue: Option[String => String] = Some(identity))
               extends MongoDBManifest() {
 
             override def valueStorageType: String =
@@ -121,6 +122,12 @@ object PersistedMonadicKVDBMongoNodeSetup
             def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = {
               ccl match {
                 case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                  val unBlob: Object = fromXQSafeJSONBlob(rv)
+                  unBlob match {
+                    case TheMTT.Ground(value) => value
+                    case rsrc: mTT.Resource   => getGV(rsrc).getOrElse("WHOOPS!")
+                  }
+                case CnxnCtxtLeaf(Left(rv)) =>
                   val unBlob = fromXQSafeJSONBlob(rv)
                   unBlob match {
                     case TheMTT.Ground(value) => value
@@ -128,6 +135,28 @@ object PersistedMonadicKVDBMongoNodeSetup
                   }
                 case _ =>
                   throw new Exception(s"unexpected value form: $ccl")
+              }
+            }
+
+            override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+              val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+              val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+              val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+              CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                  fk match {
+                    case CnxnCtxtLeaf(Left(v)) =>
+                      val unblob: String = fromXQSafeJSONBlob(v) match {
+                        case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                        case e: Throwable                  => throw e
+                      }
+                      new CnxnCtxtBranch(ltns("flatKey"), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                  }
+                case xFactor =>
+                  // Should never get here because it is
+                  // unreasonable to have retrieved a DBObject
+                  // with the key if the key is malformed
+                  throw new Exception("unexpected record structure:	" + xFactor)
               }
             }
 
