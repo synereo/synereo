@@ -1006,28 +1006,22 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                       case Left( p ) => p
                       case Right( p ) => p
                     }
-                  val flatKey = pd.asIndirection( path, e )
+                  val flatKey: mTT.GetRequest = pd.asIndirection( path, e )
                   // Do a query here!
                   val answer =
-                    for(
-                      qryClntSessFn <- createMongoQuery(
-                        pd, xmlCollName, Left[mTT.GetRequest,mTT.GetRequest]( flatKey )
-                      )
-                    ) yield {
+                    for {
+                      qryClntSessFn <- createMongoQuery(pd, xmlCollName, Left[mTT.GetRequest,mTT.GetRequest]( flatKey ))
+                    } yield {
                       
-                      val actlBlob = wrapAction( qryClntSessFn )( xmlCollName )
-                      // BUGBUG - LGM : may have to use fromMongoObject
-                      val ersrc =
-                        pd.asResource(
-                          CnxnMongoObjectifier.fromMongoObject( actlBlob.head )( ltns, ttv, ttt ),
-                          e
-                        )
-
-                      loop(
-                        acc ++ List[( DBObject, emT.PlaceInstance )]( ( e, ersrc ) ),
-                        qryRslts
-                      )
-                    }                  
+                      wrapAction(qryClntSessFn)(xmlCollName) match {
+                        case x :: Nil =>
+													val ersrc = pd.asResource(flatKey, x)
+													loop(acc ++ List[(DBObject, emT.PlaceInstance)]((e, ersrc)), qryRslts)
+                        case xs =>
+													throw new Exception(s"unique key not unique: $xs")
+                      }
+                      // Since the actlBlob of a flatKey will always have a length of 1, we should
+                    }
                   answer.getOrElse( List[( DBObject, emT.PlaceInstance )]() )
                 }
                 catch {
