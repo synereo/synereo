@@ -437,11 +437,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                 labelToNS.getOrElse(
                   throw new Exception( "must have labelToNS to convert flatKey: " + fk )
                 )
-              val flatKey = ttt( asCacheValue( fk ) + "" )
+              val fkS = asCacheValue( fk ) + ""
+              val flatKey = ttt( fkS )
               asStoreEntry(
                 asStoreKey(
                   new CnxnCtxtBranch[Namespace,Var,Tag](
-                    ltns( "flatKey" ),
+                    ltns( fkS ),
                     ( new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( ( flatKey ) ) ) ) :: Nil
                   )
                 ),

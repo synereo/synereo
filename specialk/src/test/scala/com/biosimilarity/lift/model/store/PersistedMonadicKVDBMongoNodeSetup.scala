@@ -146,11 +146,13 @@ object PersistedMonadicKVDBMongoNodeSetup
                 case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
                   fk match {
                     case CnxnCtxtLeaf(Left(v)) =>
-                      val unblob: String = fromXQSafeJSONBlob(v) match {
-                        case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                        case e: Throwable                  => throw e
-                      }
-                      new CnxnCtxtBranch(ltns("flatKey"), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                      val unblob: String = (
+                        fromXQSafeJSONBlob(v) match {
+                          case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                          case e: Throwable                  => throw e
+                        }
+                      )
+                      new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                   }
                 case xFactor =>
                   // Should never get here because it is
