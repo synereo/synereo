@@ -43,7 +43,8 @@ lazy val commonSettings = Seq(
   organization := "com.biosimilarity.lift",
   version := "1.1.8.5",
   scalaVersion := "2.10.5",
-  scalacOptions := commonOptions)
+  scalacOptions := commonOptions,
+  fork in Test := true)
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)

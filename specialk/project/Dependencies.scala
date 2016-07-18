@@ -56,6 +56,8 @@ object Dependencies {
     "org.codehaus.jettison"     % "jettison"          % "1.3",
     "org.json4s"               %% "json4s-jackson"    % "3.2.7",
     "org.mongodb"              %% "casbah"            % "2.6.4",
+    "org.scalacheck"           %% "scalacheck"        % "1.12.5" % "test",
+    "org.scalatest"            %% "scalatest"         % "2.2.6"  % "test",
     "org.scalesxml"            %% "scales-xml"        % "0.4.5")
 
   lazy val depsSettings = Seq(

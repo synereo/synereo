@@ -1,0 +1,22 @@
+sudo: required
+
+language: scala
+
+scala:
+  - 2.10.5
+
+jdk:
+  - oraclejdk7
+
+services:
+  - mongodb
+  - rabbitmq
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
+
+before_cache:
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+  - find $HOME/.sbt -name "*.lock" -type f -delete
