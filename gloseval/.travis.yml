@@ -1,31 +1,20 @@
 sudo: false
-
+language: scala
+scala:
+- 2.10.5
 cache:
   directories:
-    - $HOME/.m2/repository
-    - $HOME/.sbt
-    - $HOME/.ivy2
-
+  - $HOME/.m2/repository
+  - $HOME/.sbt
+  - $HOME/.ivy2
 jdk:
-  - oraclejdk7
-#  - openjdk8
-
-language: scala
-
-scala:
-   - 2.10.5
-
-# blocklist
+- oraclejdk7
 branches:
-  except:
-
-# safelist
-branches:
-  only:
-    - 1.0
-    
+  only: 
 script:
-   - mvn -e -fn -DskipTests=true install prepare-package
+- mvn -e -fn -DskipTests=true install prepare-package
 notifications:
   email:
-    - ns68751+tci@gmail.com
+  - ns68751+tci@gmail.com
+  slack:
+    secure: WmC2UI5hT2hRYsPZsR55krrjj9qiIekJD/teH6gDhA3q9DaF1h/BDLqGcg4HP9EoRyc12yRCZA/i3W9tQJ5cAt88UzeT4ooyH/VaWlbp8B2MlGHzk3eUR9NC8dACsESdys5py8qC+NEhdMsFr+cqaw5UW7gGzLm5XX6wvMCh8Hw=
