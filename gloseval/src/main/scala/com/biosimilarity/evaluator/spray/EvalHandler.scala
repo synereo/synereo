@@ -1419,11 +1419,68 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("lastActiveLabel" -> "") ~
                         ("jsonBlob" -> parse(jsonBlob))
 
-                    onSuccess(sessionURI)  // register sessionURI
-
                     CompletionMapper.complete(key, compact(render(
                       ("msgType" -> "initializeSessionResponse") ~
                         ("content" -> content))))
+
+                    onSuccess(sessionURI)  // register the session
+
+                    // Get the profile of each target in the list
+                    biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
+                      // Construct self-connection for each target
+                      val targetURI = biCnxn match {
+                        case PortableAgentBiCnxn(read, _) => read.src
+                      }
+                      val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
+                      def handleFetchRsp(
+                                          optRsrc: Option[mTT.Resource],
+                                          v: ConcreteHL.HLExpr): Unit = {
+                        v match {
+                          case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
+                            CometActorMapper.cometMessage(sessionURI, compact(render(
+                              ("msgType" -> "connectionProfileResponse") ~
+                                ("content" -> (
+                                  ("sessionURI" -> sessionURI) ~
+                                    ("connection" -> biCnxnToJObject(biCnxn)) ~
+                                    ("jsonBlob" -> jsonBlob))))))
+                          }
+                          case Bottom => {
+                            CometActorMapper.cometMessage(sessionURI, compact(render(
+                              ("msgType" -> "connectionProfileError") ~
+                                ("content" -> (
+                                  ("sessionURI" -> sessionURI) ~
+                                    ("connection" -> biCnxnToJObject(biCnxn)) ~
+                                    ("reason" -> "Not found"))))))
+                          }
+                          case _ => {
+                            CompletionMapper.complete(key, compact(render(
+                              ("msgType" -> "connectionProfileError") ~
+                                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+                          }
+                        }
+                      }
+
+                      fetch(
+                        jsonBlobLabel,
+                        List(targetSelfCnxn),
+                        (optRsrc: Option[mTT.Resource]) => {
+                          optRsrc match {
+                            case None => ();
+                            case Some(mTT.Ground(v)) => {
+                              handleFetchRsp(optRsrc, v)
+                            }
+                            case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+                              handleFetchRsp(optRsrc, v)
+                            }
+                            case _ => {
+                              CompletionMapper.complete(key, compact(render(
+                                ("msgType" -> "initializeSessionError") ~
+                                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+                            }
+                          }
+                        })
+                    })
+
                   }
                   case Bottom => {
                     CompletionMapper.complete(key, compact(render(
@@ -1453,62 +1510,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               def handleRsp(v: ConcreteHL.HLExpr): Unit = {
                 v match {
                   case PostedExpr((PostedExpr(biCnxnList: String), _, _, _)) => {
-                    val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
-                    // Get the profile of each target in the list
-                    biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
-                      // Construct self-connection for each target
-                      val targetURI = biCnxn match {
-                        case PortableAgentBiCnxn(read, _) => read.src
-                      }
-                      val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
-                      def handleFetchRsp(
-                        optRsrc: Option[mTT.Resource],
-                        v: ConcreteHL.HLExpr): Unit = {
-                        v match {
-                          case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-                            CometActorMapper.cometMessage(sessionURI, compact(render(
-                              ("msgType" -> "connectionProfileResponse") ~
-                                ("content" -> (
-                                  ("sessionURI" -> sessionURI) ~
-                                  ("connection" -> biCnxnToJObject(biCnxn)) ~
-                                  ("jsonBlob" -> jsonBlob))))))
-                          }
-                          case Bottom => {
-                            CometActorMapper.cometMessage(sessionURI, compact(render(
-                              ("msgType" -> "connectionProfileError") ~
-                                ("content" -> (
-                                  ("sessionURI" -> sessionURI) ~
-                                  ("connection" -> biCnxnToJObject(biCnxn)) ~
-                                  ("reason" -> "Not found"))))))
-                          }
-                          case _ => {
-                            CompletionMapper.complete(key, compact(render(
-                              ("msgType" -> "initializeSessionError") ~
-                                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
-                          }
-                        }
-                      }
-
-                      fetch(
-                        jsonBlobLabel,
-                        List(targetSelfCnxn),
-                        (optRsrc: Option[mTT.Resource]) => {
-                          optRsrc match {
-                            case None => ();
-                            case Some(mTT.Ground(v)) => {
-                              handleFetchRsp(optRsrc, v)
-                            }
-                            case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                              handleFetchRsp(optRsrc, v)
-                            }
-                            case _ => {
-                              CompletionMapper.complete(key, compact(render(
-                                ("msgType" -> "initializeSessionError") ~
-                                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
-                            }
-                          }
-                        })
-                    })
                     fetch(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, defaultAlias, biCnxnList))
                   }
                   case Bottom => {
