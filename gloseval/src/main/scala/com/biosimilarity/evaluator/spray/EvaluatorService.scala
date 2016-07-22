@@ -166,8 +166,7 @@ trait EvaluatorService extends HttpService
     // New API
     ("createAgentRequest", createAgentRequest),
     ("initializeSessionRequest", createNewSession),
-    // gary goofing about
-      ("getAgentRequest", getAgentRequest)
+    ("getAgentRequest", getAgentRequest)
   )
 
   @transient
@@ -193,6 +192,7 @@ trait EvaluatorService extends HttpService
     // Connections
     ("removeAliasConnectionsRequest", removeAliasConnectionsRequest),
     ("getAliasConnectionsRequest", getAliasConnectionsRequest),
+    ("getConnectionProfiles", getConnectionProfiles),
     // Alias Labels
     ("addAliasLabelsRequest", addAliasLabelsRequest),
     ("updateAliasLabelsRequest", updateAliasLabelsRequest),
@@ -214,7 +214,7 @@ trait EvaluatorService extends HttpService
     ("resetDatabaseRequest", resetDatabaseRequest),
     // Verifier protocol
     ("initiateClaim", initiateClaim),
-    // omni interfact
+    // omni
     ("omniGetBalance", omniGetBalance),
     ("omniTransfer", omniTransfer),
     ("getAmpWalletAddress", omniGetAmpWalletAddress),

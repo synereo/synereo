@@ -1369,6 +1369,149 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
+  def biCnxnToJObject(biCnxn: PortableAgentBiCnxn): JObject = {
+    ("source" -> biCnxn.writeCnxn.src.toString) ~
+      ("label" -> biCnxn.writeCnxn.label) ~
+      ("target" -> biCnxn.writeCnxn.trgt.toString)
+  }
+
+  def getConnectionProfiles(jv : JValue) : Unit = {
+    val sessionURI = (jv \ "sessionURI").extract[String]
+    val cap = capFromSession(sessionURI)
+    val capURI = capToAgentURI(cap)
+    val capSelfCnxn = getCapSelfCnxn(cap)
+
+    val onConnectionsFetch : Option[mTT.Resource] => Unit = (optRsrc) => {
+      def handleRsp(v: ConcreteHL.HLExpr): Unit = {
+        v match {
+          case PostedExpr((PostedExpr(biCnxnList: String), _, _, _)) => {
+            val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
+            fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
+          }
+          case Bottom => {
+            CometActorMapper.cometMessage(sessionURI, compact(render(
+              ("msgType" -> "getConnectionProfilesError") ~
+                ("content" -> ("reason" -> "Strange: found other data but not connections!?")))))
+          }
+          case _ => {
+            CometActorMapper.cometMessage(sessionURI, compact(render(
+              ("msgType" -> "getConnectionProfilesError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+          }
+        }
+      }
+      optRsrc match {
+        case None => ();
+        case Some(mTT.Ground(v)) => {
+          handleRsp(v)
+        }
+        case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+          handleRsp(v)
+        }
+        case _ => {
+          CometActorMapper.cometMessage(sessionURI, compact(render(
+            ("msgType" -> "getConnectionProfilesError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+        }
+      }
+    }
+    val onDefaultAliasFetch : Option[mTT.Resource] => Unit = (optRsrc) => {
+      def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
+        v match {
+          case PostedExpr((PostedExpr(defaultAlias: String), _, _, _)) => {
+            val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+            fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch)
+          }
+          case Bottom => {
+            CometActorMapper.cometMessage(sessionURI, compact(render(
+              ("msgType" -> "getConnectionProfilesError") ~
+                ("content" -> ("reason" -> "Strange: found other data but not default alias!?")))))
+          }
+          case _ => {
+            CometActorMapper.cometMessage(sessionURI, compact(render(
+              ("msgType" -> "getConnectionProfilesError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+          }
+        }
+      }
+      optRsrc match {
+        case None => ();
+        case Some(mTT.Ground(v)) => {
+          handleRsp(optRsrc, v)
+        }
+        case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+          handleRsp(optRsrc, v)
+        }
+        case _ => {
+          CometActorMapper.cometMessage(sessionURI, compact(render(
+            ("msgType" -> "getConnectionProfilesError") ~
+              ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+        }
+      }
+    }
+    fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch)
+  }
+
+  def fetchAndSendConnectionProfiles(sessionURI : String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
+    biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
+      // Construct self-connection for each target
+      val targetURI = biCnxn match {
+        case PortableAgentBiCnxn(read, _) => read.src
+      }
+      val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
+      def handleFetchRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
+        v match {
+          case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
+            CometActorMapper.cometMessage(sessionURI, compact(render(
+              ("msgType" -> "connectionProfileResponse") ~
+                ("content" -> (
+                  ("sessionURI" -> sessionURI) ~
+                    ("connection" -> biCnxnToJObject(biCnxn)) ~
+                    ("jsonBlob" -> jsonBlob))))))
+          }
+          case Bottom => {
+            CometActorMapper.cometMessage(sessionURI, compact(render(
+              ("msgType" -> "connectionProfileError") ~
+                ("content" -> (
+                  ("sessionURI" -> sessionURI) ~
+                    ("connection" -> biCnxnToJObject(biCnxn)) ~
+                    ("reason" -> "Not found"))))))
+          }
+          case _ => {
+            CometActorMapper.cometMessage(sessionURI, compact(render(
+              ("msgType" -> "connectionProfileError") ~
+                ("content" -> (
+                  ("sessionURI" -> sessionURI) ~
+                    ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))))))
+          }
+        }
+      }
+
+      fetch(
+        jsonBlobLabel,
+        List(targetSelfCnxn),
+        (optRsrc: Option[mTT.Resource]) => {
+          optRsrc match {
+            case None => ();
+            case Some(mTT.Ground(v)) => {
+              handleFetchRsp(optRsrc, v)
+            }
+            case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+              handleFetchRsp(optRsrc, v)
+            }
+            case _ => {
+              CometActorMapper.cometMessage(sessionURI, compact(render(
+                ("msgType" -> "connectionProfileError") ~
+                  ("content" -> (
+                    ("sessionURI" -> sessionURI) ~
+                      ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc)))))))
+            }
+          }
+        })
+    })
+
+  }
+
   def secureLogin(
     identType: String,
     identInfo: String,
@@ -1394,11 +1537,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               ("msgType" -> "initializeSessionError") ~
                 ("content" -> ("reason" -> "Bad password.")))))
           } else {
-            def biCnxnToJObject(biCnxn: PortableAgentBiCnxn): JObject = {
-              ("source" -> biCnxn.writeCnxn.src.toString) ~
-                ("label" -> biCnxn.writeCnxn.label) ~
-                ("target" -> biCnxn.writeCnxn.trgt.toString)
-            }
             def onLabelsFetch(jsonBlob: String, aliasList: String, defaultAlias: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
               BasicLogService.tweet("secureLogin | login | onPwmacFetch | onLabelsFetch: optRsrc = " + optRsrc)
               def handleRsp(v: ConcreteHL.HLExpr): Unit = {
@@ -1424,62 +1562,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("content" -> content))))
 
                     onSuccess(sessionURI)  // register the session
-
-                    // Get the profile of each target in the list
-                    biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
-                      // Construct self-connection for each target
-                      val targetURI = biCnxn match {
-                        case PortableAgentBiCnxn(read, _) => read.src
-                      }
-                      val targetSelfCnxn = PortableAgentCnxn(targetURI, "identity", targetURI)
-                      def handleFetchRsp(
-                                          optRsrc: Option[mTT.Resource],
-                                          v: ConcreteHL.HLExpr): Unit = {
-                        v match {
-                          case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-                            CometActorMapper.cometMessage(sessionURI, compact(render(
-                              ("msgType" -> "connectionProfileResponse") ~
-                                ("content" -> (
-                                  ("sessionURI" -> sessionURI) ~
-                                    ("connection" -> biCnxnToJObject(biCnxn)) ~
-                                    ("jsonBlob" -> jsonBlob))))))
-                          }
-                          case Bottom => {
-                            CometActorMapper.cometMessage(sessionURI, compact(render(
-                              ("msgType" -> "connectionProfileError") ~
-                                ("content" -> (
-                                  ("sessionURI" -> sessionURI) ~
-                                    ("connection" -> biCnxnToJObject(biCnxn)) ~
-                                    ("reason" -> "Not found"))))))
-                          }
-                          case _ => {
-                            CompletionMapper.complete(key, compact(render(
-                              ("msgType" -> "connectionProfileError") ~
-                                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
-                          }
-                        }
-                      }
-
-                      fetch(
-                        jsonBlobLabel,
-                        List(targetSelfCnxn),
-                        (optRsrc: Option[mTT.Resource]) => {
-                          optRsrc match {
-                            case None => ();
-                            case Some(mTT.Ground(v)) => {
-                              handleFetchRsp(optRsrc, v)
-                            }
-                            case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-                              handleFetchRsp(optRsrc, v)
-                            }
-                            case _ => {
-                              CompletionMapper.complete(key, compact(render(
-                                ("msgType" -> "initializeSessionError") ~
-                                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
-                            }
-                          }
-                        })
-                    })
+                    fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
 
                   }
                   case Bottom => {
@@ -1579,9 +1662,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
                 v match {
                   case PostedExpr((PostedExpr(aliasList: String), _, _, _)) => {
-                    //agentMgr().fetch(defaultAliasLabel,
-                    //List(capSelfCnxn),
-                    //onDefaultAliasFetch(jsonBlob, aliasList))
                     fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch(jsonBlob, aliasList))
                   }
                   case Bottom => {
