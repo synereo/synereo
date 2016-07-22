@@ -144,16 +144,22 @@ object PersistedMonadicKVDBMongoNodeSetup
               val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
               CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
                 case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
-                  fk match {
-                    case CnxnCtxtLeaf(Left(v)) =>
-                      val unblob: String = (
-                        fromXQSafeJSONBlob(v) match {
-                          case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                          case e: Throwable                  => throw e
-                        }
-                      )
-                      new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
-                  }
+                  val matchRslt = matchMap(key, k)
+                  matchRslt match {
+                    case Some(_) =>
+                      fk match {
+                        case CnxnCtxtLeaf(Left(v)) =>
+                          val unblob: String = (
+                            fromXQSafeJSONBlob(v) match {
+                              case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                              case e: Throwable                  => throw e
+                            }
+                          )
+                            new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                      }
+                    case None =>
+                      throw new UnificationQueryFilter(key, k, value)
+                  }                
                 case xFactor =>
                   // Should never get here because it is
                   // unreasonable to have retrieved a DBObject
