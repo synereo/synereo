@@ -46,7 +46,7 @@ lazy val commonSettings = Seq(
   scalacOptions := commonOptions,
   fork in Test := true)
 
-lazy val root = (project in file("."))
+lazy val specialk = (project in file("."))
   .settings(commonSettings: _*)
   .settings(depsSettings: _*)
   .settings(bnfcSettings: _*)
