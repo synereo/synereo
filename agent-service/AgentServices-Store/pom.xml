@@ -145,12 +145,6 @@
         </dependency>
 
         <dependency>
-            <groupId>net.lag</groupId>
-            <artifactId>configgy</artifactId>
-            <version>local</version>
-        </dependency>
-
-        <dependency>
           <groupId>org.basex</groupId>
           <artifactId>basex-api</artifactId>
           <version>7.6</version>
