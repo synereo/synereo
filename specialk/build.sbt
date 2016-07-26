@@ -104,6 +104,8 @@ lazy val commonSettings = Seq(
   },
   scalaVersion := "2.10.5",
   scalacOptions := commonOptions,
+  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+  bintrayOrganization := Some("synereo"),
   fork in Test := true)
 
 lazy val specialK = (project in file("."))
