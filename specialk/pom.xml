@@ -423,12 +423,6 @@
     </dependency>
 
     <dependency>
-      <groupId>net.lag</groupId>
-      <artifactId>configgy</artifactId>
-      <version>local</version>
-    </dependency>
-
-    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
       <!--version>1.2.16</version-->
