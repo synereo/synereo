@@ -98,7 +98,10 @@ lazy val depsSettings = Seq(
 lazy val commonSettings = Seq(
   name := "specialK",
   organization := "com.biosimilarity.lift",
-  version := "1.1.8.5",
+  git.baseVersion := "1.1.8.5",
+  git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
+    s"${git.baseVersion.value}-${sha.substring(0, 7)}"
+  },
   scalaVersion := "2.10.5",
   scalacOptions := commonOptions,
   fork in Test := true)
@@ -107,3 +110,4 @@ lazy val specialK = (project in file("."))
   .settings(commonSettings: _*)
   .settings(depsSettings: _*)
   .settings(bnfcSettings: _*)
+  .enablePlugins(GitVersioning)
