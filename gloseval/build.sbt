@@ -49,12 +49,12 @@ lazy val coreDeps = Seq(
   // =================================================
   // These dependencies appear to be currently unused:
   // =================================================
-  // "biz.source_code"             % "base64coder"            % "2010-09-21",
   // "com.thoughtworks.xstream"    % "xstream"                % "1.4.4" exclude("xmlpull", "xmlpull"),
   // "commons-pool"                % "commons-pool"           % "1.6",
   // "log4j"                       % "log4j"                  % "1.2.17",
   // "org.apache.ws.commmons.util" % "ws-commons-util"        % "1.0.2",
   // "org.codehaus.jettison"       % "jettison"               % "1.3",
+  // "org.scalaz"                 %% "scalaz-core"            % "7.0.0",
   // "org.slf4j"                   % "sl4j-log4j12"           % "1.7.18",
   // ===============================================================
   // These dependencies are currently unmanaged (see lib directory):
@@ -65,6 +65,7 @@ lazy val coreDeps = Seq(
   // =====================
   // Current dependencies:
   // =====================
+  "biz.source_code"             % "base64coder"            % "2010-09-21",
   "io.spray"                    % "spray-can"              % sprayVersion,
   "io.spray"                    % "spray-client"           % sprayVersion,
   "io.spray"                    % "spray-routing"          % sprayVersion,
@@ -80,7 +81,6 @@ lazy val coreDeps = Seq(
   "org.json4s"                 %% "json4s-native"          % json4sVersion,
   "org.mongodb"                %% "casbah"                 % "2.6.4" exclude("org.slf4j", "slf4j-api"),
   "org.scalaj"                 %% "scalaj-http"            % "2.0.0",
-  "org.scalaz"                 %% "scalaz-core"            % "7.0.0",
   "org.specs2"                 %% "specs2"                 % "1.14" % "test")
 
 lazy val depsSettings = Seq(
