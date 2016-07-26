@@ -1,20 +1,28 @@
-sudo: false
+sudo: required
+
 language: scala
+
 scala:
-- 2.10.5
+  - 2.10.5
+
+jdk:
+  - oraclejdk7
+
+services:
+  - mongodb
+  - rabbitmq
+
 cache:
   directories:
-  - $HOME/.m2/repository
-  - $HOME/.sbt
-  - $HOME/.ivy2
-jdk:
-- oraclejdk7
-branches:
-  only: 
-script:
-- mvn -e -fn -DskipTests=true install prepare-package
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
+
+before_cache:
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+
 notifications:
   email:
-  - ns68751+tci@gmail.com
+    - ns68751+tci@gmail.com
   slack:
     secure: WmC2UI5hT2hRYsPZsR55krrjj9qiIekJD/teH6gDhA3q9DaF1h/BDLqGcg4HP9EoRyc12yRCZA/i3W9tQJ5cAt88UzeT4ooyH/VaWlbp8B2MlGHzk3eUR9NC8dACsESdys5py8qC+NEhdMsFr+cqaw5UW7gGzLm5XX6wvMCh8Hw=
