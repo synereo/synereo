@@ -32,7 +32,7 @@ lazy val commonOptions = Seq(
   "-P:continuations:enable")
 
 lazy val additionalResolvers = Seq(
-  Resolver.bintrayRepo("henrytill", "maven"),
+  Resolver.bintrayRepo("synereo", "maven"),
   Resolver.sonatypeRepo("snapshots"),
   "BaseX" at "http://files.basex.org/maven/",
   "xqj"   at "http://xqj.net/maven/")
@@ -41,7 +41,7 @@ lazy val json4sVersion = "3.2.7"
 
 lazy val prolog4jVersion = "0.2.1-SNAPSHOT"
 
-lazy val specialKVersion = "1.1.8.5"
+lazy val specialKVersion = "1.1.8.5-9d94474"
 
 lazy val coreDeps = Seq(
   // =================================================
