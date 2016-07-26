@@ -1,91 +1,109 @@
-import AssemblyKeys._
+autoCompilerPlugins in ThisBuild := true
 
-organization  := "com.biosimilarity"
+addCompilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.5")
 
-name := "GLoSEval"
-
-version       := "0.1"
-
-scalaVersion  := "2.10.5"
-//scalaVersion  := "2.10.0"
-//scalaVersion  := "2.9.2"
-
-autoCompilerPlugins := true
-
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8",
+lazy val commonOptions = Seq(
+  // ================================
+  // TODO Eliminate feature warnings:
+  // ================================
+  // "-feature",
+  // "-language:higherKinds",
+  // "-language:implicitConversions",
+  // "-language:postfixOps",
+  // "-language:reflectiveCalls",
+  // =========================================
+  // TODO Enable as many of these as possible:
+  // =========================================
+  // "-Xfatal-warnings",
+  // "-Xfuture",
+  // "-Xlint",
+  // "-Yno-adapted-args",
+  // "-Ywarn-dead-code",
+  // "-Ywarn-numeric-widen",
+  // "-Ywarn-value-discard",
+  // "-deprecation",
+  // "-unchecked"
+  // ============================
+  // Original flags from pom.xml:
+  // ============================
+  "-encoding", "UTF-8",
   "-P:continuations:enable")
 
-resolvers ++= Seq(
-  "local-maven-cache repo" at "file://" + Path.userHome.absolutePath + "/.m2/repository/",
-  "protegra repo" at "ftp://ftp.protegra.com/",
-  "spray repo" at "http://repo.spray.io/",
-  "json4s repo" at "http://repo.scala-sbt.org/scalasbt/repo/",
-  "biosim repo" at "http://biosimrepomirror.googlecode.com/svn/trunk/",
-  "scalaz repo" at "https://github.com/scalaz/scalaz.git",
-  "basex repo" at "http://files.basex.org/maven/",
-  "basex-xqj repo" at "http://xqj.net/maven/"
-)
+lazy val additionalResolvers = Seq(
+  Resolver.bintrayRepo("synereo", "maven"),
+  Resolver.sonatypeRepo("snapshots"),
+  "BaseX" at "http://files.basex.org/maven/",
+  "xqj"   at "http://xqj.net/maven/")
 
-// Change for remote install
-publishTo := Some(Resolver.file("file",  new File(Path.userHome.absolutePath+"/.m2/repository")))
+lazy val agentServicesVersion = "1.9.5-63b5972"
 
-ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+lazy val json4sVersion = "3.2.7"
 
-libraryDependencies ++= Seq(
-  "io.spray"               %   "spray-can"          % "1.1.2",
-  "io.spray"               %   "spray-routing"      % "1.1.2",
-  "io.spray"               %   "spray-testkit"      % "1.1.2",
-  "com.typesafe.akka"      %%  "akka-actor"         % "2.2.5",
-//  "com.typesafe.akka"      %  "akka-actor"         % "2.0.5",
-  "org.specs2"             %%  "specs2"             % "1.13" % "test",
-//  "org.specs2"             %   "specs2_2.9.2"       % "1.12.4.1",
-//  "org.json4s"             %   "json4s-native_2.10" % "3.1.0",
-  "org.json4s"             %%   "json4s-native" % "3.1.0",
-//  "org.json4s"             %   "json4s-jackson_2.10" % "3.1.0",
-  "org.json4s"             %%   "json4s-jackson" % "3.1.0",
-//  "org.json4s"             %   "json4s-native_2.9.2" % "3.1.0",
-//  "org.json4s"             %   "json4s-jackson_2.9.2" % "3.1.0",
-  "org.scalaz"             %%  "scalaz-core"        % "6.0.4",
-//  "org.scala-lang"         %   "scala-actors"       % "2.10.0",
-  "org.scala-lang"         %   "scala-actors"       % "2.10.2",
-//  "org.scala-lang"         %   "scala-reflect"      % "2.10.0",
-  "org.scala-lang"         %   "scala-reflect"      % "2.10.2",
-//  "com.biosimilarity.lift" %   "specialK"           % "1.1.8.0",
-  "com.biosimilarity.lift" %   "specialK"           % "1.1.8.5",
-//  "com.protegra-ati"       %   "agentservices-store-ia" % "1.9.2-SNAPSHOT",
-  "com.protegra-ati"       %   "agentservices-store-ia" % "1.9.5",
-  "com.rabbitmq"           %   "amqp-client"        % "2.6.1",
-  "org.prolog4j"           %   "prolog4j-api"       % "0.2.1-SNAPSHOT",
-  "it.unibo.alice.tuprolog" %  "tuprolog"           % "2.1.1",
-  "com.thoughtworks.xstream" % "xstream"            % "1.4.2",
-//  "org.mongodb"            %   "casbah_2.10"       % "2.6.2",
-//  "org.mongodb"            %   "casbah_2.10"       % "2.5.1",
-  "org.mongodb"            %%   "casbah"       % "2.5.1",
-//  "org.mongodb"            %   "casbah_2.9.2"       % "2.5.1",
-//  "org.basex"              %   "basex-api"          % "7.5",
-  "biz.source_code"        %   "base64coder"        % "2010-09-21",
-  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.3")
-  //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.0")
-  //compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.2")
-)    
-    
-// Just a touch to retrigger build
+lazy val prolog4jVersion = "0.2.1-SNAPSHOT"
 
-//seq(Revolver.settings: _*)
+lazy val specialKVersion = "1.1.8.5-9d94474"
 
-sbtassembly.Plugin.assemblySettings
+lazy val sprayVersion = "1.1.3"
 
-test in assembly := {}
+lazy val coreDeps = Seq(
+  // =================================================
+  // These dependencies appear to be currently unused:
+  // =================================================
+  // "biz.source_code"             % "base64coder"            % "2010-09-21",
+  // "com.thoughtworks.xstream"    % "xstream"                % "1.4.4" exclude("xmlpull", "xmlpull"),
+  // "commons-pool"                % "commons-pool"           % "1.6",
+  // "log4j"                       % "log4j"                  % "1.2.17",
+  // "org.apache.ws.commmons.util" % "ws-commons-util"        % "1.0.2",
+  // "org.codehaus.jettison"       % "jettison"               % "1.3",
+  // "org.slf4j"                   % "sl4j-log4j12"           % "1.7.18",
+  // ===============================================================
+  // These dependencies are currently unmanaged (see lib directory):
+  // ===============================================================
+  // "org.prolog4j"                % "prolog4j-api"           % prolog4jVersion,
+  // "org.prolog4j"                % "prolog4j-tuprolog"      % prolog4jVersion,
+  // "com.protegra-ati"           %% "agentservices-store-ia" % agentServicesVersion,
+  // =====================
+  // Current dependencies:
+  // =====================
+  "io.spray"                    % "spray-can"              % sprayVersion,
+  "io.spray"                    % "spray-client"           % sprayVersion,
+  "io.spray"                    % "spray-routing"          % sprayVersion,
+  "io.spray"                    % "spray-testkit"          % sprayVersion,
+  "io.spray"                   %% "spray-json"             % "1.2.5",
+  "com.biosimilarity.lift"     %% "specialk"               % specialKVersion,
+  "com.googlecode.json-simple"  % "json-simple"            % "1.1.1",
+  "com.rabbitmq"                % "amqp-client"            % "2.6.1",
+  "com.typesafe.akka"          %% "akka-actor"             % "2.1.4",
+  "it.unibo.alice.tuprolog"     % "tuprolog"               % "2.1.1",
+  "org.apache.commons"          % "commons-email"          % "1.3.1",
+  "org.json4s"                 %% "json4s-jackson"         % json4sVersion,
+  "org.json4s"                 %% "json4s-native"          % json4sVersion,
+  "org.mongodb"                %% "casbah"                 % "2.6.4" exclude("org.slf4j", "slf4j-api"),
+  "org.scalaj"                 %% "scalaj-http"            % "2.0.0",
+  "org.scalaz"                 %% "scalaz-core"            % "7.0.0",
+  "org.specs2"                 %% "specs2"                 % "1.14" % "test")
 
-mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-  {
-    case PathList("org", "fusesource", "jansi", xs @ _*) => MergeStrategy.first
-    case PathList("META-INF", "native", "osx", "libjansi.jnilib") => MergeStrategy.first
-    case PathList("META-INF", "ECLIPSEF.RSA") => MergeStrategy.last
-    case "plugin.properties" => MergeStrategy.last
-    case "about.html" => MergeStrategy.discard
-    case x => old(x)
-  }
-}
+lazy val depsSettings = Seq(
+  resolvers ++= additionalResolvers,
+  libraryDependencies ++= coreDeps ++ Seq(
+    "org.scala-lang" % "scala-actors"  % scalaVersion.value,
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value))
 
-//net.virtualvoid.sbt.graph.Plugin.graphSettings
+lazy val commonSettings = Seq(
+  name := "GLoSEval",
+  organization := "com.biosimilarity",
+  git.baseVersion := "0.1",
+  git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
+    s"${git.baseVersion.value}-${sha.substring(0, 7)}"
+  },
+  scalaVersion := "2.10.5",
+  scalacOptions := commonOptions,
+  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+  bintrayOrganization := Some("synereo"),
+  test in assembly := {},
+  fork in Test := true)
+
+lazy val gloseval = (project in file("."))
+  .settings(commonSettings: _*)
+  .settings(depsSettings: _*)
+  .enablePlugins(GitVersioning)
