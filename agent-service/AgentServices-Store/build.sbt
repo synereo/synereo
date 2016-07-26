@@ -87,7 +87,10 @@ lazy val depsSettings = Seq(
 lazy val commonSettings = Seq(
   name := "agentservices-store-ia",
   organization := "com.protegra-ati",
-  version := "1.9.5",
+  git.baseVersion := "1.9.5",
+  git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
+    s"${git.baseVersion.value}-${sha.substring(0, 7)}"
+  },
   scalaVersion := "2.10.5",
   scalacOptions := commonOptions,
   fork in Test := true)
@@ -96,3 +99,4 @@ lazy val agentService = (project in file("."))
   .settings(commonSettings: _*)
   .settings(depsSettings: _*)
   .settings(bnfcSettings: _*)
+  .enablePlugins(GitVersioning)
