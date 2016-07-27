@@ -23,7 +23,6 @@ To work with SpecialK you will need:
 * Java Development Kit (JDK), version 7
   * available at http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
-  * alternatively, Azul's Zulu OpenJDK is available at https://www.azul.com/products/zulu/
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/
 
