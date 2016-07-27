@@ -41,7 +41,7 @@ lazy val json4sVersion = "3.2.7"
 
 lazy val prolog4jVersion = "0.2.1-SNAPSHOT"
 
-lazy val specialKVersion = "1.1.8.5-9d94474"
+lazy val specialKVersion = "1.1.8.5-a98012c"
 
 lazy val coreDeps = Seq(
   // =================================================
