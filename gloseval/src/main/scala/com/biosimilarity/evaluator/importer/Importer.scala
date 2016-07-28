@@ -371,8 +371,8 @@ object Importer extends EvalConfig
         val adminSession = createSession(uri, NodeUser.password)
         sessionsById.put(adminId, adminSession) // longpoll on adminSession
         println("using admin session URI : " + adminSession.sessionURI)
-        //val thrd = longPoll()
-        //thrd.start()
+        val thrd = longPoll()
+        thrd.start()
 
         try {
           dataset.labels match {
@@ -393,10 +393,10 @@ object Importer extends EvalConfig
           }
         } finally {
           // need to fix this
-          // wait ten seconds for long poll receipts
-          //thrd.interrupt()
+          // wait five seconds for long poll receipts
+          thrd.interrupt()
 
-          //thrd.join(20000)
+          thrd.join(5000)
         }
       }
       case _ => throw new Exception("Unable to open admin session")
