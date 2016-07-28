@@ -155,7 +155,8 @@ package services {
 		  override val storeUnitStr : String,
 		  @transient override val labelToNS : Option[String => Namespace],
 		  @transient override val textToVar : Option[String => Var],
-		  @transient override val textToTag : Option[String => Tag]
+		  @transient override val textToTag : Option[String => Tag],
+			@transient override val textToValue: Option[String => Value]
 		)
 		extends XMLDBManifest( database ) {
 		  override def valueStorageType : String = {
@@ -189,6 +190,9 @@ package services {
 		  ) : Value = {
 		    throw new Exception( "Not implemented in this service" )
 		  }
+
+			def asIndirection(key: mTT.GetRequest, value: Elem): Option[mTT.GetRequest] =
+				throw new Exception("Not implemented in this service")
 		  
 		  override def asResource(
 		    key : mTT.GetRequest, // must have the pattern to determine bindings

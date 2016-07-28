@@ -2326,7 +2326,8 @@ package usage {
               override val storeUnitStr : String,
               @transient override val labelToNS : Option[String => String],
               @transient override val textToVar : Option[String => String],
-              @transient override val textToTag : Option[String => String]
+              @transient override val textToTag : Option[String => String],
+              @transient override val textToValue: Option[String => String] = Some(identity)
             )
             extends XMLDBManifest( database ) {
               override def valueStorageType : String = {
@@ -2433,7 +2434,9 @@ package usage {
                   }
                 }
               }
-              
+
+              override def asIndirection(key: mTT.GetRequest, value: Elem): Option[mTT.GetRequest] = ???
+
               override def asResource(
                 key : mTT.GetRequest, // must have the pattern to determine bindings
                 value : Elem
@@ -2603,7 +2606,7 @@ package usage {
               val sid = Some( ( s : String ) => s )
               val kvdb = this;
               Some(
-                new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                   override def valueStorageType : String = {
                     kvdb.valueStorageType
                   }
@@ -2655,7 +2658,8 @@ package usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends XMLDBManifest( database ) {
                     override def valueStorageType : String = {
@@ -2762,7 +2766,9 @@ package usage {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: Elem): Option[mTT.GetRequest] = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : Elem
@@ -2933,7 +2939,7 @@ package usage {
                     val sid = Some( ( s : String ) => s )
                     val kvdb = this;
                     Some(
-                      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -2991,7 +2997,8 @@ package usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends XMLDBManifest( database ) {
                     override def valueStorageType : String = {
@@ -3098,7 +3105,9 @@ package usage {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: Elem): Option[mTT.GetRequest] = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : Elem
@@ -3273,7 +3282,7 @@ package usage {
                     val sid = Some( ( s : String ) => s )
                     val kvdb = this;
                     Some(
-                      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -3354,7 +3363,8 @@ package usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends XMLDBManifest( database ) {
                     override def valueStorageType : String = {
@@ -3461,7 +3471,9 @@ package usage {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: Elem): Option[mTT.GetRequest] = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : Elem
@@ -3630,7 +3642,7 @@ package usage {
                     val sid = Some( ( s : String ) => s )
                     val kvdb = this;
                     Some(
-                      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringXMLDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }

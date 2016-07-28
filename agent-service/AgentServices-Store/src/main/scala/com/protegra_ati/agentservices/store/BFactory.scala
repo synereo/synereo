@@ -285,7 +285,8 @@ package bfactory {
               override val storeUnitStr : String,
               @transient override val labelToNS : Option[String => String],
               @transient override val textToVar : Option[String => String],
-              @transient override val textToTag : Option[String => String]
+              @transient override val textToTag : Option[String => String],
+              @transient override val textToValue: Option[String => ConcreteBFactHL.BFactHLExpr] = throw new Exception("You need to supply this, dummy")
             )
             extends MongoDBManifest( /* database */ ) {
               override def valueStorageType : String = {
@@ -392,7 +393,9 @@ package bfactory {
                   }
                 }
               }
-              
+
+              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
               override def asResource(
                 key : mTT.GetRequest, // must have the pattern to determine bindings
                 value : DBObject
@@ -588,9 +591,10 @@ package bfactory {
                 )
               )
               val sid = Some( ( s : String ) => recoverFieldName( s ) )
+              val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteBFactHL.BFactHLExpr])
               val kvdb = this;
               Some(
-                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
                   override def valueStorageType : String = {
                     kvdb.valueStorageType
                   }
@@ -642,7 +646,8 @@ package bfactory {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => ConcreteBFactHL.BFactHLExpr] = throw new Exception("You need to supply this, dummy")
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -749,7 +754,9 @@ package bfactory {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -946,9 +953,10 @@ package bfactory {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
+                    val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteBFactHL.BFactHLExpr])
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -1006,7 +1014,8 @@ package bfactory {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => ConcreteBFactHL.BFactHLExpr] = throw new Exception("You need to supply this, dummy")
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -1155,7 +1164,9 @@ package bfactory {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -1351,9 +1362,10 @@ package bfactory {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
+                    val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteBFactHL.BFactHLExpr])
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -1434,7 +1446,8 @@ package bfactory {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => ConcreteBFactHL.BFactHLExpr] = throw new Exception("You need to supply this value dummy")
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -1541,7 +1554,9 @@ package bfactory {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -1737,9 +1752,10 @@ package bfactory {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
+                    val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteBFactHL.BFactHLExpr])
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }

@@ -2394,9 +2394,10 @@ package mongo.usage {
             }      
             class StringMongoDBManifest(
               override val storeUnitStr : String,
-              @transient override val labelToNS : Option[String => String],
-              @transient override val textToVar : Option[String => String],
-              @transient override val textToTag : Option[String => String]
+              @transient override val labelToNS: Option[String => String],
+              @transient override val textToVar: Option[String => String],
+              @transient override val textToTag: Option[String => String],
+              @transient override val textToValue: Option[String => String] = Some(identity)
             )
             extends MongoDBManifest( /* database */ ) {
               override def valueStorageType : String = {
@@ -2503,7 +2504,9 @@ package mongo.usage {
                   }
                 }
               }
-              
+
+              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
               override def asResource(
                 key : mTT.GetRequest, // must have the pattern to determine bindings
                 value : DBObject
@@ -2707,7 +2710,7 @@ package mongo.usage {
               val sid = Some( ( s : String ) => recoverFieldName( s ) )
               val kvdb = this;
               Some(
-                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                   override def valueStorageType : String = {
                     kvdb.valueStorageType
                   }
@@ -2759,7 +2762,8 @@ package mongo.usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -2866,7 +2870,9 @@ package mongo.usage {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -3065,7 +3071,7 @@ package mongo.usage {
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -3123,7 +3129,8 @@ package mongo.usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -3230,7 +3237,9 @@ package mongo.usage {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -3428,7 +3437,7 @@ package mongo.usage {
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -3509,7 +3518,8 @@ package mongo.usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -3616,7 +3626,9 @@ package mongo.usage {
                         }
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -3810,7 +3822,7 @@ package mongo.usage {
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
