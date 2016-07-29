@@ -41,7 +41,7 @@ lazy val json4sVersion = "3.2.7"
 
 lazy val prolog4jVersion = "0.2.1-SNAPSHOT"
 
-lazy val specialKVersion = "1.1.8.5-a98012c"
+lazy val specialKVersion = "1.1.8.5-28ba53a"
 
 lazy val sprayVersion = "1.1.3"
 
@@ -87,7 +87,9 @@ lazy val depsSettings = Seq(
   resolvers ++= additionalResolvers,
   libraryDependencies ++= coreDeps ++ Seq(
     "org.scala-lang" % "scala-actors"  % scalaVersion.value,
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value))
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    // https://github.com/json4s/json4s/issues/108
+    "org.scala-lang" % "scalap"        % scalaVersion.value))
 
 lazy val commonSettings = Seq(
   name := "GLoSEval",
