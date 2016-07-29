@@ -127,12 +127,12 @@ object Importer extends EvalConfig
   */
 
   //@@GS - should be actor based but will have to do for now.
-  // requires all other methods to be synchronized where appropriate
+  var terminateLongPoll = false
   def longPoll(): Thread = {
     println("initiating long-polling")
     new Thread(new Runnable() {
       override def run() {
-        while (!Thread.interrupted()) {
+        while (!terminateLongPoll) {
           val tmp = sessionsById.clone()
           while (tmp.nonEmpty) {
             tmp.foreach {
@@ -392,11 +392,7 @@ object Importer extends EvalConfig
             case None => ()
           }
         } finally {
-          // need to fix this
-          // wait five seconds for long poll receipts
-          thrd.interrupt()
-
-          thrd.join(5000)
+          terminateLongPoll = true
         }
       }
       case _ => throw new Exception("Unable to open admin session")
