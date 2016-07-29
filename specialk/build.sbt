@@ -93,7 +93,9 @@ lazy val depsSettings = Seq(
   resolvers ++= additionalResolvers,
   libraryDependencies ++= coreDeps ++ Seq(
     "org.scala-lang" % "scala-actors"  % scalaVersion.value,
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value))
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    // https://github.com/json4s/json4s/issues/108
+    "org.scala-lang" % "scalap"        % scalaVersion.value))
 
 lazy val commonSettings = Seq(
   name := "specialK",
