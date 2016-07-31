@@ -58,9 +58,16 @@ object symbol2jvalue extends Serializable {}
 object CompletionMapper extends Serializable {
   @transient
   val map = new HashMap[String, RequestContext]()
-  def complete(key: String, message: String): Unit = {
-    for (reqCtx <- map.get(key)) {
+  def complete(key : String, message : String) : Unit = {
+    for ( reqCtx <- map.get(key)) {
       reqCtx.complete(HttpResponse(200, message))
+    }
+    map -= key
+  }
+  def complete(key : String, msgType : String, content : JObject): Unit = {
+    for ( reqCtx <- map.get(key)) {
+      val message = ("msgType" -> msgType) ~ ("content" -> content)
+      reqCtx.complete(HttpResponse(200, compact(render(message))))
     }
     map -= key
   }
@@ -324,10 +331,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             // TODO(mike): do proper context-aware interpolation
             "pwdb(" + List(salt, toHex(hash), "user", aesHashK).map('"' + _ + '"').mkString(",") + ")",
             (optRsrc: Option[mTT.Resource]) => {
-              CompletionMapper.complete(key, compact(render(
-                ("msgType" -> "createAgentResponse") ~
-                  ("content" -> (
-                    "agentURI" -> uri.toString)))))
+              CompletionMapper.complete(key, "createAgentResponse", ("agentURI" -> uri.toString))
             })
         }
       }
@@ -338,10 +342,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
   def createAgentError(key: String, reason: String): Unit = {
-    CompletionMapper.complete(key, compact(render(
-      ("msgType" -> "createAgentError") ~
-        ("content" -> (
-          "reason" -> reason)))))
+    CompletionMapper.complete(key, "createAgentError", ("reason" -> reason))
   }
   def saltAndHash(pw: String): (String, Array[Byte]) = {
     val md = MessageDigest.getInstance("SHA1")
@@ -1191,7 +1192,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       try {
         omniCreateWallet(selfCnxn, optRsrc => BasicLogService.tweet("omniwallet created: " + optRsrc))
       } catch {
-        case e => BasicLogService.tweet("error creating omni account: " + e.getMessage)
+        case e : Throwable => BasicLogService.tweet("error creating omni account: " + e.getMessage)
       }
     }
   }
@@ -2338,24 +2339,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     throw new Exception("connect servers not implemented")
   }
 
-  def sessionPing(json: JValue): String = {
-    val sessionURI = (json \ "sessionURI").extract[String]
-    // TODO: check sessionURI validity
-
-    sessionURI
-  }
-
-  def closeSessionRequest(json: JValue): Unit = {
-    val sessionURI = (json \ "sessionURI").extract[String]
-    for (actor <- CometActorMapper.map.get(sessionURI)) {
-      CometActorMapper.cometMessage(sessionURI, compact(render(
-        ("msgType" -> "closeSessionResponse") ~
-          ("content" ->
-            ("sessionURI" -> sessionURI)))))
-      actor ! CloseSession()
-    }
-  }
-
   def createNodeUser(email: String, password: String, jsonBlob: String): Unit = {
     val cap = emailToCap(email)
     val capSelfCnxn = getCapSelfCnxn(cap)
@@ -2543,7 +2526,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def backupRequest(json: JValue): Unit = {
     val sessionURI = (json \ "sessionURI").extract[String]
     val mongoPath = (json \ "mongodbPath").extract[String]
-    val tgt = (json \ "outputDir").extract[Option[String]] match {
+    val tgt = (json \ "outputDir").extractOpt[String] match {
       case Some(str) => " --out "+str
       case _ => ""
     }
@@ -2564,7 +2547,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val sessionURI = (json \ "sessionURI").extract[String]
     val mongoPath = (json \ "mongodbPath").extract[String]
 
-    val src = (json \ "inputDir").extract[Option[String]] match {
+    val src = (json \ "inputDir").extractOpt[String] match {
       case Some(str) => str
       case _ => ""
     }
@@ -2792,9 +2775,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
   }
 
-  def omniGetAmpWalletAddress(json: JObject) : Unit = { omniGetAmpWalletAddress(json, false) }
-  def omniGetAmpWalletAddress(json: JObject, recursed: Boolean) : Unit = {
-      val ssn = (json \ "sessionURI").extract[String]
+  def omniGetAmpWalletAddress(json: JObject, actor : ActorRef) : Unit = { omniGetAmpWalletAddress(json, actor, false) }
+  def omniGetAmpWalletAddress(json: JObject, actor : ActorRef, recursed: Boolean) : Unit = {
+    val ssn = (json \ "sessionURI").extract[String]
     val cap = capFromSession(ssn)
     val cnxn = getCapSelfCnxn(cap)
 
@@ -2803,9 +2786,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case Some(Bottom) => {
           if (!recursed) {
             try {
-              omniCreateWallet(cnxn, _ => omniGetAmpWalletAddress(json, true))
+              omniCreateWallet(cnxn, _ => omniGetAmpWalletAddress(json, actor, true))
             } catch {
-              case (e) => sendCometMessage(ssn, OmniClient.omniError("Unable to create wallet: "+e.getMessage))
+              case e : Throwable  => actor ! ApiMessageResponse( "omniError", ("reason" -> ("Unable to create wallet: "+e.getMessage) ))
             }
           }
           else {
@@ -2813,12 +2796,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
         }
         case Some(PostedExpr((PostedExpr(addr: String), _, _, _))) => {
-          sendCometMessage(ssn,
-            ("msgType" -> "getAmpWalletAddressResponse") ~
-              ("content" -> ("address" -> addr)))
+          actor ! ApiMessageResponse( "getAmpWalletAddressResponse", ("address" -> addr))
         }
         case _ => {
-          sendCometMessage(ssn, OmniClient.omniError("Unrecognized resource"))
+          actor ! ApiMessageResponse( "omniError", ("reason" -> "Unrecognized resource"))
         }
       }
     }
@@ -2852,7 +2833,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         }
         else doPost(Some(oldaddr))
       } catch {
-        case (e) => sendCometMessage(ssn, OmniClient.omniError("Error checking balance: "+e.getMessage))
+        case e : Throwable  => sendCometMessage(ssn, OmniClient.omniError("Error checking balance: "+e.getMessage))
       }
     }
 

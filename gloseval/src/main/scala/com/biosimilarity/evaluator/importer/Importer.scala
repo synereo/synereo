@@ -83,7 +83,7 @@ object Importer extends EvalConfig
 
   def makeAliasURI(alias: String) = s"alias://${alias}/alias"
 
-  private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
+  //private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
 
   /* not used here - just an example of a per session thread approach
   //@@GS - should be actor based but will have to do for now.
@@ -145,7 +145,9 @@ object Importer extends EvalConfig
                   arr.foreach(v => {
                     val typ = (v \ "msgType").extract[String]
                     typ match {
-                      case "sessionPong" => tmp.remove(id)
+                      case "sessionPong" => {
+                        tmp.remove(id)
+                      }
                       case "connectionProfileResponse" => {
                         //println("connectionProfileResponse : " + (v \ "content"))
 
@@ -168,8 +170,10 @@ object Importer extends EvalConfig
                 }
             }
           }
-          println("longpoll sleeping")
-          Thread.sleep(10000)
+          if (!terminateLongPoll) {
+            println("longpoll sleeping")
+            Thread.sleep(10000)
+          }
         }
       }
     })
@@ -415,8 +419,8 @@ object Importer extends EvalConfig
     val adminSession = createSession(adminURI, NodeUser.password)
     sessionsById.put(adminId, adminSession) // longpoll on adminSession
     println("using admin session URI : " + adminSession.sessionURI)
-    //val thrd = longPoll()
-    //thrd.start()
+    val thrd = longPoll()
+    thrd.start()
     var testOmni = EvalConfConfig.isOmniRequired()
 
     tests.foreach(el => {
@@ -484,11 +488,7 @@ object Importer extends EvalConfig
           case _ => throw new Exception("Unknown test element")
         }
       } finally {
-        // need to fix this
-        // wait ten seconds for long poll receipts
-        //thrd.interrupt()
-
-        //thrd.join(20000)
+        terminateLongPoll = true
       }
 
       if (testOmni) OmniClient.runTests()
