@@ -2775,8 +2775,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     readFromCnxnLabel(ampWalletLabel, cnxn, handleRsp)
   }
 
-  def omniGetAmpWalletAddress(json: JObject, actor : ActorRef) : Unit = { omniGetAmpWalletAddress(json, actor, false) }
-  def omniGetAmpWalletAddress(json: JObject, actor : ActorRef, recursed: Boolean) : Unit = {
+  def omniGetAmpWalletAddress(json: JObject) : Unit = { omniGetAmpWalletAddress(json, false) }
+  def omniGetAmpWalletAddress(json: JObject, recursed: Boolean) : Unit = {
     val ssn = (json \ "sessionURI").extract[String]
     val cap = capFromSession(ssn)
     val cnxn = getCapSelfCnxn(cap)
@@ -2786,9 +2786,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case Some(Bottom) => {
           if (!recursed) {
             try {
-              omniCreateWallet(cnxn, _ => omniGetAmpWalletAddress(json, actor, true))
+              omniCreateWallet(cnxn, _ => omniGetAmpWalletAddress(json, true))
             } catch {
-              case e : Throwable  => actor ! ApiMessageResponse( "omniError", ("reason" -> ("Unable to create wallet: "+e.getMessage) ))
+              case e : Throwable  => sendCometMessage(ssn, OmniClient.omniError("Unable to create wallet: "+e.getMessage))
             }
           }
           else {
@@ -2796,10 +2796,12 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
         }
         case Some(PostedExpr((PostedExpr(addr: String), _, _, _))) => {
-          actor ! ApiMessageResponse( "getAmpWalletAddressResponse", ("address" -> addr))
+          sendCometMessage(ssn,
+            ("msgType" -> "getAmpWalletAddressResponse") ~
+              ("content" -> ("address" -> addr)))
         }
         case _ => {
-          actor ! ApiMessageResponse( "omniError", ("reason" -> "Unrecognized resource"))
+          sendCometMessage(ssn, OmniClient.omniError("Unrecognized resource"))
         }
       }
     }
