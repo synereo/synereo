@@ -1,39 +1,33 @@
 package com.protegra_ati.agentservices.store.util
 
-import org.specs2.mutable._
-import org.specs2.time.Duration
+import org.scalatest.concurrent.{Eventually, IntegrationPatience}
+import org.scalatest.{MustMatchers, WordSpec}
 
-import java.util.UUID
-import com.protegra_ati.agentservices.store.Timeouts
-
-
-class ResultsTest extends SpecificationWithJUnit
-with Timeouts
-{
+class ResultsTest extends WordSpec with MustMatchers with Eventually with IntegrationPatience {
 
   "trigger" should {
+
     "return true" in {
       val key = Results.getKey()
       Results.trigger(key)
-      Results.triggered(key) must be_==(true).eventually(5, TIMEOUT_EVENTUALLY)
+      eventually { Results.triggered(key) must ===(true) }
     }
+
     "return false" in {
       val key = Results.getKey()
-      Results.triggered(key) must be_==(false).eventually(5, TIMEOUT_EVENTUALLY)
+      eventually { Results.triggered(key) must ===(false) }
     }
 
     "count 1" in {
       val key = Results.getKey()
       Results.count(key, 1)
-      Results.counted(key) must be_==(1)
+      Results.counted(key) must ===(1)
     }
 
     "not spinlock to 100% cpu on not found" in {
-      val key = Results.getKey()
-           //set to 0 if you want a full spinlock
-      Results.counted(key, 5) must be_==(0)
+      val key: String = Results.getKey()
+      // set to 0 if you want a full spinlock
+      Results.counted(key, 5) must ===(0)
     }
   }
-
-
 }

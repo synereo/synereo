@@ -8,47 +8,20 @@
 
 package com.protegra_ati.agentservices.store
 
-import org.specs2.mutable._
+import com.biosimilarity.lift.lib.BasicLogService
+import org.scalatest.{MustMatchers, WordSpec}
 
-import org.specs2.runner._
-import org.junit.runner._
-import org.specs2.matcher._
-
-import com.biosimilarity.lift.model.store._
-import com.protegra_ati.agentservices.store.extensions.StringExtensions._
-import com.protegra_ati.agentservices.store.extensions.ResourceExtensions._
-import com.protegra_ati.agentservices.store.extensions.URIExtensions._
-
-import scala.util.continuations._
-import scala.concurrent.{Channel => Chan, _}
-//import scala.concurrent.cpsops._
-import com.biosimilarity.lift.lib.concurrent._
-import com.biosimilarity.lift.lib.concurrent.cpsops._
-
-import java.net.URI
-import java.util.UUID
-
-import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope._
-import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.acT._
-import com.protegra_ati.agentservices.store.mongo.usage.AgentKVDBMongoScope.mTT._
-import com.protegra_ati.agentservices.store.mongo.usage._
-
-
-
-class AgentKVDBNodeResubmitRequestsTest extends SpecificationWithJUnit
-{  
+class AgentKVDBNodeResubmitRequestsTest extends WordSpec with MustMatchers {
 
   "AgentKVDBNode" should {
     @transient
-    val testConfig =
-      AgentKVDBNodeResubmitRequestsTestDefaultConfiguration()
-    
+    val testConfig = AgentKVDBNodeResubmitRequestsTestDefaultConfiguration()
+
     /* --------------------------------------------------------- *
      *                       Scenarios
      * --------------------------------------------------------- */
 
-    "retrieve between UI and Store with a public queue" in {
-      skipped("no assert")
+    "retrieve between UI and Store with a public queue" ignore {
 
       /* --------------------------------------------------------- *
        *                       KVDBs
@@ -63,67 +36,64 @@ class AgentKVDBNodeResubmitRequestsTest extends SpecificationWithJUnit
 
       /* --------------------------------------------------------- *
        *                   Store continuations
-       * --------------------------------------------------------- */      
-      testConfig.registerContinuations(
-	testConfig.keyBidsNAsks._2.take( testConfig.numberOfStandingRequests )
-      )( testConfig.ckrReportPresent, testConfig.ckrReportAbsent )
+       * --------------------------------------------------------- */
+      testConfig.registerContinuations(testConfig.keyBidsNAsks._2.take(testConfig.numberOfStandingRequests))(testConfig.ckrReportPresent,
+                                                                                                             testConfig.ckrReportAbsent)
 
       /* --------------------------------------------------------- *
        * Wait at barrier -- will be fixed with a blocking get, soon
        * --------------------------------------------------------- */
 
-      while ( testConfig.barrier() < testConfig.numberOfStandingRequests ) {
-	println( "waiting to get past registration barrier; current height: " + testConfig.barrier )
-	Thread.sleep( testConfig.TIMEOUT_MED )
+      while (testConfig.barrier() < testConfig.numberOfStandingRequests) {
+        BasicLogService.tweet("waiting to get past registration barrier; current height: " + testConfig.barrier)
+        Thread.sleep(testConfig.TIMEOUT_MED)
       }
 
       /* --------------------------------------------------------- *
        *                   Resubmit requests
-       * --------------------------------------------------------- */      
+       * --------------------------------------------------------- */
 
-      testConfig.resubmitRequests(
-	testConfig.keyBidsNAsks._2.take( testConfig.numberOfStandingRequests )
-      )
+      testConfig.resubmitRequests(testConfig.keyBidsNAsks._2.take(testConfig.numberOfStandingRequests))
 
       testConfig.justPullKRecords match {
-	case false => {
-	  println( "\n########################################################\n" )
-	  println( " Actually resubmitting requests " )
-	  println( "\n########################################################\n" )
+        case false =>
+          BasicLogService.tweet(s"""|
+                                    |########################################################
+                                    | Actually resubmitting requests
+                                    |########################################################
+                                    |""".stripMargin)
+          while (testConfig.barrier() < testConfig.numberOfStandingRequests) {
+            BasicLogService.tweet("waiting to get past resubmission barrier; current height: " + testConfig.barrier)
+            Thread.sleep(testConfig.TIMEOUT_MED)
+          }
 
-	  while ( testConfig.barrier() < testConfig.numberOfStandingRequests ) {
-	    println( "waiting to get past resubmission barrier; current height: " + testConfig.barrier )
-	    Thread.sleep( testConfig.TIMEOUT_MED )
-	  }
+          BasicLogService.tweet("\n########################################################\n")
 
-	  println( "\n########################################################\n" )
-	  
-	  for( ( k, v ) <- testConfig.keyMap ) {
-	    println( 	  
-	      "registered key : " + k + "\n"
-	      + "number of times registered : " + v + "\n"
-	    )
-	  }
-	  
-	  println( "\n########################################################\n" )
-	  
-	  testConfig.probeStandingRequests(
-	    testConfig.keyBidsNAsks._1.take( testConfig.numberOfStandingRequests )
-	  )
-	}
-	case true => {
-	  println( "\n########################################################\n" )
-	  println( " Just pulled krecords " )
-	  println( "\n########################################################\n" )
-	}
-      }      
+          for ((k, v) <- testConfig.keyMap) {
+            BasicLogService.tweet(s"""|registered key : $k
+                                      |number of times registered : $v
+                                      |""".stripMargin)
+          }
+
+          BasicLogService.tweet("\n########################################################\n")
+
+          testConfig.probeStandingRequests(
+            testConfig.keyBidsNAsks._1.take(testConfig.numberOfStandingRequests)
+          )
+        case true =>
+          BasicLogService.tweet(s"""|
+                                    |########################################################
+                                    | Just pulled krecords
+                                    |########################################################
+                                    |""".stripMargin)
+      }
 
       /* --------------------------------------------------------- *
        *                   Assert invariant
-       * --------------------------------------------------------- */      
-      1 must be_==(1)
+       * --------------------------------------------------------- */
+      1 must ===(1)
 
-      //fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
+      // fetchString(_resultsQ, cnxnTest, resultKey.toLabel) must be_==(value).eventually(10, TIMEOUT_EVENTUALLY)
     }
 
   }

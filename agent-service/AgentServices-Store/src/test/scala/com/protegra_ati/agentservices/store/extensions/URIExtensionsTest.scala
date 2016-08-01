@@ -1,29 +1,25 @@
 package com.protegra_ati.agentservices.store.extensions
 
-/* User: jklassen
-*/
-
-
-import org.specs2.mutable._
 import java.net.URI
+
 import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 import com.protegra_ati.agentservices.store.extensions.URIExtensions._
+import org.scalatest.{MustMatchers, WordSpec}
 
-class URIExtensionsTest extends SpecificationWithJUnit {
-   "withPort" should {
-     "add port" in {
-       val port = 1234
-       val uri = "localhost".toURI.withPort(port)
+class URIExtensionsTest extends WordSpec with MustMatchers {
 
-       uri.getPort() must be_==(port)
-     }
-   }
+  "withPort" should {
+    "add port" in {
+      val port: Int = 1234
+      val uri: URI  = "localhost".toURI.withPort(port)
+      uri.getPort must ===(port)
+    }
+  }
 
   "port" should {
-     "default" in {
-       val uri = "localhost".toURI
-
-       uri.getPort() must be_==(-1)
-     }
-   }
+    "default" in {
+      val uri: URI = "localhost".toURI
+      uri.getPort must ===(-1)
+    }
+  }
 }

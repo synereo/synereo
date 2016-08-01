@@ -1,4 +1,4 @@
-package com.protegra_ati.agentservices.store
+package com.protegra_ati.agentservices.store.test
 
 trait RabbitTestSetup {
   val RABBIT_PORT_UI_PRIVATE = 5672
@@ -10,5 +10,4 @@ trait RabbitTestSetup {
   val RABBIT_PORT_CLAIMING_AGENT = 6003
   val RABBIT_PORT_RELYING_AGENT = 6004
   val RABBIT_PORT_TEST_RESULTS_DB = 7000
-
-} 
+}

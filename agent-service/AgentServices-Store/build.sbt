@@ -74,9 +74,7 @@ lazy val coreDeps = Seq(
   "org.mongodb"                %% "casbah"            % "2.6.4" exclude("org.slf4j", "slf4j-api"),
   "org.scala-lang"             %% "scala-pickling"    % "0.8.0",
   "org.scalesxml"              %% "scales-xml"        % "0.4.5",
-  "junit"                       % "junit"             % "4.8.1"   % "test",
-  "org.scalatest"              %% "scalatest"         % "2.0.M5b" % "test",
-  "org.specs2"                 %% "specs2"            % "1.14"    % "test")
+  "org.scalatest"              %% "scalatest"         % "2.2.6" % "test")
 
 lazy val depsSettings = Seq(
   resolvers ++= additionalResolvers,

@@ -1,17 +1,14 @@
-package com.protegra_ati.agentservices.store
-
-import org.specs2.time.Duration
-
+package com.protegra_ati.agentservices.store.test
 
 trait Timeouts {
-  val TIMEOUT_SHORT = 200
-  val TIMEOUT_MED = 500
-  val TIMEOUT_LONG = 1000
-  val TIMEOUT_VERY_LONG = 5000
-  val TIMEOUT_BEFORE_RESULT_FETCH = 1000
 
-  @transient val TIMEOUT_EVENTUALLY = new Duration(2000)
-  @transient val TIMEOUT_EVENTUALLY_LONG = new Duration(10000)
+  val TIMEOUT_SHORT               = 200
+  val TIMEOUT_MED                 = 500
+  val TIMEOUT_LONG                = 1000
+  val TIMEOUT_VERY_LONG           = 5000
+  val TIMEOUT_BEFORE_RESULT_FETCH = 1000
+  val TIMEOUT_EVENTUALLY          = 2000
+  val TIMEOUT_EVENTUALLY_LONG     = 10000
 
   def trySleep(count: Int) = {
     if (count == 0)
