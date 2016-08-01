@@ -460,7 +460,33 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  value : mTT.Resource
 	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
 	  //println( "in asStoreKRecord with kvKNameSpace = " + kvKNameSpace )
-	  asStoreEntry( key, value )( kvKNameSpace )
+	  //asStoreEntry( key, value )( kvKNameSpace )
+          key match {
+            case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {              
+              val ttt =
+	        textToTag.getOrElse(
+	          throw new Exception( "must have textToTag to convert flatKey: " + fk )
+	        )
+              val ltns =
+                labelToNS.getOrElse(
+                  throw new Exception( "must have labelToNS to convert flatKey: " + fk )
+                )
+              val fkS = asCacheValue( fk ) + ""
+              val flatKey = ttt( fkS )
+              asStoreEntry(
+                asStoreKey(
+                  new CnxnCtxtBranch[Namespace,Var,Tag](
+                    ltns( fkS ),
+                    ( new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( ( flatKey ) ) ) ) :: Nil
+                  )
+                ),
+                value
+              )( kvNameSpace )
+            }
+            case _ => {
+              throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
+            }
+          }
 	}
 
 	override def asCacheValue(
