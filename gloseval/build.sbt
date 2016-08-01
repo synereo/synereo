@@ -35,7 +35,7 @@ lazy val additionalResolvers = Seq(
   "BaseX" at "http://files.basex.org/maven/",
   "xqj"   at "http://xqj.net/maven/")
 
-lazy val agentServicesVersion = "1.9.5-63b5972"
+lazy val agentServicesVersion = "1.9.5-ef3c169"
 
 lazy val json4sVersion = "3.2.7"
 
