@@ -1,15 +1,51 @@
-Agent-Service-ATI-IA
+Agent-Service-ATI-IA (RChain Agent Service)
 ====================
-The code in this repository is licensed by Agent Technology Inc.  There is no licensing requirement for individuals, non-profit businesses, and non-G20 governments. In other words, it is free for your personal use. You don’t even have to register the software.
+# RChain Agent Service
 
-Agent Technology Inc introduces a novel licensing model, which we call “forward innovation”. We believe that those who invest in developing an idea should have the right to be rewarded for taking the risk and putting in the effort, but not at the cost of preventing others from innovating further.
+[![Build Status](https://tbd)](https://tbd)
+[![Gitter](https://badges.gitter.im/synereo/tbd)](https://gitter.im/synereo/tbd)
 
-Anyone who builds on this technology is free to make money from their innovation, as long as it does not inhibit further innovation. Specifically, use of this technology cannot inhibit further innovation or cometition, by copyright or patents. We call this forward innovation, since any attempt to use copyright or patents to prevent further innovation or competition will allow the party accused of infringement to use the Agent license as protection.
+RChain Agent Service is...
 
-We intend that the consequence of this provision in the license will: (1) encourage innovation by giving a degree of protection to innovators from patent and copyright trolls.  (2) reward execution by letting the market decide which implementation is preferred regardless of who filed first. (3) the advantage given to execution should in turn encourage collaboration over competition.
+* an agent and privacy model built on SpecialK
+* introduces a DSL, including: 
+  * sessions and associated security
+  * agents
+  * connections between agents, including a self-connection known as an "alias"
+  * posts
+  * filters (and evaluation for query)
+  * poll and subscription, with paging
+  * protocols and handlers, including:
+    * introduction (of agents)
+    * reputation
+    * verification
 
-Agent Technology Inc. recognizes that it has built on a huge body of others’ innovation, so any fee charged for for-profit and G-20 uses of this technology is meant to represent the incremental contribution of Agent Technology’s innovation and is nominal. License fees will be easy to calculate and intended to have little material effect on the bottom line of companies and governments that use this technology.  The majority of licensing fees will be used to improve the code and encourage socially desirable applications of this technology.
+## Installation
 
-Not included in the licensing requirements is our request that nonprofits who use Agents as a revenue source contribute some small percentage of this revenue to help maintain and improve the code base.  This request includes cooperatives created specifically for Agent hosting cost sharing.  ATI will provide assurances that contributions from non-profits are only used to increase code improvements.
+To work with RChain Agent Service, you will need:
 
-Agent Technology Inc. is willing to modify this licensing agreement on a case by case basis in return for contributions to the code base.  This includes companies and individuals who have created code that we have used already and enhancements to our code.  Please contact us for more information.
+* TBD
+
+After installing these dependencies, you can clone the agent-service-ati-ia repo and run tests:
+```
+TBD
+```
+
+**NOTE**: In order to run these tests, MongoDB and RabbitMQ must be running.
+
+
+## Usage
+
+Currently, RChain Agent Service is intended to be used in conjunction with the [SpecialK](https://github.com/synereo/specialk) and [GLoSEval](https://github.com/synereo/gloseval).
+
+## Issues
+
+We welcome reports of any issues on the [issue tracker](https://github.com/synereo/agent-service-ati-ia/issues).
+
+We are also using JIRA to track issues for this project and the rest of the Synereo Platform:
+https://synereo.atlassian.net/projects/SOC/issues
+
+## More Information
+
+* Lucius Gregory Meredith's [*Agents and Agency in the Internet*](https://youtu.be/CjSr9Iui1ko) presentation at the Scala Bay Meetup in Fall 2013.
+* Synereo [Development Workshops](https://www.youtube.com/playlist?list=PLsMIFzUId4x_FoKGsr_dVvp-v_VQdGc8t) hosted on our [YouTube Channel](https://www.youtube.com/channel/UCU5CBbxAeFYnodf32w3ahOQ)
