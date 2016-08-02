@@ -10,47 +10,32 @@ package com.biosimilarity.evaluator.spray
 
 import java.io.File
 
-import com.protegra_ati.agentservices.store._
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.msgs._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
 import com.biosimilarity.evaluator.omniRPC.OmniClient
 
-
-
 import scala.collection.mutable
-//import com.biosimilarity.evaluator.distribution.portable.v0_1.createUserResponse
 import spray.routing._
-//import directives.CompletionMagnet
 import spray.http._
-import spray.http.StatusCodes._
-import MediaTypes._
-
-import spray.httpx.encoding._
-
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.continuations._
 import scala.collection.mutable.HashMap
-
-import com.typesafe.config._
-
 import javax.crypto._
 import javax.crypto.spec._
 import java.security._
-
-import java.util.Date
 import java.util.UUID
-
 import java.net.URI
+
+import com.biosimilarity.evaluator.spray.srp.{ConversionUtils, SRPSessionManager, UserCredentials}
+
+import scala.util.Try
+import scala.language.postfixOps
 
 // Mask the json4s symbol2jvalue implicit so we can use the PrologDSL
 object symbol2jvalue extends Serializable {}
@@ -89,16 +74,19 @@ object btcKeyMapper extends Serializable {
 }
 
 object ConfirmationEmail extends Serializable {
+  val EMAIL_AUTH_USERNAME = EvalConfConfig.read("EmailAuthUsername")
+  val EMAIL_AUTH_PASSWORD = EvalConfConfig.read("EmailAuthPassword")
+  val EMAIL_FROM_ADDRESS  = EvalConfConfig.read("EmailFromAddress")
+
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
+
     val simple = new SimpleEmail()
     simple.setHostName("smtp.googlemail.com")
     simple.setSmtpPort(465)
-    //simple.setAuthenticator(new DefaultAuthenticator("individualagenttech", "4genttech"))
-    simple.setAuthenticator(new DefaultAuthenticator("splicious.ftw", "spl1c1ous"))
+    simple.setAuthenticator(new DefaultAuthenticator(EMAIL_AUTH_USERNAME, EMAIL_AUTH_PASSWORD))
     simple.setSSLOnConnect(true)
-    //simple.setFrom("individualagenttech@gmail.com")
-    simple.setFrom("splicious.ftw@gmail.com")
+    simple.setFrom(EMAIL_FROM_ADDRESS)
     simple.setSubject("Confirm splicious agent signup")
     // TODO(mike): get the URL from a config file
     simple.setMsg("""Your token is: """ + token)
@@ -121,7 +109,7 @@ trait CapUtilities {
     emlmac.doFinal(email.getBytes("utf-8")).map("%02x" format _).mkString.substring(0, 36)
   }
 
-  def getCapMacInstance(): Mac = {
+  def getCapMacInstance: Mac = {
     val macInstance = Mac.getInstance("HmacSHA256")
     macInstance.init(new SecretKeySpec("5ePeN42X".getBytes("utf-8"), "HmacSHA256"))
     macInstance
@@ -184,6 +172,15 @@ trait CapUtilities {
   def spawnNewSessionURI(session : String) : String = {
     val cap = capFromSession(session)
     capToSession(cap)
+  }
+
+  def isWrongCap(capWithMac: String): Boolean = {
+    val cap = capWithMac.slice(0, 36)
+    val mac = capWithMac.slice(36, 46)
+    val macInstance = getCapMacInstance
+    val hex = macInstance.doFinal(cap.getBytes("utf-8")).slice(0, 5).map("%02x" format _).mkString
+
+    hex != mac
   }
 
 }
@@ -532,6 +529,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   // ----------------------------------------------------------------------------------------------------------
   val jsonBlobLabel = fromTermString("jsonBlob(W)").getOrElse(throw new Exception("Couldn't parse jsonBlobLabel"))
   val pwmacLabel = fromTermString("pwmac(X)").getOrElse(throw new Exception("Couldn't parse pwmacLabel"))
+  val pwdLabel = fromTermString("pwd(X)").getOrElse(throw new Exception("Couldn't parse pwdLabel"))
   val emailLabel = fromTermString("email(Y)").getOrElse(throw new Exception("Couldn't parse emailLabel"))
   val tokenLabel = fromTermString("token(Z)").getOrElse(throw new Exception("Couldn't parse tokenLabel"))
   val aliasListLabel = fromTermString("aliasList(true)").getOrElse(throw new Exception("Couldn't parse aliasListLabel"))
@@ -567,11 +565,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case PostedExpr((PostedExpr(postedStr: String), _, _, _)) => {
           val content = parse(postedStr)
           val email = (content \ "email").extract[String]
-          val password = (content \ "password").extract[String]
-          //val jsonBlob = compact(render(content \ "jsonBlob"))
-         // secureSignup(email, password, jsonBlob, key)
+          val salt = (content \ "salt").extract[String]
+          val verifier = (content \ "verifier").extract[String]
           val jsv = (content \ "jsonBlob").extract[JObject]
-          upsertUser(email, password, jsv, key)
+          upsertUser(email, s"$salt:$verifier", jsv, key)
 
         }
       }
@@ -1760,7 +1757,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         BasicLogService.tweet("secureLogin | cap branch")
         val cap = identInfo.slice(0, 36)
         val mac = identInfo.slice(36, 46)
-        val macInstance = getCapMacInstance()
+        val macInstance = getCapMacInstance
         val hex = macInstance.doFinal(cap.getBytes("utf-8")).slice(0, 5).map("%02x" format _).mkString
         if (hex != mac) {
           CompletionMapper.complete(key, compact(render(
@@ -2427,7 +2424,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     val createUserResponse: Unit => Unit = Unit => {
       CompletionMapper.complete(key, compact(render(
-        ("msgType" -> "createUserResponse") ~
+        ("msgType" -> "createUserStep2Response") ~
           ("content" -> ("agentURI" -> uri)))))
     }
 
@@ -2452,13 +2449,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     // Store the email
     put(emailLabel, List(capSelfCnxn), cap)
 
-    val pwmac = getPwMac(password)
-
-    // Store pwmac
     post(
-      pwmacLabel,
+      pwdLabel,
       List(capSelfCnxn),
-      pwmac,
+      password,
       (optRsrc: Option[mTT.Resource]) => optRsrc match {
         case None => ()
         case Some(_) =>
@@ -2677,6 +2671,441 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       ssn,
       compact(
         render( msg ) ) )
+  }
+
+  def createUserStep1Request(json: JValue, key: String): Unit = {
+    val errorMsgType = "createUserError"
+
+    try {
+      val eml = (json \ "email").extract[String].toLowerCase
+      val (email, noconfirm, testtoken) = getEmailFromPrefixedString(eml)
+      val cap = emailToCap(email)
+      val capURI = new URI("agent://" + cap)
+      val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
+      val salt = ConversionUtils.getRandomSalt
+      def handleRsp(): Unit = CompletionMapper.complete(key, compact(render(
+        ("msgType" -> "createUserStep1Response") ~
+          ("content" -> ("salt" -> salt)))))
+
+      read(
+        jsonBlobLabel,
+        List(capSelfCnxn),
+        (optRsrc: Option[mTT.Resource]) => {
+          BasicLogService.tweet("createUserStep1Request | anonymous onFetch: optRsrc = " + optRsrc)
+          optRsrc match {
+            case None => ();
+            case Some(mTT.Ground(Bottom)) =>  handleRsp()
+            case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => handleRsp()
+            case _ => completeWithError(key, errorMsgType, "Email is already registered.")
+          }
+        })
+    } catch {
+      case e: Throwable =>
+        BasicLogService.tweet(s"Error createUserStep1Request: \n${e.getStackTraceString}")
+        completeWithError(key, errorMsgType, e.getMessage)
+    }
+  }
+
+  def createUserStep2Request(json: JValue, key: String): Unit = {
+    val errorMsgType = "createUserError"
+
+    try {
+      val eml = (json \ "email").extract[String].toLowerCase
+      val (email, noconfirm, testtoken) = getEmailFromPrefixedString(eml)
+
+      if (noconfirm) {
+        val salt = (json \ "salt").extract[String]
+        val verifier = (json \ "verifier").extract[String]
+        val blob = (json \ "jsonBlob").extract[JObject]
+        upsertUser(email, s"$salt:$verifier", blob, key)
+      }
+      else {
+        val cap = emailToCap(email)
+        val capURI = new URI("agent://" + cap)
+        val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
+
+        val token = UUID.randomUUID.toString.substring(0, 8)
+        val tokenUri = new URI("token://" + token)
+        val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
+
+        post[String](
+          tokenLabel,
+          List(tokenCnxn),
+          compact(render(json)),
+          (optRsrc: Option[mTT.Resource]) => {
+            BasicLogService.tweet("createUserRequest | onPost: optRsrc = " + optRsrc)
+            optRsrc match {
+              case None => ();
+              case Some(_) => {
+                if (testtoken) {
+                  processEmailToken(token, key)
+                } else {
+                  ConfirmationEmail.confirm(email, token)
+                  // Notify user to check her email
+                  CompletionMapper.complete(key, compact(render(
+                    ("msgType" -> "createUserWaiting") ~
+                      ("content" -> List()) // List() is rendered as "{}"
+                  )))
+                }
+              }
+            }
+          })
+      }
+    } catch {
+      case e: Throwable =>
+        BasicLogService.tweet(s"Error createUserStep2Request: \n${e.getStackTraceString}")
+        completeWithError(key, errorMsgType, e.getMessage)
+    }
+  }
+
+  def initializeSessionStep1Request(json: JValue, key: String): Unit = {
+    import DSLCommLink.mTT
+
+    val errorMsgType = "initializeSessionError"
+
+    def fetchPwdAndCalculateB(cap: String, AHex: String) = {
+      val onPwdFetch: Option[mTT.Resource] => Unit = (rsrc) => {
+        def handlePwdHash(hash: String): Unit = {
+          import SRPSessionManager._
+
+          BasicLogService.tweet("initializeSessionStep1Request | onPwdFetch: hash = " + hash)
+          Try(hash.split(":")) toOption match {
+            case None => completeWithError(key, errorMsgType, "Error fetching data")
+            case Some(arr) =>
+              try {
+                val uc = UserCredentials(cap, arr(1))
+                val (ssn, bHex) = uc.getLoginSessionKey(AHex)
+                saveSession(ssn, uc)
+                CompletionMapper.complete(key, compact(render(
+                  ("msgType" -> "initializeSessionStep1Response") ~
+                    ("content" -> ("s" -> arr(0)) ~ ("B" -> bHex)))))
+              } catch {
+                case e: Throwable =>
+                  e.printStackTrace()
+                  completeWithError(key, errorMsgType, "Error calculating B")
+              }
+          }
+        }
+        rsrc match {
+          case None => ();
+          case Some(mTT.Ground(PostedExpr((PostedExpr(hash: String), _, _, _)))) => handlePwdHash(hash)
+          case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(hash: String), _, _, _)))), _)) => handlePwdHash(hash)
+          case _ => completeWithError(key, errorMsgType, s"Unrecognized resource: rsrc = $rsrc")
+        }
+      }
+      fetch(pwdLabel, List(getCapSelfCnxn(cap)), onPwdFetch)
+    }
+
+    try {
+      val (identType, identInfo, pVal) = parseLoginRequestContent(json, "A")
+
+      identType match {
+        case "cap" =>  fetchPwdAndCalculateB(identInfo, pVal)
+        case "email" => {
+          val cap = emailToCap(identInfo)
+          // don't need mac of cap; need to verify email is on our network
+          val emailURI = new URI("emailhash://" + cap)
+          val emailSelfCnxn = PortableAgentCnxn(emailURI, "emailhash", emailURI)
+          def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
+            v match {
+              case Bottom => completeWithError(key, errorMsgType, "No such email.")
+              case PostedExpr((PostedExpr(cap: String), _, _, _)) => {
+                BasicLogService.tweet(s"initializeSessionStep1Request | Logging in with cap = $cap")
+                fetchPwdAndCalculateB(cap, pVal)
+              }
+              case _ => completeWithError(key, errorMsgType, "Unrecognized resource: optRsrc = " + optRsrc)
+            }
+          }
+
+          read(
+            emailLabel,
+            List(emailSelfCnxn),
+            (optRsrc: Option[mTT.Resource]) => {
+              BasicLogService.tweet("initializeSessionStep1Request | email case | anonymous onFetch: optRsrc = " + optRsrc)
+              optRsrc match {
+                case None => ()
+                case Some(mTT.Ground(v)) => handleRsp(optRsrc, v)
+                case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => handleRsp(optRsrc, v)
+                case _ => completeWithError(key, errorMsgType, "Unrecognized resource: optRsrc = " + optRsrc)
+              }
+            }
+          )
+        }
+      }
+    }
+    catch {
+      case e: Throwable => completeWithError(key, errorMsgType, e.getMessage)
+    }
+  }
+
+  def initializeSessionStep2Request(json: JValue, key: String, onSuccess: String => Unit ): Unit = {
+    import SRPSessionManager._
+    import DSLCommLink.mTT
+
+    val errorMsgType = "initializeSessionError"
+
+    try {
+      val (identType, identInfo, pVal) = parseLoginRequestContent(json, "M")
+      val cap = identType match {
+        case "cap" => identInfo
+        case "email" => emailToCap(identInfo)
+      }
+      val capURI = capToAgentURI(cap)
+      val capSelfCnxn = getCapSelfCnxn(cap)
+      val sessionURI = capToSession(cap)
+      val uc = getSessionWithHash(pVal)
+
+      def onLabelsFetch(jsonBlob: String, aliasList: String, defaultAlias: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+        BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onLabelsFetch: optRsrc = " + optRsrc)
+        def handleRsp(v: ConcreteHL.HLExpr): Unit = {
+          v match {
+            case PostedExpr((PostedExpr(labelList: String), _, _, _)) => {
+              val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+              listenIntroductionNotification(sessionURI, aliasCnxn)
+              listenConnectNotification(sessionURI, aliasCnxn)
+
+              val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
+
+              val content =
+                ("sessionURI" -> sessionURI) ~
+                  ("listOfAliases" -> parse(aliasList)) ~
+                  ("defaultAlias" -> defaultAlias) ~
+                  ("listOfLabels" -> parse(labelList)) ~ // for default alias
+                  ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~ // for default alias
+                  ("lastActiveLabel" -> "") ~
+                  ("jsonBlob" -> parse(jsonBlob)) ~
+                  ("M2" -> uc.getM2Hex(pVal)) // SRP parameter for client-side verification
+
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionResponse") ~
+                  ("content" -> content))))
+
+              onSuccess(sessionURI)  // register the session
+              fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
+
+            }
+            case Bottom => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> "Strange: found other data but not labels!?")))))
+            }
+          }
+        }
+        optRsrc match {
+          case None => ();
+          case Some(mTT.Ground(v)) => {
+            handleRsp(v)
+          }
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+            handleRsp(v)
+          }
+          case _ => {
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "initializeSessionError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+          }
+        }
+      }
+      def onConnectionsFetch(jsonBlob: String, aliasList: String, defaultAlias: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+        BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onConnectionsFetch: optRsrc = " + optRsrc)
+        val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+        def handleRsp(v: ConcreteHL.HLExpr): Unit = {
+          v match {
+            case PostedExpr((PostedExpr(biCnxnList: String), _, _, _)) => {
+              fetch(labelListLabel, List(aliasCnxn), onLabelsFetch(jsonBlob, aliasList, defaultAlias, biCnxnList))
+            }
+            case Bottom => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> "Strange: found other data but not connections!?")))))
+            }
+            case _ => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+            }
+          }
+        }
+        optRsrc match {
+          case None => ();
+          case Some(mTT.Ground(v)) => {
+            handleRsp(v)
+          }
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+            handleRsp(v)
+          }
+          case _ => {
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "initializeSessionError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+          }
+        }
+      }
+      def onDefaultAliasFetch(jsonBlob: String, aliasList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+        BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onDefaultAliasFetch: optRsrc = " + optRsrc)
+        def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
+          v match {
+            case PostedExpr((PostedExpr(defaultAlias: String), _, _, _)) => {
+              val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+              fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(jsonBlob, aliasList, defaultAlias))
+            }
+            case Bottom => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> "Strange: found other data but not default alias!?")))))
+            }
+            case _ => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+            }
+          }
+        }
+        optRsrc match {
+          case None => ();
+          case Some(mTT.Ground(v)) => {
+            handleRsp(optRsrc, v)
+          }
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+            handleRsp(optRsrc, v)
+          }
+          case _ => {
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "initializeSessionError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+          }
+        }
+      }
+      def onAliasesFetch(jsonBlob: String): Option[mTT.Resource] => Unit = (optRsrc) => {
+        BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onAliasesFetch: optRsrc = " + optRsrc)
+        def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
+          v match {
+            case PostedExpr((PostedExpr(aliasList: String), _, _, _)) => {
+              fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch(jsonBlob, aliasList))
+            }
+            case Bottom => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> "Strange: found pwmac and jsonBlob but not aliases!?")))))
+            }
+            case _ => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+            }
+          }
+        }
+        optRsrc match {
+          case None => ();
+          case Some(mTT.Ground(v)) => {
+            handleRsp(optRsrc, v)
+          }
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+            handleRsp(optRsrc, v)
+          }
+          case _ => {
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "initializeSessionError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+          }
+        }
+      }
+      val onJSONBlobFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
+        BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onJSONBlobFetch: optRsrc = " + optRsrc)
+        def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
+          v match {
+            case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
+              fetch(aliasListLabel, List(capSelfCnxn), onAliasesFetch(jsonBlob))
+            }
+            case Bottom => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> "Strange: found pwmac but not jsonBlob!?")))))
+            }
+            case _ => {
+              CompletionMapper.complete(key, compact(render(
+                ("msgType" -> "initializeSessionError") ~
+                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+            }
+          }
+        }
+        optRsrc match {
+          case None => ();
+          case Some(mTT.Ground(v))  => {
+            handleRsp(optRsrc, v)
+          }
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+            handleRsp(optRsrc, v)
+          }
+          case _ => {
+            CompletionMapper.complete(key, compact(render(
+              ("msgType" -> "initializeSessionError") ~
+                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+          }
+        }
+      }
+
+      if(uc == null) completeWithError(key, errorMsgType, s"Authentication failed on server.")
+      else {
+        fetch(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
+        ()
+      }
+    }
+    catch {
+      case e: Throwable => completeWithError(key, errorMsgType, e.getMessage)
+    }
+  }
+
+  private def parseLoginRequestContent(json: JValue, queryParam: String): (String, String, String) = {
+    val agentURI = (json \ "agentURI").extract[String]
+    val uri = new URI(agentURI)
+
+    if (uri.getScheme != "agent") {
+      throw new Exception("Unrecognized scheme")
+    }
+    val (identType, identInfo) = {
+      val pth = uri.getPath
+      if (pth == "") ("cap", uri.getHost )
+      else (uri.getHost, pth.substring(1) )
+    }
+    val queryMap = new HashMap[String, String]
+    val qry = uri.getRawQuery
+    if (qry != null) {
+      qry.split("&").map((x: String) => {
+        val pair = x.split("=")
+        queryMap += ((pair(0), pair(1)))
+      })
+    }
+
+    val pVal = queryMap.getOrElse(queryParam, "")
+
+    if(pVal.isEmpty) {
+      throw new Exception(s"Require nonempty $queryParam parameter")
+    }
+
+    identType match {
+      case "cap" => if (isWrongCap(identInfo)) throw new Exception("This link wasn't generated by us.")
+      else (identType, identInfo.slice(0, 36), pVal)
+      case "email" => (identType, identInfo.toLowerCase, pVal)
+      case _ => throw new Exception(s"Wrong identifier type")
+    }
+  }
+
+  private def completeWithError(key: String, msgType: String, reason: String): Unit =
+    CompletionMapper.complete(key, compact(render(
+      ("msgType" -> msgType) ~
+        ("content" -> ("reason" -> reason)))))
+
+  private def getEmailFromPrefixedString(eml: String): (String, Boolean, Boolean) = {
+    val prfx = "noconfirm:"
+    val testprfx = "testtoken:"
+    val noconfirm = eml.startsWith(prfx)
+    val testtoken = eml.startsWith(testprfx)
+    val email = if (noconfirm) eml.substring(prfx.length)
+    else if (testtoken) eml.substring(testprfx.length)
+    else eml
+
+    (email, noconfirm, testtoken)
   }
 
   def omniGetBalance(json: JObject) : Unit = {
