@@ -1200,9 +1200,20 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      val dbAccessExpr =
 		() => {
 		  for(
-		    rcrd <- asStoreKRecord( ptn, rsrc );
+                    indrctRcrd <- asStoreIndirection( ptn );
+		    rcrd <- asStoreKRecord( indrctRcrd, rsrc );
 		    sus <- collName
 		  ) {
+                    BasicLogService.tweet(
+		      (
+			"storing indirectionRecord to db : " //+ pd.db
+			+ " pair : " + indrctRcrd
+			+ " in coll : " + sus
+		      )
+		    )
+                    store( sus )( indrctRcrd )(
+		      nameSpaceToString, varToString, tagToString, useUpsert
+		    )                                        
 		    BasicLogService.tweet(
 		      (
 			"storing to db : " /* + pd.db */
