@@ -135,28 +135,25 @@ object PersistedMonadicKVDBMongoNodeSetup
               val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
               val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
               val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
-              val computedRslt = CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+              CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
                 case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, v :: Nil) :: Nil) =>
-                  val matchRslt = matchMap(key, k)
-                  matchRslt match {
+                  matchMap(key, k) match {
                     case Some(soln) =>
                       if (compareNameSpace(ns, kvNameSpace)) {
                         val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
-                        val groundWrapper  = mTT.Ground(cacheValueRslt)
+                        val groundWrapper = mTT.Ground(cacheValueRslt)
                         val boundHMWrapper = mTT.RBoundHM(Some(groundWrapper), Some(soln))
-                        val boundWrapper   = mTT.asRBoundAList(boundHMWrapper)
+                        val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
                         emT.PlaceInstance(k,
-                                          Left[mTT.Resource, List[Option[mTT.Resource] => Unit @suspendable]](boundWrapper),
-                                          theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                          Left[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](boundWrapper),
+                          theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                      } else if (compareNameSpace(ns, kvKNameSpace)) {
+                        val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                        emT.PlaceInstance(k,
+                          Right[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](ks),
+                          theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
                       } else {
-                        if (compareNameSpace(ns, kvKNameSpace)) {
-                          val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
-                          emT.PlaceInstance(k,
-                                            Right[mTT.Resource, List[Option[mTT.Resource] => Unit @suspendable]](ks),
-                                            theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
-                        } else {
-                          throw new Exception(s"unexpected namespace: $ns")
-                        }
+                        throw new Exception(s"unexpected namespace: $ns")
                       }
                     case None =>
                       throw new UnificationQueryFilter(key, k, value)
@@ -164,7 +161,6 @@ object PersistedMonadicKVDBMongoNodeSetup
                 case _ =>
                   throw new Exception(s"unexpected record format: $value")
               }
-              computedRslt
             }
           }
 
