@@ -2,6 +2,7 @@ package com.biosimilarity.evaluator.distribution
 
 import com.typesafe.config.Config
 
+import scala.collection.JavaConversions._
 import scala.util.Try
 
 object EvalConfConfig extends EvalConfig {
@@ -27,6 +28,13 @@ object EvalConfConfig extends EvalConfig {
 
   def readIntOrElse(param: String, default: Int): Int =
     Try(readInt(param)).getOrElse(default)
+
+  def readList(param: String): List[String] =
+    try {
+      config.getStringList(param).toList
+    } catch {
+      case _: Throwable => throw new Exception(s"Missing or empty value for: $param in eval.conf file.")
+    }
 
   def isOmniRequired(): Boolean = Try(readString("OmniRPCURI")).isSuccess
 
