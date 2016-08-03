@@ -49,6 +49,7 @@ lazy val coreDeps = Seq(
   // =================================================
   // "org.apache.ws.commmons.util" % "ws-commons-util"   % "1.0.2",
   // "net.lag"                     % "configgy"          % "2.0.0",
+  // "org.scala-lang"             %% "scala-pickling"    % "0.8.0",
   // ===============================================================
   // These dependencies are currently unmanaged (see lib directory):
   // ===============================================================
@@ -72,7 +73,6 @@ lazy val coreDeps = Seq(
   "org.json4s"                 %% "json4s-jackson"    % json4sVersion,
   "org.json4s"                 %% "json4s-native"     % json4sVersion,
   "org.mongodb"                %% "casbah"            % "2.6.4" exclude("org.slf4j", "slf4j-api"),
-  "org.scala-lang"             %% "scala-pickling"    % "0.8.0",
   "org.scalesxml"              %% "scales-xml"        % "0.4.5",
   "org.scalatest"              %% "scalatest"         % "2.2.6" % "test")
 

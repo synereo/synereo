@@ -188,15 +188,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-pickling_2.10</artifactId>
-            <!-- version>1.4.2</version -->
-            <!-- version>1.4.3</version -->
-            <!-- version>1.4.4</version -->
-            <version>0.8.0-Local</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <!-- version>1.4.2</version -->
@@ -224,11 +215,6 @@
           <version>1.2.17</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.ws.commons.util</groupId>
-            <artifactId>ws-commons-util</artifactId>
-            <version>1.0.2</version>
-        </dependency>
         <dependency>
             <groupId>commons-pool</groupId>
             <artifactId>commons-pool</artifactId>
