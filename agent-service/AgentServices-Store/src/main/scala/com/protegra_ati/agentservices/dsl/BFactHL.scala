@@ -38,6 +38,8 @@ trait AbstractBFactHL {
     def behavior : String
   }
 
+  case class FlatKeyBouncer(label: Label) extends BFactHLExpr
+
   case class CommenceInstance(
     override val behaviorDefinitionCnxn : Cnxn,
     override val behaviorDefinitionLabel : Label,

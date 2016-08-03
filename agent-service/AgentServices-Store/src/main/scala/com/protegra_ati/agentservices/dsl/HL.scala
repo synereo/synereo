@@ -29,6 +29,8 @@ trait AbstractHL {
 
   case object Bottom extends HLExpr
 
+  case class FlatKeyBouncer(label: Label) extends HLExpr
+
   case class FeedExpr(
     override val label : Label,
     override val cnxns : Seq[Cnxn]

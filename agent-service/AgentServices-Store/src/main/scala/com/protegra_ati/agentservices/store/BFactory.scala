@@ -286,7 +286,7 @@ package bfactory {
               @transient override val labelToNS : Option[String => String],
               @transient override val textToVar : Option[String => String],
               @transient override val textToTag : Option[String => String],
-              @transient override val textToValue: Option[String => ConcreteBFactHL.BFactHLExpr] = throw new Exception("You need to supply this, dummy")
+              @transient override val textToValue: Option[String => ConcreteBFactHL.BFactHLExpr] = Some { (s: String) => ConcreteBFactHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
             )
             extends MongoDBManifest( /* database */ ) {
               override def valueStorageType : String = {
@@ -394,7 +394,33 @@ package bfactory {
                 }
               }
 
-              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                  case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                    val matchRslt = matchMap(key, k)
+                    matchRslt match {
+                      case Some(_) =>
+                        fk match {
+                          case CnxnCtxtLeaf(Left(v)) =>
+                            val unblob: String = fromXQSafeJSONBlob(v) match {
+                              case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                              case e: Throwable => throw e
+                            }
+                            new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                        }
+                      case None =>
+                        throw new UnificationQueryFilter(key, k, value)
+                    }
+                  case xFactor =>
+                    // Should never get here because it is
+                    // unreasonable to have retrieved a DBObject
+                    // with the key if the key is malformed
+                    throw new Exception("unexpected record structure:	" + xFactor)
+                }
+              }
 
               override def asResource(
                 key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -755,7 +781,33 @@ package bfactory {
                       }
                     }
 
-                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                                    case e: Throwable => throw e
+                                  }
+                                  new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
+                      }
+                    }
 
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -1165,7 +1217,33 @@ package bfactory {
                       }
                     }
 
-                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                                    case e: Throwable => throw e
+                                  }
+                                  new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
+                      }
+                    }
 
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -1555,7 +1633,33 @@ package bfactory {
                       }
                     }
 
-                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = ???
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                                    case e: Throwable => throw e
+                                  }
+                                  new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
+                      }
+                    }
 
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
