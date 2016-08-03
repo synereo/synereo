@@ -1,12 +1,11 @@
-package com.biosimilarity.evaluator.importer.dtos
+package com.biosimilarity.evaluator.api
 
 import org.json4s._
-
-case class ApiRequest(msgType: String, content: RequestContent)
 
 object Api {
 
   // helpers
+  case class Connection(source: String, target: String, label: String)
   case class EvalSubscribeContent(cnxns: List[Connection], label: String, value: String, uid: String)
   case class EvalSubscribeExpression(msgType: String, content: EvalSubscribeContent)
 
@@ -14,7 +13,6 @@ object Api {
   trait RequestContent {}
   // actual API
   case class Request(msgType: String, content: RequestContent)
-
   case class CreateUserRequest(email: String,password: String,jsonBlob: JObject) extends RequestContent
   case class GetAgentRequest(email: String,password: String) extends RequestContent
   case class UpdateUserRequest(sessionURI: String,jsonBlob: JObject) extends RequestContent
@@ -35,4 +33,7 @@ object Api {
     Api.Request(tnm, cont)
   }
 
+
+  trait ResponseContent {}
+  case class InitializeSessionResponse(sessionURI: String, agentURI: String, defaultAlias: String, jsonBlob: JValue) extends ResponseContent
 }

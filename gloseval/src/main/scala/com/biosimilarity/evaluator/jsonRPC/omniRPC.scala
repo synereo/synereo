@@ -70,9 +70,7 @@ object OmniClient extends EvalConfig
     try {
       response = req.asString.body
     } catch {
-      case (e) => {
-        return omniError("Unable to connect to Omni server")
-      }
+      case e : Throwable => return omniError("Unable to connect to Omni server")
     }
 
     println(s"omni RESPONSE BODY: ${response}")

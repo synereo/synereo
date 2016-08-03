@@ -9,10 +9,11 @@
 package com.biosimilarity.evaluator.importer
 
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.importer.dtos._
+import com.biosimilarity.evaluator.api.Api
+//import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.spray.NodeUser
-import org.json4s.JsonAST.{JValue, JObject}
+import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 import org.json4s.JsonDSL._
@@ -21,6 +22,31 @@ import java.util.UUID
 import com.biosimilarity.evaluator.omniRPC.OmniClient
 
 import scalaj.http.Http
+
+/*
+
+// maybe later if we end up moving to spray-client instead of scalaj-http
+
+import java.util.concurrent.TimeUnit
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.Future
+import scala.util.{Success, Failure}
+import scala.concurrent.duration._
+
+import akka.actor.ActorSystem
+import akka.util.Timeout
+import akka.pattern.ask
+import akka.io.IO
+
+import spray.can.Http
+import spray.http._
+import spray.client.pipelining._
+
+import HttpMethods._
+*/
+
+
 
 /**
  * Iterates through a sample data file, parses it, and imports the data
@@ -36,6 +62,8 @@ object Importer extends EvalConfig
   with Serializable {
 
   implicit val formats = org.json4s.DefaultFormats
+  //implicit val system: ActorSystem = ActorSystem()
+  //import system.dispatcher // implicit execution context
 
   private var GLOSEVAL_HOST = serviceHostURI()
   //private val GLOSEVAL_SENDER = serviceEmailSenderAddress()
@@ -44,7 +72,7 @@ object Importer extends EvalConfig
 
   private val agentsById = scala.collection.mutable.Map[String, String]()
   // loginId:agentURI
-  private val sessionsById = scala.collection.mutable.Map[String, InitializeSessionResponse]()
+  private val sessionsById = scala.collection.mutable.Map[String, Api.InitializeSessionResponse]()
   // sessionURI:agent
   private val cnxnLabels = scala.collection.mutable.Map[String, String]() // src+trgt:label
 
@@ -52,23 +80,25 @@ object Importer extends EvalConfig
 
   private def resolveLabel(id: String): LabelDesc = labels(id)
 
-  private def glosevalPost(msgType: String, data: RequestContent): String = {
-    println(s"REQUEST: ${msgType}")
-    val requestBody = write(ApiRequest(msgType, data))
+  private def glosevalPost(data: Api.RequestContent): String = {
+    glosevalPost(Api.toReq( data))
+  }
+
+  private def glosevalPost(msg : Api.Request): String = {
+    val requestBody = write(msg)
     glosevalPost(requestBody)
 
   }
 
-
   private def glosevalPost(msgType: String, data: JValue): String = {
-    println(s"REQUEST: ${msgType}")
+    println(s"REQUEST: $msgType")
     val requestBody = write( ("msgType" -> msgType) ~ ("content" -> data) )
     glosevalPost(requestBody)
 
   }
 
   private def glosevalPost(requestBody: String): String = {
-    println(s"REQUEST BODY: ${requestBody}")
+    println(s"REQUEST BODY: $requestBody")
 
     val req = Http(GLOSEVAL_HOST)
       .timeout(1000, 60000)
@@ -80,6 +110,42 @@ object Importer extends EvalConfig
     if (response.startsWith("Malformed request")) throw new Exception(response)
     response
   }
+
+
+
+  /*
+    private def glosevalPost(requestBody: String): String = {
+      println(s"REQUEST BODY: $requestBody")
+      //implicit val timeout: Timeout = Timeout(30.seconds)
+
+      val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
+      val fut : Future[HttpResponse] = pipeline(Post(GLOSEVAL_HOST, requestBody))
+
+      val rsp : HttpResponse = Await.result(fut,Duration.Inf) //.asInstanceOf[HttpResponse]
+      println(s"RESPONSE: ${rsp}")
+      //if (rsp.message.startsWith("Malformed request")) throw new Exception(response)
+      if (rsp.status.isFailure) {
+        throw new Exception("HTTP Error : " + rsp.status + " - " + rsp.status.defaultMessage)
+      }
+      rsp.entity.asString
+
+  //    Await.ready(fut, Duration.Inf).value.get match {
+  //      case Success(rsp) => {
+  //        println(s"RESPONSE: ${rsp}")
+  //        //if (rsp.message.startsWith("Malformed request")) throw new Exception(response)
+  //        if (rsp.status.isFailure) {
+  //          throw new Exception("HTTP Error : " + rsp.status + " - " + rsp.status.defaultMessage)
+  //        }
+  //        rsp.entity.asString
+  //      }
+  //      case Failure(e) => {
+  //        println("Error : " + e)
+  //        throw e
+  //      }
+  //    }
+    }
+  */
+
 
   def makeAliasURI(alias: String) = s"alias://${alias}/alias"
 
@@ -126,8 +192,9 @@ object Importer extends EvalConfig
   }
   */
 
-  //@@GS - should be actor based but will have to do for now.
   var terminateLongPoll = false
+
+  //var messagesReceived : List[JObject] = Nil
   def longPoll(): Thread = {
     println("initiating long-polling")
     new Thread(new Runnable() {
@@ -140,9 +207,10 @@ object Importer extends EvalConfig
                 try {
                   println("Sending Ping")
                   val session = sess.sessionURI
-                  val js = glosevalPost("sessionPing", SessionPingRequest(session))
-                  val arr = parse(js).extract[List[JValue]]
+                  val js = glosevalPost(Api.SessionPing(session))
+                  val arr = parse(js).extract[List[JObject]]
                   arr.foreach(v => {
+                    //messagesReceived = v :: messagesReceived
                     val typ = (v \ "msgType").extract[String]
                     typ match {
                       case "sessionPong" => {
@@ -181,7 +249,7 @@ object Importer extends EvalConfig
 
   def expect(msgType: String, session: String): Option[JValue] = {
     println("Sending Ping")
-    val js = glosevalPost("sessionPing", SessionPingRequest(session))
+    val js = glosevalPost(Api.SessionPing(session))
     var rslt: Option[JValue] = None
     var done = false
     while (!done) {
@@ -204,14 +272,7 @@ object Importer extends EvalConfig
   def createAgent(agent: AgentDesc): Option[String] = {
     val eml = agent.email + (if (agent.email.contains("@")) "" else "@livelygig.com")
     val jsonBlob = parse(agent.jsonBlob).extract[JObject]
-    val json1 = glosevalPost(
-      "createUserRequest",
-      CreateUserRequest(
-        "noConfirm:" + eml,
-        agent.pwd,
-        jsonBlob
-      )
-    )
+    val json1 = glosevalPost(Api.CreateUserRequest("noConfirm:" + eml, agent.pwd, jsonBlob))
 
     val jsv = parse(json1)
 
@@ -226,17 +287,15 @@ object Importer extends EvalConfig
     }
   }
 
-  def createSession(agentURI: String, pwd: String): InitializeSessionResponse = {
+  def createSession(agentURI: String, pwd: String): Api.InitializeSessionResponse = {
     val json =
-      glosevalPost(
-        "initializeSessionRequest",
-        InitializeSessionRequest(agentURI + "?password=" + pwd))
+      glosevalPost(Api.InitializeSessionRequest(agentURI + "?password=" + pwd))
 
     val jsession: JValue = (parse(json) \ "content")
     val uri = (jsession \ "sessionURI").extract[String]
     val alias = (jsession \ "defaultAlias").extract[String]
 
-    InitializeSessionResponse(uri, agentURI, alias, jsession)
+    Api.InitializeSessionResponse(uri, agentURI, alias, jsession)
   }
 
   def makeAgent(agent: AgentDesc): Unit = {
@@ -252,7 +311,7 @@ object Importer extends EvalConfig
           case None =>()
           case Some(l) =>
             val lbls = l.map(lbl => makeLabel(LabelDesc.extractFrom(lbl)).toTermString(resolveLabel))
-            glosevalPost("addAliasLabelsRequest", AddAliasLabelsRequest(session.sessionURI, "alias", lbls))
+            glosevalPost(Api.AddAliasLabelsRequest(session.sessionURI, "alias", lbls))
         }
     }
   }
@@ -305,8 +364,7 @@ object Importer extends EvalConfig
       val cnxnLabel = UUID.randomUUID().toString
 
       if (!cnxnLabels.contains(sourceId + targetId)) {
-        //glosevalPost("beginIntroductionRequest", BeginIntroductionRequest(adminURI, "alias", Connection(sourceAlias, targetAlias, lbl), Connection(targetAlias, sourceAlias, lbl), aMessage, bMessage))
-        glosevalPost("establishConnectionRequest", EstablishConnectionRequest(sessionId, sourceURI, targetURI, cnxnLabel))
+        glosevalPost(Api.EstablishConnectionRequest(sessionId, sourceURI, targetURI, cnxnLabel))
         cnxnLabels.put(sourceId + targetId, cnxnLabel)
         cnxnLabels.put(targetId + sourceId, cnxnLabel)
       }
@@ -317,25 +375,25 @@ object Importer extends EvalConfig
 
   def makePost(post: PostDesc): Unit = {
     try {
-      var cnxns: List[Connection] = Nil
+      var cnxns: List[Api.Connection] = Nil
 
       val sourceId = agentsById(post.src)
       val sourceAlias = makeAliasURI(sourceId)
       val sourceSession = sessionsById(post.src).sessionURI
 
-      val selfcnxn = Connection("agent://" + sourceId, "agent://" + sourceId, "alias")
+      val selfcnxn = Api.Connection("agent://" + sourceId, "agent://" + sourceId, "alias")
       //val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
 
       post.trgts.foreach(trgt => {
         val targetId = agentsById(trgt)
         val lbl = cnxnLabels(sourceId + targetId)
         val trgtAlias = makeAliasURI(agentsById(trgt))
-        cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
+        cnxns = Api.Connection(sourceAlias, trgtAlias, lbl) :: cnxns
       })
 
-      val cont = EvalSubscribeContent(selfcnxn :: cnxns, post.label, post.value, post.uid)
+      val cont = Api.EvalSubscribeContent(selfcnxn :: cnxns, post.label, post.value, post.uid)
+      glosevalPost(Api.EvalSubscribeRequest(sourceSession, Api.EvalSubscribeExpression("insertContent", cont)))
 
-      glosevalPost("evalSubscribeRequest", EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
     } catch {
       case ex: Throwable => println("exception while creating post: " + ex)
     }
@@ -347,7 +405,7 @@ object Importer extends EvalConfig
   }
 
   def getAgentURI(email: String, password: String) = {
-    val json = glosevalPost("getAgentRequest", GetUserRequest(email, password))
+    val json = glosevalPost(Api.GetAgentRequest(email, password))
     val jsv = parse(json)
 
     val tmsg = (jsv \ "msgType").extract[String]
@@ -403,10 +461,18 @@ object Importer extends EvalConfig
     }
   }
 
-  def runTestFile(dataJsonFile: String, host: String = GLOSEVAL_HOST): Unit = {
+  /*
+  def runSessionCamReqTest(sessionURI: String, req: ApiRequest ) : JObject = {
+    val host = GLOSEVAL_HOST
 
+  }
+  */
+
+  def runTestFile(dataJsonFile: String): Unit = {
+    // this routine doesn't keep sessions alive via longpoll.
+    // the calls to expect will
     println("testing file : " + dataJsonFile)
-    GLOSEVAL_HOST = host
+    val host = GLOSEVAL_HOST
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val tests = parse(dataJson).extract[List[JObject]]
@@ -419,8 +485,8 @@ object Importer extends EvalConfig
     val adminSession = createSession(adminURI, NodeUser.password)
     sessionsById.put(adminId, adminSession) // longpoll on adminSession
     println("using admin session URI : " + adminSession.sessionURI)
-    val thrd = longPoll()
-    thrd.start()
+    //val thrd = longPoll()
+    //thrd.start()
     var testOmni = EvalConfConfig.isOmniRequired()
 
     tests.foreach(el => {
@@ -429,7 +495,7 @@ object Importer extends EvalConfig
       try {
         typ match {
           case "reset" => {
-            val isok = glosevalPost("resetDatabaseRequest", ResetDatabaseRequest(adminSession.sessionURI, mongodbPath()))
+            val isok = glosevalPost(Api.ResetDatabaseRequest(adminSession.sessionURI, mongodbPath()))
             if (isok != "OK") throw new Exception("Unable to reset database")
             expect("resetDatabaseResponse", adminSession.sessionURI) match {
               case Some(_) => ()
@@ -441,20 +507,20 @@ object Importer extends EvalConfig
             makeAgent(agent)
             if (testOmni) {
               val session = sessionsById(agent.id).sessionURI
-              val isok = glosevalPost("getAmpWalletAddress", ("sessionURI" -> session))
+              val isok = glosevalPost(Api.GetAmpWalletAddress(session))
               if (isok != "OK") throw new Exception("Unable to call getAmpWalletAddress")
               expect("getAmpWalletAddressResponse", session) match {
                 case Some(js) => {
-                  println(pretty(js))
+                  //println(pretty(js))
                   val oldaddr = (js \ "address").extract[String]
-                  val isok2 = glosevalPost("setAmpWalletAddress", ("sessionURI" -> session) ~ ("address" -> OmniClient.testAmpAddress))
+                  val isok2 = glosevalPost(Api.SetAmpWalletAddress(session, OmniClient.testAmpAddress))
                   if (isok2 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
                   expect("setAmpWalletAddressResponse", session) match {
                     case Some(js) => {
-                      println(pretty(js))
+                      //println(pretty(js))
                       val newaddr = (js \ "newaddress").extract[String]
                       if (newaddr != OmniClient.testAmpAddress) throw new Exception("setAmpWalletAddressResponse invalid")
-                      val isok3 = glosevalPost("setAmpWalletAddress", ("sessionURI" -> session) ~ ("address" -> oldaddr))
+                      val isok3 = glosevalPost(Api.SetAmpWalletAddress(session,oldaddr))
                       if (isok3 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
                       expect("setAmpWalletAddressResponse", session) match {
                         case Some(js) => {
@@ -501,7 +567,7 @@ object Importer extends EvalConfig
     //fromFile("src/main/resources/sample-data-test_2.json", host)
   }
 
-  def runTestFiles(host: String = GLOSEVAL_HOST): Unit = {
-    runTestFile("src/test/resources/test-posts.json", host)
+  def runTestFiles(): Unit = {
+    runTestFile("src/test/resources/test-posts.json")
   }
 }

@@ -8,18 +8,7 @@
 
 package com.biosimilarity.evaluator.importer
 
-import com.biosimilarity.evaluator.distribution.{AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
-import com.biosimilarity.evaluator.importer.dtos._
-import com.biosimilarity.evaluator.importer.models._
-import com.biosimilarity.evaluator.importer.utils.mailinator.Mailinator
-import com.biosimilarity.evaluator.spray.{BTCHandler, DownStreamHttpCommsT, EvalHandler}
-import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization.write
-import org.joda.time.DateTime
-import scala.collection.JavaConversions._
-import scala.util.Random
-
-import scalaj.http.Http
+import com.biosimilarity.evaluator.distribution.EvalConfig
 
 trait ImporterConfig {
   self : EvalConfig =>

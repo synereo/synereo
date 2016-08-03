@@ -294,7 +294,7 @@ trait EvaluatorService extends HttpService
                       case Some(sessionURI) => {
                         CometActorMapper.map.get(sessionURI) match {
                           case None => {
-                            ctx.complete(StatusCodes.Forbidden)
+                            ctx.complete(StatusCodes.Forbidden,"Invalid sessionURI parameter")
                           }
                           case Some(cometActor) => msgType match {
                             case "sessionPing" => {
