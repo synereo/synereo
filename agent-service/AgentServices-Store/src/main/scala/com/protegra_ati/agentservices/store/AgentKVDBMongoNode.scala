@@ -3195,6 +3195,12 @@ package mongo.usage {
                             }
                           }
                         }
+                        case CnxnCtxtLeaf(Left(rv)) =>
+                          val unBlob = fromXQSafeJSONBlob(rv)
+                          unBlob match {
+                            case TheMTT.Ground(value) => value
+                            case rsrc: mTT.Resource   => getGV(rsrc).getOrElse("WHOOPS!")
+                          }
                         case _ => {
                           //asPatternString( ccl )
                           throw new Exception( "unexpected value form: " + ccl )
