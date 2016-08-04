@@ -17,52 +17,69 @@ import scala.collection.mutable.HashMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-
-/**
- * CometMessage used when some data needs to be sent to a client
- * with the given id
- */
 case class CometMessage(data: String)
-  extends Serializable
-
-/**
- * Poll used when a client wants to register/long-poll with the
- * server
- */
 case class SessionPing(reqCtx: RequestContext) extends Serializable
-
-/**
- * PollTimeout sent when a long-poll requests times out
- */
 case class PollTimeout() extends Serializable
 case class SetSessionId(id : String) extends Serializable
 case class KeepAlive() extends Serializable
-case class RunFunction(fn : JObject => Unit, content : JObject) extends Serializable
+case class RunFunction(fn : JObject => Unit, msgType : String, content : JObject) extends Serializable
+case class CloseSession(reqCtx : Option[RequestContext]) extends Serializable
+case class CameraItem(sending : Boolean, msgType : String, content : Option[JObject], tmStamp : DateTime)
+case class StartCamera(reqCtx : RequestContext)
+case class StopCamera(reqCtx : RequestContext)
+case class ApiResponse(msgType : String, msgId : Option[String], content : JObject)
 
-
-/**
- * ClientGc sent to deregister a client when it hasnt pinged in a long time
- */
-case class CloseSession() extends Serializable
-
-class CometActor extends Actor with Serializable {
+class SessionActor extends Actor with Serializable {
   val gcTime = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes // if client doesnt poll within this time, its garbage collected
   val clientTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds // ping requests are ponged after this much time, clients need to re-ping after this
   @transient
-  var aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession())
+  var aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession(None))
   @transient
   var optReq : Option[(RequestContext, Cancellable)] = None
   @transient
-  var msgs = List[String]() // sets of async return messages
+  var msgs : List[String] = Nil
+  @transient
+  var camera : Option[List[CameraItem]] = None
   var sessionId : Option[String] = None
+  @transient
+  implicit val formats = DefaultFormats
 
   override def postStop() = {
     sessionId = None
   }
 
-  def resetAliveTimer() = {
+  def resetAliveTimer() : Unit = {
     aliveTimer.cancel()
-    aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession())
+    aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession(None))
+  }
+
+  def itemToString(itm : CameraItem) : String = {
+    val cont : JValue = itm.content match {
+      case Some(j) => j
+      case None => JNull
+
+    }
+    var jo : JObject =
+      ("msgType" -> itm.msgType) ~
+      ("direction" -> (if (itm.sending) "Sent" else "Received") ) ~
+      ("tmStamp" -> itm.tmStamp.toIsoDateTimeString) ~
+      ("content" -> cont)
+    pretty(render(jo))
+  }
+
+  def addCameraItem(itm : CameraItem) : Unit = {
+    camera match {
+      case Some(l) => camera = Some(itm :: l)
+      case None => ()
+    }
+  }
+
+  def itemReceived(msgType : String, content : Option[JObject]) : Unit = {
+    if (camera.isDefined) addCameraItem(CameraItem(sending = false, msgType, content, DateTime.now))
+  }
+
+  def itemSent(msgType : String, content : Option[JObject]) : Unit = {
+    if (camera.isDefined) addCameraItem(CameraItem(sending = true, msgType, content, DateTime.now))
   }
 
   def receive = {
@@ -74,6 +91,7 @@ class CometActor extends Actor with Serializable {
       resetAliveTimer()
     }
     case SessionPing(reqCtx) => {
+      itemReceived("sessionPing", None)
       for (ssn <- sessionId) {
         resetAliveTimer()
         for ((_, tmr) <- optReq) tmr.cancel()
@@ -94,29 +112,59 @@ class CometActor extends Actor with Serializable {
           case Some((req, _)) => {
             req.complete(HttpResponse(entity = compact(render(
               List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> ssn)))))))
+            itemSent("sessionPong", None)
             optReq = None
           }
           case None => ()
         }
       }
     }
-    case CloseSession() => {
+    case CloseSession(optReqCtx) => {
       context.stop(self)
       for (ssn <- sessionId) CometActorMapper.map -= ssn
+      for (reqCtx <- optReqCtx) reqCtx.complete(StatusCodes.OK,"session closed")
     }
-    case RunFunction(fn,content) => {
+    case RunFunction(fn,msgType,content) => {
+      itemReceived(msgType,Some(content))
       fn(content)
     }
     case CometMessage(data) => {
-      resetAliveTimer()
       msgs = data :: msgs
+      resetAliveTimer()
       optReq match {
         case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
         case Some((reqCtx,tmr)) => {
-          reqCtx.complete(HttpResponse(entity = "[" + msgs.reverse.mkString(",") + "]"))
+          val rmsgs = msgs.reverse
+          val now = DateTime.now
+          rmsgs.foreach(msg => {
+            val jo = parse(msg)
+            val msgType = (jo \ "msgType").extract[String]
+            val content = (jo \ "content").extract[JObject]
+            addCameraItem( CameraItem(sending = true, msgType, Some(content), now) )
+          })
+          reqCtx.complete(HttpResponse(entity = "[" + rmsgs.mkString(",") + "]"))
           optReq = None
           msgs = Nil
           tmr.cancel()
+        }
+      }
+    }
+    case StartCamera(reqCtx) => {
+      val msg : String = camera match {
+        case Some(_) => "session is already recording"
+        case None => "session recording started"
+      }
+      if (camera.isEmpty) camera = Some(Nil)
+      itemReceived("startSessionRecording", None)
+      reqCtx.complete(StatusCodes.OK,msg)
+    }
+    case StopCamera(reqCtx) => {
+      itemReceived("stopSessionRecording", None)
+      camera match {
+        case None => reqCtx.complete(StatusCodes.PreconditionFailed,"session not recording" )
+        case Some(itms) => {
+          val items = itms.reverse.map(itemToString)
+          reqCtx.complete(HttpResponse(entity = "[" + items.mkString(",") + "]"))
         }
       }
     }
@@ -151,7 +199,7 @@ trait EvaluatorService extends HttpService
 
   def createNewSession(json: JObject, key: String) : Unit = {
     initializeSessionRequest(json, key, ssn => {
-      val actor = actorRefFactory.actorOf(Props[CometActor])
+      val actor = actorRefFactory.actorOf(Props[SessionActor])
       actor ! SetSessionId(ssn)
       CometActorMapper.map += (ssn -> actor)
     })
@@ -172,7 +220,6 @@ trait EvaluatorService extends HttpService
   @transient
   val asyncMethods = HashMap[String, JObject => Unit](
     // Old stuff
-    ("closeSessionRequest", closeSessionRequest),
     ("updateUserRequest", updateUserRequest),
     // Agents
     ("addAgentExternalIdentityRequest", addAgentExternalIdentityRequest),
@@ -219,7 +266,6 @@ trait EvaluatorService extends HttpService
     ("omniTransfer", omniTransfer),
     ("getAmpWalletAddress", omniGetAmpWalletAddress),
     ("setAmpWalletAddress", omniSetAmpWalletAddress)
-
     )
 
   @transient
@@ -241,17 +287,27 @@ trait EvaluatorService extends HttpService
                       CompletionMapper.map += (key -> ctx)
                       fn(content, key)
                     }
-                    case None => (content \ "sessionURI").extract[Option[String]] match {
+                    case None => (content \ "sessionURI").extractOpt[String] match {
+                      case None => {
+                        ctx.complete(StatusCodes.Forbidden, "missing sessionURI parameter")
+                      }
                       case Some(sessionURI) => {
                         CometActorMapper.map.get(sessionURI) match {
-                          case None => ctx.complete(StatusCodes.Forbidden)
+                          case None => {
+                            ctx.complete(StatusCodes.Forbidden,"Invalid sessionURI parameter")
+                          }
                           case Some(cometActor) => msgType match {
-                            case "sessionPing" => cometActor ! SessionPing(ctx)
+                            case "sessionPing" => {
+                              cometActor ! SessionPing(ctx)
+                            }
+                            case "startSessionRecording" => cometActor ! StartCamera(ctx)
+                            case "stopSessionRecording" => cometActor ! StopCamera(ctx)
+                            case "closeSessionRequest" => cometActor ! CloseSession(Some(ctx))
                             case _ => {
                               cometActor ! KeepAlive()
                               asyncMethods.get(msgType) match {
                                 case Some(fn) => {
-                                  cometActor ! RunFunction(fn,content)  // run function in actor thread
+                                  cometActor ! RunFunction(fn, msgType, content)
                                   ctx.complete(StatusCodes.OK)
                                 }
                                 case _ => {
