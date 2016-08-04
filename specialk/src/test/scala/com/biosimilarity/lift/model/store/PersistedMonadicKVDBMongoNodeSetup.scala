@@ -122,14 +122,12 @@ object PersistedMonadicKVDBMongoNodeSetup
             def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = {
               ccl match {
                 case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
-                  val unBlob: Object = fromXQSafeJSONBlob(rv)
-                  unBlob match {
+                  fromXQSafeJSONBlob(rv) match {
                     case TheMTT.Ground(value) => value
                     case rsrc: mTT.Resource   => getGV(rsrc).getOrElse("WHOOPS!")
                   }
                 case CnxnCtxtLeaf(Left(rv)) =>
-                  val unBlob = fromXQSafeJSONBlob(rv)
-                  unBlob match {
+                  fromXQSafeJSONBlob(rv) match {
                     case TheMTT.Ground(value) => value
                     case rsrc: mTT.Resource   => getGV(rsrc).getOrElse("WHOOPS!")
                   }
@@ -144,27 +142,24 @@ object PersistedMonadicKVDBMongoNodeSetup
               val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
               CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
                 case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
-                  val matchRslt = matchMap(key, k)
-                  matchRslt match {
+                  matchMap(key, k) match {
                     case Some(_) =>
                       fk match {
                         case CnxnCtxtLeaf(Left(v)) =>
-                          val unblob: String = (
-                            fromXQSafeJSONBlob(v) match {
-                              case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                              case e: Throwable                  => throw e
-                            }
-                          )
-                            new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                          val unblob: String = fromXQSafeJSONBlob(v) match {
+                            case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                            case e: Throwable                  => throw e
+                          }
+                          new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                       }
                     case None =>
                       throw new UnificationQueryFilter(key, k, value)
-                  }                
+                  }
                 case xFactor =>
                   // Should never get here because it is
                   // unreasonable to have retrieved a DBObject
                   // with the key if the key is malformed
-                  throw new Exception("unexpected record structure:	" + xFactor)
+                  throw new Exception(s"unexpected record structure: $xFactor")
               }
             }
 

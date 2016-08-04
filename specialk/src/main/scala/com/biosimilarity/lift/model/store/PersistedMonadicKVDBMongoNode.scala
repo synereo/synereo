@@ -2700,7 +2700,7 @@ package usage {
 	      @transient override val labelToNS : Option[String => String],
 	      @transient override val textToVar : Option[String => String],
 	      @transient override val textToTag : Option[String => String],
-              @transient override val textToValue : Option[String => Double] = Some( ( x : String ) => x.toDouble )
+              @transient override val textToValue : Option[String => Double] = Some((x: String) => x.toDouble)
 	    )
 	    extends MongoDBManifest( ) {
 	      override def valueStorageType : String = {
@@ -2779,62 +2779,38 @@ package usage {
 		  Left[String,String]( blob )
 		)
 	      }
-	      
-	      def asCacheValue(
-		ccl : CnxnCtxtLabel[String,String,String]
-	      ) : Double = {
-		BasicLogService.tweet(
-		  "converting to cache value"
-		)
-		ccl match {
-		  case CnxnCtxtBranch(
-		    "string",
-		    CnxnCtxtLeaf( Left( rv ) ) :: Nil
-		  ) => {
-		    val unBlob =
-		      fromXQSafeJSONBlob( rv )
-		    
-		    unBlob match {
-		      case rsrc : mTT.Resource => {
-			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
-		      }
-		    }
-		  }
-                  case CnxnCtxtLeaf( Left( rv ) ) => {
-                    val unBlob =
-		      fromXQSafeJSONBlob( rv )
-		    
-		    unBlob match {
-		      case rsrc : mTT.Resource => {
-			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
-		      }
-		    }
-                  }
-		  case _ => {
-		    //asPatternString( ccl )
-		    throw new Exception( "unexpected value form: " + ccl )
-		  }
-		}
-	      }
 
-              override def asIndirection(
-		key : mTT.GetRequest, // must have the pattern to determine bindings
-		value : DBObject
-	      ) : mTT.GetRequest = {
-                // TBD
-                key match {
-                  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {
-                    new CnxnCtxtBranch( kNs, fk :: Nil )
-                  }
-                  case _ => {
-                    // Should never get here because it is
-                    // unreasonable to have retrieved a DBObject
-                    // with the key if the key is malformed
-                    throw new Exception( "unexpected record structure:	" + key )
-                  }
+              def asCacheValue(ccl : CnxnCtxtLabel[String,String,String]): Double = {
+                ccl match {
+                  case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                    fromXQSafeJSONBlob(rv) match {
+                      case rsrc: mTT.Resource => getGV(rsrc).getOrElse(java.lang.Double.MAX_VALUE)
+                    }
+                  case CnxnCtxtLeaf(Left(rv)) =>
+                    fromXQSafeJSONBlob(rv) match {
+                      case rsrc: mTT.Resource => getGV(rsrc).getOrElse(java.lang.Double.MAX_VALUE)
+                    }
+                  case _ => throw new Exception( "unexpected value form: " + ccl )
                 }
               }
-	      
+
+              // TODO ht, 2016/08/04: This will not work and must be fixed!
+              // For example, see PersistedMonadicKVDBMongoNodeSetup.scala in the 'test' directory
+              // Note: that example uses String instead of Double for its values
+              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                // key match {
+                //   case CnxnCtxtBranch( ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                //     new CnxnCtxtBranch( kNs, fk :: Nil )
+                //   case _ => {
+                //     // Should never get here because it is
+                //     // unreasonable to have retrieved a DBObject
+                //     // with the key if the key is malformed
+                //     throw new Exception(s"unexpected record structure: $key")
+                //   }
+                // }
+                throw new Exception("asIndirection has not been implemented for this example")
+              }
+
 	      override def asResource(
 		key : mTT.GetRequest, // must have the pattern to determine bindings
 		value : DBObject
