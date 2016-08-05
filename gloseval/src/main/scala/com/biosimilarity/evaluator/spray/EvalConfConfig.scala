@@ -36,5 +36,5 @@ object EvalConfConfig extends EvalConfig {
       case _: Throwable => default
     }
 
-  def isOmniRequired: Boolean = Try(read("OmniRPCURI")).isSuccess
+  def isOmniRequired(): Boolean = Try(read("OmniRPCURI")).isSuccess
 }
