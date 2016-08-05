@@ -551,10 +551,9 @@ object BFactoryCommLink
           }
           override def persistenceManifest : Option[PersistenceManifest] = {
             val sid = Some( ( s : String ) => recoverFieldName( s ) )
-            val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteBFactHL.BFactHLExpr])
-            val kvdb = this;
+            val kvdb = this
             Some(
-              new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
+              new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                 override def valueStorageType : String = {
                   kvdb.valueStorageType
                 }

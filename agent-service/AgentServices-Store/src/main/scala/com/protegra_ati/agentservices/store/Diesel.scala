@@ -520,10 +520,9 @@ package diesel {
                 )
               )
               val sid = Some( ( s : String ) => recoverFieldName( s ) )
-              val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteHL.HLExpr])
-              val kvdb = this;
+              val kvdb = this
               Some(
-                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
+                new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                   override def valueStorageType : String = {
                     kvdb.valueStorageType
                   }
@@ -595,7 +594,7 @@ package diesel {
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
                     @transient override val textToTag : Option[String => String],
-                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = throw new Exception("You need to supply this, dummy")
+                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = Some { (s: String) => ConcreteHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -923,10 +922,9 @@ package diesel {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
-                    val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteHL.HLExpr])
-                    val kvdb = this;
+                    val kvdb = this
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
+                      new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -1004,7 +1002,7 @@ package diesel {
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
                     @transient override val textToTag : Option[String => String],
-                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = throw new Exception("You need to supply this, dummy")
+                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = Some { (s: String) => ConcreteHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -1027,7 +1025,7 @@ package diesel {
                     def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
                       ns1.equals( ns2 )
                     }
-                    
+
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
@@ -1335,10 +1333,9 @@ package diesel {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
-                    val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteHL.HLExpr])
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
+                      new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -1439,7 +1436,7 @@ package diesel {
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
                     @transient override val textToTag : Option[String => String],
-                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = throw new Exception("You need to supply this, dummy")
+                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = Some { (s: String) => ConcreteHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -1766,10 +1763,9 @@ package diesel {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
-                    val deserialize = Some((s: String) => fromXQSafeJSONBlob(s).asInstanceOf[ConcreteHL.HLExpr])
-                    val kvdb = this;
+                    val kvdb = this
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, deserialize ) {
+                      new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
