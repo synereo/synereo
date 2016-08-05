@@ -231,101 +231,18 @@ object DSLCommLink
                 Left[String,String]( blob )
               )
             }
-            
-            def asCacheValue(
-              ccl : CnxnCtxtLabel[String,String,String]
-            ) : ConcreteHL.HLExpr = {
-              BasicLogService.tweet(
-                "*****************************************************"
-                + "\nconverting to cache value"
-                + "\n*****************************************************"
-              )
-              ccl match {
-                case CnxnCtxtBranch(
-                  "string",
-                  //CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                  CnxnCtxtLeaf( Left( blob ) ) :: Nil
-                ) => {
-                  BasicLogService.tweet(
-                    "*****************************************************"
-                    + "\nmatched ccl to CnxnCtxtBranch"
-                    + "\n*****************************************************"
-                  )                                    
 
-                  try {
-                    val unBlob =
-                      fromXQSafeJSONBlob( blob )
-                    // val jsonBlob =
-//                       (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
-//                      blob.replace(
-//                        "{{",
-//                        "{"
-//                      ).replace(
-//                        "}}",
-//                        "}"
-//                      )
-//                       }
-//                        else {
-//                       blob
-//                        }).replace(
-//                         "&quot;",
-//                         "\""
-//                       )
-//                     val blobXStrm = 
-//                       new XStream( new JettisonMappedXmlDriver() )
-                    //val unBlob =
-                      //blobXStrm.fromXML( jsonBlob )
-                    BasicLogService.tweet(
-                      "*****************************************************"
-                      + "\nunBlob : " + unBlob
-                      + "\n*****************************************************"
-                    )
-                  
-                    unBlob match {
-                      case rsrc : mTT.Resource => {
-                        BasicLogService.tweet(
-                          "*****************************************************"
-                          + "\nunBlob : " + unBlob
-                          + "\n*****************************************************"
-                        )
-                        val gvRslt = getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-                        BasicLogService.tweet(
-                          "*****************************************************"
-                          + "\ngvRslt : " + gvRslt
-                          + "\n*****************************************************"
-                        )
-                        gvRslt
-                      }
-                      case _ => {
-                        throw new Exception( "unable to recognized deserialized blob : " + unBlob )
-                      }
-                    }
-                  }
-                  catch {
-                    case e : Throwable => {                      
-                      val sw : java.io.StringWriter = new java.io.StringWriter()
-                      val pw : java.io.PrintWriter = new java.io.PrintWriter( sw )
-                      e.printStackTrace( pw )
-                      BasicLogService.tweet(
-                        "*****************************************************"
-                        + "\nfromXML failed"
-                        + "\n" + sw.toString
-                        + "\n*****************************************************"
-                      )
-                      throw( e )
-                    }
-                  }                  
+            def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteHL.HLExpr = ccl match {
+              case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                fromXQSafeJSONBlob(rv) match {
+                  case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
                 }
-                case _ => {
-                  BasicLogService.tweet(
-                    "*****************************************************"
-                    + "failed to matched ccl to CnxnCtxtBranch"
-                    + "*****************************************************"
-                  )
-                  //asPatternString( ccl )
-                  throw new Exception( "unexpected value form: " + ccl )
+              case CnxnCtxtLeaf(Left(rv)) =>
+                fromXQSafeJSONBlob(rv) match {
+                  case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
                 }
-              }
+              case _ =>
+                throw new Exception(s"unexpected value form: $ccl")
             }
 
             override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {

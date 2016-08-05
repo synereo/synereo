@@ -2477,31 +2477,18 @@ package mongo.usage {
                   Left[String,String]( blob )
                 )
               }
-              
-              def asCacheValue(
-                ccl : CnxnCtxtLabel[String,String,String]
-              ) : String = {
-                BasicLogService.tweet(
-                  "converting to cache value"
-                )
-                ccl match {
-                  case CnxnCtxtBranch(
-                    "string",
-                    CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                  ) => {
-                    val unBlob =
-                      fromXQSafeJSONBlob( rv )
-                    
-                    unBlob match {
-                      case rsrc : mTT.Resource => {
-                        getGV( rsrc ).getOrElse( "" )
-                      }
-                    }
+
+              def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                   }
-                  case _ => {
-                    //asPatternString( ccl )
-                    throw new Exception( "unexpected value form: " + ccl )
+                case CnxnCtxtLeaf(Left(rv)) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                   }
+                case _ => {
+                  throw new Exception(s"unexpected value form: $ccl")
                 }
               }
 
@@ -2779,31 +2766,18 @@ package mongo.usage {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : String = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( "" )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                         }
+                      case _ => {
+                        throw new Exception(s"unexpected value form: $ccl")
                       }
                     }
 
@@ -3174,37 +3148,18 @@ package mongo.usage {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : String = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( "" )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                         }
-                        case CnxnCtxtLeaf(Left(rv)) =>
-                          val unBlob = fromXQSafeJSONBlob(rv)
-                          unBlob match {
-                            case TheMTT.Ground(value) => value
-                            case rsrc: mTT.Resource   => getGV(rsrc).getOrElse("WHOOPS!")
-                          }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                         }
+                      case _ => {
+                        throw new Exception(s"unexpected value form: $ccl")
                       }
                     }
 
@@ -3597,31 +3552,18 @@ package mongo.usage {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : String = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( "" )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                         }
+                      case _ => {
+                        throw new Exception(s"unexpected value form: $ccl")
                       }
                     }
 

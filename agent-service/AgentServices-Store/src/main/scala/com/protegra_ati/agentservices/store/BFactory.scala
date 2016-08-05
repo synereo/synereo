@@ -366,32 +366,18 @@ package bfactory {
                   Left[String,String]( blob )
                 )
               }
-              
-              def asCacheValue(
-                ccl : CnxnCtxtLabel[String,String,String]
-              ) : ConcreteBFactHL.BFactHLExpr = {
-                BasicLogService.tweet(
-                  "converting to cache value"
-                )
-                ccl match {
-                  case CnxnCtxtBranch(
-                    "string",
-                    CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                  ) => {
-                    val unBlob =
-                      fromXQSafeJSONBlob( rv )
-                    
-                    unBlob match {
-                      case rsrc : mTT.Resource => {
-                        getGV( rsrc ).getOrElse( ConcreteBFactHL.Noop )
-                      }
-                    }
+
+              def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteBFactHL.BFactHLExpr = ccl match {
+                case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                   }
-                  case _ => {
-                    //asPatternString( ccl )
-                    throw new Exception( "unexpected value form: " + ccl )
+                case CnxnCtxtLeaf(Left(rv)) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                   }
-                }
+                case _ =>
+                  throw new Exception(s"unexpected value form: $ccl")
               }
 
               override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
@@ -752,32 +738,18 @@ package bfactory {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : ConcreteBFactHL.BFactHLExpr = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( ConcreteBFactHL.Noop )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteBFactHL.BFactHLExpr = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                         }
-                      }
+                      case _ =>
+                        throw new Exception(s"unexpected value form: $ccl")
                     }
 
                     override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
@@ -1145,74 +1117,19 @@ package bfactory {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : ConcreteBFactHL.BFactHLExpr = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              BasicLogService.tweet(
-                                "**********************************************"
-	                        +"\n method : asCacheValue"
-                                +"\n rsrc is mTT.Resource"
-                                +"\n this : " + this
-                                +"\n ccl : " + ccl
-                                +"\n----------------------------------------------"
-                                +"\n unBlob : " + unBlob
-                                +"\n**********************************************"
-	                      )
-                              getGV( rsrc ).getOrElse( ConcreteBFactHL.Noop )
-                            }
-                            case rsrcz : MonadicTermTypes[_,_,_,_]#Resource => {
-                              BasicLogService.tweet(
-                                "**********************************************"
-	                        +"\n method : asCacheValue"
-                                +"\n rsrc is MonadicTermTypes[_,_,_,_]#Resource"
-                                +"\n this : " + this
-                                +"\n ccl : " + ccl
-                                +"\n----------------------------------------------"
-                                +"\n unBlob : " + unBlob
-                                +"\n**********************************************"
-	                      )
-                              getGV( rsrcz.asInstanceOf[mTT.Resource] ).getOrElse( ConcreteBFactHL.Noop )
-                            }
-                            case _ => {
-                              if ( unBlob.getClass.getName.equals( "com.biosimilarity.lift.model.store.MonadicTermTypes$Ground" ) ) {
-                                BasicLogService.tweet(
-                                  "**********************************************"
-	                          +"\n method : asCacheValue"
-                                  +"\n last ditch effort"
-                                  +"\n unBlob.getClass.getName.equals( \"com.biosimilarity.lift.model.store.MonadicTermTypes$Ground\" )"
-                                  +"\n this : " + this
-                                  +"\n ccl : " + ccl
-                                  +"\n----------------------------------------------"
-                                  +"\n unBlob : " + unBlob
-                                  +"\n**********************************************"
-	                        )
-                                getGV( unBlob.asInstanceOf[mTT.Resource] ).getOrElse( ConcreteBFactHL.Noop )
-                              }
-                              else {
-                                throw new Exception( "unexpected value form: " + ccl )
-                              }
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteBFactHL.BFactHLExpr = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource =>
+                            getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                         }
-                      }
+                      case _ =>
+                        throw new Exception(s"unexpected value form: $ccl")
                     }
 
                     override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
@@ -1602,32 +1519,18 @@ package bfactory {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : ConcreteBFactHL.BFactHLExpr = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( ConcreteBFactHL.Noop )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteBFactHL.BFactHLExpr = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteBFactHL.Noop)
                         }
-                      }
+                      case _ =>
+                        throw new Exception(s"unexpected value form: $ccl")
                     }
 
                     override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
