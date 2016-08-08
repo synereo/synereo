@@ -21,6 +21,8 @@ before_cache:
   - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
   - find $HOME/.sbt -name "*.lock" -type f -delete
 
+before_install: make pem
+
 notifications:
   email:
     - ns68751+tci@gmail.com

@@ -29,4 +29,7 @@ object EvalConfConfig extends EvalConfig {
     Try(readInt(param)).getOrElse(default)
 
   def isOmniRequired(): Boolean = Try(readString("OmniRPCURI")).isSuccess
+
+  val serverPort    = EvalConfConfig.readIntOrElse("serverPort", 80)
+  val serverSSLPort = EvalConfConfig.readIntOrElse("serverSSLPort", 443)
 }

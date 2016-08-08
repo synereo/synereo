@@ -1,28 +1,23 @@
 package com.biosimilarity.evaluator.spray
 
-import akka.io.IO
-import spray.can.Http
-import akka.actor.{ ActorSystem, Props }
-import com.biosimilarity.evaluator.omniRPC.OmniClient
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.typesafe.config.{Config, ConfigFactory}
+import spray.can.server.ServerSettings
 
-object Boot extends App
-  with Serializable {
+import scala.sys.ShutdownHookThread
 
-  //TODO: Remove sleep below once race condition is fixed
+object Boot extends App {
+
+  // TODO: Remove sleep below once race condition is fixed
   // @@GS - is it fixed??
-  Thread.sleep(3000)
+  // Thread.sleep(3000)
 
-  com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
+  val config: Config = ConfigFactory.load()
 
-  @transient
-  implicit val system = ActorSystem("evaluator-system")
+  val settings: ServerSettings = ServerSettings(config)
 
-  @transient
-  val service = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")
+  val sht: ShutdownHookThread = sys.addShutdownHook(shutdown())
 
-  IO(Http) ! Http.Bind(listener = service, interface = "0.0.0.0", port = 9876)
+  val service: Server = new Server(settings).start()
 
-  if (EvalConfConfig.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
-
+  private def shutdown(): Unit = { val _ = service.stop(); () }
 }
