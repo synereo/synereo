@@ -11,19 +11,22 @@ object Api {
 
 
   trait RequestContent {}
-  // actual API
   case class Request(msgType: String, content: RequestContent)
+
+  // actual API
   case class CreateUserRequest(email: String,password: String,jsonBlob: JObject) extends RequestContent
   case class GetAgentRequest(email: String,password: String) extends RequestContent
   case class UpdateUserRequest(sessionURI: String,jsonBlob: JObject) extends RequestContent
   case class StartSessionRecording(sessionURI: String) extends RequestContent
   case class StopSessionRecording(sessionURI: String) extends RequestContent
+  case class SpawnSessionRequest(sessionURI: String) extends RequestContent
   case class SessionPing(sessionURI: String) extends RequestContent
   case class InitializeSessionRequest(agentURI: String) extends RequestContent
+  case class CloseSessionRequest(agentURI: String) extends RequestContent
   case class AddAliasLabelsRequest(sessionURI: String, alias: String, labels: List[String]) extends RequestContent
   case class EstablishConnectionRequest(sessionURI: String, aURI: String, bURI: String, label: String) extends RequestContent
   case class EvalSubscribeRequest(sessionURI: String, expression: EvalSubscribeExpression) extends RequestContent
-  case class ResetDatabaseRequest(sessionURI: String, mongodbPath: String) extends RequestContent
+  case class ResetDatabaseRequest(sessionURI: String) extends RequestContent
   case class GetAmpWalletAddress(sessionURI: String) extends RequestContent
   case class SetAmpWalletAddress(sessionURI: String, address: String) extends RequestContent
 

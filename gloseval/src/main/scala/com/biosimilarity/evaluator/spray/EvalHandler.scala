@@ -179,7 +179,11 @@ trait CapUtilities {
   def capFromSession(session : String) : String = {
     val sessionURI = new URI(session)
     sessionURI.getHost
+  }
 
+  def spawnNewSessionURI(session : String) : String = {
+    val cap = capFromSession(session)
+    capToSession(cap)
   }
 
 }
@@ -1820,6 +1824,15 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
+  def spawnSessionRequest(json: JValue, key: String, onSuccess: String => Unit ): Unit = {
+    val ssn = spawnNewSessionURI( (json \ "sessionURI").extract[String] )
+    onSuccess(ssn)
+    CompletionMapper.complete(key, compact(render(
+      ("msgType" -> "spawnSessionResponse") ~
+        ("content" -> ("sessionURI", ssn)))))
+
+  }
+
   def initializeSessionRequest(json: JValue, key: String, onSuccess: String => Unit ): Unit = {
     val agentURI = (json \ "agentURI").extract[String]
     val uri = new URI(agentURI)
@@ -2530,7 +2543,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       case Some(str) => " --out "+str
       case _ => ""
     }
-    temp_runProcess(mongoPath+"/mongodump"+tgt, None, List(), {
+    runProcess(mongoPath+"/mongodump"+tgt, None, List(), {
       case Some(optRsrc) => {
         //println("backupRequest: optRsrc = " + optRsrc)
         BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
@@ -2552,7 +2565,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       case _ => ""
     }
     //{
-    temp_runProcess(mongoPath+"/mongorestore "+src, None, List(), {
+    runProcess(mongoPath+"/mongorestore "+src, None, List(), {
       case Some(optRsrc) =>
       {
         //println("restoreRequest: optRsrc = " + optRsrc)
@@ -2566,25 +2579,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     })
   }
 
-  def resetDatabaseRequest(json: JValue): Unit = {
-    val sessionURI = (json \ "sessionURI").extract[String]
-    val mongoPath = (json \ "mongodbPath").extract[String]
-    //{
-    temp_runProcess(mongoPath+"/mongo records --eval \"db.dropDatabase()\" ", None, List(), {
-      case Some(optRsrc) =>
-      {
-        BasicLogService.tweet("resetDatabaseRequest: optRsrc = " + optRsrc)
-        createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
-
-        CometActorMapper.cometMessage(sessionURI, compact(render(
-          ("msgType" -> "resetDatabaseResponse") ~
-            ("content" ->
-              ("sessionURI" -> sessionURI)))))
-      }
-      case _ => throw new Exception("Unable to reset")
-    })
-  }
-
+ /*
   // until runProcess is fixed
   def temp_runProcess(
                        cmd : String,
@@ -2608,7 +2603,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     onExecution(Some(mTT.Ground(RunProcessResponse(exitCode, stdOutBuffer.toList, stdErrBuffer.toList))))
 
   }
-
+*/
 
   def initiateClaim(json: JValue): Unit = {
     val sessionId = (json \ "sessionURI").extract[String]

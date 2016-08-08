@@ -27,9 +27,10 @@ case class CloseSession(reqCtx : Option[RequestContext]) extends Serializable
 case class CameraItem(sending : Boolean, msgType : String, content : Option[JObject], tmStamp : DateTime)
 case class StartCamera(reqCtx : RequestContext)
 case class StopCamera(reqCtx : RequestContext)
-case class ApiResponse(msgType : String, msgId : Option[String], content : JObject)
 
 class SessionActor extends Actor with Serializable {
+  import EvalHandlerService._
+
   val gcTime = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes // if client doesnt poll within this time, its garbage collected
   val clientTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds // ping requests are ponged after this much time, clients need to re-ping after this
   @transient
@@ -59,7 +60,7 @@ class SessionActor extends Actor with Serializable {
       case None => JNull
 
     }
-    var jo : JObject =
+    val jo : JObject =
       ("msgType" -> itm.msgType) ~
       ("direction" -> (if (itm.sending) "Sent" else "Received") ) ~
       ("tmStamp" -> itm.tmStamp.toIsoDateTimeString) ~
@@ -82,31 +83,43 @@ class SessionActor extends Actor with Serializable {
     if (camera.isDefined) addCameraItem(CameraItem(sending = true, msgType, content, DateTime.now))
   }
 
+  def sendMessages(rmsgs : List[String], reqCtx : RequestContext) : Unit = {
+    val now = DateTime.now
+    rmsgs.foreach(msg => {
+      //@transient
+      implicit val formats = DefaultFormats
+
+      val jo = parse(msg)
+      val msgType = (jo \ "msgType").extract[String]
+      val content = (jo \ "content").extract[JObject]
+      addCameraItem( CameraItem(sending = true, msgType, Some(content), now) )
+    })
+    reqCtx.complete(HttpResponse(entity = "[" + rmsgs.mkString(",") + "]"))
+  }
+
   def receive = {
-    case SetSessionId(id) => {
+    case SetSessionId(id) =>
       sessionId = Some(id)
       resetAliveTimer()
-    }
-    case KeepAlive() => {
+
+    case KeepAlive() =>
       resetAliveTimer()
-    }
-    case SessionPing(reqCtx) => {
+
+    case SessionPing(reqCtx) =>
       itemReceived("sessionPing", None)
       for (ssn <- sessionId) {
         resetAliveTimer()
         for ((_, tmr) <- optReq) tmr.cancel()
         msgs match {
-          case Nil => {
+          case Nil =>
             optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout()))
-          }
-          case _ => {
-            reqCtx.complete(HttpResponse(entity = "[" + msgs.reverse.mkString(",") + "]"))
+          case _ =>
+            sendMessages( msgs.reverse, reqCtx)
             msgs = Nil
-          }
         }
       }
-    }
-    case PollTimeout() => {
+
+    case PollTimeout() =>
       for (ssn <- sessionId) {
         optReq match {
           case Some((req, _)) => {
@@ -118,38 +131,32 @@ class SessionActor extends Actor with Serializable {
           case None => ()
         }
       }
-    }
-    case CloseSession(optReqCtx) => {
+
+    case CloseSession(optReqCtx) =>
       context.stop(self)
       for (ssn <- sessionId) CometActorMapper.map -= ssn
       for (reqCtx <- optReqCtx) reqCtx.complete(StatusCodes.OK,"session closed")
-    }
-    case RunFunction(fn,msgType,content) => {
+
+    case RunFunction(fn,msgType,content) =>
       itemReceived(msgType,Some(content))
       fn(content)
-    }
-    case CometMessage(data) => {
+
+    case CometMessage(data) =>
       msgs = data :: msgs
       resetAliveTimer()
       optReq match {
-        case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
+        case None =>
+          () //println("CometMessage optReqCtx miss: id = " + sessionId)
+
         case Some((reqCtx,tmr)) => {
-          val rmsgs = msgs.reverse
-          val now = DateTime.now
-          rmsgs.foreach(msg => {
-            val jo = parse(msg)
-            val msgType = (jo \ "msgType").extract[String]
-            val content = (jo \ "content").extract[JObject]
-            addCameraItem( CameraItem(sending = true, msgType, Some(content), now) )
-          })
-          reqCtx.complete(HttpResponse(entity = "[" + rmsgs.mkString(",") + "]"))
+          tmr.cancel()
+          sendMessages(msgs.reverse, reqCtx)
           optReq = None
           msgs = Nil
-          tmr.cancel()
         }
       }
-    }
-    case StartCamera(reqCtx) => {
+
+    case StartCamera(reqCtx) =>
       val msg : String = camera match {
         case Some(_) => "session is already recording"
         case None => "session recording started"
@@ -157,20 +164,19 @@ class SessionActor extends Actor with Serializable {
       if (camera.isEmpty) camera = Some(Nil)
       itemReceived("startSessionRecording", None)
       reqCtx.complete(StatusCodes.OK,msg)
-    }
-    case StopCamera(reqCtx) => {
+
+    case StopCamera(reqCtx) =>
       itemReceived("stopSessionRecording", None)
       camera match {
-        case None => reqCtx.complete(StatusCodes.PreconditionFailed,"session not recording" )
-        case Some(itms) => {
+        case None =>
+          reqCtx.complete(StatusCodes.PreconditionFailed,"session not recording" )
+
+        case Some(itms) =>
           val items = itms.reverse.map(itemToString)
           reqCtx.complete(HttpResponse(entity = "[" + items.mkString(",") + "]"))
-        }
       }
-    }
   }
 }
-
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -203,7 +209,13 @@ trait EvaluatorService extends HttpService
       actor ! SetSessionId(ssn)
       CometActorMapper.map += (ssn -> actor)
     })
-
+  }
+  def spawnSession(json: JObject, key: String) : Unit = {
+    spawnSessionRequest(json, key, ssn => {
+      val actor = actorRefFactory.actorOf(Props[SessionActor])
+      actor ! SetSessionId (ssn)
+      CometActorMapper.map += (ssn -> actor)
+    })
   }
 
   @transient
@@ -214,6 +226,7 @@ trait EvaluatorService extends HttpService
     // New API
     ("createAgentRequest", createAgentRequest),
     ("initializeSessionRequest", createNewSession),
+    ("spawnSessionRequest", spawnSession),
     ("getAgentRequest", getAgentRequest)
   )
 
@@ -258,7 +271,6 @@ trait EvaluatorService extends HttpService
     // Database dump/restore
     ("backupRequest", backupRequest),
     ("restoreRequest", restoreRequest),
-    ("resetDatabaseRequest", resetDatabaseRequest),
     // Verifier protocol
     ("initiateClaim", initiateClaim),
     // omni

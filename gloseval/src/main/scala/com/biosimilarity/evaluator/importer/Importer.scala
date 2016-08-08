@@ -13,6 +13,7 @@ import com.biosimilarity.evaluator.api.Api
 //import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.spray.NodeUser
+import com.biosimilarity.evaluator.spray.util._
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
@@ -106,7 +107,7 @@ object Importer extends EvalConfig
       .postData(requestBody)
     val response = req.asString.body
 
-    println(s"RESPONSE BODY: ${response}")
+    println(s"RESPONSE BODY: $response")
     if (response.startsWith("Malformed request")) throw new Exception(response)
     response
   }
@@ -194,7 +195,6 @@ object Importer extends EvalConfig
 
   var terminateLongPoll = false
 
-  //var messagesReceived : List[JObject] = Nil
   def longPoll(): Thread = {
     println("initiating long-polling")
     new Thread(new Runnable() {
@@ -202,38 +202,28 @@ object Importer extends EvalConfig
         while (!terminateLongPoll) {
           val tmp = sessionsById.clone()
           while (tmp.nonEmpty) {
-            tmp.foreach {
+            tmp.clone().foreach {
               case (id, sess) =>
                 try {
-                  println("Sending Ping")
                   val session = sess.sessionURI
                   val js = glosevalPost(Api.SessionPing(session))
                   val arr = parse(js).extract[List[JObject]]
                   arr.foreach(v => {
-                    //messagesReceived = v :: messagesReceived
                     val typ = (v \ "msgType").extract[String]
                     typ match {
-                      case "sessionPong" => {
-                        tmp.remove(id)
-                      }
-                      case "connectionProfileResponse" => {
-                        //println("connectionProfileResponse : " + (v \ "content"))
-
-                      }
-                      case "addAliasLabelsResponse" => {}
-                      case "beginIntroductionResponse" => {
-                        //println("beginIntroductionResponse : " + (v \ "content"))
-                      }
-                      case _ => {
-                        //println("contents : " + (v \ "content"))
+                      case "sessionPong" => tmp.remove(id)
+                      case "connectionProfileResponse" => ()
+                      case "addAliasLabelsResponse" => ()
+                      case "beginIntroductionResponse" => ()
+                      case "establishConnectionResponse" => ()
+                      case _ =>
                         println("WARNING - handler not provided for server sent message type : " + typ)
-                      }
                     }
-
                   })
                 } catch {
                   case ex: Throwable => {
                     println("exception during SessionPing : " + ex)
+                    tmp.remove(id)
                   }
                 }
             }
@@ -291,7 +281,7 @@ object Importer extends EvalConfig
     val json =
       glosevalPost(Api.InitializeSessionRequest(agentURI + "?password=" + pwd))
 
-    val jsession: JValue = (parse(json) \ "content")
+    val jsession: JValue = parse(json) \ "content"
     val uri = (jsession \ "sessionURI").extract[String]
     val alias = (jsession \ "defaultAlias").extract[String]
 
@@ -421,6 +411,10 @@ object Importer extends EvalConfig
 
   def fromFile(dataJsonFile: String, host: String = GLOSEVAL_HOST): Unit = {
 
+    println("launching server")
+    resetMongo()
+    Thread.sleep(5000)  // give it time to warm up ...
+
     println("Importing file : " + dataJsonFile)
     GLOSEVAL_HOST = host
 
@@ -437,6 +431,9 @@ object Importer extends EvalConfig
         thrd.start()
 
         try {
+          val isok = glosevalPost(Api.ResetDatabaseRequest(adminSession.sessionURI))
+          if (isok != "OK") throw new Exception("Unable to reset database")
+
           dataset.labels match {
             case Some(lbls) => lbls.foreach(l => makeLabel(LabelDesc.extractFrom(l)))
             case None => ()
@@ -459,14 +456,8 @@ object Importer extends EvalConfig
       }
       case _ => throw new Exception("Unable to open admin session")
     }
-  }
-
-  /*
-  def runSessionCamReqTest(sessionURI: String, req: ApiRequest ) : JObject = {
-    val host = GLOSEVAL_HOST
 
   }
-  */
 
   def runTestFile(dataJsonFile: String): Unit = {
     // this routine doesn't keep sessions alive via longpoll.
@@ -474,8 +465,6 @@ object Importer extends EvalConfig
     println("testing file : " + dataJsonFile)
     val host = GLOSEVAL_HOST
 
-    val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
-    val tests = parse(dataJson).extract[List[JObject]]
     val adminURI =
       getAgentURI(NodeUser.email, NodeUser.password) match {
         case Some(uri) => uri
@@ -485,24 +474,40 @@ object Importer extends EvalConfig
     val adminSession = createSession(adminURI, NodeUser.password)
     sessionsById.put(adminId, adminSession) // longpoll on adminSession
     println("using admin session URI : " + adminSession.sessionURI)
-    //val thrd = longPoll()
-    //thrd.start()
     var testOmni = EvalConfConfig.isOmniRequired()
 
-    tests.foreach(el => {
-      val typ = (el \ "type").extract[String]
-
-      try {
+    def runTests(ssn : String, tests : List[JObject]) : Unit = {
+      tests.foreach(el => {
+        val typ = (el \ "type").extract[String]
         typ match {
-          case "reset" => {
-            val isok = glosevalPost(Api.ResetDatabaseRequest(adminSession.sessionURI, mongodbPath()))
+          case "spawn" =>
+            val js = glosevalPost(Api.SpawnSessionRequest(ssn))
+            val tssn = (parse(js) \ "content" \ "sessionURI").extract[String]
+            println(tssn)
+            val tsts = (el \ "content").extract[List[JObject]]
+            runTests(tssn, tsts)
+            glosevalPost(Api.CloseSessionRequest(tssn))
+
+          case "reset" =>
+            val isok = glosevalPost(Api.ResetDatabaseRequest(ssn))
             if (isok != "OK") throw new Exception("Unable to reset database")
-            expect("resetDatabaseResponse", adminSession.sessionURI) match {
+            expect("resetDatabaseResponse", ssn) match {
               case Some(_) => ()
               case _ => throw new Exception("Unable to reset database")
             }
-          }
-          case "agent" => {
+
+          case "startCam" =>
+            val js = glosevalPost(Api.StartSessionRecording(ssn))
+            println(js)
+
+          case "stopCam" =>
+            glosevalPost(Api.SessionPing(ssn))  // make sure messages get returned to us before closing the cam
+            val js = glosevalPost(Api.StopSessionRecording(ssn))
+            //println(js)
+            val els = parse(js).extract[List[JObject]]
+            els foreach (el => println(el))
+
+          case "agent" =>
             val agent = (el \ "content").extract[AgentDesc]
             makeAgent(agent)
             if (testOmni) {
@@ -520,7 +525,7 @@ object Importer extends EvalConfig
                       //println(pretty(js))
                       val newaddr = (js \ "newaddress").extract[String]
                       if (newaddr != OmniClient.testAmpAddress) throw new Exception("setAmpWalletAddressResponse invalid")
-                      val isok3 = glosevalPost(Api.SetAmpWalletAddress(session,oldaddr))
+                      val isok3 = glosevalPost(Api.SetAmpWalletAddress(session, oldaddr))
                       if (isok3 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
                       expect("setAmpWalletAddressResponse", session) match {
                         case Some(js) => {
@@ -535,31 +540,32 @@ object Importer extends EvalConfig
                 }
                 case _ => throw new Exception("Unable to get wallet address")
               }
-              testOmni = false  // once is enough ...
+              testOmni = false // once is enough ...
             }
-          }
-          case "cnxn" => {
+
+          case "cnxn" =>
             val cnxn = (el \ "content").extract[ConnectionDesc]
-            makeCnxn(adminSession.sessionURI, cnxn)
-          }
-          case "label" => {
+            makeCnxn(ssn, cnxn)
+
+          case "label" =>
             val jo = (el \ "content").extract[JObject]
             val lbl = LabelDesc.extractFrom(jo)
             makeLabel(lbl)
-          }
-          case "post" => {
+
+          case "post" =>
             val post = (el \ "content").extract[PostDesc]
             makePost(post)
-          }
+
           case _ => throw new Exception("Unknown test element")
         }
-      } finally {
-        terminateLongPoll = true
-      }
+      })
+    }
 
-      if (testOmni) OmniClient.runTests()
+    val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
+    val tests = parse(dataJson).extract[List[JObject]]
+    runTests(adminSession.sessionURI, tests)
 
-    })
+    if (testOmni) OmniClient.runTests()
   }
 
   def fromFiles(dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST): Unit = {

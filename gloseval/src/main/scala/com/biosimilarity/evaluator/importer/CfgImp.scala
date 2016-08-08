@@ -105,15 +105,6 @@ trait ImporterConfig {
     }
   }
 
-  def mongodbPath() = {
-    _mongodbPath match {
-      case Some( sddf ) => sddf
-      case None => {
-        evalConfig().getString( "MongodbPath" )
-      }
-    }
-  }
-
   /*
     def serviceSystemLabelsFile() = {
       _serviceSystemLabelsFile match {
