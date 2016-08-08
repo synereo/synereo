@@ -33,6 +33,7 @@ import java.util.UUID
 import java.net.URI
 
 import com.biosimilarity.evaluator.spray.srp.{ConversionUtils, SRPSessionManager, UserCredentials}
+import com.typesafe.config.ConfigFactory
 
 import scala.util.Try
 import scala.language.postfixOps
@@ -2724,7 +2725,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         val capURI = new URI("agent://" + cap)
         val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
-        val token = UUID.randomUUID.toString.substring(0, 8)
+        val token = Try(ConfigFactory.load.getString("run.mode")) toOption match {
+          case Some("test") => "b08353e9"
+          case _ => UUID.randomUUID.toString.substring(0, 8)
+        }
+
         val tokenUri = new URI("token://" + token)
         val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
 
