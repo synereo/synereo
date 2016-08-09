@@ -13,7 +13,7 @@ import scala.util.Try
 object AuthenticationTestData {
   import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 
-  val email = "metaweta+1@gmail.com"
+  val email = "testonly@test.com"
   val password = "qwerty12345"
   val srpClient = new SRP6Client()
 
