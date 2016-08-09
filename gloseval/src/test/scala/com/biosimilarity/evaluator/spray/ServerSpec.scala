@@ -64,14 +64,12 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
     }
   }
 
-  """A POST of msgType 'initializeSessionRequest' sent over http
+  """A POST of msgType 'createUserStep1Request' sent over http
     |to the '/api' route of a running instance of Server""".stripMargin should {
     """respond with the proper 301 "Moved Permanently" status code and HSTS header""" in {
-      val username: String = readString("nodeAdminEmail")
-      val password: String = readString("nodeAdminPass")
+      val email = "testonly@test.com"
       val requestBody: HttpEntity =
-        HttpEntity(ContentType(MediaTypes.`application/json`),
-                   s"""{"msgType":"initializeSessionRequest","content":{"agentURI":"agent://email/$username?password=$password"}}""")
+        HttpEntity(ContentType(MediaTypes.`application/json`), s"""{"msgType":"createUserStep1Request","content":{"email":"$email"}}""")
       val uri: Uri                       = Uri("http://localhost/api").withPort(serverPort)
       val response: Future[HttpResponse] = IO(Http)(system).ask(HttpRequest(POST, uri, entity = requestBody))(timeout).mapTo[HttpResponse]
       whenReady(response) { (r: HttpResponse) =>
@@ -82,14 +80,12 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
     }
   }
 
-  """A POST of msgType 'initializeSessionRequest' sent over https
+  """A POST of msgType 'createUserStep1Request' sent over https
     |to the '/api' route of a running instance of Server""".stripMargin should {
     """respond with the proper 200 "OK" status code""" in {
-      val username: String = readString("nodeAdminEmail")
-      val password: String = readString("nodeAdminPass")
+      val email = "testonly@test.com"
       val requestBody: HttpEntity =
-        HttpEntity(ContentType(MediaTypes.`application/json`),
-                   s"""{"msgType":"initializeSessionRequest","content":{"agentURI":"agent://email/$username?password=$password"}}""")
+        HttpEntity(ContentType(MediaTypes.`application/json`), s"""{"msgType":"createUserStep1Request","content":{"email":"$email"}}""")
       eventualHostConnector
         .flatMap((hc: ActorRef) => hc.ask(HttpRequest(POST, "/api", entity = requestBody))(timeout))
         .mapTo[HttpResponse]

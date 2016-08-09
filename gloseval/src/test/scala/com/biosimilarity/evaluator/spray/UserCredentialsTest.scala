@@ -1,3 +1,5 @@
+package com.biosimilarity.evaluator.spray
+
 import java.security.SecureRandom
 
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._

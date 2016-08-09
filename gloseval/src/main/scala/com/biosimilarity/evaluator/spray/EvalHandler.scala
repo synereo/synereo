@@ -75,9 +75,9 @@ object btcKeyMapper extends Serializable {
 }
 
 object ConfirmationEmail extends Serializable {
-  val EMAIL_AUTH_USERNAME = EvalConfConfig.read("EmailAuthUsername")
-  val EMAIL_AUTH_PASSWORD = EvalConfConfig.read("EmailAuthPassword")
-  val EMAIL_FROM_ADDRESS  = EvalConfConfig.read("EmailFromAddress")
+  val EMAIL_AUTH_USERNAME = EvalConfConfig.readString("EmailAuthUsername")
+  val EMAIL_AUTH_PASSWORD = EvalConfConfig.readString("EmailAuthPassword")
+  val EMAIL_FROM_ADDRESS  = EvalConfConfig.readString("EmailFromAddress")
 
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._

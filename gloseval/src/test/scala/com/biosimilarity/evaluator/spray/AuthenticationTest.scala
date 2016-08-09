@@ -1,16 +1,19 @@
 package com.biosimilarity.evaluator.spray
 
+import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.spray.util._
 import org.bouncycastle.crypto.agreement.srp.{SRP6Client, SRP6StandardGroups, SRP6VerifierGenerator}
 import org.bouncycastle.crypto.digests.SHA512Digest
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import org.scalatest.{MustMatchers, WordSpec}
+import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpec}
 import spray.http._
 import spray.testkit.ScalatestRouteTest
 
 import scala.util.Try
 
 object AuthenticationTestData {
+
   import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 
   val email = "testonly@test.com"
@@ -42,7 +45,7 @@ object AuthenticationTestData {
   }
 }
 
-class AuthenticationTest extends WordSpec with MustMatchers with ScalatestRouteTest with EvaluatorService {
+class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatchers with ScalatestRouteTest with EvaluatorService {
 
   implicit val formats = DefaultFormats
 
@@ -51,12 +54,18 @@ class AuthenticationTest extends WordSpec with MustMatchers with ScalatestRouteT
 
   def actorRefFactory = system
 
+  val httpsUri: Uri = Uri("/api").withScheme("https").withPort(EvalConfConfig.serverSSLPort)
+
+  override def beforeAll(): Unit = {
+    resetMongo()
+  }
+
   import AuthenticationTestData._
 
   "EvaluationService" should {
 
     "return random salt on creation user, step 1" in {
-      Post("/api", HttpEntity(MediaTypes.`application/json`, createUserStep1RequestBody)) ~> myRoute ~>
+      Post(httpsUri, HttpEntity(MediaTypes.`application/json`, createUserStep1RequestBody)) ~> myRoute ~>
         check {
           val rsp = responseAs[String]
           rsp must include("salt")
@@ -71,7 +80,7 @@ class AuthenticationTest extends WordSpec with MustMatchers with ScalatestRouteT
     }
 
     "respond with CreateUserWaiting on creation user, step 2" in {
-      Post("/api", HttpEntity(MediaTypes.`application/json`, getCreateUserStep2RequestBody(salt))) ~> myRoute ~> {
+      Post(httpsUri, HttpEntity(MediaTypes.`application/json`, getCreateUserStep2RequestBody(salt))) ~> myRoute ~> {
         check {
           val rsp = responseAs[String]
           rsp must include("createUserWaiting")
@@ -80,7 +89,7 @@ class AuthenticationTest extends WordSpec with MustMatchers with ScalatestRouteT
     }
 
     "generate agentURI on email token confirmation" in {
-      Post("/api", HttpEntity(MediaTypes.`application/json`, confirmEmailTokenRequestBody)) ~> myRoute ~>
+      Post(httpsUri, HttpEntity(MediaTypes.`application/json`, confirmEmailTokenRequestBody)) ~> myRoute ~>
         check {
           val rsp     = responseAs[String]
           val json    = parse(rsp)
@@ -93,7 +102,7 @@ class AuthenticationTest extends WordSpec with MustMatchers with ScalatestRouteT
     }
 
     "respond with B parameter and stored salt on initializing new session, step 1" in {
-      Post("/api", HttpEntity(MediaTypes.`application/json`, getInitializeSessionStep1RequestBody(salt))) ~> myRoute ~>
+      Post(httpsUri, HttpEntity(MediaTypes.`application/json`, getInitializeSessionStep1RequestBody(salt))) ~> myRoute ~>
         check {
           val rsp     = responseAs[String]
           val json    = parse(rsp)
@@ -109,7 +118,7 @@ class AuthenticationTest extends WordSpec with MustMatchers with ScalatestRouteT
     }
 
     "respond with M2 parameter on initializing new session, step 2" in {
-      Post("/api", HttpEntity(MediaTypes.`application/json`, getInitializeSessionStep2RequestBody(B))) ~> myRoute ~>
+      Post(httpsUri, HttpEntity(MediaTypes.`application/json`, getInitializeSessionStep2RequestBody(B))) ~> myRoute ~>
         check {
           val rsp     = responseAs[String]
           val json    = parse(rsp)

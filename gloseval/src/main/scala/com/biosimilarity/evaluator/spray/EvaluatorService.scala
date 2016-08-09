@@ -221,7 +221,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
 
   def createNewSessionSRP(json: JObject, key: String) : Unit = {
     initializeSessionStep2Request(json, key, ssn => {
-      val actor = actorRefFactory.actorOf(Props[CometActor])
+      val actor = actorRefFactory.actorOf(Props[SessionActor])
       actor ! SetSessionId(ssn)
       CometActorMapper.map += (ssn -> actor)
     })
