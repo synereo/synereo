@@ -30,7 +30,6 @@ case class StartCamera(reqCtx : RequestContext)
 case class StopCamera(reqCtx : RequestContext)
 
 class SessionActor extends Actor with Serializable {
-  import EvalHandlerService._
 
   val gcTime = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes // if client doesnt poll within this time, its garbage collected
   val clientTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds // ping requests are ponged after this much time, clients need to re-ping after this

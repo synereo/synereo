@@ -1,4 +1,4 @@
-package com.biosimilarity.evaluator.api
+package com.biosimilarity.evaluator
 
 import org.json4s._
 
@@ -29,6 +29,8 @@ object Api {
   case class ResetDatabaseRequest(sessionURI: String) extends RequestContent
   case class GetAmpWalletAddress(sessionURI: String) extends RequestContent
   case class SetAmpWalletAddress(sessionURI: String, address: String) extends RequestContent
+  case class OmniTransfer(sessionURI: String, target: String, amount: BigDecimal ) extends RequestContent
+  case class OmniGetBalance(sessionURI: String) extends RequestContent
 
   def toReq[T <: RequestContent](cont: T) : Request = {
     val nm = cont.getClass.getSimpleName()

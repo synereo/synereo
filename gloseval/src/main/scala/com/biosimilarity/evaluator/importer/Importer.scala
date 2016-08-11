@@ -9,7 +9,7 @@
 package com.biosimilarity.evaluator.importer
 
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.api.Api
+import com.biosimilarity.evaluator.Api
 //import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.spray.NodeUser
@@ -412,8 +412,8 @@ object Importer extends EvalConfig
   def fromFile(dataJsonFile: String, host: String = GLOSEVAL_HOST): Unit = {
 
     println("launching server")
-    resetMongo()
-    Thread.sleep(5000)  // give it time to warm up ...
+    //resetMongo()
+    //Thread.sleep(5000)  // give it time to warm up ...
 
     println("Importing file : " + dataJsonFile)
     GLOSEVAL_HOST = host
