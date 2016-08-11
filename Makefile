@@ -1,10 +1,10 @@
-KEYPASS   = $(shell awk -F ' *= *' '/^keypass/{print $$2}' eval.conf)
-STOREPASS = $(shell awk -F ' *= *' '/^storepass/{print $$2}' eval.conf)
+KEYPASS   = $(shell awk -F ' *= *' '/^keypass/{print $$2}' gloseval/eval.conf)
+STOREPASS = $(shell awk -F ' *= *' '/^storepass/{print $$2}' gloseval/eval.conf)
 
-KEYSTORE = src/main/resources/keystore.jks
-PEM      = src/test/resources/gloseval.pem
+KEYSTORE = gloseval/src/main/resources/keystore.jks
+PEM      = gloseval/src/test/resources/gloseval.pem
 
-all: keystore
+all: pem
 
 keystore: $(KEYSTORE)
 
