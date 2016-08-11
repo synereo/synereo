@@ -81,6 +81,7 @@ lazy val coreDeps = Seq(
   "org.json4s"                 %% "json4s-native"          % json4sVersion,
   "org.mongodb"                %% "casbah"                 % "2.6.4" exclude("org.slf4j", "slf4j-api"),
   "org.scalaj"                 %% "scalaj-http"            % "2.0.0",
+  "org.bouncycastle"            % "bcprov-jdk15on"         % "1.54",
   "org.scalatest"              %% "scalatest"              % "2.2.6" % "test")
 
 lazy val depsSettings = Seq(
@@ -103,7 +104,8 @@ lazy val commonSettings = Seq(
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   bintrayOrganization := Some("synereo"),
   test in assembly := {},
-  fork in Test := true)
+  fork in Test := true,
+  parallelExecution in Test := false)
 
 lazy val gloseval = (project in file("."))
   .settings(commonSettings: _*)
