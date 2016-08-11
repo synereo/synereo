@@ -103,6 +103,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def labelToNS : Option[String => Namespace]
 	def textToVar : Option[String => Var]
 	def textToTag : Option[String => Tag]        
+        def textToValue : Option[String => Value]
 	
 	def kvNameSpace : Namespace
 	def kvKNameSpace : Namespace
@@ -119,6 +120,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  rsrc : mTT.Resource
 	) : CnxnCtxtLeaf[Namespace,Var,Tag] with Factual
 	
+        // How is a key-value record represented in the store?
+	def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual
+
 	// How is a key-value record represented in the store?
 	def asStoreRecord(
 	  key : mTT.GetRequest,
@@ -159,6 +165,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Option[mTT.Continuation] = {
 	  throw new Exception( "shouldn't be calling this version of asCacheK" )
 	}
+
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : DBObject
+	) : mTT.GetRequest
 
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -228,6 +239,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    ttt
 	  }
 	}
+        def textToValue : Option[String => Value] = {
+	  for( pd <- persistenceManifest; ttvl <- pd.textToValue ) 
+	  yield {
+	    ttvl
+	  }
+	}
 	
 	def kvNameSpace : Option[Namespace] = {
 	  for( pd <- persistenceManifest )
@@ -260,6 +277,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  yield { pd.asStoreValue( rsrc ) }
 	}
 	
+        def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
+	  for( pd <- persistenceManifest )
+	  yield { pd.asStoreIndirection( key ) }
+	}
+
 	def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
@@ -275,6 +299,14 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  for( pd <- persistenceManifest )
 	  yield { pd.asStoreKRecord( key, value ) }
 	}
+        
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : DBObject
+	) : Option[mTT.GetRequest] = {
+          for( pd <- persistenceManifest )
+	  yield { pd.asIndirection( key, value )} 
+        }
 	
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -379,11 +411,48 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  )
 	}
 
+        override def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+	  val theUUID = UUID.randomUUID().toString.replace( "-", "" )
+          val ttvl =
+	    textToValue.getOrElse(
+	      throw new Exception( "must have textToValue to convert mongo object" )
+	    )
+	  asStoreEntry( key, mTT.Ground( ttvl( theUUID ) ) )( kvNameSpace )
+	}
+
 	override def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
 	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
-	  asStoreEntry( key, value )( kvNameSpace )
+	  //asStoreEntry( key, value )( kvNameSpace )
+          key match {
+            case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {              
+              val ttt =
+	        textToTag.getOrElse(
+	          throw new Exception( "must have textToTag to convert flatKey: " + fk )
+	        )
+              val ltns =
+                labelToNS.getOrElse(
+                  throw new Exception( "must have labelToNS to convert flatKey: " + fk )
+                )
+              val fkS = asCacheValue( fk ) + ""
+              val flatKey = ttt( fkS )
+              asStoreEntry(
+                asStoreKey(
+                  new CnxnCtxtBranch[Namespace,Var,Tag](
+                    ltns( fkS ),
+                    ( new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( ( flatKey ) ) ) ) :: Nil
+                  )
+                ),
+                value
+              )( kvNameSpace )
+            }
+            case _ => {
+              throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
+            }
+          }
 	}
 
 	override def asStoreKRecord(
@@ -391,7 +460,33 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  value : mTT.Resource
 	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
 	  //println( "in asStoreKRecord with kvKNameSpace = " + kvKNameSpace )
-	  asStoreEntry( key, value )( kvKNameSpace )
+	  //asStoreEntry( key, value )( kvKNameSpace )
+          key match {
+            case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {              
+              val ttt =
+	        textToTag.getOrElse(
+	          throw new Exception( "must have textToTag to convert flatKey: " + fk )
+	        )
+              val ltns =
+                labelToNS.getOrElse(
+                  throw new Exception( "must have labelToNS to convert flatKey: " + fk )
+                )
+              val fkS = asCacheValue( fk ) + ""
+              val flatKey = ttt( fkS )
+              asStoreEntry(
+                asStoreKey(
+                  new CnxnCtxtBranch[Namespace,Var,Tag](
+                    ltns( fkS ),
+                    ( new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( ( flatKey ) ) ) ) :: Nil
+                  )
+                ),
+                value
+              )( kvNameSpace )
+            }
+            case _ => {
+              throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
+            }
+          }
 	}
 
 	override def asCacheValue(
@@ -690,7 +785,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                with CnxnNSVarSTagStringDefaults[Namespace,Var,Tag]
 	       with Serializable 
       {	 		
-	import LogConfiguration._ 
+	import LogConfiguration._         
 	override def tmpDirStr : String = {
 	  val tds = 
 	    try {
@@ -804,23 +899,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	
 	implicit val SyncTable : Option[( UUID, HashMap[UUID,Int] )] = None
 
-        def executeWithResults(
+        def createMongoQuery(
           pd : PersistenceManifest,
           xmlCollName : String,
           tPath : Either[mTT.GetRequest,mTT.GetRequest]
-        ) : List[( DBObject, emT.PlaceInstance )] = {
-          // BUGBUG : lgm -- this is not very performant!
-          // The better approach is to find a way to inline the
-          // asResource code
-          BasicLogService.tweet(
-	    (
-	      "PersistedMonadicKVDBMongoNode : "
-	      + "\nmethod : executeWithResults "
-	      + "\nthis : " + this
-              + "\ncollName : " + xmlCollName
-	      + "\ntPath : " + tPath
-	    )
-	  )
+        ) : Option[( MongoClient, String ) => List[DBObject]] = {
           val mongoPD : MongoDBManifest = 
             pd match {
               case mngoPM : MongoDBManifest => mngoPM
@@ -853,6 +936,90 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               }
             }
 
+          for(
+            qry <- qFn( xmlCollName, path )
+          ) yield {
+              BasicLogService.tweet(
+	        (
+	          "PersistedMonadicKVDBMongoNode : "
+	          + "\nmethod : executeWithResults "
+	          + "\nthis : " + this
+                  + "\ncollName : " + xmlCollName
+	          + "\ntPath : " + tPath
+                  + "\n------------------------------------------------"
+                  + "\ncompiled query : \n" + qry
+                  + "\ncompiled query string : \n" + qry.toString
+	        )
+	      )              
+
+            // Returning a function!
+            ( clientSession : MongoClient, collectionName : String ) => {
+              val mc = clientSession.getDB( defaultDB )( collectionName )
+              BasicLogService.tweet(
+	        (
+	          "PersistedMonadicKVDBMongoNode : "
+	          + "\nmethod : executeWithResults "
+                  + "\nlocal function: qryClntSessFn"
+	          + "\nthis : " + this
+                  + "\nclientSession : " + clientSession
+                  + "\ncollectionName : " + collectionName
+                  + "\n------------------------------------------------"
+	        )
+	      )
+              mc.find( qry ).toList
+            }
+          }
+        }
+
+        def executeWithResults(
+          pd : PersistenceManifest,
+          xmlCollName : String,
+          tPath : Either[mTT.GetRequest,mTT.GetRequest]
+        ) : List[( DBObject, emT.PlaceInstance )] = {
+          // Reader beware - 
+          // The aim of this function is to return the list of
+          // values/continuations associated with tPath.
+          // The option of that value is calculated in pairs, below
+          // The initial query is not sufficient to give the full
+          // semantics of unification. So, once get the candidates
+          // into memory we unify with the key.
+
+          // We have split the records essentially into the
+          // unification bit and a flat key to the value bit
+          
+          // The unification occurs in asIndirection and will throw
+          // and exception if the unification fails which will be
+          // caught by the catch case in the loop that maps over the
+          // return values from the initial query checking for
+          // unification between the key in tPath and the key in the
+          // record
+          
+          // If the the unification succeeds we can then bounce
+          // over to the actual value/continuation
+
+          BasicLogService.tweet(
+	    (
+	      "PersistedMonadicKVDBMongoNode : "
+	      + "\nmethod : executeWithResults "
+	      + "\nthis : " + this
+              + "\ncollName : " + xmlCollName
+	      + "\ntPath : " + tPath
+	    )
+	  )
+
+          val ltns =
+	    labelToNS.getOrElse(
+	      throw new Exception( "must have labelToNS to convert mongo object" )
+	    )
+	  val ttv =
+	    textToVar.getOrElse(
+	      throw new Exception( "must have textToVar to convert mongo object" )
+	    )
+	  val ttt =
+	    textToTag.getOrElse(
+	      throw new Exception( "must have textToTag to convert mongo object" )
+	    )
+
           def loop(
             acc : List[( DBObject, emT.PlaceInstance )],
             rawQryRslts : List[DBObject]
@@ -861,12 +1028,28 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               case Nil => acc              
               case e :: qryRslts => {
                 try {
-                  val ersrc = pd.asResource( path, e )
-                  val pair = ( e, ersrc )
-                    loop(
-                      acc ++ List[( DBObject, emT.PlaceInstance )]( pair ),
-                      qryRslts
-                    )
+                  val path =
+                    tPath match {
+                      case Left( p ) => p
+                      case Right( p ) => p
+                    }
+                  val flatKey: mTT.GetRequest = pd.asIndirection( path, e )
+                  // Do a query here!
+                  val answer =
+                    for {
+                      qryClntSessFn <- createMongoQuery(pd, xmlCollName, Left[mTT.GetRequest,mTT.GetRequest]( flatKey ))
+                    } yield {
+                      
+                      wrapAction(qryClntSessFn)(xmlCollName) match {
+                        case x :: Nil =>
+													val ersrc = pd.asResource(flatKey, x)
+													loop(acc ++ List[(DBObject, emT.PlaceInstance)]((e, ersrc)), qryRslts)
+                        case xs =>
+													throw new Exception(s"unique key not unique: $xs")
+                      }
+                      // Since the actlBlob of a flatKey will always have a length of 1, we should
+                    }
+                  answer.getOrElse( List[( DBObject, emT.PlaceInstance )]() )
                 }
                 catch {
                   case e : UnificationQueryFilter[Namespace,Var,Tag] => {
@@ -886,38 +1069,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 
           val pairs : Option[List[( DBObject, emT.PlaceInstance )]] = 
             for(
-              qry <- qFn( xmlCollName, path )
+              qryClntSessFn <- createMongoQuery( pd, xmlCollName, tPath )
             ) yield {
-              BasicLogService.tweet(
-	        (
-	          "PersistedMonadicKVDBMongoNode : "
-	          + "\nmethod : executeWithResults "
-	          + "\nthis : " + this
-                  + "\ncollName : " + xmlCollName
-	          + "\ntPath : " + tPath
-                  + "\n------------------------------------------------"
-                  + "\ncompiled query : \n" + qry
-                  + "\ncompiled query string : \n" + qry.toString
-	        )
-	      )              
-              val qryClntSessFn : ( MongoClient, String ) => List[DBObject] = {
-                ( clientSession : MongoClient, collectionName : String ) => {
-                  val mc = clientSession.getDB( defaultDB )( collectionName )
-                  BasicLogService.tweet(
-	            (
-	              "PersistedMonadicKVDBMongoNode : "
-	              + "\nmethod : executeWithResults "
-                      + "\nlocal function: qryClntSessFn"
-	              + "\nthis : " + this
-                      + "\nclientSession : " + clientSession
-                      + "\ncollectionName : " + collectionName
-                      + "\n------------------------------------------------"
-	            )
-	          )
-                  mc.find( qry ).toList
-                }
-              }
-              //val qryRslts = executeWithResults( xmlCollName, qry )
+              
               val qryRslts = wrapAction( qryClntSessFn )( xmlCollName )
 
               BasicLogService.tweet(
@@ -935,29 +1089,6 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                 List[( DBObject, emT.PlaceInstance )]( ),
                 qryRslts
               )
-              // ( List[( DBObject, emT.PlaceInstance )]( ) /: qryRslts )(
-//                 {
-//                   ( acc, e ) => {
-//                     try {
-//                       val ersrc = pd.asResource( path, e )
-//                       val pair = ( e, ersrc )
-//                       acc ++ List[( DBObject, emT.PlaceInstance )]( pair )
-//                     }
-//                     catch {
-//                       case e : UnificationQueryFilter[Namespace,Var,Tag] => {
-//                         BasicLogService.tweet( "filtering refuted pattern: " + e.ptn + "; key: " + e.key )
-//                         acc
-//                       }
-//                       case t : Throwable => {
-//                         val errors : java.io.StringWriter = new java.io.StringWriter()
-//                         t.printStackTrace( new java.io.PrintWriter( errors ) )
-//                         BasicLogService.tweet( "unhandled exception : " + errors.toString( ) )
-//                         throw( t )
-//                       }
-//                     }
-//                   }
-//                 }
-//               )
               
             }
           BasicLogService.tweet(
@@ -971,6 +1102,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               + "\npairs : " + pairs
 	    )
 	  )
+
           pairs.getOrElse( List[( DBObject, emT.PlaceInstance )]( ) )
         }
 	def putInStore(
@@ -1004,19 +1136,30 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      val dbAccessExpr =
 		() => {
 		  for(
-		    rcrd <- asStoreRecord( ptn, rsrc );
+                    indrctRcrd <- asStoreIndirection( ptn );
+                    rcrd <- asStoreRecord( indrctRcrd, rsrc );
 		    sus <- collName
 		  ) {
 		    BasicLogService.tweet(
 		      (
-			"storing to db : " //+ pd.db
+			"storing indirectionRecord to db : " //+ pd.db
+			+ " pair : " + indrctRcrd
+			+ " in coll : " + sus
+		      )
+		    )
+                    store( sus )( indrctRcrd )(
+		      nameSpaceToString, varToString, tagToString, useUpsert
+		    )                    
+                    BasicLogService.tweet(
+		      (
+			"storing flatKeyRecord to db : " //+ pd.db
 			+ " pair : " + rcrd
 			+ " in coll : " + sus
 		      )
 		    )
-		    store( sus )( rcrd )(
+                    store( sus )( rcrd )(
 		      nameSpaceToString, varToString, tagToString, useUpsert
-		    )
+                    )		                        
 		  }
 		}
 
@@ -1057,9 +1200,20 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      val dbAccessExpr =
 		() => {
 		  for(
-		    rcrd <- asStoreKRecord( ptn, rsrc );
+                    indrctRcrd <- asStoreIndirection( ptn );
+		    rcrd <- asStoreKRecord( indrctRcrd, rsrc );
 		    sus <- collName
 		  ) {
+                    BasicLogService.tweet(
+		      (
+			"storing indirectionRecord to db : " //+ pd.db
+			+ " pair : " + indrctRcrd
+			+ " in coll : " + sus
+		      )
+		    )
+                    store( sus )( indrctRcrd )(
+		      nameSpaceToString, varToString, tagToString, useUpsert
+		    )                                        
 		    BasicLogService.tweet(
 		      (
 			"storing to db : " /* + pd.db */
@@ -2539,11 +2693,14 @@ package usage {
       object PersistedKVDBNodeFactory extends PersistedKVDBNodeFactoryT with Serializable {	  
 	def mkCache[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse]( here : URI ) : PersistedMonadicKVDB[ReqBody,RspBody] = {
 	  new PersistedMonadicKVDB[ReqBody, RspBody]( MURI( here ) ) with Blobify with AMQPMonikerOps {		
+            // BUGBUG : LGM - maybe we should go change the call sites
+            // instead of defaulting the textToValue argument
 	    class StringMongoDBManifest(
 	      override val storeUnitStr : String,
 	      @transient override val labelToNS : Option[String => String],
 	      @transient override val textToVar : Option[String => String],
-	      @transient override val textToTag : Option[String => String]
+	      @transient override val textToTag : Option[String => String],
+              @transient override val textToValue : Option[String => Double] = Some((x: String) => x.toDouble)
 	    )
 	    extends MongoDBManifest( ) {
 	      override def valueStorageType : String = {
@@ -2622,34 +2779,38 @@ package usage {
 		  Left[String,String]( blob )
 		)
 	      }
-	      
-	      def asCacheValue(
-		ccl : CnxnCtxtLabel[String,String,String]
-	      ) : Double = {
-		BasicLogService.tweet(
-		  "converting to cache value"
-		)
-		ccl match {
-		  case CnxnCtxtBranch(
-		    "string",
-		    CnxnCtxtLeaf( Left( rv ) ) :: Nil
-		  ) => {
-		    val unBlob =
-		      fromXQSafeJSONBlob( rv )
-		    
-		    unBlob match {
-		      case rsrc : mTT.Resource => {
-			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
-		      }
-		    }
-		  }
-		  case _ => {
-		    //asPatternString( ccl )
-		    throw new Exception( "unexpected value form: " + ccl )
-		  }
-		}
-	      }
-	      
+
+              def asCacheValue(ccl : CnxnCtxtLabel[String,String,String]): Double = {
+                ccl match {
+                  case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                    fromXQSafeJSONBlob(rv) match {
+                      case rsrc: mTT.Resource => getGV(rsrc).getOrElse(java.lang.Double.MAX_VALUE)
+                    }
+                  case CnxnCtxtLeaf(Left(rv)) =>
+                    fromXQSafeJSONBlob(rv) match {
+                      case rsrc: mTT.Resource => getGV(rsrc).getOrElse(java.lang.Double.MAX_VALUE)
+                    }
+                  case _ => throw new Exception( "unexpected value form: " + ccl )
+                }
+              }
+
+              // TODO ht, 2016/08/04: This will not work and must be fixed!
+              // For example, see PersistedMonadicKVDBMongoNodeSetup.scala in the 'test' directory
+              // Note: that example uses String instead of Double for its values
+              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                // key match {
+                //   case CnxnCtxtBranch( ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                //     new CnxnCtxtBranch( kNs, fk :: Nil )
+                //   case _ => {
+                //     // Should never get here because it is
+                //     // unreasonable to have retrieved a DBObject
+                //     // with the key if the key is malformed
+                //     throw new Exception(s"unexpected record structure: $key")
+                //   }
+                // }
+                throw new Exception("asIndirection has not been implemented for this example")
+              }
+
 	      override def asResource(
 		key : mTT.GetRequest, // must have the pattern to determine bindings
 		value : DBObject

@@ -88,6 +88,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def labelToNS : Option[String => Namespace]
 	def textToVar : Option[String => Var]
 	def textToTag : Option[String => Tag]        
+        def textToValue : Option[String => Value]        
 	
 	def kvNameSpace : Namespace
 	def kvKNameSpace : Namespace
@@ -101,6 +102,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def asStoreValue(
 	  rsrc : mTT.Resource
 	) : CnxnCtxtLeaf[Namespace,Var,String] with Factual
+	
+	def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,String] with Factual
 	
 	def asStoreRecord(
 	  key : mTT.GetRequest,
@@ -135,6 +140,11 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Option[mTT.Continuation] = {
 	  throw new Exception( "shouldn't be calling this version of asCacheK" )
 	}
+
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : Elem
+	) : Option[mTT.GetRequest]
 
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -204,6 +214,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	    ttt
 	  }
 	}
+        def textToValue : Option[String => Value] = {
+	  for( pd <- persistenceManifest; ttvl <- pd.textToValue ) 
+	  yield {
+	    ttvl
+	  }
+	}
 	
 	def kvNameSpace : Option[Namespace] = {
 	  for( pd <- persistenceManifest )
@@ -236,6 +252,13 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  yield { pd.asStoreValue( rsrc ) }
 	}
 	
+        def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+	  for( pd <- persistenceManifest )
+	  yield { pd.asStoreIndirection( key ) }
+	}
+
 	def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
@@ -250,6 +273,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
 	  for( pd <- persistenceManifest )
 	  yield { pd.asStoreKRecord( key, value ) }
+	}
+
+        def asIndirection(
+	  key : mTT.GetRequest, // must have the pattern to determine bindings
+	  value : Elem
+	) : Option[mTT.GetRequest] = {
+	  for(
+            pd <- persistenceManifest;
+            rslt <- pd.asIndirection( key, value )
+          )
+	  yield { rslt }
 	}
 	
 	def asResource(
@@ -343,11 +377,52 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  )
 	}
 
+	override def asStoreIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
+          val theUUID = UUID.randomUUID().toString.replace( "-", "" )
+	  val ttvl =
+	    textToValue.getOrElse(
+	      throw new Exception( "must have textToValue to convert mongo object" )
+	    )
+	  asStoreEntry(
+            key,
+            mTT.Ground( ttvl( theUUID ) )
+          )( kvNameSpace )
+	}
+
 	override def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
 	) : CnxnCtxtLabel[Namespace,Var,String] with Factual = {
-	  asStoreEntry( key, value )( kvNameSpace )
+          key match {
+            case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, fk :: Nil ) :: Nil ) => {              
+              // BUGBUG : lgm - how to avoid this cast???              
+              val ttt =
+	        textToTag.getOrElse(
+	          throw new Exception( "must have textToTag to convert flatKey: " + fk )
+	        )
+              val ltns =
+                labelToNS.getOrElse(
+                  throw new Exception( "must have labelToNS to convert flatKey: " + fk )
+                )
+              val fkS = asCacheValue( fk.asInstanceOf[CnxnCtxtLabel[Namespace,Var,String]] ) + ""
+              val flatKey = ttt( fkS )
+              asStoreEntry(                
+                asStoreKey(
+                  new CnxnCtxtBranch[Namespace,Var,Tag](
+                    ltns( fkS ),
+                    ( new CnxnCtxtLeaf[Namespace,Var,Tag]( Left( ( flatKey ) ) ) ) :: Nil
+                  )
+                ).asInstanceOf[mTT.GetRequest],
+                value
+              )( kvNameSpace )
+            }
+            case _ => {
+              throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
+            }
+          }          
+	  
 	}
 
 	override def asStoreKRecord(
@@ -701,12 +776,21 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      val dbAccessExpr =
 		() => {
 		  for(
-		    rcrd <- asStoreRecord( ptn, rsrc );
+                    indrctRcrd <- asStoreIndirection( ptn );                    
+                    rcrd <- asStoreRecord( indrctRcrd.asInstanceOf[mTT.GetRequest], rsrc );
 		    sus <- collName
 		  ) {
 		    BasicLogService.tweet(
 		      (
-			"storing to db : " + pd.db
+			"storing indirectionRecord to db : " //+ pd.db
+			+ " pair : " + indrctRcrd
+			+ " in coll : " + sus
+		      )
+		    )
+                    store( sus )( indrctRcrd )
+                    BasicLogService.tweet(
+		      (
+			"storing flatKeyRecord to db : " //+ pd.db
 			+ " pair : " + rcrd
 			+ " in coll : " + sus
 		      )
@@ -2251,7 +2335,8 @@ package usage {
 	      override val storeUnitStr : String,
 	      @transient override val labelToNS : Option[String => String],
 	      @transient override val textToVar : Option[String => String],
-	      @transient override val textToTag : Option[String => String]
+	      @transient override val textToTag : Option[String => String],
+              @transient override val textToValue : Option[String => Double] = Some( ( x : String ) => x.toDouble )
 	    )
 	    extends XMLDBManifest( database ) {
 	      override def valueStorageType : String = {
@@ -2351,6 +2436,16 @@ package usage {
 		      }
 		    }
 		  }
+                  case CnxnCtxtLeaf( Left( rv ) ) => {
+                    val unBlob =
+		      fromXQSafeJSONBlob( rv )
+		    
+		    unBlob match {
+		      case rsrc : mTT.Resource => {
+			getGV( rsrc ).getOrElse( java.lang.Double.MAX_VALUE )
+		      }
+		    }
+                  }
 		  case _ => {
 		    //asPatternString( ccl )
 		    throw new Exception( "unexpected value form: " + ccl )
@@ -2358,7 +2453,15 @@ package usage {
 		}
 	      }
 	      
-	      override def asResource(
+              override def asIndirection(
+		key : mTT.GetRequest, // must have the pattern to determine bindings
+		value : Elem
+	      ) : Option[mTT.GetRequest] = {
+                // BaseX is dead. Long live BaseX!
+                ???
+              }
+
+              override def asResource(
 		key : mTT.GetRequest, // must have the pattern to determine bindings
 		value : Elem
 	      ) : emT.PlaceInstance = {
