@@ -45,7 +45,7 @@ trait ImporterConfig {
 
     //private var GLOSEVAL_HOST = "http://52.35.39.85:9876/api"
     def serviceHostURI() = {
-      s"http://${serviceHost}:${servicePort}/api"
+      s"https://${serviceHost}:${servicePort}/api"
     }
 
   //private val GLOSEVAL_SENDER = "splicious.ftw@gmail.com"

@@ -10,6 +10,8 @@ package com.biosimilarity.evaluator.importer
 
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.Api
+
+import scalaj.http.HttpOptions
 //import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.spray.NodeUser
@@ -104,6 +106,7 @@ object Importer extends EvalConfig
     val req = Http(GLOSEVAL_HOST)
       .timeout(1000, 60000)
       .header("Content-Type", "application/json")
+      .option(HttpOptions.allowUnsafeSSL)
       .postData(requestBody)
     val response = req.asString.body
 
@@ -431,9 +434,6 @@ object Importer extends EvalConfig
         thrd.start()
 
         try {
-          val isok = glosevalPost(Api.ResetDatabaseRequest(adminSession.sessionURI))
-          if (isok != "OK") throw new Exception("Unable to reset database")
-
           dataset.labels match {
             case Some(lbls) => lbls.foreach(l => makeLabel(LabelDesc.extractFrom(l)))
             case None => ()
