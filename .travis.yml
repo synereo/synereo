@@ -11,6 +11,7 @@ jdk:
 services:
   - mongodb
   - rabbitmq
+  - memcached
 
 cache:
   directories:

@@ -25,7 +25,6 @@ lazy val commonOptions = Seq(
   // Original flags from pom.xml:
   // ============================
   "-encoding", "UTF-8",
-  "-explaintypes",
   "-P:continuations:enable")
 
 lazy val additionalResolvers = Seq(
