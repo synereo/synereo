@@ -1,0 +1,36 @@
+sudo: required
+
+language: scala
+
+scala:
+  - 2.10.5
+
+jdk:
+  - oraclejdk7
+
+services:
+  - mongodb
+  - rabbitmq
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
+
+before_cache:
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+
+before_install: make pem
+
+notifications:
+  email:
+    - ns68751+tci@gmail.com
+  slack:
+    secure: WmC2UI5hT2hRYsPZsR55krrjj9qiIekJD/teH6gDhA3q9DaF1h/BDLqGcg4HP9EoRyc12yRCZA/i3W9tQJ5cAt88UzeT4ooyH/VaWlbp8B2MlGHzk3eUR9NC8dACsESdys5py8qC+NEhdMsFr+cqaw5UW7gGzLm5XX6wvMCh8Hw=
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/7c6399d413cc1a7735cc
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: never     # options: [always|never|change] default: always
