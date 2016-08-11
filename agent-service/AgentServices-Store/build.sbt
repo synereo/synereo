@@ -41,7 +41,7 @@ lazy val json4sVersion = "3.2.7"
 
 lazy val prolog4jVersion = "0.2.1-SNAPSHOT"
 
-lazy val specialKVersion = "1.1.8.5-28ba53a"
+lazy val specialKVersion = "1.1.8.5-800f3ca"
 
 lazy val coreDeps = Seq(
   // =================================================
@@ -91,6 +91,8 @@ lazy val commonSettings = Seq(
   },
   scalaVersion := "2.10.5",
   scalacOptions := commonOptions,
+  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+  bintrayOrganization := Some("synereo"),
   fork in Test := true)
 
 lazy val agentService = (project in file("."))

@@ -184,7 +184,8 @@ package diesel {
               override val storeUnitStr : String,
               @transient override val labelToNS : Option[String => String],
               @transient override val textToVar : Option[String => String],
-              @transient override val textToTag : Option[String => String]
+              @transient override val textToTag : Option[String => String],
+              @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = Some { (s: String) => ConcreteHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
             )
             extends MongoDBManifest( /* database */ ) {
               override def valueStorageType : String = {
@@ -207,7 +208,7 @@ package diesel {
               def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
                 ns1.equals( ns2 )
               }
-              
+
               override def asStoreValue(
                 rsrc : mTT.Resource
               ) : CnxnCtxtLeaf[String,String,String] with Factual = {
@@ -264,30 +265,58 @@ package diesel {
                   Left[String,String]( blob )
                 )
               }
-              
-              def asCacheValue(
-                ccl : CnxnCtxtLabel[String,String,String]
-              ) : ConcreteHL.HLExpr = {
-                BasicLogService.tweet(
-                  "converting to cache value"
-                )
-                ccl match {
-                  case CnxnCtxtBranch(
-                    "string",
-                    CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                  ) => {
-                    val unBlob =
-                      fromXQSafeJSONBlob( rv )
-                    
-                    unBlob match {
-                      case rsrc : mTT.Resource => {
-                        getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-                      }
+
+              def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteHL.HLExpr = ccl match {
+                case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc : mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                  }
+                case CnxnCtxtLeaf(Left(rv)) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                  }
+                case _ =>
+                  throw new Exception(s"unexpected value form: $ccl")
+              }
+
+              override def asStoreRecord(key : mTT.GetRequest, value : mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                key match {
+                  case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                    val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                    val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                    val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                    val flatKey: String = ttt(fkS)
+                    asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                  }
+                  case _ =>
+                    throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                }
+
+              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                  case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                    val matchRslt = matchMap(key, k)
+                    matchRslt match {
+                      case Some(_) =>
+                        fk match {
+                          case CnxnCtxtLeaf(Left(v)) =>
+                            val unblob: String = fromXQSafeJSONBlob(v) match {
+                              case TheMTT.Ground(ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                              case e: Throwable => throw e
+                            }
+                            new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                        }
+                      case None =>
+                        throw new UnificationQueryFilter(key, k, value)
                     }
-                  }
-                  case _ => {
-                    throw new Exception( "unexpected value form: " + ccl )
-                  }
+                  case xFactor =>
+                    // Should never get here because it is
+                    // unreasonable to have retrieved a DBObject
+                    // with the key if the key is malformed
+                    throw new Exception("unexpected record structure:	" + xFactor)
                 }
               }
               
@@ -491,9 +520,9 @@ package diesel {
                 )
               )
               val sid = Some( ( s : String ) => recoverFieldName( s ) )
-              val kvdb = this;
+              val kvdb = this
               Some(
-                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                   override def valueStorageType : String = {
                     kvdb.valueStorageType
                   }
@@ -564,7 +593,8 @@ package diesel {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = Some { (s: String) => ConcreteHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -644,31 +674,58 @@ package diesel {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : ConcreteHL.HLExpr = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-                            }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteHL.HLExpr = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc : mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                        }
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                        }
+                      case _ =>
+                        throw new Exception(s"unexpected value form: $ccl")
+                    }
+
+                    override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                                    case e: Throwable => throw e
+                                  }
+                                  new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
                           }
-                        }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
-                        }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
                       }
                     }
                     
@@ -864,9 +921,9 @@ package diesel {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
-                    val kvdb = this;
+                    val kvdb = this
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -943,7 +1000,8 @@ package diesel {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = Some { (s: String) => ConcreteHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -966,7 +1024,7 @@ package diesel {
                     def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
                       ns1.equals( ns2 )
                     }
-                    
+
                     override def asStoreValue(
                       rsrc : mTT.Resource
                     ) : CnxnCtxtLeaf[String,String,String] with Factual = {
@@ -1023,31 +1081,58 @@ package diesel {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : ConcreteHL.HLExpr = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-                            }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteHL.HLExpr = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc : mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                        }
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                        }
+                      case _ =>
+                        throw new Exception(s"unexpected value form: $ccl")
+                    }
+
+                    override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                                    case e: Throwable => throw e
+                                  }
+                                  new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
                           }
-                        }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
-                        }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
                       }
                     }
                     
@@ -1248,7 +1333,7 @@ package diesel {
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -1348,7 +1433,8 @@ package diesel {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => ConcreteHL.HLExpr] = Some { (s: String) => ConcreteHL.FlatKeyBouncer(new CnxnCtxtLeaf[String, String, String](Left(s))) }
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -1428,34 +1514,61 @@ package diesel {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : ConcreteHL.HLExpr = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( ConcreteHL.Bottom )
-                            }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): ConcreteHL.HLExpr = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc : mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                        }
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse(ConcreteHL.Bottom)
+                        }
+                      case _ =>
+                        throw new Exception(s"unexpected value form: $ccl")
+                    }
+
+                    override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                                    case e: Throwable => throw e
+                                  }
+                                  new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
                           }
-                        }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
-                        }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
                       }
                     }
-                    
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -1647,9 +1760,9 @@ package diesel {
                       )
                     )
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
-                    val kvdb = this;
+                    val kvdb = this
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest(dfStoreUnitStr, sid, sid, sid) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }

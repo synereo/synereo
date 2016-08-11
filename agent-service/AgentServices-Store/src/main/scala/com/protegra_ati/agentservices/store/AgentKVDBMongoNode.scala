@@ -2394,9 +2394,10 @@ package mongo.usage {
             }      
             class StringMongoDBManifest(
               override val storeUnitStr : String,
-              @transient override val labelToNS : Option[String => String],
-              @transient override val textToVar : Option[String => String],
-              @transient override val textToTag : Option[String => String]
+              @transient override val labelToNS: Option[String => String],
+              @transient override val textToVar: Option[String => String],
+              @transient override val textToTag: Option[String => String],
+              @transient override val textToValue: Option[String => String] = Some(identity)
             )
             extends MongoDBManifest( /* database */ ) {
               override def valueStorageType : String = {
@@ -2476,157 +2477,82 @@ package mongo.usage {
                   Left[String,String]( blob )
                 )
               }
-              
-              def asCacheValue(
-                ccl : CnxnCtxtLabel[String,String,String]
-              ) : String = {
-                BasicLogService.tweet(
-                  "converting to cache value"
-                )
-                ccl match {
-                  case CnxnCtxtBranch(
-                    "string",
-                    CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                  ) => {
-                    val unBlob =
-                      fromXQSafeJSONBlob( rv )
-                    
-                    unBlob match {
-                      case rsrc : mTT.Resource => {
-                        getGV( rsrc ).getOrElse( "" )
-                      }
-                    }
+
+              def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                   }
-                  case _ => {
-                    //asPatternString( ccl )
-                    throw new Exception( "unexpected value form: " + ccl )
+                case CnxnCtxtLeaf(Left(rv)) =>
+                  fromXQSafeJSONBlob(rv) match {
+                    case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                   }
+                case _ => {
+                  throw new Exception(s"unexpected value form: $ccl")
                 }
               }
-              
-              override def asResource(
-                key : mTT.GetRequest, // must have the pattern to determine bindings
-                value : DBObject
-              ) : emT.PlaceInstance = {
-                BasicLogService.tweet(
-	          (
-	            "AgentKVDB : "
-	            + "\nmethod : asResource "
-	            + "\nthis : " + this
-	            + "\nkey : " + key
-                    + "\nvalue : " + value
-	          )
-	        )
-                val ltns =
-                  labelToNS.getOrElse(
-                    throw new Exception( "must have labelToNS to convert mongo object" )
-                  )
-                val ttv =
-                  textToVar.getOrElse(
-                    throw new Exception( "must have textToVar to convert mongo object" )
-                  )
-                val ttt =
-                  textToTag.getOrElse(
-                    throw new Exception( "must have textToTag to convert mongo object" )
-                  )
-                                
+
+              override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                  case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                    val matchRslt = matchMap(key, k)
+                    matchRslt match {
+                      case Some(_) =>
+                        fk match {
+                          case CnxnCtxtLeaf(Left(v)) =>
+                            val unblob: String = (
+                              fromXQSafeJSONBlob(v) match {
+                                case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                                case e: Throwable                  => throw e
+                              }
+                              )
+                            new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                        }
+                      case None =>
+                        throw new UnificationQueryFilter(key, k, value)
+                    }
+                  case xFactor =>
+                    // Should never get here because it is
+                    // unreasonable to have retrieved a DBObject
+                    // with the key if the key is malformed
+                    throw new Exception("unexpected record structure:	" + xFactor)
+                }
+              }
+
+              override def asResource( key : mTT.GetRequest, value : DBObject ) : emT.PlaceInstance = {
+                val ltns = labelToNS.getOrElse( throw new Exception( "must have labelToNS to convert mongo object" ) )
+                val ttv = textToVar.getOrElse( throw new Exception( "must have textToVar to convert mongo object" ) )
+                val ttt = textToTag.getOrElse( throw new Exception( "must have textToTag to convert mongo object" ) )
                 CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                   case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                     matchMap( key, k ) match {
-                      case Some( soln ) => {
-                        if ( compareNameSpace( ns, kvNameSpace ) ) {
-                          val cacheValueRslt =
-                              asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
-                          BasicLogService.tweet(
-                            (
-                              " ****************************************** "
-                              + "\nBaseAgentKVDB : "
-                              + "\n method : mkCache"
-                              + "\n ------------------------------------------ "
-		              + "\n computed cacheValue: " + cacheValueRslt
-		              + "\n ****************************************** "
-                            )
-                          )
-                          val groundWrapper =
-                            mTT.Ground( cacheValueRslt )
-                          val boundHMWrapper =
-                            mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
-                          val boundWrapper =
-                            mTT.asRBoundAList( boundHMWrapper )
-
-                          BasicLogService.tweet(
-                            (
-                              " ****************************************** "
-                              + "\nBaseAgentKVDB : "
-                              + "\n method : mkCache"
-		              + "\n ------------------------------------------ "
-                              + "\n boundWrapper: " + boundWrapper
-		              + " ****************************** "
-                            )
-                          )
-
-                          val finalRslt =
-                            emT.PlaceInstance(
-                              k,
-                              Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                boundWrapper
-                              ),
-                              // BUGBUG -- lgm : why can't the compiler determine
-                              // that this cast is not necessary?
-                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                            )
-                          
-                          BasicLogService.tweet(
-                            (
-                              " ****************************************** "
-                              + "\nBaseAgentKVDB : "
-                              + "\n method : mkCache"
-		              + "\n ------------------------------------------ "
-                              + "\n placeInstance: " + finalRslt
-		              + " ****************************** "
-                            )
-                          )
-                            
-                          finalRslt
+                      case Some( soln ) =>
+                        if (compareNameSpace(ns, kvNameSpace)) {
+                          val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                          val groundWrapper = mTT.Ground(cacheValueRslt)
+                          val boundHMWrapper = mTT.RBoundHM(Some(groundWrapper), Some(soln))
+                          val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                          emT.PlaceInstance(k, Left[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](boundWrapper), theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                        } else if (compareNameSpace(ns, kvKNameSpace)) {
+                          val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                          emT.PlaceInstance(k, Right[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](ks), theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
                         }
                         else {
-                          if ( compareNameSpace( ns, kvKNameSpace ) ) {
-                            val mTT.Continuation( ks ) =
-                              asCacheK(
-                                new CnxnCtxtBranch[String,String,String](
-                                  "string",
-                                  v :: Nil
-                                )
-                              )
-                            emT.PlaceInstance(
-                              k,
-                              Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-                                ks
-                              ),
-                              // BUGBUG -- lgm : why can't the compiler determine
-                              // that this cast is not necessary?
-                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                            )
-                          }
-                          else {
-                            throw new Exception( "unexpected namespace : (" + ns + ")" )
-                          }
+                          throw new Exception("unexpected namespace : (" + ns + ")")
                         }
-                      }
-                      case None => {
-                        BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                        //throw new Exception( "matchMap failure " + key + " " + k )
+                      case None =>
                         throw new UnificationQueryFilter( key, k, value )
-                      }
-                    }                                           
+                    }
                   }
-                  case _ => {
+                  case _ =>
                     throw new Exception( "unexpected record format : " + value )
-                  }
                 }                               
               }
-              
             }
+
             override def asCacheK(
               ccl : CnxnCtxtLabel[String,String,String]
             ) : Option[mTT.Continuation] = {
@@ -2707,7 +2633,7 @@ package mongo.usage {
               val sid = Some( ( s : String ) => recoverFieldName( s ) )
               val kvdb = this;
               Some(
-                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                   override def valueStorageType : String = {
                     kvdb.valueStorageType
                   }
@@ -2759,7 +2685,8 @@ package mongo.usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -2839,34 +2766,51 @@ package mongo.usage {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : String = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( "" )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                         }
+                      case _ => {
+                        throw new Exception(s"unexpected value form: $ccl")
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = (
+                                    fromXQSafeJSONBlob(v) match {
+                                      case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                                      case e: Throwable                  => throw e
+                                    }
+                                    )
+                                  new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
+                      }
+                    }
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -3065,7 +3009,7 @@ package mongo.usage {
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -3123,7 +3067,8 @@ package mongo.usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -3203,34 +3148,51 @@ package mongo.usage {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : String = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( "" )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                         }
+                      case _ => {
+                        throw new Exception(s"unexpected value form: $ccl")
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = (
+                                    fromXQSafeJSONBlob(v) match {
+                                      case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                                      case e: Throwable                  => throw e
+                                    }
+                                    )
+                                  new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
+                      }
+                    }
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -3428,7 +3390,7 @@ package mongo.usage {
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }
@@ -3509,7 +3471,8 @@ package mongo.usage {
                     override val storeUnitStr : String,
                     @transient override val labelToNS : Option[String => String],
                     @transient override val textToVar : Option[String => String],
-                    @transient override val textToTag : Option[String => String]
+                    @transient override val textToTag : Option[String => String],
+                    @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
                     override def valueStorageType : String = {
@@ -3589,34 +3552,51 @@ package mongo.usage {
                         Left[String,String]( blob )
                       )
                     }
-                    
-                    def asCacheValue(
-                      ccl : CnxnCtxtLabel[String,String,String]
-                    ) : String = {
-                      BasicLogService.tweet(
-                        "converting to cache value"
-                      )
-                      ccl match {
-                        case CnxnCtxtBranch(
-                          "string",
-                          CnxnCtxtLeaf( Left( rv ) ) :: Nil
-                        ) => {
-                          val unBlob =
-                            fromXQSafeJSONBlob( rv )
-                          
-                          unBlob match {
-                            case rsrc : mTT.Resource => {
-                              getGV( rsrc ).getOrElse( "" )
-                            }
-                          }
+
+                    def asCacheValue(ccl: CnxnCtxtLabel[String, String, String]): String = ccl match {
+                      case CnxnCtxtBranch("string", CnxnCtxtLeaf(Left(rv)) :: Nil) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("")
                         }
-                        case _ => {
-                          //asPatternString( ccl )
-                          throw new Exception( "unexpected value form: " + ccl )
+                      case CnxnCtxtLeaf(Left(rv)) =>
+                        fromXQSafeJSONBlob(rv) match {
+                          case rsrc: mTT.Resource => getGV(rsrc).getOrElse("WHOOPS!")
                         }
+                      case _ => {
+                        throw new Exception(s"unexpected value form: $ccl")
                       }
                     }
-                    
+
+                    override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                          val matchRslt = matchMap(key, k)
+                          matchRslt match {
+                            case Some(_) =>
+                              fk match {
+                                case CnxnCtxtLeaf(Left(v)) =>
+                                  val unblob: String = (
+                                    fromXQSafeJSONBlob(v) match {
+                                      case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                                      case e: Throwable                  => throw e
+                                    }
+                                    )
+                                  new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
+                              }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case xFactor =>
+                          // Should never get here because it is
+                          // unreasonable to have retrieved a DBObject
+                          // with the key if the key is malformed
+                          throw new Exception("unexpected record structure:	" + xFactor)
+                      }
+                    }
+
                     override def asResource(
                       key : mTT.GetRequest, // must have the pattern to determine bindings
                       value : DBObject
@@ -3810,7 +3790,7 @@ package mongo.usage {
                     val sid = Some( ( s : String ) => recoverFieldName( s ) )
                     val kvdb = this;
                     Some(
-                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid ) {
+                      new StringMongoDBManifest( dfStoreUnitStr, sid, sid, sid, sid ) {
                         override def valueStorageType : String = {
                           kvdb.valueStorageType
                         }

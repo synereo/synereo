@@ -128,7 +128,7 @@ class KVDBPlatformAgentSingleTest extends KVDBPlatformAgentBase {
       fetchMustBe(value)(reader, cnxn, key1)
     }
 
-    "not pin cpu at 100% for 5 complex keys" should {
+    "not pin cpu at 100% for 5 complex keys" ignore {
       val key1 =
         """disclosedData(fields(id("1111d264-dfe2-43a9-b161-1366439f7bbd"),localeCode("en"),dataClassType("class com.protegra.protunityservices.schema.Role"),connectionType("Basic"),fields("")))""".toLabel
       val key2 =
