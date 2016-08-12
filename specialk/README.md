@@ -1,6 +1,5 @@
 # SpecialK
 
-[![Build Status](https://travis-ci.org/synereo/specialk.svg?branch=1.0)](https://travis-ci.org/synereo/specialk)
 [![Gitter](https://badges.gitter.im/synereo/specialk.svg)](https://gitter.im/synereo/specialk?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 SpecialK is...
@@ -10,7 +9,7 @@ SpecialK is...
 
 See [*SpecialK/KVDB – A Pattern Language for the Web*](http://blog.synereo.com/2015/03/17/specialkkvdb-a-pattern-language-for-the-web/) for further explanation.
 
-## Installation
+## Requirements
 
 To work with SpecialK you will need:
 
@@ -24,17 +23,7 @@ To work with SpecialK you will need:
   * available at http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
 * [sbt](http://www.scala-sbt.org/)
-  * available at http://www.scala-sbt.org/
-
-After installing these dependencies, you can clone the SpecialK repo and run tests:
-```
-$ git clone https://github.com/synereo/specialk.git
-  ...
-$ cd specialk
-$ sbt test
-```
-
-**NOTE**: In order to run these tests, MongoDB and RabbitMQ must be running.
+  * available at http://www.scala-sbt.org/download.html
 
 ### Why can't I use newer versions?
 
@@ -59,11 +48,11 @@ The following files provide an example of setting up a single node to store `Str
 This set of tests may provide additional insight into how such a node may be used, including retrieving values using the Prolog-based query system:
 * [`PersistedMonadicKVDBMongoNodeSpec.scala`](src/test/scala/com/biosimilarity/lift/model/store/PersistedMonadicKVDBMongoNodeSpec.scala)
 
-A more complex usage example involving multiple nodes can be found [here](https://github.com/synereo/agent-service-ati-ia/blob/master/AgentServices-Store/src/main/scala/com/protegra_ati/agentservices/store/AgentKVDBMongoNode.scala#L2276-L4689).
+A more complex usage example involving multiple nodes can be found [here](../agent-service/AgentServices-Store/src/main/scala/com/protegra_ati/agentservices/store/AgentKVDBMongoNode.scala#L2276-L4689).
 
 ## Issues
 
-We welcome reports of any issues on the [issue tracker](https://github.com/synereo/specialk/issues).
+We welcome reports of any issues on the [issue tracker](https://github.com/synereo/synereo/issues).
 
 We are also using JIRA to track issues for this project and the rest of the Synereo Platform:
 https://synereo.atlassian.net/projects/SOC/issues

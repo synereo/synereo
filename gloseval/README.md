@@ -1,13 +1,12 @@
 # GLoSEval
 
-[![Build Status](https://travis-ci.org/synereo/gloseval.svg?branch=1.0)](https://travis-ci.org/synereo/gloseval)
 [![Gitter](https://badges.gitter.im/synereo/gloseval.svg)](https://gitter.im/synereo/gloseval?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Network evaluator for Generalized Language of Streams.
 
 Backend for the Synereo Social Platform.
 
-## Installation
+## Requirements
 
 To work with GLoSEval you will need:
 
@@ -21,25 +20,15 @@ To work with GLoSEval you will need:
   * available at http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
 * [sbt](http://www.scala-sbt.org/)
-  * available at http://www.scala-sbt.org/
-
-After installing these dependencies, you can clone the GLoSEval repo and run it:
-```
-$ git clone https://github.com/synereo/gloseval.git
-  ...
-$ cd gloseval
-$ sbt run
-```
-
-**NOTE**: In order to run GLoSEval, MongoDB and RabbitMQ must be running.
+  * available at http://www.scala-sbt.org/download.html
 
 ### Why can't I use newer versions?
 
-See note [here](https://github.com/synereo/specialk#why-cant-i-use-newer-versions).
+See note [here](../specialk/README.md#why-cant-i-use-newer-versions).
 
 ## Issues
 
-We welcome reports of any issues on the [issue tracker](https://github.com/synereo/specialk/issues).
+We welcome reports of any issues on the [issue tracker](https://github.com/synereo/synereo/issues).
 
 We are also using JIRA to track issues for this project and the rest of the Synereo Platform:
 https://synereo.atlassian.net/projects/SOC/issues
