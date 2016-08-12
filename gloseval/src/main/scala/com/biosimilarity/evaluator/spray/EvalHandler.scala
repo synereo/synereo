@@ -18,7 +18,7 @@ import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
-import com.biosimilarity.evaluator.omniRPC.OmniClient
+import com.biosimilarity.evaluator.omni.OmniClient
 
 
 

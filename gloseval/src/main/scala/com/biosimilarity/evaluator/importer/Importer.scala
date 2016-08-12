@@ -22,7 +22,7 @@ import org.json4s.jackson.Serialization.write
 import org.json4s.JsonDSL._
 import java.util.UUID
 
-import com.biosimilarity.evaluator.omniRPC.OmniClient
+import com.biosimilarity.evaluator.omni.OmniClient
 
 import scalaj.http.Http
 
