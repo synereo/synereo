@@ -28,6 +28,7 @@ lazy val commonOptions = Seq(
   "-P:continuations:enable")
 
 lazy val additionalResolvers = Seq(
+  Resolver.bintrayRepo("synereo", "maven"),
   Resolver.sonatypeRepo("snapshots"),
   "BaseX" at "http://files.basex.org/maven/",
   "xqj"   at "http://xqj.net/maven/")
@@ -36,7 +37,7 @@ lazy val json4sVersion = "3.2.7"
 
 lazy val jettyVersion = "8.0.4.v20111024"
 
-lazy val prolog4jVersion = "0.2.1-SNAPSHOT"
+lazy val prolog4jVersion = "0.2.1"
 
 lazy val xmlrpcVersion = "3.1.2"
 
@@ -58,14 +59,7 @@ lazy val specialkDeps = Seq(
   // "org.eclipse.jetty"         % "jetty-webapp"      % jettyVersion,
   // "org.eclipse.jetty"         % "jetty-websocket"   % jettyVersion,
   // "org.eclipse.jetty.orbit"   % "javax.servlet.jsp" % "2.2.0.v201112011158",
-  // "org.scalatest"            %% "scalatest"         % "2.0.M5b" % "test",
-  // "org.specs2"               %% "specs2"            % "1.14"    % "test",
   // "xpp3"                      % "xpp3_min"          % "1.1.4c",
-  // ===============================================================
-  // These dependencies are currently unmanaged (see lib directory):
-  // ===============================================================
-  // "org.prolog4j"              % "prolog4j-api"      % prolog4jVersion,
-  // "org.prolog4j"              % "prolog4j-tuprolog" % prolog4jVersion,
   // =====================
   // Current dependencies:
   // =====================
@@ -82,6 +76,8 @@ lazy val specialkDeps = Seq(
   "org.codehaus.jettison"     % "jettison"          % "1.3",
   "org.json4s"               %% "json4s-jackson"    % "3.2.7",
   "org.mongodb"              %% "casbah"            % "2.6.4",
+  "org.prolog4j"              % "prolog4j-api"      % prolog4jVersion,
+  "org.prolog4j"              % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalacheck"           %% "scalacheck"        % "1.12.5" % "test",
   "org.scalatest"            %% "scalatest"         % "2.2.6"  % "test",
   "org.scalesxml"            %% "scales-xml"        % "0.4.5")
@@ -122,11 +118,6 @@ lazy val agentServiceDeps = Seq(
   // "org.apache.ws.commmons.util" % "ws-commons-util"   % "1.0.2",
   // "net.lag"                     % "configgy"          % "2.0.0",
   // "org.scala-lang"             %% "scala-pickling"    % "0.8.0",
-  // ===============================================================
-  // These dependencies are currently unmanaged (see lib directory):
-  // ===============================================================
-  // "org.prolog4j"                % "prolog4j-api"      % prolog4jVersion,
-  // "org.prolog4j"                % "prolog4j-tuprolog" % prolog4jVersion,
   // =====================
   // Current dependencies:
   // =====================
@@ -144,6 +135,8 @@ lazy val agentServiceDeps = Seq(
   "org.json4s"                 %% "json4s-jackson"    % json4sVersion,
   "org.json4s"                 %% "json4s-native"     % json4sVersion,
   "org.mongodb"                %% "casbah"            % "2.6.4" exclude("org.slf4j", "slf4j-api"),
+  "org.prolog4j"                % "prolog4j-api"      % prolog4jVersion,
+  "org.prolog4j"                % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalesxml"              %% "scales-xml"        % "0.4.5",
   "org.scalatest"              %% "scalatest"         % "2.2.6" % "test")
 
@@ -186,12 +179,6 @@ lazy val glosevalDeps = Seq(
   // "org.codehaus.jettison"       % "jettison"               % "1.3",
   // "org.scalaz"                 %% "scalaz-core"            % "7.0.0",
   // "org.slf4j"                   % "sl4j-log4j12"           % "1.7.18",
-  // ===============================================================
-  // These dependencies are currently unmanaged (see lib directory):
-  // ===============================================================
-  // "org.prolog4j"                % "prolog4j-api"           % prolog4jVersion,
-  // "org.prolog4j"                % "prolog4j-tuprolog"      % prolog4jVersion,
-  // "com.protegra-ati"           %% "agentservices-store-ia" % agentServicesVersion,
   // =====================
   // Current dependencies:
   // =====================
@@ -209,6 +196,8 @@ lazy val glosevalDeps = Seq(
   "org.json4s"                 %% "json4s-jackson"         % json4sVersion,
   "org.json4s"                 %% "json4s-native"          % json4sVersion,
   "org.mongodb"                %% "casbah"                 % "2.6.4" exclude("org.slf4j", "slf4j-api"),
+  "org.prolog4j"                % "prolog4j-api"           % prolog4jVersion,
+  "org.prolog4j"                % "prolog4j-tuprolog"      % prolog4jVersion,
   "org.scalaj"                 %% "scalaj-http"            % "2.0.0",
   "org.scalatest"              %% "scalatest"              % "2.2.6" % "test")
 
