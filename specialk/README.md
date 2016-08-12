@@ -37,7 +37,7 @@ In the case of the JDK, we have experienced issues with version 8 related to our
 
 ## Usage
 
-Currently, SpecialK is intended to be used in conjunction with the [Agent Service](https://github.com/synereo/agent-service-ati-ia) and [GLoSEval](https://github.com/synereo/gloseval).
+Currently, SpecialK is intended to be used in conjunction with the [Agent Service](../agent-service) and [GLoSEval](../gloseval).
 
 However, it can also be used as a standalone key-value store.
 
