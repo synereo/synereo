@@ -7,7 +7,7 @@ Home of:
 * [SpecialK](specialk)
 * The Synereo [Agent Service](agent-service)
 * [GLoSEval](gloseval)
-  
+
 ## Requirements
 
 To work with the projects in this repository you will need:
@@ -23,7 +23,7 @@ To work with the projects in this repository you will need:
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/download.html
 
-Additionally, to run the Agent Service test suites you will need: 
+Additionally, to run the Agent Service test suites you will need:
 * [Memcached](https://memcached.org/), latest stable version
   * available at https://memcached.org/downloads
 
@@ -32,7 +32,7 @@ Additionally, to run the Agent Service test suites you will need:
 See note [here](specialk/README.md#why-cant-i-use-newer-versions).
 
 ## Usage
-  
+
 After installing the these dependencies, you can clone this repo and run tasks using sbt:
 ```
 $ git clone https://github.com/synereo/synereo.git
@@ -52,7 +52,7 @@ $ sbt test
   ...
 ```
 
-**NOTE**: In order to run most tasks, MongoDB and RabbitMQ must also be running.  
+**NOTE**: In order to run most tasks, MongoDB and RabbitMQ must also be running.
 
 For the Agent Service test suites, Memcached must also be running.
 
