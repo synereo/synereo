@@ -73,6 +73,26 @@ object PersistedMonadicKVDBMongoNodeSetup
 
         new PersistedMonadicKVDB[ReqBody, RspBody](MURI(here)) with Blobify with AMQPMonikerOps {
 
+          override def assertComposes(indirect: CnxnCtxtLabel[String, String, String] with Factual,
+                                      direct: CnxnCtxtLabel[String, String, String] with Factual): Boolean =
+            (indirect, direct) match {
+              case (CnxnCtxtBranch(ns1, _ :: CnxnCtxtBranch(vNs1, fk1 :: Nil) :: Nil),
+              CnxnCtxtBranch(ns2, CnxnCtxtBranch(kNs2, k2 :: Nil) :: _ :: Nil)) =>
+                val flatKey1: String = fk1 match {
+                  case CnxnCtxtLeaf(Left(v)) =>
+                    fromXQSafeJSONBlob(v) match {
+                      case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                      case e: Throwable => throw e
+                    }
+                }
+                val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
+                flatKey1 == flatKey2
+              case _ =>
+                throw new Exception(s"""Records don't have correct shape:
+                                        |indirect: $indirect
+                                        |direct: $direct""".stripMargin)
+            }
+
           class StringMongoDBManifest(override val storeUnitStr: String,
                                       @transient override val labelToNS: Option[String => String],
                                       @transient override val textToVar: Option[String => String],

@@ -759,59 +759,50 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	
 	implicit val SyncTable : Option[( UUID, HashMap[UUID,Int] )] = None
 
-	def putInStore(
-	  persist : Option[PersistenceManifest],
-	  channels : Map[mTT.GetRequest,mTT.Resource],
-	  ptn : mTT.GetRequest,
-	  wtr : Option[mTT.GetRequest],
-	  rsrc : mTT.Resource,
-	  collName : Option[String],
-	  spawnDBCall : Boolean
-	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
-	  persist match {
-	    case None => {
-	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
-	    }
-	    case Some( pd ) => {
-	      val dbAccessExpr =
-		() => {
-		  for(
-                    indrctRcrd <- asStoreIndirection( ptn );                    
-                    rcrd <- asStoreRecord( indrctRcrd.asInstanceOf[mTT.GetRequest], rsrc );
-		    sus <- collName
-		  ) {
-		    BasicLogService.tweet(
-		      (
-			"storing indirectionRecord to db : " //+ pd.db
-			+ " pair : " + indrctRcrd
-			+ " in coll : " + sus
-		      )
-		    )
-                    store( sus )( indrctRcrd )
-                    BasicLogService.tweet(
-		      (
-			"storing flatKeyRecord to db : " //+ pd.db
-			+ " pair : " + rcrd
-			+ " in coll : " + sus
-		      )
-		    )
-		    store( sus )( rcrd )
-		  }
-		}
+  def assertComposes(indirect: CnxnCtxtLabel[Namespace, Var, String] with Factual,
+										 direct: CnxnCtxtLabel[Namespace, Var, String] with Factual): Boolean = throw new Exception("Can't find my way home")
 
-	      BasicLogService.tweet( "accessing db : " + pd.db )
-	      // remove this line to force to db on get
-	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
-	      if ( spawnDBCall ) {
-		spawn {
-		  dbAccessExpr()
+  def putInStore(persist : Option[PersistenceManifest],
+								 channels : Map[mTT.GetRequest,mTT.Resource],
+								 ptn : mTT.GetRequest,
+								 wtr : Option[mTT.GetRequest],
+								 rsrc : mTT.Resource,
+								 collName : Option[String],
+								 spawnDBCall : Boolean)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
+	  persist match {
+	    case None => channels( wtr.getOrElse( ptn ) ) = rsrc
+	    case Some(pd) => {
+				val dbAccessExpr = () =>
+					for {
+						indrctRcrd <- asStoreIndirection( ptn )
+						rcrd <- asStoreRecord( indrctRcrd.asInstanceOf[mTT.GetRequest], rsrc )
+						sus <- collName
+					} {
+            assertComposes(indrctRcrd, rcrd) match {
+							case true =>
+								BasicLogService.tweet(s"storing indirectionRecord to db :  pair : $indrctRcrd in coll : $sus")
+								store(sus)(indrctRcrd)
+								BasicLogService.tweet((s"storing flatKeyRecord to db :  pair : $rcrd in coll : $sus"))
+								store(sus)(rcrd)
+							case false =>
+								throw new Exception(s"""Records don't compose:
+																			 |indirect record: $indrctRcrd
+																			 |direct record: $rcrd""".stripMargin)
+						}
+					}
+				BasicLogService.tweet( "accessing db : " + pd.db )
+				// remove this line to force to db on get
+				channels( wtr.getOrElse( ptn ) ) = rsrc
+				if ( spawnDBCall ) {
+					spawn {
+						dbAccessExpr()
+					}
+				}
+				else {
+					dbAccessExpr()
+				}
+			}
 		}
-	      }
-	      else {
-		dbAccessExpr()
-	      }
-	    }
-	  }
 	}
 	
 	// BUGBUG -- lgm : how can we refactor out commonality between
@@ -824,40 +815,39 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  spawnDBCall : Boolean
 	)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
 	  persist match {
-	    case None => {
-	      // Nothing to do
-	      BasicLogService.tweet( "warning : no store in which to put continuation " + rsrc )
-	    }
-	    case Some( pd ) => {
-	      BasicLogService.tweet( "putKInStore accessing db : " + pd.db )
-	      val dbAccessExpr =
-		() => {
-		  for(
-		    rcrd <- asStoreKRecord( ptn, rsrc );
-		    sus <- collName
-		  ) {
-		    BasicLogService.tweet(
-		      (
-			"storing to db : " + pd.db
-			+ " pair : " + rcrd
-			+ " in coll : " + sus
-		      )
-		    )
-		    store( sus )( rcrd )
-		    for( ( sky, stbl ) <- syncTable ) {
-		      stbl( sky ) = stbl( sky ) - 1
-		    }
-		  }
-		}
-	      if ( spawnDBCall ) {
-		spawn {
-		  dbAccessExpr() 
-		}
-	      }
-	      else {
-		dbAccessExpr() 
-	      }
-	    }
+	    case None => BasicLogService.tweet(s"warning : no store in which to put continuation $rsrc")
+	    case Some(pd) => {
+	      BasicLogService.tweet(s"putKInStore accessing db : ${pd.db}")
+	      val dbAccessExpr = () =>
+					for {
+						indrctRcrd <- asStoreIndirection(ptn)
+						rcrd <- asStoreKRecord(indrctRcrd.asInstanceOf[mTT.GetRequest], rsrc)
+						sus <- collName
+					} {
+            assertComposes(indrctRcrd, rcrd) match {
+							case true =>
+								BasicLogService.tweet((s"storing indirectionRecord to db :  pair : $indrctRcrd in coll : $sus"))
+								store(sus)(indrctRcrd)
+								BasicLogService.tweet(s"storing to db :  pair : $rcrd in coll : $sus")
+								store(sus)(rcrd)
+								for((sky, stbl) <- syncTable) {
+									stbl(sky) = stbl(sky) - 1
+								}
+  						case false =>
+								throw new Exception(s"""Records don't compose:
+																			 |indirect record: $indrctRcrd
+																			 |direct record: $rcrd""".stripMargin)
+						}
+					}
+				if (spawnDBCall) {
+					spawn {
+						dbAccessExpr()
+					}
+				}
+				else {
+					dbAccessExpr()
+				}
+			}
 	  }
 	}
 
