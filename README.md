@@ -22,6 +22,8 @@ To work with the projects in this repository you will need:
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/download.html
+* [Make](https://www.gnu.org/software/make/)
+  * available at http://ftp.gnu.org/gnu/make/
 
 Additionally, to run the Agent Service test suites you will need:
 * [Memcached](https://memcached.org/), latest stable version
@@ -38,6 +40,8 @@ After installing the these dependencies, you can clone this repo and run tasks u
 $ git clone https://github.com/synereo/synereo.git
   ...
 $ cd synereo
+$ make
+  ...
 
 # Run a GLoSEval server
 $ sbt gloseval/run
