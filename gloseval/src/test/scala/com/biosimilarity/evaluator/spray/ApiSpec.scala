@@ -176,7 +176,7 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterAll with ScalaFu
           println("Bob's connections: "+pretty(render(jb)))
           println("Carol's connections: "+pretty(render(jc)))
           ja.values.length shouldBe 3
-          //jb.values.length shouldBe 2
+          jb.values.length shouldBe 2
           jc.values.length shouldBe 2
         case _ => fail("should not happen")
       }

@@ -1244,7 +1244,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   def handleRsp(v: ConcreteHL.HLExpr): Unit = {
                     val newBiCnxnList = v match {
                       case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
-                        bBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
+                        val extants = Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
+                        if (extants.contains(bBiCnxn) )
+                          extants
+                        else
+                          bBiCnxn :: extants
                       }
                       case Bottom => List(bBiCnxn)
                     }
