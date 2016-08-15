@@ -48,7 +48,7 @@ class AgentKVDBNodeConfigurationTest extends WordSpec with MustMatchers with Tim
 
       node.configFileName must ===(configFileName)
       node.configurationFromFile.getOrElse("dbPort", "") must ===("1984")
-      node.cache.dbHost must ===("localhost")
+      node.cache.dbHost must ===("127.0.0.1")
       node.cache.dbPort must ===("27017")
     }
 
