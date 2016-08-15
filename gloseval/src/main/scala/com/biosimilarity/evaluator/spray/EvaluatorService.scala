@@ -331,7 +331,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
 
   @transient
   val myRoute =
-    requireHttpsIf(false) {
+    requireHttps {
       cors {
         path("api") {
           post {
