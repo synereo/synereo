@@ -19,6 +19,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 case class CometMessage(data: String)
+case class CometMessageList(data: List[String])
 case class SessionPing(reqCtx: RequestContext) extends Serializable
 case class PollTimeout() extends Serializable
 case class SetSessionId(id : String) extends Serializable
@@ -28,6 +29,44 @@ case class CloseSession(reqCtx : Option[RequestContext]) extends Serializable
 case class CameraItem(sending : Boolean, msgType : String, content : Option[JObject], tmStamp : DateTime)
 case class StartCamera(reqCtx : RequestContext)
 case class StopCamera(reqCtx : RequestContext)
+
+object ChunkingActor {
+  case class SetChunkSize(sz : Int)
+  case class SetExpected(n : Int)
+  case class SetRecipient(ref : ActorRef)
+}
+
+class ChunkingActor extends Actor {
+  import ChunkingActor._
+
+  var chunkSize = 20
+  var expected = -1
+  var recipient : Option[ActorRef] = None
+
+  var msgs : List[String] = Nil
+  def receive = {
+    case SetRecipient(ref) => recipient = Some(ref)
+
+    case SetChunkSize(sz) => chunkSize = sz
+
+    case SetExpected(sz) => expected = sz
+
+    case CometMessage(data) =>
+      msgs = data :: msgs
+      expected -= 1
+      if (msgs.length == chunkSize || expected == 0) {
+        recipient match {
+          case Some(ref) =>
+            ref ! CometMessageList(msgs.reverse)
+            msgs = Nil
+            if (expected == 0) context.stop(self)
+
+          case None =>
+            throw new Exception("Recipient not set for chunking actor")
+        }
+      }
+  }
+}
 
 class SessionActor extends Actor with Serializable {
 
@@ -83,18 +122,33 @@ class SessionActor extends Actor with Serializable {
     if (camera.isDefined) addCameraItem(CameraItem(sending = true, msgType, content, DateTime.now))
   }
 
-  def sendMessages(rmsgs : List[String], reqCtx : RequestContext) : Unit = {
+  def sendMessages(msgs : List[String], reqCtx : RequestContext) : Unit = {
     val now = DateTime.now
-    rmsgs.foreach(msg => {
-      //@transient
-      implicit val formats = DefaultFormats
+    if (camera.isDefined) {
+      msgs.foreach(msg => {
+        implicit val formats = DefaultFormats
 
-      val jo = parse(msg)
-      val msgType = (jo \ "msgType").extract[String]
-      val content = (jo \ "content").extract[JObject]
-      addCameraItem( CameraItem(sending = true, msgType, Some(content), now) )
-    })
-    reqCtx.complete(HttpResponse(entity = "[" + rmsgs.mkString(",") + "]"))
+        val jo = parse(msg)
+        val msgType = (jo \ "msgType").extract[String]
+        val content = (jo \ "content").extract[JObject]
+        addCameraItem(CameraItem(sending = true, msgType, Some(content), now))
+      })
+    }
+    reqCtx.complete(HttpResponse(entity = "[" + msgs.mkString(",") + "]"))
+  }
+
+  def trySendMessages() : Unit = {
+    resetAliveTimer()
+    optReq match {
+      case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
+
+      case Some((reqCtx,tmr)) => {
+        tmr.cancel()
+        sendMessages(msgs.reverse, reqCtx)
+        optReq = None
+        msgs = Nil
+      }
+    }
   }
 
   def receive = {
@@ -141,20 +195,13 @@ class SessionActor extends Actor with Serializable {
       itemReceived(msgType,Some(content))
       fn(content)
 
+    case CometMessageList(data) =>
+      data.foreach( msg => msgs = msg :: msgs)
+      trySendMessages()
+
     case CometMessage(data) =>
       msgs = data :: msgs
-      resetAliveTimer()
-      optReq match {
-        case None =>
-          () //println("CometMessage optReqCtx miss: id = " + sessionId)
-
-        case Some((reqCtx,tmr)) => {
-          tmr.cancel()
-          sendMessages(msgs.reverse, reqCtx)
-          optReq = None
-          msgs = Nil
-        }
-      }
+      trySendMessages()
 
     case StartCamera(reqCtx) =>
       val msg : String = camera match {
@@ -194,6 +241,7 @@ class EvaluatorServiceActor extends Actor
   def receive = runRoute(myRoute)
 
   def actorRefFactory = context
+  CometActorMapper.actorRefFactory = Some(context)   //@@GS  has to be a better way ... surely
 
 }
 
@@ -210,6 +258,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
       CometActorMapper.map += (ssn -> actor)
     })
   }
+
   def spawnSession(json: JObject, key: String) : Unit = {
     spawnSessionRequest(json, key, ssn => {
       val actor = actorRefFactory.actorOf(Props[SessionActor])
@@ -282,7 +331,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
 
   @transient
   val myRoute =
-    requireHttps {
+    requireHttpsIf(false) {
       cors {
         path("api") {
           post {

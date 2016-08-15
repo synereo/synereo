@@ -1,5 +1,4 @@
 [
-    {"type": "reset", "content": {}},
     {"type": "agent", "content": {
         "id": "Pam",
         "email": "pbennett@livelygig.com",
@@ -29,7 +28,7 @@
         "trgt": "Ed"
     }}, 
     {"type": "spawn", "content": [
-        {"type": "startCam", "content": {}},
+        {"type": "startCam"},
         {"type": "cnxn", "content": {
             "src": "Pam",
             "trgt": "Mukul"
@@ -38,7 +37,10 @@
             "src": "Mukul",
             "trgt": "Ed"
         }},
-        {"type": "stopCam", "content": {}}
+        {"type": "stopCam"}
+    ]},
+    {"type": "spawn", "session": "Pam", "content": [
+        {"type": "getConnectionProfiles", "requireCount": 3}
     ]},
     {"type": "post", "content": {
         "src": "Pam",
