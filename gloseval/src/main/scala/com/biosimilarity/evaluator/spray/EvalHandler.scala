@@ -32,7 +32,7 @@ import java.security._
 import java.util.UUID
 import java.net.URI
 
-import com.biosimilarity.evaluator.spray.srp.{ConversionUtils, SRPSessionManager, UserCredentials}
+import com.biosimilarity.evaluator.spray.srp.{ConversionUtils, SRPSessionManager, UserCredentials, VerifierGenerator}
 import com.typesafe.config.ConfigFactory
 
 import scala.util.Try
@@ -2356,7 +2356,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val capSelfCnxn = getCapSelfCnxn(cap)
 
     def handleRsp(): Unit = {
-      _createUser(email, password, jsonBlob, launchNodeUserBehaviors)
+      val salt = ConversionUtils.getRandomSalt
+      val verifier = VerifierGenerator.generateVerifier(email, password, salt)
+      _createUser(email, s"$salt:$verifier", jsonBlob, launchNodeUserBehaviors)
     }
     read(
       jsonBlobLabel,
@@ -3057,7 +3059,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       }
     }
     catch {
-      case e: Throwable => completeWithError(key, errorMsgType, e.getMessage)
+      case e: Throwable =>
+        e.printStackTrace()
+        completeWithError(key, errorMsgType, e.getMessage)
     }
   }
 

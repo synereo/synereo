@@ -5,6 +5,7 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfConfig._
+import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.util.HttpsDirectives.StrictTransportSecurity
 import com.typesafe.config.{Config, ConfigFactory}
@@ -14,6 +15,7 @@ import spray.can.Http
 import spray.can.server.ServerSettings
 import spray.http.HttpMethods._
 import spray.http._
+import com.biosimilarity.evaluator.spray.util._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -36,6 +38,7 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
 
   override def beforeAll(): Unit = {
     serverInstance = Some(new Server(settings).start())
+    resetMongo()
   }
 
   override def afterAll(): Unit = {
@@ -91,6 +94,12 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
         .mapTo[HttpResponse]
         .map((response: HttpResponse) => response.status)
         .futureValue shouldBe StatusCodes.OK
+    }
+  }
+
+  "Importer" should {
+    "run test files" in {
+      Importer.runTestFiles()
     }
   }
 }
