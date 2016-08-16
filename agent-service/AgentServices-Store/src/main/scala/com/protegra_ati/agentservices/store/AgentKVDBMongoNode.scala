@@ -2402,7 +2402,6 @@ package mongo.usage {
                     case CnxnCtxtLeaf(Left(v)) =>
                       fromXQSafeJSONBlob(v) match {
                         case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                        case e: Throwable => throw e
                       }
                   }
                   val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -2533,12 +2532,9 @@ package mongo.usage {
                       case Some(_) =>
                         fk match {
                           case CnxnCtxtLeaf(Left(v)) =>
-                            val unblob: String = (
-                              fromXQSafeJSONBlob(v) match {
-                                case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                                case e: Throwable                  => throw e
-                              }
-                              )
+                            val unblob: String = fromXQSafeJSONBlob(v) match {
+                              case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                            }
                             new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                         }
                       case None =>
@@ -2721,7 +2717,6 @@ package mongo.usage {
                           case CnxnCtxtLeaf(Left(v)) =>
                             fromXQSafeJSONBlob(v) match {
                               case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                              case e: Throwable => throw e
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -2852,12 +2847,9 @@ package mongo.usage {
                             case Some(_) =>
                               fk match {
                                 case CnxnCtxtLeaf(Left(v)) =>
-                                  val unblob: String = (
-                                    fromXQSafeJSONBlob(v) match {
-                                      case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                                      case e: Throwable                  => throw e
-                                    }
-                                    )
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                                  }
                                   new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                               }
                             case None =>
@@ -3133,7 +3125,6 @@ package mongo.usage {
                           case CnxnCtxtLeaf(Left(v)) =>
                             fromXQSafeJSONBlob(v) match {
                               case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                              case e: Throwable => throw e
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -3264,12 +3255,9 @@ package mongo.usage {
                             case Some(_) =>
                               fk match {
                                 case CnxnCtxtLeaf(Left(v)) =>
-                                  val unblob: String = (
-                                    fromXQSafeJSONBlob(v) match {
-                                      case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                                      case e: Throwable                  => throw e
-                                    }
-                                    )
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                                  }
                                   new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                               }
                             case None =>
@@ -3567,7 +3555,6 @@ package mongo.usage {
                           case CnxnCtxtLeaf(Left(v)) =>
                             fromXQSafeJSONBlob(v) match {
                               case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                              case e: Throwable => throw e
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -3698,12 +3685,9 @@ package mongo.usage {
                             case Some(_) =>
                               fk match {
                                 case CnxnCtxtLeaf(Left(v)) =>
-                                  val unblob: String = (
-                                    fromXQSafeJSONBlob(v) match {
-                                      case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
-                                      case e: Throwable                  => throw e
-                                    }
-                                    )
+                                  val unblob: String = fromXQSafeJSONBlob(v) match {
+                                    case TheMTT.Ground(theRealFlatKey) => theRealFlatKey
+                                  }
                                   new CnxnCtxtBranch(ltns( unblob ), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                               }
                             case None =>

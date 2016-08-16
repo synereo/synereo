@@ -291,7 +291,6 @@ package bfactory {
                     case CnxnCtxtLeaf(Left(v)) =>
                       fromXQSafeJSONBlob(v) match {
                         case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                        case e: Throwable => throw e
                       }
                   }
                   val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -435,7 +434,6 @@ package bfactory {
                           case CnxnCtxtLeaf(Left(v)) =>
                             val unblob: String = fromXQSafeJSONBlob(v) match {
                               case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                              case e: Throwable => throw e
                             }
                             new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                         }
@@ -705,7 +703,6 @@ package bfactory {
                           case CnxnCtxtLeaf(Left(v)) =>
                             fromXQSafeJSONBlob(v) match {
                               case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                              case e: Throwable => throw e
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -849,7 +846,6 @@ package bfactory {
                                 case CnxnCtxtLeaf(Left(v)) =>
                                   val unblob: String = fromXQSafeJSONBlob(v) match {
                                     case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                                    case e: Throwable => throw e
                                   }
                                   new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                               }
@@ -1126,7 +1122,6 @@ package bfactory {
                           case CnxnCtxtLeaf(Left(v)) =>
                             fromXQSafeJSONBlob(v) match {
                               case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                              case e: Throwable => throw e
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -1271,7 +1266,6 @@ package bfactory {
                                 case CnxnCtxtLeaf(Left(v)) =>
                                   val unblob: String = fromXQSafeJSONBlob(v) match {
                                     case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                                    case e: Throwable => throw e
                                   }
                                   new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                               }
@@ -1570,7 +1564,6 @@ package bfactory {
                           case CnxnCtxtLeaf(Left(v)) =>
                             fromXQSafeJSONBlob(v) match {
                               case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                              case e: Throwable => throw e
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
@@ -1714,7 +1707,6 @@ package bfactory {
                                 case CnxnCtxtLeaf(Left(v)) =>
                                   val unblob: String = fromXQSafeJSONBlob(v) match {
                                     case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                                    case e: Throwable => throw e
                                   }
                                   new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                               }

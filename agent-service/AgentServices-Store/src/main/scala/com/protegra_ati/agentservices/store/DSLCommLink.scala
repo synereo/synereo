@@ -258,7 +258,6 @@ object DSLCommLink
                         case CnxnCtxtLeaf(Left(v)) =>
                           val unblob: String = fromXQSafeJSONBlob(v) match {
                             case TheMTT.Ground(ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
-                            case e: Throwable => throw e
                           }
                           new CnxnCtxtBranch(ltns(unblob), new CnxnCtxtLeaf[String, String, String](Left(unblob)) :: Nil)
                       }
