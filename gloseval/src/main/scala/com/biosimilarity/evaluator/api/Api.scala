@@ -18,6 +18,7 @@ object Api {
   case class CreateUserStep1Request(email: String) extends RequestContent
   case class CreateUserStep2Request(email: String, salt: String, verifier: String, jsonBlob: JObject) extends RequestContent
   case class GetAgentRequest(email: String,password: String) extends RequestContent
+  case class GetConnectionProfiles(sessionURI: String) extends RequestContent
   case class UpdateUserRequest(sessionURI: String,jsonBlob: JObject) extends RequestContent
   case class StartSessionRecording(sessionURI: String) extends RequestContent
   case class StopSessionRecording(sessionURI: String) extends RequestContent
