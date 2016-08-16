@@ -194,7 +194,7 @@ package diesel {
                       }
                   }
                   val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                  flatKey1 == flatKey2
+                  s"FlatKeyBouncer($flatKey1)" == flatKey2
                 case _ =>
                   throw new Exception(s"""Records don't have correct shape:
                                           |indirect: $indirect
@@ -632,7 +632,7 @@ package diesel {
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                        flatKey1 == flatKey2
+                        s"FlatKeyBouncer($flatKey1)" == flatKey2
                       case _ =>
                         throw new Exception(s"""Records don't have correct shape:
                                                 |indirect: $indirect
@@ -1068,7 +1068,7 @@ package diesel {
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                        flatKey1 == flatKey2
+                        s"FlatKeyBouncer($flatKey1)" == flatKey2
                       case _ =>
                         throw new Exception(s"""Records don't have correct shape:
                                                 |indirect: $indirect
@@ -1530,7 +1530,7 @@ package diesel {
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                        flatKey1 == flatKey2
+                        s"FlatKeyBouncer($flatKey1)" == flatKey2
                       case _ =>
                         throw new Exception(s"""Records don't have correct shape:
                                                 |indirect: $indirect
