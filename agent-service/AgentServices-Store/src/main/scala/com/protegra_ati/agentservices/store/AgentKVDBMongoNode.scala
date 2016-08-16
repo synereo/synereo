@@ -2421,6 +2421,15 @@ package mongo.usage {
               @transient override val textToValue: Option[String => String] = Some(identity)
             )
             extends MongoDBManifest( /* database */ ) {
+
+              override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+              }
+
+              override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+                new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+              }
+
               override def valueStorageType : String = {
                 throw new Exception( "valueStorageType not overriden in instantiation" )
               }
@@ -2731,6 +2740,15 @@ package mongo.usage {
                     @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
+
+                    override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                      new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                    }
+
+                    override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+                      new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                    }
+
                     override def valueStorageType : String = {
                       throw new Exception( "valueStorageType not overriden in instantiation" )
                     }
@@ -3568,6 +3586,15 @@ package mongo.usage {
                     @transient override val textToValue: Option[String => String] = Some(identity)
                   )
                   extends MongoDBManifest( /* database */ ) {
+
+                    override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                      new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                    }
+
+                    override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+                      new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                    }
+
                     override def valueStorageType : String = {
                       throw new Exception( "valueStorageType not overriden in instantiation" )
                     }
