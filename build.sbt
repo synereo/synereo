@@ -224,7 +224,7 @@ lazy val glosevalSettings = Seq(
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   bintrayOrganization := Some("synereo"),
   test in assembly := {},
-  fork in Test := true)
+  fork := true)
 
 lazy val gloseval = (project in file("gloseval"))
   .settings(glosevalSettings: _*)
