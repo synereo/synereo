@@ -43,10 +43,6 @@ $ cd synereo
 $ make
   ...
 
-# Run a GLoSEval server
-$ sbt gloseval/run
-  ...
-
 # Run the SpecialK test suites
 $ sbt specialk/test
   ...
