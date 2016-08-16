@@ -26,7 +26,8 @@ import org.json4s.JsonDSL._
 import java.util.UUID
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 
-import com.biosimilarity.evaluator.omniRPC.OmniClient
+import com.biosimilarity.evaluator.omni.OmniClient
+import org.json4s.JInt
 
 import scalaj.http.Http
 
@@ -107,9 +108,10 @@ object Importer extends EvalConfig
   private def glosevalPost(requestBody: String): String = {
     println(s"REQUEST BODY: $requestBody")
 
-    val req = Http(GLOSEVAL_HOST).option(HttpOptions.allowUnsafeSSL)
+    val req = Http(GLOSEVAL_HOST)
       .timeout(1000, 60000)
       .header("Content-Type", "application/json")
+      .option(HttpOptions.allowUnsafeSSL)
       .postData(requestBody)
     val response = req.asString.body
 
@@ -154,7 +156,7 @@ object Importer extends EvalConfig
   */
 
 
-  def makeAliasURI(alias: String) = s"alias://${alias}/alias"
+  def makeAliasURI(alias: String) = s"alias://$alias/alias"
 
   //private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
 
@@ -209,9 +211,8 @@ object Importer extends EvalConfig
           val tmp = sessionsById.clone()
           while (tmp.nonEmpty) {
             tmp.clone().foreach {
-              case (id, sess) =>
+              case (id, session) =>
                 try {
-                  val session = sess
                   val js = glosevalPost(Api.SessionPing(session))
                   val arr = parse(js).extract[List[JObject]]
                   arr.foreach(v => {
@@ -227,10 +228,9 @@ object Importer extends EvalConfig
                     }
                   })
                 } catch {
-                  case ex: Throwable => {
+                  case ex: Throwable =>
                     println("exception during SessionPing : " + ex)
                     tmp.remove(id)
-                  }
                 }
             }
           }
@@ -254,15 +254,34 @@ object Importer extends EvalConfig
         val typ = (v \ "msgType").extract[String]
         typ match {
           case "sessionPong" => done = true
-          case `msgType` => {
+          case `msgType` =>
             done = true
             rslt = Some(v \ "content")
-          }
           case _ => ()
         }
       })
     }
     rslt
+  }
+
+  def expectAll(session: String): List[JValue] = {
+    println("Sending Ping")
+    var rslt: List[JValue] = Nil
+    var done = false
+    while (!done) {
+      val js = glosevalPost(Api.SessionPing(session))
+      val arr = parse(js).extract[List[JValue]]
+      arr.foreach(v => {
+        val typ = (v \ "msgType").extract[String]
+        typ match {
+          case "sessionPong" =>
+            done = true
+          case _ =>
+            rslt = v :: rslt
+        }
+      })
+    }
+    rslt.reverse
   }
 
   def createAgent(agent: AgentDesc): Option[String] = {
@@ -350,28 +369,25 @@ object Importer extends EvalConfig
 
     def reorderComponents(lbl: LabelDesc): LabelDesc = {
       lbl match {
-        case ComplexLabelDesc(id, "leaf", lbls) => {
+        case ComplexLabelDesc(id, "leaf", lbls) =>
           val (tp, r) = lbls.partition(matchFunctor("text", _))
           if (tp.length > 1) throw new Exception("label must contain at most one text field")
           val (dp, r2) = r.partition(matchFunctor("display", _))
           if (dp.length > 1) throw new Exception("label must contain at most one display field")
           val lbls2 = tp ++ dp ++ r2
           ComplexLabelDesc(id, "leaf", lbls2)
-        }
         case _ => lbl
       }
     }
 
     label match {
-      case smpl: SimpleLabelDesc => {
+      case smpl: SimpleLabelDesc =>
         smpl.id.foreach(s => labels.put(s, smpl))
         smpl
-      }
-      case cmplx: ComplexLabelDesc => {
+      case cmplx: ComplexLabelDesc =>
         val rslt = reorderComponents(cmplx)
         cmplx.id.foreach(s => labels.put(s, rslt))
         rslt
-      }
       case ref: LabelRef => ref //labels(ref.label)  // throw if not present??
     }
 
@@ -441,14 +457,9 @@ object Importer extends EvalConfig
     }
   }
 
-  def fromFile(dataJsonFile: String, host: String = GLOSEVAL_HOST): Unit = {
-
-    println("launching server")
-    //resetMongo()
-    //Thread.sleep(5000)  // give it time to warm up ...
+  def fromFile(dataJsonFile: String): Unit = {
 
     println("Importing file : " + dataJsonFile)
-    GLOSEVAL_HOST = host
 
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
@@ -462,8 +473,6 @@ object Importer extends EvalConfig
           println("using admin session URI : " + adminSession)
           val thrd = longPoll()
           thrd.start()
-          val isok = glosevalPost(Api.ResetDatabaseRequest(adminSession))
-          if (isok != "OK") throw new Exception("Unable to reset database")
 
           dataset.labels match {
             case Some(lbls) => lbls.foreach(l => makeLabel(LabelDesc.extractFrom(l)))
@@ -492,9 +501,8 @@ object Importer extends EvalConfig
 
   def runTestFile(dataJsonFile: String): Unit = {
     // this routine doesn't keep sessions alive via longpoll.
-    // the calls to expect will
+    // the calls to expect might ...
     println("testing file : " + dataJsonFile)
-    val host = GLOSEVAL_HOST
 
     val adminURI =
       getAgentURI(NodeUser.email, NodeUser.password) match {
@@ -512,20 +520,16 @@ object Importer extends EvalConfig
         val typ = (el \ "type").extract[String]
         typ match {
           case "spawn" =>
-            val js = glosevalPost(Api.SpawnSessionRequest(ssn))
+            val withssn = (el \ "session").extractOpt[String] match {
+              case Some(id) => sessionsById(id)
+              case None => ssn
+            }
+            val js = glosevalPost(Api.SpawnSessionRequest(withssn))
             val tssn = (parse(js) \ "content" \ "sessionURI").extract[String]
             println(tssn)
             val tsts = (el \ "content").extract[List[JObject]]
             runTests(tssn, tsts)
             glosevalPost(Api.CloseSessionRequest(tssn))
-
-          case "reset" => resetMongo()
-//            val isok = glosevalPost(Api.ResetDatabaseRequest(ssn))
-//            if (isok != "OK") throw new Exception("Unable to reset database")
-//            expect("resetDatabaseResponse", ssn) match {
-//              case Some(_) => ()
-//              case _ => throw new Exception("Unable to reset database")
-//            }
 
           case "startCam" =>
             val js = glosevalPost(Api.StartSessionRecording(ssn))
@@ -546,21 +550,21 @@ object Importer extends EvalConfig
               val isok = glosevalPost(Api.GetAmpWalletAddress(session))
               if (isok != "OK") throw new Exception("Unable to call getAmpWalletAddress")
               expect("getAmpWalletAddressResponse", session) match {
-                case Some(js) => {
+                case Some(js) =>
                   //println(pretty(js))
                   val oldaddr = (js \ "address").extract[String]
                   val isok2 = glosevalPost(Api.SetAmpWalletAddress(session, OmniClient.testAmpAddress))
                   if (isok2 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
                   expect("setAmpWalletAddressResponse", session) match {
-                    case Some(js) => {
+                    case Some(js2) => {
                       //println(pretty(js))
-                      val newaddr = (js \ "newaddress").extract[String]
+                      val newaddr = (js2 \ "newaddress").extract[String]
                       if (newaddr != OmniClient.testAmpAddress) throw new Exception("setAmpWalletAddressResponse invalid")
                       val isok3 = glosevalPost(Api.SetAmpWalletAddress(session, oldaddr))
                       if (isok3 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
                       expect("setAmpWalletAddressResponse", session) match {
-                        case Some(js) => {
-                          val addr = (js \ "newaddress").extract[String]
+                        case Some(js3) => {
+                          val addr = (js3 \ "newaddress").extract[String]
                           if (addr != oldaddr) throw new Exception("setAmpWalletAddressResponse invalid")
                         }
                         case _ => throw new Exception("Unable to set wallet address")
@@ -568,7 +572,6 @@ object Importer extends EvalConfig
                     }
                     case _ => throw new Exception("Unable to set wallet address")
                   }
-                }
                 case _ => throw new Exception("Unable to get wallet address")
               }
               testOmni = false // once is enough ...
@@ -587,7 +590,24 @@ object Importer extends EvalConfig
             val post = (el \ "content").extract[PostDesc]
             makePost(post)
 
-          case _ => throw new Exception("Unknown test element")
+          case "getConnectionProfiles" => {
+            val reqcnt = (el \ "requireCount").extract[Option[BigInt]]
+            val isok = glosevalPost(Api.GetConnectionProfiles(ssn))
+            if (isok != "OK") throw new Exception("Unable to call getConnectionProfiles")
+            val rsps = expectAll(ssn)
+            println("got here")
+            reqcnt match {
+              case Some(l) =>
+                if (l != rsps.length) throw new Exception("Expected : " + l + ", but received: " + rsps.length)
+                println("requireCount matched ok")
+              case _ => println("requirecount not supplied?")
+            }
+            rsps foreach { js =>
+              println(pretty(js))
+            }
+          }
+          case _ =>
+            throw new Exception("Unknown test element : "+ typ)
         }
       })
     }
@@ -599,12 +619,12 @@ object Importer extends EvalConfig
     if (testOmni) OmniClient.runTests()
   }
 
-  def fromFiles(dataJsonFile: String = serviceDemoDataFile(), host: String = GLOSEVAL_HOST): Unit = {
-    fromFile(dataJsonFile, host)
+  def fromFiles(dataJsonFile: String = serviceDemoDataFile() ): Unit = {
+    fromFile(dataJsonFile)
     //fromFile("src/main/resources/sample-data-test_2.json", host)
   }
 
   def runTestFiles(): Unit = {
-    runTestFile(ConfigFactory.load.getString("importer.test.file"))
+    runTestFile("src/test/resources/test-posts.json")
   }
 }

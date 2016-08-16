@@ -10,7 +10,7 @@ object Api {
   case class EvalSubscribeExpression(msgType: String, content: EvalSubscribeContent)
 
 
-  trait RequestContent {}
+  trait RequestContent
   case class Request(msgType: String, content: RequestContent)
 
   // actual API

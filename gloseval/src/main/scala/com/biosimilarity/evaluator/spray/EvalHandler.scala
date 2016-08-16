@@ -14,7 +14,7 @@ import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
-import com.biosimilarity.evaluator.omniRPC.OmniClient
+import com.biosimilarity.evaluator.omni.OmniClient
 
 import spray.routing._
 import spray.http._
@@ -59,10 +59,27 @@ object CompletionMapper extends Serializable {
 object CometActorMapper extends Serializable {
   @transient
   val map = new HashMap[String, akka.actor.ActorRef]()
+  var actorRefFactory : Option[ActorContext] = None
   def cometMessage(sessionURI: String, jsonBody: String): Unit = {
     for (cometActor <- map.get(sessionURI)) {
       cometActor ! CometMessage(jsonBody)
     }
+  }
+  def getChunkingActor(sessionURI: String, cnt: Int) = {
+    val ssnactor = CometActorMapper.map.get(sessionURI) match {
+      case Some(actor) => actor
+      case None => throw new Exception("invalid session supplied")
+    }
+    if (cnt < 2) ssnactor
+    else
+      actorRefFactory match {
+        case Some(cxt) =>
+          val a = cxt.actorOf(Props[ChunkingActor])
+          a ! ChunkingActor.SetRecipient(ssnactor)
+          a ! ChunkingActor.SetExpected(cnt)
+          a
+        case None => ssnactor
+      }
   }
 }
 
@@ -1222,7 +1239,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   def handleRsp(v: ConcreteHL.HLExpr): Unit = {
                     val newBiCnxnList = v match {
                       case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
-                        bBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
+                        val extants = Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
+                        if (extants.contains(bBiCnxn) )
+                          extants
+                        else
+                          bBiCnxn :: extants
                       }
                       case Bottom => List(bBiCnxn)
                     }
@@ -1271,7 +1292,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               aBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
             }
             case Bottom => {
-              println("failed to find bicnxns")
+              //println("failed to find bicnxns")
               List(aBiCnxn)
 
             }
@@ -1453,6 +1474,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def fetchAndSendConnectionProfiles(sessionURI : String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
+    val actor = CometActorMapper.getChunkingActor(sessionURI, biCnxnListObj.length)
+
     biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
       // Construct self-connection for each target
       val targetURI = biCnxn match {
@@ -1462,7 +1485,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       def handleFetchRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-            CometActorMapper.cometMessage(sessionURI, compact(render(
+            actor ! CometMessage(compact(render(
               ("msgType" -> "connectionProfileResponse") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1470,7 +1493,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("jsonBlob" -> jsonBlob))))))
           }
           case Bottom => {
-            CometActorMapper.cometMessage(sessionURI, compact(render(
+            actor ! CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1478,7 +1501,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("reason" -> "Not found"))))))
           }
           case _ => {
-            CometActorMapper.cometMessage(sessionURI, compact(render(
+            actor ! CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
