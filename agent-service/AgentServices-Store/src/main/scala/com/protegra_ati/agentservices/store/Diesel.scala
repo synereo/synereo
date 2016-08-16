@@ -215,8 +215,16 @@ package diesel {
               override def continuationStorageType : String = {
                 throw new Exception( "continuationStorageType not overriden in instantiation" )
               }
-              
-              override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+
+              override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+              }
+
+              override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+                new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+              }
+
+              override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {
                 cnxn match {
                   case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
                   case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
@@ -645,8 +653,16 @@ package diesel {
                     override def continuationStorageType : String = {
                       throw new Exception( "continuationStorageType not overriden in instantiation" )
                     }
-                    
-                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+
+                    override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                      new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                    }
+
+                    override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+                      new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                    }
+
+                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {
                       cnxn match {
                         case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
                         case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
@@ -1073,8 +1089,16 @@ package diesel {
                     override def continuationStorageType : String = {
                       throw new Exception( "continuationStorageType not overriden in instantiation" )
                     }
-                    
-                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+
+                    override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                      new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                    }
+
+                    override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+                      new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                    }
+
+                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {
                       cnxn match {
                         case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
                         case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
@@ -1527,8 +1551,16 @@ package diesel {
                     override def continuationStorageType : String = {
                       throw new Exception( "continuationStorageType not overriden in instantiation" )
                     }
-                    
-                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {     
+
+                    override def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
+                      new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+                    }
+
+                    override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
+                      new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
+                    }
+
+                    override def storeUnitStr[Src,Label,Trgt]( cnxn : Cnxn[Src,Label,Trgt] ) : String = {
                       cnxn match {
                         case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
                         case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
