@@ -40,6 +40,10 @@ lazy val prolog4jVersion = "0.2.1-SNAPSHOT"
 
 lazy val xmlrpcVersion = "3.1.2"
 
+lazy val xstreamVersion = "1.4.4"
+
+lazy val jettisonVersion = "1.3.3"
+
 lazy val specialkDeps = Seq(
   // =================================================
   // These dependencies appear to be currently unused:
@@ -71,7 +75,7 @@ lazy val specialkDeps = Seq(
   // =====================
   "biz.source_code"           % "base64coder"       % "2010-09-21",
   "com.rabbitmq"              % "amqp-client"       % "2.6.1",
-  "com.thoughtworks.xstream"  % "xstream"           % "1.4.4" exclude("xmlpull", "xmlpull"),
+  "com.thoughtworks.xstream"  % "xstream"           % xstreamVersion exclude("xmlpull", "xmlpull"),
   "com.typesafe"              % "config"            % "1.0.0",
   "commons-pool"              % "commons-pool"      % "1.6",
   "it.unibo.alice.tuprolog"   % "tuprolog"          % "2.1.1",
@@ -79,7 +83,7 @@ lazy val specialkDeps = Seq(
   "log4j"                     % "log4j"             % "1.2.17",
   "org.basex"                 % "basex-api"         % "7.6",
   "org.coconut.forkjoin"      % "jsr166y"           % "070108",
-  "org.codehaus.jettison"     % "jettison"          % "1.3",
+  "org.codehaus.jettison"     % "jettison"          % jettisonVersion,
   "org.json4s"               %% "json4s-jackson"    % "3.2.7",
   "org.mongodb"              %% "casbah"            % "2.6.4",
   "org.scalacheck"           %% "scalacheck"        % "1.12.5" % "test",
@@ -132,7 +136,7 @@ lazy val agentServiceDeps = Seq(
   // =====================
   "biz.source_code"             % "base64coder"       % "2010-09-21",
   "com.rabbitmq"                % "amqp-client"       % "2.6.1",
-  "com.thoughtworks.xstream"    % "xstream"           % "1.4.4" exclude("xmlpull", "xmlpull"),
+  "com.thoughtworks.xstream"    % "xstream"           % xstreamVersion exclude("xmlpull", "xmlpull"),
   "com.typesafe"                % "config"            % "1.0.0",
   "commons-pool"                % "commons-pool"      % "1.6",
   "it.unibo.alice.tuprolog"     % "tuprolog"          % "2.1.1",
@@ -140,7 +144,7 @@ lazy val agentServiceDeps = Seq(
   "log4j"                       % "log4j"             % "1.2.17",
   "net.spy"                     % "spymemcached"      % "2.9.0",
   "org.basex"                   % "basex-api"         % "7.6"   exclude("org.slf4j", "slf4j-nop"),
-  "org.codehaus.jettison"       % "jettison"          % "1.3.3",
+  "org.codehaus.jettison"       % "jettison"          % jettisonVersion,
   "org.json4s"                 %% "json4s-jackson"    % json4sVersion,
   "org.json4s"                 %% "json4s-native"     % json4sVersion,
   "org.mongodb"                %% "casbah"            % "2.6.4" exclude("org.slf4j", "slf4j-api"),
