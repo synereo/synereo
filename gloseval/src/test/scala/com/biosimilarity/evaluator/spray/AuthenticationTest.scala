@@ -1,9 +1,8 @@
 package com.biosimilarity.evaluator.spray
 
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.spray.util._
-import org.bouncycastle.crypto.agreement.srp.{SRP6Client, SRP6StandardGroups, SRP6VerifierGenerator}
-import org.bouncycastle.crypto.digests.SHA512Digest
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpec}
@@ -13,36 +12,29 @@ import spray.testkit.ScalatestRouteTest
 import scala.util.Try
 
 object AuthenticationTestData {
-
-  import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
-
   val email = "testonly@test.com"
   val password = "qwerty12345"
-  val srpClient = new SRP6Client()
+  val srpClient = new SRPClient()
 
   val createUserStep1RequestBody = s"""{"msgType":"createUserStep1Request","content":{"email":"$email"}}"""
   val confirmEmailTokenRequestBody = """{"msgType":"confirmEmailToken","content":{"token":"b08353e9"}}"""
 
+  srpClient.init
+
   def getVerifier(salt: String) = {
-    val verifierGenerator = new SRP6VerifierGenerator()
-    verifierGenerator.init(SRP6StandardGroups.rfc5054_1024, new SHA512Digest())
-    toHex(verifierGenerator.generateVerifier(salt.getBytes, email.getBytes, password.getBytes))
+    srpClient.calculateX(email, password, salt)
+    srpClient.generateVerifier
   }
-  def getA(salt: String) = {
-    srpClient.init(SRP6StandardGroups.rfc5054_1024, new SHA512Digest(), getSecureRandom)
-    toHex(srpClient.generateClientCredentials(salt.getBytes, email.getBytes, password.getBytes))
-  }
+  def getA = srpClient.calculateAHex
 
   def getCreateUserStep2RequestBody(salt: String): String =
     s"""{"msgType":"createUserStep2Request","content":{"email":"$email","salt": "$salt","verifier":"${getVerifier(salt)}","jsonBlob":{"name":"test"}}}"""
 
   def getInitializeSessionStep1RequestBody(salt: String): String =
-    s"""{"msgType":"initializeSessionStep1Request","content":{"agentURI":"agent://email/$email?A=${getA(salt)}"}}"""
+    s"""{"msgType":"initializeSessionStep1Request","content":{"agentURI":"agent://email/$email?A=$getA"}}"""
 
-  def getInitializeSessionStep2RequestBody(bVal: String): String = {
-    srpClient.calculateSecret(fromHex(bVal))
-    s"""{"msgType":"initializeSessionStep2Request","content":{"agentURI":"agent://email/$email?M=${toHex(srpClient.calculateClientEvidenceMessage())}"}}"""
-  }
+  def getInitializeSessionStep2RequestBody(bVal: String): String =
+    s"""{"msgType":"initializeSessionStep2Request","content":{"agentURI":"agent://email/$email?M=${srpClient.calculateMHex(bVal)}"}}"""
 }
 
 class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatchers with ScalatestRouteTest with EvaluatorService {

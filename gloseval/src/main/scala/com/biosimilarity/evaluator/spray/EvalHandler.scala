@@ -8,8 +8,6 @@
 
 package com.biosimilarity.evaluator.spray
 
-import java.io.File
-
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.lift.model.store._
@@ -18,7 +16,6 @@ import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity
 import akka.actor._
 import com.biosimilarity.evaluator.omniRPC.OmniClient
 
-import scala.collection.mutable
 import spray.routing._
 import spray.http._
 import org.json4s._
@@ -32,7 +29,7 @@ import java.security._
 import java.util.UUID
 import java.net.URI
 
-import com.biosimilarity.evaluator.spray.srp.{ConversionUtils, SRPSessionManager, UserCredentials, VerifierGenerator}
+import com.biosimilarity.evaluator.spray.srp._
 import com.typesafe.config.ConfigFactory
 
 import scala.util.Try
@@ -2357,7 +2354,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     def handleRsp(): Unit = {
       val salt = ConversionUtils.getRandomSalt
-      val verifier = VerifierGenerator.generateVerifier(email, password, salt)
+      val srpClient = new SRPClient()
+      srpClient.init
+      srpClient.calculateX(email, password, salt)
+      val verifier = srpClient.generateVerifier
       _createUser(email, s"$salt:$verifier", jsonBlob, launchNodeUserBehaviors)
     }
     read(
