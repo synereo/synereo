@@ -11,7 +11,7 @@ package com.biosimilarity.evaluator.importer
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.Api
 import com.biosimilarity.evaluator.Api._
-import com.biosimilarity.evaluator.spray.srp.{SRPClient, VerifierGenerator}
+import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.typesafe.config.ConfigFactory
 
 import scalaj.http.HttpOptions
@@ -268,14 +268,17 @@ object Importer extends EvalConfig
   def createAgent(agent: AgentDesc): Option[String] = {
     val eml = agent.email + (if (agent.email.contains("@")) "" else "@livelygig.com")
     val jsonBlob = parse(agent.jsonBlob).extract[JObject]
+    val srpClient = new SRPClient()
+    srpClient.init
     val r1 = parse(glosevalPost(Api.CreateUserStep1Request("noConfirm:" + eml))).extract[ApiResponse]
     r1.responseContent match {
       case ApiError(reason) =>
         println(s"create user, step 1, failed, reason : $reason")
         None
       case CreateUserStep1Response(salt) =>
+        srpClient.calculateX(eml, agent.pwd, salt)
         val r2 = parse(glosevalPost(Api.CreateUserStep2Request("noConfirm:" + eml,
-          salt, VerifierGenerator.generateVerifier(eml, agent.pwd, salt), jsonBlob))).extract[ApiResponse]
+          salt, srpClient.generateVerifier, jsonBlob))).extract[ApiResponse]
         r2.responseContent match {
           case ApiError(reason) =>
             println(s"create user, step 2, failed, reason : $reason")
@@ -297,7 +300,7 @@ object Importer extends EvalConfig
         println(s"initialize session, step 1, failed, reason : $reason")
         None
       case InitializeSessionStep1Response(salt, bval) =>
-        srpClient.calculateX(salt, email, pwd)
+        srpClient.calculateX(email, pwd, salt)
         val r2 = parse(glosevalPost(Api.InitializeSessionStep2Request(s"$agentURI?M=${srpClient.calculateMHex(bval)}")))
           .extract[ApiResponse]
         r2.responseContent match {
