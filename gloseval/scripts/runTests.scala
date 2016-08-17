@@ -1,10 +1,9 @@
-//import com.protegra_ati.agentservices.protocols.TestRace
-//TestRace.race(true, 20, false, 2)
-
-
 import com.biosimilarity.evaluator.importer.Importer
+import com.biosimilarity.evaluator.spray.util._
+
+resetMongo()
+com.biosimilarity.evaluator.spray.Boot.main(new Array[String](0))
+Thread.sleep(3000)  // allow it to 'warm up'
 Importer.runTestFiles()
 
-//import com.biosimilarity.evaluator.omniRPC.OmniClient
-//OmniClient.runTests()
 

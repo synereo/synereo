@@ -1,15 +1,16 @@
-# GLoSEval
+# synereo
 
-[![Gitter](https://badges.gitter.im/synereo/gloseval.svg)](https://gitter.im/synereo/gloseval?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/synereo/synereo.svg?branch=staging)](https://travis-ci.org/synereo/synereo)
 
-Network evaluator for Generalized Language of Streams.
+Home of:
 
-Backend for the Synereo Social Platform.
+* [SpecialK](specialk)
+* The Synereo [Agent Service](agent-service)
+* [GLoSEval](gloseval)
 
 ## Requirements
 
-To work with GLoSEval you will need:
-
+To work with the projects in this repository you will need:
 * [MongoDB](https://www.mongodb.com/), version 2.6.12 (also tested with version 2.4.14)
   * available at https://www.mongodb.com/download-center (go to "Previous Releases")
 * [Erlang](https://www.erlang.org/), version 15B03 (also tested with version R14B04) (required to run RabbitMQ)
@@ -21,10 +22,44 @@ To work with GLoSEval you will need:
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/download.html
+* [Make](https://www.gnu.org/software/make/)
+  * available at http://ftp.gnu.org/gnu/make/
+
+Additionally, to run the Agent Service test suites you will need:
+* [Memcached](https://memcached.org/), latest stable version
+  * available at https://memcached.org/downloads
 
 ### Why can't I use newer versions?
 
-See note [here](../specialk/README.md#why-cant-i-use-newer-versions).
+See note [here](specialk/README.md#why-cant-i-use-newer-versions).
+
+## Usage
+
+After installing the these dependencies, you can clone this repo and run tasks using sbt:
+```
+$ git clone https://github.com/synereo/synereo.git
+  ...
+$ cd synereo
+$ make
+  ...
+
+# Run a GLoSEval server
+$ sbt gloseval/run
+  ...
+
+# Run the SpecialK test suites
+$ sbt specialk/test
+  ...
+
+# Run the test suites for all projects
+$ sbt test
+  ...
+```
+
+**NOTE**: In order to run most tasks, MongoDB and RabbitMQ must also be running.
+
+For the Agent Service test suites, Memcached must also be running.
+
 
 ## Issues
 

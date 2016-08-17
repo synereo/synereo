@@ -5,7 +5,7 @@ import akka.io.IO
 import akka.pattern._
 import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
-import com.biosimilarity.evaluator.omniRPC.OmniClient
+import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.SSLConfiguration._
 import spray.can.Http
 import spray.can.server.ServerSettings
