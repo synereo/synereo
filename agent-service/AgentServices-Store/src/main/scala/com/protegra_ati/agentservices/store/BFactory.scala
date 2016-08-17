@@ -328,23 +328,23 @@ package bfactory {
                 cnxn match {
                   case CCnxn( s, l, t ) => s.toString + l.toString + t.toString
                   case acT.AgentCnxn( s, l, t ) => s.getHost + l.toString + t.getHost
-                }           
-              } 
-              
+                }
+              }
+
               def kvNameSpace : String = "record"
               def kvKNameSpace : String = "kRecord"
-              
+
               def compareNameSpace( ns1 : String, ns2 : String ) : Boolean = {
                 ns1.equals( ns2 )
               }
-              
+
               override def asStoreValue(
                 rsrc : mTT.Resource
               ) : CnxnCtxtLeaf[String,String,String] with Factual = {
                 BasicLogService.tweet(
                   "In asStoreValue on " + this + " for resource: " + rsrc
                 )
-                val storageDispatch = 
+                val storageDispatch =
                   rsrc match {
                     case k : mTT.Continuation => {
                       BasicLogService.tweet(
@@ -359,11 +359,11 @@ package bfactory {
                       valueStorageType
                     }
                   };
-                
+
                 BasicLogService.tweet(
                   "storageDispatch: " + storageDispatch
                 )
-                
+
                 val blob =
                   storageDispatch match {
                     case "Base64" => {
@@ -377,13 +377,13 @@ package bfactory {
                       BasicLogService.tweet(
                         "warning: CnxnCtxtLabel method is using XStream"
                       )
-                      toXQSafeJSONBlob( rsrc )                            
+                      toXQSafeJSONBlob( rsrc )
                     }
                     case "XStream" => {
                       BasicLogService.tweet(
                         "using XStream method"
                       )
-                      
+
                       toXQSafeJSONBlob( rsrc )
                     }
                     case _ => {
@@ -409,6 +409,19 @@ package bfactory {
               }
 
               override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                key match {
+                  case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                    val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                    val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                    val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                    val flatKey: String = ttt(fkS)
+                    asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                  }
+                  case _ =>
+                    throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                }
+
+              override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                 key match {
                   case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                     val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
@@ -465,10 +478,10 @@ package bfactory {
                     throw new Exception( "must have textToTag to convert mongo object" )
                   )
                 //val ttt = ( x : String ) => x
-                
+
                 //val ptn = asPatternString( key )
-                //println( "ptn : " + ptn )             
-                
+                //println( "ptn : " + ptn )
+
                 CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
                   case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
                     matchMap( key, k ) match {
@@ -514,7 +527,7 @@ package bfactory {
                               // that this cast is not necessary?
                               theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
                             )
-                          
+
                           BasicLogService.tweet(
                             (
                               " ****************************************** "
@@ -525,7 +538,7 @@ package bfactory {
 		              + " ****************************** "
                             )
                           )
-                            
+
                           finalRslt
                         }
                         else {
@@ -539,7 +552,7 @@ package bfactory {
                               )
                             emT.PlaceInstance(
                               k,
-                              Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
+                              Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
                                 ks
                               ),
                               // BUGBUG -- lgm : why can't the compiler determine
@@ -556,14 +569,14 @@ package bfactory {
                         //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
                         throw new UnificationQueryFilter( key, k, value )
                       }
-                    }                                           
+                    }
                   }
                   case _ => {
                     throw new Exception( "unexpected record format : " + value )
                   }
-                }                               
+                }
               }
-              
+
             }
             override def asCacheK(
               ccl : CnxnCtxtLabel[String,String,String]
@@ -598,7 +611,7 @@ package bfactory {
                         o
                       }
                     }
-                  
+
                   unBlob match {
                     case k : mTT.Resource => {
                       Some( k.asInstanceOf[mTT.Continuation] )
@@ -608,7 +621,7 @@ package bfactory {
                         (
                           ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                           + "ill-formatted continuation stack blob : " + rv
-                          + "\n" 
+                          + "\n"
                           + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                           + "\n"
                           + "unBlob : " + unBlob
@@ -626,7 +639,7 @@ package bfactory {
                 }
               }
             }
-            
+
             override def asCacheK(
               ltns : String => String,
               ttv : String => String,
@@ -821,6 +834,19 @@ package bfactory {
                     }
 
                     override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                       key match {
                         case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                           val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
@@ -1241,6 +1267,19 @@ package bfactory {
                     }
 
                     override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                       key match {
                         case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                           val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
@@ -1682,6 +1721,19 @@ package bfactory {
                     }
 
                     override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                       key match {
                         case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                           val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))

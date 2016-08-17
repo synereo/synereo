@@ -2090,8 +2090,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     'user(
                       'p1(originalFilter),
                       // TODO(mike): temporary workaround until bindings bug is fixed.
-                      //'p2('uid((arr(0) \ "uid").extract[String])),
-                      'p2('uid("_")),
+                      'p2('uid((arr(0) \ "uid").extract[String])),
                       'p3('old("_")),
                       'p4('nil("_"))),
                     List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
@@ -2196,11 +2195,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
           //println("evalSubscribeRequest | feedExpr: calling feed")
           BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
-          val uid = 'uid("_") /*try {
+          val uid = try {
             'uid((ec \ "uid").extract[String])
           } catch {
             case _: Throwable => 'uid("UID")
-          } */
+          }
           for (filter <- filters) {
             //println("evalSubscribeRequest | feedExpr: filter = " + filter)
             BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
@@ -2270,11 +2269,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             case _ => throw new Exception("Couldn't parse staff: " + json)
           }
           BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling score")
-          val uid = 'uid("_") /*try {
+          val uid = try {
             'uid((ec \ "uid").extract[String])
           } catch {
             case _: Throwable => 'uid("UID")
-          }*/
+          }
           for (filter <- filters) {
             //agentMgr().score(
             score(
@@ -2291,7 +2290,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           //println("evalSubscribeRequest | insertContent: calling post")
           BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
           val value = (ec \ "value").extract[String]
-          val uid = 'uid("_") //Ground((ec \ "uid").extract[String]))
+          val uid = 'uid(Ground((ec \ "uid").extract[String]))
 
           for (filter <- filters) {
             BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post with filter " + filter)

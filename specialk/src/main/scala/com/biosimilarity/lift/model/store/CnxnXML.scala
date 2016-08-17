@@ -20,53 +20,29 @@ import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver
 
 trait Blobify {
-  def toBlob( x : java.lang.Object ) : String = {
-    toJSONBlob( x )
+  def toBlob(x: java.lang.Object): String = {
+    toJSONBlob(x)
   }
-  def fromBlob( blob : String ) : java.lang.Object = {
-    fromJSONBlob( blob )
+  def fromBlob(blob: String): java.lang.Object = {
+    fromJSONBlob(blob )
   }      
-  def toJSONBlob( x : java.lang.Object ) : String = {
-    new XStream( new JettisonMappedXmlDriver() ).toXML( x )
+  def toJSONBlob(x: java.lang.Object): String = {
+    new XStream(new JettisonMappedXmlDriver() ).toXML( x )
   }
-  def fromJSONBlob( blob : String ) : java.lang.Object = {
+  def fromJSONBlob(blob: String): java.lang.Object = {
     new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
   }      
-  def toXQSafeJSONBlob( x : java.lang.Object ) : String = {
-    val jsonBlob =
-      new XStream( new JettisonMappedXmlDriver() ).toXML( x )
-    jsonBlob.replace(
-      "{",
-      "{{"
-    ).replace(
-      "}",
-      "}}"
-    )
+  def toXQSafeJSONBlob(x: java.lang.Object): String = {
+   new XStream(new JettisonMappedXmlDriver()).toXML(x)
   }
-  def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {
-    val jsonBlob =
-      (if ( blob.substring( 0, 2 ).equals( "{{" ) ) {
-	blob.replace(
-	  "{{",
-	  "{"
-	).replace(
-	  "}}",
-	  "}"
-	)
-      }
-      else {
-	blob
-      }).replace(
-      "&quot;",
-      "\""
-    )
-    new XStream( new JettisonMappedXmlDriver() ).fromXML( jsonBlob )
+  def fromXQSafeJSONBlob(blob: String): java.lang.Object = {
+    new XStream(new JettisonMappedXmlDriver()).fromXML(blob)
   }      
-  def toXMLBlob( x : java.lang.Object ) : String = {
-    new XStream( ).toXML( x )
+  def toXMLBlob(x: java.lang.Object): String = {
+    new XStream().toXML(x)
   }
-  def fromXMLBlob( blob : String ) : java.lang.Object = {
-    new XStream( ).fromXML( blob )
+  def fromXMLBlob(blob: String): java.lang.Object = {
+    new XStream().fromXML(blob)
   }      
 }
 
