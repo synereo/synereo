@@ -58,11 +58,8 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterAll with ScalaFu
 
   def makeRequest(cont: Api.RequestContent): HttpRequest = {
     val body = write(Api.toReq(cont))
-    println(body)
-    val requestBody: HttpEntity =
-      HttpEntity(ContentType(MediaTypes.`application/json`), body)
+    val requestBody: HttpEntity = HttpEntity(ContentType(MediaTypes.`application/json`), body)
     HttpRequest(POST, "/api", entity = requestBody)
-
   }
 
   type SessionUri = String
@@ -120,71 +117,35 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterAll with ScalaFu
   def makeConnection(sessionId: SessionUri, agentL: AgentUri, agentR: AgentUri, cnxnLabel: String): Future[Api.Connection] = {
     val sourceUri = makeAliasUri(agentL)
     val targetUri = makeAliasUri(agentR)
-    //val cnxnLabel = UUID.randomUUID().toString
-
     val cont = Api.EstablishConnectionRequest(sessionId, sourceUri, targetUri, cnxnLabel)
-    post(cont).map((response: HttpResponse) => {
-      //val rsp = response.entity.asString
-      Api.Connection(sourceUri, targetUri, cnxnLabel)
-    })
+    post(cont).map((response: HttpResponse) => Api.Connection(sourceUri, targetUri, cnxnLabel))
   }
 
   def makePost(sessionId: SessionUri, tgts: List[Api.Connection], lbl: String, uid: String, value: String): Future[Api.Connection] = {
     val from = "agent://" + capFromSession(sessionId)
     val selfcnxn = Api.Connection(from, from, "alias")
-
     val cont = Api.EvalSubscribeContent(selfcnxn :: tgts, lbl, value, uid)
     val req = Api.EvalSubscribeRequest(sessionId, Api.EvalSubscribeExpression("insertContent", cont))
-    post(req).map((response: HttpResponse) => {
-      //val rsp = response.entity.asString
-      selfcnxn
-    })
+    post(req).map((response: HttpResponse) =>  selfcnxn)
   }
 
   def makeQueryOnSelf(sessionId: SessionUri, lbl: String ): Future[Api.Connection] = {
     val from = "agent://" + capFromSession(sessionId)
     val selfcnxn = Api.Connection(from, from, "alias")
-
     val cont = Api.EvalSubscribeContent(selfcnxn :: Nil, lbl, "", "")
     val req = Api.EvalSubscribeRequest(sessionId, Api.EvalSubscribeExpression("feedExpr", cont))
-    post(req).map((response: HttpResponse) => {
-      //val rsp = response.entity.asString
-      selfcnxn
-    })
+    post(req).map((response: HttpResponse) => selfcnxn)
   }
 
   def getConnectionProfiles(sessionId: SessionUri) : Future[String] = {
     val cont = Api.GetConnectionProfiles(sessionId)
-    post(cont).map((response: HttpResponse) => {
-      val rsp = response.entity.asString
-      rsp
-    })
+    post(cont).map((response: HttpResponse) =>  response.entity.asString)
   }
 
   def sessionPing(ssn: SessionUri): Future[JArray] = {
     val cont = Api.SessionPing(ssn)
-    post(cont).map((response: HttpResponse) => {
-      parse(response.entity.asString).extract[JArray]
-    })
+    post(cont).map((response: HttpResponse) => parse(response.entity.asString).extract[JArray])
   }
-
-  /*
-  def pingUntilPong(ssn: SessionUri): Future[JArray] = {
-    val cont = Api.SessionPing(ssn)
-    def _pingRec(cur: List[JValue]) : Future[List[JValue]] = {
-      post(cont).map((response: HttpResponse) => {
-        val ja = parse(response.entity.asString).extract[JArray]
-        var done = false
-        var rslt = cur
-        ja.values.foreach[JValue]( (jv : JValue) => {
-          val typ = (jv \ "msgType").extract[String]
-          if (typ == "sessionPong") done = true
-          else rslt = jv :: cur
-        })
-      })
-    }
-  }
-  */
 
   """The Administrator Session""".stripMargin should {
 
@@ -228,23 +189,13 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterAll with ScalaFu
     }
 
     """query empty database without crashing""" in {
-//      val value = "{\"$type\":\"shared.models.MessagePost\", \"created\" : \"2002-05-30T09:30:10Z\", \"modified\" : \"2002-05-30T09:30:10Z\", \"messagePostContent\": {\"$type\":\"shared.models.MessagePostContent\",\"versionedPostId\" : \"35e60447-747e-496a-afde-65ca182db1c8\", \"versionedPostPredecessorId\" : \"\", \"versionNumber\" : \"1\", \"canForward\" : true, \"text\" : \"this is a subject for the message\",\"subject\" : \"this is a message\"}}"
-//      val uid = "0c778b40-4799-4557-9050-fd7a4b77c23e"
-
       val proc: Future[(JArray)] = for {
         ssn <- openAdminSession()
         cnxn <- makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
         spwnssnA <- spawnSession(ssn)
         a <- sessionPing(spwnssnA)
-
-      } yield (a)
-
-      whenReady(proc, timeout(Span(60, Seconds))) {
-        case (ja: JArray) =>
-          println("Query results: "+pretty(render(ja)))
-          ja.values.length shouldBe 1
-        case _ => fail("should not happen")
-      }
+      } yield a
+      proc.futureValue.values.length shouldBe 1
     }
   }
 }
