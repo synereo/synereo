@@ -193,7 +193,7 @@ package diesel {
                       }
                   }
                   val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                  s"FlatKeyBouncer($flatKey1)" == flatKey2
+                  flatKey1 == flatKey2
                 case _ =>
                   throw new Exception(s"""Records don't have correct shape:
                                           |indirect: $indirect
@@ -308,6 +308,19 @@ package diesel {
               }
 
               override def asStoreRecord(key : mTT.GetRequest, value : mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                key match {
+                  case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                    val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                    val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                    val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                    val flatKey: String = ttt(fkS)
+                    asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                  }
+                  case _ =>
+                    throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                }
+
+              override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                 key match {
                   case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                     val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
@@ -629,7 +642,7 @@ package diesel {
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                        s"FlatKeyBouncer($flatKey1)" == flatKey2
+                        flatKey1 == flatKey2
                       case _ =>
                         throw new Exception(s"""Records don't have correct shape:
                                                 |indirect: $indirect
@@ -744,6 +757,19 @@ package diesel {
                     }
 
                     override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                       key match {
                         case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                           val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
@@ -1063,7 +1089,7 @@ package diesel {
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                        s"FlatKeyBouncer($flatKey1)" == flatKey2
+                        flatKey1 == flatKey2
                       case _ =>
                         throw new Exception(s"""Records don't have correct shape:
                                                 |indirect: $indirect
@@ -1178,6 +1204,19 @@ package diesel {
                     }
 
                     override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                       key match {
                         case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                           val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
@@ -1523,7 +1562,7 @@ package diesel {
                             }
                         }
                         val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
-                        s"FlatKeyBouncer($flatKey1)" == flatKey2
+                        flatKey1 == flatKey2
                       case _ =>
                         throw new Exception(s"""Records don't have correct shape:
                                                 |indirect: $indirect
@@ -1638,6 +1677,19 @@ package diesel {
                     }
 
                     override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+                      key match {
+                        case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                          val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                          val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                          val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                          val flatKey: String = ttt(fkS)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                        }
+                        case _ =>
+                          throw new Exception(s"""we should never get here! key: $key , value : $value""")
+                      }
+
+                    override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
                       key match {
                         case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
                           val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
