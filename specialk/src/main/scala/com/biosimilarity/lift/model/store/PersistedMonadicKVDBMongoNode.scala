@@ -124,6 +124,9 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	def asStoreIndirection(
 	  key : mTT.GetRequest
 	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual
+        def asStoreKIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual
 
 	// How is a key-value record represented in the store?
 	def asStoreRecord(
@@ -283,6 +286,12 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  for( pd <- persistenceManifest )
 	  yield { pd.asStoreIndirection( key ) }
 	}
+        def asStoreKIndirection(
+	  key : mTT.GetRequest
+	) : Option[CnxnCtxtLabel[Namespace,Var,Tag] with Factual] = {
+	  for( pd <- persistenceManifest )
+	  yield { pd.asStoreKIndirection( key ) }
+	}
 
 	def asStoreRecord(
 	  key : mTT.GetRequest,
@@ -422,6 +431,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  asStoreEntry( key, mTT.Ground( ttvl( theUUID ) ) )( kvNameSpace )
 	}
 
+        override def asStoreKIndirection(
+	  key : mTT.GetRequest
+	) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
+	  val theUUID = UUID.randomUUID().toString.replace( "-", "" )
+          val ttvl =
+	    textToValue.getOrElse(
+	      throw new Exception( "must have textToValue to convert mongo object" )
+	    )
+	  asStoreEntry( key, mTT.Ground( ttvl( theUUID ) ) )( kvKNameSpace )
+	}
+
 	override def asStoreRecord(
 	  key : mTT.GetRequest,
 	  value : mTT.Resource
@@ -481,7 +501,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                   )
                 ),
                 value
-              )( kvNameSpace )
+              )( kvNameSpace ) // The flatkey to blob can just be a
+                               // normal record -- provided that the
+                               // key to flatkey for continuations are
+                               // recorded as krecords.
             }
             case _ => {
               throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
@@ -1181,7 +1204,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 				BasicLogService.tweet("putKInStore accessing db : ")
 				val dbAccessExpr = () =>
 					for {
-						indrctRcrd <- asStoreIndirection(ptn)
+						indrctRcrd <- asStoreKIndirection(ptn)
 						rcrd <- asStoreKRecord(indrctRcrd, rsrc)
 						sus <- collName
 					} {
