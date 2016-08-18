@@ -5,6 +5,7 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfConfig._
+import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.util.HttpsDirectives.StrictTransportSecurity
 import com.typesafe.config.{Config, ConfigFactory}
@@ -14,6 +15,7 @@ import spray.can.Http
 import spray.can.server.ServerSettings
 import spray.http.HttpMethods._
 import spray.http._
+import com.biosimilarity.evaluator.spray.util._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -36,6 +38,7 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
 
   override def beforeAll(): Unit = {
     serverInstance = Some(new Server(settings).start())
+    resetMongo()
   }
 
   override def afterAll(): Unit = {
@@ -64,14 +67,12 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
     }
   }
 
-  """A POST of msgType 'initializeSessionRequest' sent over http
+  """A POST of msgType 'createUserStep1Request' sent over http
     |to the '/api' route of a running instance of Server""".stripMargin should {
     """respond with the proper 301 "Moved Permanently" status code and HSTS header""" in {
-      val username: String = readString("nodeAdminEmail")
-      val password: String = readString("nodeAdminPass")
+      val email = "testonly@test.com"
       val requestBody: HttpEntity =
-        HttpEntity(ContentType(MediaTypes.`application/json`),
-                   s"""{"msgType":"initializeSessionRequest","content":{"agentURI":"agent://email/$username?password=$password"}}""")
+        HttpEntity(ContentType(MediaTypes.`application/json`), s"""{"msgType":"createUserStep1Request","content":{"email":"$email"}}""")
       val uri: Uri                       = Uri("http://localhost/api").withPort(serverPort)
       val response: Future[HttpResponse] = IO(Http)(system).ask(HttpRequest(POST, uri, entity = requestBody))(timeout).mapTo[HttpResponse]
       whenReady(response) { (r: HttpResponse) =>
@@ -82,19 +83,23 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
     }
   }
 
-  """A POST of msgType 'initializeSessionRequest' sent over https
+  """A POST of msgType 'createUserStep1Request' sent over https
     |to the '/api' route of a running instance of Server""".stripMargin should {
     """respond with the proper 200 "OK" status code""" in {
-      val username: String = readString("nodeAdminEmail")
-      val password: String = readString("nodeAdminPass")
+      val email = "testonly@test.com"
       val requestBody: HttpEntity =
-        HttpEntity(ContentType(MediaTypes.`application/json`),
-                   s"""{"msgType":"initializeSessionRequest","content":{"agentURI":"agent://email/$username?password=$password"}}""")
+        HttpEntity(ContentType(MediaTypes.`application/json`), s"""{"msgType":"createUserStep1Request","content":{"email":"$email"}}""")
       eventualHostConnector
         .flatMap((hc: ActorRef) => hc.ask(HttpRequest(POST, "/api", entity = requestBody))(timeout))
         .mapTo[HttpResponse]
         .map((response: HttpResponse) => response.status)
         .futureValue shouldBe StatusCodes.OK
+    }
+  }
+
+  "Importer" should {
+    "run test files" ignore {
+      Importer.runTestFiles()
     }
   }
 }

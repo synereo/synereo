@@ -10,15 +10,21 @@ package com.biosimilarity.evaluator.importer
 
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.Api
+import com.biosimilarity.evaluator.Api._
+import com.biosimilarity.evaluator.spray.srp.SRPClient
+import com.typesafe.config.ConfigFactory
 
 import scalaj.http.HttpOptions
+//import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.spray.NodeUser
+import com.biosimilarity.evaluator.spray.util._
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 import org.json4s.JsonDSL._
 import java.util.UUID
+import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 
 import com.biosimilarity.evaluator.omni.OmniClient
 import org.json4s.JInt
@@ -281,28 +287,52 @@ object Importer extends EvalConfig
   def createAgent(agent: AgentDesc): Option[String] = {
     val eml = agent.email + (if (agent.email.contains("@")) "" else "@livelygig.com")
     val jsonBlob = parse(agent.jsonBlob).extract[JObject]
-    val json1 = glosevalPost(Api.CreateUserRequest("noConfirm:" + eml, agent.pwd, jsonBlob))
-
-    val jsv = parse(json1)
-
-    val tmsg = (jsv \ "msgType").extract[String]
-    if (tmsg == "createUserError") {
-      println("create user failed, reason : " + (jsv \ "content" \ "reason").extract[String])
-      None
-    }
-    else {
-      val agentURI = (jsv \ "content" \ "agentURI").extract[String]
-      Some(agentURI)
+    val srpClient = new SRPClient()
+    srpClient.init
+    val r1 = parse(glosevalPost(Api.CreateUserStep1Request("noConfirm:" + eml))).extract[ApiResponse]
+    r1.responseContent match {
+      case ApiError(reason) =>
+        println(s"create user, step 1, failed, reason : $reason")
+        None
+      case CreateUserStep1Response(salt) =>
+        srpClient.calculateX(eml, agent.pwd, salt)
+        val r2 = parse(glosevalPost(Api.CreateUserStep2Request("noConfirm:" + eml,
+          salt, srpClient.generateVerifier, jsonBlob))).extract[ApiResponse]
+        r2.responseContent match {
+          case ApiError(reason) =>
+            println(s"create user, step 2, failed, reason : $reason")
+            None
+          case CreateUserStep2Response(agentURI) => Some(agentURI)
+          case _ => throw new Exception("Unspecified response")
+        }
+      case _ => throw new Exception("Unspecified response")
     }
   }
 
-  def createSession(agentURI: String, pwd: String): String = {
-    val json =
-      glosevalPost(Api.InitializeSessionRequest(agentURI + "?password=" + pwd))
-
-    val jsession: JValue = parse(json) \ "content"
-    val uri = (jsession \ "sessionURI").extract[String]
-    uri
+  def createSession(agentURI: String, email: String, pwd: String): Option[String] = {
+    val srpClient = new SRPClient()
+    srpClient.init
+    val r1 = parse(glosevalPost(Api.InitializeSessionStep1Request(s"$agentURI?A=${srpClient.calculateAHex}")))
+      .extract[ApiResponse]
+    r1.responseContent match {
+      case ApiError(reason) =>
+        println(s"initialize session, step 1, failed, reason : $reason")
+        None
+      case InitializeSessionStep1Response(salt, bval) =>
+        srpClient.calculateX(email, pwd, salt)
+        val r2 = parse(glosevalPost(Api.InitializeSessionStep2Request(s"$agentURI?M=${srpClient.calculateMHex(bval)}")))
+          .extract[ApiResponse]
+        r2.responseContent match {
+          case ApiError(reason) =>
+            println(s"initialize session, step 2, failed, reason : $reason")
+            None
+          case InitializeSessionResponse(sessionURI, m2) =>
+            if(srpClient.verifyServerEvidenceMessage(fromHex(m2))) Some(sessionURI)
+            else throw new Exception("Authentication failed on client")
+          case _ => throw new Exception("Unspecified response")
+        }
+      case _ => throw new Exception("Unspecified response")
+    }
   }
 
   def makeAgent(agent: AgentDesc): Unit = {
@@ -311,15 +341,19 @@ object Importer extends EvalConfig
       case Some(agentURI) =>
         val agentCap = agentURI.replace("agent://cap/", "").slice(0, 36)
         agentsById.put(agent.id, agentCap)
-        val session = createSession(agentURI, agent.pwd)
-        sessionsById.put(agent.id, session)
+        createSession(agentURI, agent.email, agent.pwd) match {
+          case None => throw new Exception("Create session failure.")
+          case Some(session) =>
+            sessionsById.put(agent.id, session)
 
-        agent.aliasLabels match {
-          case None =>()
-          case Some(l) =>
-            val lbls = l.map(lbl => makeLabel(LabelDesc.extractFrom(lbl)).toTermString(resolveLabel))
-            glosevalPost(Api.AddAliasLabelsRequest(session, "alias", lbls))
+            agent.aliasLabels match {
+              case None =>()
+              case Some(l) =>
+                val lbls = l.map(lbl => makeLabel(LabelDesc.extractFrom(lbl)).toTermString(resolveLabel))
+                glosevalPost(Api.AddAliasLabelsRequest(session, "alias", lbls))
+            }
         }
+      case _ => throw new Exception("Unspecified response")
     }
   }
 
@@ -433,13 +467,13 @@ object Importer extends EvalConfig
     getAgentURI(NodeUser.email, NodeUser.password) match {
       case Some(uri) => {
         val adminId = uri.replace("agent://", "")
-        val adminSession = createSession(uri, NodeUser.password)
-        sessionsById.put(adminId, adminSession) // longpoll on adminSession
-        println("using admin session URI : " + adminSession)
-        val thrd = longPoll()
-        thrd.start()
-
         try {
+          val adminSession = createSession(uri, NodeUser.email, NodeUser.password).get
+          sessionsById.put(adminId, adminSession) // longpoll on adminSession
+          println("using admin session URI : " + adminSession)
+          val thrd = longPoll()
+          thrd.start()
+
           dataset.labels match {
             case Some(lbls) => lbls.foreach(l => makeLabel(LabelDesc.extractFrom(l)))
             case None => ()
@@ -476,7 +510,7 @@ object Importer extends EvalConfig
         case _ => throw new Exception("unable to open admin session")
       }
     val adminId = adminURI.replace("agent://", "")
-    val adminSession = createSession(adminURI, NodeUser.password)
+    val adminSession = createSession(adminURI, NodeUser.email, NodeUser.password).get
     sessionsById.put(adminId, adminSession) // longpoll on adminSession
     println("using admin session URI : " + adminSession)
     var testOmni = EvalConfConfig.isOmniRequired()

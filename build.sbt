@@ -204,6 +204,7 @@ lazy val glosevalDeps = Seq(
   "org.prolog4j"                % "prolog4j-api"           % prolog4jVersion,
   "org.prolog4j"                % "prolog4j-tuprolog"      % prolog4jVersion,
   "org.scalaj"                 %% "scalaj-http"            % "2.0.0",
+  "org.bouncycastle"            % "bcprov-jdk15on"         % "1.54",
   "org.scalatest"              %% "scalatest"              % "2.2.6" % "test")
 
 lazy val glosevalDepsSettings = Seq(
@@ -228,7 +229,8 @@ lazy val glosevalSettings = Seq(
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   bintrayOrganization := Some("synereo"),
   test in assembly := {},
-  fork := true)
+  fork := true,
+  parallelExecution in Test := false)
 
 lazy val gloseval = (project in file("gloseval"))
   .settings(glosevalSettings: _*)
