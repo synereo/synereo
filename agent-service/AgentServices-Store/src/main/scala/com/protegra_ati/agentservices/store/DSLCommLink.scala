@@ -273,13 +273,15 @@ object DSLCommLink
             }
 
             override def isIndirectionKey(functor: String, flatKeyCandidate: String): Boolean =
-              nameSpaceToString(functor) == tagToString(flatKeyCandidate)
+              nameSpaceToString(functor) != tagToString(flatKeyCandidate)
 
             override def isIndirection(rcrd: CnxnCtxtBranch[String, String, String]): Boolean = rcrd match {
               case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
-                fk match {
+                k match {
                   case CnxnCtxtBranch(functor, CnxnCtxtLeaf(Left(flatKeyCandidate)) :: Nil) =>
                     isIndirectionKey(functor, flatKeyCandidate)
+                  case _ =>
+                    true
                 }
               case _ =>
                 throw new Exception(s"unexpected krecord: $rcrd")
