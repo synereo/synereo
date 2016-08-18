@@ -174,6 +174,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  value : DBObject
 	) : mTT.GetRequest
 
+        def isIndirectionKey(functor: Namespace, flatKeyCandidate: Tag): Boolean
+
+        def isIndirection(rcrd: CnxnCtxtBranch[Namespace, Var, Tag]): Boolean
+
 	def asResource(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
 	  value : DBObject
@@ -308,7 +312,17 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  for( pd <- persistenceManifest )
 	  yield { pd.asStoreKRecord( key, value ) }
 	}
+
+        def isIndirectionKey(functor: Namespace, flatKeyCandidate: Tag): Option[Boolean] = {
+          for(pd <- persistenceManifest)
+          yield pd.isIndirectionKey(functor, flatKeyCandidate)
+        }
         
+        def isIndirection(rcrd: CnxnCtxtBranch[Namespace, Var, Tag]): Option[Boolean] = {
+          for(pd <- persistenceManifest)
+          yield pd.isIndirection(rcrd)
+        }
+
         def asIndirection(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
 	  value : DBObject
@@ -501,10 +515,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                   )
                 ),
                 value
-              )( kvNameSpace ) // The flatkey to blob can just be a
-                               // normal record -- provided that the
-                               // key to flatkey for continuations are
-                               // recorded as krecords.
+              )( kvKNameSpace )
             }
             case _ => {
               throw new Exception( s"""we should never get here! key: ${key} , value : ${value}""" )
@@ -559,11 +570,10 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 		    fromXQSafeJSONBlob( tagToString( rv ) )
 		  }
 		  case "Base64" => {
-		    val data : Array[Byte] = Base64Coder.decode( tagToString( rv ) )
-		    // val ois : ObjectInputStream =
-// 		      new ObjectInputStream( new ByteArrayInputStream(  data ) )
-                    val ois : DefensiveObjectInputStream =
-		      new DefensiveObjectInputStream( new ByteArrayInputStream(  data ) )
+				val data: Array[Byte] = Base64Coder.decode(tagToString(rv))
+        // NO PRISONERS!
+		    // val data : Array[Byte] = Base64Coder.decode( tagToString( rv ) )
+        val ois : DefensiveObjectInputStream = new DefensiveObjectInputStream( new ByteArrayInputStream(  data ) )
 		    val o : java.lang.Object = ois.readObject();
 		    ois.close()
 		    o
@@ -1051,28 +1061,21 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               case Nil => acc              
               case e :: qryRslts => {
                 try {
-                  val path =
-                    tPath match {
-                      case Left( p ) => p
-                      case Right( p ) => p
-                    }
-                  val flatKey: mTT.GetRequest = pd.asIndirection( path, e )
+                  val flatKey: mTT.GetRequest = pd.asIndirection(tPath.merge, e)
                   // Do a query here!
-                  val answer =
-                    for {
-                      qryClntSessFn <- createMongoQuery(pd, xmlCollName, Left[mTT.GetRequest,mTT.GetRequest]( flatKey ))
-                    } yield {
-                      
-                      wrapAction(qryClntSessFn)(xmlCollName) match {
-                        case x :: Nil =>
-													val ersrc = pd.asResource(flatKey, x)
-													loop(acc ++ List[(DBObject, emT.PlaceInstance)]((e, ersrc)), qryRslts)
-                        case xs =>
-													throw new Exception(s"unique key not unique: $xs")
-                      }
-                      // Since the actlBlob of a flatKey will always have a length of 1, we should
-                    }
-                  answer.getOrElse( List[( DBObject, emT.PlaceInstance )]() )
+                  val answer: Option[List[(DBObject, emT.PlaceInstance)]] = for {
+                    qryClntSessFn <- createMongoQuery(pd, xmlCollName, tPath match {
+                                                        case Left(_) => Left[mTT.GetRequest,mTT.GetRequest](flatKey)
+                                                        case Right(_) => Right[mTT.GetRequest,mTT.GetRequest](flatKey)
+                                                      })
+                  } yield wrapAction(qryClntSessFn)(xmlCollName) match {
+                    case x :: Nil =>
+                      val ersrc = pd.asResource(flatKey, x)
+                      loop(acc ++ List[(DBObject, emT.PlaceInstance)]((e, ersrc)), qryRslts)
+                    case xs =>
+                      throw new Exception(s"unique key not unique: $xs")
+                  }
+                  answer.getOrElse(List.empty[(DBObject, emT.PlaceInstance)])
                 }
                 catch {
                   case e : UnificationQueryFilter[Namespace,Var,Tag] => {
@@ -2803,6 +2806,12 @@ package usage {
                 // }
                 throw new Exception("asIndirection has not been implemented for this example")
               }
+
+	      override def isIndirectionKey(functor: String, flatKeyCandidate: String): Boolean =
+                throw new Exception("isIndirectionKey has not been implemented for this example")
+
+              override def isIndirection(rcrd: CnxnCtxtBranch[String, String, String]): Boolean =
+                throw new Exception("isIndirection has not been implemented for this example")
 
 	      override def asResource(
 		key : mTT.GetRequest, // must have the pattern to determine bindings

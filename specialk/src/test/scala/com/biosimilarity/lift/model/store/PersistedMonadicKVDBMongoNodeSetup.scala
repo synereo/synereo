@@ -181,12 +181,25 @@ object PersistedMonadicKVDBMongoNodeSetup
               }
             }
 
+            override def isIndirectionKey(functor: String, flatKeyCandidate: String): Boolean =
+              nameSpaceToString(functor) == tagToString(flatKeyCandidate)
+
+            override def isIndirection(rcrd: CnxnCtxtBranch[String, String, String]): Boolean = rcrd match {
+              case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                fk match {
+                  case CnxnCtxtBranch(functor, CnxnCtxtLeaf(Left(flatKeyCandidate)) :: Nil) =>
+                    isIndirectionKey(functor, flatKeyCandidate)
+                }
+              case _ =>
+                throw new Exception(s"unexpected krecord: $rcrd")
+            }
+
             override def asResource(key: mTT.GetRequest, value: DBObject): emT.PlaceInstance = {
               val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
               val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
               val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
               CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
-                case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, v :: Nil) :: Nil) =>
+                case rcrd @ CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, v :: Nil) :: Nil) =>
                   matchMap(key, k) match {
                     case Some(soln) =>
                       if (compareNameSpace(ns, kvNameSpace)) {
@@ -197,6 +210,13 @@ object PersistedMonadicKVDBMongoNodeSetup
                         emT.PlaceInstance(k,
                           Left[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](boundWrapper),
                           theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                      } else if ((compareNameSpace(ns, kvKNameSpace)) && isIndirection(rcrd)) {
+                        val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String,String,String]("string", v :: Nil))
+                        val groundWrapper = mTT.Ground(cacheValueRslt)
+                        val boundHMWrapper = mTT.RBoundHM(Some( groundWrapper ), Some(soln))
+                        val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                        val finalRslt = emT.PlaceInstance(k, Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](boundWrapper), theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution])
+                        finalRslt
                       } else if (compareNameSpace(ns, kvKNameSpace)) {
                         val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
                         emT.PlaceInstance(k,

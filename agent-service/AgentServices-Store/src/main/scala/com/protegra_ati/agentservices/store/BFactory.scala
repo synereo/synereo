@@ -428,7 +428,7 @@ package bfactory {
                     val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
                     val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
                     val flatKey: String = ttt(fkS)
-                    asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                    asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvKNameSpace)
                   }
                   case _ =>
                     throw new Exception(s"""we should never get here! key: $key , value : $value""")
@@ -461,123 +461,62 @@ package bfactory {
                 }
               }
 
-              override def asResource(
-                key : mTT.GetRequest, // must have the pattern to determine bindings
-                value : DBObject
-              ) : emT.PlaceInstance = {
-                val ltns =
-                  labelToNS.getOrElse(
-                    throw new Exception( "must have labelToNS to convert mongo object" )
-                  )
-                val ttv =
-                  textToVar.getOrElse(
-                    throw new Exception( "must have textToVar to convert mongo object" )
-                  )
-                val ttt =
-                  textToTag.getOrElse(
-                    throw new Exception( "must have textToTag to convert mongo object" )
-                  )
-                //val ttt = ( x : String ) => x
+              override def isIndirectionKey(functor: String, flatKeyCandidate: String): Boolean =
+                nameSpaceToString(functor) == tagToString(flatKeyCandidate)
 
-                //val ptn = asPatternString( key )
-                //println( "ptn : " + ptn )
-
-                CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-                  case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-                    matchMap( key, k ) match {
-                      case Some( soln ) => {
-                        if ( compareNameSpace( ns, kvNameSpace ) ) {
-                          val cacheValueRslt =
-                              asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
-                          BasicLogService.tweet(
-                            (
-                              " ****************************************** "
-                              + "\nBFactory AgentKVDB : "
-                              + "\n method : mkCache"
-                              + "\n ------------------------------------------ "
-		              + "\n computed cacheValue: " + cacheValueRslt
-		              + "\n ****************************************** "
-                            )
-                          )
-                          val groundWrapper =
-                            mTT.Ground( cacheValueRslt )
-                          val boundHMWrapper =
-                            mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
-                          val boundWrapper =
-                            mTT.asRBoundAList( boundHMWrapper )
-
-                          BasicLogService.tweet(
-                            (
-                              " ****************************************** "
-                              + "\nBFactory AgentKVDB : "
-                              + "\n method : mkCache"
-		              + "\n ------------------------------------------ "
-                              + "\n boundWrapper: " + boundWrapper
-		              + " ****************************** "
-                            )
-                          )
-
-                          val finalRslt =
-                            emT.PlaceInstance(
-                              k,
-                              Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                boundWrapper
-                              ),
-                              // BUGBUG -- lgm : why can't the compiler determine
-                              // that this cast is not necessary?
-                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                            )
-
-                          BasicLogService.tweet(
-                            (
-                              " ****************************************** "
-                              + "\nBFactory AgentKVDB : "
-                              + "\n method : mkCache"
-		              + "\n ------------------------------------------ "
-                              + "\n placeInstance: " + finalRslt
-		              + " ****************************** "
-                            )
-                          )
-
-                          finalRslt
-                        }
-                        else {
-                          if ( compareNameSpace( ns, kvKNameSpace ) ) {
-                            val mTT.Continuation( ks ) =
-                              asCacheK(
-                                new CnxnCtxtBranch[String,String,String](
-                                  "string",
-                                  v :: Nil
-                                )
-                              )
-                            emT.PlaceInstance(
-                              k,
-                              Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                ks
-                              ),
-                              // BUGBUG -- lgm : why can't the compiler determine
-                              // that this cast is not necessary?
-                              theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                            )
-                          }
-                          else {
-                            throw new Exception( "unexpected namespace : (" + ns + ")" )
-                          }
-                        }
+              override def isIndirection(rcrd: CnxnCtxtBranch[String, String, String]): Boolean = rcrd match {
+                case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                  fk match {
+                    case CnxnCtxtBranch(functor, CnxnCtxtLeaf(Left(flatKeyCandidate)) :: Nil) =>
+                      val unblob: String = fromXQSafeJSONBlob(flatKeyCandidate) match {
+                        case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
                       }
-                      case None => {
-                        //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                        throw new UnificationQueryFilter( key, k, value )
-                      }
-                    }
+                      isIndirectionKey(functor, unblob)
                   }
-                  case _ => {
-                    throw new Exception( "unexpected record format : " + value )
-                  }
-                }
+                case _ =>
+                  throw new Exception(s"unexpected krecord: $rcrd")
               }
 
+              override def asResource(key: mTT.GetRequest, value: DBObject): emT.PlaceInstance = {
+                val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                  case rcrd @ CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, v :: Nil) :: Nil) =>
+                    matchMap(key, k) match {
+                      case Some(soln) =>
+                        if (compareNameSpace(ns, kvNameSpace)) {
+                          val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                          val groundWrapper = mTT.Ground(cacheValueRslt)
+                          val boundHMWrapper = mTT.RBoundHM(Some(groundWrapper), Some(soln))
+                          val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                          emT.PlaceInstance(k,
+                                            Left[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](boundWrapper),
+                                            theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                        } else if ((compareNameSpace(ns, kvKNameSpace)) && isIndirection(rcrd)) {
+                          val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String,String,String]("string", v :: Nil))
+                          val groundWrapper = mTT.Ground(cacheValueRslt)
+                          val boundHMWrapper = mTT.RBoundHM(Some( groundWrapper ), Some(soln))
+                          val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                          val finalRslt = emT.PlaceInstance(k, Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](boundWrapper), theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution])
+                          finalRslt
+                        } else if (compareNameSpace(ns, kvKNameSpace)) {
+                          val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                          emT.PlaceInstance(k,
+                                            Right[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](ks),
+                                            theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                        } else {
+                          throw new Exception(s"unexpected namespace: $ns")
+                        }
+                      case None =>
+                        throw new UnificationQueryFilter(key, k, value)
+                    }
+                  case _ =>
+                    throw new Exception(s"unexpected record format: $value")
+                }
+              }
             }
+
             override def asCacheK(
               ccl : CnxnCtxtLabel[String,String,String]
             ) : Option[mTT.Continuation] = {
@@ -853,7 +792,7 @@ package bfactory {
                           val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
                           val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
                           val flatKey: String = ttt(fkS)
-                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvKNameSpace)
                         }
                         case _ =>
                           throw new Exception(s"""we should never get here! key: $key , value : $value""")
@@ -886,123 +825,62 @@ package bfactory {
                       }
                     }
 
-                    override def asResource(
-                      key : mTT.GetRequest, // must have the pattern to determine bindings
-                      value : DBObject
-                    ) : emT.PlaceInstance = {
-                      val ltns =
-                        labelToNS.getOrElse(
-                          throw new Exception( "must have labelToNS to convert mongo object" )
-                        )
-                      val ttv =
-                        textToVar.getOrElse(
-                          throw new Exception( "must have textToVar to convert mongo object" )
-                        )
-                      val ttt =
-                        textToTag.getOrElse(
-                          throw new Exception( "must have textToTag to convert mongo object" )
-                        )
-                      //val ttt = ( x : String ) => x
-                      
-                      //val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
-                      
-                      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-                        case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-                          matchMap( key, k ) match {
-                            case Some( soln ) => {
-                              if ( compareNameSpace( ns, kvNameSpace ) ) {
-                                val cacheValueRslt =
-                                  asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-                                    + "\n ------------------------------------------ "
-		                    + "\n computed cacheValue: " + cacheValueRslt
-		                    + "\n ****************************************** "
-                                  )
-                                )
-                                val groundWrapper =
-                                  mTT.Ground( cacheValueRslt )
-                                val boundHMWrapper =
-                                  mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
-                                val boundWrapper =
-                                  mTT.asRBoundAList( boundHMWrapper )
-                                
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-		                    + "\n ------------------------------------------ "
-                                    + "\n boundWrapper: " + boundWrapper
-		                    + " ****************************** "
-                                  )
-                                )
-                                
-                                val finalRslt =
-                                  emT.PlaceInstance(
-                                    k,
-                                    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                      boundWrapper
-                                    ),
-                                    // BUGBUG -- lgm : why can't the compiler determine
-                                    // that this cast is not necessary?
-                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                                  )
-                                
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-		                    + "\n ------------------------------------------ "
-                                    + "\n placeInstance: " + finalRslt
-		                    + " ****************************** "
-                                  )
-                                )
-                                
+                    override def isIndirectionKey(functor: String, flatKeyCandidate: String): Boolean =
+                      nameSpaceToString(functor) == tagToString(flatKeyCandidate)
+
+                    override def isIndirection(rcrd: CnxnCtxtBranch[String, String, String]): Boolean = rcrd match {
+                      case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                        fk match {
+                          case CnxnCtxtBranch(functor, CnxnCtxtLeaf(Left(flatKeyCandidate)) :: Nil) =>
+                            val unblob: String = fromXQSafeJSONBlob(flatKeyCandidate) match {
+                              case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                            }
+                            isIndirectionKey(functor, unblob)
+                        }
+                      case _ =>
+                        throw new Exception(s"unexpected krecord: $rcrd")
+                    }
+
+                    override def asResource(key: mTT.GetRequest, value: DBObject): emT.PlaceInstance = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case rcrd @ CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, v :: Nil) :: Nil) =>
+                          matchMap(key, k) match {
+                            case Some(soln) =>
+                              if (compareNameSpace(ns, kvNameSpace)) {
+                                val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                                val groundWrapper = mTT.Ground(cacheValueRslt)
+                                val boundHMWrapper = mTT.RBoundHM(Some(groundWrapper), Some(soln))
+                                val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                                emT.PlaceInstance(k,
+                                                  Left[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](boundWrapper),
+                                                  theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                              } else if ((compareNameSpace(ns, kvKNameSpace)) && isIndirection(rcrd)) {
+                                val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String,String,String]("string", v :: Nil))
+                                val groundWrapper = mTT.Ground(cacheValueRslt)
+                                val boundHMWrapper = mTT.RBoundHM(Some( groundWrapper ), Some(soln))
+                                val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                                val finalRslt = emT.PlaceInstance(k, Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](boundWrapper), theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution])
                                 finalRslt
+                              } else if (compareNameSpace(ns, kvKNameSpace)) {
+                                val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                                emT.PlaceInstance(k,
+                                                  Right[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](ks),
+                                                  theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                              } else {
+                                throw new Exception(s"unexpected namespace: $ns")
                               }
-                              else {
-                                if ( compareNameSpace( ns, kvKNameSpace ) ) {
-                                  val mTT.Continuation( ks ) =
-                                    asCacheK(
-                                      new CnxnCtxtBranch[String,String,String](
-                                        "string",
-                                        v :: Nil
-                                      )
-                                    )
-                                  emT.PlaceInstance(
-                                    k,
-                                    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-                                      ks
-                                    ),
-                                    // BUGBUG -- lgm : why can't the compiler determine
-                                    // that this cast is not necessary?
-                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                                  )
-                                }
-                                else {
-                                  throw new Exception( "unexpected namespace : (" + ns + ")" )
-                                }
-                              }
-                            }
-                            case None => {
-                              //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                              throw new UnificationQueryFilter( key, k, value )
-                            }
-                          }                                             
-                        }
-                        case _ => {
-                          throw new Exception( "unexpected record format : " + value )
-                        }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case _ =>
+                          throw new Exception(s"unexpected record format: $value")
                       }
                     }
-                    
                   }
+
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
@@ -1286,7 +1164,7 @@ package bfactory {
                           val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
                           val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
                           val flatKey: String = ttt(fkS)
-                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvKNameSpace)
                         }
                         case _ =>
                           throw new Exception(s"""we should never get here! key: $key , value : $value""")
@@ -1319,123 +1197,62 @@ package bfactory {
                       }
                     }
 
-                    override def asResource(
-                      key : mTT.GetRequest, // must have the pattern to determine bindings
-                      value : DBObject
-                    ) : emT.PlaceInstance = {
-                      val ltns =
-                        labelToNS.getOrElse(
-                          throw new Exception( "must have labelToNS to convert mongo object" )
-                        )
-                      val ttv =
-                        textToVar.getOrElse(
-                          throw new Exception( "must have textToVar to convert mongo object" )
-                        )
-                      val ttt =
-                        textToTag.getOrElse(
-                          throw new Exception( "must have textToTag to convert mongo object" )
-                        )
-                      //val ttt = ( x : String ) => x
-                      
-                      //val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
-                      
-                      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-                        case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-                          matchMap( key, k ) match {
-                            case Some( soln ) => {
-                              if ( compareNameSpace( ns, kvNameSpace ) ) {
-                                val cacheValueRslt =
-                                  asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-                                    + "\n ------------------------------------------ "
-		                    + "\n computed cacheValue: " + cacheValueRslt
-		                    + "\n ****************************************** "
-                                  )
-                                )
-                                val groundWrapper =
-                                  mTT.Ground( cacheValueRslt )
-                                val boundHMWrapper =
-                                  mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
-                                val boundWrapper =
-                                  mTT.asRBoundAList( boundHMWrapper )
-                                
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-		                    + "\n ------------------------------------------ "
-                                    + "\n boundWrapper: " + boundWrapper
-		                    + " ****************************** "
-                                  )
-                                )
-                                
-                                val finalRslt =
-                                  emT.PlaceInstance(
-                                    k,
-                                    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                      boundWrapper
-                                    ),
-                                    // BUGBUG -- lgm : why can't the compiler determine
-                                    // that this cast is not necessary?
-                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                                  )
-                                
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-		                    + "\n ------------------------------------------ "
-                                    + "\n placeInstance: " + finalRslt
-		                    + " ****************************** "
-                                  )
-                                )
-                                
+                    override def isIndirectionKey(functor: String, flatKeyCandidate: String): Boolean =
+                      nameSpaceToString(functor) == tagToString(flatKeyCandidate)
+
+                    override def isIndirection(rcrd: CnxnCtxtBranch[String, String, String]): Boolean = rcrd match {
+                      case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                        fk match {
+                          case CnxnCtxtBranch(functor, CnxnCtxtLeaf(Left(flatKeyCandidate)) :: Nil) =>
+                            val unblob: String = fromXQSafeJSONBlob(flatKeyCandidate) match {
+                              case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                            }
+                            isIndirectionKey(functor, unblob)
+                        }
+                      case _ =>
+                        throw new Exception(s"unexpected krecord: $rcrd")
+                    }
+
+                    override def asResource(key: mTT.GetRequest, value: DBObject): emT.PlaceInstance = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case rcrd @ CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, v :: Nil) :: Nil) =>
+                          matchMap(key, k) match {
+                            case Some(soln) =>
+                              if (compareNameSpace(ns, kvNameSpace)) {
+                                val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                                val groundWrapper = mTT.Ground(cacheValueRslt)
+                                val boundHMWrapper = mTT.RBoundHM(Some(groundWrapper), Some(soln))
+                                val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                                emT.PlaceInstance(k,
+                                                  Left[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](boundWrapper),
+                                                  theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                              } else if ((compareNameSpace(ns, kvKNameSpace)) && isIndirection(rcrd)) {
+                                val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String,String,String]("string", v :: Nil))
+                                val groundWrapper = mTT.Ground(cacheValueRslt)
+                                val boundHMWrapper = mTT.RBoundHM(Some( groundWrapper ), Some(soln))
+                                val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                                val finalRslt = emT.PlaceInstance(k, Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](boundWrapper), theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution])
                                 finalRslt
+                              } else if (compareNameSpace(ns, kvKNameSpace)) {
+                                val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                                emT.PlaceInstance(k,
+                                                  Right[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](ks),
+                                                  theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                              } else {
+                                throw new Exception(s"unexpected namespace: $ns")
                               }
-                              else {
-                                if ( compareNameSpace( ns, kvKNameSpace ) ) {
-                                  val mTT.Continuation( ks ) =
-                                    asCacheK(
-                                      new CnxnCtxtBranch[String,String,String](
-                                        "string",
-                                        v :: Nil
-                                      )
-                                    )
-                                  emT.PlaceInstance(
-                                    k,
-                                    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-                                      ks
-                                    ),
-                                    // BUGBUG -- lgm : why can't the compiler determine
-                                    // that this cast is not necessary?
-                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                                  )
-                                }
-                                else {
-                                  throw new Exception( "unexpected namespace : (" + ns + ")" )
-                                }
-                              }
-                            }
-                            case None => {
-                              //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                              throw new UnificationQueryFilter( key, k, value )
-                            }
-                          }                                             
-                        }
-                        case _ => {
-                          throw new Exception( "unexpected record format : " + value )
-                        }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case _ =>
+                          throw new Exception(s"unexpected record format: $value")
                       }
                     }
-                    
                   }
+
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
@@ -1740,7 +1557,7 @@ package bfactory {
                           val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
                           val ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
                           val flatKey: String = ttt(fkS)
-                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                          asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvKNameSpace)
                         }
                         case _ =>
                           throw new Exception(s"""we should never get here! key: $key , value : $value""")
@@ -1773,123 +1590,62 @@ package bfactory {
                       }
                     }
 
-                    override def asResource(
-                      key : mTT.GetRequest, // must have the pattern to determine bindings
-                      value : DBObject
-                    ) : emT.PlaceInstance = {
-                      val ltns =
-                        labelToNS.getOrElse(
-                          throw new Exception( "must have labelToNS to convert mongo object" )
-                        )
-                      val ttv =
-                        textToVar.getOrElse(
-                          throw new Exception( "must have textToVar to convert mongo object" )
-                        )
-                      val ttt =
-                        textToTag.getOrElse(
-                          throw new Exception( "must have textToTag to convert mongo object" )
-                        )
-                      //val ttt = ( x : String ) => x
-                      
-                      //val ptn = asPatternString( key )
-                      //println( "ptn : " + ptn )               
-                      
-                      CnxnMongoObjectifier.fromMongoObject( value )( ltns, ttv, ttt ) match {
-                        case CnxnCtxtBranch( ns, CnxnCtxtBranch( kNs, k :: Nil ) :: CnxnCtxtBranch( vNs, v :: Nil ) :: Nil ) => {
-                          matchMap( key, k ) match {
-                            case Some( soln ) => {
-                              if ( compareNameSpace( ns, kvNameSpace ) ) {
-                                val cacheValueRslt =
-                                  asCacheValue( new CnxnCtxtBranch[String,String,String]( "string", v :: Nil ) )
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-                                    + "\n ------------------------------------------ "
-		                    + "\n computed cacheValue: " + cacheValueRslt
-		                    + "\n ****************************************** "
-                                  )
-                                )
-                                val groundWrapper =
-                                  mTT.Ground( cacheValueRslt )
-                                val boundHMWrapper =
-                                  mTT.RBoundHM( Some( groundWrapper ), Some( soln ) )
-                                val boundWrapper =
-                                  mTT.asRBoundAList( boundHMWrapper )
-                                
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-		                    + "\n ------------------------------------------ "
-                                    + "\n boundWrapper: " + boundWrapper
-		                    + " ****************************** "
-                                  )
-                                )
-                                
-                                val finalRslt =
-                                  emT.PlaceInstance(
-                                    k,
-                                    Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](
-                                      boundWrapper
-                                    ),
-                                    // BUGBUG -- lgm : why can't the compiler determine
-                                    // that this cast is not necessary?
-                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                                  )
-                                
-                                BasicLogService.tweet(
-                                  (
-                                    " ****************************************** "
-                                    + "\nBFactory AgentKVDB : "
-                                    + "\n method : mkCache"
-		                    + "\n ------------------------------------------ "
-                                    + "\n placeInstance: " + finalRslt
-		                    + " ****************************** "
-                                  )
-                                )
-                                
+                    override def isIndirectionKey(functor: String, flatKeyCandidate: String): Boolean =
+                      nameSpaceToString(functor) == tagToString(flatKeyCandidate)
+
+                    override def isIndirection(rcrd: CnxnCtxtBranch[String, String, String]): Boolean = rcrd match {
+                      case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fk :: Nil) :: Nil) =>
+                        fk match {
+                          case CnxnCtxtBranch(functor, CnxnCtxtLeaf(Left(flatKeyCandidate)) :: Nil) =>
+                            val unblob: String = fromXQSafeJSONBlob(flatKeyCandidate) match {
+                              case TheMTT.Ground(ConcreteBFactHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                            }
+                            isIndirectionKey(functor, unblob)
+                        }
+                      case _ =>
+                        throw new Exception(s"unexpected krecord: $rcrd")
+                    }
+
+                    override def asResource(key: mTT.GetRequest, value: DBObject): emT.PlaceInstance = {
+                      val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
+                      val ttv  = textToVar.getOrElse(throw new Exception("must have textToVar to convert mongo object"))
+                      val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert mongo object"))
+                      CnxnMongoObjectifier().fromMongoObject(value)(ltns, ttv, ttt) match {
+                        case rcrd @ CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, v :: Nil) :: Nil) =>
+                          matchMap(key, k) match {
+                            case Some(soln) =>
+                              if (compareNameSpace(ns, kvNameSpace)) {
+                                val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                                val groundWrapper = mTT.Ground(cacheValueRslt)
+                                val boundHMWrapper = mTT.RBoundHM(Some(groundWrapper), Some(soln))
+                                val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                                emT.PlaceInstance(k,
+                                                  Left[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](boundWrapper),
+                                                  theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                              } else if ((compareNameSpace(ns, kvKNameSpace)) && isIndirection(rcrd)) {
+                                val cacheValueRslt = asCacheValue(new CnxnCtxtBranch[String,String,String]("string", v :: Nil))
+                                val groundWrapper = mTT.Ground(cacheValueRslt)
+                                val boundHMWrapper = mTT.RBoundHM(Some( groundWrapper ), Some(soln))
+                                val boundWrapper = mTT.asRBoundAList(boundHMWrapper)
+                                val finalRslt = emT.PlaceInstance(k, Left[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]](boundWrapper), theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution])
                                 finalRslt
+                              } else if (compareNameSpace(ns, kvKNameSpace)) {
+                                val mTT.Continuation(ks) = asCacheK(new CnxnCtxtBranch[String, String, String]("string", v :: Nil))
+                                emT.PlaceInstance(k,
+                                                  Right[mTT.Resource, List[Option[mTT.Resource] => Unit@suspendable]](ks),
+                                                  theEMTypes.PrologSubstitution(soln).asInstanceOf[emT.Substitution])
+                              } else {
+                                throw new Exception(s"unexpected namespace: $ns")
                               }
-                              else {
-                                if ( compareNameSpace( ns, kvKNameSpace ) ) {
-                                  val mTT.Continuation( ks ) =
-                                    asCacheK(
-                                      new CnxnCtxtBranch[String,String,String](
-                                        "string",
-                                        v :: Nil
-                                      )
-                                    )
-                                  emT.PlaceInstance(
-                                    k,
-                                    Right[mTT.Resource,List[Option[mTT.Resource] => Unit @suspendable]]( 
-                                      ks
-                                    ),
-                                    // BUGBUG -- lgm : why can't the compiler determine
-                                    // that this cast is not necessary?
-                                    theEMTypes.PrologSubstitution( soln ).asInstanceOf[emT.Substitution]
-                                  )
-                                }
-                                else {
-                                  throw new Exception( "unexpected namespace : (" + ns + ")" )
-                                }
-                              }
-                            }
-                            case None => {
-                              //BasicLogService.tweet( "Unexpected matchMap failure: " + key + " " + k )
-                              throw new UnificationQueryFilter( key, k, value )
-                            }
-                          }                                             
-                        }
-                        case _ => {
-                          throw new Exception( "unexpected record format : " + value )
-                        }
+                            case None =>
+                              throw new UnificationQueryFilter(key, k, value)
+                          }
+                        case _ =>
+                          throw new Exception(s"unexpected record format: $value")
                       }
                     }
-                    
                   }
+
                   override def asCacheK(
                     ccl : CnxnCtxtLabel[String,String,String]
                   ) : Option[mTT.Continuation] = {
