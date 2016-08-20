@@ -1,23 +1,47 @@
 package com.biosimilarity.evaluator.spray
 
-import com.typesafe.config.{Config, ConfigFactory}
-import spray.can.server.ServerSettings
+import java.io.File
 
-import scala.sys.ShutdownHookThread
+import scopt.OptionParser
 
-object Boot extends App {
+object Boot extends App with BootTasks {
 
-  // TODO: Remove sleep below once race condition is fixed
-  // @@GS - is it fixed??
-  // Thread.sleep(3000)
+  case class BootConfig(verbose: Boolean = false, mode: String = "", file: Option[File] = None)
 
-  val config: Config = ConfigFactory.load()
+  val parser: OptionParser[BootConfig] = new OptionParser[BootConfig]("gloseval") {
 
-  val settings: ServerSettings = ServerSettings(config)
+    override def showUsageOnError = true
 
-  val sht: ShutdownHookThread = sys.addShutdownHook(shutdown())
+    head("GLoSEval", "Alpha")
 
-  val service: Server = new Server(settings).start()
+    help("help").text("prints this usage text\n")
 
-  private def shutdown(): Unit = { val _ = service.stop(); () }
+    cmd("start")
+      .optional()
+      .action((_: Unit, c: BootConfig) => c.copy(mode = "start"))
+      .text("  Start GLoSEval\n")
+
+    cmd("import")
+      .action((_: Unit, c: BootConfig) => c.copy(mode = "import"))
+      .text("  Reset the Database, Start GLoSEval, and run the Importer")
+      .children(opt[File]('f', "file").optional().valueName("<file>").action((x, c) => c.copy(file = Some(x))).text("file to import.\n"))
+
+    note("""  If no file is specified, the importer will import the file specified
+           |  in the 'ImporterServiceDemoDataFile' field of eval.conf.
+           |""".stripMargin)
+
+    cmd("reset")
+      .action((_: Unit, c: BootConfig) => c.copy(mode = "reset"))
+      .text("  Reset the Database")
+  }
+
+  parser.parse(args, BootConfig()) match {
+    case Some(BootConfig(_, mode, _)) if mode == "start" || mode == "" =>
+      startServer()
+    case Some(BootConfig(_, "import", file)) =>
+      runImporter(file)
+    case Some(BootConfig(_, "reset", file)) =>
+      resetDatabase()
+    case None =>
+  }
 }

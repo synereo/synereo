@@ -9,6 +9,7 @@
 package com.biosimilarity.evaluator.importer
 
 import com.biosimilarity.evaluator.distribution.EvalConfig
+import java.io.File
 
 trait ImporterConfig {
   self : EvalConfig =>
@@ -96,13 +97,9 @@ trait ImporterConfig {
     }
 */
 
-  def serviceDemoDataFile() = {
-    _serviceDemoDataFile match {
-      case Some( sddf ) => sddf
-      case None => {
-        evalConfig().getString( "ImporterServiceDemoDataFile" )
-      }
-    }
+  def serviceDemoDataFile(): File = _serviceDemoDataFile match {
+    case Some(file) => new File(file)
+    case None       => new File(evalConfig().getString("ImporterServiceDemoDataFile"))
   }
 
   /*
