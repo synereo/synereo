@@ -1,11 +1,14 @@
 package com.biosimilarity.evaluator.spray
 
+import akka.actor.Actor
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.spray.util._
+import com.typesafe.config.{Config, ConfigFactory}
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpec}
+import spray.can.server.ServerSettings
 import spray.http._
 import spray.testkit.ScalatestRouteTest
 
@@ -45,6 +48,13 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
   var B = ""
 
   def actorRefFactory = system
+
+  //@@GS - need to review this ...
+  val config: Config = ConfigFactory.load()
+  val settings: ServerSettings = ServerSettings(config)
+  var serverInstance: Server = new Server(settings).start()
+
+
 
   val httpsUri: Uri = Uri("/api").withScheme("https").withPort(EvalConfConfig.serverSSLPort)
 
