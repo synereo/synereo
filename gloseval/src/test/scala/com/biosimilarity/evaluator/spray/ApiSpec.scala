@@ -10,7 +10,6 @@ import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.spray.util._
-import com.biosimilarity.evaluator.spray.CapUtilities
 import com.typesafe.config.{Config, ConfigFactory}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -23,8 +22,9 @@ import spray.can.server.ServerSettings
 import spray.http.HttpMethods._
 import spray.http._
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaFutures with IntegrationPatience with CapUtilities {
 
@@ -175,6 +175,25 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     post(cont).map((response: HttpResponse) => parse(response.entity.asString).extract[JArray])
   }
 
+  def pingUntilPong(ssn: SessionUri): Future[JArray] = {
+    def _step(acc: List[JValue]): List[JValue] = {
+      val ja = Await.result(sessionPing(ssn), 10.seconds )
+      var ta = acc
+
+      var done = false
+      ja.arr.foreach((jv: JValue) => {
+        val msgType = (jv \ "msgType").extract[String]
+        if (msgType == "sessionPong") done = true
+        else ta = jv :: ta
+      })
+
+      if (done) ta
+      else _step(ta)
+    }
+    val l = _step(Nil)
+    Future.successful(JArray(l))
+  }
+
   "The Administrator" should {
     "be able to create a session" in {
       openAdminSession().futureValue shouldNot be ("")
@@ -221,14 +240,47 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       }
     }
 
-    """query empty database without crashing""" in {
+    """return evalSubscribeResponse when querying using any, each or all""" in {
       val proc: Future[(JArray)] = for {
-        ssn <- openAdminSession()
-        cnxn <- makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
-        spwnssnA <- spawnSession(ssn)
-        a <- sessionPing(spwnssnA)
+        tssn <- openAdminSession()
+        ssn <- spawnSession(tssn)
+        _ <- {
+          for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
+          makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
+          makeQueryOnSelf(ssn, "any([MESSAGEPOSTLABEL])")
+          makeQueryOnSelf(ssn, "all([MESSAGEPOSTLABEL])")
+        }
+        a <- sessionPing(ssn)
       } yield a
-      proc.futureValue.values.length shouldBe 1
+      whenReady(proc) {
+        case (ja: JArray) =>
+          ja.arr.length shouldBe 1
+          val rsp = ja.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          msgType shouldBe "evalSubscribeResponse"
+        case _ => fail("should not happen")
+      }
+    }
+
+    """return evalSubscribeError when querying not using any, each or all""" in {
+      val proc: Future[(JArray)] = for {
+        tssn <- openAdminSession()
+        ssn <- spawnSession(tssn)
+        _ <- {
+          for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
+          makeQueryOnSelf(ssn, "lordfarquad([MESSAGEPOSTLABEL])")
+        }
+        //a <- sessionPing(ssn)
+        a <- pingUntilPong(ssn)
+      } yield a
+      whenReady(proc) {
+        case (ja: JArray) =>
+          ja.arr.length shouldBe 1
+          val rsp = ja.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          msgType shouldBe "evalSubscribeError"
+        case _ => fail("should not happen")
+      }
     }
   }
 }

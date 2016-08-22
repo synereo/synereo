@@ -37,7 +37,7 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       def handleCompleteClaim( v : ConcreteHL.HLExpr ) : Unit = {
         v match {
           case PostedExpr((PostedExpr(CompleteClaim( sessionId, correlationId, verifier, claim, data )), _, _, _)) => {
-            CometActorMapper.cometMessage(sessionId, compact(render(
+            SessionManager.cometMessage(sessionId, compact(render(
               ("msgType" -> "completeClaim") ~
               ("content" -> (
                 ("sessionURI" -> sessionId) ~
@@ -106,7 +106,7 @@ trait VerificationBehaviorsT extends FJTaskRunnersX {
       def handleVerificationNotification( v : ConcreteHL.HLExpr ) : Unit = {
         v match {
           case PostedExpr((PostedExpr(VerificationNotification( sessionId, correlationId, claimant, claim, witness )), _, _, _)) => {
-            CometActorMapper.cometMessage(sessionId, compact(render(
+            SessionManager.cometMessage(sessionId, compact(render(
               ("msgType" -> "verificationNotification") ~
               ("content" -> (
                 ("sessionURI" -> sessionId) ~

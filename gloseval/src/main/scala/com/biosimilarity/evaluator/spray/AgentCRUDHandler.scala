@@ -227,7 +227,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
         BasicLogService.tweet( "handleaddAgentExternalIdentityRequest | onGet | onPut" )
 
-        CometActorMapper.cometMessage(
+        SessionManager.cometMessage(
           sessionURIStr,
           compact(
             render(
@@ -256,7 +256,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( v )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "addAgentExternalIdentityError" ) ~
               ( "content" -> (
                 ( "sessionURI" -> sessionURIStr ) ~
@@ -315,7 +315,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
         BasicLogService.tweet( "handleaddAgentAliasesRequest | onGet | onPut" )
         
-        CometActorMapper.cometMessage(
+        SessionManager.cometMessage(
           sessionURIStr,
           compact(
             render(
@@ -354,7 +354,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( v )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "addAgentAliasesError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -385,7 +385,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
         BasicLogService.tweet( "handleremoveAgentAliasesRequest | onGet | onPut" )
         
-        CometActorMapper.cometMessage( sessionURIStr, compact( render(
+        SessionManager.cometMessage( sessionURIStr, compact( render(
           ( "msgType" -> "removeAgentAliasesResponse" ) ~
           ( "content" ->
            ( "sessionURI" -> sessionURIStr )
@@ -421,7 +421,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( v )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "removeAgentAliasesError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -455,7 +455,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         case Bottom => Nil
       }
       
-      CometActorMapper.cometMessage( sessionURIStr, compact( render(
+      SessionManager.cometMessage( sessionURIStr, compact( render(
         ( "msgType" -> "getAgentAliasesResponse" ) ~
         ( "content" ->
          ( "sessionURI" -> sessionURIStr ) ~
@@ -477,7 +477,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( v )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "getAgentAliasesError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -507,7 +507,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
       v match {
         case PostedExpr( ( PostedExpr( defaultAlias : String ), _, _, _ ) ) => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "getDefaultAliasResponse" ) ~
             ( "content" ->
              ( "sessionURI" -> sessionURIStr ) ~
@@ -516,7 +516,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           ) ) )
         }
         case Bottom => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "getDefaultAliasError" ) ~
             ( "content" ->
              ( "sessionURI" -> sessionURIStr ) ~
@@ -525,7 +525,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           ) ) )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "getDefaultAliasError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -549,7 +549,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( optRsrc, v )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "getDefaultAliasError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -578,7 +578,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
       val sessionURIStr = msg.sessionURI.toString
 
-      CometActorMapper.cometMessage( sessionURIStr, compact( render(
+      SessionManager.cometMessage( sessionURIStr, compact( render(
         ( "msgType" -> "setDefaultAliasResponse" ) ~
         ( "content" ->
           ( "sessionURI" -> sessionURIStr )
@@ -608,7 +608,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
         BasicLogService.tweet( "handleaddAliasExternalIdentitiesRequest | onGet | onPut" )
         
-        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        SessionManager.cometMessage(sessionURIStr, compact( render(
           ( "msgType" -> "addAliasExternalIdentityResponse" ) ~
           ( "content" -> ( "sessionURI" -> sessionURIStr ) )
         ) ) )
@@ -630,7 +630,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           put[List[ExternalIdentity]]( externalIdsStorageLocation, List( aliasStorageCnxn ), msg.ids, onPut )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "addAliasExternalIdentitiesError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -654,7 +654,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( optRsrc, v )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "addAliasExternalIdentitiesError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -686,7 +686,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
         BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet | onPut" )
         
-        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        SessionManager.cometMessage(sessionURIStr, compact( render(
           ( "msgType" -> "removeAliasExternalIdentitiesResponse" ) ~
           ( "content" -> ( "sessionURI" -> sessionURIStr ) )
         ) ) )
@@ -706,7 +706,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         case Bottom => {
           BasicLogService.tweet( "handleremoveAliasExternalIdentitiesRequest | onGet: no externalIdsList exists" )
           
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "removeAliasExternalIdentitiesError" ) ~
             ( "content" ->
              ( "sessionURI" -> sessionURIStr ) ~
@@ -715,7 +715,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           ) ) )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "removeAliasExternalIdentitiesError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -739,7 +739,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( optRsrc, v )
         }
         case _ => {
-          CometActorMapper.cometMessage( sessionURIStr, compact( render(
+          SessionManager.cometMessage( sessionURIStr, compact( render(
             ( "msgType" -> "removeAliasExternalIdentitiesError" ) ~
             ( "content" -> (
               ( "sessionURI" -> sessionURIStr ) ~
@@ -780,7 +780,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
       val sessionURIStr = msg.sessionURI.toString
 
-      CometActorMapper.cometMessage(sessionURIStr, compact( render(
+      SessionManager.cometMessage(sessionURIStr, compact( render(
         ( "msgType" -> "setAliasDefaultExternalIdentityResponse" ) ~
         ( "content" -> ( "sessionURI" -> sessionURIStr ) )
       ) ) )
@@ -809,7 +809,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         
         // TODO: Should the write cnxn be cleared out or removed?
         
-        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        SessionManager.cometMessage(sessionURIStr, compact( render(
           ( "msgType" -> "removeAliasConnectionsResponse" ) ~
           ( "content" -> ( "sessionURI" -> sessionURIStr ) )
         ) ) )
@@ -830,7 +830,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           put( biCnxnsStorageLocation, List( aliasStorageCnxn ), newBiCnxnListStr, onPut )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "removeAliasConnectionsError" ) ~
             ( "content" -> 
              ( "sessionURI" -> sessionURIStr ) ~
@@ -854,7 +854,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( optRsrc, v )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "removeAliasConnectionsError" ) ~
             ( "content" -> 
               ( "sessionURI" -> sessionURIStr ) ~
@@ -895,7 +895,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         ( "target" -> biCnxn.writeCnxn.trgt.toString )
       }
 
-      CometActorMapper.cometMessage(sessionURIStr, compact( render(
+      SessionManager.cometMessage(sessionURIStr, compact( render(
         ( "msgType" -> "getAliasConnectionsResponse" ) ~
         ( "content" ->
          ( "sessionURI" -> sessionURIStr ) ~
@@ -917,7 +917,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( v )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "getAliasConnectionsError" ) ~
             ( "content" -> 
               ( "sessionURI" -> sessionURIStr ) ~
@@ -928,7 +928,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     } catch {
       case e: Exception => {
-        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        SessionManager.cometMessage(sessionURIStr, compact( render(
           ( "msgType" -> "getAliasConnectionsError" ) ~
           ( "content" -> 
             ( "sessionURI" -> sessionURIStr ) ~
@@ -958,7 +958,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       val onPut : Option[mTT.Resource] => Unit = ( optRsrc : Option[mTT.Resource] ) => {
         BasicLogService.tweet( "handleaddAliasLabelsRequest | onGet | onPut" )
         
-        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        SessionManager.cometMessage(sessionURIStr, compact( render(
           ( "msgType" -> "addAliasLabelsResponse" ) ~
           ( "content" -> ( "sessionURI" -> sessionURIStr ) )
         ) ) )
@@ -984,7 +984,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "addAliasLabelsError" ) ~
             ( "content" -> 
              ( "sessionURI" -> sessionURIStr ) ~
@@ -1008,7 +1008,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( optRsrc, v )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "addAliasLabelsError" ) ~
             ( "content" -> 
               ( "sessionURI" -> sessionURIStr ) ~
@@ -1042,7 +1042,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       val onPut : Option[mTT.Resource] => Unit =
         ( optRsrc : Option[mTT.Resource] ) => {
           BasicLogService.tweet("handleupdateAliasLabelsRequest | onGet | onPut")
-          CometActorMapper.cometMessage(
+          SessionManager.cometMessage(
             sessionURIStr,
             compact(
               render(
@@ -1081,7 +1081,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( v )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "updateAliasLabelsError" ) ~
             ( "content" -> 
               ( "sessionURI" -> sessionURIStr ) ~
@@ -1116,7 +1116,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         case _ => throw new Exception("Unrecognized resource")
       }
 
-      CometActorMapper.cometMessage(sessionURIStr, compact( render(
+      SessionManager.cometMessage(sessionURIStr, compact( render(
         ( "msgType" -> "getAliasLabelsResponse" ) ~
         ( "content" ->
          ( "sessionURI" -> sessionURIStr ) ~
@@ -1138,7 +1138,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           handleRsp( v )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "getAliasLabelsError" ) ~
             ( "content" -> 
               ( "sessionURI" -> sessionURIStr ) ~
@@ -1149,7 +1149,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     } catch {
       case e: Exception => {
-        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        SessionManager.cometMessage(sessionURIStr, compact( render(
           ( "msgType" -> "getAliasLabelsError" ) ~
           ( "content" -> 
             ( "sessionURI" -> sessionURIStr ) ~
@@ -1176,7 +1176,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
       val sessionURIStr = msg.sessionURI.toString
 
-      CometActorMapper.cometMessage(sessionURIStr, compact( render(
+      SessionManager.cometMessage(sessionURIStr, compact( render(
         ( "msgType" -> "setAliasDefaultLabelResponse" ) ~
         ( "content" -> ( "sessionURI" -> sessionURIStr ) )
       ) ) )
@@ -1205,7 +1205,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
 
       v match {
         case PostedExpr( (PostedExpr( defaultLabel : CnxnCtxtLabel[String,String,String] ), _, _, _) ) => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "getAliasDefaultLabelResponse" ) ~
             ( "content" ->
              ( "sessionURI" -> sessionURIStr ) ~
@@ -1214,7 +1214,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           ) ) )
         }
         case Bottom => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "getAliasDefaultLabelError" ) ~
             ( "content" ->
              ( "sessionURI" -> sessionURIStr ) ~
@@ -1223,7 +1223,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           ) ) )
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURIStr, compact( render(
+          SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "getAliasDefaultLabelError" ) ~
             ( "content" -> 
              ( "sessionURI" -> sessionURIStr ) ~
@@ -1250,7 +1250,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
     } catch {
       case e: Exception => {
-        CometActorMapper.cometMessage(sessionURIStr, compact( render(
+        SessionManager.cometMessage(sessionURIStr, compact( render(
           ( "msgType" -> "getAliasDefaultLabelError" ) ~
           ( "content" -> 
             ( "sessionURI" -> sessionURIStr ) ~
@@ -1296,7 +1296,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
           BasicLogService.tweet( "handleevalSubscribeCancelRequest | onFetch: got None" )
         }
         case _ => {
-          CometActorMapper.cometMessage(msg.sessionURI.toString, compact(render(
+          SessionManager.cometMessage(msg.sessionURI.toString, compact(render(
             ("msgType" -> "evalSubscribeCancelResponse") ~
             ("content" -> ("sessionURI" -> msg.sessionURI.toString))
           )))
@@ -1323,7 +1323,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
         optRsrc match {
           case None => ()
           case _ => {
-            CometActorMapper.cometMessage(sessionId, compact(render(
+            SessionManager.cometMessage(sessionId, compact(render(
               ("msgType" -> "initiateClaimResponse")~
               ("content" ->
                 ("sessionURI" -> sessionId)

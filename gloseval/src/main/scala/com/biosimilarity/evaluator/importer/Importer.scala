@@ -29,61 +29,21 @@ import java.util.UUID
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 
 import com.biosimilarity.evaluator.omni.OmniClient
-import org.json4s.JInt
 
 import scalaj.http.Http
 
-/*
-
-// maybe later if we end up moving to spray-client instead of scalaj-http
-
-import java.util.concurrent.TimeUnit
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import scala.concurrent.Future
-import scala.util.{Success, Failure}
-import scala.concurrent.duration._
-
-import akka.actor.ActorSystem
-import akka.util.Timeout
-import akka.pattern.ask
-import akka.io.IO
-
-import spray.can.Http
-import spray.http._
-import spray.client.pipelining._
-
-import HttpMethods._
-*/
-
-
-
-/**
- * Iterates through a sample data file, parses it, and imports the data
- *
- * @note To run the importer, ensure you are using a recent version of Maven.
- * @note First run `mvn clean compile` in the terminal.
- * @note Second run `mvn scala:console`.
- * @note Finally, import this object and execute `Importer.fromFiles()`. You may need to set the file paths in the parameters.
-  * @note - it may also be required to reset mongo db with 'mongo records --eval "db.dropDatabase()" '
- */
 object Importer extends EvalConfig
   with ImporterConfig
   with Serializable {
 
   implicit val formats = org.json4s.DefaultFormats
-  //implicit val system: ActorSystem = ActorSystem()
-  //import system.dispatcher // implicit execution context
 
   private var GLOSEVAL_HOST = serviceHostURI()
-  //private val GLOSEVAL_SENDER = serviceEmailSenderAddress()
-  //private val MAILINATOR_HOST = serviceMailinatorHost()
-  //private val MAILINATOR_KEY = serviceMailinatorKey()
 
   private val agentsById = scala.collection.mutable.Map[String, String]()
-  // loginId:agentURI
+  // loginId -> agentURI
   private val sessionsById = scala.collection.mutable.Map[String, String]()
-  // sessionURI:agent
+  // sessionURI -> agent
   private val cnxnLabels = scala.collection.mutable.Map[String, String]() // src+trgt:label
 
   private val labels = scala.collection.mutable.Map[String, LabelDesc]() // id
@@ -97,14 +57,12 @@ object Importer extends EvalConfig
   private def glosevalPost(msg : Api.Request): String = {
     val requestBody = write(msg)
     glosevalPost(requestBody)
-
   }
 
   private def glosevalPost(msgType: String, data: JValue): String = {
     println(s"REQUEST: $msgType")
     val requestBody = write( ("msgType" -> msgType) ~ ("content" -> data) )
     glosevalPost(requestBody)
-
   }
 
   private def glosevalPost(requestBody: String): String = {
@@ -122,86 +80,9 @@ object Importer extends EvalConfig
     response
   }
 
-
-
-  /*
-    private def glosevalPost(requestBody: String): String = {
-      println(s"REQUEST BODY: $requestBody")
-      //implicit val timeout: Timeout = Timeout(30.seconds)
-
-      val pipeline: HttpRequest => Future[HttpResponse] = sendReceive
-      val fut : Future[HttpResponse] = pipeline(Post(GLOSEVAL_HOST, requestBody))
-
-      val rsp : HttpResponse = Await.result(fut,Duration.Inf) //.asInstanceOf[HttpResponse]
-      println(s"RESPONSE: ${rsp}")
-      //if (rsp.message.startsWith("Malformed request")) throw new Exception(response)
-      if (rsp.status.isFailure) {
-        throw new Exception("HTTP Error : " + rsp.status + " - " + rsp.status.defaultMessage)
-      }
-      rsp.entity.asString
-
-  //    Await.ready(fut, Duration.Inf).value.get match {
-  //      case Success(rsp) => {
-  //        println(s"RESPONSE: ${rsp}")
-  //        //if (rsp.message.startsWith("Malformed request")) throw new Exception(response)
-  //        if (rsp.status.isFailure) {
-  //          throw new Exception("HTTP Error : " + rsp.status + " - " + rsp.status.defaultMessage)
-  //        }
-  //        rsp.entity.asString
-  //      }
-  //      case Failure(e) => {
-  //        println("Error : " + e)
-  //        throw e
-  //      }
-  //    }
-    }
-  */
-
-
   def makeAliasURI(alias: String) = s"alias://$alias/alias"
 
   //private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
-
-  /* not used here - just an example of a per session thread approach
-  //@@GS - should be actor based but will have to do for now.
-  // requires all other methods to be synchronized where appropriate
-  def longPollSession(session : String  ) : Thread = {
-    println("initiating long-polling for session: " + session)
-    new Thread(new Runnable() {
-      override def run() {
-        while (!Thread.interrupted()) {  // call thrd.interrupt() when session closes
-          try {
-            val requestBody =  s"{ \"msgType\": \"sessionPing\", \"content\" : {\"sessionURI\": \"${session}\" } }"
-            println("Sending Ping ")
-            val req = Http(GLOSEVAL_HOST)
-                        .timeout(1000,10000)   // connTimeout, readTimeut - wait 10 seconds for response
-                                               //  needs to be greater than gloseval clientTimeOut setting - currently 7 seconds
-                        .header("Content-Type", "application/json")
-                        .postData(requestBody)
-            val js = req.asString.body
-            println("PING RESPONSE: " + js)
-            val arr = parse(js).extract[List[JValue]]
-            arr.foreach( v => {
-              val typ = ( v \ "msgType").extract[String]
-              var cont = ( v \ "content").extract[JValue]
-              typ match {
-                case "sessionPong" => Thread.sleep(10000)  // loop after 10 seconds
-                  // .. dispatch to handlers ...
-                case _ => println("WARNING - handler not provided for server sent message type : " + typ)
-              }
-
-            })
-          } catch {
-            case ex : Throwable => {
-              println("exception during SessionPing : " + ex)
-            }
-          }
-
-        }
-      }
-    })
-  }
-  */
 
   var terminateLongPoll = false
 

@@ -40,7 +40,7 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
 
       val sessionURIStr = msg.sessionURI.toString
 
-      CometActorMapper.cometMessage(sessionURIStr, compact( render(
+      SessionManager.cometMessage(sessionURIStr, compact( render(
         ( "msgType" -> "beginIntroductionResponse" ) ~
         ( "content" -> ( "sessionURI" -> sessionURIStr ) )
       ) ) )
@@ -64,7 +64,7 @@ trait AgentIntroductionHandler extends AgentIntroductionSchema {
 
       val sessionURIStr = msg.sessionURI.toString
 
-      CometActorMapper.cometMessage(sessionURIStr, compact( render(
+      SessionManager.cometMessage(sessionURIStr, compact( render(
         ( "msgType" -> "introductionConfirmationResponse" ) ~
         ( "content" -> ( "sessionURI" -> sessionURIStr ) )
       ) ) )
