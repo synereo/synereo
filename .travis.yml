@@ -13,6 +13,11 @@ services:
   - rabbitmq
   - memcached
 
+script: sbt ++$TRAVIS_SCALA_VERSION test:compile &&
+    sbt ++$TRAVIS_SCALA_VERSION specialk/test &&
+    sbt ++$TRAVIS_SCALA_VERSION agentService/test &&
+    sbt ++$TRAVIS_SCALA_VERSION gloseval/test
+
 cache:
   directories:
     - $HOME/.ivy2/cache
