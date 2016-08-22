@@ -34,6 +34,8 @@ lazy val additionalResolvers = Seq(
   "BaseX" at "http://files.basex.org/maven/",
   "xqj"   at "http://xqj.net/maven/")
 
+lazy val ourScalaVersion = "2.10.6"
+
 lazy val json4sVersion = "3.2.7"
 
 lazy val jettyVersion = "8.0.4.v20111024"
@@ -97,14 +99,14 @@ lazy val specialkDepsSettings = Seq(
 
 lazy val specialkSettings = Seq(
   autoCompilerPlugins := true,
-  addCompilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.5"),
+  addCompilerPlugin("org.scala-lang.plugins" % "continuations" % ourScalaVersion),
   name := "specialk",
   organization := "com.biosimilarity.lift",
   git.baseVersion := "1.1.8.5",
   git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
     s"${git.baseVersion.value}-${sha.substring(0, 7)}"
   },
-  scalaVersion := "2.10.5",
+  scalaVersion := ourScalaVersion,
   scalacOptions := commonOptions,
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   bintrayOrganization := Some("synereo"),
@@ -153,14 +155,14 @@ lazy val agentServiceDepsSettings = Seq(
 
 lazy val agentServiceSettings = Seq(
   autoCompilerPlugins := true,
-  addCompilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.5"),
+  addCompilerPlugin("org.scala-lang.plugins" % "continuations" % ourScalaVersion),
   name := "agentservices-store-ia",
   organization := "com.protegra-ati",
   git.baseVersion := "1.9.5",
   git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
     s"${git.baseVersion.value}-${sha.substring(0, 7)}"
   },
-  scalaVersion := "2.10.5",
+  scalaVersion := ourScalaVersion,
   scalacOptions := commonOptions,
   fork in Test := true)
 
@@ -220,15 +222,14 @@ lazy val glosevalDepsSettings = Seq(
 
 lazy val glosevalSettings = Seq(
   autoCompilerPlugins := true,
-  addCompilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.5"),
+  addCompilerPlugin("org.scala-lang.plugins" % "continuations" % ourScalaVersion),
   name := "GLoSEval",
   organization := "com.biosimilarity",
   git.baseVersion := "0.1",
   git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
     s"${git.baseVersion.value}-${sha.substring(0, 7)}"
   },
-  scalaVersion := "2.10.5",
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+  scalaVersion := ourScalaVersion,
   scalacOptions := commonOptions,
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   bintrayOrganization := Some("synereo"),
@@ -247,5 +248,5 @@ lazy val root = (project in file("."))
   .aggregate(specialk, agentService, gloseval)
   .dependsOn(specialk, agentService, gloseval)
   .settings(autoCompilerPlugins := true,
-            addCompilerPlugin("org.scala-lang.plugins" % "continuations" % "2.10.5"),
+            addCompilerPlugin("org.scala-lang.plugins" % "continuations" % ourScalaVersion),
             scalacOptions := commonOptions)
