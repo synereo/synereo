@@ -7,6 +7,7 @@ import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
 import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.SSLConfiguration._
+import com.typesafe.config.{Config, ConfigFactory}
 import spray.can.Http
 import spray.can.server.ServerSettings
 
@@ -56,4 +57,13 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
     case (_, _) =>
       throw new IllegalStateException("Server has reached an inconsistent state")
   }
+}
+
+object Server {
+
+  private val serverConfig: Config = ConfigFactory.load()
+
+  val defaultSettings: ServerSettings = ServerSettings(serverConfig)
+
+  def apply(settings: ServerSettings = defaultSettings): Server = new Server(settings)
 }

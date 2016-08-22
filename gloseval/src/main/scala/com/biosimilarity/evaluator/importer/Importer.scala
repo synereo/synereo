@@ -8,6 +8,8 @@
 
 package com.biosimilarity.evaluator.importer
 
+import java.io.File
+
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.Api
 import com.biosimilarity.evaluator.Api._
@@ -437,7 +439,7 @@ object Importer extends EvalConfig
     }
   }
 
-  def parseData(dataJsonFile: String = serviceDemoDataFile()) = {
+  def parseData(dataJsonFile: File = serviceDemoDataFile()) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
   }
@@ -457,35 +459,28 @@ object Importer extends EvalConfig
     }
   }
 
-  def fromFile(dataJsonFile: String): Unit = {
-
-    println("Importing file : " + dataJsonFile)
-
+  def fromFile(dataJsonFile: File = serviceDemoDataFile()): Unit = {
+    println(s"Importing file: $dataJsonFile")
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
-
     getAgentURI(NodeUser.email, NodeUser.password) match {
-      case Some(uri) => {
+      case Some(uri) =>
         val adminId = uri.replace("agent://", "")
         try {
           val adminSession = createSession(uri, NodeUser.email, NodeUser.password).get
           sessionsById.put(adminId, adminSession) // longpoll on adminSession
-          println("using admin session URI : " + adminSession)
+          println(s"using admin session URI: $adminSession")
           val thrd = longPoll()
           thrd.start()
-
           dataset.labels match {
             case Some(lbls) => lbls.foreach(l => makeLabel(LabelDesc.extractFrom(l)))
             case None => ()
           }
-
           dataset.agents.foreach(makeAgent)
-
           dataset.cnxns match {
             case Some(cnxns) => cnxns.foreach(cnxn => makeCnxn(adminSession, cnxn))
             case None => ()
           }
-
           dataset.posts match {
             case Some(posts) => posts.foreach(makePost)
             case None => ()
@@ -493,13 +488,11 @@ object Importer extends EvalConfig
         } finally {
           terminateLongPoll = true
         }
-      }
       case _ => throw new Exception("Unable to open admin session")
     }
-
   }
 
-  def runTestFile(dataJsonFile: String): Unit = {
+  def runTestFile(dataJsonFile: String = "src/test/resources/test-posts.json"): Unit = {
     // this routine doesn't keep sessions alive via longpoll.
     // the calls to expect might ...
     println("testing file : " + dataJsonFile)
@@ -619,12 +612,6 @@ object Importer extends EvalConfig
     if (testOmni) OmniClient.runTests()
   }
 
-  def fromFiles(dataJsonFile: String = serviceDemoDataFile() ): Unit = {
-    fromFile(dataJsonFile)
-    //fromFile("src/main/resources/sample-data-test_2.json", host)
-  }
-
-  def runTestFiles(): Unit = {
-    runTestFile("src/test/resources/test-posts.json")
-  }
+  def fromFiles(dataJsonFile: String): Unit =
+    throw new Exception("This function is deprecated.  Please use Importer.fromFile() instead")
 }

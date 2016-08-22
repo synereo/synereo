@@ -99,7 +99,7 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
 
   "Importer" should {
     "run test files" ignore {
-      Importer.runTestFiles()
+      Importer.runTestFile()
     }
   }
 }
