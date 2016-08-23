@@ -245,7 +245,8 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
         tssn <- openAdminSession()
         ssn <- spawnSession(tssn)
         _ <- {
-          for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
+          // uncomment the following line allow the test to run faster
+          //for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
           makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
           makeQueryOnSelf(ssn, "any([MESSAGEPOSTLABEL])")
           makeQueryOnSelf(ssn, "all([MESSAGEPOSTLABEL])")
@@ -267,7 +268,8 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
         tssn <- openAdminSession()
         ssn <- spawnSession(tssn)
         _ <- {
-          for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
+          // uncomment the following line to allow the test to run faster
+          //for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
           makeQueryOnSelf(ssn, "lordfarquad([MESSAGEPOSTLABEL])")
         }
         //a <- sessionPing(ssn)

@@ -54,8 +54,6 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
   val settings: ServerSettings = ServerSettings(config)
   var serverInstance: Server = new Server(settings).start()
 
-
-
   val httpsUri: Uri = Uri("/api").withScheme("https").withPort(EvalConfConfig.serverSSLPort)
 
   override def beforeAll(): Unit = {

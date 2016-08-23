@@ -38,15 +38,18 @@ object Importer extends EvalConfig
 
   implicit val formats = org.json4s.DefaultFormats
 
-  private var GLOSEVAL_HOST = serviceHostURI()
+  private val GLOSEVAL_HOST = serviceHostURI()
 
+  // maps loginId to agentURI
   private val agentsById = scala.collection.mutable.Map[String, String]()
-  // loginId -> agentURI
-  private val sessionsById = scala.collection.mutable.Map[String, String]()
-  // sessionURI -> agent
-  private val cnxnLabels = scala.collection.mutable.Map[String, String]() // src+trgt:label
 
-  private val labels = scala.collection.mutable.Map[String, LabelDesc]() // id
+  // maps sessionURI to agent
+  private val sessionsById = scala.collection.mutable.Map[String, String]()
+
+  // maps src+trgt to label
+  private val cnxnLabels = scala.collection.mutable.Map[String, String]()
+
+  private val labels = scala.collection.mutable.Map[String, LabelDesc]()
 
   private def resolveLabel(id: String): LabelDesc = labels(id)
 

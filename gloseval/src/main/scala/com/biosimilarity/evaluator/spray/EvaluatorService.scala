@@ -20,12 +20,12 @@ import scala.concurrent.duration._
 
 case class CometMessage(data: String)
 case class CometMessageList(data: List[String])
-case class SessionPing(reqCtx: RequestContext) extends Serializable
-case class PongTimeout() extends Serializable
-case class SetSessionId(id : String) extends Serializable
-case class KeepAlive() extends Serializable
-case class RunFunction(fn : JObject => Unit, msgType : String, content : JObject) extends Serializable
-case class CloseSession(reqCtx : Option[RequestContext]) extends Serializable
+case class SessionPing(reqCtx: RequestContext)
+case class PongTimeout()
+case class SetSessionId(id : String)
+case class KeepAlive()
+case class RunFunction(fn : JObject => Unit, msgType : String, content : JObject)
+case class CloseSession(reqCtx : Option[RequestContext])
 case class CameraItem(sending : Boolean, msgType : String, content : Option[JObject], tmStamp : DateTime)
 case class StartCamera(reqCtx : RequestContext)
 case class StopCamera(reqCtx : RequestContext)
@@ -70,7 +70,7 @@ class ChunkingActor extends Actor {
   }
 }
 
-class SessionActor extends Actor with Serializable {
+class SessionActor extends Actor {
 
   // if client doesnt receive any messages within this time, its garbage collected
   var sessionTimeout = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes
@@ -79,16 +79,12 @@ class SessionActor extends Actor with Serializable {
   // clients need to re-ping after this
   var pongTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds
 
-  @transient
   var aliveTimer = context.system.scheduler.scheduleOnce(pongTimeout, self, CloseSession(None))
-  @transient
   var optReq : Option[(RequestContext, Cancellable)] = None
-  @transient
   var msgs : List[String] = Nil
-  @transient
   var camera : Option[List[CameraItem]] = None
   var sessionId : Option[String] = None
-  @transient
+
   implicit val formats = DefaultFormats
 
   override def postStop() = {
@@ -231,7 +227,7 @@ class SessionActor extends Actor with Serializable {
       itemReceived("stopSessionRecording", None)
       camera match {
         case None =>
-          reqCtx.complete(StatusCodes.PreconditionFailed,"session not recording" )
+          reqCtx.complete(StatusCodes.PreconditionFailed, "session not recording" )
 
         case Some(itms) =>
           val items = itms.reverse.map(itemToString)
@@ -241,14 +237,13 @@ class SessionActor extends Actor with Serializable {
 }
 
 object EvaluatorServiceActor {
-  case class initSession(actor: ActorRef, ssn: String)
+  case class InitSession(actor: ActorRef, ssn: String)
   case class SetDefaultSessionTimeout(t : FiniteDuration)
   case class SetDefaultPongTimeout(t : FiniteDuration)
 }
 
 class EvaluatorServiceActor extends Actor
-  with EvaluatorService
-  with Serializable {
+  with EvaluatorService {
   import EvalHandlerService._
   import EvaluatorServiceActor._
 
@@ -261,7 +256,6 @@ class EvaluatorServiceActor extends Actor
   // clients need to re-ping after this
   var defaultPongTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds
 
-
   def handle: Receive = {
     case SetDefaultSessionTimeout(t) =>
       defaultSessionTimeout = t
@@ -269,12 +263,10 @@ class EvaluatorServiceActor extends Actor
     case SetDefaultPongTimeout(t) =>
       defaultPongTimeout = t
 
-    case initSession(actor: ActorRef, ssn: String) =>
+    case InitSession(actor: ActorRef, ssn: String) =>
       actor ! SetSessionTimeout(defaultSessionTimeout)
       actor ! SetPongTimeout(defaultPongTimeout)
       actor ! SetSessionId(ssn)
-
-
   }
 
   def receive = handle orElse runRoute(myRoute)
