@@ -1,6 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
-import java.io.InputStream
+import java.io.{FileInputStream, InputStream}
 
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
 import com.mongodb.casbah.Imports.MongoClient
@@ -11,7 +11,7 @@ import scala.collection.mutable
 package object util {
 
   def resourceStream(resourceName: String): InputStream = {
-    val is: InputStream = getClass.getClassLoader.getResourceAsStream(resourceName)
+    val is: InputStream = new FileInputStream(Boot.resourcesDir.resolve(resourceName).toFile)
     require(is.ne(null), s"Resource $resourceName not found")
     is
   }

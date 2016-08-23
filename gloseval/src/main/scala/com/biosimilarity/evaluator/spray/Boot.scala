@@ -6,7 +6,7 @@ import scopt.OptionParser
 
 object Boot extends App with BootTasks {
 
-  case class BootConfig(verbose: Boolean = false, mode: String = "", file: Option[File] = None)
+  case class BootConfig(verbose: Boolean = false, mode: String = "", file: Option[File] = None, certificate: Option[Certificate] = None)
 
   val parser: OptionParser[BootConfig] = new OptionParser[BootConfig]("gloseval") {
 
@@ -20,6 +20,11 @@ object Boot extends App with BootTasks {
       .optional()
       .action((_: Unit, c: BootConfig) => c.copy(mode = "start"))
       .text("  Start GLoSEval\n")
+
+    cmd("gencert")
+      .action((_: Unit, c: BootConfig) => c.copy(mode = "gencert"))
+      .text("  Generate a TLS Certificate")
+      .children(opt[Unit]("self-signed").action((x, c) => c.copy(certificate = Some(SelfSigned))).text("Generate a self-signed certificate.\n"))
 
     cmd("import")
       .action((_: Unit, c: BootConfig) => c.copy(mode = "import"))
@@ -36,11 +41,13 @@ object Boot extends App with BootTasks {
   }
 
   parser.parse(args, BootConfig()) match {
-    case Some(BootConfig(_, mode, _)) if mode == "start" || mode == "" =>
+    case Some(BootConfig(_, mode, _, _)) if mode == "start" || mode == "" =>
       startServer()
-    case Some(BootConfig(_, "import", file)) =>
+    case Some(BootConfig(_, "gencert", _, Some(cert))) =>
+      genCert(cert)
+    case Some(BootConfig(_, "import", file, _)) =>
       runImporter(file)
-    case Some(BootConfig(_, "reset", file)) =>
+    case Some(BootConfig(_, "reset", file, _)) =>
       resetDatabase()
     case None =>
   }
