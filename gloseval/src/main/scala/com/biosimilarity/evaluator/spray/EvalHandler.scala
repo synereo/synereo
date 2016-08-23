@@ -57,16 +57,16 @@ object CompletionMapper extends Serializable {
 }
 
 object SessionManager extends Serializable {
-  private var map = new mutable.HashMap[String, akka.actor.ActorRef]()
+  private var hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
   private var sessionManager : Option[ActorContext] = None
 
   def setSessionManager(cxt: ActorContext) = {
-    map = new mutable.HashMap[String, akka.actor.ActorRef]()
+    hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
     sessionManager = Some(cxt)
   }
 
   def cometMessage(sessionURI: String, jsonBody: String): Unit = {
-    for (cometActor <- map.get(sessionURI)) {
+    for (cometActor <- hmap.get(sessionURI)) {
       cometActor ! CometMessage(jsonBody)
     }
   }
@@ -75,7 +75,7 @@ object SessionManager extends Serializable {
     sessionManager match {
       case Some(cxt) =>
         val actor = cxt.actorOf(Props[SessionActor])
-        map += (ssn -> actor)
+        hmap += (ssn -> actor)
         cxt.self ! EvaluatorServiceActor.initSession(actor, ssn)
       case None =>
         throw new Exception("No session manager installed")
@@ -83,15 +83,15 @@ object SessionManager extends Serializable {
   }
 
   def removeSession(ssn: String): Unit = {
-    map -= ssn
+    hmap -= ssn
   }
 
   def getSession(ssn: String): Option[ActorRef] = {
-    map.get(ssn)
+    hmap.get(ssn)
   }
 
   def getChunkingActor(sessionURI: String, cnt: Int) = {
-    val ssnactor = SessionManager.map.get(sessionURI) match {
+    val ssnactor = SessionManager.hmap.get(sessionURI) match {
       case Some(actor) =>
         actor
       case None =>
