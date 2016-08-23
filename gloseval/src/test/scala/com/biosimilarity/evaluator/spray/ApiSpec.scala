@@ -198,7 +198,20 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     "be able to create a session" in {
       openAdminSession().futureValue shouldNot be ("")
     }
+
+    """query empty database without crashing""" in {
+      val proc: Future[(JArray)] = for {
+        ssn <- openAdminSession()
+        cnxn <- makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
+        spwnssnA <- spawnSession(ssn)
+        a <- sessionPing(spwnssnA)
+      } yield a
+      proc.futureValue.values.length shouldBe 1
+    }
   }
+
+
+
 
   """The Administrator Session""".stripMargin should {
     """establish the correct number of connections""" in {
