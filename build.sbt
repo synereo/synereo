@@ -22,9 +22,6 @@ lazy val commonOptions = Seq(
   // "-Ywarn-dead-code",
   // "-Ywarn-numeric-widen",
   // "-Ywarn-value-discard",
-  // ============================
-  // Original flags from pom.xml:
-  // ============================
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
