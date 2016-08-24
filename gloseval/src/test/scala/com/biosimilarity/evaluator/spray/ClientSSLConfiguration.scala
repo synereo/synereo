@@ -1,5 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
+import java.io.InputStream
 import java.security.cert.{Certificate, CertificateFactory}
 import java.security.{KeyStore, SecureRandom}
 import javax.net.ssl.{SSLContext, SSLParameters, TrustManagerFactory}
@@ -9,8 +10,14 @@ import spray.io.{ClientSSLEngineProvider, SSLContextProvider}
 
 object ClientSSLConfiguration {
 
-  private def loadX509Certificate(resourceName: String): Certificate =
-    CertificateFactory.getInstance("X.509").generateCertificate(resourceStream(resourceName))
+  private def loadX509Certificate(resourceName: String): Certificate = {
+    val certResource: InputStream = resourceStream(resourceName)
+    try {
+      CertificateFactory.getInstance("X.509").generateCertificate(certResource)
+    } finally {
+      certResource.close()
+    }
+  }
 
   private def clientSSLContext: SSLContext = {
     val keystore: KeyStore                       = KeyStore.getInstance(KeyStore.getDefaultType)
