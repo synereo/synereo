@@ -10,7 +10,6 @@ import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.spray.util._
-import com.typesafe.config.{Config, ConfigFactory}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
@@ -18,18 +17,14 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import spray.can.Http
-import spray.can.server.ServerSettings
 import spray.http.HttpMethods._
 import spray.http._
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{Await, Future}
 
 class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaFutures with IntegrationPatience with CapUtilities {
 
-  val config: Config = ConfigFactory.load()
-  val settings: ServerSettings = ServerSettings(config)
   val system: ActorSystem = ActorSystem()
   val timeout: Timeout = Timeout(60.seconds)
 
@@ -47,7 +42,7 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
 
   override def beforeEach(): Unit = {
     resetMongo()
-    serverInstance = Some(new Server(settings).start())
+    serverInstance = Some(Server().start())
     Thread.sleep(2000)
   }
 
