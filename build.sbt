@@ -138,7 +138,6 @@ lazy val glosevalDeps = Seq(
   "io.spray"                    % "spray-testkit"     % sprayVersion,
   "io.spray"                   %% "spray-json"        % "1.2.5",
   "com.github.scopt"           %% "scopt"             % "3.5.0",
-  "com.googlecode.json-simple"  % "json-simple"       % "1.1.1",
   "com.rabbitmq"                % "amqp-client"       % amqpClientVersion,
   "com.typesafe.akka"          %% "akka-actor"        % "2.1.4",
   "it.unibo.alice.tuprolog"     % "tuprolog"          % tuprologVersion,
