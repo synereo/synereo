@@ -286,7 +286,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     ("createUserStep1Request", createUserStep1Request),
     ("createUserStep2Request", createUserStep2Request),
     ("initializeSessionStep1Request", initializeSessionStep1Request),
-    ("initializeSessionStep2Request", initializeSessionStep2Request)
+    ("initializeSessionStep2Request", initializeSessionStep2Request),
+    // Version Info
+    ("versionInfoRequest", versionInfoRequest)
   )
 
   @transient

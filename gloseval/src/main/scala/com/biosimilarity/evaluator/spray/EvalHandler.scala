@@ -9,7 +9,9 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.protocols.msgs._
+import com.biosimilarity.evaluator.Api
 import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.spray.util._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
@@ -19,6 +21,7 @@ import spray.routing._
 import spray.http._
 import org.json4s._
 import org.json4s.native.JsonMethods._
+import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL._
 
 import scala.collection.mutable.HashMap
@@ -334,6 +337,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   def toHex(bytes: Array[Byte]): String = {
     bytes.map("%02X" format _).mkString
+  }
+
+  def versionInfoRequest(json: JObject, key: String): Unit = {
+    val msg: Api.AltResponse[Api.VersionInfoResponse] =
+      Api.AltResponse[Api.VersionInfoResponse]("versionInfoResponse",
+                                               Api.VersionInfoResponse(BuildInfo.version,
+                                                                       BuildInfo.scalaVersion,
+                                                                       mongoVersion().getOrElse("n/a"),
+                                                                       rabbitMQVersion().getOrElse("n/a")))
+    CompletionMapper.complete(key, Serialization.write(msg))
   }
 
   def createAgentRequest(json: JObject, key: String): Unit = {

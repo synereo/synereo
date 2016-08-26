@@ -9,11 +9,19 @@ object Api {
   case class EvalSubscribeContent(cnxns: List[Connection], label: String, value: String, uid: String)
   case class EvalSubscribeExpression(msgType: String, content: EvalSubscribeContent)
 
-
-  trait RequestContent
+  // actual API
   case class Request(msgType: String, content: RequestContent)
 
-  // actual API
+  sealed trait RequestContent {
+    def asRequest: Request = {
+      val nm: String  = this.getClass.getSimpleName
+      val tnm: String = Character.toLowerCase(nm.charAt(0)) + nm.substring(1)
+      Request(tnm, this)
+    }
+  }
+  case object VersionInfoRequest extends RequestContent {
+    override def asRequest: Request = Request("versionInfoRequest", this)
+  }
   case class CreateUserRequest(email: String,password: String,jsonBlob: JObject) extends RequestContent
   case class CreateUserStep1Request(email: String) extends RequestContent
   case class CreateUserStep2Request(email: String, salt: String, verifier: String, jsonBlob: JObject) extends RequestContent
@@ -37,14 +45,24 @@ object Api {
   case class OmniTransfer(sessionURI: String, target: String, amount: BigDecimal ) extends RequestContent
   case class OmniGetBalance(sessionURI: String) extends RequestContent
 
+  // ht 2016-08-26:
+  // This approach doesn't work for case objects but I've left it intact
+  // because it is still used in the Importer.
   def toReq[T <: RequestContent](cont: T) : Request = {
     val nm = cont.getClass.getSimpleName()
     val tnm = Character.toLowerCase(nm.charAt(0)) + nm.substring(1)
     Api.Request(tnm, cont)
   }
 
-
   sealed trait ResponseContent
+  case class VersionInfoResponse(glosevalVersion: String, scalaVersion: String, mongoDBVersion: String, rabbitMQVersion: String)
+      extends ResponseContent {
+    override def toString: String = s"""|GLoSEVal version: $glosevalVersion
+                                        |Scala version: $scalaVersion
+                                        |MongoDB version: $mongoDBVersion
+                                        |RabbitMQ version: $rabbitMQVersion""".stripMargin
+
+  }
   case class InitializeSessionStep1Response(salt: String, B: String) extends ResponseContent
   case class InitializeSessionResponse(sessionURI: String, M2: String) extends ResponseContent
   case class CreateUserStep1Response(salt: String) extends ResponseContent
@@ -72,6 +90,11 @@ object Api {
     }
   }
 
+  // ht 2016-08-26:
+  // I'm going to try something slightly different here.
+  // See ApiSpec's versionInfoRequest test for a usage example.
+  case class AltResponse[T <: ResponseContent](msgType: String, content: T)
+
   val hints = new ShortTypeHints(classOf[ApiResponse] :: Nil) {
     override def serialize: PartialFunction[Any, JObject] = {
       case ar: ApiResponse =>
@@ -84,5 +107,4 @@ object Api {
   }
 
   implicit val formats = native.Serialization.formats(hints)
-
 }

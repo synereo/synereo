@@ -12,7 +12,7 @@ import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.spray.util._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization.write
+import org.json4s.jackson.Serialization._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
@@ -51,16 +51,16 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     serverInstance = None
   }
 
-  def makeRequest(cont: Api.RequestContent): HttpRequest = {
-    val body = write(Api.toReq(cont))
+  type SessionUri = String
+
+  def makePost(cont: Api.RequestContent): HttpRequest = {
+    val body = write(cont.asRequest)
     val requestBody: HttpEntity = HttpEntity(ContentType(MediaTypes.`application/json`), body)
     HttpRequest(POST, "/api", entity = requestBody)
   }
 
-  type SessionUri = String
-
   def post(cont: Api.RequestContent): Future[HttpResponse] = {
-    val req = makeRequest(cont)
+    val req: HttpRequest = makePost(cont)
     eventualHostConnector
       .flatMap((hc: ActorRef) => hc.ask(req)(timeout))
       .mapTo[HttpResponse]
@@ -187,6 +187,22 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     }
     val l = _step(Nil)
     Future.successful(JArray(l))
+  }
+
+  "A versionInfoRequest" should {
+    "result in a versionInfoResponse" in {
+      val eventualResponse: Future[Api.AltResponse[Api.VersionInfoResponse]] =
+        post(Api.VersionInfoRequest).map { (response: HttpResponse) =>
+          read[Api.AltResponse[Api.VersionInfoResponse]](response.entity.asString)
+        }
+      whenReady(eventualResponse) { (msg: Api.AltResponse[Api.VersionInfoResponse]) =>
+        msg.msgType shouldBe "versionInfoResponse"
+        msg.content.glosevalVersion should equal (BuildInfo.version)
+        msg.content.scalaVersion should equal (BuildInfo.scalaVersion)
+        msg.content.mongoDBVersion should equal (mongoVersion().getOrElse("n/a"))
+        msg.content.rabbitMQVersion should equal (rabbitMQVersion().getOrElse("n/a"))
+      }
+    }
   }
 
   "The Administrator" should {
