@@ -74,9 +74,9 @@ object SessionManager extends Serializable {
   def startSession(ssn : String): Unit = {
     sessionManager match {
       case Some(cxt) =>
-        val actor = cxt.actorOf(Props[SessionActor])
+        val actor = cxt actorOf Props(new SessionActor(ssn))
         hmap += (ssn -> actor)
-        cxt.self ! SessionManagerActor.InitSession(actor, ssn)
+        cxt.self ! SessionManagerActor.InitSession(actor)
       case None =>
         throw new Exception("No session manager installed")
     }

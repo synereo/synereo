@@ -22,20 +22,20 @@ case class CometMessage(data: String)
 case class CometMessageList(data: List[String])
 case class SessionPing(reqCtx: RequestContext)
 case class PongTimeout()
-case class SetSessionId(id : String)
-case class KeepAlive()
-case class RunFunction(fn : JObject => Unit, msgType : String, content : JObject)
-case class CloseSession(reqCtx : Option[RequestContext])
-case class CameraItem(sending : Boolean, msgType : String, content : Option[JObject], tmStamp : DateTime)
-case class StartCamera(reqCtx : RequestContext)
-case class StopCamera(reqCtx : RequestContext)
-case class SetPongTimeout(t : FiniteDuration)
-case class SetSessionTimeout(t : FiniteDuration)
+case class SetSessionId(id: String)
+case class RunFunction(fn: JObject => Unit, msgType : String, content : JObject)
+case class CloseSession(reqCtx: Option[RequestContext])
+case class SessionTimedOut()
+case class CameraItem(sending: Boolean, msgType: String, content: Option[JObject], tmStamp: DateTime)
+case class StartCamera(reqCtx: RequestContext)
+case class StopCamera(reqCtx: RequestContext)
+case class SetPongTimeout(t: FiniteDuration)
+case class SetSessionTimeout(t: FiniteDuration)
 
 object ChunkingActor {
-  case class SetChunkSize(sz : Int)
-  case class SetExpected(n : Int)
-  case class SetRecipient(ref : ActorRef)
+  case class SetChunkSize(sz: Int)
+  case class SetExpected(n: Int)
+  case class SetRecipient(ref: ActorRef)
 }
 
 class ChunkingActor extends Actor {
@@ -70,7 +70,7 @@ class ChunkingActor extends Actor {
   }
 }
 
-class SessionActor extends Actor {
+class SessionActor(sessionId: String) extends Actor {
 
   // if client doesnt receive any messages within this time, its garbage collected
   var sessionTimeout = 60.minutes  // initial value will be overwritten during instantiation
@@ -79,25 +79,17 @@ class SessionActor extends Actor {
   // clients need to re-ping after this
   var pongTimeout = 7.seconds  // initial value will be overwritten during instantiation
 
-  var aliveTimer: Option[Cancellable] = None
+
+  var aliveTimer: Cancellable = new Cancellable {def cancel() = {}; def isCancelled = true }
   var optReq : Option[(RequestContext, Cancellable)] = None
   var msgs : List[String] = Nil
   var camera : Option[List[CameraItem]] = None
-  var sessionId : Option[String] = None
 
   implicit val formats = DefaultFormats
 
-  override def postStop() = {
-    sessionId = None
-  }
-
   def resetAliveTimer() : Unit = {
-    sessionId match {
-      case Some(_) =>
-        for (tmr <- aliveTimer) tmr.cancel()
-        aliveTimer = Some(context.system.scheduler.scheduleOnce(sessionTimeout, self, CloseSession(None)))
-      case None => ()
-    }
+    aliveTimer.cancel()
+    aliveTimer = context.system.scheduler.scheduleOnce(sessionTimeout, self, SessionTimedOut())
   }
 
   def itemToString(itm : CameraItem) : String = {
@@ -145,7 +137,6 @@ class SessionActor extends Actor {
   }
 
   def trySendMessages() : Unit = {
-    resetAliveTimer()
     optReq match {
       case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
 
@@ -159,55 +150,43 @@ class SessionActor extends Actor {
   }
 
   def receive = {
-    case SetSessionId(id) =>
-      sessionId = Some(id)
-      resetAliveTimer()
 
     case SetSessionTimeout(t) =>
       sessionTimeout = t
-      resetAliveTimer()
 
     case SetPongTimeout(t) =>
       pongTimeout = t
-      resetAliveTimer()
-
-    case KeepAlive() =>
-      resetAliveTimer()
 
     case SessionPing(reqCtx) =>
       itemReceived("sessionPing", None)
-      sessionId match {
-        case Some(ssn) =>
-          resetAliveTimer()
-          for ((_, tmr) <- optReq) tmr.cancel()
-          msgs match {
-            case Nil =>
-              optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(pongTimeout, self, PongTimeout()))
-            case _ =>
-              sendMessages(msgs.reverse, reqCtx)
-              msgs = Nil
-          }
-        case None =>
-          context.system.scheduler.scheduleOnce(1.seconds, self, SessionPing(reqCtx))
+      resetAliveTimer()
+      for ((_, tmr) <- optReq) tmr.cancel()
+      msgs match {
+        case Nil =>
+          optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(pongTimeout, self, PongTimeout()))
+        case _ =>
+          sendMessages(msgs.reverse, reqCtx)
+          msgs = Nil
       }
 
     case PongTimeout() =>
-      for (ssn <- sessionId) {
-        optReq match {
-          case Some((req, _)) => {
-            req.complete(HttpResponse(entity = compact(render(
-              List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> ssn)))))))
-            itemSent("sessionPong", None)
-            optReq = None
-          }
-          case None => ()
+      optReq match {
+        case Some((req, _)) => {
+          req.complete(HttpResponse(entity = compact(render(
+            List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> sessionId)))))))
+          itemSent("sessionPong", None)
+          optReq = None
         }
+        case None => ()
       }
 
     case CloseSession(optReqCtx) =>
       context.stop(self)
-      for (ssn <- sessionId) SessionManager.removeSession(ssn)
+      SessionManager.removeSession(sessionId)
       for (reqCtx <- optReqCtx) reqCtx.complete(StatusCodes.OK,"session closed")
+
+    case SessionTimedOut() =>
+      context.self ! CloseSession(None)
 
     case RunFunction(fn,msgType,content) =>
       itemReceived(msgType,Some(content))
@@ -258,7 +237,7 @@ class EvaluatorServiceActor extends Actor
 }
 
 object SessionManagerActor {
-  case class InitSession(actor: ActorRef, ssn: String)
+  case class InitSession(actor: ActorRef)
   case class SetDefaultSessionTimeout(t : FiniteDuration)
   case class SetDefaultPongTimeout(t : FiniteDuration)
 }
@@ -280,16 +259,13 @@ class SessionManagerActor extends Actor {
     case SetDefaultPongTimeout(t) =>
       defaultPongTimeout = t
 
-    case InitSession(actor: ActorRef, ssn: String) =>
+    case InitSession(actor: ActorRef) =>
       actor ! SetSessionTimeout(defaultSessionTimeout)
       actor ! SetPongTimeout(defaultPongTimeout)
-      actor ! SetSessionId(ssn)
   }
 
   SessionManager.setSessionManager(context)
 }
-
-
 
 case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
 
@@ -400,7 +376,6 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
                               case "stopSessionRecording" => cometActor ! StopCamera(ctx)
                               case "closeSessionRequest" => cometActor ! CloseSession(Some(ctx))
                               case _ => {
-                                cometActor ! KeepAlive()
                                 asyncMethods.get(msgType) match {
                                   case Some(fn) => {
                                     cometActor ! RunFunction(fn, msgType, content)
