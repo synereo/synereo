@@ -73,13 +73,13 @@ class ChunkingActor extends Actor {
 class SessionActor extends Actor {
 
   // if client doesnt receive any messages within this time, its garbage collected
-  var sessionTimeout = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes
+  var sessionTimeout = 60.minutes  // initial value will be overwritten during instantiation
 
   // ping requests are ponged after this much time unless other data is sent in the meantime
   // clients need to re-ping after this
-  var pongTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds
+  var pongTimeout = 7.seconds  // initial value will be overwritten during instantiation
 
-  var aliveTimer = context.system.scheduler.scheduleOnce(pongTimeout, self, CloseSession(None))
+  var aliveTimer: Option[Cancellable] = None
   var optReq : Option[(RequestContext, Cancellable)] = None
   var msgs : List[String] = Nil
   var camera : Option[List[CameraItem]] = None
@@ -92,8 +92,12 @@ class SessionActor extends Actor {
   }
 
   def resetAliveTimer() : Unit = {
-    aliveTimer.cancel()
-    aliveTimer = context.system.scheduler.scheduleOnce(sessionTimeout, self, CloseSession(None))
+    sessionId match {
+      case Some(_) =>
+        for (tmr <- aliveTimer) tmr.cancel()
+        aliveTimer = Some(context.system.scheduler.scheduleOnce(sessionTimeout, self, CloseSession(None)))
+      case None => ()
+    }
   }
 
   def itemToString(itm : CameraItem) : String = {
@@ -172,16 +176,19 @@ class SessionActor extends Actor {
 
     case SessionPing(reqCtx) =>
       itemReceived("sessionPing", None)
-      for (ssn <- sessionId) {
-        resetAliveTimer()
-        for ((_, tmr) <- optReq) tmr.cancel()
-        msgs match {
-          case Nil =>
-            optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(pongTimeout, self, PongTimeout()))
-          case _ =>
-            sendMessages( msgs.reverse, reqCtx)
-            msgs = Nil
-        }
+      sessionId match {
+        case Some(ssn) =>
+          resetAliveTimer()
+          for ((_, tmr) <- optReq) tmr.cancel()
+          msgs match {
+            case Nil =>
+              optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(pongTimeout, self, PongTimeout()))
+            case _ =>
+              sendMessages(msgs.reverse, reqCtx)
+              msgs = Nil
+          }
+        case None =>
+          context.system.scheduler.scheduleOnce(1.seconds, self, SessionPing(reqCtx))
       }
 
     case PongTimeout() =>
@@ -236,18 +243,28 @@ class SessionActor extends Actor {
   }
 }
 
-object EvaluatorServiceActor {
+class EvaluatorServiceActor extends Actor
+  with EvaluatorService {
+  import EvalHandlerService._
+
+  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
+
+  def receive = runRoute(myRoute)
+
+  def actorRefFactory = context
+
+  context.actorOf(Props[SessionManagerActor])
+
+}
+
+object SessionManagerActor {
   case class InitSession(actor: ActorRef, ssn: String)
   case class SetDefaultSessionTimeout(t : FiniteDuration)
   case class SetDefaultPongTimeout(t : FiniteDuration)
 }
 
-class EvaluatorServiceActor extends Actor
-  with EvaluatorService {
-  import EvalHandlerService._
-  import EvaluatorServiceActor._
-
-  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
+class SessionManagerActor extends Actor {
+  import SessionManagerActor._
 
   // if client doesnt receive any messages within this time, its garbage collected
   var defaultSessionTimeout = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes
@@ -256,7 +273,7 @@ class EvaluatorServiceActor extends Actor
   // clients need to re-ping after this
   var defaultPongTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds
 
-  def handle: Receive = {
+  def receive = {
     case SetDefaultSessionTimeout(t) =>
       defaultSessionTimeout = t
 
@@ -269,13 +286,10 @@ class EvaluatorServiceActor extends Actor
       actor ! SetSessionId(ssn)
   }
 
-  def receive = handle orElse runRoute(myRoute)
-
-  def actorRefFactory = context
-
   SessionManager.setSessionManager(context)
-
 }
+
+
 
 case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
 

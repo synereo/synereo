@@ -76,7 +76,7 @@ object SessionManager extends Serializable {
       case Some(cxt) =>
         val actor = cxt.actorOf(Props[SessionActor])
         hmap += (ssn -> actor)
-        cxt.self ! EvaluatorServiceActor.InitSession(actor, ssn)
+        cxt.self ! SessionManagerActor.InitSession(actor, ssn)
       case None =>
         throw new Exception("No session manager installed")
     }
