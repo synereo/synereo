@@ -22,6 +22,7 @@ object Api {
   case object VersionInfoRequest extends RequestContent {
     override def asRequest: Request = Request("versionInfoRequest", this)
   }
+  case class ConfirmEmailToken(token: String) extends RequestContent
   case class CreateUserRequest(email: String,password: String,jsonBlob: JObject) extends RequestContent
   case class CreateUserStep1Request(email: String) extends RequestContent
   case class CreateUserStep2Request(email: String, salt: String, verifier: String, jsonBlob: JObject) extends RequestContent
@@ -67,12 +68,14 @@ object Api {
   case class InitializeSessionResponse(sessionURI: String, M2: String) extends ResponseContent
   case class CreateUserStep1Response(salt: String) extends ResponseContent
   case class CreateUserStep2Response(agentURI: String) extends ResponseContent
+  case class CreateUserWaiting(token: String) extends ResponseContent
   case class ApiError(reason: String) extends ResponseContent
 
   case class Response(msgType: String, content: JObject) {
     val responseContent = (msgType, content) match {
       case ("createUserStep1Response", JObject(JField("salt", JString(s)) :: Nil)) => CreateUserStep1Response(s)
       case ("createUserStep2Response", JObject(JField("agentURI", JString(au)) :: Nil)) => CreateUserStep2Response(au)
+      case ("createUserWaiting", JObject(JField("token", JString(tok)) :: Nil)) => CreateUserWaiting(tok)
       case ("initializeSessionStep1Response", JObject(JField("s", JString(s)) :: JField("B", JString(b)) :: Nil)) =>
         InitializeSessionStep1Response(s, b)
       case ("initializeSessionResponse", JObject(JField("sessionURI", JString(ssn)) ::

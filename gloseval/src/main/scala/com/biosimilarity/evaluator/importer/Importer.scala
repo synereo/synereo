@@ -72,7 +72,7 @@ object Importer extends EvalConfig
     println(s"REQUEST BODY: $requestBody")
 
     val req = Http(GLOSEVAL_HOST)
-      .timeout(1000, 60000)
+      .timeout(1000, 600000)
       .header("Content-Type", "application/json")
       .option(HttpOptions.allowUnsafeSSL)
       .postData(requestBody)
@@ -175,20 +175,27 @@ object Importer extends EvalConfig
     val jsonBlob = parse(agent.jsonBlob).extract[JObject]
     val srpClient = new SRPClient()
     srpClient.init
-    val r1 = parse(glosevalPost(Api.CreateUserStep1Request("noConfirm:" + eml))).extract[Response]
+    val r1 = parse(glosevalPost(Api.CreateUserStep1Request(eml))).extract[Response]
     r1.responseContent match {
       case ApiError(reason) =>
         println(s"create user, step 1, failed, reason : $reason")
         None
       case CreateUserStep1Response(salt) =>
         srpClient.calculateX(eml, agent.pwd, salt)
-        val r2 = parse(glosevalPost(Api.CreateUserStep2Request("noConfirm:" + eml,
-          salt, srpClient.generateVerifier, jsonBlob))).extract[Response]
+        val r2 = parse(glosevalPost(Api.CreateUserStep2Request(eml, salt, srpClient.generateVerifier, jsonBlob))).extract[Response]
         r2.responseContent match {
           case ApiError(reason) =>
             println(s"create user, step 2, failed, reason : $reason")
             None
-          case CreateUserStep2Response(agentURI) => Some(agentURI)
+          case CreateUserWaiting(tok) =>
+            val r3 = parse(glosevalPost(Api.ConfirmEmailToken(tok))).extract[Response]
+            r3.responseContent match {
+              case ApiError(reason) =>
+                println(s"create user, step 2, failed, reason : $reason")
+                None
+              case CreateUserStep2Response(agentURI) =>
+                Some(agentURI)
+            }
           case _ => throw new Exception("Unspecified response")
         }
       case _ => throw new Exception("Unspecified response")
@@ -198,7 +205,9 @@ object Importer extends EvalConfig
   def createSession(agentURI: String, email: String, pwd: String): Option[String] = {
     val srpClient = new SRPClient()
     srpClient.init
-    val r1 = parse(glosevalPost(Api.InitializeSessionStep1Request(s"$agentURI?A=${srpClient.calculateAHex}")))
+    val emluri = "agent://email/"+email
+    //val r1 = parse(glosevalPost(Api.InitializeSessionStep1Request(s"$agentURI?A=${srpClient.calculateAHex}")))
+    val r1 = parse(glosevalPost(Api.InitializeSessionStep1Request(s"$emluri?A=${srpClient.calculateAHex}")))
       .extract[Response]
     r1.responseContent match {
       case ApiError(reason) =>
@@ -206,7 +215,8 @@ object Importer extends EvalConfig
         None
       case InitializeSessionStep1Response(salt, bval) =>
         srpClient.calculateX(email, pwd, salt)
-        val r2 = parse(glosevalPost(Api.InitializeSessionStep2Request(s"$agentURI?M=${srpClient.calculateMHex(bval)}")))
+        //val r2 = parse(glosevalPost(Api.InitializeSessionStep2Request(s"$agentURI?M=${srpClient.calculateMHex(bval)}")))
+        val r2 = parse(glosevalPost(Api.InitializeSessionStep2Request(s"$emluri?M=${srpClient.calculateMHex(bval)}")))
           .extract[Response]
         r2.responseContent match {
           case ApiError(reason) =>

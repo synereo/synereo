@@ -24,9 +24,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
   @transient
   val syncMethods = HashMap[String, (JObject, String) => Unit](
     // Old stuff
-    ("createUserRequest", createUserRequest),
+    //("createUserRequest", createUserRequest),
+
     ("confirmEmailToken", confirmEmailToken),
-    // New API
     ("createAgentRequest", createAgentRequest),
     ("initializeSessionRequest", initializeSessionRequest),
     ("getAgentRequest", getAgentRequest),
