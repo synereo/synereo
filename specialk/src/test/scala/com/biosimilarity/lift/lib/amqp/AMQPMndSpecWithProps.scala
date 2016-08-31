@@ -1,10 +1,10 @@
 package com.biosimilarity.lift.lib.amqp
 
-import com.biosimilarity.lift.test.AMQPUtil
 import com.biosimilarity.lift.test.Generators._
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Matchers, WordSpec}
+import com.biosimilarity.lift.test._
 
 class AMQPMndSpecWithProps extends WordSpec with Matchers with Eventually with IntegrationPatience with GeneratorDrivenPropertyChecks {
 
@@ -22,7 +22,7 @@ class AMQPMndSpecWithProps extends WordSpec with Matchers with Eventually with I
       forAll(nonEmptySetOfNonEmptyStrings) { (sendSet: Set[String]) =>
         whenever(sendSet.forall(_.nonEmpty)) {
           val receiveSet: mutable.Set[String] = mutable.Set.empty[String]
-          val cleanup: () => Unit             = roundTrip[String]("localhost", "localhost", AMQPUtil.genRandQueueName(), sendSet, receiveSet)
+          val cleanup: () => Unit             = roundTrip[String]("localhost", "localhost", genRandQueueName(), sendSet, receiveSet)
           eventually { receiveSet should contain theSameElementsAs sendSet }
           cleanup()
         }
