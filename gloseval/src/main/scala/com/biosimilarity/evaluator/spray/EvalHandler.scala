@@ -10,6 +10,7 @@ package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.protocols.msgs._
 import com.biosimilarity.evaluator.Api
+import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.spray.util._
 import com.biosimilarity.lift.model.store._
@@ -19,7 +20,7 @@ import akka.actor._
 import com.biosimilarity.evaluator.omni.OmniClient
 import spray.routing._
 import spray.http._
-import org.json4s._
+import org.json4s.{BuildInfo ⇒ _, _}
 import org.json4s.native.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL._

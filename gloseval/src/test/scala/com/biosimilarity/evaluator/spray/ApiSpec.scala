@@ -5,12 +5,13 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.Api
+import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution.EvalConfConfig._
 import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.spray.util._
-import org.json4s._
+import org.json4s.{BuildInfo ⇒ _, _}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
