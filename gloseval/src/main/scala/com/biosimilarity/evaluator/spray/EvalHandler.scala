@@ -9,17 +9,20 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.protocols.msgs._
+import com.biosimilarity.evaluator.Api
+import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.spray.util._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
 import com.biosimilarity.evaluator.omni.OmniClient
-
 import spray.routing._
 import spray.http._
-import org.json4s._
+import org.json4s.{BuildInfo ⇒ _, _}
 import org.json4s.native.JsonMethods._
+import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL._
 
 import scala.collection.mutable.HashMap
@@ -32,6 +35,7 @@ import java.net.URI
 import com.biosimilarity.evaluator.spray.srp._
 import com.typesafe.config.ConfigFactory
 
+import scala.collection.mutable
 import scala.util.Try
 import scala.language.postfixOps
 
@@ -56,23 +60,50 @@ object CompletionMapper extends Serializable {
   }
 }
 
-object CometActorMapper extends Serializable {
-  @transient
-  val map = new HashMap[String, akka.actor.ActorRef]()
-  var actorRefFactory : Option[ActorContext] = None
+object SessionManager extends Serializable {
+  private var hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
+  private var sessionManager : Option[ActorContext] = None
+
+  def setSessionManager(cxt: ActorContext) = {
+    hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
+    sessionManager = Some(cxt)
+  }
+
   def cometMessage(sessionURI: String, jsonBody: String): Unit = {
-    for (cometActor <- map.get(sessionURI)) {
+    for (cometActor <- hmap.get(sessionURI)) {
       cometActor ! CometMessage(jsonBody)
     }
   }
+
+  def startSession(ssn : String): Unit = {
+    sessionManager match {
+      case Some(cxt) =>
+        val actor = cxt actorOf Props(new SessionActor(ssn))
+        hmap += (ssn -> actor)
+        cxt.self ! SessionManagerActor.InitSession(actor)
+      case None =>
+        throw new Exception("No session manager installed")
+    }
+  }
+
+  def removeSession(ssn: String): Unit = {
+    hmap -= ssn
+  }
+
+  def getSession(ssn: String): Option[ActorRef] = {
+    hmap.get(ssn)
+  }
+
   def getChunkingActor(sessionURI: String, cnt: Int) = {
-    val ssnactor = CometActorMapper.map.get(sessionURI) match {
-      case Some(actor) => actor
-      case None => throw new Exception("invalid session supplied")
+    val ssnactor = SessionManager.hmap.get(sessionURI) match {
+      case Some(actor) =>
+        actor
+      case None =>
+        throw new Exception("invalid session supplied")
     }
     if (cnt < 2) ssnactor
     else
-      actorRefFactory match {
+      sessionManager match {
         case Some(cxt) =>
           val a = cxt.actorOf(Props[ChunkingActor])
           a ! ChunkingActor.SetRecipient(ssnactor)
@@ -233,7 +264,7 @@ trait BTCCryptoUtilities {
     // Create a keyspec from the hash
     val keySpec = new SecretKeySpec(hash, "AES")
 
-    // Use a zero IV; 
+    // Use a zero IV;
     val iv = Array[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     val ivSpec = new IvParameterSpec(iv)
 
@@ -309,6 +340,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     bytes.map("%02X" format _).mkString
   }
 
+  def versionInfoRequest(json: JObject, key: String): Unit = {
+    val msg: Api.AltResponse[Api.VersionInfoResponse] =
+      Api.AltResponse[Api.VersionInfoResponse]("versionInfoResponse",
+                                               Api.VersionInfoResponse(BuildInfo.version,
+                                                                       BuildInfo.scalaVersion,
+                                                                       mongoVersion().getOrElse("n/a"),
+                                                                       rabbitMQVersion().getOrElse("n/a")))
+    CompletionMapper.complete(key, Serialization.write(msg))
+  }
+
   def createAgentRequest(json: JObject, key: String): Unit = {
     try {
       val authType = (json \ "authType").extract[String].toLowerCase
@@ -328,7 +369,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         val agentIdCnxn = PortableAgentCnxn(uri, "identity", uri)
 
         // Generate K for encrypting the lists of aliases, external identities, etc. on the Agent
-        // term = pwdb(<salt>, hash = SHA(salt + pw), "user", AES_hash(K)) 
+        // term = pwdb(<salt>, hash = SHA(salt + pw), "user", AES_hash(K))
         // post term.toString on (Agent, term)
         {
           // Since we're encrypting exactly 128 bits, ECB is OK
@@ -462,7 +503,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         (json \ "alias").extract[String],
         lbls.map(fromTermString)
           .map(_.getOrElse(
-            CometActorMapper.cometMessage(sessionURIStr, compact(render(
+            SessionManager.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "addAliasLabelsError") ~
                 ("content" -> ("reason" -> ("Couldn't parse a label:" +
                   compact(render(json \ "labels")))))))))).asInstanceOf[List[CnxnCtxtLabel[String, String, String]]]))
@@ -476,7 +517,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         (json \ "labels").extract[List[String]].
           map(fromTermString).
           map(_.getOrElse(
-            CometActorMapper.cometMessage(sessionURIStr, compact(render(
+            SessionManager.cometMessage(sessionURIStr, compact(render(
               ("msgType" -> "updateAliasLabelsError") ~
                 ("content" -> ("reason" -> ("Couldn't parse a label:" +
                   compact(render(json \ "labels")))))))))).asInstanceOf[List[CnxnCtxtLabel[String, String, String]]]))
@@ -849,7 +890,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case None => ()
         case Some(_) => {
           // Make the call to BTC wallet creation
-          // emailToCap( email )@splicious.com 
+          // emailToCap( email )@splicious.com
           // will be used for the BlockChain call
           //btcWalletAddress match {
           //  case None => doCreateBTCWallet( aliasCnxn, email, password )
@@ -971,7 +1012,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               + "\nsessionId = " + sessionId
               + "\ninvoking comet actor with comet message"
               + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"))
-          CometActorMapper.cometMessage(sessionURIStr, compact(render(
+          SessionManager.cometMessage(sessionURIStr, compact(render(
             ("msgType" -> "introductionNotification") ~
               ("content" ->
                 ("introSessionId" -> sessionId) ~
@@ -1014,7 +1055,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           case Some(mTT.Ground(Bottom)) => ();
           // distributed
           case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ();
-          // colocated 
+          // colocated
           case Some(mTT.Ground(v)) => {
             handleRsp(v)
           }
@@ -1061,7 +1102,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             writeCnxn.trgt,
             //agentMgr().feed _
             feed _)
-          CometActorMapper.cometMessage(sessionURIStr, compact(render(
+          SessionManager.cometMessage(sessionURIStr, compact(render(
             ("msgType" -> "connectNotification") ~
               ("content" ->
                 ("connection" ->
@@ -1256,7 +1297,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         optRsrc match {
                           case None => ()
                           case Some(_) => {
-                            CometActorMapper.cometMessage(sessionURI, compact(render(
+                            SessionManager.cometMessage(sessionURI, compact(render(
                               ("msgType" -> "establishConnectionResponse") ~
                               ("content" ->
                                 ("sessionURI" -> sessionURI) ~
@@ -1410,12 +1451,12 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
           }
           case Bottom => {
-            CometActorMapper.cometMessage(sessionURI, compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "getConnectionProfilesError") ~
                 ("content" -> ("reason" -> "Strange: found other data but not connections!?")))))
           }
           case _ => {
-            CometActorMapper.cometMessage(sessionURI, compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "getConnectionProfilesError") ~
                 ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
           }
@@ -1430,7 +1471,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           handleRsp(v)
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURI, compact(render(
+          SessionManager.cometMessage(sessionURI, compact(render(
             ("msgType" -> "getConnectionProfilesError") ~
               ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
         }
@@ -1444,12 +1485,12 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch)
           }
           case Bottom => {
-            CometActorMapper.cometMessage(sessionURI, compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "getConnectionProfilesError") ~
                 ("content" -> ("reason" -> "Strange: found other data but not default alias!?")))))
           }
           case _ => {
-            CometActorMapper.cometMessage(sessionURI, compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "getConnectionProfilesError") ~
                 ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
           }
@@ -1464,7 +1505,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           handleRsp(optRsrc, v)
         }
         case _ => {
-          CometActorMapper.cometMessage(sessionURI, compact(render(
+          SessionManager.cometMessage(sessionURI, compact(render(
             ("msgType" -> "getConnectionProfilesError") ~
               ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
         }
@@ -1474,7 +1515,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def fetchAndSendConnectionProfiles(sessionURI : String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
-    val actor = CometActorMapper.getChunkingActor(sessionURI, biCnxnListObj.length)
+    val actor = SessionManager.getChunkingActor(sessionURI, biCnxnListObj.length)
 
     biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
       // Construct self-connection for each target
@@ -1523,7 +1564,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               handleFetchRsp(optRsrc, v)
             }
             case _ => {
-              CometActorMapper.cometMessage(sessionURI, compact(render(
+              SessionManager.cometMessage(sessionURI, compact(render(
                 ("msgType" -> "connectionProfileError") ~
                   ("content" -> (
                     ("sessionURI" -> sessionURI) ~
@@ -1535,12 +1576,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   }
 
-  def secureLogin(
-    identType: String,
-    identInfo: String,
-    password: String,
-    key: String,
-    onSuccess: String => Unit): Unit = {
+  def secureLogin(identType: String, identInfo: String, password: String, key: String): Unit = {
     import DSLCommLink.mTT
 
     def login(cap: String): Unit = {
@@ -1584,7 +1620,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                       ("msgType" -> "initializeSessionResponse") ~
                         ("content" -> content))))
 
-                    onSuccess(sessionURI)  // register the session
+                    SessionManager.startSession(sessionURI)  // register the session
                     fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
 
                   }
@@ -1842,16 +1878,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def spawnSessionRequest(json: JValue, key: String, onSuccess: String => Unit ): Unit = {
+  def spawnSessionRequest(json: JValue, key: String): Unit = {
     val ssn = spawnNewSessionURI( (json \ "sessionURI").extract[String] )
-    onSuccess(ssn)
+    SessionManager.startSession(ssn)
     CompletionMapper.complete(key, compact(render(
       ("msgType" -> "spawnSessionResponse") ~
         ("content" -> ("sessionURI", ssn)))))
 
   }
 
-  def initializeSessionRequest(json: JValue, key: String, onSuccess: String => Unit ): Unit = {
+  def initializeSessionRequest(json: JValue, key: String ): Unit = {
     val agentURI = (json \ "agentURI").extract[String]
     val uri = new URI(agentURI)
 
@@ -1872,7 +1908,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       })
     }
     val password = queryMap.getOrElse("password", "")
-    secureLogin(identType, identInfo, password, key, onSuccess)
+    secureLogin(identType, identInfo, password, key)
   }
 
   def extractCnxn(cx: JObject) = new PortableAgentCnxn(
@@ -1912,7 +1948,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           case _ => {
             sessionURI match {
               case Some(sessionURIStr) =>
-                CometActorMapper.cometMessage(sessionURIStr, compact(render(
+                SessionManager.cometMessage(sessionURIStr, compact(render(
                   ("msgType" -> "updateUserError") ~
                     ("content" -> ("reason" -> ("Unrecognized resource: " + optRsrc.toString))))))
               case None => ()
@@ -2067,7 +2103,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val ec = (expression \ "content").asInstanceOf[JObject]
     val optFiltersAndCnxns = extractFiltersAndCnxns(ec)
     if (optFiltersAndCnxns == None) {
-      CometActorMapper.cometMessage(
+      SessionManager.cometMessage(
         sessionURIStr,
         """{"msgType":"evalSubscribeError","content":{"reason":"Invalid label."}}""")
     } else {
@@ -2127,7 +2163,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                   //println("evalSubscribeRequest | onFeed: response = " + pretty(render(response)))
                   //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+                  SessionManager.cometMessage(sessionURIStr, compact(render(response)))
                 }
               }
             }
@@ -2139,7 +2175,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
               //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
-              CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+              SessionManager.cometMessage(sessionURIStr, compact(render(response)))
             }
 
             optRsrc match {
@@ -2180,7 +2216,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                 //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+                SessionManager.cometMessage(sessionURIStr, compact(render(response)))
               }
               case Bottom => {
                 val content =
@@ -2189,7 +2225,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                 //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+                SessionManager.cometMessage(sessionURIStr, compact(render(response)))
               }
             }
           }
@@ -2253,7 +2289,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
                   BasicLogService.tweet("evalSubscribeRequest | onScore: response = " + compact(render(response)))
-                  CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+                  SessionManager.cometMessage(sessionURIStr, compact(render(response)))
                 }
                 case _ => {
                   throw new Exception("Unrecognized response: " + v)
@@ -2330,7 +2366,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
                     //println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
                     BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                    CometActorMapper.cometMessage(sessionURIStr, compact(render(response)))
+                    SessionManager.cometMessage(sessionURIStr, compact(render(response)))
                   }
                   case _ => throw new Exception("Unrecognized resource: " + optRsrc)
                 }
@@ -2567,7 +2603,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       case Some(optRsrc) => {
         //println("backupRequest: optRsrc = " + optRsrc)
         BasicLogService.tweet("backupRequest: optRsrc = " + optRsrc)
-        CometActorMapper.cometMessage(sessionURI, compact(render(
+        SessionManager.cometMessage(sessionURI, compact(render(
           ("msgType" -> "backupResponse") ~
             ("content" ->
               ("sessionURI" -> sessionURI)))))
@@ -2590,7 +2626,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       {
         //println("restoreRequest: optRsrc = " + optRsrc)
         BasicLogService.tweet("restoreRequest: optRsrc = " + optRsrc)
-        CometActorMapper.cometMessage(sessionURI, compact(render(
+        SessionManager.cometMessage(sessionURI, compact(render(
           ("msgType" -> "restoreResponse") ~
             ("content" ->
               ("sessionURI" -> sessionURI)))))
@@ -2692,7 +2728,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
 
   def sendCometMessage(ssn : String, msg : JValue) : Unit = {
-    CometActorMapper.cometMessage(
+    SessionManager.cometMessage(
       ssn,
       compact(
         render( msg ) ) )
@@ -2867,7 +2903,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def initializeSessionStep2Request(json: JValue, key: String, onSuccess: String => Unit ): Unit = {
+  def initializeSessionStep2Request(json: JValue, key: String): Unit = {
     import SRPSessionManager._
     import DSLCommLink.mTT
 
@@ -2909,7 +2945,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 ("msgType" -> "initializeSessionResponse") ~
                   ("content" -> content))))
 
-              onSuccess(sessionURI)  // register the session
+              SessionManager.startSession(sessionURI)  // register the session
               fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
 
             }

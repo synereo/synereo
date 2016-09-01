@@ -8,22 +8,18 @@ import com.biosimilarity.evaluator.distribution.EvalConfConfig._
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.util.HttpsDirectives.StrictTransportSecurity
-import com.typesafe.config.{Config, ConfigFactory}
+import com.biosimilarity.evaluator.spray.util._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 import spray.can.Http
-import spray.can.server.ServerSettings
 import spray.http.HttpMethods._
 import spray.http._
-import com.biosimilarity.evaluator.spray.util._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with ScalaFutures with IntegrationPatience {
 
-  val config: Config           = ConfigFactory.load()
-  val settings: ServerSettings = ServerSettings(config)
   val system: ActorSystem      = ActorSystem()
   val timeout: Timeout         = Timeout(15.seconds)
   import system.dispatcher
@@ -37,8 +33,8 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
     .map((hci: Http.HostConnectorInfo) => hci.hostConnector)
 
   override def beforeAll(): Unit = {
-    serverInstance = Some(new Server(settings).start())
     resetMongo()
+    serverInstance = Some(Server().start())
   }
 
   override def afterAll(): Unit = {

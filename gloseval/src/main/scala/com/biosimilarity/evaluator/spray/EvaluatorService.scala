@@ -20,20 +20,22 @@ import scala.concurrent.duration._
 
 case class CometMessage(data: String)
 case class CometMessageList(data: List[String])
-case class SessionPing(reqCtx: RequestContext) extends Serializable
-case class PollTimeout() extends Serializable
-case class SetSessionId(id : String) extends Serializable
-case class KeepAlive() extends Serializable
-case class RunFunction(fn : JObject => Unit, msgType : String, content : JObject) extends Serializable
-case class CloseSession(reqCtx : Option[RequestContext]) extends Serializable
-case class CameraItem(sending : Boolean, msgType : String, content : Option[JObject], tmStamp : DateTime)
-case class StartCamera(reqCtx : RequestContext)
-case class StopCamera(reqCtx : RequestContext)
+case class SessionPing(reqCtx: RequestContext)
+case class PongTimeout()
+case class SetSessionId(id: String)
+case class RunFunction(fn: JObject => Unit, msgType : String, content : JObject)
+case class CloseSession(reqCtx: Option[RequestContext])
+case class SessionTimedOut()
+case class CameraItem(sending: Boolean, msgType: String, content: Option[JObject], tmStamp: DateTime)
+case class StartCamera(reqCtx: RequestContext)
+case class StopCamera(reqCtx: RequestContext)
+case class SetPongTimeout(t: FiniteDuration)
+case class SetSessionTimeout(t: FiniteDuration)
 
 object ChunkingActor {
-  case class SetChunkSize(sz : Int)
-  case class SetExpected(n : Int)
-  case class SetRecipient(ref : ActorRef)
+  case class SetChunkSize(sz: Int)
+  case class SetExpected(n: Int)
+  case class SetRecipient(ref: ActorRef)
 }
 
 class ChunkingActor extends Actor {
@@ -68,29 +70,26 @@ class ChunkingActor extends Actor {
   }
 }
 
-class SessionActor extends Actor with Serializable {
+class SessionActor(sessionId: String) extends Actor {
 
-  val gcTime = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes // if client doesnt poll within this time, its garbage collected
-  val clientTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds // ping requests are ponged after this much time, clients need to re-ping after this
-  @transient
-  var aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession(None))
-  @transient
+  // if client doesnt receive any messages within this time, its garbage collected
+  var sessionTimeout = 60.minutes  // initial value will be overwritten during instantiation
+
+  // ping requests are ponged after this much time unless other data is sent in the meantime
+  // clients need to re-ping after this
+  var pongTimeout = 7.seconds  // initial value will be overwritten during instantiation
+
+
+  var aliveTimer: Cancellable = new Cancellable {def cancel() = {}; def isCancelled = true }
   var optReq : Option[(RequestContext, Cancellable)] = None
-  @transient
   var msgs : List[String] = Nil
-  @transient
   var camera : Option[List[CameraItem]] = None
-  var sessionId : Option[String] = None
-  @transient
-  implicit val formats = DefaultFormats
 
-  override def postStop() = {
-    sessionId = None
-  }
+  implicit val formats = DefaultFormats
 
   def resetAliveTimer() : Unit = {
     aliveTimer.cancel()
-    aliveTimer = context.system.scheduler.scheduleOnce(gcTime, self, CloseSession(None))
+    aliveTimer = context.system.scheduler.scheduleOnce(sessionTimeout, self, SessionTimedOut())
   }
 
   def itemToString(itm : CameraItem) : String = {
@@ -138,7 +137,6 @@ class SessionActor extends Actor with Serializable {
   }
 
   def trySendMessages() : Unit = {
-    resetAliveTimer()
     optReq match {
       case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
 
@@ -152,44 +150,43 @@ class SessionActor extends Actor with Serializable {
   }
 
   def receive = {
-    case SetSessionId(id) =>
-      sessionId = Some(id)
-      resetAliveTimer()
 
-    case KeepAlive() =>
-      resetAliveTimer()
+    case SetSessionTimeout(t) =>
+      sessionTimeout = t
+
+    case SetPongTimeout(t) =>
+      pongTimeout = t
 
     case SessionPing(reqCtx) =>
       itemReceived("sessionPing", None)
-      for (ssn <- sessionId) {
-        resetAliveTimer()
-        for ((_, tmr) <- optReq) tmr.cancel()
-        msgs match {
-          case Nil =>
-            optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(clientTimeout, self, PollTimeout()))
-          case _ =>
-            sendMessages( msgs.reverse, reqCtx)
-            msgs = Nil
-        }
+      resetAliveTimer()
+      for ((_, tmr) <- optReq) tmr.cancel()
+      msgs match {
+        case Nil =>
+          optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(pongTimeout, self, PongTimeout()))
+        case _ =>
+          sendMessages(msgs.reverse, reqCtx)
+          msgs = Nil
       }
 
-    case PollTimeout() =>
-      for (ssn <- sessionId) {
-        optReq match {
-          case Some((req, _)) => {
-            req.complete(HttpResponse(entity = compact(render(
-              List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> ssn)))))))
-            itemSent("sessionPong", None)
-            optReq = None
-          }
-          case None => ()
+    case PongTimeout() =>
+      optReq match {
+        case Some((req, _)) => {
+          req.complete(HttpResponse(entity = compact(render(
+            List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> sessionId)))))))
+          itemSent("sessionPong", None)
+          optReq = None
         }
+        case None => ()
       }
 
     case CloseSession(optReqCtx) =>
       context.stop(self)
-      for (ssn <- sessionId) CometActorMapper.map -= ssn
+      SessionManager.removeSession(sessionId)
       for (reqCtx <- optReqCtx) reqCtx.complete(StatusCodes.OK,"session closed")
+
+    case SessionTimedOut() =>
+      context.self ! CloseSession(None)
 
     case RunFunction(fn,msgType,content) =>
       itemReceived(msgType,Some(content))
@@ -216,7 +213,7 @@ class SessionActor extends Actor with Serializable {
       itemReceived("stopSessionRecording", None)
       camera match {
         case None =>
-          reqCtx.complete(StatusCodes.PreconditionFailed,"session not recording" )
+          reqCtx.complete(StatusCodes.PreconditionFailed, "session not recording" )
 
         case Some(itms) =>
           val items = itms.reverse.map(itemToString)
@@ -225,24 +222,49 @@ class SessionActor extends Actor with Serializable {
   }
 }
 
-// we don't implement our route structure directly in the service actor because
-// we want to be able to test it independently, without having to spin up an actor
 class EvaluatorServiceActor extends Actor
-  with EvaluatorService
-  with Serializable {
+  with EvaluatorService {
   import EvalHandlerService._
 
-  // create well-known node user
   createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
 
-  // this actor only runs our route, but you could add
-  // other things here, like request stream processing
-  // or timeout handling
   def receive = runRoute(myRoute)
 
   def actorRefFactory = context
-  CometActorMapper.actorRefFactory = Some(context)   //@@GS  has to be a better way ... surely
 
+  context.actorOf(Props[SessionManagerActor])
+
+}
+
+object SessionManagerActor {
+  case class InitSession(actor: ActorRef)
+  case class SetDefaultSessionTimeout(t : FiniteDuration)
+  case class SetDefaultPongTimeout(t : FiniteDuration)
+}
+
+class SessionManagerActor extends Actor {
+  import SessionManagerActor._
+
+  // if client doesnt receive any messages within this time, its garbage collected
+  var defaultSessionTimeout = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes
+
+  // ping requests are ponged after this much time unless other data is sent in the meantime
+  // clients need to re-ping after this
+  var defaultPongTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds
+
+  def receive = {
+    case SetDefaultSessionTimeout(t) =>
+      defaultSessionTimeout = t
+
+    case SetDefaultPongTimeout(t) =>
+      defaultPongTimeout = t
+
+    case InitSession(actor: ActorRef) =>
+      actor ! SetSessionTimeout(defaultSessionTimeout)
+      actor ! SetPongTimeout(defaultPongTimeout)
+  }
+
+  SessionManager.setSessionManager(context)
 }
 
 case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
@@ -251,31 +273,6 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
 
   import EvalHandlerService._
 
-  def createNewSession(json: JObject, key: String) : Unit = {
-    initializeSessionRequest(json, key, ssn => {
-      val actor = actorRefFactory.actorOf(Props[SessionActor])
-      actor ! SetSessionId(ssn)
-      CometActorMapper.map += (ssn -> actor)
-    })
-  }
-
-  def spawnSession(json: JObject, key: String) : Unit = {
-    spawnSessionRequest(json, key, ssn => {
-      val actor = actorRefFactory.actorOf(Props[SessionActor])
-      actor ! SetSessionId (ssn)
-      CometActorMapper.map += (ssn -> actor)
-    })
-  }
-
-  def createNewSessionSRP(json: JObject, key: String) : Unit = {
-    initializeSessionStep2Request(json, key, ssn => {
-      val actor = actorRefFactory.actorOf(Props[SessionActor])
-      actor ! SetSessionId(ssn)
-      CometActorMapper.map += (ssn -> actor)
-    })
-
-  }
-
   @transient
   val syncMethods = HashMap[String, (JObject, String) => Unit](
     // Old stuff
@@ -283,13 +280,15 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     ("confirmEmailToken", confirmEmailToken),
     // New API
     ("createAgentRequest", createAgentRequest),
-    ("initializeSessionRequest", createNewSession),
+    ("initializeSessionRequest", initializeSessionRequest),
     ("getAgentRequest", getAgentRequest),
-    ("spawnSessionRequest", spawnSession),
+    ("spawnSessionRequest", spawnSessionRequest),
     ("createUserStep1Request", createUserStep1Request),
     ("createUserStep2Request", createUserStep2Request),
     ("initializeSessionStep1Request", initializeSessionStep1Request),
-    ("initializeSessionStep2Request", createNewSessionSRP)
+    ("initializeSessionStep2Request", initializeSessionStep2Request),
+    // Version Info
+    ("versionInfoRequest", versionInfoRequest)
   )
 
   @transient
@@ -367,7 +366,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
                           ctx.complete(StatusCodes.Forbidden, "missing sessionURI parameter")
                         }
                         case Some(sessionURI) => {
-                          CometActorMapper.map.get(sessionURI) match {
+                          SessionManager.getSession(sessionURI) match {
                             case None => {
                               ctx.complete(StatusCodes.Forbidden,"Invalid sessionURI parameter")
                             }
@@ -379,7 +378,6 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
                               case "stopSessionRecording" => cometActor ! StopCamera(ctx)
                               case "closeSessionRequest" => cometActor ! CloseSession(Some(ctx))
                               case _ => {
-                                cometActor ! KeepAlive()
                                 asyncMethods.get(msgType) match {
                                   case Some(fn) => {
                                     cometActor ! RunFunction(fn, msgType, content)

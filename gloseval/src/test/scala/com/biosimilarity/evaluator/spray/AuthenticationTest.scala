@@ -46,10 +46,18 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
 
   def actorRefFactory = system
 
+  var serverInstance: Option[Server] = None
+
   val httpsUri: Uri = Uri("/api").withScheme("https").withPort(EvalConfConfig.serverSSLPort)
 
   override def beforeAll(): Unit = {
     resetMongo()
+    serverInstance = Some(Server().start())
+  }
+
+  override def afterAll(): Unit = {
+    serverInstance.map(_.stop())
+    serverInstance = None
   }
 
   import AuthenticationTestData._

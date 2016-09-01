@@ -45,6 +45,10 @@ lazy val commonSettings = Seq(
   scalaVersion := ourScalaVersion,
   scalacOptions := commonOptions,
   autoCompilerPlugins := true,
+  git.baseVersion := "2.0",
+  git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
+    s"${git.baseVersion.value}-${sha.substring(0, 7)}"
+  },
   resolvers ++= Seq(
     Resolver.bintrayRepo("synereo", "maven"),
     Resolver.sonatypeRepo("snapshots"),
@@ -80,10 +84,6 @@ lazy val specialkDeps = Seq(
 lazy val specialkSettings = Seq(
   name := "specialk",
   organization := "com.biosimilarity.lift",
-  git.baseVersion := "1.1.8.5",
-  git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
-    s"${git.baseVersion.value}-${sha.substring(0, 7)}"
-  },
   libraryDependencies ++= specialkDeps,
   fork in Test := true)
 
@@ -116,10 +116,6 @@ lazy val agentServiceDeps = Seq(
 lazy val agentServiceSettings = Seq(
   name := "agentservices-store-ia",
   organization := "com.protegra-ati",
-  git.baseVersion := "1.9.5",
-  git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
-    s"${git.baseVersion.value}-${sha.substring(0, 7)}"
-  },
   libraryDependencies ++= agentServiceDeps,
   fork in Test := true)
 
@@ -128,7 +124,6 @@ lazy val agentService = (project in file("agent-service/AgentServices-Store"))
   .settings(commonSettings: _*)
   .settings(bnfcSettings: _*)
   .dependsOn(specialk)
-  .enablePlugins(GitVersioning)
 
 lazy val glosevalDeps = Seq(
   "biz.source_code"             % "base64coder"       % base64coderVersion,
@@ -138,7 +133,6 @@ lazy val glosevalDeps = Seq(
   "io.spray"                    % "spray-testkit"     % sprayVersion,
   "io.spray"                   %% "spray-json"        % "1.2.5",
   "com.github.scopt"           %% "scopt"             % "3.5.0",
-  "com.googlecode.json-simple"  % "json-simple"       % "1.1.1",
   "com.rabbitmq"                % "amqp-client"       % amqpClientVersion,
   "com.typesafe.akka"          %% "akka-actor"        % "2.1.4",
   "it.unibo.alice.tuprolog"     % "tuprolog"          % tuprologVersion,
@@ -158,11 +152,9 @@ lazy val glosevalDeps = Seq(
 lazy val glosevalSettings = Seq(
   name := "GLoSEval",
   organization := "com.biosimilarity",
-  git.baseVersion := "0.1",
-  git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
-    s"${git.baseVersion.value}-${sha.substring(0, 7)}"
-  },
   libraryDependencies ++= glosevalDeps,
+  buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
+  buildInfoPackage := "com.biosimilarity.evaluator",
   fork := true,
   parallelExecution in Test := false)
 
@@ -170,10 +162,11 @@ lazy val gloseval = (project in file("gloseval"))
   .settings(glosevalSettings: _*)
   .settings(commonSettings: _*)
   .dependsOn(specialk, agentService)
-  .enablePlugins(GitVersioning)
   .enablePlugins(JavaAppPackaging)
+  .enablePlugins(BuildInfoPlugin)
 
 lazy val root = (project in file("."))
   .aggregate(specialk, agentService, gloseval)
   .dependsOn(specialk, agentService, gloseval)
   .settings(commonSettings: _*)
+  .enablePlugins(GitVersioning)

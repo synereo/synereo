@@ -5,31 +5,27 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.Api
+import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution.EvalConfConfig._
 import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.spray.util._
-import com.biosimilarity.evaluator.spray.CapUtilities
-import com.typesafe.config.{Config, ConfigFactory}
-import org.json4s._
+import org.json4s.{BuildInfo ⇒ _, _}
 import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization.write
+import org.json4s.jackson.Serialization._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import spray.can.Http
-import spray.can.server.ServerSettings
 import spray.http.HttpMethods._
 import spray.http._
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaFutures with IntegrationPatience with CapUtilities {
 
-  val config: Config = ConfigFactory.load()
-  val settings: ServerSettings = ServerSettings(config)
   val system: ActorSystem = ActorSystem()
   val timeout: Timeout = Timeout(60.seconds)
 
@@ -47,7 +43,7 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
 
   override def beforeEach(): Unit = {
     resetMongo()
-    serverInstance = Some(new Server(settings).start())
+    serverInstance = Some(Server().start())
     Thread.sleep(2000)
   }
 
@@ -56,16 +52,16 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     serverInstance = None
   }
 
-  def makeRequest(cont: Api.RequestContent): HttpRequest = {
-    val body = write(Api.toReq(cont))
+  type SessionUri = String
+
+  def makePost(cont: Api.RequestContent): HttpRequest = {
+    val body = write(cont.asRequest)
     val requestBody: HttpEntity = HttpEntity(ContentType(MediaTypes.`application/json`), body)
     HttpRequest(POST, "/api", entity = requestBody)
   }
 
-  type SessionUri = String
-
   def post(cont: Api.RequestContent): Future[HttpResponse] = {
-    val req = makeRequest(cont)
+    val req: HttpRequest = makePost(cont)
     eventualHostConnector
       .flatMap((hc: ActorRef) => hc.ask(req)(timeout))
       .mapTo[HttpResponse]
@@ -175,11 +171,59 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     post(cont).map((response: HttpResponse) => parse(response.entity.asString).extract[JArray])
   }
 
+  def pingUntilPong(ssn: SessionUri): Future[JArray] = {
+    def _step(acc: List[JValue]): List[JValue] = {
+      val ja = Await.result(sessionPing(ssn), 10.seconds )
+      var ta = acc
+
+      var done = false
+      ja.arr.foreach((jv: JValue) => {
+        val msgType = (jv \ "msgType").extract[String]
+        if (msgType == "sessionPong") done = true
+        else ta = jv :: ta
+      })
+
+      if (done) ta
+      else _step(ta)
+    }
+    val l = _step(Nil)
+    Future.successful(JArray(l))
+  }
+
+  "A versionInfoRequest" should {
+    "result in a versionInfoResponse" in {
+      val eventualResponse: Future[Api.AltResponse[Api.VersionInfoResponse]] =
+        post(Api.VersionInfoRequest).map { (response: HttpResponse) =>
+          read[Api.AltResponse[Api.VersionInfoResponse]](response.entity.asString)
+        }
+      whenReady(eventualResponse) { (msg: Api.AltResponse[Api.VersionInfoResponse]) =>
+        msg.msgType shouldBe "versionInfoResponse"
+        msg.content.glosevalVersion should equal (BuildInfo.version)
+        msg.content.scalaVersion should equal (BuildInfo.scalaVersion)
+        msg.content.mongoDBVersion should equal (mongoVersion().getOrElse("n/a"))
+        msg.content.rabbitMQVersion should equal (rabbitMQVersion().getOrElse("n/a"))
+      }
+    }
+  }
+
   "The Administrator" should {
     "be able to create a session" in {
       openAdminSession().futureValue shouldNot be ("")
     }
+
+    """query empty database without crashing""" in {
+      val proc: Future[(JArray)] = for {
+        ssn <- openAdminSession()
+        cnxn <- makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
+        spwnssnA <- spawnSession(ssn)
+        a <- sessionPing(spwnssnA)
+      } yield a
+      proc.futureValue.values.length shouldBe 1
+    }
   }
+
+
+
 
   """The Administrator Session""".stripMargin should {
     """establish the correct number of connections""" in {
@@ -221,14 +265,49 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       }
     }
 
-    """query empty database without crashing""" in {
+    """return evalSubscribeResponse when querying using any, each or all""" in {
       val proc: Future[(JArray)] = for {
-        ssn <- openAdminSession()
-        cnxn <- makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
-        spwnssnA <- spawnSession(ssn)
-        a <- sessionPing(spwnssnA)
+        tssn <- openAdminSession()
+        ssn <- spawnSession(tssn)
+        _ <- {
+          // uncomment the following line allow the test to run faster
+          //for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
+          makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
+          makeQueryOnSelf(ssn, "any([MESSAGEPOSTLABEL])")
+          makeQueryOnSelf(ssn, "all([MESSAGEPOSTLABEL])")
+        }
+        a <- sessionPing(ssn)
       } yield a
-      proc.futureValue.values.length shouldBe 1
+      whenReady(proc) {
+        case (ja: JArray) =>
+          ja.arr.length shouldBe 1
+          val rsp = ja.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          msgType shouldBe "evalSubscribeResponse"
+        case _ => fail("should not happen")
+      }
+    }
+
+    """return evalSubscribeError when querying not using any, each or all""" in {
+      val proc: Future[(JArray)] = for {
+        tssn <- openAdminSession()
+        ssn <- spawnSession(tssn)
+        _ <- {
+          // uncomment the following line to allow the test to run faster
+          //for (actor <- SessionManager.getSession(ssn) ) actor ! SetPongTimeout(1.seconds)
+          makeQueryOnSelf(ssn, "lordfarquad([MESSAGEPOSTLABEL])")
+        }
+        //a <- sessionPing(ssn)
+        a <- pingUntilPong(ssn)
+      } yield a
+      whenReady(proc) {
+        case (ja: JArray) =>
+          ja.arr.length shouldBe 1
+          val rsp = ja.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          msgType shouldBe "evalSubscribeError"
+        case _ => fail("should not happen")
+      }
     }
   }
 }
