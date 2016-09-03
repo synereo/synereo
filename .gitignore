@@ -5,3 +5,5 @@ target/
 logs/
 keystore.jks
 gloseval.pem
+gloseval/client
+gloseval/agentui

@@ -154,10 +154,20 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
               }
             }
           }
-        } ~
-          pathPrefix("agentui") {
-            getFromDirectory("./agentui")
+        } ~ pathPrefix("agentui") {
+          getFromDirectory("agentui")
+        } ~ (pathSingleSlash | path("index.html")) {
+          getFromFile("client/index.html")
+        } ~ pathPrefix("assets") {
+          getFromDirectory("client/assets")
+        } ~ path("logging") {
+          post {
+            entity(as[String]) { (entityString: String) =>
+              BasicLogService.tweet(s"UI: $entityString")
+              complete("logged")
+            }
           }
+        }
       }
     }
 }
