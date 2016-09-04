@@ -87,12 +87,12 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     for {
       resp1 <- post(Api.CreateUserStep1Request(nce))
       resp2 <- post(Api.CreateUserStep2Request(nce, {
-        parse(resp1.entity.asString).extract[Api.ApiResponse].responseContent match {
+        parse(resp1.entity.asString).extract[Api.Response].responseContent match {
           case Api.CreateUserStep1Response(salt) =>
             srpClient.calculateX(email, pwd, salt)
             salt
         }}, srpClient.generateVerifier, blob))
-    } yield parse(resp2.entity.asString).extract[Api.ApiResponse].responseContent match {
+    } yield parse(resp2.entity.asString).extract[Api.Response].responseContent match {
       case Api.CreateUserStep2Response(agentURI) => agentURI
     }
   }
@@ -104,12 +104,12 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       agentUri <- getAgentURI(email, pwd)
       resp1 <- post(Api.InitializeSessionStep1Request("%s?A=%s".format(agentUri, srpClient.calculateAHex)))
       resp2 <- post(Api.InitializeSessionStep2Request("%s?M=%s".format(agentUri, srpClient.calculateMHex {
-        parse(resp1.entity.asString).extract[Api.ApiResponse].responseContent match {
+        parse(resp1.entity.asString).extract[Api.Response].responseContent match {
           case Api.InitializeSessionStep1Response(s, b) =>
             srpClient.calculateX(email, pwd, s)
             b
         }})))
-    } yield parse(resp2.entity.asString).extract[Api.ApiResponse].responseContent match {
+    } yield parse(resp2.entity.asString).extract[Api.Response].responseContent match {
       case Api.InitializeSessionResponse(sessionURI, m2) if srpClient.verifyServerEvidenceMessage(fromHex(m2)) =>
         sessionURI
     }

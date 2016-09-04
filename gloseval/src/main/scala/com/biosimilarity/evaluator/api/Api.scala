@@ -69,8 +69,7 @@ object Api {
   case class CreateUserStep2Response(agentURI: String) extends ResponseContent
   case class ApiError(reason: String) extends ResponseContent
 
-  sealed trait Response
-  case class ApiResponse(msgType: String, content: JObject) extends Response {
+  case class Response(msgType: String, content: JObject) {
     val responseContent = (msgType, content) match {
       case ("createUserStep1Response", JObject(JField("salt", JString(s)) :: Nil)) => CreateUserStep1Response(s)
       case ("createUserStep2Response", JObject(JField("agentURI", JString(au)) :: Nil)) => CreateUserStep2Response(au)
@@ -95,14 +94,14 @@ object Api {
   // See ApiSpec's versionInfoRequest test for a usage example.
   case class AltResponse[T <: ResponseContent](msgType: String, content: T)
 
-  val hints = new ShortTypeHints(classOf[ApiResponse] :: Nil) {
+  val hints = new ShortTypeHints(classOf[Response] :: Nil) {
     override def serialize: PartialFunction[Any, JObject] = {
-      case ar: ApiResponse =>
+      case ar: Response =>
         JObject(JField("msgType", JString(ar.msgType)) :: JField("content", ar.content) :: Nil)
     }
     override def deserialize: PartialFunction[(String, JObject), Any] = {
       case ("ApiResponse", JObject(JField("msgType", JString(m)) :: JField(content, JObject(c)) :: Nil)) =>
-        ApiResponse(m, JObject(c))
+        Response(m, JObject(c))
     }
   }
 
