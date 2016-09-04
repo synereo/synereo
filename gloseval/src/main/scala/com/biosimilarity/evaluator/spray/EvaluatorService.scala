@@ -124,7 +124,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
         syncMethods.get(msgType) match {
           case Some(fn) =>
             val key: String = UUID.randomUUID.toString
-            CompletionMapper.map += (key -> ctx)
+            CompletionMapper.hmap += (key -> ctx)
             fn(content, key)
           case None =>
             handleAsyncPosts(ctx, msgType, content)

@@ -46,19 +46,21 @@ object symbol2jvalue extends Serializable {}
 
 object CompletionMapper extends Serializable {
   @transient
-  val map = new HashMap[String, RequestContext]()
+  val hmap = new HashMap[String, RequestContext]()
+
   def complete(key : String, message : String) : Unit = {
-    for ( reqCtx <- map.get(key)) {
+    for (reqCtx <- hmap.get(key)) {
       reqCtx.complete(HttpResponse(200, message))
     }
-    map -= key
+    hmap -= key
   }
+
   def complete(key : String, msgType : String, content : JObject): Unit = {
-    for ( reqCtx <- map.get(key)) {
+    for (reqCtx <- hmap.get(key)) {
       val message = ("msgType" -> msgType) ~ ("content" -> content)
       reqCtx.complete(HttpResponse(200, compact(render(message))))
     }
-    map -= key
+    hmap -= key
   }
 }
 
