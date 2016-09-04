@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.spray.util.HttpsDirectives
+import com.biosimilarity.evaluator.spray.directives.{CORSSupport, HttpsDirectives}
 import com.biosimilarity.lift.lib._
 import org.json4s.JsonDSL._
 import org.json4s._
