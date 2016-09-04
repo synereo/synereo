@@ -1,273 +1,21 @@
 package com.biosimilarity.evaluator.spray
 
-import akka.actor._
-import com.biosimilarity.lift.lib._
-import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.spray.util.HttpsDirectives
-import spray.routing._
-
 import java.util.UUID
 
+import akka.actor._
+import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.spray.util.HttpsDirectives
+import com.biosimilarity.lift.lib._
 import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import spray.http._
 import spray.httpx.encoding._
+import spray.routing._
 
 import scala.collection.mutable.HashMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-
-case class CometMessage(data: String)
-case class CometMessageList(data: List[String])
-case class SessionPing(reqCtx: RequestContext)
-case class PongTimeout()
-case class SetSessionId(id: String)
-case class RunFunction(fn: JObject => Unit, msgType : String, content : JObject)
-case class CloseSession(reqCtx: Option[RequestContext])
-case class SessionTimedOut()
-case class CameraItem(sending: Boolean, msgType: String, content: Option[JObject], tmStamp: DateTime)
-case class StartCamera(reqCtx: RequestContext)
-case class StopCamera(reqCtx: RequestContext)
-case class SetPongTimeout(t: FiniteDuration)
-case class SetSessionTimeout(t: FiniteDuration)
-
-object ChunkingActor {
-  case class SetChunkSize(sz: Int)
-  case class SetExpected(n: Int)
-  case class SetRecipient(ref: ActorRef)
-}
-
-class ChunkingActor extends Actor {
-  import ChunkingActor._
-
-  var chunkSize = 20
-  var expected = -1
-  var recipient : Option[ActorRef] = None
-
-  var msgs : List[String] = Nil
-  def receive = {
-    case SetRecipient(ref) => recipient = Some(ref)
-
-    case SetChunkSize(sz) => chunkSize = sz
-
-    case SetExpected(sz) => expected = sz
-
-    case CometMessage(data) =>
-      msgs = data :: msgs
-      expected -= 1
-      if (msgs.length == chunkSize || expected == 0) {
-        recipient match {
-          case Some(ref) =>
-            ref ! CometMessageList(msgs.reverse)
-            msgs = Nil
-            if (expected == 0) context.stop(self)
-
-          case None =>
-            throw new Exception("Recipient not set for chunking actor")
-        }
-      }
-  }
-}
-
-class SessionActor(sessionId: String) extends Actor {
-
-  // if client doesnt receive any messages within this time, its garbage collected
-  var sessionTimeout = 60.minutes  // initial value will be overwritten during instantiation
-
-  // ping requests are ponged after this much time unless other data is sent in the meantime
-  // clients need to re-ping after this
-  var pongTimeout = 7.seconds  // initial value will be overwritten during instantiation
-
-
-  var aliveTimer: Cancellable = new Cancellable {def cancel() = {}; def isCancelled = true }
-  var optReq : Option[(RequestContext, Cancellable)] = None
-  var msgs : List[String] = Nil
-  var camera : Option[List[CameraItem]] = None
-
-  implicit val formats = DefaultFormats
-
-  def resetAliveTimer() : Unit = {
-    aliveTimer.cancel()
-    aliveTimer = context.system.scheduler.scheduleOnce(sessionTimeout, self, SessionTimedOut())
-  }
-
-  def itemToString(itm : CameraItem) : String = {
-    val cont : JValue = itm.content match {
-      case Some(j) => j
-      case None => JNull
-
-    }
-    val jo : JObject =
-      ("msgType" -> itm.msgType) ~
-      ("direction" -> (if (itm.sending) "Sent" else "Received") ) ~
-      ("tmStamp" -> itm.tmStamp.toIsoDateTimeString) ~
-      ("content" -> cont)
-    pretty(render(jo))
-  }
-
-  def addCameraItem(itm : CameraItem) : Unit = {
-    camera match {
-      case Some(l) => camera = Some(itm :: l)
-      case None => ()
-    }
-  }
-
-  def itemReceived(msgType : String, content : Option[JObject]) : Unit = {
-    if (camera.isDefined) addCameraItem(CameraItem(sending = false, msgType, content, DateTime.now))
-  }
-
-  def itemSent(msgType : String, content : Option[JObject]) : Unit = {
-    if (camera.isDefined) addCameraItem(CameraItem(sending = true, msgType, content, DateTime.now))
-  }
-
-  def sendMessages(msgs : List[String], reqCtx : RequestContext) : Unit = {
-    val now = DateTime.now
-    if (camera.isDefined) {
-      msgs.foreach(msg => {
-        implicit val formats = DefaultFormats
-
-        val jo = parse(msg)
-        val msgType = (jo \ "msgType").extract[String]
-        val content = (jo \ "content").extract[JObject]
-        addCameraItem(CameraItem(sending = true, msgType, Some(content), now))
-      })
-    }
-    reqCtx.complete(HttpResponse(entity = "[" + msgs.mkString(",") + "]"))
-  }
-
-  def trySendMessages() : Unit = {
-    optReq match {
-      case None => () //println("CometMessage optReqCtx miss: id = " + sessionId)
-
-      case Some((reqCtx,tmr)) => {
-        tmr.cancel()
-        sendMessages(msgs.reverse, reqCtx)
-        optReq = None
-        msgs = Nil
-      }
-    }
-  }
-
-  def receive = {
-
-    case SetSessionTimeout(t) =>
-      sessionTimeout = t
-
-    case SetPongTimeout(t) =>
-      pongTimeout = t
-
-    case SessionPing(reqCtx) =>
-      itemReceived("sessionPing", None)
-      resetAliveTimer()
-      for ((_, tmr) <- optReq) tmr.cancel()
-      msgs match {
-        case Nil =>
-          optReq = Some(reqCtx, context.system.scheduler.scheduleOnce(pongTimeout, self, PongTimeout()))
-        case _ =>
-          sendMessages(msgs.reverse, reqCtx)
-          msgs = Nil
-      }
-
-    case PongTimeout() =>
-      optReq match {
-        case Some((req, _)) => {
-          req.complete(HttpResponse(entity = compact(render(
-            List(("msgType" -> "sessionPong") ~ ("content" -> ("sessionURI" -> sessionId)))))))
-          itemSent("sessionPong", None)
-          optReq = None
-        }
-        case None => ()
-      }
-
-    case CloseSession(optReqCtx) =>
-      context.stop(self)
-      SessionManager.removeSession(sessionId)
-      for (reqCtx <- optReqCtx) reqCtx.complete(StatusCodes.OK,"session closed")
-
-    case SessionTimedOut() =>
-      context.self ! CloseSession(None)
-
-    case RunFunction(fn,msgType,content) =>
-      itemReceived(msgType,Some(content))
-      fn(content)
-
-    case CometMessageList(data) =>
-      data.foreach( msg => msgs = msg :: msgs)
-      trySendMessages()
-
-    case CometMessage(data) =>
-      msgs = data :: msgs
-      trySendMessages()
-
-    case StartCamera(reqCtx) =>
-      val msg : String = camera match {
-        case Some(_) => "session is already recording"
-        case None => "session recording started"
-      }
-      if (camera.isEmpty) camera = Some(Nil)
-      itemReceived("startSessionRecording", None)
-      reqCtx.complete(StatusCodes.OK,msg)
-
-    case StopCamera(reqCtx) =>
-      itemReceived("stopSessionRecording", None)
-      camera match {
-        case None =>
-          reqCtx.complete(StatusCodes.PreconditionFailed, "session not recording" )
-
-        case Some(itms) =>
-          val items = itms.reverse.map(itemToString)
-          reqCtx.complete(HttpResponse(entity = "[" + items.mkString(",") + "]"))
-      }
-  }
-}
-
-class EvaluatorServiceActor extends Actor
-  with EvaluatorService {
-  import EvalHandlerService._
-
-  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
-
-  def receive = runRoute(myRoute)
-
-  def actorRefFactory = context
-
-  context.actorOf(Props[SessionManagerActor])
-
-}
-
-object SessionManagerActor {
-  case class InitSession(actor: ActorRef)
-  case class SetDefaultSessionTimeout(t : FiniteDuration)
-  case class SetDefaultPongTimeout(t : FiniteDuration)
-}
-
-class SessionManagerActor extends Actor {
-  import SessionManagerActor._
-
-  // if client doesnt receive any messages within this time, its garbage collected
-  var defaultSessionTimeout = EvalConfConfig.readInt("sessionTimeoutMinutes") minutes
-
-  // ping requests are ponged after this much time unless other data is sent in the meantime
-  // clients need to re-ping after this
-  var defaultPongTimeout = EvalConfConfig.readInt("pongTimeoutSeconds") seconds
-
-  def receive = {
-    case SetDefaultSessionTimeout(t) =>
-      defaultSessionTimeout = t
-
-    case SetDefaultPongTimeout(t) =>
-      defaultPongTimeout = t
-
-    case InitSession(actor: ActorRef) =>
-      actor ! SetSessionTimeout(defaultSessionTimeout)
-      actor ! SetPongTimeout(defaultPongTimeout)
-  }
-
-  SessionManager.setSessionManager(context)
-}
-
-case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
 
 trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport {
 
@@ -339,7 +87,60 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     ("omniTransfer", omniTransfer),
     ("getAmpWalletAddress", omniGetAmpWalletAddress),
     ("setAmpWalletAddress", omniSetAmpWalletAddress)
-    )
+  )
+
+  def handleAsyncPosts(ctx: RequestContext, msgType: String, content: JObject): Unit =
+    (content \ "sessionURI").extractOpt[String] match {
+      case None =>
+        ctx.complete(StatusCodes.Forbidden, "Missing sessionURI parameter")
+      case Some(sessionURI) =>
+        SessionManager.getSession(sessionURI) match {
+          case None =>
+            ctx.complete(StatusCodes.Forbidden, "Invalid sessionURI parameter")
+          case Some(cometActor) =>
+            msgType match {
+              case "sessionPing"           => cometActor ! SessionActor.SessionPing(ctx)
+              case "closeSessionRequest"   => cometActor ! SessionActor.CloseSession(Some(ctx))
+              case "startSessionRecording" => cometActor ! SessionActor.StartCamera(ctx)
+              case "stopSessionRecording"  => cometActor ! SessionActor.StopCamera(ctx)
+              case _ =>
+                asyncMethods.get(msgType) match {
+                  case Some(fn) =>
+                    cometActor ! SessionActor.RunFunction(fn, msgType, content)
+                    ctx.complete(StatusCodes.OK)
+                  case _ =>
+                    ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
+                }
+            }
+        }
+    }
+
+  def handlePosts(entityString: String): (RequestContext) => Unit =
+    (ctx: RequestContext) =>
+      try {
+        val json: JValue     = parse(entityString)
+        val msgType: String  = (json \ "msgType").extract[String]
+        val content: JObject = (json \ "content").extract[JObject]
+        syncMethods.get(msgType) match {
+          case Some(fn) =>
+            val key: String = UUID.randomUUID.toString
+            CompletionMapper.map += (key -> ctx)
+            fn(content, key)
+          case None =>
+            handleAsyncPosts(ctx, msgType, content)
+        }
+      } catch {
+        case e: Throwable =>
+          val writer: java.io.StringWriter     = new java.io.StringWriter()
+          val printWriter: java.io.PrintWriter = new java.io.PrintWriter(writer)
+          e.printStackTrace(printWriter)
+          printWriter.flush()
+          val stackTrace: String     = writer.toString()
+          val responseString: String = s"""|Malformed request:
+                                           |$stackTrace""".stripMargin
+          BasicLogService.tweet(responseString)
+          ctx.complete(HttpResponse(500, responseString))
+    }
 
   @transient
   val myRoute =
@@ -348,69 +149,11 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
         path("api") {
           post {
             decodeRequest(NoEncoding) {
-              entity(as[String]) { jsonStr =>
-                (ctx) => {
-                  try {
-                    //BasicLogService.tweet("json: " + jsonStr)
-                    val json = parse(jsonStr)
-                    val msgType = (json \ "msgType").extract[String]
-                    val content = (json \ "content").extract[JObject]
-                    syncMethods.get(msgType) match {
-                      case Some(fn) => {
-                        val key = UUID.randomUUID.toString
-                        CompletionMapper.map += (key -> ctx)
-                        fn(content, key)
-                      }
-                      case None => (content \ "sessionURI").extractOpt[String] match {
-                        case None => {
-                          ctx.complete(StatusCodes.Forbidden, "missing sessionURI parameter")
-                        }
-                        case Some(sessionURI) => {
-                          SessionManager.getSession(sessionURI) match {
-                            case None => {
-                              ctx.complete(StatusCodes.Forbidden,"Invalid sessionURI parameter")
-                            }
-                            case Some(cometActor) => msgType match {
-                              case "sessionPing" => {
-                                cometActor ! SessionPing(ctx)
-                              }
-                              case "startSessionRecording" => cometActor ! StartCamera(ctx)
-                              case "stopSessionRecording" => cometActor ! StopCamera(ctx)
-                              case "closeSessionRequest" => cometActor ! CloseSession(Some(ctx))
-                              case _ => {
-                                asyncMethods.get(msgType) match {
-                                  case Some(fn) => {
-                                    cometActor ! RunFunction(fn, msgType, content)
-                                    ctx.complete(StatusCodes.OK)
-                                  }
-                                  case _ => {
-                                    ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                  catch {
-                    case th: Throwable => {
-                      val writer: java.io.StringWriter = new java.io.StringWriter()
-                      val printWriter: java.io.PrintWriter = new java.io.PrintWriter(writer)
-                      th.printStackTrace(printWriter)
-                      printWriter.flush()
-
-                      val stackTrace: String = writer.toString()
-                      //println( "Malformed request: \n" + stackTrace )
-                      BasicLogService.tweet("Malformed request: \n" + stackTrace)
-                      ctx.complete(HttpResponse(500, "Malformed request: \n" + stackTrace))
-                    }
-                  }
-                }
-              } // jsonStr
-            } // decodeRequest
-          } // post
+              entity(as[String]) { (entityString: String) =>
+                handlePosts(entityString)
+              }
+            }
+          }
         } ~
           pathPrefix("agentui") {
             getFromDirectory("./agentui")
@@ -419,52 +162,15 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     }
 }
 
-/*
-        path("admin/connectServers") {
-          // allow administrators to make
-          // sure servers are connected
-          // BUGBUG : lgm -- make this secure!!!
-          get {
-            parameters('whoAmI) {
-              (whoAmI: String) =>
-                {
-                  //             println(
-                  //               (
-                  //                 " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                  //                 + "in admin/connectServers2 "
-                  //                 + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                  //               )
-                  //             )
-                  BasicLogService.tweet(
-                    (
-                      " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                      + "in admin/connectServers2 "
-                      + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "))
+class EvaluatorServiceActor extends Actor with EvaluatorService {
 
-                  connectServers("evaluator-service", UUID.randomUUID)
+  import EvalHandlerService._
 
-                  (cometActor ! SessionPing("", _))
-                }
-            }
-          }
-        } ~
-        pathPrefix("splicious/btc") {
-          get {
-            parameters('btcToken) {
-              (btcToken: String) =>
-                {
-                  BasicLogService.tweet(
-                    (
-                      " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "
-                      + "in splicious/btc "
-                      + " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> "))
+  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
 
-                  handleBTCResponse(btcToken)
+  def receive = runRoute(myRoute)
 
-                  (cometActor ! SessionPing("", _))
+  def actorRefFactory = context
 
-                }
-            }
-          }
-        }
-  */
+  context.actorOf(Props[SessionManagerActor])
+}

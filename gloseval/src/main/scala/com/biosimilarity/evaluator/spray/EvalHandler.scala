@@ -39,6 +39,8 @@ import scala.collection.mutable
 import scala.util.Try
 import scala.language.postfixOps
 
+case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
+
 // Mask the json4s symbol2jvalue implicit so we can use the PrologDSL
 object symbol2jvalue extends Serializable {}
 
@@ -71,7 +73,7 @@ object SessionManager extends Serializable {
 
   def cometMessage(sessionURI: String, jsonBody: String): Unit = {
     for (cometActor <- hmap.get(sessionURI)) {
-      cometActor ! CometMessage(jsonBody)
+      cometActor ! SessionActor.CometMessage(jsonBody)
     }
   }
 
@@ -1526,7 +1528,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       def handleFetchRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-            actor ! CometMessage(compact(render(
+            actor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileResponse") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1534,7 +1536,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("jsonBlob" -> jsonBlob))))))
           }
           case Bottom => {
-            actor ! CometMessage(compact(render(
+            actor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1542,7 +1544,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("reason" -> "Not found"))))))
           }
           case _ => {
-            actor ! CometMessage(compact(render(
+            actor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
