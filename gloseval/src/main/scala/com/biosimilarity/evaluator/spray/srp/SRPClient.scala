@@ -4,7 +4,7 @@ import java.math.BigInteger
 
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import org.bouncycastle.crypto.CryptoException
-import org.bouncycastle.crypto.agreement.srp.{SRP6Client, SRP6StandardGroups}
+import org.bouncycastle.crypto.agreement.srp.{SRP6Client, SRP6StandardGroups, SRP6Util}
 import org.bouncycastle.crypto.digests.SHA512Digest
 
 class SRPClient extends SRP6Client {
@@ -30,8 +30,11 @@ class SRPClient extends SRP6Client {
   }
 
   def calculateX(identity: String, password: String, salt: String) = {
-    val inner = toHex(hash(s"$identity:$password".getBytes))
-    val result = hash(s"$salt$inner".getBytes)
+    if(Option(identity).isEmpty || Option(password).isEmpty || Option(salt).isEmpty) {
+      throw new CryptoException("Impossible to compute X: identity or password or salt value is missing.")
+    }
+    val inner = hash(s"$identity:$password".getBytes)
+    val result = SRP6Util.calculateU(digest, N, fromHex(salt), inner)
     this.x = result
   }
 
