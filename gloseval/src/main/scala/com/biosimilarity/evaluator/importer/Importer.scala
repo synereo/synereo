@@ -14,13 +14,10 @@ import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.Api
 import com.biosimilarity.evaluator.Api._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
-import com.typesafe.config.ConfigFactory
 
 import scalaj.http.HttpOptions
-//import com.biosimilarity.evaluator.importer.dtos._
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.spray.NodeUser
-import com.biosimilarity.evaluator.spray.util._
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
@@ -43,7 +40,7 @@ object Importer extends EvalConfig
   // maps loginId to agentURI
   private val agentsById = scala.collection.mutable.Map[String, String]()
 
-  // maps sessionURI to agent
+  // maps agent to sessionURI
   private val sessionsById = scala.collection.mutable.Map[String, String]()
 
   // maps src+trgt to label
@@ -98,25 +95,29 @@ object Importer extends EvalConfig
           while (tmp.nonEmpty) {
             tmp.clone().foreach {
               case (id, session) =>
-                try {
-                  val js = glosevalPost(Api.SessionPing(session))
-                  val arr = parse(js).extract[List[JObject]]
-                  arr.foreach(v => {
-                    val typ = (v \ "msgType").extract[String]
-                    typ match {
-                      case "sessionPong" => tmp.remove(id)
-                      case "connectionProfileResponse" => ()
-                      case "addAliasLabelsResponse" => ()
-                      case "beginIntroductionResponse" => ()
-                      case "establishConnectionResponse" => ()
-                      case _ =>
-                        println("WARNING - handler not provided for server sent message type : " + typ)
-                    }
-                  })
-                } catch {
-                  case ex: Throwable =>
-                    println("exception during SessionPing : " + ex)
-                    tmp.remove(id)
+                if (!terminateLongPoll) {
+                  try {
+                    val js = glosevalPost(Api.SessionPing(session))
+                    val arr = parse(js).extract[List[JObject]]
+                    arr.foreach(v => {
+                      val typ = (v \ "msgType").extract[String]
+                      typ match {
+                        case "sessionPong" => tmp.remove(id)
+                        case "connectionProfileResponse" => ()
+                        case "addAliasLabelsResponse" => ()
+                        case "beginIntroductionResponse" => ()
+                        case "establishConnectionResponse" => ()
+                        case "evalComplete" => ()
+                        case _ =>
+                          println("WARNING - handler not provided for server sent message type : " + typ)
+                      }
+                    })
+                  } catch {
+                    case ex: Throwable =>
+                      println("exception during SessionPing : " + ex)
+                      tmp.remove(id)
+                      terminateLongPoll = true
+                  }
                 }
             }
           }
@@ -353,10 +354,11 @@ object Importer extends EvalConfig
     }
   }
 
-  def fromFile(dataJsonFile: File = serviceDemoDataFile()): Unit = {
+  def fromFile(dataJsonFile: File = serviceDemoDataFile()): Int = {
     println(s"Importing file: $dataJsonFile")
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val dataset = parse(dataJson).extract[DataSetDesc]
+    var rslt = 0
     getAgentURI(NodeUser.email, NodeUser.password) match {
       case Some(uri) =>
         val adminId = uri.replace("agent://", "")
@@ -366,24 +368,49 @@ object Importer extends EvalConfig
           println(s"using admin session URI: $adminSession")
           val thrd = longPoll()
           thrd.start()
+          def checkPoll() = {
+            if (terminateLongPoll) {
+              rslt = 2
+              throw new Exception("polling thread has terminated")
+            }
+          }
           dataset.labels match {
-            case Some(lbls) => lbls.foreach(l => makeLabel(LabelDesc.extractFrom(l)))
+            case Some(lbls) => lbls.foreach(l => {
+              checkPoll()
+              makeLabel(LabelDesc.extractFrom(l))
+            })
             case None => ()
           }
-          dataset.agents.foreach(makeAgent)
+          dataset.agents.foreach(a => {
+            checkPoll()
+            makeAgent(a)
+          })
           dataset.cnxns match {
-            case Some(cnxns) => cnxns.foreach(cnxn => makeCnxn(adminSession, cnxn))
+            case Some(cnxns) => cnxns.foreach(cnxn => {
+              checkPoll()
+              makeCnxn(adminSession, cnxn)
+            })
             case None => ()
           }
           dataset.posts match {
-            case Some(posts) => posts.foreach(makePost)
+            case Some(posts) => posts.foreach(p => {
+              checkPoll()
+              makePost(p)
+            })
             case None => ()
           }
+        } catch {
+          case ex: Throwable =>
+            println("ERROR : "+ex)
+            rslt = 1
         } finally {
           terminateLongPoll = true
+          sessionsById.foreach(pr => glosevalPost(Api.CloseSessionRequest(pr._2)))
         }
       case _ => throw new Exception("Unable to open admin session")
     }
+    println("Import file returning : "+rslt)
+    rslt
   }
 
   def runTestFile(dataJsonFile: String = "src/test/resources/test-posts.json"): Unit = {

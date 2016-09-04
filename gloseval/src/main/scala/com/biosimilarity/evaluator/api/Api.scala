@@ -36,7 +36,7 @@ object Api {
   case class InitializeSessionRequest(agentURI: String) extends RequestContent
   case class InitializeSessionStep1Request(agentURI: String) extends RequestContent
   case class InitializeSessionStep2Request(agentURI: String) extends RequestContent
-  case class CloseSessionRequest(agentURI: String) extends RequestContent
+  case class CloseSessionRequest(sessionURI: String) extends RequestContent
   case class AddAliasLabelsRequest(sessionURI: String, alias: String, labels: List[String]) extends RequestContent
   case class EstablishConnectionRequest(sessionURI: String, aURI: String, bURI: String, label: String) extends RequestContent
   case class EvalSubscribeRequest(sessionURI: String, expression: EvalSubscribeExpression) extends RequestContent
