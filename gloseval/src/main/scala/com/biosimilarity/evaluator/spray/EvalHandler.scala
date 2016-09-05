@@ -2118,7 +2118,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           BasicLogService.tweet("evalSubscribeRequest | feedExpr")
           val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
             //BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
-            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
 
             def handleTuple(v: ConcreteHL.HLExpr): Unit = {
               v match {
@@ -2139,7 +2138,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   }
                   val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                   val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-                  println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   //BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   val arr = parse(postedStr).asInstanceOf[JArray].arr
                   val json = compact(render(arr(0)))
@@ -2154,8 +2152,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                       'p4('nil("_"))),
                     List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
                     postedStr,
-                    //(optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
-                    (optRsrc) => { BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid) })
+                    (optRsrc) => { /*BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid)*/ })
 
                   val content =
                     ("sessionURI" -> sessionURIStr) ~
@@ -2166,7 +2163,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("target" -> agentCnxn.trgt.toString))) ~
                         ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  //println("evalSubscribeRequest | onFeed: response = " + pretty(render(response)))
                   //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   SessionManager.cometMessage(sessionURIStr, compact(render(response)))
                 }
@@ -2178,7 +2174,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 ("sessionURI" -> sessionURIStr) ~
                   ("pageOfPosts" -> List[String]())
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               SessionManager.cometMessage(sessionURIStr, compact(render(response)))
             }
@@ -2219,18 +2214,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                       ("target" -> agentCnxn.trgt.toString))) ~
                       ("filter" -> jsonFilter)
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 SessionManager.cometMessage(sessionURIStr, compact(render(response)))
               }
               case Bottom => {
-                val content =
-                  ("sessionURI" -> sessionURIStr) ~
-                    ("pageOfPosts" -> List[String]())
-                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                SessionManager.cometMessage(sessionURIStr, compact(render(response)))
+//                val content =
+//                  ("sessionURI" -> sessionURIStr) ~
+//                    ("pageOfPosts" -> List[String]())
+//                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+//                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+//                SessionManager.cometMessage(sessionURIStr, compact(render(response)))
               }
             }
           }
