@@ -1,7 +1,7 @@
-package com.biosimilarity.evaluator.spray.util
+package com.biosimilarity.evaluator.spray.directives
 
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
-import com.biosimilarity.evaluator.spray.util.HttpsDirectives.StrictTransportSecurity
+import com.biosimilarity.evaluator.spray.directives.HttpsDirectives.StrictTransportSecurity
 import org.scalatest.{Matchers, WordSpec}
 import spray.http.{HttpHeaders, StatusCodes, Uri}
 import spray.routing.Directives._

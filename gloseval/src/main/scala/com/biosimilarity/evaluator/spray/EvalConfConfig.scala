@@ -7,6 +7,10 @@ import scala.util.Try
 
 object EvalConfConfig extends EvalConfig {
 
+  sealed trait DeploymentMode
+  case object Colocated extends DeploymentMode
+  case object Distributed extends DeploymentMode
+
   val config: Config = evalConfig()
 
   def readString(param: String): String =
@@ -40,4 +44,10 @@ object EvalConfConfig extends EvalConfig {
 
   val serverPort    = EvalConfConfig.readIntOrElse("serverPort", 80)
   val serverSSLPort = EvalConfConfig.readIntOrElse("serverSSLPort", 443)
+
+  def deploymentMode: DeploymentMode =
+    EvalConfConfig.readString("deploymentMode") match {
+      case "distributed" => Distributed
+      case _             => Colocated
+    }
 }

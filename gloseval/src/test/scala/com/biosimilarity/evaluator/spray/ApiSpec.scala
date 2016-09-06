@@ -87,12 +87,12 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
     for {
       resp1 <- post(Api.CreateUserStep1Request(nce))
       resp2 <- post(Api.CreateUserStep2Request(nce, {
-        parse(resp1.entity.asString).extract[Api.ApiResponse].responseContent match {
+        parse(resp1.entity.asString).extract[Api.Response].responseContent match {
           case Api.CreateUserStep1Response(salt) =>
             srpClient.calculateX(email, pwd, salt)
             salt
         }}, srpClient.generateVerifier, blob))
-    } yield parse(resp2.entity.asString).extract[Api.ApiResponse].responseContent match {
+    } yield parse(resp2.entity.asString).extract[Api.Response].responseContent match {
       case Api.CreateUserStep2Response(agentURI) => agentURI
     }
   }
@@ -104,12 +104,12 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       agentUri <- getAgentURI(email, pwd)
       resp1 <- post(Api.InitializeSessionStep1Request("%s?A=%s".format(agentUri, srpClient.calculateAHex)))
       resp2 <- post(Api.InitializeSessionStep2Request("%s?M=%s".format(agentUri, srpClient.calculateMHex {
-        parse(resp1.entity.asString).extract[Api.ApiResponse].responseContent match {
+        parse(resp1.entity.asString).extract[Api.Response].responseContent match {
           case Api.InitializeSessionStep1Response(s, b) =>
             srpClient.calculateX(email, pwd, s)
             b
         }})))
-    } yield parse(resp2.entity.asString).extract[Api.ApiResponse].responseContent match {
+    } yield parse(resp2.entity.asString).extract[Api.Response].responseContent match {
       case Api.InitializeSessionResponse(sessionURI, m2) if srpClient.verifyServerEvidenceMessage(fromHex(m2)) =>
         sessionURI
     }
@@ -123,6 +123,16 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       val newssn = (rsp \ "content" \ "sessionURI").extract[SessionUri]
       newssn
     })
+  }
+
+  def startCam(ssn: SessionUri): Future[SessionUri] = {
+    val cont = Api.StartSessionRecording(ssn)
+    post(cont).map((response: HttpResponse) => ssn )
+  }
+
+  def stopCam(ssn: SessionUri): Future[String] = {
+    val cont = Api.StopSessionRecording(ssn)
+    post(cont).map((response: HttpResponse) => response.entity.asString )
   }
 
   def openAdminSession() = openSRPSession(readString("nodeAdminEmail"), readString("nodeAdminPass"))
@@ -211,7 +221,7 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       openAdminSession().futureValue shouldNot be ("")
     }
 
-    """query empty database without crashing""" in {
+    "query empty database without crashing" in {
       val proc: Future[(JArray)] = for {
         ssn <- openAdminSession()
         cnxn <- makeQueryOnSelf(ssn, "each([MESSAGEPOSTLABEL])")
@@ -220,13 +230,8 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       } yield a
       proc.futureValue.values.length shouldBe 1
     }
-  }
 
-
-
-
-  """The Administrator Session""".stripMargin should {
-    """establish the correct number of connections""" in {
+    "establish the correct number of connections" in {
       val proc: Future[(JArray, JArray, JArray)] = for {
         ssn <- openAdminSession()
         alice <- createSRPUser("alice@test.com", "alice", "a")
@@ -265,7 +270,7 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       }
     }
 
-    """return evalSubscribeResponse when querying using any, each or all""" in {
+    "return evalSubscribeResponse when querying using any, each or all" in {
       val proc: Future[(JArray)] = for {
         tssn <- openAdminSession()
         ssn <- spawnSession(tssn)
@@ -288,7 +293,7 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       }
     }
 
-    """return evalSubscribeError when querying not using any, each or all""" in {
+    "return evalSubscribeError when querying not using any, each or all" in {
       val proc: Future[(JArray)] = for {
         tssn <- openAdminSession()
         ssn <- spawnSession(tssn)
@@ -310,5 +315,24 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       }
     }
   }
+
+  "The session cam"  should {
+    "work" in {
+      val proc: Future[String] = for {
+        alice <- createSRPUser("alice@test.com", "alice", "a")
+        ssnA <- openSRPSession("alice@test.com", "a")
+        _ <- startCam(ssnA)
+        _ <- pingUntilPong(ssnA)
+        s <- stopCam(ssnA)
+      } yield s
+      whenReady(proc) {
+        case (s: String) =>
+          println(s)
+          s shouldNot be ("")
+        case _ => fail("should not happen")
+      }
+    }
+  }
+
 }
 

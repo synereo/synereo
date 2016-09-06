@@ -1,7 +1,8 @@
 package com.biosimilarity.lift.model.store
 
+import com.biosimilarity.lift.lib.amqp.AMQPUtil
+import com.biosimilarity.lift.model.store.mongo.MongoUtil
 import com.biosimilarity.lift.test.Generators._
-import com.biosimilarity.lift.test.{AMQPUtil, MongoUtil}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Matchers, WordSpec}
 

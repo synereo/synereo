@@ -1,18 +1,22 @@
-package com.biosimilarity.evaluator.spray
+package com.biosimilarity.evaluator.spray.directives
 
-
+import spray.http.HttpHeaders.{
+  `Access-Control-Allow-Headers`,
+  `Access-Control-Allow-Methods`,
+  `Access-Control-Allow-Origin`,
+  `Access-Control-Max-Age`
+}
 import spray.http._
-import spray.http.HttpHeaders._
-import spray.routing._
+import spray.routing.{HttpService, MethodRejection, Rejected, _}
 
 // see also https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
-trait CORSSupport {
-  this: HttpService =>
+trait CORSSupport { this: HttpService =>
 
   private val allowOriginHeader = `Access-Control-Allow-Origin`(AllOrigins)
   private val optionsCorsHeaders = List(
     //`Access-Control-Allow-Methods`(HttpMethods.POST, HttpMethods.GET,HttpMethods.PUT, HttpMethods.DELETE , HttpMethods.OPTIONS),
-    `Access-Control-Allow-Headers`("Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Accept-Language, Host, Referer, User-Agent"),
+    `Access-Control-Allow-Headers`(
+      "Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Accept-Language, Host, Referer, User-Agent"),
     `Access-Control-Max-Age`(1728000)
   )
 
@@ -23,7 +27,7 @@ trait CORSSupport {
         val allowedMethods: List[HttpMethod] = x.collect { case rejection: MethodRejection => rejection.supported }
         ctx.complete {
           HttpResponse().withHeaders(
-            `Access-Control-Allow-Methods`(HttpMethods.OPTIONS, allowedMethods :_*) ::  allowOriginHeader ::
+            `Access-Control-Allow-Methods`(HttpMethods.OPTIONS, allowedMethods: _*) :: allowOriginHeader ::
               optionsCorsHeaders
           )
         }
@@ -32,7 +36,6 @@ trait CORSSupport {
       allowOriginHeader :: headers
     }
   }
-
 
   override def timeoutRoute = complete {
     HttpResponse(

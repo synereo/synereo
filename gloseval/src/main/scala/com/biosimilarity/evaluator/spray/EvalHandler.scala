@@ -39,24 +39,28 @@ import scala.collection.mutable
 import scala.util.Try
 import scala.language.postfixOps
 
+case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
+
 // Mask the json4s symbol2jvalue implicit so we can use the PrologDSL
 object symbol2jvalue extends Serializable {}
 
 object CompletionMapper extends Serializable {
   @transient
-  val map = new HashMap[String, RequestContext]()
+  val hmap = new HashMap[String, RequestContext]()
+
   def complete(key : String, message : String) : Unit = {
-    for ( reqCtx <- map.get(key)) {
+    for (reqCtx <- hmap.get(key)) {
       reqCtx.complete(HttpResponse(200, message))
     }
-    map -= key
+    hmap -= key
   }
+
   def complete(key : String, msgType : String, content : JObject): Unit = {
-    for ( reqCtx <- map.get(key)) {
+    for (reqCtx <- hmap.get(key)) {
       val message = ("msgType" -> msgType) ~ ("content" -> content)
       reqCtx.complete(HttpResponse(200, compact(render(message))))
     }
-    map -= key
+    hmap -= key
   }
 }
 
@@ -71,7 +75,7 @@ object SessionManager extends Serializable {
 
   def cometMessage(sessionURI: String, jsonBody: String): Unit = {
     for (cometActor <- hmap.get(sessionURI)) {
-      cometActor ! CometMessage(jsonBody)
+      cometActor ! SessionActor.CometMessage(jsonBody)
     }
   }
 
@@ -1526,7 +1530,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       def handleFetchRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-            actor ! CometMessage(compact(render(
+            actor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileResponse") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1534,7 +1538,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("jsonBlob" -> jsonBlob))))))
           }
           case Bottom => {
-            actor ! CometMessage(compact(render(
+            actor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1542,7 +1546,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("reason" -> "Not found"))))))
           }
           case _ => {
-            actor ! CometMessage(compact(render(
+            actor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -2114,7 +2118,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           BasicLogService.tweet("evalSubscribeRequest | feedExpr")
           val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
             //BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
-            println("evalSubscribeRequest | onFeed: optRsrc = " + optRsrc)
 
             def handleTuple(v: ConcreteHL.HLExpr): Unit = {
               v match {
@@ -2135,7 +2138,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   }
                   val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                   val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-                  println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   //BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   val arr = parse(postedStr).asInstanceOf[JArray].arr
                   val json = compact(render(arr(0)))
@@ -2149,8 +2151,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                       'p4('nil("_"))),
                     List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
                     postedStr,
-                    //(optRsrc) => { println ("evalSubscribeRequest | onFeed | republished: uid = " + uid) }
-                    (optRsrc) => { BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid) })
+                    (optRsrc) => { /*BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid)*/ })
 
                   val content =
                     ("sessionURI" -> sessionURIStr) ~
@@ -2161,7 +2162,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("target" -> agentCnxn.trgt.toString))) ~
                         ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  //println("evalSubscribeRequest | onFeed: response = " + pretty(render(response)))
                   //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   SessionManager.cometMessage(sessionURIStr, compact(render(response)))
                 }
@@ -2173,7 +2173,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 ("sessionURI" -> sessionURIStr) ~
                   ("pageOfPosts" -> List[String]())
               val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-              //println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
               SessionManager.cometMessage(sessionURIStr, compact(render(response)))
             }
@@ -2214,18 +2213,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                       ("target" -> agentCnxn.trgt.toString))) ~
                       ("filter" -> jsonFilter)
                 val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
                 SessionManager.cometMessage(sessionURIStr, compact(render(response)))
               }
               case Bottom => {
-                val content =
-                  ("sessionURI" -> sessionURIStr) ~
-                    ("pageOfPosts" -> List[String]())
-                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                //println("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
-                SessionManager.cometMessage(sessionURIStr, compact(render(response)))
+//                val content =
+//                  ("sessionURI" -> sessionURIStr) ~
+//                    ("pageOfPosts" -> List[String]())
+//                val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
+//                BasicLogService.tweet("evalSubscribeRequest | onRead: response = " + compact(render(response)))
+//                SessionManager.cometMessage(sessionURIStr, compact(render(response)))
               }
             }
           }
@@ -2739,7 +2736,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     try {
       val eml = (json \ "email").extract[String].toLowerCase
-      val (email, noconfirm, testtoken) = getEmailFromPrefixedString(eml)
+      val (email, _, _) = getEmailFromPrefixedString(eml)
       val cap = emailToCap(email)
       val capURI = new URI("agent://" + cap)
       val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
@@ -2809,7 +2806,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   // Notify user to check her email
                   CompletionMapper.complete(key, compact(render(
                     ("msgType" -> "createUserWaiting") ~
-                      ("content" -> List()) // List() is rendered as "{}"
+                      ("content" -> ("token", token))
                   )))
                 }
               }
@@ -2865,7 +2862,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       val (identType, identInfo, pVal) = parseLoginRequestContent(json, "A")
 
       identType match {
-        case "cap" =>  fetchPwdAndCalculateB(identInfo, pVal)
+        case "cap" =>
+          fetchPwdAndCalculateB(identInfo, pVal)
         case "email" => {
           val cap = emailToCap(identInfo)
           // don't need mac of cap; need to verify email is on our network
@@ -3152,7 +3150,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     identType match {
       case "cap" => if (isWrongCap(identInfo)) throw new Exception("This link wasn't generated by us.")
-      else (identType, identInfo.slice(0, 36), pVal)
+                    else (identType, identInfo.slice(0, 36), pVal)
       case "email" => (identType, identInfo.toLowerCase, pVal)
       case _ => throw new Exception(s"Wrong identifier type")
     }

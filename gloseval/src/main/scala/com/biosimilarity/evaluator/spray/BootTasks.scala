@@ -2,13 +2,15 @@ package com.biosimilarity.evaluator.spray
 
 import java.io.File
 import java.nio.file.{Files, Path, Paths}
-import java.security.CodeSource
+import java.util.logging.{Level => JLevel, Logger => JLogger}
 
 import com.biosimilarity.evaluator.Api.VersionInfoResponse
 import com.biosimilarity.evaluator.BuildInfo
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.{EvalConfConfig => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.util._
+import com.biosimilarity.lift.lib.amqp.AMQPUtil._
+import com.biosimilarity.lift.model.store.mongo.MongoUtil._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.sys.process._
@@ -26,18 +28,28 @@ trait BootTasks {
       VersionInfoResponse(BuildInfo.version, BuildInfo.scalaVersion, mongoVersion().getOrElse("n/a"), rabbitMQVersion().getOrElse("n/a")))
 
   def startServer(): Unit = {
-    if (keystoreExists) {
-      logger.info("Starting GLoSEval...")
-      var service: Option[Server] = None
-      sys.addShutdownHook {
-        logger.info("Stopping GLoSEval...")
-        val _: Option[Server] = service.map(_.stop())
-        Thread.sleep(2000)
-      }
-      service = Some(Server().start())
-    } else {
-      logger.error("TLS Certificate not found.  Please run the 'gencert' command.")
-      System.exit(1)
+    JLogger.getLogger("com.mongodb").setLevel(JLevel.OFF)
+    val (mongoHost, mongoPort)   = (Config.readString("dbHost"), Config.readInt("dbPort"))
+    val (rabbitHost, rabbitPort) = (Config.readString("DSLCommLinkClientHost"), Config.readInt("DSLCommLinkClientPort"))
+    logger.info(s"Starting GLoSEval in ${Config.deploymentMode.toString.toLowerCase} mode...")
+    (keystoreExists, Config.deploymentMode, rabbitIsRunning(rabbitHost, rabbitPort), mongoIsRunning(mongoHost, mongoPort)) match {
+      case (false, _, _, _) ⇒
+        logger.error("TLS Certificate not found.  Please run the 'gencert' command.")
+        System.exit(1)
+      case (true, Config.Distributed, false, _) ⇒
+        logger.error(s"Could not connect to RabbitMQ instance at $rabbitHost:$rabbitPort")
+        System.exit(1)
+      case (true, _, _, false) ⇒
+        logger.error(s"Could not connect to MongoDB instance at $mongoHost:$mongoPort")
+        System.exit(1)
+      case (true, _, _, true) ⇒
+        var service: Option[Server] = None
+        sys.addShutdownHook {
+          logger.info("Stopping GLoSEval...")
+          val _: Option[Server] = service.map(_.stop())
+          Thread.sleep(2000)
+        }
+        service = Some(Server().start())
     }
   }
 
@@ -100,8 +112,8 @@ trait BootTasks {
     logger.info(s"Current working directory is $pwd")
     (certificate, keystoreExists, clientCertExists) match {
       case (SelfSigned, false, false) =>
-        val keyPass: String   = EvalConfConfig.readString("keypass")
-        val storePass: String = EvalConfConfig.readString("storepass")
+        val keyPass: String   = Config.readString("keypass")
+        val storePass: String = Config.readString("storepass")
         genSelfSignedCert(resourcesDir, storePass, keyPass) match {
           case Success(_) =>
             logger.info("We are good to go!")

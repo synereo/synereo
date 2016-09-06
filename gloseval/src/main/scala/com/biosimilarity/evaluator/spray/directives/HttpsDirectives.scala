@@ -1,9 +1,9 @@
-package com.biosimilarity.evaluator.spray.util
+package com.biosimilarity.evaluator.spray.directives
 
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
 import spray.http.{HttpHeader, HttpHeaders, StatusCodes, Uri}
-import spray.routing.{Directive0, RequestContext}
 import spray.routing.Directives._
+import spray.routing.{Directive0, RequestContext}
 
 trait HttpsDirectives {
 
