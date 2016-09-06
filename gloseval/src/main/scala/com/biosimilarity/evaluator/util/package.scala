@@ -1,6 +1,6 @@
 package com.biosimilarity.evaluator
 
-import java.io.{FileInputStream, InputStream}
+import java.io._
 
 import com.biosimilarity.evaluator.api.VersionInfoResponse
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
@@ -14,6 +14,18 @@ import scala.sys.process._
 import scala.util.Try
 
 package object util extends Helpers {
+
+  def withFileReader[T](file: File)(fn: (FileReader) => T): T = {
+    val fr: FileReader = new FileReader(file)
+    try fn(fr)
+    finally fr.close()
+  }
+
+  def withFileWriter[T](file: File)(fn: (FileWriter) => T): T = {
+    val fw: FileWriter = new FileWriter(file)
+    try fn(fw)
+    finally fw.close()
+  }
 
   def resourceStream(resourceName: String): InputStream = {
     val is: InputStream = new FileInputStream(Boot.resourcesDir.resolve(resourceName).toFile)
