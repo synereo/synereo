@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import com.biosimilarity.evaluator.distribution._
+import com.biosimilarity.evaluator.spray.SessionActor.SendAmps
 import com.biosimilarity.evaluator.spray.directives.{CORSSupport, HttpsDirectives}
 import com.biosimilarity.lift.lib._
 import org.json4s.JsonDSL._
@@ -103,6 +104,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
               case "closeSessionRequest"   => cometActor ! SessionActor.CloseSession(Some(ctx))
               case "startSessionRecording" => cometActor ! SessionActor.StartCamera(ctx)
               case "stopSessionRecording"  => cometActor ! SessionActor.StopCamera(ctx)
+              case "sendAmpsRequest"       => fetchWallet(content, (address, coin) => cometActor ! SendAmps(address, coin, ctx))
               case _ =>
                 asyncMethods.get(msgType) match {
                   case Some(fn) =>
