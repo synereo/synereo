@@ -64,7 +64,7 @@ lazy val commonSettings = Seq(
 lazy val specialkDeps = Seq(
   "biz.source_code"           % "base64coder"       % base64coderVersion,
   "com.rabbitmq"              % "amqp-client"       % amqpClientVersion,
-  "com.thoughtworks.xstream"  % "xstream"           % xstreamVersion exclude("xmlpull", "xmlpull"),
+  "com.thoughtworks.xstream"  % "xstream"           % xstreamVersion,
   "com.typesafe"              % "config"            % configVersion,
   "commons-pool"              % "commons-pool"      % commonsPoolVersion,
   "it.unibo.alice.tuprolog"   % "tuprolog"          % tuprologVersion,
@@ -96,7 +96,7 @@ lazy val specialk = (project in file("specialk"))
 lazy val agentServiceDeps = Seq(
   "biz.source_code"             % "base64coder"       % base64coderVersion,
   "com.rabbitmq"                % "amqp-client"       % amqpClientVersion,
-  "com.thoughtworks.xstream"    % "xstream"           % xstreamVersion exclude("xmlpull", "xmlpull"),
+  "com.thoughtworks.xstream"    % "xstream"           % xstreamVersion,
   "com.typesafe"                % "config"            % configVersion,
   "commons-pool"                % "commons-pool"      % commonsPoolVersion,
   "it.unibo.alice.tuprolog"     % "tuprolog"          % tuprologVersion,
