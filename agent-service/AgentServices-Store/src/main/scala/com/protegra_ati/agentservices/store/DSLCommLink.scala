@@ -146,7 +146,27 @@ object DSLCommLink
           }
           override def fromXQSafeJSONBlob( blob : String ) : java.lang.Object = {              
             new XStream( new JettisonMappedXmlDriver() ).fromXML( blob )
-          }      
+          }
+
+          override def assertComposes(indirect: CnxnCtxtLabel[String, String, String] with Factual,
+                                      direct: CnxnCtxtLabel[String, String, String] with Factual): Boolean =
+            (indirect, direct) match {
+              case (CnxnCtxtBranch(ns1, _ :: CnxnCtxtBranch(vNs1, fk1 :: Nil) :: Nil),
+              CnxnCtxtBranch(ns2, CnxnCtxtBranch(kNs2, k2 :: Nil) :: _ :: Nil)) =>
+                val flatKey1: String = fk1 match {
+                  case CnxnCtxtLeaf(Left(v)) =>
+                    fromXQSafeJSONBlob(v) match {
+                      case TheMTT.Ground(ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(theRealFlatKey)))) => theRealFlatKey
+                    }
+                }
+                val CnxnCtxtBranch(_, CnxnCtxtLeaf(Left(flatKey2)) :: Nil) = k2
+                flatKey1 == flatKey2
+              case _ =>
+                throw new Exception(s"""Records don't have correct shape:
+                                        |indirect: $indirect
+                                        |direct: $direct""".stripMargin)
+            }
+
           class StringMongoDBManifest(
             override val storeUnitStr : String,
             @transient override val labelToNS : Option[String => String],
@@ -244,6 +264,32 @@ object DSLCommLink
               case _ =>
                 throw new Exception(s"unexpected value form: $ccl")
             }
+
+            override def asStoreRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+              key match {
+                case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                  val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                  val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                  val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                  val flatKey: String = ttt(fkS)
+                  asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvNameSpace)
+                }
+                case _ =>
+                  throw new Exception(s"""we should never get here! key: $key , value : $value""")
+              }
+
+            override def asStoreKRecord(key: mTT.GetRequest, value: mTT.Resource): CnxnCtxtLabel[String, String, String] with Factual =
+              key match {
+                case CnxnCtxtBranch(ns, CnxnCtxtBranch(kNs, k :: Nil) :: CnxnCtxtBranch(vNs, fkbs :: Nil) :: Nil) => {
+                  val ttt  = textToTag.getOrElse(throw new Exception("must have textToTag to convert flatKey: " + fkbs))
+                  val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert flatKey: " + fkbs))
+                  val ConcreteHL.FlatKeyBouncer(CnxnCtxtLeaf(Left(fkS))) = asCacheValue(fkbs)
+                  val flatKey: String = ttt(fkS)
+                  asStoreEntry(asStoreKey(new CnxnCtxtBranch[String, String, String](ltns(fkS), (new CnxnCtxtLeaf[String, String, String](Left((flatKey)))) :: Nil)), value)(kvKNameSpace)
+                }
+                case _ =>
+                  throw new Exception(s"""we should never get here! key: $key , value : $value""")
+              }
 
             override def asIndirection(key: mTT.GetRequest, value: DBObject): mTT.GetRequest = {
               val ltns = labelToNS.getOrElse(throw new Exception("must have labelToNS to convert mongo object"))
