@@ -46,7 +46,7 @@ object WalletProvider {
       }
     })
 
-    println("send money to: " + kit.wallet.currentReceiveAddress().toString)
+    println("send money to: " + kit.wallet.freshReceiveAddress.toString)
 
     kit
   }
