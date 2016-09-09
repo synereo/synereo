@@ -2961,7 +2961,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
 
               val (balance: String, address: String) =
-                if(kit.isDefined) (kit.get.wallet().getBalance.toString, s"${kit.get.wallet().currentReceiveAddress()}")
+                if(kit.isDefined) (kit.get.wallet().getBalance(Wallet.BalanceType.ESTIMATED).toString, s"${kit.get.wallet().currentReceiveAddress()}")
                 else ("undefined", "undefined")
 
               val content =
