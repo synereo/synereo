@@ -85,6 +85,8 @@ object Api {
                                                  JField("listOfConnections", JArray(lc)) ::
                                                  JField("lastActiveLabel", JString(lal)) ::
                                                  JField("jsonBlob", JObject(jb)) ::
+                                                 JField("balance", JString(bb)) ::
+                                                 JField("address", JString(aa)) ::
                                                  JField("M2", JString(m2)) :: Nil)) =>
         InitializeSessionResponse(ssn, m2)
       case ("createUserError", JObject(JField("reason", JString(r)) :: Nil)) => ApiError(r)

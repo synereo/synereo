@@ -147,6 +147,7 @@ lazy val glosevalDeps = Seq(
   "org.slf4j"                   % "slf4j-api"         % "1.7.21",
   "org.slf4j"                   % "slf4j-log4j12"     % "1.7.21",
   "org.bouncycastle"            % "bcprov-jdk15on"    % "1.54",
+  "org.bitcoinj"                % "bitcoinj-core"     % "0.14.3" exclude("org.slf4j", "slf4j-api"),
   "org.scalatest"              %% "scalatest"         % scalatestVersion % "test")
 
 lazy val glosevalSettings = Seq(
