@@ -34,7 +34,7 @@ import java.util.UUID
 import java.net.URI
 
 import com.biosimilarity.evaluator.spray.srp._
-import com.biosimilarity.evaluator.wallet.{DeterministicSeedData, WalletProvider}
+import com.biosimilarity.evaluator.spray.wallet.{DeterministicSeedData, WalletProvider}
 import com.google.common.base.Joiner
 import com.typesafe.config.ConfigFactory
 import org.bitcoinj.core.{Address, Coin, Transaction}
@@ -72,6 +72,7 @@ object CompletionMapper extends Serializable {
 
 object SessionManager extends Serializable {
   private var hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
+  private var wallets = new mutable.HashMap[String, WalletAppKit]()
   private var sessionManager : Option[ActorContext] = None
 
   def setSessionManager(cxt: ActorContext) = {
@@ -85,11 +86,11 @@ object SessionManager extends Serializable {
     }
   }
 
-  def storeWalletKit(sessionURI: String, kit: Option[WalletAppKit]): Unit = {
-    for (cometActor <- hmap.get(sessionURI)) {
-      cometActor ! SessionActor.WalletKit(kit)
-    }
-  }
+  def storeKitBySession(session: String, kit: WalletAppKit) =
+    wallets += (session -> kit)
+
+  def getKitBySession(session: String): Option[WalletAppKit] =
+    wallets.get(session)
 
   def startSession(ssn : String): Unit = {
     sessionManager match {
@@ -108,11 +109,6 @@ object SessionManager extends Serializable {
 
   def getSession(ssn: String): Option[ActorRef] = {
     hmap.get(ssn)
-  }
-
-  def getSessionByHost(host: String): Option[ActorRef] = {
-    val key = hmap.keySet.filter(p => new URI(p).getHost.equals(host))
-    if(key.isEmpty) None else hmap.get(key.head)
   }
 
   def getChunkingActor(sessionURI: String, cnt: Int) = {
@@ -2981,7 +2977,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   ("content" -> content))))
 
               SessionManager.startSession(sessionURI)  // register the session
-              SessionManager.storeWalletKit(sessionURI, kit)
               fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
 
             }
@@ -3215,7 +3210,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val onWalletFetch: Option[mTT.Resource] => Unit = (rsrc) => {
       def handleWallet(seedDataJson: String): Unit = {
         val address = WalletProvider.getReceiveAddress(parse(seedDataJson).extract[DeterministicSeedData])
-        val coin = Coin.parseCoin(amount)
+        val coin = Coin.valueOf(amount.toLong)
 
         onSuccess(address, coin)
       }

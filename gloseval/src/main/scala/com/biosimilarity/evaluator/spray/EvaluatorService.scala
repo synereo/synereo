@@ -1,5 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
+import java.net.URI
 import java.util.UUID
 
 import akka.actor._
@@ -104,7 +105,12 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
               case "closeSessionRequest"   => cometActor ! SessionActor.CloseSession(Some(ctx))
               case "startSessionRecording" => cometActor ! SessionActor.StartCamera(ctx)
               case "stopSessionRecording"  => cometActor ! SessionActor.StopCamera(ctx)
-              case "sendAmpsRequest"       => fetchWallet(content, (address, coin) => cometActor ! SendAmps(address, coin, ctx))
+              case "sendAmpsRequest"       => {
+                val session = new URI(sessionURI).getHost
+                val kit = SessionManager.getKitBySession(session)
+                if(kit.isEmpty) SessionManager.cometMessage(sessionURI, """{"msgType":"sendAmpsError", "content":{"reason":"Wallet is unavailable"}}""")
+                else fetchWallet(content, (address, coin) => cometActor ! SendAmps(address, coin, kit.get, ctx))
+              }
               case _ =>
                 asyncMethods.get(msgType) match {
                   case Some(fn) =>
