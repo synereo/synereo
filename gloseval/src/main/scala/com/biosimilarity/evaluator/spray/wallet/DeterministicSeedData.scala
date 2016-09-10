@@ -1,4 +1,4 @@
-package com.biosimilarity.evaluator.wallet
+package com.biosimilarity.evaluator.spray.wallet
 
 import org.json4s.JsonAST.{JField, JObject, JString}
 import org.json4s.{native, _}

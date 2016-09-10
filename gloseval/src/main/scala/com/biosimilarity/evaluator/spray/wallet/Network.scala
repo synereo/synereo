@@ -1,4 +1,4 @@
-package com.biosimilarity.evaluator.wallet
+package com.biosimilarity.evaluator.spray.wallet
 
 import com.typesafe.config.ConfigFactory
 import org.bitcoinj.params.{MainNetParams, RegTestParams, TestNet3Params}

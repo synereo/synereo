@@ -1,8 +1,5 @@
 package com.biosimilarity.evaluator.spray
 
-import java.io.File
-import java.net.URI
-
 import akka.actor.{Actor, Cancellable}
 import org.bitcoinj.core.{Address, Coin, InsufficientMoneyException}
 import org.bitcoinj.kits.WalletAppKit
@@ -28,11 +25,9 @@ object SessionActor {
   case class SetSessionTimeout(t: FiniteDuration)
   case class StartCamera(reqCtx: RequestContext)
   case class StopCamera(reqCtx: RequestContext)
-  case class WalletKit(kit: Option[WalletAppKit])
-  case class SendAmps(address: Address, coin: Coin, ctx: RequestContext)
+  case class SendAmps(address: Address, coin: Coin, kit: WalletAppKit, ctx: RequestContext)
   case object PongTimeout
   case object SessionTimedOut
-  case object StopKit
 }
 
 class SessionActor(sessionId: String) extends Actor {
@@ -50,7 +45,6 @@ class SessionActor(sessionId: String) extends Actor {
   var optReq: Option[(RequestContext, Cancellable)] = None
   var msgs: List[String]                            = Nil
   var camera: Option[List[CameraItem]]              = None
-  var walletKit : Option[WalletAppKit]              = None
 
   implicit val formats = DefaultFormats
 
@@ -116,30 +110,7 @@ class SessionActor(sessionId: String) extends Actor {
     }
   }
 
-  def stopKit = {
-    if(walletKit.isDefined) {
-      val session = new URI(sessionId).getHost
-      val chainFile: File = new File(s"restorewallet-$session.spvchain")
-      val walletFile: File = new File(s"restorewallet-$session.wallet")
-
-      println("------------------------------------------> Stop Kit")
-      walletKit.get.stopAsync()
-      walletKit.get.awaitTerminated()
-      walletKit = None
-
-      if (walletFile.exists) {
-        println("------------------------------------------> Remove Wallet File")
-        walletFile.delete
-      }
-      if (chainFile.exists) {
-        println("------------------------------------------> Remove Chain File")
-        chainFile.delete
-      }
-    }
-  }
-
-  def sendCoins(address: Address, coin: Coin, ctx: RequestContext) = {
-    val kit = walletKit.get
+  def sendCoins(address: Address, coin: Coin, kit: WalletAppKit, ctx: RequestContext) = {
     def completeWithError(errMsg: String) = {
       println(errMsg)
       ctx.complete(StatusCodes.OK, compact(render(
@@ -168,14 +139,8 @@ class SessionActor(sessionId: String) extends Actor {
 
   def receive = {
 
-    case WalletKit(kit) =>
-      walletKit = kit
-
-    case SendAmps(address, coin, ctx) =>
-      sendCoins(address, coin, ctx)
-
-    case StopKit =>
-      stopKit
+    case SendAmps(address, coin, kit, ctx) =>
+      sendCoins(address, coin, kit, ctx)
 
     case SetSessionTimeout(t) =>
       sessionTimeout = t
@@ -207,8 +172,6 @@ class SessionActor(sessionId: String) extends Actor {
       }
 
     case CloseSession(optReqCtx) =>
-      println("Closing session ...")
-      stopKit
       context.stop(self)
       SessionManager.removeSession(sessionId)
       for (reqCtx <- optReqCtx) reqCtx.complete(StatusCodes.OK, "session closed")
