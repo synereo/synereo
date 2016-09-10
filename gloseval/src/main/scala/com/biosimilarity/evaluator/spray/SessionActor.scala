@@ -122,6 +122,8 @@ class SessionActor(sessionId: String) extends Actor {
     try {
       val result: Wallet.SendResult = kit.wallet.sendCoins(kit.peerGroup, address, coin)
       println("coins sent. transaction hash: " + result.tx.getHashAsString)
+      result.broadcastComplete.get()
+      kit.wallet().addWatchedAddress(address)
       ctx.complete(StatusCodes.OK, compact(render(
         ("msgType" -> "sendAmpsResponse") ~
           ("content" ->

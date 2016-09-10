@@ -7,7 +7,7 @@ import org.bitcoinj.core.listeners.TransactionConfidenceEventListener
 import org.bitcoinj.core.{Address, Coin, Transaction}
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.wallet.{DeterministicSeed, Wallet}
-import org.bitcoinj.wallet.listeners.{WalletCoinsReceivedEventListener, WalletCoinsSentEventListener}
+import org.bitcoinj.wallet.listeners.{WalletChangeEventListener, WalletCoinsReceivedEventListener, WalletCoinsSentEventListener}
 
 object WalletProvider {
 
@@ -30,6 +30,7 @@ object WalletProvider {
         kit.awaitRunning
 
         kit.wallet().allowSpendingUnconfirmedTransactions()
+        if(Network.networkMode.equals("TEST")) kit.useTor()
 
         kit.wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
           override def onCoinsReceived(wallet: Wallet, tx: Transaction, prevBalance: Coin, newBalance: Coin): Unit = {
@@ -40,6 +41,12 @@ object WalletProvider {
         kit.wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
           override def onCoinsSent(wallet: Wallet, tx: Transaction, prevBalance: Coin, newBalance: Coin): Unit = {
             onsent(wallet, tx, prevBalance, newBalance)
+          }
+        })
+
+        kit.wallet().addChangeEventListener(new WalletChangeEventListener {
+          override def onWalletChanged(wallet: Wallet): Unit = {
+            println(s"Wallet changed : ${wallet.toString}")
           }
         })
 
