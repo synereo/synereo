@@ -231,6 +231,36 @@ class ApiSpec extends WordSpec with Matchers with BeforeAndAfterEach with ScalaF
       proc.futureValue.values.length shouldBe 1
     }
 
+    "establish a connection" in {
+      val proc: Future[(JArray, JArray)] = for {
+        ssn <- openAdminSession()
+        alice <- createSRPUser("alice@testing.com", "alice", "a")
+        bob <- createSRPUser("bob@testing.com", "bob", "b")
+
+        _ <- makeConnection(ssn, alice, bob, "alice_bob")
+
+        ssnA <- openSRPSession("alice@testing.com", "a")
+        spwnssnA <- spawnSession(ssnA)
+        _ <- getConnectionProfiles(spwnssnA)
+        a <- sessionPing(spwnssnA)
+
+        ssnB <- openSRPSession("bob@testing.com", "b")
+        spwnssnB <- spawnSession(ssnB)
+        _ <- getConnectionProfiles(spwnssnB)
+        b <- sessionPing(spwnssnB)
+
+      } yield (a, b)
+
+      whenReady(proc, timeout(Span(60, Seconds))) {
+        case (ja: JArray, jb: JArray) =>
+          //println("Alice's connections: "+pretty(render(ja)))
+          //println("Bob's connections: "+pretty(render(jb)))
+          ja.values.length shouldBe 2
+          jb.values.length shouldBe 2
+        case _ => fail("should not happen")
+      }
+    }
+
     "establish the correct number of connections" in {
       val proc: Future[(JArray, JArray, JArray)] = for {
         ssn <- openAdminSession()

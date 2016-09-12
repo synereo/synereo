@@ -1276,39 +1276,34 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           optRsrc match {
             case None => ()
             case Some(_) => {
-              get(
+              read(
                 biCnxnsListLabel,
                 List(bAliasCnxn),
                 (optRsrc: Option[mTT.Resource]) => {
-                  BasicLogService.tweet("estabishConnection | get : optRsrc = " + optRsrc)
+                  BasicLogService.tweet("establishConnection | get : optRsrc = " + optRsrc)
                   def handleRsp(v: ConcreteHL.HLExpr): Unit = {
-                    val newBiCnxnList = v match {
+                    val optList = v match {
                       case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
                         val extants = Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
-                        if (extants.contains(bBiCnxn) )
-                          extants
-                        else
-                          bBiCnxn :: extants
+                        if (extants.contains(bBiCnxn) ) None
+                        else Some(bBiCnxn :: extants)
                       }
-                      case Bottom => List(bBiCnxn)
+                      case Bottom => Some(List(bBiCnxn))
                     }
-                    put(
-                      biCnxnsListLabel,
-                      List(bAliasCnxn),
-                      Serializer.serialize(newBiCnxnList),
-                      (optRsrc: Option[mTT.Resource]) => {
-                        BasicLogService.tweet("establishConnection | onPut : optRsrc = " + optRsrc)
-                        optRsrc match {
-                          case None => ()
-                          case Some(_) => {
-                            SessionManager.cometMessage(sessionURI, compact(render(
-                              ("msgType" -> "establishConnectionResponse") ~
-                              ("content" ->
-                                ("sessionURI" -> sessionURI) ~
-                                ("label" -> cnxnLabel )))))
-                          }
-                        }
-                      })
+                    for (newBiCnxnList <- optList) {
+                      put(
+                        biCnxnsListLabel,
+                        List(bAliasCnxn),
+                        Serializer.serialize(newBiCnxnList),
+                        (optRsrc: Option[mTT.Resource]) =>
+                          BasicLogService.tweet("establishConnection | onPut : optRsrc = " + optRsrc)
+                        )
+                    }
+                    SessionManager.cometMessage(sessionURI, compact(render(
+                      ("msgType" -> "establishConnectionResponse") ~
+                        ("content" ->
+                          ("sessionURI" -> sessionURI) ~
+                            ("label" -> cnxnLabel)))))
                   }
                   optRsrc match {
                     case None => ();
@@ -1327,34 +1322,23 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
         })
     }
-    get(
+    read(
       biCnxnsListLabel,
       List(aAliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
         def handleRsp(v: ConcreteHL.HLExpr): Unit = {
           val newBiCnxnList = v match {
-            case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
+            case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) =>
               aBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
-            }
-            case Bottom => {
-              //println("failed to find bicnxns")
-              List(aBiCnxn)
-
-            }
+            case Bottom => List(aBiCnxn)
           }
           doPut(newBiCnxnList)
         }
         optRsrc match {
-          case None => ();
-          case Some(mTT.Ground(v)) => {
-            handleRsp(v)
-          }
-          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-            handleRsp(v)
-          }
-          case _ => {
-            throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
-          }
+          case None => ()
+          case Some(mTT.Ground(v)) => handleRsp(v)
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => handleRsp(v)
+          case _ => throw new Exception("Unrecognized resource: optRsrc = " + optRsrc)
         }
 
       }
