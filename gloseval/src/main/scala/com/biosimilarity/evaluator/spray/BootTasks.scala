@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import java.util.logging.{Level => JLevel, Logger => JLogger}
 
-import com.biosimilarity.evaluator.Api.VersionInfoResponse
+import com.biosimilarity.evaluator.api.VersionInfoResponse
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution.{EvalConfConfig => Config}
 import com.biosimilarity.evaluator.importer.Importer
@@ -61,7 +61,7 @@ trait BootTasks {
   def runImporter(file: Option[File]): Unit = {
     resetDatabase()
     startServer()
-    val importerFile: File = file.getOrElse(Importer.serviceDemoDataFile())
+    val importerFile: File = file.getOrElse(Config.serviceDemoDataFile)
     logger.info(s"Importing ${importerFile.getAbsolutePath}...")
     Thread.sleep(5000)
     Importer.fromFile(importerFile)

@@ -9,7 +9,7 @@
 package com.biosimilarity.evaluator.spray
 
 import com.protegra_ati.agentservices.protocols.msgs._
-import com.biosimilarity.evaluator.Api
+import com.biosimilarity.evaluator.api
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.spray.util._
@@ -345,9 +345,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def versionInfoRequest(json: JObject, key: String): Unit = {
-    val msg: Api.AltResponse[Api.VersionInfoResponse] =
-      Api.AltResponse[Api.VersionInfoResponse]("versionInfoResponse",
-                                               Api.VersionInfoResponse(BuildInfo.version,
+    val msg: api.AltResponse[api.VersionInfoResponse] =
+      api.AltResponse[api.VersionInfoResponse]("versionInfoResponse",
+                                               api.VersionInfoResponse(BuildInfo.version,
                                                                        BuildInfo.scalaVersion,
                                                                        mongoVersion().getOrElse("n/a"),
                                                                        rabbitMQVersion().getOrElse("n/a")))

@@ -92,10 +92,4 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
         .futureValue shouldBe StatusCodes.OK
     }
   }
-
-  "Importer" should {
-    "run test files" ignore {
-      Importer.runTestFile()
-    }
-  }
 }

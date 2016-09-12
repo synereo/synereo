@@ -1,5 +1,7 @@
 package com.biosimilarity.evaluator.distribution
 
+import java.io.File
+
 import com.typesafe.config.Config
 
 import scala.collection.JavaConversions._
@@ -8,7 +10,7 @@ import scala.util.Try
 object EvalConfConfig extends EvalConfig {
 
   sealed trait DeploymentMode
-  case object Colocated extends DeploymentMode
+  case object Colocated   extends DeploymentMode
   case object Distributed extends DeploymentMode
 
   val config: Config = evalConfig()
@@ -42,12 +44,20 @@ object EvalConfConfig extends EvalConfig {
 
   def isOmniRequired(): Boolean = Try(readString("OmniRPCURI")).isSuccess
 
-  val serverPort    = EvalConfConfig.readIntOrElse("serverPort", 80)
-  val serverSSLPort = EvalConfConfig.readIntOrElse("serverSSLPort", 443)
+  val serverPort    = readIntOrElse("serverPort", 80)
+  val serverSSLPort = readIntOrElse("serverSSLPort", 443)
 
   def deploymentMode: DeploymentMode =
-    EvalConfConfig.readString("deploymentMode") match {
+    readString("deploymentMode") match {
       case "distributed" => Distributed
       case _             => Colocated
     }
+
+  def serviceDemoDataFile: File = new File(readString("ImporterServiceDemoDataFile"))
+
+  def serviceHost: String = readString("ImporterServiceHost")
+
+  def servicePort: Int = readInt("ImporterServicePort")
+
+  def serviceHostURI: String = "https://%s:%d/api".format(serviceHost, servicePort)
 }
