@@ -1061,6 +1061,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
               case Nil => acc              
               case e :: qryRslts => {
                 try {
+                  val nakedTPath = tPath.merge
+                  val emT.PlaceInstance(_, _, subst) = pd.asResource(nakedTPath, e)
                   val flatKey: mTT.GetRequest = pd.asIndirection(tPath.merge, e)
                   // Do a query here!
                   val answer: Option[List[(DBObject, emT.PlaceInstance)]] = for {
@@ -1071,7 +1073,8 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
                   } yield wrapAction(qryClntSessFn)(xmlCollName) match {
                     case x :: Nil =>
                       val ersrc = pd.asResource(flatKey, x)
-                      loop(acc ++ List[(DBObject, emT.PlaceInstance)]((e, ersrc)), qryRslts)
+                      val rrsrc = emT.PlaceInstance(ersrc.place, ersrc.stuff, subst)
+                      loop(acc ++ List[(DBObject, emT.PlaceInstance)]((e, rrsrc)), qryRslts)
                     case xs =>
                       throw new Exception(s"unique key not unique: $xs")
                   }
