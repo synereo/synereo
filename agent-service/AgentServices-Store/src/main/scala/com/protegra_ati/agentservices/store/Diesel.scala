@@ -3314,7 +3314,7 @@ package diesel {
             reset { 
               for( e <- client.subscribe( erql ) ) {
                 BasicLogService.tweet(
-                  "method: innerLoop"
+                  "method: innerLoop (node: StdEvalChannel)"
                   + "\n completed client.subscribe "
                   + "\nthis: " + this
                   + "\nerql: " + erql
@@ -3327,7 +3327,7 @@ package diesel {
                 e match {
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
-                      "method: innerLoop"
+                      "method: innerLoop (node: StdEvalChannel)"
                       + "\n case rsrc type: DSLCommLink.mTT.RBoundAList"
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
@@ -3348,7 +3348,7 @@ package diesel {
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                               + "\nDiesel.scala:2258 forward(" + optRsrc + ")"
                               + "\n------------------------------------------------------------------"
-                              + "\n defined in method innerLoop"
+                              + "\n defined in method innerLoop (node: StdEvalChannel)"
                               + "\n passed to and called in evaluateExpression"
                               + "\nerql: " + erql
                               + "\nserver: " + server                              
@@ -3382,7 +3382,7 @@ package diesel {
                   }
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
-                      "method: innerLoop"
+                      "method: innerLoop (node: StdEvalChannel)"
                       + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
@@ -3403,7 +3403,7 @@ package diesel {
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                               + "\nDiesel.scala:2313 forward(" + optRsrc + ")"
                               + "\n------------------------------------------------------------------"
-                              + "\n defined in method innerLoop"
+                              + "\n defined in method innerLoop (node: StdEvalChannel)"
                               + "\n passed to and called in evaluateExpression"
                               + "\nerql: " + erql
                               + "\nserver: " + server                              
@@ -3439,7 +3439,7 @@ package diesel {
                     rsrc match {
                       case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
                         BasicLogService.tweet(
-                          "method: innerLoop"
+                          "method: innerLoop (node: StdEvalChannel)"
                           + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                           + "\n completed client.subscribe "
                           + "\nthis: " + this
@@ -3462,7 +3462,7 @@ package diesel {
                                       ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                                       + "\nDiesel.scala:2372 forward(" + optRsrc + ")"
                                       + "\n------------------------------------------------------------------"
-                                      + "\n defined in method innerLoop"
+                                      + "\n defined in method innerLoop (node: StdEvalChannel)"
                                       + "\n passed to and called in evaluateExpression"
                                       + "\nerql: " + erql
                                       + "\nserver: " + server                              
@@ -3495,7 +3495,7 @@ package diesel {
                           }
                           case Some( innerRrsc ) => {
                             BasicLogService.tweet(
-                              "method: innerLoop"
+                              "method: innerLoop (node: StdEvalChannel)"
                               + "\n case unexpected inner rsrc type: " + innerRrsc
                               + "\ninner rsrc type: " + innerRrsc.getClass
                               + "\n completed client.subscribe "
@@ -3512,7 +3512,7 @@ package diesel {
                       }
                       case _ => {
                         BasicLogService.tweet(
-                          "method: innerLoop"
+                          "method: innerLoop (node: StdEvalChannel)"
                           + "\n case unexpected rsrc type: " + rsrc
                           + "\ninner rsrc type: " + rsrc.getClass
                           + "\n completed client.subscribe "
@@ -3532,7 +3532,7 @@ package diesel {
                   }
                   case _ => {
                     BasicLogService.tweet(
-                      "method: innerLoop"
+                      "method: innerLoop (node: StdEvalChannel)"
                       + "\n rsrc not handled: " + e
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
@@ -3555,7 +3555,7 @@ package diesel {
           rspLabelCtor : String => CnxnCtxtLabel[String,String,String]
         ) : Unit = {
           BasicLogService.tweet(
-            "entering method: innerLoop"
+            "entering method: innerLoop (node: String)"
             + "\nthis: " + this
             + "\nerql: " + erql
             + "\nclient: " + client
@@ -3568,7 +3568,8 @@ package diesel {
                 e match {
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundAList( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
-                      "method: innerLoop"
+                      "method: innerLoop (node: String)"
+                      + "\n case rsrc type: DSLCommLink.mTT.RBoundAList"
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
                       + "\nerql: " + erql
@@ -3588,7 +3589,7 @@ package diesel {
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                               + "\nDiesel.scala:2500 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
                               + "\n------------------------------------------------------------------"
-                              + "\n defined in method innerLoop"
+                              + "\n defined in method innerLoop (node: String)"
                               + "\n passed to and called in evaluateExpression"
                               + "\nerql: " + erql
                               + "\nserver: " + server                              
@@ -3653,7 +3654,7 @@ package diesel {
                   }
                   case Some( boundRsrc@DSLCommLink.mTT.RBoundHM( Some( DSLCommLink.mTT.Ground( expr ) ), subst ) ) => {
                     BasicLogService.tweet(
-                      "method: innerLoop"
+                      "method: innerLoop (node: String)"
                       + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
@@ -3674,7 +3675,7 @@ package diesel {
                               ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                               + "\nDiesel.scala:2555 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
                               + "\n------------------------------------------------------------------"
-                              + "\n defined in method innerLoop"
+                              + "\n defined in method innerLoop (node: String)"
                               + "\n passed to and called in evaluateExpression"
                               + "\nerql: " + erql
                               + "\nserver: " + server                              
@@ -3741,7 +3742,7 @@ package diesel {
                     rsrc match {
                       case boundRsrc@DSLCommLink.mTT.RBoundHM( innerOptRsrc, subst ) => {
                         BasicLogService.tweet(
-                          "method: innerLoop"
+                          "method: innerLoop (node: String)"
                           + "\n case rsrc type: DSLCommLink.mTT.RBoundHM"
                           + "\n completed client.subscribe "
                           + "\nthis: " + this
@@ -3764,7 +3765,7 @@ package diesel {
                                       ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                                       + "\nDiesel.scala:2614 forward(" + optRsrc + ", " + optFilter + ", " + optCnxn + ")"
                                       + "\n------------------------------------------------------------------"
-                                      + "\n defined in method innerLoop"
+                                      + "\n defined in method innerLoop (node: String)"
                                       + "\n passed to and called in evaluateExpression"
                                       + "\nerql: " + erql
                                       + "\nserver: " + server                              
@@ -3828,7 +3829,7 @@ package diesel {
                           }
                           case Some( innerRrsc ) => {
                             BasicLogService.tweet(
-                              "method: innerLoop"
+                              "method: innerLoop (node: String)"
                               + "\n case unexpected inner rsrc type: " + innerRrsc
                               + "\ninner rsrc type: " + innerRrsc.getClass
                               + "\n completed client.subscribe "
@@ -3845,7 +3846,7 @@ package diesel {
                       }
                       case _ => {
                         BasicLogService.tweet(
-                          "method: innerLoop"
+                          "method: innerLoop (node: String)"
                           + "\n case unexpected rsrc type: " + rsrc
                           + "\ninner rsrc type: " + rsrc.getClass
                           + "\n completed client.subscribe "
@@ -3865,7 +3866,7 @@ package diesel {
                   }
                   case _ => {
                     BasicLogService.tweet(
-                      "method: innerLoop"
+                      "method: innerLoop (node: String)"
                       + "\n rsrc not handled: " + e
                       + "\n completed client.subscribe "
                       + "\nthis: " + this
