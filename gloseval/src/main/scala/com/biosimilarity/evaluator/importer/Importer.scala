@@ -407,10 +407,12 @@ class Importer {
         } catch {
           case ex: Throwable =>
             println("ERROR : "+ex)
-            terminateLongPoll = true
-            sessionsById.foreach(pr => glosevalPost(CloseSessionRequest(pr._2)))
             rslt = Math.max(1, rslt)
+        } finally {
+          terminateLongPoll = true
+          sessionsById.foreach(pr => glosevalPost(CloseSessionRequest(pr._2)))
         }
+
       case _ => throw new Exception("Unable to open admin session")
     }
     rslt

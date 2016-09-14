@@ -45,6 +45,7 @@ package object usage extends ApiClient {
   def startServer(): Unit = {
     logger.info(s"Starting GLoSEval in ${Config.deploymentMode.toString.toLowerCase} mode...")
     serverInstance = Some(Server().start())
+    Thread.sleep(3000)
   }
 
   def stopServer(): Unit = {
