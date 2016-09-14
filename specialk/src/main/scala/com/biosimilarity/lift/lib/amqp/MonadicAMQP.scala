@@ -112,7 +112,14 @@ trait MonadicAMQPDispatcher[T]
             channel.queueDeclare(qname, true, false, false, null);
             channel.queueBind( qname, exQNameRoot, "routeroute" )
 
-            for ( t <- read [T] ( channel, exQNameRoot ) ) { k( t ) }
+            for ( t <- read [T] ( channel, exQNameRoot ) ) {
+              try {
+                k(t)
+              } catch {
+                case e: Throwable =>
+                  BasicLogService.tweet(s"TURNER THE BEAT AROUND: ${e.getMessage}")
+              }
+            }
 
             // Close bracket
 	  }
