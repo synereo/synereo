@@ -94,6 +94,11 @@ class SessionActor(sessionId: String) extends Actor {
         addCameraItem(CameraItem(sending = true, msgType, Some(content), now))
       })
     }
+    msgs.foreach(msg => {
+      if(msg.contains("balanceChanged")) {
+        println(s"-----------------------------> Sending BALANCE_CHANGED message: $msg")
+      }
+    })
     reqCtx.complete(HttpResponse(entity = "[" + msgs.mkString(",") + "]"))
   }
 
