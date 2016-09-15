@@ -1,7 +1,5 @@
 # GLoSEval
 
-[![Gitter](https://badges.gitter.im/synereo/gloseval.svg)](https://gitter.im/synereo/gloseval?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 Network evaluator for Generalized Language of Streams.
 
 Backend for the Synereo Social Platform.

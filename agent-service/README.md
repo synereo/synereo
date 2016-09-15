@@ -1,7 +1,5 @@
 # Agent-Service-ATI-IA
 
-[![Join the chat at https://gitter.im/synereo/agent-service-ati-ia](https://badges.gitter.im/synereo/agent-service-ati-ia.svg)](https://gitter.im/synereo/agent-service-ati-ia?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 Agent Service ATI IA is...
 
 * an agent and privacy model built on [SpecialK](https://github.com/synereo/specialk)
