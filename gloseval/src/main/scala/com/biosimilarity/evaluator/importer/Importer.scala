@@ -1,9 +1,16 @@
+// -*- mode: Scala;-*-
+// Filename:    Importer.scala
+// Authors:     lgm
+// Creation:    Tue Jan 19 16:49:16 2016
+// Copyright:   Not supplied
+// Description:
+// ------------------------------------------------------------------------
+
 package com.biosimilarity.evaluator.importer
 
 import java.io.File
 import java.util.UUID
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.biosimilarity.evaluator.api._
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
 import com.biosimilarity.evaluator.importer.models._
@@ -11,130 +18,24 @@ import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.NodeUser
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
+import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
-import org.json4s._
+import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
-import org.json4s.native.JsonMethods._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
 import scalaj.http.{Http, HttpOptions}
 
-object LongPollActor {
-  case object TerminateLongPoll
-  case object SendPing
-}
-
-class LongPollActor(imp: Importer, sessionId: String) extends Actor {
-
-  import Importer._
-  import LongPollActor._
-  implicit val formats = org.json4s.DefaultFormats
-
-  var stopping = false
-  def ping() = {
-    try {
-      val js = glosevalPost(SessionPing(sessionId))
-      val arr = parse(js).extract[List[JObject]]
-      arr.foreach(v => {
-        val typ = (v \ "msgType").extract[String]
-        typ match {
-          case "sessionPong" => ()
-          case "connectionProfileResponse" => ()
-          case "addAliasLabelsResponse" => ()
-          case "beginIntroductionResponse" => ()
-          case "establishConnectionResponse" => ()
-          case "evalComplete" => ()
-          case "evalSubscribeResponse" => ()
-          case _ =>
-            println("WARNING - handler not provided for server sent message type : " + typ)
-        }
-      })
-      context.system.scheduler.scheduleOnce(2.seconds, self, SendPing)
-
-    } catch {
-      case ex: Throwable =>
-        println("exception during SessionPing, Session - " + sessionId + " : "+ ex)
-        imp.stop(2)
-    }
-  }
-
-  override def postStop(): Unit = {
-    imp.sessionStopped(sessionId)
-    super.postStop()
-  }
-  def receive = {
-    case TerminateLongPoll =>
-      stopping = true
-    case SendPing =>
-      if (stopping) context.stop(self)
-      else ping()
-  }
-}
-
-object Importer {
-  private val GLOSEVAL_HOST = EvalConfConfig.serviceHostURI
-  implicit val formats = org.json4s.DefaultFormats
-
-  val longPollSystem: ActorSystem = ActorSystem("longpoll-system")
-
-  def glosevalPost(data: RequestContent): String = {
-    glosevalPost(data.asRequest)
-  }
-
-  def glosevalPost(msg : Request): String = {
-    val requestBody = write(msg)
-    glosevalPost(requestBody)
-  }
-
-  def glosevalPost(msgType: String, data: JValue): String = {
-    //println(s"REQUEST: $msgType")
-    val requestBody = write( ("msgType" -> msgType) ~ ("content" -> data) )
-    glosevalPost(requestBody)
-  }
-
-  def glosevalPost(requestBody: String): String = {
-    val tid = Thread.currentThread().getId()
-    println(s"$tid: - REQUEST: $requestBody")
-    val req = Http(GLOSEVAL_HOST)
-      .timeout(1000, 600000)
-      .header("Content-Type", "application/json")
-      .option(HttpOptions.allowUnsafeSSL)
-      .postData(requestBody)
-    val response = req.asString.body
-
-    println(s"$tid: - RESPONSE: $response")
-    //if (response.startsWith("Malformed request")) throw new Exception(response)
-    response
-  }
-
-  def makeAliasURI(alias: String) = s"alias://$alias/alias"
-
-  //private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
-
-  def fromFile(dataJsonFile: File = EvalConfConfig.serviceDemoDataFile): Int = {
-    println(s"Importing file: $dataJsonFile")
-    val dataJson: String = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
-    val imp = new Importer()
-    imp.start()
-    val rslt = imp.importData(dataJson)
-    println("Import file returning : " + rslt)
-    rslt
-  }
-}
-
 class Importer {
-  import Importer._
 
+  implicit val formats = org.json4s.DefaultFormats
+
+  private val GLOSEVAL_HOST = EvalConfConfig.serviceHostURI
 
   // maps loginId to agentURI
   private val agentsById = scala.collection.mutable.Map[String, String]()
 
   // maps loginId to sessionURI
   private val sessionsById = scala.collection.mutable.Map[String, String]()
-
-  // maps sessionURI to ActorRef
-  private val sessionActors = scala.collection.mutable.Map[String, ActorRef]()
 
   // maps src+trgt to label
   private val cnxnLabels = scala.collection.mutable.Map[String, String]()
@@ -143,10 +44,85 @@ class Importer {
 
   private def resolveLabel(id: String): LabelDesc = labels(id)
 
-  def startLongPoll(ssn: String) = {
-    val ref = longPollSystem.actorOf( Props(new LongPollActor(this, ssn)) )
-    sessionActors.put(ssn, ref)
-    ref ! LongPollActor.SendPing
+  private def glosevalPost(data: RequestContent): String = {
+    glosevalPost(data.asRequest)
+  }
+
+  private def glosevalPost(msg : Request): String = {
+    val requestBody = write(msg)
+    glosevalPost(requestBody)
+  }
+
+  private def glosevalPost(msgType: String, data: JValue): String = {
+    println(s"REQUEST: $msgType")
+    val requestBody = write( ("msgType" -> msgType) ~ ("content" -> data) )
+    glosevalPost(requestBody)
+  }
+
+  private def glosevalPost(requestBody: String): String = {
+    println(s"REQUEST BODY: $requestBody")
+
+    val req = Http(GLOSEVAL_HOST)
+      .timeout(1000, 600000)
+      .header("Content-Type", "application/json")
+      .option(HttpOptions.allowUnsafeSSL)
+      .postData(requestBody)
+    val response = req.asString.body
+
+    println(s"RESPONSE BODY: $response")
+    if (response.startsWith("Malformed request")) throw new Exception(response)
+    response
+  }
+
+  def makeAliasURI(alias: String) = s"alias://$alias/alias"
+
+  //private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
+
+  var terminateLongPoll = false
+
+  def longPoll(): Thread = {
+    println("initiating long-polling")
+    new Thread(new Runnable() {
+      override def run() {
+        while (!terminateLongPoll) {
+          val tmp = sessionsById.clone()
+          while (tmp.nonEmpty) {
+            tmp.clone().foreach {
+              case (id, session) =>
+                if (!terminateLongPoll) {
+                  try {
+                    val js = glosevalPost(SessionPing(session))
+                    val arr = parse(js).extract[List[JObject]]
+                    arr.foreach(v => {
+                      val typ = (v \ "msgType").extract[String]
+                      typ match {
+                        case "sessionPong" => tmp.remove(id)
+                        case "connectionProfileResponse" => ()
+                        case "addAliasLabelsResponse" => ()
+                        case "beginIntroductionResponse" => ()
+                        case "establishConnectionResponse" => ()
+                        case "evalComplete" => ()
+                        case "evalSubscribeResponse" => ()
+                        case _ =>
+                          println("WARNING - handler not provided for server sent message type : " + typ)
+                      }
+                    })
+                  } catch {
+                    case ex: Throwable =>
+                      println("exception during SessionPing : " + ex)
+                      tmp.remove(id)
+                      terminateLongPoll = true
+                  }
+                }
+            }
+          }
+          if (!terminateLongPoll) {
+            // println("longpoll sleeping")
+            Thread.sleep(3000)
+          }
+        }
+      }
+    })
   }
 
   def expect(msgType: String, session: String): Option[JValue] = {
@@ -252,7 +228,6 @@ class Importer {
           case None => throw new Exception("Create session failure.")
           case Some(session) =>
             sessionsById.put(agent.id, session)
-            startLongPoll(session)
 
             agent.aliasLabels match {
               case None =>()
@@ -328,6 +303,7 @@ class Importer {
       val sourceSession = sessionsById(post.src)
 
       val selfcnxn = Connection("agent://" + sourceId, "agent://" + sourceId, "alias")
+      //val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
 
       post.trgts.foreach(trgt => {
         val targetId = agentsById(trgt)
@@ -364,39 +340,30 @@ class Importer {
     }
   }
 
-  private var _rslt = 0
-  def terminating() = {
-    _rslt > 0
+  private def checkPoll() = {
+    if (terminateLongPoll) {
+      rslt = 2
+      throw new Exception("polling thread has terminated")
+    }
   }
 
+  private var rslt = 0
+  private var thrd: Option[Thread] = None
   def start() = {
-    _rslt = 0
+    terminateLongPoll = false
+    val t = longPoll()
+    t.start()
+    thrd = Some(t)
+
   }
 
-  def sessionStopped(ssn: String) = {
-    sessionActors.remove(ssn)
-    glosevalPost(CloseSessionRequest(ssn))
-  }
-
-  def stop(rslt: Int) = {
-    val doClose = !terminating()
-    _rslt = Math.max(rslt, _rslt)
-    if (doClose) {
-      sessionsById.foreach(pr => {
-        val ssn = pr._2
-        sessionActors.get(ssn) match {
-          case Some(ref) =>
-            ref ! LongPollActor.TerminateLongPoll
-          case None => println("ssn actor missing : " + ssn)
-        }
-      })
+  def stop() = {
+    thrd match {
+      case Some(t) =>
+        terminateLongPoll = true
+        thrd = None
+      case None => ()
     }
-    while (sessionActors.nonEmpty) {
-      println("Sessions not yet closed : " + sessionActors.size)
-      Thread.sleep(2000L)
-    }
-    sessionsById.clear()
-    _rslt
   }
 
   def importData(dataJson: String) = {
@@ -406,40 +373,49 @@ class Importer {
         val adminId = uri.replace("agent://", "")
         try {
           val adminSession = createSession(NodeUser.email, NodeUser.password).get
-          sessionsById.put(adminId, adminSession)
-          startLongPoll(adminSession)
-
-          //println(s"using admin session URI: $adminSession")
+          thrd match {
+            case Some(t) => ()
+            case None => throw new Exception("polling not started")
+          }
+          sessionsById.put(adminId, adminSession) // longpoll on adminSession
+          println(s"using admin session URI: $adminSession")
           dataset.labels match {
             case Some(lbls) => lbls.foreach(l => {
-              if (!terminating()) makeLabel(LabelDesc.extractFrom(l))
+              checkPoll()
+              makeLabel(LabelDesc.extractFrom(l))
             })
             case None => ()
           }
           dataset.agents.foreach(a => {
-            if (!terminating()) makeAgent(a)
+            checkPoll()
+            makeAgent(a)
           })
           dataset.cnxns match {
             case Some(cnxns) => cnxns.foreach(cnxn => {
-              if (!terminating()) makeCnxn(adminSession, cnxn)
+              checkPoll()
+              makeCnxn(adminSession, cnxn)
             })
             case None => ()
           }
           dataset.posts match {
             case Some(posts) => posts.foreach(p => {
-              if (!terminating()) makePost(p)
+              checkPoll()
+              makePost(p)
             })
             case None => ()
           }
         } catch {
           case ex: Throwable =>
             println("ERROR : "+ex)
-            stop(1)
+            rslt = Math.max(1, rslt)
+        } finally {
+          terminateLongPoll = true
+          sessionsById.foreach(pr => glosevalPost(CloseSessionRequest(pr._2)))
         }
 
       case _ => throw new Exception("Unable to open admin session")
     }
-    stop(0)
+    rslt
   }
 
   def runTestFile(dataJsonFile: String = "src/test/resources/test-posts.json"): Unit = {
@@ -538,6 +514,7 @@ class Importer {
             val isok = glosevalPost(GetConnectionProfiles(ssn))
             if (isok != "OK") throw new Exception("Unable to call getConnectionProfiles")
             val rsps = expectAll(ssn)
+            println("got here")
             reqcnt match {
               case Some(l) =>
                 if (l != rsps.length) throw new Exception("Expected : " + l + ", but received: " + rsps.length)
@@ -545,7 +522,7 @@ class Importer {
               case _ => println("requirecount not supplied?")
             }
             rsps foreach { js =>
-              println(pretty(render(js)))
+              println(pretty(js))
             }
           }
           case _ =>
@@ -562,3 +539,16 @@ class Importer {
   }
 }
 
+object Importer {
+
+  def fromFile(dataJsonFile: File = EvalConfConfig.serviceDemoDataFile): Int = {
+    println(s"Importing file: $dataJsonFile")
+    val dataJson: String = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
+    val imp = new Importer()
+    imp.start()
+    val rslt = imp.importData(dataJson)
+    imp.stop()
+    println("Import file returning : " + rslt)
+    rslt
+  }
+}
