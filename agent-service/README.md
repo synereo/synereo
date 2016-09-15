@@ -1,21 +1,8 @@
-# Agent-Service-ATI-IA
+# Agent Service
 
-Agent Service ATI IA is...
+The Synereo Agent Service
 
-* an agent and privacy model built on [SpecialK](https://github.com/synereo/specialk)
-* a DSL interpreter, along with a DSL for:
-  * sessions and associated security
-  * agents
-  * connections between agents, including a self-connection known as an "alias"
-  * posts
-  * filters (and evaluation for query)
-  * poll and subscription, with paging
-  * protocols and handlers, including:
-    * introduction (of agents)
-    * reputation
-    * verification
-
-## Installation
+## Requirements
 
 To work with the Agent Service, you will need:
 
@@ -32,23 +19,17 @@ To work with the Agent Service, you will need:
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/
 
-After installing these dependencies, you can clone the SpecialK repo and run tests:
-```
-$ git clone https://github.com/synereo/agent-service-ati-ia.git
-  ...
-$ cd agent-service-ati-ia/AgentServices-Store
-$ sbt test
-```
+### Why can't I use newer versions?
 
-**NOTE**: In order to run these tests, MongoDB, RabbitMQ, and Memcached must be running.
+See note [here](../specialk/README.md#why-cant-i-use-newer-versions).
 
 ## Usage
 
-Currently, the Agent Service is intended to be used in conjunction with the [SpecialK](https://github.com/synereo/specialk) and [GLoSEval](https://github.com/synereo/gloseval).
+Currently, the Agent Service is intended to be used in conjunction with the [SpecialK](../specialk) and [GLoSEval](../gloseval).
 
 ## Issues
 
-We welcome reports of any issues on the [issue tracker](https://github.com/synereo/agent-service-ati-ia/issues).
+We welcome reports of any issues on the [issue tracker](https://github.com/synereo/synereo/issues).
 
 We are also using JIRA to track issues for this project and the rest of the Synereo Platform:
 https://synereo.atlassian.net/projects/SOC/issues
