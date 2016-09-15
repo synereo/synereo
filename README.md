@@ -1,7 +1,6 @@
 # synereo
 
 [![Join the chat at https://gitter.im/synereo/synereo](https://badges.gitter.im/synereo/synereo.svg)](https://gitter.im/synereo/synereo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 [![Build Status](https://travis-ci.org/synereo/synereo.svg?branch=staging)](https://travis-ci.org/synereo/synereo)
 
 Home of:
