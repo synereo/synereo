@@ -141,6 +141,7 @@ class SessionActor(sessionId: String) extends Actor {
       context.stop(self)
       SessionManager.removeSession(sessionId)
       for (reqCtx <- optReqCtx) reqCtx.complete(StatusCodes.OK, "session closed")
+      optReq = None
 
     case SessionTimedOut =>
       context.self ! CloseSession(None)
