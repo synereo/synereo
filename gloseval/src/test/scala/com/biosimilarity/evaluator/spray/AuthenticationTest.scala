@@ -79,7 +79,8 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
         }
     }
 
-    "respond with CreateUserWaiting on creation user, step 2" in {
+    // TODO: re-enable after we stop using smtp.googlemail.com as our SMTP server for tests
+    "respond with CreateUserWaiting on creation user, step 2" ignore {
       Post(httpsUri, HttpEntity(MediaTypes.`application/json`, getCreateUserStep2RequestBody(salt))) ~> myRoute ~> {
         check {
           val rsp = responseAs[String]
