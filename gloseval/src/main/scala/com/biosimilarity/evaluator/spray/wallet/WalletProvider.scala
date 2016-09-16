@@ -2,12 +2,15 @@ package com.biosimilarity.evaluator.spray.wallet
 
 import java.io.File
 import java.net.URI
+
 import com.biosimilarity.evaluator.spray.SessionManager
-import org.bitcoinj.core.listeners.TransactionConfidenceEventListener
+import org.bitcoinj.core.listeners.{DownloadProgressTracker, TransactionConfidenceEventListener}
 import org.bitcoinj.core.{Address, Coin, Transaction}
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.wallet.{DeterministicSeed, Wallet}
-import org.bitcoinj.wallet.listeners.{WalletChangeEventListener, WalletCoinsReceivedEventListener, WalletCoinsSentEventListener}
+import org.bitcoinj.wallet.listeners.{WalletCoinsReceivedEventListener, WalletCoinsSentEventListener}
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
 
 object WalletProvider {
 
@@ -26,6 +29,7 @@ object WalletProvider {
         println(s"----------------------------------------> Wallet for session: $session")
         val kit: WalletAppKit = new WalletAppKit(Network.params, new File("."), s"restorewallet-${session}_${System.currentTimeMillis}")
         kit.restoreWalletFromSeed(new DeterministicSeed(seedData.seedcode, null, seedData.passphrase, seedData.creationtime))
+        kit.setBlockingStartup(false)
         kit.startAsync
         kit.awaitRunning
 
@@ -44,19 +48,27 @@ object WalletProvider {
           }
         })
 
-        kit.wallet().addChangeEventListener(new WalletChangeEventListener {
-          override def onWalletChanged(wallet: Wallet): Unit = {
-            println(s"Wallet changed : ${wallet.toString}")
-          }
-        })
-
         kit.wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
           override def onTransactionConfidenceChanged(wallet: Wallet, tx: Transaction): Unit = {
             onconfidencechanged(wallet, tx)
           }
         })
 
-        println("send money to: " + kit.wallet.freshReceiveAddress.toString)
+        kit.setDownloadListener(new DownloadProgressTracker(){
+          override def doneDownload() = {
+            println(s"--------------------------------------> Download Complete for: $session")
+            val content =
+              ("sessionURI" -> sessionURI) ~
+                ("address" -> s"${kit.wallet().currentReceiveAddress().toString}") ~
+                ("tx" -> "") ~
+                ("prevBalance" -> "0") ~
+                ("newBalance" -> kit.wallet().getBalance(Wallet.BalanceType.ESTIMATED).toString)
+            SessionManager.cometMessageByHost(sessionURI, compact(render(
+              ("msgType" -> "balanceChanged") ~ ("content" -> content))))
+          }
+        })
+
+        println("send money to: " + kit.wallet.currentReceiveAddress.toString)
 
         SessionManager.storeKitBySession(session, kit)
         kit

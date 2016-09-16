@@ -233,7 +233,7 @@ object Importer extends EvalConfig
           case None => throw new Exception("Create session failure.")
           case Some(session) =>
             sessionsById.put(agent.id, session)
-
+            Thread.sleep(1000)
             agent.aliasLabels match {
               case None =>()
               case Some(l) =>
