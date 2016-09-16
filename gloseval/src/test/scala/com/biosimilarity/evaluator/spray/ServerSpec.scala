@@ -5,8 +5,7 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfConfig._
-import com.biosimilarity.evaluator.importer.Importer
-import com.biosimilarity.evaluator.spray.ClientSSLConfiguration._
+import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.directives.HttpsDirectives.StrictTransportSecurity
 import com.biosimilarity.evaluator.spray.util._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}

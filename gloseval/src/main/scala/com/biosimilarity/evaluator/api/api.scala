@@ -4,7 +4,7 @@ import org.json4s._
 
 // helpers
 case class Connection(source: String, target: String, label: String)
-case class EvalSubscribeContent(cnxns: List[Connection], label: String, value: String, uid: String)
+case class EvalSubscribeContent(cnxns: List[Connection], label: String, value: Option[String], uid: Option[String])
 case class EvalSubscribeExpression(msgType: String, content: EvalSubscribeContent)
 
 // actual API
@@ -52,33 +52,36 @@ case class VersionInfoResponse(glosevalVersion: String, scalaVersion: String, mo
                                       |MongoDB version: $mongoDBVersion
                                       |RabbitMQ version: $rabbitMQVersion""".stripMargin
 }
-case class InitializeSessionStep1Response(salt: String, B: String)   extends ResponseContent
-case class InitializeSessionResponse(sessionURI: String, M2: String) extends ResponseContent
-case class CreateUserStep1Response(salt: String)                     extends ResponseContent
-case class CreateUserStep2Response(agentURI: String)                 extends ResponseContent
-case class CreateUserWaiting(token: String)                          extends ResponseContent
-case class ApiError(reason: String)                                  extends ResponseContent
+case class InitializeSessionStep1Response(s: String, B: String) extends ResponseContent
+case class InitializeSessionResponse(sessionURI: String,
+                                     defaultAlias: String,
+                                     jsonBlob: JObject,
+                                     lastActiveLabel: String,
+                                     listOfAliases: List[String],
+                                     listOfConnections: List[Connection],
+                                     listOfLabels: List[String],
+                                     M2: String)
+    extends ResponseContent
+case class CreateUserStep1Response(salt: String)                                                   extends ResponseContent
+case class CreateUserStep2Response(agentURI: String)                                               extends ResponseContent
+case class CreateUserWaiting(token: String)                                                        extends ResponseContent
+case class ConnectionProfileResponse(sessionURI: String, connection: Connection, jsonBlob: JValue) extends ResponseContent
+case class ApiError(reason: String)                                                                extends ResponseContent
 
 case class Response(msgType: String, content: JObject) {
-  val responseContent = (msgType, content) match {
-    case ("createUserStep1Response", JObject(JField("salt", JString(s)) :: Nil))      => CreateUserStep1Response(s)
-    case ("createUserStep2Response", JObject(JField("agentURI", JString(au)) :: Nil)) => CreateUserStep2Response(au)
-    case ("createUserWaiting", JObject(JField("token", JString(tok)) :: Nil))         => CreateUserWaiting(tok)
-    case ("initializeSessionStep1Response", JObject(JField("s", JString(s)) :: JField("B", JString(b)) :: Nil)) =>
-      InitializeSessionStep1Response(s, b)
-    case ("initializeSessionResponse",
-          JObject(
-          JField("sessionURI", JString(ssn)) ::
-            JField("listOfAliases", JArray(la)) ::
-              JField("defaultAlias", JString(da)) ::
-                JField("listOfLabels", JArray(ll)) ::
-                  JField("listOfConnections", JArray(lc)) ::
-                    JField("lastActiveLabel", JString(lal)) ::
-                      JField("jsonBlob", JObject(jb)) ::
-                        JField("M2", JString(m2)) :: Nil)) =>
-      InitializeSessionResponse(ssn, m2)
-    case ("createUserError", JObject(JField("reason", JString(r)) :: Nil))        => ApiError(r)
-    case ("initializeSessionError", JObject(JField("reason", JString(r)) :: Nil)) => ApiError(r)
+
+  implicit val formats = org.json4s.DefaultFormats
+
+  def extractResponseContent: ResponseContent = msgType match {
+    case "createUserError"                => content.extract[ApiError]
+    case "createUserStep1Response"        => content.extract[CreateUserStep1Response]
+    case "createUserStep2Response"        => content.extract[CreateUserStep2Response]
+    case "createUserWaiting"              => content.extract[CreateUserWaiting]
+    case "connectionProfileResponse"      => content.extract[ConnectionProfileResponse]
+    case "initializeSessionError"         => content.extract[ApiError]
+    case "initializeSessionResponse"      => content.extract[InitializeSessionResponse]
+    case "initializeSessionStep1Response" => content.extract[InitializeSessionStep1Response]
+    case "versionInfoResponse"            => content.extract[VersionInfoResponse]
   }
 }
 

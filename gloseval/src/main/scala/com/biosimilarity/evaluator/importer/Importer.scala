@@ -172,14 +172,14 @@ class Importer {
     val srpClient = new SRPClient()
     srpClient.init
     val r1 = parse(glosevalPost(CreateUserStep1Request(eml))).extract[Response]
-    r1.responseContent match {
+    r1.extractResponseContent match {
       case ApiError(reason) =>
         println(s"create user, step 1, failed, reason : $reason")
         None
       case CreateUserStep1Response(salt) =>
         srpClient.calculateX(eml, agent.pwd, salt)
         val r2 = parse(glosevalPost(CreateUserStep2Request("noconfirm:"+eml, salt, srpClient.generateVerifier, jsonBlob))).extract[Response]
-        r2.responseContent match {
+        r2.extractResponseContent match {
           case ApiError(reason) =>
             println(s"create user, step 2, failed, reason : $reason")
             None
@@ -197,7 +197,7 @@ class Importer {
     val emluri = "agent://email/"+email
     val r1 = parse(glosevalPost(InitializeSessionStep1Request(s"$emluri?A=${srpClient.calculateAHex}")))
       .extract[Response]
-    r1.responseContent match {
+    r1.extractResponseContent match {
       case ApiError(reason) =>
         println(s"initialize session, step 1, failed, reason : $reason")
         None
@@ -205,11 +205,11 @@ class Importer {
         srpClient.calculateX(email, pwd, salt)
         val r2 = parse(glosevalPost(InitializeSessionStep2Request(s"$emluri?M=${srpClient.calculateMHex(bval)}")))
           .extract[Response]
-        r2.responseContent match {
+        r2.extractResponseContent match {
           case ApiError(reason) =>
             println(s"initialize session, step 2, failed, reason : $reason")
             None
-          case InitializeSessionResponse(sessionURI, m2) =>
+          case InitializeSessionResponse(sessionURI, _, _, _, _, _, _, m2) =>
             if(srpClient.verifyServerEvidenceMessage(fromHex(m2))) Some(sessionURI)
             else throw new Exception("Authentication failed on client")
           case _ => throw new Exception("Unspecified response")
@@ -312,7 +312,7 @@ class Importer {
         cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
       })
 
-      val cont = EvalSubscribeContent(selfcnxn :: cnxns, post.label, post.value, post.uid)
+      val cont = EvalSubscribeContent(selfcnxn :: cnxns, post.label, Some(post.value), Some(post.uid))
       glosevalPost(EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
 
     } catch {

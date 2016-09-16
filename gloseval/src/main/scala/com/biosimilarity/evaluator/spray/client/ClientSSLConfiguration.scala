@@ -1,4 +1,4 @@
-package com.biosimilarity.evaluator.spray
+package com.biosimilarity.evaluator.spray.client
 
 import java.io.InputStream
 import java.security.cert.{Certificate, CertificateFactory}
