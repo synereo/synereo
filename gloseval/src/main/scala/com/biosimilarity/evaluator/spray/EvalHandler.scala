@@ -86,11 +86,28 @@ object SessionManager extends Serializable {
     }
   }
 
+  def cometMessageByHost(sessionURI: String, jsonBody: String): Unit = {
+    val host: String = new URI(sessionURI).getHost
+    val keys: Seq[String] = getKeysByHost(host)
+    for (key <- keys) {
+      hmap.get(key) match {
+        case None =>
+        case Some(actor) => actor ! SessionActor.CometMessage(jsonBody)
+      }
+    }
+  }
+
   def storeKitBySession(session: String, kit: WalletAppKit) =
     wallets += (session -> kit)
 
   def getKitBySession(session: String): Option[WalletAppKit] =
     wallets.get(session)
+
+  def startWalletKit(sessionURI: String, seedData: String): Unit = {
+    for (cometActor <- hmap.get(sessionURI)) {
+      cometActor ! SessionActor.StartWalletKit(seedData)
+    }
+  }
 
   def startSession(ssn : String): Unit = {
     sessionManager match {
@@ -109,6 +126,10 @@ object SessionManager extends Serializable {
 
   def getSession(ssn: String): Option[ActorRef] = {
     hmap.get(ssn)
+  }
+
+  def getKeysByHost(host: String): Seq[String] = {
+    hmap.keySet.filter(p => new URI(p).getHost.equals(host)).toSeq
   }
 
   def getChunkingActor(sessionURI: String, cnt: Int) = {
@@ -2943,7 +2964,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       val capSelfCnxn = getCapSelfCnxn(cap)
       val sessionURI = capToSession(cap)
       val uc = getSessionWithHash(pVal)
-      var kit: Option[WalletAppKit] = None
+      val kit: Option[WalletAppKit] = SessionManager.getKitBySession(cap)
+      var seedData: String = ""
 
       def onLabelsFetch(jsonBlob: String, aliasList: String, defaultAlias: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
         BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onLabelsFetch: optRsrc = " + optRsrc)
@@ -2978,6 +3000,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
               SessionManager.startSession(sessionURI)  // register the session
               fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
+              if(kit.isEmpty) SessionManager.startWalletKit(sessionURI, seedData)
 
             }
             case Bottom => {
@@ -3143,54 +3166,21 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
       val onWalletFetch: Option[mTT.Resource] => Unit = (rsrc) => {
         def handleWallet(seedDataJson: String): Unit = {
-          def receive(wallet: Wallet, tx: Transaction, prevBal: Coin, newBal: Coin): Unit = {
-            println("-------------------------------------------> Money received")
-            val content =
-              ("sessionURI" -> sessionURI) ~
-              ("address" -> s"${wallet.currentReceiveAddress}") ~
-              ("tx" -> tx.getHashAsString) ~
-              ("prevBalance" -> prevBal.toString) ~
-              ("newBalance" -> newBal.toString)
-            println(compact(render(content)))
-            SessionManager.cometMessage(sessionURI, compact(render(
-              ("msgType" -> "balanceChanged") ~ ("content" -> content))))
-          }
-          def send(wallet: Wallet, tx: Transaction, prevBal: Coin, newBal: Coin): Unit = {
-            println("-------------------------------------------> Money sent")
-            val content =
-                ("sessionURI" -> sessionURI) ~
-                ("address" -> s"${wallet.currentReceiveAddress}") ~
-                ("tx" -> tx.getHashAsString) ~
-                ("prevBalance" -> prevBal.toString) ~
-                ("newBalance" -> newBal.toString)
-            println(compact(render(content)))
-            SessionManager.cometMessage(sessionURI, compact(render(
-              ("msgType" -> "balanceChanged") ~ ("content" -> content))))
-          }
-          def confidence(wallet: Wallet, tx: Transaction): Unit = {
-            println("-------------------------------------------> Confidence changed")
-            val content = ("sessionURI" -> sessionURI) ~ ("tx" -> tx.getHashAsString) ~ ("confidence" -> tx.getConfidence.getDepthInBlocks)
-            println(compact(render(content)))
-            SessionManager.cometMessage(sessionURI, compact(render(
-              ("msgType" -> "confidenceChanged") ~ ("content" -> content))))
-          }
-
-          kit = Try(WalletProvider.restoreWallet(parse(seedDataJson).extract[DeterministicSeedData],
-            sessionURI, receive, send, confidence)).toOption
-
+          seedData = seedDataJson
           fetch(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
         }
         rsrc match {
-          case None => println("ERRROR!!!")
+          case None => handleWallet("")
           case Some(mTT.Ground(PostedExpr((PostedExpr(seedDataJson: String), _, _, _)))) => handleWallet(seedDataJson)
           case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(seedDataJson: String), _, _, _)))), _)) => handleWallet(seedDataJson)
-          case _ => println("ERRROR!!!")
+          case _ => handleWallet("")
         }
       }
 
       if(uc == null) completeWithError(key, errorMsgType, s"Authentication failed on server.")
       else {
-        fetch(ampWalletLabel, List(capSelfCnxn), onWalletFetch)
+        if(kit.isDefined) fetch(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
+        else fetch(ampWalletLabel, List(capSelfCnxn), onWalletFetch)
         ()
       }
     }

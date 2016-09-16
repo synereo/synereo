@@ -1,7 +1,10 @@
 package com.biosimilarity.evaluator.spray
 
+import java.net.URI
+
 import akka.actor.{Actor, Cancellable}
-import org.bitcoinj.core.{Address, Coin, InsufficientMoneyException}
+import com.biosimilarity.evaluator.spray.wallet.{DeterministicSeedData, WalletProvider}
+import org.bitcoinj.core.{Address, Coin, InsufficientMoneyException, Transaction}
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.wallet.Wallet
 import org.json4s.JsonDSL._
@@ -12,6 +15,7 @@ import spray.routing.RequestContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 object SessionActor {
   case class CameraItem(sending: Boolean, msgType: String, content: Option[JObject], tmStamp: DateTime)
@@ -25,6 +29,7 @@ object SessionActor {
   case class SetSessionTimeout(t: FiniteDuration)
   case class StartCamera(reqCtx: RequestContext)
   case class StopCamera(reqCtx: RequestContext)
+  case class StartWalletKit(seedData: String)
   case class SendAmps(address: Address, coin: Coin, kit: WalletAppKit, ctx: RequestContext)
   case object PongTimeout
   case object SessionTimedOut
@@ -98,6 +103,9 @@ class SessionActor(sessionId: String) extends Actor {
       if(msg.contains("balanceChanged")) {
         println(s"-----------------------------> Sending BALANCE_CHANGED message: $msg")
       }
+      if(msg.contains("downloadComplete")) {
+        println(s"-----------------------------> Sending DOWNLOAD_COMPLETE message: $msg")
+      }
     })
     reqCtx.complete(HttpResponse(entity = "[" + msgs.mkString(",") + "]"))
   }
@@ -145,6 +153,52 @@ class SessionActor(sessionId: String) extends Actor {
   }
 
   def receive = {
+
+    case StartWalletKit(seedData) =>
+      def receive(wallet: Wallet, tx: Transaction, prevBal: Coin, newBal: Coin): Unit = {
+        println("-------------------------------------------> Money received")
+        val content =
+          ("sessionURI" -> sessionId) ~
+          ("address" -> s"${wallet.currentReceiveAddress}") ~
+          ("tx" -> tx.getHashAsString) ~
+          ("prevBalance" -> prevBal.toString) ~
+          ("newBalance" -> newBal.toString)
+        println(compact(render(content)))
+        SessionManager.cometMessageByHost(sessionId, compact(render(
+          ("msgType" -> "balanceChanged") ~ ("content" -> content))))
+      }
+      def send(wallet: Wallet, tx: Transaction, prevBal: Coin, newBal: Coin): Unit = {
+        println("-------------------------------------------> Money sent")
+        val content =
+            ("sessionURI" -> sessionId) ~
+            ("address" -> s"${wallet.currentReceiveAddress}") ~
+            ("tx" -> tx.getHashAsString) ~
+            ("prevBalance" -> prevBal.toString) ~
+            ("newBalance" -> newBal.toString)
+        println(compact(render(content)))
+        SessionManager.cometMessageByHost(sessionId, compact(render(
+          ("msgType" -> "balanceChanged") ~ ("content" -> content))))
+      }
+      def confidence(wallet: Wallet, tx: Transaction): Unit = {
+        println("-------------------------------------------> Confidence changed")
+        val content = ("sessionURI" -> sessionId) ~ ("tx" -> tx.getHashAsString) ~ ("confidence" -> tx.getConfidence.getDepthInBlocks)
+        println(compact(render(content)))
+        SessionManager.cometMessageByHost(sessionId, compact(render(
+          ("msgType" -> "confidenceChanged") ~ ("content" -> content))))
+      }
+
+      if(!seedData.isEmpty) {
+        Try(WalletProvider.restoreWallet(parse(seedData).extract[DeterministicSeedData],
+          sessionId, receive, send, confidence)) match {
+          case Failure(e) =>
+            println(s"----------------------------> Error starting wallet for ${new URI(sessionId).getHost}")
+            e.printStackTrace()
+          case Success(r) =>
+            println(s"----------------------------> Started wallet for ${new URI(sessionId).getHost}")
+        }
+      } else {
+        println(s"----------------------------> Error: no wallet found ${new URI(sessionId).getHost}")
+      }
 
     case SendAmps(address, coin, kit, ctx) =>
       sendCoins(address, coin, kit, ctx)
