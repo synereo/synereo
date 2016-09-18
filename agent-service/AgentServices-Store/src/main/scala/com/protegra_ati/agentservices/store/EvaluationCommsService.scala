@@ -79,14 +79,19 @@ with CnxnString[String, String, String]{
     _clientServerPair match {
       case Some( lnk ) => lnk
       case None => {        
+	val nodes = DSLCommLinkCtor.stdBiLink(          
+          serverHostName, serverPort,
+	  List( ( clientHostName, clientPort ) )
+        )
         val ( client, server ) : ( Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
         ], Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
-        ] ) = DSLCommLinkCtor.stdBiLink(
-          clientHostName, clientPort,
-          serverHostName, serverPort
-        )
+        ] ) = 
+	  nodes match {
+	    case ( c, s ) :: Nil => { ( c, s ) }
+	    case _ => throw new Exception( "unexpected nodes length: " + nodes )
+	  }
 
         _clientServerPair = Some( ( client, server ) )
         ( client, server )
@@ -126,14 +131,20 @@ with CnxnString[String, String, String]{
         ] = DSLCommsLinkNodeMapper.get( nn ) match {
           case Some( n ) => n
           case None => {
-            val node : Being.PersistedMonadicKVDBNode[
-              PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
-            ] =
+            val nodes =
               DSLCommLinkCtor.stdLink(
                 serverHostName, serverPort,
-                clientHostName, clientPort
+                List( ( clientHostName, clientPort ) )
               )( flip )
             
+	    val node : Being.PersistedMonadicKVDBNode[
+              PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
+            ] =
+	      nodes match {
+		case n :: Nil => n
+		case _ => throw new Exception( "unexpected nodes length: " + nodes )
+	      }
+
             DSLCommsLinkNodeMapper += ( nn -> node )
             node
           }

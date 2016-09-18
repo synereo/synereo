@@ -24,7 +24,7 @@ trait BootTasks {
   def startServer(): Unit = {
     JLogger.getLogger("com.mongodb").setLevel(JLevel.OFF)
     val (mongoHost, mongoPort)   = (Config.readString("dbHost"), Config.readInt("dbPort"))
-    val (rabbitHost, rabbitPort) = (Config.readString("DSLCommLinkClientHost"), Config.readInt("DSLCommLinkClientPort"))
+    val (rabbitHost, rabbitPort) = (Config.readString("DSLCommLinkServerHost"), Config.readInt("DSLCommLinkServerPort"))
     logger.info(s"Starting GLoSEval in ${Config.deploymentMode.toString.toLowerCase} mode...")
     (keystoreExists, Config.deploymentMode, rabbitIsRunning(rabbitHost, rabbitPort), mongoIsRunning(mongoHost, mongoPort)) match {
       case (false, _, _, _) =>

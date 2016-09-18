@@ -3888,21 +3888,26 @@ package diesel {
           useBiLink : Option[Boolean] = None,
           flip : Boolean = false
         ) : Unit = {
-          val ( client, server ) = 
+          val clientsNServers = 
             useBiLink match {
               case Some( true ) => {
                 DSLCommLinkCtor.stdBiLink()              
               }
               case Some( false ) => {
-                val ( client, server ) = DSLCommLinkCtor.stdBiLink()
-                ( server, client )
+                val csNSs = DSLCommLinkCtor.stdBiLink()
+		for( ( client, server ) <- csNSs ) 
+		yield {
+		  ( server, client )
+		}
               }
               case None => {          
                 val link = DSLCommLinkCtor.stdLink()( flip )
-                ( link, link )
+                link.zip( link )
               }
             }
-          innerLoop( erql, client, server, node, rspLabelCtor )
+          for( ( client, server ) <- clientsNServers ) {
+	    innerLoop( erql, client, server, node, rspLabelCtor )
+	  }
         }
 
         def lateMessageProcessorLoop(
@@ -3912,21 +3917,26 @@ package diesel {
           useBiLink : Option[Boolean] = None,
           flip : Boolean = false
         ) : Unit = {
-          val ( client, server ) = 
+          val clientsNServers = 
             useBiLink match {
               case Some( true ) => {
                 DSLCommLinkCtor.stdBiLink()              
               }
               case Some( false ) => {
-                val ( client, server ) = DSLCommLinkCtor.stdBiLink()
-                ( server, client )
+                val csNSs = DSLCommLinkCtor.stdBiLink()
+		for( ( client, server ) <- csNSs ) 
+		yield {
+		  ( server, client )
+		}
               }
               case None => {          
                 val link = DSLCommLinkCtor.stdLink()( flip )
-                ( link, link )
+                link.zip( link )
               }
             }
-          innerLoop( erql, client, server, node, rspLabelCtor )
+          for( ( client, server ) <- clientsNServers ) {
+	    innerLoop( erql, client, server, node, rspLabelCtor )
+	  }
         }
 
         def go( derefNodeEarly : Boolean = false ) : Unit = {

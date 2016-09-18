@@ -498,7 +498,7 @@ object CommManagement {
     _commLink match {
       case Some( cLink ) => cLink
       case None => {
-        val cLink : StdEvaluationRequestChannel = stdLink()( flip )
+        val cLink : StdEvaluationRequestChannel = oneStdLink()( flip )
         _commLink = Some( cLink )
         cLink
       }
