@@ -45,7 +45,11 @@ object symbol2jvalue extends Serializable {}
 
 object CompletionMapper extends Serializable {
   @transient
-  val hmap = new mutable.HashMap[String, RequestContext]()
+  var hmap = new mutable.HashMap[String, RequestContext]()
+
+  def reset(): Unit = {
+    hmap = mutable.HashMap.empty[String, ActorRef]
+  }
 
   def complete(key : String, message : String) : Unit = {
     for (reqCtx <- hmap.get(key)) {
@@ -66,6 +70,10 @@ object CompletionMapper extends Serializable {
 object SessionManager extends Serializable {
   private var hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
   private var sessionManager : Option[ActorContext] = None
+
+  def reset(): Unit = {
+    hmap = mutable.HashMap.empty[String, ActorRef]
+  }
 
   def setSessionManager(cxt: ActorContext) = {
     hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
