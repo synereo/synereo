@@ -13,7 +13,7 @@ import spray.http._
 import spray.httpx.encoding._
 import spray.routing._
 
-import scala.collection.mutable.HashMap
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -22,7 +22,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
   import EvalHandlerService._
 
   @transient
-  val syncMethods = HashMap[String, (JObject, String) => Unit](
+  val syncMethods = mutable.HashMap[String, (JObject, String) => Unit](
     // Old stuff
     //("createUserRequest", createUserRequest),
 
@@ -40,7 +40,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
   )
 
   @transient
-  val asyncMethods = HashMap[String, JObject => Unit](
+  val asyncMethods = mutable.HashMap[String, JObject => Unit](
     // Old stuff
     ("updateUserRequest", updateUserRequest),
     // Agents

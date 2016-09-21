@@ -25,7 +25,6 @@ import org.json4s.native.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL._
 
-import scala.collection.mutable.HashMap
 import javax.crypto._
 import javax.crypto.spec._
 import java.security._
@@ -46,7 +45,7 @@ object symbol2jvalue extends Serializable {}
 
 object CompletionMapper extends Serializable {
   @transient
-  val hmap = new HashMap[String, RequestContext]()
+  val hmap = new mutable.HashMap[String, RequestContext]()
 
   def complete(key : String, message : String) : Unit = {
     for (reqCtx <- hmap.get(key)) {
@@ -120,7 +119,7 @@ object SessionManager extends Serializable {
 
 object btcKeyMapper extends Serializable {
   @transient
-  val map = new HashMap[String, String]()
+  val map = new mutable.HashMap[String, String]()
 }
 
 object ConfirmationEmail extends Serializable {
@@ -1887,7 +1886,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       if (pth == "") ("cap", uri.getHost )
       else (uri.getHost, pth.substring(1) )
     }
-    val queryMap = new HashMap[String, String]
+    val queryMap = new mutable.HashMap[String, String]
     val qry = uri.getRawQuery
     if (qry != null) {
       qry.split("&").map((x: String) => {
@@ -3110,7 +3109,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       if (pth == "") ("cap", uri.getHost )
       else (uri.getHost, pth.substring(1) )
     }
-    val queryMap = new HashMap[String, String]
+    val queryMap = new mutable.HashMap[String, String]
     val qry = uri.getRawQuery
     if (qry != null) {
       qry.split("&").map((x: String) => {

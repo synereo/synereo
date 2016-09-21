@@ -36,8 +36,7 @@ import org.json4s.JsonDSL._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.continuations._ 
-import scala.collection.mutable.MapProxy
-import scala.collection.mutable.HashMap
+import scala.collection.mutable
 
 import com.typesafe.config._
 
@@ -57,9 +56,9 @@ case object BTCPaymentPending extends BTCPaymentStatus with Serializable
 case object BTCPaymentComplete extends BTCPaymentStatus with Serializable
 case object BTCPaymentFailed extends BTCPaymentStatus with Serializable
 
-object BTCPaymentSessions extends MapProxy[String,BTCPaymentStatus] with Serializable {
+object BTCPaymentSessions extends mutable.MapProxy[String,BTCPaymentStatus] with Serializable {
   @transient
-  override val self = new HashMap[String,BTCPaymentStatus]()
+  override val self = new mutable.HashMap[String,BTCPaymentStatus]()
 }
 
 trait BTCHandlerSchema {
