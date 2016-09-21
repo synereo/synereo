@@ -48,7 +48,7 @@ object CompletionMapper extends Serializable {
   var hmap = new mutable.HashMap[String, RequestContext]()
 
   def reset(): Unit = {
-    hmap = mutable.HashMap.empty[String, ActorRef]
+    hmap = mutable.HashMap.empty[String, RequestContext]
   }
 
   def complete(key : String, message : String) : Unit = {
