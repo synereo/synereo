@@ -33,7 +33,7 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
     var labels: List[String] = Nil
     var cnxns: List[JObject] = Nil
     for (dbo <- csr) {
-      val s = dbo.toString()
+      val s = dbo.toString
       if (s.contains("AbstractHL$PostedExpr")) {
         val tdb = dbo.get("record").asInstanceOf[DBObject].get("value").asInstanceOf[DBObject]
         val js = tdb.head._1

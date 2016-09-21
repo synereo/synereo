@@ -2320,10 +2320,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
         }
         case "insertContent" => {
-          //println("evalSubscribeRequest | insertContent")
-          BasicLogService.tweet("evalSubscribeRequest | insertContent")
-          //println("evalSubscribeRequest | insertContent: calling post")
-          BasicLogService.tweet("evalSubscribeRequest | insertContent: calling post")
           val value = (ec \ "value").extract[String]
           val uid = 'uid(Ground((ec \ "uid").extract[String]))
 
@@ -2335,19 +2331,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               cnxns,
               "[" + value + ", " + compact(render(JString(toTermString(filter)))) + "]",
               (optRsrc: Option[mTT.Resource]) => {
-                //println("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
                 BasicLogService.tweet("evalSubscribeRequest | insertContent | onPost: optRsrc = " + optRsrc)
                 optRsrc match {
-                  case None => ()
+                  case None => ()   //@@GS  what does this actually mean??
                   case Some(_) => {
-                    // evalComplete, empty seq of posts
-                    val content =
-                      ("sessionURI" -> sessionURIStr) ~
-                        ("pageOfPosts" -> List[String]())
-                    val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
-                    //println("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                    BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
-                    SessionManager.cometMessage(sessionURIStr, compact(render(response)))
+//                    val content =
+//                      ("sessionURI" -> sessionURIStr) ~
+//                        ("pageOfPosts" -> List[String]())
+//                    val response = ("msgType" -> "evalComplete") ~ ("content" -> content)
+//                    BasicLogService.tweet("evalSubscribeRequest | onPost: response = " + compact(render(response)))
+//                    SessionManager.cometMessage(sessionURIStr, compact(render(response)))
                   }
                   case _ => throw new Exception("Unrecognized resource: " + optRsrc)
                 }
