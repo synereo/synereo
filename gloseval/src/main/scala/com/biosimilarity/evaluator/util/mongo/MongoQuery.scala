@@ -22,6 +22,9 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
   val records = mongoClient("records")
 
   def readAliasCnxnContent(agent: String): AliasCnxnContent = {
+    //DANGER WILL ROBINSON DANGER ...
+    //this code is absolutely horrible, and uses fragile heuristics to attempt to
+    //extract the relevant data based on how it currently appears
     val id = agent+"alias"+agent
     val coll: MongoCollection = records(id)
     val csr = coll.find("record" $exists true )

@@ -6,7 +6,7 @@
 // Description:
 // ------------------------------------------------------------------------
 
-package com.biosimilarity.evaluator.importer
+package com.biosimilarity.evaluator.importerExperimental
 
 import java.io.File
 import java.util.UUID
@@ -75,6 +75,8 @@ class Importer {
   }
 
   def makeAliasURI(alias: String) = s"alias://$alias/alias"
+
+  //private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
 
   var terminateLongPoll = false
 
@@ -416,6 +418,125 @@ class Importer {
     rslt
   }
 
+  def runTestFile(dataJsonFile: String = "src/test/resources/test-posts.json"): Unit = {
+    // this routine doesn't keep sessions alive via longpoll.
+    // the calls to expect might ...
+    println("testing file : " + dataJsonFile)
+
+    val adminURI =
+      getAgentURI(NodeUser.email, NodeUser.password) match {
+        case Some(uri) => uri
+        case _ => throw new Exception("unable to open admin session")
+      }
+    val adminId = adminURI.replace("agent://", "")
+    val adminSession = createSession(NodeUser.email, NodeUser.password).get
+    sessionsById.put(adminId, adminSession) // longpoll on adminSession
+    println("using admin session URI : " + adminSession)
+    var testOmni = EvalConfConfig.isOmniRequired()
+
+    def runTests(ssn : String, tests : List[JObject]) : Unit = {
+      tests.foreach(el => {
+        val typ = (el \ "type").extract[String]
+        typ match {
+          case "spawn" =>
+            val withssn = (el \ "session").extractOpt[String] match {
+              case Some(id) => sessionsById(id)
+              case None => ssn
+            }
+            val js = glosevalPost(SpawnSessionRequest(withssn))
+            val tssn = (parse(js) \ "content" \ "sessionURI").extract[String]
+            println(tssn)
+            val tsts = (el \ "content").extract[List[JObject]]
+            runTests(tssn, tsts)
+            glosevalPost(CloseSessionRequest(tssn))
+
+          case "startCam" =>
+            val js = glosevalPost(StartSessionRecording(ssn))
+            println(js)
+
+          case "stopCam" =>
+            glosevalPost(SessionPing(ssn))  // make sure messages get returned to us before closing the cam
+          val js = glosevalPost(StopSessionRecording(ssn))
+            //println(js)
+            val els = parse(js).extract[List[JObject]]
+            els foreach (el => println(el))
+
+          case "agent" =>
+            val agent = (el \ "content").extract[AgentDesc]
+            makeAgent(agent)
+            if (testOmni) {
+              val session = sessionsById(agent.id)
+              val isok = glosevalPost(GetAmpWalletAddress(session))
+              if (isok != "OK") throw new Exception("Unable to call getAmpWalletAddress")
+              expect("getAmpWalletAddressResponse", session) match {
+                case Some(js) =>
+                  //println(pretty(js))
+                  val oldaddr = (js \ "address").extract[String]
+                  val isok2 = glosevalPost(SetAmpWalletAddress(session, OmniClient.testAmpAddress))
+                  if (isok2 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
+                  expect("setAmpWalletAddressResponse", session) match {
+                    case Some(js2) => {
+                      //println(pretty(js))
+                      val newaddr = (js2 \ "newaddress").extract[String]
+                      if (newaddr != OmniClient.testAmpAddress) throw new Exception("setAmpWalletAddressResponse invalid")
+                      val isok3 = glosevalPost(SetAmpWalletAddress(session, oldaddr))
+                      if (isok3 != "OK") throw new Exception("Unable to call setAmpWalletAddress")
+                      expect("setAmpWalletAddressResponse", session) match {
+                        case Some(js3) => {
+                          val addr = (js3 \ "newaddress").extract[String]
+                          if (addr != oldaddr) throw new Exception("setAmpWalletAddressResponse invalid")
+                        }
+                        case _ => throw new Exception("Unable to set wallet address")
+                      }
+                    }
+                    case _ => throw new Exception("Unable to set wallet address")
+                  }
+                case _ => throw new Exception("Unable to get wallet address")
+              }
+              testOmni = false // once is enough ...
+            }
+
+          case "cnxn" =>
+            val cnxn = (el \ "content").extract[ConnectionDesc]
+            makeCnxn(ssn, cnxn)
+
+          case "label" =>
+            val jo = (el \ "content").extract[JObject]
+            val lbl = LabelDesc.extractFrom(jo)
+            makeLabel(lbl)
+
+          case "post" =>
+            val post = (el \ "content").extract[PostDesc]
+            makePost(post)
+
+          case "getConnectionProfiles" => {
+            val reqcnt = (el \ "requireCount").extract[Option[BigInt]]
+            val isok = glosevalPost(GetConnectionProfiles(ssn))
+            if (isok != "OK") throw new Exception("Unable to call getConnectionProfiles")
+            val rsps = expectAll(ssn)
+            println("got here")
+            reqcnt match {
+              case Some(l) =>
+                if (l != rsps.length) throw new Exception("Expected : " + l + ", but received: " + rsps.length)
+                println("requireCount matched ok")
+              case _ => println("requirecount not supplied?")
+            }
+            rsps foreach { js =>
+              println(pretty(js))
+            }
+          }
+          case _ =>
+            throw new Exception("Unknown test element : "+ typ)
+        }
+      })
+    }
+
+    val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
+    val tests = parse(dataJson).extract[List[JObject]]
+    runTests(adminSession, tests)
+
+    if (testOmni) OmniClient.runTests()
+  }
 }
 
 object Importer {
