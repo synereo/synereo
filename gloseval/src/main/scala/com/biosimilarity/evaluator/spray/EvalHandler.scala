@@ -23,7 +23,7 @@ import spray.http._
 import org.json4s.{BuildInfo ⇒ _, _}
 import org.json4s.native.JsonMethods._
 import org.json4s.jackson.Serialization
-import org.json4s.JsonDSL._
+import org.json4s.JsonDSL.{symbol2jvalue => _, _}
 
 import javax.crypto._
 import javax.crypto.spec._
@@ -39,9 +39,6 @@ import scala.util.Try
 import scala.language.postfixOps
 
 case class InitializeSessionException(agentURI: String, message: String) extends Exception with Serializable
-
-// Mask the json4s symbol2jvalue implicit so we can use the PrologDSL
-object symbol2jvalue extends Serializable {}
 
 object CompletionMapper extends Serializable {
   @transient
