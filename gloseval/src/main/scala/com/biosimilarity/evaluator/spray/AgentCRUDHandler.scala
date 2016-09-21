@@ -21,7 +21,7 @@ import spray.http._
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import org.json4s.JsonDSL._
+import org.json4s.JsonDSL.{symbol2jvalue => _, _}
 
 
 import java.net.URI
