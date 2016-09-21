@@ -20,7 +20,7 @@ import akka.actor._
 import com.biosimilarity.evaluator.omni.OmniClient
 import spray.routing._
 import spray.http._
-import org.json4s.{BuildInfo ⇒ _, _}
+import org.json4s.{BuildInfo => _, _}
 import org.json4s.native.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL.{symbol2jvalue => _, _}

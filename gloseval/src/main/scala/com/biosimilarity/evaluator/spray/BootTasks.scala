@@ -33,16 +33,16 @@ trait BootTasks {
     val (rabbitHost, rabbitPort) = (Config.readString("DSLCommLinkClientHost"), Config.readInt("DSLCommLinkClientPort"))
     logger.info(s"Starting GLoSEval in ${Config.deploymentMode.toString.toLowerCase} mode...")
     (keystoreExists, Config.deploymentMode, rabbitIsRunning(rabbitHost, rabbitPort), mongoIsRunning(mongoHost, mongoPort)) match {
-      case (false, _, _, _) ⇒
+      case (false, _, _, _) =>
         logger.error("TLS Certificate not found.  Please run the 'gencert' command.")
         System.exit(1)
-      case (true, Config.Distributed, false, _) ⇒
+      case (true, Config.Distributed, false, _) =>
         logger.error(s"Could not connect to RabbitMQ instance at $rabbitHost:$rabbitPort")
         System.exit(1)
-      case (true, _, _, false) ⇒
+      case (true, _, _, false) =>
         logger.error(s"Could not connect to MongoDB instance at $mongoHost:$mongoPort")
         System.exit(1)
-      case (true, _, _, true) ⇒
+      case (true, _, _, true) =>
         var service: Option[Server] = None
         sys.addShutdownHook {
           logger.info("Stopping GLoSEval...")
