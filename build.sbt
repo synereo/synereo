@@ -15,6 +15,7 @@ lazy val log4jVersion       = "1.2.17"
 lazy val prolog4jVersion    = "0.2.1"
 lazy val scalatestVersion   = "2.2.6"
 lazy val scalesXmlVersion   = "0.4.5"
+lazy val slf4jVersion       = "1.7.21"
 lazy val sprayVersion       = "1.1.3"
 lazy val tuprologVersion    = "2.1.1"
 lazy val xstreamVersion     = "1.4.4"
@@ -41,6 +42,10 @@ lazy val commonOptions = Seq(
   "-Xmax-classfile-name", "244",
   "-P:continuations:enable")
 
+lazy val commonDeps = Seq(
+  "log4j"     % "log4j"         % log4jVersion,
+  "org.slf4j" % "slf4j-api"     % slf4jVersion)
+
 lazy val commonSettings = Seq(
   scalaVersion := ourScalaVersion,
   scalacOptions := commonOptions,
@@ -59,7 +64,8 @@ lazy val commonSettings = Seq(
     Seq("org.scala-lang" % "scala-actors"  % scalaVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value,
         // https://github.com/json4s/json4s/issues/108
-        "org.scala-lang" % "scalap"        % scalaVersion.value))
+        "org.scala-lang" % "scalap"        % scalaVersion.value) ++
+    commonDeps)
 
 lazy val specialkDeps = Seq(
   "biz.source_code"           % "base64coder"       % base64coderVersion,
@@ -69,7 +75,6 @@ lazy val specialkDeps = Seq(
   "commons-pool"              % "commons-pool"      % commonsPoolVersion,
   "it.unibo.alice.tuprolog"   % "tuprolog"          % tuprologVersion,
   "javax.persistence"         % "persistence-api"   % persistenceVersion,
-  "log4j"                     % "log4j"             % log4jVersion,
   "org.basex"                 % "basex-api"         % baseXVersion exclude("org.slf4j", "slf4j-nop"),
   "org.coconut.forkjoin"      % "jsr166y"           % "070108",
   "org.codehaus.jettison"     % "jettison"          % jettisonVersion,
@@ -79,7 +84,8 @@ lazy val specialkDeps = Seq(
   "org.prolog4j"              % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalacheck"           %% "scalacheck"        % "1.12.5" % "test",
   "org.scalatest"            %% "scalatest"         % scalatestVersion % "test",
-  "org.scalesxml"            %% "scales-xml"        % scalesXmlVersion)
+  "org.scalesxml"            %% "scales-xml"        % scalesXmlVersion,
+  "org.slf4j"                 % "slf4j-nop"         % slf4jVersion)
 
 lazy val specialkSettings = Seq(
   name := "specialk",
@@ -101,7 +107,6 @@ lazy val agentServiceDeps = Seq(
   "commons-pool"                % "commons-pool"      % commonsPoolVersion,
   "it.unibo.alice.tuprolog"     % "tuprolog"          % tuprologVersion,
   "javax.persistence"           % "persistence-api"   % persistenceVersion,
-  "log4j"                       % "log4j"             % log4jVersion,
   "net.spy"                     % "spymemcached"      % "2.9.0",
   "org.basex"                   % "basex-api"         % baseXVersion exclude("org.slf4j", "slf4j-nop"),
   "org.codehaus.jettison"       % "jettison"          % jettisonVersion,
@@ -111,7 +116,8 @@ lazy val agentServiceDeps = Seq(
   "org.prolog4j"                % "prolog4j-api"      % prolog4jVersion,
   "org.prolog4j"                % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalesxml"              %% "scales-xml"        % scalesXmlVersion,
-  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test")
+  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test",
+  "org.slf4j"                   % "slf4j-nop"         % slf4jVersion)
 
 lazy val agentServiceSettings = Seq(
   name := "agentservices-store-ia",
@@ -136,7 +142,6 @@ lazy val glosevalDeps = Seq(
   "com.rabbitmq"                % "amqp-client"       % amqpClientVersion,
   "com.typesafe.akka"          %% "akka-actor"        % "2.1.4",
   "it.unibo.alice.tuprolog"     % "tuprolog"          % tuprologVersion,
-  "log4j"                       % "log4j"             % log4jVersion,
   "org.apache.commons"          % "commons-email"     % "1.3.1",
   "org.json4s"                 %% "json4s-jackson"    % json4sVersion,
   "org.json4s"                 %% "json4s-native"     % json4sVersion,
@@ -144,10 +149,9 @@ lazy val glosevalDeps = Seq(
   "org.prolog4j"                % "prolog4j-api"      % prolog4jVersion,
   "org.prolog4j"                % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalaj"                 %% "scalaj-http"       % "2.0.0",
-  "org.slf4j"                   % "slf4j-api"         % "1.7.21",
-  "org.slf4j"                   % "slf4j-log4j12"     % "1.7.21",
   "org.bouncycastle"            % "bcprov-jdk15on"    % "1.54",
-  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test")
+  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test",
+  "org.slf4j"                   % "slf4j-log4j12"     % slf4jVersion)
 
 lazy val glosevalSettings = Seq(
   name := "GLoSEval",
