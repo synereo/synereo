@@ -6,7 +6,7 @@ import akka.util.Timeout
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.api._
 import com.biosimilarity.evaluator.spray.client.ApiClient
-import com.biosimilarity.evaluator.spray.util._
+import com.biosimilarity.evaluator.util._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.json4s.{BuildInfo => _, _}

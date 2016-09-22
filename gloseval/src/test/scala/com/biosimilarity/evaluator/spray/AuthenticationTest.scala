@@ -2,7 +2,7 @@ package com.biosimilarity.evaluator.spray
 
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
 import com.biosimilarity.evaluator.spray.srp.SRPClient
-import com.biosimilarity.evaluator.spray.util._
+import com.biosimilarity.evaluator.util._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.scalatest.{BeforeAndAfterAll, MustMatchers, WordSpec}

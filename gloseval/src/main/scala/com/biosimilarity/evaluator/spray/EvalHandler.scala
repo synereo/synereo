@@ -12,7 +12,7 @@ import com.protegra_ati.agentservices.protocols.msgs._
 import com.biosimilarity.evaluator.api
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution._
-import com.biosimilarity.evaluator.spray.util._
+import com.biosimilarity.evaluator.util._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}

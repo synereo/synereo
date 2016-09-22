@@ -1,11 +1,12 @@
-package com.biosimilarity.evaluator.spray
+package com.biosimilarity.evaluator
 
 import java.io.{FileInputStream, InputStream}
 
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.spray.Boot
 import com.mongodb.casbah.Imports.MongoClient
-import com.rabbitmq.client.{Connection, ConnectionFactory}
 import com.mongodb.casbah.MongoClientURI
+import com.rabbitmq.client.{Connection, ConnectionFactory}
 
 import scala.collection.mutable
 import scala.sys.process._

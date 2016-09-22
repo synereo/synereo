@@ -9,7 +9,7 @@ import com.biosimilarity.evaluator.distribution.{EvalConfConfig => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.Server
 import com.biosimilarity.evaluator.spray.client.ApiClient
-import com.biosimilarity.evaluator.spray.util._
+import com.biosimilarity.evaluator.util._
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.JsonMethods._
 import spray.can.Http

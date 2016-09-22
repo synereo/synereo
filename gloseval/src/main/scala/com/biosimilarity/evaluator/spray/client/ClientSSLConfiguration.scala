@@ -5,7 +5,7 @@ import java.security.cert.{Certificate, CertificateFactory}
 import java.security.{KeyStore, SecureRandom}
 import javax.net.ssl.{SSLContext, SSLParameters, TrustManagerFactory}
 
-import com.biosimilarity.evaluator.spray.util._
+import com.biosimilarity.evaluator.util._
 import spray.io.{ClientSSLEngineProvider, SSLContextProvider}
 
 object ClientSSLConfiguration {

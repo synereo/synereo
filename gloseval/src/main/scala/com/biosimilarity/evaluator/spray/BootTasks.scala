@@ -8,7 +8,7 @@ import com.biosimilarity.evaluator.api.VersionInfoResponse
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution.{EvalConfConfig => Config}
 import com.biosimilarity.evaluator.importer.Importer
-import com.biosimilarity.evaluator.spray.util._
+import com.biosimilarity.evaluator.util._
 import com.biosimilarity.lift.lib.amqp.AMQPUtil._
 import com.biosimilarity.lift.model.store.mongo.MongoUtil._
 import org.slf4j.{Logger, LoggerFactory}
