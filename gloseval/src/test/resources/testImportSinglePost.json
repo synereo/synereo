@@ -1,0 +1,24 @@
+{
+  "agents": [{
+    "id": "Alice",
+    "email": "alice@livelygig.com",
+    "pwd": "a",
+    "jsonBlob": "{\"name\" : \"Alice\"}"
+  }, {
+    "id": "Bob",
+    "email": "bob@livelygig.com",
+    "pwd": "b",
+    "jsonBlob": "{\"name\" : \"Bob\"}"
+  }],
+  "cnxns": [{
+    "src": "Alice",
+    "trgt": "Bob"
+  }],
+  "posts": [{
+    "src": "Alice",
+    "trgts": ["Bob"],
+    "label": "each([Bitcoin],[PROJECTPOSTLABEL])",
+    "uid": "58bbeb44-3b4c-4c0c-bda8-2c99c3178e6e",
+    "value": "{\"$type\":\"shared.models.MessagePost\",\"uid\" : \"58bbeb44-3b4c-4c0c-bda8-2c99c3178e6e\", \"created\" : \"2002-05-30T09:30:10Z\", \"modified\" : \"2002-05-30T09:30:10Z\", \"messagePostContent\": {\"$type\":\"shared.models.MessagePostContent\",\"versionedPostId\" : \"35e60447-747e-496a-afde-65ca182db1c8\", \"versionedPostPredecessorId\" : \"\", \"versionNumber\" : \"1\", \"canForward\" : true, \"text\" : \"this is a subject for the message\",\"subject\" : \"this is a message\"}}"
+  }]
+}

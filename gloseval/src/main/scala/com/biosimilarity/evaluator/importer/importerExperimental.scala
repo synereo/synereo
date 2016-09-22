@@ -24,6 +24,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 
 import scalaj.http.{Http, HttpOptions}
+import com.biosimilarity.evaluator.util.mongo._
 
 class Importer {
 
@@ -359,11 +360,37 @@ class Importer {
 
   def stop() = {
     thrd match {
-      case Some(t) =>
+      case Some(_) =>
         terminateLongPoll = true
         thrd = None
       case None => ()
     }
+  }
+
+  def readAliasCnxnContent(agent: String): AliasCnxnContent = {
+    val qry = new MongoQuery()
+    agentsById.get(agent) match {
+      case Some(uri) =>
+        qry.readAliasCnxnContent(uri)
+      case None =>
+        throw new Exception("unable to locate agent: "+agent)
+    }
+  }
+
+  def readAllAliasCnxnContents(): scala.collection.Map[String, AliasCnxnContent] = {
+    val qry = new MongoQuery()
+    agentsById.mapValues(ag => {
+      qry.readAliasCnxnContent(ag)
+    })
+  }
+
+  def printStats(): Unit = {
+    val conts = readAllAliasCnxnContents()
+    conts.foreach( pr => {
+      val k: String = pr._1
+      val v: AliasCnxnContent = pr._2
+      println(s"$k - cnxns: ${v.cnxns.length}, posts: ${v.posts.length}, labels: ${v.labels.length}")
+    })
   }
 
   def importData(dataJson: String) = {
@@ -549,6 +576,7 @@ object Importer {
     val rslt = imp.importData(dataJson)
     imp.stop()
     println("Import file returning : " + rslt)
+    if (rslt == 0) imp.printStats()
     rslt
   }
 }

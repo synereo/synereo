@@ -1284,9 +1284,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 biCnxnsListLabel,
                 List(bAliasCnxn),
                 (optRsrc: Option[mTT.Resource]) => {
-                  BasicLogService.tweet("establishConnection | get : optRsrc = " + optRsrc)
+                  BasicLogService.tweet("establishConnection | read : optRsrc = " + optRsrc)
                   def handleRsp(v: ConcreteHL.HLExpr): Unit = {
-                    val optList = v match {
+                    val optList: Option[List[BiCnxn]] = v match {
                       case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
                         val extants = Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
                         if (extants.contains(bBiCnxn) ) None
@@ -1331,12 +1331,14 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       List(aAliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
         def handleRsp(v: ConcreteHL.HLExpr): Unit = {
-          val newBiCnxnList = v match {
+          val optList: Option[List[BiCnxn]] = v match {
             case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) =>
-              aBiCnxn :: Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
-            case Bottom => List(aBiCnxn)
+              val extants = Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
+              if (extants.contains(aBiCnxn) ) None
+              else Some(aBiCnxn :: extants)
+            case Bottom => Some(List(aBiCnxn))
           }
-          doPut(newBiCnxnList)
+          for (l <- optList) doPut(l)
         }
         optRsrc match {
           case None => ()
@@ -2088,7 +2090,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     object act extends AgentCnxnTypes {}
 
     val cjs = pretty(render(json))
-    println("evalSubscribeRequest: json = " + cjs)
     val sessionURIStr = (json \ "sessionURI").extract[String]
 
     val expression = (json \ "expression")
