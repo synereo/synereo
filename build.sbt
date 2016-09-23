@@ -44,7 +44,8 @@ lazy val commonOptions = Seq(
 
 lazy val commonDeps = Seq(
   "log4j"     % "log4j"         % log4jVersion,
-  "org.slf4j" % "slf4j-api"     % slf4jVersion)
+  "org.slf4j" % "slf4j-api"     % slf4jVersion,
+  "org.slf4j" % "slf4j-log4j12" % slf4jVersion)
 
 lazy val commonSettings = Seq(
   scalaVersion := ourScalaVersion,
@@ -84,8 +85,7 @@ lazy val specialkDeps = Seq(
   "org.prolog4j"              % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalacheck"           %% "scalacheck"        % "1.12.5" % "test",
   "org.scalatest"            %% "scalatest"         % scalatestVersion % "test",
-  "org.scalesxml"            %% "scales-xml"        % scalesXmlVersion,
-  "org.slf4j"                 % "slf4j-nop"         % slf4jVersion)
+  "org.scalesxml"            %% "scales-xml"        % scalesXmlVersion)
 
 lazy val specialkSettings = Seq(
   name := "specialk",
@@ -116,8 +116,7 @@ lazy val agentServiceDeps = Seq(
   "org.prolog4j"                % "prolog4j-api"      % prolog4jVersion,
   "org.prolog4j"                % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalesxml"              %% "scales-xml"        % scalesXmlVersion,
-  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test",
-  "org.slf4j"                   % "slf4j-nop"         % slf4jVersion)
+  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test")
 
 lazy val agentServiceSettings = Seq(
   name := "agentservices-store-ia",
@@ -150,8 +149,7 @@ lazy val glosevalDeps = Seq(
   "org.prolog4j"                % "prolog4j-tuprolog" % prolog4jVersion,
   "org.scalaj"                 %% "scalaj-http"       % "2.0.0",
   "org.bouncycastle"            % "bcprov-jdk15on"    % "1.54",
-  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test",
-  "org.slf4j"                   % "slf4j-log4j12"     % slf4jVersion)
+  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test")
 
 lazy val glosevalSettings = Seq(
   name := "GLoSEval",
