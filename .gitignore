@@ -7,3 +7,4 @@ keystore.jks
 gloseval.pem
 gloseval/client
 gloseval/agentui
+.vagrant/machines
