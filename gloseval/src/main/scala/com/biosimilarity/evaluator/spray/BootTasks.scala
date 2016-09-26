@@ -4,8 +4,6 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import java.util.logging.{Level => JLevel, Logger => JLogger}
 
-import com.biosimilarity.evaluator.api.VersionInfoResponse
-import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution.{EvalConfConfig => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.util._
@@ -22,10 +20,6 @@ trait BootTasks {
   case object SelfSigned extends Certificate
 
   val logger: Logger = LoggerFactory.getLogger(classOf[BootTasks])
-
-  def version(): Unit =
-    println(
-      VersionInfoResponse(BuildInfo.version, BuildInfo.scalaVersion, mongoVersion().getOrElse("n/a"), rabbitMQVersion().getOrElse("n/a")))
 
   def startServer(): Unit = {
     JLogger.getLogger("com.mongodb").setLevel(JLevel.OFF)

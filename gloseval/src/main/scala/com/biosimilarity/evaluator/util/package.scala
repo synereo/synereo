@@ -2,6 +2,7 @@ package com.biosimilarity.evaluator
 
 import java.io.{FileInputStream, InputStream}
 
+import com.biosimilarity.evaluator.api.VersionInfoResponse
 import com.biosimilarity.evaluator.distribution.EvalConfConfig
 import com.biosimilarity.evaluator.spray.Boot
 import com.mongodb.casbah.Imports.MongoClient
@@ -47,4 +48,10 @@ package object util {
       conn.close()
       version
     }.toOption
+
+  def versionInfoResponse: VersionInfoResponse =
+    VersionInfoResponse(BuildInfo.version,
+                        BuildInfo.scalaVersion,
+                        mongoVersion().getOrElse("n/a"),
+                        rabbitMQVersion().getOrElse("n/a"))
 }

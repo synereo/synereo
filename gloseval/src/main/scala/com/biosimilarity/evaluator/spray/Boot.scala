@@ -2,6 +2,7 @@ package com.biosimilarity.evaluator.spray
 
 import java.io.File
 
+import com.biosimilarity.evaluator.util.versionInfoResponse
 import scopt.OptionParser
 
 object Boot extends App with BootTasks {
@@ -44,7 +45,7 @@ object Boot extends App with BootTasks {
 
   parser.parse(args, BootConfig()) match {
     case Some(BootConfig(_, _, _, _, true)) =>
-      version()
+      println(versionInfoResponse)
     case Some(BootConfig(_, mode, _, _, false)) if mode == "start" || mode == "" =>
       startServer()
     case Some(BootConfig(_, "gencert", _, Some(cert), false)) =>
