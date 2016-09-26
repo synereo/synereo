@@ -79,10 +79,9 @@ with CnxnString[String, String, String]{
     _clientServerPair match {
       case Some( lnk ) => lnk
       case None => {        
-	val nodes = DSLCommLinkCtor.stdBiLink(          
-          serverHostName, serverPort,
-	  List( ( clientHostName, clientPort ) )
-        )
+        val nodes = DSLCommLinkCtor.stdBiLink(serverHostName(),
+                                              serverPort(),
+                                              clientHostsNPorts())
         val ( client, server ) : ( Being.PersistedMonadicKVDBNode[
           PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
         ], Being.PersistedMonadicKVDBNode[
@@ -132,11 +131,9 @@ with CnxnString[String, String, String]{
           case Some( n ) => n
           case None => {
             val nodes =
-              DSLCommLinkCtor.stdLink(
-                serverHostName, serverPort,
-                List( ( clientHostName, clientPort ) )
-              )( flip )
-            
+              DSLCommLinkCtor.stdLink(serverHostName(),
+                                      serverPort(),
+                                      clientHostsNPorts())(flip)
 	    val node : Being.PersistedMonadicKVDBNode[
               PersistedKVDBNodeRequest,PersistedKVDBNodeResponse
             ] =
