@@ -105,7 +105,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -140,7 +140,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -162,7 +162,7 @@ with StdXMLStoreConfiguration
         bxe.printStackTrace
         false
       }
-      case e => {
+      case e: Throwable => {
         e.printStackTrace
         throw e
       }
@@ -182,7 +182,7 @@ with StdXMLStoreConfiguration
             clientSession.execute(new CreateDB(collectionName, emptyDocument()))
           }
           catch {
-            case e => {
+            case e: Throwable => {
               e.printStackTrace
               throw e
             }
@@ -219,7 +219,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -241,7 +241,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -289,7 +289,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -330,7 +330,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -415,7 +415,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -449,7 +449,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -477,7 +477,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }
@@ -526,7 +526,7 @@ with StdXMLStoreConfiguration
         pool.returnClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw bxe
       }
-      case e => {
+      case e: Throwable => {
         pool.evictClientSession(clientSession, dbHost, dbPort.toInt, dbUser, dbPwd)
         throw e
       }

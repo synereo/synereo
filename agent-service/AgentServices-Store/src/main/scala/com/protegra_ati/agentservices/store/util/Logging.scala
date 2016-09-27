@@ -59,14 +59,14 @@ object LogConfiguration {
       SeverityFromString( config.getString( "traceLevel" ) )
     }
     catch {
-      case e => Severity.Trace
+      case e: Throwable => Severity.Trace
     }
   var logLevel =
     try {
       SeverityFromString( config.getString( "logLevel" ) )
     }
     catch {
-      case e => Severity.Trace
+      case e: Throwable => Severity.Trace
     }
 
   lazy val logger = {

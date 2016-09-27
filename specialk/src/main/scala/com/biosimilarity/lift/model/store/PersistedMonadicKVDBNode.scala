@@ -677,7 +677,7 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	      config.getString( "storageDir" )
 	    }
 	    catch {
-	      case e => "tmp"
+	      case e: Throwable => "tmp"
 	    }
 	  val tmpDir = new java.io.File( tds )
 	  if ( ! tmpDir.exists ) {

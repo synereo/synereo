@@ -53,7 +53,7 @@ trait ThreadPoolRunners extends TaskRunnersBase
           // Preserve interrupt status
           Thread.currentThread().interrupt();
         }
-        case e => e.printStackTrace() // TODO check which exceptions can be expected
+        case e: Throwable => e.printStackTrace() // TODO check which exceptions can be expected
       }
 
     }

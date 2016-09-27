@@ -141,14 +141,14 @@ with Serializable {
       SeverityFromString( config.getString( "tweetLevel" ) )
     }
     catch {
-      case e => Severity.Trace
+      case e: Throwable => Severity.Trace
     }
   var blogLevel =
     try {
       SeverityFromString( config.getString( "blogLevel" ) )
     }
     catch {
-      case e => Severity.Trace
+      case e: Throwable => Severity.Trace
     }
 
   @transient lazy val logger = lazyLoadLogger()

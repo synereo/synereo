@@ -65,7 +65,7 @@ extends ConfigurationTrampolineDefaults {
 	  config.getString( m.getName )	  
 	}
 	catch {
-	  case e => m.invoke( configurationDefaults )
+	  case e: Throwable => m.invoke( configurationDefaults )
 	}
       env += (( m.getName, confVal.toString ) )
     }

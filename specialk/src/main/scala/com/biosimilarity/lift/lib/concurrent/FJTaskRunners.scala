@@ -20,7 +20,7 @@ trait FJTaskRunners extends TaskRunnersBase {
       FJTaskWrapper.runOnCurrentThreadOrPool(new RecursiveAction {
         def compute() = try {
           f()
-        } catch { case e => e.printStackTrace() }
+        } catch { case e: Throwable => e.printStackTrace() }
         // TODO: exception handling
       }, pool)
     }

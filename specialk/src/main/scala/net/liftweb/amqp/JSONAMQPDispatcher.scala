@@ -137,7 +137,7 @@ trait JSONToSQLHandler {
 	entityManager( db ).getTransaction().commit();
       }
       catch {
-	case e => {
+	case e: Throwable => {
 	  println( "persistence error attempting to store " + obj )
 	  
 	  e.printStackTrace
@@ -145,7 +145,7 @@ trait JSONToSQLHandler {
       }
     }
     catch {
-      case e => {
+      case e: Throwable => {
 	  println( "marshaling error" )
 	  e.printStackTrace
 	}
