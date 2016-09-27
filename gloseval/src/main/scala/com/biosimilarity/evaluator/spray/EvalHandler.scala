@@ -2078,7 +2078,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def evalSubscribeRequest(json: JObject): Unit = {
-    import com.biosimilarity.evaluator.distribution.portable.v0_1._
     import com.protegra_ati.agentservices.store._
     import com.biosimilarity.evaluator.prolog.PrologDSL._
 
