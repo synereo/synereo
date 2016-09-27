@@ -328,7 +328,7 @@ trait JustificationOverAMQPTwistedPairScope[Req,Rsp]
       val a2S : A => Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]] = 
 	( a : A ) => {
 	  a match {
-	    case Left( req : Req ) => {
+	    case Left(req: Req @unchecked) => {
 	      Left[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]](
 		JustifiedRequest[Req,Rsp](
 		  getUUID(),
@@ -340,7 +340,7 @@ trait JustificationOverAMQPTwistedPairScope[Req,Rsp]
 		)
 	      )
 	    }
-	    case Right( rsp : Rsp ) => {
+	    case Right(rsp: Rsp @unchecked) => {
 	      Right[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]](
 		JustifiedResponse[Req,Rsp](
 		  getUUID(),
@@ -357,10 +357,10 @@ trait JustificationOverAMQPTwistedPairScope[Req,Rsp]
       val s2A : Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]] => A = 
 	( s : Either[JustifiedRequest[Req,Rsp],JustifiedResponse[Req,Rsp]] ) => {
 	  s match {
-	    case Left( JustifiedRequest( _, _, _, _, req : Req, _ ) ) => {
+	    case Left(JustifiedRequest( _, _, _, _, req: Req @unchecked, _) ) => {
 	      Left[Req,Rsp]( req ).asInstanceOf[A]
 	    }
-	    case Right( JustifiedResponse( _, _, _, _, rsp : Rsp, _ ) ) => {
+	    case Right(JustifiedResponse( _, _, _, _, rsp: Rsp @unchecked, _) ) => {
 	      Right[Req,Rsp]( rsp ).asInstanceOf[A]
 	    }
 	  }

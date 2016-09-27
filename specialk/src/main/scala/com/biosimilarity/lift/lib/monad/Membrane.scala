@@ -95,7 +95,7 @@ trait ForNotationShiv[Shape[_],A] {
 	  ( a : A ) => {
 	    f( a ) match {
 	      case Open => throw new Exception( "Encountered open cell" )
-	      case SCell( sb : Shape[B] ) => sb
+	      case SCell(sb: Shape[B] @unchecked) => sb
 	      case Cell( b ) => unit[B]( b )
 	    }
 	  }
@@ -173,7 +173,7 @@ trait ForNotationImplicitsShiv[Shape[_],A] {
   // ... and one to open the enclosure
   implicit def toShape [A] ( s : Membrane[A] ) : Shape[A] = {
     s match {
-      case self.SCell( sa : Shape[A] ) => sa
+      case self.SCell(sa: Shape[A] @unchecked) => sa
       case _ => throw new Exception( "value escaping enclosure" )
     }
   }  

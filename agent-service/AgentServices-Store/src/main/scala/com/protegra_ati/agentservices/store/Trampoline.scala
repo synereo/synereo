@@ -19,13 +19,13 @@ object DieselValueTrampoline {
       case None => {
         Right[V,Boolean]( true )
       }
-      case Some( mTT.Ground( PostedExpr( v : V ) ) ) => {
+      case Some(mTT.Ground(PostedExpr(v: V @unchecked))) => {
         Left[V,Boolean]( v )
       }
-      case Some( mTT.RBoundHM( Some( mTT.Ground( PostedExpr( v : V ) ) ), _ ) ) => {
+      case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr(v: V @unchecked))), _)) => {
         Left[V,Boolean]( v )
       }
-      case Some( mTT.RBoundAList( Some( mTT.Ground( PostedExpr( v : V ) ) ), _ ) ) => {
+      case Some(mTT.RBoundAList(Some(mTT.Ground(PostedExpr(v: V @unchecked))), _)) => {
         Left[V,Boolean]( v )
       }      
       case _ => {

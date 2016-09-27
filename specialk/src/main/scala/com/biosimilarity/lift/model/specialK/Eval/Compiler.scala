@@ -319,19 +319,19 @@ with UUIDOps {
   ) : Source = {
     <source>new CnxnLeaf[String,String]( {
     ltrl match {
-      case boollit : BooleanLiteral => {
+      case boollit: BooleanLiteral @unchecked=> {
 	boollit.duality_ match {
 	  case t : Verity => "true"
 	  case f : Absurdity => "false"
 	}
       }
-      case strlit : StringLiteral => {
+      case strlit: StringLiteral @unchecked => {
 	strlit.string_
       }
-      case intlit : IntegerLiteral => {
+      case intlit: IntegerLiteral @unchecked => {
 	intlit.integer_
       }
-      case dbllit : DoubleLiteral => {
+      case dbllit: DoubleLiteral @unchecked => {
 	dbllit.double_
       }
     }
@@ -406,19 +406,19 @@ with UUIDOps {
   ) : FactualCnxnCtxtLabel = {
     new CnxnCtxtLeaf[String,String,String](
       ltrl match {
-	case boollit : BooleanLiteral => {
+	case boollit: BooleanLiteral @unchecked => {
 	  boollit.duality_ match {
 	    case t : Verity => Left( "true" )
 	    case f : Absurdity => Left( "false" )
 	  }
 	}
-	case strlit : StringLiteral => {
+	case strlit: StringLiteral @unchecked => {
 	  Left( strlit.string_ )
 	}
-	case intlit : IntegerLiteral => {
+	case intlit: IntegerLiteral @unchecked => {
 	  Left( intlit.integer_ + "" )
 	}
-	case dbllit : DoubleLiteral => {
+	case dbllit: DoubleLiteral @unchecked => {
 	  Left( dbllit.double_ + "" )
 	}
       }

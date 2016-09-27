@@ -228,7 +228,7 @@ package usage {
             innerMeaning[V]( abstraction )( env )( mc )
           case application : Application[V] =>
             innerMeaning[V]( application )( env )( mc )
-          case v : Box[V,AnyRef] =>
+          case v: Box[V, AnyRef] @unchecked =>
             innerMeaning[V]( v )( env )( mc )
           case summation : Summation[V] =>
             innerMeaning[V]( summation )( env )( mc )
@@ -286,7 +286,7 @@ package usage {
             )(
               ( v : Box[V,AnyRef] ) => {
                 boxK match {
-                  case Value( op : Function1[Box[V,AnyRef],CC[Box[V,AnyRef],AnyRef]] ) =>
+                  case Value(op: Function1[Box[V, AnyRef], CC[Box[V, AnyRef], AnyRef]] @unchecked) =>
                     op( v )
                   case _ => throw new Exception( "attempt to apply non-function: " + boxK )
                 }

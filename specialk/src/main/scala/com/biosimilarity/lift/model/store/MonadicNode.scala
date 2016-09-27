@@ -136,7 +136,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
 	  routingKey,	  
 	  ( txPortMsg : TxPort ) => {
 	    txPort2FramedMsg[FramedMsg]( txPortMsg ) match {
-	      case b : B => b
+	      case b: B @unchecked => b
 	      case _ => {
 		throw new Exception( "trgt is not a B" )
 	      }
@@ -174,7 +174,7 @@ abstract class MonadicTxPortFramedMsgDispatcher[TxPort,ReqBody,RspBody,+SZ[Rq <:
       ( txPortMsg : TxPort ) => {
 	//BasicLogService.tweet( "calling txPort2FramedMsg" )
 	txPort2FramedMsg[FramedMsg]( txPortMsg ) match {
-	  case fmsg : FMsg => {
+	  case fmsg: FMsg @unchecked => {
 	    BasicLogService.tweet( "fmsg : " + fmsg )
 	    fmsg
 	  }

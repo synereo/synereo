@@ -78,7 +78,7 @@ trait ForNotationPShiv[Shape[+_,_,_],A,B,C] {
 	  ( a : A ) => {
 	    f( a ) match {
 	      //case POpen => throw new Exception( "Encountered open cell" )
-	      case SPCell( sb : Shape[B,V,U] ) => sb
+	      case SPCell(sb: Shape[B, V, U] @unchecked) => sb
 	      case PCell( b ) => v2t( unit[B,V]( b ) )
 	    }
 	  }

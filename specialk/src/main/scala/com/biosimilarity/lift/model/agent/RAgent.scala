@@ -121,8 +121,8 @@ class ReflectiveMessenger[ReqBody,RspBody](
 	receive {
 	  case JustifiedRequest(
 	    m, p, d, t,
-	    f : ReqBody,
-	    c : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
+	    f: ReqBody @unchecked,
+	    c: Option[Response[AbstractJustifiedRequest[ReqBody, RspBody], RspBody]] @unchecked
 	  ) => {
 	    val jr = JustifiedRequest[ReqBody,RspBody]( m, p, d, t, f, c )
 	    if ( validate( jr ) ) {
@@ -140,8 +140,8 @@ class ReflectiveMessenger[ReqBody,RspBody](
 	  }
 	  case JustifiedResponse(
 	    m, p, d, t,
-	    f : RspBody,
-	    c : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
+	    f: RspBody @unchecked,
+	    c: Option[Request[AbstractJustifiedResponse[ReqBody, RspBody], ReqBody]] @unchecked
 	  ) =>  {
 	    val jr = JustifiedResponse[ReqBody,RspBody]( m, p, d, t, f, c )
 	    if ( validate( jr ) ) {

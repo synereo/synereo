@@ -174,7 +174,7 @@ extends PrologPathQuery[Namespace,Var,Tag] {
 		  println( "found a predicate" )
 		  cnxnPathElementTermStr( p )
 		}
-		case nspace : Namespace => {
+		case nspace: Namespace @unchecked => {
 		  println( "found a namespace" )
 		  cnxnPathElementTermStr( nspace )
 		}		
@@ -192,7 +192,7 @@ extends PrologPathQuery[Namespace,Var,Tag] {
 	cnxnTrgtTermStr( v ) + " )"
       case p : Predicate[Namespace,Var,Tag] =>
 	cnxnTrgtTermStr( p ) + " )"
-      case tag : Tag =>
+      case tag: Tag @unchecked =>
 	cnxnTrgtTermStr( tag ) + " )"      
     }
   }

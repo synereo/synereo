@@ -207,7 +207,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	}
       
       rsp match {
-	case rsbdy : RspBody => {
+	case rsbdy: RspBody @unchecked => {
 	  frameResponse( msrc )( rsbdy )
 	}
 	case _ => {
@@ -232,7 +232,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	  }
 	}
       rsp match {
-	case rsbdy : RspBody => {
+	case rsbdy: RspBody @unchecked => {
 	  frameResponse( msrc )( rsbdy )
 	}
 	case _ => {
@@ -511,7 +511,7 @@ extends MonadicSoloTermStoreScope[Namespace,Var,Tag,Value]
 	  }
 
 	request match {
-	  case rqbdy : ReqBody => {
+	  case rqbdy: ReqBody @unchecked => {
 	    val framedReq = frameRequest( trgt )( rqbdy )
 	    BasicLogService.tweet( ( this + " forwarding " + framedReq + " to " + trgt ) )
 	    q ! framedReq

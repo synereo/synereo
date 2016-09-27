@@ -1345,7 +1345,7 @@ with AgentCnxnTypeScope {
               }
             
             request match {
-              case rqbdy : ReqBody => {
+              case rqbdy: ReqBody @unchecked => {
                 val framedReq = frameRequest( trgt )( rqbdy )
                 BasicLogService.tweet( ( "BaseAgentKVDBNode: " + this + " forwarding " + framedReq + " to " + trgt ) )
                 q ! framedReq
@@ -1887,7 +1887,7 @@ with AgentCnxnTypeScope {
           )
           
           path match {
-            case cclStr : CnxnCtxtLabel[Namespace,Var,String] => {
+            case cclStr: CnxnCtxtLabel[Namespace, Var, String] @unchecked => {
               pmgj.cache.delete(pd.storeUnitStr( cnxn ), cclStr)(
                 cache.nameSpaceToString,
                 cache.varToString,

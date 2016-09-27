@@ -52,8 +52,8 @@ trait MonadicAgency[TxPort,ReqBody,RspBody]
 		  case l@Left(
 		    jreq@JustifiedRequest(
 		      m, p, d, t,
-		      f : ReqBody,
-		      c : Option[Response[AbstractJustifiedRequest[ReqBody,RspBody],RspBody]]
+		      f: ReqBody @unchecked,
+		      c: Option[Response[AbstractJustifiedRequest[ReqBody, RspBody], RspBody]] @unchecked
 		    )
 		  ) => {
 		    if ( validate( jreq ) ) {
@@ -64,8 +64,8 @@ trait MonadicAgency[TxPort,ReqBody,RspBody]
 		  case r@Right(
 		    jrsp@JustifiedResponse(
 		      m, p, d, t,
-		      f : RspBody,
-		      c : Option[Request[AbstractJustifiedResponse[ReqBody,RspBody],ReqBody]]
+		      f: RspBody @unchecked,
+		      c: Option[Request[AbstractJustifiedResponse[ReqBody, RspBody], ReqBody]] @unchecked
 		    )
 		  ) => {
 		    if ( validate( jrsp ) ) {

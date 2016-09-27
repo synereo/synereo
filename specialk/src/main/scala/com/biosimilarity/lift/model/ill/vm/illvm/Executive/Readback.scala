@@ -29,7 +29,7 @@ trait ReadBack /*[Ctxt]*/ {
   }
   def prettyPrintD( a : Any )( level : Int ) : String = {
     a match {
-      case eOrV : Either[Env,Value] =>
+      case eOrV: Either[Env, Value] @unchecked =>
 	prettyPrint( eOrV )( level )
       case env : Env => 
 	prettyPrint( env )( level )

@@ -346,7 +346,7 @@ trait SFKTScope[M[_]] {
 
     def ssk [A] ( a : A, fk : FK[M[Any]] ) = {      
       fk match {
-	case mOATMA : M[Option[(A,TM[A])]] => {
+	case mOATMA: M[Option[(A, TM[A])]] @unchecked => {
 	  // liftC( mOATMA ) : SFKTC[Option[(A,TM[A])]]
 	  // reflect : Option[(A,TM[A])] => SFKTC[A]
 	  // bind( liftC( mOATMA ), reflect ) : SFKTC[A]
@@ -374,7 +374,7 @@ trait SFKTScope[M[_]] {
       val fk : M[Option[( A, SFKTC[A] )]] =
 	monadicMWitness.unit( None )
       tma.unSFKT( ssk, fk.asInstanceOf[M[Any]] ) match {
-	case mOATMA : M[Option[(A, SFKTC[A])]] => {
+	case mOATMA: M[Option[(A, SFKTC[A])]] @unchecked => {
 	  liftC( mOATMA )
 	}
 	case _ => {
@@ -404,7 +404,7 @@ trait SFKTScope[M[_]] {
 	{
 	  ( any : Any ) => {
 	    any match {
-	      case a : A => monadicMWitness.unit( a )
+	      case a: A @unchecked => monadicMWitness.unit( a )
 	      case _ => throw new Exception( "no answer" ) 
 	    }
 	  }

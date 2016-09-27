@@ -33,7 +33,7 @@ abstract class AMQPSender[ T ](conn: Connection, exchange: String, routingKey: S
   def loop
   {
     react {
-      case AMQPMessage(msg: T) => send(msg); loop
+      case AMQPMessage(msg: T @unchecked) => send(msg); loop
     }
   }
 }

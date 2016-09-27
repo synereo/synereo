@@ -615,7 +615,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
       
       v match {
-        case PostedExpr( (PostedExpr( previousExternalIdsList : List[ExternalIdentity] ), _, _, _) ) => {
+        case PostedExpr((PostedExpr(previousExternalIdsList: List[ExternalIdentity] @unchecked), _, _, _)) => {
           val newExternalIdsList = previousExternalIdsList ++ msg.ids
           
           BasicLogService.tweet(
@@ -693,7 +693,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       }
       
       v match {
-        case PostedExpr( (PostedExpr( previousExternalIdsList : List[ID] ), _, _, _) ) => {
+        case PostedExpr((PostedExpr(previousExternalIdsList: List[ID] @unchecked), _, _, _)) => {
           val newExternalIdsList = previousExternalIdsList.filterNot( msg.ids.contains )
           
           BasicLogService.tweet(
@@ -1204,7 +1204,7 @@ trait AgentCRUDHandler extends AgentCRUDSchema {
       BasicLogService.tweet( "handlegetAliasDefaultLabelRequest | onFetch: got " + v )
 
       v match {
-        case PostedExpr( (PostedExpr( defaultLabel : CnxnCtxtLabel[String,String,String] ), _, _, _) ) => {
+        case PostedExpr((PostedExpr(defaultLabel: CnxnCtxtLabel[String, String, String] @unchecked), _, _, _)) => {
           SessionManager.cometMessage(sessionURIStr, compact( render(
             ( "msgType" -> "getAliasDefaultLabelResponse" ) ~
             ( "content" ->

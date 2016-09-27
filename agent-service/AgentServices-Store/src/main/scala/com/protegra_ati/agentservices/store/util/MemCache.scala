@@ -63,7 +63,7 @@ object MemCache
   {
     val matching = client.get(key)
     matching match {
-      case x: T => x
+      case x: T @unchecked => x
       case _ => null.asInstanceOf[ T ]
     }
   }
@@ -109,7 +109,7 @@ object MemCache
       return null
 
     matching.getValue match {
-      case x: List[ T ] => x
+      case x: List[T] @unchecked => x
       case _ => null.asInstanceOf[ List[ T ] ]
     }
   }

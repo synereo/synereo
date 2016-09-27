@@ -23,11 +23,11 @@ object WriterMonad {
   ) : Monad[({ type L[Msg] = HCtxt[C,A,Msg]})#L] with MonadPlus[({ type L[Msg] = HCtxt[C,A,Msg]})#L] with FilteredMonad[({ type L[Msg] = HCtxt[C,A,Msg]})#L] = new Monad[({ type L[Msg] = HCtxt[C,A,Msg]})#L] with MonadPlus[({ type L[Msg] = HCtxt[C,A,Msg]})#L] with FilteredMonad[({ type L[Msg] = HCtxt[C,A,Msg]})#L]{
     def apply[Msg]( data : Msg ) = HCtxt[C,A,Msg]( None, witness.apply( data ) )
     def flatten[Msg]( hhv : HCtxt[C,A,HCtxt[C,A,Msg]] ) : HCtxt[C,A,Msg] = {
-      val HCtxt( optA1 : Option[A], ch : C[HCtxt[C,A,Msg]] ) = hhv            
+      val HCtxt(optA1: Option[A], ch: C[HCtxt[C, A, Msg]] @unchecked) = hhv
       var nrcrd : C[Msg] = witness.zero
 
       for( h <- monadToFilteredComprehension( witness( ch ) ) ) {
-        val HCtxt( _ : A , rcrd : C[Msg] ) = h
+        val HCtxt(_: A @unchecked, rcrd: C[Msg] @unchecked) = h
         nrcrd = witness.plus[Msg]( nrcrd )( rcrd )
       }
 

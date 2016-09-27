@@ -244,7 +244,7 @@ with UUIDOps {
 	    case jr@JustifiedRequest(
 	      m, p, d, t,
 	      f : DReq,
-	      c : Option[Response[AbstractJustifiedRequest[DReq,DRsp],DRsp]]
+	      c: Option[Response[AbstractJustifiedRequest[DReq, DRsp], DRsp]] @unchecked
 	    ) => {	    
 	      val jrJSON : JustifiedRequest[DReq,DRsp]
 	      = jr.asInstanceOf[JustifiedRequest[DReq,DRsp]]
@@ -271,7 +271,7 @@ with UUIDOps {
 	    case jr@JustifiedResponse(
 	      m, p, d, t,
 	      f : DRsp,
-	      c : Option[Request[AbstractJustifiedResponse[DReq,DRsp],DReq]]
+	      c: Option[Request[AbstractJustifiedResponse[DReq, DRsp], DReq]] @unchecked
 	    ) =>  {
 	      val jrJSON : JustifiedResponse[DReq,DRsp]
 	      = jr.asInstanceOf[JustifiedResponse[DReq,DRsp]]
@@ -438,10 +438,10 @@ with UUIDOps {
     val msg =
       new XStream( new JettisonMappedXmlDriver() ).fromXML( contents )
     msg match {
-      case jreq : JustifiedRequest[DReq,DRsp] => {
+      case jreq: JustifiedRequest[DReq, DRsp] @unchecked => {
 	Left[JustifiedRequest[DReq,DRsp],JustifiedResponse[DReq,DRsp]]( jreq )
       }
-      case jrsp : JustifiedResponse[DReq,DRsp] => {
+      case jrsp: JustifiedResponse[DReq, DRsp] @unchecked => {
 	Right[JustifiedRequest[DReq,DRsp],JustifiedResponse[DReq,DRsp]]( jrsp )
       }
       case _ => {

@@ -2016,7 +2016,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     try {
       val labelSet = new SumOfProducts()((exprContent \ "label").extract[String])
       val cnxns = (exprContent \ "cnxns") match {
-        case JArray(arr: List[JObject]) => arr.map(extractCnxn _)
+        case JArray(arr: List[JObject] @unchecked) => arr.map(extractCnxn _)
       }
       Some((labelSet, cnxns))
     } catch {
@@ -2181,7 +2181,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           def handleRsp(v: ConcreteHL.HLExpr): Unit = {
             v match {
               case PostedExpr(
-                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String, String, String], cnxn, bindings)
+                (PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String, String, String] @unchecked, cnxn, bindings)
                 ) => {
                 val arr = parse(postedStr).asInstanceOf[JArray].arr
                 val json = compact(render(arr(0)))
@@ -2254,7 +2254,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             //println("evalSubscribeRequest | onScore: optRsrc = " + optRsrc)
             def handlePostedExpr(v: ConcreteHL.HLExpr): Unit = {
               v match {
-                case PostedExpr((PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String, String, String], cnxn, bindings)) => {
+                case PostedExpr((PostedExpr(postedStr: String), filter: CnxnCtxtLabel[String, String, String] @unchecked, cnxn, bindings)) => {
                   val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                   val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
                   val arr = parse(postedStr).asInstanceOf[JArray].arr
@@ -2292,7 +2292,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               // Either[Seq[PortableAgentCnxn],Seq[CnxnCtxtLabel[String,String,String]]]
               which match {
                 case "a" => vals match {
-                  case JArray(arr: List[JObject]) => Left(arr.map(extractCnxn _))
+                  case JArray(arr: List[JObject] @unchecked) => Left(arr.map(extractCnxn _))
                 }
                 case "b" => Right(
                   vals.extract[List[String]].map((t: String) =>

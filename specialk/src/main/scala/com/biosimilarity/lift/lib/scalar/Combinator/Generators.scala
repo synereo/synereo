@@ -80,10 +80,10 @@ trait Nominals {
 
   def asName( a : Any ) = {
       a match {
-	case t : Term => Transcription( t )
+	case t: Term @unchecked => Transcription( t )
 	case s : String => StringVariable( s )
 	case u : java.net.URL => URLVariable( u )
-	case p : ( Int, Int ) => {
+	case p: (Int, Int) @unchecked => {
 	  p match { case ( i, j ) => DeBruijn( i, j) }
 	}
 	case _ => throw new Exception( "no nominal conversion" )

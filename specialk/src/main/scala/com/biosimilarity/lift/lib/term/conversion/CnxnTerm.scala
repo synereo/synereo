@@ -22,10 +22,10 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( _, Top( ) ) => {
         throw new Exception( "left of top" )
       }
-      case Location( t, LabeledTreeContext( lbl : L, l :: left, up, right ) ) => {
+      case Location(t, LabeledTreeContext(lbl: L @unchecked, l :: left, up, right)) => {
         Location( l, LabeledTreeContext[L,A1]( lbl, left, up, t :: right ) )
       }
-      case Location( t, LabeledTreeContext( lbl : L, Nil, up, right ) ) => {
+      case Location(t, LabeledTreeContext(lbl: L @unchecked, Nil, up, right)) => {
         throw new Exception( "left of first" )
       }
     }
@@ -35,7 +35,7 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( _, Top( ) ) => {
         throw new Exception( "right of top" )
       }
-      case Location( t, LabeledTreeContext( lbl : L, left, up, r :: right ) ) => {
+      case Location(t, LabeledTreeContext(lbl: L @unchecked, left, up, r :: right)) => {
         Location( r, LabeledTreeContext[L, A1]( lbl, t :: left, up, right ) )
       }
       case Location( t, _ ) => {
@@ -48,9 +48,9 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( _, Top( ) ) => {
         throw new Exception( "up of top" )
       }   
-      case Location( t : CnxnCtxtLabel[L,V,T] with Factual, LabeledTreeContext( lbl : L, left, up, right ) ) => {
+      case Location( t : CnxnCtxtLabel[L, V, T] with Factual, LabeledTreeContext(lbl: L @unchecked, left, up, right)) => {
 	( left, right ) match {
-	  case ( lTerms : List[CnxnCtxtLabel[L,V,T] with Factual], rTerms : List[CnxnCtxtLabel[L,V,T] with Factual] ) => {
+	  case (lTerms: List[CnxnCtxtLabel[L, V, T] with Factual] @unchecked, rTerms: List[CnxnCtxtLabel[L, V, T] with Factual] @unchecked) => {
 	    val rvrsLTerms : List[CnxnCtxtLabel[L,V,T] with Factual] = lTerms.reverse
             Location[A1]( new CnxnCtxtBranch[L,V,T]( lbl, rvrsLTerms ::: ( t :: rTerms ) ), up )
 	  }
@@ -82,7 +82,7 @@ trait CnxnNavigation[L,V,T] extends ZipperNavigation[Either[T,V]] {
       case Location( TreeSection( Nil ), ctxt ) => {
         throw new Exception( "down of empty" )
       }
-      case Location( CnxnCtxtBranch( lbl : L, u :: trees ), ctxt ) => {
+      case Location(CnxnCtxtBranch(lbl: L @unchecked, u :: trees), ctxt) => {
         Location( u, LabeledTreeContext[L, A1]( lbl, List[CnxnCtxtLabel[L,V,T] with Factual](), ctxt, trees ) )
       }
     }
@@ -109,7 +109,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	curr,
-	LabeledTreeContext( lbl : L, left, up, right )
+	LabeledTreeContext(lbl: L @unchecked, left, up, right)
       ) => {
 	Location(
 	  curr,
@@ -127,7 +127,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	curr,
-	LabeledTreeContext( lbl : L, left, up, right )
+	LabeledTreeContext(lbl: L @unchecked, left, up, right)
       ) => {
 	Location(
 	  curr,
@@ -144,7 +144,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
 	throw new Exception( "down of item" )
       }
       case Location(
-	CnxnCtxtBranch( lbl : L, progeny ),
+	CnxnCtxtBranch(lbl: L @unchecked, progeny),
 	ctxt@Top()
       ) => {
 	Location(
@@ -153,7 +153,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
 	)
       }
       case Location(
-	CnxnCtxtBranch( lbl : L, progeny ),
+	CnxnCtxtBranch(lbl: L @unchecked, progeny),
 	ctxt : LabeledTreeContext[L,Either[T,V]]
       ) => {
 	Location(
@@ -191,7 +191,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	_,
-	LabeledTreeContext( lbl : L, left, up, r :: right )
+	LabeledTreeContext(lbl: L @unchecked, left, up, r :: right)
       ) => {
 	Location(
 	  r,
@@ -200,7 +200,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	_,
-	LabeledTreeContext( lbl : L, l :: left, up, Nil )
+	LabeledTreeContext(lbl: L @unchecked, l :: left, up, Nil)
       ) => {
 	Location(
 	  l,
@@ -209,7 +209,7 @@ trait CnxnMutation[L,V,T] extends ZipperMutation[Either[T,V]] {
       }
       case Location(
 	_,
-	LabeledTreeContext( lbl : L, Nil, up, Nil )
+	LabeledTreeContext(lbl : L @unchecked, Nil, up, Nil)
       ) => {
 	Location( new CnxnCtxtBranch[L,V,T]( lbl, List[CnxnCtxtLabel[L,V,T] with Factual]() ), up )
       }
@@ -224,7 +224,7 @@ trait CnxnZipperComposition[L,V,T] {
   ) : Context[Either[T,V]] = {
     ctxtL match {
       case Top() => ctxtR
-      case LabeledTreeContext( lbl : L, left : List[CnxnCtxtLabel[L,V,T] with Factual], ctxt : LabeledTreeContext[L, Either[T,V]], right : List[CnxnCtxtLabel[L,V,T] with Factual] ) => {
+      case LabeledTreeContext(lbl: L @unchecked, left: List[CnxnCtxtLabel[L, V, T] with Factual] @unchecked, ctxt: LabeledTreeContext[L, Either[T, V]] @unchecked, right: List[CnxnCtxtLabel[L, V, T] with Factual] @unchecked) => {
 	LabeledTreeContext[L,Either[T,V]](
 	  lbl, left, compose( ctxt, ctxtR ), right 
 	)
@@ -237,7 +237,7 @@ trait CnxnZipperComposition[L,V,T] {
   ) : CnxnCtxtLabel[L,V,T] with Factual = {
     ctxt match {
       case Top() => tree
-      case LabeledTreeContext( lbl : L, left : List[CnxnCtxtLabel[L,V,T] with Factual], ctxt : LabeledTreeContext[L, Either[T,V]], right : List[CnxnCtxtLabel[L,V,T] with Factual] ) => {
+      case LabeledTreeContext(lbl: L @unchecked, left: List[CnxnCtxtLabel[L, V, T] with Factual] @unchecked, ctxt: LabeledTreeContext[L, Either[T, V]] @unchecked, right: List[CnxnCtxtLabel[L, V, T] with Factual] @unchecked) => {
 	new CnxnCtxtBranch[L,V,T](
 	  lbl, 
 	  left ++ ( compose( ctxt, tree ) :: right )
@@ -264,10 +264,10 @@ trait CnxnSubstitution[L,V,T] {
       case tLeaf@CnxnCtxtLeaf( Left( _ ) ) => {
         tLeaf
       }
-      case vLeaf@CnxnCtxtLeaf( Right( v : V ) ) => {
+      case vLeaf@CnxnCtxtLeaf(Right(v: V @unchecked)) => {
         bindings.get( v ).getOrElse( vLeaf )
       }
-      case CnxnCtxtBranch( fnctr : L, actls : List[CnxnCtxtLabel[L,V,T] with Factual] ) => {
+      case CnxnCtxtBranch(fnctr: L @unchecked, actls: List[CnxnCtxtLabel[L, V, T] with Factual]) => {
         new CnxnCtxtBranch( fnctr, actls.map( substitute( _ )( bindings ) ) )
       }
     }
@@ -401,7 +401,7 @@ class TermToCnxnCtxtLabel[N,X,T](
 		
 		loc
 	      }
-	      case Location( _, LabeledTreeContext( lbl : N, left, nrCtxt, right ) ) => {
+	      case Location(_, LabeledTreeContext(lbl: N @unchecked, left, nrCtxt, right)) => {
 		Location[Either[T,X]](
 		  xTerm,
 		  zipr.compose( yCtxt, xCtxt )
