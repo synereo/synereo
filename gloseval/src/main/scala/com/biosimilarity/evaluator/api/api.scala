@@ -96,8 +96,3 @@ case class Response(msgType: String, content: JObject) {
     case "versionInfoResponse"            => content.extract[VersionInfoResponse]
   }
 }
-
-// ht 2016-08-26:
-// I'm going to try something slightly different here.
-// See ApiSpec's versionInfoRequest test for a usage example.
-case class AltResponse[T <: ResponseContent](msgType: String, content: T)
