@@ -349,8 +349,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def versionInfoRequest(json: JObject, key: String): Unit = {
-    val msg: api.AltResponse[api.VersionInfoResponse] =
-      api.AltResponse[api.VersionInfoResponse]("versionInfoResponse", versionInfoResponse)
+    val msg = versionInfoResponse.asResponse
     CompletionMapper.complete(key, Serialization.write(msg))
   }
 

@@ -44,7 +44,19 @@ case class SetAmpWalletAddress(sessionURI: String, address: String)             
 case class OmniTransfer(sessionURI: String, target: String, amount: BigDecimal)                      extends RequestContent
 case class OmniGetBalance(sessionURI: String)                                                        extends RequestContent
 
-sealed trait ResponseContent
+sealed trait ResponseContent {
+
+  implicit val formats = org.json4s.DefaultFormats
+
+  protected def toJObject: JObject = Extraction.decompose(this).asInstanceOf[JObject]
+
+  def asResponse: Response = {
+    val nm: String  = this.getClass.getSimpleName
+    val tnm: String = Character.toLowerCase(nm.charAt(0)) + nm.substring(1)
+    Response(tnm, toJObject)
+  }
+
+}
 case class VersionInfoResponse(glosevalVersion: String, scalaVersion: String, mongoDBVersion: String, rabbitMQVersion: String)
     extends ResponseContent {
   override def toString: String = s"""|GLoSEVal version: $glosevalVersion
