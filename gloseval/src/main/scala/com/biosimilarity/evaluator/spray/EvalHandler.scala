@@ -2893,6 +2893,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       val capSelfCnxn = getCapSelfCnxn(cap)
       val sessionURI = capToSession(cap)
       val uc = getSessionWithHash(pVal)
+      val m2Hex = uc.getM2Hex(pVal)
 
       def onLabelsFetch(jsonBlob: String, aliasList: String, defaultAlias: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
         BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onLabelsFetch: optRsrc = " + optRsrc)
@@ -2913,7 +2914,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~ // for default alias
                   ("lastActiveLabel" -> "") ~
                   ("jsonBlob" -> parse(jsonBlob)) ~
-                  ("M2" -> uc.getM2Hex(pVal)) // SRP parameter for client-side verification
+                  ("M2" -> m2Hex) // SRP parameter for client-side verification
 
               CompletionMapper.complete(key, compact(render(
                 ("msgType" -> "initializeSessionResponse") ~
