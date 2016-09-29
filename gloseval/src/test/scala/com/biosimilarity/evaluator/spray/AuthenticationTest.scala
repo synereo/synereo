@@ -64,7 +64,7 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
 
   "EvaluationService" should {
 
-    "return random salt on creation user, step 1" in {
+    "return random salt on creation user, step 1" ignore {
       Post(httpsUri, HttpEntity(MediaTypes.`application/json`, createUserStep1RequestBody)) ~> myRoute ~>
         check {
           val rsp = responseAs[String]
@@ -79,7 +79,7 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
         }
     }
 
-    "respond with CreateUserWaiting on creation user, step 2" in {
+    "respond with CreateUserWaiting on creation user, step 2" ignore {
       Post(httpsUri, HttpEntity(MediaTypes.`application/json`, getCreateUserStep2RequestBody(salt))) ~> myRoute ~> {
         check {
           val rsp = responseAs[String]
@@ -88,7 +88,7 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
       }
     }
 
-    "generate agentURI on email token confirmation" in {
+    "generate agentURI on email token confirmation" ignore {
       Post(httpsUri, HttpEntity(MediaTypes.`application/json`, confirmEmailTokenRequestBody)) ~> myRoute ~>
         check {
           val rsp     = responseAs[String]
@@ -101,7 +101,7 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
         }
     }
 
-    "respond with B parameter and stored salt on initializing new session, step 1" in {
+    "respond with B parameter and stored salt on initializing new session, step 1" ignore {
       Post(httpsUri, HttpEntity(MediaTypes.`application/json`, getInitializeSessionStep1RequestBody(salt))) ~> myRoute ~>
         check {
           val rsp     = responseAs[String]
@@ -117,7 +117,7 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
         }
     }
 
-    "respond with M2 parameter on initializing new session, step 2" in {
+    "respond with M2 parameter on initializing new session, step 2" ignore {
       Post(httpsUri, HttpEntity(MediaTypes.`application/json`, getInitializeSessionStep2RequestBody(B))) ~> myRoute ~>
         check {
           val rsp     = responseAs[String]
