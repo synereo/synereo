@@ -338,7 +338,7 @@ with UUIDOps {
     } )</source>
   }
 
-  def toScalaObject(
+  def toAnyRef(
     pattern : Pattern,
     compUnitId : UUID,
     reg : Map[Agent,UUID],
@@ -366,7 +366,7 @@ with UUIDOps {
   ) : List[FactualCnxnCtxtLabel] = {
     (for( ptrn <- lstPtrn )
     yield {
-      toScalaObject( ptrn, compUnitId, reg, env )
+      toAnyRef( ptrn, compUnitId, reg, env )
     }).toList
   }
 
@@ -531,7 +531,7 @@ with UUIDOps {
       toScalaSource( in.pattern_, inId, reg, env )
 
     val patternObj =
-      toScalaObject( in.pattern_, inId, reg, env )
+      toAnyRef( in.pattern_, inId, reg, env )
     val patternVars =
       patternObj.names.map( 
 	_ match {

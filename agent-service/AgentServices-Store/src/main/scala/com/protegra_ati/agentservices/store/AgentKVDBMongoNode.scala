@@ -4488,10 +4488,10 @@ package mongo.usage {
 //      val ptn =
 //        testConfig.vars match {
 //          case Some( vars ) => {
-//            CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable], vars )
+//            CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv.asInstanceOf[AnyRef with Product with Serializable], vars )
 //          }
 //          case None => {
-//            asCnxnCtxtLabel( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable] )
+//            asCnxnCtxtLabel( testConfig.pv.asInstanceOf[AnyRef with Product with Serializable] )
 //          }
 //        }
 //      for( cnxn <- cnxnStrm ) {
@@ -4513,10 +4513,10 @@ package mongo.usage {
 //      val ptn =
 //        testConfig.vars match {
 //          case Some( vars ) => {
-//            CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable], vars )
+//            CnxnConversionStringScope.partialCaseClassDerivative( testConfig.pv.asInstanceOf[AnyRef with Product with Serializable], vars )
 //          }
 //          case None => {
-//            asCnxnCtxtLabel( testConfig.pv.asInstanceOf[ScalaObject with Product with Serializable] )
+//            asCnxnCtxtLabel( testConfig.pv.asInstanceOf[AnyRef with Product with Serializable] )
 //          }
 //        }
 //      for( cnxn <- cnxnStrm; v <- vStream ) {

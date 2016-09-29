@@ -112,10 +112,19 @@ trait CaseClassConversion {
       "notifyAll"
       )
 
-  def isCaseClass( candidate : Any ) = false
-  def isCaseClass( candidate : ScalaObject with Product with Serializable ) = true
+  // def isCaseClass( candidate : AnyVal ) = false
+  // def isCaseClass( candidate : AnyRef ) = true
 
-  def toTermSymbol( msg : ScalaObject with Product with Serializable ) : String = {
+  def isCaseClass(v: Any): Boolean = {
+    import reflect.runtime.universe._
+    val typeMirror = runtimeMirror(v.getClass.getClassLoader)
+    val instanceMirror = typeMirror.reflect(v)
+    val symbol = instanceMirror.symbol
+    symbol.isCaseClass
+  }
+
+
+  def toTermSymbol( msg : AnyRef with Product with Serializable ) : String = {
     val msgClassName = msg.getClass.getName
     val msgName =
       msgClassName.substring( 
@@ -126,12 +135,12 @@ trait CaseClassConversion {
     msgName.take( 1 ).toLowerCase + msgName.drop( 1 )
   }
   
-  def toTermActuals( msg : ScalaObject with Product with Serializable ) : String = {
-    def getArg( msg : ScalaObject with Product with Serializable, mthd : String ) : String = {
+  def toTermActuals( msg : AnyRef with Product with Serializable ) : String = {
+    def getArg( msg : AnyRef with Product with Serializable, mthd : String ) : String = {
       val meth = msg.getClass.getMethod( mthd )
       val mbr = meth.invoke( msg )
-      if ( isCaseClass( mbr ) ) {
-	toTerm( mbr.asInstanceOf[ScalaObject with Product with Serializable] )
+      if ( isCaseClass(mbr) ) {
+	toTerm( mbr.asInstanceOf[AnyRef with Product with Serializable] )
       }
       else {
 	mbr.toString
@@ -162,7 +171,7 @@ trait CaseClassConversion {
     }    
   }
 
-  def toTerm( msg : ScalaObject with Product with Serializable ) : String = {
+  def toTerm( msg : AnyRef with Product with Serializable ) : String = {
     (
       toTermSymbol( msg )
       + "("

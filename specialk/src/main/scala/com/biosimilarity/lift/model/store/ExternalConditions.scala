@@ -95,7 +95,7 @@ with MapProxy[String,ReflectiveSurfaceT#Specimen]
     Specimen( typeOf[T], None, content.asInstanceOf[AnyRef] )
   }
 
-  def captureSpecimenAsT[T : TypeTag](
+  def captureSpecimenAsT[T <: AnyRef : TypeTag](
     content : T,
     genExpr : ReflectiveSurfaceT#ExprTree
   ) : Specimen = {

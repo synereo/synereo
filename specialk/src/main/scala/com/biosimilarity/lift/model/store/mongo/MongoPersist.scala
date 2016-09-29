@@ -157,7 +157,7 @@ object MongoClientPool {
     if (clientMap.containsKey(key)) {
       clientMap.get(key)
     } else {
-      val newClient = MongoClient(uri.getAuthority, MongoClientOptions(true, MAX_CLIENT_CONNECTIONS))
+      val newClient = MongoClient(uri.getAuthority, MongoClientOptions(connectionsPerHost = MAX_CLIENT_CONNECTIONS))
       val tmpClient = clientMap.putIfAbsent(key, newClient)
       if (tmpClient == null) {
         newClient // New client used

@@ -1,22 +1,22 @@
 import BNFC._
 
-lazy val ourScalaVersion    = "2.10.6"
+lazy val ourScalaVersion    = "2.11.8"
 lazy val amqpClientVersion  = "2.6.1"
 lazy val base64coderVersion = "2010-09-21"
 lazy val baseXVersion       = "7.6"
 lazy val commonsPoolVersion = "1.6"
 lazy val configVersion      = "1.0.0"
-lazy val casbahVersion      = "2.6.4"
+lazy val casbahVersion      = "3.1.1"
 lazy val persistenceVersion = "1.0"
 lazy val jettisonVersion    = "1.3.3"
 lazy val jettyVersion       = "8.0.4.v20111024"
-lazy val json4sVersion      = "3.2.7"
+lazy val json4sVersion      = "3.4.1"
 lazy val log4jVersion       = "1.2.17"
 lazy val prolog4jVersion    = "0.2.1"
 lazy val scalatestVersion   = "2.2.6"
-lazy val scalesXmlVersion   = "0.4.5"
+lazy val scalesXmlVersion   = "0.6.0-M3"
 lazy val slf4jVersion       = "1.7.21"
-lazy val sprayVersion       = "1.1.3"
+lazy val sprayVersion       = "1.3.3"
 lazy val tuprologVersion    = "2.1.1"
 lazy val xstreamVersion     = "1.4.4"
 
@@ -61,9 +61,10 @@ lazy val commonSettings = Seq(
     "BaseX" at "http://files.basex.org/maven/",
     "xqj"   at "http://xqj.net/maven/"),
   libraryDependencies ++=
-    Seq(compilerPlugin("org.scala-lang.plugins" % "continuations" % scalaVersion.value)) ++
-    Seq("org.scala-lang" % "scala-actors"  % scalaVersion.value,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    Seq(compilerPlugin("org.scala-lang.plugins" % s"scala-continuations-plugin_$ourScalaVersion" % "1.0.2")) ++
+    Seq("org.scala-lang"          % "scala-actors"                % scalaVersion.value,
+        "org.scala-lang"          % "scala-reflect"               % scalaVersion.value,
+        "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.2",
         // https://github.com/json4s/json4s/issues/108
         "org.scala-lang" % "scalap"        % scalaVersion.value) ++
     commonDeps)
@@ -131,25 +132,26 @@ lazy val agentService = (project in file("agent-service/AgentServices-Store"))
   .dependsOn(specialk)
 
 lazy val glosevalDeps = Seq(
-  "biz.source_code"             % "base64coder"       % base64coderVersion,
-  "io.spray"                    % "spray-can"         % sprayVersion,
-  "io.spray"                    % "spray-client"      % sprayVersion,
-  "io.spray"                    % "spray-routing"     % sprayVersion,
-  "io.spray"                    % "spray-testkit"     % sprayVersion,
-  "io.spray"                   %% "spray-json"        % "1.2.5",
-  "com.github.scopt"           %% "scopt"             % "3.5.0",
-  "com.rabbitmq"                % "amqp-client"       % amqpClientVersion,
-  "com.typesafe.akka"          %% "akka-actor"        % "2.1.4",
-  "it.unibo.alice.tuprolog"     % "tuprolog"          % tuprologVersion,
-  "org.apache.commons"          % "commons-email"     % "1.3.1",
-  "org.json4s"                 %% "json4s-jackson"    % json4sVersion,
-  "org.json4s"                 %% "json4s-native"     % json4sVersion,
-  "org.mongodb"                %% "casbah"            % casbahVersion exclude("org.slf4j", "slf4j-api"),
-  "org.prolog4j"                % "prolog4j-api"      % prolog4jVersion,
-  "org.prolog4j"                % "prolog4j-tuprolog" % prolog4jVersion,
-  "org.scalaj"                 %% "scalaj-http"       % "2.0.0",
-  "org.bouncycastle"            % "bcprov-jdk15on"    % "1.54",
-  "org.scalatest"              %% "scalatest"         % scalatestVersion % "test")
+  "biz.source_code"             % "base64coder"              % base64coderVersion,
+  "io.spray"                   %% "spray-can"                % sprayVersion,
+  "io.spray"                   %% "spray-client"             % sprayVersion,
+  "io.spray"                   %% "spray-httpx"              % sprayVersion,
+  "io.spray"                   %% "spray-routing-shapeless2" % sprayVersion,
+  "io.spray"                   %% "spray-testkit"            % sprayVersion,
+  "io.spray"                   %% "spray-json"               % "1.3.2",
+  "com.github.scopt"           %% "scopt"                    % "3.5.0",
+  "com.rabbitmq"                % "amqp-client"              % amqpClientVersion,
+  "com.typesafe.akka"          %% "akka-actor"               % "2.4.9",
+  "it.unibo.alice.tuprolog"     % "tuprolog"                 % tuprologVersion,
+  "org.apache.commons"          % "commons-email"            % "1.3.1",
+  "org.json4s"                 %% "json4s-jackson"           % json4sVersion,
+  "org.json4s"                 %% "json4s-native"            % json4sVersion,
+  "org.mongodb"                %% "casbah"                   % casbahVersion exclude("org.slf4j", "slf4j-api"),
+  "org.prolog4j"                % "prolog4j-api"             % prolog4jVersion,
+  "org.prolog4j"                % "prolog4j-tuprolog"        % prolog4jVersion,
+  "org.scalaj"                 %% "scalaj-http"              % "2.0.0",
+  "org.bouncycastle"            % "bcprov-jdk15on"           % "1.54",
+  "org.scalatest"              %% "scalatest"                % scalatestVersion % "test")
 
 lazy val glosevalSettings = Seq(
   name := "GLoSEval",

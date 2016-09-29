@@ -3,7 +3,7 @@ package com.biosimilarity.evaluator.spray
 import akka.actor.{Actor, Cancellable}
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
-import org.json4s.{DefaultFormats, _}
+import org.json4s._
 import spray.http.{DateTime, HttpResponse, StatusCodes}
 import spray.routing.RequestContext
 
@@ -37,7 +37,10 @@ class SessionActor(sessionId: String) extends Actor {
   // clients need to re-ping after this
   var pongTimeout = 7.seconds // initial value will be overwritten during instantiation
 
-  var aliveTimer: Cancellable                       = new Cancellable { def cancel() = {}; def isCancelled = true }
+  var aliveTimer: Cancellable = new Cancellable {
+    def cancel(): Boolean = true
+    def isCancelled: Boolean = true
+  }
   var optReq: Option[(RequestContext, Cancellable)] = None
   var msgs: List[String]                            = Nil
   var camera: Option[List[CameraItem]]              = None

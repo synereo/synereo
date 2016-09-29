@@ -31,33 +31,27 @@ trait ScalaXMLResultsParser extends XMLResultsParser {
     }
   }
 }
+
 trait ScalesXMLResultsParser extends XMLResultsParser {
-  import scales.xml.{
-      Doc => SXMLDoc, Namespace => SXMLNamespace, Elem => SXMLElem, Text => SXMLText, _
-    }
-  import scales.utils.{ Tree => SXMLTree, _ }
-  import ScalesUtils._
-  import ScalesXml._
-  import Functions._
 
-  type ParsedResult = 
-    SXMLTree[XmlItem,SXMLElem,scales.xml.XCC]
+  import scales.xml.{Elem => SXMLElem, XmlItem, loadXml}
+  import scales.utils.collection.{Tree => SXMLTree}
+  import scales.xml.ScalesXml._
 
-  def getRsltsScalesXML(
-    srStrm : java.io.ByteArrayOutputStream
-  ) : scala.List[ParsedResult] = {
+  type ParsedResult = SXMLTree[XmlItem, SXMLElem, scales.xml.XCC]
+
+  def getRsltsScalesXML(srStrm : java.io.ByteArrayOutputStream): scala.List[ParsedResult] = {
     val results = srStrm.toString("UTF-8")
     results match {
-      case "" => {
+      case "" =>
         Nil
-      }
-      case _ => {
-        loadXml(
-	  new java.io.StringReader(
-	    "<results>" + results + "</results>"
-	  )
-	).rootElem.children.toList.filter( _.isRight ).map( _.getRight )
-      }
+      case _ =>
+        loadXml(new java.io.StringReader("<results>" + results + "</results>"))
+          .rootElem
+          .children
+          .toList
+          .filter( _.isRight )
+          .map( _.getRight )
     }
   }
 }

@@ -613,26 +613,22 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
     )
   }
 
-  def fromlabeledBlob [Namespace,Var,Tag] (
-    cclBlob : CnxnCtxtLabel[Namespace,Var,Tag]
-  ) : Option[Product] = {
+  def fromlabeledBlob[Namespace,Var,Tag](cclBlob: CnxnCtxtLabel[Namespace,Var,Tag]): Option[Product] =
     cclBlob match {
-      case CnxnCtxtBranch( blNS, CnxnCtxtLeaf( Left( blob ) ) :: Nil ) => {
-	if ( blobLabel.equals( blNS.toString ) ) {
-	  Some( fromBlob( blob + "" ).asInstanceOf[Product] )
-	}
-	else {
-	  None
-	}
-      }
-      case _ => {
-	None
-      }
+      case CnxnCtxtBranch(blNS, xs) if xs.length == 1 =>
+        xs.head match {
+          case CnxnCtxtLeaf(Left(x)) if (blobLabel.equals(blNS.toString)) =>
+            Some(fromBlob(x + "").asInstanceOf[Product])
+          case _ =>
+            None
+        }
+      case _ =>
+        None
     }
-  }
+
 
   def caseClassAccessors( 
-    //cc : ScalaObject with Product with Serializable
+    //cc : AnyRef with Product with Serializable
     cc : java.lang.Object
   ) : /* Array[java.lang.reflect.Method] */ Array[java.lang.reflect.Field] = {
     // this is what you call a heuristic
@@ -676,7 +672,7 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
   }
 
   def caseClassNameSpace(
-    //cc : ScalaObject with Product with Serializable
+    //cc : AnyRef with Product with Serializable
     cc : java.lang.Object
   ) : String = {
     nameStrCleansing( cc.getClass.getName )
@@ -688,7 +684,7 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
     labelToNS : String => Namespace,
     valToTag : java.lang.Object => Tag
   )(
-    cc : ScalaObject with Product with Serializable
+    cc : AnyRef with Product with Serializable
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {    
     def fromCC(
       cc : java.lang.Object
@@ -702,7 +698,7 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
 	if ( cc.isInstanceOf[Option[_]] ) {
 	  cc match {
 	    case Some(
-	      thing : ScalaObject with Product with Serializable
+	      thing : AnyRef with Product with Serializable
 	    ) => {
 	      new CnxnCtxtBranch[Namespace,Var,Tag](
 		labelToNS( "some" ),
@@ -866,13 +862,13 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
     labelToNS : String => Namespace,
     valToTag : java.lang.Object => Tag
   )(
-    cc : ScalaObject with Product with Serializable
+    cc : AnyRef with Product with Serializable
   ) : CnxnCtxtLabel[Namespace,Var,Tag] with Factual = {
     fromCaseClass( ( m : java.lang.reflect.Method ) => true )( labelToNS, valToTag )( cc )
   }
 
   def fromCaseClass(
-    cc : ScalaObject with Product with Serializable
+    cc : AnyRef with Product with Serializable
   ) : CnxnCtxtLabel[String,String,String] with Factual = {    
     fromCaseClass [String,String,String] (
       ( x : String ) => x,
@@ -1044,83 +1040,48 @@ trait CnxnXML[Namespace,Var,Tag] extends CnxnString[Namespace,Var,Tag] {
   }  
 }
 
-trait CnxnScalesXML[Namespace,Var,Tag] {
-  self : CnxnXML[Namespace,Var,Tag] =>
+trait CnxnScalesXML[Namespace, Var, Tag] { self : CnxnXML[Namespace, Var, Tag] =>
 
-    import scales.xml.{
-      Doc => SXMLDoc, Namespace => SXMLNamespace, Elem => SXMLElem, Text => SXMLText, _
-    }
-    import scales.utils.{ Tree => SXMLTree, _ }
-    import ScalesUtils._
-    import ScalesXml._
-    import Functions._
+  import scales.xml.{Doc => SXMLDoc, Elem => SXMLElem, XmlItem, XCC, text}
+  import scales.utils.collection.{Tree => SXMLTree}
+  import scales.xml.ScalesXml._
 
-  def fromScalesXML( 
-    lbl2Namespace : String => Namespace,
-    text2Var : String => Var,
-    text2Tag : String => Tag
-  )(
-    doc : SXMLDoc
-  ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
-    val tree : SXMLTree[XmlItem,SXMLElem,XCC] = doc.rootElem
-    fromScalesXMLTree( lbl2Namespace, text2Var, text2Tag )( tree )
+  def fromScalesXML(lbl2Namespace: String => Namespace,
+                    text2Var: String => Var,
+                    text2Tag: String => Tag )(doc: SXMLDoc)
+      : Option[CnxnCtxtLabel[Namespace, Var, String] with Factual] = {
+    val tree: SXMLTree[XmlItem, SXMLElem, XCC] = doc.rootElem
+    fromScalesXMLTree(lbl2Namespace, text2Var, text2Tag)(tree)
   }
-  
-  def fromScalesXMLTree( 
-    lbl2Namespace : String => Namespace,
-    text2Var : String => Var,
-    text2Tag : String => Tag
-  )(
-    tree : SXMLTree[XmlItem,SXMLElem,XCC]
-  ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+
+  def fromScalesXMLTree(lbl2Namespace: String => Namespace,
+                        text2Var: String => Var,
+                        text2Tag: String => Tag )(tree: SXMLTree[XmlItem, SXMLElem, XCC])
+      : Option[CnxnCtxtLabel[Namespace, Var, String] with Factual] = {
     tree.section.name.qName match {
-      case "var" => {
-	Some(
-	  new CnxnCtxtLeaf[Namespace,Var,String](
-	    Right( text2Var( text( tree ) ) )
-	  )
-	)
-      }
-      case qName => {
-	val projeny =
-	  for {
-	    c <- tree.children.toList
-	    childVal <- 
-	    c.isRight match {
-	      case true => {
-		fromScalesXMLTree( lbl2Namespace, text2Var, text2Tag )( c.getRight )
-	      }
-	      case false => {
-		fromScalesXMLLeaf( lbl2Namespace, text2Var, text2Tag )( c.getLeft )
-	      }
-	    }
-	  }
-	  yield childVal
-	
-	Some( 
-	  new CnxnCtxtBranch[Namespace,Var,String](
-	    lbl2Namespace( qName ),
-	    projeny.toList
-	  )
-	)
-      }
+      case "var" =>
+        Some(new CnxnCtxtLeaf[Namespace, Var, String](Right(text2Var(text(tree)))))
+      case qName =>
+        val projeny: List[CnxnCtxtLabel[Namespace, Var, String] with Factual] = for {
+          c <- tree.children.toList
+          childVal <-
+          c.isRight match {
+            case true =>
+              fromScalesXMLTree( lbl2Namespace, text2Var, text2Tag )( c.getRight )
+            case false =>
+              fromScalesXMLLeaf( lbl2Namespace, text2Var, text2Tag )( c.getLeft )
+          }
+        } yield childVal
+        Some(new CnxnCtxtBranch[Namespace, Var, String](lbl2Namespace(qName), projeny.toList))
     }
-  }  
-
-  def fromScalesXMLLeaf( 
-    lbl2Namespace : String => Namespace,
-    text2Var : String => Var,
-    text2Tag : String => Tag
-  )(
-    elem : XmlItem
-  ) : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
-    Some(
-      new CnxnCtxtLeaf[Namespace,Var,String](
-	Left( elem.value )
-      )
-    )
   }
 
+  def fromScalesXMLLeaf(lbl2Namespace: String => Namespace,
+                        text2Var: String => Var,
+                        text2Tag: String => Tag)(elem : XmlItem)
+      : Option[CnxnCtxtLabel[Namespace,Var,String] with Factual] = {
+    Some(new CnxnCtxtLeaf[Namespace, Var, String](Left(elem.value)))
+  }
 }
 
 trait CnxnConversionScope[Namespace,Var,Tag] {
@@ -1178,7 +1139,7 @@ object CnxnConversionStringScope
   }
   
   implicit def asCnxnCtxtLabel(
-    cc : ScalaObject with Product with Serializable
+    cc : AnyRef with Product with Serializable
   ) : CnxnCtxtLabel[String,String,String] with Factual = {        
     cnxnConversions.fromCaseClass( l2ns, v2t )( cc )
   }
