@@ -8,7 +8,7 @@ lazy val commonsPoolVersion = "1.6"
 lazy val configVersion      = "1.0.0"
 lazy val casbahVersion      = "3.1.1"
 lazy val persistenceVersion = "1.0"
-lazy val jettisonVersion    = "1.3.3"
+lazy val jettisonVersion    = "1.3.8"
 lazy val jettyVersion       = "8.0.4.v20111024"
 lazy val json4sVersion      = "3.4.1"
 lazy val log4jVersion       = "1.2.17"
@@ -18,7 +18,7 @@ lazy val scalesXmlVersion   = "0.6.0-M3"
 lazy val slf4jVersion       = "1.7.21"
 lazy val sprayVersion       = "1.3.3"
 lazy val tuprologVersion    = "2.1.1"
-lazy val xstreamVersion     = "1.4.4"
+lazy val xstreamVersion     = "1.4.9"
 
 lazy val commonOptions = Seq(
   // =========================================
