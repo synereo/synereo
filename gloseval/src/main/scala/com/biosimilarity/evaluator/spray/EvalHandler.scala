@@ -24,7 +24,6 @@ import org.json4s.{BuildInfo => _, _}
 import org.json4s.native.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL.{symbol2jvalue => _, _}
-
 import javax.crypto._
 import javax.crypto.spec._
 import java.security._
@@ -2396,17 +2395,15 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       List(capSelfCnxn),
       (optRsrc: Option[mTT.Resource]) => {
         BasicLogService.tweet("createNodeUser | onRead: optRsrc = " + optRsrc)
-
         optRsrc match {
           // colocated
-          case Some(mTT.Ground(Bottom)) => {
+          case Some(mTT.Ground(Bottom)) =>
             handleRsp()
-          }
           // distributed
-          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
+          case Some(mTT.RBoundHM(Some(mTT.Ground(ConcreteHL.Bottom)), _)) =>
             handleRsp()
-          }
-          case _ => ()
+          case _ =>
+            ()
         }
       })
   }
