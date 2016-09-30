@@ -685,7 +685,7 @@ with Serializable {
  * Basic ctor is the setup method
  * -------------------------------------------------------------------------- */
 
-  def setup[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+  def setupOne[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
     localHost : String, localPort : Int,
     remoteHost : String, remotePort : Int
   )(
@@ -740,7 +740,7 @@ with Serializable {
   ) : List[Either[EvaluationRequestChannel[ReqBody,RspBody],(EvaluationRequestChannel[ReqBody,RspBody],EvaluationRequestChannel[ReqBody,RspBody])]] = {
     for( ( remoteHost, remotePort ) <- remoteHostsNPorts )
     yield {
-      setup[ReqBody,RspBody](
+      setupOne[ReqBody,RspBody](
 	localHost, localPort, remoteHost, remotePort
       )( returnTwist, flip )
     }
@@ -755,7 +755,7 @@ with Serializable {
     remoteHost : String = clientHostName, remotePort : Int = clientPort
   )( flip : Boolean = false ) : EvaluationRequestChannel[ReqBody,RspBody] = {
     val Left( client ) =
-      setup[ReqBody,RspBody]( localHost, localPort, remoteHost, remotePort )( false, flip )
+      setupOne[ReqBody,RspBody](localHost, localPort, remoteHost, remotePort )(false, flip )
     client
   }
 
@@ -778,7 +778,7 @@ with Serializable {
     remoteHost : String = clientHostName, remotePort : Int = clientPort
   ) : ( EvaluationRequestChannel[ReqBody,RspBody], EvaluationRequestChannel[ReqBody,RspBody] ) = {
     val Right( ( client, server ) ) =
-      setup[ReqBody,RspBody]( localHost, localPort, remoteHost, remotePort )( true )
+      setupOne[ReqBody,RspBody](localHost, localPort, remoteHost, remotePort )(true )
     ( client, server )
   }
 
@@ -801,7 +801,7 @@ with Serializable {
     remoteHost : String = clientHostName, remotePort : Int = clientPort
   )( flip : Boolean = false ) : StdEvaluationRequestChannel = {
     val Left( client ) =
-      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
+      setupOne[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](
         localHost, localPort, remoteHost, remotePort
       )( false, flip )
     client
@@ -826,7 +826,7 @@ with Serializable {
     remoteHost : String = clientHostName, remotePort : Int = clientPort
   ) : ( StdEvaluationRequestChannel, StdEvaluationRequestChannel ) = {
     val Right( ( client, server ) ) =
-      setup[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse]( localHost, localPort, remoteHost, remotePort )( true )
+      setupOne[PersistedKVDBNodeRequest,PersistedKVDBNodeResponse](localHost, localPort, remoteHost, remotePort )(true )
     ( client, server )
   }
 
