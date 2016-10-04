@@ -140,13 +140,11 @@ trait AgentCRUDSchema {
     )    
   }
 
-  def aliasFromSession(
-    sessionURI: URI
-  ) : URI = {
+  def aliasFromSession(sessionURI: URI, alias: String = "alias" ) : URI = {
     new URI(
       "alias",
       sessionURI.getHost(),
-      "/alias",
+      "/$alias",
       null
     )    
   }

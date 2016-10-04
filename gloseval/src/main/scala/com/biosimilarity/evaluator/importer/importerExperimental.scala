@@ -42,6 +42,7 @@ class Importer {
   private val cnxnLabels = scala.collection.mutable.Map[String, String]()
 
   private val labels = scala.collection.mutable.Map[String, LabelDesc]()
+  private val defaultAlias = "alias"
 
   private def resolveLabel(id: String): LabelDesc = labels(id)
 
@@ -75,7 +76,7 @@ class Importer {
     response
   }
 
-  def makeAliasURI(alias: String) = s"alias://$alias/alias"
+  def makeAliasURI(id: String, alias: String) = s"alias://$id/$alias"
 
   //private def makeAliasLabel(label: String, color: String) = s"""leaf(text("${label}"),display(color("${color}"),image("")))"""
 
@@ -280,9 +281,9 @@ class Importer {
   def makeCnxn(sessionId: String, connection: ConnectionDesc): Unit = {
     try {
       val sourceId = agentsById(connection.src.replace("agent://", ""))
-      val sourceURI = makeAliasURI(sourceId)
+      val sourceURI = makeAliasURI(sourceId,defaultAlias)
       val targetId = agentsById(connection.trgt.replace("agent://", ""))
-      val targetURI = makeAliasURI(targetId)
+      val targetURI = makeAliasURI(targetId,defaultAlias)
       val cnxnLabel = UUID.randomUUID().toString
 
       if (!cnxnLabels.contains(sourceId + targetId)) {
@@ -300,7 +301,7 @@ class Importer {
       var cnxns: List[Connection] = Nil
 
       val sourceId = agentsById(post.src)
-      val sourceAlias = makeAliasURI(sourceId)
+      val sourceAlias = makeAliasURI(sourceId, defaultAlias)
       val sourceSession = sessionsById(post.src)
 
       val selfcnxn = Connection("agent://" + sourceId, "agent://" + sourceId, "alias")
@@ -309,7 +310,7 @@ class Importer {
       post.trgts.foreach(trgt => {
         val targetId = agentsById(trgt)
         val lbl = cnxnLabels(sourceId + targetId)
-        val trgtAlias = makeAliasURI(agentsById(trgt))
+        val trgtAlias = makeAliasURI(agentsById(trgt), defaultAlias)
         cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
       })
 
@@ -578,5 +579,10 @@ object Importer {
     println("Import file returning : " + rslt)
     if (rslt == 0) imp.printStats()
     rslt
+  }
+
+  def fromTest(testFileName: String) : Int = {
+    val fnm = s"src/test/resources/importer/${testFileName}.json"
+    fromFile(new File(fnm))
   }
 }

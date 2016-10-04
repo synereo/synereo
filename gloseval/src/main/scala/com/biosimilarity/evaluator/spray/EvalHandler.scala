@@ -185,17 +185,9 @@ trait CapUtilities {
     PortableAgentCnxn(capURI, "identity", capURI)
   }
 
-  //def splEmail(email: String): String = {
-  //  val spliciousBTCWalletCap =
-  //    emailToCap(email)
-  //  spliciousBTCWalletCap + "@splicious.net"
-  //}
-
-  def pw(email: String, password: String): String = {
-    throw new Exception("not implemented")
-    //val spliciousEmail = splEmail(email)
-    //val spliciousBTCWalletCap = spliciousEmail.split("@")(0)
-    //emailToCap(spliciousBTCWalletCap + password + "@splicious.net")
+  def getAliasCnxn(sessionURI: String, alias: String = "alias") : PortableAgentCnxn = {
+    val agentURI : URI = capToAgentURI( capFromSession( sessionURI ) )
+    PortableAgentCnxn( agentURI, alias, agentURI )
   }
 
   def capToAgent(cap : String) : String = {
@@ -566,8 +558,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
   def establishConnectionRequest(json: JValue): Unit = {
     val sessionURI = (json \ "sessionURI").extract[String]
-    val aURI = new URI((json \ "aURI").extract[String])
-    val bURI = new URI((json \ "bURI").extract[String])
+    val aURI = (json \ "aURI").extract[String]
+    val bURI = (json \ "bURI").extract[String]
     val label = (json \ "label").extract[String]
     establishConnection(sessionURI, aURI, bURI, label)
 
@@ -1256,9 +1248,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def establishConnection(sessionURI : String, aURI : URI, bURI : URI, cnxnLabel : String) = {
-    val aAliasCnxn = PortableAgentCnxn(aURI,"alias",aURI)
-    val bAliasCnxn = PortableAgentCnxn(bURI,"alias",bURI)
+  def establishConnection(sessionURI: String, src: String, tgt: String, cnxnLabel: String) = {
+    val aURI: URI = new URI(src)
+    val bURI: URI = new URI(tgt)
+    val aAliasCnxn = getAliasCnxn(src)
+    val bAliasCnxn = getAliasCnxn(tgt)
     val aCnxn = PortableAgentCnxn(aURI, cnxnLabel, bURI)
     val bCnxn = PortableAgentCnxn(bURI, cnxnLabel, aURI)
     val aBiCnxn = PortableAgentBiCnxn(bCnxn, aCnxn)
@@ -1427,16 +1421,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   def getConnectionProfiles(jv : JValue) : Unit = {
     val sessionURI = (jv \ "sessionURI").extract[String]
-    val cap = capFromSession(sessionURI)
-    val capURI = capToAgentURI(cap)
-    val capSelfCnxn = getCapSelfCnxn(cap)
-
+    val alias = (jv \ "alias").extractOpt[String] match {
+      case Some(s) => s
+      case None => "alias"
+    }
     val onConnectionsFetch : Option[mTT.Resource] => Unit = (optRsrc) => {
       def handleRsp(v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(biCnxnList: String), _, _, _)) => {
             val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
-            fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
+            fetchAndSendConnectionProfiles(sessionURI, alias, biCnxnListObj)
           }
           case Bottom => {
             SessionManager.cometMessage(sessionURI, compact(render(
@@ -1465,44 +1459,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         }
       }
     }
-    val onDefaultAliasFetch : Option[mTT.Resource] => Unit = (optRsrc) => {
-      def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
-        v match {
-          case PostedExpr((PostedExpr(defaultAlias: String), _, _, _)) => {
-            val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
-            fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch)
-          }
-          case Bottom => {
-            SessionManager.cometMessage(sessionURI, compact(render(
-              ("msgType" -> "getConnectionProfilesError") ~
-                ("content" -> ("reason" -> "Strange: found other data but not default alias!?")))))
-          }
-          case _ => {
-            SessionManager.cometMessage(sessionURI, compact(render(
-              ("msgType" -> "getConnectionProfilesError") ~
-                ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
-          }
-        }
-      }
-      optRsrc match {
-        case None => ();
-        case Some(mTT.Ground(v)) => {
-          handleRsp(optRsrc, v)
-        }
-        case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
-          handleRsp(optRsrc, v)
-        }
-        case _ => {
-          SessionManager.cometMessage(sessionURI, compact(render(
-            ("msgType" -> "getConnectionProfilesError") ~
-              ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
-        }
-      }
-    }
-    fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch)
+    val aliasCnxn = getAliasCnxn(sessionURI, alias)
+    fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch)
   }
 
-  def fetchAndSendConnectionProfiles(sessionURI : String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
+  def fetchAndSendConnectionProfiles(sessionURI: String, alias: String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
     val actor = SessionManager.getChunkingActor(sessionURI, biCnxnListObj.length)
 
     biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
@@ -1609,7 +1570,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("content" -> content))))
 
                     SessionManager.startSession(sessionURI)  // register the session
-                    fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
+                    fetchAndSendConnectionProfiles(sessionURI, defaultAlias, biCnxnListObj)
 
                   }
                   case Bottom => {
@@ -1636,7 +1597,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             }
             def onConnectionsFetch(jsonBlob: String, aliasList: String, defaultAlias: String): Option[mTT.Resource] => Unit = (optRsrc) => {
               BasicLogService.tweet("secureLogin | login | onPwmacFetch | onConnectionsFetch: optRsrc = " + optRsrc)
-              val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+              val aliasCnxn = getAliasCnxn(capURI.toString, defaultAlias)
               def handleRsp(v: ConcreteHL.HLExpr): Unit = {
                 v match {
                   case PostedExpr((PostedExpr(biCnxnList: String), _, _, _)) => {
@@ -2897,7 +2858,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         def handleRsp(v: ConcreteHL.HLExpr): Unit = {
           v match {
             case PostedExpr((PostedExpr(labelList: String), _, _, _)) => {
-              val aliasCnxn = PortableAgentCnxn(capURI, defaultAlias, capURI)
+              val aliasCnxn = getAliasCnxn(capURI.toString, defaultAlias)
               listenIntroductionNotification(sessionURI, aliasCnxn)
               listenConnectNotification(sessionURI, aliasCnxn)
 
@@ -2918,7 +2879,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   ("content" -> content))))
 
               SessionManager.startSession(sessionURI)  // register the session
-              fetchAndSendConnectionProfiles(sessionURI, biCnxnListObj)
+              fetchAndSendConnectionProfiles(sessionURI, defaultAlias, biCnxnListObj)
 
             }
             case Bottom => {

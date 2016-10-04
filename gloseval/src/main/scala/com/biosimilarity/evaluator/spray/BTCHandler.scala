@@ -198,7 +198,7 @@ trait BTCHandler extends BTCHandlerSchema with CapUtilities {
           // issue payment from the supporter
           val mopd =
             MakeOutgoingPaymentData(
-              pw( msg.cnxn.toString, "" ), // BUGBUG : lgm -- this
+              "no-eyed deer" , // BUGBUG : lgm -- this
                                            // should be the email, or
                                            // we should store and
                                            // retrieve it

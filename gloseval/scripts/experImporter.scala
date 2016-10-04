@@ -1,9 +1,11 @@
-import com.biosimilarity.evaluator.importerExperimental.Importer
-import com.biosimilarity.evaluator.spray.util._
+//import com.biosimilarity.evaluator.importerExperimental.Importer
+import com.biosimilarity.evaluator.importer.Importer
+import com.biosimilarity.evaluator.util._
 
 resetMongo()
 com.biosimilarity.evaluator.spray.Boot.main(new Array[String](0))
 Thread.sleep(3000)  // allow it to 'warm up'
-Importer.fromFile()
+Importer.fromTest("zeroToTen")
+//Importer.fromTest("singlePost")
 
 

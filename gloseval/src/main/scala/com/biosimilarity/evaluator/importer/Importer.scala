@@ -430,4 +430,10 @@ object Importer {
     println("Import file returning : " + rslt)
     rslt
   }
+
+  def fromTest(testFileName: String) : Int = {
+    val fnm = s"src/test/resources/importer/${testFileName}.json"
+    fromFile(new File(fnm))
+  }
+
 }
