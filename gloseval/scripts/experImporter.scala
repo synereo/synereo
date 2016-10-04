@@ -1,5 +1,5 @@
-//import com.biosimilarity.evaluator.importerExperimental.Importer
-import com.biosimilarity.evaluator.importer.Importer
+import com.biosimilarity.evaluator.importerExperimental.Importer
+//import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.util._
 
 resetMongo()

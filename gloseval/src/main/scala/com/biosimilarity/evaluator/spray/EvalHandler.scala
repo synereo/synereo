@@ -1421,11 +1421,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
   def getConnectionProfiles(jv : JValue) : Unit = {
     val sessionURI = (jv \ "sessionURI").extract[String]
-    val alias = (jv \ "alias").extractOpt[String] match {
-      case Some(s) => s
-      case None => "alias"
-    }
-    val onConnectionsFetch : Option[mTT.Resource] => Unit = (optRsrc) => {
+    def onConnectionsFetch(alias: String): Option[mTT.Resource] => Unit = (optRsrc) => {
       def handleRsp(v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(biCnxnList: String), _, _, _)) => {
@@ -1459,8 +1455,48 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         }
       }
     }
-    val aliasCnxn = getAliasCnxn(sessionURI, alias)
-    fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch)
+    (jv \ "alias").extractOpt[String] match {
+      case Some(alias) =>
+        val aliasCnxn = getAliasCnxn(sessionURI, alias)
+        fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(alias))
+      case None =>
+        val onDefaultAliasFetch: Option[mTT.Resource] => Unit = (optRsrc) => {
+          def handleRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
+            v match {
+              case PostedExpr((PostedExpr(defaultAlias: String), _, _, _)) => {
+                val aliasCnxn = getAliasCnxn(sessionURI, defaultAlias)
+                fetch(biCnxnsListLabel, List(aliasCnxn), onConnectionsFetch(defaultAlias))
+              }
+              case Bottom => {
+                SessionManager.cometMessage(sessionURI, compact(render(
+                  ("msgType" -> "getConnectionProfilesError") ~
+                    ("content" -> ("reason" -> "Strange: found other data but not default alias!?")))))
+              }
+              case _ => {
+                SessionManager.cometMessage(sessionURI, compact(render(
+                  ("msgType" -> "getConnectionProfilesError") ~
+                    ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+              }
+            }
+          }
+          optRsrc match {
+            case None => ();
+            case Some(mTT.Ground(v)) => {
+              handleRsp(optRsrc, v)
+            }
+            case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+              handleRsp(optRsrc, v)
+            }
+            case _ => {
+              SessionManager.cometMessage(sessionURI, compact(render(
+                ("msgType" -> "getConnectionProfilesError") ~
+                  ("content" -> ("reason" -> ("Unrecognized resource: optRsrc = " + optRsrc))))))
+            }
+          }
+        }
+        val capSelfCnxn = getCapSelfCnxn(capFromSession(sessionURI))
+        fetch(defaultAliasLabel, List(capSelfCnxn), onDefaultAliasFetch)
+    }
   }
 
   def fetchAndSendConnectionProfiles(sessionURI: String, alias: String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
