@@ -66,7 +66,7 @@ lazy val commonSettings = Seq(
         "org.scala-lang"          % "scala-reflect"               % scalaVersion.value,
         "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.2",
         // https://github.com/json4s/json4s/issues/108
-        "org.scala-lang" % "scalap"        % scalaVersion.value) ++
+        "org.scala-lang"          % "scalap"                      % scalaVersion.value) ++
     commonDeps)
 
 lazy val specialkDeps = Seq(
