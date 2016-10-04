@@ -144,7 +144,7 @@ trait AgentCRUDSchema {
     new URI(
       "alias",
       sessionURI.getHost(),
-      "/$alias",
+      s"/$alias",
       null
     )    
   }
