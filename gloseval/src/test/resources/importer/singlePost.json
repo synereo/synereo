@@ -3,12 +3,12 @@
     "id": "Alice",
     "email": "alice@livelygig.com",
     "pwd": "a",
-    "jsonBlob": "{\"name\" : \"Alice\"}"
+    "jsonBlob": "{\"name\" : \"Alice\", \"imgSrc\" : \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAw9pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDIxIDc5LjE1NDkxMSwgMjAxMy8xMC8yOS0xMTo0NzoxNiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RDEzQUFCNUMwMjlFMTFFNkE2QkRGOENGOTgzOTk0OEMiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RDEzQUFCNUIwMjlFMTFFNkE2QkRGOENGOTgzOTk0OEMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIFdpbmRvd3MiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0iMzdFQ0EyRkZCRDQyNkZGNDI3Mzg3ODFGN0IzRjQzODYiIHN0UmVmOmRvY3VtZW50SUQ9IjM3RUNBMkZGQkQ0MjZGRjQyNzM4NzgxRjdCM0Y0Mzg2Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+IRPYLwAAAAZQTFRF5n8j////rMEQjAAAAFNJREFUeNqk0ssKACAIRNHr//90EFImY/SwXYcZXIiVwzfRnyAHVAorUiOEKkyNLLI0nq5Bkao33KQYk8g/sYDkzDSUBAJl94QTT2RX9H5sTYABANFGAcZAvppzAAAAAElFTkSuQmCC\"}"
   }, {
     "id": "Bob",
     "email": "bob@livelygig.com",
     "pwd": "b",
-    "jsonBlob": "{\"name\" : \"Bob\"}"
+    "jsonBlob": "{\"name\" : \"Bob\",  \"imgSrc\" : \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAMAAACelLz8AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAw9pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDIxIDc5LjE1NDkxMSwgMjAxMy8xMC8yOS0xMTo0NzoxNiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RDEzQUFCNUMwMjlFMTFFNkE2QkRGOENGOTgzOTk0OEMiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RDEzQUFCNUIwMjlFMTFFNkE2QkRGOENGOTgzOTk0OEMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIFdpbmRvd3MiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0iMzdFQ0EyRkZCRDQyNkZGNDI3Mzg3ODFGN0IzRjQzODYiIHN0UmVmOmRvY3VtZW50SUQ9IjM3RUNBMkZGQkQ0MjZGRjQyNzM4NzgxRjdCM0Y0Mzg2Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+IRPYLwAAAAZQTFRF5n8j////rMEQjAAAAFNJREFUeNqk0ssKACAIRNHr//90EFImY/SwXYcZXIiVwzfRnyAHVAorUiOEKkyNLLI0nq5Bkao33KQYk8g/sYDkzDSUBAJl94QTT2RX9H5sTYABANFGAcZAvppzAAAAAElFTkSuQmCC\"}"
   }],
   "cnxns": [{
     "src": "Alice",
@@ -17,8 +17,8 @@
   "posts": [{
     "src": "Alice",
     "trgts": ["Bob"],
-    "label": "each([Bitcoin],[PROJECTPOSTLABEL])",
-    "uid": "58bbeb44-3b4c-4c0c-bda8-2c99c3178e6e",
-    "value": "{\"$type\":\"shared.models.MessagePost\",\"uid\" : \"58bbeb44-3b4c-4c0c-bda8-2c99c3178e6e\", \"created\" : \"2002-05-30T09:30:10Z\", \"modified\" : \"2002-05-30T09:30:10Z\", \"messagePostContent\": {\"$type\":\"shared.models.MessagePostContent\",\"versionedPostId\" : \"35e60447-747e-496a-afde-65ca182db1c8\", \"versionedPostPredecessorId\" : \"\", \"versionNumber\" : \"1\", \"canForward\" : true, \"text\" : \"this is a subject for the message\",\"subject\" : \"this is a message\"}}"
+    "label": "each([Bitcoin],[MESSAGEPOSTLABEL])",
+    "uid": "58bbeb-443b4c4c0cbda82c99c3178e6e",
+    "value": "{\"$type\":\"shared.models.MessagePost\",\"uid\" : \"58bbeb-443b4c4c0cbda82c99c3178e6e\", \"created\" : \"2002-05-30T09:30:10Z\", \"modified\" : \"2002-05-30T09:30:10Z\", \"connections\":[{}], \"postContent\": {\"$type\":\"shared.models.MessagePostContent\",\"versionedPostId\" : \"35e60447-747e-496a-afde-65ca182db1c8\", \"versionedPostPredecessorId\" : \"\", \"versionNumber\" : \"1\", \"canForward\" : true, \"text\" : \"this is a subject for the message\",\"subject\" : \"this is a message\"}}"
   }]
 }
