@@ -11,27 +11,17 @@ See [*SpecialK/KVDB – A Pattern Language for the Web*](http://blog.synereo.com
 
 To work with SpecialK you will need:
 
-* [MongoDB](https://www.mongodb.com/), version 2.6.12 (also tested with version 2.4.14)
+* [MongoDB](https://www.mongodb.com/), version 2.6.12 (also tested with version 2.4.14, 3.2.9)
   * available at https://www.mongodb.com/download-center (go to "Previous Releases")
 * [Erlang](https://www.erlang.org/), version 15B03 (also tested with version R14B04) (required to run RabbitMQ)
   * available at https://www.erlang-solutions.com/resources/download.html
 * [RabbitMQ](http://www.rabbitmq.com/), version 3.0.2 (also tested with version 2.7.1)
   * available at http://www.rabbitmq.com/download.html (go to "Older Versions")
-* Java Development Kit (JDK), version 7
-  * available at http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
+* Java Development Kit (JDK), version 8 (also tested with version 7)
+  * available at http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/download.html
-
-### Why can't I use newer versions?
-
-Short answer: it may be possible!
-
-In the case of MongoDB, SpecialK currently uses version 2.6.4 of [Casbah](http://mongodb.github.io/casbah/).  According to the MongoDB [compatibility chart](https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#scala-driver-compatibility), this version of Casbah is only supported for use with MongoDB 2.4.x, though we are successfully using it with version 2.6.x.
-
-In the case of Erlang & RabbitMQ, we encourage all those motivated to try newer versions, and welcome reports of successes or failures!
-
-In the case of the JDK, we have experienced issues with version 8 related to our use of [prolog4j](https://github.com/espakm/prolog4j).  See [SOC-101](https://synereo.atlassian.net/browse/SOC-101) for more information.
 
 ## Usage
 

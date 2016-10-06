@@ -8,21 +8,17 @@ Backend for the Synereo Social Platform.
 
 To work with GLoSEval you will need:
 
-* [MongoDB](https://www.mongodb.com/), version 2.6.12 (also tested with version 2.4.14)
+* [MongoDB](https://www.mongodb.com/), version 2.6.12 (also tested with version 2.4.14, 3.2.9)
   * available at https://www.mongodb.com/download-center (go to "Previous Releases")
 * [Erlang](https://www.erlang.org/), version 15B03 (also tested with version R14B04) (required to run RabbitMQ)
   * available at https://www.erlang-solutions.com/resources/download.html
 * [RabbitMQ](http://www.rabbitmq.com/), version 3.0.2 (also tested with version 2.7.1)
   * available at http://www.rabbitmq.com/download.html (go to "Older Versions")
-* Java Development Kit (JDK), version 7
-  * available at http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
+* Java Development Kit (JDK), version 8 (also tested with version 7)
+  * available at http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/download.html
-
-### Why can't I use newer versions?
-
-See note [here](../specialk/README.md#why-cant-i-use-newer-versions).
 
 ## Issues
 
