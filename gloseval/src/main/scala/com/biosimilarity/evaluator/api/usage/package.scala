@@ -9,10 +9,13 @@ import com.biosimilarity.evaluator.distribution.{EvalConfigWrapper => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.Server
 import com.biosimilarity.evaluator.spray.client.ApiClient
+import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.JsonMethods._
+import org.slf4j.{Logger, LoggerFactory}
 import spray.can.Http
+import spray.http.Uri
 
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,6 +27,8 @@ package object usage extends ApiClient {
 
   implicit val timeout: Timeout = Timeout(FiniteDuration(15, SECONDS))
   implicit val ec               = system.dispatcher
+
+  val logger: Logger = LoggerFactory.getLogger(classOf[ApiClient])
 
   private var serverInstance: Option[Server] = None
 
@@ -55,9 +60,10 @@ package object usage extends ApiClient {
     serverInstance = None
   }
 
-  private def printQueryResponses(hc: ActorRef, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout): Future[Unit] =
+  private def printQueryResponses(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext,
+                                                                                  timeout: Timeout): Future[Unit] =
     Future {
-      new Pingerator(hc, sessionUri).foreach { (curr: JArray) =>
+      new Pingerator(hc, uri, sessionUri).foreach { (curr: JArray) =>
         val posts: List[String] = (curr \ "content" \ "pageOfPosts").extract[List[String]]
         println(s"""|
                     |>>>>>>>>>
@@ -78,11 +84,12 @@ package object usage extends ApiClient {
 
   def queryOnSelf(email: String, password: String, query: String): Unit = {
     val eventualQueryResponse: Future[Unit] = for {
-      hc  <- eventualHostConnector(system)
-      isr <- openSRPSession(hc, email, password)
-      u   <- spawnSession(hc, isr.sessionURI)
-      _   <- makeQueryOnSelf(hc, u, query)
-      _   <- printQueryResponses(hc, u)
+      uri <- Future(Uri("https://localhost:9876/api"))
+      hc  <- eventualHostConnector(system, uri.effectivePort, clientSSLEngineProvider)
+      isr <- openSRPSession(hc, uri, email, password)
+      u   <- spawnSession(hc, uri, isr.sessionURI)
+      _   <- makeQueryOnSelf(hc, uri, u, query)
+      _   <- printQueryResponses(hc, uri, u)
       _   <- hc.ask(Http.CloseAll)(timeout)
     } yield ()
     eventualQueryResponse.onComplete {

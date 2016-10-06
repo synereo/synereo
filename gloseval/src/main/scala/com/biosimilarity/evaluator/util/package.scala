@@ -37,6 +37,7 @@ package object util {
       val pattern = """(?m)^db version v(\S+)$""".r
       pattern.findFirstIn(s) match {
         case Some(pattern(version)) => version
+        case None => "unknown"
       }
     }
 

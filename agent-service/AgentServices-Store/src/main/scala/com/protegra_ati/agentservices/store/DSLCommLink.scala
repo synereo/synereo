@@ -533,16 +533,15 @@ trait DSLCommLinkConfiguration {
       case e : Throwable => 5672
     }
   }
+  // TODO: refactor, find another place where Rabbit defaults are defined use them
   def clientHostsNPorts() : List[(String,Int)] = {
     try {
-      val configObject: List[String] = evalConfig().getStringList("DSLCommLinkClientHosts").toList
-      configObject.map { (s: String) =>
+      evalConfig().getString("DSLCommLinkClientHosts").split(',').toList.map { (s: String) =>
         val uri = new URI("unused://" + s)
-        // TODO: find another place where Rabbit defaults are defined use them
         val host: String = Option(uri.getHost).getOrElse("localhost")
-        val port: Int    = {
-          val u = uri.getPort
-          if (u == -1) 5672 else u
+        val port: Int    = uri.getPort match {
+          case -1 => 5672
+          case x  => x
         }
         (host, port)
       }
