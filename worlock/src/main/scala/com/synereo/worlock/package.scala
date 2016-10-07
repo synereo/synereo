@@ -17,7 +17,7 @@ import scala.util.Try
 
 package object worlock {
 
-  val logger: Logger = LoggerFactory.getLogger(classOf[Container])
+  val logger: Logger = LoggerFactory.getLogger("worlock")
 
   val defaultDockerClientConfig: DefaultDockerClientConfig =
     DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost("tcp://localhost:2376").build()
