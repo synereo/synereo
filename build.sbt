@@ -187,22 +187,23 @@ lazy val glosevalDockerSettings = Seq(
     (stage in Docker).value
   },
   dockerCommands := {
-    val localhostIpAddress = "127.0.0.1"
-    val localhostRabbitPort = "5672"
+    val ip = "127.0.0.1"
+    val port = "5672"
     Seq(
       Cmd("FROM", "synereo/base"),
-      Cmd("ENV", "DEPLOYMENT_MODE=colocated"),
-      Cmd("ENV", s"DSL_COMM_LINK_CLIENT_HOSTS=$localhostIpAddress:$localhostRabbitPort"),
-      Cmd("ENV", s"DSL_EVALUATOR_HOST=$localhostIpAddress"),
-      Cmd("ENV", s"DSL_EVALUATOR_PORT=$localhostRabbitPort"),
-      Cmd("ENV", s"DSL_EVALUATOR_PREFERRED_SUPPLIER_HOST=$localhostIpAddress"),
-      Cmd("ENV", s"DSL_EVALUATOR_PREFERRED_SUPPLIER_PORT=$localhostRabbitPort"),
-      Cmd("ENV", s"BFACTORY_COMM_LINK_SERVER_HOST=$localhostIpAddress"),
-      Cmd("ENV", s"BFACTORY_COMM_LINK_SERVER_PORT=$localhostRabbitPort"),
-      Cmd("ENV", s"BFACTORY_COMM_LINK_CLIENT_HOST=$localhostIpAddress"),
-      Cmd("ENV", s"BFACTORY_COMM_LINK_CLIENT_PORT=$localhostRabbitPort"),
-      Cmd("ENV", s"BFACTORY_EVALUATOR_HOST=$localhostIpAddress"),
-      Cmd("ENV", s"BFACTORY_EVALUATOR_PORT=$localhostRabbitPort"),
+      Cmd("ENV",
+        "DEPLOYMENT_MODE=colocated",
+        s"DSL_COMM_LINK_CLIENT_HOSTS=$ip:$port",
+        s"DSL_EVALUATOR_HOST=$ip",
+        s"DSL_EVALUATOR_PORT=$port",
+        s"DSL_EVALUATOR_PREFERRED_SUPPLIER_HOST=$ip",
+        s"DSL_EVALUATOR_PREFERRED_SUPPLIER_PORT=$port",
+        s"BFACTORY_COMM_LINK_SERVER_HOST=$ip",
+        s"BFACTORY_COMM_LINK_SERVER_PORT=$port",
+        s"BFACTORY_COMM_LINK_CLIENT_HOST=$ip",
+        s"BFACTORY_COMM_LINK_CLIENT_PORT=$port",
+        s"BFACTORY_EVALUATOR_HOST=$ip",
+        s"BFACTORY_EVALUATOR_PORT=$port"),
       Cmd("WORKDIR", "/opt/docker"),
       Cmd("ADD", "opt", "/opt"),
       Cmd("USER", "root"),
