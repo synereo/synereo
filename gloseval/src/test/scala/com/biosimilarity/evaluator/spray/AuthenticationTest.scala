@@ -1,6 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.util._
 import org.json4s._
@@ -48,7 +48,7 @@ class AuthenticationTest extends WordSpec with BeforeAndAfterAll with MustMatche
 
   var serverInstance: Option[Server] = None
 
-  val httpsUri: Uri = Uri("/api").withScheme("https").withPort(EvalConfConfig.serverSSLPort)
+  val httpsUri: Uri = Uri("/api").withScheme("https").withPort(EvalConfigWrapper.serverSSLPort)
 
   override def beforeAll(): Unit = {
     resetMongo()

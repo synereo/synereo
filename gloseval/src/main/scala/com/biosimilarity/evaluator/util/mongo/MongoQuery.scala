@@ -1,6 +1,6 @@
 package com.biosimilarity.evaluator.util.mongo
 
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.MongoClientURI
 import org.json4s.{JArray, JString}
@@ -8,8 +8,8 @@ import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.jackson.JsonMethods._
 
 object MongoQuery {
-  val defaultHost = EvalConfConfig.readStringOrElse("dbHost", "localhost")
-  val defaultPort = EvalConfConfig.readStringOrElse("dbPort", "27017")
+  val defaultHost = EvalConfigWrapper.readStringOrElse("dbHost", "localhost")
+  val defaultPort = EvalConfigWrapper.readStringOrElse("dbPort", "27017")
 }
 
 case class AliasCnxnContent(posts: List[JArray], labels: List[String], cnxns: List[JObject], errs: List[(JValue,Throwable)])

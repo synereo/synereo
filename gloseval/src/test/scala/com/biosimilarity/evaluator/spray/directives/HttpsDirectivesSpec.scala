@@ -1,6 +1,6 @@
 package com.biosimilarity.evaluator.spray.directives
 
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.spray.directives.HttpsDirectives.StrictTransportSecurity
 import org.scalatest.{Matchers, WordSpec}
 import spray.http.{HttpHeaders, StatusCodes, Uri}
@@ -10,8 +10,8 @@ import spray.testkit.ScalatestRouteTest
 
 class HttpsDirectivesSpec extends WordSpec with HttpsDirectives with ScalatestRouteTest with Matchers {
 
-  val httpUri: Uri  = Uri("http://alpha.synereo.com/api").withPort(EvalConfConfig.serverPort)
-  val httpsUri: Uri = httpUri.withScheme("https").withPort(EvalConfConfig.serverSSLPort)
+  val httpUri: Uri  = Uri("http://alpha.synereo.com/api").withPort(EvalConfigWrapper.serverPort)
+  val httpsUri: Uri = httpUri.withScheme("https").withPort(EvalConfigWrapper.serverSSLPort)
 
   "The requireHttps directive" should {
 

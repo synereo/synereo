@@ -5,7 +5,7 @@ import java.io.File
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.biosimilarity.evaluator.distribution.{EvalConfConfig => Config}
+import com.biosimilarity.evaluator.distribution.{EvalConfigWrapper => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.Server
 import com.biosimilarity.evaluator.spray.client.ApiClient

@@ -1,6 +1,6 @@
 package com.biosimilarity.evaluator.spray.directives
 
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import spray.http.{HttpHeader, HttpHeaders, StatusCodes, Uri}
 import spray.routing.Directives._
 import spray.routing.{Directive0, RequestContext}
@@ -10,7 +10,7 @@ trait HttpsDirectives {
   import HttpsDirectives._
 
   def redirectToHttps: Directive0 = requestUri.flatMap { (uri: Uri) =>
-    redirect(uri.withScheme("https").withPort(EvalConfConfig.serverSSLPort), StatusCodes.MovedPermanently)
+    redirect(uri.withScheme("https").withPort(EvalConfigWrapper.serverSSLPort), StatusCodes.MovedPermanently)
   }
 
   def requireHttps: Directive0 =

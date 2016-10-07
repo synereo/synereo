@@ -27,10 +27,10 @@ object OmniClient extends EvalConfig with Serializable {
 
   implicit val formats = org.json4s.DefaultFormats
 
-  private val RPC_USER    = EvalConfConfig.readString("OmniRPCUser")
-  private val RPC_PWD     = EvalConfConfig.readString("OmniRPCPass")
+  private val RPC_USER    = EvalConfigWrapper.readString("OmniRPCUser")
+  private val RPC_PWD     = EvalConfigWrapper.readString("OmniRPCPass")
   private val AMP_PROP_ID = 39
-  private val OMNI_URI    = EvalConfConfig.readString("OmniRPCURI")
+  private val OMNI_URI    = EvalConfigWrapper.readString("OmniRPCURI")
   val testAmpAddress      = "mfiScEupUknzvkCwDbEEPcjCTiRw17k42X"
 
   def omniError(reason: String): JObject = {

@@ -5,7 +5,7 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.api._
-import com.biosimilarity.evaluator.distribution.EvalConfConfig._
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper._
 import com.biosimilarity.evaluator.spray.CapUtilities
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._

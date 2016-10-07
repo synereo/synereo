@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.io.IO
 import akka.pattern._
 import akka.util.Timeout
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.SSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.SRPSessionManager
@@ -28,17 +28,17 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       SRPSessionManager.reset()
       CompletionMapper.reset()
       com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
-      if (EvalConfConfig.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
+      if (EvalConfigWrapper.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
       val system: ActorSystem            = ActorSystem("evaluator-system")
       val listener: ActorRef             = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")
       val nonSSLSettings: ServerSettings = settings.copy(sslEncryption = false)
       IO(Http)(system) ! Http.Bind(listener = listener,
                                    interface = "0.0.0.0",
-                                   port = EvalConfConfig.serverPort,
+                                   port = EvalConfigWrapper.serverPort,
                                    settings = Some(nonSSLSettings))
       IO(Http)(system) ! Http.Bind(listener = listener,
                                    interface = "0.0.0.0",
-                                   port = EvalConfConfig.serverSSLPort,
+                                   port = EvalConfigWrapper.serverSSLPort,
                                    settings = Some(settings))(sslEngineProvider)
       new Server(settings, Some(system), Some(listener))(system.dispatcher)
     case (Some(_), Some(_)) =>

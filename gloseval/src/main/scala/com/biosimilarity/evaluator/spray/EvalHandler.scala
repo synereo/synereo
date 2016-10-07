@@ -127,9 +127,9 @@ object btcKeyMapper extends Serializable {
 }
 
 object ConfirmationEmail extends Serializable {
-  val EMAIL_AUTH_USERNAME = EvalConfConfig.readString("EmailAuthUsername")
-  val EMAIL_AUTH_PASSWORD = EvalConfConfig.readString("EmailAuthPassword")
-  val EMAIL_FROM_ADDRESS  = EvalConfConfig.readString("EmailFromAddress")
+  val EMAIL_AUTH_USERNAME = EvalConfigWrapper.readString("EmailAuthUsername")
+  val EMAIL_AUTH_PASSWORD = EvalConfigWrapper.readString("EmailAuthPassword")
+  val EMAIL_FROM_ADDRESS  = EvalConfigWrapper.readString("EmailFromAddress")
 
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
@@ -1238,7 +1238,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(aliasURI, nodeAliasURI, feed _)
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(nodeAliasURI, aliasURI, feed _)
 
-    if (EvalConfConfig.isOmniRequired()) {
+    if (EvalConfigWrapper.isOmniRequired()) {
       try {
         omniCreateWallet(selfCnxn, optRsrc => BasicLogService.tweet("omniwallet created: " + optRsrc))
       } catch {

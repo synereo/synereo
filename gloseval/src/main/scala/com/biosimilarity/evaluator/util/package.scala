@@ -3,7 +3,7 @@ package com.biosimilarity.evaluator
 import java.io.{FileInputStream, InputStream}
 
 import com.biosimilarity.evaluator.api.VersionInfoResponse
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.spray.Boot
 import com.mongodb.casbah.Imports.MongoClient
 import com.mongodb.casbah.MongoClientURI
@@ -22,8 +22,8 @@ package object util {
   }
 
   def resetMongo(): Unit = {
-    val dbHost = EvalConfConfig.readStringOrElse("dbHost", "localhost")
-    val dbPort = EvalConfConfig.readStringOrElse("dbPort", "27017")
+    val dbHost = EvalConfigWrapper.readStringOrElse("dbHost", "localhost")
+    val dbPort = EvalConfigWrapper.readStringOrElse("dbPort", "27017")
     val uri                             = MongoClientURI(s"mongodb://$dbHost:$dbPort/")
     val mongoClient: MongoClient        = MongoClient(uri)
     val dbNames: mutable.Buffer[String] = mongoClient.databaseNames

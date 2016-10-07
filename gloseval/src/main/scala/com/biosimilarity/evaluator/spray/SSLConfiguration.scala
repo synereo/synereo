@@ -4,7 +4,7 @@ import java.io.InputStream
 import java.security.{KeyStore, SecureRandom}
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.util._
 import spray.io.{SSLContextProvider, ServerSSLEngineProvider}
 
@@ -13,8 +13,8 @@ object SSLConfiguration {
   private def sslContext: SSLContext = {
     val keystoreResource: InputStream = resourceStream("keystore.jks")
     try {
-      val storepass: String                        = EvalConfConfig.readString("storepass")
-      val keypass: String                          = EvalConfConfig.readString("keypass")
+      val storepass: String                        = EvalConfigWrapper.readString("storepass")
+      val keypass: String                          = EvalConfigWrapper.readString("keypass")
       val keyStore: KeyStore                       = KeyStore.getInstance("jks")
       val keyManagerFactory: KeyManagerFactory     = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
       val trustManagerFactory: TrustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)

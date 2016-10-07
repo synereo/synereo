@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import java.util.logging.{Level => JLevel, Logger => JLogger}
 
-import com.biosimilarity.evaluator.distribution.{DSLCommLinkCtor, Distributed, EvalConfConfig => Config}
+import com.biosimilarity.evaluator.distribution.{DSLCommLinkCtor, Distributed, EvalConfigWrapper => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.util._
 import com.biosimilarity.lift.lib.amqp.AMQPUtil._

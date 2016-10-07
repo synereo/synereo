@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import com.biosimilarity.evaluator.distribution.EvalConfConfig._
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper._
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.directives.HttpsDirectives.StrictTransportSecurity
 import com.biosimilarity.evaluator.util._

@@ -12,7 +12,7 @@ import java.io.File
 import java.util.UUID
 
 import com.biosimilarity.evaluator.api._
-import com.biosimilarity.evaluator.distribution.EvalConfConfig
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.NodeUser
@@ -29,7 +29,7 @@ class Importer {
 
   implicit val formats = org.json4s.DefaultFormats
 
-  private val GLOSEVAL_HOST = EvalConfConfig.serviceHostURI
+  private val GLOSEVAL_HOST = EvalConfigWrapper.serviceHostURI
 
   // maps loginId to agentURI
   private val agentsById = scala.collection.mutable.Map[String, String]()
@@ -318,7 +318,7 @@ class Importer {
     }
   }
 
-  def parseData(dataJsonFile: File = EvalConfConfig.serviceDemoDataFile) = {
+  def parseData(dataJsonFile: File = EvalConfigWrapper.serviceDemoDataFile) = {
     val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     parse(dataJson).extract[DataSetDesc]
   }
@@ -420,7 +420,7 @@ class Importer {
 
 object Importer {
 
-  def fromFile(dataJsonFile: File = EvalConfConfig.serviceDemoDataFile): Int = {
+  def fromFile(dataJsonFile: File = EvalConfigWrapper.serviceDemoDataFile): Int = {
     println(s"Importing file: $dataJsonFile")
     val dataJson: String = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
     val imp = new Importer()
