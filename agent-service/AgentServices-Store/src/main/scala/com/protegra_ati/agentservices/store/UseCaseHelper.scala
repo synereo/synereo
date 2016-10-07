@@ -740,17 +740,16 @@ trait UseCaseHelper extends MessageGeneration
 }
 
 package usage {
+
   object SimpleClient
-    extends EvaluationCommsService  
-     with MessageGeneration
-     with ChannelGeneration
-     with EvalConfig
-     with DSLCommLinkConfiguration
-     with AccordionConfiguration
-     with CnxnString[String,String,String]
-     with StorageManagement
-     with Serializable
-  {
+    extends EvaluationCommsService
+      with MessageGeneration
+      with ChannelGeneration
+      with EvalConfig
+      with DSLCommLinkConfiguration
+      with CnxnString[String,String,String]
+      with StorageManagement
+      with Serializable {
     import com.protegra_ati.agentservices.store.extensions.StringExtensions._
   }
   
@@ -770,12 +769,11 @@ package usage {
   }
 
   object StreamBasedClient
-  extends EvaluationCommsService  
-  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration
-  with AccordionConfiguration
-  with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
-  with StorageManagement with CnxnString[String,String,String]
-  with Serializable {
+    extends EvaluationCommsService
+      with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration
+      with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
+      with StorageManagement with CnxnString[String,String,String]
+      with Serializable {
     import com.biosimilarity.lift.model.store.mongo._
     override def getMongoClientSession() : com.mongodb.casbah.Imports.MongoClient = {
       agentMgr()
@@ -984,14 +982,13 @@ package usage {
       }
     }
   }
-  
+
   object SimpleVerbClient
-  extends EvaluationCommsService  
-  with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration
-  with AccordionConfiguration
-  with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
-  with StorageManagement with CnxnString[String,String,String]
-  with Serializable {
+    extends EvaluationCommsService
+      with ChannelGeneration with EvalConfig with DSLCommLinkConfiguration
+      with FuzzyTerms with FuzzyStreams with FuzzyTermStreams with FuzzyMessageStreams
+      with StorageManagement with CnxnString[String,String,String]
+      with Serializable {
     def insertAM(value: String, filter: String = "all(a(_))") = {
       agentMgr().post(
         fromTermString(filter).get,

@@ -29,9 +29,8 @@ import java.util.UUID
 
 
 
-trait BFactoryCommsService extends BehaviorService
-with CnxnString[String, String, String]{
-  self : EvalConfig with BFactoryCommLinkConfiguration with AccordionConfiguration =>
+trait BFactoryCommsService extends BehaviorService with CnxnString[String, String, String] {
+  self: EvalConfig with BFactoryCommLinkConfiguration =>
 
   import BFactoryCommLink._   
   import Being._
@@ -359,7 +358,6 @@ package usage {
       new BFactoryCommsService
          with EvalConfig
          with BFactoryCommLinkConfiguration
-         with AccordionConfiguration
          with Serializable {
          }    
   }

@@ -408,11 +408,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   @transient
   object handler extends EvalConfig
     with DSLCommLinkConfiguration
-    with AccordionConfiguration
     with EvaluationCommsService
     with AgentCRUDHandler
     with AgentIntroductionHandler
-    with Serializable {}
+    with Serializable
 
   // Agents
   def addAgentExternalIdentityRequest(json: JObject): Unit = {

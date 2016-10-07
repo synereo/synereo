@@ -8,7 +8,7 @@
 
 package com.biosimilarity.evaluator.spray
 
-import com.biosimilarity.evaluator.distribution.{AccordionConfiguration, DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
+import com.biosimilarity.evaluator.distribution.{DSLCommLinkConfiguration, EvalConfig, EvaluationCommsService}
 
 @SerialVersionUID(1000L)
 object EvalHandlerService
@@ -16,7 +16,6 @@ object EvalHandlerService
     with EvaluationCommsService
     with EvalConfig
     with DSLCommLinkConfiguration
-    with AccordionConfiguration
     with DownStreamHttpCommsT
     with BTCHandler
     with Serializable
@@ -27,7 +26,6 @@ object EvalAndAgentCRUDHandlerService
     with EvaluationCommsService
     with EvalConfig
     with DSLCommLinkConfiguration
-    with AccordionConfiguration
     with DownStreamHttpCommsT
     with BTCHandler
     with Serializable

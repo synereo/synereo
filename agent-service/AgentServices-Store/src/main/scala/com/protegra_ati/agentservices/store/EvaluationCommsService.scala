@@ -37,7 +37,7 @@ object DSLCommsLinkNodeMapper
 
 trait EvaluationCommsService extends EvaluationService
 with CnxnString[String, String, String]{
-  self : EvalConfig with DSLCommLinkConfiguration with AccordionConfiguration =>
+  self : EvalConfig with DSLCommLinkConfiguration =>
 
   import DSLCommLink._   
   import Being._
@@ -786,16 +786,9 @@ with CnxnString[String, String, String]{
 }
 
 package usage {
-  object EvaluationServiceContext
-  extends Serializable 
-  with UseCaseHelper {    
+
+  object EvaluationServiceContext extends Serializable with UseCaseHelper {
     @transient
-    lazy val eServe =
-      new EvaluationCommsService
-         with EvalConfig
-         with DSLCommLinkConfiguration
-         with AccordionConfiguration
-         with Serializable {
-         }    
-  }  
+    lazy val eServe = new EvaluationCommsService with EvalConfig with DSLCommLinkConfiguration with Serializable
+  }
 }
