@@ -537,7 +537,7 @@ trait DSLCommLinkConfiguration {
   def clientHostsNPorts() : List[(String,Int)] = {
     try {
       evalConfig().getString("DSLCommLinkClientHosts").split(',').toList.map { (s: String) =>
-        val uri = new URI("unused://" + s)
+        val uri = new URI("unused://" + s.trim)
         val host: String = Option(uri.getHost).getOrElse("localhost")
         val port: Int    = uri.getPort match {
           case -1 => 5672
