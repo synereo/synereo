@@ -18,7 +18,7 @@ trait Containable[T] {
 
 object Containable {
 
-  implicit object nodeContainer extends Containable[Node] {
+  implicit object containableNode extends Containable[Node] {
 
     val imageName: String = s"gloseval:${BuildInfo.version}"
 
