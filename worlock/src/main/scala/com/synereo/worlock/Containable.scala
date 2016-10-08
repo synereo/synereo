@@ -1,12 +1,17 @@
 package com.synereo.worlock
 
+import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.distribution.{Colocated, Distributed}
 import com.github.dockerjava.api.model.Ports.Binding
 import com.github.dockerjava.api.model.{ExposedPort, Ports}
 
 trait Containable[T] {
 
-  def createEnvironment(a: T): Map[String, String]
+  val imageName: String
+
+  def getContainerName(a: T): String
+
+  def getEnvironment(a: T): Map[String, String]
 
   def getPortBindings(a: T): Ports
 }
@@ -15,7 +20,11 @@ object Containable {
 
   implicit object nodeContainer extends Containable[Node] {
 
-    def createEnvironment(n: Node): Map[String, String] =
+    val imageName: String = s"gloseval:${BuildInfo.version}"
+
+    def getContainerName(n: Node): String = n.name
+
+    def getEnvironment(n: Node): Map[String, String] =
       Map[String, String](
         "DEPLOYMENT_MODE" ->
           n.deploymentMode.toString,
@@ -42,13 +51,12 @@ object Containable {
         "BFACTORY_EVALUATOR_HOST" ->
           n.bFactoryEvaluator.address.getAddress.toString.substring(1),
         "BFACTORY_EVALUATOR_PORT" ->
-          n.bFactoryEvaluator.address.getPort.toString
-      )
+          n.bFactoryEvaluator.address.getPort.toString)
 
-    private def createPortBindings(portMap: Map[Option[Int], Int]): Ports = {
+    private def createPortBindings(portMap: Map[Int, Option[Int]]): Ports = {
       val ports: Ports = new Ports()
       portMap.foreach {
-        case (Some(exposed), inner) =>
+        case (inner, Some(exposed)) =>
           ports.bind(ExposedPort.tcp(exposed), Binding.bindPort(inner))
         case _ =>
       }
@@ -59,23 +67,22 @@ object Containable {
       case x: Headed if x.deploymentMode == Colocated =>
         createPortBindings(
           Map(
-            x.exposedServerPort -> x.serverPort,
-            x.exposedServerSSLPort -> x.serverSSLPort))
+            x.serverPort -> x.exposedServerPort,
+            x.serverSSLPort -> x.exposedServerSSLPort))
       case x: Headed if x.deploymentMode == Distributed =>
         createPortBindings(
           Map(
-            x.exposedRabbitPort -> x.rabbitPort,
-            x.exposedServerPort -> x.serverPort,
-            x.exposedServerSSLPort -> x.serverSSLPort))
+            x.rabbitPort -> x.exposedRabbitPort,
+            x.serverPort -> x.exposedServerPort,
+            x.serverSSLPort -> x.exposedServerSSLPort))
       case x: Headless if x.deploymentMode == Colocated =>
         createPortBindings(
           Map(
-            x.exposedRabbitPort -> x.rabbitPort))
+            x.rabbitPort -> x.exposedRabbitPort))
       case x: Headless if x.deploymentMode == Distributed =>
         createPortBindings(
           Map(
-            x.exposedRabbitPort -> x.rabbitPort))
+            x.rabbitPort -> x.exposedRabbitPort))
     }
   }
-
 }

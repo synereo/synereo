@@ -1,5 +1,8 @@
 package com.synereo.worlock
 
+import java.net.InetSocketAddress
+
+import com.biosimilarity.evaluator.distribution.Colocated
 import com.biosimilarity.evaluator.spray.ApiTests
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
@@ -21,7 +24,24 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
 
   override def beforeEach(): Unit = {
     val name: String = containerName()
-    containerInfo = createColocatedTestContainer(name, "127.0.0.1", 5672, apiUri.effectivePort) match {
+    lazy val colocated: Node = Headed(
+      name,
+      Colocated,
+      new InetSocketAddress("127.0.0.1", 5672),
+      colocated,
+      List(colocated),
+      colocated,
+      colocated,
+      colocated,
+      colocated,
+      colocated,
+      5672,
+      Some(5672),
+      8567,
+      Some(8567),
+      9876,
+      Some(9876))
+    containerInfo = createAndStartContainer(colocated) match {
       case Success(x) =>
         logger.info("%-24s %s".format("Created container:", name))
         Some(x)
