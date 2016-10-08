@@ -1,9 +1,11 @@
 package com.synereo
 
 import java.io.File
+import java.net.InetSocketAddress
 import java.nio.file.Paths
 
 import com.biosimilarity.evaluator.BuildInfo
+import com.biosimilarity.evaluator.distribution.Colocated
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.model.Ports.Binding
@@ -15,7 +17,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.JavaConversions._
 import scala.util.Try
 
-package object worlock {
+package object worlock extends Network {
 
   val logger: Logger = LoggerFactory.getLogger("worlock")
 
@@ -30,6 +32,24 @@ package object worlock {
   }
 
   val baseImagePath: File = Paths.get(System.getProperty("user.dir")).resolve("src/main/docker/base").toFile
+
+  val colocated: Node = Headed(
+    "Foo",
+    Colocated,
+    new InetSocketAddress("127.0.0.1", 5672),
+    colocated,
+    List(colocated),
+    colocated,
+    colocated,
+    colocated,
+    colocated,
+    colocated,
+    5672,
+    Some(5672),
+    8567,
+    Some(8567),
+    9876,
+    Some(9876))
 
   def colocatedEnvironment(ip: String, port: Int): Try[Map[String, String]] =
     Try {
