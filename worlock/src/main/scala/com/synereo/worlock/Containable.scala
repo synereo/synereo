@@ -28,6 +28,10 @@ object Containable {
       Map[String, String](
         "DEPLOYMENT_MODE" ->
           n.deploymentMode.toString,
+        "DSL_COMM_LINK_SERVER_HOST" ->
+          n.dslCommLinkServer.address.getAddress.toString.substring(1),
+        "DSL_COMM_LINK_SERVER_PORT" ->
+          n.dslCommLinkServer.address.getPort.toString,
         "DSL_COMM_LINK_CLIENT_HOSTS" ->
           n.dslCommLinkClients.foldLeft(List.empty[String]) { (accum: List[String], node: Node) =>
             node.address.getAddress.toString.substring(1) + ":" + node.address.getPort.toString :: accum
@@ -51,7 +55,17 @@ object Containable {
         "BFACTORY_EVALUATOR_HOST" ->
           n.bFactoryEvaluator.address.getAddress.toString.substring(1),
         "BFACTORY_EVALUATOR_PORT" ->
-          n.bFactoryEvaluator.address.getPort.toString)
+          n.bFactoryEvaluator.address.getPort.toString
+      ) ++ (n match {
+        case headed: Headed =>
+          Map[String, String](
+            "SERVER_PORT" ->
+              headed.serverPort.toString,
+            "SERVER_SSL_PORT" ->
+              headed.serverSSLPort.toString)
+        case headless: Headless =>
+          Map.empty[String, String]
+      })
 
     private def createPortBindings(portMap: Map[Int, Option[Int]]): Ports = {
       val ports: Ports = new Ports()
