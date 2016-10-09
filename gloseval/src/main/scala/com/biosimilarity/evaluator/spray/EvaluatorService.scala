@@ -1,5 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
+import java.net.URI
 import java.util.UUID
 
 import akka.actor._
@@ -103,6 +104,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
               case "closeSessionRequest"   => cometActor ! SessionActor.CloseSession(Some(ctx))
               case "startSessionRecording" => cometActor ! SessionActor.StartCamera(ctx)
               case "stopSessionRecording"  => cometActor ! SessionActor.StopCamera(ctx)
+              case "sendAmpsRequest"       => sendAmps(sessionURI, content, ctx)
               case _ =>
                 asyncMethods.get(msgType) match {
                   case Some(fn) =>

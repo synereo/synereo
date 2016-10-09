@@ -123,7 +123,7 @@ trait ApiClient extends CapUtilities {
       implicit ec: ExecutionContext): Future[InitializeSessionResponse] =
     Future {
       extractResponseContentFromHttpResponse(response) match {
-        case isr @ InitializeSessionResponse(_, _, _, _, _, _, _, m2) if srpClient.verifyServerEvidenceMessage(fromHex(m2)) =>
+        case isr @ InitializeSessionResponse(_, _, _, _, _, _, _,_, _, _, _, m2) if srpClient.verifyServerEvidenceMessage(fromHex(m2)) =>
           isr
         case _ =>
           throw new Exception(s"Unexpected result when extracting $response")

@@ -5,7 +5,7 @@ import akka.io.IO
 import akka.pattern._
 import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
-import com.biosimilarity.evaluator.omni.OmniClient
+import com.biosimilarity.evaluator.omni.AMPUtilities
 import com.biosimilarity.evaluator.spray.SSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.SRPSessionManager
 import com.typesafe.config.{Config, ConfigFactory}
@@ -28,7 +28,7 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       SRPSessionManager.reset()
       CompletionMapper.reset()
       com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
-      if (EvalConfigWrapper.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
+      if (EvalConfigWrapper.isOmniRequired() && !AMPUtilities.isHealthy) throw new Exception("Unable to connect to OmniCore")
       val system: ActorSystem            = ActorSystem("evaluator-system")
       val listener: ActorRef             = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")
       val nonSSLSettings: ServerSettings = settings.copy(sslEncryption = false)

@@ -58,6 +58,8 @@ lazy val commonSettings = Seq(
   },
   resolvers ++= Seq(
     Resolver.bintrayRepo("synereo", "maven"),
+    Resolver.bintrayRepo("omni", "maven"),
+    Resolver.bintrayRepo("msgilligan", "maven"),
     Resolver.sonatypeRepo("snapshots"),
     "BaseX" at "http://files.basex.org/maven/",
     "xqj"   at "http://xqj.net/maven/"),
@@ -153,6 +155,9 @@ lazy val glosevalDeps = Seq(
   "org.prolog4j"                % "prolog4j-tuprolog"        % prolog4jVersion,
   "org.scalaj"                 %% "scalaj-http"              % "2.0.0",
   "org.bouncycastle"            % "bcprov-jdk15on"           % "1.54",
+  "org.bitcoinj"                % "bitcoinj-core"            % "0.14.3" exclude("org.slf4j", "slf4j-api"),
+  "foundation.omni"             % "omnij-core"               % "0.4.0" exclude("org.slf4j", "slf4j-api"),
+  "foundation.omni"             % "omnij-rpc"                % "0.4.0" exclude("org.slf4j", "slf4j-api"),
   "org.scalatest"              %% "scalatest"                % scalatestVersion % "test")
 
 val buildBaseImage      = taskKey[Unit]("Builds the 'synereo/base' Docker Image")
@@ -270,3 +275,5 @@ lazy val root = (project in file("."))
   .dependsOn(specialk, agentService, gloseval, worlock)
   .settings(commonSettings: _*)
   .enablePlugins(GitVersioning)
+
+//mainClass in (Compile, run) := Some("com.biosimilarity.evaluator.spray.Boot")

@@ -207,7 +207,7 @@ class Importer {
           case ApiError(reason) =>
             println(s"initialize session, step 2, failed, reason : $reason")
             None
-          case InitializeSessionResponse(sessionURI, _, _, _, _, _, _, m2) =>
+          case InitializeSessionResponse(sessionURI, _, _, _, _, _, _,_,_,_,_, m2) =>
             if(srpClient.verifyServerEvidenceMessage(fromHex(m2))) Some(sessionURI)
             else throw new Exception("Authentication failed on client")
           case _ => throw new Exception("Unspecified response")
