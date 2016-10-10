@@ -71,8 +71,8 @@ object Containable {
       val ports: Ports = new Ports()
       portMap.foreach {
         case (inner, Some(exposed)) =>
-          ports.bind(ExposedPort.tcp(exposed), Binding.bindPort(inner))
-        case _ =>
+          ports.bind(ExposedPort.tcp(inner), Binding.bindPort(exposed))
+        case (_, None) =>
       }
       ports
     }
