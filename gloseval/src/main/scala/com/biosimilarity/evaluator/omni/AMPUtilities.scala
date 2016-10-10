@@ -4,14 +4,15 @@ import com.biosimilarity.evaluator.spray.srp.ConversionUtils
 import foundation.omni.OmniDivisibleValue
 import org.bitcoinj.core._
 import ConversionUtils._
-import com.google.common.util.concurrent.{FutureCallback, ListenableFuture}
+import com.biosimilarity.evaluator.spray.SessionManager
 import foundation.omni.tx.OmniTxBuilder
 
 import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConversions._
-import com.google.common.util.concurrent.Futures
 
 object AMPUtilities extends RPCConfiguration {
+
+  val MIN_NUM_OF_CONFIRMATIONS: Int = 1
 
   def getReceiveAddress(str: String): Address = Address.fromBase58(Network.params, str)
 
@@ -51,26 +52,17 @@ object AMPUtilities extends RPCConfiguration {
     val builder = new OmniTxBuilder(Network.params)
     val tx = builder.createSignedSimpleSend(from.key, outputs, toAddress, ampsID, omniAmount)
 
-    val future: ListenableFuture[TransactionConfidence] = tx.getConfidence.getDepthFuture(1)
-    val callback: FutureCallback[TransactionConfidence] = new FutureCallback[TransactionConfidence] {
-      override def onFailure(t: Throwable): Unit = t.printStackTrace()
-
-      override def onSuccess(result: TransactionConfidence): Unit = {
-        println(s"Sending balance changes by transaction ${toHexString(result.getTransactionHash)}")
-        val b1 = getBalanceSummary(from.address)
-        from.findSessions.foreach(s => b1.cometMessage(s))
-        val b2 = getBalanceSummary(to.address)
-        to.findSessions.foreach(s => b2.cometMessage(s))
-      }
-    }
-
-    Futures.addCallback(future, callback)
-
     println(s"----> Sending $amount AMPs from ${fromAddress.toBase58} to $to")
     println(s"----> Transaction to send: \n${tx.toString}")
 
-    toHexString(omniClient.sendRawTransaction(tx))
+    val hash: Sha256Hash = omniClient.sendRawTransaction(tx)
+
+    SessionManager.addMonitoredTransaction(from.identity, MonitoredTransaction(hash, from, to))
+
+    toHexString(hash)
   }
+
+  def isConfirmed(hash: Sha256Hash) = omniClient.getTransaction(hash).getConfirmations >= MIN_NUM_OF_CONFIRMATIONS
 
   def toHexString(hash: Sha256Hash): String = Utils.HEX.encode(hash.getBytes)
 

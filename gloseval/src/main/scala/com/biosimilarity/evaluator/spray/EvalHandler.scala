@@ -103,6 +103,14 @@ object SessionManager extends Serializable {
 
   def findSessionsByCap(cap: String) = hmap.keySet.filter(p => new URI(p).getHost.equals(cap))
 
+  def addMonitoredTransaction(cap: String, mt: MonitoredTransaction): Unit = {
+    findSessionsByCap(cap).foreach(ssn =>
+      for (cometActor <- hmap.get(ssn)) {
+        cometActor ! SessionActor.AddTransaction(mt)
+      }
+    )
+  }
+
   def getChunkingActor(sessionURI: String, cnt: Int) = {
     val ssnactor = SessionManager.hmap.get(sessionURI) match {
       case Some(actor) =>
