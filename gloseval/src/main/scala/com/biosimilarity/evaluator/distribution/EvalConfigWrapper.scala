@@ -29,4 +29,10 @@ object EvalConfigWrapper extends EvalConfig {
   def servicePort: Int = readInt("ImporterServicePort")
 
   def serviceHostURI: String = "https://%s:%d/api".format(serviceHost, servicePort)
+
+  def nodeMode(): NodeMode =
+    evalConfig().getString("mode") match {
+      case "headless" => Headless
+      case "headed" => Headed
+    }
 }

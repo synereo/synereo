@@ -57,14 +57,18 @@ object Containable {
         "BFACTORY_EVALUATOR_PORT" ->
           n.bFactoryEvaluator.address.getPort.toString
       ) ++ (n match {
-        case headed: Headed =>
+        case headed: HeadedNode =>
           Map[String, String](
+            "MODE" ->
+              "headed",
             "SERVER_PORT" ->
               headed.serverPort.toString,
             "SERVER_SSL_PORT" ->
               headed.serverSSLPort.toString)
-        case headless: Headless =>
-          Map.empty[String, String]
+        case headless: HeadlessNode =>
+          Map[String, String](
+            "MODE" ->
+              "headless")
       })
 
     private def createPortBindings(portMap: Map[Int, Option[Int]]): Ports = {
@@ -78,22 +82,22 @@ object Containable {
     }
 
     def getPortBindings(n: Node): Ports = n match {
-      case x: Headed if x.deploymentMode == Colocated =>
+      case x: HeadedNode if x.deploymentMode == Colocated =>
         createPortBindings(
           Map(
             x.serverPort -> x.exposedServerPort,
             x.serverSSLPort -> x.exposedServerSSLPort))
-      case x: Headed if x.deploymentMode == Distributed =>
+      case x: HeadedNode if x.deploymentMode == Distributed =>
         createPortBindings(
           Map(
             x.rabbitPort -> x.exposedRabbitPort,
             x.serverPort -> x.exposedServerPort,
             x.serverSSLPort -> x.exposedServerSSLPort))
-      case x: Headless if x.deploymentMode == Colocated =>
+      case x: HeadlessNode if x.deploymentMode == Colocated =>
         createPortBindings(
           Map(
             x.rabbitPort -> x.exposedRabbitPort))
-      case x: Headless if x.deploymentMode == Distributed =>
+      case x: HeadlessNode if x.deploymentMode == Distributed =>
         createPortBindings(
           Map(
             x.rabbitPort -> x.exposedRabbitPort))

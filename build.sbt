@@ -192,6 +192,7 @@ lazy val glosevalDockerSettings = Seq(
     Seq(
       Cmd("FROM", "synereo/base"),
       Cmd("ENV",
+        "MODE=headed",
         "DEPLOYMENT_MODE=colocated",
         "SERVER_PORT=8567",
         "SERVER_SSL_PORT=9876",
