@@ -7,32 +7,15 @@ import scala.util.Try
 
 object EvalConfigWrapper extends EvalConfig {
 
-  def readString(param: String): String =
-    try {
-      evalConfig().getString(param)
-    } catch {
-      case _: Throwable => throw new IllegalStateException(s"Missing or empty value for: $param in eval.conf file.")
-    }
+  def readString(param: String): String = evalConfig().getString(param)
 
-  def readStringOrElse(param: String, default: String): String =
-    Try(readString(param)).getOrElse(default)
+  def readStringOrElse(param: String, default: String): String = Try(readString(param)).getOrElse(default)
 
-  def readInt(param: String): Int =
-    try {
-      evalConfig().getInt(param)
-    } catch {
-      case _: Throwable => throw new IllegalStateException(s"Missing or empty value for: $param in eval.conf file.")
-    }
+  def readInt(param: String): Int = evalConfig().getInt(param)
 
-  def readIntOrElse(param: String, default: Int): Int =
-    Try(readInt(param)).getOrElse(default)
+  def readIntOrElse(param: String, default: Int): Int = Try(readInt(param)).getOrElse(default)
 
-  def readList(param: String): List[String] =
-    try {
-      evalConfig().getStringList(param).toList
-    } catch {
-      case _: Throwable => throw new Exception(s"Missing or empty value for: $param in eval.conf file.")
-    }
+  def readList(param: String): List[String] = evalConfig().getStringList(param).toList
 
   def isOmniRequired(): Boolean = Try(readString("OmniRPCURI")).isSuccess
 
