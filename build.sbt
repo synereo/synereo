@@ -192,6 +192,7 @@ lazy val glosevalDockerSettings = Seq(
     Seq(
       Cmd("FROM", "synereo/base"),
       Cmd("ENV",
+        "JAVA_OPTS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005'",
         "MODE=headed",
         "DEPLOYMENT_MODE=colocated",
         "SERVER_PORT=8567",
@@ -218,7 +219,7 @@ lazy val glosevalDockerSettings = Seq(
       Cmd("USER", "synereo"),
       Cmd("RUN", "bin/gloseval", "gencert", "--self-signed"),
       Cmd("USER", "root"),
-      Cmd("EXPOSE", "8567", "9876"),
+      Cmd("EXPOSE", "5005", "8567", "9876"),
       ExecCmd("CMD", "/usr/bin/supervisord"))
   })
 
