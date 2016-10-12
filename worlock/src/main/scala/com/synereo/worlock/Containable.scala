@@ -11,6 +11,8 @@ trait Containable[T] {
 
   def getContainerName(a: T): String
 
+  def getIpv4Address(a: T): String
+
   def getEnvironment(a: T): Map[String, String]
 
   def getPortBindings(a: T): Ports
@@ -24,6 +26,8 @@ object Containable {
 
     def getContainerName(n: Node): String = n.name
 
+    def getIpv4Address(n: Node): String = n.address.getAddress.toString.substring(1)
+
     def getEnvironment(n: Node): Map[String, String] =
       Map[String, String](
         "DEPLOYMENT_MODE" ->
@@ -33,9 +37,11 @@ object Containable {
         "DSL_COMM_LINK_SERVER_PORT" ->
           n.dslCommLinkServer.address.getPort.toString,
         "DSL_COMM_LINK_CLIENT_HOSTS" ->
-          n.dslCommLinkClients.foldLeft(List.empty[String]) { (accum: List[String], node: Node) =>
-            node.address.getAddress.toString.substring(1) + ":" + node.address.getPort.toString :: accum
-          }.mkString(","),
+          n.dslCommLinkClients
+            .foldLeft(List.empty[String]) { (accum: List[String], node: Node) =>
+              node.address.getAddress.toString.substring(1) + ":" + node.address.getPort.toString :: accum
+            }
+            .mkString(","),
         "DSL_EVALUATOR_HOST" ->
           n.dslEvaluator.address.getAddress.toString.substring(1),
         "DSL_EVALUATOR_PORT" ->
@@ -58,13 +64,12 @@ object Containable {
           n.bFactoryEvaluator.address.getPort.toString
       ) ++ (n match {
         case headed: HeadedNode =>
-          Map[String, String](
-            "MODE" ->
-              "headed",
-            "SERVER_PORT" ->
-              headed.serverPort.toString,
-            "SERVER_SSL_PORT" ->
-              headed.serverSSLPort.toString)
+          Map[String, String]("MODE" ->
+                                "headed",
+                              "SERVER_PORT" ->
+                                headed.serverPort.toString,
+                              "SERVER_SSL_PORT" ->
+                                headed.serverSSLPort.toString)
         case headless: HeadlessNode =>
           Map[String, String](
             "MODE" ->
@@ -83,24 +88,13 @@ object Containable {
 
     def getPortBindings(n: Node): Ports = n match {
       case x: HeadedNode if x.deploymentMode == Colocated =>
-        createPortBindings(
-          Map(
-            x.serverPort -> x.exposedServerPort,
-            x.serverSSLPort -> x.exposedServerSSLPort))
+        createPortBindings(Map(x.serverPort -> x.exposedServerPort, x.serverSSLPort -> x.exposedServerSSLPort))
       case x: HeadedNode if x.deploymentMode == Distributed =>
-        createPortBindings(
-          Map(
-            x.rabbitPort -> x.exposedRabbitPort,
-            x.serverPort -> x.exposedServerPort,
-            x.serverSSLPort -> x.exposedServerSSLPort))
+        createPortBindings(Map(x.serverPort -> x.exposedServerPort, x.serverSSLPort -> x.exposedServerSSLPort))
       case x: HeadlessNode if x.deploymentMode == Colocated =>
-        createPortBindings(
-          Map(
-            x.rabbitPort -> x.exposedRabbitPort))
+        createPortBindings(Map.empty[Int, Option[Int]])
       case x: HeadlessNode if x.deploymentMode == Distributed =>
-        createPortBindings(
-          Map(
-            x.rabbitPort -> x.exposedRabbitPort))
+        createPortBindings(Map.empty[Int, Option[Int]])
     }
   }
 }

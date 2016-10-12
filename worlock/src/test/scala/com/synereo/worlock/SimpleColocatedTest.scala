@@ -27,23 +27,20 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
 
   override def beforeEach(): Unit = {
     val name: String = containerName()
-    lazy val colocatedNode: Node = HeadedNode(
-      name = name,
-      deploymentMode = Colocated,
-      address = new InetSocketAddress("127.0.0.1", 5672),
-      dslCommLinkServer = colocatedNode,
-      dslCommLinkClients = List(colocatedNode),
-      dslEvaluator = colocatedNode,
-      dslEvaluatorPreferredSupplier = colocatedNode,
-      bFactoryCommLinkServer = colocatedNode,
-      bFactoryCommLinkClient = colocatedNode,
-      bFactoryEvaluator = colocatedNode,
-      rabbitPort = 5672,
-      exposedRabbitPort = Some(5672),
-      serverPort = 8567,
-      exposedServerPort = Some(8567),
-      serverSSLPort = 9876,
-      exposedServerSSLPort = Some(9876))
+    lazy val colocatedNode: Node = HeadedNode(name = name,
+                                              deploymentMode = Colocated,
+                                              address = new InetSocketAddress("172.17.0.2", 6672),
+                                              dslCommLinkServer = colocatedNode,
+                                              dslCommLinkClients = List(colocatedNode),
+                                              dslEvaluator = colocatedNode,
+                                              dslEvaluatorPreferredSupplier = colocatedNode,
+                                              bFactoryCommLinkServer = colocatedNode,
+                                              bFactoryCommLinkClient = colocatedNode,
+                                              bFactoryEvaluator = colocatedNode,
+                                              serverPort = 8567,
+                                              exposedServerPort = Some(8567),
+                                              serverSSLPort = 9876,
+                                              exposedServerSSLPort = Some(9876))
     containerInfo = createAndStartContainer(colocatedNode) match {
       case Success(x) =>
         logger.info("%-24s %s".format("Created container:", name))

@@ -17,8 +17,6 @@ trait Network {
     val bFactoryCommLinkServer: Node
     val bFactoryCommLinkClient: Node
     val bFactoryEvaluator: Node
-    val rabbitPort: Int
-    val exposedRabbitPort: Option[Int]
   }
 
   final class HeadedNode(val name: String,
@@ -31,13 +29,11 @@ trait Network {
                          _bFactoryCommLinkServer: => Node,
                          _bFactoryCommLinkClient: => Node,
                          _bFactoryEvaluator: => Node,
-                         val rabbitPort: Int,
-                         val exposedRabbitPort: Option[Int],
                          val serverPort: Int,
                          val exposedServerPort: Option[Int],
                          val serverSSLPort: Int,
                          val exposedServerSSLPort: Option[Int])
-    extends Node {
+      extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
     lazy val dslCommLinkClients            = _dslCommLinkClients
@@ -59,29 +55,24 @@ trait Network {
               bFactoryCommLinkServer: => Node,
               bFactoryCommLinkClient: => Node,
               bFactoryEvaluator: => Node,
-              rabbitPort: Int,
-              exposedRabbitPort: Option[Int],
               serverPort: Int,
               exposedServerPort: Option[Int],
               serverSSLPort: Int,
               exposedServerSSLPort: Option[Int]): HeadedNode =
-      new HeadedNode(
-        name,
-        deploymentMode,
-        address,
-        dslCommLinkServer,
-        dslCommLinkClients,
-        dslEvaluator,
-        dslEvaluatorPreferredSupplier,
-        bFactoryCommLinkServer,
-        bFactoryCommLinkClient,
-        bFactoryEvaluator,
-        rabbitPort,
-        exposedRabbitPort,
-        serverPort,
-        exposedServerPort,
-        serverSSLPort,
-        exposedServerSSLPort)
+      new HeadedNode(name,
+                     deploymentMode,
+                     address,
+                     dslCommLinkServer,
+                     dslCommLinkClients,
+                     dslEvaluator,
+                     dslEvaluatorPreferredSupplier,
+                     bFactoryCommLinkServer,
+                     bFactoryCommLinkClient,
+                     bFactoryEvaluator,
+                     serverPort,
+                     exposedServerPort,
+                     serverSSLPort,
+                     exposedServerSSLPort)
   }
 
   final class HeadlessNode(val name: String,
@@ -93,10 +84,8 @@ trait Network {
                            _dslEvaluatorPreferredSupplier: => Node,
                            _bFactoryCommLinkServer: => Node,
                            _bFactoryCommLinkClient: => Node,
-                           _bFactoryEvaluator: => Node,
-                           val rabbitPort: Int,
-                           val exposedRabbitPort: Option[Int])
-    extends Node {
+                           _bFactoryEvaluator: => Node)
+      extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
     lazy val dslCommLinkClients            = _dslCommLinkClients
@@ -117,21 +106,16 @@ trait Network {
               dslEvaluatorPreferredSupplier: => Node,
               bFactoryCommLinkServer: => Node,
               bFactoryCommLinkClient: => Node,
-              bFactoryEvaluator: => Node,
-              rabbitPort: Int,
-              exposedRabbitPort: Option[Int]): HeadlessNode =
-      new HeadlessNode(
-        name,
-        deploymentMode,
-        address,
-        dslCommLinkServer,
-        dslCommLinkClients,
-        dslEvaluator,
-        dslEvaluatorPreferredSupplier,
-        bFactoryCommLinkServer,
-        bFactoryCommLinkClient,
-        bFactoryEvaluator,
-        rabbitPort,
-        exposedRabbitPort)
+              bFactoryEvaluator: => Node): HeadlessNode =
+      new HeadlessNode(name,
+                       deploymentMode,
+                       address,
+                       dslCommLinkServer,
+                       dslCommLinkClients,
+                       dslEvaluator,
+                       dslEvaluatorPreferredSupplier,
+                       bFactoryCommLinkServer,
+                       bFactoryCommLinkClient,
+                       bFactoryEvaluator)
   }
 }
