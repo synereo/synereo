@@ -13,7 +13,7 @@ import scala.collection.mutable
 import scala.sys.process._
 import scala.util.Try
 
-package object util {
+package object util extends Helpers {
 
   def resourceStream(resourceName: String): InputStream = {
     val is: InputStream = new FileInputStream(Boot.resourcesDir.resolve(resourceName).toFile)

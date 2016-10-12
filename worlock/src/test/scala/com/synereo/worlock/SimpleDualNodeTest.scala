@@ -78,7 +78,7 @@ class SimpleDualNodeTest
                                            exposedServerSSLPort = Some(9876))
     containerInfo = (for {
       client            <- dockerClient
-      network           <- optionToTry(networkInfo.map(_._2))
+      network           <- networkInfo.map(_._2).toTry
       headlessContainer <- createContainer(client, network, headlessNode)
       headedContainer   <- createContainer(client, network, headedNode)
       _                 <- startContainer(client, headlessContainer.getId)

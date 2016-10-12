@@ -17,12 +17,6 @@ import scala.util.{Failure, Success, Try}
 
 package object test extends ApiClient {
 
-  def optionToTry[T](option: Option[T]): Try[T] =
-    option match {
-      case Some(x) => Success(x)
-      case None    => Failure(new Exception)
-    }
-
   def retry[T](op: => Future[T], delay: FiniteDuration, retries: Int)(implicit ec: ExecutionContext, s: Scheduler): Future[T] =
     op.recoverWith {
       case _: Throwable if retries > 0 =>
