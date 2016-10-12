@@ -31,8 +31,9 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
   val system: ActorSystem = ActorSystem()
 
-  implicit val timeout: Timeout = Timeout(FiniteDuration(15, SECONDS))
-  implicit val ec               = system.dispatcher
+  implicit val ec = system.dispatcher
+
+  implicit val timeout: Timeout
 
   val logger: Logger
 
@@ -213,6 +214,8 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngineProvider) with IntegrationPatience {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[ApiSpec])
+
+  implicit val timeout: Timeout = Timeout(FiniteDuration(15, SECONDS))
 
   var serverInstance: Option[Server] = None
 

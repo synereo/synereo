@@ -2,6 +2,7 @@ package com.synereo.worlock
 
 import java.net.InetSocketAddress
 
+import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.Colocated
 import com.biosimilarity.evaluator.spray.ApiTests
 import com.github.dockerjava.api.DockerClient
@@ -17,6 +18,8 @@ import scala.util.{Failure, Success}
 class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider) with IntegrationPatience {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[SimpleColocatedTest])
+
+  implicit val timeout: Timeout = Timeout(FiniteDuration(15, SECONDS))
 
   def containerName(): String = s"SimpleColocatedTest-${java.util.UUID.randomUUID().toString}"
 
