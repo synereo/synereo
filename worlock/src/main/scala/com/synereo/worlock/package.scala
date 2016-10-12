@@ -1,7 +1,8 @@
 package com.synereo
 
 import com.github.dockerjava.api.DockerClient
-import com.github.dockerjava.api.command.CreateContainerResponse
+import com.github.dockerjava.api.command.{CreateContainerResponse, CreateNetworkResponse}
+import com.github.dockerjava.api.model.Network
 import com.github.dockerjava.core.{DefaultDockerClientConfig, DockerClientBuilder}
 
 import scala.collection.JavaConversions._
@@ -20,13 +21,22 @@ package object worlock extends Network {
       s"${curr._1}=${curr._2}" :: accum
     }
 
-  def createContainer[T](client: DockerClient, node: T)(implicit c: Containable[T]): Try[CreateContainerResponse] =
+  def createNetwork(client: DockerClient, name: String, subnet: String): Try[CreateNetworkResponse] =
     Try {
+      client.createNetworkCmd().withIpam(new Network.Ipam().withConfig(new Network.Ipam.Config().withSubnet(subnet))).withName(name).exec()
+    }
+
+  def createContainer[T](client: DockerClient, networkResponse: CreateNetworkResponse, node: T)(
+      implicit c: Containable[T]): Try[CreateContainerResponse] =
+    Try {
+      val networkName: String = client.inspectNetworkCmd().withNetworkId(networkResponse.getId).exec().getName
       client
         .createContainerCmd(c.imageName)
         .withName(c.getContainerName(node))
         .withEnv(environmentMapToList(c.getEnvironment(node)))
         .withPortBindings(c.getPortBindings(node))
+        .withNetworkMode(networkName)
+        .withIpv4Address(c.getIpv4Address(node))
         .exec()
     }
 
@@ -36,7 +46,8 @@ package object worlock extends Network {
   def createAndStartContainer[T](node: T)(implicit c: Containable[T]): Try[(DockerClient, CreateContainerResponse)] =
     for {
       client    <- getDockerClient()
-      container <- createContainer(client, node)
+      network   <- createNetwork(client, "synereo", "10.100.101.0/24")
+      container <- createContainer(client, network, node)
       _         <- startContainer(client, container.getId)
     } yield (client, container)
 }
