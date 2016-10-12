@@ -390,7 +390,7 @@ class Importer {
     conts.foreach( pr => {
       val k: String = pr._1
       val v: AliasCnxnContent = pr._2
-      println(s"$k - BiCnxnBouncers: , cnxns: ${v.cnxns.length}, posts: ${v.posts.length}, labels: ${v.labels.length}")
+      println(s"$k - BiCnxnBouncers: ${v.biCnxnBouncers.length}, cnxns: ${v.cnxns.length}, orphanCnxns: ${v.orphans.length}, posts: ${v.posts.length}, labels: ${v.labels.length}")
     })
   }
 

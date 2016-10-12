@@ -12,7 +12,7 @@ object MongoQuery {
   val defaultPort = EvalConfigWrapper.readStringOrElse("dbPort", "27017")
 }
 
-case class AliasCnxnContent(posts: List[JArray], labels: List[String], cnxns: List[JObject], errs: List[(JValue,Throwable)])
+case class AliasCnxnContent(posts: List[JArray], labels: List[String], cnxns: List[JObject], orphans: List[JObject], biCnxnBouncers: List[String], errs: List[(JValue,Throwable)])
 
 class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = MongoQuery.defaultPort) {
   implicit val formats = org.json4s.DefaultFormats
@@ -31,11 +31,14 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
     var posts: List[JArray] = Nil
     var errs: List[(JValue, Throwable)] = Nil
     var labels: List[String] = Nil
-    var cnxns: List[JObject] = Nil
+    var cnxns: List[(String,JObject)] = Nil
+    var biCnxnBouncers: List[String] = Nil
+
     for (dbo <- csr) {
       try {
         val s = dbo.toString
-        if (s.contains("ConcreteHL$PostedExpr")) {
+        if (s.contains("\"biCnxnsList\"")) biCnxnBouncers = s :: biCnxnBouncers
+        else if (s.contains("ConcreteHL$PostedExpr")) {
           val tdb = dbo.get("record").asInstanceOf[DBObject].get("value").asInstanceOf[DBObject]
           val js = tdb.head._1
           val jo = parse(js)
@@ -50,10 +53,12 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
             }
             else {
               val tjo: JObject = ta(0).asInstanceOf[JObject]
-              if (tjo.values.contains("readCnxn"))
+              if (tjo.values.contains("readCnxn")) {
+                val bnckey = dbo.get("record").asInstanceOf[DBObject].get("key").asInstanceOf[DBObject].head._1.asInstanceOf[String]
                 ta.children.foreach(tv => {
-                  cnxns = tv.asInstanceOf[JObject] :: cnxns
+                  cnxns = (bnckey,tv.asInstanceOf[JObject]) :: cnxns
                 })
+              }
               else {
                 if (tjo.values.contains("$type"))
                   posts = ta :: posts
@@ -73,6 +78,7 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
           errs = (new JString("wtf"), e) :: errs
       }
     }
-    AliasCnxnContent(posts, labels, cnxns, errs)
+    val (orphans,good) = cnxns.partition( pr => biCnxnBouncers.count( s => s.contains(pr._1)) == 0)
+    AliasCnxnContent(posts, labels, good.map( _._2), orphans.map(_._2), biCnxnBouncers, errs)
   }
 }
