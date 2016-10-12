@@ -13,8 +13,15 @@ import spray.io.{ClientSSLEngineProvider, SSLContextProvider}
 
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 package object test extends ApiClient {
+
+  def optionToTry[T](option: Option[T]): Try[T] =
+    option match {
+      case Some(x) => Success(x)
+      case None    => Failure(new Exception)
+    }
 
   def retry[T](op: => Future[T], delay: FiniteDuration, retries: Int)(implicit ec: ExecutionContext, s: Scheduler): Future[T] =
     op.recoverWith {
@@ -22,7 +29,9 @@ package object test extends ApiClient {
         akka.pattern.after(delay, s)(retry(op, delay, retries - 1))
     }
 
-  def spinwaitOnServer(system: ActorSystem, uri: Uri, delay: FiniteDuration, retries: Int)(implicit ec: ExecutionContext, s: Scheduler, t: Timeout): HttpResponse = {
+  def spinwaitOnServer(system: ActorSystem, uri: Uri, delay: FiniteDuration, retries: Int)(implicit ec: ExecutionContext,
+                                                                                           s: Scheduler,
+                                                                                           t: Timeout): HttpResponse = {
     val e: Future[HttpResponse] = eventualHostConnector(system, 9876, trustfulClientSSLEngineProvider).flatMap { (hc: ActorRef) =>
       retry(hc.ask(HttpRequest(GET, uri)).mapTo[HttpResponse], delay, retries)
     }
