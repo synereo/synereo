@@ -1151,7 +1151,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val biCnxn = PortableAgentBiCnxn(nodeToThisCnxn, thisToNodeCnxn)
     val nodeAgentBiCnxn = PortableAgentBiCnxn(thisToNodeCnxn, nodeToThisCnxn)
 
-    post(
+    put(
       biCnxnsListLabel,
       List(aliasCnxn),
       Serializer.serialize(List(biCnxn)),
@@ -1267,7 +1267,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           optRsrc match {
             case None => ()
             case Some(_) => {
-              read(
+              get(
                 biCnxnsListLabel,
                 List(bAliasCnxn),
                 (optRsrc: Option[mTT.Resource]) => {
@@ -1313,7 +1313,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
         })
     }
-    read(
+    get(
       biCnxnsListLabel,
       List(aAliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
