@@ -171,20 +171,20 @@ lazy val glosevalDockerSettings = Seq(
       .:+(baseDirectory.value / "src" / "main" / "docker" / "node" / "log.conf" -> "log.conf")
       .:+(baseDirectory.value / "src" / "main" / "docker" / "node" / "supervisord.conf" -> "supervisord.conf")
   },
-  buildBaseImage := {
+  buildBaseImage in Docker := {
     val cmd = s"docker build -t synereo/base:latest ${baseDirectory.value}/src/main/docker/base"
     Process(cmd) !
   },
-  copyClientResources := {
+  copyClientResources in Docker := {
     val sourceDir = baseDirectory.value / "client"
     val destDir = stagingDirectory.in(Docker).value / "opt" / "docker" / "client"
     IO.createDirectory(destDir)
     IO.copyDirectory(sourceDir, destDir)
   },
   stage in Docker := {
-    buildBaseImage.value
-    copyClientResources.value
-    (stage in Docker).value
+    buildBaseImage.in(Docker).value
+    copyClientResources.in(Docker).value
+    stage.in(Docker).value
   },
   dockerCommands := {
     val ip = "127.0.0.1"
