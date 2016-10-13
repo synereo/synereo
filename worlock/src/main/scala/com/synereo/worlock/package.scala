@@ -32,13 +32,12 @@ package object worlock extends Network {
         case true =>
           network
         case false =>
-          DockerNetwork(client
-                          .createNetworkCmd()
-                          .withIpam(new DNetwork.Ipam().withConfig(new DNetwork.Ipam.Config().withSubnet(network.subnet)))
-                          .withName(network.name)
-                          .exec()
-                          .getId,
-                        network.subnet)
+          client
+            .createNetworkCmd()
+            .withIpam(new DNetwork.Ipam().withConfig(new DNetwork.Ipam.Config().withSubnet(network.subnet)))
+            .withName(network.name)
+            .exec()
+          network
       }
     }
 
