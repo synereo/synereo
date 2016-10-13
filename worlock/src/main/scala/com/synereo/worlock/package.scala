@@ -56,12 +56,4 @@ package object worlock extends Network {
 
   def startContainer(client: DockerClient, containerId: String): Try[Unit] =
     Try(client.startContainerCmd(containerId).exec())
-
-  def createAndStartContainer[T](node: T)(implicit c: Containable[T]): Try[(DockerClient, CreateContainerResponse)] =
-    for {
-      client    <- getDockerClient()
-      network   <- createOrGetNetwork(client, DockerNetwork("synereo", "10.100.101.0/24"))
-      container <- createContainer(client, network, node)
-      _         <- startContainer(client, container.getId)
-    } yield (client, container)
 }
