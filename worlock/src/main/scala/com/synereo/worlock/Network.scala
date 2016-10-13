@@ -6,6 +6,8 @@ import com.biosimilarity.evaluator.distribution.DeploymentMode
 
 trait Network {
 
+  case class DockerNetwork(name: String, subnet: String)
+
   sealed trait Node {
     val name: String
     val deploymentMode: DeploymentMode

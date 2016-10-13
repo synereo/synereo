@@ -11,9 +11,8 @@ import spray.http.HttpMethods.GET
 import spray.http.{HttpRequest, HttpResponse, Uri}
 import spray.io.{ClientSSLEngineProvider, SSLContextProvider}
 
-import scala.concurrent.duration.{FiniteDuration, SECONDS}
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 
 package object test extends ApiClient {
 
