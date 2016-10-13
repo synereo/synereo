@@ -18,7 +18,7 @@ RUN bash -c '(sleep 180; kill $$) & exec mongod --port 10000 --dbpath /tmp/mongo
 RUN mkdir -p /data/db
 RUN mv /tmp/mongo/journal /data/db
 RUN chown -R mongodb:nogroup /data/db
-RUN chmod 0600 /data/db/journal/*
+RUN find /data/db/journal -type f -exec chmod 0600 {} \;
 
 RUN curl -sL https://dl.eff.org/certbot-auto > /usr/local/bin/certbot-auto
 RUN chmod a+x /usr/local/bin/certbot-auto
