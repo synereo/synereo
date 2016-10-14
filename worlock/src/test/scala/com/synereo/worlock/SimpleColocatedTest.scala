@@ -17,7 +17,10 @@ import spray.http.Uri
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Failure, Success, Try}
 
-class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider) with BeforeAndAfterAll with IntegrationPatience {
+class SimpleColocatedTest
+    extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider)
+    with BeforeAndAfterAll
+    with IntegrationPatience {
 
   def containerName(): String = s"SimpleColocatedTest-${java.util.UUID.randomUUID().toString}"
 

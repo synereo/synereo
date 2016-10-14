@@ -41,12 +41,16 @@ package object worlock extends Network {
       }
     }
 
-  def createContainer[T](client: DockerClient, network: DockerNetwork, node: T)(implicit c: Containable[T]): Try[CreateContainerResponse] =
+  def createContainer[T](
+      client: DockerClient,
+      network: DockerNetwork,
+      node: T,
+      additionalEnv: Map[String, String] = Map.empty[String, String])(implicit c: Containable[T]): Try[CreateContainerResponse] =
     Try {
       client
         .createContainerCmd(c.imageName)
         .withName(c.getContainerName(node))
-        .withEnv(environmentMapToList(c.getEnvironment(node)))
+        .withEnv(environmentMapToList(c.getEnvironment(node) ++ additionalEnv))
         .withPortBindings(c.getPortBindings(node))
         .withNetworkMode(network.name)
         .withIpv4Address(c.getIpv4Address(node))
