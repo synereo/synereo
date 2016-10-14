@@ -172,8 +172,12 @@ lazy val glosevalDockerSettings = Seq(
       .:+(baseDirectory.value / "src" / "main" / "docker" / "node" / "supervisord.conf" -> "supervisord.conf")
   },
   buildBaseImage in Docker := {
+    val s: TaskStreams = streams.value
     val cmd = s"docker build -t synereo/base:latest ${baseDirectory.value}/src/main/docker/base"
-    Process(cmd) !
+    Process(cmd).!(s.log) match {
+      case 0 => ()
+      case _ => error("'docker build' failed")
+    }
   },
   copyClientResources in Docker := {
     val sourceDir = baseDirectory.value / "client"
