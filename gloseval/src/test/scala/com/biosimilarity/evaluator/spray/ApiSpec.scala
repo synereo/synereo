@@ -99,7 +99,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         a        <- sessionPing(hc, uri, spwnssnA)
         _        <- hc.ask(Http.CloseAll)
       } yield a
-      whenReady(proc, timeout(Span(60, Seconds))) {
+      whenReady(proc) {
         case (ja: JArray) =>
           logger.info(s"Alice's connections: ${pretty(render(ja))}")
           ja.values.length shouldBe 2
@@ -134,8 +134,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         c        <- sessionPing(hc, uri, spwnssnC)
         _        <- hc.ask(Http.CloseAll)
       } yield (a, b, c)
-
-      whenReady(proc, timeout(Span(60, Seconds))) {
+      whenReady(proc) {
         case (ja: JArray, jb: JArray, jc: JArray) =>
           logger.info(s"Alice's connections: ${pretty(render(ja))}")
           logger.info(s"Bob's connections: ${pretty(render(jb))}")
