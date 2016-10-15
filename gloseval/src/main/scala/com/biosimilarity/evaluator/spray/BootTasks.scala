@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import java.util.logging.{Level => JLevel, Logger => JLogger}
 
-import com.biosimilarity.evaluator.distribution.{DSLCommLinkCtor, Distributed, Headed, Headless, EvalConfigWrapper => Config}
+import com.biosimilarity.evaluator.distribution.{DSLBoot, DSLCommLinkCtor, Distributed, Headed, Headless, EvalConfigWrapper => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.util._
 import com.biosimilarity.lift.lib.amqp.AMQPUtil._
@@ -47,9 +47,7 @@ trait BootTasks {
         }
         service = Some(Server().start())
       case (_, Headless, _, _, true) =>
-        com.biosimilarity.evaluator.distribution.diesel.Server.run()
-        com.biosimilarity.evaluator.distribution.bfactory.Server.run()
-        com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
+        DSLBoot.start()
     }
   }
 
