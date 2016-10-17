@@ -19,7 +19,53 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
 
   val uri = MongoClientURI(s"mongodb://$dbHost:$dbPort/")
   val mongoClient: MongoClient = MongoClient(uri)
-  val records = mongoClient("records")
+  val records: MongoDB = mongoClient("records")
+
+  def readAllIdentities(): List[(String, String)] = {
+    var rslt : List[(String,String)] = Nil
+    val ids = records.collectionNames().filter( nm => nm.contains("identity") )
+    ids.foreach( id => {
+      val i = id.indexOf("identity")
+      val uid = id.substring(0,i)
+      if (uid == id.substring(i+"identity".length())) {
+        val coll = records(id)
+        var bncrs : List[DBObject] = Nil
+        var blobs : List[String] = Nil
+        for (dbo <- coll) {
+          val rec = dbo.get("record").asInstanceOf[DBObject]
+          val key = rec.get("key").asInstanceOf[DBObject].head._1.asInstanceOf[String]
+          val v = rec.get("value").asInstanceOf[DBObject].head._1.asInstanceOf[String]
+          if (key == "jsonBlob") {
+            blobs = v :: blobs
+          } else if (key == "email") {
+          } else if (key == "pwd") {
+          } else if (key == "aliasList") {
+          } else if (key == "defaultAlias") {
+          } else {
+            bncrs = rec :: bncrs
+          }
+
+        }
+        bncrs.foreach( rec => {
+          val key = rec.get("key").asInstanceOf[DBObject].head._1.asInstanceOf[String]
+          blobs.find( _ contains key ) match {
+            case Some(r) => {
+              val js = rec.get("value").asInstanceOf[DBObject].head._1.asInstanceOf[String]
+              val jo = parse(js)
+              val JString(s) = jo.children(0).children(0).children(1).children(1).asInstanceOf[JString]
+              val blob = parse(s)
+              val nm = (blob \ "name").extract[String]
+              rslt = (uid, nm ) :: rslt
+            }
+            case None => ()
+          }
+
+        })
+
+      }
+    })
+    rslt
+  }
 
   def readAliasCnxnContent(agent: String): AliasCnxnContent = {
     //DANGER WILL ROBINSON DANGER ...
@@ -81,4 +127,11 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
     val (orphans,good) = cnxns.partition( pr => biCnxnBouncers.count( s => s.contains(pr._1)) == 0)
     AliasCnxnContent(posts, labels, good.map( _._2), orphans.map(_._2), biCnxnBouncers, errs)
   }
+
+  def readAllAliasCnxns() : List[(String,AliasCnxnContent)] = {
+    val ids: List[(String, String)] = readAllIdentities()
+    ids.map( pr => (pr._2, readAliasCnxnContent(pr._1)) )
+  }
+
+
 }
