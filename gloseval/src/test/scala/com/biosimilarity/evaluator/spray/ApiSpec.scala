@@ -145,7 +145,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
-    "return evalSubscribeResponse when querying using 'any', 'each' or 'all'" in {
+    "return evalSubscribeResponse when querying using 'any', 'each' or 'all'" ignore {
       val proc: Future[(JArray)] = for {
         uri      <- Future(apiUri)
         hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
