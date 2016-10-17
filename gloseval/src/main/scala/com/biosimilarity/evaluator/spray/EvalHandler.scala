@@ -2095,7 +2095,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case "feedExpr" => {
           BasicLogService.tweet("evalSubscribeRequest | feedExpr")
           val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
-            //BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+            //println("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
 
             def handleTuple(v: ConcreteHL.HLExpr): Unit = {
               v match {
@@ -2116,7 +2116,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   }
                   val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                   val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-                  //BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                  //println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   val arr = parse(postedStr).asInstanceOf[JArray].arr
                   val json = compact(render(arr(0)))
                   val originalFilter = fromTermString(arr(1).asInstanceOf[JString].s).get.asInstanceOf[CnxnCtxtLabel[String, String, String] with Factual]
@@ -2129,8 +2129,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                       'p4('nil("_"))),
                     List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
                     postedStr,
-                    (optRsrc) => { /*BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid)*/ })
-
+                    (optRsrc) => { /*println("evalSubscribeRequest | onFeed | republished: uid = " + uid)*/ })
+                  /*
                   val content =
                     ("sessionURI" -> sessionURIStr) ~
                       ("pageOfPosts" -> List(json)) ~
@@ -2140,8 +2140,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("target" -> agentCnxn.trgt.toString))) ~
                         ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                  println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   SessionManager.cometMessage(sessionURIStr, compact(render(response)))
+                  */
                 }
               }
             }
@@ -2158,10 +2159,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             optRsrc match {
               case None => ();
               case Some(mTT.Ground(Bottom)) => {
-                handleBottom()
+                //handleBottom()
               }
               case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-                handleBottom()
+                //handleBottom()
               }
               case Some(mTT.Ground(v)) => {
                 handleTuple(v)
@@ -2207,7 +2208,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
           val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
             //println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
-            BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
             optRsrc match {
               case None => ();
               // colocated
@@ -2223,7 +2223,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
 
           //println("evalSubscribeRequest | feedExpr: calling feed")
-          BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
           val uid = try {
             'uid((ec \ "uid").extract[String])
           } catch {
@@ -2231,7 +2230,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
           for (filter <- filters) {
             //println("evalSubscribeRequest | feedExpr: filter = " + filter)
-            BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
             feed(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
               cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)),
