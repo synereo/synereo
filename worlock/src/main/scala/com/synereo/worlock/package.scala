@@ -1,7 +1,7 @@
 package com.synereo
 
 import com.github.dockerjava.api.DockerClient
-import com.github.dockerjava.api.command.{CreateContainerResponse, CreateNetworkResponse}
+import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.model.{Network => DNetwork}
 import com.github.dockerjava.core.{DefaultDockerClientConfig, DockerClientBuilder}
 
