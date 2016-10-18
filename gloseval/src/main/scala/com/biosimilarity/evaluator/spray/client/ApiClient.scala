@@ -216,7 +216,7 @@ trait ApiClient extends CapUtilities {
     override def hasNext: Boolean = !ponged
 
     override def next(): JArray = {
-      val jArray: JArray = Await.result(sessionPing(hc, uri, sessionUri), FiniteDuration(10, SECONDS))
+      val jArray: JArray = Await.result(sessionPing(hc, uri, sessionUri), timeout.duration)
       ponged = jArray.arr.exists(isPong)
       jArray
     }
