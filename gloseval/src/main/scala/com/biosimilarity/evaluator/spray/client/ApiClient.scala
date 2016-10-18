@@ -34,13 +34,10 @@ trait ApiClient extends CapUtilities {
       .mapTo[Http.HostConnectorInfo]
       .map((hci: Http.HostConnectorInfo) => hci.hostConnector)
 
-  type SessionUri = String
-  type AgentUri   = String
-
   def toHttpRequest(uri: Uri, requestContent: RequestContent): HttpRequest =
     HttpRequest(POST, uri, entity = HttpEntity(ContentType(MediaTypes.`application/json`), write(requestContent.asRequest)))
 
-  def post(hc: ActorRef, uri: Uri, requestContent: RequestContent)(implicit timeout: Timeout): Future[HttpResponse] =
+  def httpPost(hc: ActorRef, uri: Uri, requestContent: RequestContent)(implicit timeout: Timeout): Future[HttpResponse] =
     hc.ask(toHttpRequest(uri, requestContent)).mapTo[HttpResponse]
 
   def parseHttpResponseEntity(response: HttpResponse): JValue =
@@ -53,8 +50,8 @@ trait ApiClient extends CapUtilities {
     parseHttpResponseEntity _ andThen extractResponseContentFromJValue
 
   def getAgentURI(hc: ActorRef, uri: Uri, email: String, password: String)(implicit ec: ExecutionContext,
-                                                                           timeout: Timeout): Future[AgentUri] =
-    post(hc, uri, GetAgentRequest(email, password)).map { (response: HttpResponse) =>
+                                                                           timeout: Timeout): Future[String] =
+    httpPost(hc, uri, GetAgentRequest(email, password)).map { (response: HttpResponse) =>
       parseHttpResponseEntity(response)
     }.map { (value: JValue) =>
       (value \ "msgType").extract[String] match {
@@ -95,15 +92,15 @@ trait ApiClient extends CapUtilities {
     }
 
   def createSRPUser(hc: ActorRef, email: String, username: String, password: String)(implicit ec: ExecutionContext,
-                                                                                     timeout: Timeout): Future[AgentUri] =
+                                                                                     timeout: Timeout): Future[String] =
     for {
       srpClient <- eventualSRPClient()
       uri       <- Future("/api")
       blob      <- Future(JObject(("name", JString(username)) :: Nil))
       nce       <- Future(s"noConfirm:$email")
-      resp1     <- post(hc, uri, CreateUserStep1Request(nce))
+      resp1     <- httpPost(hc, uri, CreateUserStep1Request(nce))
       salt      <- processCreateUserStep1Response(resp1, srpClient, email, password)
-      resp2     <- post(hc, uri, CreateUserStep2Request(nce, salt, srpClient.generateVerifier, blob))
+      resp2     <- httpPost(hc, uri, CreateUserStep2Request(nce, salt, srpClient.generateVerifier, blob))
       resp3     <- processCreateUserStep2Response(resp2)
     } yield resp3
 
@@ -135,104 +132,82 @@ trait ApiClient extends CapUtilities {
     for {
       srpClient <- eventualSRPClient()
       agentUri  <- getAgentURI(hc, uri, email, password)
-      resp1     <- post(hc, uri, InitializeSessionStep1Request("%s?A=%s".format(agentUri, srpClient.calculateAHex)))
+      resp1     <- httpPost(hc, uri, InitializeSessionStep1Request("%s?A=%s".format(agentUri, srpClient.calculateAHex)))
       b         <- processInitializeSessionStep2Response(resp1, srpClient, email, password)
-      resp2     <- post(hc, uri, InitializeSessionStep2Request("%s?M=%s".format(agentUri, srpClient.calculateMHex(b))))
+      resp2     <- httpPost(hc, uri, InitializeSessionStep2Request("%s?M=%s".format(agentUri, srpClient.calculateMHex(b))))
       resp3     <- processInitializeSessionResponse(resp2, srpClient)
     } yield resp3
 
-  def spawnSession(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout): Future[SessionUri] =
-    post(hc, uri, SpawnSessionRequest(sessionUri)).map { (response: HttpResponse) =>
-      (parseHttpResponseEntity(response) \ "content" \ "sessionURI").extract[SessionUri]
+  def spawnSession(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
+    httpPost(hc, uri, SpawnSessionRequest(sessionUri)).map { (response: HttpResponse) =>
+      (parseHttpResponseEntity(response) \ "content" \ "sessionURI").extract[String]
     }
 
-  def startCam(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout): Future[SessionUri] =
-    post(hc, uri, StartSessionRecording(sessionUri)).map((response: HttpResponse) => sessionUri)
+  def startCam(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
+    httpPost(hc, uri, StartSessionRecording(sessionUri)).map((response: HttpResponse) => sessionUri)
 
-  def stopCam(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
-    post(hc, uri, StopSessionRecording(sessionUri)).map((response: HttpResponse) => response.entity.asString)
+  def stopCam(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
+    httpPost(hc, uri, StopSessionRecording(sessionUri)).map((response: HttpResponse) => response.entity.asString)
 
   def openAdminSession(hc: ActorRef, uri: Uri, email: String, password: String)(implicit ec: ExecutionContext,
                                                                                 timeout: Timeout): Future[InitializeSessionResponse] =
     openSRPSession(hc, uri, email, password)
 
-  def capFromAgentUri(agent: AgentUri): String =
+  def capFromAgentUri(agent: String): String =
     agent.replace("agent://cap/", "").slice(0, 36)
 
-  def makeAliasUri(agent: AgentUri): String =
+  def makeAliasUri(agent: String): String =
     s"alias://${capFromAgentUri(agent)}/alias"
 
-  def makeConnection(hc: ActorRef, uri: Uri, sessionUri: SessionUri, agentL: AgentUri, agentR: AgentUri, cnxnLabel: String)(
+  def makeConnection(hc: ActorRef, uri: Uri, sessionUri: String, agentL: String, agentR: String, cnxnLabel: String)(
       implicit ec: ExecutionContext,
-      timeout: Timeout): Future[Connection] = {
+      timeout: Timeout): Future[HttpResponse] = {
     val sourceUri: String                = makeAliasUri(agentL)
     val targetUri: String                = makeAliasUri(agentR)
     val cont: EstablishConnectionRequest = EstablishConnectionRequest(sessionUri, sourceUri, targetUri, cnxnLabel)
-    post(hc, uri, cont).map((response: HttpResponse) => Connection(sourceUri, targetUri, cnxnLabel))
+    httpPost(hc, uri, cont)
   }
 
-  def makePost(hc: ActorRef, uri: Uri, sessionUri: SessionUri, targets: List[Connection], label: String, uid: String, value: String)(
+  def makePost(hc: ActorRef, uri: Uri, sessionUri: String, targets: List[Connection], label: String, uid: String, value: String)(
       implicit ec: ExecutionContext,
-      timeout: Timeout): Future[Connection] = {
-    val from: SessionUri           = "agent://" + capFromSession(sessionUri)
+      timeout: Timeout): Future[HttpResponse] = {
+    val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
     val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, label, Some(value), Some(uid))
     val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
-    post(hc, uri, req).map((response: HttpResponse) => selfcnxn)
+    httpPost(hc, uri, req)
   }
 
-  def makeQueryOnConnections(hc: ActorRef, uri: Uri, sessionUri: SessionUri, connections: List[Connection], lbl: String)(
+  def makeQueryOnConnections(hc: ActorRef, uri: Uri, sessionUri: String, connections: List[Connection], lbl: String)(
       implicit ec: ExecutionContext,
-      timeout: Timeout): Future[Unit] = {
-    val from: SessionUri           = "agent://" + capFromSession(sessionUri)
+      timeout: Timeout): Future[HttpResponse] = {
+    val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
     val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: connections, lbl, None, None)
     val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("feedExpr", cont))
-    post(hc, uri, req).map((response: HttpResponse) => ())
+    httpPost(hc, uri, req)
   }
 
-  def makeQueryOnSelf(hc: ActorRef, uri: Uri, sessionUri: SessionUri, label: String)(implicit ec: ExecutionContext,
-                                                                                     timeout: Timeout): Future[Connection] = {
-    val from: SessionUri           = "agent://" + capFromSession(sessionUri)
+  def makeQueryOnSelf(hc: ActorRef, uri: Uri, sessionUri: String, label: String)(implicit ec: ExecutionContext,
+                                                                                 timeout: Timeout): Future[HttpResponse] = {
+    val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
     val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: Nil, label, None, None)
     val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("feedExpr", cont))
-    post(hc, uri, req).map((response: HttpResponse) => selfcnxn)
+    httpPost(hc, uri, req)
   }
 
-  def getConnectionProfiles(hc: ActorRef, uri: Uri, sessionId: SessionUri)(implicit ec: ExecutionContext,
-                                                                           timeout: Timeout): Future[String] =
-    post(hc, uri, GetConnectionProfiles(sessionId)).map { (response: HttpResponse) =>
+  def getConnectionProfiles(hc: ActorRef, uri: Uri, sessionId: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
+    httpPost(hc, uri, GetConnectionProfiles(sessionId)).map { (response: HttpResponse) =>
       response.entity.asString
     }
 
-  def sessionPing(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
-    post(hc, uri, SessionPing(sessionUri)).map { (response: HttpResponse) =>
+  def sessionPing(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
+    httpPost(hc, uri, SessionPing(sessionUri)).map { (response: HttpResponse) =>
       parseHttpResponseEntity(response).extract[JArray]
     }
 
-  def pingUntilPong(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] = {
-    @scala.annotation.tailrec
-    def _step(acc: List[JValue]): List[JValue] = {
-      val ja = Await.result(sessionPing(hc, uri, sessionUri), FiniteDuration(10, SECONDS))
-      var ta = acc
-
-      var done = false
-      ja.arr.foreach((jv: JValue) => {
-        val msgType = (jv \ "msgType").extract[String]
-        if (msgType == "sessionPong") done = true
-        else ta = jv :: ta
-      })
-
-      if (done) ta
-      else _step(ta)
-    }
-    val l = _step(Nil)
-    Future.successful(JArray(l))
-  }
-
-  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout)
-      extends Iterator[JArray] {
+  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
 
     private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == "sessionPong"
 
@@ -247,7 +222,7 @@ trait ApiClient extends CapUtilities {
     }
   }
 
-  def altPingUntilPong(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
+  def pingUntilPong(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
     Future {
       new Pingerator(hc, uri, sessionUri).fold(JArray(Nil)) { (left: JArray, right: JArray) =>
         JArray(left.arr ++ right.arr)

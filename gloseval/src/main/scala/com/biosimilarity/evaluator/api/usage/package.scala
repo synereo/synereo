@@ -60,8 +60,8 @@ package object usage extends ApiClient {
     serverInstance = None
   }
 
-  private def printQueryResponses(hc: ActorRef, uri: Uri, sessionUri: SessionUri)(implicit ec: ExecutionContext,
-                                                                                  timeout: Timeout): Future[Unit] =
+  private def printQueryResponses(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext,
+                                                                              timeout: Timeout): Future[Unit] =
     Future {
       new Pingerator(hc, uri, sessionUri).foreach { (curr: JArray) =>
         val posts: List[String] = (curr \ "content" \ "pageOfPosts").extract[List[String]]
