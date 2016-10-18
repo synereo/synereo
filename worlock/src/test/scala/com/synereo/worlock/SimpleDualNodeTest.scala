@@ -77,7 +77,7 @@ class SimpleDualNodeTest
                                            dslEvaluatorPreferredSupplier = headlessNode,
                                            bFactoryCommLinkServer = headlessNode,
                                            bFactoryCommLinkClient = headedNode,
-                                           bFactoryEvaluator = headedNode,
+                                           bFactoryEvaluator = headlessNode,
                                            serverPort = 8567,
                                            exposedServerPort = Some(8567),
                                            serverSSLPort = 9876,
