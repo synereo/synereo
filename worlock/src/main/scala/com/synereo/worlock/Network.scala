@@ -19,6 +19,8 @@ trait Network {
     val bFactoryCommLinkServer: Node
     val bFactoryCommLinkClient: Node
     val bFactoryEvaluator: Node
+    val exposedDebugPort: Option[Int]
+    val exposedMongoPort: Option[Int]
   }
 
   final class HeadedNode(val name: String,
@@ -34,7 +36,9 @@ trait Network {
                          val serverPort: Int,
                          val exposedServerPort: Option[Int],
                          val serverSSLPort: Int,
-                         val exposedServerSSLPort: Option[Int])
+                         val exposedServerSSLPort: Option[Int],
+                         val exposedDebugPort: Option[Int],
+                         val exposedMongoPort: Option[Int])
       extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
@@ -60,7 +64,9 @@ trait Network {
               serverPort: Int,
               exposedServerPort: Option[Int],
               serverSSLPort: Int,
-              exposedServerSSLPort: Option[Int]): HeadedNode =
+              exposedServerSSLPort: Option[Int],
+              exposedDebugPort: Option[Int],
+              exposedMongoPort: Option[Int]): HeadedNode =
       new HeadedNode(name,
                      deploymentMode,
                      address,
@@ -74,7 +80,9 @@ trait Network {
                      serverPort,
                      exposedServerPort,
                      serverSSLPort,
-                     exposedServerSSLPort)
+                     exposedServerSSLPort,
+                     exposedDebugPort,
+                     exposedMongoPort)
   }
 
   final class HeadlessNode(val name: String,
@@ -86,7 +94,9 @@ trait Network {
                            _dslEvaluatorPreferredSupplier: => Node,
                            _bFactoryCommLinkServer: => Node,
                            _bFactoryCommLinkClient: => Node,
-                           _bFactoryEvaluator: => Node)
+                           _bFactoryEvaluator: => Node,
+                           val exposedDebugPort: Option[Int],
+                           val exposedMongoPort: Option[Int])
       extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
@@ -108,7 +118,9 @@ trait Network {
               dslEvaluatorPreferredSupplier: => Node,
               bFactoryCommLinkServer: => Node,
               bFactoryCommLinkClient: => Node,
-              bFactoryEvaluator: => Node): HeadlessNode =
+              bFactoryEvaluator: => Node,
+              exposedDebugPort: Option[Int],
+              exposedMongoPort: Option[Int]): HeadlessNode =
       new HeadlessNode(name,
                        deploymentMode,
                        address,
@@ -118,6 +130,8 @@ trait Network {
                        dslEvaluatorPreferredSupplier,
                        bFactoryCommLinkServer,
                        bFactoryCommLinkClient,
-                       bFactoryEvaluator)
+                       bFactoryEvaluator,
+                       exposedDebugPort,
+                       exposedMongoPort)
   }
 }

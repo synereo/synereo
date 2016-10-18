@@ -196,7 +196,6 @@ lazy val glosevalDockerSettings = Seq(
     Seq(
       Cmd("FROM", "synereo/base"),
       Cmd("ENV",
-        "JAVA_OPTS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005'",
         "TWEET_LEVEL=warning",
         "BLOG_LEVEL=warning",
         "MODE=headed",

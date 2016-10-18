@@ -64,7 +64,9 @@ class SimpleDualNodeTest
                                                dslEvaluatorPreferredSupplier = headedNode,
                                                bFactoryCommLinkServer = headedNode,
                                                bFactoryCommLinkClient = headlessNode,
-                                               bFactoryEvaluator = headlessNode)
+                                               bFactoryEvaluator = headlessNode,
+                                               exposedDebugPort = Some(5005),
+                                               exposedMongoPort = Some(37017))
 
     lazy val headedNode: Node = HeadedNode(name = headedName,
                                            deploymentMode = Distributed,
@@ -79,7 +81,9 @@ class SimpleDualNodeTest
                                            serverPort = 8567,
                                            exposedServerPort = Some(8567),
                                            serverSSLPort = 9876,
-                                           exposedServerSSLPort = Some(9876))
+                                           exposedServerSSLPort = Some(9876),
+                                           exposedDebugPort = Some(5006),
+                                           exposedMongoPort = Some(27017))
 
     def setupContainers(): Try[List[CreateContainerResponse]] =
       for {

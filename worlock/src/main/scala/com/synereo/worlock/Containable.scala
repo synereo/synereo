@@ -24,12 +24,17 @@ object Containable {
 
     val imageName: String = s"gloseval:${BuildInfo.version}"
 
+    private val internalJVMDebugPort: Int = 5005
+    private val internalMongoPort: Int    = 27017
+
     def getContainerName(n: Node): String = n.name
 
     def getIpv4Address(n: Node): String = n.address.getAddress.toString.substring(1)
 
     def getEnvironment(n: Node): Map[String, String] =
       Map[String, String](
+        "JAVA_OPTS" ->
+          s"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$internalJVMDebugPort",
         "DEPLOYMENT_MODE" ->
           n.deploymentMode.toString,
         "DSL_COMM_LINK_SERVER_HOST" ->
@@ -88,13 +93,21 @@ object Containable {
 
     def getPortBindings(n: Node): Ports = n match {
       case x: HeadedNode if x.deploymentMode == Colocated =>
-        createPortBindings(Map(x.serverPort -> x.exposedServerPort, x.serverSSLPort -> x.exposedServerSSLPort))
+        createPortBindings(
+          Map(x.serverPort         -> x.exposedServerPort,
+              x.serverSSLPort      -> x.exposedServerSSLPort,
+              internalJVMDebugPort -> x.exposedDebugPort,
+              internalMongoPort    -> x.exposedMongoPort))
       case x: HeadedNode if x.deploymentMode == Distributed =>
-        createPortBindings(Map(x.serverPort -> x.exposedServerPort, x.serverSSLPort -> x.exposedServerSSLPort))
+        createPortBindings(
+          Map(x.serverPort         -> x.exposedServerPort,
+              x.serverSSLPort      -> x.exposedServerSSLPort,
+              internalJVMDebugPort -> x.exposedDebugPort,
+              internalMongoPort    -> x.exposedMongoPort))
       case x: HeadlessNode if x.deploymentMode == Colocated =>
-        createPortBindings(Map.empty[Int, Option[Int]])
+        createPortBindings(Map(internalJVMDebugPort -> x.exposedDebugPort, internalMongoPort -> x.exposedMongoPort))
       case x: HeadlessNode if x.deploymentMode == Distributed =>
-        createPortBindings(Map.empty[Int, Option[Int]])
+        createPortBindings(Map(internalJVMDebugPort -> x.exposedDebugPort, internalMongoPort -> x.exposedMongoPort))
     }
   }
 }
