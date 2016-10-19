@@ -5,21 +5,17 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.api._
-import com.biosimilarity.evaluator.distribution.EvalConfigWrapper._
 import com.biosimilarity.evaluator.spray.CapUtilities
-import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.json4s.{BuildInfo => _, _}
-import org.slf4j.{Logger, LoggerFactory}
 import spray.can.Http
 import spray.http.HttpMethods.POST
 import spray.http._
 import spray.io.ClientSSLEngineProvider
 
-import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait ApiClient extends CapUtilities {
