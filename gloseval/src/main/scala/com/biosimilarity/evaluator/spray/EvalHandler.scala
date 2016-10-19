@@ -64,7 +64,11 @@ object CompletionMapper extends Serializable {
 }
 
 object SessionManager extends Serializable {
+
+  @transient
   private var hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
+
+  @transient
   private var sessionManager : Option[ActorContext] = None
 
   def reset(): Unit = {
