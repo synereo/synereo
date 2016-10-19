@@ -113,7 +113,7 @@ class SessionActor(sessionId: String) extends Actor {
     }
   }
 
-  def checkMonitoredTransactions: Unit = {
+  def checkMonitoredTransactions(): Unit = {
     import AMPUtilities._
     var stopList: List[String] = Nil
     monitoredTransactions.foreach(t =>
@@ -143,7 +143,7 @@ class SessionActor(sessionId: String) extends Actor {
     case SessionPing(reqCtx) =>
       itemReceived("sessionPing", None)
       resetAliveTimer()
-      checkMonitoredTransactions
+      checkMonitoredTransactions()
       for ((_, tmr) <- optReq) tmr.cancel()
       msgs match {
         case Nil =>

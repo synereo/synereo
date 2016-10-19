@@ -4,6 +4,6 @@ import org.bitcoinj.core.Sha256Hash
 
 case class MonitoredTransaction(hash: Sha256Hash, from: AMPKey, to: AMPKey) {
 
-  val id: String = AMPUtilities.toHexString(hash)
+  val id: String = hash.toString
 
 }

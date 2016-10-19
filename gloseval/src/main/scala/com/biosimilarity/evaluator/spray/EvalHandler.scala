@@ -2535,17 +2535,18 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                                     (optRsrc: Option[mTT.Resource]) => optRsrc match {
                                       case None => ()
                                       case Some(_) =>
-                                        try {
-                                          val pkHex = AMPUtilities.newKeyHex
-                                          postToCnxnLabel(ampKeyLabel, capSelfCnxn, pkHex, optRsrc => {
-                                            println("EC key persisted: " + optRsrc)
-                                            onComplete(aliasCnxn)
-                                          })
-                                        } catch {
-                                          case e : Throwable =>
-                                            println(s"Error on creation EC key for user $cap")
-                                            e.printStackTrace()
+                                        if(EvalConfigWrapper.isOmniRequired()) {
+                                          try {
+                                            postToCnxnLabel(ampKeyLabel, capSelfCnxn, AMPKey(cap).privHex, optRsrc => {
+                                              println("EC key persisted: " + optRsrc)
+                                            })
+                                          } catch {
+                                            case e: Throwable =>
+                                              println(s"Error on creation EC key for user $cap")
+                                              e.printStackTrace()
+                                          }
                                         }
+                                        onComplete(aliasCnxn)
                                     })
                               })
                         })

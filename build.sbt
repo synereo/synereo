@@ -275,5 +275,3 @@ lazy val root = (project in file("."))
   .dependsOn(specialk, agentService, gloseval, worlock)
   .settings(commonSettings: _*)
   .enablePlugins(GitVersioning)
-
-//mainClass in (Compile, run) := Some("com.biosimilarity.evaluator.spray.Boot")
