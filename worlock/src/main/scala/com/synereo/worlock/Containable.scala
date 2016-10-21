@@ -24,8 +24,9 @@ object Containable {
 
     val imageName: String = s"gloseval:${BuildInfo.version}"
 
-    private val internalJVMDebugPort: Int = 5005
-    private val internalMongoPort: Int    = 27017
+    private val internalJVMDebugPort: Int         = 5005
+    private val internalMongoPort: Int            = 27017
+    private val internalRabbitManagementPort: Int = 55672
 
     def getContainerName(n: Node): String = n.name
 
@@ -92,22 +93,30 @@ object Containable {
     }
 
     def getPortBindings(n: Node): Ports = n match {
-      case x: HeadedNode if x.deploymentMode == Colocated =>
+      case a: HeadedNode if a.deploymentMode == Colocated =>
         createPortBindings(
-          Map(x.serverPort         -> x.exposedServerPort,
-              x.serverSSLPort      -> x.exposedServerSSLPort,
-              internalJVMDebugPort -> x.exposedDebugPort,
-              internalMongoPort    -> x.exposedMongoPort))
-      case x: HeadedNode if x.deploymentMode == Distributed =>
+          Map(a.serverPort                 -> a.exposedServerPort,
+              a.serverSSLPort              -> a.exposedServerSSLPort,
+              internalJVMDebugPort         -> a.exposedDebugPort,
+              internalMongoPort            -> a.exposedMongoPort,
+              internalRabbitManagementPort -> a.exposedRabbitManagementPort))
+      case b: HeadedNode if b.deploymentMode == Distributed =>
         createPortBindings(
-          Map(x.serverPort         -> x.exposedServerPort,
-              x.serverSSLPort      -> x.exposedServerSSLPort,
-              internalJVMDebugPort -> x.exposedDebugPort,
-              internalMongoPort    -> x.exposedMongoPort))
-      case x: HeadlessNode if x.deploymentMode == Colocated =>
-        createPortBindings(Map(internalJVMDebugPort -> x.exposedDebugPort, internalMongoPort -> x.exposedMongoPort))
-      case x: HeadlessNode if x.deploymentMode == Distributed =>
-        createPortBindings(Map(internalJVMDebugPort -> x.exposedDebugPort, internalMongoPort -> x.exposedMongoPort))
+          Map(b.serverPort                 -> b.exposedServerPort,
+              b.serverSSLPort              -> b.exposedServerSSLPort,
+              internalJVMDebugPort         -> b.exposedDebugPort,
+              internalMongoPort            -> b.exposedMongoPort,
+              internalRabbitManagementPort -> b.exposedRabbitManagementPort))
+      case c: HeadlessNode if c.deploymentMode == Colocated =>
+        createPortBindings(
+          Map(internalJVMDebugPort         -> c.exposedDebugPort,
+              internalMongoPort            -> c.exposedMongoPort,
+              internalRabbitManagementPort -> c.exposedRabbitManagementPort))
+      case d: HeadlessNode if d.deploymentMode == Distributed =>
+        createPortBindings(
+          Map(internalJVMDebugPort         -> d.exposedDebugPort,
+              internalMongoPort            -> d.exposedMongoPort,
+              internalRabbitManagementPort -> d.exposedRabbitManagementPort))
     }
   }
 }

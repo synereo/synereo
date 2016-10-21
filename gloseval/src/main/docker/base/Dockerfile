@@ -14,6 +14,8 @@ RUN apt-get -qqy update
 
 RUN apt-get -qqy install curl git mongodb rabbitmq-server supervisor zulu-8 sbt
 
+RUN /usr/lib/rabbitmq/lib/rabbitmq_server-2.7.1/sbin/rabbitmq-plugins enable rabbitmq_management
+
 RUN mkdir -p /tmp/mongo
 
 # https://docs.mongodb.com/manual/tutorial/manage-journaling/#journaling-avoid-preallocation-lag
@@ -39,4 +41,4 @@ WORKDIR /home/synereo
 
 VOLUME /data/db
 
-EXPOSE 5672 27017
+EXPOSE 5672 27017 55672

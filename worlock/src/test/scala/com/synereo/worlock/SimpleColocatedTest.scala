@@ -65,7 +65,8 @@ class SimpleColocatedTest
                                               serverSSLPort = 9876,
                                               exposedServerSSLPort = Some(9876),
                                               exposedDebugPort = Some(5005),
-                                              exposedMongoPort = Some(27017))
+                                              exposedMongoPort = Some(27017),
+                                              exposedRabbitManagementPort = Some(55672))
     containerInfo = (for {
       client    <- dockerClient
       network   <- networkInfo.map(_._2).toTry
