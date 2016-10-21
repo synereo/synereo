@@ -2,21 +2,28 @@ package com.biosimilarity.evaluator.spray
 
 import akka.actor.{Actor, ActorRef}
 
-object ChunkingActor {
-  case class SetChunkSize(sz: Int)
-  case class SetExpected(n: Int)
-  case class SetRecipient(ref: ActorRef)
+object ChunkingActor extends Serializable {
+  case class SetChunkSize(sz: Int)       extends Serializable
+  case class SetExpected(n: Int)         extends Serializable
+  case class SetRecipient(ref: ActorRef) extends Serializable
 }
 
-class ChunkingActor extends Actor {
+class ChunkingActor extends Actor with Serializable {
 
   import ChunkingActor._
 
-  var chunkSize                   = 20
-  var expected                    = -1
+  @transient
+  var chunkSize = 20
+
+  @transient
+  var expected = -1
+
+  @transient
   var recipient: Option[ActorRef] = None
 
+  @transient
   var msgs: List[String] = Nil
+
   def receive = {
     case SetRecipient(ref) => recipient = Some(ref)
 

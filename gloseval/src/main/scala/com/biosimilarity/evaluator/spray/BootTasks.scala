@@ -16,9 +16,10 @@ import scala.util.{Failure, Success, Try}
 
 trait BootTasks {
 
-  sealed trait Certificate
-  case object SelfSigned extends Certificate
+  sealed trait Certificate extends Serializable
+  case object SelfSigned extends Certificate with Serializable
 
+  @transient
   val logger: Logger = LoggerFactory.getLogger(classOf[BootTasks])
 
   def startServer(): Unit = {

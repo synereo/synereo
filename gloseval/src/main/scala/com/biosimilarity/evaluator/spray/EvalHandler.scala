@@ -1503,7 +1503,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def fetchAndSendConnectionProfiles(sessionURI: String, alias: String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
-    val actor = SessionManager.getChunkingActor(sessionURI, biCnxnListObj.length)
+    @transient
+    val chunkingActor: ActorRef = SessionManager.getChunkingActor(sessionURI, biCnxnListObj.length)
 
     biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
       // Construct self-connection for each target
@@ -1514,7 +1515,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       def handleFetchRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-            actor ! SessionActor.CometMessage(compact(render(
+            chunkingActor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileResponse") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1522,7 +1523,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("jsonBlob" -> jsonBlob))))))
           }
           case Bottom => {
-            actor ! SessionActor.CometMessage(compact(render(
+            chunkingActor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1530,7 +1531,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("reason" -> "Not found"))))))
           }
           case _ => {
-            actor ! SessionActor.CometMessage(compact(render(
+            chunkingActor ! SessionActor.CometMessage(compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~

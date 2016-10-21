@@ -10,41 +10,51 @@ import spray.routing.RequestContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-object SessionActor {
-  case class CameraItem(sending: Boolean, msgType: String, content: Option[JObject], tmStamp: DateTime)
-  case class CloseSession(reqCtx: Option[RequestContext])
-  case class CometMessage(data: String)
-  case class CometMessageList(data: List[String])
-  case class RunFunction(fn: JObject => Unit, msgType: String, content: JObject)
-  case class SessionPing(reqCtx: RequestContext)
-  case class SetPongTimeout(t: FiniteDuration)
-  case class SetSessionId(id: String)
-  case class SetSessionTimeout(t: FiniteDuration)
-  case class StartCamera(reqCtx: RequestContext)
-  case class StopCamera(reqCtx: RequestContext)
-  case object PongTimeout
-  case object SessionTimedOut
+object SessionActor extends Serializable {
+  case class CameraItem(sending: Boolean, msgType: String, content: Option[JObject], tmStamp: DateTime) extends Serializable
+  case class CloseSession(reqCtx: Option[RequestContext])                                               extends Serializable
+  case class CometMessage(data: String)                                                                 extends Serializable
+  case class CometMessageList(data: List[String])                                                       extends Serializable
+  case class RunFunction(fn: JObject => Unit, msgType: String, content: JObject)                        extends Serializable
+  case class SessionPing(reqCtx: RequestContext)                                                        extends Serializable
+  case class SetPongTimeout(t: FiniteDuration)                                                          extends Serializable
+  case class SetSessionId(id: String)                                                                   extends Serializable
+  case class SetSessionTimeout(t: FiniteDuration)                                                       extends Serializable
+  case class StartCamera(reqCtx: RequestContext)                                                        extends Serializable
+  case class StopCamera(reqCtx: RequestContext)                                                         extends Serializable
+  case object PongTimeout                                                                               extends Serializable
+  case object SessionTimedOut                                                                           extends Serializable
 }
 
-class SessionActor(sessionId: String) extends Actor {
+class SessionActor(sessionId: String) extends Actor with Serializable {
 
   import SessionActor._
 
   // if client doesnt receive any messages within this time, its garbage collected
+  @transient
   var sessionTimeout = 60.minutes // initial value will be overwritten during instantiation
 
   // ping requests are ponged after this much time unless other data is sent in the meantime
   // clients need to re-ping after this
+  @transient
   var pongTimeout = 7.seconds // initial value will be overwritten during instantiation
 
+  @transient
   var aliveTimer: Cancellable = new Cancellable {
-    def cancel(): Boolean = true
+    def cancel(): Boolean    = true
     def isCancelled: Boolean = true
   }
-  var optReq: Option[(RequestContext, Cancellable)] = None
-  var msgs: List[String]                            = Nil
-  var camera: Option[List[CameraItem]]              = None
 
+  @transient
+  var optReq: Option[(RequestContext, Cancellable)] = None
+
+  @transient
+  var msgs: List[String] = Nil
+
+  @transient
+  var camera: Option[List[CameraItem]] = None
+
+  @transient
   implicit val formats = DefaultFormats
 
   def resetAliveTimer(): Unit = {
@@ -61,8 +71,8 @@ class SessionActor(sessionId: String) extends Actor {
     val jo: JObject =
       ("msgType"     -> itm.msgType) ~
         ("direction" -> (if (itm.sending) "Sent" else "Received")) ~
-        ("tmStamp"   -> itm.tmStamp.toIsoDateTimeString) ~
-        ("content"   -> cont)
+        ("tmStamp" -> itm.tmStamp.toIsoDateTimeString) ~
+        ("content" -> cont)
     pretty(render(jo))
   }
 
@@ -181,4 +191,3 @@ class SessionActor(sessionId: String) extends Actor {
       }
   }
 }
-
