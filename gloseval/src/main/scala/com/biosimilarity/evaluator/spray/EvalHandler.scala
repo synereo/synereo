@@ -116,8 +116,7 @@ object SessionManager extends Serializable {
     else
       sessionManager match {
         case Some(cxt) =>
-          val a = cxt.actorOf(Props[ChunkingActor])
-          a ! ChunkingActor.SetRecipient(ssnactor)
+          val a = cxt.actorOf(Props(new ChunkingActor(ssnactor)))
           a ! ChunkingActor.SetExpected(cnt)
           a
         case None => ssnactor
@@ -1503,8 +1502,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def fetchAndSendConnectionProfiles(sessionURI: String, alias: String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
-    @transient
-    val chunkingActor: ActorRef = SessionManager.getChunkingActor(sessionURI, biCnxnListObj.length)
 
     biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
       // Construct self-connection for each target
@@ -1515,7 +1512,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       def handleFetchRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-            chunkingActor ! SessionActor.CometMessage(compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "connectionProfileResponse") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1523,7 +1520,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("jsonBlob" -> jsonBlob))))))
           }
           case Bottom => {
-            chunkingActor ! SessionActor.CometMessage(compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1531,7 +1528,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("reason" -> "Not found"))))))
           }
           case _ => {
-            chunkingActor ! SessionActor.CometMessage(compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~

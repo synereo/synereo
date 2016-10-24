@@ -108,8 +108,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
               case _ =>
                 asyncMethods.get(msgType) match {
                   case Some(fn) =>
-                    cometActor ! SessionActor.RunFunction(fn, msgType, content)
+                    cometActor ! SessionActor.ItemReceived(msgType, content)
                     ctx.complete(StatusCodes.OK)
+                    fn(content)
                   case _ =>
                     ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
                 }

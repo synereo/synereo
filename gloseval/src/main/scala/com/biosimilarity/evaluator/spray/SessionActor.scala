@@ -15,7 +15,7 @@ object SessionActor extends Serializable {
   case class CloseSession(reqCtx: Option[RequestContext])                                               extends Serializable
   case class CometMessage(data: String)                                                                 extends Serializable
   case class CometMessageList(data: List[String])                                                       extends Serializable
-  case class RunFunction(fn: JObject => Unit, msgType: String, content: JObject)                        extends Serializable
+  case class ItemReceived(msgType: String, content: JObject)                                            extends Serializable
   case class SessionPing(reqCtx: RequestContext)                                                        extends Serializable
   case class SetPongTimeout(t: FiniteDuration)                                                          extends Serializable
   case class SetSessionId(id: String)                                                                   extends Serializable
@@ -158,9 +158,8 @@ class SessionActor(sessionId: String) extends Actor with Serializable {
     case SessionTimedOut =>
       context.self ! CloseSession(None)
 
-    case RunFunction(fn, msgType, content) =>
+    case ItemReceived(msgType, content) =>
       itemReceived(msgType, Some(content))
-      fn(content)
 
     case CometMessageList(data) =>
       data.foreach(msg => msgs = msg :: msgs)
