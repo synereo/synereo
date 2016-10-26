@@ -185,5 +185,5 @@ class EvaluatorServiceActor extends Actor with EvaluatorService with Serializabl
 
   def actorRefFactory = context
 
-  context.actorOf(Props[SessionManagerActor])
+  context.actorOf(Props(new SessionManagerActor))
 }
