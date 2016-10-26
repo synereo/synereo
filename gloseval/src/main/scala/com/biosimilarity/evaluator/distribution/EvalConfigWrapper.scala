@@ -5,7 +5,7 @@ import java.io.File
 import scala.collection.JavaConversions._
 import scala.util.Try
 
-object EvalConfigWrapper extends EvalConfig {
+object EvalConfigWrapper extends EvalConfig with Serializable {
 
   def readString(param: String): String = evalConfig().getString(param)
 
@@ -19,8 +19,9 @@ object EvalConfigWrapper extends EvalConfig {
 
   def isOmniRequired(): Boolean = Try(readString("OmniRPCURI")).isSuccess
 
-  val serverPort    = readIntOrElse("serverPort", 80)
-  val serverSSLPort = readIntOrElse("serverSSLPort", 443)
+  def serverPort    = readIntOrElse("serverPort", 80)
+
+  def serverSSLPort = readIntOrElse("serverSSLPort", 443)
 
   def serviceDemoDataFile: File = new File(readString("ImporterServiceDemoDataFile"))
 

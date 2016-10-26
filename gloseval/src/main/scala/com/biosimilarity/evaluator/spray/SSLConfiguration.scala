@@ -8,7 +8,7 @@ import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.util._
 import spray.io.{SSLContextProvider, ServerSSLEngineProvider}
 
-object SSLConfiguration {
+object SSLConfiguration extends Serializable {
 
   private def sslContext: SSLContext = {
     val keystoreResource: InputStream = resourceStream("keystore.jks")
