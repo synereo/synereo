@@ -99,7 +99,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
         session match {
           case None =>
             ctx.complete(StatusCodes.Forbidden, "Invalid sessionURI parameter")
-          case Some(cometActor: ActorRef) =>
+          case Some(cometActor) =>
             msgType match {
               case "sessionPing"           => cometActor ! SessionActor.SessionPing(ctx)
               case "closeSessionRequest"   => cometActor ! SessionActor.CloseSession(Some(ctx))

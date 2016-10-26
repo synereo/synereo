@@ -20,6 +20,9 @@ import spray.can.Http
 import spray.http.Uri
 import spray.io.ClientSSLEngineProvider
 
+import com.biosimilarity.evaluator.importer.Importer
+import com.biosimilarity.evaluator.util.mongo.MongoQuery
+
 import scala.concurrent.Future
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 
@@ -218,6 +221,41 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         println(s)
         s shouldNot be("")
       }
+    }
+  }
+
+  "The Importer" should {
+    "import the 'singlePost' test file " in {
+
+      val rslt = Importer.fromTest("singlePost")
+      rslt shouldBe 0
+      val qry = new MongoQuery()
+      val conts =  qry.readAllAliasCnxns()
+      conts("Alice").biCnxnBouncers.length shouldBe 1
+      conts("Bob").biCnxnBouncers.length shouldBe 1
+      // Need to create an SOC to get the orphans issue fixed
+      //conts("Alice").orphans.length shouldBe 0
+      //conts("Bob").orphans.length shouldBe 0
+
+    }
+
+    "import the 'zeroToTen' test file " in {
+
+      val rslt = Importer.fromTest("zeroToTen")
+      rslt shouldBe 0
+      val qry = new MongoQuery()
+      qry.printAliasCnxns()
+      val conts =  qry.readAllAliasCnxns()
+      conts.size shouldBe 12
+      conts.foreach( pr => {
+        val cnxn = pr._2
+        cnxn.biCnxnBouncers.length shouldBe 1
+        //cnxn.orphans.length shouldBe 1
+      })
+      conts(" Lucky Seven").cnxns.length shouldBe 3
+      conts(" Zero").cnxns.length shouldBe 11
+      conts("NodeAdmin QueenSplicious").cnxns.length shouldBe 11
+
     }
   }
 }

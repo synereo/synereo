@@ -128,10 +128,20 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
     AliasCnxnContent(posts, labels, good.map( _._2), orphans.map(_._2), biCnxnBouncers, errs)
   }
 
-  def readAllAliasCnxns() : List[(String,AliasCnxnContent)] = {
+  def readAllAliasCnxns() : scala.collection.Map[String,AliasCnxnContent] = {
     val ids: List[(String, String)] = readAllIdentities()
-    ids.map( pr => (pr._2, readAliasCnxnContent(pr._1)) )
+    ids.map( pr => (pr._2, readAliasCnxnContent(pr._1)) ).toMap[String,AliasCnxnContent]
   }
+
+  def printAliasCnxns(): Unit = {
+    val conts =  readAllAliasCnxns()
+    conts.foreach( pr => {
+      val k: String = pr._1
+      val v: AliasCnxnContent = pr._2
+      println(s"$k - BiCnxnBouncers: ${v.biCnxnBouncers.length}, cnxns: ${v.cnxns.length}, orphanCnxns: ${v.orphans.length}, posts: ${v.posts.length}, labels: ${v.labels.length}, errors: ${v.errs.length}")
+    })
+  }
+
 
 
 }
