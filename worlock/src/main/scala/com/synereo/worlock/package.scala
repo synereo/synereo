@@ -1,5 +1,6 @@
 package com.synereo
 
+import com.biosimilarity.evaluator.util._
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.model.{Network => DNetwork}
@@ -59,4 +60,41 @@ package object worlock extends Network {
 
   def startContainer(client: DockerClient, containerId: String): Try[Unit] =
     Try(client.startContainerCmd(containerId).exec())
+
+  /**
+    * Create and start containers for a List of [[Node]]s
+    * @param client an instance of [[com.github.dockerjava.api.DockerClient]]
+    * @param network network on which to create the containers
+    * @param nodes a List of node definitions
+    * @param additionalEnvironment a Map containing additional environment variables to supply to the containers
+    * @return
+    */
+  def setupContainers(client: DockerClient,
+                      network: DockerNetwork,
+                      nodes: List[Node],
+                      additionalEnvironment: Map[String, String]): Try[List[CreateContainerResponse]] =
+    nodes.map { (node: Node) =>
+      createContainer(client, network, node, additionalEnvironment)
+    }.traverse { (response: CreateContainerResponse) =>
+      Thread.sleep(15000L)
+      startContainer(client, response.getId).map((_: Unit) => response)
+    }
+
+  /**
+    * Stops containers and conditionally destroys them
+    * @param client an instance of [[com.github.dockerjava.api.DockerClient]]
+    * @param containers a List of containers
+    * @param destroy if true, then destroy containers after stopping them, otherwise save them
+    * @return
+    */
+  def teardownContainers(client: DockerClient,
+                         containers: List[CreateContainerResponse],
+                         destroy: Boolean): Try[List[UsedContainer]] =
+    containers.map { (container: CreateContainerResponse) =>
+      for {
+        name      <- Try(client.inspectContainerCmd(container.getId).exec().getName.substring(1))
+        stopped   <- Try(client.stopContainerCmd(container.getId).exec()).map((_: Void) => true)
+        destroyed <- Try(client.removeContainerCmd(container.getId).exec()).map((_: Void) => true) if destroy
+      } yield UsedContainer(name, stopped, destroyed)
+    }.sequence
 }

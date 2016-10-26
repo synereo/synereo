@@ -8,6 +8,8 @@ trait Network {
 
   case class DockerNetwork(name: String, subnet: String)
 
+  case class UsedContainer(name: String, stopped: Boolean, destroyed: Boolean)
+
   sealed trait Node {
     val name: String
     val deploymentMode: DeploymentMode

@@ -25,13 +25,13 @@ class SimpleDualNodeTest
 
   val logger: Logger = LoggerFactory.getLogger(classOf[SimpleDualNodeTest])
 
-  implicit val timeout: Timeout = Timeout(FiniteDuration(360, SECONDS))
+  val timeoutLength: Int = 120
 
-  override implicit val patienceConfig = PatienceConfig(timeout = Span(360, Seconds), interval = Span(1, Second))
+  implicit val timeout: Timeout = Timeout(FiniteDuration(timeoutLength, SECONDS))
+
+  override implicit val patienceConfig = PatienceConfig(timeout = Span(timeoutLength, Seconds), interval = Span(1, Second))
 
   def containerName(): String = s"SimpleDualNodeTest-${java.util.UUID.randomUUID().toString}"
-
-  def tryLogger(msg: String): Try[Unit] = Try(logger.info(msg))
 
   val deleteNetworkAfterTests: AtomicBoolean = new AtomicBoolean(false)
 
@@ -39,12 +39,13 @@ class SimpleDualNodeTest
 
   val testNetwork: DockerNetwork = DockerNetwork("synereo", "10.100.101.0/24")
 
-  override def beforeAll(): Unit = createOrGetNetwork(client, testNetwork) match {
-    case Success(x) =>
-      logger.info("%-24s %s".format("Using network:", x.name))
-    case Failure(exception) =>
-      throw exception
-  }
+  override def beforeAll(): Unit =
+    createOrGetNetwork(client, testNetwork) match {
+      case Success(x) =>
+        logger.info("%-24s %s".format("Using network:", x.name))
+      case Failure(exception) =>
+        throw exception
+    }
 
   override def withFixture(test: NoArgTest) = {
 
@@ -87,39 +88,20 @@ class SimpleDualNodeTest
                                            exposedMongoPort = Some(27017),
                                            exposedRabbitManagementPort = Some(55673))
 
-    def setupContainers(): Try[List[CreateContainerResponse]] =
-      for {
-        _                 <- tryLogger("%-24s %s".format("Preparing test:", test.name))
-        network           <- Try(testNetwork)
-        headlessContainer <- createContainer(client, network, headlessNode, ae)
-        headedContainer   <- createContainer(client, network, headedNode, ae)
-        _                 <- startContainer(client, headlessContainer.getId)
-        _                 <- tryLogger("%-24s %s".format("Started container:", headlessName))
-        _                 <- startContainer(client, headedContainer.getId)
-        _                 <- tryLogger("%-24s %s".format("Started container:", headedName))
-      } yield List(headlessContainer, headedContainer)
+    logger.info("%-24s %s".format("Preparing test:", test.name))
 
-    def teardownContainers(cs: List[CreateContainerResponse], destroy: Boolean): Unit =
-      cs.foreach { (container: CreateContainerResponse) =>
-        val name: String = client.inspectContainerCmd(container.getId).exec().getName.substring(1)
-        client.stopContainerCmd(container.getId).exec()
-        logger.info("%-24s %s".format("Stopped container:", name))
-        if (destroy) {
-          client.removeContainerCmd(container.getId).exec()
-          logger.info("%-24s %s".format("Destroyed container:", name))
-        } else {
-          logger.info("%-24s %s".format("Saved container:", name))
-        }
-      }
+    val containerInfo: List[CreateContainerResponse] = setupContainers(client, testNetwork, List(headlessNode, headedNode), ae).get
 
-    val containerInfo: List[CreateContainerResponse] = setupContainers().get
+    containerInfo.foreach { (response: CreateContainerResponse) =>
+      logger.info("%-24s %s".format("Started container:", client.inspectContainerCmd(response.getId).exec().getName.substring(1)))
+    }
 
     try {
       logger.info("%-24s %s".format("Waiting for server:", headedName))
       spinwaitOnServer(system, apiUri, FiniteDuration(5, SECONDS), 20)(ec, system.scheduler, timeout)
 
       logger.info("%-24s %s".format("Waiting for quiescence:", headedName))
-      Thread.sleep(30000L)
+      Thread.sleep(45000L)
 
       logger.info("%-24s %s".format("Starting test:", test.name))
 
@@ -128,15 +110,28 @@ class SimpleDualNodeTest
           logger.info("%-24s %s".format("Test passed:", test.name))
           Succeeded
         case failed: Failed =>
-          logger.info("%-24s %s".format("Test failed:", test.name))
+          logger.error("%-24s %s".format("Test failed:", test.name))
           destroyContainerAfterTest.set(false)
           deleteNetworkAfterTests.set(false)
           failed
         case other =>
+          logger.error("%-24s %s".format("Unexpected test result", test.name))
+          destroyContainerAfterTest.set(false)
+          deleteNetworkAfterTests.set(false)
           other
       }
     } finally {
-      teardownContainers(containerInfo, destroyContainerAfterTest.get)
+      logger.info("%-24s %s".format("Tearing down:", test.name))
+      teardownContainers(client, containerInfo, destroyContainerAfterTest.get).foreach { (usedContainers: List[UsedContainer]) =>
+        usedContainers.foreach {
+          case UsedContainer(name, _, destroyed) =>
+            logger.info("%-24s %s".format("Stopped container:", name))
+            if (destroyed)
+              logger.info("%-24s %s".format("Destroyed container:", name))
+            else
+              logger.info("%-24s %s".format("Saved container:", name))
+        }
+      }
     }
   }
 
