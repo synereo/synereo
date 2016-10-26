@@ -5,6 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.api._
+import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
@@ -12,6 +13,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.json4s.{BuildInfo => _, _}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.time.{Second, Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import org.slf4j.{Logger, LoggerFactory}
 import spray.can.Http
@@ -95,23 +97,22 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
       val eventualJArray: Future[JArray] =
         for {
-          uri   <- Future(apiUri)
-          hc    <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
-          isr   <- openAdminSession(hc, uri, "admin@localhost", "a")
-          alice <- createSRPUser(hc, "alice@testing.com", "alice", "a")
-          bob   <- createSRPUser(hc, "bob@testing.com", "bob", "b")
-          _     <- makeConnection(hc, uri, isr.sessionURI, alice, bob, "alice_bob")
-          // get alice's connections
+          uri      <- Future(apiUri)
+          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          isr      <- openAdminSession(hc, uri, "admin@localhost", "a")
+          alice    <- createSRPUser(hc, "alice@testing.com", "alice", "a")
+          bob      <- createSRPUser(hc, "bob@testing.com", "bob", "b")
+          _        <- makeConnection(hc, uri, isr.sessionURI, alice, bob, "alice_bob")
           isrA     <- openSRPSession(hc, uri, "alice@testing.com", "a")
           spwnssnA <- spawnSession(hc, uri, isrA.sessionURI)
           _        <- getConnectionProfiles(hc, uri, spwnssnA)
-          jArray   <- sessionPing(hc, uri, spwnssnA)
+          jArray   <- pingUntilPong(hc, uri, spwnssnA)
           _        <- hc.ask(Http.CloseAll)
         } yield jArray
 
       whenReady(eventualJArray) { (ja: JArray) =>
         println(s"Alice's connections: ${pretty(render(ja))}")
-        ja.values.length shouldBe 2
+        ja.values.length shouldBe 3
       }
     }
 
@@ -119,41 +120,37 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
       val eventualTuple: Future[(JArray, JArray, JArray)] =
         for {
-          uri   <- Future(apiUri)
-          hc    <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
-          isr   <- openAdminSession(hc, uri, "admin@localhost", "a")
-          alice <- createSRPUser(hc, "alice@test.com", "alice", "a")
-          bob   <- createSRPUser(hc, "bob@test.com", "bob", "b")
-          carol <- createSRPUser(hc, "carol@test.com", "carol", "c")
-          // make the connections
-          _ <- makeConnection(hc, uri, isr.sessionURI, alice, bob, "alice_bob")
-          _ <- makeConnection(hc, uri, isr.sessionURI, alice, carol, "alice_carol")
-          // get alice's connections
+          uri         <- Future(apiUri)
+          hc          <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          isr         <- openAdminSession(hc, uri, "admin@localhost", "a")
+          alice       <- createSRPUser(hc, "alice@test.com", "alice", "a")
+          bob         <- createSRPUser(hc, "bob@test.com", "bob", "b")
+          carol       <- createSRPUser(hc, "carol@test.com", "carol", "c")
+          _           <- makeConnection(hc, uri, isr.sessionURI, alice, bob, "alice_bob")
+          _           <- makeConnection(hc, uri, isr.sessionURI, alice, carol, "alice_carol")
           isrA        <- openSRPSession(hc, uri, "alice@test.com", "a")
           spwnssnA    <- spawnSession(hc, uri, isrA.sessionURI)
           _           <- getConnectionProfiles(hc, uri, spwnssnA)
-          jArrayAlice <- sessionPing(hc, uri, spwnssnA)
-          // get bob's connections
-          isrB      <- openSRPSession(hc, uri, "bob@test.com", "b")
-          spwnssnB  <- spawnSession(hc, uri, isrB.sessionURI)
-          _         <- getConnectionProfiles(hc, uri, spwnssnB)
-          jArrayBob <- sessionPing(hc, uri, spwnssnB)
-          // get carols's connections
+          jArrayAlice <- pingUntilPong(hc, uri, spwnssnA)
+          isrB        <- openSRPSession(hc, uri, "bob@test.com", "b")
+          spwnssnB    <- spawnSession(hc, uri, isrB.sessionURI)
+          _           <- getConnectionProfiles(hc, uri, spwnssnB)
+          jArrayBob   <- pingUntilPong(hc, uri, spwnssnB)
           isrC        <- openSRPSession(hc, uri, "carol@test.com", "c")
           spwnssnC    <- spawnSession(hc, uri, isrC.sessionURI)
           _           <- getConnectionProfiles(hc, uri, spwnssnC)
-          jArrayCarol <- sessionPing(hc, uri, spwnssnC)
+          jArrayCarol <- pingUntilPong(hc, uri, spwnssnC)
           _           <- hc.ask(Http.CloseAll)
         } yield (jArrayAlice, jArrayBob, jArrayCarol)
 
       whenReady(eventualTuple) {
         case (ja: JArray, jb: JArray, jc: JArray) =>
           println(s"Alice's connections: ${pretty(render(ja))}")
+          ja.values.length shouldBe 4
           println(s"Bob's connections: ${pretty(render(jb))}")
+          jb.values.length shouldBe 3
           println(s"Carol's connections: ${pretty(render(jc))}")
-          ja.values.length shouldBe 3
-          jb.values.length shouldBe 2
-          jc.values.length shouldBe 2
+          jc.values.length shouldBe 3
       }
     }
 
@@ -229,7 +226,13 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
 
   val logger: Logger = LoggerFactory.getLogger(classOf[ApiSpec])
 
-  implicit val timeout: Timeout = Timeout(FiniteDuration(15, SECONDS))
+  val maxNumberOfPingUntilPongs = 5
+
+  val timeoutLength: Int = EvalConfigWrapper.readIntOrElse("pongTimeout", 15) * (maxNumberOfPingUntilPongs + 1)
+
+  override implicit val patienceConfig = PatienceConfig(timeout = Span(timeoutLength, Seconds))
+
+  implicit val timeout: Timeout = Timeout(FiniteDuration(timeoutLength, SECONDS))
 
   var serverInstance: Option[Server] = None
 
