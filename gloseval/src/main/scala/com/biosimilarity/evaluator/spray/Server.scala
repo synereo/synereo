@@ -17,8 +17,10 @@ import scala.concurrent.duration._
 import scala.util.Try
 
 class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, listener: Option[ActorRef] = None)(
-    implicit ec: ExecutionContext = ExecutionContext.global) {
+    implicit ec: ExecutionContext = ExecutionContext.global)
+    extends Serializable {
 
+  @transient
   implicit val timeout: Timeout = Timeout(5.seconds)
 
   // format: off
@@ -31,6 +33,12 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       if (EvalConfigWrapper.isOmniRequired() && !AMPUtilities.isHealthy) throw new Exception("Unable to connect to OmniCore")
       val system: ActorSystem            = ActorSystem("evaluator-system")
       val listener: ActorRef             = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")
+      if (EvalConfigWrapper.isOmniRequired() && !AMPUtilities.isHealthy) throw new Exception("Unable to connect to OmniCore")
+      @transient
+      val system: ActorSystem = ActorSystem("evaluator-system")
+      @transient
+      val listener: ActorRef = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")
+      @transient
       val nonSSLSettings: ServerSettings = settings.copy(sslEncryption = false)
       IO(Http)(system) ! Http.Bind(listener = listener,
                                    interface = "0.0.0.0",
@@ -63,10 +71,12 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
   }
 }
 
-object Server {
+object Server extends Serializable {
 
+  @transient
   private val serverConfig: Config = ConfigFactory.load()
 
+  @transient
   val defaultSettings: ServerSettings = ServerSettings(serverConfig)
 
   def apply(settings: ServerSettings = defaultSettings): Server = new Server(settings)

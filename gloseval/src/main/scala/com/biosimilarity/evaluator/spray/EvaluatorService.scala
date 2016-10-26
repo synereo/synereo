@@ -95,7 +95,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
       case None =>
         ctx.complete(StatusCodes.Forbidden, "Missing sessionURI parameter")
       case Some(sessionURI) =>
-        SessionManager.getSession(sessionURI) match {
+        @transient
+        val session: Option[ActorRef] = SessionManager.getSession(sessionURI)
+        session match {
           case None =>
             ctx.complete(StatusCodes.Forbidden, "Invalid sessionURI parameter")
           case Some(cometActor) =>
@@ -108,8 +110,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
               case _ =>
                 asyncMethods.get(msgType) match {
                   case Some(fn) =>
-                    cometActor ! SessionActor.RunFunction(fn, msgType, content)
+                    cometActor ! SessionActor.ItemReceived(msgType, content)
                     ctx.complete(StatusCodes.OK)
+                    fn(content)
                   case _ =>
                     ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
                 }
@@ -174,7 +177,7 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     }
 }
 
-class EvaluatorServiceActor extends Actor with EvaluatorService {
+class EvaluatorServiceActor extends Actor with EvaluatorService with Serializable {
 
   import EvalHandlerService._
 

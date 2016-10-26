@@ -23,6 +23,10 @@ To work with the projects in this repository you will need:
   * alternatively, the [OpenJDK](http://openjdk.java.net/) can be installed using most common package managers.
 * [sbt](http://www.scala-sbt.org/)
   * available at http://www.scala-sbt.org/download.html
+  
+To build a Docker image you will need:
+* [Docker](https://www.docker.com/)
+  * available at https://www.docker.com/products/docker
 
 Additionally, to run the Agent Service test suites you will need:
 * [Memcached](https://memcached.org/), latest stable version
@@ -48,6 +52,10 @@ $ sbt specialk/test
 
 # Run the test suites for all projects
 $ sbt test
+  ...
+  
+# Build a Docker image
+$ sbt gloseval/docker:publishLocal
   ...
 ```
 

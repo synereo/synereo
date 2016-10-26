@@ -275,47 +275,41 @@ class Importer {
   }
 
   def makeCnxn(sessionId: String, connection: ConnectionDesc): Unit = {
-    try {
-      val sourceId = agentsById(connection.src.replace("agent://", ""))
-      val sourceURI = makeAliasURI(sourceId)
-      val targetId = agentsById(connection.trgt.replace("agent://", ""))
-      val targetURI = makeAliasURI(targetId)
-      val cnxnLabel = UUID.randomUUID().toString
+    val sourceId = agentsById(connection.src.replace("agent://", ""))
+    val sourceURI = makeAliasURI(sourceId)
+    val targetId = agentsById(connection.trgt.replace("agent://", ""))
+    val targetURI = makeAliasURI(targetId)
+    val cnxnLabel = UUID.randomUUID().toString
 
-      if (!cnxnLabels.contains(sourceId + targetId)) {
-        glosevalPost(EstablishConnectionRequest(sessionId, sourceURI, targetURI, cnxnLabel))
-        cnxnLabels.put(sourceId + targetId, cnxnLabel)
-        cnxnLabels.put(targetId + sourceId, cnxnLabel)
-      }
-    } catch {
-      case ex: Throwable => println("exception while creating connection: " + ex)
+    if (!cnxnLabels.contains(sourceId + targetId)) {
+      glosevalPost(EstablishConnectionRequest(sessionId, sourceURI, targetURI, cnxnLabel))
+      cnxnLabels.put(sourceId + targetId, cnxnLabel)
+      cnxnLabels.put(targetId + sourceId, cnxnLabel)
     }
   }
 
   def makePost(post: PostDesc): Unit = {
-    try {
-      var cnxns: List[Connection] = Nil
+    var cnxns: List[Connection] = Nil
 
-      val sourceId = agentsById(post.src)
-      val sourceAlias = makeAliasURI(sourceId)
-      val sourceSession = sessionsById(post.src)
+    val sourceId = agentsById(post.src)
+    val sourceAlias = makeAliasURI(sourceId)
+    val sourceSession = sessionsById(post.src)
 
-      val selfcnxn = Connection("agent://" + sourceId, "agent://" + sourceId, "alias")
-      //val selfcnxn = Connection(sourceAlias, sourceAlias, "alias")
+    val selfcnxn = Connection("agent://" + sourceId, "agent://" + sourceId, "alias")
 
-      post.trgts.foreach(trgt => {
-        val targetId = agentsById(trgt)
-        val lbl = cnxnLabels(sourceId + targetId)
-        val trgtAlias = makeAliasURI(agentsById(trgt))
-        cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
-      })
+    post.trgts.foreach(trgt => {
+      val targetId = agentsById(trgt)
+      val lbl = cnxnLabels.get(sourceId + targetId) match {
+        case Some(l) => l
+        case None => throw new Exception(s"Cannot post from source '${post.src}' to target '${trgt}' as no connection has been established")
+      }
+      val trgtAlias = makeAliasURI(agentsById(trgt))
+      cnxns = Connection(sourceAlias, trgtAlias, lbl) :: cnxns
+    })
 
-      val cont = EvalSubscribeContent(selfcnxn :: cnxns, post.label, Some(post.value), Some(post.uid))
-      glosevalPost(EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
+    val cont = EvalSubscribeContent(selfcnxn :: cnxns, post.label, Some(post.value), Some(post.uid))
+    glosevalPost(EvalSubscribeRequest(sourceSession, EvalSubscribeExpression("insertContent", cont)))
 
-    } catch {
-      case ex: Throwable => println("exception while creating post: " + ex)
-    }
   }
 
   def parseData(dataJsonFile: File = EvalConfigWrapper.serviceDemoDataFile) = {

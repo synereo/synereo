@@ -2,9 +2,11 @@ package com.synereo.worlock
 
 import java.net.InetSocketAddress
 
-import com.biosimilarity.evaluator.distribution.{Colocated, DeploymentMode}
+import com.biosimilarity.evaluator.distribution.DeploymentMode
 
 trait Network {
+
+  case class DockerNetwork(name: String, subnet: String)
 
   sealed trait Node {
     val name: String
@@ -17,27 +19,29 @@ trait Network {
     val bFactoryCommLinkServer: Node
     val bFactoryCommLinkClient: Node
     val bFactoryEvaluator: Node
-    val rabbitPort: Int
-    val exposedRabbitPort: Option[Int]
+    val exposedDebugPort: Option[Int]
+    val exposedMongoPort: Option[Int]
+    val exposedRabbitManagementPort: Option[Int]
   }
 
-  final class Headed(val name: String,
-                     val deploymentMode: DeploymentMode,
-                     val address: InetSocketAddress,
-                     _dslCommLinkServer: => Node,
-                     _dslCommLinkClients: => List[Node],
-                     _dslEvaluator: => Node,
-                     _dslEvaluatorPreferredSupplier: => Node,
-                     _bFactoryCommLinkServer: => Node,
-                     _bFactoryCommLinkClient: => Node,
-                     _bFactoryEvaluator: => Node,
-                     val rabbitPort: Int,
-                     val exposedRabbitPort: Option[Int],
-                     val serverPort: Int,
-                     val exposedServerPort: Option[Int],
-                     val serverSSLPort: Int,
-                     val exposedServerSSLPort: Option[Int])
-    extends Node {
+  final class HeadedNode(val name: String,
+                         val deploymentMode: DeploymentMode,
+                         val address: InetSocketAddress,
+                         _dslCommLinkServer: => Node,
+                         _dslCommLinkClients: => List[Node],
+                         _dslEvaluator: => Node,
+                         _dslEvaluatorPreferredSupplier: => Node,
+                         _bFactoryCommLinkServer: => Node,
+                         _bFactoryCommLinkClient: => Node,
+                         _bFactoryEvaluator: => Node,
+                         val serverPort: Int,
+                         val exposedServerPort: Option[Int],
+                         val serverSSLPort: Int,
+                         val exposedServerSSLPort: Option[Int],
+                         val exposedDebugPort: Option[Int],
+                         val exposedMongoPort: Option[Int],
+                         val exposedRabbitManagementPort: Option[Int])
+      extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
     lazy val dslCommLinkClients            = _dslCommLinkClients
@@ -48,7 +52,7 @@ trait Network {
     lazy val bFactoryEvaluator             = _bFactoryEvaluator
   }
 
-  object Headed {
+  object HeadedNode {
     def apply(name: String,
               deploymentMode: DeploymentMode,
               address: InetSocketAddress,
@@ -59,44 +63,46 @@ trait Network {
               bFactoryCommLinkServer: => Node,
               bFactoryCommLinkClient: => Node,
               bFactoryEvaluator: => Node,
-              rabbitPort: Int,
-              exposedRabbitPort: Option[Int],
               serverPort: Int,
               exposedServerPort: Option[Int],
               serverSSLPort: Int,
-              exposedServerSSLPort: Option[Int]): Headed =
-      new Headed(
-        name,
-        deploymentMode,
-        address,
-        dslCommLinkServer,
-        dslCommLinkClients,
-        dslEvaluator,
-        dslEvaluatorPreferredSupplier,
-        bFactoryCommLinkServer,
-        bFactoryCommLinkClient,
-        bFactoryEvaluator,
-        rabbitPort,
-        exposedRabbitPort,
-        serverPort,
-        exposedServerPort,
-        serverSSLPort,
-        exposedServerSSLPort)
+              exposedServerSSLPort: Option[Int],
+              exposedDebugPort: Option[Int],
+              exposedMongoPort: Option[Int],
+              exposedRabbitManagementPort: Option[Int]): HeadedNode =
+      new HeadedNode(name,
+                     deploymentMode,
+                     address,
+                     dslCommLinkServer,
+                     dslCommLinkClients,
+                     dslEvaluator,
+                     dslEvaluatorPreferredSupplier,
+                     bFactoryCommLinkServer,
+                     bFactoryCommLinkClient,
+                     bFactoryEvaluator,
+                     serverPort,
+                     exposedServerPort,
+                     serverSSLPort,
+                     exposedServerSSLPort,
+                     exposedDebugPort,
+                     exposedMongoPort,
+                     exposedRabbitManagementPort)
   }
 
-  final class Headless(val name: String,
-                       val deploymentMode: DeploymentMode,
-                       val address: InetSocketAddress,
-                       _dslCommLinkServer: => Node,
-                       _dslCommLinkClients: => List[Node],
-                       _dslEvaluator: => Node,
-                       _dslEvaluatorPreferredSupplier: => Node,
-                       _bFactoryCommLinkServer: => Node,
-                       _bFactoryCommLinkClient: => Node,
-                       _bFactoryEvaluator: => Node,
-                       val rabbitPort: Int,
-                       val exposedRabbitPort: Option[Int])
-    extends Node {
+  final class HeadlessNode(val name: String,
+                           val deploymentMode: DeploymentMode,
+                           val address: InetSocketAddress,
+                           _dslCommLinkServer: => Node,
+                           _dslCommLinkClients: => List[Node],
+                           _dslEvaluator: => Node,
+                           _dslEvaluatorPreferredSupplier: => Node,
+                           _bFactoryCommLinkServer: => Node,
+                           _bFactoryCommLinkClient: => Node,
+                           _bFactoryEvaluator: => Node,
+                           val exposedDebugPort: Option[Int],
+                           val exposedMongoPort: Option[Int],
+                           val exposedRabbitManagementPort: Option[Int])
+      extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
     lazy val dslCommLinkClients            = _dslCommLinkClients
@@ -107,7 +113,7 @@ trait Network {
     lazy val bFactoryEvaluator             = _bFactoryEvaluator
   }
 
-  object Headless {
+  object HeadlessNode {
     def apply(name: String,
               deploymentMode: DeploymentMode,
               address: InetSocketAddress,
@@ -118,20 +124,21 @@ trait Network {
               bFactoryCommLinkServer: => Node,
               bFactoryCommLinkClient: => Node,
               bFactoryEvaluator: => Node,
-              rabbitPort: Int,
-              exposedRabbitPort: Option[Int]): Headless =
-      new Headless(
-        name,
-        deploymentMode,
-        address,
-        dslCommLinkServer,
-        dslCommLinkClients,
-        dslEvaluator,
-        dslEvaluatorPreferredSupplier,
-        bFactoryCommLinkServer,
-        bFactoryCommLinkClient,
-        bFactoryEvaluator,
-        rabbitPort,
-        exposedRabbitPort)
+              exposedDebugPort: Option[Int],
+              exposedMongoPort: Option[Int],
+              exposedRabbitManagementPort: Option[Int]): HeadlessNode =
+      new HeadlessNode(name,
+                       deploymentMode,
+                       address,
+                       dslCommLinkServer,
+                       dslCommLinkClients,
+                       dslEvaluator,
+                       dslEvaluatorPreferredSupplier,
+                       bFactoryCommLinkServer,
+                       bFactoryCommLinkClient,
+                       bFactoryEvaluator,
+                       exposedDebugPort,
+                       exposedMongoPort,
+                       exposedRabbitManagementPort)
   }
 }

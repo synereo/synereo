@@ -64,7 +64,11 @@ object CompletionMapper extends Serializable {
 }
 
 object SessionManager extends Serializable {
+
+  @transient
   private var hmap = new mutable.HashMap[String, akka.actor.ActorRef]()
+
+  @transient
   private var sessionManager : Option[ActorContext] = None
 
   def reset(): Unit = {
@@ -122,8 +126,7 @@ object SessionManager extends Serializable {
     else
       sessionManager match {
         case Some(cxt) =>
-          val a = cxt.actorOf(Props[ChunkingActor])
-          a ! ChunkingActor.SetRecipient(ssnactor)
+          val a = cxt.actorOf(Props(new ChunkingActor(ssnactor)))
           a ! ChunkingActor.SetExpected(cnt)
           a
         case None => ssnactor
@@ -1162,7 +1165,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val biCnxn = PortableAgentBiCnxn(nodeToThisCnxn, thisToNodeCnxn)
     val nodeAgentBiCnxn = PortableAgentBiCnxn(thisToNodeCnxn, nodeToThisCnxn)
 
-    post(
+    put(
       biCnxnsListLabel,
       List(aliasCnxn),
       Serializer.serialize(List(biCnxn)),
@@ -1278,7 +1281,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           optRsrc match {
             case None => ()
             case Some(_) => {
-              read(
+              get(
                 biCnxnsListLabel,
                 List(bAliasCnxn),
                 (optRsrc: Option[mTT.Resource]) => {
@@ -1324,7 +1327,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
         })
     }
-    read(
+    get(
       biCnxnsListLabel,
       List(aAliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
@@ -1510,7 +1513,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def fetchAndSendConnectionProfiles(sessionURI: String, alias: String, biCnxnListObj : List[PortableAgentBiCnxn]) = {
-    val actor = SessionManager.getChunkingActor(sessionURI, biCnxnListObj.length)
 
     biCnxnListObj.foreach((biCnxn: PortableAgentBiCnxn) => {
       // Construct self-connection for each target
@@ -1521,7 +1523,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       def handleFetchRsp(optRsrc: Option[mTT.Resource], v: ConcreteHL.HLExpr): Unit = {
         v match {
           case PostedExpr((PostedExpr(jsonBlob: String), _, _, _)) => {
-            actor ! SessionActor.CometMessage(compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "connectionProfileResponse") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1529,7 +1531,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("jsonBlob" -> jsonBlob))))))
           }
           case Bottom => {
-            actor ! SessionActor.CometMessage(compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -1537,7 +1539,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                     ("reason" -> "Not found"))))))
           }
           case _ => {
-            actor ! SessionActor.CometMessage(compact(render(
+            SessionManager.cometMessage(sessionURI, compact(render(
               ("msgType" -> "connectionProfileError") ~
                 ("content" -> (
                   ("sessionURI" -> sessionURI) ~
@@ -2106,7 +2108,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case "feedExpr" => {
           BasicLogService.tweet("evalSubscribeRequest | feedExpr")
           val onFeed: Option[mTT.Resource] => Unit = (optRsrc) => {
-            //BasicLogService.tweet("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
+            //println("evalSubscribeRequest | onFeed: rsrc = " + optRsrc)
 
             def handleTuple(v: ConcreteHL.HLExpr): Unit = {
               v match {
@@ -2127,7 +2129,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   }
                   val (cclFilter, jsonFilter, uid, age) = extractMetadata(filter)
                   val agentCnxn = cnxn.asInstanceOf[act.AgentCnxn]
-                  //BasicLogService.tweet("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
+                  //println("evalSubscribeRequest | onFeed | republishing in history; bindings = " + bindings)
                   val arr = parse(postedStr).asInstanceOf[JArray].arr
                   val json = compact(render(arr(0)))
                   val originalFilter = fromTermString(arr(1).asInstanceOf[JString].s).get.asInstanceOf[CnxnCtxtLabel[String, String, String] with Factual]
@@ -2140,8 +2142,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                       'p4('nil("_"))),
                     List(PortableAgentCnxn(agentCnxn.src, agentCnxn.label, agentCnxn.trgt)),
                     postedStr,
-                    (optRsrc) => { /*BasicLogService.tweet("evalSubscribeRequest | onFeed | republished: uid = " + uid)*/ })
-
+                    (optRsrc) => { /*println("evalSubscribeRequest | onFeed | republished: uid = " + uid)*/ })
+                  /*
                   val content =
                     ("sessionURI" -> sessionURIStr) ~
                       ("pageOfPosts" -> List(json)) ~
@@ -2151,8 +2153,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                         ("target" -> agentCnxn.trgt.toString))) ~
                         ("filter" -> jsonFilter)
                   val response = ("msgType" -> "evalSubscribeResponse") ~ ("content" -> content)
-                  //BasicLogService.tweet("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
+                  println("evalSubscribeRequest | onFeed: response = " + compact(render(response)))
                   SessionManager.cometMessage(sessionURIStr, compact(render(response)))
+                  */
                 }
               }
             }
@@ -2169,10 +2172,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
             optRsrc match {
               case None => ();
               case Some(mTT.Ground(Bottom)) => {
-                handleBottom()
+                //handleBottom()
               }
               case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => {
-                handleBottom()
+                //handleBottom()
               }
               case Some(mTT.Ground(v)) => {
                 handleTuple(v)
@@ -2218,7 +2221,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
           val onRead: Option[mTT.Resource] => Unit = (optRsrc) => {
             //println("evalSubscribeRequest | onRead: optRsrc = " + optRsrc)
-            BasicLogService.tweet("evalSubscribeRequest | onRead: rsrc = " + optRsrc)
             optRsrc match {
               case None => ();
               // colocated
@@ -2234,7 +2236,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
 
           //println("evalSubscribeRequest | feedExpr: calling feed")
-          BasicLogService.tweet("evalSubscribeRequest | feedExpr: calling feed")
           val uid = try {
             'uid((ec \ "uid").extract[String])
           } catch {
@@ -2242,7 +2243,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           }
           for (filter <- filters) {
             //println("evalSubscribeRequest | feedExpr: filter = " + filter)
-            BasicLogService.tweet("evalSubscribeRequest | feedExpr: filter = " + filter)
             feed(
               'user('p1(filter), 'p2(uid), 'p3('new("_")), 'p4('nil("_"))),
               cnxns.map((c) => PortableAgentCnxn(c.trgt, c.label, c.src)),

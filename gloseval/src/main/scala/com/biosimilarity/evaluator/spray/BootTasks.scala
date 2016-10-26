@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 import java.util.logging.{Level => JLevel, Logger => JLogger}
 
-import com.biosimilarity.evaluator.distribution.{DSLCommLinkCtor, Distributed, EvalConfigWrapper => Config}
+import com.biosimilarity.evaluator.distribution.{DSLBoot, DSLCommLinkCtor, Distributed, Headed, Headless, EvalConfigWrapper => Config}
 import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.util._
 import com.biosimilarity.lift.lib.amqp.AMQPUtil._
@@ -16,9 +16,10 @@ import scala.util.{Failure, Success, Try}
 
 trait BootTasks {
 
-  sealed trait Certificate
-  case object SelfSigned extends Certificate
+  sealed trait Certificate extends Serializable
+  case object SelfSigned extends Certificate with Serializable
 
+  @transient
   val logger: Logger = LoggerFactory.getLogger(classOf[BootTasks])
 
   def startServer(): Unit = {
@@ -28,17 +29,17 @@ trait BootTasks {
     logger.info(s"Starting GLoSEval in ${Config.deploymentMode().toString.toLowerCase} mode...")
     val clientsHostsNPorts: List[(String, Int)] = DSLCommLinkCtor.clientHostsNPorts()
     logger.info(s"Clients: $clientsHostsNPorts")
-    (keystoreExists, Config.deploymentMode(), rabbitIsRunning(rabbitHost, rabbitPort), mongoIsRunning(mongoHost, mongoPort)) match {
-      case (false, _, _, _) =>
+    (keystoreExists, Config.nodeMode(), Config.deploymentMode(), rabbitIsRunning(rabbitHost, rabbitPort), mongoIsRunning(mongoHost, mongoPort)) match {
+      case (false, Headed, _, _, _) =>
         logger.error("TLS Certificate not found.  Please run the 'gencert' command.")
         System.exit(1)
-      case (true, Distributed, false, _) =>
+      case (_, _, Distributed, false, _) =>
         logger.error(s"Could not connect to RabbitMQ instance at $rabbitHost:$rabbitPort")
         System.exit(1)
-      case (true, _, _, false) =>
+      case (_, _, _, _, false) =>
         logger.error(s"Could not connect to MongoDB instance at $mongoHost:$mongoPort")
         System.exit(1)
-      case (true, _, _, true) =>
+      case (true, Headed, _, _, true) =>
         var service: Option[Server] = None
         sys.addShutdownHook {
           logger.info("Stopping GLoSEval...")
@@ -46,6 +47,8 @@ trait BootTasks {
           Thread.sleep(2000)
         }
         service = Some(Server().start())
+      case (_, Headless, _, _, true) =>
+        DSLBoot.start()
     }
   }
 

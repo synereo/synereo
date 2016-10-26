@@ -7,11 +7,12 @@ import akka.actor.{ActorRef, ActorSystem, Scheduler}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.spray.client.ApiClient
+import spray.can.Http
 import spray.http.HttpMethods.GET
 import spray.http.{HttpRequest, HttpResponse, Uri}
 import spray.io.{ClientSSLEngineProvider, SSLContextProvider}
 
-import scala.concurrent.duration.{FiniteDuration, SECONDS}
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 package object test extends ApiClient {
@@ -22,11 +23,18 @@ package object test extends ApiClient {
         akka.pattern.after(delay, s)(retry(op, delay, retries - 1))
     }
 
-  def spinwaitOnServer(system: ActorSystem, uri: Uri, delay: FiniteDuration, retries: Int)(implicit ec: ExecutionContext, s: Scheduler, t: Timeout): HttpResponse = {
-    val e: Future[HttpResponse] = eventualHostConnector(system, 9876, trustfulClientSSLEngineProvider).flatMap { (hc: ActorRef) =>
-      retry(hc.ask(HttpRequest(GET, uri)).mapTo[HttpResponse], delay, retries)
+  def spinwaitOnServer(system: ActorSystem, uri: Uri, delay: FiniteDuration, retries: Int)(implicit ec: ExecutionContext,
+                                                                                           s: Scheduler,
+                                                                                           t: Timeout): HttpResponse = {
+    val connector: Future[ActorRef] = eventualHostConnector(system, 9876, trustfulClientSSLEngineProvider)
+    try {
+      val e: Future[HttpResponse] = connector.flatMap { (hc: ActorRef) =>
+        retry(hc.ask(HttpRequest(GET, uri)).mapTo[HttpResponse], delay, retries)
+      }
+      Await.result(e, delay * (retries + 1))
+    } finally {
+      connector.map((ref: ActorRef) => ref.ask(Http.CloseAll))
     }
-    Await.result(e, delay * (retries + 1))
   }
 
   private object TrustfulX509TrustManager extends X509TrustManager {

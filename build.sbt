@@ -176,20 +176,24 @@ lazy val glosevalDockerSettings = Seq(
       .:+(baseDirectory.value / "src" / "main" / "docker" / "node" / "log.conf" -> "log.conf")
       .:+(baseDirectory.value / "src" / "main" / "docker" / "node" / "supervisord.conf" -> "supervisord.conf")
   },
-  buildBaseImage := {
+  buildBaseImage in Docker := {
+    val s: TaskStreams = streams.value
     val cmd = s"docker build -t synereo/base:latest ${baseDirectory.value}/src/main/docker/base"
-    Process(cmd) !
+    Process(cmd).!(s.log) match {
+      case 0 => ()
+      case _ => error("'docker build' failed")
+    }
   },
-  copyClientResources := {
+  copyClientResources in Docker := {
     val sourceDir = baseDirectory.value / "client"
     val destDir = stagingDirectory.in(Docker).value / "opt" / "docker" / "client"
     IO.createDirectory(destDir)
     IO.copyDirectory(sourceDir, destDir)
   },
   stage in Docker := {
-    buildBaseImage.value
-    copyClientResources.value
-    (stage in Docker).value
+    buildBaseImage.in(Docker).value
+    copyClientResources.in(Docker).value
+    stage.in(Docker).value
   },
   dockerCommands := {
     val ip = "127.0.0.1"
@@ -197,6 +201,9 @@ lazy val glosevalDockerSettings = Seq(
     Seq(
       Cmd("FROM", "synereo/base"),
       Cmd("ENV",
+        "TWEET_LEVEL=warning",
+        "BLOG_LEVEL=warning",
+        "MODE=headed",
         "DEPLOYMENT_MODE=colocated",
         "SERVER_PORT=8567",
         "SERVER_SSL_PORT=9876",
@@ -222,7 +229,7 @@ lazy val glosevalDockerSettings = Seq(
       Cmd("USER", "synereo"),
       Cmd("RUN", "bin/gloseval", "gencert", "--self-signed"),
       Cmd("USER", "root"),
-      Cmd("EXPOSE", "8567", "9876"),
+      Cmd("EXPOSE", "5005", "8567", "9876"),
       ExecCmd("CMD", "/usr/bin/supervisord"))
   })
 

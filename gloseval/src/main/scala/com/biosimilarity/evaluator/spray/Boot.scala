@@ -5,10 +5,16 @@ import java.io.File
 import com.biosimilarity.evaluator.util.versionInfoResponse
 import scopt.OptionParser
 
-object Boot extends App with BootTasks {
+object Boot extends App with BootTasks with Serializable {
 
-  case class BootConfig(verbose: Boolean = false, mode: String = "", file: Option[File] = None, certificate: Option[Certificate] = None, version: Boolean = false)
+  case class BootConfig(verbose: Boolean = false,
+                        mode: String = "",
+                        file: Option[File] = None,
+                        certificate: Option[Certificate] = None,
+                        version: Boolean = false)
+      extends Serializable
 
+  @transient
   val parser: OptionParser[BootConfig] = new OptionParser[BootConfig]("gloseval") {
 
     override def showUsageOnError = true
@@ -17,17 +23,15 @@ object Boot extends App with BootTasks {
 
     help("help").text("prints this usage text\n")
 
-    opt[Unit]('v', "version").action( (_, c) => c.copy(version = true) ).text("Get version information.")
+    opt[Unit]('v', "version").action((_, c) => c.copy(version = true)).text("Get version information.")
 
-    cmd("start")
-      .optional()
-      .action((_: Unit, c: BootConfig) => c.copy(mode = "start"))
-      .text("  Start GLoSEval\n")
+    cmd("start").optional().action((_: Unit, c: BootConfig) => c.copy(mode = "start")).text("  Start GLoSEval\n")
 
     cmd("gencert")
       .action((_: Unit, c: BootConfig) => c.copy(mode = "gencert"))
       .text("  Generate a TLS Certificate")
-      .children(opt[Unit]("self-signed").action((x, c) => c.copy(certificate = Some(SelfSigned))).text("Generate a self-signed certificate.\n"))
+      .children(
+        opt[Unit]("self-signed").action((x, c) => c.copy(certificate = Some(SelfSigned))).text("Generate a self-signed certificate.\n"))
 
     cmd("import")
       .action((_: Unit, c: BootConfig) => c.copy(mode = "import"))
@@ -38,9 +42,7 @@ object Boot extends App with BootTasks {
            |  in the 'ImporterServiceDemoDataFile' field of eval.conf.
            |""".stripMargin)
 
-    cmd("reset")
-      .action((_: Unit, c: BootConfig) => c.copy(mode = "reset"))
-      .text("  Reset the Database")
+    cmd("reset").action((_: Unit, c: BootConfig) => c.copy(mode = "reset")).text("  Reset the Database")
   }
 
   parser.parse(args, BootConfig()) match {

@@ -11,6 +11,8 @@ trait Containable[T] {
 
   def getContainerName(a: T): String
 
+  def getIpv4Address(a: T): String
+
   def getEnvironment(a: T): Map[String, String]
 
   def getPortBindings(a: T): Ports
@@ -22,10 +24,18 @@ object Containable {
 
     val imageName: String = s"gloseval:${BuildInfo.version}"
 
+    private val internalJVMDebugPort: Int         = 5005
+    private val internalMongoPort: Int            = 27017
+    private val internalRabbitManagementPort: Int = 55672
+
     def getContainerName(n: Node): String = n.name
+
+    def getIpv4Address(n: Node): String = n.address.getAddress.toString.substring(1)
 
     def getEnvironment(n: Node): Map[String, String] =
       Map[String, String](
+        "JAVA_OPTS" ->
+          s"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$internalJVMDebugPort",
         "DEPLOYMENT_MODE" ->
           n.deploymentMode.toString,
         "DSL_COMM_LINK_SERVER_HOST" ->
@@ -33,9 +43,11 @@ object Containable {
         "DSL_COMM_LINK_SERVER_PORT" ->
           n.dslCommLinkServer.address.getPort.toString,
         "DSL_COMM_LINK_CLIENT_HOSTS" ->
-          n.dslCommLinkClients.foldLeft(List.empty[String]) { (accum: List[String], node: Node) =>
-            node.address.getAddress.toString.substring(1) + ":" + node.address.getPort.toString :: accum
-          }.mkString(","),
+          n.dslCommLinkClients
+            .foldLeft(List.empty[String]) { (accum: List[String], node: Node) =>
+              node.address.getAddress.toString.substring(1) + ":" + node.address.getPort.toString :: accum
+            }
+            .mkString(","),
         "DSL_EVALUATOR_HOST" ->
           n.dslEvaluator.address.getAddress.toString.substring(1),
         "DSL_EVALUATOR_PORT" ->
@@ -57,46 +69,54 @@ object Containable {
         "BFACTORY_EVALUATOR_PORT" ->
           n.bFactoryEvaluator.address.getPort.toString
       ) ++ (n match {
-        case headed: Headed =>
+        case headed: HeadedNode =>
+          Map[String, String]("MODE" ->
+                                "headed",
+                              "SERVER_PORT" ->
+                                headed.serverPort.toString,
+                              "SERVER_SSL_PORT" ->
+                                headed.serverSSLPort.toString)
+        case headless: HeadlessNode =>
           Map[String, String](
-            "SERVER_PORT" ->
-              headed.serverPort.toString,
-            "SERVER_SSL_PORT" ->
-              headed.serverSSLPort.toString)
-        case headless: Headless =>
-          Map.empty[String, String]
+            "MODE" ->
+              "headless")
       })
 
     private def createPortBindings(portMap: Map[Int, Option[Int]]): Ports = {
       val ports: Ports = new Ports()
       portMap.foreach {
         case (inner, Some(exposed)) =>
-          ports.bind(ExposedPort.tcp(exposed), Binding.bindPort(inner))
-        case _ =>
+          ports.bind(ExposedPort.tcp(inner), Binding.bindPort(exposed))
+        case (_, None) =>
       }
       ports
     }
 
     def getPortBindings(n: Node): Ports = n match {
-      case x: Headed if x.deploymentMode == Colocated =>
+      case a: HeadedNode if a.deploymentMode == Colocated =>
         createPortBindings(
-          Map(
-            x.serverPort -> x.exposedServerPort,
-            x.serverSSLPort -> x.exposedServerSSLPort))
-      case x: Headed if x.deploymentMode == Distributed =>
+          Map(a.serverPort                 -> a.exposedServerPort,
+              a.serverSSLPort              -> a.exposedServerSSLPort,
+              internalJVMDebugPort         -> a.exposedDebugPort,
+              internalMongoPort            -> a.exposedMongoPort,
+              internalRabbitManagementPort -> a.exposedRabbitManagementPort))
+      case b: HeadedNode if b.deploymentMode == Distributed =>
         createPortBindings(
-          Map(
-            x.rabbitPort -> x.exposedRabbitPort,
-            x.serverPort -> x.exposedServerPort,
-            x.serverSSLPort -> x.exposedServerSSLPort))
-      case x: Headless if x.deploymentMode == Colocated =>
+          Map(b.serverPort                 -> b.exposedServerPort,
+              b.serverSSLPort              -> b.exposedServerSSLPort,
+              internalJVMDebugPort         -> b.exposedDebugPort,
+              internalMongoPort            -> b.exposedMongoPort,
+              internalRabbitManagementPort -> b.exposedRabbitManagementPort))
+      case c: HeadlessNode if c.deploymentMode == Colocated =>
         createPortBindings(
-          Map(
-            x.rabbitPort -> x.exposedRabbitPort))
-      case x: Headless if x.deploymentMode == Distributed =>
+          Map(internalJVMDebugPort         -> c.exposedDebugPort,
+              internalMongoPort            -> c.exposedMongoPort,
+              internalRabbitManagementPort -> c.exposedRabbitManagementPort))
+      case d: HeadlessNode if d.deploymentMode == Distributed =>
         createPortBindings(
-          Map(
-            x.rabbitPort -> x.exposedRabbitPort))
+          Map(internalJVMDebugPort         -> d.exposedDebugPort,
+              internalMongoPort            -> d.exposedMongoPort,
+              internalRabbitManagementPort -> d.exposedRabbitManagementPort))
     }
   }
 }

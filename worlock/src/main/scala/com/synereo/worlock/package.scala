@@ -2,6 +2,7 @@ package com.synereo
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
+import com.github.dockerjava.api.model.{Network => DNetwork}
 import com.github.dockerjava.core.{DefaultDockerClientConfig, DockerClientBuilder}
 
 import scala.collection.JavaConversions._
@@ -20,23 +21,42 @@ package object worlock extends Network {
       s"${curr._1}=${curr._2}" :: accum
     }
 
-  def createContainer[T](client: DockerClient, node: T)(implicit c: Containable[T]): Try[CreateContainerResponse] =
+  def getNetworkId(client: DockerClient, network: DockerNetwork): Try[String] =
+    Try {
+      client.inspectNetworkCmd().withNetworkId(network.name).exec().getId
+    }
+
+  def createOrGetNetwork(client: DockerClient, network: DockerNetwork): Try[DockerNetwork] =
+    Try {
+      client.listNetworksCmd().exec().exists((n: DNetwork) => n.getName == network.name) match {
+        case true =>
+          network
+        case false =>
+          client
+            .createNetworkCmd()
+            .withIpam(new DNetwork.Ipam().withConfig(new DNetwork.Ipam.Config().withSubnet(network.subnet)))
+            .withName(network.name)
+            .exec()
+          network
+      }
+    }
+
+  def createContainer[T](
+      client: DockerClient,
+      network: DockerNetwork,
+      node: T,
+      additionalEnv: Map[String, String] = Map.empty[String, String])(implicit c: Containable[T]): Try[CreateContainerResponse] =
     Try {
       client
         .createContainerCmd(c.imageName)
         .withName(c.getContainerName(node))
-        .withEnv(environmentMapToList(c.getEnvironment(node)))
+        .withEnv(environmentMapToList(c.getEnvironment(node) ++ additionalEnv))
         .withPortBindings(c.getPortBindings(node))
+        .withNetworkMode(network.name)
+        .withIpv4Address(c.getIpv4Address(node))
         .exec()
     }
 
   def startContainer(client: DockerClient, containerId: String): Try[Unit] =
     Try(client.startContainerCmd(containerId).exec())
-
-  def createAndStartContainer[T](node: T)(implicit c: Containable[T]): Try[(DockerClient, CreateContainerResponse)] =
-    for {
-      client    <- getDockerClient()
-      container <- createContainer(client, node)
-      _         <- startContainer(client, container.getId)
-    } yield (client, container)
 }

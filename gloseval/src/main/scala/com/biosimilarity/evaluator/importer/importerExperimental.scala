@@ -368,30 +368,9 @@ class Importer {
     }
   }
 
-  def readAliasCnxnContent(agent: String): AliasCnxnContent = {
-    val qry = new MongoQuery()
-    agentsById.get(agent) match {
-      case Some(uri) =>
-        qry.readAliasCnxnContent(uri)
-      case None =>
-        throw new Exception("unable to locate agent: "+agent)
-    }
-  }
-
-  def readAllAliasCnxnContents(): scala.collection.Map[String, AliasCnxnContent] = {
-    val qry = new MongoQuery()
-    agentsById.mapValues(ag => {
-      qry.readAliasCnxnContent(ag)
-    })
-  }
-
   def printStats(): Unit = {
-    val conts = readAllAliasCnxnContents()
-    conts.foreach( pr => {
-      val k: String = pr._1
-      val v: AliasCnxnContent = pr._2
-      println(s"$k - cnxns: ${v.cnxns.length}, posts: ${v.posts.length}, labels: ${v.labels.length}")
-    })
+    val qry = new MongoQuery()
+    qry.printAliasCnxns()
   }
 
   def importData(dataJson: String) = {

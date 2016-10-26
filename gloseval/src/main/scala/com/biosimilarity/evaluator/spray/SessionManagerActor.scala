@@ -5,21 +5,23 @@ import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 
 import scala.concurrent.duration._
 
-object SessionManagerActor {
-  case class InitSession(actor: ActorRef)
-  case class SetDefaultSessionTimeout(t: FiniteDuration)
-  case class SetDefaultPongTimeout(t: FiniteDuration)
+object SessionManagerActor extends Serializable {
+  case class InitSession(actor: ActorRef)                extends Serializable
+  case class SetDefaultSessionTimeout(t: FiniteDuration) extends Serializable
+  case class SetDefaultPongTimeout(t: FiniteDuration)    extends Serializable
 }
 
-class SessionManagerActor extends Actor {
+class SessionManagerActor extends Actor with Serializable {
 
   import SessionManagerActor._
 
   // if client doesnt receive any messages within this time, its garbage collected
+  @transient
   var defaultSessionTimeout = EvalConfigWrapper.readInt("sessionTimeoutMinutes") minutes
 
   // ping requests are ponged after this much time unless other data is sent in the meantime
   // clients need to re-ping after this
+  @transient
   var defaultPongTimeout = EvalConfigWrapper.readInt("pongTimeoutSeconds") seconds
 
   def receive = {
