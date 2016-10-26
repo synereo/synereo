@@ -29,10 +29,7 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       SessionManager.reset()
       SRPSessionManager.reset()
       CompletionMapper.reset()
-      com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()
-      if (EvalConfigWrapper.isOmniRequired() && !AMPUtilities.isHealthy) throw new Exception("Unable to connect to OmniCore")
-      val system: ActorSystem            = ActorSystem("evaluator-system")
-      val listener: ActorRef             = system.actorOf(Props[EvaluatorServiceActor], "evaluator-service")
+      com.biosimilarity.evaluator.distribution.bfactory.BFactoryMapInitializer.makeMap()      
       if (EvalConfigWrapper.isOmniRequired() && !AMPUtilities.isHealthy) throw new Exception("Unable to connect to OmniCore")
       @transient
       val system: ActorSystem = ActorSystem("evaluator-system")
