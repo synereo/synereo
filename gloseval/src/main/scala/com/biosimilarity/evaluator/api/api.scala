@@ -78,6 +78,7 @@ case class CreateUserStep1Response(salt: String)                                
 case class CreateUserStep2Response(agentURI: String)                                               extends ResponseContent
 case class CreateUserWaiting(token: String)                                                        extends ResponseContent
 case class ConnectionProfileResponse(sessionURI: String, connection: Connection, jsonBlob: JValue) extends ResponseContent
+case class InitializeSessionError(reason: String)                                                  extends ResponseContent
 case class ApiError(reason: String)                                                                extends ResponseContent
 
 case class Response(msgType: String, content: JObject) {
@@ -90,7 +91,7 @@ case class Response(msgType: String, content: JObject) {
     case "createUserStep2Response"        => content.extract[CreateUserStep2Response]
     case "createUserWaiting"              => content.extract[CreateUserWaiting]
     case "connectionProfileResponse"      => content.extract[ConnectionProfileResponse]
-    case "initializeSessionError"         => content.extract[ApiError]
+    case "initializeSessionError"         => content.extract[InitializeSessionError]
     case "initializeSessionResponse"      => content.extract[InitializeSessionResponse]
     case "initializeSessionStep1Response" => content.extract[InitializeSessionStep1Response]
     case "versionInfoResponse"            => content.extract[VersionInfoResponse]

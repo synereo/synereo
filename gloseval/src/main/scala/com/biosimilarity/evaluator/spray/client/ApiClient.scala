@@ -45,38 +45,25 @@ trait ApiClient extends CapUtilities {
   def extractResponseContentFromHttpResponse: (HttpResponse) => ResponseContent =
     parseHttpResponseEntity _ andThen extractResponseContentFromJValue
 
-  def getAgentURI(hc: ActorRef, uri: Uri, email: String, password: String)(implicit ec: ExecutionContext,
-                                                                           timeout: Timeout): Future[String] =
-    httpPost(hc, uri, GetAgentRequest(email, password)).map { (response: HttpResponse) =>
-      parseHttpResponseEntity(response)
-    }.map { (value: JValue) =>
-      (value \ "msgType").extract[String] match {
-        case "getAgentError" =>
-          throw new Exception("create user failed, reason : " + (value \ "content" \ "reason").extract[String])
-        case _ =>
-          (value \ "content" \ "agentURI").extract[String]
-      }
-    }
-
   def processCreateUserStep1Response(response: HttpResponse, srpClient: SRPClient, email: String, password: String)(
-      implicit ec: ExecutionContext) =
+      implicit ec: ExecutionContext): Future[String] =
     Future {
       extractResponseContentFromHttpResponse(response) match {
         case CreateUserStep1Response(salt) =>
           srpClient.calculateX(email, password, salt)
           salt
         case _ =>
-          throw new Exception(s"Unexpected result when extracting $response")
+          throw new Exception(s"A CreateUserStep1Request for $email returned an unexpected response: $response")
       }
     }
 
-  def processCreateUserStep2Response(response: HttpResponse)(implicit ec: ExecutionContext) =
+  def processCreateUserStep2Response(response: HttpResponse, email: String)(implicit ec: ExecutionContext): Future[String] =
     Future {
       extractResponseContentFromHttpResponse(response) match {
         case CreateUserStep2Response(agentURI) =>
           agentURI
         case _ =>
-          throw new Exception(s"Unexpected result when extracting $response")
+          throw new Exception(s"A CreateUserStep2Request for $email returned an unexpected response: $response")
       }
     }
 
@@ -97,29 +84,33 @@ trait ApiClient extends CapUtilities {
       resp1     <- httpPost(hc, uri, CreateUserStep1Request(nce))
       salt      <- processCreateUserStep1Response(resp1, srpClient, email, password)
       resp2     <- httpPost(hc, uri, CreateUserStep2Request(nce, salt, srpClient.generateVerifier, blob))
-      resp3     <- processCreateUserStep2Response(resp2)
+      resp3     <- processCreateUserStep2Response(resp2, email)
     } yield resp3
 
-  def processInitializeSessionStep2Response(response: HttpResponse, srpClient: SRPClient, email: String, password: String)(
+  def processInitializeSessionStep1Response(response: HttpResponse, srpClient: SRPClient, email: String, password: String)(
       implicit ec: ExecutionContext): Future[String] =
     Future {
       extractResponseContentFromHttpResponse(response) match {
         case InitializeSessionStep1Response(s, b) =>
           srpClient.calculateX(email, password, s)
           b
+        case InitializeSessionError(reason) =>
+          throw new Exception(s"An InitializeSessionStep1Request for $email returned an error: $reason")
         case _ =>
-          throw new Exception(s"Unexpected result when extracting $response")
+          throw new Exception(s"An InitializeSessionStep1Request for $email returned an unexpected response: $response")
       }
     }
 
-  def processInitializeSessionResponse(response: HttpResponse, srpClient: SRPClient)(
+  def processInitializeSessionResponse(response: HttpResponse, srpClient: SRPClient, email: String)(
       implicit ec: ExecutionContext): Future[InitializeSessionResponse] =
     Future {
       extractResponseContentFromHttpResponse(response) match {
         case isr @ InitializeSessionResponse(_, _, _, _, _, _, _, m2) if srpClient.verifyServerEvidenceMessage(fromHex(m2)) =>
           isr
+        case InitializeSessionError(reason) =>
+          throw new Exception(s"An InitializeSessionStep2Request for $email returned an error: $reason")
         case _ =>
-          throw new Exception(s"Unexpected result when extracting $response")
+          throw new Exception(s"An InitializeSessionStep2Request for $email returned an unexpected response: $response")
       }
     }
 
@@ -127,11 +118,10 @@ trait ApiClient extends CapUtilities {
                                                                               timeout: Timeout): Future[InitializeSessionResponse] =
     for {
       srpClient <- eventualSRPClient()
-      agentUri  <- getAgentURI(hc, uri, email, password)
-      resp1     <- httpPost(hc, uri, InitializeSessionStep1Request("%s?A=%s".format(agentUri, srpClient.calculateAHex)))
-      b         <- processInitializeSessionStep2Response(resp1, srpClient, email, password)
-      resp2     <- httpPost(hc, uri, InitializeSessionStep2Request("%s?M=%s".format(agentUri, srpClient.calculateMHex(b))))
-      resp3     <- processInitializeSessionResponse(resp2, srpClient)
+      resp1     <- httpPost(hc, uri, InitializeSessionStep1Request("agent://email/%s?A=%s".format(email, srpClient.calculateAHex)))
+      b         <- processInitializeSessionStep1Response(resp1, srpClient, email, password)
+      resp2     <- httpPost(hc, uri, InitializeSessionStep2Request("agent://email/%s?M=%s".format(email, srpClient.calculateMHex(b))))
+      resp3     <- processInitializeSessionResponse(resp2, srpClient, email)
     } yield resp3
 
   def spawnSession(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
