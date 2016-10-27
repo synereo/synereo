@@ -17,7 +17,7 @@ import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
-import com.biosimilarity.evaluator.omni.OmniClient
+import com.biosimilarity.evaluator.omni._
 import spray.routing._
 import spray.http._
 import org.json4s.{BuildInfo => _, _}
@@ -103,6 +103,16 @@ object SessionManager extends Serializable {
 
   def getSession(ssn: String): Option[ActorRef] = {
     hmap.get(ssn)
+  }
+
+  def findSessionsByCap(cap: String) = hmap.keySet.filter(p => new URI(p).getHost.equals(cap))
+
+  def addMonitoredTransaction(cap: String, mt: MonitoredTransaction): Unit = {
+    findSessionsByCap(cap).foreach(ssn =>
+      for (cometActor <- hmap.get(ssn)) {
+        cometActor ! SessionActor.AddTransaction(mt)
+      }
+    )
   }
 
   def getChunkingActor(sessionURI: String, cnt: Int) = {
@@ -589,6 +599,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   val labelListLabel = fromTermString("labelList(true)").getOrElse(throw new Exception("Couldn't parse labelListLabel"))
   val biCnxnsListLabel = fromTermString("biCnxnsList(true)").getOrElse(throw new Exception("Couldn't parse biCnxnsListLabel"))
   val ampWalletLabel = fromTermString("amp(walletRequest(W))").getOrElse(throw new Exception("Couldn't parse ampWalletLabel."))
+  val ampKeyLabel = fromTermString("pk(X)").getOrElse(throw new Exception("Couldn't parse ampKeyLabel."))
   /*
   val btcWalletLabel = fromTermString("btc(walletRequest(W))").getOrElse(throw new Exception("Couldn't parse btc(W)."))
   val btcWalletJSONLabel =
@@ -2524,6 +2535,17 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                                     (optRsrc: Option[mTT.Resource]) => optRsrc match {
                                       case None => ()
                                       case Some(_) =>
+                                        if(EvalConfigWrapper.isOmniRequired()) {
+                                          try {
+                                            postToCnxnLabel(ampKeyLabel, capSelfCnxn, AMPKey(cap).privHex, optRsrc => {
+                                              println("EC key persisted: " + optRsrc)
+                                            })
+                                          } catch {
+                                            case e: Throwable =>
+                                              println(s"Error on creation EC key for user $cap")
+                                              e.printStackTrace()
+                                          }
+                                        }
                                         onComplete(aliasCnxn)
                                     })
                               })
@@ -2887,6 +2909,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       val sessionURI = capToSession(cap)
       val uc = getSessionWithHash(pVal)
       val m2Hex = uc.getM2Hex(pVal)
+      var ampKeyOpt: Option[AMPKey] = None
 
       def onLabelsFetch(jsonBlob: String, aliasList: String, defaultAlias: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
         BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onLabelsFetch: optRsrc = " + optRsrc)
@@ -2898,6 +2921,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               listenConnectNotification(sessionURI, aliasCnxn)
 
               val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
+              val balanceSummary = ampKeyOpt match {
+                case None => BalanceSummary("undefined", "0", "0", List("No EC key found."))
+                case Some(key) => AMPUtilities.getBalanceSummary(key.address)
+              }
 
               val content =
                 ("sessionURI" -> sessionURI) ~
@@ -2907,6 +2934,10 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~ // for default alias
                   ("lastActiveLabel" -> "") ~
                   ("jsonBlob" -> parse(jsonBlob)) ~
+                  ("balanceAMP" -> balanceSummary.amp) ~
+                  ("balanceBTC" -> balanceSummary.btc) ~
+                  ("address" -> balanceSummary.address) ~
+                  ("networkMode" -> Network.networkMode) ~
                   ("M2" -> m2Hex) // SRP parameter for client-side verification
 
               CompletionMapper.complete(key, compact(render(
@@ -3080,14 +3111,75 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
       if(uc == null) completeWithError(key, errorMsgType, s"Authentication failed on server.")
       else {
-        fetch(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
-        ()
+        fetchAMPkey(cap, keyOpt => {
+          ampKeyOpt = keyOpt
+          fetch(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
+          ()
+        })
+
       }
     }
     catch {
       case e: Throwable =>
         e.printStackTrace()
         completeWithError(key, errorMsgType, e.getMessage)
+    }
+  }
+
+  def sendAmps(sessionURI: String, content: JObject, ctx: RequestContext): Unit = {
+    val fromCap = new URI(sessionURI).getHost
+    val toCap = (content \ "target").extract[String]
+    val amount = BigDecimal((content \ "amount").extract[String])
+
+    def completeWithError(errMsg: String) = {
+      println(errMsg)
+      ctx.complete(StatusCodes.OK, compact(render(
+        ("msgType" -> "sendAmpsError") ~
+          ("content" ->
+            ("reason" -> errMsg)
+            ))))
+    }
+
+    fetchAMPkey(fromCap, from => fetchAMPkey(toCap, to => {
+      if (from.isEmpty) completeWithError("No EC key found for sender.")
+      else if (to.isEmpty) completeWithError("No EC key found for receiver.")
+      else try {
+          ctx.complete(StatusCodes.OK, compact(render(
+            ("msgType" -> "sendAmpsResponse") ~
+              ("content" ->
+                ("sessionURI" -> sessionURI) ~
+                ("transaction" -> AMPUtilities.transfer(from.get, to.get, amount))))))
+        } catch {
+          case e: Throwable => completeWithError(e.getMessage)
+      }
+    }))
+  }
+
+  def fetchAMPkey(cap: String, onSuccess: Option[AMPKey] => Unit): Unit = {
+    val capSelfCnxn = getCapSelfCnxn(cap)
+
+    val onECKeyFetch: Option[mTT.Resource] => Unit = (rsrc) => {
+      def handleKey(hex: String): Unit = onSuccess
+      rsrc match {
+        case None =>
+          println(s"EC Key not found for $cap !!!")
+          onSuccess(None)
+        case Some(mTT.Ground(PostedExpr((PostedExpr(hex: String), _, _, _)))) =>
+          onSuccess(Some(AMPKey(cap, hex)))
+        case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(hex: String), _, _, _)))), _)) =>
+          onSuccess(Some(AMPKey(cap, hex)))
+        case _ =>
+          println(s"EC Key not found for $cap !!!")
+          onSuccess(None)
+      }
+    }
+
+    try {
+      fetch(ampKeyLabel, List(capSelfCnxn), onECKeyFetch)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        onSuccess(None)
     }
   }
 

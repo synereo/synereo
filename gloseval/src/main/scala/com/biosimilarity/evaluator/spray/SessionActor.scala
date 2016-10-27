@@ -1,6 +1,7 @@
 package com.biosimilarity.evaluator.spray
 
 import akka.actor.{Actor, Cancellable}
+import com.biosimilarity.evaluator.omni.{AMPUtilities, MonitoredTransaction}
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import org.json4s._
@@ -22,6 +23,7 @@ object SessionActor extends Serializable {
   case class SetSessionTimeout(t: FiniteDuration)                                                       extends Serializable
   case class StartCamera(reqCtx: RequestContext)                                                        extends Serializable
   case class StopCamera(reqCtx: RequestContext)                                                         extends Serializable
+  case class AddTransaction(mt: MonitoredTransaction)                                                   extends Serializable
   case object PongTimeout                                                                               extends Serializable
   case object SessionTimedOut                                                                           extends Serializable
 }
@@ -53,6 +55,9 @@ class SessionActor(sessionId: String) extends Actor with Serializable {
 
   @transient
   var camera: Option[List[CameraItem]] = None
+
+  @transient
+  var monitoredTransactions: List[MonitoredTransaction] = Nil
 
   @transient
   implicit val formats = DefaultFormats
@@ -119,7 +124,26 @@ class SessionActor(sessionId: String) extends Actor with Serializable {
     }
   }
 
+  def checkMonitoredTransactions(): Unit = {
+    import AMPUtilities._
+    var stopList: List[String] = Nil
+    monitoredTransactions.foreach(t =>
+      if (isConfirmed(t.hash)) {
+        stopList ::= t.id
+        println(s"Sending balance changes by transaction ${t.id}")
+        val b1 = getBalanceSummary(t.from.address)
+        b1.cometMessage(sessionId)
+        val b2 = getBalanceSummary(t.to.address)
+        t.to.findSessions.foreach(s => b2.cometMessage(s))
+      }
+    )
+    if(stopList.nonEmpty) monitoredTransactions = monitoredTransactions.filter(t => !stopList.contains(t.id))
+  }
+
   def receive = {
+
+    case AddTransaction(t) =>
+      monitoredTransactions ::= t
 
     case SetSessionTimeout(t) =>
       sessionTimeout = t
@@ -130,6 +154,7 @@ class SessionActor(sessionId: String) extends Actor with Serializable {
     case SessionPing(reqCtx) =>
       itemReceived("sessionPing", None)
       resetAliveTimer()
+      checkMonitoredTransactions()
       for ((_, tmr) <- optReq) tmr.cancel()
       msgs match {
         case Nil =>
