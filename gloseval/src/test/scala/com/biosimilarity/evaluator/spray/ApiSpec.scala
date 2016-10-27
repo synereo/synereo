@@ -225,11 +225,13 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
   }
 
   "The Importer" should {
+
     "import the 'singlePost' test file " in {
 
       val rslt = Importer.fromTest("singlePost")
       rslt shouldBe 0
       val qry = new MongoQuery()
+      qry.printAliasCnxns()
       val conts =  qry.readAllAliasCnxns()
       conts("Alice").biCnxnBouncers.length shouldBe 1
       conts("Bob").biCnxnBouncers.length shouldBe 1
@@ -239,8 +241,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     }
 
-    "import the 'zeroToTen' test file " in {
-
+    "import the 'zeroToTen' test file " ignore {
       val rslt = Importer.fromTest("zeroToTen")
       rslt shouldBe 0
       val qry = new MongoQuery()
@@ -255,9 +256,10 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       conts(" Lucky Seven").cnxns.length shouldBe 3
       conts(" Zero").cnxns.length shouldBe 11
       conts("NodeAdmin QueenSplicious").cnxns.length shouldBe 11
-
     }
+
   }
+
 }
 
 class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngineProvider) with IntegrationPatience {
@@ -277,7 +279,7 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
   override def beforeEach(): Unit = {
     resetMongo()
     serverInstance = Some(Server().start())
-    Thread.sleep(2000L)
+    Thread.sleep(10000L)
     logger.info("finished waiting")
   }
 

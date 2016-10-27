@@ -317,21 +317,6 @@ class Importer {
     parse(dataJson).extract[DataSetDesc]
   }
 
-  def getAgentURI(email: String, password: String) = {
-    val json = glosevalPost(GetAgentRequest(email, password))
-    val jsv = parse(json)
-
-    val tmsg = (jsv \ "msgType").extract[String]
-    if (tmsg == "getAgentError") {
-      println("create user failed, reason : " + (jsv \ "content" \ "reason").extract[String])
-      None
-    }
-    else {
-      val agentURI = (jsv \ "content" \ "agentURI").extract[String]
-      Some(agentURI)
-    }
-  }
-
   private def checkPoll() = {
     if (terminateLongPoll) {
       rslt = 2
@@ -360,52 +345,49 @@ class Importer {
 
   def importData(dataJson: String) = {
     val dataset = parse(dataJson).extract[DataSetDesc]
-    getAgentURI(NodeUser.email, NodeUser.password) match {
-      case Some(uri) =>
-        val adminId = uri.replace("agent://", "")
-        try {
-          val adminSession = createSession(NodeUser.email, NodeUser.password).get
-          thrd match {
-            case Some(t) => ()
-            case None => throw new Exception("polling not started")
-          }
-          sessionsById.put(adminId, adminSession) // longpoll on adminSession
-          println(s"using admin session URI: $adminSession")
-          dataset.labels match {
-            case Some(lbls) => lbls.foreach(l => {
-              checkPoll()
-              makeLabel(LabelDesc.extractFrom(l))
-            })
-            case None => ()
-          }
-          dataset.agents.foreach(a => {
-            checkPoll()
-            makeAgent(a)
-          })
-          dataset.cnxns match {
-            case Some(cnxns) => cnxns.foreach(cnxn => {
-              checkPoll()
-              makeCnxn(adminSession, cnxn)
-            })
-            case None => ()
-          }
-          dataset.posts match {
-            case Some(posts) => posts.foreach(p => {
-              checkPoll()
-              makePost(p)
-            })
-            case None => ()
-          }
-        } catch {
-          case ex: Throwable =>
-            println("ERROR : "+ex)
-            rslt = Math.max(1, rslt)
-        } finally {
-          terminateLongPoll = true
-          sessionsById.foreach(pr => glosevalPost(CloseSessionRequest(pr._2)))
-        }
-
-      case _ => throw new Exception("Unable to open admin session")
+    try {
+      val adminSession = createSession(NodeUser.email, NodeUser.password) match {
+        case Some(s) => s //
+        case None => throw new Exception("Unable to create admin session")
+      }
+      sessionsById.put("admin", adminSession)
+      thrd match {
+        case Some(t) => ()
+        case None => throw new Exception("polling not started")
+      }
+      println(s"using admin session URI: $adminSession")
+      dataset.labels match {
+        case Some(lbls) => lbls.foreach(l => {
+          checkPoll()
+          makeLabel(LabelDesc.extractFrom(l))
+        })
+        case None => ()
+      }
+      dataset.agents.foreach(a => {
+        checkPoll()
+        makeAgent(a)
+      })
+      dataset.cnxns match {
+        case Some(cnxns) => cnxns.foreach(cnxn => {
+          checkPoll()
+          makeCnxn(adminSession, cnxn)
+        })
+        case None => ()
+      }
+      dataset.posts match {
+        case Some(posts) => posts.foreach(p => {
+          checkPoll()
+          makePost(p)
+        })
+        case None => ()
+      }
+    } catch {
+      case ex: Throwable =>
+        println("ERROR : " + ex)
+        rslt = Math.max(1, rslt)
+    } finally {
+      terminateLongPoll = true
+      sessionsById.foreach(pr => glosevalPost(CloseSessionRequest(pr._2)))
     }
     rslt
   }
