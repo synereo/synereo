@@ -9,7 +9,6 @@ import com.biosimilarity.evaluator.spray.ApiTests
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.synereo.worlock.test._
-import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.time.{Second, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, Failed, Succeeded}
 import org.slf4j.{Logger, LoggerFactory}
@@ -18,10 +17,7 @@ import spray.http.Uri
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Failure, Random, Success, Try}
 
-class SimpleDualNodeTest
-    extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider)
-    with BeforeAndAfterAll
-    with IntegrationPatience {
+class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider) with BeforeAndAfterAll {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[SimpleDualNodeTest])
 
