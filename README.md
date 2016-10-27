@@ -2,6 +2,7 @@
 
 [![Join the chat at https://gitter.im/synereo/synereo](https://badges.gitter.im/synereo/synereo.svg)](https://gitter.im/synereo/synereo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/synereo/synereo.svg?branch=staging)](https://travis-ci.org/synereo/synereo)
+[![Build status](https://ci.appveyor.com/api/projects/status/8hxpx6mwmi5b8g58/branch/staging?svg=true)](https://ci.appveyor.com/project/henrytill/synereo/branch/staging)
 
 Home of:
 
