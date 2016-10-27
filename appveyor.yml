@@ -1,0 +1,20 @@
+version: 1.0.{build}
+
+environment:
+  PATH: C:\sbt\bin;%PATH%
+  JAVA_OPTS: -Xms2048M -Xmx2048M
+
+services:
+  - mongodb
+
+install:
+  - ps: . "scripts\appveyor.ps1"
+
+cache:
+  - C:\Users\appveyor\.ivy2
+
+build_script:
+  - ps: sbt test:compile
+
+test_script:
+  - ps: sbt specialk/test; sbt 'gloseval/run gencert --self-signed'; sbt gloseval/test
