@@ -5,16 +5,25 @@ import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.github.dockerjava.api.model.{Network => DNetwork}
 import com.github.dockerjava.core.{DefaultDockerClientConfig, DockerClientBuilder}
+import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.collection.JavaConversions._
 import scala.util.Try
 
 package object worlock extends Network {
 
-  val defaultDockerClientConfig: DefaultDockerClientConfig =
-    DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost("tcp://localhost:2376").build()
+  val conf: Config = ConfigFactory.load()
 
-  def getDockerClient(config: DefaultDockerClientConfig = defaultDockerClientConfig): Try[DockerClient] =
+  def getDockerClientPort: Int =
+    getOS match {
+      case "Windows 10" => Try(conf.getInt("worlock.default-docker-client-port-windows-10")).getOrElse(2375)
+      case _            => Try(conf.getInt("worlock.default-docker-client-port")).getOrElse(2376)
+    }
+
+  def getDockerClientConfig(port: Int = getDockerClientPort): DefaultDockerClientConfig =
+    DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(s"tcp://localhost:$port").build()
+
+  def getDockerClient(config: DefaultDockerClientConfig = getDockerClientConfig()): Try[DockerClient] =
     Try(DockerClientBuilder.getInstance(config).build())
 
   private def environmentMapToList(env: Map[String, String]): List[String] =
@@ -87,9 +96,7 @@ package object worlock extends Network {
     * @param destroy if true, then destroy containers after stopping them, otherwise save them
     * @return
     */
-  def teardownContainers(client: DockerClient,
-                         containers: List[CreateContainerResponse],
-                         destroy: Boolean): Try[List[UsedContainer]] =
+  def teardownContainers(client: DockerClient, containers: List[CreateContainerResponse], destroy: Boolean): Try[List[UsedContainer]] =
     containers.map { (container: CreateContainerResponse) =>
       for {
         name      <- Try(client.inspectContainerCmd(container.getId).exec().getName.substring(1))

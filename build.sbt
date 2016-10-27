@@ -249,6 +249,7 @@ lazy val gloseval = (project in file("gloseval"))
 lazy val worlockDeps = Seq(
   "com.github.docker-java"  % "docker-java"    % "3.0.6",
   "com.typesafe.akka"      %% "akka-actor"     % "2.4.9",
+  "com.typesafe"            % "config"         % configVersion,
   "io.spray"               %% "spray-can"      % sprayVersion,
   "io.spray"               %% "spray-client"   % sprayVersion,
   "io.spray"               %% "spray-httpx"    % sprayVersion,

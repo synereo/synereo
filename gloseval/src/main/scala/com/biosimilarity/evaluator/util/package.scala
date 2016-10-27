@@ -55,4 +55,6 @@ package object util extends Helpers {
                         BuildInfo.scalaVersion,
                         mongoVersion().getOrElse("n/a"),
                         rabbitMQVersion().getOrElse("n/a"))
+
+  def getOS: String = System.getProperty("os.name")
 }
