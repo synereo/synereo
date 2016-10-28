@@ -35,7 +35,6 @@ if (!(Test-Path -Path $sbtZipPath)) {
 }
 
 Write-Host "Installing sbt..."
-
 [System.IO.Compression.ZipFile]::ExtractToDirectory($sbtZipPath, "C:\")
 
 Write-Host "sbt installed" -ForegroundColor Green

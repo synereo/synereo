@@ -1,3 +1,5 @@
+# Convenience script for setting up a development environment on Windows
+
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 #Erlang
@@ -82,8 +84,7 @@ if (!(Test-Path -Path $sbtZipPath)) {
 }
 
 Write-Host "Installing sbt..."
-
 [System.IO.Compression.ZipFile]::ExtractToDirectory($sbtZipPath, "C:\")
-[System.Environment]::SetEnvironmentVariable("PATH", $Env:Path + ";C:\sbt\bin", "User")
+[System.Environment]::SetEnvironmentVariable("PATH", $env:Path + ";C:\sbt\bin", "User")
 
 Write-Host "sbt installed" -ForegroundColor Green
