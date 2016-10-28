@@ -119,6 +119,29 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
+    "allow the administrator to make connections (dup)" in {
+
+      val eventualJArray: Future[JArray] =
+        for {
+          uri      <- Future(apiUri)
+          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          isr      <- openAdminSession(hc, uri, "admin@localhost", "a")
+          alice    <- createSRPUser(hc, "alice@testing.com", "alice", "a")
+          bob      <- createSRPUser(hc, "bob@testing.com", "bob", "b")
+          _        <- makeConnection(hc, uri, isr.sessionURI, alice, bob, "alice_bob")
+          isrA     <- openSRPSession(hc, uri, "alice@testing.com", "a")
+          spwnssnA <- spawnSession(hc, uri, isrA.sessionURI)
+          _        <- getConnectionProfiles(hc, uri, spwnssnA)
+          jArray   <- pingUntilPong(hc, uri, spwnssnA)
+          _        <- hc.ask(Http.CloseAll)
+        } yield jArray
+
+      whenReady(eventualJArray) { (ja: JArray) =>
+        println(s"Alice's connections: ${pretty(render(ja))}")
+        ja.values.length shouldBe 3
+      }
+    }
+
     "establish the correct number of connections" in {
 
       val eventualTuple: Future[(JArray, JArray, JArray)] =
@@ -241,7 +264,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     }
 
-    "import the 'zeroToTen' test file " ignore {
+    "import the 'zeroToTen' test file " in {
       val rslt = Importer.fromTest("zeroToTen")
       rslt shouldBe 0
       val qry = new MongoQuery()
