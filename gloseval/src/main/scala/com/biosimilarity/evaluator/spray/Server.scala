@@ -6,7 +6,6 @@ import akka.pattern._
 import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.distribution.bfactory
-import com.biosimilarity.evaluator.distribution.diesel
 import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.SSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.SRPSessionManager
@@ -31,12 +30,6 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       SessionManager.reset()
       SRPSessionManager.reset()
       CompletionMapper.reset()
-      bfactory.EvalNodeMapper.clear()
-      bfactory.CommsLinkMapper.clear()
-      bfactory.Server.reset()
-      diesel.EvalNodeMapper.clear()
-      diesel.CommsLinkMapper.clear()
-      diesel.Server.reset()
       bfactory.BFactoryMapInitializer.makeMap()
       if (EvalConfigWrapper.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
       @transient
