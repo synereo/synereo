@@ -4260,5 +4260,11 @@ package diesel {
       a1( 0 ) = "config=eval.conf" 
       run( a1 )
     }
+
+    def reset(): Unit = {
+      _engine       = None
+      _localService = None
+      _looper       = None
+    }
   }
 }
