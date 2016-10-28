@@ -264,7 +264,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     }
 
-    "import the 'zeroToTen' test file " in {
+    "import the 'zeroToTen' test file " ignore {
       val rslt = Importer.fromTest("zeroToTen")
       rslt shouldBe 0
       val qry = new MongoQuery()
